@@ -271,8 +271,10 @@ impl<'a> Locator<'a, '_> {
             ItemKind::Input(input) => {
                 self.body = Body::Constant;
                 self.ty(&input.ty);
-                if let Some(default) = &input.default {
-                    self.expr(default);
+                for value in input.default.iter().chain(input.constraint.iter()) {
+                    if self.expr(value) {
+                        break;
+                    }
                 }
             }
             ItemKind::Const(constant) => {
@@ -286,6 +288,10 @@ impl<'a> Locator<'a, '_> {
             ItemKind::Test(test) => {
                 self.body = Body::Test;
                 self.block(&test.body);
+            }
+            ItemKind::Property(property) => {
+                self.body = Body::Test;
+                self.block(&property.body);
             }
             ItemKind::Stmt(stmt) => {
                 self.body = Body::Top;
@@ -357,6 +363,7 @@ impl<'a> Locator<'a, '_> {
             StmtKind::Assign { value, .. }
             | StmtKind::Return(value)
             | StmtKind::Expr(value)
+            | StmtKind::Assume(value)
             | StmtKind::Given { value, .. } => {
                 self.expr(value);
             }
@@ -390,6 +397,19 @@ impl<'a> Locator<'a, '_> {
                 }
                 self.block(&statement.body);
             }
+            StmtKind::Choose(choose) => {
+                for option in &choose.options {
+                    self.visited += 1;
+                    if self.block(&option.body) {
+                        break;
+                    }
+                }
+            }
+            StmtKind::Vary { values, .. } => {
+                if let Some(values) = values {
+                    self.expr(values);
+                }
+            }
             StmtKind::Require { condition, message } => {
                 self.condition(condition);
                 self.text(message);
@@ -405,7 +425,7 @@ impl<'a> Locator<'a, '_> {
                 }
             },
             StmtKind::Expect(expect) => match expect {
-                Expect::Holds(value) => {
+                Expect::Holds(value) | Expect::Monotone { value, .. } => {
                     self.expr(value);
                 }
                 Expect::Fails(Some(text)) => self.text(text),
@@ -773,8 +793,8 @@ impl<'a> ScopeWalker<'a, '_> {
             }
             ItemKind::Input(input) => {
                 self.ty(&input.ty);
-                if let Some(default) = &input.default {
-                    self.expr(default);
+                for value in input.default.iter().chain(input.constraint.iter()) {
+                    self.expr(value);
                 }
             }
             ItemKind::Const(constant) => {
@@ -815,6 +835,7 @@ impl<'a> ScopeWalker<'a, '_> {
                 }
             }
             ItemKind::Test(test) => self.block(&test.body),
+            ItemKind::Property(property) => self.block(&property.body),
             ItemKind::Stmt(stmt) => {
                 if top {
                     let from = Extent::TopLevel {
@@ -835,7 +856,29 @@ impl<'a> ScopeWalker<'a, '_> {
                 condition: Condition::Let { name, .. },
                 ..
             } => self.add(name, extent),
-            _ => {}
+            StmtKind::Vary { target, .. } => {
+                if let Some(name) = vary_name(target) {
+                    self.add(name, extent);
+                }
+            }
+            StmtKind::Assign { .. }
+            | StmtKind::Charge(_)
+            | StmtKind::Note(_)
+            | StmtKind::If(_)
+            | StmtKind::Choose(_)
+            | StmtKind::Match(_)
+            | StmtKind::For(_)
+            | StmtKind::Require { .. }
+            | StmtKind::Fail(_)
+            | StmtKind::Return(_)
+            | StmtKind::Break
+            | StmtKind::Continue
+            | StmtKind::Total(_)
+            | StmtKind::Given { .. }
+            | StmtKind::Assume(_)
+            | StmtKind::Expect(_)
+            | StmtKind::Expr(_)
+            | StmtKind::Item(_) => {}
         }
     }
 
@@ -883,7 +926,10 @@ impl<'a> ScopeWalker<'a, '_> {
                     ..
                 },
             )
-            | StmtKind::Expect(Expect::Holds(value)) => self.expr(value),
+            | StmtKind::Expect(Expect::Holds(value) | Expect::Monotone { value, .. })
+            | StmtKind::Assume(value) => {
+                self.expr(value);
+            }
             StmtKind::Charge(charge) => {
                 self.text(&charge.label);
                 for option in &charge.options {
@@ -907,6 +953,16 @@ impl<'a> ScopeWalker<'a, '_> {
             StmtKind::Match(statement) => {
                 self.expr(&statement.scrutinee);
                 self.arms(&statement.arms);
+            }
+            StmtKind::Choose(choose) => {
+                for option in &choose.options {
+                    self.block(&option.body);
+                }
+            }
+            StmtKind::Vary { values, .. } => {
+                if let Some(values) = values {
+                    self.expr(values);
+                }
             }
             StmtKind::For(statement) => {
                 self.expr(&statement.iterable);
@@ -1078,6 +1134,116 @@ impl<'a> ScopeWalker<'a, '_> {
             | ExprKind::Path { .. }
             | ExprKind::Missing => {}
         }
+    }
+}
+
+/// The name a `vary` declares: its target when that is one name (`vary w in …`), not a record
+/// path or `input.name`.
+#[must_use]
+pub fn vary_name(target: &[Name]) -> Option<&Name> {
+    match target {
+        [name] if !name.text.is_empty() && name.text != "input" => Some(name),
+        _ => None,
+    }
+}
+
+/// Calls `visit` on every statement of a file, each before the statements inside it: the
+/// file-level ones, and those in every block (functions, tests, properties, `if`, `for`,
+/// `match` arms, choice options and misplaced items).
+pub fn statements<'a>(file: &'a File, visit: &mut impl FnMut(&'a Stmt)) {
+    for item in &file.items {
+        item_statements(item, visit);
+    }
+}
+
+/// Calls `visit` on every statement of one item, each before the statements inside it.
+pub fn item_statements<'a>(item: &'a Item, visit: &mut impl FnMut(&'a Stmt)) {
+    match &item.kind {
+        ItemKind::Fn(function) => {
+            if let FnBody::Block(block) = &function.body {
+                block_statements(block, visit);
+            }
+        }
+        ItemKind::Test(test) => block_statements(&test.body, visit),
+        ItemKind::Property(property) => block_statements(&property.body, visit),
+        ItemKind::Stmt(stmt) => stmt_statements(stmt, visit),
+        ItemKind::Use(_)
+        | ItemKind::Input(_)
+        | ItemKind::Const(_)
+        | ItemKind::Type(_)
+        | ItemKind::Enum(_) => {}
+    }
+}
+
+fn block_statements<'a>(block: &'a Block, visit: &mut impl FnMut(&'a Stmt)) {
+    for stmt in &block.stmts {
+        stmt_statements(stmt, visit);
+    }
+}
+
+fn stmt_statements<'a>(stmt: &'a Stmt, visit: &mut impl FnMut(&'a Stmt)) {
+    visit(stmt);
+    match &stmt.kind {
+        StmtKind::If(statement) => {
+            for (_, block) in &statement.branches {
+                block_statements(block, visit);
+            }
+            if let Some(otherwise) = &statement.otherwise {
+                block_statements(otherwise, visit);
+            }
+        }
+        StmtKind::For(statement) => block_statements(&statement.body, visit),
+        StmtKind::Match(statement) => {
+            for arm in &statement.arms {
+                if let ArmBody::Block(block) = &arm.body {
+                    block_statements(block, visit);
+                }
+            }
+        }
+        StmtKind::Choose(choose) => {
+            for option in &choose.options {
+                block_statements(&option.body, visit);
+            }
+        }
+        StmtKind::Item(item) => item_statements(item, visit),
+        StmtKind::Let(_)
+        | StmtKind::Var(_)
+        | StmtKind::Assign { .. }
+        | StmtKind::Charge(_)
+        | StmtKind::Note(_)
+        | StmtKind::Require { .. }
+        | StmtKind::Fail(_)
+        | StmtKind::Return(_)
+        | StmtKind::Break
+        | StmtKind::Continue
+        | StmtKind::Total(_)
+        | StmtKind::Given { .. }
+        | StmtKind::Vary { .. }
+        | StmtKind::Assume(_)
+        | StmtKind::Expect(_)
+        | StmtKind::Expr(_) => {}
+    }
+}
+
+/// The body a byte offset of a file is in, from the file-level item holding it: the cheap
+/// answer [`locate`] gives without descending (a parameter's default reads as the function's
+/// body).
+#[must_use]
+pub fn body_at(file: &File, offset: u32) -> Body {
+    let index = file.items.partition_point(|item| item.span.end < offset);
+    let Some(item) = file
+        .items
+        .get(index)
+        .filter(|item| item.span.start <= offset)
+    else {
+        return Body::Top;
+    };
+    match &item.kind {
+        ItemKind::Fn(_) => Body::Function,
+        ItemKind::Test(_) | ItemKind::Property(_) => Body::Test,
+        ItemKind::Input(_) | ItemKind::Const(_) => Body::Constant,
+        ItemKind::Use(_) | ItemKind::Type(_) | ItemKind::Enum(_) => Body::Declaration,
+        ItemKind::Stmt(_) => Body::Top,
     }
 }
 

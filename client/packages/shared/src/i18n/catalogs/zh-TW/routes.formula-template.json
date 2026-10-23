@@ -174,7 +174,6 @@
   "Run a backtest to preview how the candidate tariff would change the bills of shipments this template already rated.": "執行回溯測試，預覽候選運價表會如何改變此範本已計價運單的帳單。",
   "Save and return to Draft": "儲存並退回草稿",
   "Save and return to Draft?": "儲存並退回草稿？",
-  "Save as test": "儲存為測試",
   "Save tags": "儲存標籤",
   "Saved version": "已儲存的版本",
   "Saving this edit cancels the review in progress and returns the template to <b>Draft</b>.": "儲存此編輯會取消進行中的審查，並將範本退回<b>草稿</b>。",

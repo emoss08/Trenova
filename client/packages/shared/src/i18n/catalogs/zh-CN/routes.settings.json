@@ -62,7 +62,7 @@
   "No sign-ins recorded yet.": "尚无登录记录。",
   "No title": "无职位",
   "Non-urgent emails arrive together at 8:00 AM. Urgent ones still come right away.": "非紧急邮件会在上午 8:00 一并送达，紧急邮件仍会立即发送。",
-  "Normal, insert and visual modes with AstroNvim's keys: jj or jk leaves insert mode and Space is the leader.": "使用 AstroNvim 按键的普通、插入和可视模式：jj 或 jk 退出插入模式，空格键为前导键。",
+  "Normal, insert and visual modes with AstroNvim's keys: jj or jk leaves insert mode and Space is the leader.": "普通、插入与可视模式，搭配 AstroNvim 的按键：jj 或 jk 退出插入模式，空格键为 leader 键。",
   "Not paused": "未暂停",
   "Nothing pops up outside Trenova.": "Trenova 以外不会弹出任何通知。",
   "Notification settings could not be loaded.": "无法加载通知设置。",

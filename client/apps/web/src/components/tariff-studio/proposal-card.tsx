@@ -1,4 +1,5 @@
 import { checkTariffSource } from "@/components/formula-editor/tariff-service";
+import { isTestItem } from "@/lib/tariff-outline";
 import { refusalText, tariffMessageText } from "@/components/tariff-bill/refusal-text";
 import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
@@ -112,7 +113,7 @@ export function ProposalCard({
     [rules, next.source, kind, context],
   );
   const errors = check.diagnostics.filter((finding) => finding.severity === "error").length;
-  const testCount = check.outline?.items.filter((item) => item.kind === "test").length ?? 0;
+  const testCount = check.outline?.items.filter(isTestItem).length ?? 0;
   const tests = useTariffTests({
     rules,
     source: next.source,

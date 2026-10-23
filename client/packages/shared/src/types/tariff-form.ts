@@ -14,8 +14,10 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import {
   TARIFF_DECIMAL_PATTERN,
+  tariffChoiceSchema,
   tariffInputValuesSchema,
   type TariffBillLine,
+  type TariffChoice,
   type TariffWireNumber,
   type TariffWireQuantity,
 } from "./tariff";
@@ -195,4 +197,56 @@ export function readStoredTariffBill(value: unknown): StoredTariffBill | null {
   if (value === null || value === undefined) return null;
   const parsed = storedTariffBillSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
+}
+
+const storedChoiceOptionSchema = z.object({
+  label: z.string(),
+  status: z.string().transform((value) => value.toLowerCase()),
+  subtotal: storedDecimalSchema.nullish(),
+  refusal: z.string().nullish(),
+});
+
+/**
+ * A choice as the server stores it on a rating (`tarifftypes.Choice`, GraphQL `TariffChoice`):
+ * the currency its subtotals are in, each option's subtotal a decimal and its refusal already in
+ * the reader's words. Read into the module's wire form, so one view draws a preview's choices and a
+ * shipment's alike.
+ */
+const rawStoredChoiceSchema = z
+  .object({
+    label: z.string(),
+    kind: z.string().transform((value) => value.toLowerCase()),
+    currency: z.string().nullish(),
+    chosen: z.string().nullish(),
+    options: z.array(storedChoiceOptionSchema).default([]),
+  })
+  .transform((choice): TariffChoice => ({
+    label: choice.label,
+    kind: choice.kind === "worst" ? "worst" : "best",
+    currency: choice.currency || null,
+    range: null,
+    chosen: choice.chosen || null,
+    options: choice.options.map((option) => ({
+      label: option.label,
+      range: null,
+      status: (["chosen", "lost", "refused"] as const).includes(
+        option.status as TariffChoice["options"][number]["status"],
+      )
+        ? (option.status as TariffChoice["options"][number]["status"])
+        : "lost",
+      subtotal: option.subtotal == null ? null : { $q: option.subtotal, u: "$" },
+      refusal: option.refusal ? { message: option.refusal, range: null } : null,
+    })),
+  }));
+
+/** Every choice a stored rating made, read whether it arrived stored or already read. */
+export const storedTariffChoicesSchema: z.ZodType<TariffChoice[], unknown> = z
+  .array(z.union([tariffChoiceSchema, rawStoredChoiceSchema]))
+  .nullish()
+  .transform((value) => value ?? []);
+
+/** The choices a record's rating detail carries; empty when there are none or they do not read. */
+export function readStoredTariffChoices(value: unknown): TariffChoice[] {
+  const parsed = storedTariffChoicesSchema.safeParse(value);
+  return parsed.success ? parsed.data : [];
 }

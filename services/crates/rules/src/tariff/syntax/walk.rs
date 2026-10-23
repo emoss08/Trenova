@@ -40,6 +40,9 @@ macro_rules! walker {
                 if let Some(default) = & $($m)? input.default {
                     $expr(default, visit);
                 }
+                if let Some(constraint) = & $($m)? input.constraint {
+                    $expr(constraint, visit);
+                }
             }
             ItemKind::Const(constant) => $expr(& $($m)? constant.value, visit),
             ItemKind::Fn(function) => {
@@ -54,6 +57,7 @@ macro_rules! walker {
                 }
             }
             ItemKind::Test(test) => $block(& $($m)? test.body, visit),
+            ItemKind::Property(property) => $block(& $($m)? property.body, visit),
             ItemKind::Stmt(stmt) => $stmt(stmt, visit),
         }
     }
@@ -85,7 +89,8 @@ macro_rules! walker {
             | StmtKind::Return(value)
             | StmtKind::Given { value, .. }
             | StmtKind::Expr(value)
-            | StmtKind::Expect(Expect::Holds(value))
+            | StmtKind::Expect(Expect::Holds(value) | Expect::Monotone { value, .. })
+            | StmtKind::Assume(value)
             | StmtKind::Total(TotalClause::Minimum(value) | TotalClause::Maximum(value)) => {
                 $expr(value, visit);
             }
@@ -109,6 +114,16 @@ macro_rules! walker {
                 $text(text, visit);
             }
             StmtKind::Expect(Expect::Fails(None)) | StmtKind::Break | StmtKind::Continue => {}
+            StmtKind::Vary { values, .. } => {
+                if let Some(values) = values {
+                    $expr(values, visit);
+                }
+            }
+            StmtKind::Choose(choose) => {
+                for option in & $($m)? choose.options {
+                    $block(& $($m)? option.body, visit);
+                }
+            }
             StmtKind::If(statement) => {
                 for (condition, block) in & $($m)? statement.branches {
                     $condition(condition, visit);

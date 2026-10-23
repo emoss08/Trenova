@@ -155,7 +155,12 @@ function auditTheme(theme, p) {
     pair(`syntax-${role}`, "card", 4.5, `${role} code on a panel`);
     pair(`syntax-${role}`, "sunken", 4.5, `${role} code in a well`);
     pair(`syntax-${role}`, "surface-hover", 4.5, `${role} code in a Desk reply`);
+    pair(`syntax-${role}`, "editor-reference", 4.5, `${role} code read at the cursor`);
+    pair(`syntax-${role}`, "editor-reference-write", 4.5, `${role} code written at the cursor`);
   }
+  pair("foreground", "editor-reference", 7, "a name read at the cursor");
+  pair("foreground", "editor-reference-write", 7, "a name written at the cursor");
+  pair("editor-coverage-gap", "field", 3, "the gutter bar of a line no test reaches");
 
   // Not WCAG: a hairline nobody can see is how the surface ladder collapsed
   // into one flat plane the first time round.

@@ -93,40 +93,21 @@ func hasFilter(filters []domaintypes.FieldFilter, want domaintypes.FieldFilter) 
 	return false
 }
 
-var excludeThreads = domaintypes.FieldFilter{
-	Field:    agentRunFieldSubjectType,
-	Operator: dbtype.OpNotEqual,
-	Value:    string(agent.SubjectAssistantThread),
-}
-
-func TestListAgentRuns_HidesRunsOnAnotherPersonsConversation(t *testing.T) {
+func TestListAgentRuns_ReadsForThePersonInTheConversation(t *testing.T) {
 	t.Parallel()
 
 	params := personParams(permissionports.PrincipalTypeUser)
-	mine := pulid.MustNew("athr_")
-	theirs := pulid.MustNew("athr_")
-	orphaned := pulid.MustNew("athr_")
 	background := backgroundRun(false)
-	own := threadRun(mine)
-	other := threadRun(theirs)
-	unknown := threadRun(orphaned)
+	own := threadRun(pulid.MustNew("athr_"))
+	runs := &fakeRunList{runs: []*agent.AgentRun{background, own}}
 
-	runs := &fakeRunList{runs: []*agent.AgentRun{background, own, other, unknown}}
-	threads := &fakeThreadOwners{owners: map[pulid.ID]pulid.ID{
-		mine:   params.Actor.UserID,
-		theirs: pulid.MustNew("usr_"),
-	}}
-
-	outcome := queryRuns(t, newListAgentRunsTool(runs, threads), params)
+	outcome := queryRuns(t, newListAgentRunsTool(runs), params)
 
 	assert.Equal(t, []string{background.ID.String(), own.ID.String()}, runIDs(outcome))
-	require.Len(t, threads.requests, 1, "owners are read in one batch")
-	assert.ElementsMatch(t, []pulid.ID{mine, theirs, orphaned}, threads.requests[0].ThreadIDs)
-	assert.Equal(t, params.OrganizationID, threads.requests[0].TenantInfo.OrgID)
-	assert.Contains(t, outcome.Notes, personThreadRunsNote)
 	require.Len(t, runs.requests, 1)
-	assert.False(t, hasFilter(runs.requests[0].Filter.FieldFilters, excludeThreads),
-		"a person's own conversation runs stay listable")
+	assert.Equal(t, agentports.PersonRunRead(params.Actor.UserID), runs.requests[0].Reader,
+		"the repository keeps conversation runs to their owner, so a page stays full")
+	assert.Contains(t, outcome.Notes, personThreadRunsNote)
 }
 
 func TestListAgentRuns_AnAgentNeverSeesConversationRuns(t *testing.T) {
@@ -137,16 +118,13 @@ func TestListAgentRuns_AnAgentNeverSeesConversationRuns(t *testing.T) {
 		permissionports.PrincipalTypeAPIKey,
 	} {
 		params := personParams(principal)
-		background := backgroundRun(false)
-		runs := &fakeRunList{runs: []*agent.AgentRun{background, threadRun(pulid.MustNew("athr_"))}}
-		threads := &fakeThreadOwners{}
+		runs := &fakeRunList{runs: []*agent.AgentRun{backgroundRun(false)}}
 
-		outcome := queryRuns(t, newListAgentRunsTool(runs, threads), params)
+		outcome := queryRuns(t, newListAgentRunsTool(runs), params)
 
-		assert.Equal(t, []string{background.ID.String()}, runIDs(outcome), principal)
-		assert.Empty(t, threads.requests, "nobody's conversation is theirs to read")
-		assert.True(t, hasFilter(runs.requests[0].Filter.FieldFilters, excludeThreads),
-			"the query itself leaves conversation runs out, so a page stays full")
+		reader := runs.requests[0].Reader
+		assert.True(t, reader.ForPerson(), principal)
+		assert.True(t, reader.UserID().IsNil(), "nobody's conversation is theirs to read")
 		assert.Contains(t, outcome.Notes, agentThreadRunsNote)
 	}
 }
@@ -198,7 +176,7 @@ func TestListAgentRuns_MineDefaultsToTheCallingAgentWhenItRunsOnItsOwn(t *testin
 		params.Params = tc.params
 		runs := &fakeRunList{}
 
-		outcome := queryRuns(t, newListAgentRunsTool(runs, &fakeThreadOwners{}), params)
+		outcome := queryRuns(t, newListAgentRunsTool(runs), params)
 
 		assert.Equal(t, tc.scoped, hasFilter(runs.requests[0].Filter.FieldFilters, own), name)
 		if tc.scoped {
@@ -214,7 +192,7 @@ func TestListAgentRuns_MineWithoutAnAgentIsRefused(t *testing.T) {
 	params.Params = map[string]any{paramMine: true}
 	runs := &fakeRunList{}
 
-	_, err := newListAgentRunsTool(runs, &fakeThreadOwners{}).Query(t.Context(), params)
+	_, err := newListAgentRunsTool(runs).Query(t.Context(), params)
 
 	require.ErrorIs(t, err, errMineNeedsAnAgent)
 	assert.Empty(t, runs.requests)
@@ -228,7 +206,7 @@ func TestListAgentRuns_MarksEachRunThatReadOutsideContent(t *testing.T) {
 	runs := &fakeRunList{runs: []*agent.AgentRun{clean, dirty}}
 	params := personParams(permissionports.PrincipalTypeAgent)
 
-	outcome := queryRuns(t, newListAgentRunsTool(runs, &fakeThreadOwners{}), params)
+	outcome := queryRuns(t, newListAgentRunsTool(runs), params)
 
 	assert.Equal(t, []agent.RecordRef{{
 		EntityType: agent.TaintEntityAgentRun,
@@ -252,7 +230,7 @@ func TestListAgentRuns_PagesAndBoundsTheList(t *testing.T) {
 	params := personParams(permissionports.PrincipalTypeAgent)
 	params.Params = map[string]any{"limit": 500}
 
-	outcome := queryRuns(t, newListAgentRunsTool(runs, &fakeThreadOwners{}), params)
+	outcome := queryRuns(t, newListAgentRunsTool(runs), params)
 
 	assert.Equal(t, maxListLimit, outcome.Count)
 	assert.True(t, outcome.HasMore)
@@ -262,7 +240,7 @@ func TestListAgentRuns_PagesAndBoundsTheList(t *testing.T) {
 func TestListAgentRuns_DeclaresAMarkedRunRecordRead(t *testing.T) {
 	t.Parallel()
 
-	tool := newListAgentRunsTool(nil, nil)
+	tool := newListAgentRunsTool(nil)
 	policy := tool.Policy()
 
 	assert.Equal(t, "agent_list_runs", tool.Name())
@@ -284,14 +262,21 @@ func TestListAgentRuns_DeclaresAMarkedRunRecordRead(t *testing.T) {
 }
 
 type fakeRunGetter struct {
-	run *agent.AgentRun
+	run     *agent.AgentRun
+	owner   pulid.ID
+	readers []agentports.RunReader
 }
 
 func (f *fakeRunGetter) GetByID(
 	_ context.Context,
 	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
+	f.readers = append(f.readers, req.Reader)
 	if f.run == nil || f.run.ID != req.ID {
+		return nil, errortypes.NewNotFoundError("Agent run not found")
+	}
+	if f.run.SubjectType == agent.SubjectAssistantThread && req.Reader.ForPerson() &&
+		(req.Reader.UserID().IsNil() || req.Reader.UserID() != f.owner) {
 		return nil, errortypes.NewNotFoundError("Agent run not found")
 	}
 
@@ -338,7 +323,6 @@ func (f *fakeRunEvents) List(
 
 type runFixture struct {
 	runs      *fakeRunGetter
-	threads   *fakeThreadOwners
 	proposals *fakeRunProposals
 	events    *fakeRunEvents
 	perms     *fakePermissions
@@ -347,7 +331,6 @@ type runFixture struct {
 func newRunFixture(run *agent.AgentRun) *runFixture {
 	return &runFixture{
 		runs:      &fakeRunGetter{run: run},
-		threads:   &fakeThreadOwners{owners: map[pulid.ID]pulid.ID{}},
 		proposals: &fakeRunProposals{},
 		events:    &fakeRunEvents{},
 		perms:     &fakePermissions{allowed: true},
@@ -357,7 +340,6 @@ func newRunFixture(run *agent.AgentRun) *runFixture {
 func (f *runFixture) tool() agentports.AgentQueryTool {
 	return &getAgentRunTool{
 		runs:      f.runs,
-		owners:    agentRunOwnership{threads: f.threads},
 		proposals: f.proposals,
 		events:    f.events,
 		access:    newFieldAccess(f.perms),
@@ -388,8 +370,9 @@ func TestGetAgentRun_ReadsAConversationRunOnlyForItsOwner(t *testing.T) {
 
 	owner := personParams(permissionports.PrincipalTypeUser)
 	owner.Params = map[string]any{paramRunID: run.ID.String()}
-	fixture.threads.owners[threadID] = owner.Actor.UserID
+	fixture.runs.owner = owner.Actor.UserID
 	assert.Equal(t, run.ID.String(), getRun(t, fixture, owner).ID)
+	assert.Equal(t, agentports.PersonRunRead(owner.Actor.UserID), fixture.runs.readers[0])
 
 	colleague := personParams(permissionports.PrincipalTypeUser)
 	colleague.Params = map[string]any{paramRunID: run.ID.String()}
@@ -433,7 +416,8 @@ func TestGetAgentRun_ReadsABackgroundRunAndMarksItsTaint(t *testing.T) {
 	assert.Nil(t, detail.Proposals, "proposals are added only when asked for")
 	assert.Nil(t, detail.Events)
 	assert.Zero(t, fixture.proposals.calls)
-	assert.Empty(t, fixture.threads.requests, "a background run has no owner to look up")
+	assert.Equal(t, agentports.PersonRunRead(pulid.Nil), fixture.runs.readers[0],
+		"an agent reads with no person, and a background run is still found")
 }
 
 func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
@@ -495,6 +479,8 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 	assert.Equal(t, 70, request.After, "the last fifty of 120 steps start after 70")
 	assert.Equal(t, string(agentports.RunStepOwnerAgentRun), request.OwnerKind)
 	assert.Equal(t, run.ID, request.OwnerID)
+	assert.Equal(t, agentports.PersonRunRead(params.Actor.UserID), request.Reader,
+		"a run's steps are read for the same person as the run")
 
 	require.Len(t, detail.Events, 3)
 	assert.Equal(t, "shipment_get", detail.Events[0].Tool)

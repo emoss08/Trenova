@@ -1,6 +1,7 @@
 package agentquerytoolservice
 
 import (
+	"github.com/bytedance/sonic"
 	"context"
 	"testing"
 
@@ -538,3 +539,59 @@ const testCatalog = `{
     {"kind": "fn", "name": "stepPercent", "signature": "fn stepPercent(price: Money/gal) -> Percent", "doc": "A stepped fuel surcharge."}
   ]}]
 }`
+
+func TestRunTests_ReportsPropertiesAndTheRegionsNoTestReaches(t *testing.T) {
+	t.Parallel()
+
+	workbench := &fakeWorkbench{}
+	workbench.outcome = workbench.outcomeOrDefault()
+	workbench.outcome.Tests = tariff.TestSummary{
+		Total:  1,
+		Passed: 0,
+		Tests: []tariff.TestOutcome{{
+			Name:   "heavier never bills less",
+			Kind:   "property",
+			Status: "failed",
+			Cases:  24,
+			Counterexample: &tariff.Counterexample{
+				Values: []tariff.VariedValue{{Target: "shipment.weight", Value: "999 lb"}},
+				Monotone: &tariff.MonotoneFailure{
+					Target:     "shipment.weight",
+					Expression: "total",
+					Direction:  "nondecreasing",
+					Before:     tariff.MonotoneSide{At: "999 lb", Result: "$310.00"},
+					After:      tariff.MonotoneSide{At: "1,000 lb", Result: "$250.00"},
+				},
+				Test: "test \"heavier never bills less: 999 lb\" {\n}\n",
+			},
+		}},
+		Coverage: &tariff.CoverageReport{
+			CoverageSummary: &tariff.CoverageSummary{
+				Reached: 18,
+				Total:   21,
+				Unreached: []tariff.UnreachedRegion{{
+					Kind:    "if",
+					At:      tariff.SourcePosition{Line: 12, Column: 1},
+					Excerpt: "if weight > 45_000 lb {",
+				}},
+			},
+			Summary: "Tests reach 18 of 21 regions",
+		},
+	}
+
+	result, err := (&runFormulaTestsTool{workbench: workbench}).Query(t.Context(),
+		chatParams(map[string]any{"source": toolPerMileSource}, ""))
+	require.NoError(t, err)
+
+	tested := result.(testedFormula)
+	assert.Contains(t, tested.Note, "tests.coverage.unreached")
+	encoded, err := sonic.Marshal(tested)
+	require.NoError(t, err)
+	text := string(encoded)
+	assert.Contains(t, text, `"kind":"property"`)
+	assert.Contains(t, text, `"cases":24`)
+	assert.Contains(t, text, `"before":{"at":"999 lb","result":"$310.00"}`)
+	assert.Contains(t, text, `"test":"test \"heavier never bills less: 999 lb\" {\n}\n"`)
+	assert.Contains(t, text, `"summary":"Tests reach 18 of 21 regions"`)
+	assert.Contains(t, text, `"excerpt":"if weight > 45_000 lb {"`)
+}

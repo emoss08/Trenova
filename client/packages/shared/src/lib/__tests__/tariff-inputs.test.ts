@@ -19,6 +19,7 @@ function declaration(overrides: Partial<TariffInputDeclaration>): TariffInputDec
     type: "Money/mi",
     descriptor: { kind: "quantity", dimension: "Money/Distance", unit: "$/mi" },
     required: true,
+    constraint: null,
     range: null,
     ...overrides,
   };
@@ -151,6 +152,45 @@ describe("tariffInputIssues", () => {
     expect(tariffInputIssues([rate], { rate: { $q: "1", u: "$/mi" }, rat: true }, t)).toEqual([
       { path: ["rat"], message: "This tariff has no input named rat" },
     ]);
+  });
+});
+
+describe("tariffInputIssues with constraints", () => {
+  const bounded = declaration({
+    constraint: {
+      range: { min: { $q: "0.5", u: "$/mi" }, max: { $q: "15", u: "$/mi" }, maxInclusive: true },
+    },
+  });
+
+  it("accepts both ends of an inclusive range", () => {
+    expect(tariffInputIssues([bounded], { rate: { $q: "0.50", u: "$/mi" } }, t)).toEqual([]);
+    expect(tariffInputIssues([bounded], { rate: { $q: "15", u: "$/mi" } }, t)).toEqual([]);
+  });
+
+  it("refuses a value past either end with the bounds", () => {
+    expect(tariffInputIssues([bounded], { rate: { $q: "235", u: "$/mi" } }, t)).toEqual([
+      { path: ["rate"], message: "Must be from $0.50/mi to $15.00/mi" },
+    ]);
+    expect(tariffInputIssues([bounded], { rate: { $q: "0.49", u: "$/mi" } }, t)).toHaveLength(1);
+  });
+
+  it("reports each item of a list input outside the bounds at its index", () => {
+    const stops = declaration({
+      name: "stops",
+      type: "List<Int>",
+      descriptor: { kind: "list", item: { kind: "int" } },
+      constraint: { range: { min: { $n: "0" }, max: { $n: "10" }, maxInclusive: false } },
+    });
+    expect(
+      tariffInputIssues([stops], { stops: [{ $n: "2" }, { $n: "10" }, { $n: "-1" }] }, t),
+    ).toEqual([
+      { path: ["stops", 1], message: "Must be at least 0 and below 10" },
+      { path: ["stops", 2], message: "Must be at least 0 and below 10" },
+    ]);
+  });
+
+  it("leaves a value of the wrong type to the type check alone", () => {
+    expect(tariffInputIssues([bounded], { rate: { $q: "1", u: "lb" } }, t)).toHaveLength(1);
   });
 });
 

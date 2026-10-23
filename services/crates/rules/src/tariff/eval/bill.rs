@@ -20,13 +20,18 @@
 //! Adjustment lines carry their kind and no label: the hosts label them in the reader's
 //! language. They are uncoded, so they count as freight. A bill whose freight lines sum below
 //! zero, or whose total is below zero, is a rating error.
+//!
+//! A `best` or `worst` runs each option into a bill of its own, compares their
+//! [`Bill::subtotal`]s and [`Bill::splice`]s the kept one into the bill; [`Choices`] records
+//! every evaluation for the result's `choices` and for `chosen(…)` in tests.
 
-use super::error::{Code, EvalError};
+use super::error::{Code, EvalError, Refusal};
 use super::value::{Value, money_digits};
 use crate::message::{Arg, Message};
 use crate::span::Span;
-use crate::tariff::syntax::ast::RoundMode;
+use crate::tariff::syntax::ast::{ChooseKind, RoundMode};
 use rust_decimal::{Decimal, RoundingStrategy};
+use std::collections::BTreeMap;
 
 /// What a line is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -305,6 +310,115 @@ impl Bill {
             accessorial_total,
             total: rounded_total,
         })
+    }
+}
+
+impl Bill {
+    /// The exact sum of the lines billed so far: a choice's option is compared by this.
+    ///
+    /// # Errors
+    ///
+    /// When the sum overflows.
+    pub fn subtotal(&self) -> Result<Decimal, EvalError> {
+        sum(self.lines.iter())
+    }
+
+    /// Appends another bill's lines and notes, in their order: a choice's kept option joining
+    /// the bill where the choice is written.
+    pub fn splice(&mut self, other: Self) {
+        self.lines.extend(other.lines);
+        self.notes.extend(other.notes);
+    }
+}
+
+/// The most choice evaluations a result reports.
+pub const MAX_CHOICES: usize = 200;
+
+/// What became of one option of a choice.
+#[derive(Debug, Clone)]
+pub enum OptionOutcome {
+    /// It billed lines adding up to this exact subtotal.
+    Billed(Decimal),
+    /// It refused, so it was out of the running.
+    Refused(Refusal),
+}
+
+/// One option of an evaluated choice.
+#[derive(Debug, Clone)]
+pub struct OptionRecord {
+    /// The option's label.
+    pub label: String,
+    /// The `option` block.
+    pub span: Span,
+    /// Its subtotal or its refusal.
+    pub outcome: OptionOutcome,
+}
+
+/// One evaluation of a `best` or `worst`.
+#[derive(Debug, Clone)]
+pub struct ChoiceRecord {
+    /// The choice's label.
+    pub label: String,
+    /// `best` or `worst`.
+    pub kind: ChooseKind,
+    /// The statement.
+    pub span: Span,
+    /// The index of the option kept, or `None` when every option refused.
+    pub chosen: Option<usize>,
+    /// Every option, in the order written.
+    pub options: Vec<OptionRecord>,
+}
+
+impl ChoiceRecord {
+    /// The kept option's label.
+    #[must_use]
+    pub fn chosen_label(&self) -> Option<&str> {
+        self.chosen
+            .and_then(|index| self.options.get(index))
+            .map(|option| option.label.as_str())
+    }
+}
+
+/// The choices a run evaluated: the first [`MAX_CHOICES`] in the order their evaluation began
+/// (a choice inside a loop once per iteration, an outer choice before the ones nested in its
+/// options), and the label each choice kept the last time it was evaluated, for `chosen(…)`.
+#[derive(Debug, Clone, Default)]
+pub struct Choices {
+    records: Vec<Option<ChoiceRecord>>,
+    last: BTreeMap<String, Option<String>>,
+}
+
+impl Choices {
+    /// Holds a place for a choice whose evaluation begins, while there is room.
+    pub fn begin(&mut self) -> Option<usize> {
+        if self.records.len() >= MAX_CHOICES {
+            return None;
+        }
+        self.records.push(None);
+        Some(self.records.len() - 1)
+    }
+
+    /// Records a finished choice in the place [`Choices::begin`] held for it.
+    pub fn finish(&mut self, slot: Option<usize>, record: ChoiceRecord) {
+        self.last.insert(
+            record.label.clone(),
+            record.chosen_label().map(str::to_owned),
+        );
+        if let Some(place) = slot.and_then(|slot| self.records.get_mut(slot)) {
+            *place = Some(record);
+        }
+    }
+
+    /// The finished choices, in order; a choice an evaluation error interrupted is left out.
+    pub fn records(&self) -> impl Iterator<Item = &ChoiceRecord> {
+        self.records.iter().flatten()
+    }
+
+    /// The label each choice kept the last time it was evaluated (`None` when every option
+    /// refused), by the choice's label.
+    #[must_use]
+    pub const fn last(&self) -> &BTreeMap<String, Option<String>> {
+        &self.last
     }
 }
 

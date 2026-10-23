@@ -30,13 +30,17 @@ function service(): TariffLanguageService {
     context: () => CONTEXT,
     trace: () => [],
     openDefinition: vi.fn(),
+    showReferences: vi.fn(),
   };
 }
 
 const views: EditorView[] = [];
 
-function mount(doc: string, extensions: Extension[] = []) {
-  const languageService = service();
+function mount(
+  doc: string,
+  extensions: Extension[] = [],
+  languageService: TariffLanguageService = service(),
+) {
   const parent = document.createElement("div");
   document.body.appendChild(parent);
   const view = new EditorView({
@@ -157,7 +161,9 @@ describe("comments", () => {
   it("comments a visual selection's lines with Space / and returns to normal mode", () => {
     const view = mount("let a = 1\nlet b = 2\nlet c = 3\n");
     cursorAt(view, 0);
-    press(view, "V", "j", "<Space>", "/");
+    // jsdom lays nothing out, so `j` (which asks CodeMirror for the position a line below on
+    // screen) lands at the document's end; `2G` reaches the second line without layout.
+    press(view, "V", "2", "G", "<Space>", "/");
     expect(view.state.doc.toString()).toBe("// let a = 1\n// let b = 2\nlet c = 3\n");
     expect(mode(view)).toBe("normal");
   });
@@ -170,6 +176,27 @@ describe("language features", () => {
     press(view, "g", "d");
     expect(head(view)).toBe(TARIFF.indexOf("linehaul ="));
     expect(view.state.selection.main.empty).toBe(true);
+    expect(mode(view)).toBe("normal");
+  });
+
+  it.each([
+    ["grr", ["g", "r", "r"]],
+    ["Space l R", ["<Space>", "l", "R"]],
+  ])("lists every use of the name under the cursor on %s", (_, keys) => {
+    const languageService = service();
+    const view = mount(TARIFF, [], languageService);
+    const declaration = TARIFF.indexOf("linehaul =");
+    const read = TARIFF.indexOf("linehaul\n");
+    cursorAt(view, read + 2);
+    press(view, ...keys);
+    expect(languageService.showReferences).toHaveBeenCalledWith({
+      name: "linehaul",
+      offset: read + 2,
+      references: [
+        { range: { from: declaration, to: declaration + 8 }, kind: "declaration", module: null },
+        { range: { from: read, to: read + 8 }, kind: "read", module: null },
+      ],
+    });
     expect(mode(view)).toBe("normal");
   });
 

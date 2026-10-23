@@ -376,6 +376,7 @@ func ratingDetailFromQuote(rated *ratequoteports.RatedShipment) *shipment.Rating
 	detail := &shipment.RatingDetail{
 		Bill:                rated.Bill,
 		Refusal:             rated.Refusal,
+		Choices:             rated.Choices,
 		Source:              string(rated.Outcome),
 		FormulaTemplateName: rated.FormulaTemplateName,
 		VersionNumber:       rated.TemplateVersion,

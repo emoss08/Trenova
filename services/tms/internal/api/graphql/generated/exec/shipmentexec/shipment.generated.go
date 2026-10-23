@@ -123,6 +123,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "TariffBill", Implementors: []string{"TariffBill"}},
 		{Name: "TariffBillExchange", Implementors: []string{"TariffBillExchange"}},
 		{Name: "TariffBillLine", Implementors: []string{"TariffBillLine"}},
+		{Name: "TariffChoice", Implementors: []string{"TariffChoice"}},
+		{Name: "TariffChoiceOption", Implementors: []string{"TariffChoiceOption"}},
 		{Name: "TrackingEvent", Implementors: []string{"TrackingEvent"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -8545,6 +8547,17 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:      "choices",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "TariffChoice",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingDetail)
+					return obj.Choices, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTariffChoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceᚄ),
+			},
+			{
 				Name:     "inputs",
 				NonNull:  true,
 				ChildErr: errNoChild8,
@@ -9757,6 +9770,98 @@ var Shard = &gqlexec.Shard{
 					return obj.Amount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+		}},
+		{Object: "TariffChoice", Fields: []*gqlexec.Field{
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoice)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoice)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "currency",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoice)
+					return obj.Currency, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "chosen",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoice)
+					return obj.Chosen, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:      "options",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "TariffChoiceOption",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoice)
+					return obj.Options, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTariffChoiceOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceOptionᚄ),
+			},
+		}},
+		{Object: "TariffChoiceOption", Fields: []*gqlexec.Field{
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoiceOption)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoiceOption)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "subtotal",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoiceOption)
+					return obj.Subtotal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "refusal",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoiceOption)
+					return obj.Refusal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 		}},
 		{Object: "TrackingEvent", Fields: []*gqlexec.Field{
@@ -14317,6 +14422,38 @@ func marshalNTariffBillLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "TariffBillLine", v)
+}
+
+func marshalNTariffChoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.TariffChoice) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.TariffChoice]{
+		Elem:        marshalNTariffChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoice,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNTariffChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffChoice) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TariffChoice", v)
+}
+
+func marshalNTariffChoiceOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceOptionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.TariffChoiceOption) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.TariffChoiceOption]{
+		Elem:        marshalNTariffChoiceOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceOption,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNTariffChoiceOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceOption(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffChoiceOption) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TariffChoiceOption", v)
 }
 
 func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {

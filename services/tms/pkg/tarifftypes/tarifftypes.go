@@ -118,12 +118,13 @@ func sameNumber(left, right any) bool {
 }
 
 type InputDecl struct {
-	Name       string        `json:"name"`
-	Doc        string        `json:"doc,omitempty"`
-	Type       string        `json:"type"`
-	Descriptor rules.RawJSON `json:"descriptor"`
-	Required   bool          `json:"required"`
-	Default    rules.RawJSON `json:"default,omitempty"`
+	Name       string                  `json:"name"`
+	Doc        string                  `json:"doc,omitempty"`
+	Type       string                  `json:"type"`
+	Descriptor rules.RawJSON           `json:"descriptor"`
+	Required   bool                    `json:"required"`
+	Default    rules.RawJSON           `json:"default,omitempty"`
+	Constraint *rules.TariffConstraint `json:"constraint,omitempty"`
 }
 
 func InputDeclsFrom(inputs []rules.TariffInput) []InputDecl {
@@ -137,6 +138,7 @@ func InputDeclsFrom(inputs []rules.TariffInput) []InputDecl {
 			Descriptor: in.Descriptor,
 			Required:   in.Required,
 			Default:    in.Default,
+			Constraint: in.Constraint,
 		})
 	}
 	return out

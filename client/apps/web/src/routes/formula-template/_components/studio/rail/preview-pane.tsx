@@ -1,5 +1,6 @@
 import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
 import { BillView } from "@/components/tariff-bill/bill-view";
+import { ChoicesView } from "@/components/tariff-bill/choices-view";
 import { BillViewSkeleton } from "@/components/tariff-bill/bill-view-skeleton";
 import { refusalText, tariffMessageText } from "@/components/tariff-bill/refusal-text";
 import { TraceView } from "@/components/tariff-bill/trace-view";
@@ -140,7 +141,8 @@ function SaveAsTest() {
 /**
  * The preview: what the tariff in the editor bills one load, rated on the server: the sample
  * record with the sample inputs, or a real shipment. It shows the bill line by line, or why the
- * tariff refused, or the error that stopped it, then the trace of how it got there.
+ * tariff refused, or the error that stopped it, with what each `best` and `worst` chose, then the
+ * trace of how it got there.
  */
 export function PreviewPane() {
   const t = useT();
@@ -273,6 +275,9 @@ export function PreviewPane() {
                 )}
                 <SaveAsTest />
               </div>
+              {result.choices.length > 0 && (
+                <ChoicesView choices={result.choices} onSelectRange={reveal} className="mt-2" />
+              )}
             </div>
           </div>
         ) : result.bill ? (
@@ -283,6 +288,13 @@ export function PreviewPane() {
               <SaveAsTest />
             </div>
             <BillView bill={result.bill} onSelectRange={reveal} />
+            {result.choices.length > 0 && (
+              <ChoicesView
+                choices={result.choices}
+                onSelectRange={reveal}
+                className="border-t pt-2"
+              />
+            )}
           </div>
         ) : (
           <p className="text-foreground-muted px-4 py-6 text-center text-sm">

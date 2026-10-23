@@ -65,6 +65,8 @@ type FieldWrapperProps = {
   error?: string;
   descriptionId?: string;
   errorId?: string;
+  /** The control's id, so the label names it. */
+  htmlFor?: string;
   /**
    * Where the label and description sit: above the control, or in a column
    * beside it, for a settings form read down a list of rows.
@@ -90,12 +92,15 @@ export function FieldRow({
   label,
   required,
   description,
+  htmlFor,
   className,
   children,
 }: {
   label?: React.ReactNode;
   required?: boolean;
   description?: React.ReactNode;
+  /** The control's id, so the label names it. */
+  htmlFor?: string;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -104,7 +109,7 @@ export function FieldRow({
       className={cn("grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-x-4", className)}
     >
       <div className="flex min-w-0 flex-col gap-1 pt-2">
-        <FieldLabel label={label} required={required} className="text-sm" />
+        <FieldLabel label={label} required={required} htmlFor={htmlFor} className="text-sm" />
         {description}
       </div>
       <div className="flex min-w-0 flex-col gap-0.5">{children}</div>
@@ -115,10 +120,12 @@ export function FieldRow({
 export function FieldLabel({
   label,
   required,
+  htmlFor,
   className,
 }: {
   label?: React.ReactNode;
   required?: boolean;
+  htmlFor?: string;
   className?: string;
 }) {
   if (!label) {
@@ -130,7 +137,11 @@ export function FieldLabel({
     return <div className={classes}>{label}</div>;
   }
 
-  return <Label className={classes}>{label}</Label>;
+  return (
+    <Label className={classes} htmlFor={htmlFor}>
+      {label}
+    </Label>
+  );
 }
 
 function FieldWrapperInner({ children }: { children: React.ReactNode }) {
@@ -151,6 +162,7 @@ export function FieldWrapper({
   error,
   descriptionId,
   errorId,
+  htmlFor,
   layout = "stacked",
   name,
   formatValue,
@@ -172,6 +184,7 @@ export function FieldWrapper({
       <FieldRow
         label={label}
         required={required}
+        htmlFor={htmlFor}
         className={className}
         description={
           description || warning?.show ? (
@@ -189,7 +202,7 @@ export function FieldWrapper({
     <div className={cn("flex flex-col gap-0.5", className)}>
       {label && (
         <FieldWrapperInner>
-          <FieldLabel label={label} required={required} />
+          <FieldLabel label={label} required={required} htmlFor={htmlFor} />
         </FieldWrapperInner>
       )}
       {control}

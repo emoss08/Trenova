@@ -416,3 +416,145 @@ let a = match x {
 ---
 tariff "t"
 let a = (match x [A => 1] [_ => 2])
+
+=== best with options
+tariff "t"
+best "Linehaul" {
+  option "Per mile" {
+    charge "Linehaul" (quantity: shipment.distance, rate: rate)
+  }
+  option "Flat" {
+    charge "Flat rate" = flatRate
+  }
+}
+---
+tariff "t"
+best "Linehaul"
+  option "Per mile"
+    charge (text "Linehaul") (quantity:(. shipment distance) rate:rate)
+  option "Flat"
+    charge (text "Flat rate") = flatRate
+
+=== worst inside an if
+tariff "t"
+if shipment.hazmat {
+  worst "Floor" {
+    option "A" {
+      charge "A" = $1
+    }
+    option "B" {
+      charge "B" = $2
+    }
+  }
+}
+---
+tariff "t"
+if (. shipment hazmat)
+  worst "Floor"
+    option "A"
+      charge (text "A") = $1
+    option "B"
+      charge (text "B") = $2
+
+=== a choice holds only options
+tariff "t"
+best "x" {
+  charge "A" = $1
+}
+---
+tariff "t"
+best "x"
+! syntax 24..30 A choice holds only `option "Label"` blocks, one for each method
+
+=== an option outside a choice
+tariff "t"
+option "A" {
+  charge "A" = $1
+}
+---
+tariff "t"
+best ""
+  option "A"
+    charge (text "A") = $1
+! misplaced 11..17 An `option` can only be written inside `best` or `worst`
+
+=== best, worst and option are names elsewhere
+tariff "t"
+let best = 1
+let option = best + 2
+let worst = [option]
+---
+tariff "t"
+let best = 1
+let option = (+ best 2)
+let worst = (list option)
+
+=== vary and assume outside a property
+tariff "t"
+test "t" {
+  vary shipment.weight in 1 lb..2 lb
+  assume true
+}
+---
+tariff "t"
+test "t"
+  vary shipment.weight in (.. 1[lb] 2[lb])
+  assume true
+! misplaced 24..28 `vary` can only be used inside a `property` block
+! misplaced 61..67 `assume` can only be used inside a `property` block
+
+=== assume reads a charge call
+tariff "t"
+property "p" {
+  vary shipment.weight in 1 lb..2 lb
+  assume charge("Linehaul") != none
+  expect true
+}
+---
+tariff "t"
+property "p"
+  vary shipment.weight in (.. 1[lb] 2[lb])
+  assume (!= (call charge (text "Linehaul")) none)
+  expect true
+
+=== assume with a space before a parenthesis is the statement
+tariff "t"
+fn assume(x: Bool) -> Bool = x
+property "p" {
+  vary shipment.weight in 1 lb..2 lb
+  assume (shipment.weight ?? 0 lb) > 1 lb
+  let ok = assume(true)
+  expect ok
+}
+---
+tariff "t"
+fn assume(x: Bool) -> Bool = x
+property "p"
+  vary shipment.weight in (.. 1[lb] 2[lb])
+  assume (> (paren (?? (. shipment weight) 0[lb])) 1[lb])
+  let ok = (call assume true)
+  expect ok
+
+=== a property expects no refusal
+tariff "t"
+property "p" {
+  vary shipment.weight in 1 lb..2 lb
+  expect fails
+}
+---
+tariff "t"
+property "p"
+  vary shipment.weight in (.. 1[lb] 2[lb])
+  expect fails
+! misplaced 72..77 A property can't expect a refusal: it states what holds when the tariff rates. Narrow it with `assume` or its ranges instead
+
+=== monotone expect outside a property
+tariff "t"
+test "t" {
+  expect total nondecreasing in shipment.weight
+}
+---
+tariff "t"
+test "t"
+  expect total nondecreasing in shipment.weight
+! misplaced 37..50 `nondecreasing` can only be used inside a `property` block

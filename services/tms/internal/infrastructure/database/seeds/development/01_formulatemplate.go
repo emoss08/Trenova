@@ -24,7 +24,7 @@ func NewFormulaTemplateSeed() *FormulaTemplateSeed {
 	seed := &FormulaTemplateSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"FormulaTemplate",
-		"2.0.0",
+		"2.1.0",
 		"Creates the standard rating method formula templates, approved, in Tariff",
 		[]common.Environment{
 			common.EnvDevelopment,

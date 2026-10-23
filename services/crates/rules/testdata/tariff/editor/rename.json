@@ -714,6 +714,261 @@
    "input": {
     "newName": "m"
    }
+  },
+  {
+   "name": "new syntax: a vary name, its reads and a monotone target",
+   "source": [
+    "tariff \"t\"",
+    "fn f(w: Weight) -> Money = $1/lb * w",
+    "property \"p\" {",
+    "  vary |w in 1 lb..2 lb",
+    "  assume w > 1 lb",
+    "  expect f(w) nondecreasing in w",
+    "}"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "w"
+      },
+      "insert": "weight"
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "insert": "weight"
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "insert": "weight"
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "insert": "weight"
+     }
+    ]
+   },
+   "input": {
+    "newName": "weight"
+   }
+  },
+  {
+   "name": "new syntax: prepare on a vary name",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary we|ight in 1 lb..2 lb",
+    "  expect total >= $1/lb * weight",
+    "}"
+   ],
+   "expect": {
+    "range": {
+     "text": "weight"
+    },
+    "placeholder": "weight"
+   }
+  },
+  {
+   "name": "new syntax: a vary name can't take another vary's name",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary |a in 1 lb..2 lb",
+    "  vary b in 1 mi..2 mi",
+    "  expect total >= $1/lb * a + $1/mi * b",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is already {1} here; pick another name",
+     "args": [
+      "`b`",
+      {
+       "message": "a name in scope"
+      }
+     ]
+    }
+   },
+   "input": {
+    "newName": "b"
+   }
+  },
+  {
+   "name": "new syntax: a vary name can't take an input's name",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "property \"p\" {",
+    "  vary |a in 1 lb..2 lb",
+    "  expect total >= $1/lb * a",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is already {1} here; pick another name",
+     "args": [
+      "`rate`",
+      {
+       "message": "declared in this file"
+      }
+     ]
+    }
+   },
+   "input": {
+    "newName": "rate"
+   }
+  },
+  {
+   "name": "new syntax: a vary name must be camelCase",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary |a in 1 lb..2 lb",
+    "  expect total >= $1/lb * a",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} can't name {1}: names are camelCase, like `extraDropFee`",
+     "args": [
+      "`Weight`",
+      {
+       "message": "a binding"
+      }
+     ]
+    }
+   },
+   "input": {
+    "newName": "Weight"
+   }
+  },
+  {
+   "name": "new syntax: an input renames in a vary and a monotone target",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "property \"p\" {",
+    "  vary input.rate",
+    "  expect total nondecreasing in input.ra|te",
+    "}"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "rate"
+      },
+      "insert": "perMile"
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "insert": "perMile"
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "insert": "perMile"
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "insert": "perMile"
+     }
+    ]
+   },
+   "input": {
+    "newName": "perMile"
+   }
+  },
+  {
+   "name": "new syntax: a choice is renamed by its text",
+   "source": [
+    "tariff \"t\"",
+    "best \"Line|haul\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "A choice is named by its label, which is text: edit it between the quotes, and in every `chosen` that names it"
+    }
+   }
+  },
+  {
+   "name": "new syntax: chosen's label is text",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(\"Line|haul\") == \"A\"",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "A choice is named by its label, which is text: edit it between the quotes, and in every `chosen` that names it"
+    }
+   },
+   "input": {
+    "newName": "Flat"
+   }
+  },
+  {
+   "name": "new syntax: a let inside an option",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    let f|ee = $1",
+    "    charge \"A\" = fee",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "fee"
+      },
+      "insert": "flat"
+     },
+     {
+      "range": {
+       "text": "fee"
+      },
+      "insert": "flat"
+     }
+    ]
+   },
+   "input": {
+    "newName": "flat"
+   }
   }
  ]
 }

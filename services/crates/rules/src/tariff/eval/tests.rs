@@ -1,16 +1,19 @@
-//! The test runner: a file's `test` blocks, run against the sample record.
+//! The test runner: a file's `test` and `property` blocks, run against the sample record, in
+//! source order.
 //!
 //! A test in a tariff or condition:
 //!
 //! 1. starts from the sample record and the inputs' defaults;
 //! 2. applies its `given`s in order: a record path (`shipment.weight`, `lane.origin.zip3`) or
-//!    `input.name`. The test constructors (`pickup(…)`, `delivery(…)`, `splitPickup(…)`,
-//!    `splitDelivery(…)`, `commodity(…)`) build stops and commodities from the sample defaults.
+//!    `input.name` (a value outside the input's `where` constraint is an `input` error). The
+//!    test constructors (`pickup(…)`, `delivery(…)`, `splitPickup(…)`, `splitDelivery(…)`,
+//!    `commodity(…)`) build stops and commodities from the sample defaults.
 //!    Afterwards each stop without a sequence takes its position, and `shipment.pickup` and
 //!    `shipment.delivery` follow the stops unless a `given` set them;
 //! 3. runs the file;
 //! 4. runs the rest of its body in order, with `charge(CODE)` / `charge("Label")` (the matching
-//!    lines' sum, or `none`), `total` and `lines` in scope. `expect cond` must hold;
+//!    lines' sum, or `none`), `chosen("Label")` (the option that choice last kept, or `none`),
+//!    `total` and `lines` in scope. `expect cond` must hold;
 //!    `expect fails` passes when the rating was refused (with that text, when one is given).
 //!
 //! A test in a library runs its body in order with no rating: `expect`s over function calls.
@@ -20,32 +23,49 @@
 //! A failing `expect` reports the values of the operands in it, so the author sees what the
 //! tariff computed. An evaluation error makes the test's status `error`.
 //!
+//! A **property** runs many cases ([`super::property`]); each case is a test with extra
+//! `given`s, one per `vary`, and its `assume`s checked before the rating. The runner here is
+//! shared: [`Runner::rating_case`] and [`Runner::library_case`] run one test or one case.
+//!
 //! Tests read rate tables under the same on-demand protocol as a rating
 //! ([`super::tables`]): a lookup of cells the request did not carry is a provisional miss and
 //! the test keeps running, so one pass finds every need it can, from its `given`s, the rating
 //! and its `expect`s alike. A test that recorded needs ends with status `needs` whatever else
 //! happened, since the provisional miss may have caused it; the host loads the cells and runs
 //! the tests again.
+//!
+//! **Budgets.** Each test, and each case of a property, runs under the request's limits. The
+//! whole run also shares one step meter of [`FILE_STEPS`] times the per-test step limit: once
+//! it is spent, every test and case left ends in a `budget` error, so a file of many
+//! properties still finishes in bounded time.
+//!
+//! **Coverage.** When every test runs (no `names`), each test and property case records the
+//! root file's regions it entered ([`super::coverage`]); the run's total is [`Suite::coverage`].
 
 use super::StaticTypes;
 use super::bill::Finished;
 use super::budget::{Limits, Meter};
-use super::error::{EvalError, Refusal, Stop};
+use super::coverage::{Hits, Regions};
+use super::error::{Code, EvalError, Refusal, Stop};
 use super::interp::link::Linked;
 use super::interp::{Env, Interp, Setup, TestView};
+use super::property::Counterexample;
 use super::record::{sample, settle};
-use super::run::{Supplied, bind_inputs};
+use super::run::{Supplied, bind_inputs, enforce_constraint};
 use super::tables::{Need, Tables};
 use super::value::{Record, Value};
 use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::schema::Settings;
 use crate::tariff::syntax::ast::{
-    Expect, Expr, ExprKind, FileKind, Name, Stmt, StmtKind, Test, TextPart,
+    Block, Expect, Expr, ExprKind, FileKind, ItemKind, Name, Stmt, StmtKind, TextPart,
 };
 use crate::tariff::syntax::program::Program;
 use std::collections::BTreeMap;
 use std::rc::Rc;
+
+/// The whole run's step meter, as a multiple of the per-test step limit.
+pub const FILE_STEPS: u64 = 32;
 
 /// What a test run is given.
 pub struct TestRequest<'p> {
@@ -98,6 +118,26 @@ impl Status {
     }
 }
 
+/// What a result is for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Kind {
+    /// A `test` block.
+    Test,
+    /// A `property` block.
+    Property,
+}
+
+impl Kind {
+    /// The kind's wire name.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Test => "test",
+            Self::Property => "property",
+        }
+    }
+}
+
 /// An `expect` that did not hold.
 #[derive(Debug, Clone)]
 pub struct Failure {
@@ -110,13 +150,15 @@ pub struct Failure {
     pub values: Vec<(Span, String, Option<serde_json::Value>)>,
 }
 
-/// One test's result.
+/// One test's or property's result.
 #[derive(Debug, Clone)]
 pub struct TestResult {
     /// The test's name.
     pub name: String,
     /// The test's name as written.
     pub span: Span,
+    /// A test or a property.
+    pub kind: Kind,
     /// How it ended.
     pub status: Status,
     /// The `expect`s that did not hold.
@@ -127,64 +169,139 @@ pub struct TestResult {
     pub bill: Option<Finished>,
     /// The table cells the test needs, for status `needs`.
     pub needs: Vec<Need>,
+    /// How many cases rated: 1 for a test.
+    pub cases: usize,
+    /// How many cases an `assume` skipped: 0 for a test.
+    pub skipped: usize,
+    /// A property's failing case.
+    pub counterexample: Option<Counterexample>,
 }
 
-/// Runs the root file's tests.
+/// A whole run: every result, and the coverage of the root file's regions.
+#[derive(Debug, Clone)]
+pub struct Suite {
+    /// The results, in source order.
+    pub results: Vec<TestResult>,
+    /// How many times each region ran; `None` when only some tests ran (`names`) or a test
+    /// ended `needs`.
+    pub coverage: Option<Hits>,
+}
+
+/// Runs the root file's tests and properties.
 #[must_use]
 pub fn run_tests(request: &TestRequest<'_>) -> Vec<TestResult> {
-    let linked = Linked::new(request.program);
-    let kind = request
-        .program
-        .root()
-        .and_then(|root| root.file.header.as_ref())
-        .map(|header| header.kind);
-    linked
-        .tests(0)
-        .into_iter()
-        .filter(|test| {
-            request
-                .names
-                .is_none_or(|names| names.contains(&test.name.text))
-        })
-        .map(|test| {
-            let mut runner = Runner {
-                request,
-                linked: &linked,
-                failures: Vec::new(),
-                needs: Vec::new(),
-            };
-            let ended = if kind == Some(FileKind::Library) {
-                runner.library(test).map(|()| None)
-            } else {
-                runner.rating(test)
-            };
-            let (status, error, bill) = match ended {
-                _ if !runner.needs.is_empty() => {
-                    runner.failures.clear();
-                    (Status::Needs, None, None)
-                }
-                Ok(bill) if runner.failures.is_empty() => (Status::Passed, None, bill),
-                Ok(bill) => (Status::Failed, None, bill),
-                Err(error) => (Status::Error, Some(error), None),
-            };
-            TestResult {
-                name: test.name.text.clone(),
-                span: test.name.span,
-                status,
-                failures: runner.failures,
-                error,
-                bill,
-                needs: runner.needs,
-            }
-        })
-        .collect()
+    run_suite(request).results
 }
 
-struct Runner<'r, 'p, 'a> {
-    request: &'r TestRequest<'p>,
-    linked: &'r Linked<'a>,
-    failures: Vec<Failure>,
-    needs: Vec<Need>,
+/// Runs the root file's tests and properties, recording coverage when all of them run.
+#[must_use]
+pub fn run_suite(request: &TestRequest<'_>) -> Suite {
+    let linked = Linked::new(request.program);
+    let Some(root) = request.program.root() else {
+        return Suite {
+            results: Vec::new(),
+            coverage: None,
+        };
+    };
+    let library = root
+        .file
+        .header
+        .as_ref()
+        .is_some_and(|header| header.kind == FileKind::Library);
+    let regions = request
+        .names
+        .is_none()
+        .then(|| Rc::new(Regions::of(&root.file)));
+    let mut ledger = Ledger::new(request.limits, regions);
+    let selected = |name: &Name| request.names.is_none_or(|names| names.contains(&name.text));
+    let mut results = Vec::new();
+    for item in &root.file.items {
+        let mut runner = Runner::new(request, &linked, &mut ledger);
+        match &item.kind {
+            ItemKind::Test(test) if selected(&test.name) => {
+                results.push(runner.test(&test.name, &test.body, library));
+            }
+            ItemKind::Property(property) if selected(&property.name) => {
+                results.push(super::property::run(&mut runner, property, library));
+            }
+            _ => {}
+        }
+    }
+    let needs = results.iter().any(|result| result.status == Status::Needs);
+    Suite {
+        coverage: ledger.hits.filter(|_| !needs),
+        results,
+    }
+}
+
+/// What every test of a run shares: the file's step meter and the coverage counts.
+#[derive(Debug)]
+pub struct Ledger {
+    spent: u64,
+    limit: u64,
+    regions: Option<Rc<Regions>>,
+    hits: Option<Hits>,
+    /// The program's landmarks, gathered for the first property that varies over a range.
+    pub landmarks: Option<Rc<Vec<Value>>>,
+    /// Whether the code running now counts toward coverage: tests and a property's generated
+    /// cases do, a property's shrinking runs do not.
+    pub counting: bool,
+}
+
+impl Ledger {
+    /// A fresh ledger for a run under `limits`, counting `regions` when given.
+    #[must_use]
+    pub fn new(limits: Limits, regions: Option<Rc<Regions>>) -> Self {
+        Self {
+            spent: 0,
+            limit: limits.steps.saturating_mul(FILE_STEPS),
+            hits: regions
+                .as_ref()
+                .map(|regions| Hits::new(Rc::clone(regions))),
+            regions,
+            landmarks: None,
+            counting: true,
+        }
+    }
+
+    /// The `budget` error once the file's step meter is spent.
+    #[must_use]
+    pub fn exhausted(&self) -> Option<EvalError> {
+        (self.spent >= self.limit).then(|| {
+            EvalError::with(
+                Code::Budget,
+                crate::message!(
+                    "The tests used up the file's step budget ({0, plural, one {# step} other {# steps}}) before they finished"
+                ),
+                [Arg::Count(i64::try_from(self.limit).unwrap_or(i64::MAX))],
+            )
+        })
+    }
+}
+
+/// Runs tests and property cases, collecting what each one found.
+pub struct Runner<'r, 'p, 'a> {
+    /// The request.
+    pub request: &'r TestRequest<'p>,
+    /// The program.
+    pub linked: &'r Linked<'a>,
+    /// What the run shares.
+    pub ledger: &'r mut Ledger,
+    /// The `expect`s that did not hold in the test or case being run.
+    pub failures: Vec<Failure>,
+    /// The table cells it needed.
+    pub needs: Vec<Need>,
+    /// The value of each monotone `expect`, in order: `None` when the rating refused.
+    pub monotone: Vec<Option<Value>>,
+}
+
+impl std::fmt::Debug for Runner<'_, '_, '_> {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("Runner")
+            .field("failures", &self.failures.len())
+            .finish_non_exhaustive()
+    }
 }
 
 /// Every table need of a set of results, each once, in the order first met.
@@ -199,14 +316,53 @@ pub fn needs_of(results: &[TestResult]) -> Vec<Need> {
     needs
 }
 
+/// What a property case adds to a test: a value for each varied path, input and name.
+#[derive(Debug, Default)]
+pub struct CaseSetup<'a> {
+    /// Record paths and their values, applied after the `given`s.
+    pub paths: Vec<(&'a [Name], Value)>,
+    /// Input values, applied after the `given`s.
+    pub inputs: Vec<(String, Value)>,
+    /// Names bound for the `assume`s and the statements after the rating.
+    pub names: Vec<(String, Value)>,
+}
+
+/// How one test or case ended, when it could be evaluated.
+#[derive(Debug, Clone)]
+pub enum Ended {
+    /// It ran to its end: the bill, for a tariff (the `expect`s' failures are the runner's).
+    Rated(Option<Finished>),
+    /// The rating (or, in a library, a statement) refused.
+    Refused(Refusal),
+    /// An `assume` did not hold, so nothing was rated.
+    Skipped,
+}
+
 /// How the tested rating ended.
 enum Rating {
     Rated(Finished),
     Refused(Refusal),
 }
 
-impl<'r, 'a> Runner<'r, '_, 'a> {
-    fn interp(&self, record: Value) -> Interp<'r, 'a> {
+impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
+    /// A runner for one test or property.
+    pub fn new(
+        request: &'r TestRequest<'p>,
+        linked: &'r Linked<'a>,
+        ledger: &'r mut Ledger,
+    ) -> Self {
+        Self {
+            request,
+            linked,
+            ledger,
+            failures: Vec::new(),
+            needs: Vec::new(),
+            monotone: Vec::new(),
+        }
+    }
+
+    /// An interpreter over `record`, with the test constructors in scope.
+    pub fn interp(&self, record: Value) -> Interp<'r, 'a> {
         let mut interp = Interp::new(Setup {
             linked: self.linked,
             types: self.request.types,
@@ -216,21 +372,81 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
             trace: false,
         });
         interp.constructors = true;
+        if self.ledger.counting {
+            interp.coverage = self
+                .ledger
+                .regions
+                .as_ref()
+                .map(|regions| Hits::new(Rc::clone(regions)));
+        }
         interp
     }
 
-    /// Moves the needs an interpreter recorded onto the test.
-    fn gather(&mut self, interp: &mut Interp<'_, '_>) {
+    /// Moves what an interpreter recorded onto the run: its needs, its steps and the regions
+    /// it entered.
+    pub fn gather(&mut self, interp: &mut Interp<'_, '_>) {
         for need in std::mem::take(&mut interp.needs) {
             if !self.needs.contains(&need) {
                 self.needs.push(need);
             }
         }
+        self.ledger.spent = self.ledger.spent.saturating_add(interp.meter.steps_used());
+        if let (Some(hits), Some(total)) = (interp.coverage.take(), self.ledger.hits.as_mut()) {
+            total.merge(&hits);
+        }
     }
 
-    /// A test of a tariff or condition.
-    fn rating(&mut self, test: &'a Test) -> Result<Option<Finished>, EvalError> {
-        let (record, inputs) = self.givens(test)?;
+    /// Runs one `test` block.
+    fn test(&mut self, name: &Name, body: &'a Block, library: bool) -> TestResult {
+        let setup = CaseSetup::default();
+        let ended = match self.ledger.exhausted() {
+            Some(error) => Err(error),
+            None if library => self.library_case(body, &setup),
+            None => self.rating_case(body, &setup),
+        };
+        let (status, error, bill) = match ended {
+            _ if !self.needs.is_empty() => {
+                self.failures.clear();
+                (Status::Needs, None, None)
+            }
+            Ok(Ended::Rated(bill)) if self.failures.is_empty() => (Status::Passed, None, bill),
+            Ok(Ended::Rated(bill)) => (Status::Failed, None, bill),
+            Ok(Ended::Refused(_) | Ended::Skipped) if self.failures.is_empty() => {
+                (Status::Passed, None, None)
+            }
+            Ok(Ended::Refused(_) | Ended::Skipped) => (Status::Failed, None, None),
+            Err(error) => (Status::Error, Some(error), None),
+        };
+        TestResult {
+            name: name.text.clone(),
+            span: name.span,
+            kind: Kind::Test,
+            status,
+            failures: std::mem::take(&mut self.failures),
+            error,
+            bill,
+            needs: std::mem::take(&mut self.needs),
+            cases: 1,
+            skipped: 0,
+            counterexample: None,
+        }
+    }
+
+    /// One test (or property case) of a tariff or condition: the `given`s and the case's
+    /// values, its `assume`s, the rating, then the body's other statements.
+    ///
+    /// # Errors
+    ///
+    /// When the test or the rating could not be evaluated.
+    pub fn rating_case(
+        &mut self,
+        body: &'a Block,
+        setup: &CaseSetup<'a>,
+    ) -> Result<Ended, EvalError> {
+        let (record, inputs) = self.givens(body, setup)?;
+        if !self.assumed(body, setup, &record, &inputs)? {
+            return Ok(Ended::Skipped);
+        }
         let mut interp = self.interp(record.clone());
         let mut env = Env::new(0, false);
         let ran = bind_inputs(&mut interp, &mut env, &Supplied::Values(&inputs))
@@ -249,28 +465,60 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
             checker.view = Some(TestView {
                 lines: bill.lines.clone(),
                 total: bill.total,
+                chosen: interp.choices.last().clone(),
             });
         }
-        let outcome = self.expectations(&mut checker, test, &rating);
+        let outcome = self.expectations(&mut checker, body, &rating, setup);
         self.gather(&mut checker);
         outcome?;
         Ok(match rating {
-            Rating::Rated(bill) => Some(bill),
-            Rating::Refused(_) => None,
+            Rating::Rated(bill) => Ended::Rated(Some(bill)),
+            Rating::Refused(refusal) => Ended::Refused(refusal),
         })
+    }
+
+    /// Whether every `assume` of a case holds, over its record, inputs and varied names.
+    fn assumed(
+        &mut self,
+        body: &'a Block,
+        setup: &CaseSetup<'a>,
+        record: &Value,
+        inputs: &BTreeMap<String, Value>,
+    ) -> Result<bool, EvalError> {
+        if !body
+            .stmts
+            .iter()
+            .any(|stmt| matches!(stmt.kind, StmtKind::Assume(_)))
+        {
+            return Ok(true);
+        }
+        let mut interp = self.interp(record.clone());
+        let mut env = Env::new(0, false);
+        let held = match bind_inputs(&mut interp, &mut env, &Supplied::Values(inputs)) {
+            Err(Stop::Failed(error)) => Err(error),
+            Err(Stop::Refused(_)) => Ok(true),
+            Ok(()) => {
+                bind_names(&mut env, setup);
+                assumptions(&mut interp, &mut env, body)
+            }
+        };
+        self.gather(&mut interp);
+        held
     }
 
     /// A rating test's body after the rating: its `expect`s and the statements between them.
     fn expectations(
         &mut self,
         checker: &mut Interp<'r, 'a>,
-        test: &'a Test,
+        body: &'a Block,
         rating: &Rating,
+        setup: &CaseSetup<'a>,
     ) -> Result<(), EvalError> {
         let mut scope = Env::new(0, false);
-        for stmt in &test.body.stmts {
+        bind_names(&mut scope, setup);
+        for stmt in &body.stmts {
             match &stmt.kind {
-                StmtKind::Given { .. } => {}
+                StmtKind::Given { .. } | StmtKind::Vary { .. } | StmtKind::Assume(_) => {}
                 StmtKind::Expect(Expect::Fails(message)) => {
                     let wanted = match message {
                         Some(message) => Some(
@@ -288,17 +536,19 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
                 }
                 StmtKind::Expect(Expect::Holds(expr)) => {
                     if let Rating::Refused(refusal) = rating {
-                        self.failures.push(Failure {
-                            span: stmt.span,
-                            message: Message::with(
-                                crate::message!("The rating was refused: {0}"),
-                                [Arg::from(refusal.message.text())],
-                            ),
-                            values: Vec::new(),
-                        });
+                        self.rating_refused(stmt.span, refusal);
                         continue;
                     }
                     self.expect_holds(checker, &mut scope, stmt, expr)?;
+                }
+                StmtKind::Expect(Expect::Monotone { value, .. }) => {
+                    if let Rating::Refused(refusal) = rating {
+                        self.rating_refused(stmt.span, refusal);
+                        self.monotone.push(None);
+                        continue;
+                    }
+                    let found = checker.eval_in(&mut scope, value).map_err(stopped)?;
+                    self.monotone.push(Some(found));
                 }
                 _ => {
                     checker.exec(&mut scope, stmt).map_err(stopped)?;
@@ -308,10 +558,25 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
         Ok(())
     }
 
-    /// The record and input values after a test's `given`s.
-    fn givens(&mut self, test: &'a Test) -> Result<(Value, BTreeMap<String, Value>), EvalError> {
+    fn rating_refused(&mut self, span: Span, refusal: &Refusal) {
+        self.failures.push(Failure {
+            span,
+            message: Message::with(
+                crate::message!("The rating was refused: {0}"),
+                [Arg::from(refusal.message.text())],
+            ),
+            values: Vec::new(),
+        });
+    }
+
+    /// The record and input values after a test's `given`s and a case's values.
+    fn givens(
+        &mut self,
+        body: &'a Block,
+        setup: &CaseSetup<'a>,
+    ) -> Result<(Value, BTreeMap<String, Value>), EvalError> {
         let mut interp = self.interp(sample(self.request.settings));
-        let applied = apply_givens(&mut interp, test);
+        let applied = apply_givens(&mut interp, body, setup);
         self.gather(&mut interp);
         let (inputs, pickup, delivery) = applied?;
         Ok((settle(&interp.record, pickup, delivery), inputs))
@@ -370,10 +635,18 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
         }
     }
 
-    /// A test of a library: its body, in order.
-    fn library(&mut self, test: &'a Test) -> Result<(), EvalError> {
+    /// One test (or property case) of a library: its body, in order, with no rating.
+    ///
+    /// # Errors
+    ///
+    /// When a statement could not be evaluated.
+    pub fn library_case(
+        &mut self,
+        body: &'a Block,
+        setup: &CaseSetup<'a>,
+    ) -> Result<Ended, EvalError> {
         let mut interp = self.interp(sample(self.request.settings));
-        let ran = self.library_body(&mut interp, test);
+        let ran = self.library_body(&mut interp, body, setup);
         self.gather(&mut interp);
         ran
     }
@@ -381,12 +654,18 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
     fn library_body(
         &mut self,
         interp: &mut Interp<'r, 'a>,
-        test: &'a Test,
-    ) -> Result<(), EvalError> {
+        body: &'a Block,
+        setup: &CaseSetup<'a>,
+    ) -> Result<Ended, EvalError> {
         let mut scope = Env::new(0, false);
+        bind_names(&mut scope, setup);
+        if !assumptions(interp, &mut scope, body)? {
+            return Ok(Ended::Skipped);
+        }
         let mut refused: Option<Refusal> = None;
-        for stmt in &test.body.stmts {
+        for stmt in &body.stmts {
             match &stmt.kind {
+                StmtKind::Vary { .. } | StmtKind::Assume(_) => {}
                 StmtKind::Expect(Expect::Fails(message)) => {
                     let wanted = match message {
                         Some(message) => Some(
@@ -399,9 +678,16 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
                     let refusal = refused.take();
                     self.expect_refused(stmt.span, refusal.as_ref(), wanted.as_deref());
                 }
+                StmtKind::Expect(Expect::Monotone { .. }) if refused.is_some() => {
+                    self.monotone.push(None);
+                }
                 _ if refused.is_some() => {}
                 StmtKind::Expect(Expect::Holds(expr)) => {
                     self.expect_holds(interp, &mut scope, stmt, expr)?;
+                }
+                StmtKind::Expect(Expect::Monotone { value, .. }) => {
+                    let found = interp.eval_in(&mut scope, value).map_err(stopped)?;
+                    self.monotone.push(Some(found));
                 }
                 StmtKind::Given { .. } => {
                     return Err(EvalError::internal(Message::new(crate::message!(
@@ -416,29 +702,74 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
                 },
             }
         }
-        if let Some(refusal) = refused {
-            self.failures.push(Failure {
-                span: refusal.span,
-                message: Message::with(
-                    crate::message!("The test was refused: {0}"),
-                    [Arg::from(refusal.message.text())],
-                ),
-                values: Vec::new(),
-            });
-        }
-        Ok(())
+        let Some(refusal) = refused else {
+            return Ok(Ended::Rated(None));
+        };
+        self.failures.push(Failure {
+            span: refusal.span,
+            message: Message::with(
+                crate::message!("The test was refused: {0}"),
+                [Arg::from(refusal.message.text())],
+            ),
+            values: Vec::new(),
+        });
+        Ok(Ended::Refused(refusal))
     }
 }
 
-/// Applies a test's `given`s to the interpreter's record: the input values they set, and
-/// whether they set `shipment.pickup` and `shipment.delivery`.
+/// Binds a case's varied names in a scope.
+fn bind_names(scope: &mut Env, setup: &CaseSetup<'_>) {
+    for (name, value) in &setup.names {
+        scope.bind(name, value.clone(), false);
+    }
+}
+
+/// Whether every `assume` of a body holds in `env`.
+fn assumptions<'a>(
+    interp: &mut Interp<'_, 'a>,
+    env: &mut Env,
+    body: &'a Block,
+) -> Result<bool, EvalError> {
+    for stmt in &body.stmts {
+        let StmtKind::Assume(condition) = &stmt.kind else {
+            continue;
+        };
+        match interp.eval_in(env, condition).map_err(stopped)? {
+            Value::Bool(true) => {}
+            Value::Bool(false) => return Ok(false),
+            other => {
+                return Err(EvalError::internal(Message::with(
+                    crate::message!("An assumption must be true or false, not {0}"),
+                    [Arg::from(other.kind())],
+                ))
+                .at(condition.span));
+            }
+        }
+    }
+    Ok(true)
+}
+
+/// Applies a test's `given`s and a case's values to the interpreter's record: the input values
+/// they set, and whether they set `shipment.pickup` and `shipment.delivery`.
 fn apply_givens<'a>(
     interp: &mut Interp<'_, 'a>,
-    test: &'a Test,
+    body: &'a Block,
+    setup: &CaseSetup<'a>,
 ) -> Result<(BTreeMap<String, Value>, bool, bool), EvalError> {
     let mut inputs = BTreeMap::new();
     let (mut pickup, mut delivery) = (false, false);
-    for stmt in &test.body.stmts {
+    let mut set = |interp: &mut Interp<'_, 'a>, path: &[Name], value: Value, span: Option<Span>| {
+        pickup |=
+            matches!(path, [root, field] if root.text == "shipment" && field.text == "pickup");
+        delivery |=
+            matches!(path, [root, field] if root.text == "shipment" && field.text == "delivery");
+        interp.record = set_path(&interp.record, path, value).map_err(|error| match span {
+            Some(span) => error.at(span),
+            None => error,
+        })?;
+        Ok::<(), EvalError>(())
+    };
+    for stmt in &body.stmts {
         let StmtKind::Given { target, value } = &stmt.kind else {
             continue;
         };
@@ -446,20 +777,26 @@ fn apply_givens<'a>(
         let value = interp.eval_in(&mut scope, value).map_err(stopped)?;
         match target.as_slice() {
             [head, name] if head.text == "input" => {
+                enforce_constraint(interp, &name.text, &value)
+                    .map_err(|error| error.at(stmt.span))?;
                 inputs.insert(name.text.clone(), value);
             }
-            path => {
-                pickup |= matches!(path, [root, field] if root.text == "shipment" && field.text == "pickup");
-                delivery |= matches!(path, [root, field] if root.text == "shipment" && field.text == "delivery");
-                interp.record =
-                    set_path(&interp.record, path, value).map_err(|error| error.at(stmt.span))?;
-            }
+            path => set(interp, path, value, Some(stmt.span))?,
         }
+    }
+    for (path, value) in &setup.paths {
+        set(interp, path, value.clone(), None)?;
+    }
+    for (name, value) in &setup.inputs {
+        enforce_constraint(interp, name, value)?;
+        inputs.insert(name.clone(), value.clone());
     }
     Ok((inputs, pickup, delivery))
 }
 
-fn stopped(stop: Stop) -> EvalError {
+/// A refusal or error from a test's own statements, as the error that stops the test.
+#[must_use]
+pub fn stopped(stop: Stop) -> EvalError {
     match stop {
         Stop::Failed(error) => error,
         Stop::Refused(refusal) => EvalError::internal(Message::with(

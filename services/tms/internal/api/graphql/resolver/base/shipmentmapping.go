@@ -320,6 +320,7 @@ func ratingDetailToModel(
 		VersionNumber:       int(detail.VersionNumber),
 		Bill:                TariffBillToModel(detail.Bill),
 		Refusal:             detail.Refusal,
+		Choices:             TariffChoicesToModel(detail.Choices),
 		Inputs:              inputs,
 		Skipped:             skipped,
 		Trace:               trace,

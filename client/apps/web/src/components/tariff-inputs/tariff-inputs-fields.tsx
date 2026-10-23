@@ -5,6 +5,7 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { PlusIcon, RefreshCcw01Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { describeTariffConstraint, isListType } from "@trenova/shared/lib/tariff-constraint";
 import { inheritedTariffValue, tariffInputText } from "@trenova/shared/lib/tariff-inputs";
 import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
 import { emptyTariffValue } from "@trenova/shared/rules/tariff-wire";
@@ -130,7 +131,9 @@ function inheritanceCopy(
  * A tariff's inputs as form fields under `name`: labels from the doc comments, unit-aware
  * money, rate and quantity fields, enums, optionals, records as a group of fields and lists of
  * records (weight breaks) as an editable table, each value written in its wire form so the form
- * saves exactly what the tariff reads. An input left unset inherits (the agreement's value under
+ * saves exactly what the tariff reads. An input's `where` bounds show as its help text ("From
+ * $0.50/mi to $15.00/mi"), and a text or enum input bounded by a list is a select of that list;
+ * the form's resolver refuses a value outside them as it is typed (`tariffInputIssues`). An input left unset inherits (the agreement's value under
  * a rule, then the declared default), which each field's placeholder says.
  *
  * Each input is a row: its label and doc beside its control where there is room, above it where
@@ -206,15 +209,33 @@ function DeclarationLink({
 function rowDescription(
   declaration: TariffInputDeclaration,
   description: string | null,
+  bounds: string | null,
   onReveal: TariffInputsFieldsProps["onReveal"],
 ): React.ReactNode {
-  if (!onReveal) return description;
+  const text = [description, bounds].filter(Boolean).join(" · ") || null;
+  if (!onReveal) return text;
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      {description && <p className="text-2xs text-foreground/70 text-left">{description}</p>}
+      {text && <p className="text-2xs text-foreground/70 text-left">{text}</p>}
       <DeclarationLink declaration={declaration} onReveal={onReveal} />
     </div>
   );
+}
+
+/**
+ * The values a text or enum input's `where` list allows, which the field offers as a select;
+ * null for any other input or constraint.
+ */
+export function constraintChoices(declaration: TariffInputDeclaration): string[] | null {
+  const constraint = declaration.constraint;
+  if (!constraint || !("oneOf" in constraint)) return null;
+  const type =
+    declaration.descriptor.kind === "optional"
+      ? declaration.descriptor.inner
+      : declaration.descriptor;
+  if (type.kind !== "text" && type.kind !== "enum") return null;
+  const values = constraint.oneOf.filter((value): value is string => typeof value === "string");
+  return values.length === constraint.oneOf.length ? values : null;
 }
 
 type TariffInputFieldProps = {
@@ -244,10 +265,18 @@ function TariffInputField({
   const { control, setValue } = useFormContext<FieldValues>();
   const value = useWatch({ control, name: path }) as TariffWireValue | undefined;
   const { label, description: doc } = tariffInputText(declaration);
-  const description = rowDescription(declaration, doc, onReveal);
   const copy = inheritanceCopy(declaration, inherited, inheritedFrom, currency, requireUnset, t);
   const fallback = inheritedTariffValue(declaration, inherited);
   const isSet = value !== undefined;
+  const choices = constraintChoices(declaration);
+  const bounds =
+    declaration.constraint && !choices
+      ? describeTariffConstraint(declaration.constraint, t, {
+          currency,
+          each: isListType(declaration.descriptor),
+        })
+      : null;
+  const description = rowDescription(declaration, doc, bounds, onReveal);
 
   const reset =
     isSet && copy.reset && !disabled ? (
@@ -296,6 +325,7 @@ function TariffInputField({
         disabled={disabled}
         empty={undefined}
         inheritedBool={typeof fallback === "boolean" ? fallback : undefined}
+        oneOf={choices}
       />
       {reset && (layout === "inline" ? <FieldRow>{reset}</FieldRow> : reset)}
     </>

@@ -10,17 +10,20 @@ import (
 
 type ListAgentRunRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
+	Reader RunReader                `json:"-"`
 }
 
 type ListAgentRunConnectionRequest struct {
 	Filter  *pagination.QueryOptions `json:"filter"`
 	Cursor  pagination.CursorInfo    `json:"-"`
 	Columns []string                 `json:"-"`
+	Reader  RunReader                `json:"-"`
 }
 
 type GetAgentRunByIDRequest struct {
 	ID         pulid.ID               `json:"id"`
 	TenantInfo *pagination.TenantInfo `json:"-"`
+	Reader     RunReader              `json:"-"`
 }
 
 type CountOpenAgentRunsRequest struct {
@@ -42,6 +45,7 @@ type CountAgentRunsSinceRequest struct {
 type ListAgentRunsByIDsRequest struct {
 	IDs        []pulid.ID
 	TenantInfo pagination.TenantInfo
+	Reader     RunReader
 }
 
 type AgentRunRepository interface {

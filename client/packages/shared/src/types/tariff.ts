@@ -167,9 +167,27 @@ export const tariffTypeSchema: z.ZodType<TariffType> = z.lazy(() =>
 );
 
 /**
+ * An input's `where` clause, folded to values: a range (the minimum always inclusive, the
+ * maximum inclusive only when `maxInclusive`, an open end `null`) or a list the value must be
+ * one of. For a `List<T>` input it bounds each item; `none` always passes an optional's.
+ */
+export const tariffConstraintSchema = z.union([
+  z.object({
+    range: z.object({
+      min: tariffWireValueSchema.nullish().transform((value) => value ?? null),
+      max: tariffWireValueSchema.nullish().transform((value) => value ?? null),
+      maxInclusive: z.boolean(),
+    }),
+  }),
+  z.object({ oneOf: z.array(tariffWireValueSchema) }),
+]);
+export type TariffConstraint = z.output<typeof tariffConstraintSchema>;
+
+/**
  * One `input` of a tariff or condition, as `tariff.check` derives it and a template version
  * stores it: the name, the doc comment (the form's label), the type as written (`Money/mi`) and
- * as a descriptor, whether nothing supplies a default, and the default as a wire value.
+ * as a descriptor, whether nothing supplies a default, the default as a wire value, and the
+ * bounds its `where` clause sets.
  */
 export const tariffInputDeclarationSchema = z.object({
   name: z.string(),
@@ -181,6 +199,8 @@ export const tariffInputDeclarationSchema = z.object({
   descriptor: tariffTypeSchema,
   required: z.boolean(),
   default: tariffWireValueSchema.optional(),
+  /** Absent or null when the input has no `where` clause. */
+  constraint: tariffConstraintSchema.nullish(),
   range: tariffRangeSchema.nullish(),
 });
 export type TariffInputDeclaration = z.output<typeof tariffInputDeclarationSchema>;
@@ -343,6 +363,9 @@ export const tariffOutlineKindSchema = z.enum([
   "charge",
   "total",
   "test",
+  "property",
+  "choice",
+  "option",
 ]);
 export type TariffOutlineKind = z.output<typeof tariffOutlineKindSchema>;
 
@@ -365,7 +388,10 @@ export const tariffFoldSchema = z.object({
 });
 export type TariffFold = z.output<typeof tariffFoldSchema>;
 
-/** The file's outline (inputs, functions, charges, totals, tests) and its folding ranges. */
+/**
+ * The file's outline (inputs, functions, charges with the `best`/`worst` choices and options they
+ * sit in, totals, tests and properties) and its folding ranges.
+ */
 export const tariffOutlineSchema = z.object({
   items: z.array(tariffOutlineItemSchema),
   folding: z.array(tariffFoldSchema),
@@ -437,10 +463,59 @@ const tariffNeedsSchema = z
 export const tariffTestStatusSchema = z.enum(["passed", "failed", "error", "needs"]);
 export type TariffTestStatus = z.output<typeof tariffTestStatusSchema>;
 
-/** One `test` block's result: the failing expectations with their values, and its bill. */
+/** A value a property's case varied or computed: the text interpolation writes and its wire form. */
+export const tariffCaseValueSchema = z.object({
+  display: z.string(),
+  value: tariffWireValueSchema.optional(),
+});
+export type TariffCaseValue = z.output<typeof tariffCaseValueSchema>;
+
+/** One `vary` target with the value it had in the failing case. */
+export const tariffVariedValueSchema = tariffCaseValueSchema.extend({ target: z.string() });
+export type TariffVariedValue = z.output<typeof tariffVariedValueSchema>;
+
+/**
+ * A failed `nondecreasing` or `nonincreasing` expectation: the two neighbouring values of the
+ * varied target whose results are out of order, each with what the expression came to.
+ */
+export const tariffMonotoneSchema = z.object({
+  target: z.string(),
+  expression: z.string(),
+  direction: z.enum(["nondecreasing", "nonincreasing"]),
+  before: z.object({ at: tariffCaseValueSchema, result: tariffCaseValueSchema }),
+  after: z.object({ at: tariffCaseValueSchema, result: tariffCaseValueSchema }),
+});
+export type TariffMonotone = z.output<typeof tariffMonotoneSchema>;
+
+/**
+ * The simplest case a property found failing: each varied value, the out-of-order pair of a
+ * monotone expectation, the refusal when the case refused to rate, and a `test` block that
+ * reproduces it, formatted, for "Save as test".
+ */
+export const tariffCounterexampleSchema = z.object({
+  values: z
+    .array(tariffVariedValueSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  monotone: tariffMonotoneSchema.nullish().transform((value) => value ?? null),
+  refusal: tariffRefusalSchema.nullish().transform((value) => value ?? null),
+  test: z.string(),
+});
+export type TariffCounterexample = z.output<typeof tariffCounterexampleSchema>;
+
+/** A `test` block checks one shipment; a `property` checks a rule over many. */
+export const tariffTestKindSchema = z.enum(["test", "property"]);
+export type TariffTestKind = z.output<typeof tariffTestKindSchema>;
+
+/**
+ * One `test` or `property` block's result: the failing expectations with their values and its
+ * bill (a failed property's are its counterexample's), how many cases rated and how many an
+ * `assume` skipped (a test is one case), and a failed property's counterexample.
+ */
 export const tariffTestResultSchema = z.object({
   name: z.string(),
   range: tariffRangeSchema,
+  kind: tariffTestKindSchema.nullish().transform((value) => value ?? "test"),
   status: tariffTestStatusSchema,
   failures: z
     .array(tariffTestFailureSchema)
@@ -448,17 +523,65 @@ export const tariffTestResultSchema = z.object({
     .transform((value) => value ?? []),
   bill: tariffBillSchema.nullish().transform((value) => value ?? null),
   error: tariffEvalErrorSchema.nullish().transform((value) => value ?? null),
+  cases: z
+    .number()
+    .int()
+    .nonnegative()
+    .nullish()
+    .transform((value) => value ?? 1),
+  skipped: z
+    .number()
+    .int()
+    .nonnegative()
+    .nullish()
+    .transform((value) => value ?? 0),
+  counterexample: tariffCounterexampleSchema.nullish().transform((value) => value ?? null),
 });
 export type TariffTestResult = z.output<typeof tariffTestResultSchema>;
 
+/** What part of a file a coverage region is: a branch, an arm, a loop body, an option, … */
+export const tariffRegionKindSchema = z.enum([
+  "if",
+  "else",
+  "arm",
+  "loop",
+  "option",
+  "charge",
+  "refusal",
+  "function",
+]);
+export type TariffRegionKind = z.output<typeof tariffRegionKindSchema>;
+
+/** One region of the root file and how many test and property cases ran it. */
+export const tariffRegionSchema = z.object({
+  range: tariffRangeSchema,
+  kind: tariffRegionKindSchema,
+  hits: z.number().int().nonnegative(),
+});
+export type TariffRegion = z.output<typeof tariffRegionSchema>;
+
+/**
+ * Which regions of the root file the run reached, in source order: `reached` counts those with
+ * a hit. The module leaves it out (`null`) when the file does not check, a test is still waiting
+ * for table cells, or only some tests ran.
+ */
+export const tariffCoverageSchema = z.object({
+  regions: z.array(tariffRegionSchema),
+  reached: z.number().int().nonnegative(),
+  total: z.number().int().nonnegative(),
+});
+export type TariffCoverage = z.output<typeof tariffCoverageSchema>;
+
 /**
  * What `tariff.test` answers; `error` is set when the file does not load, and no test ran.
- * `needs` is every test's needs, each once.
+ * `needs` is every test's needs, each once; `coverage` the regions every case reached.
  */
 export const tariffTestRunSchema = z.object({
   tests: z.array(tariffTestResultSchema),
   needs: tariffNeedsSchema,
   error: tariffEvalErrorSchema.nullish().transform((value) => value ?? null),
+  /** Absent or null when the run reports none. */
+  coverage: tariffCoverageSchema.nullish(),
 });
 export type TariffTestRun = z.output<typeof tariffTestRunSchema>;
 
@@ -510,6 +633,15 @@ export const tariffTraceEventSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("note"), text: z.string(), range: tariffRangeSchema }),
   z.object({ kind: z.literal("refusal"), message: z.string(), range: tariffRangeSchema }),
   z.object({ kind: z.literal("lookup"), lookup: z.number().int(), range: tariffRangeSchema }),
+  z.object({
+    kind: z.literal("choice"),
+    label: z.string(),
+    chosen: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? null),
+    range: tariffRangeSchema,
+  }),
   z.object({ kind: z.literal("truncated") }),
 ]);
 export type TariffTraceEvent = z.output<typeof tariffTraceEventSchema>;
@@ -529,6 +661,50 @@ export const tariffLookupSchema = z.object({
   range: tariffRangeSchema,
 });
 export type TariffLookup = z.output<typeof tariffLookupSchema>;
+
+/** How an option of a `best` or `worst` came out: kept, beaten, or out of the running. */
+export const tariffChoiceStatusSchema = z.enum(["chosen", "lost", "refused"]);
+export type TariffChoiceStatus = z.output<typeof tariffChoiceStatusSchema>;
+
+/** One option of a choice: its label, its exact subtotal, or why it refused. */
+export const tariffChoiceOptionSchema = z.object({
+  label: z.string(),
+  range: tariffRangeSchema.nullish().transform((value) => value ?? null),
+  status: tariffChoiceStatusSchema,
+  subtotal: tariffWireQuantitySchema.nullish().transform((value) => value ?? null),
+  refusal: tariffRefusalSchema.nullish().transform((value) => value ?? null),
+});
+export type TariffChoiceOption = z.output<typeof tariffChoiceOptionSchema>;
+
+/**
+ * One evaluation of a `best` (the lowest subtotal wins) or `worst` (the highest): its label,
+ * which option it kept (`null` when every option refused) and each option. A choice inside a
+ * loop appears once per pass.
+ */
+export const tariffChoiceSchema = z.object({
+  label: z.string(),
+  kind: z.enum(["best", "worst"]),
+  /**
+   * The ISO currency the subtotals are in, when the host knows it (a stored rating's, which may
+   * differ from a converted bill's); the module's own choices are in the rating currency.
+   */
+  currency: z
+    .string()
+    .nullish()
+    .transform((value) => value || null),
+  range: tariffRangeSchema.nullish().transform((value) => value ?? null),
+  chosen: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  options: z.array(tariffChoiceOptionSchema),
+});
+export type TariffChoice = z.output<typeof tariffChoiceSchema>;
+
+export const tariffChoicesSchema = z
+  .array(tariffChoiceSchema)
+  .nullish()
+  .transform((value) => value ?? []);
 
 /** An organisation library a file may import with `use org.<name>`, pinned to a version. */
 export const tariffLibrarySourceSchema = z.object({

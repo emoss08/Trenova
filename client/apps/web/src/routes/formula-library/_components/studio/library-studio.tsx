@@ -1,5 +1,7 @@
 import { ActiveEditorProvider } from "@/components/formula-editor/active-editor";
+import { isTestItem } from "@/lib/tariff-outline";
 import { DefinitionDialog } from "@/components/tariff-studio/definition-dialog";
+import { READINESS_KEYS } from "@/components/tariff-studio/readiness";
 import { OutlinePanel } from "@/components/tariff-studio/outline-panel";
 import { REFERENCE_SEARCH_ID } from "@/components/tariff-studio/reference-search";
 import { newTestBlock } from "@/components/tariff-studio/source-edits";
@@ -141,9 +143,7 @@ function RailBody({ onRestored }: { onRestored: (library: FormulaLibrary) => voi
     appendToSource(
       newTestBlock(
         "library",
-        (check.outline?.items ?? [])
-          .filter((item) => item.kind === "test")
-          .map((item) => item.name),
+        (check.outline?.items ?? []).filter(isTestItem).map((item) => item.name),
         t("a new test"),
       ),
     );
@@ -154,7 +154,13 @@ function RailBody({ onRestored }: { onRestored: (library: FormulaLibrary) => voi
         <ScrollArea maskVariant="card" className="min-h-0 flex-1">
           {shown === "tests" && (
             <Suspense fallback={<TestsPaneSkeleton />}>
-              <TestsPanel state={tests} source={source} onReveal={reveal} onAddTest={addTest} />
+              <TestsPanel
+                state={tests}
+                source={source}
+                onReveal={reveal}
+                onAddTest={addTest}
+                onSaveAsTest={appendToSource}
+              />
             </Suspense>
           )}
           {shown === "usage" && (
@@ -298,7 +304,10 @@ function LibraryStudioLayout({
     definition,
     context,
     closeDefinition,
+    readiness,
   } = studio;
+  const { control: formControl } = useFormContext<FormulaLibraryFormValues>();
+  const source = useWatch({ control: formControl, name: "source" }) ?? "";
 
   const [submitOpen, setSubmitOpen] = useState(false);
   const [decision, setDecision] = useState<LibraryDecision | null>(null);
@@ -402,6 +411,14 @@ function LibraryStudioLayout({
                 open={submitOpen}
                 onOpenChange={setSubmitOpen}
                 library={library}
+                liveChecks={readiness.filter((check) => check.key === READINESS_KEYS.coverage)}
+                link={{
+                  source,
+                  onReveal: (range) => {
+                    setSubmitOpen(false);
+                    reveal(range);
+                  },
+                }}
               />
             )}
             {decisionOpened && (

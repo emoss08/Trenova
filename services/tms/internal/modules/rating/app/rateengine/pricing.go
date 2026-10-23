@@ -32,6 +32,7 @@ type priced struct {
 	template   *tariffports.Template
 	bill       *tarifftypes.Bill
 	refusal    string
+	choices    []tarifftypes.Choice
 	conditions map[pulid.ID]bool
 	inputs     tarifftypes.Inputs
 }
@@ -137,8 +138,18 @@ func (s *Service) price(
 	}
 	trace.Statements = result.Trace
 	trace.Lookups = result.Lookups
+	locale := i18n.FromContext(ctx)
+	out.choices, err = tarifftypes.ChoicesFrom(&tarifftypes.ChoicesRequest{
+		Choices:  result.Choices,
+		Currency: currency,
+		Locale:   locale,
+	})
+	if err != nil {
+		return nil, err
+	}
+	trace.Choices = out.choices
 	if result.Refusal != nil {
-		out.refusal = result.Refusal.Localize(i18n.FromContext(ctx))
+		out.refusal = result.Refusal.Localize(locale)
 		trace.Refusal = out.refusal
 		return out, nil
 	}

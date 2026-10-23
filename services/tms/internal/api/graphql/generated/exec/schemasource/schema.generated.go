@@ -18754,6 +18754,13 @@ type FormulaInputDeclaration {
   required: Boolean!
   "The default as a wire value, or null when the input has none."
   default: Any
+  """
+  The values the input accepts, from its where clause, or null when it has none:
+  {"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}} (the
+  minimum is inclusive and an open end is null) or {"oneOf": [wire, ...]}. For a
+  list input it bounds each item.
+  """
+  constraint: Any
 }
 
 "An organization library a formula version imports, pinned to the version it was checked against."
@@ -26791,6 +26798,32 @@ type TariffBill {
   exchange: TariffBillExchange
 }
 
+"One method a choice weighed: what it would have billed, or why it did not apply."
+type TariffChoiceOption {
+  label: String!
+  "chosen when the choice kept this option, lost when another won, refused when it did not apply."
+  status: String!
+  "The exact sum of the charge lines the option billed, before rounding. Null when it refused."
+  subtotal: Decimal
+  "Why the option did not apply, in the reader's language when the engine wrote it. Null unless it refused."
+  refusal: String
+}
+
+"""
+A best or worst block the tariff evaluated: the methods it weighed and the one it
+kept. A choice inside a loop appears once for each time it ran.
+"""
+type TariffChoice {
+  label: String!
+  "best keeps the lowest subtotal, worst the highest."
+  kind: String!
+  "The currency the subtotals are in: the tariff's own, before any conversion the bill shows."
+  currency: String!
+  "The label of the option kept. Null when every option refused."
+  chosen: String
+  options: [TariffChoiceOption!]!
+}
+
 "A charge the shipment's other engines left out because the tariff already billed its code."
 type ShipmentRatingSkip {
   code: String!
@@ -26815,6 +26848,8 @@ type ShipmentRatingDetail {
   bill: TariffBill
   "The tariff's reason for refusing to rate the shipment."
   refusal: String!
+  "Every best and worst the tariff evaluated, in the order they ran."
+  choices: [TariffChoice!]!
   "The inputs the tariff priced with, by name. Each value is a Tariff wire value."
   inputs: JSON!
   skipped: [ShipmentRatingSkip!]!

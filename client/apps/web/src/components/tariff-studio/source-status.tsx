@@ -10,6 +10,9 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatAltShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import type { TariffFormatResult } from "@trenova/shared/rules/tariff";
+import type { EditorView } from "@codemirror/view";
+import type { TariffFileKind } from "@trenova/shared/types/tariff";
+import { EditorActionsMenu } from "./editor-actions-menu";
 import type { TariffTestsState } from "./use-tariff-tests";
 
 export type SourceTone = "ok" | "bad" | "warn" | "idle";
@@ -106,7 +109,8 @@ function EditorKeys() {
 
 /**
  * The bar under a Studio's editor: the check's verdict, what the file holds, failing tests, the
- * format button, Vim keys and the editor's keys.
+ * format button, the editor's menu (definition, references, rename, Promote to input), Vim keys
+ * and the editor's keys.
  */
 export function SourceStatusBar({
   status,
@@ -114,6 +118,7 @@ export function SourceStatusBar({
   tests,
   onFormat,
   formatDisabled,
+  editor,
 }: {
   status: { tone: SourceTone; label: string };
   /** What the file holds, in one line. */
@@ -121,6 +126,8 @@ export function SourceStatusBar({
   tests: TariffTestsState;
   onFormat: () => void;
   formatDisabled: boolean;
+  /** The editor the menu's commands act on, and the kind of file it holds. */
+  editor?: { view: () => EditorView | null; kind: TariffFileKind };
 }) {
   const t = useT();
   return (
@@ -172,6 +179,7 @@ export function SourceStatusBar({
           {t("Format")} <Kbd className="ml-1">{formatAltShortcut("⇧F")}</Kbd>
         </TooltipContent>
       </Tooltip>
+      {editor && <EditorActionsMenu view={editor.view} kind={editor.kind} />}
       <VimToggle />
       <EditorKeys />
     </div>

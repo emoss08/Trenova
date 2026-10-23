@@ -243,6 +243,9 @@ pub struct Lookup {
     pub value: Value,
 }
 
+/// The most band edges one range axis gives [`Tables::band_edges`].
+pub const MAX_EDGES: usize = 1_024;
+
 /// Every table a request carries, by code.
 #[derive(Debug, Default)]
 pub struct Tables {
@@ -267,6 +270,33 @@ impl Tables {
             tables.insert(shape.code.clone(), built);
         }
         Self { tables }
+    }
+
+    /// Every band edge (floor and ceiling) of every range axis the request carried, as values
+    /// of the axis's key type, each axis's edges once and at most [`MAX_EDGES`] of them: the
+    /// landmarks a property's cases are drawn around.
+    #[must_use]
+    pub fn band_edges(&self) -> Vec<Value> {
+        let mut out = Vec::new();
+        for table in self.tables.values().filter_map(|table| table.as_ref().ok()) {
+            for (position, rule) in table.axes.iter().enumerate() {
+                let AxisRule::Range { bound, .. } = rule else {
+                    continue;
+                };
+                let mut edges = BTreeSet::new();
+                for cell in &table.cells {
+                    if let Some(Position::Band(bounds)) = cell.at.get(position) {
+                        edges.insert(bounds.min);
+                        edges.extend(bounds.max);
+                    }
+                    if edges.len() >= MAX_EDGES {
+                        break;
+                    }
+                }
+                out.extend(edges.into_iter().map(|edge| bound_value(bound, edge)));
+            }
+        }
+        out
     }
 
     fn table(&self, code: &str) -> Result<Rc<Table>, EvalError> {

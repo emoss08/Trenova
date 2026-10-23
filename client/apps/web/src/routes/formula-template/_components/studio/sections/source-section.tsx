@@ -1,4 +1,5 @@
 import { TariffEditor } from "@/components/formula-editor/tariff-editor";
+import { isTestItem } from "@/lib/tariff-outline";
 import { formatTariffDocument } from "@/components/formula-editor/tariff-format";
 import { ProblemsList } from "@/components/tariff-studio/problems-list";
 import {
@@ -69,6 +70,7 @@ export function SourceSection() {
     errors,
     warnings,
     tests,
+    coverage,
     preview,
     context,
     contextError,
@@ -107,7 +109,7 @@ export function SourceSection() {
 
   const outline = check.outline?.items ?? [];
   const charges = outline.filter((item) => item.kind === "charge").length;
-  const testCount = outline.filter((item) => item.kind === "test").length;
+  const testCount = outline.filter(isTestItem).length;
   const trace = preview.result && !preview.blocked ? preview.result.trace : null;
 
   const handleView = useCallback(
@@ -185,6 +187,7 @@ export function SourceSection() {
               onChange={field.onChange}
               context={context}
               trace={trace}
+              coverage={coverage}
               highlight={highlight}
               onView={handleView}
               onOpenDefinition={openDefinition}
@@ -209,6 +212,7 @@ export function SourceSection() {
           tests={tests}
           onFormat={format}
           formatDisabled={empty}
+          editor={{ view: () => viewRef.current, kind: "tariff" }}
         />
         <ProblemsList
           diagnostics={check.diagnostics}

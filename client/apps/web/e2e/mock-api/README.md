@@ -179,13 +179,15 @@ The organisation's context (`GET /formula-templates/context`) holds the approved
 library that is not archived (a library is left out of its own), the accessorial codes `FSC`,
 `STOP`, `HAZ`, `WKND` and `DET` (the linehaul is uncoded, so it is freight), and the distance unit.
 
-Three saved copies of "Regional per mile + fuel", each importing `org.accessorials`:
+Three saved copies of "Regional per mile + fuel", each importing `org.accessorials`, and an LTL
+tariff for the language's newer features:
 
 | Id                  | Status        | What it shows |
 | ------------------- | ------------- | ------------- |
 | `fmt_studio_draft`  | Draft, v4     | v3 is the approved version (fuel 14%); v4 raises fuel to 18%, but its first test still expects the 14% total, so it fails, the outline shows a red dot and Submit is refused until the test is fixed. Usage: 6 rate agreements, 2 rules, 214 shipments |
 | `fmt_studio_review` | In review, v3 | Submitted by Dana Whitfield two days ago with the signed-in person as the requested reviewer and a note; v2 (fuel 16%) is production, so the impact and the review diff have something to show. Every test passes, so it can be approved |
 | `fmt_studio_active` | Active, v2    | Approved by Priya Shah |
+| `fmt_studio_ltl`    | Draft, v1     | "LTL weight breaks": bounded inputs (two rate ranges, a minimum range, a service list), a weight break that inverts at 1,000 lb so `heavier never bills less` fails with a monotone counterexample (999 lb at $309.69, 1,000 lb at $250.00), a passing property over distance and the rate's bounds, a `best "Linehaul"` of three methods (the volume method refuses below 45,000 lb), and a hazmat fee and volume charge no test reaches, so coverage reaches 10 of 13 regions |
 
 Three libraries:
 
@@ -211,13 +213,16 @@ Templates, under `/api/v1/formula-templates`:
   library's approved version) and `testCount` are derived from its source on every read.
 - `GET /context` (`{context, libraries}`: the context and each library's approved version); `POST /test` (the preview: `{source, inputs?, shipmentId?}` → the check's
   findings, the bill or the refusal or the error, the trace, the lookups and the server's run of
-  the tests); `POST /scaffold-test` (`tariff.scaffoldTest` on a real shipment).
+  the tests, and the `choices` its `best` and `worst` blocks made); `POST /scaffold-test`
+  (`tariff.scaffoldTest` on a real shipment).
 - `GET /standards`, `POST /install-standards`, `POST /duplicate`, `POST /bulk-update-status`
   (archiving one in use needs `confirmInUse`), `POST /import` (export version `2.0`).
 - `GET /:id/usage`, `/versions` (and `/versions/<n>`, `/versions/scheduled`), `POST /:id/versions`,
   `/rollback`, `/fork`, `GET /:id/compare`, `/lineage`.
-- `GET /:id/readiness` (keys `details`, `source`, `warnings`, `tests`, `status`, `reviewer`,
-  `submissionAge`; a template with no tests only warns), `/reviews`, `/review-diff` (source and
+- `GET /:id/readiness` (keys `details`, `source`, `warnings`, `tests`, `coverage`, `status`,
+  `reviewer`, `submissionAge`; a template with no tests only warns; `coverage` warns, never
+  blocks, and the response's `coverage` lists each unreached region with its line, column and
+  first line of source, as the server's does), `/reviews`, `/review-diff` (source and
   pinned imports against the approved version), `/reviewers`, `POST /:id/impact`, `/backtest`.
 - `POST /:id/submit` (refused with 422 and field errors keyed by check when readiness fails),
   `/approve` (not by the submitter, every check passing), `/reject` and `/request-changes` (a
@@ -270,12 +275,23 @@ fail, every change is refused that way.
 The Studio applies every offered change to its editor the moment the artifact streams; the
 card under the reply undoes it.
 
+The first board load, `shp_0412` (`?panelType=edit&panelEntityId=shp_0412` on the shipments page),
+was last rated by `fmt_studio_ltl`: its `ratingDetail` carries the bill and the `choices` GraphQL's
+`ShipmentRatingDetail.choices` reads (subtotals as Decimals, refusals as text), so its billing card
+shows each option.
+
 `formula-studio-screenshots.mjs` shoots both Studios in light and dark: the list, each template's
 state, the editor's problems, completion, hover, signature help, rename and definition, the
 preview on a real shipment and "Save as test", the tests panel failing and fixed, Nova's
 suggested tests and its reading of a failing test, the reference, formatting, Nova's proposals
 (on the active template) and a refused one (on the draft), the review dialogs, the backtest, the
-narrow layouts, and every library page and pane.
+narrow layouts, and every library page and pane; and on `fmt_studio_ltl`, the tests panel with the failing
+property's counterexample and "Save as test", coverage (the unreached list, the gutter and its
+tooltip), the marks at the cursor and Find references, the editor's menu, Promote to input (the
+menu, rename after it, and nothing to promote), the hover's bounds, the preview's choices on the
+sample and on a real shipment, the trace's choice, the inputs' bounds (an out-of-bounds value and
+the service select), the submit dialog's coverage warning, and the shipment's choices
+(`shipment-rating-choices`).
 
 ## Screenshots
 

@@ -17934,7 +17934,7 @@
     },
     {
       "name": "formula_check",
-      "description": "Check a Tariff source against this organisation's tables, codes and libraries. It returns every error and warning with its line and column and the fixes the checker offers, the inputs it declares, the libraries it imports and the charges it bills. Check before you show or explain source; fix every error.",
+      "description": "Check a Tariff source against this organisation's tables, codes and libraries. It returns every error and warning with its line and column and the fixes the checker offers, the inputs it declares with the values each accepts, the libraries it imports and the charges it bills. Check before you show or explain source; fix every error.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18608,7 +18608,7 @@
     },
     {
       "name": "formula_preview",
-      "description": "Rate a formula template's Tariff source for a saved shipment or the sample record. With the input values given, it returns the bill line by line, or the refusal or error and where in the source it came from. Use it to learn what a formula charges a real load; say an amount only when a tool gave it.",
+      "description": "Rate a formula template's Tariff source for a saved shipment or the sample record. With the input values given, it returns the bill line by line and every best or worst choice with each option's subtotal, or the refusal or error and where in the source it came from. Use it to learn what a formula charges a real load; say an amount only when a tool gave it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18727,7 +18727,7 @@
     },
     {
       "name": "formula_run_tests",
-      "description": "Run the test blocks of a Tariff source with Trenova's engine: each test's name, line, whether it passed, and what each failed expectation actually came to. A source that does not check runs no tests; its errors come back instead. Run the tests before you propose source, and write a test for every case you claim it prices.",
+      "description": "Run the test and property blocks of a Tariff source with Trenova's engine, and see which pass and how much of the file they reach. Each result gives its name, line, whether it passed and what each failed expectation actually came to; a property adds how many cases ran and its counterexample, with a test block that reproduces it; coverage lists each region no test reaches. A source that does not check runs no tests; its errors come back instead. Run the tests before you propose source, and write a test for every case you claim it prices.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
