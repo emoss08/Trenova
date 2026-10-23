@@ -50,6 +50,7 @@ type GetARCustomerSnapshotRequest struct {
 }
 
 type ARBalanceOverview struct {
+	HasInvoiced          bool                `json:"hasInvoiced"`
 	TotalOpenMinor       int64               `json:"totalOpenMinor"`
 	OverdueMinor         int64               `json:"overdueMinor"`
 	UnappliedCashMinor   int64               `json:"unappliedCashMinor"`
@@ -214,10 +215,6 @@ type ARSnapshotReader interface {
 	GetDashboardKPIs(ctx context.Context, req GetARAnalyticsRequest) (*ARDashboardKPIs, error)
 	GetPaymentStats(ctx context.Context, req GetARAnalyticsRequest) (*ARPaymentStats, error)
 	GetDraftInvoices(ctx context.Context, req GetARAnalyticsRequest) (*ARDraftInvoices, error)
-	GetCollectionPerformance(
-		ctx context.Context,
-		req GetARCollectionMetricsRequest,
-	) (*ARCollectionPerformance, error)
 	ListTopOverdueCustomers(
 		ctx context.Context,
 		req ListARTopOverdueCustomersRequest,

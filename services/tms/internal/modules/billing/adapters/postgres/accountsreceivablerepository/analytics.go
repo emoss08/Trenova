@@ -22,21 +22,8 @@ const openInvoicePredicate = `
 	  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 	  AND inv.total_amount_minor > inv.applied_amount_minor`
 
-const appliedAsOfExpr = `(
-		SELECT COALESCE(SUM(cpa.applied_amount_minor + cpa.short_pay_amount_minor), 0)
-		FROM customer_payment_applications cpa
-		JOIN customer_payments cp
-		  ON cp.id = cpa.customer_payment_id
-		 AND cp.organization_id = cpa.organization_id
-		 AND cp.business_unit_id = cpa.business_unit_id
-		WHERE cpa.invoice_id = inv.id
-		  AND cpa.organization_id = inv.organization_id
-		  AND cpa.business_unit_id = inv.business_unit_id
-		  AND cpa.created_at <= p.period_end
-		  AND (cp.reversed_at IS NULL OR cp.reversed_at > p.period_end)
-	)`
-
 type balanceOverviewRecord struct {
+	HasInvoiced          bool    `bun:"has_invoiced"`
 	TotalOpenMinor       int64   `bun:"total_open_minor"`
 	OverdueMinor         int64   `bun:"overdue_minor"`
 	UnappliedCashMinor   int64   `bun:"unapplied_cash_minor"`
@@ -56,13 +43,21 @@ func (r *repository) GetBalanceOverview(
 	ctx context.Context,
 	req customerledgerports.GetARAnalyticsRequest,
 ) (*customerledgerports.ARBalanceOverview, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARBalanceOverview, error) {
 			rec := new(balanceOverviewRecord)
 			err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
+			EXISTS (
+				SELECT 1
+				FROM invoices posted
+				WHERE posted.organization_id = ?
+				  AND posted.business_unit_id = ?
+				  AND posted.bill_type IN ('Invoice', 'DebitMemo')
+				  AND posted.posted_at IS NOT NULL
+			) AS has_invoiced,
 			COALESCE(SUM(inv.total_amount_minor - inv.applied_amount_minor), 0) AS total_open_minor,
 			COALESCE(SUM(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS overdue_minor,
 			COALESCE((
@@ -85,6 +80,7 @@ func (r *repository) GetBalanceOverview(
 		FROM invoices inv
 		WHERE inv.organization_id = ?
 		  AND inv.business_unit_id = ?`+openInvoicePredicate,
+				req.TenantInfo.OrgID, req.TenantInfo.BuID,
 				req.AsOfDate,
 				req.TenantInfo.OrgID, req.TenantInfo.BuID,
 				req.AsOfDate,
@@ -101,6 +97,7 @@ func (r *repository) GetBalanceOverview(
 			}
 
 			return &customerledgerports.ARBalanceOverview{
+				HasInvoiced:          rec.HasInvoiced,
 				TotalOpenMinor:       rec.TotalOpenMinor,
 				OverdueMinor:         rec.OverdueMinor,
 				UnappliedCashMinor:   rec.UnappliedCashMinor,
@@ -135,7 +132,7 @@ func (r *repository) GetPaymentStats(
 	ctx context.Context,
 	req customerledgerports.GetARAnalyticsRequest,
 ) (*customerledgerports.ARPaymentStats, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARPaymentStats, error) {
@@ -223,29 +220,25 @@ func (r *repository) ListBalanceSeries(
 	ctx context.Context,
 	req customerledgerports.ListARSeriesRequest,
 ) ([]*customerledgerports.ARBalancePoint, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARBalancePoint, error) {
 			records := make([]*balancePointRecord, 0, req.Weeks)
+			args := append(seriesWindow(req).args(),
+				req.TenantInfo.OrgID, req.TenantInfo.BuID,
+				trailingDSOWindow,
+			)
 			err := r.db.DBForContext(ctx).NewRaw(`
-		WITH points AS (
-			SELECT (?::BIGINT - (n * ?::BIGINT))::BIGINT AS period_end
-			FROM generate_series(0, ?::INT - 1) AS n
+		WITH`+openAsOfCTEs+`,
+		balances AS (
+			SELECT n, SUM(open_minor) AS ar_balance_minor
+			FROM open_items
+			GROUP BY n
 		)
 		SELECT
 			p.period_end,
-			COALESCE((
-				SELECT SUM(inv.total_amount_minor - applied.amount)
-				FROM invoices inv
-				CROSS JOIN LATERAL (SELECT `+appliedAsOfExpr+` AS amount) applied
-				WHERE inv.organization_id = ?
-				  AND inv.business_unit_id = ?
-				  AND inv.status = 'Posted'
-				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-				  AND inv.invoice_date <= p.period_end
-				  AND inv.total_amount_minor > applied.amount
-			), 0) AS ar_balance_minor,
+			COALESCE(b.ar_balance_minor, 0) AS ar_balance_minor,
 			COALESCE((
 				SELECT SUM(inv.total_amount_minor)
 				FROM invoices inv
@@ -258,12 +251,8 @@ func (r *repository) ListBalanceSeries(
 				  AND inv.invoice_date <= p.period_end
 			), 0) AS billed_minor
 		FROM points p
-		ORDER BY p.period_end ASC`,
-				req.AsOfDate, secondsPerWeek, req.Weeks,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				trailingDSOWindow,
-			).Scan(ctx, &records)
+		LEFT JOIN balances b ON b.n = p.n
+		ORDER BY p.period_end ASC`, args...).Scan(ctx, &records)
 			if err != nil {
 				return nil, fmt.Errorf("list ar balance series: %w", err)
 			}
@@ -295,29 +284,13 @@ func (r *repository) ListAgingTrend(
 	ctx context.Context,
 	req customerledgerports.ListARSeriesRequest,
 ) ([]*customerledgerports.ARAgingTrendPoint, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARAgingTrendPoint, error) {
 			records := make([]*agingTrendRecord, 0, req.Weeks)
 			err := r.db.DBForContext(ctx).NewRaw(`
-		WITH points AS (
-			SELECT (?::BIGINT - (n * ?::BIGINT))::BIGINT AS period_end
-			FROM generate_series(0, ?::INT - 1) AS n
-		),
-		open_items AS (
-			SELECT
-				p.period_end,
-				inv.due_date,
-				inv.total_amount_minor - `+appliedAsOfExpr+` AS open_minor
-			FROM points p
-			JOIN invoices inv
-			  ON inv.organization_id = ?
-			 AND inv.business_unit_id = ?
-			 AND inv.status = 'Posted'
-			 AND inv.bill_type IN ('Invoice', 'DebitMemo')
-			 AND inv.invoice_date <= p.period_end
-		)
+		WITH`+openAsOfCTEs+`
 		SELECT
 			p.period_end,
 			COALESCE(SUM(CASE WHEN oi.due_date IS NULL OR oi.due_date >= p.period_end THEN oi.open_minor ELSE 0 END), 0) AS current_minor,
@@ -327,14 +300,9 @@ func (r *repository) ListAgingTrend(
 			COALESCE(SUM(CASE WHEN oi.due_date < p.period_end AND (p.period_end - oi.due_date) / 86400 > 90 THEN oi.open_minor ELSE 0 END), 0) AS days_over90_minor,
 			COALESCE(SUM(oi.open_minor), 0) AS total_open_minor
 		FROM points p
-		LEFT JOIN open_items oi
-		  ON oi.period_end = p.period_end
-		 AND oi.open_minor > 0
+		LEFT JOIN open_items oi ON oi.n = p.n
 		GROUP BY p.period_end
-		ORDER BY p.period_end ASC`,
-				req.AsOfDate, secondsPerWeek, req.Weeks,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-			).Scan(ctx, &records)
+		ORDER BY p.period_end ASC`, seriesWindow(req).args()...).Scan(ctx, &records)
 			if err != nil {
 				return nil, fmt.Errorf("list ar aging trend: %w", err)
 			}
@@ -372,7 +340,7 @@ func (r *repository) ListCashFlow(
 	ctx context.Context,
 	req customerledgerports.ListARCashFlowRequest,
 ) ([]*customerledgerports.ARCashFlowPoint, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARCashFlowPoint, error) {
@@ -500,19 +468,9 @@ type collectionTotalsRecord struct {
 }
 
 const collectionTotalsSQL = `
-		WITH bounds AS (SELECT ?::BIGINT AS period_start, ?::BIGINT AS period_end)
+		WITH bounds AS (SELECT ?::BIGINT AS period_start, ?::BIGINT AS period_end),` + openAsOfCTEs + `
 		SELECT
-			(SELECT COALESCE(SUM(inv.total_amount_minor - applied.amount), 0)
-				FROM bounds, LATERAL (SELECT bounds.period_start AS period_end) p,
-				invoices inv
-				CROSS JOIN LATERAL (SELECT ` + appliedAsOfExpr + ` AS amount) applied
-				WHERE inv.organization_id = ?
-				  AND inv.business_unit_id = ?
-				  AND inv.status = 'Posted'
-				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-				  AND inv.invoice_date <= p.period_end
-				  AND inv.total_amount_minor > applied.amount
-			) AS beginning_open_minor,
+			(SELECT COALESCE(SUM(oi.open_minor), 0) FROM open_items oi) AS beginning_open_minor,
 			(SELECT COALESCE(SUM(inv.total_amount_minor - inv.applied_amount_minor), 0)
 				FROM invoices inv
 				WHERE inv.organization_id = ?
@@ -621,14 +579,15 @@ func (r *repository) GetCollectionTotals(
 	ctx context.Context,
 	req customerledgerports.GetARCollectionMetricsRequest,
 ) (*customerledgerports.ARCollectionTotals, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARCollectionTotals, error) {
 			periodStart := req.AsOfDate - int64(req.PeriodDays)*secondsPerDay
 			rec := new(collectionTotalsRecord)
-			err := r.db.DBForContext(ctx).NewRaw(collectionTotalsSQL,
-				periodStart, req.AsOfDate,
+			args := []any{periodStart, req.AsOfDate}
+			args = append(args, instantWindow(req.TenantInfo, periodStart).args()...)
+			args = append(args,
 				req.TenantInfo.OrgID, req.TenantInfo.BuID,
 				req.TenantInfo.OrgID, req.TenantInfo.BuID,
 				req.TenantInfo.OrgID, req.TenantInfo.BuID,
@@ -639,8 +598,8 @@ func (r *repository) GetCollectionTotals(
 				req.TenantInfo.OrgID, req.TenantInfo.BuID,
 				req.TenantInfo.OrgID, req.TenantInfo.BuID,
 				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-			).Scan(ctx, rec)
+			)
+			err := r.db.DBForContext(ctx).NewRaw(collectionTotalsSQL, args...).Scan(ctx, rec)
 			if err != nil {
 				return nil, fmt.Errorf("get ar collection totals: %w", err)
 			}
@@ -677,7 +636,7 @@ func (r *repository) ListTopOverdueCustomers(
 	ctx context.Context,
 	req customerledgerports.ListARTopOverdueCustomersRequest,
 ) ([]*customerledgerports.ARTopOverdueCustomer, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARTopOverdueCustomer, error) {
@@ -741,7 +700,7 @@ func (r *repository) ListCollectionsWorklist(
 	ctx context.Context,
 	req customerledgerports.ListARCollectionsWorklistRequest,
 ) ([]*customerledgerports.ARCollectionsWorklistItem, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARCollectionsWorklistItem, error) {
@@ -964,7 +923,7 @@ func (r *repository) GetCustomerSnapshot(
 	ctx context.Context,
 	req customerledgerports.GetARCustomerSnapshotRequest,
 ) (*customerledgerports.ARCustomerSnapshot, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARCustomerSnapshot, error) {

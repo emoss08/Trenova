@@ -26,7 +26,6 @@ vi.mock("@/lib/graphql/accounts-receivable", () => ({
   fetchArDsoTrend: mocks.fetchArDsoTrend,
   fetchArAgingTrend: vi.fn().mockResolvedValue([]),
   fetchArCashFlowForecast: vi.fn().mockResolvedValue([]),
-  fetchArCollectionPerformance: vi.fn().mockResolvedValue(null),
   fetchArTopOverdueCustomers: vi.fn().mockResolvedValue([]),
   fetchArCollectionsWorklist: vi.fn().mockResolvedValue([]),
 }));
@@ -44,10 +43,11 @@ const BUCKETS = {
   totalOpenMinor: 0,
 };
 
-function kpis(overview: Partial<Record<string, number>> = {}) {
+function kpis(overview: Partial<Record<string, number | boolean>> = {}) {
   return {
     asOfDate: 1_757_000_000,
     overview: {
+      hasInvoiced: false,
       totalOpenMinor: 0,
       overdueMinor: 0,
       unappliedCashMinor: 0,
@@ -61,17 +61,33 @@ function kpis(overview: Partial<Record<string, number>> = {}) {
     },
     currentDsoDays: 0,
     dsoDeltaDays: 0,
-    cei: 0,
-    avgDaysToPay: 0,
     overduePercent: 0,
-    writeOffRatio: 0,
-    disputeRate: 0,
-    shortPayRate: 0,
+    collection: {
+      totals: {
+        periodStart: 1_749_000_000,
+        periodEnd: 1_757_000_000,
+        beginningOpenMinor: 0,
+        endingOpenMinor: 0,
+        endingCurrentMinor: 0,
+        creditSalesMinor: 0,
+        collectedMinor: 0,
+        avgDaysToPay: 0,
+        shortPayMinor: 0,
+        shortPayApplicationCount: 0,
+        applicationCount: 0,
+        disputedInvoiceCount: 0,
+        postedInvoiceCount: 0,
+      },
+      cei: 0,
+      writeOffRatio: 0,
+      disputeRate: 0,
+      shortPayRate: 0,
+    },
   };
 }
 
-function week(over: Partial<{ billedMinor: number; arBalanceMinor: number }> = {}) {
-  return { periodEnd: 1_756_000_000, dsoDays: 0, arBalanceMinor: 0, billedMinor: 0, ...over };
+function week() {
+  return { periodEnd: 1_756_000_000, dsoDays: 0, arBalanceMinor: 0, billedMinor: 0 };
 }
 
 beforeEach(() => {
@@ -98,8 +114,8 @@ describe("accounting dashboard empty state", () => {
 
   // A clear book with history is a healthy dashboard, not an empty one: the
   // figures should read as zero, with the trend still drawn.
-  it("keeps the dashboard when the book is clear today but carried billing this year", async () => {
-    mocks.fetchArDsoTrend.mockResolvedValue([week(), week({ billedMinor: 125_000 })]);
+  it("keeps the dashboard when the book is clear today but has invoiced before", async () => {
+    mocks.fetchArDashboardKpis.mockResolvedValue(kpis({ hasInvoiced: true }));
     renderAccountingPage(<AccountingDashboardPage />);
 
     expect(await screen.findByText("AR outstanding")).toBeInTheDocument();
@@ -107,7 +123,7 @@ describe("accounting dashboard empty state", () => {
   });
 
   it("leads a dashboard with history with the day's brief", async () => {
-    mocks.fetchArDsoTrend.mockResolvedValue([week(), week({ billedMinor: 125_000 })]);
+    mocks.fetchArDashboardKpis.mockResolvedValue(kpis({ hasInvoiced: true }));
     renderAccountingPage(<AccountingDashboardPage />);
 
     await waitFor(() =>
@@ -115,6 +131,13 @@ describe("accounting dashboard empty state", () => {
         /Nothing is owed to you and no cash is waiting to be applied\./,
       ),
     );
+  });
+
+  it("decides a never-invoiced book from the KPIs without reading the trend", async () => {
+    renderAccountingPage(<AccountingDashboardPage />);
+
+    expect(await screen.findByText("Nothing on the books yet")).toBeInTheDocument();
+    expect(mocks.fetchArDsoTrend).not.toHaveBeenCalled();
   });
 
   it("does not brief a book that has never invoiced", async () => {
@@ -126,7 +149,7 @@ describe("accounting dashboard empty state", () => {
 
   it("keeps the dashboard while an invoice is open", async () => {
     mocks.fetchArDashboardKpis.mockResolvedValue(
-      kpis({ openInvoiceCount: 2, totalOpenMinor: 40_000 }),
+      kpis({ hasInvoiced: true, openInvoiceCount: 2, totalOpenMinor: 40_000 }),
     );
     renderAccountingPage(<AccountingDashboardPage />);
 

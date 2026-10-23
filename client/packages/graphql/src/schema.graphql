@@ -1948,6 +1948,8 @@ type ARBalanceOverview {
   buckets: ARAgingBucketTotals!
   disputedInvoiceCount: Int!
   disputedOpenMinor: Int!
+  """Whether the tenant has ever posted an invoice or debit memo."""
+  hasInvoiced: Boolean!
   openInvoiceCount: Int!
   overdueInvoiceCount: Int!
   overdueMinor: Int!
@@ -2067,15 +2069,12 @@ type ARDSOTrendPoint {
 
 type ARDashboardKPIs {
   asOfDate: Timestamp!
-  avgDaysToPay: Float!
-  cei: Float!
+  """Collection performance over the trailing 91 days."""
+  collection: ARCollectionPerformance!
   currentDsoDays: Float!
-  disputeRate: Float!
   dsoDeltaDays: Float!
   overduePercent: Float!
   overview: ARBalanceOverview!
-  shortPayRate: Float!
-  writeOffRatio: Float!
 }
 
 type ARLedgerEntry {
@@ -24240,7 +24239,6 @@ type Query {
   arAgingSummary(asOfDate: Timestamp): ARAgingSummary!
   arAgingTrend(weeks: Int): [ARAgingTrendPoint!]!
   arCashFlowForecast(futureWeeks: Int, pastWeeks: Int): [ARCashFlowPoint!]!
-  arCollectionPerformance(periodDays: Int): ARCollectionPerformance!
   arCollectionsWorklist(limit: Int): [ARCollectionsWorklistItem!]!
   arCustomerLedger(customerId: ID!): [ARLedgerEntry!]!
   arCustomerProfile(customerId: ID!): ARCustomerProfile!

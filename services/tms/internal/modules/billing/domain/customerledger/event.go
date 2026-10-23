@@ -11,6 +11,14 @@ import (
 // already on account to an invoice.
 const EventPaymentApplied = "CustomerPaymentApplied"
 
+// SourceFactoringItem is the source object of a ledger row a factoring
+// movement wrote when it settled or reopened an invoice.
+const SourceFactoringItem = "FactoringSubmissionItem"
+
+// CollectionWindowDays is the trailing window the receivables dashboard
+// measures collection performance over.
+const CollectionWindowDays = 91
+
 var eventLabels = map[string]string{
 	tenant.JournalSourceEventInvoicePosted.String():         "Invoice",
 	tenant.JournalSourceEventCreditMemoPosted.String():      "Credit memo",

@@ -70,7 +70,7 @@ func (r *repository) ListCustomerLedger(
 	ctx context.Context,
 	req customerledgerports.ListCustomerLedgerRequest,
 ) ([]*customerledgerports.ARLedgerEntry, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARLedgerEntry, error) {
@@ -95,7 +95,7 @@ func (r *repository) ListARAging(
 	ctx context.Context,
 	req customerledgerports.ListARAgingRequest,
 ) ([]*customerledgerports.ARCustomerAgingRow, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARCustomerAgingRow, error) {
@@ -146,7 +146,7 @@ func (r *repository) ListOpenItems(
 	ctx context.Context,
 	req customerledgerports.ListAROpenItemsRequest,
 ) ([]*customerledgerports.AROpenItem, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.AROpenItem, error) {
@@ -245,7 +245,7 @@ func (r *repository) GetCustomerName(
 	ctx context.Context,
 	req customerledgerports.GetARCustomerNameRequest,
 ) (string, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (string, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (string, error) {
 		var row struct {
 			Name string `bun:"name"`
 		}
@@ -269,7 +269,7 @@ func (r *repository) GetCustomerAging(
 	ctx context.Context,
 	req customerledgerports.GetARCustomerAgingRequest,
 ) (*customerledgerports.ARCustomerAgingRow, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARCustomerAgingRow, error) {

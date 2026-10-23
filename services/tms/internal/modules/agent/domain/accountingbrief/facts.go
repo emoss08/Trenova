@@ -4,6 +4,7 @@ import (
 	"math"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -13,7 +14,7 @@ const (
 	CrossingWindowDays        = 7
 	DueSoonDays               = 7
 	DueThisMonthDays          = 30
-	CollectionWindowDays      = 91
+	CollectionWindowDays      = customerledger.CollectionWindowDays
 	PromiseLookaheadDays      = 2
 	UncontactedDays           = 14
 	ShortPayRemainderMaxMinor = 5_000
