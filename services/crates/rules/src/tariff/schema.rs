@@ -1,7 +1,8 @@
 //! The data a tariff reads: the schema roots, their record and enum types, and the shapes of
 //! the rate tables and charge codes the host describes.
 //!
-//! The roots are `shipment`, `lane`, `customer`, `fuel`, `rating` and `tables`. Their types are
+//! The roots are `shipment`, `lane`, `customer`, `fuel`, `rating` and `tables`, and in a
+//! tariff's own code `bill`, the bill so far. Their types are
 //! fixed by the language (the reference lists them under "Data"), so the browser and the server
 //! check against the same schema without fetching it; the host only says which unit the
 //! organisation stores distances in, and describes its rate tables and accessorial codes.
@@ -18,6 +19,44 @@ use std::sync::Arc;
 
 /// The doc of `tables`, the root that holds the organisation's active rate matrices.
 pub const TABLES_DOC: &str = message!("The organisation's active rate matrices, by code.");
+
+/// The doc of `bill`, the bill a tariff is building.
+pub const BILL_DOC: &str = message!(
+    "The bill so far: the lines billed above this line, exact, after each line's own minimum and maximum and before the total clauses and rounding. Inside a `best` option, the bill outside the choice plus that option's own lines."
+);
+
+/// The doc of `bill.charge(…)`.
+pub const BILL_CHARGE_DOC: &str = message!(
+    "The sum of the lines billed so far with this label (as interpolated) or charge code, as in `bill.charge(\"Linehaul\")` or `bill.charge(FSC)`; `none` when there are none."
+);
+
+/// The type of `bill`: what a tariff's own code reads of the bill so far. Its fields are the
+/// sums of the lines billed so far, exact; `bill.charge(…)` is checked on its own.
+#[must_use]
+pub fn bill_type() -> Arc<RecordType> {
+    let field = |name: &str, doc: &'static str| FieldDef {
+        name: name.to_owned(),
+        ty: Type::money(),
+        doc: Some(Doc::message(doc)),
+    };
+    Arc::new(RecordType {
+        name: Some(String::from("Bill")),
+        fields: vec![
+            field(
+                "freight",
+                message!("The sum of the freight (uncoded) lines billed so far, exact."),
+            ),
+            field(
+                "accessorials",
+                message!("The sum of the accessorial (coded) lines billed so far, exact."),
+            ),
+            field(
+                "total",
+                message!("The sum of every line billed so far, exact."),
+            ),
+        ],
+    })
+}
 
 /// The schema enums, by name, with their variants in order.
 pub const ENUMS: &[(&str, &[&str])] = &[

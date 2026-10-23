@@ -571,3 +571,24 @@ property "p" {
   assume true
   expect total nondecreasing in shipment.weight
 }
+
+=== a choice as a value, a review and a freight clause
+tariff "t"
+let   linehaul   =   best "Linehaul" {
+option "A" { charge "A" (quantity: 1 mi, rate: $2/mi,   minimum: $5) }
+option "B" { charge "B" = $2 }
+}
+review   "Check {linehaul}"
+minimum   $400   on   freight
+---
+tariff "t"
+let linehaul = best "Linehaul" {
+  option "A" {
+    charge "A" (quantity: 1 mi, rate: $2/mi, minimum: $5)
+  }
+  option "B" {
+    charge "B" = $2
+  }
+}
+review "Check {linehaul}"
+minimum $400 on freight

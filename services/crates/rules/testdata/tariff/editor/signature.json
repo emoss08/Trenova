@@ -222,7 +222,7 @@
    "expect": {
     "signatures": [
      {
-      "label": "charge \"label\" (quantity: Quantity, rate: Money/unit)"
+      "label": "charge \"label\" (quantity: Quantity, rate: Money/unit, minimum: Money, maximum: Money)"
      }
     ],
     "activeParameter": 1
@@ -555,6 +555,25 @@
      }
     ],
     "active": 0,
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "bill.charge(…)",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $1",
+    "let x = bill.charge(|)"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "bill.charge(line: CODE | Text) -> Money?",
+      "doc": {
+       "message": "The sum of the lines billed so far with this label (as interpolated) or charge code, as in `bill.charge(\"Linehaul\")` or `bill.charge(FSC)`; `none` when there are none."
+      }
+     }
+    ],
     "activeParameter": 0
    }
   }

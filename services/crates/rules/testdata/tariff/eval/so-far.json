@@ -1,0 +1,255 @@
+[
+ {
+  "name": "a choice written as a value binds the kept option's subtotal",
+  "source": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi\ninput flatRate: Money = $900\nlet linehaul = best \"Linehaul\" {\n  option \"Per mile\" { charge \"Linehaul\" (quantity: shipment.distance, rate: rate) }\n  option \"Flat\" { charge \"Flat rate\" = flatRate }\n}\ncharge \"Fuel surcharge\" as FSC = linehaul * 32%",
+  "facts": {
+   "shipment": {
+    "distance": {
+     "$q": "500",
+     "u": "mi"
+    }
+   }
+  },
+  "trace": true,
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "label": "Flat rate",
+      "code": null,
+      "amount": {
+       "$q": "900",
+       "u": "$"
+      }
+     },
+     {
+      "label": "Fuel surcharge",
+      "code": "FSC",
+      "amount": {
+       "$q": "288",
+       "u": "$"
+      }
+     }
+    ],
+    "total": {
+     "$q": "1188",
+     "u": "$"
+    }
+   },
+   "choices": [
+    {
+     "label": "Linehaul",
+     "chosen": "Flat"
+    }
+   ],
+   "trace": [
+    {
+     "kind": "charge",
+     "label": "Linehaul",
+     "value": {
+      "$q": "1175",
+      "u": "$"
+     },
+     "limit": null
+    },
+    {
+     "kind": "charge",
+     "label": "Flat rate",
+     "value": {
+      "$q": "900",
+      "u": "$"
+     },
+     "limit": null
+    },
+    {
+     "kind": "choice",
+     "label": "Linehaul",
+     "chosen": "Flat",
+     "subtotal": {
+      "$q": "900",
+      "u": "$"
+     }
+    },
+    {
+     "kind": "bind",
+     "name": "linehaul",
+     "value": {
+      "$q": "900",
+      "u": "$"
+     },
+     "display": "$900.00"
+    },
+    {
+     "kind": "charge",
+     "label": "Fuel surcharge",
+     "code": "FSC",
+     "value": {
+      "$q": "288",
+      "u": "$"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "a choice whose every option refuses refuses the rating, as a value too",
+  "source": "tariff \"t\"\nlet x = best \"L\" {\n  option \"A\" { fail \"A is out\" }\n  option \"B\" { require false else \"B is out\" }\n}\ncharge \"x\" = x",
+  "expect": {
+   "status": "refused",
+   "refusal": {
+    "message": "A is out"
+   }
+  }
+ },
+ {
+  "name": "an accumulated choice adds its subtotal each time",
+  "source": "tariff \"t\"\nvar fees = $0\nfor stop in shipment.stops {\n  fees += worst \"Stop\" {\n    option \"Flat\" { charge \"Stop {stop.sequence} flat\" = $10 }\n    option \"Per stop\" { charge \"Stop {stop.sequence}\" = $4 * stop.sequence }\n  }\n}\nnote \"{fees}\"",
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "label": "Stop 1 flat",
+      "amount": {
+       "$q": "10",
+       "u": "$"
+      }
+     },
+     {
+      "label": "Stop 2 flat",
+      "amount": {
+       "$q": "10",
+       "u": "$"
+      }
+     }
+    ],
+    "notes": [
+     {
+      "text": "$20.00"
+     }
+    ],
+    "total": {
+     "$q": "20",
+     "u": "$"
+    }
+   }
+  }
+ },
+ {
+  "name": "bill reads the lines billed so far",
+  "source": "tariff \"t\"\ncharge \"Linehaul\" = $1_000\nlet before = bill.total\ncharge \"Fuel\" as FSC = bill.freight * 10%\ncharge \"Detention\" as DET = $50\nlet line = bill.charge(\"Linehaul\") ?? $0\nnote \"{bill.freight} {bill.accessorials} {bill.total} {bill.charge(FSC) ?? $0} {line} {before}\"\nnote \"{bill.charge(LIFT) == none}\"",
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "notes": [
+     {
+      "text": "$1000.00 $150.00 $1150.00 $100.00 $1000.00 $1000.00"
+     },
+     {
+      "text": "true"
+     }
+    ],
+    "total": {
+     "$q": "1150",
+     "u": "$"
+    }
+   }
+  }
+ },
+ {
+  "name": "inside an option, bill reads the bill outside the choice and the option's own lines",
+  "source": "tariff \"t\"\ncharge \"Base\" = $100\nbest \"L\" {\n  option \"A\" {\n    charge \"A\" = $10\n    note \"A sees {bill.total}\"\n  }\n  option \"B\" {\n    charge \"B\" = $20\n    charge \"B2\" = bill.total * 10%\n    note \"B sees {bill.total}\"\n  }\n}\nnote \"after {bill.total}\"",
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "label": "Base",
+      "amount": {
+       "$q": "100",
+       "u": "$"
+      }
+     },
+     {
+      "label": "A",
+      "amount": {
+       "$q": "10",
+       "u": "$"
+      }
+     }
+    ],
+    "notes": [
+     {
+      "text": "A sees $110.00"
+     },
+     {
+      "text": "after $110.00"
+     }
+    ],
+    "total": {
+     "$q": "110",
+     "u": "$"
+    }
+   },
+   "choices": [
+    {
+     "label": "L",
+     "chosen": "A",
+     "options": [
+      {
+       "label": "A",
+       "subtotal": {
+        "$q": "10",
+        "u": "$"
+       }
+      },
+      {
+       "label": "B",
+       "subtotal": {
+        "$q": "32",
+        "u": "$"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "name": "a nested option reads every bill around it",
+  "source": "tariff \"t\"\ncharge \"Base\" = $100\nbest \"Outer\" {\n  option \"O1\" {\n    charge \"O1\" = $5\n    best \"Inner\" {\n      option \"I1\" { charge \"I1\" = bill.total }\n      option \"I2\" { charge \"I2\" = $200 }\n    }\n  }\n  option \"O2\" { charge \"O2\" = $1_000 }\n}",
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "label": "Base",
+      "amount": {
+       "$q": "100",
+       "u": "$"
+      }
+     },
+     {
+      "label": "O1",
+      "amount": {
+       "$q": "5",
+       "u": "$"
+      }
+     },
+     {
+      "label": "I1",
+      "amount": {
+       "$q": "105",
+       "u": "$"
+      }
+     }
+    ],
+    "total": {
+     "$q": "210",
+     "u": "$"
+    }
+   }
+  }
+ }
+]

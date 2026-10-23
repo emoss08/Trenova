@@ -8,6 +8,7 @@
 
 use super::ast::ArmBody;
 use super::ast::Block;
+use super::ast::Choose;
 use super::ast::Expr;
 use super::ast::ExprKind;
 use super::ast::File;
@@ -294,10 +295,10 @@ impl Builder<'_> {
                 });
             }
             StmtKind::Total(clause) => {
-                let name = match clause {
-                    TotalClause::Minimum(_) => "minimum",
-                    TotalClause::Maximum(_) => "maximum",
-                    TotalClause::Round { .. } => "round",
+                let (name, on) = match clause {
+                    TotalClause::Minimum(bound) => ("minimum", bound.on.as_ref()),
+                    TotalClause::Maximum(bound) => ("maximum", bound.on.as_ref()),
+                    TotalClause::Round { .. } => ("round", None),
                 };
                 let keyword = Span::new(
                     stmt.span.start,
@@ -305,7 +306,7 @@ impl Builder<'_> {
                 );
                 self.push(OutlineItem {
                     kind: OutlineKind::Total,
-                    name: name.to_owned(),
+                    name: on.map_or_else(|| name.to_owned(), |on| format!("{name} on {}", on.text)),
                     code: None,
                     depth,
                     span: stmt.span,
@@ -321,26 +322,10 @@ impl Builder<'_> {
                 }
             }
             StmtKind::For(statement) => self.block(&statement.body, depth + 1),
-            StmtKind::Choose(choose) => {
-                self.push(OutlineItem {
-                    kind: OutlineKind::Choice,
-                    name: choose.label.text.clone(),
-                    code: None,
-                    depth,
-                    span: choose.span,
-                    selection: choose.label.span,
-                });
-                self.fold(choose.span, FoldKind::Block);
-                for option in &choose.options {
-                    self.push(OutlineItem {
-                        kind: OutlineKind::Option,
-                        name: option.label.text.clone(),
-                        code: None,
-                        depth: depth + 1,
-                        span: option.span,
-                        selection: option.label.span,
-                    });
-                    self.block(&option.body, depth + 2);
+            StmtKind::Choose(choose) => self.choice(choose, depth),
+            StmtKind::Assign { value, .. } => {
+                if let ExprKind::Choose(choose) = &value.kind {
+                    self.choice(choose, depth);
                 }
             }
             StmtKind::Match(statement) => {
@@ -355,9 +340,36 @@ impl Builder<'_> {
                 if let Some(ty) = &binding.ty {
                     self.fold_type(ty);
                 }
+                if let ExprKind::Choose(choose) = &binding.value.kind {
+                    self.choice(choose, depth);
+                }
             }
             StmtKind::Item(item) => self.item(item),
             _ => {}
+        }
+    }
+
+    /// A `best` or `worst`, written as a statement or as a binding's value, with its options.
+    fn choice(&mut self, choose: &Choose, depth: u32) {
+        self.push(OutlineItem {
+            kind: OutlineKind::Choice,
+            name: choose.label.text.clone(),
+            code: None,
+            depth,
+            span: choose.span,
+            selection: choose.label.span,
+        });
+        self.fold(choose.span, FoldKind::Block);
+        for option in &choose.options {
+            self.push(OutlineItem {
+                kind: OutlineKind::Option,
+                name: option.label.text.clone(),
+                code: None,
+                depth: depth + 1,
+                span: option.span,
+                selection: option.label.span,
+            });
+            self.block(&option.body, depth + 2);
         }
     }
 

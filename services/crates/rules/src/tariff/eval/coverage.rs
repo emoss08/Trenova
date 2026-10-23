@@ -12,6 +12,7 @@
 //! | `loop` | a `for` body | each iteration runs it |
 //! | `option` | each `option` of a `best` or `worst` | the option runs |
 //! | `charge` | a `charge` statement | it runs |
+//! | `review` | a `review` statement | it runs |
 //! | `refusal` | a `fail` statement, a `require` statement, a `?? fail` fallback | it refuses |
 //! | `function` | a function body | the function is called |
 //!
@@ -27,8 +28,8 @@ use super::interp::{Env, Interp};
 use crate::span::{Span, Utf16Index};
 use crate::tariff::eval::trace::range;
 use crate::tariff::syntax::ast::{
-    ArmBody, Block, Condition, Expr, ExprKind, File, FnBody, ItemKind, RoundTo, Stmt, StmtKind,
-    Text, TextPart, TotalClause,
+    ArmBody, Block, Choose, Condition, Expr, ExprKind, File, FnBody, ItemKind, RoundTo, Stmt,
+    StmtKind, Text, TextPart, TotalClause,
 };
 use crate::tariff::syntax::walk;
 use serde_json::{Map, Value as Json};
@@ -50,6 +51,8 @@ pub enum RegionKind {
     Option,
     /// A `charge`.
     Charge,
+    /// A `review`.
+    Review,
     /// A refusal: `fail`, `require`, `?? fail`.
     Refusal,
     /// A function body.
@@ -67,6 +70,7 @@ impl RegionKind {
             Self::Loop => "loop",
             Self::Option => "option",
             Self::Charge => "charge",
+            Self::Review => "review",
             Self::Refusal => "refusal",
             Self::Function => "function",
         }
@@ -268,18 +272,17 @@ impl Collector {
 
     fn stmt(&mut self, stmt: &Stmt) {
         match &stmt.kind {
-            StmtKind::Let(binding) | StmtKind::Var(binding) => self.expr(&binding.value),
-            StmtKind::Assign { value, .. }
-            | StmtKind::Return(value)
+            StmtKind::Let(binding) | StmtKind::Var(binding) => self.value(&binding.value),
+            StmtKind::Assign { value, .. } => self.value(value),
+            StmtKind::Total(TotalClause::Minimum(bound) | TotalClause::Maximum(bound)) => {
+                self.expr(&bound.amount);
+            }
+            StmtKind::Return(value)
             | StmtKind::Expr(value)
-            | StmtKind::Total(
-                TotalClause::Minimum(value)
-                | TotalClause::Maximum(value)
-                | TotalClause::Round {
-                    to: RoundTo::Amount(value),
-                    ..
-                },
-            ) => self.expr(value),
+            | StmtKind::Total(TotalClause::Round {
+                to: RoundTo::Amount(value),
+                ..
+            }) => self.expr(value),
             StmtKind::Charge(charge) => {
                 self.push(stmt.span, RegionKind::Charge);
                 self.text(&charge.label);
@@ -291,6 +294,10 @@ impl Collector {
                 }
             }
             StmtKind::Note(text) => self.text(text),
+            StmtKind::Review(text) => {
+                self.push(stmt.span, RegionKind::Review);
+                self.text(text);
+            }
             StmtKind::If(statement) => {
                 for (condition, block) in &statement.branches {
                     self.condition(condition);
@@ -302,12 +309,7 @@ impl Collector {
                     self.block(otherwise);
                 }
             }
-            StmtKind::Choose(choose) => {
-                for option in &choose.options {
-                    self.push(option.span, RegionKind::Option);
-                    self.block(&option.body);
-                }
-            }
+            StmtKind::Choose(choose) => self.choose(choose),
             StmtKind::Match(statement) => {
                 self.expr(&statement.scrutinee);
                 for arm in &statement.arms {
@@ -348,6 +350,22 @@ impl Collector {
             | StmtKind::Assume(_)
             | StmtKind::Expect(_)
             | StmtKind::Item(_) => {}
+        }
+    }
+
+    /// A binding's or assignment's value; a choice written as the value has its options.
+    fn value(&mut self, value: &Expr) {
+        if let ExprKind::Choose(choose) = &value.kind {
+            self.choose(choose);
+        } else {
+            self.expr(value);
+        }
+    }
+
+    fn choose(&mut self, choose: &Choose) {
+        for option in &choose.options {
+            self.push(option.span, RegionKind::Option);
+            self.block(&option.body);
         }
     }
 

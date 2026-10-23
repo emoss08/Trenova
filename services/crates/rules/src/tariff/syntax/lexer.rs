@@ -89,7 +89,9 @@ pub const KEYWORDS: &[&str] = &[
 ];
 
 /// The words that are keywords only where the grammar uses them, and names everywhere else.
-pub const CONTEXTUAL: &[&str] = &["as", "cents", "to", "up", "down", "half", "even"];
+pub const CONTEXTUAL: &[&str] = &[
+    "as", "cents", "to", "up", "down", "half", "even", "on", "freight",
+];
 
 /// What the lexer read.
 #[derive(Debug, Clone, PartialEq)]

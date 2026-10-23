@@ -156,6 +156,8 @@ fn charge_options() -> Help {
         &[
             (String::from("quantity"), String::from("Quantity"), None),
             (String::from("rate"), String::from("Money/unit"), None),
+            (String::from("minimum"), String::from("Money"), None),
+            (String::from("maximum"), String::from("Money"), None),
         ],
         "",
     );
@@ -170,6 +172,12 @@ fn charge_options() -> Help {
             )))),
             Some(Doc::Message(Message::new(message!(
                 "The price per unit of the quantity: the invoice line's unit price."
+            )))),
+            Some(Doc::Message(Message::new(message!(
+                "The least the line bills: a smaller amount is raised to it, and the line says the minimum applied."
+            )))),
+            Some(Doc::Message(Message::new(message!(
+                "The most the line bills: a larger amount is lowered to it, and the line says the maximum applied."
             )))),
         ],
     }
@@ -257,6 +265,17 @@ fn callee_help(
             doc: Some(Doc::Message(Message::new(message!(
                 "The amount the bill's lines with this code or label add up to, or `none` when there are none."
             )))),
+            params: vec![None],
+        }),
+        Callee::BillCharge => Some(Help {
+            signature: build(
+                "bill.charge",
+                &[(String::from("line"), String::from("CODE | Text"), None)],
+                "Money?",
+            ),
+            doc: Some(Doc::Message(Message::new(
+                crate::tariff::schema::BILL_CHARGE_DOC,
+            ))),
             params: vec![None],
         }),
         Callee::Conversion(conversion) => {

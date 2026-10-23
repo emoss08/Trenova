@@ -1,17 +1,25 @@
-//! The bill: charge lines in order, notes, and the total clauses that finish it.
+//! The bill: charge lines in order, notes, review reasons, and the total clauses that finish
+//! it.
 //!
 //! A `charge` adds a [`Line`] with its label, code, exact amount, and the quantity and rate when
-//! they were given. Uncoded lines are freight; coded lines are accessorials. A line whose amount
-//! is exactly zero is dropped (the trace records it). A coded line with a negative amount is an
+//! they were given. A charge's `minimum:` and `maximum:` options limit its amount before it is
+//! added ([`limit`]): the line bills the limited amount and records the [`Limited`] amount it
+//! replaced. Uncoded lines are freight; coded lines are accessorials. A line whose amount is
+//! exactly zero is dropped (the trace records it). A coded line with a negative amount is an
 //! error naming the code; an uncoded line may be negative (a discount).
 //!
-//! [`Bill::finish`] applies the total clauses, in the order the language fixes:
+//! [`Bill::finish`] applies the total clauses, in the order the language fixes, each comparing
+//! exact amounts:
 //!
-//! 1. `minimum m`: when the total falls short of `m`, a positive [`LineKind::Minimum`] line
-//!    makes up the difference;
-//! 2. `maximum m`: when the total exceeds `m`, a negative [`LineKind::Maximum`] line brings it
+//! 1. `minimum m on freight`: when the freight lines fall short of `m`, a positive
+//!    [`LineKind::Minimum`] line on freight makes up the difference;
+//! 2. `maximum m on freight`: when they exceed `m`, a negative [`LineKind::Maximum`] line on
+//!    freight brings them down;
+//! 3. `minimum m`: when the total (the freight adjustments included) falls short of `m`, a
+//!    positive [`LineKind::Minimum`] line makes up the difference;
+//! 4. `maximum m`: when the total exceeds `m`, a negative [`LineKind::Maximum`] line brings it
 //!    down;
-//! 3. `round`: every line is rounded to cents with the clause's mode (half up when no `round`
+//! 5. `round`: every line is rounded to cents with the clause's mode (half up when no `round`
 //!    is written), the total is rounded to the clause's increment (cents or `$X`) with the same
 //!    mode, and any difference between the rounded total and the rounded lines' sum is a
 //!    [`LineKind::Rounding`] line, so the lines always add up to the total. A line that rounds
@@ -23,7 +31,8 @@
 //!
 //! A `best` or `worst` runs each option into a bill of its own, compares their
 //! [`Bill::subtotal`]s and [`Bill::splice`]s the kept one into the bill; [`Choices`] records
-//! every evaluation for the result's `choices` and for `chosen(…)` in tests.
+//! every evaluation for the result's `choices` and for `chosen(…)` in tests. While an option
+//! runs, `bill` reads the bills outside it and its own ([`Sums`]).
 
 use super::error::{Code, EvalError, Refusal};
 use super::value::{Value, money_digits};
@@ -70,6 +79,84 @@ impl LineKind {
     }
 }
 
+/// Which of a charge's limits applied.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum LimitKind {
+    /// `minimum:` raised the amount.
+    Minimum,
+    /// `maximum:` lowered the amount.
+    Maximum,
+}
+
+impl LimitKind {
+    /// The kind's wire name.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Minimum => "minimum",
+            Self::Maximum => "maximum",
+        }
+    }
+}
+
+/// A charge's limit that changed its amount: which, and the amount it replaced.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Limited {
+    /// Which limit applied.
+    pub kind: LimitKind,
+    /// The amount worked out before the limit: exact while charges are added, rounded like the
+    /// line by [`Bill::finish`].
+    pub computed: Decimal,
+}
+
+/// An amount with a charge's `minimum:` and `maximum:` applied, in that order, and the limit
+/// that changed it, if one did.
+///
+/// # Errors
+///
+/// When the minimum is above the maximum.
+pub fn limit(
+    amount: Decimal,
+    minimum: Option<Decimal>,
+    maximum: Option<Decimal>,
+) -> Result<(Decimal, Option<Limited>), EvalError> {
+    if let (Some(low), Some(high)) = (minimum, maximum)
+        && low > high
+    {
+        return Err(EvalError::with(
+            Code::Argument,
+            crate::message!("The charge's minimum {0} is above its maximum {1}"),
+            [
+                Arg::from(Value::money(low).display()),
+                Arg::from(Value::money(high).display()),
+            ],
+        ));
+    }
+    if let Some(low) = minimum
+        && amount < low
+    {
+        return Ok((
+            low,
+            Some(Limited {
+                kind: LimitKind::Minimum,
+                computed: amount,
+            }),
+        ));
+    }
+    if let Some(high) = maximum
+        && amount > high
+    {
+        return Ok((
+            high,
+            Some(Limited {
+                kind: LimitKind::Maximum,
+                computed: amount,
+            }),
+        ));
+    }
+    Ok((amount, None))
+}
+
 /// One line of the bill.
 #[derive(Debug, Clone)]
 pub struct Line {
@@ -86,6 +173,10 @@ pub struct Line {
     pub quantity: Option<Value>,
     /// The `rate:` option, when given.
     pub rate: Option<Value>,
+    /// The charge's limit, when one changed its amount.
+    pub limit: Option<Limited>,
+    /// Whether the line is the adjustment of a total clause `on freight`.
+    pub on_freight: bool,
     /// The `charge` statement, in the root file; `None` for adjustments.
     pub span: Option<Span>,
 }
@@ -110,6 +201,10 @@ pub struct Note {
 /// The total clauses a tariff wrote.
 #[derive(Debug, Clone, Default)]
 pub struct Clauses {
+    /// `minimum m on freight`, in the rating currency.
+    pub freight_minimum: Option<Decimal>,
+    /// `maximum m on freight`.
+    pub freight_maximum: Option<Decimal>,
     /// `minimum m`, in the rating currency.
     pub minimum: Option<Decimal>,
     /// `maximum m`.
@@ -125,6 +220,8 @@ pub struct Bill {
     pub lines: Vec<Line>,
     /// The notes, in order.
     pub notes: Vec<Note>,
+    /// The `review` reasons, in order, shaped like notes.
+    pub reviews: Vec<Note>,
 }
 
 /// A finished bill.
@@ -134,6 +231,8 @@ pub struct Finished {
     pub lines: Vec<Line>,
     /// The notes.
     pub notes: Vec<Note>,
+    /// The `review` reasons: a bill with any is held for approval.
+    pub reviews: Vec<Note>,
     /// Lines that came out zero and were dropped, for the trace.
     pub dropped: Vec<Line>,
     /// The uncoded lines' sum.
@@ -200,7 +299,7 @@ fn sum<'a>(mut lines: impl Iterator<Item = &'a Line>) -> Result<Decimal, EvalErr
     })
 }
 
-fn adjustment(kind: LineKind, amount: Decimal) -> Line {
+fn adjustment(kind: LineKind, amount: Decimal, on_freight: bool) -> Line {
     Line {
         kind,
         label: None,
@@ -208,8 +307,41 @@ fn adjustment(kind: LineKind, amount: Decimal) -> Line {
         amount,
         quantity: None,
         rate: None,
+        limit: None,
+        on_freight,
         span: None,
     }
+}
+
+/// A minimum and a maximum applied to `current`, the sum they bound: the adjustment lines they
+/// add and the sum after them.
+fn bound(
+    lines: &mut Vec<Line>,
+    current: Decimal,
+    minimum: Option<Decimal>,
+    maximum: Option<Decimal>,
+    on_freight: bool,
+) -> Result<Decimal, EvalError> {
+    let mut current = current;
+    if let Some(minimum) = minimum
+        && current < minimum
+    {
+        let difference = minimum
+            .checked_sub(current)
+            .ok_or_else(EvalError::overflow)?;
+        lines.push(adjustment(LineKind::Minimum, difference, on_freight));
+        current = minimum;
+    }
+    if let Some(maximum) = maximum
+        && current > maximum
+    {
+        let difference = maximum
+            .checked_sub(current)
+            .ok_or_else(EvalError::overflow)?;
+        lines.push(adjustment(LineKind::Maximum, difference, on_freight));
+        current = maximum;
+    }
+    Ok(current)
 }
 
 impl Bill {
@@ -247,6 +379,11 @@ impl Bill {
         self.notes.push(note);
     }
 
+    /// Adds a `review` reason.
+    pub fn review(&mut self, review: Note) {
+        self.reviews.push(review);
+    }
+
     /// Applies the total clauses and checks the result.
     ///
     /// # Errors
@@ -255,26 +392,27 @@ impl Bill {
     /// positive, or a sum overflows.
     pub fn finish(self, clauses: &Clauses) -> Result<Finished, EvalError> {
         let mut lines = self.lines;
-        let mut total = sum(lines.iter())?;
-        if let Some(minimum) = clauses.minimum
-            && total < minimum
-        {
-            let difference = minimum.checked_sub(total).ok_or_else(EvalError::overflow)?;
-            lines.push(adjustment(LineKind::Minimum, difference));
-            total = minimum;
-        }
-        if let Some(maximum) = clauses.maximum
-            && total > maximum
-        {
-            let difference = maximum.checked_sub(total).ok_or_else(EvalError::overflow)?;
-            lines.push(adjustment(LineKind::Maximum, difference));
-            total = maximum;
-        }
+        let freight = sum(lines.iter().filter(|line| line.freight()))?;
+        let accessorials = sum(lines.iter().filter(|line| !line.freight()))?;
+        let freight = bound(
+            &mut lines,
+            freight,
+            clauses.freight_minimum,
+            clauses.freight_maximum,
+            true,
+        )?;
+        let total = freight
+            .checked_add(accessorials)
+            .ok_or_else(EvalError::overflow)?;
+        let total = bound(&mut lines, total, clauses.minimum, clauses.maximum, false)?;
         let (mode, increment) = clauses.round.unwrap_or((RoundMode::HalfUp, cents()));
         let mut kept = Vec::with_capacity(lines.len() + 1);
         let mut dropped = Vec::new();
         for mut line in lines {
             line.amount = round_to(line.amount, cents(), mode)?;
+            if let Some(limited) = &mut line.limit {
+                limited.computed = round_to(limited.computed, cents(), mode)?;
+            }
             if line.amount.is_zero() {
                 dropped.push(line);
             } else {
@@ -286,7 +424,7 @@ impl Bill {
             .checked_sub(sum(kept.iter())?)
             .ok_or_else(EvalError::overflow)?;
         if !remainder.is_zero() {
-            kept.push(adjustment(LineKind::Rounding, remainder));
+            kept.push(adjustment(LineKind::Rounding, remainder, false));
         }
         let freight_total = sum(kept.iter().filter(|line| line.freight()))?;
         let accessorial_total = sum(kept.iter().filter(|line| !line.freight()))?;
@@ -305,6 +443,7 @@ impl Bill {
         Ok(Finished {
             lines: kept,
             notes: self.notes,
+            reviews: self.reviews,
             dropped,
             freight_total,
             accessorial_total,
@@ -323,11 +462,77 @@ impl Bill {
         sum(self.lines.iter())
     }
 
-    /// Appends another bill's lines and notes, in their order: a choice's kept option joining
-    /// the bill where the choice is written.
+    /// Appends another bill's lines, notes and reviews, in their order: a choice's kept option
+    /// joining the bill where the choice is written.
     pub fn splice(&mut self, other: Self) {
         self.lines.extend(other.lines);
         self.notes.extend(other.notes);
+        self.reviews.extend(other.reviews);
+    }
+
+    /// Adds this bill's lines to `sums`.
+    ///
+    /// # Errors
+    ///
+    /// When a sum overflows.
+    pub fn add_to(&self, sums: &mut Sums, wanted: Option<&Wanted>) -> Result<(), EvalError> {
+        for line in &self.lines {
+            let side = if line.freight() {
+                &mut sums.freight
+            } else {
+                &mut sums.accessorials
+            };
+            *side = side
+                .checked_add(line.amount)
+                .ok_or_else(EvalError::overflow)?;
+            let matches = match wanted {
+                Some(Wanted::Code(code)) => line.code.as_deref() == Some(code.as_str()),
+                Some(Wanted::Label(label)) => line.label.as_deref() == Some(label.as_str()),
+                None => false,
+            };
+            if matches {
+                sums.charge = Some(
+                    sums.charge
+                        .unwrap_or_default()
+                        .checked_add(line.amount)
+                        .ok_or_else(EvalError::overflow)?,
+                );
+            }
+        }
+        Ok(())
+    }
+}
+
+/// What `bill.charge(…)` names.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Wanted {
+    /// A charge code.
+    Code(String),
+    /// A label, as interpolated.
+    Label(String),
+}
+
+/// The bill so far, as `bill` reads it: the exact sums of the lines billed so far.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Sums {
+    /// The uncoded lines.
+    pub freight: Decimal,
+    /// The coded lines.
+    pub accessorials: Decimal,
+    /// The lines `bill.charge(…)` named, or `None` when there are none.
+    pub charge: Option<Decimal>,
+}
+
+impl Sums {
+    /// Every line.
+    ///
+    /// # Errors
+    ///
+    /// When the sum overflows.
+    pub fn total(&self) -> Result<Decimal, EvalError> {
+        self.freight
+            .checked_add(self.accessorials)
+            .ok_or_else(EvalError::overflow)
     }
 }
 
@@ -498,7 +703,7 @@ fn below_zero(template: &'static str, amount: Decimal) -> EvalError {
 
 #[cfg(test)]
 mod tests {
-    use super::{Bill, Billed, Clauses, Line, LineKind, cents, round_to};
+    use super::{Bill, Billed, Clauses, LimitKind, Line, LineKind, cents, limit, round_to};
     use crate::tariff::syntax::ast::RoundMode;
     use rust_decimal::Decimal;
     use std::str::FromStr;
@@ -515,6 +720,8 @@ mod tests {
             amount: d(amount),
             quantity: None,
             rate: None,
+            limit: None,
+            on_freight: false,
             span: None,
         }
     }
@@ -570,6 +777,58 @@ mod tests {
         let sum: Decimal = converted.lines.iter().copied().sum();
         assert_eq!(sum, converted.total);
         assert_eq!(converted.total, d("80.08"));
+    }
+
+    #[test]
+    fn freight_clauses_come_before_the_whole_bills() {
+        let mut bill = Bill::default();
+        assert!(bill.charge(line("300", None)).is_ok());
+        assert!(bill.charge(line("20", Some("FSC"))).is_ok());
+        let clauses = Clauses {
+            freight_minimum: Some(d("400")),
+            minimum: Some(d("450")),
+            ..Clauses::default()
+        };
+        let finished = bill.finish(&clauses).expect("a bill");
+        let adjustments: Vec<(LineKind, bool, Decimal)> = finished
+            .lines
+            .iter()
+            .filter(|line| line.kind != LineKind::Charge)
+            .map(|line| (line.kind, line.on_freight, line.amount))
+            .collect();
+        assert_eq!(
+            adjustments,
+            vec![
+                (LineKind::Minimum, true, d("100")),
+                (LineKind::Minimum, false, d("30")),
+            ]
+        );
+        assert_eq!(finished.freight_total, d("430"));
+        assert_eq!(finished.total, d("450"));
+    }
+
+    #[test]
+    fn a_line_limit_raises_then_lowers() {
+        let raised = limit(d("300"), Some(d("450")), None).expect("limited");
+        assert_eq!(raised.0, d("450"));
+        assert_eq!(
+            raised.1.map(|limited| limited.kind),
+            Some(LimitKind::Minimum)
+        );
+        assert_eq!(raised.1.map(|limited| limited.computed), Some(d("300")));
+        let lowered = limit(d("900"), Some(d("450")), Some(d("800"))).expect("limited");
+        assert_eq!(lowered.0, d("800"));
+        assert_eq!(
+            lowered.1.map(|limited| limited.kind),
+            Some(LimitKind::Maximum)
+        );
+        assert_eq!(
+            limit(d("500"), Some(d("450")), Some(d("800")))
+                .expect("kept")
+                .1,
+            None
+        );
+        assert!(limit(d("500"), Some(d("900")), Some(d("800"))).is_err());
     }
 
     #[test]

@@ -155,6 +155,11 @@ pub enum Want {
     },
     /// A total clause's amount.
     Total,
+    /// A charge's `minimum:` or `maximum:` option.
+    Limit {
+        /// The option.
+        option: String,
+    },
 }
 
 /// One module's check in progress.
@@ -216,7 +221,8 @@ pub struct Checker<'a> {
     pub choice: super::choose::ChoiceState,
 }
 
-/// The charges and choices a tariff writes, for checking `charge(…)` and `chosen(…)` in tests.
+/// The charges and choices a tariff writes, for checking `charge(…)` and `chosen(…)` in tests
+/// and `bill.charge(…)` in its own code.
 #[derive(Debug, Default, Clone)]
 pub struct Billed {
     /// Literal labels.
@@ -227,6 +233,8 @@ pub struct Billed {
     pub any_label: bool,
     /// The labels of the file's `best` and `worst` choices, for `chosen(…)` in tests.
     pub choices: Vec<String>,
+    /// Every `charge` of the file with where it is written, for `bill.charge(…)`'s order.
+    pub sites: Vec<super::bill::ChargeSite>,
 }
 
 impl Checker<'_> {
@@ -342,6 +350,8 @@ impl Checker<'_> {
             && (self.schema.root(&name.text).is_some() || name.text == "tables")
         {
             Some((Message::new(message!("a schema root")), None))
+        } else if self.kind == FileKind::Tariff && name.text == "bill" {
+            Some((Message::new(message!("the bill so far")), None))
         } else {
             match self.globals.values.get(&name.text) {
                 Some(Global::Input { .. }) if matches!(self.body, Body::Top) => Some((

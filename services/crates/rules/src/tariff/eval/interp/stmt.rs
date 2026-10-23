@@ -4,14 +4,14 @@ use super::expr::internal;
 use super::{Env, Flow, Interp, refusal};
 use crate::message::Arg;
 use crate::span::Span;
-use crate::tariff::eval::bill::{Billed, Line, LineKind, Note, cents};
+use crate::tariff::eval::bill::{self, Billed, Line, LineKind, Note, cents};
 use crate::tariff::eval::error::{EvalError, Stop};
 use crate::tariff::eval::operators;
 use crate::tariff::eval::trace::{Event, MAX_ITERATIONS};
 use crate::tariff::eval::value::Value;
 use crate::tariff::syntax::ast::{
     AssignOp, Block, Charge, Expr, ExprKind, ForStmt, IfStmt, ItemKind, RoundTo, Stmt, StmtKind,
-    TotalClause,
+    Text, TotalClause,
 };
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
@@ -97,17 +97,12 @@ impl<'a> Interp<'_, 'a> {
                 Ok(Flow::Normal)
             }
             StmtKind::Note(text) => {
-                let text = self.interpolate(env, text)?;
-                if self.traced(env) {
-                    self.trace.push(Event::Note {
-                        text: text.clone(),
-                        span: stmt.span,
-                    });
-                }
-                self.bill.note(Note {
-                    text,
-                    span: stmt.span,
-                });
+                self.note(env, text, stmt.span, false)?;
+                Ok(Flow::Normal)
+            }
+            StmtKind::Review(text) => {
+                self.cover_in(env, stmt.span);
+                self.note(env, text, stmt.span, true)?;
                 Ok(Flow::Normal)
             }
             StmtKind::If(statement) => self.if_statement(env, statement, stmt.span),
@@ -157,6 +152,32 @@ impl<'a> Interp<'_, 'a> {
                 Ok(Flow::Normal)
             }
         }
+    }
+
+    /// A `note`, or a `review` reason: interpolated, traced and added to the bill.
+    fn note(
+        &mut self,
+        env: &mut Env,
+        text: &'a Text,
+        span: Span,
+        review: bool,
+    ) -> Result<(), Stop> {
+        let text = self.interpolate(env, text)?;
+        if self.traced(env) {
+            let text = text.clone();
+            self.trace.push(if review {
+                Event::Review { text, span }
+            } else {
+                Event::Note { text, span }
+            });
+        }
+        let note = Note { text, span };
+        if review {
+            self.bill.review(note);
+        } else {
+            self.bill.note(note);
+        }
+        Ok(())
     }
 
     fn refuse(&mut self, env: &Env, text: String, span: Span) -> Stop {
@@ -222,14 +243,20 @@ impl<'a> Interp<'_, 'a> {
         let label = self.interpolate(env, &charge.label)?;
         let mut quantity = None;
         let mut rate = None;
+        let mut minimum = None;
+        let mut maximum = None;
         for option in &charge.options {
             let value = self.eval(env, &option.value)?;
             match option.name.as_ref().map(|name| name.text.as_str()) {
                 Some("quantity") => quantity = Some(value),
                 Some("rate") => rate = Some(value),
+                Some("minimum") => minimum = Some(Self::money(&value, "A charge's minimum")?),
+                Some("maximum") => maximum = Some(Self::money(&value, "A charge's maximum")?),
                 _ => {
                     return Err(internal(
-                        crate::message!("A charge takes only quantity and rate options"),
+                        crate::message!(
+                            "A charge takes only quantity, rate, minimum and maximum options"
+                        ),
                         [],
                     ));
                 }
@@ -248,6 +275,8 @@ impl<'a> Interp<'_, 'a> {
             }
         };
         let amount = Self::money(&amount, "A charge's amount")?;
+        let (amount, limit) =
+            bill::limit(amount, minimum, maximum).map_err(|error| Stop::Failed(error.at(span)))?;
         let code = charge.code.as_ref().map(|code| code.text.clone());
         let line = Line {
             kind: LineKind::Charge,
@@ -256,6 +285,8 @@ impl<'a> Interp<'_, 'a> {
             amount,
             quantity,
             rate,
+            limit,
+            on_freight: false,
             span: Some(span),
         };
         let billed = self
@@ -268,6 +299,7 @@ impl<'a> Interp<'_, 'a> {
                     label,
                     code,
                     amount,
+                    limit,
                     span,
                 },
                 Billed::Dropped => Event::Dropped {
@@ -282,13 +314,23 @@ impl<'a> Interp<'_, 'a> {
 
     fn total_clause(&mut self, env: &mut Env, clause: &'a TotalClause) -> Result<(), Stop> {
         match clause {
-            TotalClause::Minimum(amount) => {
-                let value = self.eval(env, amount)?;
-                self.clauses.minimum = Some(Self::money(&value, "minimum")?);
+            TotalClause::Minimum(bound) => {
+                let value = self.eval(env, &bound.amount)?;
+                let amount = Some(Self::money(&value, "minimum")?);
+                if bound.on_freight() {
+                    self.clauses.freight_minimum = amount;
+                } else {
+                    self.clauses.minimum = amount;
+                }
             }
-            TotalClause::Maximum(amount) => {
-                let value = self.eval(env, amount)?;
-                self.clauses.maximum = Some(Self::money(&value, "maximum")?);
+            TotalClause::Maximum(bound) => {
+                let value = self.eval(env, &bound.amount)?;
+                let amount = Some(Self::money(&value, "maximum")?);
+                if bound.on_freight() {
+                    self.clauses.freight_maximum = amount;
+                } else {
+                    self.clauses.maximum = amount;
+                }
             }
             TotalClause::Round { mode, to } => {
                 let increment = match to {

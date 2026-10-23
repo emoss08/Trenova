@@ -338,15 +338,17 @@ impl Checker<'_> {
         }
     }
 
-    /// A new name a `vary` binds: it may not shadow an input or the bill's `total` and
-    /// `lines`, besides what any binding may not shadow.
+    /// A new name a `vary` binds: it may not shadow an input or the bill's `total`, `lines`
+    /// and `reviews`, besides what any binding may not shadow.
     fn vary_name(&mut self, name: &Name, ty: Type) {
         let taken = if matches!(
             self.globals.values.get(&name.text),
             Some(super::checker::Global::Input { .. })
         ) {
             Some(Message::new(message!("an input")))
-        } else if self.kind == FileKind::Tariff && matches!(name.text.as_str(), "total" | "lines") {
+        } else if self.kind == FileKind::Tariff
+            && super::catalog::TEST_NAMES.contains(&name.text.as_str())
+        {
             Some(Message::new(message!(
                 "what a property reads from the bill"
             )))
@@ -950,7 +952,7 @@ impl Checker<'_> {
         let mut found: Vec<Span> = Vec::new();
         super::visit::expr(condition, &mut |node| match &node.kind {
             ExprKind::Name(name)
-                if matches!(name.text.as_str(), "total" | "lines")
+                if super::catalog::TEST_NAMES.contains(&name.text.as_str())
                     && self.scopes.find(&name.text).is_none()
                     && !self.globals.values.contains_key(&name.text) =>
             {

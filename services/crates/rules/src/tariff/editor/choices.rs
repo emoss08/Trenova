@@ -24,13 +24,27 @@ pub const CHOSEN_DOC: &str = crate::message!(
 pub fn choices(file: &File) -> Vec<&Choose> {
     let mut out = Vec::new();
     statements(file, &mut |stmt| {
-        if let StmtKind::Choose(choose) = &stmt.kind
+        let written = match &stmt.kind {
+            StmtKind::Choose(choose) => Some(choose),
+            StmtKind::Let(binding) | StmtKind::Var(binding) => valued(&binding.value),
+            StmtKind::Assign { value, .. } => valued(value),
+            _ => None,
+        };
+        if let Some(choose) = written
             && !choose.label.text.is_empty()
         {
             out.push(choose);
         }
     });
     out
+}
+
+/// The choice a binding's or assignment's value is, when it is one.
+fn valued(value: &Expr) -> Option<&Choose> {
+    match &value.kind {
+        ExprKind::Choose(choose) => Some(choose),
+        _ => None,
+    }
 }
 
 /// The first choice of a file with a label.

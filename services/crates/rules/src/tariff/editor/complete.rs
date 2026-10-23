@@ -685,6 +685,15 @@ fn member(site: &Site<'_, '_>, items: &mut Items) {
             }
             return;
         }
+        ExprKind::Name(name)
+            if name.text == "bill"
+                && site.located.body == Body::Top
+                && site.kind() == FileKind::Tariff
+                && alias_module(site, &name.text).is_none() =>
+        {
+            bill_members(items);
+            return;
+        }
         ExprKind::Name(name) => {
             if let Some(module) = alias_module(site, &name.text) {
                 module_members(site, items, module);
@@ -703,6 +712,21 @@ fn member(site: &Site<'_, '_>, items: &mut Items) {
     let rewrite = (!optional_dot && ty.is_optional())
         .then(|| Span::new(dot_span.start, site.offset.max(dot_span.end)));
     members(items, ty.unwrapped(), rewrite);
+}
+
+/// What `bill.` reads: the sums of the bill so far and `charge(…)`.
+fn bill_members(items: &mut Items) {
+    members(
+        items,
+        &Type::Record(crate::tariff::schema::bill_type()),
+        None,
+    );
+    if let Some(item) = items.add(Rank::Expected, Kind::Method, "charge") {
+        item.insert = String::from("charge($0)");
+        item.snippet = true;
+        item.detail = Some(String::from("charge(line: CODE | Text) -> Money?"));
+        item.doc = Some(Doc::message(crate::tariff::schema::BILL_CHARGE_DOC));
+    }
 }
 
 /// The expression a `.` at `dot` reads from.
@@ -1413,7 +1437,7 @@ fn inside(site: &Site<'_, '_>, bracket: &Bracket, items: &mut Items) -> Then {
     names::arguments(site, items, call, bracket, at_part_start)
 }
 
-/// A charge's `quantity:` and `rate:` options not written yet.
+/// A charge's `quantity:`, `rate:`, `minimum:` and `maximum:` options not written yet.
 fn charge_options(items: &mut Items, bracket: &Bracket) {
     for (option, doc) in [
         (
@@ -1423,6 +1447,18 @@ fn charge_options(items: &mut Items, bracket: &Bracket) {
         (
             "rate",
             crate::message!("The price per unit of the quantity: the invoice line's unit price."),
+        ),
+        (
+            "minimum",
+            crate::message!(
+                "The least the line bills: a smaller amount is raised to it, and the line says the minimum applied."
+            ),
+        ),
+        (
+            "maximum",
+            crate::message!(
+                "The most the line bills: a larger amount is lowered to it, and the line says the maximum applied."
+            ),
         ),
     ] {
         if bracket.named.iter().any(|(_, name)| name == option) {

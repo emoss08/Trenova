@@ -73,10 +73,18 @@ impl Visit for Uses<'_> {
         let ExprKind::Call { callee, args } = &expr.kind else {
             return;
         };
-        let (ExprKind::Name(name), [arg]) = (&callee.kind, args.as_slice()) else {
+        let [arg] = args.as_slice() else {
             return;
         };
-        if name.text != "charge" {
+        let reads = match &callee.kind {
+            ExprKind::Name(name) => name.text == "charge",
+            ExprKind::Field { target, name, .. } => {
+                name.text == "charge"
+                    && matches!(&target.kind, ExprKind::Name(root) if root.text == "bill")
+            }
+            _ => false,
+        };
+        if !reads {
             return;
         }
         if let ExprKind::Name(code) = &arg.value.kind

@@ -259,6 +259,7 @@ impl Formatter<'_> {
             | ExprKind::If { .. }
             | ExprKind::Match { .. }
             | ExprKind::Lambda { .. } => self.compound(expr),
+            ExprKind::Choose(choose) => self.choose(choose, expr.span.end),
             ExprKind::Missing => Doc::text(""),
         }
     }

@@ -66,6 +66,10 @@ impl Checker<'_> {
                 {
                     return self.table_method(expr, code, name, args);
                 }
+                if self.is_bill(target) {
+                    self.record(callee, Type::Error);
+                    return self.bill_call(expr, target, name, args);
+                }
                 self.method_call(expr, callee, target, name, *optional, args)
             }
             ExprKind::Name(name) => self.named_call(expr, name, args, expected),
@@ -389,7 +393,7 @@ impl Checker<'_> {
     }
 
     /// The span of a call's parentheses, where a missing argument is reported.
-    fn parens_span(&self, call: &Expr) -> Span {
+    pub(super) fn parens_span(&self, call: &Expr) -> Span {
         let ExprKind::Call { callee, .. } = &call.kind else {
             return call.span;
         };

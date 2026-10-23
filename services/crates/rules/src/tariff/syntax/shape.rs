@@ -312,6 +312,7 @@ fn write_simple_stmt(line: &mut String, kind: &StmtKind) {
             }
         }
         StmtKind::Note(text) => write_word_text(line, "note", text),
+        StmtKind::Review(text) => write_word_text(line, "review", text),
         StmtKind::Fail(text) => write_word_text(line, "fail", text),
         StmtKind::Require { condition, message } => {
             line.push_str("require ");
@@ -376,13 +377,16 @@ fn write_word_expr(line: &mut String, word: &str, value: &Expr) {
 
 fn write_total(out: &mut String, clause: &TotalClause) {
     match clause {
-        TotalClause::Minimum(value) => {
-            out.push_str("minimum ");
-            write_expr(out, value);
-        }
-        TotalClause::Maximum(value) => {
-            out.push_str("maximum ");
-            write_expr(out, value);
+        TotalClause::Minimum(bound) | TotalClause::Maximum(bound) => {
+            out.push_str(if matches!(clause, TotalClause::Minimum(_)) {
+                "minimum "
+            } else {
+                "maximum "
+            });
+            write_expr(out, &bound.amount);
+            if let Some(on) = &bound.on {
+                let _ = write!(out, " on {}", on.text);
+            }
         }
         TotalClause::Round { mode, to } => {
             out.push_str(match mode {
@@ -568,12 +572,14 @@ fn write_kind(out: &mut String, kind: &ExprKind) {
         | ExprKind::Record(_)
         | ExprKind::If { .. }
         | ExprKind::Match { .. }
+        | ExprKind::Choose(_)
         | ExprKind::Lambda { .. } => write_compound(out, kind),
         ExprKind::Missing => out.push('?'),
     }
 }
 
-/// Lists, records, `if`, `match` and lambdas.
+/// Lists, records, `if`, `match`, choices and lambdas; a choice's option blocks are written
+/// inline, their statements separated by `;`.
 fn write_compound(out: &mut String, kind: &ExprKind) {
     match kind {
         ExprKind::List(items) => {
@@ -621,6 +627,21 @@ fn write_compound(out: &mut String, kind: &ExprKind) {
                     ArmBody::Block(_) => out.push_str("{block}"),
                 }
                 out.push(']');
+            }
+            out.push(')');
+        }
+        ExprKind::Choose(choose) => {
+            let _ = write!(out, "({} {:?}", choose.kind.keyword(), choose.label.text);
+            for option in &choose.options {
+                let mut body = Shape::default();
+                body.block(0, &option.body);
+                let lines: Vec<&str> = body.text.lines().collect();
+                let _ = write!(
+                    out,
+                    " [option {:?} {{{}}}]",
+                    option.label.text,
+                    lines.join("; ")
+                );
             }
             out.push(')');
         }

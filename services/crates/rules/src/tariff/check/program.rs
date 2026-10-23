@@ -14,7 +14,7 @@ use crate::span::Span;
 use crate::tariff::context::Context;
 use crate::tariff::diagnostic::{Diagnostic, Severity};
 use crate::tariff::docs::Doc;
-use crate::tariff::schema::{Schema, TABLES_DOC};
+use crate::tariff::schema::{BILL_DOC, Schema, TABLES_DOC, bill_type};
 use crate::tariff::syntax::ast::{
     FileKind, FnBody, FnDecl, ItemKind, Stmt, StmtKind, TextPart, TotalClause,
 };
@@ -44,6 +44,14 @@ pub fn check(program: &Program, context: &Context) -> Analysis {
         span: None,
         ty: None,
         doc: Some(Doc::message(TABLES_DOC)),
+    });
+    state.symbols.push(Symbol {
+        name: String::from("bill"),
+        kind: SymbolKind::Root,
+        module: None,
+        span: None,
+        ty: Some(Type::Record(bill_type())),
+        doc: Some(Doc::message(BILL_DOC)),
     });
     let mut modules: Vec<ModuleAnalysis> = program
         .modules
@@ -425,6 +433,7 @@ fn unused_globals(
 /// `charge(…)` and `chosen(…)`.
 fn billed(stmts: &[&Stmt]) -> super::checker::Billed {
     let mut out = super::checker::Billed::default();
+    let mut valued = Vec::new();
     for stmt in stmts {
         super::visit::stmt(
             stmt,
@@ -442,9 +451,15 @@ fn billed(stmts: &[&Stmt]) -> super::checker::Billed {
                     }
                 }
             },
-            &mut |_| {},
+            &mut |expr| {
+                if let crate::tariff::syntax::ast::ExprKind::Choose(choose) = &expr.kind {
+                    valued.push(choose.label.text.clone());
+                }
+            },
         );
     }
+    out.choices.extend(valued);
+    out.sites = super::bill::sites(stmts);
     out
 }
 
@@ -456,9 +471,11 @@ fn top_level(checker: &mut Checker<'_>, stmts: &[&Stmt], kind: FileKind, header:
     for (index, stmt) in stmts.iter().enumerate() {
         if let StmtKind::Total(clause) = &stmt.kind {
             let rank = match clause {
-                TotalClause::Minimum(_) => 0,
-                TotalClause::Maximum(_) => 1,
-                TotalClause::Round { .. } => 2,
+                TotalClause::Minimum(bound) if bound.on_freight() => 0,
+                TotalClause::Maximum(bound) if bound.on_freight() => 1,
+                TotalClause::Minimum(_) => 2,
+                TotalClause::Maximum(_) => 3,
+                TotalClause::Round { .. } => 4,
             };
             total_order(checker, &totals, rank, stmt.span);
             totals.push((rank, stmt.span));
@@ -522,7 +539,7 @@ fn total_order(checker: &mut Checker<'_>, seen: &[(u8, Span)], rank: u8, span: S
                 "total-order",
                 span,
                 Message::new(message!(
-                    "Total clauses go in the order `minimum`, `maximum`, `round`"
+                    "Total clauses go in the order `minimum … on freight`, `maximum … on freight`, `minimum`, `maximum`, `round`"
                 )),
             )
             .with_related(
@@ -533,20 +550,67 @@ fn total_order(checker: &mut Checker<'_>, seen: &[(u8, Span)], rank: u8, span: S
     }
 }
 
-/// When both a minimum and a maximum fold, the minimum may not be above the maximum.
+/// When a minimum and a maximum fold, the minimum may not be above the maximum: the freight
+/// clauses against each other, the whole bill's against each other, and a freight minimum
+/// against the whole bill's maximum (accessorials only add to the total, so freight above the
+/// bill's maximum can't be kept).
 fn minimum_over_maximum(checker: &mut Checker<'_>, stmts: &[&Stmt]) {
-    let mut minimum = None;
-    let mut maximum = None;
+    type Clause<'s> = Option<(&'s crate::tariff::syntax::ast::Expr, Span)>;
+    let (mut freight_low, mut freight_high, mut low, mut high): (Clause, Clause, Clause, Clause) =
+        (None, None, None, None);
     for stmt in stmts {
         match &stmt.kind {
-            StmtKind::Total(TotalClause::Minimum(value)) => minimum = Some((value, stmt.span)),
-            StmtKind::Total(TotalClause::Maximum(value)) => maximum = Some((value, stmt.span)),
+            StmtKind::Total(TotalClause::Minimum(bound)) if bound.on_freight() => {
+                freight_low = Some((&bound.amount, stmt.span));
+            }
+            StmtKind::Total(TotalClause::Maximum(bound)) if bound.on_freight() => {
+                freight_high = Some((&bound.amount, stmt.span));
+            }
+            StmtKind::Total(TotalClause::Minimum(bound)) => low = Some((&bound.amount, stmt.span)),
+            StmtKind::Total(TotalClause::Maximum(bound)) => {
+                high = Some((&bound.amount, stmt.span));
+            }
             _ => {}
         }
     }
-    let (Some((low, low_span)), Some((high, high_span))) = (minimum, maximum) else {
-        return;
-    };
+    let pairs = [
+        (
+            freight_low,
+            freight_high,
+            message!(
+                "The freight minimum is above the freight maximum, so no freight total satisfies both"
+            ),
+        ),
+        (
+            low,
+            high,
+            message!("The minimum is above the maximum, so no total satisfies both"),
+        ),
+        (
+            freight_low,
+            high,
+            message!("The freight minimum is above the bill's maximum, so no bill satisfies both"),
+        ),
+    ];
+    for (minimum, maximum, template) in pairs {
+        let (Some((low, low_span)), Some((high, high_span))) = (minimum, maximum) else {
+            continue;
+        };
+        if above(checker, low, high) {
+            checker.report(
+                Diagnostic::error("total-order", low_span, Message::new(template))
+                    .with_related(high_span, Message::new(message!("The maximum"))),
+            );
+        }
+    }
+}
+
+/// Whether `low` and `high` both fold and `low` is the larger.
+pub(super) fn above(
+    checker: &Checker<'_>,
+    low: &crate::tariff::syntax::ast::Expr,
+    high: &crate::tariff::syntax::ast::Expr,
+) -> bool {
     let fold = |expr: &crate::tariff::syntax::ast::Expr| -> Option<super::consts::Value> {
         let none = |_: &crate::tariff::syntax::ast::Expr| None;
         let type_of = |id| checker.recorded(id);
@@ -558,20 +622,9 @@ fn minimum_over_maximum(checker: &mut Checker<'_>, stmts: &[&Stmt]) {
         .ok()
     };
     let (Some(low_value), Some(high_value)) = (fold(low), fold(high)) else {
-        return;
+        return false;
     };
-    if super::consts::compare(&low_value, &high_value) == Some(std::cmp::Ordering::Greater) {
-        checker.report(
-            Diagnostic::error(
-                "total-order",
-                low_span,
-                Message::new(message!(
-                    "The minimum is above the maximum, so no total satisfies both"
-                )),
-            )
-            .with_related(high_span, Message::new(message!("The maximum"))),
-        );
-    }
+    super::consts::compare(&low_value, &high_value) == Some(std::cmp::Ordering::Greater)
 }
 
 /// A condition's last statement: the `Bool` it decides.

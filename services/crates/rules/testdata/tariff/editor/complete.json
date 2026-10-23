@@ -3084,6 +3084,136 @@
      "FSC"
     ]
    }
+  },
+  {
+   "name": "after bill's dot, its sums and charge(…)",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = bill.|"
+   ],
+   "expect": {
+    "includes": [
+     "freight",
+     "accessorials",
+     "total",
+     "charge"
+    ],
+    "excludes": [
+     "round",
+     "weight"
+    ],
+    "items": {
+     "freight": {
+      "kind": "field",
+      "detail": "Money"
+     },
+     "charge": {
+      "kind": "method",
+      "detail": "charge(line: CODE | Text) -> Money?"
+     }
+    }
+   }
+  },
+  {
+   "name": "bill is a name in a tariff's own code",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = |"
+   ],
+   "expect": {
+    "includes": [
+     "bill",
+     "shipment"
+    ],
+    "items": {
+     "bill": {
+      "kind": "name",
+      "detail": "Bill"
+     }
+    }
+   }
+  },
+  {
+   "name": "bill is no name in a function or a test, which reads reviews instead",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "reviews",
+     "total",
+     "lines"
+    ],
+    "excludes": [
+     "bill"
+    ]
+   }
+  },
+  {
+   "name": "bill is no name in a condition",
+   "source": [
+    "condition \"c\"",
+    "|"
+   ],
+   "expect": {
+    "excludes": [
+     "bill",
+     "review"
+    ]
+   }
+  },
+  {
+   "name": "a charge's options include its limits",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" (quantity: 1 mi, |) = $1"
+   ],
+   "expect": {
+    "includes": [
+     "rate:",
+     "minimum:",
+     "maximum:"
+    ],
+    "excludes": [
+     "quantity:"
+    ]
+   }
+  },
+  {
+   "name": "bill.charge offers the codes and labels the tariff bills",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $1",
+    "charge \"Fuel\" as FSC = $1",
+    "let x = bill.charge(|)"
+   ],
+   "expect": {
+    "includes": [
+     "FSC",
+     "\"Linehaul\""
+    ]
+   }
+  },
+  {
+   "name": "review starts a statement in a tariff",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $1",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "review",
+     "best",
+     "note"
+    ]
+   }
   }
  ]
 }

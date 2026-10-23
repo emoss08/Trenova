@@ -24,8 +24,10 @@
 //! {"results": [{"id": "rule-1", "status": "rated" | "refused" | "error" | "needs",
 //!   "bill": {"lines": [{"kind": "charge", "label": "Linehaul", "code": null, "freight": true,
 //!                       "amount": {"$q": "1908.2", "u": "$"}, "quantity": …, "rate": …,
+//!                       "limit": null | {"kind": "minimum", "computed": …}, "on": null,
 //!                       "range": {"from": 0, "to": 40}}],
-//!            "notes": [{"text": "…", "range": …}], "freightTotal": …, "accessorialTotal": …,
+//!            "notes": [{"text": "…", "range": …}], "reviews": [{"text": "…", "range": …}],
+//!            "freightTotal": …, "accessorialTotal": …,
 //!            "total": …, "converted": {"currency": "CAD", "rate": "1.3502", "lines": […],
 //!            "total": …}},
 //!   "value": true,
@@ -39,7 +41,10 @@
 //! ```
 //!
 //! `bill` is present for a rated tariff, `value` for a condition, `refusal`, `error` and
-//! `needs` for those statuses. `choices` is every `best` and `worst` the run evaluated, in the
+//! `needs` for those statuses. A line's `limit` is set when its `minimum:` or `maximum:` changed
+//! its amount (`computed` is the amount it replaced, rounded like the line); `on` is `freight`
+//! for the adjustment of a total clause `on freight`. `reviews` are the `review` reasons, shaped
+//! like `notes`: a bill with any is held for approval. `choices` is every `best` and `worst` the run evaluated, in the
 //! order their evaluation began, at most 200: each option's `status` is `chosen`, `lost` or
 //! `refused`, with its exact `subtotal` or its `refusal`; `chosen` is `null` when every option
 //! refused. A result that never ran, and a condition, has `"choices": []`. A refusal's `message` is the author's text, or a `Message` when
@@ -431,10 +436,39 @@ fn line_json(line: &Line, index: &Utf16Index) -> Json {
         ("quantity", optional(line.quantity.as_ref())),
         ("rate", optional(line.rate.as_ref())),
         (
+            "limit",
+            line.limit
+                .as_ref()
+                .map_or(Json::Null, super::trace::limit_json),
+        ),
+        (
+            "on",
+            if line.on_freight {
+                Json::String(String::from("freight"))
+            } else {
+                Json::Null
+            },
+        ),
+        (
             "range",
             line.span.map_or(Json::Null, |span| range(span, index)),
         ),
     ])
+}
+
+/// Notes or review reasons on the wire: `[{"text", "range"}]`.
+fn notes_json(notes: &[super::bill::Note], index: &Utf16Index) -> Json {
+    Json::Array(
+        notes
+            .iter()
+            .map(|note| {
+                object(vec![
+                    ("text", Json::String(note.text.clone())),
+                    ("range", range(note.span, index)),
+                ])
+            })
+            .collect(),
+    )
 }
 
 /// A finished bill on the wire.
@@ -450,20 +484,8 @@ pub fn bill_json(bill: &Finished, index: &Utf16Index) -> Json {
                     .collect(),
             ),
         ),
-        (
-            "notes",
-            Json::Array(
-                bill.notes
-                    .iter()
-                    .map(|note| {
-                        object(vec![
-                            ("text", Json::String(note.text.clone())),
-                            ("range", range(note.span, index)),
-                        ])
-                    })
-                    .collect(),
-            ),
-        ),
+        ("notes", notes_json(&bill.notes, index)),
+        ("reviews", notes_json(&bill.reviews, index)),
         ("freightTotal", money(bill.freight_total)),
         ("accessorialTotal", money(bill.accessorial_total)),
         ("total", money(bill.total)),

@@ -548,7 +548,7 @@
     "contents": {
      "signature": "charge",
      "doc": {
-      "message": "Adds a line to the bill: `charge \"Label\" as CODE (quantity: q, rate: r) = amount`; in a test, `charge(CODE)` reads a line's amount."
+      "message": "Adds a line to the bill: `charge \"Label\" as CODE (quantity: q, rate: r, minimum: lo, maximum: hi) = amount`; in a test, `charge(CODE)` reads a line's amount."
      }
     }
    }
@@ -1055,7 +1055,7 @@
     "contents": {
      "signature": "best",
      "doc": {
-      "message": "Bills the cheapest of several methods: each `option` runs, and the one with the lowest subtotal joins the bill."
+      "message": "Bills the cheapest of several methods: each `option` runs, and the one with the lowest subtotal joins the bill. `let x = best \"Label\" …` also names that subtotal."
      }
     }
    }
@@ -1077,7 +1077,7 @@
     "contents": {
      "signature": "worst",
      "doc": {
-      "message": "Bills the dearest of several methods: each `option` runs, and the one with the highest subtotal joins the bill."
+      "message": "Bills the dearest of several methods: each `option` runs, and the one with the highest subtotal joins the bill. `let x = worst \"Label\" …` also names that subtotal."
      }
     }
    }
@@ -1526,6 +1526,101 @@
        "`\"Nope\"`"
       ]
      }
+    }
+   }
+  },
+  {
+   "name": "bill and its doc",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = bi|ll.freight * 10%"
+   ],
+   "expect": {
+    "range": {
+     "text": "bill"
+    },
+    "contents": {
+     "signature": "bill: Bill",
+     "doc": {
+      "message": "The bill so far: the lines billed above this line, exact, after each line's own minimum and maximum and before the total clauses and rounding. Inside a `best` option, the bill outside the choice plus that option's own lines."
+     }
+    }
+   }
+  },
+  {
+   "name": "a sum of the bill so far",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = bill.frei|ght * 10%"
+   ],
+   "expect": {
+    "range": {
+     "text": "freight"
+    },
+    "contents": {
+     "signature": "freight: Money",
+     "doc": {
+      "message": "The sum of the freight (uncoded) lines billed so far, exact."
+     }
+    }
+   }
+  },
+  {
+   "name": "bill.charge(…)",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = (bill.cha|rge(\"Linehaul\") ?? $0) * 10%"
+   ],
+   "expect": {
+    "range": {
+     "text": "charge"
+    },
+    "contents": {
+     "signature": "bill.charge(line: CODE | Text) -> Money?",
+     "doc": {
+      "message": "The sum of the lines billed so far with this label (as interpolated) or charge code, as in `bill.charge(\"Linehaul\")` or `bill.charge(FSC)`; `none` when there are none."
+     }
+    }
+   }
+  },
+  {
+   "name": "review",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "rev|iew \"Check the permit\""
+   ],
+   "expect": {
+    "range": {
+     "text": "review"
+    },
+    "contents": {
+     "signature": "review",
+     "doc": {
+      "message": "Bills as usual and asks for the rating to be approved before it is used, with this text as the reason: `review \"Hazmat over 500 miles\"`."
+     }
+    }
+   }
+  },
+  {
+   "name": "a choice written as a value",
+   "source": [
+    "tariff \"t\"",
+    "let line|haul = best \"Linehaul\" {",
+    "  option \"A\" { charge \"A\" = $1 }",
+    "  option \"B\" { charge \"B\" = $2 }",
+    "}",
+    "charge \"Fuel\" as FSC = linehaul * 10%"
+   ],
+   "expect": {
+    "range": {
+     "text": "linehaul"
+    },
+    "contents": {
+     "signature": "let linehaul: Money"
     }
    }
   }

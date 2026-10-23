@@ -89,6 +89,10 @@ const CORPUS: &[(&str, &str)] = &[
         "properties",
         include_str!("../../../testdata/tariff/check/properties.json"),
     ),
+    (
+        "bill",
+        include_str!("../../../testdata/tariff/check/bill.json"),
+    ),
 ];
 
 fn text(value: &Json) -> String {
@@ -170,6 +174,7 @@ fn usual(code: &str) -> Severity {
         "unreachable",
         "unreachable-arm",
         "not-billed",
+        "bill-order",
         "doc",
     ];
     if WARNINGS.contains(&code) {
@@ -434,7 +439,7 @@ fn spec_file(index: usize, block: &str) -> String {
             let mut lines: Vec<&str> = block.lines().collect();
             let last = lines.pop().unwrap_or_default();
             format!(
-                "tariff \"t\"\ninput rate: Money/mi = $2/mi\ninput fuelPercent: Percent = 10%\nlet miles = shipment.distance\nlet linehaul = rate * miles\n{}\nfor stop in shipment.stops {{\n  let billable = stop.dwell ?? 0 h\n  {last}\n}}\n",
+                "tariff \"t\"\ninput rate: Money/mi = $2/mi\ninput fuelPercent: Percent = 10%\nlet miles = shipment.distance\n{}\nfor stop in shipment.stops {{\n  let billable = stop.dwell ?? 0 h\n  {last}\n}}\n",
                 lines.join("\n")
             )
         }
@@ -442,12 +447,18 @@ fn spec_file(index: usize, block: &str) -> String {
             "tariff \"t\"\ninput rate: Money/mi = $2/mi\ninput flatRate: Money = $500\ninput volumeRate: Money/lb = $0.10/lb\n{block}\n"
         ),
         6 => format!(
-            "tariff \"t\"\nenum Service {{ Standard, Guaranteed, Expedited }}\n{block}\ncharge \"x\" = rate * shipment.distance + $1 * freeStops\nnote \"{{service}}\"\n"
+            "tariff \"t\"\ninput rate: Money/mi = $2/mi\ninput flatRate: Money = $500\ninput fuelPercent: Percent = 10%\n{block}\n"
+        ),
+        7 => format!(
+            "tariff \"t\"\ninput rate: Money/mi = $2/mi\ninput flatRate: Money = $500\n{block}\n"
         ),
         8 => format!(
+            "tariff \"t\"\nenum Service {{ Standard, Guaranteed, Expedited }}\n{block}\ncharge \"x\" = rate * shipment.distance + $1 * freeStops\nnote \"{{service}}\"\n"
+        ),
+        10 => format!(
             "tariff \"t\"\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\ncharge \"Linehaul\" = $1/lb * w\n{block}\n"
         ),
-        9 => format!(
+        11 => format!(
             "tariff \"t\"\ninput rate: Money/mi = $2.35/mi where $1/mi..=$5/mi\ncharge \"Linehaul\" (quantity: shipment.distance, rate: rate)\ncharge \"Weight\" = $0.01/lb * (shipment.weight ?? 0 lb)\nminimum $450\n{block}\n"
         ),
         _ => block.to_owned(),
@@ -457,7 +468,7 @@ fn spec_file(index: usize, block: &str) -> String {
 #[test]
 fn the_references_examples_check_clean() {
     let blocks = spec_blocks();
-    assert_eq!(blocks.len(), 10, "the reference's tariff blocks changed");
+    assert_eq!(blocks.len(), 12, "the reference's tariff blocks changed");
     let context = spec_context();
     for (index, block) in blocks.iter().enumerate() {
         let source = spec_file(index, block);
