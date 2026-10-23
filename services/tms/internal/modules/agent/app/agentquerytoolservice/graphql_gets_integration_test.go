@@ -33,6 +33,8 @@ var convertedGets = map[string]string{
 	"carrier_list":            "carrier_get",
 	"equipment_list_tractors": "equipment_get_tractor",
 	"equipment_list_trailers": "equipment_get_trailer",
+	"formula_list_templates":  "formula_get_template",
+	"formula_list_libraries":  "formula_get_library",
 }
 
 func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.T) {

@@ -25,6 +25,10 @@ reads:
     operation: DeskVehiclePositions
     reason: The tool is named for positions, which no kind claims; its rows are each tractor's latest reading.
   - tool: equipment_list_types
+  - tool: formula_list_templates
+  - tool: formula_get_template
+  - tool: formula_list_libraries
+  - tool: formula_get_library
   - tool: location_list_categories
   - tool: masterdata_list_accessorial_charges
   - tool: masterdata_list_commodities

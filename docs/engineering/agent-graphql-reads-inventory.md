@@ -124,13 +124,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `factoring_list_remittances` | op | factoringRemittances | FactoringRemittanceTable (alt FactoringRemittances) | cursor | bespoke FactoringRemittanceListInput (table + factoringCompanyId, inboundMessageId, statuses) | Same RemittanceService.ListConnection. Two ops on the root; Table picked per rule. |
 | `factoring_list_submissions` | op | factoringSubmissions | FactoringSubmissionTable | cursor | bespoke FactoringSubmissionListInput (table + factoringCompanyId, statuses) | Same SubmissionService.List. |
 
-## formula
-
-| tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
-|---|---|---|---|---|---|---|
-| `formula_get_template` | field-no-op | formulaTemplate | propose DeskFormulaTemplateCard | n/a | id | Same FormulaTemplateRepository.GetByID via service; no persisted op reads formulaTemplate(id). |
-| `formula_list_templates` | op | formulaTemplates | FormulaTemplateTable | cursor | DataTable fieldFilters only | Same repository list. |
-
 ## fuel
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
@@ -311,9 +304,10 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 91 |
-| op, converted (rows removed) | 28 |
-| field-no-op | 6 |
+| op, not yet converted | 90 |
+| op, converted (rows removed) | 29 |
+| field-no-op, not yet converted | 5 |
+| field-no-op, converted (rows removed) | 1 |
 | partial, not yet converted | 23 |
 | partial, converted (rows removed) | 7 |
 | none | 21 |

@@ -203,6 +203,8 @@ func graphQLGetSpecs() []getSpec {
 		carrierIntelEventGetSpec(),
 		tractorGetSpec(),
 		trailerGetSpec(),
+		formulaTemplateGetSpec(),
+		formulaLibraryGetSpec(),
 	}
 }
 
@@ -232,7 +234,7 @@ func getCatalogSpecs() []getSpec {
 		locationGetSpec(),
 		specOfGet(newGetDetentionOccurrenceTool(nil, nil, nil)),
 		specOfGet(newGetServiceFailureTool(nil, nil)),
-		specOfGet(newGetFormulaTemplateTool(nil, nil)),
+		formulaTemplateGetSpec(),
 	}
 }
 
