@@ -7,9 +7,9 @@ templates:
       /// Bills one flat amount for the shipment.
 
       /// The amount the shipment pays.
-      input rate: Money
+      input rate: Money where $1..=$100_000
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       charge "Flat Rate" = rate
 
@@ -35,9 +35,9 @@ templates:
       /// Bills the rate for every mile of the shipment's distance.
 
       /// The rate per mile.
-      input rate: Money/mi
+      input rate: Money/mi where $0.50/mi..=$15/mi
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       charge "Per Mile" (quantity: shipment.distance, rate: rate)
 
@@ -57,6 +57,65 @@ templates:
         expect total == $450
       }
 
+  - name: Per Mile or Flat
+    description: A rate per mile that never bills more than a flat amount; the shipment pays whichever is lower.
+    source: |
+      tariff "Per Mile or Flat"
+
+      /// Bills the lower of the rate for every mile and the flat amount, so a long haul is
+      /// capped at the flat price.
+
+      /// The rate per mile.
+      input rate: Money/mi where $0.50/mi..=$15/mi
+      /// The most the shipment pays for its linehaul.
+      input flatRate: Money where $1..=$100_000
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0 where $0..=$100_000
+
+      best "Linehaul" {
+        option "Per mile" {
+          charge "Per Mile" (quantity: shipment.distance, rate: rate)
+        }
+        option "Flat" {
+          charge "Flat Rate" = flatRate
+        }
+      }
+
+      minimum minimumCharge
+
+      test "a short haul bills its miles" {
+        given input.rate = $2.50/mi
+        given input.flatRate = $1_500
+        given shipment.distance = 400 mi
+        expect charge("Per Mile") == $1_000
+        expect chosen("Linehaul") == "Per mile"
+        expect total == $1_000
+      }
+
+      test "a long haul is capped at the flat amount" {
+        given input.rate = $2.50/mi
+        given input.flatRate = $1_500
+        given shipment.distance = 900 mi
+        expect charge("Flat Rate") == $1_500
+        expect chosen("Linehaul") == "Flat"
+        expect total == $1_500
+      }
+
+      test "the minimum lifts a short haul" {
+        given input.rate = $2.50/mi
+        given input.flatRate = $1_500
+        given input.minimumCharge = $450
+        given shipment.distance = 100 mi
+        expect total == $450
+      }
+
+      property "never more than the flat amount" {
+        vary shipment.distance in 1 mi..3_000 mi
+        vary input.rate
+        given input.flatRate = $1_500
+        expect total <= $1_500
+      }
+
   - name: Per Stop
     description: A rate for every stop on the shipment.
     source: |
@@ -65,9 +124,9 @@ templates:
       /// Bills the rate for every stop, pickups and deliveries alike.
 
       /// The rate per stop.
-      input rate: Money/stop
+      input rate: Money/stop where $1/stop..=$2_500/stop
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       charge "Per Stop" (quantity: shipment.stops.len, rate: rate)
 
@@ -93,9 +152,9 @@ templates:
       /// Bills the rate for every pound of the shipment's weight.
 
       /// The rate per pound.
-      input rate: Money/lb
+      input rate: Money/lb where $0.01/lb..=$10/lb
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       require let weight = shipment.weight else "This rate needs the shipment's weight"
 
@@ -123,9 +182,9 @@ templates:
       /// Bills the rate for every pallet, counted from the shipment's pieces.
 
       /// The rate per pallet.
-      input rate: Money/pallet
+      input rate: Money/pallet where $1/pallet..=$1_000/pallet
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       require let pallets = shipment.pieces else "This rate needs the shipment's pallet count"
 
@@ -153,9 +212,9 @@ templates:
       /// Bills the rate for every piece of the shipment.
 
       /// The rate per piece.
-      input rate: Money/piece
+      input rate: Money/piece where $0.10/piece..=$500/piece
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       require let pieces = shipment.pieces else "This rate needs the shipment's piece count"
 
@@ -184,9 +243,9 @@ templates:
       /// Bills the rate for every linear foot of trailer the freight occupies.
 
       /// The rate per linear foot.
-      input rate: Money/ft
+      input rate: Money/ft where $1/ft..=$500/ft
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       charge "Per Linear Foot" (quantity: shipment.linearFeet, rate: rate)
 
@@ -213,9 +272,9 @@ templates:
       /// Bills the rate for every hundred pounds, with the weight billed up to the next hundred.
 
       /// The rate per hundredweight.
-      input rate: Money/cwt
+      input rate: Money/cwt where $1/cwt..=$500/cwt
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       require let weight = shipment.weight else "This rate needs the shipment's weight"
 
@@ -237,6 +296,12 @@ templates:
         expect fails "This rate needs the shipment's weight"
       }
 
+      property "heavier never bills less" {
+        vary shipment.weight in 1 lb..40_000 lb
+        given input.rate = $18.50/cwt
+        expect total nondecreasing in shipment.weight
+      }
+
   - name: Per Hour
     description: A rate for every hour of service, from the stop times unless billed hours are set.
     source: |
@@ -246,11 +311,11 @@ templates:
       /// the time the shipment took between its stops.
 
       /// The rate per hour.
-      input rate: Money/h
+      input rate: Money/h where $10/h..=$1_000/h
       /// Hours to bill instead of the stop times; leave at 0 h to use the stop times.
-      input billedHours: Duration = 0 h
+      input billedHours: Duration = 0 h where 0 h..=200 h
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       let hours = if billedHours > 0 h { billedHours } else { shipment.duration }
 
@@ -279,9 +344,9 @@ templates:
       /// Bills a share of the shipment's sell total, for carrier pay written as a percentage.
 
       /// The share of the sell total to pay.
-      input rate: Percent
+      input rate: Percent where 1%..=100%
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       require let sell = rating.sellTotal else "This rate needs the shipment's sell total, so it only rates the buy side"
 
@@ -318,7 +383,7 @@ templates:
       /// Whether a heavier break may bill when it costs less than the actual weight.
       input allowDeficit: Bool = true
       /// The least the shipment pays.
-      input minimumCharge: Money = $0
+      input minimumCharge: Money = $0 where $0..=$100_000
 
       require let weight = shipment.weight else "This rate needs the shipment's weight"
 
@@ -359,4 +424,15 @@ templates:
         ]
         given shipment.weight = 100 lb
         expect total == $90
+      }
+
+      property "heavier never bills less" {
+        vary shipment.weight in 1 lb..40_000 lb
+        given input.breaks = [
+          { from: 0 lb, rate: $42/cwt, minimum: $90 },
+          { from: 500 lb, rate: $35.50/cwt, minimum: none },
+          { from: 1_000 lb, rate: $28.10/cwt, minimum: none },
+          { from: 5_000 lb, rate: $19.75/cwt, minimum: none },
+        ]
+        expect total nondecreasing in shipment.weight
       }
