@@ -178,7 +178,7 @@ func checkReferences(params []graphQLParam, args map[string]any) error {
 				return err
 			}
 		case paramIn, paramEquals, paramContains, paramDayFrom, paramDayTo, paramAtLeast,
-			paramAtMost, paramPresent, paramInstantFrom, paramInstantTo:
+			paramAtMost, paramPresent, paramInstantFrom, paramInstantTo, paramDayText:
 		}
 	}
 
