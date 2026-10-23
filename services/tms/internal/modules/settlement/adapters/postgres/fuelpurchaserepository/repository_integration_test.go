@@ -714,3 +714,40 @@ func TestAccumulateFuelGroupsByTractorJurisdictionAndFuelType(t *testing.T) {
 	assert.Equal(t, f.tractorB, otherTenant[0].TractorID)
 	assert.Equal(t, "500.000", otherTenant[0].Gallons.StringFixed(3))
 }
+
+// The cards screen's search, through the real database after the migrations,
+// finds a card by its label or its last four digits, and never by the card
+// provider's own id, which the search vector no longer holds.
+func TestCardSearchMatchesTheLabelAndLastFourOnly(t *testing.T) {
+	f := setup(t)
+
+	card := f.newCard(f.tenantA, "4321")
+	card.Label = "Fleet card East"
+	card.ExternalCardID = "PROV-998877"
+	created, err := f.repo.CreateCard(f.ctx, card)
+	require.NoError(t, err)
+	_, err = f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "5555"))
+	require.NoError(t, err)
+
+	search := func(query string) []pulid.ID {
+		t.Helper()
+		listed, listErr := f.repo.ListCards(f.ctx, &fuelpurchaseports.ListFuelCardsRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: f.tenantA,
+				Query:      query,
+				Pagination: pagination.Info{Limit: 10},
+			},
+			Cursor: pagination.CursorInfo{Limit: 10},
+		})
+		require.NoError(t, listErr)
+		ids := make([]pulid.ID, 0, len(listed.Items))
+		for _, item := range listed.Items {
+			ids = append(ids, item.ID)
+		}
+		return ids
+	}
+
+	assert.Equal(t, []pulid.ID{created.ID}, search("4321"), "by its last four")
+	assert.Equal(t, []pulid.ID{created.ID}, search("East"), "by its label")
+	assert.Empty(t, search("PROV-998877"), "never by the provider's own id")
+}
