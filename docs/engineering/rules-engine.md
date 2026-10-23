@@ -299,11 +299,14 @@ error.
 The checker's are listed in the header of `src/tariff/check/mod.rs`: unknown names (with "did
 you mean" fixes), `unknown-code` and `inactive-code`, `type-mismatch`, `unit-mismatch`,
 `optional` (with `?? zero`, `if let` and `require let` fixes), scope rules, call rules, rate
-table rules, charge and total-clause rules, `match` exhaustiveness and overlap, the warnings
-(`unused`, `unreachable`, `no-charge`, `needless-fallback`, `bounds` for code an input's
-`where` bounds make dead, and the rest), `unknown-option` for a `chosen` compared with a label
-that is no option, `constraint` (including a test's `given` outside the bounds), and
-`input-value`.
+table rules, charge and total-clause rules (a line limit or total clause whose minimum is
+above its maximum is `total-order` or `charge-option`), `match` exhaustiveness and overlap, the
+warnings (`unused`, `unreachable`, `no-charge`, `needless-fallback`, `bounds` for code an
+input's `where` bounds make dead, `bill-order` for a `bill.charge(…)` of a line billed only
+later, and the rest), `misplaced` for a `best` used as a value anywhere but the whole value of
+a `let`, `var` or assignment and for `bill` or `review` outside a tariff's own code,
+`unknown-option` for a `chosen` compared with a label that is no option, `constraint`
+(including a test's `given` outside the bounds), and `input-value`.
 
 ### The gate
 
@@ -354,8 +357,10 @@ Response:
 {"results": [{"id": "rule-1", "status": "rated" | "refused" | "error" | "needs",
   "bill": {"lines": [{"kind": "charge", "label": "Linehaul", "code": null, "freight": true,
                       "amount": {"$q": "1908.2", "u": "$"}, "quantity": …, "rate": …,
-                      "range": {"from": 0, "to": 40}}],
-           "notes": [{"text": "…", "range": …}], "freightTotal": …, "accessorialTotal": …,
+                      "limit": null | {"kind": "minimum" | "maximum", "computed": {"$q": "1175", "u": "$"}},
+                      "on": null | "freight", "range": {"from": 0, "to": 40}}],
+           "notes": [{"text": "…", "range": …}], "reviews": [{"text": "…", "range": …}],
+           "freightTotal": …, "accessorialTotal": …,
            "total": …, "converted": {"currency": "CAD", "rate": "1.3502", "lines": […],
            "total": …}},
   "value": true,
@@ -377,7 +382,7 @@ Response:
   `chosen` is the kept option's label, or `null` when every option refused. Each option's
   `status` is `chosen`, `lost` or `refused`, with its exact `subtotal` (money) or its `refusal`
   (shaped like a result's). A tariff with no choices sends `"choices": []`; a condition never has
-  any. The trace also records each choice as a `choice` event (`label`, `chosen`).
+  any. The trace also records each choice as a `choice` event (`label`, `chosen`, `subtotal`).
 
 - **The four statuses.** `rated`: a tariff's `bill`, or a condition's `value` (true or
   false). `refused`: a `refusal`, whose `message` is the author's interpolated text (`fail`,
@@ -388,8 +393,15 @@ Response:
   `rounding` for the total clauses' adjustment lines, which carry no label (the host labels
   them in the reader's language) and no range. `freight` is true for an uncoded line;
   adjustments are uncoded, so they count as freight. `amount` is money; `quantity` and `rate`
-  are the wire values a `charge … (quantity:, rate:)` gave, else `null`. A zero line is dropped
-  and noted on the trace. `freightTotal`, `accessorialTotal` and `total` are money; the lines
+  are the wire values a `charge … (quantity:, rate:)` gave, else `null`. `limit` is `null`
+  unless the charge's `minimum:` or `maximum:` changed its amount: then `kind` names the limit
+  and `computed` is the amount it replaced (rounded to cents like the line), so the quantity
+  and rate no longer multiply to `amount` and the invoice says the minimum (or maximum)
+  applied. `on` is `freight` for the adjustment of a `minimum … on freight` or `maximum … on
+  freight` clause and `null` on every other line. A zero line is dropped and noted on the
+  trace. `notes` and `reviews` are `{text, range}` in the order they ran: a `review` asks the
+  host to hold the rated bill for approval with its reasons (a losing `best` option's are
+  dropped, as its notes are). `freightTotal`, `accessorialTotal` and `total` are money; the lines
   always add up to the total. With `exchange`, `converted` gives each line's amount in the
   billing currency (in `lines`' order, rounded to cents with the bill's round mode), the total
   rounded with the bill's mode and increment, and any difference on the rounding line's
@@ -400,8 +412,10 @@ Response:
   produced), each with its `range`: `bind` and `assign` (`name`, `value`, `display`), `branch`
   (`taken`: the branch's index, or `null` when nothing ran), `arm`, `loop` (`name`,
   `iterations`), `iteration` (`name`, `index`, `value`, `display`), `charge` (`label`, `code`,
-  `value`, `display`), `dropped` (a zero line), `note`, `refusal` and `lookup` (an index into
-  `lookups`). It keeps at most 2,000 events (then one `{"kind": "truncated"}`), 50 iterations
+  `value`, `display`, and `limit`: `null`, or `{kind, computed}` with the exact amount a line
+  limit replaced), `dropped` (a zero line), `note` and `review` (`text`), `refusal`, `choice`
+  (`label`, `chosen`, and `subtotal`: the kept option's exact subtotal, the value a `let`
+  binds, or `null`) and `lookup` (an index into `lookups`). It keeps at most 2,000 events (then one `{"kind": "truncated"}`), 50 iterations
   per loop, 50 items of a list and 500 characters of display text. `display` is the text
   interpolation would write.
 - **Lookups** are every table read, at most 500: `{table, op, keys, match, adjusted, value,
@@ -512,15 +526,16 @@ applies to each test. Output:
   text (`1000 lb`, `$250.00`); a listed `vary` item displays as written (`[pickup(), delivery()]`).
 - **Coverage** is the root file's regions with their `hits` across every test and property case
   of the run, in source order. `kind` is `if` (a branch block of an `if` or `else if`), `else`,
-  `arm` (a `match` arm), `loop` (a `for` body), `option`, `charge`, `refusal` (a `fail`, the
-  refusing side of a `require` or of `?? fail`) or `function` (a function body); `range` is the
+  `arm` (a `match` arm), `loop` (a `for` body), `option`, `charge`, `review`, `refusal` (a
+  `fail`, the refusing side of a `require` or of `?? fail`) or `function` (a function body); `range` is the
   region's block or statement. `reached` counts regions with `hits > 0`. `coverage` is `null`
   when the file does not check, when any test ended in `needs`, or when `names` ran only some
   tests.
 
 - A test starts from the sample record and the inputs' defaults, applies its `given`s in order
   (a record path or `input.name`), runs the file, then runs its `expect`s with `charge(CODE)`,
-  `charge("Label")`, `total` and `lines` in scope. A test in a library runs its body with no
+  `charge("Label")`, `chosen("Label")`, `total`, `lines` and `reviews` (the review reasons, a
+  `List<Text>`) in scope. A test in a library runs its body with no
   rating.
 - A failing `expect` reports each operand's `display` and wire `value`, so the author sees what
   the tariff computed. An evaluation error makes the status `error`, with the error. `bill` is
