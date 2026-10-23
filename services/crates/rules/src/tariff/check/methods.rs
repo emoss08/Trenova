@@ -36,6 +36,10 @@ pub enum Receiver {
     Date,
     /// `DateTime`.
     DateTime,
+    /// `Time`.
+    Time,
+    /// The `FreightClass` schema enum.
+    FreightClass,
     /// `List<T>`.
     List,
 }
@@ -52,6 +56,8 @@ impl Receiver {
             Self::Text => "Text",
             Self::Date => "Date",
             Self::DateTime => "DateTime",
+            Self::Time => "Time",
+            Self::FreightClass => "FreightClass",
             Self::List => "List<T>",
         }
     }
@@ -67,6 +73,10 @@ impl Receiver {
             Type::Text => Some(Self::Text),
             Type::Date => Some(Self::Date),
             Type::DateTime => Some(Self::DateTime),
+            Type::Time => Some(Self::Time),
+            Type::Enum(enumeration) if enumeration.name == "FreightClass" => {
+                Some(Self::FreightClass)
+            }
             Type::List(_) => Some(Self::List),
             _ => None,
         }
@@ -128,6 +138,8 @@ pub enum Rule {
     Date,
     /// `Weekday`.
     Weekday,
+    /// `Time`.
+    Time,
     /// `Int` without `places`, `Number` with it.
     Round,
     /// The receiver converted to the unit argument.
@@ -672,6 +684,15 @@ pub static METHODS: &[Method] = &[
         message!("The calendar date, in the date-time's own offset."),
     ),
     property(
+        "time",
+        R::DateTime,
+        "Time",
+        Rule::Time,
+        message!(
+            "The time of day, in the date-time's own offset: the clock at the stop, as in `stop.arrival?.time`."
+        ),
+    ),
+    property(
         "weekday",
         R::DateTime,
         "Weekday",
@@ -700,6 +721,35 @@ pub static METHODS: &[Method] = &[
         "DateTime",
         Rule::Same,
         message!("The instant `n` hours later."),
+    ),
+    method(
+        "addMinutes",
+        R::DateTime,
+        DAYS,
+        "DateTime",
+        Rule::Same,
+        message!("The instant `n` minutes later (earlier when `n` is negative)."),
+    ),
+    property(
+        "hour",
+        R::Time,
+        "Int",
+        Rule::Int,
+        message!("The hour, 0 to 23."),
+    ),
+    property(
+        "minute",
+        R::Time,
+        "Int",
+        Rule::Int,
+        message!("The minute, 0 to 59."),
+    ),
+    property(
+        "number",
+        R::FreightClass,
+        "Number",
+        Rule::Number,
+        message!("The class as a number: `Class77_5.number` is `77.5`."),
     ),
     property(
         "len",

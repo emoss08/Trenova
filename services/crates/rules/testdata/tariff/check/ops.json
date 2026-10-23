@@ -859,6 +859,9 @@
       },
       {
        "path": "std.accessorials"
+      },
+      {
+       "path": "std.tiers"
       }
      ]
     }

@@ -878,6 +878,7 @@ fn is_literal(expr: &Expr) -> bool {
         | ExprKind::Percent(_)
         | ExprKind::Date(_)
         | ExprKind::DateTime(_)
+        | ExprKind::Time(_)
         | ExprKind::Bool(_)
         | ExprKind::None
         | ExprKind::Path { .. } => true,

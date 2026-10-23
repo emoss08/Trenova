@@ -366,6 +366,7 @@ impl Writer<'_> {
             (Value::Text(text), _) => text_literal(text),
             (Value::Date(date), _) => format!("@{}", date.iso()),
             (Value::DateTime(at), _) => format!("@{}", at.iso()),
+            (Value::Time(time), _) => format!("@{}", time.display()),
             (Value::Enum(variant), Type::Enum(enumeration)) => {
                 variant_literal(variant, &enumeration.name)
             }

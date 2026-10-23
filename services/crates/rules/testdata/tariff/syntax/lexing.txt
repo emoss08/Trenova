@@ -191,7 +191,7 @@ error "@2026-10-22T08:00+18:30"
 @2026-1-1
 ---
 error "@2026-1-1"
-! syntax 0..9 Write a date as `@2026-10-22`, or a date and time as `@2026-10-22T08:00-05:00`
+! syntax 0..9 Write a date as `@2026-10-22`, a date and time as `@2026-10-22T08:00-05:00`, or a time of day as `@17:30`
 
 === in after a number before a value is the keyword
 5 in [5, 6]

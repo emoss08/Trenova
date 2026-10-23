@@ -3084,6 +3084,90 @@
      "FSC"
     ]
    }
+  },
+  {
+   "name": "a date-time offers its time of day and minutes",
+   "source": [
+    "tariff \"t\"",
+    "let t = rating.date.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "time",
+     "addMinutes",
+     "addHours",
+     "hour"
+    ],
+    "items": {
+     "time": {
+      "kind": "property",
+      "detail": "time: Time"
+     },
+     "addMinutes": {
+      "kind": "method",
+      "detail": "addMinutes(n: Int) -> DateTime"
+     }
+    }
+   }
+  },
+  {
+   "name": "a time of day offers its hour and minute",
+   "source": [
+    "tariff \"t\"",
+    "let t = rating.date.time",
+    "let h = t.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "hour",
+     "minute"
+    ],
+    "excludes": [
+     "addMinutes",
+     "date"
+    ],
+    "items": {
+     "hour": {
+      "kind": "property",
+      "detail": "hour: Int"
+     }
+    }
+   }
+  },
+  {
+   "name": "a freight class offers its number",
+   "source": [
+    "tariff \"t\"",
+    "let c = shipment.freightClass ?? Class50",
+    "let n = c.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "number"
+    ],
+    "items": {
+     "number": {
+      "kind": "property",
+      "detail": "number: Number"
+     }
+    }
+   }
+  },
+  {
+   "name": "Time is a type",
+   "source": [
+    "tariff \"t\"",
+    "input open: Ti|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Time"
+    ]
+   }
   }
  ]
 }

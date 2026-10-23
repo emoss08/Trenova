@@ -325,6 +325,7 @@ impl Declarer<'_> {
             name: qualified(self.module, &decl.name.text),
             variants,
             doc,
+            ordered: false,
         }
     }
 

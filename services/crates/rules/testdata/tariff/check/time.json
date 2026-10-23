@@ -1,0 +1,380 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "times of day are values with an order and arithmetic",
+   "source": [
+    "tariff \"t\"",
+    "let at = rating.date",
+    "let t = at.time",
+    "let open = @17:00 - @08:30",
+    "if t >= @17:30 and t in @08:00..@17:00 and at.addMinutes(90).time.hour > 3 and t.minute == 0 {",
+    "  charge \"Late\" = $1/h * open",
+    "}"
+   ],
+   "types": {
+    "@17:00 - @08:30": "Duration",
+    "at.addMinutes(90)": "DateTime",
+    "at.addMinutes(90).time.hour": "Int",
+    "t": "Time"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rating.date < @17:00",
+     "code": "unit-mismatch",
+     "fixes": [
+      {
+       "label": "Use its time of day: `rating.date.time`",
+       "result": [
+        "tariff \"t\"",
+        "if rating.date.time < @17:00 {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      }
+     ],
+     "message": "`rating.date` is a date and time and `@17:00` is a time of day. `rating.date < @17:00` compares a date and time with a time of day. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "a date-time compared with a time of day offers its time",
+   "source": [
+    "tariff \"t\"",
+    "if rating.date < @17:00 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.pickup?.arrival == @08:00",
+     "code": "type-mismatch",
+     "fixes": [
+      {
+       "label": "Use its time of day: `shipment.pickup?.arrival?.time`",
+       "result": [
+        "tariff \"t\"",
+        "if shipment.pickup?.arrival?.time == @08:00 {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      }
+     ],
+     "message": "`shipment.pickup?.arrival` is a date and time that may be empty and `@08:00` is a time of day, so they can't be compared"
+    }
+   ],
+   "name": "a date-time tested for equality with a time offers its time",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.pickup?.arrival == @08:00 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "7",
+     "code": "type-mismatch",
+     "fixes": [
+      {
+       "label": "Write it as the time `@07:00`",
+       "result": [
+        "tariff \"t\"",
+        "use std.time.{ afterHours }",
+        "if afterHours(rating.date, open: @07:00) {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      }
+     ],
+     "message": "`7` is a whole number, but `open` of `afterHours` takes a time of day"
+    }
+   ],
+   "name": "a whole hour where a time is needed is written as a time",
+   "source": [
+    "tariff \"t\"",
+    "use std.time.{ afterHours }",
+    "if afterHours(rating.date, open: 7) {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rating.date",
+     "code": "type-mismatch",
+     "fixes": [
+      {
+       "label": "Use its time of day: `rating.date.time`",
+       "result": [
+        "tariff \"t\"",
+        "use std.time.{ afterHours }",
+        "input close: Time = @17:00",
+        "if afterHours(rating.date, close: rating.date.time) or close == @17:00 {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      }
+     ],
+     "message": "`rating.date` is a date and time, but `close` of `afterHours` takes a time of day",
+     "nth": 2
+    }
+   ],
+   "name": "a date-time where a time is needed offers its time",
+   "source": [
+    "tariff \"t\"",
+    "use std.time.{ afterHours }",
+    "input close: Time = @17:00",
+    "if afterHours(rating.date, close: rating.date) or close == @17:00 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "the fixed comparisons check clean",
+   "source": [
+    "tariff \"t\"",
+    "use std.time.{ afterHours }",
+    "if rating.date.time < @17:00 and shipment.pickup?.arrival?.time == @08:00 and afterHours(rating.date, open: @07:00) {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "@17:00 + 30 min",
+     "code": "unit-mismatch",
+     "message": "`@17:00` is a time of day and `30 min` is a duration. `@17:00 + 30 min` adds a time of day to a duration. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "a time of day can't be added to",
+   "source": [
+    "tariff \"t\"",
+    "let later = @17:00 + 30 min",
+    "charge \"x\" = $1",
+    "note \"{later}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "@24:00",
+     "code": "syntax",
+     "message": "@24:00 is not a real time of day: hours run from 00 to 23, minutes and seconds from 00 to 59"
+    }
+   ],
+   "name": "a time of day outside the clock is refused",
+   "source": [
+    "tariff \"t\"",
+    "if rating.date.time > @24:00 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "time ranges in a match cover the day from midnight",
+   "source": [
+    "library \"t\"",
+    "fn band(at: DateTime) -> Int = match at.time {",
+    "  @00:00..@08:00 => 1",
+    "  @08:00..@17:00 => 2",
+    "  @17:00..=@23:59:59 => 3",
+    "}",
+    "fn open(at: DateTime) -> Bool = match at.time {",
+    "  ..@08:00 => false",
+    "  @08:00..@17:00 => true",
+    "  @17:00.. => false",
+    "}"
+   ],
+   "types": {}
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `at.time` doesn't cover from `@08:00` up to `@09:00` and `@17:00` and above. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a time match names the hours it leaves out",
+   "source": [
+    "library \"t\"",
+    "fn band(at: DateTime) -> Int = match at.time {",
+    "  @00:00..@08:00 => 1",
+    "  @09:00..@17:00 => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "@11:00..",
+     "code": "match-overlap",
+     "message": "This arm overlaps an arm above it: from `@11:00` up to `@12:00` matches both",
+     "related": [
+      {
+       "at": "..@12:00",
+       "line": 3,
+       "message": "The arm it overlaps"
+      }
+     ]
+    }
+   ],
+   "name": "overlapping time ranges name both arms",
+   "source": [
+    "library \"t\"",
+    "fn band(at: DateTime) -> Int = match at.time {",
+    "  ..@12:00 => 1",
+    "  @11:00.. => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": {
+      "range": {
+       "max": {
+        "$time": "23:59:00"
+       },
+       "maxInclusive": true,
+       "min": {
+        "$time": "00:00:00"
+       }
+      }
+     },
+     "default": {
+      "$time": "08:00:00"
+     },
+     "descriptor": {
+      "kind": "time"
+     },
+     "doc": "When the dock opens.",
+     "name": "open",
+     "range": {
+      "from": 42,
+      "to": 46
+     },
+     "required": false,
+     "type": "Time"
+    },
+    {
+     "constraint": null,
+     "default": null,
+     "descriptor": {
+      "inner": {
+       "kind": "time"
+      },
+      "kind": "optional"
+     },
+     "doc": null,
+     "name": "close",
+     "range": {
+      "from": 90,
+      "to": 95
+     },
+     "required": false,
+     "type": "Time?"
+    }
+   ],
+   "name": "a time input has a descriptor, a wire default and a constraint",
+   "source": [
+    "tariff \"t\"",
+    "/// When the dock opens.",
+    "input open: Time = @08:00 where @00:00..=@23:59",
+    "input close: Time? = none",
+    "charge \"x\" = $1",
+    "note \"{open} {close ?? @17:00}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "@18:00",
+     "code": "constraint",
+     "message": "`close` must be at least 06:00 and below 17:00; 18:00 is outside it"
+    }
+   ],
+   "name": "a time default outside its constraint is refused",
+   "source": [
+    "tariff \"t\"",
+    "input close: Time = @18:00 where @06:00..@17:00",
+    "charge \"x\" = $1",
+    "note \"{close}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "code": "input-value",
+     "message": "\"25:00:00\" is not a time of day (HH:MM:SS, from 00:00:00 to 23:59:59)",
+     "path": "rule.close"
+    },
+    {
+     "code": "input-value",
+     "message": "`open` must be from 00:00 to 23:59; 23:59:30 is outside it",
+     "path": "rule.open"
+    }
+   ],
+   "name": "contract time values are checked against the type and the constraint",
+   "source": [
+    "tariff \"t\"",
+    "input open: Time = @08:00 where @00:00..=@23:59",
+    "input close: Time = @17:00",
+    "charge \"x\" = $1",
+    "note \"{open} {close}\""
+   ],
+   "values": {
+    "rule": {
+     "close": {
+      "$time": "25:00:00"
+     },
+     "open": {
+      "$time": "23:59:30"
+     }
+    }
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "close < @12:00",
+     "code": "bounds",
+     "message": "This is never true: `close` is always within `@12:00..=@20:00`",
+     "severity": "warning"
+    }
+   ],
+   "name": "a time input's bounds decide comparisons with a constant",
+   "source": [
+    "tariff \"t\"",
+    "input close: Time = @17:00 where @12:00..=@20:00",
+    "if close < @12:00 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a time range in a property varies by the minute",
+   "source": [
+    "tariff \"t\"",
+    "input close: Time = @17:00 where @12:00..=@20:00",
+    "charge \"x\" = $1",
+    "property \"closing never changes the bill\" {",
+    "  vary input.close",
+    "  vary late in @17:00..=@23:00",
+    "  assume late >= close or late < @17:30",
+    "  expect total == $1",
+    "}"
+   ]
+  }
+ ]
+}

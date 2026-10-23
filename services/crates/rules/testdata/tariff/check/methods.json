@@ -547,7 +547,7 @@
     {
      "at": "s.kind",
      "code": "unordered",
-     "message": "`sortBy` compares values, and a value of type `StopKind` can't be ordered"
+     "message": "`sortBy` compares values, and a value of type `StopKind` can't be ordered: only `FreightClass` and `Weekday` order their variants"
     }
    ],
    "name": "sortBy needs an ordered key",

@@ -224,6 +224,7 @@ fn needs_name(session: &Session<'_>, value: &Expr, name: &str, count: usize) -> 
             | ExprKind::None
             | ExprKind::Date(_)
             | ExprKind::DateTime(_)
+            | ExprKind::Time(_)
     );
     count >= 2 || literal
 }

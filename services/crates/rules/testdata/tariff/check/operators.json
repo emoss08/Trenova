@@ -368,15 +368,26 @@
   {
    "diagnostics": [
     {
-     "at": "\"a\" < \"b\"",
+     "at": "lane.origin.zip < \"31000\"",
      "code": "unit-mismatch",
-     "message": "`\"a\"` is text, which can't be ordered: only numbers, money, quantities and dates compare with `<`"
+     "fixes": [
+      {
+       "label": "Write it as the range `lane.origin.zip in ..\"31000\"`",
+       "result": [
+        "tariff \"t\"",
+        "if lane.origin.zip in ..\"31000\" {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      }
+     ],
+     "message": "`lane.origin.zip` is text, which has no order, so it can't be compared with `<`. To test a band of codes such as zips, use a range, compared character by character: `lane.origin.zip in \"30000\"..=\"31999\"`"
     }
    ],
-   "name": "comparing text is refused",
+   "name": "comparing text is refused, pointing at text ranges",
    "source": [
     "tariff \"t\"",
-    "if \"a\" < \"b\" {",
+    "if lane.origin.zip < \"31000\" {",
     "  charge \"x\" = $1",
     "}"
    ]

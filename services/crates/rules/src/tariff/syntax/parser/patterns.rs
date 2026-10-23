@@ -1,5 +1,5 @@
-//! `match` patterns: literals, ranges with literal ends, enum variants, `none`, `_`, bindings,
-//! record shapes and `|` alternatives.
+//! `match` patterns: literals, ranges with literal ends (or variant ends, `Mon..=Fri`), enum
+//! variants, `none`, `_`, bindings, record shapes and `|` alternatives.
 
 use super::Parser;
 use crate::message;
@@ -88,6 +88,10 @@ impl Parser<'_> {
             );
         }
         match token.kind {
+            TokenKind::TypeName if self.variant_range_ahead() => {
+                let start = self.path();
+                self.range_pattern(Some(start))
+            }
             TokenKind::TypeName | TokenKind::Code => self.variant_pattern(),
             TokenKind::Name => {
                 self.bump();
@@ -113,6 +117,17 @@ impl Parser<'_> {
                 )
             }
         }
+    }
+
+    /// Whether the variant at the cursor (`Mon`, `Weekday.Mon`) starts a range: `..` or `..=`
+    /// follows it on the same line.
+    fn variant_range_ahead(&self) -> bool {
+        let after = if self.peek_is(1, ".") && self.peek_nth(2).kind == TokenKind::TypeName {
+            3
+        } else {
+            1
+        };
+        (self.peek_is(after, "..") || self.peek_is(after, "..=")) && !self.newline_before_nth(after)
     }
 
     /// Whether the cursor starts a literal a pattern can hold.
@@ -178,7 +193,15 @@ impl Parser<'_> {
     fn range_pattern(&mut self, start: Option<Expr>) -> (Pattern, u8) {
         let op = self.bump();
         let inclusive = self.slice(op.span) == "..=";
-        let end = (!self.newline_before() && self.starts_literal()).then(|| self.pattern_literal());
+        let end = if self.newline_before() {
+            None
+        } else if self.starts_literal() {
+            Some(self.pattern_literal())
+        } else if self.kind() == TokenKind::TypeName {
+            Some(self.path())
+        } else {
+            None
+        };
         if start.is_none() && end.is_none() {
             self.error(
                 op.span,

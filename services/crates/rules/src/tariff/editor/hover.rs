@@ -162,6 +162,7 @@ impl Hovered<'_, '_> {
                         | ExprKind::Percent(_)
                         | ExprKind::Date(_)
                         | ExprKind::DateTime(_)
+                        | ExprKind::Time(_)
                 )
         })?;
         let range = Span::new(expr.span.start, expr.span.end.max(span.end));
@@ -701,7 +702,7 @@ fn table_hover(span: Span, table: &TableShape) -> Hover {
 }
 
 /// What a literal is worth in plainer terms: a quantity in SI units, a percent as a factor, a
-/// date's weekday.
+/// date's weekday, a time of day's place on the clock.
 fn literal_doc(expr: &Expr, written: &str) -> Option<Message> {
     match &expr.kind {
         ExprKind::Number {
@@ -753,6 +754,21 @@ fn literal_doc(expr: &Expr, written: &str) -> Option<Message> {
                 [Arg::from(written.to_owned()), Arg::from(day.weekday())],
             ))
         }
+        ExprKind::Time(time) => Some(Message::with(
+            message!(
+                "`{0}` is a time of day, {1} minutes after midnight, with no date and no offset: it compares with a date-time's `.time`, the clock where the date-time is"
+            ),
+            [
+                Arg::from(written.to_owned()),
+                Arg::from(
+                    Decimal::from(time.seconds())
+                        .checked_div(Decimal::from(60))
+                        .unwrap_or_default()
+                        .normalize()
+                        .to_string(),
+                ),
+            ],
+        )),
         _ => None,
     }
 }

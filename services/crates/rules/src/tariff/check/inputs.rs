@@ -6,7 +6,9 @@
 //! Descriptors: `{"kind":"money"}`, `{"kind":"quantity","dimension":"Money/Distance","unit":
 //! "$/mi"}`, `{"kind":"list","item":…}`, `{"kind":"optional","inner":…}`, `{"kind":"record",
 //! "name":"Break","fields":[{"name","doc","type"}]}`, `{"kind":"enum","name","variants":[…]}`,
-//! and `int`, `number`, `percent`, `text`, `bool`, `date`, `dateTime`. A field's `doc` is a
+//! and `int`, `number`, `percent`, `text`, `bool`, `date`, `dateTime`, `time`. An enum's
+//! descriptor also says whether its variants are `ordered` (`FreightClass`, `Weekday`), so a form
+//! can offer a range of them. A field's `doc` is a
 //! [`crate::tariff::docs::Doc`]: a `Message` for the schema's and the standard library's
 //! fields, the author's text otherwise.
 //!
@@ -76,6 +78,7 @@ pub fn descriptor(ty: &Type) -> Json {
         Type::Text => json!({ "kind": "text" }),
         Type::Date => json!({ "kind": "date" }),
         Type::DateTime => json!({ "kind": "dateTime" }),
+        Type::Time => json!({ "kind": "time" }),
         Type::Quantity(quantity) if quantity.dim == Dim::money() => json!({ "kind": "money" }),
         Type::Quantity(quantity) => json!({
             "kind": "quantity",
@@ -97,6 +100,7 @@ pub fn descriptor(ty: &Type) -> Json {
             "kind": "enum",
             "name": ty.to_string(),
             "variants": enumeration.variants.iter().map(|(name, _)| name.clone()).collect::<Vec<_>>(),
+            "ordered": enumeration.ordered,
         }),
         Type::Never | Type::Error => json!({ "kind": "unknown" }),
     }

@@ -14,6 +14,8 @@
 //!   are written. `$` directly followed by `/` and a unit is the money unit (`.in($/cwt)`), a
 //!   unit token followed by the denominators. The parser marks the units of a type or of
 //!   `.in(…)`.
+//! - `@` starts a date (`@2026-10-22`), a date-time (`@2026-10-22T08:00-05:00`) or a time of
+//!   day (`@17:30`), all [`TokenKind::Date`]; [`parse_date_literal`] tells them apart.
 //! - Text is split into literal runs ([`TokenKind::Text`], the first holding the opening quote and
 //!   the last the closing one), escapes and interpolations, whose expressions are lexed like any
 //!   other code between two [`TokenKind::Interpolation`] braces. Text ends at the end of its line.
@@ -33,6 +35,7 @@ use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::diagnostic::Fix;
 use crate::tariff::syntax::ast::DateLit;
 use crate::tariff::syntax::ast::DateTimeLit;
+use crate::tariff::syntax::ast::TimeLit;
 use crate::tariff::units;
 use rust_decimal::Decimal;
 
@@ -547,9 +550,16 @@ impl Lexer<'_> {
                 message!("{0} is not a real date and time"),
                 [Arg::from(text_after)],
             )
+        } else if parse_time_shape(text_after) {
+            Message::with(
+                message!(
+                    "{0} is not a real time of day: hours run from 00 to 23, minutes and seconds from 00 to 59"
+                ),
+                [Arg::from(text_after)],
+            )
         } else {
             Message::new(message!(
-                "Write a date as `@2026-10-22`, or a date and time as `@2026-10-22T08:00-05:00`"
+                "Write a date as `@2026-10-22`, a date and time as `@2026-10-22T08:00-05:00`, or a time of day as `@17:30`"
             ))
         };
         self.error(start, self.position, message);
@@ -864,6 +874,21 @@ fn parse_date_shape(text: &str) -> bool {
             .all(|(index, byte)| index == 4 || index == 7 || byte.is_ascii_digit())
 }
 
+/// Whether `text` has the shape of a time-of-day literal, valid or not: `@HH:MM` or
+/// `@HH:MM:SS` with digits in every place.
+fn parse_time_shape(text: &str) -> bool {
+    let body = text.strip_prefix('@').unwrap_or(text);
+    let bytes = body.as_bytes();
+    matches!(bytes.len(), 5 | 8)
+        && bytes.iter().enumerate().all(|(index, byte)| {
+            if index % 3 == 2 {
+                *byte == b':'
+            } else {
+                byte.is_ascii_digit()
+            }
+        })
+}
+
 /// Whether `year` is a leap year.
 const fn leap(year: i32) -> bool {
     (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
@@ -899,20 +924,44 @@ fn parse_date(text: &str) -> Option<DateLit> {
     (day <= days_in_month(year, month)).then_some(DateLit { year, month, day })
 }
 
-/// A date literal, `@` included: a date or a date-time.
+/// A date literal, `@` included: a date, a date-time or a time of day.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DateLiteral {
     /// `@2026-10-22`.
     Date(DateLit),
     /// `@2026-10-22T08:00-05:00`.
     DateTime(DateTimeLit),
+    /// `@17:30`, `@07:30:15`.
+    Time(TimeLit),
+}
+
+/// `17:30` or `07:30:15`, validated: hours 0 to 23, minutes and seconds 0 to 59.
+fn parse_clock(text: &str) -> Option<TimeLit> {
+    let mut parts = text.split(':');
+    let hour = two(parts.next()?)?;
+    let minute = two(parts.next()?)?;
+    let second = match parts.next() {
+        Some(second) => two(second)?,
+        None => 0,
+    };
+    if parts.next().is_some() || hour > 23 || minute > 59 || second > 59 {
+        return None;
+    }
+    Some(TimeLit {
+        hour,
+        minute,
+        second,
+    })
 }
 
 /// Reads a date literal (`@` included), validating the calendar date, the time (hours 0 to 23)
-/// and the offset (within ±18:00).
+/// and the offset (within ±18:00). `@` followed directly by `HH:` is a time of day.
 #[must_use]
 pub fn parse_date_literal(text: &str) -> Option<DateLiteral> {
     let body = text.strip_prefix('@')?;
+    if body.as_bytes().get(2) == Some(&b':') {
+        return parse_clock(body).map(DateLiteral::Time);
+    }
     let Some((date_text, time_text)) = body.split_once('T') else {
         return parse_date(body).map(DateLiteral::Date);
     };
@@ -933,21 +982,12 @@ pub fn parse_date_literal(text: &str) -> Option<DateLiteral> {
         let total = i16::from(hours) * 60 + i16::from(minutes);
         (clock, if negative { -total } else { total })
     };
-    let mut parts = clock.split(':');
-    let hour = two(parts.next()?)?;
-    let minute = two(parts.next()?)?;
-    let second = match parts.next() {
-        Some(second) => two(second)?,
-        None => 0,
-    };
-    if parts.next().is_some() || hour > 23 || minute > 59 || second > 59 {
-        return None;
-    }
+    let time = parse_clock(clock)?;
     Some(DateLiteral::DateTime(DateTimeLit {
         date,
-        hour,
-        minute,
-        second,
+        hour: time.hour,
+        minute: time.minute,
+        second: time.second,
         offset_minutes,
     }))
 }
@@ -1005,6 +1045,33 @@ mod tests {
             parse_date_literal("@2026-10-22T08:00:30-05:00"),
             Some(DateLiteral::DateTime(dt)) if dt.offset_minutes == -300 && dt.second == 30
         ));
+    }
+
+    #[test]
+    fn validates_times_of_day() {
+        assert!(matches!(
+            parse_date_literal("@17:30"),
+            Some(DateLiteral::Time(time)) if time.hour == 17 && time.minute == 30 && time.second == 0
+        ));
+        assert!(matches!(
+            parse_date_literal("@07:30:15"),
+            Some(DateLiteral::Time(time)) if time.second == 15
+        ));
+        assert!(parse_date_literal("@24:00").is_none());
+        assert!(parse_date_literal("@12:60").is_none());
+        assert!(parse_date_literal("@7:30").is_none());
+        assert!(parse_date_literal("@12:00Z").is_none());
+        let tokens = kinds("@08:00..@17:00");
+        assert_eq!(tokens[0], (TokenKind::Date, String::from("@08:00")));
+        assert_eq!(tokens[1], (TokenKind::Punct, String::from("..")));
+        assert_eq!(tokens[2], (TokenKind::Date, String::from("@17:00")));
+        let errors = lex("@25:00").diagnostics;
+        assert_eq!(
+            errors.first().map(|d| d.message.english()),
+            Some(String::from(
+                "@25:00 is not a real time of day: hours run from 00 to 23, minutes and seconds from 00 to 59"
+            ))
+        );
     }
 
     #[test]

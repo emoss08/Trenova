@@ -626,6 +626,7 @@ impl<'a> Locator<'a, '_> {
             | ExprKind::Percent(_)
             | ExprKind::Date(_)
             | ExprKind::DateTime(_)
+            | ExprKind::Time(_)
             | ExprKind::Bool(_)
             | ExprKind::None
             | ExprKind::Name(_)
@@ -1128,6 +1129,7 @@ impl<'a> ScopeWalker<'a, '_> {
             | ExprKind::Percent(_)
             | ExprKind::Date(_)
             | ExprKind::DateTime(_)
+            | ExprKind::Time(_)
             | ExprKind::Bool(_)
             | ExprKind::None
             | ExprKind::Name(_)
