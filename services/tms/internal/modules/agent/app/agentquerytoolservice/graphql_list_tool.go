@@ -515,7 +515,7 @@ func graphQLListSpecs() []graphQLListSpec {
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
 		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), operationsReadSpecs(),
 		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(), rateReadSpecs(),
-		workforceProgrammeReadSpecs(), formulaReadSpecs(), fuelReadSpecs(),
+		workforceProgrammeReadSpecs(), formulaReadSpecs(), fuelReadSpecs(), settlementReadSpecs(),
 	)
 }
 
@@ -798,7 +798,11 @@ type graphQLListOutcome struct {
 	outside []agent.RecordRef
 }
 
-func (o *graphQLListOutcome) TaintedRecords() []agent.RecordRef { return o.outside }
+// TaintedRecords is on the value: a list returns its outcome by value, as
+// its callers and the runtime's taint carrier read it.
+//
+//nolint:gocritic // the outcome is passed by value wherever a list returns it
+func (o graphQLListOutcome) TaintedRecords() []agent.RecordRef { return o.outside }
 
 // outsideRecords are the records among items that show text written outside
 // the organization in one of the fields named, each under its kind.
@@ -922,7 +926,7 @@ func (t *graphQLListTool) Query(
 	}
 	outcome.Note = strings.Join(notes, " ")
 	if len(beside) == 0 {
-		return &outcome, nil
+		return outcome, nil
 	}
 
 	return withBeside(&outcome, beside)

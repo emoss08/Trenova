@@ -34,7 +34,8 @@ const (
 	fieldDescription     = "description"
 	paramHasExceptions   = "hasExceptions"
 
-	whatDriver = "The driver"
+	whatDriver   = "The driver"
+	entityDriver = "driver"
 
 	noteOpenToChange = "A settlement still open to change is Draft, PendingApproval or " +
 		"Approved; send all three to list every open one in one call."
@@ -290,7 +291,7 @@ func settlementGetSpecs() []getSpec {
 		},
 		{
 			name:     toolGetDriverEarnings,
-			entity:   "driver",
+			entity:   entityDriver,
 			resource: permission.ResourceDriverSettlement,
 			amounts:  true,
 			summary: "Summarize what a worker has earned but not yet been paid on a " +

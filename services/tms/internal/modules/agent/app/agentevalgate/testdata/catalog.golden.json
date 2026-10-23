@@ -40325,10 +40325,6 @@
             "description": "Only records whose payment method contains this text.",
             "type": "string"
           },
-          "paymentReference": {
-            "description": "Only records whose payment reference contains this text.",
-            "type": "string"
-          },
           "periodEndFrom": {
             "description": "Only records whose period end is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
