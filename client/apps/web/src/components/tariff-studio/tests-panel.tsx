@@ -25,6 +25,7 @@ import type {
   TariffTestResult,
 } from "@trenova/shared/types/tariff";
 import { useState, type ReactNode } from "react";
+import { TickedText } from "./ticked-text";
 import type { TariffTestCells, TariffTestsState } from "./use-tariff-tests";
 
 export function StatusIcon({ status }: { status: TariffTestResult["status"] }) {
@@ -243,7 +244,7 @@ function TestRow({
           )}
           {test.error && (
             <p className="text-warning-foreground text-xs">
-              {translateMessage(test.error.message, t)}
+              <TickedText text={translateMessage(test.error.message, t)} />
             </p>
           )}
           {test.failures.map((failure, index) => (
@@ -254,7 +255,7 @@ function TestRow({
             >
               <RangeButton source={source} range={failure.range} onReveal={onReveal}>
                 <span className="text-danger-foreground text-xs">
-                  {translateMessage(failure.message, t)}
+                  <TickedText text={translateMessage(failure.message, t)} />
                 </span>
               </RangeButton>
               {failure.values.length > 0 && (
@@ -469,7 +470,9 @@ export function TestsPanel({
       )}
       {run.error ? (
         <p className="text-warning-foreground px-3 py-3 text-xs">
-          {t("The tests could not run: {0}", translateMessage(run.error.message, t))}
+          <TickedText
+            text={t("The tests could not run: {0}", translateMessage(run.error.message, t))}
+          />
         </p>
       ) : (
         <ul className={cn("divide-border divide-y", stale && "opacity-60")}>
