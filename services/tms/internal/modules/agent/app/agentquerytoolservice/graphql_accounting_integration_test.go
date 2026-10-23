@@ -78,6 +78,8 @@ func writeAccountingRows(
 	conn.ApplyCompanyFacts(&accountingsync.CompanyFacts{
 		CompanyName: "Acme " + label, HomeCurrency: "USD",
 	})
+	conn.SetupStep = accountingsync.SetupStepComplete
+	conn.SyncStartDate, conn.SyncEnabledAt = &now, &now
 	created, err := repos.connections.Create(ctx, conn)
 	require.NoError(t, err)
 
@@ -131,7 +133,7 @@ func writeAccountingRows(
 	}
 
 	var mappings []*accountingsync.AccountingMapping
-	for _, key := range []string{"ARAccount", "RevenueAccount"} {
+	for _, key := range []string{"ARAccount", "RevenueAccount", "APAccount"} {
 		mappings = append(mappings, &accountingsync.AccountingMapping{
 			ID:             pulid.MustNew("acctm_"),
 			OrganizationID: info.OrgID,
@@ -223,7 +225,7 @@ func TestConvertedLists_AccountingReadsUnderRowLevelSecurity(t *testing.T) {
 		{
 			tool: "accounting_list_mapping_gaps", ours: ours.mappings, other: other.mappings,
 			narrow:   map[string]any{"system": accountingSystem, "query": "RevenueAccount"},
-			narrowed: ours.mappings[1:],
+			narrowed: ours.mappings[1:2],
 		},
 	}
 	for _, c := range cases {
