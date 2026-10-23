@@ -401,8 +401,8 @@ property's `vary` values, or (of `Int`s) after `for … in`. Its ends are values
 - **Text**, in Unicode scalar order, character by character:
   `lane.origin.zip in "30000"..="31999"`, `lane.destination.zip3 in "300".."320"`. This is how
   a zip or postal range is written; `<` and `>` stay refused on text, and their error points
-  here. Because the comparison is character by character, `"9"` falls inside `"10".."200"`
-  (it sorts after `"1"`), so the checker warns (`text-range`) when a range's two literal ends
+  here. Because the comparison is character by character, `"2"` falls inside `"10".."300"`
+  (it sorts after `"1"` and before `"3"`), so the checker warns (`text-range`) when a range's two literal ends
   have different lengths: zip ranges are only right when every code has the ends' length.
   The empty text `""` is the smallest text, so `.."300"` starts there.
 
@@ -1186,8 +1186,11 @@ postfix     = primary { "." name [ args ] | "?." name [ args ] | "[" expr { "," 
 args        = "(" [ arg { "," arg } [ "," ] ] ")" ;
 arg         = [ name ":" ] ( expr | lambda ) ;
 lambda      = name "=>" expr | "(" name "," name ")" "=>" expr ;
-primary     = literal | name | TypeName [ "." name ] | "(" expr ")" | list | record
-            | ifExpr | matchExpr ;
+primary     = literal | name | TypeName [ "." TypeName ] | TypeName "." name args
+            | "(" expr ")" | list | record | ifExpr | matchExpr ;
+                                                              (* StopKind.Delivery, Int.parse(t);
+                                                                 Class77_5.number is a postfix
+                                                                 field of the variant *)
 ifExpr      = "if" condition "{" expr "}" { "else" "if" condition "{" expr "}" } "else" "{" expr "}" ;
 matchExpr   = "match" expr "{" { pattern [ "if" expr ] "=>" expr NL } "}" ;
 list        = "[" [ expr { "," expr } [ "," ] ] "]" ;

@@ -112,6 +112,8 @@ reports an internal error. No input, however malformed, may make the crate panic
     `{"$q": "1200", "u": "lb"}`, `{"$q": "18", "u": "%"}`, `{"$q": "450", "u": "$"}`;
   - `Date` and `DateTime` are `{"$date": "2026-10-22"}` and
     `{"$date": "2026-10-22T08:00:00-05:00"}` (RFC 3339 with the offset the value carries);
+  - `Time` (a time of day, no date and no offset) is `{"$time": "17:30:00"}`, always written
+    with seconds; `"17:30"` is read too;
   - an enum variant is a JSON string (`"Delivery"`), read as the declared enum;
   - `none` is JSON `null`;
   - lists and records are arrays and objects; a record key never starts with `$`.
@@ -121,8 +123,8 @@ reports an internal error. No input, however malformed, may make the crate panic
   another dimension, a variant the enum lacks, a missing or unknown record field, `null` where
   the type is not optional, a fraction where an `Int` is needed, nesting past 64 levels. A
   record field whose type is optional may be left out. Encoding is canonical: decimals
-  normalised (`"2.5"`, never `"2.50"`), date-times with seconds and their offset, and every
-  object's keys sorted by name.
+  normalised (`"2.5"`, never `"2.50"`), date-times with seconds and their offset, times with
+  seconds, and every object's keys sorted by name.
 - **Text positions** are UTF-16 code units: `{"from": 3, "to": 6}`, half-open. Inside the crate
   everything is a byte `Span`, converted at the edge by `span::Utf16Index`.
 - **User-facing text** is a `Message`: `{"message": "unknown name {0}", "args": ["foo"]}`. The
@@ -243,13 +245,20 @@ pins only the fields shown:
 - `inputs` are the root's, in declaration order: `name`, `doc` (the doc comment as written, or
   `null`), `type` (display text), `descriptor` (for building the form: `money`, `quantity` with
   `dimension` and `unit`, `list` with `item`, `optional` with `inner`, `record` with `name` and
-  `fields` (each `{name, doc, type}`), `enum` with `name` and `variants`, and `int`, `number`,
-  `percent`, `text`, `bool`, `date`, `dateTime`), `required` (no default), `default` (a wire
+  `fields` (each `{name, doc, type}`), `enum` with `name`, `variants` and `ordered` (true for
+  `FreightClass` and `Weekday`, whose variants have an order, so a form may offer a range of
+  them), and `int`, `number`, `percent`, `text`, `bool`, `date`, `dateTime`, `time`),
+  `required` (no default), `default` (a wire
   value, when the default folds), `constraint` and the name's `range`.
 - `constraint` is the input's `where` clause, folded: `null` when it has none,
   `{"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}}` (the minimum is
   always inclusive; an open end is `null`), or `{"oneOf": [wire, …]}`. For a `List<T>` input it
-  bounds each item. A constraint that does not fold is a checker error, never sent.
+  bounds each item. A constraint that does not fold is a checker error, never sent. A range's
+  ends compare as the language orders them: numbers, money and quantities across units, dates,
+  date-times and times in time order, `FreightClass` and `Weekday` variants in declaration
+  order, and text in Unicode scalar order, character by character (`"30000"..="39999"`), so a
+  form that validates as the user types must compare text the same way (JavaScript's `<` on
+  strings compares UTF-16 code units, which differs only past the Basic Multilingual Plane).
 - `imports` is every library the program loads, directly or not, dependencies first, with its
   pinned `version`: the context's for an organisation library, the crate's own for `std.*`.
 - `outline.items` are `{kind, name, code?, depth, range, selection}`, where `kind` is also
@@ -563,8 +572,9 @@ same tree with the same comments, and formatting it again changes nothing.
 
 `tariff.tokens`: `{"source"}` gives `{"tokens": [{"from": 0, "to": 6, "kind": "keyword"}, …]}`,
 every token but newlines and the end of the file, classed for highlighting: `keyword`, `name`,
-`type`, `code`, `number`, `unit`, `money`, `percent`, `date`, `text`, `escape`,
-`interpolation`, `punct`, `comment`, `doc` or `error`.
+`type`, `code`, `number`, `unit`, `money`, `percent`, `date` (dates, date-times and times of
+day: `@2026-10-22`, `@17:30`), `text`, `escape`, `interpolation`, `punct`, `comment`, `doc` or
+`error`.
 
 ### The editor operations
 
@@ -626,10 +636,11 @@ doc in it is a `Message`.
  "units": [{"unit", "dimension", "factor", "si"}],
  "keywords": […], "contextual": ["as", "cents", "to", "up", "down", "half", "even", "total", "lines"],
  "schema": {"roots": [{"name", "doc", "type", "fields"}], "records": [{"name", "fields"}],
-            "enums": [{"name", "variants"}]}}
+            "enums": [{"name", "variants", "ordered"}]}}
 ```
 
-The modules are `std.ltl`, `std.fuel`, `std.time` and `std.accessorials`, in that order. A
+The modules are `std.ltl`, `std.fuel`, `std.time`, `std.accessorials` and `std.tiers`, in that
+order. A
 schema field is `{name, type, descriptor, words, doc, fields}`. `keywords` are the lexer's
 reserved words, never names; `contextual` are the lexer's contextual words (keywords only where
 the grammar uses them, which `tariff.tokens` classes as `keyword` there and `name` elsewhere)
