@@ -16,8 +16,9 @@ const (
 	toolWorkerGetHOS        = "worker_get_hos"
 	toolWorkerGetDOTDraw    = "worker_get_dot_random_draw"
 
-	paramCredentialID = "credentialId"
+	paramCredentialID = "credentialId" //nolint:gosec // G101: a parameter name, not a credential
 	paramDrawID       = "drawId"
+	dutyStatusUnknown = "Unknown"
 
 	hosRecordedAt   = "recordedAt"
 	hosStale        = "stale"
@@ -59,7 +60,7 @@ const (
 func workerGetSpec() getSpec {
 	return getSpec{
 		name:      toolWorkerGet,
-		entity:    "worker",
+		entity:    fieldWorker,
 		resource:  permission.ResourceWorker,
 		summary:   workerGetSummary,
 		paramName: paramWorkerID,
@@ -148,7 +149,7 @@ func shapeHoursOfService(
 func unreportedHours(workerID pulid.ID) map[string]any {
 	return map[string]any{
 		paramWorkerID: workerID.String(),
-		hosDutyStatus: "Unknown",
+		hosDutyStatus: dutyStatusUnknown,
 		hosRecordedAt: "never",
 		hosStale:      true,
 		outcomeNote:   noELDNote,
