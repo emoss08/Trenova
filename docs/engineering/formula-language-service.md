@@ -32,10 +32,12 @@ CodeMirror counts. A refused request throws `RulesRequestError {op, code, detail
 | `tariffCheck(rules, {source, kind, context})` | `tariff.check` | diagnostics with fixes, the header, the declared inputs, the imports, the outline (items and folding) and the charges |
 | `tariffTokens(rules, source)` | `tariff.tokens` | the editor's highlighting and every read-only view of a source (`TariffCode`) |
 | `tariffFormat(rules, source)` | `tariff.format` | the format command and Nova's proposals; `formatted: null` with the syntax errors that stop it |
-| `tariffTest(rules, {source, context})` | `tariff.test` | the tests panel, the outline's test dots, readiness and Nova's proposal card |
+| `tariffTest(rules, {source, context})` | `tariff.test` | the tests panel (tests and properties, a property's cases and counterexample), the outline's dots, readiness, the coverage gutter and Nova's proposal card |
 | `tariffScaffoldTest(rules, {source, context, record, inputs, name})` | `tariff.scaffoldTest` | "Save as test" on the sample load (a real shipment is scaffolded on the server) |
 | `tariffCatalog(rules)` | `tariff.catalog` | the reference pane and the definition dialog for a standard library name; memoised per runtime in a `WeakMap` |
 | `tariffComplete`, `tariffHover`, `tariffSignature`, `tariffDefinition`, `tariffRename`, `tariffPrepareRename`, `tariffInlays` | `tariff.complete`, `.hover`, `.signature`, `.definition`, `.rename` (with and without `newName`), `.inlays` | the editor's features at a cursor or over the visible range |
+| `tariffReferences(rules, {source, kind, context, offset, includeDeclaration?})` | `tariff.references` | the marks on every use of the name at the cursor and Find references |
+| `tariffActions(rules, {source, kind, context, from, to})` | `tariff.actions` | Promote to input: the refactorings for a selection, each a set of edits and the range to select after |
 
 `wireContext` sends the context the check was given: the libraries (path, version id, source),
 the rate tables' shapes, the accessorial codes (left out while unknown, so codes go unchecked)
@@ -56,8 +58,8 @@ Organisation libraries come in their approved versions; a library is never in it
 ## The editor
 
 All in `client/apps/web/src/components/formula-editor/`. `TariffEditor` takes `kind`, `value`,
-`onChange`, `context`, the last preview's `trace`, `highlight` (a range something outside the
-editor points at), `onView`, `onOpenDefinition` and `onFormat`, and builds its extensions once,
+`onChange`, `context`, the last preview's `trace`, the last test run's `coverage`, `highlight`
+(a range something outside the editor points at), `onView`, `onOpenDefinition` and `onFormat`, and builds its extensions once,
 reading the runtime, the kind, the context and the trace through getters
 (`TariffLanguageService` in `tariff-service.ts`), so new knowledge never rebuilds the editor.
 `TariffEditorField` is the react-hook-form binding.
@@ -74,6 +76,11 @@ reading the runtime, the kind, the context and the trace through getters
 | `tariff-inlays.ts` | inferred types after bindings, parameter names before positional arguments and, with a trace, each binding's value, for the visible range; `refreshTariffInlays` redraws them when the trace changes |
 | `tariff-fold.ts` | folding from the outline's `folding` ranges (`foldAt` keeps the braces) |
 | `tariff-format.ts` | Shift-Alt-F and the format button; a file with syntax errors is left as written and the caller is told why |
+| `tariff-references.ts` | once the cursor rests 300 ms on a name, `tariff.references` marks its uses in the file (`cm-tariff-occurrence`, a write or the declaration also `-write`, on the `--editor-reference` tokens); Shift-F12 (`findReferences`) hands the whole list to the service's `showReferences` |
+| `references-dialog.tsx` | Find references: the uses "In this file" and "In libraries", each with its line, the use set in the reference tint; Enter or a click goes to a use in this file or opens the library at it (`onOpenDefinition`), the arrow keys, Home and End move between rows. `TariffEditor` owns it, so every editor has it |
+| `tariff-actions.ts` | Promote to input (Mod-.): `tariff.actions` for the selection, a menu at the cursor (arrows, Enter, Escape), the chosen action's edits as one change (`userEvent: "refactor"`), then rename opened at its `select` |
+| `tariff-notice.ts` | the one-line notice at the cursor when a command has nothing to do there ("Nothing here can be promoted to an input"); it leaves with the next edit, move or click, or after 2.5 s |
+| `tariff-coverage.ts` | the last test run's coverage: a gutter bar (`--editor-coverage-gap`) beside each line of the outermost regions no case reached, a tooltip naming the kind of region, the regions mapped through edits until the next run; with no coverage the gutter is reconfigured away (`setTariffCoverage`) |
 | `tariff-doc.ts` | `tariffDocText` and `appendTariffDoc` (an author's doc as written, a built-in's `Message` translated), and `unlessUnanswered` |
 | `editor-theme.ts` | the chrome for all of the above, from tokens only |
 
@@ -97,6 +104,21 @@ The template studio (`routes/formula-template/_components/studio/`) and the libr
   cells has status `needs`; the tests panel says so, and offers Retry when a load fails. Everything a
   Studio shows (the underlines, the outline, the tests panel, readiness, Nova's card) reads this
   one answer, so none can disagree.
+- Properties are tests everywhere: the workbench's `testCount` counts `test` and `property` outline
+  items (`isTestItem`, `lib/tariff-outline.ts`), a failed property fails the run, blocks review and
+  submit and draws a red dot. The workbench hands the editor `coverage` (the run's, or null while
+  there is none). `TestsPanel` marks a property and its cases (and skipped), shows a failed one's
+  `Counterexample` (each varied value, a monotone failure's out-of-order pair, a refusal) with
+  "Save as test" (`onSaveAsTest`, the counterexample's `test` appended through the binding), and
+  "Tests reach {reached} of {total} regions" with the unreached regions to reveal
+  (`unreachedRegions`, outermost first, `lib/tariff-coverage.ts`). `tariffReadiness` adds a
+  `coverage` warning listing those regions; the submit dialogs show it beside the server's checks
+  where the server sends no `coverage` row (`withLiveChecks`), each region a link into the source.
+- `SourceStatusBar` carries the editor's menu (`EditorActionsMenu`: Go to definition, Find
+  references, Rename and, in a tariff, Promote to input, each with its key).
+- `ChoicesView` (`components/tariff-bill/`) draws what each `best` or `worst` chose: the preview's
+  `choices` (the module's wire form) under the bill, and the shipment's
+  `ratingDetail.choices` (GraphQL, read by `readStoredTariffChoices`) on its billing card.
 - `useTariffEditorBinding({read, write})`: reveal a range, apply a fix and append a block
   (a test from "Save as test", Nova, or the tests panel's "Add a test") through the editor, so each
   lands in its undo history; before the editor has loaded they are written to the form.
@@ -151,4 +173,7 @@ operation. `components/formula-editor/__tests__/tariff-editor-features.test.ts` 
 feature in a mounted `EditorView` against the same module: completion (with the `?.` rewrite and a
 refused request), hover, signature help, go to definition in the file and into a library, rename
 and its refusal, inlay hints, folding, lint placement, highlighting of the visible range and
-formatting. The language itself is tested in the crate (`tests/tariff_*.rs`).
+formatting; `tariff-editor-refactor.test.ts` the marks at the cursor, Find references, Promote to
+input (one change, then rename), the coverage gutter and its tooltip, and the new keywords and
+snippets; `tariff-editor.test.tsx` the references dialog and the coverage prop through
+`TariffEditor` itself. The language itself is tested in the crate (`tests/tariff_*.rs`).
