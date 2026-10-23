@@ -227,12 +227,7 @@ func (s *Service) approvalContent(
 		return nil, refusal
 	}
 
-	gate := &submissionGate{
-		details: detailsReadiness(template),
-		source:  sourceReadiness(ctx, content),
-		tests:   testsReadiness(content),
-		content: content,
-	}
+	gate := newSubmissionGate(ctx, template, content)
 	multiErr := errortypes.NewMultiError()
 	gate.addRefusals(multiErr)
 	if multiErr.HasErrors() {

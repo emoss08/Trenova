@@ -356,7 +356,8 @@ func (t *checkFormulaTool) Name() string { return "formula_check" }
 func (t *checkFormulaTool) Description() string {
 	return "Check a Tariff source against this organisation's tables, codes and libraries. " +
 		"It returns every error and warning with its line and column and the fixes the " +
-		"checker offers, the inputs it declares, the libraries it imports and the charges " +
+		"checker offers, the inputs it declares with the values each accepts, the libraries " +
+		"it imports and the charges " +
 		"it bills. Check before you show or explain source; fix every error."
 }
 
@@ -449,10 +450,13 @@ func provideRunFormulaTestsTool(
 func (t *runFormulaTestsTool) Name() string { return "formula_run_tests" }
 
 func (t *runFormulaTestsTool) Description() string {
-	return "Run the test blocks of a Tariff source with Trenova's engine: each test's name, " +
-		"line, whether it passed, and what each failed expectation actually came to. A " +
-		"source that does not check runs no tests; its errors come back instead. Run the " +
-		"tests before you propose source, and write a test for every case you claim it prices."
+	return "Run the test and property blocks of a Tariff source with Trenova's engine: each " +
+		"one's name, line, whether it passed, and what each failed expectation actually came " +
+		"to; for a property, how many cases ran and its counterexample, with a test block " +
+		"that reproduces it; and how many of the file's regions the tests reach, with each " +
+		"one none reaches. A source that does not check runs no tests; its errors come back " +
+		"instead. Run the tests before you propose source, and write a test for every case " +
+		"you claim it prices."
 }
 
 func (t *runFormulaTestsTool) ParamSchema() map[string]any {
@@ -499,6 +503,9 @@ func (t *runFormulaTestsTool) Query(
 	case checked.Tests.Total == 0:
 		result.Note = "The source has no test blocks. Write test \"…\" { given … expect … } " +
 			"for each case the person cares about."
+	case checked.Tests.Coverage != nil && !checked.Tests.Coverage.Complete():
+		result.Note = pricedByEngineNote + " No test reaches the regions listed under " +
+			"tests.coverage.unreached; add a test that runs each one the person relies on."
 	}
 	return result, nil
 }
@@ -519,8 +526,9 @@ func (t *previewFormulaTool) Name() string { return "formula_preview" }
 
 func (t *previewFormulaTool) Description() string {
 	return "Rate a formula template's Tariff source for a saved shipment or the sample record. " +
-		"With the input values given, it returns the bill line by line, or the refusal or " +
-		"error and where in the source it came from. Use it to learn what a formula charges " +
+		"With the input values given, it returns the bill line by line and every best or " +
+		"worst choice with each option's subtotal, or the refusal or error and where in the " +
+		"source it came from. Use it to learn what a formula charges " +
 		"a real load; say an amount only when a tool gave it."
 }
 

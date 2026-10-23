@@ -330,3 +330,70 @@ func TestRateWithNothingToEvaluateMakesNoCall(t *testing.T) {
 	assert.Zero(t, calls.calls)
 	assert.Empty(t, result.Conditions)
 }
+
+const boundedChoiceSource = `tariff "Lower of"
+
+input rate: Money/mi where $0.50/mi..=$15/mi
+input flatRate: Money = $150
+
+best "Linehaul" {
+  option "Per mile" {
+    charge "Linehaul" (quantity: shipment.distance, rate: rate)
+  }
+  option "Flat" {
+    charge "Flat rate" = flatRate
+  }
+}
+`
+
+func boundedChoice() *tariffports.Template {
+	return template(boundedChoiceSource,
+		tarifftypes.InputDecl{Name: "rate", Type: "Money/mi", Required: true},
+		tarifftypes.InputDecl{Name: "flatRate", Type: "Money"},
+	)
+}
+
+func TestRateReturnsTheChoicesTheTariffMade(t *testing.T) {
+	t.Parallel()
+
+	rater := tariff.NewRaterWith(zap.NewNop(), &lanesContext{}, rules.EvaluateTariffs)
+
+	result, err := rater.Rate(t.Context(), &tariffports.RateRequest{
+		TenantInfo: tenant(),
+		Template:   boundedChoice(),
+		Inputs:     tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.NewFromInt(2), "$/mi")},
+		Record:     recordFrom(t, "TX"),
+		Currency:   "USD",
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, result.Bill)
+	assert.True(t, result.Bill.Total.Equal(decimal.NewFromInt(150)), "total %s", result.Bill.Total)
+	require.Len(t, result.Choices, 1)
+	require.NotNil(t, result.Choices[0].Chosen)
+	assert.Equal(t, "Flat", *result.Choices[0].Chosen)
+	require.Len(t, result.Choices[0].Options, 2)
+	assert.Equal(t, rules.TariffOptionLost, result.Choices[0].Options[0].Status)
+}
+
+func TestRateRefusesAStoredValueOutsideTheConstraintOnTheInputs(t *testing.T) {
+	t.Parallel()
+
+	rater := tariff.NewRaterWith(zap.NewNop(), &lanesContext{}, rules.EvaluateTariffs)
+
+	_, err := rater.Rate(t.Context(), &tariffports.RateRequest{
+		TenantInfo: tenant(),
+		Template:   boundedChoice(),
+		Inputs:     tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.NewFromInt(40), "$/mi")},
+		Record:     recordFrom(t, "TX"),
+		Currency:   "USD",
+	})
+
+	var validation *errortypes.Error
+	require.ErrorAs(t, err, &validation)
+	assert.Equal(t, "inputs", validation.Field)
+	assert.Equal(t,
+		"`rate` must be from $0.50/mi to $15.00/mi; $40.00/mi is outside it",
+		errortypes.LocalizedText(t.Context(), err),
+	)
+}

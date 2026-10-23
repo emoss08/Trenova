@@ -109,11 +109,12 @@ func (s *Service) Language(
 }
 
 type Input struct {
-	Name     string        `json:"name"`
-	Type     string        `json:"type"`
-	Required bool          `json:"required"`
-	Default  rules.RawJSON `json:"default,omitempty"`
-	Doc      string        `json:"doc,omitempty"`
+	Name       string                  `json:"name"`
+	Type       string                  `json:"type"`
+	Required   bool                    `json:"required"`
+	Default    rules.RawJSON           `json:"default,omitempty"`
+	Constraint *rules.TariffConstraint `json:"constraint,omitempty"`
+	Doc        string                  `json:"doc,omitempty"`
 }
 
 type Checked struct {
@@ -209,11 +210,12 @@ func checkedOf(
 	for i := range check.Inputs {
 		input := &check.Inputs[i]
 		out.Inputs = append(out.Inputs, Input{
-			Name:     input.Name,
-			Type:     input.Type,
-			Required: input.Required,
-			Default:  input.Default,
-			Doc:      input.Doc,
+			Name:       input.Name,
+			Type:       input.Type,
+			Required:   input.Required,
+			Default:    input.Default,
+			Constraint: input.Constraint,
+			Doc:        input.Doc,
 		})
 	}
 	for _, imp := range imports {
@@ -235,6 +237,7 @@ type PreviewRequest struct {
 type Preview struct {
 	*Checked
 	Bill      *tarifftypes.Bill      `json:"bill,omitempty"`
+	Choices   []tarifftypes.Choice   `json:"choices,omitempty"`
 	Refusal   string                 `json:"refusal,omitempty"`
 	RefusalAt *tariff.SourcePosition `json:"refusalAt,omitempty"`
 	Error     string                 `json:"error,omitempty"`
@@ -270,11 +273,12 @@ func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*Preview, e
 	for i := range result.Inputs {
 		input := &result.Inputs[i]
 		check.Inputs = append(check.Inputs, rules.TariffInput{
-			Name:     input.Name,
-			Doc:      input.Doc,
-			Type:     input.Type,
-			Required: input.Required,
-			Default:  input.Default,
+			Name:       input.Name,
+			Doc:        input.Doc,
+			Type:       input.Type,
+			Required:   input.Required,
+			Default:    input.Default,
+			Constraint: input.Constraint,
 		})
 	}
 	checked := checkedOf(ctx, req.Source, check, result.Imports,
@@ -282,6 +286,21 @@ func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*Preview, e
 	checked.OK = result.Valid
 
 	out := &Preview{Checked: checked, Bill: result.Bill}
+	currency := ""
+	if result.Bill != nil {
+		currency = result.Bill.Currency
+		if result.Bill.Exchange != nil {
+			currency = result.Bill.Exchange.Currency
+		}
+	}
+	out.Choices, err = tarifftypes.ChoicesFrom(&tarifftypes.ChoicesRequest{
+		Choices:  result.Choices,
+		Currency: currency,
+		Locale:   checked.locale,
+	})
+	if err != nil {
+		return nil, err
+	}
 	if result.Refusal != nil {
 		out.Refusal = result.Refusal.Localize(checked.locale)
 		out.RefusalAt = positionOf(req.Source, result.Refusal.Range)

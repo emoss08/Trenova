@@ -1521,6 +1521,22 @@ set of stored inputs on the rules, agreements and shipments that use the templat
 `tariff.check`'s `values`, and approval is refused, naming an example and a count, when one no
 longer fits. The billing control's fallback template is checked with no inputs.
 
+**Choices.** `RateResult.Choices` carries the module's `choices`; the rate engine maps them
+with `tarifftypes.ChoicesFrom` (each option's exact subtotal, in the tariff's rating currency,
+or its refusal in the reader's language) onto the quote's trace (`ratetypes.Trace.Choices`),
+`RatedShipment.Choices` and the shipment's `RatingDetail.Choices`, which GraphQL serves as
+`ShipmentRatingDetail.choices`. The Studio preview answers the module's own `choices`, ranges
+included. A rating that stops on an `input` error (a stored value outside a constraint added
+later) is a validation error on `inputs` with the module's bounds message; the quote records it
+in the reader's language.
+
+**Properties and coverage.** Properties are tests: `TariffTestRun.Passed` is false when one
+fails, so save-for-review, submit and approval refuse it, naming each failure through
+`tariff.FailingTests` (the varied values, the monotone pair or the refusal). Readiness for
+templates and libraries adds a `coverage` check that warns and never blocks, and a `coverage`
+summary (`tariff.SummarizeCoverage`: reached, total and up to 50 unreached regions with their
+range, line and source line). Nova's `SummarizeTests` carries the same.
+
 **The preview, backtest and impact** rate a candidate source through `tariffports.Rater` with a
 two-second timeout per rating (the backtest's past shipments come from
 `tariffports.RatedShipments`, the record of a shipment from `tariffports.RecordBuilder`).

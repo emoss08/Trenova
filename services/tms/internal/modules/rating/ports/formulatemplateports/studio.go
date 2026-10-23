@@ -40,6 +40,7 @@ type PreviewResult struct {
 	Bill        *tarifftypes.Bill        `json:"bill"`
 	Refusal     *rules.TariffRefusal     `json:"refusal"`
 	Error       *PreviewError            `json:"error"`
+	Choices     []rules.TariffChoice     `json:"choices"`
 	Trace       rules.RawJSON            `json:"trace"`
 	Lookups     rules.RawJSON            `json:"lookups"`
 	Tests       []rules.TariffTestResult `json:"tests"`
