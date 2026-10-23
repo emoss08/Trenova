@@ -50,6 +50,9 @@ export type StoredTariffBillLine = {
   amount: TariffWireQuantity;
   quantity: TariffLineMeasure | null;
   rate: TariffLineMeasure | null;
+  /** The server stores neither a line's limit nor a freight-scoped adjustment's scope. */
+  limit: null;
+  on: null;
   range: null;
 };
 
@@ -118,6 +121,8 @@ function storedLine(line: z.output<typeof storedLineSchema>): StoredTariffBillLi
         : { $n: line.quantity as string }
       : null,
     rate: measured ? { $q: line.rate as string, u: line.rateUnit || "$" } : null,
+    limit: null,
+    on: null,
     range: null,
   };
 }
@@ -140,6 +145,8 @@ const readBillSchema = z.object({
       amount: quantitySchema,
       quantity: measureSchema,
       rate: measureSchema,
+      limit: z.null().default(null),
+      on: z.null().default(null),
       range: z.null(),
     }),
   ),

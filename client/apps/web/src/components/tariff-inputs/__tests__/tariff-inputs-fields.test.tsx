@@ -38,7 +38,12 @@ const service: TariffInputDeclaration = {
   name: "service",
   doc: "The service level. Guaranteed pays a premium.",
   type: "Service",
-  descriptor: { kind: "enum", name: "org.service.Service", variants: ["Standard", "Guaranteed"] },
+  descriptor: {
+    kind: "enum",
+    name: "org.service.Service",
+    variants: ["Standard", "Guaranteed"],
+    ordered: false,
+  },
   required: false,
   default: "Standard",
   range: null,
@@ -503,6 +508,7 @@ describe("TariffInputsFields", () => {
                 kind: "enum",
                 name: "Service",
                 variants: ["Standard", "Guaranteed", "Expedited"],
+                ordered: false,
               },
               constraint: { oneOf: ["Standard", "Expedited"] },
             },
@@ -512,6 +518,129 @@ describe("TariffInputsFields", () => {
       await user.click(screen.getByRole("button", { name: /Default: Standard/ }));
       const options = await screen.findAllByRole("option");
       expect(options.map((option) => option.textContent)).toEqual(["Standard", "Expedited"]);
+    });
+
+    // `input cls: FreightClass = Class70 where Class50..=Class100`, as tariff.check sends it
+    // (testdata/tariff/check/ordered-enums.json), with the variant list cut after Class110.
+    const freightClass: TariffInputDeclaration = {
+      name: "cls",
+      doc: null,
+      type: "FreightClass",
+      descriptor: {
+        kind: "enum",
+        name: "FreightClass",
+        ordered: true,
+        variants: ["Class50", "Class55", "Class70", "Class77_5", "Class100", "Class110"],
+      },
+      required: false,
+      default: "Class70",
+      constraint: { range: { min: "Class55", max: "Class100", maxInclusive: true } },
+      range: { from: 17, to: 20 },
+    };
+
+    it("offers only the variants an ordered enum's range spans", async () => {
+      const user = userEvent.setup();
+      render(<Harness declarations={[freightClass]} />);
+      await user.click(screen.getByRole("button", { name: /Default: Class70/ }));
+      const options = await screen.findAllByRole("option");
+      expect(options.map((option) => option.textContent)).toEqual([
+        "Class55",
+        "Class70",
+        "Class77_5",
+        "Class100",
+      ]);
+    });
+
+    // `input zip: Text = "30301" where "30000"..="39999"` (testdata/tariff/check/text-ranges.json).
+    const zip: TariffInputDeclaration = {
+      name: "zip",
+      doc: null,
+      type: "Text",
+      descriptor: { kind: "text" },
+      required: false,
+      default: "30301",
+      constraint: { range: { min: "30000", max: "39999", maxInclusive: true } },
+      range: { from: 17, to: 20 },
+    };
+
+    it("shows a text range as help text and refuses text past it as it is typed", async () => {
+      const user = userEvent.setup();
+      render(<Harness declarations={[zip]} validate />);
+      expect(screen.getByText("From 30000 to 39999")).toBeInTheDocument();
+      const field = screen.getByPlaceholderText("Default: 30301");
+      await user.type(field, "4");
+      expect(await screen.findByText("Must be from 30000 to 39999")).toBeInTheDocument();
+      await user.clear(field);
+      await user.type(field, "35004");
+      await act(async () => {});
+      expect(screen.queryByText("Must be from 30000 to 39999")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("a time-of-day input", () => {
+    // `input open: Time = @08:00 where @06:00..@17:00` and `input close: Time? = none`, as
+    // tariff.check sends them (testdata/tariff/check/time.json).
+    const open: TariffInputDeclaration = {
+      name: "open",
+      doc: "When the dock opens.",
+      type: "Time",
+      descriptor: { kind: "time" },
+      required: false,
+      default: { $time: "08:00:00" },
+      constraint: {
+        range: { min: { $time: "06:00:00" }, max: { $time: "17:00:00" }, maxInclusive: false },
+      },
+      range: { from: 42, to: 46 },
+    };
+    const close: TariffInputDeclaration = {
+      name: "close",
+      doc: null,
+      type: "Time?",
+      descriptor: { kind: "optional", inner: { kind: "time" } },
+      required: false,
+      default: null,
+      constraint: null,
+      range: { from: 90, to: 95 },
+    };
+
+    it("writes the time typed as the module reads it, with seconds", async () => {
+      const user = userEvent.setup();
+      render(<Harness declarations={[open]} />);
+      expect(screen.getByText("At least 6:00 AM and below 5:00 PM")).toBeInTheDocument();
+      const field = screen.getByLabelText("When the dock opens");
+      expect(field).toHaveAttribute("type", "time");
+      await user.type(field, "07:45");
+      expect(values()).toEqual({ open: { $time: "07:45:00" } });
+    });
+
+    it("shows a stored time with its seconds", () => {
+      render(<Harness declarations={[open]} initial={{ open: { $time: "07:30:15" } }} />);
+      const field = screen.getByLabelText("When the dock opens");
+      expect(field).toHaveValue("07:30:15");
+      expect(field).toHaveAttribute("step", "1");
+    });
+
+    it("refuses a time outside its range as it is entered, and clears once it fits", async () => {
+      const user = userEvent.setup();
+      render(<Harness declarations={[open]} validate />);
+      const field = screen.getByLabelText("When the dock opens");
+      await user.type(field, "17:00");
+      expect(
+        await screen.findByText("Must be at least 6:00 AM and below 5:00 PM"),
+      ).toBeInTheDocument();
+      await user.clear(field);
+      await user.type(field, "16:59");
+      await act(async () => {});
+      expect(
+        screen.queryByText("Must be at least 6:00 AM and below 5:00 PM"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("writes none when an optional time is emptied", async () => {
+      const user = userEvent.setup();
+      render(<Harness declarations={[close]} initial={{ close: { $time: "18:00:00" } }} />);
+      await user.clear(screen.getByLabelText("Close"));
+      expect(values()).toEqual({ close: null });
     });
   });
 });

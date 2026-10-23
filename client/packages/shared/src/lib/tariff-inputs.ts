@@ -121,6 +121,8 @@ function problemMessage(problem: TariffValueProblem, t: TranslateFn): string {
       return t("Must be a date");
     case "not-date-time":
       return t("Must be a date and time");
+    case "not-time":
+      return t("Must be a time of day");
     case "not-variant":
       return t("Must be one of {0}", problem.detail ?? "");
     case "not-list":
