@@ -88,6 +88,18 @@ models:
     fields:
       hold:
         resolver: true
+  RateAgreement:
+    fields:
+      lanes:
+        resolver: true
+      laneCount:
+        resolver: true
+  RateMatrix:
+    fields:
+      cellCount:
+        resolver: true
+      cells:
+        resolver: true
   Shipment:
     fields:
       orderNumber:

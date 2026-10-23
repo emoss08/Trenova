@@ -371,6 +371,20 @@ narrow the call. Any other `Int` argument is a parameter only when the schema de
 `unscoped`, not `defaults`: the safety events list reads what is still open across the
 organization when no worker is named, and one worker's record whole.
 
+A `String` argument that takes a day says so in its schema description (`as YYYY-MM-DD`, the fuel
+index price history's `from` and `to`); the tool offers it as an `agenttoolschema.Date`, refuses
+anything that is not a calendar day before the read, and sends the day as the text the argument
+takes. An id kept inside another resource's records (a fuel index inside fuel surcharge programs)
+is a reference by its record `kinds` rather than its resource, so the runtime still holds it to a
+prefix.
+
+A root that takes no argument at all (`fuelProgramCurrentRates`, a computed rate per active
+program) is an unpaged list with no parameters of its own. Where its repository tool matched a
+free-text query in what it read, the spec keeps that capability with `matches`, the row fields by
+dotted path (`program.code`, `program.name`) a case-insensitive `query` is matched against after
+the read, described by `queryNote`. The query never reaches the server, which has no search for
+it, and only an unpaged list may declare it: a paged list's query is the server's.
+
 **Reads alongside.** Where the repository tool returned records beside its own, because the next
 call needs their ids (the checklist templates a person starts by hand, the review templates) or
 because they say what the tool's records mean (the reconciliation tolerance a drift is judged by,
@@ -709,6 +723,10 @@ Each module's PR:
 | Ledger | `ledger_list_journal_reversals` | none | reads `DeskJournalReversals`; the reason text and the rejection and cancel reasons stay Restricted, as the repository row gated them |
 | Ledger | `ledger_get_journal_entry` | none of what it returned | reads `DeskJournalEntryCard`. `JournalEntryCard` had no kind, so its lines' debits and credits were not gated on any read; it now declares `@kind(resource: "journal_entry")`, so they are Restricted, as the repository tool gated them. The card's own fields (`entry`, `lines`, `period`, `posting`, `source`, the people and the related entries) and a line's account, category and party names, and the posting's refusal, are declared Internal on journal_entry; a record the card carries is still decided by its own kind. The card adds what the repository tool did not read: the reversal request against the entry, whose reason text and rejection and cancel reasons are journal_reversal's and Restricted, and a line's customer and location only to a reader of those kinds. Lines gain `isReconciled` |
 | Ledger | `ledger_get_manual_journal` | none of what it returned | reads `DeskManualJournalCard`. `ManualJournalCard` now declares `@kind(resource: "manual_journal")` for the same reason; its own fields (`journal`, `lines`, `requestedPeriod`, `posting`, the people, `entries`), the lines' account and party names, their customer and location, `postedAt` and the posting's refusal are declared Internal, and their amounts stay Restricted. The entries it became are journal entries carried by the card, shown whole only to a reader of journal entries |
+| Rates | `rate_list_agreements` | none | reads `DeskRateAgreements`, which selects what the repository row carried and nothing more; the agreement's tariff `inputs` are Restricted and withheld at Internal, as the row gated them. The margin guardrails are `@protected` and never selected |
+| Rates | `rate_get_agreement` | none | reads `DeskRateAgreementCard` on the new `rateAgreement(id)` root. Its lanes are the new `lanes(first: 50)` field, the live lanes (current and starting later) the Desk's card pages, with `laneCount`, where the repository tool loaded every rule in force and cut the result at 50. The agreement's and each lane's tariff `inputs`, an accessorial's amount, cap and condition, the review comment and the version's change message stay Restricted, as the repository view gated them; the container fields (`lanes`, `laneCount`, `accessorials`, `fuelBinding`, `currentVersion`) and `fuelSurchargeProgramId` are declared Internal so their Restricted leaves are judged one by one. Inputs come as Tariff wire values, where the repository view wrote them as display text |
+| Rates | `rate_list_fuel_index_prices` | none | reads `DeskFuelIndexPrices`. `FuelIndexPrice` had no kind, so nothing was gated; it now declares `@kind(resource: "fuel_surcharge_program")` (Internal by default), as do `FuelIndexLatestPrice` and `FuelProgramCurrentRate` that carry it |
+| Rates | `rate_list_fuel_surcharge_programs` | none | reads `DeskFuelProgramCurrentRates`; `FuelProgramCurrentRate` declares `@kind(resource: "fuel_surcharge_program")` and gains `id`, the program's. The repository tool's per-row note (no price on file, a price outside the table) is the spec's `shape`, and is left off a row whose price or rate was withheld |
 
 The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
 returned every other column at any tier; at a person's role ceiling below Internal each converted
@@ -718,7 +736,9 @@ show when the data access reaches them.
 None of the repository-backed reference, party, equipment or operations lists was gated (only `order_list`
 gated its amounts, all Internal), so at a person's role ceiling below Internal each now withholds every
 field but `id`, where it used to return them all. No description names a field that is newly withheld
-at Internal, so none changed.
+at Internal, so none changed. The fuel index price and fuel surcharge program reads were not gated
+either and now withhold the same way below Internal; the rate agreement list and get already gated
+their rates.
 
 The EDI lists and gets were gated only where they named a field (a contact, the raw X12, a
 tender's rate), so at a person's role ceiling below Internal each now withholds every field but

@@ -34,6 +34,10 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 			t.Parallel()
 
 			derived := derivedParams(t, tool, &read)
+			if read.Unpaged && len(read.Variables) == 0 {
+				assert.Empty(t, derived, "a root that takes no argument offers none")
+				return
+			}
 			if read.Verb == graphQLVerbList {
 				require.NotEmpty(t, derived, "a list tool reads by at least one typed parameter")
 			}

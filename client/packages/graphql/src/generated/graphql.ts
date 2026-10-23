@@ -3297,8 +3297,6 @@ export type DetentionClockStartBasis =
 
 export type DetentionDeskUrgency =
   | 'Accruing'
-  /** A stopped charge waiting on approval; its shipment cannot be invoiced until it is approved or waived. */
-  | 'AwaitingApproval'
   | 'FreeTimeEnding'
   | 'Lost'
   | 'Normal'
@@ -9259,113 +9257,6 @@ export type AccountTypeTableQueryVariables = Exact<{
 
 export type AccountTypeTableQuery = { accountTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type DeskAccountingConnectionQueryVariables = Exact<{
-  integrationType: AccountingSystem;
-}>;
-
-
-export type DeskAccountingConnectionQuery = { accountingSyncStatus: { integrationType: AccountingSystem, providerName: string, available: boolean, connection: { id: string, status: AccountingConnectionStatus, externalCompanyName: string, externalHomeCurrency: string, externalMultiCurrencyEnabled: boolean, externalBooksClosedThrough: number | null, lastCheckedAt: number | null, lastSuccessAt: number | null, consecutiveFailures: number, lastErrorCategory: AccountingErrorCategory | null, lastErrorMessage: string, refreshTokenAbsoluteExpiresAt: number, authMethod: AccountingAuthMethod, certificateExpiresAt: number | null, lastWebhookAt: number | null, setupStep: AccountingSetupStep, syncMode: AccountingSyncMode, ledgerGranularity: AccountingLedgerGranularity | null, ledgerOpeningBalancesSentAt: number | null, syncStartDate: number | null, syncEnabledAt: number | null, autoSync: boolean, pausedAt: number | null, pausedReason: string } | null } };
-
-export type DeskAccountingSyncSummaryQueryVariables = Exact<{
-  integrationType: AccountingSystem;
-}>;
-
-
-export type DeskAccountingSyncSummaryQuery = { accountingSyncSummary: { counts: Array<{ status: AccountingSyncRecordStatus, count: number }>, attention: Array<{ status: AccountingSyncRecordStatus, errorCategory: AccountingSyncErrorCategory | null, resolution: string, count: number, oldestQueuedAt: number, sampleRecordId: string }>, activeBackfill: { id: string, status: AccountingBackfillStatus, rangeStart: number, rangeEnd: number, objectTypes: Array<AccountingSyncObjectType>, enqueuedCount: number, alreadyQueuedCount: number } | null } };
-
-export type DeskAccountingSyncRecordFieldsFragment = { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, status: AccountingSyncRecordStatus, errorCategory: AccountingSyncErrorCategory | null, resolution: string, attemptCount: number, documentDate: number | null, queuedAt: number, nextAttemptAt: number | null, syncedAt: number | null, externalDocNumber: string, externalUrl: string, skippedReason: string } & { ' $fragmentName'?: 'DeskAccountingSyncRecordFieldsFragment' };
-
-export type DeskAccountingSyncRecordsQueryVariables = Exact<{
-  integrationType: AccountingSystem;
-  first?: number | null | undefined;
-  after?: string | null | undefined;
-  filter?: AccountingSyncRecordFilterInput | null | undefined;
-}>;
-
-
-export type DeskAccountingSyncRecordsQuery = { accountingSyncRecords: { edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskAccountingSyncRecordFieldsFragment': DeskAccountingSyncRecordFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
-export type DeskAccountingSyncObjectStatesQueryVariables = Exact<{
-  objectIds: Array<string | number> | string | number;
-  integrationType?: AccountingSystem | null | undefined;
-}>;
-
-
-export type DeskAccountingSyncObjectStatesQuery = { accountingSyncObjectStates: Array<{ objectType: AccountingSyncObjectType, objectId: string, providerName: string, record: { ' $fragmentRefs'?: { 'DeskAccountingSyncRecordFieldsFragment': DeskAccountingSyncRecordFieldsFragment } } }> };
-
-export type DeskAccountingSyncRecordQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type DeskAccountingSyncRecordQuery = { accountingSyncRecord: (
-    { dependsOnRecordId: string | null }
-    & { ' $fragmentRefs'?: { 'DeskAccountingSyncRecordFieldsFragment': DeskAccountingSyncRecordFieldsFragment } }
-  ) };
-
-export type DeskAccountingSyncAttemptsQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type DeskAccountingSyncAttemptsQuery = { accountingSyncAttempts: Array<{ attemptNumber: number, outcome: AccountingSyncAttemptOutcome, errorCategory: AccountingSyncErrorCategory | null, startedAt: number, durationMs: number }> };
-
-export type DeskAccountingMappingFieldsFragment = { id: string, targetType: AccountingMappingTargetType, targetLabel: string, trenovaObjectId: string | null, trenovaKey: string, providerKind: AccountingReferenceKind, state: AccountingMappingState, required: boolean, externalId: string, externalName: string, source: AccountingMappingSource | null, confidence: number | null, reason: string, confirmedAt: number | null, candidates: Array<{ externalId: string, name: string, score: number, reason: string }> } & { ' $fragmentName'?: 'DeskAccountingMappingFieldsFragment' };
-
-export type DeskAccountingMappingsQueryVariables = Exact<{
-  integrationType: AccountingSystem;
-  first?: number | null | undefined;
-  after?: string | null | undefined;
-  filter?: AccountingMappingFilterInput | null | undefined;
-}>;
-
-
-export type DeskAccountingMappingsQuery = { accountingMappings: { edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskAccountingMappingFieldsFragment': DeskAccountingMappingFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
-export type DeskAccountingMappingSummaryQueryVariables = Exact<{
-  integrationType: AccountingSystem;
-}>;
-
-
-export type DeskAccountingMappingSummaryQuery = { accountingMappingSummary: { integrationType: AccountingSystem, providerName: string, requiredTotal: number, requiredConfirmed: number, canCompleteSetup: boolean, groups: Array<{ targetType: AccountingMappingTargetType, unmatched: number, proposed: number, confirmed: number }>, connection: { status: AccountingConnectionStatus, setupStep: AccountingSetupStep } | null } };
-
-export type DeskAccountingMappingDetailQueryVariables = Exact<{
-  integrationType: AccountingSystem;
-  id?: string | number | null | undefined;
-  targetType?: AccountingMappingTargetType | null | undefined;
-  recordId?: string | number | null | undefined;
-  key?: string | null | undefined;
-  optionsQuery?: string | null | undefined;
-}>;
-
-
-export type DeskAccountingMappingDetailQuery = { accountingMappingDetail: { mapping: { ' $fragmentRefs'?: { 'DeskAccountingMappingFieldsFragment': DeskAccountingMappingFieldsFragment } }, options: Array<{ externalId: string, label: string, accountType: string, itemType: string, number: string }> } };
-
-export type DeskAccountingDriftFindingsQueryVariables = Exact<{
-  integrationType: AccountingSystem;
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type DeskAccountingDriftFindingsQuery = { accountingDriftFindingTable: { totalCount?: number | null, edges: Array<{ node: { id: string, kind: AccountingDriftKind, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyName: string, externalUrl: string, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedBy: string, providerModifiedAt: number | null, detectedAt: number, directions: Array<AccountingDriftDirection>, pushed: boolean, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }> } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
-export type DeskAccountingDriftOverviewQueryVariables = Exact<{
-  integrationType: AccountingSystem;
-}>;
-
-
-export type DeskAccountingDriftOverviewQuery = { accountingDriftOverview: { checkedAt: number | null, checkError: string, toleranceMinor: number, currencyCode: string } };
-
-export type DeskAccountingInboundChangesQueryVariables = Exact<{
-  integrationType: AccountingSystem;
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type DeskAccountingInboundChangesQuery = { accountingInboundChangeTable: { totalCount?: number | null, edges: Array<{ node: { id: string, kind: AccountingInboundChangeKind, status: AccountingInboundChangeStatus, reason: AccountingInboundChangeReason | null, resolution: string, externalNumber: string, externalUrl: string, partyName: string, partyObjectId: string | null, txnDate: number, amountMinor: number, currencyCode: string, referenceNumber: string, methodName: string, providerModifiedBy: string, detectedAt: number, lines: Array<{ documentKind: AccountingInboundDocumentKind, objectId: string | null, objectNumber: string, amountMinor: number, openMinor: number }> } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
 export type AccountingDriftFindingFieldsFragment = { id: string, connectionId: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyId: string | null, partyName: string, externalId: string, externalUrl: string, kind: AccountingDriftKind, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedAt: number | null, providerModifiedBy: string, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, fixObjectType: AccountingDriftFixObject | null, fixObjectId: string | null, directions: Array<AccountingDriftDirection>, pushed: boolean, resolvedAt: number | null, detectedAt: number, lastSeenAt: number, version: number, updatedAt: number, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }>, resolvedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingDriftFindingFieldsFragment' };
 
 export type AccountingDriftOverviewFieldsFragment = { connectionId: string, providerName: string, checkedAt: number | null, checkError: string, toleranceMinor: number, currencyCode: string, summary: { open: number, amountOpen: number, goneOpen: number, statusOpen: number, balanceOpen: number, resolvedSince: number } } & { ' $fragmentName'?: 'AccountingDriftOverviewFieldsFragment' };
@@ -12367,16 +12258,6 @@ export type DeskDetentionCardQueryVariables = Exact<{
 
 export type DeskDetentionCardQuery = { detentionOccurrence: { occurrence: { id: string, shipmentId: string, stopId: string, customerId: string, locationId: string, policySnapshot: unknown, calculationTrace: unknown, stopType: string, scheduleType: string, appointmentStart: number | null, appointmentEnd: number | null, arrivedAt: number | null, departedAt: number | null, clockStartAt: number, clockStopAt: number | null, freeTimeExpiresAt: number, noticeDueAt: number | null, noticeDeadlineAt: number | null, isOpen: boolean, arrivedLate: boolean, lateByMinutes: number, freeMinutesGranted: number, rawDwellMinutes: number, billableMinutes: number, roundedMinutes: number, billableAmount: string, driverPayMinutes: number, driverPayAmount: string, netMargin: string, capApplied: DetentionCapKind, convertedToLayover: boolean, currency: string, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, noticeSentAt: number | null, suppressedByGate: boolean, requiresApproval: boolean, approvedAt: number | null, waiverReason: DetentionWaiverReason | null, waiverNote: string, waivedAt: number | null, waivedAmount: string, disputeNote: string, disputedAt: number | null, locationName: string, customerName: string, shipmentProNumber: string, createdAt: number, updatedAt: number, approvedBy: { id: string, name: string } | null, waivedBy: { id: string, name: string } | null, location: { id: string, city: string, state: { id: string, abbreviation: string } | null } | null }, evidence: Array<{ id: string, kind: DetentionEvidenceKind, source: DetentionEvidenceSource, summary: string, observedAt: number }> | null, notices: Array<{ id: string, kind: DetentionNoticeKind, channel: DetentionNoticeChannel, deliveryStatus: DetentionNoticeDeliveryStatus, recipients: Array<string> | null, sentAt: number | null, scheduledFor: number, failureReason: string, satisfiesRequirement: boolean, wasAutomatic: boolean }> | null, collectability: { score: number, band: DetentionScoreBand, chainValid: boolean, summary: string, factors: Array<{ key: string, label: string, earned: number, possible: number, detail: string, remedy: string }> }, currentlyBillable: { billableMinutes: number, billableAmount: string, asOf: number } | null } };
 
-export type DeskDetentionOccurrencesQueryVariables = Exact<{
-  includeAwaitingApproval?: boolean | null | undefined;
-  urgency?: DetentionDeskUrgency | null | undefined;
-  shipmentId?: string | number | null | undefined;
-  proNumber?: string | null | undefined;
-}>;
-
-
-export type DeskDetentionOccurrencesQuery = { detentionDesk: Array<{ minutesUntilFreeEnds: number, minutesUntilNoticeDue: number | null, noticeWindowOpen: boolean, billableMinutes: number, amountAtRisk: string, urgency: DetentionDeskUrgency, occurrence: { id: string, shipmentId: string, shipmentProNumber: string, customerName: string, locationName: string, stopType: string, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, arrivedAt: number | null, freeTimeExpiresAt: number, noticeSentAt: number | null, currency: string, requiresApproval: boolean } }> };
-
 export type DetentionOccurrenceFieldsFragment = { id: string, businessUnitId: string, organizationId: string, shipmentId: string, shipmentMoveId: string, stopId: string, customerId: string, locationId: string, detentionPolicyId: string | null, policySnapshot: unknown, calculationTrace: unknown, stopType: string, scheduleType: string, appointmentStart: number | null, appointmentEnd: number | null, arrivedAt: number | null, departedAt: number | null, clockStartAt: number, clockStopAt: number | null, freeTimeExpiresAt: number, noticeDueAt: number | null, noticeDeadlineAt: number | null, isOpen: boolean, arrivedLate: boolean, lateByMinutes: number, freeMinutesGranted: number, rawDwellMinutes: number, billableMinutes: number, roundedMinutes: number, billableUnits: string, grossAmount: string, billableAmount: string, driverPayMinutes: number, driverPayAmount: string, netMargin: string, capApplied: DetentionCapKind, convertedToLayover: boolean, currency: string, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, noticeSentAt: number | null, suppressedByGate: boolean, requiresApproval: boolean, waiverReason: DetentionWaiverReason | null, waiverNote: string, waivedAt: number | null, waivedAmount: string, disputeNote: string, disputedAt: number | null, collectabilityScore: number, evidenceHead: string, additionalChargeId: string | null, locationName: string, customerName: string, shipmentProNumber: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DetentionOccurrenceFieldsFragment' };
 
 export type DetentionEvidenceFieldsFragment = { id: string, detentionOccurrenceId: string, sequence: number, kind: DetentionEvidenceKind, source: DetentionEvidenceSource, summary: string, observedAt: number, recordedAt: number, recordedById: string | null, documentId: string | null, payload: unknown, prevHash: string, hash: string, createdAt: number } & { ' $fragmentName'?: 'DetentionEvidenceFieldsFragment' };
@@ -13475,98 +13356,12 @@ export type EdiTemplateListQueryVariables = Exact<{
 
 export type EdiTemplateListQuery = { ediTemplates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTemplateListFieldsFragment': EdiTemplateListFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
-export type DeskEdiPartnersQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type DeskEdiPartnersQuery = { ediPartners: { totalCount?: number | null, edges: Array<{ node: { id: string, code: string, name: string, kind: EdiPartnerKind, status: EntityStatus, customerId: string | null, enabledForInbound: boolean, enabledForOutbound: boolean, internalOrganization: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
-
-export type DeskEdiInboundFilesQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type DeskEdiInboundFilesQuery = { ediInboundFiles: { totalCount?: number | null, edges: Array<{ node: { id: string, fileName: string, ediPartnerId: string | null, method: EdiConnectionMethod, status: EdiInboundFileStatus, failureReason: string | null, transactionCount: number, sizeBytes: number, interchangeControlNumber: string | null, isaSenderId: string | null, receivedAt: number, processedAt: number | null, rawPurgedAt: number | null, partner: { id: string, code: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
-
-export type DeskEdiInboundFileQueryVariables = Exact<{
-  id: string | number;
-  includeRaw?: boolean | null | undefined;
-}>;
-
-
-export type DeskEdiInboundFileQuery = { ediInboundFile: { communicationProfileName: string | null, messageCount: number, file: { id: string, fileName: string, ediPartnerId: string | null, method: EdiConnectionMethod, status: EdiInboundFileStatus, failureReason: string | null, transactionCount: number, sizeBytes: number, interchangeControlNumber: string | null, isaSenderId: string | null, isaReceiverId: string | null, receivedAt: number, processedAt: number | null, rawPurgedAt: number | null, partner: { id: string, code: string, name: string } | null }, messages: Array<{ id: string, transactionSet: string, direction: EdiDocumentDirection, status: EdiMessageStatus, x12Version: string, groupControlNumber: string, transactionControlNumber: string, segmentCount: number, shipmentId: string | null, invoiceId: string | null, transferId: string | null, ackStatus: EdiMessageAckStatus | null, ackLastError: string | null, generatedAt: number }>, raw?: { text: string, truncated: boolean, sizeBytes: number } | null } };
-
-export type DeskEdiMessageRowFieldsFragment = { id: string, direction: EdiDocumentDirection, transactionSet: string, status: EdiMessageStatus, ediPartnerId: string, shipmentId: string | null, invoiceId: string | null, transferId: string | null, inboundFileId: string | null, x12Version: string, interchangeControlNumber: string, groupControlNumber: string, transactionControlNumber: string, segmentCount: number, deliveryStatus: EdiMessageDeliveryStatus | null, deliveryAttempts: number, deliveryLastError: string | null, deliverySentAt: number | null, ackStatus: EdiMessageAckStatus | null, ackLastError: string | null, generatedAt: number, rawPurgedAt: number | null, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'DeskEdiMessageRowFieldsFragment' };
-
-export type DeskEdiMessagesQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type DeskEdiMessagesQuery = { ediMessages: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskEdiMessageRowFieldsFragment': DeskEdiMessageRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
-
-export type DeskEdiMessageQueryVariables = Exact<{
-  id: string | number;
-  includeRaw?: boolean | null | undefined;
-}>;
-
-
-export type DeskEdiMessageQuery = { ediMessage: { decoded: unknown, diagnosticCount: number, message: (
-      { deliveryRemotePath: string | null, deliveryLastAttemptAt: number | null, ackMessageId: string | null, ackReceivedAt: number | null }
-      & { ' $fragmentRefs'?: { 'DeskEdiMessageRowFieldsFragment': DeskEdiMessageRowFieldsFragment } }
-    ), diagnostics: Array<{ severity: string, code: string, segmentId: string | null, elementPosition: number | null, path: string | null, message: string, suggestedFix: string | null }>, raw?: { text: string, truncated: boolean, sizeBytes: number } | null } };
-
-export type DeskEdiTransferRowFieldsFragment = { id: string, status: EdiTransferStatus, direction: EdiTransferDirection, bol: string | null, customerLabel: string | null, serviceTypeLabel: string | null, stopCount: number, sourceShipmentId: string | null, targetShipmentId: string | null, inboundMessageId: string | null, rejectionReason: string | null, failureReason: string | null, submittedAt: number, processedAt: number | null, counterparty: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'DeskEdiTransferRowFieldsFragment' };
-
-export type DeskEdiTransfersQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  direction: EdiTransferDirection;
-  inboundFileId?: string | number | null | undefined;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type DeskEdiTransfersQuery = { ediTransfers: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskEdiTransferRowFieldsFragment': DeskEdiTransferRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
-
-export type DeskEdiTransferQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type DeskEdiTransferQuery = { ediTransfer: { canAccept: boolean, transfer: (
-      { shipmentTypeLabel: string | null, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, canDecide: boolean, stops: Array<{ sequence: number, type: string, location: string | null, address: string | null, city: string | null, state: string | null, postalCode: string | null, windowOpens: number | null, windowCloses: number | null, pieces: number | null, weight: number | null }>, commodities: Array<{ commodity: string, weight: number, pieces: number }>, charges: { freight: string | null, other: string | null, total: string | null, additional: Array<{ charge: string, method: string | null, amount: string }> } | null }
-      & { ' $fragmentRefs'?: { 'DeskEdiTransferRowFieldsFragment': DeskEdiTransferRowFieldsFragment } }
-    ), unresolvedMappings: Array<{ entityType: EdiMappingEntityType, source: string }> } };
-
-export type DeskEdiAckHealthQueryVariables = Exact<{
-  partnerId?: string | number | null | undefined;
-  transactionSet?: string | null | undefined;
-  overdueAfterSeconds?: number | null | undefined;
-  sinceHours?: number | null | undefined;
-}>;
-
-
-export type DeskEdiAckHealthQuery = { ediAckHealth: { asOf: number, since: number, overdueAfterSeconds: number, answersEverySet: boolean, overdueCount: number, overdueNotListed: number, ackStatusCounts: Array<{ status: EdiMessageAckStatus, count: number }>, partners: Array<{ partnerId: string, partnerName: string, partnerCode: string, ackStatusCounts: Array<{ status: EdiMessageAckStatus, count: number }> }>, overdueByPartner: Array<{ partnerId: string, partnerName: string, partnerCode: string, overdueCount: number, oldestGeneratedAt: number, messages: Array<{ id: string, transactionSet: string, shipmentId: string | null, invoiceId: string | null, transactionControlNumber: string, deliveryStatus: EdiMessageDeliveryStatus | null, generatedAt: number, deliverySentAt: number | null }> }>, recentDeadLettered: Array<{ ' $fragmentRefs'?: { 'DeskEdiMessageRowFieldsFragment': DeskEdiMessageRowFieldsFragment } }> } };
-
-export type DeskEdiCarrierInvoicesQueryVariables = Exact<{
-  reconciliationStatus?: string | null | undefined;
-  limit?: number | null | undefined;
-  offset?: number | null | undefined;
-}>;
-
-
-export type DeskEdiCarrierInvoicesQuery = { ediCarrierInvoices: { items: Array<{ id: string, invoiceNumber: string, carrierId: string | null, reconciliationStatus: string, proNumber: string, shipmentId: string | null, shipmentReference: string, invoiceDate: number | null, currencyCode: string, totalAmount: string | null, varianceAmount: string | null, suggestedCarrier: { id: string, name: string } | null }> } };
-
 export type DeskEdiPartnerCardQueryVariables = Exact<{
   id: string | number;
 }>;
 
 
-export type DeskEdiPartnerCardQuery = { ediPartnerCard: { partner: { id: string, kind: EdiPartnerKind, status: EntityStatus, code: string, name: string, description: string | null, customerId: string | null, internalOrganizationId: string | null, country: string, timezone: string | null, contactName: string | null, contactEmail: string | null, contactPhone: string | null, enabledForInbound: boolean, enabledForOutbound: boolean, updatedAt: number, internalOrganization: { id: string, name: string } | null, connection: { id: string, method: EdiConnectionMethod, status: EdiConnectionStatus, requestedAt: number, acceptedAt: number | null, rejectedAt: number | null, rejectionReason: string | null, suspendedAt: number | null, revokedAt: number | null, capabilities: { loadTenderOutbound: boolean, loadTenderInbound: boolean, shipmentStatus: boolean, invoice: boolean } } | null }, customer: { id: string, name: string, code: string } | null, documentProfiles: Array<{ id: string, name: string, status: EdiDocumentStatus, direction: EdiDocumentDirection, transactionSet: string, functionalGroupId: string, envelope: { interchangeSenderQualifier: string, interchangeSenderId: string, interchangeReceiverQualifier: string, interchangeReceiverId: string, applicationSenderCode: string, applicationReceiverCode: string, interchangeUsageIndicator: string, elementSeparator: string, segmentTerminator: string, componentSeparator: string, repetitionSeparator: string }, acknowledgment: { expected: boolean, type: string, slaInMinutes: number } }>, transports: Array<{ lastPollAttemptAt: number | null, lastPollSuccessAt: number | null, lastPollError: string | null, profile: { id: string, name: string, method: EdiConnectionMethod, status: EntityStatus, config: unknown }, credentials: Array<{ key: string, secret: boolean, required: boolean, onFile: boolean }>, certificates: Array<{ role: EdiTransportCertificateRole, readable: boolean, subject: string | null, issuer: string | null, notBefore: number | null, notAfter: number | null, expired: boolean }> }>, readiness: { ready: boolean, completedCount: number, totalCount: number, items: Array<{ key: string, label: string, complete: boolean }> }, mappings: { profileId: string | null, updatedAt: number | null, counts: Array<{ entityType: EdiMappingEntityType, count: number }> }, activity: { since: number, seriesSince: number, scorecard: { outboundTotal: number, sentCount: number, failedCount: number, deadLetteredCount: number, receivedCount: number, deliverySuccessRate: number | null, avgAckSeconds: number | null, p95AckSeconds: number | null, overdueAckCount: number }, ackStatusCounts: Array<{ status: string, count: number }>, sets: Array<{ transactionSet: string, direction: EdiDocumentDirection, count: number, failedCount: number, deadLetteredCount: number, lastAt: number | null }>, series: Array<{ bucketStart: number, bucketSeconds: number, outboundCount: number, sentCount: number, failedCount: number, receivedCount: number }> }, attention: { overdueAckAgeSeconds: number, overdueAckCount: number, oldestOverdueAt: number | null, overdueAcks: Array<{ ' $fragmentRefs'?: { 'DeskEdiPartnerMessageFieldsFragment': DeskEdiPartnerMessageFieldsFragment } }>, deadLettered: Array<{ ' $fragmentRefs'?: { 'DeskEdiPartnerMessageFieldsFragment': DeskEdiPartnerMessageFieldsFragment } }>, quarantinedFiles: Array<{ id: string, fileName: string, remotePath: string, sizeBytes: number, failureReason: string | null, receivedAt: number }> }, carriers: Array<{ carrierId: string, carrierName: string, carrierCode: string | null, scac: string | null, isDefault: boolean }> | null } };
+export type DeskEdiPartnerCardQuery = { ediPartnerCard: { partner: { id: string, kind: EdiPartnerKind, status: EntityStatus, code: string, name: string, description: string | null, customerId: string | null, internalOrganizationId: string | null, country: string, timezone: string | null, contactName: string | null, contactEmail: string | null, contactPhone: string | null, enabledForInbound: boolean, enabledForOutbound: boolean, updatedAt: number, internalOrganization: { id: string, name: string } | null, connection: { id: string, method: EdiConnectionMethod, status: EdiConnectionStatus, requestedAt: number, acceptedAt: number | null, rejectedAt: number | null, rejectionReason: string | null, suspendedAt: number | null, revokedAt: number | null, capabilities: { loadTenderOutbound: boolean, loadTenderInbound: boolean, shipmentStatus: boolean, invoice: boolean } } | null }, customer: { id: string, name: string, code: string } | null, documentProfiles: Array<{ id: string, name: string, status: EdiDocumentStatus, direction: EdiDocumentDirection, transactionSet: string, functionalGroupId: string, envelope: { interchangeSenderQualifier: string, interchangeSenderId: string, interchangeReceiverQualifier: string, interchangeReceiverId: string, applicationSenderCode: string, applicationReceiverCode: string, interchangeUsageIndicator: string, elementSeparator: string, segmentTerminator: string, componentSeparator: string, repetitionSeparator: string }, acknowledgment: { expected: boolean, type: string, slaInMinutes: number } }>, transports: Array<{ lastPollAttemptAt: number | null, lastPollSuccessAt: number | null, lastPollError: string | null, profile: { id: string, name: string, method: EdiConnectionMethod, status: EntityStatus, config: unknown }, credentials: Array<{ key: string, secret: boolean, required: boolean, onFile: boolean }>, certificates: Array<{ role: EdiTransportCertificateRole, readable: boolean, subject: string | null, issuer: string | null, notBefore: number | null, notAfter: number | null, expired: boolean }> }>, readiness: { ready: boolean, completedCount: number, totalCount: number, items: Array<{ key: string, complete: boolean }> }, mappings: { profileId: string | null, updatedAt: number | null, counts: Array<{ entityType: EdiMappingEntityType, count: number }> }, activity: { since: number, seriesSince: number, scorecard: { outboundTotal: number, sentCount: number, failedCount: number, deadLetteredCount: number, receivedCount: number, deliverySuccessRate: number | null, avgAckSeconds: number | null, p95AckSeconds: number | null, overdueAckCount: number }, ackStatusCounts: Array<{ status: string, count: number }>, sets: Array<{ transactionSet: string, direction: EdiDocumentDirection, count: number, failedCount: number, deadLetteredCount: number, lastAt: number | null }>, series: Array<{ bucketStart: number, bucketSeconds: number, outboundCount: number, sentCount: number, failedCount: number, receivedCount: number }> }, attention: { overdueAckAgeSeconds: number, overdueAckCount: number, oldestOverdueAt: number | null, overdueAcks: Array<{ ' $fragmentRefs'?: { 'DeskEdiPartnerMessageFieldsFragment': DeskEdiPartnerMessageFieldsFragment } }>, deadLettered: Array<{ ' $fragmentRefs'?: { 'DeskEdiPartnerMessageFieldsFragment': DeskEdiPartnerMessageFieldsFragment } }>, quarantinedFiles: Array<{ id: string, fileName: string, remotePath: string, sizeBytes: number, failureReason: string | null, receivedAt: number }> }, carriers: Array<{ carrierId: string, carrierName: string, carrierCode: string | null, scac: string | null, isDefault: boolean }> | null } };
 
 export type DeskEdiPartnerMessageFieldsFragment = { id: string, direction: EdiDocumentDirection, transactionSet: string, interchangeControlNumber: string, status: EdiMessageStatus, deliveryStatus: EdiMessageDeliveryStatus | null, deliveryAttempts: number, deliveryLastAttemptAt: number | null, deliveryLastError: string | null, deliverySentAt: number | null, ackStatus: EdiMessageAckStatus | null, ackReceivedAt: number | null, ackLastError: string | null, generatedAt: number } & { ' $fragmentName'?: 'DeskEdiPartnerMessageFieldsFragment' };
 
@@ -14371,13 +14166,6 @@ export type TestFactoringTransportMutationVariables = Exact<{
 
 export type TestFactoringTransportMutation = { testFactoringTransport: { passed: boolean, message: string, transport: { ' $fragmentRefs'?: { 'FactoringTransportFieldsFragment': FactoringTransportFieldsFragment } } } };
 
-export type DeskFiscalPeriodsQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-}>;
-
-
-export type DeskFiscalPeriodsQuery = { fiscalPeriods: { edges: Array<{ node: { id: string, fiscalYearId: string, name: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, startDate: number, endDate: number, isAdjusting: boolean, lockedAt: number | null, closedAt: number | null, reopenedAt: number | null, reopenReason: string | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
-
 export type FiscalPeriodFieldsFragment = { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, closedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalPeriodFieldsFragment' };
 
 export type FiscalYearTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number, periods: Array<{ ' $fragmentRefs'?: { 'FiscalPeriodFieldsFragment': FiscalPeriodFieldsFragment } }> } & { ' $fragmentName'?: 'FiscalYearTableRowFieldsFragment' };
@@ -14652,6 +14440,21 @@ export type DeleteFuelPurchaseMutationVariables = Exact<{
 
 
 export type DeleteFuelPurchaseMutation = { deleteFuelPurchase: boolean };
+
+export type DeskFuelIndexPricesQueryVariables = Exact<{
+  fuelIndexId: string | number;
+  from?: string | null | undefined;
+  to?: string | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type DeskFuelIndexPricesQuery = { fuelIndexPriceHistory: Array<{ id: string, fuelIndexId: string, priceDate: string, price: string, currency: string, isManual: boolean }> };
+
+export type DeskFuelProgramCurrentRatesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DeskFuelProgramCurrentRatesQuery = { fuelProgramCurrentRates: Array<{ id: string, ratePerMile: string | null, percent: string | null, flatAmount: string | null, usedFallback: boolean, program: { id: string, code: string, name: string, method: FuelSurchargeProgramMethod, fuelIndexId: string, fuelIndex: { id: string, name: string } | null }, price: { id: string, priceDate: string, price: string } | null }> };
 
 export type FuelIndexFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, source: FuelIndexSource, fuelType: FuelType, region: string, eiaSeriesId: string, currency: string, isActive: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FuelIndexFieldsFragment' };
 
@@ -15797,19 +15600,9 @@ export type DeskJournalEntryCardQueryVariables = Exact<{
 
 
 export type DeskJournalEntryCardQuery = { journalEntryCard: { entry: (
-      { referenceType: string, referenceId: string, referenceNumber: string, fiscalPeriodId: string, reversalOfId: string | null, reversedById: string | null, entryDate: number, approvalNotes: string, rejectedAt: number | null, rejectionReason: string }
+      { referenceType: string, referenceId: string, referenceNumber: string, fiscalPeriodId: string, reversalOfId: string | null, reversedById: string | null }
       & { ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } }
-    ), lines: Array<(
-      { isReconciled: boolean }
-      & { ' $fragmentRefs'?: { 'DeskJournalCardLineFieldsFragment': DeskJournalCardLineFieldsFragment } }
-    )>, period: { ' $fragmentRefs'?: { 'DeskJournalCardPeriodFieldsFragment': DeskJournalCardPeriodFieldsFragment } } | null, posting: { ' $fragmentRefs'?: { 'DeskJournalCardPostingFieldsFragment': DeskJournalCardPostingFieldsFragment } } | null, source: { id: string, sourceObjectType: string, sourceObjectId: string, sourceEventType: string, sourceDocumentNumber: string, status: string, batchNumber: string | null } | null, createdBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, approvedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, postedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, rejectedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, reversalOf: { ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } } | null, reversedBy: { ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } } | null, reversal: { id: string, status: JournalReversalStatus, reasonCode: string, reasonText: string, requestedAccountingDate: number, rejectionReason: string | null, cancelReason: string | null, createdAt: number, approvedAt: number | null, postedAt: number | null } | null, reversalRequestedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null } };
-
-export type DeskJournalEntriesQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-}>;
-
-
-export type DeskJournalEntriesQuery = { journalEntries: { edges: Array<{ node: { id: string, entryNumber: string, entryDate: number, accountingDate: number, entryType: string, status: string, fiscalPeriodId: string, referenceType: string, referenceNumber: string, description: string, isReversal: boolean, isAutoGenerated: boolean, totalDebit: number, totalCredit: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+    ), lines: Array<{ ' $fragmentRefs'?: { 'DeskJournalCardLineFieldsFragment': DeskJournalCardLineFieldsFragment } }>, period: { ' $fragmentRefs'?: { 'DeskJournalCardPeriodFieldsFragment': DeskJournalCardPeriodFieldsFragment } } | null, posting: { ' $fragmentRefs'?: { 'DeskJournalCardPostingFieldsFragment': DeskJournalCardPostingFieldsFragment } } | null, source: { id: string, sourceObjectType: string, sourceObjectId: string, sourceEventType: string, sourceDocumentNumber: string, status: string, batchNumber: string | null } | null, createdBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, approvedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, postedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, rejectedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, reversalOf: { ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } } | null, reversedBy: { ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } } | null, reversal: { id: string, status: JournalReversalStatus, reasonCode: string, reasonText: string, requestedAccountingDate: number, rejectionReason: string | null, cancelReason: string | null, createdAt: number, approvedAt: number | null, postedAt: number | null } | null, reversalRequestedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null } };
 
 export type JournalEntryDetailQueryVariables = Exact<{
   id: string | number;
@@ -15862,13 +15655,6 @@ export type PostJournalEntriesMutationVariables = Exact<{
 
 
 export type PostJournalEntriesMutation = { postJournalEntries: { ' $fragmentRefs'?: { 'JournalReviewResultFieldsFragment': JournalReviewResultFieldsFragment } } };
-
-export type DeskJournalReversalsQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-}>;
-
-
-export type DeskJournalReversalsQuery = { journalReversals: { edges: Array<{ node: { id: string, status: JournalReversalStatus, originalJournalEntryId: string, reversalJournalEntryId: string | null, requestedAccountingDate: number, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, approvedAt: number | null, postedAt: number | null, rejectionReason: string | null, cancelReason: string | null, createdAt: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type JournalReversalTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, originalJournalEntryId: string, reversalJournalEntryId: string | null, postedBatchId: string | null, status: JournalReversalStatus, requestedAccountingDate: number, resolvedFiscalYearId: string, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, requestedById: string, approvedById: string | null, approvedAt: number | null, rejectedById: string | null, rejectedAt: number | null, rejectionReason: string | null, cancelledById: string | null, cancelledAt: number | null, cancelReason: string | null, postedById: string | null, postedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'JournalReversalTableRowFieldsFragment' };
 
@@ -15948,14 +15734,7 @@ export type DeskManualJournalCardQueryVariables = Exact<{
 }>;
 
 
-export type DeskManualJournalCardQuery = { manualJournalCard: { postedAt: number | null, journal: { id: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, currencyCode: string, totalDebit: number, totalCredit: number, isBalanced: boolean, postedBatchId: string | null, approvedAt: number | null, rejectedAt: number | null, rejectionReason: string | null, cancelledAt: number | null, cancelReason: string | null, createdAt: number, updatedAt: number }, lines: Array<{ ' $fragmentRefs'?: { 'DeskJournalCardLineFieldsFragment': DeskJournalCardLineFieldsFragment } }>, requestedPeriod: { ' $fragmentRefs'?: { 'DeskJournalCardPeriodFieldsFragment': DeskJournalCardPeriodFieldsFragment } } | null, posting: { ' $fragmentRefs'?: { 'DeskJournalCardPostingFieldsFragment': DeskJournalCardPostingFieldsFragment } } | null, createdBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, approvedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, rejectedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, cancelledBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, postedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, entries: Array<{ ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } }> } };
-
-export type DeskManualJournalsQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-}>;
-
-
-export type DeskManualJournalsQuery = { manualJournals: { edges: Array<{ node: { id: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, isBalanced: boolean, approvedAt: number | null, rejectionReason: string | null, cancelReason: string | null, postedBatchId: string | null, createdAt: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+export type DeskManualJournalCardQuery = { manualJournalCard: { postedAt: number | null, journal: { id: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, rejectedAt: number | null, rejectionReason: string | null, cancelledAt: number | null, cancelReason: string | null, createdAt: number, updatedAt: number }, lines: Array<{ ' $fragmentRefs'?: { 'DeskJournalCardLineFieldsFragment': DeskJournalCardLineFieldsFragment } }>, requestedPeriod: { ' $fragmentRefs'?: { 'DeskJournalCardPeriodFieldsFragment': DeskJournalCardPeriodFieldsFragment } } | null, posting: { ' $fragmentRefs'?: { 'DeskJournalCardPostingFieldsFragment': DeskJournalCardPostingFieldsFragment } } | null, createdBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, approvedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, rejectedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, cancelledBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, postedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, entries: Array<{ ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } }> } };
 
 export type ManualJournalTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ManualJournalTableRowFieldsFragment' };
 
@@ -16069,13 +15848,6 @@ export type DeskOrderCardQueryVariables = Exact<{
 
 
 export type DeskOrderCardQuery = { order: { id: string, status: OrderStatus, orderNumber: string, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, charges: Array<{ id: string, description: string, amount: string, invoiceId: string | null, invoicedAt: number | null, allocations: Array<{ id: string }> }> } | null };
-
-export type DeskOrderQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type DeskOrderQuery = { order: { id: string, status: OrderStatus, orderNumber: string, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, createdAt: number, updatedAt: number, customer: { ' $fragmentRefs'?: { 'CustomerReferenceFragment': CustomerReferenceFragment } } | null, legs: Array<{ id: string, proNumber: string, status: ShipmentStatus, bol: string | null }>, charges: Array<{ id: string, description: string, amount: string, invoiceId: string | null, invoicedAt: number | null, allocations: Array<{ id: string }> }> } | null };
 
 export type OrderDetailQueryVariables = Exact<{
   id: string | number;
@@ -16557,6 +16329,29 @@ export type DeskRateAgreementPricingQueryVariables = Exact<{
 
 export type DeskRateAgreementPricingQuery = { rateQuotes: { totalCount: number | null, edges: Array<{ node: { id: string, ratedAt: number } }> } };
 
+export type DeskRateAgreementsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskRateAgreementsQuery = { rateAgreements: { totalCount?: number | null, edges: Array<{ node: { id: string, code: string, name: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, agreementType: RateAgreementType, status: RateAgreementStatus, priority: number, contractRef: string, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, currency: string, inputs: unknown } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskRateAgreementCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskRateAgreementCardQuery = { rateAgreement: { id: string, code: string, name: string, description: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, billToCustomerId: string | null, agreementType: RateAgreementType, status: RateAgreementStatus, priority: number, contractRef: string, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, currency: string, inputs: unknown, submittedAt: number | null, approvedAt: number | null, reviewComment: string, laneCount: number, currentVersion: { id: string, versionNumber: number, effectiveFrom: number, effectiveTo: number | null, changeMessage: string } | null, lanes: Array<{ id: string, label: string, originScopeType: string, originScopeValue: string, originCity: string, destinationScopeType: string, destinationScopeValue: string, destinationCity: string, direction: string, priority: number, effectiveFrom: number, effectiveTo: number | null, hazmatOnly: boolean, tempControlOnly: boolean, formulaTemplateId: string, currency: string, inputs: unknown }>, accessorials: Array<{ id: string, accessorialChargeId: string, method: string, rateUnit: string, waived: boolean, autoApply: boolean, freeUnits: number | null, effectiveFrom: number | null, effectiveTo: number | null, amount: string, maxAmount: string | null, condition: string }> | null, fuelBinding: { id: string, fuelSurchargeProgramId: string, waived: boolean } | null } | null };
+
+export type DeskRateMatrixCardQueryVariables = Exact<{
+  id: string | number;
+  cellOffset?: number | null | undefined;
+}>;
+
+
+export type DeskRateMatrixCardQuery = { rateMatrix: { id: string, code: string, name: string, description: string, status: string, valueType: string, cellCount: number, dimensions: Array<{ id: string, position: number, kind: string, matchMode: string, label: string, keyNormalization: string, rangeOverflow: string }> | null, cells: Array<{ id: string, d0Key: string, d1Key: string, d2Key: string, d3Key: string, d0Min: string | null, d0Max: string | null, d1Min: string | null, d1Max: string | null, d2Min: string | null, d2Max: string | null, d3Min: string | null, d3Max: string | null, deficitEligible: boolean, value: string, minCharge: string | null }> } | null };
+
 export type RateAgreementRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, code: string, name: string, description: string, agreementType: RateAgreementType, status: RateAgreementStatus, contractRef: string, priority: number, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, currency: string, inputs: unknown, marginFloorPercent: string | null, maxPayPercentOfSell: string | null, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, currentVersionNumber: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateAgreementRowFieldsFragment' };
 
 export type RateZoneRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateZoneRowFieldsFragment' };
@@ -16606,14 +16401,6 @@ export type DeskRecordActivityQueryVariables = Exact<{
 
 export type DeskRecordActivityQuery = { auditEntriesByResourceId: { totalCount?: number | null, edges: Array<{ node: { id: string, operation: string, timestamp: number, changes: unknown, comment: string | null, principalType: string, user: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
-export type DeskRecurringShipmentsQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  includeTotalCount: boolean;
-}>;
-
-
-export type DeskRecurringShipmentsQuery = { recurringShipments: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, status: RecurringShipmentStatus, customerId: string | null, sourceShipmentId: string, lastGeneratedShipmentId: string | null, cronExpression: string, timezone: string, autoGenerate: boolean, nextOccurrenceAt: number | null, generationCount: number, customer: { ' $fragmentRefs'?: { 'CustomerReferenceFragment': CustomerReferenceFragment } } | null, originLocation: { ' $fragmentRefs'?: { 'LocationReferenceFragment': LocationReferenceFragment } } | null, destinationLocation: { ' $fragmentRefs'?: { 'LocationReferenceFragment': LocationReferenceFragment } } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
-
 export type RecurringShipmentTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceShipmentId: string, customerId: string | null, originLocationId: string | null, destinationLocationId: string | null, name: string, description: string, status: RecurringShipmentStatus, cronExpression: string, timezone: string, startDate: number | null, endDate: number | null, maxOccurrences: number | null, leadTimeDays: number, skipWeekends: boolean, exceptionPolicy: RecurringShipmentExceptionPolicy, blackoutDates: Array<string> | null, autoGenerate: boolean, nextOccurrenceAt: number | null, lastOccurrenceAt: number | null, lastRunAt: number | null, generationCount: number, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, originLocation: { id: string, name: string, code: string } | null, destinationLocation: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'RecurringShipmentTableRowFieldsFragment' };
 
 export type RecurringShipmentTableQueryVariables = Exact<{
@@ -16656,19 +16443,9 @@ export type DocumentTypeReferenceFragment = { id: string, code: string, name: st
 
 export type DriverSettlementReferenceFragment = { id: string, workerId: string, settlementNumber: string, status: DriverSettlementStatus, periodStart: number, periodEnd: number } & { ' $fragmentName'?: 'DriverSettlementReferenceFragment' };
 
-export type EdiCarrierInvoiceReferenceFragment = { id: string, invoiceNumber: string } & { ' $fragmentName'?: 'EdiCarrierInvoiceReferenceFragment' };
-
-export type EdiCommunicationProfileReferenceFragment = { id: string, status: EntityStatus, name: string } & { ' $fragmentName'?: 'EdiCommunicationProfileReferenceFragment' };
-
-export type EdiInboundFileReferenceFragment = { id: string, status: EdiInboundFileStatus } & { ' $fragmentName'?: 'EdiInboundFileReferenceFragment' };
-
-export type EdiMessageReferenceFragment = { id: string, status: EdiMessageStatus } & { ' $fragmentName'?: 'EdiMessageReferenceFragment' };
-
 export type EdiPartnerReferenceFragment = { id: string, kind: EdiPartnerKind, status: EntityStatus, code: string, name: string, enabledForInbound: boolean, enabledForOutbound: boolean } & { ' $fragmentName'?: 'EdiPartnerReferenceFragment' };
 
 export type EdiPartnerCustomerReferenceFragment = { id: string, name: string, code: string } & { ' $fragmentName'?: 'EdiPartnerCustomerReferenceFragment' };
-
-export type EdiTransferReferenceFragment = { id: string, status: EdiTransferStatus } & { ' $fragmentName'?: 'EdiTransferReferenceFragment' };
 
 export type EmailProfileReferenceFragment = { id: string, name: string } & { ' $fragmentName'?: 'EmailProfileReferenceFragment' };
 
@@ -16687,6 +16464,10 @@ export type FiscalPeriodReferenceFragment = { id: string, fiscalYearId: string, 
 export type FleetCodeReferenceFragment = { id: string, code: string, color: string } & { ' $fragmentName'?: 'FleetCodeReferenceFragment' };
 
 export type FuelCardReferenceFragment = { id: string, provider: FuelCardProvider, lastFour: string, label: string, status: FuelCardStatus } & { ' $fragmentName'?: 'FuelCardReferenceFragment' };
+
+export type FuelIndexPriceReferenceFragment = { id: string } & { ' $fragmentName'?: 'FuelIndexPriceReferenceFragment' };
+
+export type FuelProgramCurrentRateReferenceFragment = { id: string } & { ' $fragmentName'?: 'FuelProgramCurrentRateReferenceFragment' };
 
 export type FuelPurchaseReferenceFragment = { id: string, tractorId: string, workerId: string | null, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType } & { ' $fragmentName'?: 'FuelPurchaseReferenceFragment' };
 
@@ -18100,14 +17881,6 @@ export type DeleteTelematicsFormMappingMutationVariables = Exact<{
 
 export type DeleteTelematicsFormMappingMutation = { deleteTelematicsFormMapping: boolean };
 
-export type DeskShipmentTendersQueryVariables = Exact<{
-  shipmentId: string | number;
-  shipmentMoveId?: string | number | null | undefined;
-}>;
-
-
-export type DeskShipmentTendersQuery = { tendersByShipment: Array<{ id: string, shipmentMoveId: string, mode: TenderMode, status: TenderStatus, acceptedOfferId: string | null, bounceCount: number, escalationRound: number, createdAt: number, offers: Array<{ id: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, channel: TenderChannel, status: TenderOfferStatus, sentAt: number | null, expiresAt: number | null, respondedAt: number | null, responseSource: TenderResponseSource | null, counterRate: string | null, counterNeedsApproval: boolean, carrier: { ' $fragmentRefs'?: { 'CarrierReferenceFragment': CarrierReferenceFragment } } | null }> | null }> };
-
 export type TendersByShipmentQueryVariables = Exact<{
   shipmentId: string | number;
 }>;
@@ -19417,7 +19190,6 @@ export class TypedDocumentString<TResult, TVariables>
 
 export { AccessorialChargeTableRowFieldsFragmentDoc, AccessorialChargeTableDocument } from "./documents/accessorial-charge/table";
 export { AccountTypeTableRowFieldsFragmentDoc, AccountTypeTableDocument } from "./documents/account-type/table";
-export { DeskAccountingSyncRecordFieldsFragmentDoc, DeskAccountingMappingFieldsFragmentDoc, DeskAccountingConnectionDocument, DeskAccountingSyncSummaryDocument, DeskAccountingSyncRecordsDocument, DeskAccountingSyncObjectStatesDocument, DeskAccountingSyncRecordDocument, DeskAccountingSyncAttemptsDocument, DeskAccountingMappingsDocument, DeskAccountingMappingSummaryDocument, DeskAccountingMappingDetailDocument, DeskAccountingDriftFindingsDocument, DeskAccountingDriftOverviewDocument, DeskAccountingInboundChangesDocument } from "./documents/accounting-sync/desk";
 export { AccountingDriftFindingFieldsFragmentDoc, AccountingDriftOverviewFieldsFragmentDoc, AccountingDriftOverviewDocument, AccountingDriftFindingDocument, AccountingDriftFixPreviewDocument, ResolveAccountingDriftDocument, DismissAccountingDriftDocument, CheckAccountingDriftDocument, AccountingDriftFindingTableDocument } from "./documents/accounting-sync/drift";
 export { AccountingInboundChangeFieldsFragmentDoc, AccountingInboundOverviewDocument, AccountingInboundChangeDocument, AccountingInboundApplyPreviewDocument, ApplyAccountingInboundChangeDocument, IgnoreAccountingInboundChangeDocument, AccountingInboundChangeTableDocument } from "./documents/accounting-sync/inbound";
 export { AccountingMappingFieldsFragmentDoc, AccountingReferenceObjectFieldsFragmentDoc, AccountingProviderProfileFieldsFragmentDoc, AccountingAppSettingsFieldsFragmentDoc, AccountingConnectionFieldsFragmentDoc, AccountingWebhookSubscriptionSummaryFieldsFragmentDoc, AccountingPreparedCertificateFieldsFragmentDoc, AccountingSyncStatusFieldsFragmentDoc, AccountingSyncRecordFieldsFragmentDoc, AccountingBackfillFieldsFragmentDoc, AccountingSyncStatusDocument, SaveAccountingAppDocument, RemoveAccountingAppDocument, AccountingMappingSummaryDocument, AccountingMappingsDocument, AccountingReferenceObjectsDocument, ConfirmAccountingMappingsDocument, RejectAccountingMappingDocument, SetAccountingMappingDocument, ClearAccountingMappingDocument, CreateAccountingReferenceRecordDocument, RefreshAccountingReferenceDataDocument, CompleteAccountingSetupDocument, StartAccountingAuthorizationDocument, FinishAccountingAuthorizationDocument, ChooseAccountingCompanyDocument, PrepareAccountingCertificateDocument, ConnectAccountingWithCertificateDocument, RenewAccountingCertificateDocument, DisconnectAccountingSystemDocument, CheckAccountingConnectionDocument, AccountingSyncSummaryDocument, AccountingSyncRecordsDocument, AccountingSyncRecordDocument, AccountingSyncAttemptsDocument, AccountingSyncObjectStatesDocument, AccountingBackfillsDocument, ChooseAccountingSyncModeDocument, EnableAccountingSyncDocument, UpdateAccountingSyncSettingsDocument, PauseAccountingSyncDocument, ResumeAccountingSyncDocument, RetryAccountingSyncDocument, ReleaseAccountingSyncDocument, SkipAccountingSyncDocument, RedateAccountingSyncDocument, RequestAccountingBackfillDocument, ChangeAccountingBackfillDocument } from "./documents/accounting-sync/operations";
@@ -19477,7 +19249,6 @@ export { DataTableInsightFieldsDocument, DataTableFacetsDocument, DataTableAggre
 export { DetentionFacilityStatsDocument, DetentionCustomerStatsDocument, DetentionWaiverStatsDocument, DetentionPolicyPreviewDocument, DetentionBacktestDocument } from "./documents/detention/analytics";
 export { DeskDetentionCardDocument } from "./documents/detention/card";
 export { DetentionOccurrenceFieldsFragmentDoc, DetentionEvidenceFieldsFragmentDoc, DetentionNoticeFieldsFragmentDoc, DetentionCollectabilityFieldsFragmentDoc, DetentionDeskDocument, DetentionOccurrenceDetailDocument, ShipmentDetentionDocument, DetentionDisputePacketDocument, WaiveDetentionOccurrenceDocument, ApproveDetentionOccurrenceDocument, DisputeDetentionOccurrenceDocument, SendDetentionNoticeDocument } from "./documents/detention/desk";
-export { DeskDetentionOccurrencesDocument } from "./documents/detention/desk-board";
 export { DetentionPolicyTierFieldsFragmentDoc, DetentionPolicyRowFieldsFragmentDoc, DetentionPolicyTableDocument, DetentionPolicyDocument, CreateDetentionPolicyDocument, UpdateDetentionPolicyDocument, DeleteDetentionPolicyDocument } from "./documents/detention/table";
 export { DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMovesDocument, DispatchAssignmentPreviewDocument, DispatchAssignMovesDocument, DispatchUnassignMovesDocument, DispatchCarrierAssignmentPreviewDocument, DispatchAssignMoveToCarrierDocument, DispatchCancelCarrierAssignmentDocument, DispatchPlanAutoAssignDocument } from "./documents/dispatch-console/page";
 export { DistanceOverrideLocationFieldsFragmentDoc, DistanceOverrideTableRowFieldsFragmentDoc, DistanceOverrideTableDocument } from "./documents/distance-override/table";
@@ -19489,7 +19260,6 @@ export { DeskDriverSettlementCardDocument } from "./documents/driver-settlement/
 export { PayProfileTableDocument, WorkerPayAssignmentsDocument, EffectiveWorkerPayAssignmentDocument, PayProfileAssignmentsDocument, PayProfileDetailDocument, RecurringDeductionTableDocument, RecurringEarningTableDocument, PayCodeTableDocument, PayAdvanceTableDocument, EscrowAccountTableDocument, EscrowAccountDetailDocument, DriverSettlementTableDocument, DriverSettlementDetailDocument, SettlementBatchTableDocument, DriverPayEventTableDocument, WorkerEarningsSummaryDocument, WorkerYtdPaySummariesDocument, SettlementControlDocument, SettlementWorkspaceSummaryDocument, UnsettledWorkerSummariesDocument, CurrentSettlementPeriodDocument, PreviewDriverSettlementDocument, ExportSettlementBatchCsvDocument, CreatePayProfileDocument, UpdatePayProfileDocument, AssignPayProfileToWorkerDocument, EndWorkerPayAssignmentDocument, CreateRecurringDeductionDocument, UpdateRecurringDeductionDocument, CreatePayCodeDocument, UpdatePayCodeDocument, CreateRecurringEarningDocument, UpdateRecurringEarningDocument, IssuePayAdvanceDocument, WriteOffPayAdvanceDocument, OpenEscrowAccountDocument, UpdateEscrowAccountDocument, AdjustEscrowAccountDocument, CloseEscrowAccountDocument, GenerateSettlementBatchDocument, GenerateDriverSettlementDocument, SubmitDriverSettlementDocument, ApproveDriverSettlementDocument, RejectDriverSettlementDocument, PostDriverSettlementDocument, MarkDriverSettlementPaidDocument, VoidDriverSettlementDocument, RecalculateDriverSettlementDocument, AddDriverSettlementAdjustmentDocument, RemoveDriverSettlementAdjustmentDocument, HoldDriverPayEventDocument, ReleaseDriverPayEventDocument, AttachPayEventsToSettlementDocument, DetachPayEventFromSettlementDocument, BulkDriverSettlementActionDocument, UpdateSettlementControlDocument, SettlementBatchDetailDocument, UnsettledPayEventsDocument, PayWorkerNowDocument } from "./documents/driver-settlement/operations";
 export { EdiPartnerScorecardsDocument, EdiVolumeSeriesDocument } from "./documents/edi/analytics";
 export { EdiTemplateVersionSummaryFieldsFragmentDoc, EdiTemplateListFieldsFragmentDoc, EdiTemplateListDocument } from "./documents/edi/designer";
-export { DeskEdiMessageRowFieldsFragmentDoc, DeskEdiTransferRowFieldsFragmentDoc, DeskEdiPartnersDocument, DeskEdiInboundFilesDocument, DeskEdiInboundFileDocument, DeskEdiMessagesDocument, DeskEdiMessageDocument, DeskEdiTransfersDocument, DeskEdiTransferDocument, DeskEdiAckHealthDocument, DeskEdiCarrierInvoicesDocument } from "./documents/edi/desk";
 export { DeskEdiPartnerMessageFieldsFragmentDoc, DeskEdiPartnerCardDocument, DeskEdiPartnerMessagesDocument } from "./documents/edi/partner-desk";
 export { EdiPartnerReadinessDocument } from "./documents/edi/readiness";
 export { EdiSummaryDocument } from "./documents/edi/summary";
@@ -19508,7 +19278,6 @@ export { FactoringInvoiceStateFieldsFragmentDoc, FactoringInvoiceStateTableDocum
 export { FactoringRemittanceFieldsFragmentDoc, FactoringRemittanceLineFieldsFragmentDoc, FactoringRemittancesDocument, FactoringRemittanceDetailDocument, FactoringRemittanceLinesDocument, FactoringRemittancePlanDocument, CreateFactoringRemittanceDocument, StageFactoringRemittanceDocument, RematchFactoringRemittanceDocument, UpdateFactoringRemittanceLineDocument, ApplyFactoringRemittanceDocument, DiscardFactoringRemittanceDocument, FactoringRemittanceTableDocument } from "./documents/factoring/remittances";
 export { FactoringSubmissionItemFieldsFragmentDoc, FactoringSubmissionFieldsFragmentDoc, FactoringSubmissionTableDocument, FactoringSubmissionDetailDocument, FactoringSubmissionPlanDocument, SubmitInvoicesToFactorDocument, RetryFactoringSubmissionDocument, CancelFactoringSubmissionDocument } from "./documents/factoring/submissions";
 export { FactoringTransportFieldsFragmentDoc, FactoringTransportDocument, SaveFactoringTransportDocument, TestFactoringTransportDocument } from "./documents/factoring/transport";
-export { DeskFiscalPeriodsDocument } from "./documents/fiscal-period/desk";
 export { FiscalPeriodFieldsFragmentDoc, FiscalYearTableRowFieldsFragmentDoc, FiscalYearTableDocument } from "./documents/fiscal-year/table";
 export { FleetCodeTableRowFieldsFragmentDoc, FleetCodeTableDocument } from "./documents/fleet-code/table";
 export { FleetSafetyDocument, WorkerSafetyViolationsDocument, RecordSafetyViolationDocument, UpdateSafetyViolationDocument, DeleteSafetyViolationDocument } from "./documents/fleet-safety/operations";
@@ -19520,6 +19289,7 @@ export { FuelCardFieldsFragmentDoc, FuelCardTableDocument, FuelCardDocument, Cre
 export { FuelPurchaseImportBatchFieldsFragmentDoc, FuelPurchaseImportRowFieldsFragmentDoc, FuelPurchaseImportDocument, FuelPurchaseImportRowsDocument, FuelPurchaseImportTemplateDocument, CreateFuelPurchaseImportDocument, StageFuelPurchaseImportDocument, CommitFuelPurchaseImportDocument, DiscardFuelPurchaseImportDocument, ResolveFuelPurchaseImportRowsDocument, FuelPurchaseImportTableDocument } from "./documents/fuel-purchase-import/operations";
 export { DeskFuelPurchaseCardDocument } from "./documents/fuel-purchase/desk";
 export { FuelPurchaseFieldsFragmentDoc, FuelPurchaseTableDocument, FuelPurchaseDocument, CreateFuelPurchaseDocument, UpdateFuelPurchaseDocument, DeleteFuelPurchaseDocument } from "./documents/fuel-purchase/operations";
+export { DeskFuelIndexPricesDocument, DeskFuelProgramCurrentRatesDocument } from "./documents/fuel-surcharge/desk";
 export { FuelIndexFieldsFragmentDoc, FuelSurchargeProgramFieldsFragmentDoc, FuelIndexTableDocument, FuelSurchargeProgramTableDocument, FuelSurchargeProgramDetailDocument, FuelDashboardDocument, FuelIndexPriceHistoryDocument, FuelProgramCurrentRatesDocument, GenerateFuelSurchargeTableDocument, EiaSeriesOptionsDocument, CreateFuelIndexDocument, UpdateFuelIndexDocument, DeleteFuelIndexDocument, AddFuelIndexPriceDocument, UpdateFuelIndexPriceDocument, DeleteFuelIndexPriceDocument, CreateFuelSurchargeProgramDocument, UpdateFuelSurchargeProgramDocument, DeleteFuelSurchargeProgramDocument } from "./documents/fuel-surcharge/operations";
 export { HazardousMaterialTableRowFieldsFragmentDoc, HazardousMaterialTableDocument } from "./documents/hazardous-material/table";
 export { HazmatSegregationRuleTableRowFieldsFragmentDoc, HazmatSegregationRuleTableDocument } from "./documents/hazmat-segregation-rule/table";
@@ -19539,20 +19309,19 @@ export { InvoiceRelatedFieldsFragmentDoc, CreditMemoApplicationFieldsFragmentDoc
 export { CreatedInvoiceFieldsFragmentDoc, CreateInvoicesFromShipmentsDocument, VoidInvoiceDocument, CreateMemoDocument, SendInvoiceEdiDocument, ApplyCreditMemoDocument, UnapplyCreditMemoApplicationDocument, OpenInvoiceDisputeDocument, ResolveInvoiceDisputeDocument, WithdrawInvoiceDisputeDocument } from "./documents/invoice/mutations";
 export { InvoiceRegisterRowFieldsFragmentDoc, InvoiceRegisterDocument } from "./documents/invoice/register";
 export { InvoiceTableRowFieldsFragmentDoc, InvoiceTableDocument } from "./documents/invoice/table";
-export { DeskJournalCardLineFieldsFragmentDoc, DeskJournalCardPeriodFieldsFragmentDoc, DeskJournalCardPostingFieldsFragmentDoc, DeskJournalCardPersonFieldsFragmentDoc, DeskJournalCardEntryFieldsFragmentDoc, DeskJournalEntryCardDocument, DeskJournalEntriesDocument } from "./documents/journal-entry/desk";
+export { DeskJournalCardLineFieldsFragmentDoc, DeskJournalCardPeriodFieldsFragmentDoc, DeskJournalCardPostingFieldsFragmentDoc, DeskJournalCardPersonFieldsFragmentDoc, DeskJournalCardEntryFieldsFragmentDoc, DeskJournalEntryCardDocument } from "./documents/journal-entry/desk";
 export { JournalEntryDetailDocument, JournalSourceByObjectDocument, JournalEntriesBySourceDocument } from "./documents/journal-entry/operations";
 export { JournalReviewResultFieldsFragmentDoc, JournalReviewSummaryDocument, JournalReviewTableDocument, ApproveJournalEntriesDocument, PostJournalEntriesDocument } from "./documents/journal-entry/review";
-export { DeskJournalReversalsDocument } from "./documents/journal-reversal/desk";
 export { JournalReversalTableRowFieldsFragmentDoc, JournalReversalTableDocument } from "./documents/journal-reversal/table";
 export { JurisdictionRuleOverrideTableRowFieldsFragmentDoc, JurisdictionRuleOverrideTableDocument } from "./documents/jurisdiction-rule/overrides";
 export { JurisdictionRuleTableRowFieldsFragmentDoc, JurisdictionRuleTableDocument } from "./documents/jurisdiction-rule/table";
 export { LocationCategoryTableRowFieldsFragmentDoc, LocationCategoryTableDocument } from "./documents/location-category/table";
 export { DeskLocationCardDocument, DeskLocationDwellDocument, DeskLocationPoliciesDocument } from "./documents/location-desk/desk";
 export { LocationTableRowFieldsFragmentDoc, LocationTableDocument } from "./documents/location/table";
-export { DeskManualJournalCardDocument, DeskManualJournalsDocument } from "./documents/manual-journal/desk";
+export { DeskManualJournalCardDocument } from "./documents/manual-journal/desk";
 export { ManualJournalTableRowFieldsFragmentDoc, ManualJournalTableDocument } from "./documents/manual-journal/table";
 export { NotificationFieldsFragmentDoc, NotificationListDocument, NotificationUnreadCountDocument, MyNotificationListDocument, MyNotificationUnreadCountDocument, MarkAllMyNotificationsReadDocument, MarkMyNotificationsReadDocument, MarkMyNotificationsUnreadDocument, DismissMyNotificationsDocument, RestoreMyNotificationsDocument, MarkNotificationsReadDocument, MarkNotificationsUnreadDocument, MarkAllNotificationsReadDocument, DismissNotificationsDocument, RestoreNotificationsDocument } from "./documents/notification/operations";
-export { DeskOrderCardDocument, DeskOrderDocument } from "./documents/order-desk/desk";
+export { DeskOrderCardDocument } from "./documents/order-desk/desk";
 export { OrderDetailDocument } from "./documents/order/detail";
 export { OrderMutationResultFragmentDoc, AttachOrderShipmentsDocument, DetachOrderShipmentDocument, CreateOrderDocument, UpdateOrderDocument, AddOrderChargeDocument, SetOrderChargeAllocationsDocument, UpdateOrderChargeDocument, RemoveOrderChargeDocument, CloseOrderDocument, CancelOrderDocument } from "./documents/order/mutations";
 export { OrderTableRowFieldsFragmentDoc, OrderTableDocument } from "./documents/order/table";
@@ -19562,12 +19331,11 @@ export { OrganizationSettingsStateFieldsFragmentDoc, OrganizationSettingsFieldsF
 export { DeskWorkerPerformanceReviewsDocument, DeskPerformanceReviewTemplatesDocument } from "./documents/performance-review/desk";
 export { PerformanceReviewTemplateFieldsFragmentDoc, PerformanceReviewFieldsFragmentDoc, PerformanceReviewTemplateTableDocument, ActivePerformanceReviewTemplatesDocument, WorkerPerformanceReviewsDocument, CreatePerformanceReviewTemplateDocument, UpdatePerformanceReviewTemplateDocument, ArchivePerformanceReviewTemplateDocument, RestorePerformanceReviewTemplateDocument, CreatePerformanceReviewDocument, UpdatePerformanceReviewDocument, SubmitPerformanceReviewDocument, ReopenPerformanceReviewDocument, ClosePerformanceReviewDocument, DeletePerformanceReviewDocument } from "./documents/performance-review/operations";
 export { PtoPolicyRuleFieldsFragmentDoc, PtoPolicyFieldsFragmentDoc, PtoPolicyAssignmentFieldsFragmentDoc, PlannedPtoAccrualFieldsFragmentDoc, WorkerPtoBalanceFieldsFragmentDoc, WorkerPtoLedgerEntryFieldsFragmentDoc, PtoPolicyTableDocument, PtoPolicyDocument, WorkerPtoPolicyAssignmentsDocument, WorkerPtoBalancesDocument, WorkerPtoLedgerDocument, WorkerPtoAvailabilityDocument, PreviewWorkerPtoAccrualDocument, PtoBalanceSummaryDocument, PtoLiabilityReportDocument, CreatePtoPolicyDocument, UpdatePtoPolicyDocument, ArchivePtoPolicyDocument, RestorePtoPolicyDocument, AssignWorkerPtoPolicyDocument, EndWorkerPtoPolicyAssignmentDocument, AdjustWorkerPtoBalanceDocument, RunPtoAccrualDocument } from "./documents/pto-policy/operations";
-export { DeskRateAgreementPricingDocument } from "./documents/rate/desk";
+export { DeskRateAgreementPricingDocument, DeskRateAgreementsDocument, DeskRateAgreementCardDocument, DeskRateMatrixCardDocument } from "./documents/rate/desk";
 export { RateAgreementRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateMatrixRowFieldsFragmentDoc, RateQuoteRowFieldsFragmentDoc, RateAgreementTableDocument, RateZoneTableDocument, RateMatrixTableDocument, RateQuoteTableDocument } from "./documents/rate/table";
 export { DeskRecordActivityDocument } from "./documents/record-activity/desk";
-export { DeskRecurringShipmentsDocument } from "./documents/recurring-shipment/desk";
 export { RecurringShipmentTableRowFieldsFragmentDoc, RecurringShipmentTableDocument } from "./documents/recurring-shipment/table";
-export { InboundMailboxReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiCarrierInvoiceReferenceFragmentDoc, EdiCommunicationProfileReferenceFragmentDoc, EdiInboundFileReferenceFragmentDoc, EdiMessageReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EdiTransferReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
+export { InboundMailboxReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelIndexPriceReferenceFragmentDoc, FuelProgramCurrentRateReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
 export { CannedReportsDocument } from "./documents/reports/canned";
 export { ReportCatalogDocument } from "./documents/reports/catalog";
 export { ReportDashboardFieldsFragmentDoc, ReportDashboardsDocument, ReportDashboardByIdDocument, CreateReportDashboardDocument, UpdateReportDashboardDocument, DeleteReportDashboardDocument } from "./documents/reports/dashboards";
@@ -19602,7 +19370,6 @@ export { TcaSubscriptionTableRowFieldsFragmentDoc, TcaSubscriptionTableDocument 
 export { TableConfigurationFieldsFragmentDoc, TableConfigurationTableDocument, DefaultTableConfigurationDocument, TableConfigurationDetailDocument, CreateTableConfigurationDocument, UpdateTableConfigurationDocument, DeleteTableConfigurationDocument, SetDefaultTableConfigurationDocument, SetOrgDefaultTableConfigurationDocument } from "./documents/table-configuration/operations";
 export { MyTableLayoutDocument, SaveMyTableLayoutDocument, ResetMyTableLayoutDocument } from "./documents/table-layout/operations";
 export { VehiclePositionsDocument, WorkerHosStatesDocument, WorkerHosStateDocument, WorkerHosViolationsDocument, TelematicsStatusDocument, WorkerHosLogsDocument, WorkerHosDailyLogsDocument, ShipmentDriverFeasibilityDocument, VehicleInspectionsDocument, WorkerFormSubmissionsDocument, HosCertificationSummaryDocument, ShipmentFormSubmissionsDocument, TelematicsFormMappingsDocument, SaveTelematicsFormMappingDocument, DeleteTelematicsFormMappingDocument } from "./documents/telematics/page";
-export { DeskShipmentTendersDocument } from "./documents/tender/desk";
 export { TendersByShipmentDocument, LiveTenderByMoveDocument } from "./documents/tender/operations";
 export { TimesheetsDocument, TimesheetDocument, OpenTimeClockEntryDocument, OpenTimeClockEntriesDocument, TimeClockEntriesDocument, PayrollExportsDocument, PayrollExportRowsDocument, ClockInDocument, ClockOutDocument, RecordTimeEntryDocument, DeleteTimeEntryDocument, TransitionTimesheetDocument, GeneratePayrollExportDocument, VoidPayrollExportDocument } from "./documents/timesheet/operations";
 export { DeskTractorCardDocument, DeskTractorPositionDocument, DeskVehiclePositionsDocument, DeskTractorInspectionsDocument } from "./documents/tractor/desk";

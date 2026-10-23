@@ -220,6 +220,7 @@ func graphQLGetSpecs() []getSpec {
 		detentionOccurrenceGetSpec(),
 		journalEntryGetSpec(),
 		manualJournalGetSpec(),
+		rateAgreementGetSpec(),
 	}, slices.Concat(accountingGetSpecs(), ediGetSpecs())...)
 }
 

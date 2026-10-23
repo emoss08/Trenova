@@ -159,3 +159,13 @@ reads:
   - tool: edi_get_ack_health
     operation: DeskEdiAckHealth
     reason: Acknowledgment health is read by ediAckHealth, keyed by its own arguments rather than a record's id.
+  - tool: rate_list_agreements
+    entity: github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.RateAgreement
+  - tool: rate_get_agreement
+    entity: github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.RateAgreement
+  - tool: rate_list_fuel_index_prices
+    operation: DeskFuelIndexPrices
+    reason: A fuel index's prices are read whole by fuelIndexPriceHistory, keyed by the index.
+  - tool: rate_list_fuel_surcharge_programs
+    operation: DeskFuelProgramCurrentRates
+    reason: The tool reads each active program's current rate, which fuelProgramCurrentRates computes, not the programs themselves.

@@ -161,6 +161,16 @@ const (
 	// coarse.
 	paramInstantFrom
 	paramInstantTo
+	// paramDayText is a day sent as the text a String argument takes (a fuel
+	// index price's day), not as a timestamp.
+	paramDayText
+)
+
+const (
+	// dayTextFormat is what the description of a String argument that takes
+	// a day says it is written as, and dayTextLayout how it is parsed.
+	dayTextFormat = "YYYY-MM-DD"
+	dayTextLayout = "2006-01-02"
 )
 
 // graphQLParam is one typed parameter of a tool that reads through GraphQL,
@@ -379,6 +389,8 @@ func inputValue(param *graphQLParam, args map[string]any, raw any, clk clock) (a
 			return nil, err
 		}
 		return endOfDay(clk, day), nil
+	case paramDayText:
+		return readDayText(args, param.Name)
 	case paramIn, paramEquals, paramContains, paramAtLeast, paramAtMost, paramPresent,
 		paramReference, paramReferences, paramInstantFrom, paramInstantTo:
 	}
@@ -814,7 +826,19 @@ func compileFilter(
 			return compare(dbtype.OpIsNotNull, nil), true, nil
 		}
 		return compare(dbtype.OpIsNull, nil), true, nil
+	case paramDayText:
 	}
 
 	return nil, false, fmt.Errorf("parameter %q has no filter", param.Name)
+}
+
+// readDayText is a day a String argument takes, checked as a day and sent as
+// the text the argument's description names.
+func readDayText(args map[string]any, name string) (string, error) {
+	raw := strings.TrimSpace(optionalString(args, name))
+	if _, err := time.Parse(dayTextLayout, raw); err != nil {
+		return "", fmt.Errorf("parameter %q must be a date as %s", name, dayTextFormat)
+	}
+
+	return raw, nil
 }

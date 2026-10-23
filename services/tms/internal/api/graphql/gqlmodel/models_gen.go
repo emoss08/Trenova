@@ -5261,7 +5261,10 @@ type FuelIndexPriceInput struct {
 	Price       string `json:"price"`
 }
 
+// A fuel surcharge program's surcharge this week, from the index price in effect.
 type FuelProgramCurrentRate struct {
+	// The program's id: a program has one current rate.
+	ID           string                 `json:"id"`
 	Program      *FuelSurchargeProgram  `json:"program"`
 	Price        *FuelIndexPrice        `json:"price,omitempty"`
 	RatePerMile  *string                `json:"ratePerMile,omitempty"`
@@ -6865,9 +6868,39 @@ type RateAgreement struct {
 	ApprovedAt           *int           `json:"approvedAt,omitempty"`
 	ReviewComment        string         `json:"reviewComment"`
 	CurrentVersionNumber int            `json:"currentVersionNumber"`
-	Version              int            `json:"version"`
-	CreatedAt            int            `json:"createdAt"`
-	UpdatedAt            int            `json:"updatedAt"`
+	// The customer invoices for this agreement's freight go to, when not the party itself.
+	BillToCustomerID *string `json:"billToCustomerId,omitempty"`
+	// The live lanes: active rules in force now or starting later, most specific
+	// first. first takes at most 100.
+	Lanes []*RateAgreementLane `json:"lanes"`
+	// How many live lanes the agreement holds.
+	LaneCount int `json:"laneCount"`
+	// The accessorial schedule. Read by rateAgreement only.
+	Accessorials []*RateAgreementAccessorial `json:"accessorials,omitempty"`
+	// The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only.
+	FuelBinding *RateAgreementFuelBinding `json:"fuelBinding,omitempty"`
+	// The version of the header terms in force now. Read by rateAgreement only.
+	CurrentVersion *RateAgreementVersion `json:"currentVersion,omitempty"`
+	Version        int                   `json:"version"`
+	CreatedAt      int                   `json:"createdAt"`
+	UpdatedAt      int                   `json:"updatedAt"`
+}
+
+// An accessorial an agreement prices, and on what terms.
+type RateAgreementAccessorial struct {
+	ID                  string  `json:"id"`
+	AccessorialChargeID string  `json:"accessorialChargeId"`
+	Method              string  `json:"method"`
+	RateUnit            string  `json:"rateUnit"`
+	Waived              bool    `json:"waived"`
+	AutoApply           bool    `json:"autoApply"`
+	FreeUnits           *int    `json:"freeUnits,omitempty"`
+	EffectiveFrom       *int    `json:"effectiveFrom,omitempty"`
+	EffectiveTo         *int    `json:"effectiveTo,omitempty"`
+	Amount              string  `json:"amount"`
+	MaxAmount           *string `json:"maxAmount,omitempty"`
+	// The Tariff condition a shipment meets for the charge to apply; empty applies always.
+	Condition string `json:"condition"`
 }
 
 type RateAgreementConnection struct {
@@ -6879,6 +6912,46 @@ type RateAgreementConnection struct {
 type RateAgreementEdge struct {
 	Node   *RateAgreement `json:"node"`
 	Cursor string         `json:"cursor"`
+}
+
+// How an agreement prices fuel: the program it binds, or a waiver.
+type RateAgreementFuelBinding struct {
+	ID                     string `json:"id"`
+	FuelSurchargeProgramID string `json:"fuelSurchargeProgramId"`
+	Waived                 bool   `json:"waived"`
+}
+
+// One priced lane of a rate agreement: where it applies, when, and the tariff
+// and inputs it prices with.
+type RateAgreementLane struct {
+	ID                    string `json:"id"`
+	Label                 string `json:"label"`
+	OriginScopeType       string `json:"originScopeType"`
+	OriginScopeValue      string `json:"originScopeValue"`
+	OriginCity            string `json:"originCity"`
+	DestinationScopeType  string `json:"destinationScopeType"`
+	DestinationScopeValue string `json:"destinationScopeValue"`
+	DestinationCity       string `json:"destinationCity"`
+	Direction             string `json:"direction"`
+	Priority              int    `json:"priority"`
+	EffectiveFrom         int    `json:"effectiveFrom"`
+	EffectiveTo           *int   `json:"effectiveTo,omitempty"`
+	HazmatOnly            bool   `json:"hazmatOnly"`
+	TempControlOnly       bool   `json:"tempControlOnly"`
+	// The tariff that prices the lane.
+	FormulaTemplateID string `json:"formulaTemplateId"`
+	Currency          string `json:"currency"`
+	// The values the lane's tariff prices with, by input name. Each value is a Tariff wire value.
+	Inputs map[string]any `json:"inputs"`
+}
+
+// The header terms of an agreement as they stood for a window.
+type RateAgreementVersion struct {
+	ID            string `json:"id"`
+	VersionNumber int    `json:"versionNumber"`
+	EffectiveFrom int    `json:"effectiveFrom"`
+	EffectiveTo   *int   `json:"effectiveTo,omitempty"`
+	ChangeMessage string `json:"changeMessage"`
 }
 
 // A rate table a tariff looks values up in: one to four axes, such as origin zone
@@ -6893,15 +6966,54 @@ type RateMatrix struct {
 	Status         string `json:"status"`
 	// What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int.
 	ValueType string `json:"valueType"`
-	Version   int    `json:"version"`
-	CreatedAt int    `json:"createdAt"`
-	UpdatedAt int    `json:"updatedAt"`
+	// The matrix's axes, by position. Read by rateMatrix only.
+	Dimensions []*RateMatrixDimension `json:"dimensions,omitempty"`
+	// How many cells the grid holds.
+	CellCount int `json:"cellCount"`
+	// The grid's cells, a page at a time: offset skips that many, and limit takes
+	// at most 100.
+	Cells     []*RateMatrixCell `json:"cells"`
+	Version   int               `json:"version"`
+	CreatedAt int               `json:"createdAt"`
+	UpdatedAt int               `json:"updatedAt"`
+}
+
+// One cell of a rate matrix: a key or a range on each axis, by position (d0 is
+// the first axis), and the value it holds.
+type RateMatrixCell struct {
+	ID              string  `json:"id"`
+	D0Key           string  `json:"d0Key"`
+	D1Key           string  `json:"d1Key"`
+	D2Key           string  `json:"d2Key"`
+	D3Key           string  `json:"d3Key"`
+	D0Min           *string `json:"d0Min,omitempty"`
+	D0Max           *string `json:"d0Max,omitempty"`
+	D1Min           *string `json:"d1Min,omitempty"`
+	D1Max           *string `json:"d1Max,omitempty"`
+	D2Min           *string `json:"d2Min,omitempty"`
+	D2Max           *string `json:"d2Max,omitempty"`
+	D3Min           *string `json:"d3Min,omitempty"`
+	D3Max           *string `json:"d3Max,omitempty"`
+	DeficitEligible bool    `json:"deficitEligible"`
+	Value           string  `json:"value"`
+	MinCharge       *string `json:"minCharge,omitempty"`
 }
 
 type RateMatrixConnection struct {
 	Edges      []*RateMatrixEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+// One axis of a rate matrix: what it keys on and how a value matches it.
+type RateMatrixDimension struct {
+	ID               string `json:"id"`
+	Position         int    `json:"position"`
+	Kind             string `json:"kind"`
+	MatchMode        string `json:"matchMode"`
+	Label            string `json:"label"`
+	KeyNormalization string `json:"keyNormalization"`
+	RangeOverflow    string `json:"rangeOverflow"`
 }
 
 type RateMatrixEdge struct {

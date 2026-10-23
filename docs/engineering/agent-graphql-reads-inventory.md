@@ -188,12 +188,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `rate_get_agreement` | partial | rateAgreements | DeskCustomerRateAgreements (alt RateAgreementTable) | cursor | DataTable fieldFilters only | No rateAgreement(id) Query: only via list with fieldFilter id. Version history (ListVersions) not exposed. |
-| `rate_get_matrix` | partial | rateMatrices | RateMatrixTable | cursor | DataTable fieldFilters only | No rateMatrix(id) Query; matrix cells (ListCells, cellOffset) not exposed. |
-| `rate_list_agreements` | op | rateAgreements | DeskCustomerRateAgreements (alt RateAgreementTable) | cursor | DataTable fieldFilters only | Same RateAgreementService list. carrierId/customerId/partyType/status as fieldFilters. Desk op picked per rule (customer-scoped view); Table for the unscoped register. |
+| `rate_get_matrix` | partial | rateMatrix | DeskRateMatrixCard | n/a | id, cellOffset | rateMatrix(id), its dimensions and its cells(offset, limit) are in the schema and DeskRateMatrixCard reads them; the tool converts once a get sends its operation's other variables (cellOffset). |
 | `rate_list_confirmations` | none | - | - | - | - | Rate confirmations by move are REST-only. |
-| `rate_list_fuel_index_prices` | op | fuelIndexPriceHistory | FuelIndexPriceHistory | limit only | typed indexId, from, to, limit | Same FuelIndexPriceRepository.ListByIndex. |
-| `rate_list_fuel_surcharge_programs` | op | fuelProgramCurrentRates | FuelProgramCurrentRates | unpaged | none | Same FuelSurchargeService.ProgramCurrentRates; query filtered client-side. |
 | `rate_list_imports` | none | - | - | - | - | Rate import batches are REST-only. |
 
 ## receivable
@@ -305,9 +301,6 @@ for read.
 | `factoring_get_submission` | `FactoringSubmissionDetail` | factoring_get_submission is a get tool, but FactoringSubmissionDetail reads factoringSubmission, which is not one |
 | `home_get_layout` | `HomeLayout` | home_get_layout is a get tool, but HomeLayout reads homeLayout, which is not one |
 | `home_list_widgets` | `HomeWidgetCatalog` | home_list_widgets is a list tool, but HomeWidgetCatalog reads homeWidgetCatalog, which is not one |
-| `rate_list_agreements` | `DeskCustomerRateAgreements` | RateAgreement binds to no Go type; name the entity in reads.yml |
-| `rate_list_fuel_index_prices` | `FuelIndexPriceHistory` | FuelIndexPrice binds to no Go type; name the entity in reads.yml |
-| `rate_list_fuel_surcharge_programs` | `FuelProgramCurrentRates` | FuelProgramCurrentRate binds to no Go type; name the entity in reads.yml |
 | `receivable_list_credit_memo_applications` | `DeskInvoiceCard` | receivable_list_credit_memo_applications is a list tool, but DeskInvoiceCard reads invoice, which is not one |
 | `report_get` | `ReportDefinitionById` | ReportDefinition binds to no Go type; name the entity in reads.yml |
 | `report_get_dataset` | `ReportCatalog` | report_get_dataset is a get tool, but ReportCatalog reads reportCatalog, which is not one |

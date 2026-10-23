@@ -371,6 +371,8 @@ type Resolver struct {
 	portalCredential                   *driverportalresolver.PortalCredentialResolver
 	portalTraining                     *workertrainingresolver.PortalTrainingResolver
 	query                              *queryResolver
+	rateAgreement                      *rateresolver.RateAgreementResolver
+	rateMatrix                         *rateresolver.RateMatrixResolver
 	reviewRating                       *performancereviewresolver.ReviewRatingResolver
 	riskDecision                       *securityactivityresolver.RiskDecisionResolver
 	role                               *roleresolver.RoleResolver
@@ -1634,6 +1636,8 @@ func FromServices(s *Services) *Resolver {
 			workersafetyQuery:             &workersafetyQuery{Deps: workersafetyDeps},
 			workertrainingQuery:           &workertrainingQuery{Deps: workertrainingDeps},
 		},
+		rateAgreement:                &rateresolver.RateAgreementResolver{Deps: rateDeps},
+		rateMatrix:                   &rateresolver.RateMatrixResolver{Deps: rateDeps},
 		reviewRating:                 &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
 		riskDecision:                 &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
 		role:                         &roleresolver.RoleResolver{Deps: roleDeps},
@@ -2877,6 +2881,14 @@ type queryResolver struct {
 	*workeroverviewQuery
 	*workersafetyQuery
 	*workertrainingQuery
+}
+
+func (r *Resolver) RateAgreement() generated.RateAgreementResolver {
+	return r.rateAgreement
+}
+
+func (r *Resolver) RateMatrix() generated.RateMatrixResolver {
+	return r.rateMatrix
 }
 
 func (r *Resolver) ReviewRating() generated.ReviewRatingResolver {

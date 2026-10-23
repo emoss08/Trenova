@@ -5,18 +5,16 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
@@ -90,53 +88,6 @@ func TestListFuelPurchases_ReadsTheTractorAndJurisdictionItNames(t *testing.T) {
 	assert.Equal(t, "TX", rows[0]["jurisdiction"])
 	assert.Equal(t, "389.90", rows[0]["totalAmount"])
 	assert.Equal(t, permission.ResourceFuelPurchase, tool.Policy().Resource)
-}
-
-type fakeFuelIndexPrices struct {
-	fuelsurchargeports.FuelIndexPriceRepository
-
-	captured *fuelsurchargeports.ListFuelIndexPricesRequest
-}
-
-func (f *fakeFuelIndexPrices) ListByIndex(
-	_ context.Context,
-	req *fuelsurchargeports.ListFuelIndexPricesRequest,
-) ([]*fuelsurcharge.FuelIndexPrice, error) {
-	f.captured = req
-
-	return []*fuelsurcharge.FuelIndexPrice{{
-		ID:        pulid.MustNew("fip_"),
-		PriceDate: "2026-09-21",
-		Price:     decimal.RequireFromString("3.799"),
-		Currency:  "USD",
-		IsManual:  true,
-	}}, nil
-}
-
-func TestListFuelIndexPrices_BoundsTheWindowAndTheCount(t *testing.T) {
-	t.Parallel()
-
-	prices := &fakeFuelIndexPrices{}
-	tool := newListFuelIndexPricesTool(prices)
-	indexID := pulid.MustNew("fidx_")
-
-	_, err := tool.Query(t.Context(), testParams(map[string]any{
-		paramFuelIndexID: indexID.String(),
-		"from":           "last month",
-	}))
-	require.Error(t, err)
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{
-		paramFuelIndexID: indexID.String(),
-		"from":           "2026-09-01",
-		"limit":          float64(5_000),
-	}))
-	require.NoError(t, err)
-	assert.Equal(t, maxFuelIndexPrices, prices.captured.Limit)
-	assert.Equal(t, "2026-09-01", prices.captured.From)
-	rows := result.(map[string]any)["prices"].([]fuelIndexPriceRow)
-	require.Len(t, rows, 1)
-	assert.True(t, rows[0].IsManual)
 }
 
 type fakeIFTAJurisdictions struct {

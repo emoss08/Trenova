@@ -1477,6 +1477,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: equipment | `equipment_get_tractor`, `equipment_get_trailer`, `equipment_list_positions` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: operations | `order_list`, `order_get`, `shipment_list_recurring`, `exception_list_service_failure_reason_codes`, `exception_list_service_failures`, `exception_get_service_failure`, `detention_get_occurrence`, `detention_list_occurrences`, `dispatch_list_tenders` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 | Typed reads through GraphQL: ledger | `ledger_list_journal_entries`, `ledger_list_fiscal_periods`, `ledger_list_manual_journals`, `ledger_list_journal_reversals`, `ledger_get_journal_entry`, `ledger_get_manual_journal` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
+| Typed reads through GraphQL: rates | `rate_list_agreements`, `rate_get_agreement`, `rate_list_fuel_index_prices`, `rate_list_fuel_surcharge_programs` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1638,6 +1639,7 @@ the reason the inventory gives. One development case ("which recurring shipments
 tomorrow") dropped to second when the series list's description grew its filters, and the list now
 carries search terms; keyword held-out holds at 0.99 and 0.95 over 147, hybrid at 0.93 recall@5,
 with top-1 0.83 over 167 (the case counts grew with master's merges).
+
 The accounting row converts the seven accounting sync reads and adds the machinery the remaining
 modules need. A paged list now takes its root field's own arguments beside its table input (the
 required accounting system, as `system`), or pages by the root's own `first` and `after` with a
@@ -1669,6 +1671,22 @@ Every schema change is safe. The message list's description was cut under the 90
 limit and its repository tool's search terms were restored after keyword top-1 dipped below its
 floor on development cases; the embedding fixture is re-recorded, and held-out ranking holds
 (keyword 0.99 and 0.95 over 147, hybrid 0.93 and 0.83 over 167), nothing tuned against it.
+
+The rates row converts the agreement register, one agreement, and the two fuel surcharge reads.
+`rate_get_agreement` had no single-record root; `rateAgreement(id)` now reads the header with its
+accessorials, fuel binding and current version, and the agreement's lanes are a field,
+`lanes(first:)` with `laneCount`, paged the way the Desk's agreement card pages them, where the
+repository tool loaded every rule of a tariff that can hold tens of thousands and cut the result at
+fifty. `rateMatrix(id)` gains its dimensions and a paged `cells(offset:, limit:)`, but
+`rate_get_matrix` stays on its path until a get sends its operation's other variables
+(`cellOffset`). The fuel price and program reads were ungated; `FuelIndexPrice`,
+`FuelIndexLatestPrice` and `FuelProgramCurrentRate` now declare the fuel surcharge program kind.
+Two shapes are new: a `String` argument that takes a day as text, and a whole list whose root takes
+no argument but whose repository tool matched a query in what it read (`matches`). Nothing an agent
+at Internal saw before is withheld now, and no field the repository tools hid is shown. The
+agreement descriptions changed, so the embedding fixture is re-recorded; held-out ranking: keyword unchanged (0.99 and
+0.95 over 147), hybrid recall@5 0.93 → 0.93 and top-1 0.82 → 0.83 (165 cases before, 167 on this
+master).
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

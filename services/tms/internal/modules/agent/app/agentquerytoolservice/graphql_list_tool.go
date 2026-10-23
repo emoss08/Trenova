@@ -107,7 +107,12 @@ type graphQLListSpec struct {
 	// template an EDI message was rendered from, the path it was dropped
 	// at), left out of the parameters so the ones people use stay readable.
 	unoffered []string
-	resource  permission.Resource
+	// matches are the row fields, by dotted path, an unpaged list whose root
+	// takes no search argument matches a free-text query against in the rows
+	// it read (program.code), as its repository tool did; queryNote then
+	// describes that query.
+	matches  []string
+	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
@@ -481,7 +486,7 @@ func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
 		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), operationsReadSpecs(),
-		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(),
+		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(), rateReadSpecs(),
 	)
 }
 
@@ -619,7 +624,8 @@ func describedName(param graphQLParam) (string, bool) {
 		return param.Name + "/" + suffixTo, true
 	case paramAtLeast:
 		return param.Name + "/" + suffixMax, true
-	case paramIn, paramEquals, paramContains, paramPresent, paramReference, paramReferences:
+	case paramIn, paramEquals, paramContains, paramPresent, paramReference, paramReferences,
+		paramDayText:
 		return param.Name, true
 	}
 
