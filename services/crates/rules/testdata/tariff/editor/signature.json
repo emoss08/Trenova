@@ -175,7 +175,7 @@
    "expect": {
     "signatures": [
      {
-      "label": "pickup(sequence: Int, kind: StopKind, status: StopStatus, appointment: Bool, window: { start: DateTime?, end: DateTime? }, arrival: DateTime?, departure: DateTime?, dwell: Duration?, pieces: Int?, weight: Weight?, location: { city: Text, state: Text, zip: Text, zip3: Text, … }) -> Stop"
+      "label": "pickup(sequence: Int, kind: StopKind, status: StopStatus, appointment: Bool, window: { start: DateTime?, end: DateTime? }, arrival: DateTime?, departure: DateTime?, dwell: Duration?, pieces: Int?, weight: Weight?, legDistance: Distance?, location: { city: Text, state: Text, zip: Text, zip3: Text, … }, city: Text, state: Text, zip: Text, zip3: Text, country: Text, timezone: Text, category: LocationCategory?, facilityType: FacilityType?, requiresAppointment: Bool) -> Stop"
      }
     ],
     "activeParameter": 0
@@ -222,7 +222,7 @@
    "expect": {
     "signatures": [
      {
-      "label": "charge \"label\" (quantity: Quantity, rate: Money/unit)"
+      "label": "charge \"label\" (quantity: Quantity, rate: Money/unit, minimum: Money, maximum: Money)"
      }
     ],
     "activeParameter": 1
@@ -517,7 +517,57 @@
        },
        {
         "doc": {
+         "message": "The distance from the previous stop, in the organisation's unit; none on the first stop."
+        }
+       },
+       {
+        "doc": {
          "message": "Where the stop is."
+        }
+       },
+       {
+        "doc": {
+         "message": "The city."
+        }
+       },
+       {
+        "doc": {
+         "message": "The state or province code."
+        }
+       },
+       {
+        "doc": {
+         "message": "The postal code."
+        }
+       },
+       {
+        "doc": {
+         "message": "The first three characters of the postal code."
+        }
+       },
+       {
+        "doc": {
+         "message": "The ISO country code."
+        }
+       },
+       {
+        "doc": {
+         "message": "The IANA time zone."
+        }
+       },
+       {
+        "doc": {
+         "message": "What the location is: a terminal, a warehouse, a port, …"
+        }
+       },
+       {
+        "doc": {
+         "message": "What kind of facility the location is: cross-dock, cold storage, …"
+        }
+       },
+       {
+        "doc": {
+         "message": "Whether the location requires an appointment for every visit."
         }
        }
       ]
@@ -555,6 +605,78 @@
      }
     ],
     "active": 0,
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "shipment.requested",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.requested(|) {",
+    "  charge \"x\" = $1",
+    "}"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "requested(code: CODE) -> Bool",
+      "doc": {
+       "message": "Whether the user put an accessorial with this charge code on the shipment: `shipment.requested(LIFT)`."
+      }
+     }
+    ],
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "bill.charge(…)",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $1",
+    "let x = bill.charge(|)"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "bill.charge(line: CODE | Text) -> Money?",
+      "doc": {
+       "message": "The sum of the lines billed so far with this label (as interpolated) or charge code, as in `bill.charge(\"Linehaul\")` or `bill.charge(FSC)`; `none` when there are none."
+      }
+     }
+    ],
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "std.time takes times of day",
+   "source": [
+    "tariff \"t\"",
+    "use std.time.{ afterHours }",
+    "let late = afterHours(rating.date, |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "afterHours(at: DateTime, open: Time = @08:00, close: Time = @17:00) -> Bool"
+     }
+    ],
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "std.tiers prices by distance",
+   "source": [
+    "tariff \"t\"",
+    "use std.tiers.{ byDistance }",
+    "charge \"x\" = byDistance(|)"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "byDistance(tiers: List<DistanceTier>, distance: Distance) -> Money"
+     }
+    ],
     "activeParameter": 0
    }
   }

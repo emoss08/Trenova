@@ -64,3 +64,22 @@ func TestGetRateMatrix_SaysNoMoreOnTheLastPage(t *testing.T) {
 	assert.Equal(t, false, record["cellsHasMore"])
 	assert.NotContains(t, record, "nextCellOffset")
 }
+
+func TestFoldMatrixCells_ReadsAPostalRangeAsItsTwoEnds(t *testing.T) {
+	t.Parallel()
+
+	record := map[string]any{
+		"dimensions": []any{map[string]any{"kind": "ZipRange"}, map[string]any{"kind": "Zone"}},
+		"cells": []any{map[string]any{
+			"d0Key": "30000", "d0KeyTo": "31999", "d1Key": "SE", "d1KeyTo": "",
+			"value": "2.15",
+		}},
+	}
+
+	foldMatrixCells(record, nil, clock{})
+
+	cell, _ := record["cells"].([]any)[0].(map[string]any)
+	assert.Equal(t, []any{"30000 to 31999", "SE"}, cell["keys"])
+	assert.NotContains(t, cell, "d0KeyTo")
+	assert.NotContains(t, cell, "d1KeyTo")
+}

@@ -178,6 +178,7 @@ type Params struct {
 	OrganizationService          tenantports.OrganizationService
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentCommentService       shipmentports.ShipmentCommentService
+	ShipmentRatingReviewService  shipmentports.RatingReviewService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
 	TrackingEventService         trackingeventports.TrackingEventService
 	CheckCallService             checkcallports.CheckCallService
@@ -415,6 +416,7 @@ type Services struct {
 	OrganizationService          tenantports.OrganizationService
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentCommentService       shipmentports.ShipmentCommentService
+	ShipmentRatingReviewService  shipmentports.RatingReviewService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
 	TrackingEventService         trackingeventports.TrackingEventService
 	CheckCallService             checkcallports.CheckCallService
@@ -656,6 +658,7 @@ func newServices(p *Params) *Services {
 		OrganizationService:          p.OrganizationService,
 		ShipmentService:              p.ShipmentService,
 		ShipmentCommentService:       p.ShipmentCommentService,
+		ShipmentRatingReviewService:  p.ShipmentRatingReviewService,
 		ShipmentEventService:         p.ShipmentEventService,
 		TrackingEventService:         p.TrackingEventService,
 		CheckCallService:             p.CheckCallService,

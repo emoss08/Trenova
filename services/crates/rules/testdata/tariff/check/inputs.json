@@ -223,6 +223,7 @@
      "descriptor": {
       "kind": "enum",
       "name": "RatingMode",
+      "ordered": false,
       "variants": [
        "Sell",
        "Buy"

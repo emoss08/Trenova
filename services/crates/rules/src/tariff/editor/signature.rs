@@ -20,9 +20,10 @@ use super::names::receiver_type;
 use super::session::Session;
 use crate::message;
 use crate::message::Message;
-use crate::tariff::check::{CONSTRUCTORS, Callee, TABLE_METHODS};
+use crate::tariff::check::{CONSTRUCTORS, Callee, REQUESTED_DOC, TABLE_METHODS, location_record};
 use crate::tariff::docs::{Doc, collapse};
 use crate::tariff::syntax::token::TokenKind;
+use crate::tariff::types::FieldDef;
 
 /// The most brackets signature help looks out through to find a call.
 const MAX_NESTING: usize = 16;
@@ -156,6 +157,8 @@ fn charge_options() -> Help {
         &[
             (String::from("quantity"), String::from("Quantity"), None),
             (String::from("rate"), String::from("Money/unit"), None),
+            (String::from("minimum"), String::from("Money"), None),
+            (String::from("maximum"), String::from("Money"), None),
         ],
         "",
     );
@@ -170,6 +173,12 @@ fn charge_options() -> Help {
             )))),
             Some(Doc::Message(Message::new(message!(
                 "The price per unit of the quantity: the invoice line's unit price."
+            )))),
+            Some(Doc::Message(Message::new(message!(
+                "The least the line bills: a smaller amount is raised to it, and the line says the minimum applied."
+            )))),
+            Some(Doc::Message(Message::new(message!(
+                "The most the line bills: a larger amount is lowered to it, and the line says the maximum applied."
             )))),
         ],
     }
@@ -188,6 +197,37 @@ fn chosen_help() -> Help {
             "The choice's label, as written after `best` or `worst`."
         ))))],
     }
+}
+
+/// A test constructor's fields, a stop's location fields after its own, all optional.
+fn constructor_help(session: &Session<'_>, constructor: &str) -> Option<Help> {
+    let (_, record) = CONSTRUCTORS.iter().find(|(name, _)| *name == constructor)?;
+    let shape = session.schema.record(record)?;
+    let location = location_record(&shape);
+    let all: Vec<&FieldDef> = shape
+        .fields
+        .iter()
+        .chain(location.iter().flat_map(|location| location.fields.iter()))
+        .collect();
+    let fields: Vec<(String, String, Option<String>)> = all
+        .iter()
+        .map(|field| (field.name.clone(), type_text(&field.ty), None))
+        .collect();
+    let mut signature = build(constructor, &fields, record);
+    for param in &mut signature.params {
+        param.optional = true;
+    }
+    let params = all.iter().map(|field| field.doc.clone()).collect();
+    Some(Help {
+        signature,
+        doc: Some(Doc::Message(Message::with(
+            message!(
+                "Builds a `{0}` for a test: every field is named and optional, and the sample record's values fill the rest."
+            ),
+            [crate::message::Arg::from(*record)],
+        ))),
+        params,
+    })
 }
 
 fn callee_help(
@@ -224,30 +264,16 @@ fn callee_help(
                 params,
             })
         }
-        Callee::Constructor(constructor) => {
-            let (_, record) = CONSTRUCTORS.iter().find(|(name, _)| name == constructor)?;
-            let shape = session.schema.record(record)?;
-            let fields: Vec<(String, String, Option<String>)> = shape
-                .fields
-                .iter()
-                .map(|field| (field.name.clone(), type_text(&field.ty), None))
-                .collect();
-            let mut signature = build(constructor, &fields, record);
-            for param in &mut signature.params {
-                param.optional = true;
-            }
-            let params = shape.fields.iter().map(|field| field.doc.clone()).collect();
-            Some(Help {
-                signature,
-                doc: Some(Doc::Message(Message::with(
-                    message!(
-                        "Builds a `{0}` for a test: every field is named and optional, and the sample record's values fill the rest."
-                    ),
-                    [crate::message::Arg::from(*record)],
-                ))),
-                params,
-            })
-        }
+        Callee::Constructor(constructor) => constructor_help(session, constructor),
+        Callee::Requested => Some(Help {
+            signature: build(
+                "requested",
+                &[(String::from("code"), String::from("CODE"), None)],
+                "Bool",
+            ),
+            doc: Some(Doc::Message(Message::new(REQUESTED_DOC))),
+            params: vec![None],
+        }),
         Callee::ChargeLookup => Some(Help {
             signature: build(
                 "charge",
@@ -257,6 +283,17 @@ fn callee_help(
             doc: Some(Doc::Message(Message::new(message!(
                 "The amount the bill's lines with this code or label add up to, or `none` when there are none."
             )))),
+            params: vec![None],
+        }),
+        Callee::BillCharge => Some(Help {
+            signature: build(
+                "bill.charge",
+                &[(String::from("line"), String::from("CODE | Text"), None)],
+                "Money?",
+            ),
+            doc: Some(Doc::Message(Message::new(
+                crate::tariff::schema::BILL_CHARGE_DOC,
+            ))),
             params: vec![None],
         }),
         Callee::Conversion(conversion) => {

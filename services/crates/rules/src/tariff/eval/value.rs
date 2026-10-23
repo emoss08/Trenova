@@ -10,8 +10,9 @@
 //! and an operation on values of the wrong kind is an internal error, never a guess.
 
 use super::error::EvalError;
-use super::time::{Date, DateTime};
+use super::time::{Date, DateTime, Time};
 use crate::message::{Arg, Message};
+use crate::tariff::schema::variant_rank;
 use crate::tariff::units::{Dim, Quantity, Unit};
 use rust_decimal::Decimal;
 use std::cmp::Ordering;
@@ -37,6 +38,8 @@ pub enum Value {
     Date(Date),
     /// An instant with its UTC offset.
     DateTime(DateTime),
+    /// A time of day.
+    Time(Time),
     /// A list.
     List(Rc<Vec<Value>>),
     /// A record.
@@ -213,6 +216,7 @@ impl Value {
             Self::Text(_) => crate::message!("text"),
             Self::Date(_) => crate::message!("a date"),
             Self::DateTime(_) => crate::message!("a date-time"),
+            Self::Time(_) => crate::message!("a time of day"),
             Self::List(_) => crate::message!("a list"),
             Self::Record(_) => crate::message!("a record"),
             Self::Enum(_) => crate::message!("an enum value"),
@@ -241,6 +245,7 @@ impl Value {
             (Self::Text(left), Self::Text(right)) => left == right,
             (Self::Date(left), Self::Date(right)) => left == right,
             (Self::DateTime(left), Self::DateTime(right)) => left == right,
+            (Self::Time(left), Self::Time(right)) => left == right,
             (Self::Enum(left), Self::Enum(right)) | (Self::Table(left), Self::Table(right)) => {
                 left == right
             }
@@ -271,7 +276,9 @@ impl Value {
         })
     }
 
-    /// Orders two values: numbers, percents, quantities of one dimension, dates and date-times.
+    /// Orders two values for `<`, `sortBy`, `min` and `max`: numbers, percents, quantities of
+    /// one dimension, dates, date-times, times of day and variants of an ordered enum (by
+    /// declaration order). Text has no order here; see [`Value::range_compare`].
     ///
     /// # Errors
     ///
@@ -286,13 +293,34 @@ impl Value {
             }
             (Self::Date(left), Self::Date(right)) => Ok(left.cmp(right)),
             (Self::DateTime(left), Self::DateTime(right)) => Ok(left.cmp_instant(*right)),
+            (Self::Time(left), Self::Time(right)) => Ok(left.cmp(right)),
+            (Self::Enum(left), Self::Enum(right)) => {
+                match (variant_rank(left), variant_rank(right)) {
+                    (Some(left), Some(right)) => Ok(left.cmp(&right)),
+                    _ => Err(unordered(self, other)),
+                }
+            }
             _ => Err(unordered(self, other)),
+        }
+    }
+
+    /// Orders a value against a range's end (`in lo..hi`, a range pattern, a `where` range): as
+    /// [`Value::compare`], and text too, in Unicode scalar order, character by character.
+    ///
+    /// # Errors
+    ///
+    /// When the values have no order between them, which the checker rules out.
+    pub fn range_compare(&self, other: &Self) -> Result<Ordering, EvalError> {
+        match (self, other) {
+            (Self::Text(left), Self::Text(right)) => Ok(left.cmp(right)),
+            _ => self.compare(other),
         }
     }
 
     /// The value as text interpolation writes it: `Int` plain, `Number` normalised, money
     /// `$1234.50` (at least two decimals, no grouping), rates `$2.35/mi`, quantities `500 lb`,
-    /// percents `18%`, dates and date-times ISO 8601, enums as their variant, `true`/`false`.
+    /// percents `18%`, dates and date-times ISO 8601, times `17:30` (`07:30:15` with seconds),
+    /// enums as their variant, `true`/`false`.
     /// Lists read `[a, b]` and records `{ name: value }`, in interpolation (which the checker
     /// allows when no item or field may be empty) and on the trace.
     #[must_use]
@@ -311,6 +339,7 @@ impl Value {
             Self::Text(text) => out.push_str(text),
             Self::Date(date) => out.push_str(&date.iso()),
             Self::DateTime(at) => out.push_str(&at.iso()),
+            Self::Time(time) => out.push_str(&time.display()),
             Self::Enum(variant) => out.push_str(variant),
             Self::Table(code) => {
                 let _ = write!(out, "tables.{code}");
@@ -471,6 +500,37 @@ mod tests {
         assert!(!Value::None.equals(&Value::int(0)).unwrap_or(true));
         assert!(Value::text("a").equals(&Value::int(1)).is_err());
         assert!(q("1", "lb").equals(&q("1", "mi")).is_err());
+    }
+
+    #[test]
+    fn ordered_enums_times_and_text_compare() {
+        use std::cmp::Ordering;
+        let order = |a: &Value, b: &Value| a.compare(b).ok();
+        assert_eq!(
+            order(&Value::variant("Class77_5"), &Value::variant("Class85")),
+            Some(Ordering::Less)
+        );
+        assert_eq!(
+            order(&Value::variant("Sun"), &Value::variant("Mon")),
+            Some(Ordering::Greater)
+        );
+        assert_eq!(
+            order(&Value::variant("Pickup"), &Value::variant("Delivery")),
+            None
+        );
+        let range = |a: &Value, b: &Value| a.range_compare(b).ok();
+        assert_eq!(
+            range(&Value::text("30301"), &Value::text("31999")),
+            Some(Ordering::Less)
+        );
+        assert_eq!(
+            range(&Value::text("9"), &Value::text("10")),
+            Some(Ordering::Greater)
+        );
+        assert_eq!(order(&Value::text("a"), &Value::text("b")), None);
+        let time = |text: &str| Value::Time(super::Time::parse(text).expect("a time"));
+        assert_eq!(order(&time("08:00"), &time("17:00")), Some(Ordering::Less));
+        assert_eq!(time("17:30").display(), "17:30");
     }
 
     #[test]

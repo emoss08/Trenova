@@ -441,6 +441,9 @@ func (s *Service) planDraftFromItem(
 	if err = s.guardItemDetentionHolds(ctx, req.TenantInfo, item); err != nil {
 		return nil, err
 	}
+	if err = guardItemRatingReview(item, dependencies.Shipment); err != nil {
+		return nil, err
+	}
 
 	entity, err := s.buildInvoiceEntity(ctx, &buildInvoiceParams{
 		Anchor:         item,

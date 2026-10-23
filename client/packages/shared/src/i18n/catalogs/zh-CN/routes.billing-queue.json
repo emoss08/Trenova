@@ -164,6 +164,7 @@
   "The shipment is already in the billing queue.": "该运单已在账务队列中。",
   "The shipment no longer exists or belongs to another organization.": "该运单已不存在，或属于其他组织。",
   "The shipments could not be loaded": "无法加载运单",
+  "The tariff held this rating for review; approve the rating first": "运价表已将此计价暂留待审查；请先批准计价",
   "The transfer could not be started": "无法启动转移任务",
   "The transfer report could not be loaded.": "无法加载转移任务报告。",
   "The transfer stopped because of an unexpected error.": "转移任务因意外错误而停止。",

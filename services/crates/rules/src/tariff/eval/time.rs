@@ -1,9 +1,12 @@
-//! Dates and date-times, with the civil calendar computed here: no time zone database, no clock.
+//! Dates, date-times and times of day, with the civil calendar computed here: no time zone
+//! database, no clock.
 //!
 //! A [`Date`] is a calendar day. A [`DateTime`] is an instant (whole seconds since the Unix epoch,
 //! UTC) plus the UTC offset it is shown in, so `stop.arrival.hour` is the hour on the dock's
 //! clock. Two date-times are equal when they are the same instant, whatever their offsets.
 //! Date-times are exact to the second: Tariff's literals and the wire form carry no fractions.
+//! A [`Time`] is a wall-clock time of day, seconds since midnight, with no date and no offset:
+//! `stop.arrival.time` is the time the dock's clock shows.
 //!
 //! Calendar fields come from Howard Hinnant's `days_from_civil` and `civil_from_days`, exact for
 //! the proleptic Gregorian calendar. Values stay within years 0000 to 9999, the range ISO 8601
@@ -34,6 +37,12 @@ pub struct Date {
 pub struct DateTime {
     seconds: i64,
     offset_minutes: i32,
+}
+
+/// A time of day: seconds since midnight, 0 to 86 399.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Time {
+    seconds: i64,
 }
 
 /// A date's calendar fields.
@@ -267,6 +276,90 @@ impl DateTime {
     }
 }
 
+impl Time {
+    /// The time `seconds` after midnight, or `None` outside one day.
+    #[must_use]
+    pub fn from_seconds(seconds: i64) -> Option<Self> {
+        (0..SECONDS_PER_DAY)
+            .contains(&seconds)
+            .then_some(Self { seconds })
+    }
+
+    /// Seconds since midnight.
+    #[must_use]
+    pub const fn seconds(self) -> i64 {
+        self.seconds
+    }
+
+    /// The hour, 0 to 23.
+    #[must_use]
+    pub const fn hour(self) -> i64 {
+        self.seconds / 3600
+    }
+
+    /// The minute, 0 to 59.
+    #[must_use]
+    pub const fn minute(self) -> i64 {
+        self.seconds % 3600 / 60
+    }
+
+    /// The second, 0 to 59.
+    #[must_use]
+    pub const fn second(self) -> i64 {
+        self.seconds % 60
+    }
+
+    /// The wire form, always with seconds: `17:30:00`.
+    #[must_use]
+    pub fn iso(self) -> String {
+        format!(
+            "{:02}:{:02}:{:02}",
+            self.hour(),
+            self.minute(),
+            self.second()
+        )
+    }
+
+    /// As interpolation writes it: `17:30`, or `07:30:15` when the seconds aren't zero.
+    #[must_use]
+    pub fn display(self) -> String {
+        if self.second() == 0 {
+            format!("{:02}:{:02}", self.hour(), self.minute())
+        } else {
+            self.iso()
+        }
+    }
+
+    /// Reads `HH:MM` or `HH:MM:SS`.
+    #[must_use]
+    pub fn parse(text: &str) -> Option<Self> {
+        let mut reader = Reader::new(text);
+        let hour = reader.digits(2)?;
+        reader.byte(b':')?;
+        let minute = reader.digits(2)?;
+        let second = if reader.peek() == Some(b':') {
+            reader.at += 1;
+            reader.digits(2)?
+        } else {
+            0
+        };
+        if !reader.done() || hour > 23 || minute > 59 || second > 59 {
+            return None;
+        }
+        Self::from_seconds(hour * 3600 + minute * 60 + second)
+    }
+}
+
+impl DateTime {
+    /// The time of day the date-time shows in its own offset.
+    #[must_use]
+    pub fn time(self) -> Time {
+        Time {
+            seconds: self.second_of_day(),
+        }
+    }
+}
+
 impl PartialEq for DateTime {
     fn eq(&self, other: &Self) -> bool {
         self.seconds == other.seconds
@@ -408,7 +501,24 @@ impl<'a> Reader<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Date, DateTime};
+    use super::{Date, DateTime, Time};
+
+    #[test]
+    fn times_read_and_write_the_clock() {
+        let time = Time::parse("17:30").expect("a time");
+        assert_eq!(time.iso(), "17:30:00");
+        assert_eq!(time.display(), "17:30");
+        assert_eq!(
+            Time::parse("07:30:15").map(Time::display).as_deref(),
+            Some("07:30:15")
+        );
+        assert_eq!(Time::parse("24:00"), None);
+        assert_eq!(Time::parse("7:30"), None);
+        assert_eq!(Time::parse("17:30:00Z"), None);
+        let at = DateTime::parse("2026-10-22T23:45:00-05:00").expect("a date-time");
+        assert_eq!(at.time().display(), "23:45");
+        assert_eq!(Time::from_seconds(86_400), None);
+    }
 
     #[test]
     fn dates_read_and_write_iso() {

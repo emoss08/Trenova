@@ -12,6 +12,7 @@ use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::diagnostic::Fix;
 use crate::tariff::syntax::ast::Arg as CallArg;
 use crate::tariff::syntax::ast::BinaryOp;
+use crate::tariff::syntax::ast::ChooseKind;
 use crate::tariff::syntax::ast::Condition;
 use crate::tariff::syntax::ast::Expr;
 use crate::tariff::syntax::ast::ExprKind;
@@ -545,6 +546,24 @@ impl Parser<'_> {
     }
 
     fn index(&mut self, target: Expr) -> Expr {
+        let (keys, close) = self.bracket_keys();
+        let mut height = self.height(&target);
+        for key in &keys {
+            height = height.max(self.height(key));
+        }
+        let span = target.span.cover(close);
+        self.node_with(
+            ExprKind::Index {
+                target: Box::new(target),
+                keys,
+            },
+            span,
+            height,
+        )
+    }
+
+    /// `[k, …]` at the `[`: the keys, and where the closing `]` is.
+    pub(super) fn bracket_keys(&mut self) -> (Vec<Expr>, Span) {
         let open = self.bump().span;
         let mut keys = Vec::new();
         if self.enter() {
@@ -572,19 +591,7 @@ impl Parser<'_> {
             "]",
             Message::new(message!("These brackets are missing their closing `]`")),
         );
-        let mut height = self.height(&target);
-        for key in &keys {
-            height = height.max(self.height(key));
-        }
-        let span = target.span.cover(close);
-        self.node_with(
-            ExprKind::Index {
-                target: Box::new(target),
-                keys,
-            },
-            span,
-            height,
-        )
+        (keys, close)
     }
 
     pub(super) fn primary(&mut self) -> Expr {
@@ -604,6 +611,7 @@ impl Parser<'_> {
                 let kind = match lexer::parse_date_literal(self.slice(token.span)) {
                     Some(DateLiteral::Date(date)) => ExprKind::Date(date),
                     Some(DateLiteral::DateTime(at)) => ExprKind::DateTime(at),
+                    Some(DateLiteral::Time(time)) => ExprKind::Time(time),
                     None => ExprKind::Missing,
                 };
                 self.leaf(kind, token.span)
@@ -623,6 +631,9 @@ impl Parser<'_> {
                 self.node_with(ExprKind::Text(text), span, height)
             }
             TokenKind::Name if self.peek_is(1, "=>") && !self.guard => self.misplaced_lambda(),
+            TokenKind::Name if self.at_labelled("best") || self.at_labelled("worst") => {
+                self.choose_expr()
+            }
             TokenKind::Name | TokenKind::Code | TokenKind::Unit => {
                 self.bump();
                 if token.kind == TokenKind::Unit {
@@ -640,6 +651,18 @@ impl Parser<'_> {
             }
             _ => self.expected_value(),
         }
+    }
+
+    /// `best "Label" { … }` or `worst "Label" { … }` read as a value.
+    fn choose_expr(&mut self) -> Expr {
+        let kind = if self.at_word("best") {
+            ChooseKind::Best
+        } else {
+            ChooseKind::Worst
+        };
+        let choose = self.choose(kind);
+        let span = choose.span;
+        self.node_with(ExprKind::Choose(Box::new(choose)), span, 4)
     }
 
     fn expected_value(&mut self) -> Expr {
@@ -1066,11 +1089,15 @@ impl Parser<'_> {
         self.leaf(ExprKind::Money { value, per }, span)
     }
 
-    /// `PascalCase`, optionally `.member`: a variant, or a type for a conversion.
-    fn path(&mut self) -> Expr {
+    /// `PascalCase`, optionally `.member`: a variant (`StopKind.Delivery`), or a type for a
+    /// conversion (`Int.parse(text)`). Any other `.name` (`Class77_5.number`) is a property of
+    /// the value, read as a field.
+    pub(super) fn path(&mut self) -> Expr {
         let token = self.bump();
         let head = self.name_of(&token);
-        let member = if self.at(".") && self.word_kind_at(1) {
+        let qualified = matches!(self.peek_nth(1).kind, TokenKind::TypeName | TokenKind::Code)
+            || self.peek_is(2, "(");
+        let member = if self.at(".") && self.word_kind_at(1) && qualified {
             self.bump();
             self.any_name()
         } else {

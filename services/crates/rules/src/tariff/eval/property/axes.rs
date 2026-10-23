@@ -3,9 +3,10 @@
 //! - **A range** takes its start and its last value (the end, or the last step before an
 //!   excluded end); every landmark inside it with its neighbours one step either side; and
 //!   evenly spread values, splitting the widest gap first, until it has [`POINTS`] values. The
-//!   step is 1 in the last decimal place the range's ends are written with, a day for dates
-//!   and a minute for date-times. At most [`MAX_POINTS`] values are kept, the ends and the
-//!   lowest landmarks first.
+//!   step is 1 in the last decimal place the range's ends are written with, a day for dates,
+//!   a minute for date-times and times of day, and one variant for an ordered enum
+//!   (`Class50..=Class100`). At most [`MAX_POINTS`] values are kept, the ends and the lowest
+//!   landmarks first.
 //! - **A list** takes every item, in order.
 //! - **Without `in`**: `false` and `true`, every variant in declaration order, then `none` for
 //!   an optional; or an input's constraint, read from its declaration.
@@ -22,7 +23,7 @@ use super::super::interp::link::Linked;
 use super::super::interp::{Env, Interp, Setup, literal_value};
 use super::super::operators;
 use super::super::tables::Tables;
-use super::super::time::{Date, DateTime};
+use super::super::time::{Date, DateTime, Time};
 use super::super::value::Value;
 use crate::message::Message;
 use crate::span::Span;
@@ -98,6 +99,10 @@ enum Model {
     Date,
     /// Date-times, by second since the epoch, shown at this UTC offset.
     DateTime(i32),
+    /// Times of day, by second since midnight.
+    Time,
+    /// The variants of an ordered enum, by their place in it.
+    Enum(&'static [&'static str]),
 }
 
 impl Model {
@@ -108,6 +113,12 @@ impl Model {
             Value::Number(_) => Some(Self::Number),
             Value::Date(_) => Some(Self::Date),
             Value::DateTime(at) => Some(Self::DateTime(at.offset_minutes())),
+            Value::Time(_) => Some(Self::Time),
+            Value::Enum(variant) => crate::tariff::schema::ENUMS
+                .iter()
+                .filter(|(name, _)| crate::tariff::schema::ORDERED_ENUMS.contains(name))
+                .find(|(_, variants)| variants.contains(&&**variant))
+                .map(|(_, variants)| Self::Enum(variants)),
             _ => None,
         }
     }
@@ -124,6 +135,11 @@ impl Model {
             | (Self::Number, Value::Int(number) | Value::Number(number)) => Some(*number),
             (Self::Date, Value::Date(date)) => Some(Decimal::from(date.days())),
             (Self::DateTime(_), Value::DateTime(at)) => Some(Decimal::from(at.unix())),
+            (Self::Time, Value::Time(time)) => Some(Decimal::from(time.seconds())),
+            (Self::Enum(variants), Value::Enum(variant)) => variants
+                .iter()
+                .position(|known| **known == **variant)
+                .map(Decimal::from),
             _ => None,
         }
     }
@@ -142,10 +158,15 @@ impl Model {
             Self::DateTime(offset) => {
                 DateTime::from_instant(position.to_i64()?, *offset).map(Value::DateTime)
             }
+            Self::Time => Time::from_seconds(position.to_i64()?).map(Value::Time),
+            Self::Enum(variants) => variants
+                .get(position.to_usize()?)
+                .map(|variant| Value::variant(variant)),
         }
     }
 
-    /// One step: 1 in the last decimal place either end is written with, a day, a minute.
+    /// One step: 1 in the last decimal place either end is written with, a day, a minute, a
+    /// variant.
     fn step(&self, low: &Value, high: &Value) -> Decimal {
         let scale = |value: &Value| match value {
             Value::Quantity(quantity) => quantity.value.scale(),
@@ -153,8 +174,8 @@ impl Model {
             _ => 0,
         };
         match self {
-            Self::Date | Self::Int => Decimal::ONE,
-            Self::DateTime(_) => Decimal::from(60),
+            Self::Date | Self::Int | Self::Enum(_) => Decimal::ONE,
+            Self::DateTime(_) | Self::Time => Decimal::from(60),
             Self::Quantity(_) | Self::Number => {
                 Decimal::new(1, scale(low).max(scale(high)).min(20))
             }

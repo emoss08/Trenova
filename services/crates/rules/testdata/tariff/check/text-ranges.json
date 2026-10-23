@@ -1,0 +1,357 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "a zip range tests membership by text order",
+   "source": [
+    "condition \"Southeast\"",
+    "lane.origin.zip in \"30000\"..=\"31999\" or lane.destination.zip3 in \"300\"..\"320\" or lane.origin.state in ..\"M\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"300\"..\"4000\"",
+     "code": "text-range",
+     "message": "This text range's ends have different lengths (3 and 4 characters). Text compares character by character, as zip ranges need, so text of another length can fall inside it: `\"2\"` is inside `\"10\"..\"300\"`. Write both ends with the same number of characters"
+    }
+   ],
+   "name": "a text range's ends of different lengths are a warning",
+   "source": [
+    "condition \"t\"",
+    "lane.origin.zip in \"300\"..\"4000\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "30000..40000",
+     "code": "type-mismatch",
+     "message": "`lane.origin.zip` is text, but the range `30000..40000` is of a whole number"
+    }
+   ],
+   "name": "a text range needs text at both ends",
+   "source": [
+    "condition \"t\"",
+    "lane.origin.zip in 30000..40000"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"a\"..\"b\"",
+     "code": "type-mismatch",
+     "message": "`shipment.distance` is a distance, but the range `\"a\"..\"b\"` is of text"
+    }
+   ],
+   "name": "a value of another kind is not in a text range",
+   "source": [
+    "condition \"t\"",
+    "shipment.distance in \"a\"..\"b\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"30000\" <= lane.origin.zip",
+     "code": "unit-mismatch",
+     "fixes": [
+      {
+       "label": "Write it as the range `lane.origin.zip in \"30000\"..`",
+       "result": [
+        "condition \"t\"",
+        "lane.origin.zip in \"30000\".."
+       ]
+      }
+     ],
+     "message": "`lane.origin.zip` is text, which has no order, so it can't be compared with `<=`. To test a band of codes such as zips, use a range, compared character by character: `lane.origin.zip in \"30000\"..=\"31999\"`"
+    }
+   ],
+   "name": "comparing text from the other side writes the range",
+   "source": [
+    "condition \"t\"",
+    "\"30000\" <= lane.origin.zip"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "lane.origin.zip > \"30000\"",
+     "code": "unit-mismatch",
+     "message": "`lane.origin.zip` is text, which has no order, so it can't be compared with `>`. To test a band of codes such as zips, use a range, compared character by character: `lane.origin.zip in \"30000\"..=\"31999\"`"
+    }
+   ],
+   "name": "greater than has no range to become",
+   "source": [
+    "condition \"t\"",
+    "lane.origin.zip > \"30000\""
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "text ranges in a match cover all text with open ends",
+   "source": [
+    "library \"t\"",
+    "fn region(zip3: Text) -> Int = match zip3 {",
+    "  ..\"300\" => 1",
+    "  \"300\"..\"320\" => 2",
+    "  \"320\".. => 3",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `zip3` doesn't cover below `\"300\"`, from `\"320\"` up to `\"350\"` and above `\"350\"`. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a text match without an open end names what it leaves out",
+   "source": [
+    "library \"t\"",
+    "fn region(zip3: Text) -> Int = match zip3 {",
+    "  \"300\"..\"320\" => 1",
+    "  \"350\" => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"310\"",
+     "code": "match-overlap",
+     "message": "This arm overlaps an arm above it: `310` matches both",
+     "related": [
+      {
+       "at": "\"300\"..\"320\"",
+       "line": 3,
+       "message": "The arm it overlaps"
+      }
+     ]
+    }
+   ],
+   "name": "a text literal inside a range above it overlaps",
+   "source": [
+    "library \"t\"",
+    "fn region(zip3: Text) -> Int = match zip3 {",
+    "  \"300\"..\"320\" => 1",
+    "  \"310\" => 2",
+    "  _ => 3",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"315\"..\"330\"",
+     "code": "match-overlap",
+     "message": "This arm overlaps an arm above it: from `\"315\"` up to `\"320\"` matches both",
+     "related": [
+      {
+       "at": "\"300\"..\"320\"",
+       "line": 3,
+       "message": "The arm it overlaps"
+      }
+     ]
+    }
+   ],
+   "name": "overlapping text ranges name what both match",
+   "source": [
+    "library \"t\"",
+    "fn region(zip3: Text) -> Int = match zip3 {",
+    "  \"300\"..\"320\" => 1",
+    "  \"315\"..\"330\" => 2",
+    "  _ => 3",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"30\"..\"320\"",
+     "code": "text-range",
+     "message": "This text range's ends have different lengths (2 and 3 characters). Text compares character by character, as zip ranges need, so text of another length can fall inside it: `\"2\"` is inside `\"10\"..\"300\"`. Write both ends with the same number of characters"
+    }
+   ],
+   "name": "a text range pattern's ends of different lengths are a warning",
+   "source": [
+    "library \"t\"",
+    "fn region(zip3: Text) -> Int = match zip3 {",
+    "  \"30\"..\"320\" => 1",
+    "  _ => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"320\"..\"300\"",
+     "code": "empty-range",
+     "message": "This range is empty: its start isn't below its end"
+    }
+   ],
+   "name": "an empty text range pattern is refused",
+   "source": [
+    "library \"t\"",
+    "fn region(zip3: Text) -> Int = match zip3 {",
+    "  \"320\"..\"300\" => 1",
+    "  _ => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": {
+      "range": {
+       "max": "39999",
+       "maxInclusive": true,
+       "min": "30000"
+      }
+     },
+     "default": "30301",
+     "descriptor": {
+      "kind": "text"
+     },
+     "doc": null,
+     "name": "zip",
+     "range": {
+      "from": 17,
+      "to": 20
+     },
+     "required": false,
+     "type": "Text"
+    }
+   ],
+   "name": "a text input takes a range constraint",
+   "source": [
+    "tariff \"t\"",
+    "input zip: Text = \"30301\" where \"30000\"..=\"39999\"",
+    "charge \"x\" = $1",
+    "note \"{zip}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"40000\"",
+     "code": "constraint",
+     "message": "`zip` must be from 30000 to 39999; 40000 is outside it"
+    },
+    {
+     "code": "input-value",
+     "message": "`zip3` must be at least 300 and below 320; 320 is outside it",
+     "path": "rule.zip3"
+    }
+   ],
+   "name": "a text default outside its range is refused, and so are contract values",
+   "source": [
+    "tariff \"t\"",
+    "input zip: Text = \"40000\" where \"30000\"..=\"39999\"",
+    "input zip3: Text = \"300\" where \"300\"..\"320\"",
+    "charge \"x\" = $1",
+    "note \"{zip} {zip3}\""
+   ],
+   "values": {
+    "rule": {
+     "zip3": "320"
+    }
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"000\"..=\"9999\"",
+     "code": "text-range",
+     "message": "This text range's ends have different lengths (3 and 4 characters). Text compares character by character, as zip ranges need, so text of another length can fall inside it: `\"2\"` is inside `\"10\"..\"300\"`. Write both ends with the same number of characters"
+    }
+   ],
+   "name": "a text range constraint's ends of different lengths are a warning",
+   "source": [
+    "tariff \"t\"",
+    "input zip: Text = \"500\" where \"000\"..=\"9999\"",
+    "charge \"x\" = $1",
+    "note \"{zip}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "zip == \"50000\"",
+     "code": "bounds",
+     "message": "This is never true: `zip` is always within `\"30000\"..=\"39999\"`",
+     "severity": "warning"
+    },
+    {
+     "at": "zip in \"40000\"..",
+     "code": "bounds",
+     "message": "This is never true: `zip` is always within `\"30000\"..=\"39999\"`",
+     "severity": "warning"
+    },
+    {
+     "at": "zip in \"00000\"..=\"99999\"",
+     "code": "bounds",
+     "message": "This is always true: `zip` is always within `\"30000\"..=\"39999\"`",
+     "severity": "warning"
+    }
+   ],
+   "name": "a text input's range bounds decide equality and ranges",
+   "source": [
+    "tariff \"t\"",
+    "input zip: Text = \"30301\" where \"30000\"..=\"39999\"",
+    "if zip == \"50000\" or zip in \"40000\".. or zip in \"00000\"..=\"99999\" {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"290\"..\"300\"",
+     "code": "bounds",
+     "message": "This arm is never matched: `zip3` is always within `\"300\"..\"320\"`",
+     "severity": "warning"
+    }
+   ],
+   "name": "a text input's range bounds rule out arms",
+   "source": [
+    "tariff \"t\"",
+    "input zip3: Text = \"301\" where \"300\"..\"320\"",
+    "let region = match zip3 {",
+    "  \"290\"..\"300\" => 1",
+    "  \"300\"..\"320\" => 2",
+    "  _ => 3",
+    "}",
+    "charge \"x\" = $1 * region"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "input.zip",
+     "code": "vary-values",
+     "message": "The constraint on `zip`, `\"30000\"..=\"39999\"`, is a text range, which has no next value to step to, so say which values it takes: `vary input.zip in [a, b]`",
+     "related": [
+      {
+       "at": "\"30000\"..=\"39999\"",
+       "line": 2,
+       "message": "The constraint is written here"
+      }
+     ]
+    }
+   ],
+   "name": "a text range constraint can't be varied over",
+   "source": [
+    "tariff \"t\"",
+    "input zip: Text = \"30301\" where \"30000\"..=\"39999\"",
+    "charge \"x\" = $1",
+    "property \"every zip bills a dollar\" {",
+    "  vary input.zip",
+    "  expect total == $1",
+    "}"
+   ]
+  }
+ ]
+}

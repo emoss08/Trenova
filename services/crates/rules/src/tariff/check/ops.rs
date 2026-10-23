@@ -3,8 +3,10 @@
 //! `tariff.check` input: `{"source": "…", "kind": "tariff"|"library"|"condition" (optional),
 //! "context": Context (optional), "values": {"rule": {name: wire value}, "agreement": {…}}
 //! (optional)}`. Output: `{"ok", "header": {"kind","name"} | null, "diagnostics": [...],
-//! "inputs": [...], "imports": [{"path","version"}], "outline": ..., "charges": [{"label",
-//! "code","range"}]}`. Syntax and loader findings come first, then the checker's, each sorted
+//! "inputs": [...], "imports": [{"path","version"}], "tables": [{"code","version"}], "outline":
+//! ..., "charges": [{"label","code","range"}]}`. `tables` lists every rate table the program
+//! reads (the root or a library it imports), in code order, with the version its shape was sent
+//! at (`null` when none), so the host can pin it. Syntax and loader findings come first, then the checker's, each sorted
 //! by where it starts; a finding in an imported library carries `"module"` and a range in that
 //! library's source. A finding about a contract input value has code `input-value`, a `"path"`
 //! and no range.
@@ -74,6 +76,7 @@ pub fn check(input: &RawValue) -> OpResult {
     let output = output(
         &program,
         &analysis,
+        &input.context,
         values.rule.as_ref(),
         values.agreement.as_ref(),
     );
@@ -83,6 +86,7 @@ pub fn check(input: &RawValue) -> OpResult {
 fn output(
     program: &Program,
     analysis: &Analysis,
+    context: &Context,
     rule: Option<&Map<String, Json>>,
     agreement: Option<&Map<String, Json>>,
 ) -> Json {
@@ -119,9 +123,27 @@ fn output(
         "diagnostics": diagnostics,
         "inputs": analysis.inputs.iter().map(|input| input_json(input, utf16)).collect::<Vec<_>>(),
         "imports": analysis.imports.iter().map(|import| json!({ "path": import.path, "version": import.version })).collect::<Vec<_>>(),
+        "tables": tables(analysis, context),
         "outline": outline(program),
         "charges": root.map(charges).unwrap_or_default(),
     })
+}
+
+/// Every rate table the program reads, by code, with the version the context sent it at (`null`
+/// when it sent none): `[{"code", "version"}]`.
+fn tables(analysis: &Analysis, context: &Context) -> Vec<Json> {
+    analysis
+        .tables()
+        .into_iter()
+        .map(|code| {
+            let version = context
+                .tables
+                .iter()
+                .find(|shape| shape.code == code)
+                .and_then(|shape| shape.version);
+            json!({ "code": code, "version": version })
+        })
+        .collect()
 }
 
 fn range(utf16: Option<&Utf16Index>, span: Span) -> Json {
@@ -229,6 +251,6 @@ pub fn default_wire(value: &super::consts::Value) -> Json {
 
 /// The output of `tariff.check` for a loaded and checked program, for the corpus tests.
 #[cfg(test)]
-pub fn output_for_tests(program: &Program, analysis: &Analysis) -> Json {
-    output(program, analysis, None, None)
+pub fn output_for_tests(program: &Program, analysis: &Analysis, context: &Context) -> Json {
+    output(program, analysis, context, None, None)
 }

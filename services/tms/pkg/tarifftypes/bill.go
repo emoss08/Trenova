@@ -46,6 +46,9 @@ func BillFrom(bill *rules.TariffBill, currency string) (*Bill, error) {
 	for i := range bill.Notes {
 		out.Notes = append(out.Notes, Note{Text: bill.Notes[i].Text})
 	}
+	for i := range bill.Reviews {
+		out.Reviews = append(out.Reviews, Note{Text: bill.Reviews[i].Text})
+	}
 	if converted != nil {
 		out.Currency = converted.Currency
 		out.Total = converted.Total.Value
@@ -88,7 +91,22 @@ func lineFrom(line *rules.TariffLine) (Line, error) {
 		}
 		out.Rate, out.RateUnit = &rate.Value, rate.Unit
 	}
+	if line.Limit != nil {
+		limitKind, known := limitKinds[line.Limit.Kind]
+		if !known {
+			return Line{}, fmt.Errorf("%w: line limit %q", ErrBillShape, line.Limit.Kind)
+		}
+		out.Limit = &LineLimit{Kind: limitKind, Computed: line.Limit.Computed.Value}
+	}
+	if line.On != nil {
+		out.On = *line.On
+	}
 	return out, nil
+}
+
+var limitKinds = map[string]LineKind{
+	"minimum": LineMinimum,
+	"maximum": LineMaximum,
 }
 
 func quantityOrNumber(raw rules.RawJSON) (rules.TariffQuantity, error) {

@@ -40,6 +40,10 @@ impl Checker<'_> {
                 message!("A total clause takes money, but {0} is {1}"),
                 [what, is],
             ),
+            Want::Limit { option } => Message::with(
+                message!("A charge's {0} must be money, but {1} is {2}"),
+                [quote(option), what, is],
+            ),
             Want::Argument { param, callee } => Message::with(
                 message!("{0} is {1}, but {2} of {3} takes {4}"),
                 [what, is, quote(param), quote(callee), needed],
@@ -73,7 +77,67 @@ impl Checker<'_> {
         if let Some(fix) = self.unit_fix(expr, expected) {
             diagnostic = diagnostic.with_fix(fix);
         }
+        if let Some(fix) = self.clock_fix(expr, actual, expected) {
+            diagnostic = diagnostic.with_fix(fix);
+        }
         self.report(diagnostic);
+    }
+
+    /// Where a `Time` is needed: a whole hour written as a number (`8`, from before times of
+    /// day had a type) as `@08:00`, and a date-time as its `.time`.
+    pub fn clock_fix(&self, expr: &Expr, actual: &Type, expected: &Type) -> Option<Fix> {
+        if !matches!(expected.unwrapped(), Type::Time) {
+            return None;
+        }
+        if matches!(actual, Type::DateTime) {
+            return Some(self.time_of_day_fix(expr, false));
+        }
+        let ExprKind::Number {
+            value,
+            integer: true,
+            unit: None,
+        } = &expr.kind
+        else {
+            return None;
+        };
+        let hour = u8::try_from(value.mantissa())
+            .ok()
+            .filter(|hour| *hour < 24)?;
+        if value.scale() != 0 {
+            return None;
+        }
+        let written = format!("@{hour:02}:00");
+        Some(replace(
+            Message::with(message!("Write it as the time {0}"), [quote(&written)]),
+            expr.span,
+            written,
+        ))
+    }
+
+    /// The fix that compares a date-time's time of day: `at` becomes `at.time` (`at?.time` when
+    /// it may be empty), in parentheses when it is an operation.
+    pub fn time_of_day_fix(&self, expr: &Expr, optional: bool) -> Fix {
+        let code = self.text(expr.span);
+        let postfix = expr.parens > 0
+            || matches!(
+                expr.kind,
+                ExprKind::Name(_)
+                    | ExprKind::Field { .. }
+                    | ExprKind::Call { .. }
+                    | ExprKind::Index { .. }
+                    | ExprKind::DateTime(_)
+            );
+        let dot = if optional { "?." } else { "." };
+        let written = if postfix {
+            format!("{code}{dot}time")
+        } else {
+            format!("({code}){dot}time")
+        };
+        replace(
+            Message::with(message!("Use its time of day: {0}"), [quote(&written)]),
+            expr.span,
+            written,
+        )
     }
 
     /// For a plain number literal where money or a quantity is needed, the fix that writes its
@@ -295,21 +359,22 @@ impl Checker<'_> {
                     quote("floor()"),
                 ],
             ),
-            Problem::Unordered => Message::with(
-                message!(
-                    "{0} is {1}, which can't be ordered: only numbers, money, quantities and dates compare with {2}"
-                ),
-                [
-                    quote(&left_code),
-                    Arg::from(words(left.1)),
-                    quote(op.symbol()),
-                ],
-            ),
+            Problem::Unordered => Self::unordered_message(op, (&left_code, left.1), &right_code),
             Problem::Kinds | Problem::Unnamed => {
                 Self::kinds_message(op, (&left_code, left.1), (&right_code, right.1))
             }
         };
         let mut diagnostic = Diagnostic::error("unit-mismatch", whole, message);
+        for (side, other) in [(left, right), (right, left)] {
+            if matches!(side.1, Type::DateTime) && matches!(other.1, Type::Time) {
+                diagnostic = diagnostic.with_fix(self.time_of_day_fix(side.0, false));
+            }
+        }
+        if problem == Problem::Unordered
+            && let Some(fix) = self.text_range_fix(op, left.0, right.0, whole)
+        {
+            diagnostic = diagnostic.with_fix(fix);
+        }
         for (literal, other) in [(left.0, right.1), (right.0, left.1)] {
             if matches!(
                 op,
@@ -327,6 +392,95 @@ impl Checker<'_> {
             }
         }
         self.report(diagnostic);
+    }
+
+    /// Why `left op right` can't order its operands: text has no order outside a range, an
+    /// enum other than the ordered ones has none, and the rest name what does.
+    fn unordered_message(op: BinaryOp, left: (&str, &Type), right_code: &str) -> Message {
+        let (left_code, left_ty) = left;
+        match left_ty {
+            Type::Text => {
+                let subject = if left_code.starts_with('"') && !right_code.starts_with('"') {
+                    right_code
+                } else {
+                    left_code
+                };
+                Message::with(
+                    message!(
+                        "{0} is text, which has no order, so it can't be compared with {1}. To test a band of codes such as zips, use a range, compared character by character: {2}"
+                    ),
+                    [
+                        quote(subject),
+                        quote(op.symbol()),
+                        quote(&format!("{subject} in \"30000\"..=\"31999\"")),
+                    ],
+                )
+            }
+            Type::Enum(_) => Message::with(
+                message!(
+                    "{0} is {1}, which has no order, so it can't be compared with {2}: only {3} order their variants. Compare with {4}, or list the variants with {5}"
+                ),
+                [
+                    quote(left_code),
+                    Arg::from(words(left_ty)),
+                    quote(op.symbol()),
+                    Arg::from(super::operators::ordered_enums()),
+                    quote(&format!("{left_code} == {right_code}")),
+                    quote(&format!("{left_code} in [a, b]")),
+                ],
+            ),
+            _ => Message::with(
+                message!(
+                    "{0} is {1}, which can't be ordered: only numbers, money, quantities, dates, times and the {2} enums compare with {3}"
+                ),
+                [
+                    quote(left_code),
+                    Arg::from(words(left_ty)),
+                    Arg::from(super::operators::ordered_enums()),
+                    quote(op.symbol()),
+                ],
+            ),
+        }
+    }
+
+    /// `zip < "31000"` as the range it means, `zip in .."31000"`: for `<`, `<=` and `>=` with a
+    /// text literal on one side (`>` has no range, since a range's start is always included).
+    fn text_range_fix(
+        &self,
+        op: BinaryOp,
+        left: &Expr,
+        right: &Expr,
+        whole: Span,
+    ) -> Option<crate::tariff::diagnostic::Fix> {
+        let literal =
+            |expr: &Expr| matches!(&expr.kind, ExprKind::Text(text) if text.literal().is_some());
+        let (value, bound, op) = if literal(right) {
+            (left, right, op)
+        } else if literal(left) {
+            let flipped = match op {
+                BinaryOp::Lt => BinaryOp::Gt,
+                BinaryOp::Le => BinaryOp::Ge,
+                BinaryOp::Gt => BinaryOp::Lt,
+                BinaryOp::Ge => BinaryOp::Le,
+                other => other,
+            };
+            (right, left, flipped)
+        } else {
+            return None;
+        };
+        let value_code = self.text(value.span);
+        let bound_code = self.text(bound.span);
+        let written = match op {
+            BinaryOp::Lt => format!("{value_code} in ..{bound_code}"),
+            BinaryOp::Le => format!("{value_code} in ..={bound_code}"),
+            BinaryOp::Ge => format!("{value_code} in {bound_code}.."),
+            _ => return None,
+        };
+        Some(super::fixes::replace(
+            Message::with(message!("Write it as the range {0}"), [quote(&written)]),
+            whole,
+            written,
+        ))
     }
 
     /// "`rate` is money per hundredweight and `shipment.weight` is a weight, so `rate *

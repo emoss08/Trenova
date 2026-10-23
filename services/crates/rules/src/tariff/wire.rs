@@ -6,6 +6,7 @@
 //! | `Int`, `Number` | `{"$n": "1200"}` |
 //! | Money, quantities, rates, percents | `{"$q": "2.35", "u": "$/mi"}`, `{"$q": "18", "u": "%"}` |
 //! | `Date`, `DateTime` | `{"$date": "2026-10-22"}`, `{"$date": "2026-10-22T08:00:00-05:00"}` |
+//! | `Time` | `{"$time": "17:30:00"}` (`"17:30"` is read too) |
 //! | Enum variants | a JSON string, read as the declared enum |
 //! | `none` | `null` |
 //! | Lists, records | JSON arrays and objects (record keys never start with `$`) |
@@ -17,11 +18,12 @@
 //! exactly, never through a float. A record field whose type is optional may be left out.
 //!
 //! [`encode`] is canonical: decimals normalised (`"2.5"`, never `"2.50"`), units written as
-//! `Unit`'s `Display`, date-times with seconds and their offset, records' keys in order. The
+//! `Unit`'s `Display`, date-times with seconds and their offset, times with seconds, records'
+//! keys in order. The
 //! checker writes input defaults in this same form, and the bill and the trace use it.
 
 use crate::message::{Arg, Message};
-use crate::tariff::eval::time::{Date, DateTime};
+use crate::tariff::eval::time::{Date, DateTime, Time};
 use crate::tariff::eval::value::{Record, Value, format_decimal};
 use crate::tariff::types::{RecordType, Type};
 use crate::tariff::units::Unit;
@@ -123,6 +125,7 @@ fn decode_at(json: &Json, ty: &Type, path: &str, depth: usize) -> Result<Value, 
         }
         Type::Date => date(json, ty, path).map(Value::Date),
         Type::DateTime => date_time(json, ty, path).map(Value::DateTime),
+        Type::Time => time(json, ty, path).map(Value::Time),
         Type::Enum(enumeration) => {
             let text = json.as_str().ok_or_else(|| expected(path, ty, json))?;
             if enumeration.has(text) {
@@ -335,6 +338,21 @@ fn date_time(json: &Json, ty: &Type, path: &str) -> Result<DateTime, WireError> 
     })
 }
 
+fn time(json: &Json, ty: &Type, path: &str) -> Result<Time, WireError> {
+    let object = tagged(json, "$time", None, ty, path)?;
+    let text = object
+        .get("$time")
+        .and_then(Json::as_str)
+        .ok_or_else(|| expected(path, ty, json))?;
+    Time::parse(text).ok_or_else(|| {
+        WireError::new(
+            path,
+            crate::message!("\"{0}\" is not a time of day (HH:MM:SS, from 00:00:00 to 23:59:59)"),
+            [Arg::from(text)],
+        )
+    })
+}
+
 /// Writes a value in its canonical wire form.
 #[must_use]
 pub fn encode(value: &Value) -> Json {
@@ -356,6 +374,7 @@ pub fn encode(value: &Value) -> Json {
         Value::Text(text) => Json::String(text.to_string()),
         Value::Date(date) => tag("$date", Json::String(date.iso())),
         Value::DateTime(at) => tag("$date", Json::String(at.iso())),
+        Value::Time(time) => tag("$time", Json::String(time.iso())),
         Value::List(items) => Json::Array(items.iter().map(encode).collect()),
         Value::Record(record) => Json::Object(
             record
@@ -387,6 +406,19 @@ mod tests {
         let ty = Type::quantity_in(&Unit::parse("$/mi").expect("a unit"));
         let value = decode(&json!({"$q": "2.350", "u": "$/mi"}), &ty, "rate").expect("a rate");
         assert_eq!(encode(&value), json!({"$q": "2.35", "u": "$/mi"}));
+    }
+
+    #[test]
+    fn round_trips_a_time_of_day() {
+        let value = decode(&json!({"$time": "17:30"}), &Type::Time, "open").expect("a time");
+        assert_eq!(encode(&value), json!({"$time": "17:30:00"}));
+        let error =
+            decode(&json!({"$time": "25:00:00"}), &Type::Time, "open").expect_err("refused");
+        assert_eq!(
+            error.message.english(),
+            "\"25:00:00\" is not a time of day (HH:MM:SS, from 00:00:00 to 23:59:59)"
+        );
+        assert!(decode(&json!({"$date": "17:30:00"}), &Type::Time, "open").is_err());
     }
 
     #[test]

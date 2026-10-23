@@ -34,7 +34,8 @@ func rateMatrixGetSpec() getSpec {
 }
 
 // foldMatrixCells gives each cell its keys and ranges along the matrix's own
-// axes, in place of a column per possible axis.
+// axes, in place of a column per possible axis; a postal range's key reads
+// "30000 to 31999".
 func foldMatrixCells(record map[string]any, _ map[string]struct{}, _ clock) {
 	dimensions, _ := record["dimensions"].([]any)
 	axes := min(len(dimensions), matrixAxes)
@@ -47,8 +48,12 @@ func foldMatrixCells(record map[string]any, _ map[string]struct{}, _ clock) {
 		for axis := range matrixAxes {
 			prefix := "d" + strconv.Itoa(axis)
 			key, _ := cell[prefix+"Key"].(string)
+			if keyTo, _ := cell[prefix+"KeyTo"].(string); keyTo != "" {
+				key += " to " + keyTo
+			}
 			low, high := cell[prefix+"Min"], cell[prefix+"Max"]
 			delete(cell, prefix+"Key")
+			delete(cell, prefix+"KeyTo")
 			delete(cell, prefix+"Min")
 			delete(cell, prefix+"Max")
 			if axis >= axes {

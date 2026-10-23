@@ -247,3 +247,18 @@ let a = match x
 tariff "t"
 let a = (match x)
 ! syntax 26..26 Expected the `match` arms in braces after the value
+
+=== time, text and variant range patterns
+tariff "t"
+let a = match x {
+  ..@08:00 => 1
+  @08:00..@17:30:15 => 2
+  "300".."320" => 3
+  Mon..=Fri => 4
+  Weekday.Sat.. => 5
+  ..Class85 => 6
+  _ => 7
+}
+---
+tariff "t"
+let a = (match x [(.. _ @08:00:00) => 1] [(.. @08:00:00 @17:30:15) => 2] [(.. (text "300") (text "320")) => 3] [(..= Mon Fri) => 4] [(.. Weekday::Sat _) => 5] [(.. _ Class85) => 6] [_ => 7])

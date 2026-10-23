@@ -2,7 +2,11 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { rulesSync } from "@trenova/shared/rules/runtime";
 import { tariffTest } from "@trenova/shared/rules/tariff";
-import { EMPTY_TARIFF_CONTEXT, type TariffTestRun } from "@trenova/shared/types/tariff";
+import {
+  EMPTY_TARIFF_CONTEXT,
+  tariffTestRunSchema,
+  type TariffTestRun,
+} from "@trenova/shared/types/tariff";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TestsPanel } from "../tests-panel";
 import type { TariffTestsState } from "../use-tariff-tests";
@@ -151,5 +155,154 @@ describe("TestsPanel coverage", () => {
       <TestsPanel state={ran({ ...run(), coverage: null })} source={SOURCE} onReveal={vi.fn()} />,
     );
     expect(screen.queryByRole("region", { name: "Coverage" })).not.toBeInTheDocument();
+  });
+});
+
+// A run in the shape `tariff.test` answers for testdata/tariff/eval/reviews.json's file: one test
+// whose bill asks for two reviews, one with none, and the review region no test reached, beside
+// a condition's two outcomes (eval/coverage.json), both on the condition's final expression.
+const REVIEWS_SOURCE = `tariff "t"
+charge "Linehaul" = $100
+if shipment.hazmat {
+  review "Hazmat"
+}
+review "Always check"
+`;
+
+const reviewBill = (reviews: { text: string; range: { from: number; to: number } }[]) => ({
+  lines: [
+    {
+      kind: "charge",
+      label: "Linehaul",
+      code: null,
+      freight: true,
+      amount: { $q: "100", u: "$" },
+      quantity: null,
+      rate: null,
+      limit: null,
+      on: null,
+      range: { from: 11, to: 35 },
+    },
+  ],
+  notes: [],
+  reviews,
+  freightTotal: { $q: "100", u: "$" },
+  accessorialTotal: { $q: "0", u: "$" },
+  total: { $q: "100", u: "$" },
+  converted: null,
+});
+
+const reviewsRun = tariffTestRunSchema.parse({
+  tests: [
+    {
+      name: "hazmat waits for approval",
+      range: { from: 80, to: 160 },
+      kind: "test",
+      status: "passed",
+      failures: [],
+      bill: reviewBill([
+        { text: "Hazmat", range: { from: 59, to: 74 } },
+        { text: "Always check", range: { from: 77, to: 98 } },
+      ]),
+      error: null,
+      cases: 1,
+      skipped: 0,
+      counterexample: null,
+    },
+    {
+      name: "a plain load",
+      range: { from: 161, to: 200 },
+      kind: "test",
+      status: "passed",
+      failures: [],
+      bill: reviewBill([]),
+      error: null,
+      cases: 1,
+      skipped: 0,
+      counterexample: null,
+    },
+  ],
+  needs: [],
+  coverage: {
+    regions: [
+      { range: { from: 11, to: 35 }, kind: "charge", hits: 2 },
+      { range: { from: 55, to: 76 }, kind: "if", hits: 1 },
+      { range: { from: 59, to: 74 }, kind: "review", hits: 1 },
+      { range: { from: 77, to: 98 }, kind: "review", hits: 0 },
+    ],
+    reached: 3,
+    total: 4,
+  },
+});
+
+// testdata/tariff/eval/coverage.json's condition, with only the "applies" test run.
+const CONDITION_SOURCE = `condition "c"
+shipment.hazmat and (if shipment.reefer { true } else { false })
+test "a cold hazmat load applies" {
+  given shipment.hazmat = true
+  given shipment.reefer = true
+  expect applies
+}
+`;
+
+const conditionRun = tariffTestRunSchema.parse({
+  tests: [
+    {
+      name: "a cold hazmat load applies",
+      range: { from: 79, to: 177 },
+      kind: "test",
+      status: "passed",
+      failures: [],
+      bill: null,
+      error: null,
+      cases: 1,
+      skipped: 0,
+      counterexample: null,
+    },
+  ],
+  needs: [],
+  coverage: {
+    regions: [
+      { range: { from: 14, to: 78 }, kind: "applies", hits: 1 },
+      { range: { from: 14, to: 78 }, kind: "notApplies", hits: 0 },
+      { range: { from: 56, to: 60 }, kind: "if", hits: 1 },
+      { range: { from: 70, to: 75 }, kind: "else", hits: 0 },
+    ],
+    reached: 2,
+    total: 4,
+  },
+});
+
+describe("TestsPanel with reviews and condition outcomes", () => {
+  it("counts the reviews a test's bill asks for on its row", () => {
+    render(<TestsPanel state={ran(reviewsRun)} source={REVIEWS_SOURCE} onReveal={vi.fn()} />);
+    const held = screen.getByText("hazmat waits for approval").closest("li")!;
+    expect(within(held).getByText("2 reviews")).toBeInTheDocument();
+    const plain = screen.getByText("a plain load").closest("li")!;
+    expect(within(plain).queryByText(/review/)).toBeNull();
+  });
+
+  it("names a review no test reaches", async () => {
+    const user = userEvent.setup();
+    render(<TestsPanel state={ran(reviewsRun)} source={REVIEWS_SOURCE} onReveal={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Show 1 unreached region" }));
+    const list = screen.getByRole("list", { name: "Regions no test reaches" });
+    expect(within(list).getByRole("listitem")).toHaveTextContent('Reviewreview "Always check"');
+  });
+
+  it("names the condition outcome no test sees", async () => {
+    const user = userEvent.setup();
+    const reveal = vi.fn();
+    render(<TestsPanel state={ran(conditionRun)} source={CONDITION_SOURCE} onReveal={reveal} />);
+    expect(screen.getByText("Tests reach 2 of 4 regions")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Show 2 unreached regions" }));
+    const list = screen.getByRole("list", { name: "Regions no test reaches" });
+    const items = within(list).getAllByRole("listitem");
+    expect(items.map((item) => item.querySelector("span")?.textContent)).toEqual([
+      "Condition does not apply",
+      "Else branch",
+    ]);
+    await user.click(within(items[0]!).getByRole("button"));
+    expect(reveal).toHaveBeenCalledWith({ from: 14, to: 78 });
   });
 });

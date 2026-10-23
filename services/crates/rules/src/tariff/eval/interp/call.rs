@@ -6,6 +6,7 @@ use super::expr::{internal, unit_argument};
 use super::{Env, Flow, Interp};
 use crate::message::Arg;
 use crate::span::Span;
+use crate::tariff::eval::bill::Wanted;
 use crate::tariff::eval::error::Stop;
 use crate::tariff::eval::lists::{self, Host};
 use crate::tariff::eval::record;
@@ -74,6 +75,9 @@ impl<'a> Interp<'_, 'a> {
                     && let Some((at, decl)) = self.linked.function(module, &name.text)
                 {
                     return self.call_function(env, at, decl, args, expr.span);
+                }
+                if name.text == "charge" && self.is_bill(env, target) {
+                    return self.read_bill_charge(env, args);
                 }
                 let receiver = self.eval(env, target)?;
                 if *optional && receiver.is_none() {
@@ -232,15 +236,25 @@ impl<'a> Interp<'_, 'a> {
                     [],
                 ));
             };
-            if built.get(&name.text).is_none() {
-                return Err(internal(
-                    crate::message!("{0} is not a field this constructor sets"),
-                    [Arg::from(name.text.clone())],
-                ));
-            }
             let value = self.eval(env, &arg.value)?;
-            dwell_given |= name.text == "dwell";
-            built.set(&name.text, value);
+            if built.get(&name.text).is_some() {
+                dwell_given |= name.text == "dwell";
+                built.set(&name.text, value);
+                continue;
+            }
+            match built.get("location") {
+                Some(Value::Record(location)) if stop && location.get(&name.text).is_some() => {
+                    let mut location = (**location).clone();
+                    location.set(&name.text, value);
+                    built.set("location", Value::Record(std::rc::Rc::new(location)));
+                }
+                _ => {
+                    return Err(internal(
+                        crate::message!("{0} is not a field this constructor sets"),
+                        [Arg::from(name.text.clone())],
+                    ));
+                }
+            }
         }
         let value = Value::Record(std::rc::Rc::new(built));
         Ok(if stop {
@@ -250,45 +264,88 @@ impl<'a> Interp<'_, 'a> {
         })
     }
 
+    /// `shipment.requested(CODE)`: whether any of the shipment's accessorials has the code, a
+    /// step per accessorial compared.
+    fn requested(
+        &mut self,
+        shipment: &crate::tariff::eval::value::Record,
+        args: &'a [CallArg],
+    ) -> Result<Value, Stop> {
+        let code = match args.first().map(|arg| &arg.value.kind) {
+            Some(ExprKind::Name(code)) => code.text.as_str(),
+            _ => {
+                return Err(internal(
+                    crate::message!("requested needs an accessorial charge code"),
+                    [],
+                ));
+            }
+        };
+        let Some(Value::List(accessorials)) = shipment.get("accessorials") else {
+            return Err(internal(
+                crate::message!("The shipment has no accessorials to read"),
+                [],
+            ));
+        };
+        self.meter.steps(accessorials.len()).map_err(Stop::Failed)?;
+        let found = accessorials.iter().any(|accessorial| match accessorial {
+            Value::Record(accessorial) => {
+                matches!(accessorial.get("code"), Some(Value::Text(text)) if &**text == code)
+            }
+            _ => false,
+        });
+        Ok(Value::Bool(found))
+    }
+
     /// `charge(CODE)` or `charge("Label")` in a test: the matching lines' sum, or `none`.
-    fn read_charge(&mut self, env: &mut Env, args: &'a [CallArg]) -> Result<Value, Stop> {
+    /// What `charge(…)` or `bill.charge(…)` names: a code written bare, or a label.
+    fn wanted(&mut self, env: &mut Env, args: &'a [CallArg]) -> Result<Wanted, Stop> {
         let Some(arg) = args.first() else {
             return Err(internal(
                 crate::message!("charge needs a code or a label"),
                 [],
             ));
         };
-        let (code, label) = match &arg.value.kind {
+        match &arg.value.kind {
             ExprKind::Name(name)
             | ExprKind::Path {
                 head: name,
                 member: None,
-            } if env.get(&name.text).is_none() => (Some(name.text.clone()), None),
+            } if env.get(&name.text).is_none() => Ok(Wanted::Code(name.text.clone())),
             _ => match self.eval(env, &arg.value)? {
-                Value::Text(label) => (None, Some(label.to_string())),
-                other => {
-                    return Err(internal(
-                        crate::message!("charge needs a code or a label, not {0}"),
-                        [Arg::from(other.kind())],
-                    ));
-                }
+                Value::Text(label) => Ok(Wanted::Label(label.to_string())),
+                other => Err(internal(
+                    crate::message!("charge needs a code or a label, not {0}"),
+                    [Arg::from(other.kind())],
+                )),
             },
-        };
+        }
+    }
+
+    /// `charge(CODE)` or `charge("Label")` in a test: the finished bill's lines it names.
+    fn read_charge(&mut self, env: &mut Env, args: &'a [CallArg]) -> Result<Value, Stop> {
+        let wanted = self.wanted(env, args)?;
         let Some(view) = &self.view else {
             return Ok(Value::None);
         };
         let mut total: Option<Decimal> = None;
         for line in &view.lines {
-            let matches = match (&code, &label) {
-                (Some(code), _) => line.code.as_deref() == Some(code.as_str()),
-                (None, Some(label)) => line.label.as_deref() == Some(label.as_str()),
-                (None, None) => false,
+            let matches = match &wanted {
+                Wanted::Code(code) => line.code.as_deref() == Some(code.as_str()),
+                Wanted::Label(label) => line.label.as_deref() == Some(label.as_str()),
             };
             if matches {
                 total = Some(total.unwrap_or_default().saturating_add(line.amount));
             }
         }
         Ok(total.map_or(Value::None, Value::money))
+    }
+
+    /// `bill.charge(CODE)` or `bill.charge("Label")`: the lines billed so far it names, or
+    /// `none`.
+    fn read_bill_charge(&mut self, env: &mut Env, args: &'a [CallArg]) -> Result<Value, Stop> {
+        let wanted = self.wanted(env, args)?;
+        let sums = self.sums(Some(&wanted))?;
+        Ok(sums.charge.map_or(Value::None, Value::money))
     }
 
     fn method(
@@ -307,6 +364,10 @@ impl<'a> Interp<'_, 'a> {
             Value::Table(code) => {
                 let code = code.to_string();
                 self.table_method(env, expr, &code, name, args)
+            }
+            Value::Record(shipment) if name == "requested" => {
+                let shipment = std::rc::Rc::clone(shipment);
+                self.requested(&shipment, args)
             }
             _ => {
                 if name == "in" {
@@ -383,17 +444,16 @@ impl<'a> Interp<'_, 'a> {
         }
         let key = keys.first().cloned().unwrap_or(Value::None);
         let read = match name {
-            "cell" => self.tables.cell(code, &keys, &mut self.meter),
-            "band" => self.tables.band(code, &key, &mut self.meter),
-            "interpolate" => self.tables.interpolate(code, &key, &mut self.meter),
+            "cell" => self.read_table(|tables, meter| tables.cell(code, &keys, meter)),
+            "band" => self.read_table(|tables, meter| tables.band(code, &key, meter)),
+            "interpolate" => self.read_table(|tables, meter| tables.interpolate(code, &key, meter)),
             _ => {
                 return Err(internal(
                     crate::message!("A rate table has no method named {0}"),
                     [Arg::from(name)],
                 ));
             }
-        }
-        .map_err(Stop::Failed)?;
+        }?;
         Ok(self.answer(env, read, expr.span))
     }
 

@@ -504,7 +504,8 @@ func (t *previewFormulaTool) ParamSchema() map[string]any {
 				formulaFieldDescription: "Values for the template's inputs, by name, as wire values: a " +
 					"number {\"$n\":\"2.5\"}, money {\"$q\":\"175\",\"u\":\"$\"}, a rate " +
 					"{\"$q\":\"2.85\",\"u\":\"$/mi\"}, a percent {\"$q\":\"18\",\"u\":\"%\"}, a " +
-					"date {\"$date\":\"2026-01-31\"}, text and true/false as themselves. " +
+					"date {\"$date\":\"2026-01-31\"}, a time of day {\"$time\":\"17:30:00\"}, " +
+					"text and true/false as themselves. " +
 					"Inputs with a default may be left out.",
 				"maxProperties": formulaassistantPreviewInputs,
 			},

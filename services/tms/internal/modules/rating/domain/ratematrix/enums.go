@@ -34,6 +34,7 @@ const (
 	// the expression supplies the quantity itself; a lane cannot price against
 	// it because there is nothing on the shipment to read.
 	DimensionKindQuantity = DimensionKind("Quantity")
+	DimensionKindZipRange = DimensionKind("ZipRange")
 )
 
 func (dk DimensionKind) String() string {
@@ -55,11 +56,16 @@ func (dk DimensionKind) IsValid() bool {
 		DimensionKindEquipmentType,
 		DimensionKindServiceType,
 		DimensionKindCustom,
-		DimensionKindQuantity:
+		DimensionKindQuantity,
+		DimensionKindZipRange:
 		return true
 	default:
 		return false
 	}
+}
+
+func (dk DimensionKind) IsPostalRange() bool {
+	return dk == DimensionKindZipRange
 }
 
 // IsNumeric reports whether values on this axis are quantities, which is what

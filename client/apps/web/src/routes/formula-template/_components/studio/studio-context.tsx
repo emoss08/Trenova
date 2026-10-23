@@ -58,9 +58,15 @@ import { useStudioRail } from "@/components/tariff-studio/use-studio-rail";
 
 export type StudioMode = "create" | "edit";
 export type StudioTab = "preview" | "tests" | "reference" | "nova";
-export type StudioSection = "details" | "source" | "inputs" | "tests";
+export type StudioSection = "details" | "source" | "inputs" | "tables" | "tests";
 
-export const STUDIO_SECTIONS: readonly StudioSection[] = ["details", "source", "inputs", "tests"];
+export const STUDIO_SECTIONS: readonly StudioSection[] = [
+  "details",
+  "source",
+  "inputs",
+  "tables",
+  "tests",
+];
 
 export const sectionDomId = (section: StudioSection) => `studio-section-${section}`;
 

@@ -116,7 +116,7 @@ contract. The standard library (`std`) ships with the module and is versioned wi
 - **Keywords:** `tariff library condition use input let var const fn type enum private charge
   note if else match for in where break continue return minimum maximum round require fail fails
   test given expect and or not true false none`. `as`, `to`, `up`, `down`, `half`, `even`,
-  `cents`, `total`, `lines`, `best`, `worst`, `option`, `property`, `vary`, `assume`,
+  `cents`, `total`, `lines`, `applies`, `best`, `worst`, `option`, `property`, `vary`, `assume`,
   `nondecreasing`, `nonincreasing` and the unit names are contextual: they mean something only
   where the grammar expects them, and are ordinary names elsewhere (`fn billed(weight: Weight, to:
   Weight)`, `let option = 2`). `assume` followed directly by `(` is a call (`assume(x)`
@@ -132,7 +132,9 @@ contract. The standard library (`std`) ships with the module and is versioned wi
   - with a unit: `500 lb`, `2.5 mi`, `4 h`, `30 min`, `48 ft`;
   - money: `$450`, `$2.35/mi`, `$18.50/cwt`;
   - percent: `18%`;
-  - date: `@2026-10-22`; date-time: `@2026-10-22T08:00-05:00`.
+  - date: `@2026-10-22`; date-time: `@2026-10-22T08:00-05:00`;
+  - time of day: `@17:30`, `@07:30:15` (hours `00` to `23`, seconds optional; no date and no
+    offset).
 
 ## Type system
 
@@ -194,7 +196,12 @@ The rules:
    - comparing different types is an error.
 
    `<`, `<=`, `>` and `>=` are defined on numbers, money, quantities of one dimension, rates of
-   one dimension, dates, date-times and durations.
+   one dimension, dates, date-times, times of day, durations, and the two **ordered enums**,
+   `FreightClass` and `Weekday`, which order by their declared variants (`Class50 < Class55 <
+   … < Class500`, `Mon < Tue < … < Sun`). Every other enum, schema or user, has no order, and
+   the checker says which enums do. Text has no order for these operators: a text range (see
+   "Ranges") is the one place text is ordered, so a band of zip codes is written
+   `zip in "30000"..="31999"`, never `zip >= "30000"`.
 9. **Numbers.**
    - `Int + - *` gives an `Int`, and `Int / Int` gives a `Number`.
    - `%` takes `Int`s only.
@@ -227,6 +234,7 @@ What the type system leaves out, and why:
 | Rates | `Money/mi`, `Money/cwt`, `Money/h`, `Money/pallet`, … | money per unit of a quantity |
 | `Text` | `"…"` | Unicode; length and indexing count characters |
 | `Date`, `DateTime` | `@2026-10-22`, `@2026-10-22T08:00-05:00` | instant plus UTC offset; date-times keep the stop's offset |
+| `Time` | `@17:30`, `@07:30:15` | a wall-clock time of day, no date and no offset; `DateTime.time` is the stop-local time |
 | `List<T>` | `[a, b]` | immutable |
 | Records | `{ code: FSC, amount: $10 }`, `type Charge = { … }` | structural; fields are typed |
 | Enums | `enum Zone { A, B, C }`, and every schema enum | variants are bare names: `Delivery`, `InTransit` |
@@ -279,6 +287,28 @@ force on the rating date and the module converts the finished bill: each line ex
 way the bill rounds, with any difference on the rounding line, so the converted lines still add
 up to the converted total. The rate is recorded on the bill. There is no `convert` and no currency literal inside the language.
 
+### Times of day
+
+Business hours, cut-offs and delivery windows are times on a dock's clock, not instants, so
+they have a type of their own:
+
+- **Values.** `Time` runs from `@00:00` to `@23:59:59`, to the second. `stop.arrival?.time` (any
+  `DateTime`'s `.time`) is the time the date-time shows in its own offset: the stop's local
+  time, whatever offset the host sent.
+- **Order.** Times compare, form ranges and match as ranges in wall-clock order within one day:
+  `at.time in @08:00..@17:00`, `match at.time { ..@08:00 => … @08:00..@17:00 => … @17:00.. => … }`.
+  A `match` on a `Time` is exhaustive once its ranges reach from `@00:00` to `@23:59:59`.
+- **Arithmetic.** `Time - Time` is the `Duration` between them on the same day, negative when
+  the right side is later (`@17:00 - @08:30` is `8.5 h`, `@08:00 - @09:00` is `-1 h`). There
+  is no `Time + Duration`: it would have to wrap at midnight or leave the day, and neither is a
+  time of day. Move a date-time instead (`at.addMinutes(90)`) and read its `.time`.
+- **No `Date.at(time)`.** A date and a time of day name an instant only together with an
+  offset, and the offset a stop's clock shows on a given date (daylight saving included) is the
+  time zone database's knowledge, which the module does not carry. Rather than guess one, the
+  language keeps the two apart: compare `at.time` with a `Time`, and build date-times from the
+  date-times the record gives (`at.addDays(n)`, `at.addHours(n)`, `at.addMinutes(n)`).
+- **Interpolation** writes `17:30`, or `07:30:15` when the seconds aren't zero.
+
 ### Optionals
 
 A schema field that can be empty has type `T?` (`shipment.weight: Weight?`). Using one where a
@@ -303,8 +333,9 @@ A schema field that can be empty has type `T?` (`shipment.weight: Weight?`). Usi
   Inputs are only declared at file level; their doc comments label the Studio's inputs form, and
   the optional `where` constraint bounds the values a contract may set (see "Input constraints").
 
-A name may not shadow a schema root, an input, a function or another name in scope. That last
-rule is today's `let` rule, kept.
+A name may not shadow a schema root, an input, a function or another name in scope, and a
+tariff's own code may not name anything `bill` (the bill so far, below). That last rule is
+today's `let` rule, kept.
 
 ## Statements
 
@@ -316,8 +347,9 @@ block is a scope.
 | `let`, `var`, `const` | bindings (above) |
 | `name = expr`, `name += expr`, `name -= expr` | reassign a `var` in scope; the type cannot change |
 | `charge "Label" as CODE (options) = expr` | add a line to the bill (below); tariffs only |
-| `best "Label" { option "A" { … } option "B" { … } }`, `worst "Label" { … }` | bill the cheapest (or dearest) of several methods (below); tariffs only |
+| `best "Label" { option "A" { … } option "B" { … } }`, `worst "Label" { … }` | bill the cheapest (or dearest) of several methods (below); written as the value of a `let`, `var` or assignment (`let linehaul = best "Linehaul" { … }`) it also gives the kept option's subtotal; tariffs only |
 | `note "Text {interpolated}"` | add a note to the bill: no amount, shown on the rate trace, the receipt and the invoice's notes |
+| `review "Text {interpolated}"` | bill as usual, and ask for the rating to be approved before it is used, with this reason (below); tariffs only |
 | `if cond { … } else if cond { … } else { … }` | conditional; as a statement the branches need no value |
 | `if let x = optional { … } else { … }` | bind an optional when present |
 | `match value { pattern => { … } … }` | as a statement, arms are blocks |
@@ -327,12 +359,13 @@ block is a scope.
 | `require cond else "message"`, `require let x = optional else "message"` | refuse to rate unless it holds |
 | `fail "message"` | refuse to rate |
 | `return expr` | functions only |
-| `minimum`, `maximum`, `round` | total clauses, last in a tariff (below) |
+| `minimum`, `maximum` (each also `on freight`), `round` | total clauses, last in a tariff (below) |
 | `test "name" { … }`, `property "name" { … }` | a test or a property (below); file level only |
 
 There is no `while` and no recursion. A `for` walks a list or a range whose length is known
 when the loop starts, so every formula terminates. A function body is the same statement
-language without `charge`, `note`, `best`, `worst`, total clauses, `test` or `property`.
+language without `charge`, `note`, `review`, `best`, `worst`, total clauses, `test` or
+`property`.
 Functions compute values; tariffs bill them.
 
 ## Expressions
@@ -360,6 +393,24 @@ The precedence, from loosest to tightest:
 - Ranges are half-open with `..` and closed with `..=`. Either end may be left off:
   `..500 lb`, `2_000 lb..`.
 
+### Ranges
+
+A range is written after `in`, as a `match` pattern, as an input's `where` constraint, as a
+property's `vary` values, or (of `Int`s) after `for … in`. Its ends are values of one type:
+
+- **Ordered values:** numbers, money, quantities, rates, percents, dates, date-times, times of
+  day, and the ordered enums (`rating.date.weekday in Mon..=Fri`,
+  `shipment.freightClass in Class50..=Class85`).
+- **Text**, in Unicode scalar order, character by character:
+  `lane.origin.zip in "30000"..="31999"`, `lane.destination.zip3 in "300".."320"`. This is how
+  a zip or postal range is written; `<` and `>` stay refused on text, and their error points
+  here. Because the comparison is character by character, `"2"` falls inside `"10".."300"`
+  (it sorts after `"1"` and before `"3"`), so the checker warns (`text-range`) when a range's two literal ends
+  have different lengths: zip ranges are only right when every code has the ends' length.
+  The empty text `""` is the smallest text, so `.."300"` starts there.
+
+A text range is never walked (`for`) or varied (`vary`): there is no next text to step to.
+
 ### `match`
 
 ```tariff
@@ -373,9 +424,17 @@ let perCwt = match shipment.weight {
 
 - Patterns can be literals, ranges, enum variants (`Delivery`, `Dry Van | Reefer`), `none`, the
   wildcard `_`, record shapes (`{ kind: Delivery, appointment: true }`) and a guard (`x if x > 3`).
-- A `match` must be exhaustive: the checker names the values no arm covers.
-- Overlapping ranges are an error with both arms named. The weight-break table can't
-  double-count, which is the same rule the matrix coverage check applies to rate matrices.
+- A range pattern's ends are literals, or variants of an ordered enum: `"300".."320"` on text,
+  `@08:00..@17:00` on a time, `Class50..=Class85` on a `FreightClass`, `Mon..=Fri` on a
+  `Weekday`.
+- A `match` must be exhaustive: the checker names the values no arm covers. A range of an
+  ordered enum covers the variants from its start to its end, so `Mon..=Fri` and `Sat | Sun`
+  cover a `Weekday`; ranges on a `Time` cover it once they reach from `@00:00` to `@23:59:59`;
+  text ranges never cover all text without an open end (`"500"..`) or `_`.
+- Overlapping ranges are an error with both arms named, on every type that has ranges: text
+  ranges and text literals inside them, time ranges, and variant ranges that share a variant.
+  The weight-break table can't double-count, which is the same rule the matrix coverage check
+  applies to rate matrices.
 
 ### Collections and lambdas
 
@@ -408,7 +467,9 @@ The rules the checker and the evaluator share:
   kind (`Money`, `Weight`). An empty list has no average, so `avg` of one stops the rating with
   an `argument` error; test `isEmpty` first when the list may be empty.
 - **`sortBy`, `min` and `max`** order by a value that has an order: numbers, percents, money,
-  quantities, dates and date-times. Text has no order.
+  quantities, dates, date-times, times of day and the ordered enums (`FreightClass`,
+  `Weekday`): `shipment.commodities.max(c => c.freightClass ?? Class50)` is the highest class.
+  Text has no order here.
 - **Indexing** a list or a text, `xs[i]`, gives `T?`: `none` when `i` is outside it (negative
   or past the end), so it is handled like any optional (`xs[0] ?? fallback`, `xs[0]?.field`).
 
@@ -449,11 +510,24 @@ with them (`amount.roundUp(to: $5)`).
 | `Money` | | `round()` (to cents, half up), `roundHalfEven()`, `roundUp(to: Money)`, `roundDown(to: Money)`, `abs()`, `min(x)`, `max(x)`, `clamp(lo, hi)` |
 | Quantities | `value` | `in(unit)` (on a rate, also a unit of its denominator: `in(cwt)`),  `round(to: q)`, `roundUp(to: q)` (weight breaks bill to the next hundred: `roundUp(to: 100 lb)`), `roundDown(to: q)`, `abs()`, `min(x)`, `max(x)`, `clamp(lo, hi)` |
 | `Text` | `len`, `isEmpty` | `upper()`, `lower()`, `trim()`, `startsWith(t)`, `endsWith(t)`, `contains(t)`, `replace(a, b)`, `split(sep)`, `matches(pattern)` (a linear-time regular expression) |
-| `Date`, `DateTime` | `year`, `month`, `day`, `weekday` (`Weekday`: `Mon` … `Sun`), `weekend`; `DateTime` also `hour`, `minute`, `date` | `addDays(n: Int)`; `DateTime` also `addHours(n: Int)` |
+| `Date`, `DateTime` | `year`, `month`, `day`, `weekday` (`Weekday`: `Mon` … `Sun`), `weekend`, `holiday`; `DateTime` also `hour`, `minute`, `date`, `time` (the `Time` on its own clock) | `addDays(n: Int)`; `DateTime` also `addHours(n: Int)`, `addMinutes(n: Int)` |
+| `Time` | `hour` (0 to 23), `minute` | |
+| `FreightClass` | `number` (the class as a `Number`: `Class77_5.number` is `77.5`) | |
 | `Duration` | `value` | `in(unit)` and the quantity methods |
 | `List<T>` | `len`, `isEmpty` | the collection methods above |
 
-Durations come from subtracting date-times (or dates, in whole days).
+Durations come from subtracting date-times, dates (in whole days) or times of day (on one day,
+negative when the right side is later).
+
+`holiday` is true when the date (for a `DateTime`, its calendar date in its own offset, as
+`weekend` reads it) is the date of one of `rating.holidays`, the organisation's holidays. It is
+the one property that reads the record, so it is written where the record can be read: a
+tariff's or condition's body and tests. A function, a constant and a default can't read it (a
+function sees only its parameters), and the checker refuses `.holiday` there (`closed-function`
+in a function, `not-constant` in a constant or default), saying to pass the answer in: `fn
+fee(holiday: Bool)` called as `fee(holiday: stop.arrival?.holiday ?? false)`. For the same
+reason `std.time` has no `holiday` function. Each `.holiday` is metered as one step per holiday
+it compares.
 
 ### Refusing to rate
 
@@ -466,18 +540,33 @@ A failed rating is a rating error the user can act on, never a silent `$0`.
 
 ## Charges and the bill
 
-A tariff's result is a **bill**: an ordered list of charge lines, notes, and a total.
+A tariff's result is a **bill**: an ordered list of charge lines, notes, review reasons, and a
+total.
 
 ```tariff
-charge "Linehaul" (quantity: miles, rate: rate)          // amount = rate × quantity
-charge "Fuel surcharge" as FSC = linehaul * fuelPercent
+charge "Linehaul" (quantity: miles, rate: rate, minimum: $450)   // amount = rate × quantity, at least $450
+charge "Fuel surcharge" as FSC = bill.freight * fuelPercent
 charge "Detention, stop {stop.sequence}" as DET (quantity: billable, rate: $65/h)
 ```
 
-- **`charge "Label" [as CODE] [(quantity: q, rate: r)] [= amount]`** adds a line.
+- **`charge "Label" [as CODE] [(quantity: q, rate: r, minimum: lo, maximum: hi)] [= amount]`**
+  adds a line. Each option is written at most once, by name, in any order.
   - With `quantity` and `rate` the amount may be left out: it is `rate × quantity`, and both are
     printed on the invoice line (its quantity, unit price and rate unit). With an amount and no
     options the line shows the amount only.
+  - **Line limits.** `minimum: lo` makes the line bill at least `lo`, and `maximum: hi` at most
+    `hi` (both money). The amount (the written one, or `rate × quantity`) is worked out exactly,
+    then raised to `lo` when it falls short, then lowered to `hi` when it exceeds it; a `lo`
+    above `hi` is an error (the checker's when both fold, else the rating's `argument` error).
+    The line keeps its label, code, quantity and rate and bills the limited amount, and records
+    which limit applied and the amount it replaced (`limit` on the wire), so the invoice and the
+    trace can say "minimum applied" next to the quantity and rate that no longer multiply to
+    it. One line, not a line and an adjustment, is the shape because a limit belongs to the
+    charge: a coded charge's minimum stays that accessorial (an adjustment line would be
+    uncoded, so freight), `charge(…)`, `bill.charge(…)` and `best` see the amount the customer
+    is billed, and the one-owner-per-code rule still sees one line. The limits apply before the
+    zero and sign rules below, so a line whose amount comes out at `$0` with a `minimum:` bills
+    the minimum; put the charge under an `if` when it applies only sometimes.
   - **Uncoded charges are freight.** They sum to the shipment's freight charge, and each becomes
     its own freight line on the invoice, described by its label. A tariff that bills "Linehaul"
     and "Deficit weight" shows both.
@@ -499,17 +588,41 @@ charge "Detention, stop {stop.sequence}" as DET (quantity: billable, rate: $65/h
     the customer's document, and translated in the Studio's own chrome only.
   - Charges may appear inside `if`, `match` arms and `for` loops, never inside a function.
 - **`note "…"`** adds a line with no amount, shown on the trace, the receipt and the invoice notes.
-- **Total clauses** come last, in this order, and apply to the whole bill:
-  - `minimum amount`: when the total falls short, the difference is billed as an uncoded
-    "Minimum charge adjustment" line;
-  - `maximum amount`: when the total exceeds it, an uncoded negative "Maximum charge adjustment"
-    line brings it down;
-  - `round to cents` (half up; the default when no `round` clause is written),
-    `round half even to cents`, `round up to $5`, `round down to $1`: every line is rounded, and
-    any difference between the rounded lines and the rounded total goes on an uncoded "Rounding"
-    line, so the lines always add up to the total. The step may be any money expression (an
-    input, so a contract sets it); it must be more than `$0`, which the checker enforces for a
-    literal and the rating for any other value (an `argument` error).
+- **`review "…"`** asks for the rating to be approved before it is used, with its interpolated
+  text as the reason: `review "Hazmat over 500 miles: check the permit cost"`. It may be written
+  wherever a `note` may (a tariff's top level and the blocks inside it, options included), never
+  in a function, test, library or condition. The rating still succeeds and bills as usual; the
+  bill carries every review reason reached, in order (`reviews`, shaped exactly like `notes`),
+  and the host holds a rated bill that has any for approval instead of applying it. A losing
+  `best` option's reviews are dropped with its lines and notes. A refused rating has no bill,
+  so no reviews.
+- **Total clauses** come last, in this order, each written at most once:
+  1. `minimum amount on freight`: when the freight lines (the uncoded charge lines) add up to
+     less, the difference is billed as an uncoded "Minimum charge adjustment" line;
+  2. `maximum amount on freight`: when the freight lines add up to more, an uncoded negative
+     "Maximum charge adjustment" line brings them down;
+  3. `minimum amount`: when the whole bill's total (the freight adjustments included) falls
+     short, the difference is billed as an uncoded "Minimum charge adjustment" line;
+  4. `maximum amount`: when the total exceeds it, an uncoded negative "Maximum charge
+     adjustment" line brings it down;
+  5. `round to cents` (half up; the default when no `round` clause is written),
+     `round half even to cents`, `round up to $5`, `round down to $1`: every line is rounded, and
+     any difference between the rounded lines and the rounded total goes on an uncoded "Rounding"
+     line, so the lines always add up to the total. The step may be any money expression (an
+     input, so a contract sets it); it must be more than `$0`, which the checker enforces for a
+     literal and the rating for any other value (an `argument` error).
+
+  The freight clauses come first because a whole-bill clause must see the freight the customer
+  is actually billed: `minimum $400 on freight` then `minimum $450` tops freight up to $400 and
+  only then the whole bill to $450. An adjustment line records the scope it applied to (`on` on
+  the wire: `freight` for the freight clauses, `null` for the whole bill's); the host labels it
+  in the reader's language. Every limit compares exact amounts: lines, line limits and clauses
+  are all worked out before anything is rounded, and rounding (step 5) runs last, as always. So
+  the rounded amounts can sit off a limit by the rounding: each line moves by at most half a
+  cent, the total moves to its step, and the rounding line, which is freight, takes up the
+  difference, so the billed freight can differ from a freight limit by up to half a cent per line
+  of the bill, plus the total's step. A freight minimum above a whole-bill maximum (or any minimum above the maximum of
+  its scope) satisfies nothing and is an error when both fold.
 - **One owner per code.** When a tariff bills a code that something else would also generate on
   the same shipment (a contract accessorial, the fuel surcharge program, a detention policy), the
   tariff's line wins, the other is not generated, and the trace says so. Fuel can no longer be
@@ -548,21 +661,82 @@ best "Linehaul" {
   the one with the highest (the buy side's "greater of", a floor price); a tie goes to the option
   written first. The chosen option's lines and notes join the bill where the `best` is written;
   the others are dropped. Total clauses still apply to the whole bill afterwards.
+- **As a value.** Written as the whole value of a `let`, `var` or assignment, a choice bills
+  exactly as the statement does and also gives the kept option's subtotal, as `Money` (the
+  example below). That is the only place a choice gives a value: it bills lines, so it stands where a statement
+  does, and the binding names what it billed. Anywhere else inside an expression (`linehaul * 2`
+  around it, a charge's amount, a condition, a lambda) is an error (`misplaced`): bind it first.
+  When every option refuses, the rating refuses, so the binding is never reached without a
+  value.
 - **Refusing options.** An option that refuses (`fail`, `require`, `?? fail`) is out of the
   running: that is how an option says "I don't apply to this shipment". When every option refuses,
   the rating refuses with the first option's message. An evaluation error inside an option stops
   the rating, as anywhere else: errors are bugs, not choices.
 - **The trace.** Every evaluation of a `best` or `worst` is recorded with each option's subtotal
-  or refusal and which one won, shown in the Studio's preview and on the shipment's rating detail.
+  or refusal and which one won, shown in the Studio's preview and on the shipment's rating detail;
+  its `choice` event carries the kept option's `subtotal`, the value a `let` binds.
 - **Rules.** A `best` has a label, unique among the file's choices, and at least two options, each
   with a label unique within it. It may appear wherever a `charge` may, including inside `if`,
-  `for`, `match` arms and another option. An option with no `charge` on any path is a warning: it
-  bills `$0`, so `best` always picks it.
+  `for`, `match` arms and another option, as a statement or as the value of a `let`, `var` or
+  assignment there. An option with no `charge` on any path is a warning: it bills `$0`, so
+  `best` always picks it.
 - **In tests**, `chosen("Linehaul")` is the label of the option the last evaluation of that choice
   kept, as `Text?` (`none` when the choice was not reached or every option refused):
   `expect chosen("Linehaul") == "Flat"`. Comparing it (`==`, `!=`, `in [...]`) with a label that
   is no option of that choice is an error (`unknown-option`), with the nearest option's label as
   a fix.
+
+The value form, pricing fuel on whichever linehaul was kept:
+
+```tariff
+let linehaul = best "Linehaul" {
+  option "Per mile" { charge "Linehaul" (quantity: shipment.distance, rate: rate) }
+  option "Flat" { charge "Flat rate" = flatRate }
+}
+charge "Fuel surcharge" as FSC = linehaul * fuelPercent
+```
+
+### Reading the bill so far
+
+A charge often depends on what was billed before it: fuel on the linehaul a `best` kept, a
+discount on the freight. `bill` reads the bill being built, at the line where it is read:
+
+```tariff
+best "Linehaul" {
+  option "Per mile" { charge "Linehaul" (quantity: shipment.distance, rate: rate) }
+  option "Flat" { charge "Flat rate" = flatRate }
+}
+charge "Fuel surcharge" as FSC = bill.freight * 32%
+if bill.charge("Flat rate") != none {
+  note "Billed at the flat rate, with {bill.charge(FSC) ?? $0} of fuel"
+}
+```
+
+| Read | Type | Is |
+|---|---|---|
+| `bill.freight` | `Money` | the exact sum of the uncoded lines billed so far |
+| `bill.accessorials` | `Money` | the exact sum of the coded lines billed so far |
+| `bill.total` | `Money` | both |
+| `bill.charge("Label")`, `bill.charge(CODE)` | `Money?` | the sum of the lines billed so far with that label (as interpolated) or code; `none` when there are none |
+
+- **So far, in source order.** Statements run top to bottom, so a read sees exactly the lines
+  billed before it, and the same file always reads the same amounts. Amounts are exact, before
+  any rounding, and after each line's own `minimum:` and `maximum:`, so fuel worked out after a
+  floored linehaul uses the floored amount. Zero lines are not on the bill, and total clauses
+  have not run yet: their adjustments are never read.
+- **Inside a `best` option**, `bill` reads the bill outside the choice plus the lines that option
+  has billed so far: never another option's lines, so each method is priced as if it were the
+  one kept.
+- **Where.** `bill` is read in a tariff's top level and the blocks inside it. A function can't
+  read it (pass the amount in), and neither can a condition or a library, which have no bill.
+  A test reads the finished bill instead, through `total`, `lines`, `charge(…)` and `reviews`.
+  Nothing in a tariff may be named `bill`.
+- **Order warnings.** `bill.charge("Label")` or `bill.charge(CODE)` naming a label or code the
+  tariff bills only later in source order is a warning (`bill-order`: "`FSC` is billed after
+  this line, so this reads `none`"), with the line that bills it as a related place. A charge in
+  a `for` loop around the read may bill before it, on an earlier iteration, and a charge in an
+  option of a choice that is over before the read may have joined the bill, so neither is
+  later. A label or code the tariff never bills is a warning too (`not-billed`), as in tests.
 
 ## Contracts and inputs
 
@@ -608,8 +782,9 @@ input service: Service = Standard where [Standard, Guaranteed]
 
 - **Forms.** A constraint is a compile-time value (literals and constants, like a default):
   - a range of the input's type, for an ordered type (numbers, `Int`, money, quantities, rates,
-    percents, dates, date-times): `lo..hi` includes `lo` and excludes `hi`, `lo..=hi` includes
-    both, and either end may be left off (`1..`, `..=$15/mi`);
+    percents, dates, date-times, times of day, the ordered enums) or text: `lo..hi` includes
+    `lo` and excludes `hi`, `lo..=hi` includes both, and either end may be left off (`1..`,
+    `..=$15/mi`, `where @00:00..=@23:59`, `where "000"..="999"`, `where Class50..=Class100`);
   - a list of the input's type, for any type with equality: the value must be one of them.
   For an optional input (`T?`) the constraint applies when a value is set; `none` always passes.
   For a `List<T>` input of an ordered or comparable `T`, it applies to every item. Record inputs
@@ -628,10 +803,11 @@ input service: Service = Standard where [Standard, Guaranteed]
 - **What the bounds decide.** Where an input is read by its own name, the checker knows its
   values, and warns (`bounds`) about code the bounds make dead. It is a warning because the code
   runs; the bill is unaffected.
-  - A comparison with a compile-time value (`==`, `!=`, `<`, `<=`, `>`, `>=`, `in [...]`) whose
-    answer the bounds fix is "never true" or "always true", quoting the constraint: with `input
-    rate: Money/mi where $0.50/mi..=$15/mi`, `rate > $20/mi` is never true and `rate >=
-    $0.50/mi` always is.
+  - A comparison with a compile-time value (`==`, `!=`, `<`, `<=`, `>`, `>=`, `in [...]`,
+    `in lo..hi`) whose answer the bounds fix is "never true" or "always true", quoting the
+    constraint: with `input rate: Money/mi where $0.50/mi..=$15/mi`, `rate > $20/mi` is never
+    true and `rate >= $0.50/mi` always is; with `input zip: Text where "30000"..="39999"`,
+    `zip in "40000"..` is never true.
   - Against a list constraint, a value outside the list names the values the input takes, and
     suggests the nearest of them with a fix: `service == "Guarenteed"` is never true, because
     `service` is only ever `"Standard"` or `"Guaranteed"`; did you mean `"Guaranteed"`?
@@ -649,6 +825,19 @@ condition "Residential delivery"
 input residentialZip3s: List<Text> = []
 
 lane.destination.zip3 in residentialZip3s and (shipment.weight ?? 0 lb) < 10_000 lb
+
+test "a residential zip3 applies" {
+  given input.residentialZip3s = ["752"]
+  given lane.destination.zip3 = "752"
+  expect applies
+}
+
+test "a heavy load does not" {
+  given input.residentialZip3s = ["752"]
+  given lane.destination.zip3 = "752"
+  given shipment.weight = 12_000 lb
+  expect not applies
+}
 ```
 
 - A **condition** file has inputs, bindings, functions and one final `Bool` expression. It
@@ -661,6 +850,22 @@ lane.destination.zip3 in residentialZip3s and (shipment.weight ?? 0 lb) < 10_000
   units and maximum amount are now honoured when it is applied.
 - A tariff can bill any accessorial directly with `charge … as CODE`; the one-owner-per-code rule
   decides between the two.
+- **What the user asked for.** `shipment.accessorials` lists the accessorials entered on the
+  shipment (liftgate, residential, inside delivery), each `{ code: Text, quantity: Number }`, and
+  `shipment.requested(CODE)` is whether one of them has that code: `if shipment.requested(LIFT)
+  { charge "Liftgate" as LIFT = $85 }`. The code is written bare, like `charge(CODE)` in a test,
+  and the checker judges it against the accessorial charge catalog exactly as it judges `charge
+  … as CODE` (`unknown-code`, reported once with every use, with the same fixes). The host lists
+  only the additional charges a user entered, never the lines a tariff or another program
+  generated, so a tariff that bills `LIFT` doesn't see its own line on the next re-rate.
+  `requested` is a method of the shipment record (`shipment.requested(…)`, or a binding that
+  holds it).
+- **Tests of a condition** read its result as `applies`: the final `Bool` expression's value, in
+  the condition's `test` blocks only. `expect applies` and `expect not applies` are ordinary
+  `expect`s, so `expect applies == (lane.interstate)` works too. A test whose condition refuses
+  fails each `expect applies` with the refusal, as a tariff's test fails on `total`; `expect
+  fails` expects the refusal. Coverage counts both outcomes (below), so a condition whose tests
+  only ever see it apply shows its "doesn't apply" region unreached.
 
 ## Fuel
 
@@ -678,31 +883,75 @@ now carries instead of assuming miles.
 
 | Root | Fields |
 |---|---|
-| `shipment` | `proNumber: Text`, `status: ShipmentStatus`, `weight: Weight?` (commodity lines, else the shipment's weight), `pieces: Int?`, `distance: Distance`, `duration: Duration`, `linearFeet: Length`, `volume: Volume`, `density: Weight/Volume?`, `hazmat: Bool`, `reefer: Bool`, `temperature: { min: Temperature?, max: Temperature? }`, `freightClass: FreightClass?`, `highestClass: FreightClass?`, `serviceType: { code: Text, description: Text }`, `shipmentType`, `tractorType`, `trailerType` (each `{ code, description }?`), `stops: List<Stop>`, `commodities: List<Commodity>`, `pickup: Stop?`, `delivery: Stop?` |
+| `shipment` | `proNumber: Text`, `status: ShipmentStatus`, `weight: Weight?` (commodity lines, else the shipment's weight), `pieces: Int?`, `distance: Distance`, `duration: Duration`, `linearFeet: Length`, `volume: Volume`, `density: Weight/Volume?`, `hazmat: Bool`, `reefer: Bool`, `temperature: { min: Temperature?, max: Temperature? }`, `freightClass: FreightClass?`, `highestClass: FreightClass?`, `serviceType: { code: Text, description: Text }`, `shipmentType`, `tractorType`, `trailerType` (each `{ code, description }?`), `stops: List<Stop>`, `commodities: List<Commodity>`, `pickup: Stop?`, `delivery: Stop?`, `accessorials: List<{ code: Text, quantity: Number }>` |
 | `lane` | `origin` and `destination`, each `{ city, state, zip, zip3, country: Text, zones: List<Text> }`; `interstate: Bool`; `crossBorder: Bool` |
 | `customer` | `name: Text`, `code: Text` |
 | `fuel` | `price: Money/gal?`, `priceDate: Date?`, `index: Text?` |
-| `rating` | `date: DateTime` (in the organisation's time zone), `mode: RatingMode` (`Sell`, `Buy`), `sellTotal: Money?`, `currency: Text` |
+| `rating` | `date: DateTime` (in the organisation's time zone), `mode: RatingMode` (`Sell`, `Buy`), `sellTotal: Money?`, `currency: Text`, `holidays: List<{ date: Date, name: Text }>` |
 | `tables` | the organisation's active rate matrices, by code |
 
 - A `Stop` has `sequence: Int`, `kind: StopKind`, `status: StopStatus`, `appointment: Bool`,
   `window: { start: DateTime?, end: DateTime? }`, `arrival: DateTime?`, `departure: DateTime?`,
   `dwell: Duration?` (present when both arrival and departure are), `pieces: Int?`,
-  `weight: Weight?` and `location: { city, state, zip, zip3, country, timezone: Text }`.
+  `weight: Weight?`, `legDistance: Distance?` and `location: { city, state, zip, zip3, country,
+  timezone: Text, category: LocationCategory?, facilityType: FacilityType?, requiresAppointment:
+  Bool }`.
+  - `legDistance` is the distance from the previous stop, in the organisation's distance unit
+    like `shipment.distance`; it is `none` on the first stop, and on a stop whose leg has not
+    been measured.
+  - `location.category` and `location.facilityType` are what the location is (a `Warehouse`, a
+    `Port`) and what kind of facility (`ColdStorage`, `CrossDock`), `none` when the location
+    doesn't say. `location.requiresAppointment` is the location's own rule that every visit
+    needs an appointment, as opposed to the stop's `appointment`, which says this visit has one.
 - A `Commodity` has `name: Text`, `freightClass: FreightClass?`, `weight: Weight`, `pieces: Int`,
   `dimensions: { length: Length?, width: Length?, height: Length? }`, `volume: Volume?`,
   `density: Weight/Volume?`, `hazmat: Bool` and `stackable: Bool`.
-- The schema enums (`ShipmentStatus`, `StopKind`, `StopStatus`, `FreightClass`, `RatingMode`)
-  are enums of the language; `FreightClass` variants are `Class50` through `Class500`.
+- The schema enums (`ShipmentStatus`, `StopKind`, `StopStatus`, `FreightClass`, `RatingMode`,
+  `LocationCategory`, `FacilityType`, `Weekday`) are enums of the language; `FreightClass`
+  variants are `Class50` through `Class500` (`Class77_5` is class 77.5), and `Weekday`'s are
+  `Mon` through `Sun`. These two are ordered by their variants, lowest class and Monday first;
+  the others have no order. `LocationCategory` is `Terminal`, `Warehouse`,
+  `DistributionCenter`, `TruckStop`, `RestArea`, `CustomerLocation`, `Port`, `RailYard` or
+  `MaintenanceFacility`, and `FacilityType` is `CrossDock`, `StorageWarehouse`, `ColdStorage`,
+  `HazmatFacility` or `IntermodalFacility`, in the places module's order.
+- `shipment.accessorials` is the accessorials a user entered on the shipment, in the order
+  entered, each with its catalog `code` and `quantity`; it never holds a line a tariff, a fuel
+  program or another rule generated. `shipment.requested(CODE)` tests it by code (see
+  "Accessorials and conditions").
+- `rating.holidays` is the organisation's holidays from 1 January of the year before the rating
+  date's year to 31 December of the year after, recurring holidays expanded to their date in
+  each of those years, in date order. It holds holidays only, never blackout dates. `date.holiday`
+  reads it (see "Methods on values").
 - Volume also has the liquid units `gal` and `l`, for fuel prices.
+- `bill` is not part of the record: a tariff's own code reads it as the bill it is building
+  (`bill.freight`, `bill.accessorials`, `bill.total`, `bill.charge(…)`; see "Reading the bill
+  so far"), and `tariff.catalog` lists it after `tables` with its fields and docs.
 
 ### Rate tables
 
-Every active rate matrix with one to four dimensions is a table, named by its code. A matrix
-declares its **value type** (`Money`, `Money/cwt`, `Money/mi`, `Percent`, `Number`, …), and each
-dimension's kind gives its key type: zones, zips, states, countries, freight classes, equipment
-and service types are `Text` (or the enum) and match exactly; weight breaks, distance, pieces and
-linear feet are quantities in bands.
+Every published, unarchived rate matrix with one to four dimensions is a table, named by its
+code. A matrix declares its **value type** (`Money`, `Money/cwt`, `Money/mi`, `Percent`, `Number`,
+…), and each dimension's kind gives its key type: zones, zips, states, countries, freight
+classes, equipment and service types are `Text` (or the enum) and match exactly; weight breaks,
+distance, pieces and linear feet are quantities in bands; a **postal range** axis (`ZipRange`) is
+`Text` matched against ranges.
+
+**Versions.** A matrix is versioned like a formula library. Editors change its draft; submitting
+the draft sends it to review, and a reviewer approving it publishes it as the next numbered
+version, which is immutable. A tariff reads a table at a version: a formula template version pins
+`code → version` for every table its check reads (as it pins library imports), so rating with a
+template version reads the pinned versions' cells, and publishing a matrix version never reprices
+a contract until a new template version is approved. Editing and testing a draft in the Studio
+read each table's newest published version, and the Studio shows which one. An archived matrix is
+no longer served to new checks; versions already pinned keep rating.
+
+**Postal ranges.** A `ZipRange` axis's cells hold an inclusive range of postal codes, `{"from",
+"to"}`, both ends trimmed and upper-cased and of one length `n`. A key matches a range when it has
+at least `n` characters and its first `n` characters fall between the ends, compared character by
+character in Unicode code point order (`"10001-1234"` matches `100`–`149`; `"9"` matches no range
+of length 3). The axis is keyed, so it takes part in on-demand loading like an exact axis; it
+takes no normalisation and no overflow policy (a key no range holds is a miss), and ranges on one
+axis never overlap, which the server and `matrix.coverage` refuse.
 
 - `tables.Zones[lane.origin.zip3, lane.destination.zip3]` gives the value type, optional
   (`Money/cwt?`): a miss is `none`, so `?? fail "…"` refuses to rate with a reason.
@@ -717,6 +966,16 @@ linear feet are quantities in bands.
 - The checker types each table from its definition, so a wrong number of keys, a weight given to
   a distance axis or an unknown table is an error, and completion lists a table's real keys.
   Normalisation (trim, upper case, zip3) and range overflow keep their per-dimension settings.
+- In tests, `given tables.Zones["A", "B"] = $20/cwt` sets a cell, so a test does not depend on
+  the table's live cells (see "Tests").
+- `tariff.check` reports `tables: [{ code, version }]`, every table the file and the modules it
+  imports read, with the version the context held. The server turns these into the pins a
+  template version stores; the context's `TableShape` carries `version` for that.
+
+On the wire a table axis is `{ "match": "Exact" | "Range", "kind", "label", "unit"?,
+"normalization"?, "overflow"? }`; a postal range axis is `{ "match": "Range", "kind": "ZipRange" }`.
+A cell's `at` holds `{ "key" }` on an exact axis, `{ "min", "max"? }` on a band and `{ "from", "to"
+}` on a postal range.
 
 ## Modules and the standard library
 
@@ -730,8 +989,55 @@ linear feet are quantities in bands.
 |---|---|
 | `std.ltl` | `type Break = { from: Weight, rate: Money/cwt, minimum: Money? }`; `type Rated = { weight: Weight, rate: Money/cwt, minimum: Money?, deficit: Bool }`; `fn deficit(breaks: List<Break>, actual: Weight, allow: Bool = true) -> Rated` (today's deficit rating: the cheaper of the actual weight's break and the next break's minimum weight); `fn billed(weight: Weight, to: Weight = 100 lb) -> Weight`; `fn densityClass(density: Weight/Volume) -> FreightClass` (the NMFC density scale) |
 | `std.fuel` | `fn stepPercent(price: Money/gal, peg: Money/gal, step: Money/gal, perStep: Percent) -> Percent`; `fn perMile(price: Money/gal, peg: Money/gal, mpg: Number) -> Money/mi` |
-| `std.time` | `fn weekend(at: DateTime) -> Bool`; `fn afterHours(at: DateTime, open: Int = 8, close: Int = 17) -> Bool`; `fn businessDuration(start: DateTime, end: DateTime, open: Int = 8, close: Int = 17) -> Duration` |
+| `std.time` | `fn weekend(at: DateTime) -> Bool`; `fn afterHours(at: DateTime, open: Time = @08:00, close: Time = @17:00) -> Bool` (a weekend, before `open` or from `close` on, on `at`'s own clock); `fn businessDuration(start: DateTime, end: DateTime, open: Time = @08:00, close: Time = @17:00) -> Duration` (the weekday time between `open` and `close`) |
 | `std.accessorials` | `fn detention(dwell: Duration, free: Duration = 2 h, rate: Money/h, increment: Duration = 15 min) -> Money`; `fn extraStops(stops: List<Stop>, included: Int, fee: Money) -> Money` |
+| `std.tiers` | graduated (progressive) pricing, each tier pricing only the part of a distance or weight inside it: `type DistanceTier = { from: Distance, rate: Money/mi }`; `type DistanceStep = { from: Distance, to: Distance, distance: Distance, rate: Money/mi, amount: Money }`; `fn byDistance(tiers: List<DistanceTier>, distance: Distance) -> Money`; `fn distanceSteps(tiers: List<DistanceTier>, distance: Distance) -> List<DistanceStep>`; and for weight `type WeightTier = { from: Weight, rate: Money/cwt }`, `type WeightStep = { from: Weight, to: Weight, weight: Weight, rate: Money/cwt, amount: Money }`, `fn byWeight(tiers: List<WeightTier>, weight: Weight) -> Money`, `fn weightSteps(tiers: List<WeightTier>, weight: Weight) -> List<WeightStep>` |
+
+### Graduated tiers
+
+`std.ltl`'s breaks price the whole weight at one break's rate. A graduated rate prices each part
+at its own tier's rate, like income tax brackets: "the first 100 mi at $3/mi, the next 400 at
+$2.50/mi, beyond at $2/mi" is three `DistanceTier`s, and 250 mi bills $300 + $375.
+
+```tariff
+tariff "Graduated linehaul"
+
+use std.tiers.{ DistanceTier, distanceSteps }
+
+/// Each tier prices the miles from its start up to the next tier's start.
+input mileTiers: List<DistanceTier> = [
+  { from: 0 mi, rate: $3/mi },
+  { from: 100 mi, rate: $2.50/mi },
+  { from: 500 mi, rate: $2/mi },
+]
+
+for step in distanceSteps(mileTiers, shipment.distance) {
+  charge "Linehaul, {step.from} to {step.to}" (quantity: step.distance, rate: step.rate)
+}
+
+test "250 miles bills the first 100 at $3 and the next 150 at $2.50" {
+  given shipment.distance = 250 mi
+  expect total == $675
+  expect lines.len == 2
+}
+```
+
+Each tier the distance reaches is its own line, with its quantity and rate on the invoice;
+`charge "Linehaul" = byDistance(mileTiers, shipment.distance)` bills the same total as one line.
+
+- A tier runs from its `from` up to the next tier's `from`; the highest tier has no end. Tiers
+  are read in order of `from`, however the list is written, and the lowest tier also prices
+  anything below its start (as `std.ltl.deficit` prices a weight below every break): its step
+  starts at zero, so a list whose first tier starts at `1 mi` still prices a 0.5 mi load.
+- The steps leave out every tier the distance or weight doesn't reach, so each step's
+  `distance` (or `weight`) is above zero; a zero or negative quantity has no steps and bills
+  `$0`. `amount` is the step's `rate × distance`, exact; the bill rounds it with every other
+  line.
+- `byDistance` is the steps' total. No tiers at all refuses to rate ("There are no distance
+  tiers to price 250 mi with").
+- `WeightTier`, `WeightStep`, `byWeight` and `weightSteps` are the same for weight, priced per
+  hundredweight. There are two families rather than one because a tier's rate unit is part of
+  its type, and Tariff has no user generics.
 
 ## Tests
 
@@ -753,16 +1059,49 @@ test "a load with no weight refuses to rate" {
 ```
 
 - `given` overrides a field of the sample record, built from the schema's defaults (a one-stop
-  pickup and delivery, no commodities) and the inputs' defaults; `given input.rate = $2.10/mi`
-  overrides an input.
+  pickup and delivery, no commodities, no requested accessorials, no holidays) and the inputs'
+  defaults; `given input.rate = $2.10/mi` overrides an input. `given shipment.accessorials =
+  [{ code: "LIFT", quantity: 1 }]` and `given rating.holidays = [{ date: @2026-12-25, name:
+  "Christmas Day" }]` set what a rating reads through `shipment.requested(…)` and `.holiday`.
 - In tests only, `pickup(…)`, `delivery(…)`, `splitPickup(…)` and `splitDelivery(…)` build a
   `Stop` and `commodity(…)` a `Commodity`; every argument is named and optional, and a stop's
-  `sequence` defaults to its place in the list. After the `given`s, `shipment.pickup`,
-  `shipment.delivery` and each stop's `dwell` are worked out again unless a `given` set them.
+  `sequence` defaults to its place in the list. A stop builder takes each field of a `Stop`
+  (`legDistance: 120 mi`), and each field of its `location` directly: `delivery(zip3: "752",
+  category: Warehouse, facilityType: ColdStorage, requiresAppointment: true)` sets those fields
+  of the stop's location and leaves the rest blank. Giving `location:` whole and one of its
+  fields in the same call is an error (`duplicate-argument`). A built stop's `legDistance` is
+  `none` unless given, and its location has no category or facility type and requires no
+  appointment. After the `given`s, `shipment.pickup`, `shipment.delivery` and each stop's
+  `dwell` are worked out again unless a `given` set them.
+- **Table cells.** `given tables.Code[key, …] = value` sets one cell of a rate table for the
+  test. The checker holds it to the table's shape: one key per axis, each of the axis's key type
+  (one key, not a list, on an exact axis), and a value of the table's value type, or the whole
+  cell as `{ value: …, minimum: Money?, deficit: Bool }` for a tariff that reads `.cell(…)` (a
+  bare value has no minimum and no deficit).
+  - Once a test gives any cell of a table, that table holds only the cells the test gave: a
+    lookup of any other is a miss (`none`), never the live cell and never a request for cells
+    the host must load. A table the test gives no cell reads the live cells the request carries,
+    as a rating does.
+  - On a range axis the key is a band floor: `given tables.Breaks[1_000 lb] = $28/cwt` is the
+    band from 1,000 lb up to the next floor any `given` of that table writes on that axis, or
+    open-ended when none is higher, and every key in the band reads it. So `[0 lb]`, `[500 lb]`
+    and `[1_000 lb]` give the bands 0–500 lb, 500–1,000 lb and 1,000 lb and up. Exact keys pass
+    through the axis's normalisation, and the axis's overflow policy still applies to a key no
+    given band holds.
+  - The same cell given twice keeps the later value. Keys and values are worked out like any
+    `given`'s value, before the rating.
+  - A test (or property) of a tariff or condition is warned (`live-table`, at its name) for
+    each table the file reads, in its body or in the test itself, that the test gives no cell
+    of: the test passes or fails with the matrix's live data, so editing a rate matrix can break
+    it. Giving the cells the test reads silences it.
 - `expect` takes a `Bool`; `charge("Label")` or `charge(CODE)` reads a line's amount (`Money?`),
   `total` the bill's total, `lines` the whole list (`{ label: Text, code: Text?, amount: Money,
-  kind: LineKind }`, where `LineKind` is `Charge`, `Minimum`, `Maximum` or `Rounding`); `expect fails` (optionally with the message)
-  expects a refusal.
+  kind: LineKind }`, where `LineKind` is `Charge`, `Minimum`, `Maximum` or `Rounding`), and
+  `reviews` the review reasons (`List<Text>`, in order: `expect reviews.isEmpty`,
+  `expect reviews == ["Hazmat over 500 miles: check the permit cost"]`); `expect fails`
+  (optionally with the message) expects a refusal. These read the finished bill; the tariff's
+  own code reads the bill so far through `bill`. In a condition's tests, `applies` is the
+  condition's result: `expect applies`, `expect not applies`.
 - Tests replace the Studio's test-case rows and recorded scenarios: "Save as test" in the preview
   writes a `test` block from a real shipment's facts into the source.
 
@@ -790,13 +1129,14 @@ property "never below the minimum" {
   `input.name`, exactly as `given` takes, or a new `camelCase` name, bound for the rest of the
   property (the only form a library may use, to test its functions). The values are:
   - a range of an ordered type with both ends written: `1 lb..40_000 lb`, `$1/mi..=$5/mi`,
-    `@2026-01-01..@2027-01-01`;
+    `@2026-01-01..@2027-01-01`, `@06:00..=@20:00`, `Class50..=Class100`;
   - a list of values: `[Standard, Expedited]`, `[[pickup(), delivery()], [pickup(), delivery(),
     delivery()]]`.
 
   `in values` may be left out for a `Bool` (both values), an enum (every variant), an optional
   enum or `Bool` (also `none`), and an input with a range or list constraint (the constraint).
-- **`given`** sets a field or input for every case, as in a test. **`assume cond`** skips the
+- **`given`** sets a field, an input or a rate table's cell for every case, as in a test (a
+  table one `given` sets a cell of holds only the given cells in every case). **`assume cond`** skips the
   cases where `cond` is false; it reads the record, inputs, `vary` names, functions and constants,
   and runs before the rating, so it cannot read the bill.
 - **`expect cond`** must hold in every case. **`expect value nondecreasing in target`** (or
@@ -812,7 +1152,10 @@ property "never below the minimum" {
     every band edge of a range-keyed rate table axis of that dimension), each with its neighbours
     one *step* either side; and evenly spread points, until the axis has 24 values. The step is 1
     in the last decimal place the range's ends are written with (`1 lb..40_000 lb` steps by
-    1 lb, `$0.50/mi..$15/mi` by $0.01/mi), a day for dates and a minute for date-times.
+    1 lb, `$0.50/mi..$15/mi` by $0.01/mi), a day for dates, a minute for date-times and
+    times of day, and one variant for an ordered enum (`vary shipment.freightClass in
+    Class50..=Class100`). Text has no step, so a text range can't be varied over: list the
+    values instead.
   - For a list, every item.
   - With one `vary`, every value is a case. With several, every combination when there are at
     most 256, otherwise each axis's landmarks against the other axes' ends, filled up to 256 with
@@ -830,9 +1173,10 @@ property "never below the minimum" {
   `vary`; its ranges must be finite, with compile-time ends, and an input's range must lie inside
   the input's constraint. Its `vary`s, `given`s and `assume`s come first, before its other
   statements; a `given` may not read a varied name, and a path is varied at most once and never
-  also given. Its `expect`s follow the test rules (they read the bill, the record and the file's
-  functions and constants), so a saved counterexample always checks. At most 256 cases run per
-  property, under the file's budget.
+  also given; a rate table can't vary (`vary-target`), only take given cells. Its `expect`s
+  follow the test rules (they read the bill, the record and the file's functions and
+  constants), so a saved counterexample always checks. At most 256 cases run per property,
+  under the file's budget.
 
 Properties are tests: the Studio runs them on every change, and a version with a failing property
 cannot be saved for review or submitted.
@@ -842,10 +1186,12 @@ cannot be saved for review or submitted.
 Every test and property case records which parts of the file it ran. `tariff.test` reports the
 file's **regions** with how many times each ran: each block of an `if`, `else if` and `else`
 (statement or expression), each `match` arm, each `for` body, each `option`, each `charge`, each
-refusal (`fail`, the refusing side of `require` and of `?? fail`) and each function body. The
-Studio marks the lines of regions no test reached, shows "Tests reach 18 of 21 regions" in the
-tests panel, and lists unreached regions as a readiness warning before submit. Coverage counts the
-root file's regions only; a library has its own.
+`review`, each refusal (`fail`, the refusing side of `require` and of `?? fail`), each function
+body, and a condition's two outcomes: two regions on its final expression, `applies` and
+`notApplies`, entered when a test or case sees the condition give `true` or `false` (a refusal
+enters neither). The Studio marks the lines of regions no test reached, shows "Tests reach 18 of
+21 regions" in the tests panel, and lists unreached regions as a readiness warning before submit.
+Coverage counts the root file's regions only; a library has its own.
 
 ## Module operations
 
@@ -855,7 +1201,7 @@ The crate's `formula.*` operations are replaced by `tariff.*`, with the same env
 | Operation | Does |
 |---|---|
 | `tariff.check` | parses and checks a file with the libraries it imports, against the schema, the tables' shapes and the organisation's accessorial codes; returns diagnostics with fixes, the declared inputs (name, type, default, doc), the outline, symbols and inferred types (for inlay hints) and the imports it pinned |
-| `tariff.evaluate` | rates a batch of programs (a tariff or condition with its libraries, input values and record) and returns, per program, the bill (charges with label, code, amount, quantity, rate and source range; notes; adjustments; total) or the refusal, plus lookups and per-statement values for the trace |
+| `tariff.evaluate` | rates a batch of programs (a tariff or condition with its libraries, input values and record) and returns, per program, the bill (charges with label, code, amount, quantity, rate, the limit that applied and source range; notes; review reasons; adjustments with their scope; total) or the refusal, plus lookups and per-statement values for the trace |
 | `tariff.test` | runs a file's tests and properties against the sample record; returns each one's result, the failing expectation and the values involved, a property's counterexample, and the file's coverage |
 | `tariff.format` | formats a file (one canonical style) |
 | `tariff.tokens` | the token stream for highlighting |
@@ -875,13 +1221,27 @@ always decimal strings read exactly:
 | `Int`, `Number` | `{"$n": "1200"}` |
 | Money, quantities, rates, percents | `{"$q": "2.35", "u": "$/mi"}`, `{"$q": "1200", "u": "lb"}`, `{"$q": "18", "u": "%"}`, `{"$q": "450", "u": "$"}` |
 | `Date`, `DateTime` | `{"$date": "2026-10-22"}`, `{"$date": "2026-10-22T08:00:00-05:00"}` |
+| `Time` | `{"$time": "17:30:00"}` (`HH:MM` or `HH:MM:SS` is read; seconds are always written) |
 | Enum variants | a JSON string (`"Delivery"`), read as the declared enum |
 | `none` | JSON `null` |
 | Lists, records | JSON arrays and objects (record keys never start with `$`) |
 
 Input values on rules and agreements, the record the host sends, the bill and the trace all use
 these forms, so a value never loses its unit or its precision between Postgres, Go, the module
-and the browser.
+and the browser. The record is decoded strictly against "Data": no field unknown, and every
+field present except an optional one, which may be left out as `null`. For the newest fields:
+
+```json
+{"shipment": {"accessorials": [{"code": "LIFT", "quantity": {"$n": "1"}}],
+              "stops": [{"legDistance": null,
+                         "location": {"category": "Warehouse", "facilityType": null,
+                                      "requiresAppointment": true, "…": "…"}, "…": "…"},
+                        {"legDistance": {"$q": "412", "u": "mi"}, "…": "…"}], "…": "…"},
+ "rating": {"holidays": [{"date": {"$date": "2026-12-25"}, "name": "Christmas Day"}], "…": "…"}}
+```
+
+`legDistance` is in the organisation's distance unit, like `shipment.distance`; an enum is its
+variant's name, and `null` is none.
 
 ## Storage and server changes
 
@@ -893,6 +1253,20 @@ and the browser.
 - **Formula libraries** are a new organisation-level record with the same versioning and review as
   templates (`formula_libraries`, `formula_library_versions`), with GraphQL reads, REST writes,
   permissions, audit, agent tools and an editor.
+- **Rate matrices** are versioned with the library review flow and statuses: the draft is version
+  `0` of `rate_matrix_dimensions` and `rate_matrix_cells`, each published version a
+  `rate_matrix_versions` row with its own dimension and cell rows keyed by `(matrix,
+  version_number)`, copied from the draft in one `INSERT … SELECT` on approval. Reviews are
+  `rate_matrix_reviews`; `rate_matrices` carries the review state, `published_version_number` and
+  `has_draft_changes`. Templates and template versions store `tables` (the pins), and
+  `formula_template_version_tables` indexes them for "who pins this matrix". The server's table
+  cache keys published cells by `(tenant, matrix, version)` with no invalidation, and serves the
+  newest published versions under a stamp that moves when one is published or archived; a rating
+  batch reads its cells by `(matrix, version)` in bounded, batched queries. Postal range cells
+  keep the range's end in `dN_key_to` beside its start in `dN_key`. GraphQL reads
+  `rateMatrixVersions`, `rateMatrixVersion`, `rateMatrixReviews`, `rateMatrixUsages` and
+  `FormulaTemplate.tables`; REST writes `submit`, `approve`, `reject`, `request-changes`,
+  `archive` and `restore` under `/rate-matrices/:id/`.
 - **Rate agreement rules and agreements** gain `inputs` and lose the pricing columns above; the
   breaks table is dropped. **Rate matrices** gain `valueType` and lose their template, rounding
   and currency (a table's money is in the rating currency). Density scales are removed: the NMFC
@@ -933,7 +1307,8 @@ The Studio edits one source file. Everything else is a view of it, computed by t
 - refactorings from `tariff.actions`: **Promote to input** turns a selected literal (`$2.35/mi`)
   into an `input` declaration with that default and puts the new name in its place, ready to
   rename, optionally replacing every equal literal in the file;
-- the bill preview: each charge with its code, quantity and rate, the notes and the adjustments.
+- the bill preview: each charge with its code, quantity, rate and any limit that applied, the
+  notes, the review reasons and the adjustments.
 
 Every editor operation answers from one call on a file that may not parse, in UTF-16 positions.
 A `doc` on the wire is a string (the author's words) or a `Message` (a built-in's or the standard
@@ -1020,16 +1395,19 @@ test        = "test" string block ;
 property    = "property" string block ;
 block       = "{" { stmt } "}" ;
 
-stmt        = letStmt | varStmt | assign | charge | note | ifStmt | matchStmt | forStmt
-            | choose | require | fail | return | "break" NL | "continue" NL | total
-            | given | vary | assume | expect | expr NL ;
+stmt        = letStmt | varStmt | assign | charge | note | review | ifStmt | matchStmt
+            | forStmt | choose NL | require | fail | return | "break" NL | "continue" NL
+            | total | given | vary | assume | expect | expr NL ;
 letStmt     = "let" name [ ":" type ] "=" expr NL ;
 varStmt     = "var" name [ ":" type ] "=" expr NL ;
 assign      = name ( "=" | "+=" | "-=" ) expr NL ;
 charge      = "charge" string [ "as" CODE ] [ "(" option { "," option } ")" ] [ "=" expr ] NL ;
-                                                              (* "= expr" may be left out only with quantity: and rate: *)
+                                                              (* options: quantity:, rate:, minimum:,
+                                                                 maximum:; "= expr" may be left out
+                                                                 only with quantity: and rate: *)
 option      = name ":" expr ;
 note        = "note" string NL ;
+review      = "review" string NL ;                            (* tariffs only *)
 choose      = ( "best" | "worst" ) string "{" { option } "}" ;
 option      = "option" string block ;
 ifStmt      = "if" condition block { "else" "if" condition block } [ "else" block ] ;
@@ -1038,15 +1416,19 @@ matchStmt   = "match" expr "{" { arm } "}" ;
 arm         = pattern [ "if" expr ] "=>" ( block | expr ) NL ;
 pattern     = alt { "|" alt } ;
 alt         = literal | rangePat | TypeName | "none" | "_" | name | recordPat ;
-rangePat    = [ literal ] ( ".." | "..=" ) [ literal ] ;
+rangePat    = [ rangeEnd ] ( ".." | "..=" ) [ rangeEnd ] ;
+rangeEnd    = literal | TypeName [ "." TypeName ] ;             (* a variant of an ordered enum *)
 recordPat   = "{" name ":" pattern { "," name ":" pattern } [ "," ] "}" ;
 forStmt     = "for" name "in" expr [ "where" expr ] block ;
 require     = "require" condition "else" string NL ;
 fail        = "fail" string NL ;
 return      = "return" expr NL ;
-total       = ( "minimum" | "maximum" ) expr NL
+total       = ( "minimum" | "maximum" ) expr [ "on" "freight" ] NL
             | "round" [ "half" "even" | "up" | "down" ] "to" ( "cents" | expr ) NL ;
-given       = "given" lvalue "=" expr NL ;                    (* tests only *)
+given       = "given" lvalue [ "[" expr { "," expr } "]" ] "=" expr NL ;
+                                                              (* tests and properties; the keys
+                                                                 only after tables.Code, one per
+                                                                 axis: a cell *)
 vary        = "vary" ( lvalue | name ) [ "in" expr ] NL ;     (* properties only *)
 assume      = "assume" expr NL ;                              (* properties only *)
 expect      = "expect" ( expr [ ( "nondecreasing" | "nonincreasing" ) "in" lvalue ]
@@ -1069,14 +1451,19 @@ postfix     = primary { "." name [ args ] | "?." name [ args ] | "[" expr { "," 
 args        = "(" [ arg { "," arg } [ "," ] ] ")" ;
 arg         = [ name ":" ] ( expr | lambda ) ;
 lambda      = name "=>" expr | "(" name "," name ")" "=>" expr ;
-primary     = literal | name | TypeName [ "." name ] | "(" expr ")" | list | record
-            | ifExpr | matchExpr ;
+primary     = literal | name | TypeName [ "." TypeName ] | TypeName "." name args
+            | "(" expr ")" | list | record | ifExpr | matchExpr | choose ;
+                                                              (* StopKind.Delivery, Int.parse(t);
+                                                                 Class77_5.number is a postfix
+                                                                 field of the variant; a choose
+                                                                 only as the whole value of a
+                                                                 let, var or assignment *)
 ifExpr      = "if" condition "{" expr "}" { "else" "if" condition "{" expr "}" } "else" "{" expr "}" ;
 matchExpr   = "match" expr "{" { pattern [ "if" expr ] "=>" expr NL } "}" ;
 list        = "[" [ expr { "," expr } [ "," ] ] "]" ;
 record      = "{" name ":" expr { "," name ":" expr } [ "," ] "}" ;
 
-literal     = number [ unit ] | money | percent | string | date | dateTime
+literal     = number [ unit ] | money | percent | string | date | dateTime | time
             | "true" | "false" | "none" ;
 money       = "$" number [ "/" unit ] ;                       (* $450, $2.35/mi, $18.50/cwt *)
 percent     = number "%" ;
@@ -1086,10 +1473,14 @@ unit        = "lb" | "cwt" | "kg" | "t" | "ton" | "mi" | "km" | "in" | "ft" | "m
             | unit "/" unit ;                                 (* lb/ft3 for density *)
 date        = "@" digit4 "-" digit2 "-" digit2 ;
 dateTime    = date "T" digit2 ":" digit2 [ ":" digit2 ] ( "Z" | ( "+" | "-" ) digit2 ":" digit2 ) ;
+time        = "@" digit2 ":" digit2 [ ":" digit2 ] ;             (* @17:30, @07:30:15 *)
 string      = '"' { char | escape | "{" expr "}" | "{{" | "}}" } '"' ;
 ```
 
-A keyword is never an identifier. Unit names are contextual: `lb` is a unit only directly after
+A keyword is never an identifier. `best`, `worst`, `option` and `review` start their construct
+only when a string follows on the same line, and `on` and `freight` are keywords only after a
+total clause's amount; elsewhere all of them are ordinary names (`bill` is a name too, one a
+tariff may not declare). Unit names are contextual: `lb` is a unit only directly after
 a number, or after `/` in a money literal or a type. Elsewhere it is an ordinary name, except
 as the argument of `.in(…)`, which reads `cwt` or `lb/ft3` as a unit. `$` directly followed
 by `/` and a unit is the money unit, so a whole rate unit is written `.in($/cwt)`. `in` directly

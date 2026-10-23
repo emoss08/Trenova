@@ -539,12 +539,18 @@ pub const KEYWORD_DOCS: &[(&str, &str)] = &[
     (
         "charge",
         message!(
-            "Adds a line to the bill: `charge \"Label\" as CODE (quantity: q, rate: r) = amount`; in a test, `charge(CODE)` reads a line's amount."
+            "Adds a line to the bill: `charge \"Label\" as CODE (quantity: q, rate: r, minimum: lo, maximum: hi) = amount`; in a test, `charge(CODE)` reads a line's amount."
         ),
     ),
     (
         "note",
         message!("Adds a note with no amount to the bill, the trace and the invoice."),
+    ),
+    (
+        "review",
+        message!(
+            "Bills as usual and asks for the rating to be approved before it is used, with this text as the reason: `review \"Hazmat over 500 miles\"`."
+        ),
     ),
     (
         "if",
@@ -590,13 +596,13 @@ pub const KEYWORD_DOCS: &[(&str, &str)] = &[
     (
         "minimum",
         message!(
-            "A total clause: when the total falls short, the difference is billed as a minimum charge adjustment."
+            "A total clause: when the total falls short, the difference is billed as a minimum charge adjustment; `minimum m on freight` applies to the freight lines only. As a charge option, `minimum: m` makes the line bill at least `m`."
         ),
     ),
     (
         "maximum",
         message!(
-            "A total clause: when the total exceeds it, a negative adjustment brings it down."
+            "A total clause: when the total exceeds it, a negative adjustment brings it down; `maximum m on freight` applies to the freight lines only. As a charge option, `maximum: m` makes the line bill at most `m`."
         ),
     ),
     (
@@ -620,6 +626,18 @@ pub const KEYWORD_DOCS: &[(&str, &str)] = &[
         message!("With `half`, rounds half to even (banker's rounding)."),
     ),
     ("cents", message!("Rounds to the currency's cents.")),
+    (
+        "on",
+        message!(
+            "After a `minimum` or `maximum` amount, what the clause bounds: `on freight`, the uncoded lines."
+        ),
+    ),
+    (
+        "freight",
+        message!(
+            "In `minimum m on freight` and `maximum m on freight`: the bill's uncoded lines; `bill.freight` is what they add up to so far."
+        ),
+    ),
     (
         "require",
         message!(
@@ -671,13 +689,13 @@ pub const KEYWORD_DOCS: &[(&str, &str)] = &[
     (
         "best",
         message!(
-            "Bills the cheapest of several methods: each `option` runs, and the one with the lowest subtotal joins the bill."
+            "Bills the cheapest of several methods: each `option` runs, and the one with the lowest subtotal joins the bill. `let x = best \"Label\" …` also names that subtotal."
         ),
     ),
     (
         "worst",
         message!(
-            "Bills the dearest of several methods: each `option` runs, and the one with the highest subtotal joins the bill."
+            "Bills the dearest of several methods: each `option` runs, and the one with the highest subtotal joins the bill. `let x = worst \"Label\" …` also names that subtotal."
         ),
     ),
     (
@@ -724,6 +742,16 @@ pub const KEYWORD_DOCS: &[(&str, &str)] = &[
     (
         "lines",
         message!("In a test, the bill's lines: label, code, amount and kind."),
+    ),
+    (
+        "applies",
+        message!(
+            "In a condition's test, the condition's result: `expect applies`, `expect not applies`."
+        ),
+    ),
+    (
+        "reviews",
+        message!("In a test, the bill's review reasons, in order."),
     ),
 ];
 

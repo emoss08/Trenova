@@ -1,7 +1,8 @@
 //! The data a tariff reads: the schema roots, their record and enum types, and the shapes of
 //! the rate tables and charge codes the host describes.
 //!
-//! The roots are `shipment`, `lane`, `customer`, `fuel`, `rating` and `tables`. Their types are
+//! The roots are `shipment`, `lane`, `customer`, `fuel`, `rating` and `tables`, and in a
+//! tariff's own code `bill`, the bill so far. Their types are
 //! fixed by the language (the reference lists them under "Data"), so the browser and the server
 //! check against the same schema without fetching it; the host only says which unit the
 //! organisation stores distances in, and describes its rate tables and accessorial codes.
@@ -18,6 +19,44 @@ use std::sync::Arc;
 
 /// The doc of `tables`, the root that holds the organisation's active rate matrices.
 pub const TABLES_DOC: &str = message!("The organisation's active rate matrices, by code.");
+
+/// The doc of `bill`, the bill a tariff is building.
+pub const BILL_DOC: &str = message!(
+    "The bill so far: the lines billed above this line, exact, after each line's own minimum and maximum and before the total clauses and rounding. Inside a `best` option, the bill outside the choice plus that option's own lines."
+);
+
+/// The doc of `bill.charge(…)`.
+pub const BILL_CHARGE_DOC: &str = message!(
+    "The sum of the lines billed so far with this label (as interpolated) or charge code, as in `bill.charge(\"Linehaul\")` or `bill.charge(FSC)`; `none` when there are none."
+);
+
+/// The type of `bill`: what a tariff's own code reads of the bill so far. Its fields are the
+/// sums of the lines billed so far, exact; `bill.charge(…)` is checked on its own.
+#[must_use]
+pub fn bill_type() -> Arc<RecordType> {
+    let field = |name: &str, doc: &'static str| FieldDef {
+        name: name.to_owned(),
+        ty: Type::money(),
+        doc: Some(Doc::message(doc)),
+    };
+    Arc::new(RecordType {
+        name: Some(String::from("Bill")),
+        fields: vec![
+            field(
+                "freight",
+                message!("The sum of the freight (uncoded) lines billed so far, exact."),
+            ),
+            field(
+                "accessorials",
+                message!("The sum of the accessorial (coded) lines billed so far, exact."),
+            ),
+            field(
+                "total",
+                message!("The sum of every line billed so far, exact."),
+            ),
+        ],
+    })
+}
 
 /// The schema enums, by name, with their variants in order.
 pub const ENUMS: &[(&str, &[&str])] = &[
@@ -66,10 +105,55 @@ pub const ENUMS: &[(&str, &[&str])] = &[
     ),
     ("RatingMode", &["Sell", "Buy"]),
     (
+        "LocationCategory",
+        &[
+            "Terminal",
+            "Warehouse",
+            "DistributionCenter",
+            "TruckStop",
+            "RestArea",
+            "CustomerLocation",
+            "Port",
+            "RailYard",
+            "MaintenanceFacility",
+        ],
+    ),
+    (
+        "FacilityType",
+        &[
+            "CrossDock",
+            "StorageWarehouse",
+            "ColdStorage",
+            "HazmatFacility",
+            "IntermodalFacility",
+        ],
+    ),
+    (
         "Weekday",
         &["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     ),
 ];
+
+/// The schema enums whose variants have an order: their declaration order, lowest first
+/// (`Class50 < Class55`, `Mon < Tue`). Every other enum, schema or user, has none.
+pub const ORDERED_ENUMS: &[&str] = &["FreightClass", "Weekday"];
+
+/// A variant's place in the ordered schema enum that declares it, counted from 0. The ordered
+/// enums share no variant name, so the name alone decides.
+#[must_use]
+pub fn variant_rank(variant: &str) -> Option<usize> {
+    ENUMS
+        .iter()
+        .filter(|(name, _)| ORDERED_ENUMS.contains(name))
+        .find_map(|(_, variants)| variants.iter().position(|known| *known == variant))
+}
+
+/// The class a `FreightClass` variant names, as written in the NMFC: `Class77_5` is `77.5`.
+#[must_use]
+pub fn freight_class_number(variant: &str) -> Option<rust_decimal::Decimal> {
+    let digits = variant.strip_prefix("Class")?.replace('_', ".");
+    rust_decimal::Decimal::from_str_exact(&digits).ok()
+}
 
 /// How the organisation stores what the schema exposes, as the host sends it.
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -84,7 +168,8 @@ pub struct Settings {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Axis {
-    /// `Exact` or `Range`.
+    /// `Exact` or `Range`. A `ZipRange` axis is `Range`: its cells hold inclusive postal-code
+    /// ranges (`from`, `to`) rather than quantity bands.
     #[serde(rename = "match")]
     pub match_mode: String,
     /// What the axis varies by, as Go's `ratematrix.DimensionKind` (`Zone`, `WeightBreak`, …).
@@ -106,7 +191,28 @@ pub struct Axis {
     pub overflow: String,
 }
 
+/// The kind of an axis whose cells are inclusive postal-code ranges.
+pub const ZIP_RANGE: &str = "ZipRange";
+
 impl Axis {
+    /// Whether the axis's cells are postal-code ranges, keyed by `Text`.
+    #[must_use]
+    pub fn is_zip_range(&self) -> bool {
+        self.kind == ZIP_RANGE
+    }
+
+    /// Whether a lookup key on this axis may be a list tried in order: exact and zip-range axes.
+    #[must_use]
+    pub fn takes_key_list(&self) -> bool {
+        self.match_mode.eq_ignore_ascii_case("exact") || self.is_zip_range()
+    }
+
+    /// Whether the axis is banded by quantity, which `.band(x)` and `.interpolate(x)` read.
+    #[must_use]
+    pub fn is_banded(&self) -> bool {
+        self.match_mode.eq_ignore_ascii_case("range") && !self.is_zip_range()
+    }
+
     /// The type of the key a tariff gives this axis.
     #[must_use]
     pub fn key_type(&self, schema: &Schema) -> Type {
@@ -134,6 +240,10 @@ pub struct TableShape {
     /// The matrix's name, for hover.
     #[serde(default)]
     pub name: String,
+    /// The published version of the matrix the shape and cells are, which `tariff.check`
+    /// reports beside the code of every table a file reads so the host can pin it.
+    #[serde(default)]
+    pub version: Option<i64>,
     /// The axes in position order: one to four.
     pub axes: Vec<Axis>,
     /// What a cell holds, as a Tariff type: `Money`, `Money/cwt`, `Money/mi`, `Percent`,
@@ -143,8 +253,8 @@ pub struct TableShape {
     /// leave them out for `tariff.check` and the editor.
     #[serde(default)]
     pub cells: Option<Vec<super::eval::tables::CellWire>>,
-    /// The exact-axis key combinations whose cells `cells` holds, one normalised key per exact
-    /// axis in axis order; absent when `cells` is the whole table. A lookup outside them is a
+    /// The keyed-axis combinations whose cells `cells` holds, one normalised key per exact or
+    /// zip-range axis in axis order; absent when `cells` is the whole table. A lookup outside them is a
     /// need the host answers by loading those cells and evaluating again.
     #[serde(default)]
     pub loaded: Option<Vec<Vec<String>>>,
@@ -286,6 +396,7 @@ impl Builder {
                     name: (*name).to_owned(),
                     variants: variants.iter().map(|v| ((*v).to_owned(), None)).collect(),
                     doc: None,
+                    ordered: ORDERED_ENUMS.contains(name),
                 })
             })
             .collect();
@@ -324,6 +435,21 @@ impl Builder {
             ),
             ("country", Type::Text, message!("The ISO country code.")),
             ("timezone", Type::Text, message!("The IANA time zone.")),
+            (
+                "category",
+                opt(self.enumeration("LocationCategory")),
+                message!("What the location is: a terminal, a warehouse, a port, …"),
+            ),
+            (
+                "facilityType",
+                opt(self.enumeration("FacilityType")),
+                message!("What kind of facility the location is: cross-dock, cold storage, …"),
+            ),
+            (
+                "requiresAppointment",
+                Type::Bool,
+                message!("Whether the location requires an appointment for every visit."),
+            ),
         ]);
         let window = record(&[
             (
@@ -385,6 +511,13 @@ impl Builder {
                     "weight",
                     opt(self.weight.clone()),
                     message!("Weight handled at the stop."),
+                ),
+                (
+                    "legDistance",
+                    opt(self.distance.clone()),
+                    message!(
+                        "The distance from the previous stop, in the organisation's unit; none on the first stop."
+                    ),
                 ),
                 ("location", location, message!("Where the stop is.")),
             ]),
@@ -496,6 +629,24 @@ impl Builder {
                 message!("The first pickup stop."),
             ),
             ("delivery", opt(stop), message!("The last delivery stop.")),
+            (
+                "accessorials",
+                Type::list(record(&[
+                    (
+                        "code",
+                        Type::Text,
+                        message!("The accessorial charge's catalog code."),
+                    ),
+                    (
+                        "quantity",
+                        Type::Number,
+                        message!("How many were asked for."),
+                    ),
+                ])),
+                message!(
+                    "The accessorials a user entered on the shipment, never the lines a tariff or program generated."
+                ),
+            ),
         ]
     }
 
@@ -671,6 +822,16 @@ impl Builder {
                 "currency",
                 Type::Text,
                 message!("The rating currency's ISO code."),
+            ),
+            (
+                "holidays",
+                Type::list(record(&[
+                    ("date", Type::Date, message!("The holiday's date.")),
+                    ("name", Type::Text, message!("The holiday's name.")),
+                ])),
+                message!(
+                    "The organisation's holidays from the year before the rating date's year to the year after, in date order."
+                ),
             ),
         ])
     }

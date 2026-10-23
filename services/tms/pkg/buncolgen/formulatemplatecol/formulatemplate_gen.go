@@ -58,6 +58,7 @@ var FormulaTemplateColumns = struct {
 	Source               buncolgen.Column // "source" → qualified: "ft.source"
 	Inputs               buncolgen.Column // "inputs" → qualified: "ft.inputs"
 	Imports              buncolgen.Column // "imports" → qualified: "ft.imports"
+	Tables               buncolgen.Column // "tables" → qualified: "ft.tables"
 	TestCount            buncolgen.Column // "test_count" → qualified: "ft.test_count"
 	Status               buncolgen.Column // "status" → qualified: "ft.status"
 	SubmittedByID        buncolgen.Column // "submitted_by_id" → qualified: "ft.submitted_by_id"
@@ -83,6 +84,7 @@ var FormulaTemplateColumns = struct {
 	Source:               buncolgen.NewColumn("source", "ft"),
 	Inputs:               buncolgen.NewColumn("inputs", "ft"),
 	Imports:              buncolgen.NewColumn("imports", "ft"),
+	Tables:               buncolgen.NewColumn("tables", "ft"),
 	TestCount:            buncolgen.NewColumn("test_count", "ft"),
 	Status:               buncolgen.NewColumn("status", "ft"),
 	SubmittedByID:        buncolgen.NewColumn("submitted_by_id", "ft"),
@@ -114,6 +116,7 @@ var FormulaTemplateFieldMap = map[string]string{
 	"source":               "source",
 	"inputs":               "inputs",
 	"imports":              "imports",
+	"tables":               "tables",
 	"testCount":            "test_count",
 	"status":               "status",
 	"submittedById":        "submitted_by_id",
@@ -141,6 +144,7 @@ var FormulaTemplateInsertableColumns = []string{
 	"source",
 	"inputs",
 	"imports",
+	"tables",
 	"test_count",
 	"status",
 	"submitted_by_id",
@@ -232,6 +236,7 @@ var FormulaTemplateFilter = struct {
 	Source               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
 	Inputs               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputs" → DB: "inputs"
 	Imports              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "imports" → DB: "imports"
+	Tables               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tables" → DB: "tables"
 	TestCount            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "testCount" → DB: "test_count"
 	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	SubmittedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
@@ -270,6 +275,9 @@ var FormulaTemplateFilter = struct {
 	},
 	Imports: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("imports", op, value)
+	},
+	Tables: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tables", op, value)
 	},
 	TestCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("testCount", op, value)
@@ -351,6 +359,7 @@ var FormulaTemplateVersionColumns = struct {
 	Source         buncolgen.Column // "source" → qualified: "ftv.source"
 	Inputs         buncolgen.Column // "inputs" → qualified: "ftv.inputs"
 	Imports        buncolgen.Column // "imports" → qualified: "ftv.imports"
+	Tables         buncolgen.Column // "tables" → qualified: "ftv.tables"
 	TestCount      buncolgen.Column // "test_count" → qualified: "ftv.test_count"
 	Status         buncolgen.Column // "status" → qualified: "ftv.status"
 	EffectiveFrom  buncolgen.Column // "effective_from" → qualified: "ftv.effective_from"
@@ -371,6 +380,7 @@ var FormulaTemplateVersionColumns = struct {
 	Source:         buncolgen.NewColumn("source", "ftv"),
 	Inputs:         buncolgen.NewColumn("inputs", "ftv"),
 	Imports:        buncolgen.NewColumn("imports", "ftv"),
+	Tables:         buncolgen.NewColumn("tables", "ftv"),
 	TestCount:      buncolgen.NewColumn("test_count", "ftv"),
 	Status:         buncolgen.NewColumn("status", "ftv"),
 	EffectiveFrom:  buncolgen.NewColumn("effective_from", "ftv"),
@@ -397,6 +407,7 @@ var FormulaTemplateVersionFieldMap = map[string]string{
 	"source":         "source",
 	"inputs":         "inputs",
 	"imports":        "imports",
+	"tables":         "tables",
 	"testCount":      "test_count",
 	"status":         "status",
 	"effectiveFrom":  "effective_from",
@@ -421,6 +432,7 @@ var FormulaTemplateVersionInsertableColumns = []string{
 	"source",
 	"inputs",
 	"imports",
+	"tables",
 	"test_count",
 	"status",
 	"effective_from",
@@ -503,6 +515,7 @@ var FormulaTemplateVersionFilter = struct {
 	Source         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
 	Inputs         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputs" → DB: "inputs"
 	Imports        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "imports" → DB: "imports"
+	Tables         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tables" → DB: "tables"
 	TestCount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "testCount" → DB: "test_count"
 	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	EffectiveFrom  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
@@ -542,6 +555,9 @@ var FormulaTemplateVersionFilter = struct {
 	},
 	Imports: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("imports", op, value)
+	},
+	Tables: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tables", op, value)
 	},
 	TestCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("testCount", op, value)
@@ -930,5 +946,163 @@ var VersionImportFilter = struct {
 	},
 	Path: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("path", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// VersionTable — table "formula_template_version_tables", alias "ftvt"
+// ---------------------------------------------------------------------------
+
+// VersionTableTable holds the table name, alias, and primary key columns
+// for the "formula_template_version_tables" table. The alias "ftvt" is used in all generated
+// SQL fragments (e.g. "ftvt.id = ?").
+var VersionTableTable = buncolgen.TableInfo{
+	Name:       "formula_template_version_tables",
+	Alias:      "ftvt",
+	PrimaryKey: []string{"template_version_id", "rate_matrix_id"},
+}
+
+// VersionTableColumns provides type-safe column references for the "formula_template_version_tables" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(VersionTableColumns.ID.String())
+//	// SELECT ftvt.id FROM formula_template_version_tables AS ftvt
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(VersionTableColumns.ID.Eq(), id)           // WHERE ftvt.id = ?
+//	q.Order(VersionTableColumns.CreatedAt.OrderDesc())  // ORDER BY ftvt.created_at DESC
+var VersionTableColumns = struct {
+	TemplateVersionID   buncolgen.Column // "template_version_id" → qualified: "ftvt.template_version_id"
+	RateMatrixID        buncolgen.Column // "rate_matrix_id" → qualified: "ftvt.rate_matrix_id"
+	OrganizationID      buncolgen.Column // "organization_id" → qualified: "ftvt.organization_id"
+	BusinessUnitID      buncolgen.Column // "business_unit_id" → qualified: "ftvt.business_unit_id"
+	TemplateID          buncolgen.Column // "template_id" → qualified: "ftvt.template_id"
+	TemplateVersion     buncolgen.Column // "template_version" → qualified: "ftvt.template_version"
+	MatrixVersionNumber buncolgen.Column // "matrix_version_number" → qualified: "ftvt.matrix_version_number"
+	Code                buncolgen.Column // "code" → qualified: "ftvt.code"
+}{
+	TemplateVersionID:   buncolgen.NewColumn("template_version_id", "ftvt"),
+	RateMatrixID:        buncolgen.NewColumn("rate_matrix_id", "ftvt"),
+	OrganizationID:      buncolgen.NewColumn("organization_id", "ftvt"),
+	BusinessUnitID:      buncolgen.NewColumn("business_unit_id", "ftvt"),
+	TemplateID:          buncolgen.NewColumn("template_id", "ftvt"),
+	TemplateVersion:     buncolgen.NewColumn("template_version", "ftvt"),
+	MatrixVersionNumber: buncolgen.NewColumn("matrix_version_number", "ftvt"),
+	Code:                buncolgen.NewColumn("code", "ftvt"),
+}
+
+// VersionTableFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by VersionTable.GetStaticFieldMap().
+var VersionTableFieldMap = map[string]string{
+	"templateVersionId":   "template_version_id",
+	"rateMatrixId":        "rate_matrix_id",
+	"organizationId":      "organization_id",
+	"businessUnitId":      "business_unit_id",
+	"templateId":          "template_id",
+	"templateVersion":     "template_version",
+	"matrixVersionNumber": "matrix_version_number",
+	"code":                "code",
+}
+
+// VersionTableInsertableColumns lists column names suitable for INSERT statements on the "formula_template_version_tables" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var VersionTableInsertableColumns = []string{
+	"template_version_id",
+	"rate_matrix_id",
+	"organization_id",
+	"business_unit_id",
+	"template_id",
+	"template_version",
+	"matrix_version_number",
+	"code",
+}
+
+// VersionTableScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ftvt.organization_id = ? AND ftvt.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	formulatemplatecol.VersionTableScopeTenant(sq, ti).
+//		Where(formulatemplatecol.VersionTableColumns.ID.Eq(), id)
+func VersionTableScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, VersionTableColumns.OrganizationID, VersionTableColumns.BusinessUnitID, ti)
+}
+
+// VersionTableScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return formulatemplatecol.VersionTableScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(formulatemplatecol.VersionTableColumns.ID.In(), bun.List(ids))
+//	})
+func VersionTableScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, VersionTableColumns.OrganizationID, VersionTableColumns.BusinessUnitID, ti)
+}
+
+// VersionTableScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return formulatemplatecol.VersionTableScopeTenantDelete(dq, req.TenantInfo).
+//			Where(formulatemplatecol.VersionTableColumns.ID.Eq(), id)
+//	})
+func VersionTableScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, VersionTableColumns.OrganizationID, VersionTableColumns.BusinessUnitID, ti)
+}
+
+// VersionTableApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(formulatemplatecol.VersionTableApplyTenant(tenantInfo))
+func VersionTableApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(VersionTableColumns.OrganizationID, VersionTableColumns.BusinessUnitID, ti)
+}
+
+// VersionTableFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "formula_template_version_tables" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	VersionTableFilter.TemplateVersionID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "templateVersionId", Operator: "eq", Value: value}
+var VersionTableFilter = struct {
+	TemplateVersionID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateVersionId" → DB: "template_version_id"
+	RateMatrixID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMatrixId" → DB: "rate_matrix_id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	TemplateID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	TemplateVersion     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateVersion" → DB: "template_version"
+	MatrixVersionNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matrixVersionNumber" → DB: "matrix_version_number"
+	Code                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+}{
+	TemplateVersionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("templateVersionId", op, value)
+	},
+	RateMatrixID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("rateMatrixId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	TemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("templateId", op, value)
+	},
+	TemplateVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("templateVersion", op, value)
+	},
+	MatrixVersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("matrixVersionNumber", op, value)
+	},
+	Code: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("code", op, value)
 	},
 }

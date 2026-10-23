@@ -462,5 +462,67 @@
     "name": "percent value",
     "expr": "18%.value",
     "display": "18"
+  },
+  {
+    "name": "holiday is a date in rating.holidays",
+    "expr": "\"{rating.date.holiday} {@2026-12-25.holiday} {@2026-12-26.holiday}\"",
+    "facts": {
+      "rating": {
+        "holidays": [
+          {
+            "date": {
+              "$date": "2026-01-05"
+            },
+            "name": "Sample"
+          },
+          {
+            "date": {
+              "$date": "2026-12-25"
+            },
+            "name": "Christmas Day"
+          }
+        ]
+      }
+    },
+    "display": "true true false"
+  },
+  {
+    "name": "a date-time's holiday is its own offset's date",
+    "expr": "\"{@2026-12-25T23:30-05:00.holiday} {@2026-12-26T02:00Z.holiday} {@2026-12-24T23:00-05:00.holiday}\"",
+    "facts": {
+      "rating": {
+        "holidays": [
+          {
+            "date": {
+              "$date": "2026-12-25"
+            },
+            "name": "Christmas Day"
+          }
+        ]
+      }
+    },
+    "display": "true false false"
+  },
+  {
+    "name": "no holidays, no holiday",
+    "expr": "rating.date.holiday",
+    "display": "false"
+  },
+  {
+    "name": "shipment.requested tests the accessorials by code",
+    "expr": "\"{shipment.requested(LIFT)} {shipment.requested(RES)}\"",
+    "facts": {
+      "shipment": {
+        "accessorials": [
+          {
+            "code": "LIFT",
+            "quantity": {
+              "$n": "1"
+            }
+          }
+        ]
+      }
+    },
+    "display": "true false"
   }
 ]

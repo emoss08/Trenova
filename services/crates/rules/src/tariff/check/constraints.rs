@@ -4,7 +4,9 @@
 //! - the constraint is a range or a list literal; anything else is an error showing the forms;
 //! - a record input, or a list of records, takes no constraint;
 //! - a range needs a type with an order (numbers, `Int`, money, quantities, rates, percents,
-//!   dates, date-times) and at least one end; every type a list may hold has equality;
+//!   dates, date-times, times of day, the ordered enums) or text, and at least one end; every
+//!   type a list may hold has equality; a text range whose literal ends have different lengths
+//!   is a `text-range` warning, as everywhere;
 //! - a range must not be empty (`min` above `max`, or equal to an excluded `max`), and a list
 //!   must hold a value;
 //! - the default satisfies the constraint, judged by [`crate::tariff::constraint::breach`] (the
@@ -16,7 +18,7 @@ use super::ModuleAnalysis;
 use super::consts::{Value, wire};
 use super::decls::FoldedConstraint;
 use super::describe::{quote, words};
-use super::operators::ordered;
+use super::operators::{ordered_enums, ranged, text_range};
 use crate::message;
 use crate::message::{Arg, Message};
 use crate::tariff::diagnostic::Diagnostic;
@@ -52,18 +54,33 @@ pub fn form(
     }
     match &constraint.kind {
         ExprKind::Range { start, end, .. } => {
-            if !ordered(item) {
-                report(
-                    out,
-                    constraint,
+            if !ranged(item) {
+                let message = if let Type::Enum(_) = item {
+                    Message::with(
+                        message!(
+                            "{0} is {1}, which has no order, so its constraint can't be a range: only {2} order their variants. List the values it may take, as in `where [a, b]`"
+                        ),
+                        [
+                            quote(name),
+                            Arg::from(words(item)),
+                            Arg::from(ordered_enums()),
+                        ],
+                    )
+                } else {
                     Message::with(
                         message!(
                             "{0} is {1}, which has no order, so its constraint can't be a range: list the values it may take, as in `where [a, b]`"
                         ),
                         [quote(name), Arg::from(words(item))],
-                    ),
-                );
+                    )
+                };
+                report(out, constraint, message);
                 return false;
+            }
+            if let (Some(start), Some(end)) = (start, end)
+                && let Some(warning) = text_range(start, end)
+            {
+                out.diagnostics.push(warning);
             }
             if start.is_none() && end.is_none() {
                 report(
@@ -118,7 +135,7 @@ pub fn admits_some(
             let (Some(low), Some(high)) = (run_value(min, item), run_value(max, item)) else {
                 return true;
             };
-            let empty = match low.compare(&high) {
+            let empty = match low.range_compare(&high) {
                 Ok(Ordering::Greater) => true,
                 Ok(Ordering::Equal) => !*max_inclusive,
                 _ => false,

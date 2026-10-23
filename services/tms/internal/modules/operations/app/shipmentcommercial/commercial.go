@@ -310,6 +310,7 @@ func (c *Calculator) ratingDetail(
 	detail := ratingDetailFromQuote(own)
 	detail.Skipped = pass.skipped
 	carryContractProvenance(entity, detail)
+	detail.CarryReviewApproval(entity.RatingDetail)
 	return detail
 }
 
@@ -351,7 +352,9 @@ func (c *Calculator) applyQuote(
 	}
 	entity.TariffInputs = rated.TariffInputs.Clone()
 
-	entity.RatingDetail = ratingDetailFromQuote(rated)
+	detail := ratingDetailFromQuote(rated)
+	detail.CarryReviewApproval(entity.RatingDetail)
+	entity.RatingDetail = detail
 }
 
 func seedBillToFromAgreement(entity *shipment.Shipment, rated *ratequoteports.RatedShipment) {

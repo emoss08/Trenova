@@ -12,7 +12,7 @@ use super::tables::TABLE_METHODS;
 use super::{Analysis, SymbolKind};
 use crate::tariff::context::Context;
 use crate::tariff::docs::Doc;
-use crate::tariff::schema::{Schema, Settings, TABLES_DOC};
+use crate::tariff::schema::{BILL_CHARGE_DOC, BILL_DOC, Schema, Settings, TABLES_DOC, bill_type};
 use crate::tariff::stdlib;
 use crate::tariff::syntax::ast::{FileKind, ItemKind};
 use crate::tariff::syntax::lexer::{CONTEXTUAL, KEYWORDS};
@@ -21,19 +21,21 @@ use crate::tariff::types::Type;
 use crate::tariff::units::SIMPLE_UNITS;
 use serde_json::{Value as Json, json};
 
-/// The names that mean something only in a test, after the rating: `total` and `lines`. With the
-/// lexer's contextual words ([`CONTEXTUAL`]) and the words that start a construct
-/// ([`CONSTRUCT_WORDS`]) they are what the catalog lists as `contextual`: ordinary names
-/// everywhere else, so a parameter may be called `to` and a binding `option`.
-pub const TEST_NAMES: &[&str] = &["total", "lines"];
+/// The names that mean something only in a test, after the rating: `total`, `lines`,
+/// `reviews` and a condition's `applies`. With the lexer's contextual words ([`CONTEXTUAL`]) and
+/// the words that start a construct ([`CONSTRUCT_WORDS`]) they are what the catalog lists as
+/// `contextual`: ordinary names everywhere else, so a parameter may be called `to` and a binding
+/// `option`.
+pub const TEST_NAMES: &[&str] = &["total", "lines", "reviews", "applies"];
 
 /// The words the parser reads as a construct only where one can start, and as names everywhere
-/// else: `best`, `worst` and `option` (choices), `property`, `vary` and `assume` (properties),
-/// and `nondecreasing` and `nonincreasing` (a property's monotone `expect`).
+/// else: `best`, `worst` and `option` (choices), `review`, `property`, `vary` and `assume`
+/// (properties), and `nondecreasing` and `nonincreasing` (a property's monotone `expect`).
 pub const CONSTRUCT_WORDS: &[&str] = &[
     "best",
     "worst",
     "option",
+    "review",
     "property",
     "vary",
     "assume",
@@ -60,7 +62,15 @@ pub fn catalog() -> Json {
             })).collect::<Vec<_>>(),
             "returns": method.returns,
             "doc": Doc::message(method.doc),
-        })).collect::<Vec<_>>(),
+        })).chain(std::iter::once(json!({
+            "receiver": "Shipment",
+            "name": super::REQUESTED,
+            "kind": "method",
+            "signature": super::REQUESTED_SIGNATURE,
+            "params": [{"name": "code", "type": "CODE", "default": null}],
+            "returns": "Bool",
+            "doc": Doc::message(super::REQUESTED_DOC),
+        }))).collect::<Vec<_>>(),
         "tableMethods": TABLE_METHODS.iter().map(|(name, doc)| json!({ "name": name, "doc": Doc::message(doc) })).collect::<Vec<_>>(),
         "units": SIMPLE_UNITS.iter().filter(|unit| unit.symbol != "$").map(|unit| json!({
             "unit": unit.symbol,
@@ -87,12 +97,25 @@ fn schema_json(schema: &Schema) -> Json {
             "doc": doc,
             "type": ty.to_string(),
             "fields": fields(ty),
-        })).chain(std::iter::once(json!({
-            "name": "tables",
-            "doc": Doc::message(TABLES_DOC),
-            "type": "tables",
-            "fields": [],
-        }))).collect::<Vec<_>>(),
+        })).chain([
+            json!({
+                "name": "tables",
+                "doc": Doc::message(TABLES_DOC),
+                "type": "tables",
+                "fields": [],
+            }),
+            json!({
+                "name": "bill",
+                "doc": Doc::message(BILL_DOC),
+                "type": "Bill",
+                "fields": fields(&Type::Record(bill_type())),
+                "methods": [{
+                    "name": "charge",
+                    "signature": "charge(line: CODE | Text) -> Money?",
+                    "doc": Doc::message(BILL_CHARGE_DOC),
+                }],
+            }),
+        ]).collect::<Vec<_>>(),
         "records": schema.records.iter().map(|record| json!({
             "name": record.name,
             "fields": fields(&Type::Record(record.clone())),
@@ -100,6 +123,7 @@ fn schema_json(schema: &Schema) -> Json {
         "enums": schema.enums.iter().map(|enumeration| json!({
             "name": enumeration.name,
             "variants": enumeration.variants.iter().map(|(name, _)| name.clone()).collect::<Vec<_>>(),
+            "ordered": enumeration.ordered,
         })).collect::<Vec<_>>(),
     })
 }
@@ -223,6 +247,20 @@ mod tests {
     }
 
     #[test]
+    fn the_catalog_lists_the_bill_after_the_roots() {
+        let out = catalog();
+        let roots = out
+            .get("schema")
+            .and_then(|schema| schema.get("roots"))
+            .cloned()
+            .unwrap_or(Json::Null);
+        let bill = find(&roots, "name", "bill").cloned().unwrap_or(Json::Null);
+        assert_eq!(bill.get("type").and_then(Json::as_str), Some("Bill"));
+        assert!(find(bill.get("fields").unwrap_or(&Json::Null), "name", "freight").is_some());
+        assert!(find(bill.get("methods").unwrap_or(&Json::Null), "name", "charge").is_some());
+    }
+
+    #[test]
     fn the_catalog_holds_every_part() {
         let out = catalog();
         let modules = out
@@ -278,9 +316,12 @@ mod tests {
             "down",
             "half",
             "even",
+            "on",
+            "freight",
             "best",
             "worst",
             "option",
+            "review",
             "property",
             "vary",
             "assume",
@@ -288,6 +329,8 @@ mod tests {
             "nonincreasing",
             "total",
             "lines",
+            "reviews",
+            "applies",
         ] {
             assert!(
                 contextual.contains(&Json::from(word)),
@@ -309,16 +352,42 @@ mod tests {
             .cloned()
             .unwrap_or(Json::Null);
         assert_eq!(dwell.get("type").and_then(Json::as_str), Some("Duration?"));
+        let types = out.get("types").cloned().unwrap_or(Json::Null);
+        assert!(find(&types, "name", "Money").is_some());
+    }
+
+    #[test]
+    fn the_catalog_marks_the_ordered_enums_and_lists_times_and_tiers() {
+        let out = catalog();
+        let schema = out.get("schema").cloned().unwrap_or(Json::Null);
+        let enums = schema.get("enums").cloned().unwrap_or(Json::Null);
+        let ordered = |name: &str| {
+            find(&enums, "name", name)
+                .and_then(|found| found.get("ordered").and_then(Json::as_bool))
+        };
+        assert_eq!(ordered("FreightClass"), Some(true));
+        assert_eq!(ordered("Weekday"), Some(true));
+        assert_eq!(ordered("StopKind"), Some(false));
+        let types = out.get("types").cloned().unwrap_or(Json::Null);
+        assert!(find(&types, "name", "Time").is_some());
+        let methods = out.get("methods").cloned().unwrap_or(Json::Null);
+        let receivers: Vec<&str> = methods
+            .as_array()
+            .map(|list| {
+                list.iter()
+                    .filter_map(|method| method.get("receiver").and_then(Json::as_str))
+                    .collect()
+            })
+            .unwrap_or_default();
+        assert!(receivers.contains(&"Time") && receivers.contains(&"FreightClass"));
         assert!(
             find(
-                schema.get("enums").unwrap_or(&Json::Null),
-                "name",
-                "FreightClass"
+                out.get("modules").unwrap_or(&Json::Null),
+                "path",
+                "std.tiers"
             )
             .is_some()
         );
-        let types = out.get("types").cloned().unwrap_or(Json::Null);
-        assert!(find(&types, "name", "Money").is_some());
     }
 
     /// Every `doc` under `value`, with its JSON path.

@@ -275,6 +275,17 @@ impl Checker<'_> {
             && head.text != "input"
             && head.text != "tables"
             && self.schema.root(&head.text).is_none();
+        if head.text == "tables" {
+            self.report(Diagnostic::error(
+                "vary-target",
+                span,
+                Message::new(message!(
+                    "A rate table can't vary: give the cells a property reads, as in `given tables.Zones[\"A\", \"B\"] = $20/cwt`, and vary the record or inputs that look them up"
+                )),
+            ));
+            self.skip_values(values);
+            return;
+        }
         if !new_name && self.kind == FileKind::Library {
             self.report(Diagnostic::error(
                 "vary-target",
@@ -338,15 +349,17 @@ impl Checker<'_> {
         }
     }
 
-    /// A new name a `vary` binds: it may not shadow an input or the bill's `total` and
-    /// `lines`, besides what any binding may not shadow.
+    /// A new name a `vary` binds: it may not shadow an input or the bill's `total`, `lines`
+    /// and `reviews`, besides what any binding may not shadow.
     fn vary_name(&mut self, name: &Name, ty: Type) {
         let taken = if matches!(
             self.globals.values.get(&name.text),
             Some(super::checker::Global::Input { .. })
         ) {
             Some(Message::new(message!("an input")))
-        } else if self.kind == FileKind::Tariff && matches!(name.text.as_str(), "total" | "lines") {
+        } else if self.kind == FileKind::Tariff
+            && super::catalog::TEST_NAMES.contains(&name.text.as_str())
+        {
             Some(Message::new(message!(
                 "what a property reads from the bill"
             )))
@@ -422,7 +435,7 @@ impl Checker<'_> {
     }
 
     /// A `given` in a property: it may not set a varied path, nor read a varied name.
-    pub(super) fn property_given(&mut self, target: &[Name], value: &Expr) {
+    pub(super) fn property_given(&mut self, target: &[Name], keys: Option<&[Expr]>, value: &Expr) {
         let Some(scope) = self.property.as_ref() else {
             return;
         };
@@ -451,12 +464,14 @@ impl Checker<'_> {
                 .with_related(at, Message::new(message!("It is varied here"))),
             );
         }
-        self.varied_reads(
-            std::slice::from_ref(value),
-            message!(
-                "A `given` sets one value for every case, so it can't read {0}, which varies: vary the field itself instead"
-            ),
-        );
+        for values in [keys.unwrap_or_default(), std::slice::from_ref(value)] {
+            self.varied_reads(
+                values,
+                message!(
+                    "A `given` sets one value for every case, so it can't read {0}, which varies: vary the field itself instead"
+                ),
+            );
+        }
         if let Some(scope) = self.property.as_mut() {
             scope.given.push((path, span));
         }
@@ -563,13 +578,20 @@ impl Checker<'_> {
             }
         };
         if !super::operators::ordered(&item) {
+            let template = if matches!(item, Type::Text) {
+                message!(
+                    "{0} is {1}, which has no next value to step to, so it can't be varied over a range: list its values instead, as in {2}"
+                )
+            } else {
+                message!(
+                    "{0} is {1}, which has no order, so it can't be varied over a range: list its values instead, as in {2}"
+                )
+            };
             self.report(Diagnostic::error(
                 "unordered",
                 values.span,
                 Message::with(
-                    message!(
-                        "{0} is {1}, which has no order, so it can't be varied over a range: list its values instead, as in {2}"
-                    ),
+                    template,
                     [
                         quote(&target.display),
                         Arg::from(words(&item)),
@@ -897,6 +919,31 @@ impl Checker<'_> {
                 ty: declared.clone(),
                 range: false,
             }),
+            FoldedConstraint::Range { .. }
+                if matches!(constraint_item_type(declared), Type::Text) =>
+            {
+                self.report(
+                    Diagnostic::error(
+                        "vary-values",
+                        target.span,
+                        Message::with(
+                            message!(
+                                "The constraint on {0}, {1}, is a text range, which has no next value to step to, so say which values it takes: {2}"
+                            ),
+                            [
+                                quote(target.input.unwrap_or_default()),
+                                quote_span(self.source, bounds.whole),
+                                quote(&format!("vary {} in [a, b]", target.display)),
+                            ],
+                        ),
+                    )
+                    .with_related(
+                        bounds.whole,
+                        Message::new(message!("The constraint is written here")),
+                    ),
+                );
+                None
+            }
             FoldedConstraint::Range {
                 min: Some(_),
                 max: Some(_),
@@ -950,7 +997,7 @@ impl Checker<'_> {
         let mut found: Vec<Span> = Vec::new();
         super::visit::expr(condition, &mut |node| match &node.kind {
             ExprKind::Name(name)
-                if matches!(name.text.as_str(), "total" | "lines")
+                if super::catalog::TEST_NAMES.contains(&name.text.as_str())
                     && self.scopes.find(&name.text).is_none()
                     && !self.globals.values.contains_key(&name.text) =>
             {

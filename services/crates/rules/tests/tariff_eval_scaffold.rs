@@ -42,7 +42,8 @@ fn stop(kind: &str, sequence: u32, extra: &Value) -> Value {
     let mut stop = json!({"sequence": {"$n": sequence.to_string()}, "kind": kind, "status": "New",
         "appointment": false, "window": {"start": null, "end": null}, "arrival": null,
         "departure": null, "dwell": null, "pieces": null, "weight": null,
-        "location": {"city": "", "state": "", "zip": "", "zip3": "", "country": "", "timezone": "UTC"}});
+        "legDistance": null, "location": {"city": "", "state": "", "zip": "", "zip3": "", "country": "",
+        "timezone": "UTC", "category": null, "facilityType": null, "requiresAppointment": false}});
     merge(&mut stop, extra);
     stop
 }
@@ -99,7 +100,9 @@ fn a_scaffolded_test_parses_and_passes() {
                     stop("Pickup", 1, &json!({"status": "Completed", "arrival": {"$date": "2026-01-05T08:00:00-06:00"},
                         "departure": {"$date": "2026-01-05T12:15:00-06:00"}, "dwell": {"$q": "4.25", "u": "h"},
                         "location": {"city": "Dallas", "state": "TX", "zip": "75201", "zip3": "752", "country": "US", "timezone": "America/Chicago"}})),
-                    stop("Delivery", 2, &json!({"appointment": true, "dwell": {"$q": "3", "u": "h"}})),
+                    stop("Delivery", 2, &json!({"appointment": true, "dwell": {"$q": "3", "u": "h"},
+                        "legDistance": {"$q": "412", "u": "mi"},
+                        "location": {"category": "Warehouse", "requiresAppointment": true}})),
                     stop("SplitDelivery", 7, &json!({})),
                 ],
                 "commodities": [{"name": "Widgets", "freightClass": "Class85", "weight": {"$q": "1240", "u": "lb"},
@@ -129,6 +132,19 @@ fn a_scaffolded_test_parses_and_passes() {
         test.contains("given shipment.delivery = delivery(sequence: 2"),
         "{test}"
     );
+    assert!(
+        test.contains("pickup(status: StopStatus.Completed, arrival: @2026-01-05T08:00:00-06:00"),
+        "{test}"
+    );
+    assert!(
+        test.contains("city: \"Dallas\", state: \"TX\", zip: \"75201\", zip3: \"752\""),
+        "{test}"
+    );
+    assert!(
+        test.contains("legDistance: 412 mi, category: Warehouse, requiresAppointment: true)"),
+        "{test}"
+    );
+    assert!(!test.contains("location:"), "{test}");
     assert!(!test.contains("given input.rate"), "{test}");
     assert!(test.contains("given input.fee = $12.50"), "{test}");
     assert!(
@@ -153,6 +169,35 @@ fn a_sample_record_scaffolds_only_what_differs() {
 }
 
 #[test]
+fn a_bill_held_for_review_pins_its_reasons() {
+    let source = r#"tariff "t"
+charge "Linehaul" = $100
+if shipment.hazmat {
+  review "Hazmat: check {{the}} \"permit\""
+}
+review "Always"
+"#;
+    let mut record = sample();
+    merge(&mut record, &json!({"shipment": {"hazmat": true}}));
+    let output = scaffold(&json!({"source": source, "record": record, "name": "held"}));
+    let test = output["test"]
+        .as_str()
+        .map_or_else(|| panic!("no test: {output}"), str::to_owned);
+    assert!(
+        test.contains(r#"expect reviews == ["Hazmat: check {{the}} \"permit\"", "Always"]"#),
+        "{test}"
+    );
+    let response = call("tariff.test", &json!({"source": format!("{source}{test}")}));
+    assert_eq!(
+        response["ok"]["tests"][0]["status"], "passed",
+        "{test}\n{response}"
+    );
+    let plain = scaffold(&json!({"source": source, "record": sample(), "name": "dry"}));
+    let test = plain["test"].as_str().unwrap_or_default();
+    assert!(test.contains(r#"expect reviews == ["Always"]"#), "{test}");
+}
+
+#[test]
 fn a_rating_that_fails_gives_its_error() {
     let output = scaffold(&json!({"source": "tariff \"t\"\ncharge \"x\" = $1 / 0", "name": "x"}));
     assert_eq!(output["test"], Value::Null);
@@ -171,4 +216,76 @@ fn needs_are_reported() {
     );
     assert_eq!(output["status"], "needs");
     assert_eq!(output["needs"], json!([{"table": "Z", "keys": ["A"]}]));
+}
+
+const CELLS: &str = r#"tariff "Cells"
+
+let w = shipment.weight ?? 0 lb
+let zone = tables.Zones.cell(lane.origin.zip3) ?? fail "No zone"
+charge "Linehaul" = zone.value * w
+charge "Handling" = tables.Breaks.band(w)?.value ?? $0
+charge "Class" = zone.value * w * (tables.Classes[shipment.freightClass ?? Class50] ?? 0%)
+minimum zone.minimum ?? $0
+"#;
+
+#[test]
+fn a_scaffolded_test_gives_the_cells_it_read() {
+    let context = json!({"tables": [
+        {"code": "Zones", "valueType": "Money/cwt",
+         "axes": [{"match": "Exact", "kind": "Zip3", "normalization": "Zip3"}],
+         "cells": [{"at": [{"key": "752"}], "value": "20", "minimum": "95"},
+                   {"at": [{"key": "606"}], "value": "30"}]},
+        {"code": "Breaks", "valueType": "Money",
+         "axes": [{"match": "Range", "kind": "WeightBreak", "unit": "lb"}],
+         "cells": [{"at": [{"min": "0", "max": "1000"}], "value": "10"},
+                   {"at": [{"min": "1000"}], "value": "5"}]},
+        {"code": "Classes", "valueType": "Percent",
+         "axes": [{"match": "Exact", "kind": "FreightClass"}],
+         "cells": [{"at": [{"key": "85"}], "value": "10"}]}
+    ]});
+    let mut record = sample();
+    merge(
+        &mut record,
+        &json!({
+            "shipment": {"weight": {"$q": "1240", "u": "lb"}, "freightClass": "Class85"},
+            "lane": {"origin": {"zip3": "752"}},
+        }),
+    );
+    let output =
+        scaffold(&json!({"source": CELLS, "context": context, "record": record, "name": "cells"}));
+    let test = output["test"]
+        .as_str()
+        .map_or_else(|| panic!("no test: {output}"), str::to_owned);
+    assert!(
+        test.contains(
+            "given tables.Zones[\"752\"] = { value: $20.00/cwt, minimum: $95.00, deficit: false }"
+        ),
+        "{test}"
+    );
+    assert!(
+        test.contains("given tables.Breaks[1000 lb] = $5.00"),
+        "{test}"
+    );
+    assert!(
+        test.contains("given tables.Classes[Class85] = 10%"),
+        "{test}"
+    );
+    let source = format!("{CELLS}\n{test}");
+    let checked = call(
+        "tariff.check",
+        &json!({"source": source, "context": context}),
+    );
+    assert_eq!(
+        checked["ok"]["diagnostics"],
+        json!([]),
+        "{source}\n{checked}"
+    );
+    let response = call(
+        "tariff.test",
+        &json!({"source": source, "context": context}),
+    );
+    assert_eq!(
+        response["ok"]["tests"][0]["status"], "passed",
+        "{test}\n{response}"
+    );
 }

@@ -11,13 +11,22 @@
 //!   (`4 × 0.5%` is `2%`).
 //! - `Int / Int` is a `Number`; `%` takes `Int`s only.
 //! - Temperatures only compare and subtract.
-//! - `Date - Date` and `DateTime - DateTime` are durations.
+//! - `Date - Date`, `DateTime - DateTime` and `Time - Time` (on one day, negative when the
+//!   right side is later) are durations.
+//!
+//! Order (`<`, ranges, `sortBy`) is defined on numbers, percents, money and quantities, dates,
+//! date-times, times of day and the ordered enums ([`ordered`]); a range may also be of text
+//! ([`ranged`]), compared character by character.
 //!
 //! Optionals are handled before these rules: an operand that may be empty is the `optional`
 //! error where it is written.
 
-use super::describe::{quotient, single};
-use crate::tariff::syntax::ast::BinaryOp;
+use super::describe::{quote, quotient, single};
+use crate::message;
+use crate::message::{Arg, Message};
+use crate::tariff::diagnostic::Diagnostic;
+use crate::tariff::schema::ORDERED_ENUMS;
+use crate::tariff::syntax::ast::{BinaryOp, Expr, ExprKind};
 use crate::tariff::types::{QuantityType, Type};
 use crate::tariff::units::{Base, Dim, Unit};
 
@@ -73,7 +82,9 @@ fn additive(op: BinaryOp, left: &Type, right: &Type) -> Result<Type, Problem> {
                 display: a.display.clone().or_else(|| b.display.clone()),
             }))
         }
-        (Type::Date, Type::Date) | (Type::DateTime, Type::DateTime) if op == BinaryOp::Sub => {
+        (Type::Date, Type::Date) | (Type::DateTime, Type::DateTime) | (Type::Time, Type::Time)
+            if op == BinaryOp::Sub =>
+        {
             Ok(Type::of(Base::Duration))
         }
         _ => Err(Problem::Kinds),
@@ -181,20 +192,79 @@ fn named(dim: Option<Dim>, display: Option<Unit>) -> Result<Type, Problem> {
 }
 
 /// Whether values of a type have an order (`<`, `sortBy`, `min`, ranges): numbers, percents,
-/// money and quantities, dates and date-times.
+/// money and quantities, dates, date-times, times of day and the ordered enums (`FreightClass`,
+/// `Weekday`).
 #[must_use]
-pub const fn ordered(ty: &Type) -> bool {
-    matches!(
-        ty,
+pub fn ordered(ty: &Type) -> bool {
+    match ty {
         Type::Int
-            | Type::Number
-            | Type::Percent
-            | Type::Quantity(_)
-            | Type::Date
-            | Type::DateTime
-            | Type::Error
-            | Type::Never
-    )
+        | Type::Number
+        | Type::Percent
+        | Type::Quantity(_)
+        | Type::Date
+        | Type::DateTime
+        | Type::Time
+        | Type::Error
+        | Type::Never => true,
+        Type::Enum(enumeration) => enumeration.ordered,
+        _ => false,
+    }
+}
+
+/// Whether values of a type may form a range (`in lo..hi`, a range pattern, a `where` range):
+/// every [`ordered`] type, and text, in Unicode scalar order.
+#[must_use]
+pub fn ranged(ty: &Type) -> bool {
+    matches!(ty, Type::Text) || ordered(ty)
+}
+
+/// The enums that have an order, for messages: "`FreightClass` and `Weekday`".
+#[must_use]
+pub fn ordered_enums() -> Message {
+    let name = |index: usize| quote(ORDERED_ENUMS.get(index).copied().unwrap_or_default());
+    Message::with(message!("{0} and {1}"), [name(0), name(1)])
+}
+
+/// The `text-range` warning for a text range whose two literal ends have different lengths:
+/// text compares character by character, so a code of another length can fall inside it.
+#[must_use]
+pub fn text_range(start: &Expr, end: &Expr) -> Option<Diagnostic> {
+    let (ExprKind::Text(low), ExprKind::Text(high)) = (&start.kind, &end.kind) else {
+        return None;
+    };
+    let (low, high) = (low.literal()?, high.literal()?);
+    let (low_len, high_len) = (low.chars().count(), high.chars().count());
+    if low_len == high_len {
+        return None;
+    }
+    Some(Diagnostic::warning(
+        "text-range",
+        start.span.cover(end.span),
+        Message::with(
+            message!(
+                "This text range's ends have different lengths ({0} and {1} characters). Text compares character by character, as zip ranges need, so text of another length can fall inside it: {2} is inside {3}. Write both ends with the same number of characters"
+            ),
+            [
+                Arg::from(low_len),
+                Arg::from(high_len),
+                quote("\"2\""),
+                quote("\"10\"..\"300\""),
+            ],
+        ),
+    ))
+}
+
+/// Checks the two ends of a range (or a value against an end): one kind of value that may form
+/// a range.
+///
+/// # Errors
+///
+/// [`Problem::Unordered`] for values that form no range, [`Problem::Kinds`] for two kinds.
+pub fn range_ends(left: &Type, right: &Type) -> Result<(), Problem> {
+    if matches!((left, right), (Type::Text, Type::Text)) {
+        return Ok(());
+    }
+    compare(left, right)
 }
 
 /// Checks an order comparison (`< <= > >=`) of two values.
@@ -332,6 +402,13 @@ mod tests {
             Ok(Type::of(Base::Duration))
         );
         assert_eq!(compare(&Type::Text, &Type::Text), Err(Problem::Unordered));
+        assert_eq!(super::range_ends(&Type::Text, &Type::Text), Ok(()));
+        assert_eq!(
+            arithmetic(BinaryOp::Sub, &Type::Time, &Type::Time),
+            Ok(Type::of(Base::Duration))
+        );
+        assert_eq!(compare(&Type::Time, &Type::Time), Ok(()));
+        assert_eq!(compare(&Type::Time, &Type::DateTime), Err(Problem::Kinds));
         assert_eq!(compare(&unit("lb"), &unit("kg")), Ok(()));
         assert_eq!(
             equality(&Type::optional(Type::money()), &Type::money()),

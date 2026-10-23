@@ -15,8 +15,8 @@ use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::docs::Doc;
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::{
-    Const, EnumDecl, Expr, ExprKind, FnBody, FnDecl, Input, Item, ItemKind, TypeDecl, TypeExpr,
-    TypeExprKind,
+    Const, EnumDecl, Expr, ExprKind, FileKind, FnBody, FnDecl, Input, Item, ItemKind, TypeDecl,
+    TypeExpr, TypeExprKind,
 };
 use crate::tariff::syntax::program::{Decl, Module, Program};
 use crate::tariff::types::{EnumType, RecordType, Type};
@@ -217,12 +217,44 @@ impl Declarer<'_> {
         self.constants(state, &mut globals, out);
         self.inputs(state, &mut globals, out);
         self.infer_returns(state, &mut globals, out);
+        self.bill_reserved(out);
         for (name, symbol) in &self.module.tests {
             let doc = self.doc(self.item(symbol.decl).and_then(|item| item.docs.as_ref()));
             self.symbol(state, name, SymbolKind::Test, symbol.span, None, doc);
         }
         if let Some(slot) = state.globals.get_mut(index) {
             *slot = globals;
+        }
+    }
+
+    /// Refuses a tariff's declaration, import or module alias named `bill`, the bill so far.
+    fn bill_reserved(&self, out: &mut ModuleAnalysis) {
+        let tariff = self
+            .module
+            .file
+            .header
+            .as_ref()
+            .is_some_and(|header| header.kind == FileKind::Tariff);
+        if !tariff {
+            return;
+        }
+        let spans = [
+            self.module.symbols.get("bill").map(|symbol| symbol.span),
+            self.module.imports.get("bill").map(|import| import.span),
+            self.module.aliases.get("bill").map(|alias| alias.span),
+        ];
+        for span in spans.into_iter().flatten() {
+            out.diagnostics.push(Diagnostic::error(
+                "shadow",
+                span,
+                Message::with(
+                    message!("{0} is already {1}; pick another name"),
+                    [
+                        quote("bill"),
+                        Message::new(message!("the bill so far")).into(),
+                    ],
+                ),
+            ));
         }
     }
 
@@ -325,6 +357,7 @@ impl Declarer<'_> {
             name: qualified(self.module, &decl.name.text),
             variants,
             doc,
+            ordered: false,
         }
     }
 

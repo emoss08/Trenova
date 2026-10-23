@@ -5,7 +5,9 @@ use crate::message;
 use crate::message::Arg;
 use crate::message::Message;
 use crate::span::Span;
+use crate::tariff::diagnostic::Change;
 use crate::tariff::diagnostic::Diagnostic;
+use crate::tariff::diagnostic::Fix;
 use crate::tariff::syntax::ast::Arm;
 use crate::tariff::syntax::ast::ArmBody;
 use crate::tariff::syntax::ast::AssignOp;
@@ -27,6 +29,7 @@ use crate::tariff::syntax::ast::RoundTo;
 use crate::tariff::syntax::ast::Stmt;
 use crate::tariff::syntax::ast::StmtKind;
 use crate::tariff::syntax::ast::Text;
+use crate::tariff::syntax::ast::TotalBound;
 use crate::tariff::syntax::ast::TotalClause;
 use crate::tariff::syntax::token::TokenKind;
 
@@ -147,9 +150,10 @@ impl Parser<'_> {
         StmtKind::Expr(expr)
     }
 
-    /// A statement that starts with a contextual word: `best`, `worst`, `option`, `vary` or
-    /// `assume`. Each is read as one only where what follows can't continue a name: a quoted
-    /// label after `best`, `worst` and `option`, a target after `vary`, a value after `assume`.
+    /// A statement that starts with a contextual word: `best`, `worst`, `option`, `review`,
+    /// `vary` or `assume`. Each is read as one only where what follows can't continue a name: a
+    /// quoted label after `best`, `worst`, `option` and `review`, a target after `vary`, a value
+    /// after `assume`.
     fn contextual_statement(&mut self, block: BlockKind) -> Option<StmtKind> {
         if self.kind() != TokenKind::Name {
             return None;
@@ -159,6 +163,11 @@ impl Parser<'_> {
         }
         if self.at_labelled("worst") {
             return Some(StmtKind::Choose(self.choose(ChooseKind::Worst)));
+        }
+        if self.at_labelled("review") {
+            self.mark(TokenKind::Keyword);
+            self.bump();
+            return Some(StmtKind::Review(self.text_literal()));
         }
         if self.at_labelled("option") {
             let span = self.peek().span;
@@ -256,7 +265,7 @@ impl Parser<'_> {
     }
 
     /// `best "Label" { option "A" { … } … }`.
-    fn choose(&mut self, kind: ChooseKind) -> Choose {
+    pub(super) fn choose(&mut self, kind: ChooseKind) -> Choose {
         self.mark(TokenKind::Keyword);
         let start = self.bump().span.start;
         let label = self.literal_name(Message::with(
@@ -443,11 +452,11 @@ impl Parser<'_> {
             }
             "minimum" => {
                 self.bump();
-                StmtKind::Total(TotalClause::Minimum(self.expr()))
+                StmtKind::Total(TotalClause::Minimum(self.total_bound()))
             }
             "maximum" => {
                 self.bump();
-                StmtKind::Total(TotalClause::Maximum(self.expr()))
+                StmtKind::Total(TotalClause::Maximum(self.total_bound()))
             }
             "round" => StmtKind::Total(self.round()),
             "given" => self.given(block),
@@ -746,7 +755,7 @@ impl Parser<'_> {
     /// Whether the cursor starts a statement that is not an expression: the body of a `match`
     /// statement's arm may be one, read as a block holding it.
     fn at_statement_keyword(&self) -> bool {
-        if self.at_labelled("best") || self.at_labelled("worst") {
+        if self.at_labelled("best") || self.at_labelled("worst") || self.at_labelled("review") {
             return true;
         }
         self.kind() == TokenKind::Keyword
@@ -823,6 +832,49 @@ impl Parser<'_> {
         StmtKind::Require { condition, message }
     }
 
+    /// A `minimum` or `maximum` clause's amount and `on freight`.
+    fn total_bound(&mut self) -> TotalBound {
+        let amount = self.expr();
+        let on = if self.at_word("on") && !self.newline_before() {
+            self.eat_word("on");
+            match self.same_line_name() {
+                Some(name) if name.text == "freight" => {
+                    self.mark_span(name.span, TokenKind::Keyword);
+                    Some(name)
+                }
+                Some(name) => {
+                    self.report(
+                        Diagnostic::error(
+                            "syntax",
+                            name.span,
+                            Message::with(
+                                message!("A minimum or maximum applies `on freight` (the uncoded lines) or, without `on`, to the whole bill; `{0}` isn't one of them"),
+                                [Arg::from(name.text.clone())],
+                            ),
+                        )
+                        .with_fix(Fix {
+                            label: Message::new(message!("Change to `freight`")),
+                            changes: vec![Change {
+                                span: name.span,
+                                insert: String::from("freight"),
+                            }],
+                        }),
+                    );
+                    Some(name)
+                }
+                None => {
+                    self.expected(Message::new(message!(
+                        "Expected what the clause applies to after `on`: `on freight`"
+                    )));
+                    Some(self.missing_name())
+                }
+            }
+        } else {
+            None
+        };
+        TotalBound { amount, on }
+    }
+
     fn round(&mut self) -> TotalClause {
         self.bump();
         let mode = if self.at_word("half") && self.word_at(1, "even") {
@@ -860,13 +912,18 @@ impl Parser<'_> {
         let target = self.target_path(Message::new(message!(
             "Expected what to set after `given`, like `given shipment.weight = 1_240 lb`"
         )));
+        let keys = (self.at("[") && !self.newline_before()).then(|| self.bracket_keys().0);
         let value = if self.eat("=").is_some() {
             self.expr()
         } else {
             self.expected(Message::new(message!("Expected `=` and the value to give")));
             self.missing()
         };
-        StmtKind::Given { target, value }
+        StmtKind::Given {
+            target,
+            keys,
+            value,
+        }
     }
 
     fn expect_statement(&mut self, block: BlockKind) -> StmtKind {

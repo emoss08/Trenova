@@ -2103,6 +2103,219 @@
     }
   },
   {
+    "name": "a zip-range axis finds the range holding the key",
+    "expr": "tables.Lanes[\"30303\", 1_500 lb] ?? $0/cwt",
+    "display": "$15.00/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Lanes",
+          "valueType": "Money/cwt",
+          "axes": [
+            {"match": "Range", "kind": "ZipRange", "label": "origin"},
+            {"match": "Range", "kind": "WeightBreak", "unit": "lb", "overflow": "ClampToTopBand"}
+          ],
+          "cells": [
+            {"at": [{"from": "30000", "to": "31999"}, {"min": "0", "max": "1000"}], "value": "20"},
+            {"at": [{"from": "30000", "to": "31999"}, {"min": "1000"}], "value": "15"},
+            {"at": [{"from": "32000", "to": "34999"}, {"min": "0"}], "value": "25"}
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a zip-range axis includes both ends",
+    "expr": "(tables.Lanes[\"31999\", 1 lb] ?? $0/cwt) + (tables.Lanes[\"32000\", 1 lb] ?? $0/cwt)",
+    "display": "$45.00/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Lanes",
+          "valueType": "Money/cwt",
+          "axes": [
+            {"match": "Range", "kind": "ZipRange"},
+            {"match": "Range", "kind": "WeightBreak", "unit": "lb"}
+          ],
+          "cells": [
+            {"at": [{"from": "30000", "to": "31999"}, {"min": "0"}], "value": "20"},
+            {"at": [{"from": "32000", "to": "34999"}, {"min": "0"}], "value": "25"}
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a zip-range axis trims and upper-cases the key and the ends",
+    "expr": "tables.Postal[\" k1p 1j1 \"] ?? 0",
+    "display": "7",
+    "context": {
+      "tables": [
+        {
+          "code": "Postal",
+          "valueType": "Number",
+          "axes": [{"match": "Range", "kind": "ZipRange"}],
+          "cells": [
+            {"at": [{"from": " k1a", "to": "K1Z "}], "value": "7"},
+            {"at": [{"from": "M5A", "to": "M5Z"}], "value": "9"}
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a key longer than a range matches by its first characters",
+    "expr": "(tables.Zip3[\"31555\"] ?? 0) + (tables.Zip5[\"30303-1234\"] ?? 0)",
+    "display": "3",
+    "context": {
+      "tables": [
+        {
+          "code": "Zip3",
+          "valueType": "Number",
+          "axes": [{"match": "Range", "kind": "ZipRange"}],
+          "cells": [{"at": [{"from": "300", "to": "319"}], "value": "1"}]
+        },
+        {
+          "code": "Zip5",
+          "valueType": "Number",
+          "axes": [{"match": "Range", "kind": "ZipRange"}],
+          "cells": [{"at": [{"from": "30000", "to": "31999"}], "value": "2"}]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a key shorter than a range misses",
+    "expr": "tables.Zip5[\"303\"] ?? 0",
+    "display": "0",
+    "context": {
+      "tables": [
+        {
+          "code": "Zip5",
+          "valueType": "Number",
+          "axes": [{"match": "Range", "kind": "ZipRange"}],
+          "cells": [{"at": [{"from": "30000", "to": "31999"}], "value": "2"}]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a list key on a zip-range axis takes the first that matches",
+    "expr": "tables.Zip5[[\"99999\", \"32001\", \"30001\"]] ?? 0",
+    "display": "4",
+    "context": {
+      "tables": [
+        {
+          "code": "Zip5",
+          "valueType": "Number",
+          "axes": [{"match": "Range", "kind": "ZipRange"}],
+          "cells": [
+            {"at": [{"from": "30000", "to": "31999"}], "value": "2"},
+            {"at": [{"from": "32000", "to": "34999"}], "value": "4"}
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a postal range whose ends differ in length is a malformed table",
+    "expr": "tables.Zip[\"30303\"] ?? 0",
+    "error": "table",
+    "context": {
+      "tables": [
+        {
+          "code": "Zip",
+          "valueType": "Number",
+          "axes": [{"match": "Range", "kind": "ZipRange"}],
+          "cells": [{"at": [{"from": "300", "to": "31999"}], "value": "2"}]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a postal range that ends before it starts is a malformed table",
+    "expr": "tables.Zip[\"30303\"] ?? 0",
+    "error": "table",
+    "context": {
+      "tables": [
+        {
+          "code": "Zip",
+          "valueType": "Number",
+          "axes": [{"match": "Range", "kind": "ZipRange"}],
+          "cells": [{"at": [{"from": "31999", "to": "30000"}], "value": "2"}]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a postal range without both ends is a malformed table",
+    "expr": "tables.Zip[\"30303\"] ?? 0",
+    "error": "table",
+    "context": {
+      "tables": [
+        {
+          "code": "Zip",
+          "valueType": "Number",
+          "axes": [{"match": "Range", "kind": "ZipRange"}],
+          "cells": [{"at": [{"from": "30000"}], "value": "2"}]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a zip-range axis takes no overflow policy",
+    "expr": "tables.Zip[\"30303\"] ?? 0",
+    "error": "table",
+    "context": {
+      "tables": [
+        {
+          "code": "Zip",
+          "valueType": "Number",
+          "axes": [{"match": "Range", "kind": "ZipRange", "overflow": "Nearest"}],
+          "cells": [{"at": [{"from": "30000", "to": "31999"}], "value": "2"}]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a zip-range axis loads by the key looked up",
+    "source": "tariff \"t\"\nlet a = tables.Grid[\"SE\", \"30303\"] ?? 0\nlet b = tables.Grid[\"SE\", \"32001\"]\nnote \"{a}\"",
+    "expect": {"status": "needs", "needs": [{"table": "Grid", "keys": ["SE", "32001"]}]},
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Number",
+          "axes": [
+            {"match": "Exact", "kind": "Zone", "normalization": "Upper"},
+            {"match": "Range", "kind": "ZipRange"}
+          ],
+          "cells": [{"at": [{"key": "SE"}, {"from": "30000", "to": "31999"}], "value": "3"}],
+          "loaded": [["SE", "30303"]]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a zip-range lookup is recorded with the range it matched",
+    "source": "tariff \"t\"\nlet a = tables.Grid[\"se\", \" 30303 \"]",
+    "expect": {"status": "rated", "lookups": [{"table": "Grid", "op": "index", "match": [{"key": "SE"}, {"from": "30000", "to": "31999"}], "value": {"$n": "3"}}]},
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Number",
+          "axes": [
+            {"match": "Exact", "kind": "Zone", "normalization": "Upper"},
+            {"match": "Range", "kind": "ZipRange"}
+          ],
+          "cells": [{"at": [{"key": "SE"}, {"from": "30000", "to": "31999"}], "value": "3"}],
+          "loaded": [["SE", "30303"]]
+        }
+      ]
+    }
+  },
+  {
     "name": "an int table gives whole numbers",
     "expr": "(tables.Counts[3] ?? 0) + 1",
     "display": "2",

@@ -298,6 +298,7 @@ type Resolver struct {
 	formulaLibraryImport               *formulatemplateresolver.FormulaLibraryImportResolver
 	formulaLibraryVersion              *formulalibraryresolver.FormulaLibraryVersionResolver
 	formulaTemplate                    *formulatemplateresolver.FormulaTemplateResolver
+	formulaTemplateTable               *formulatemplateresolver.FormulaTemplateTableResolver
 	fuelCard                           *fuelpurchaseresolver.FuelCardResolver
 	fuelCardDeskCard                   *fuelpurchaseresolver.FuelCardDeskCardResolver
 	fuelFeedStatus                     *fuelpurchaseresolver.FuelFeedStatusResolver
@@ -373,6 +374,7 @@ type Resolver struct {
 	query                              *queryResolver
 	rateAgreement                      *rateresolver.RateAgreementResolver
 	rateMatrix                         *rateresolver.RateMatrixResolver
+	rateMatrixVersion                  *rateresolver.RateMatrixVersionResolver
 	reportSchedule                     *reportresolver.ReportScheduleResolver
 	reviewRating                       *performancereviewresolver.ReviewRatingResolver
 	riskDecision                       *securityactivityresolver.RiskDecisionResolver
@@ -390,6 +392,7 @@ type Resolver struct {
 	shipmentMove                       *shipmentresolver.ShipmentMoveResolver
 	shipmentMoveJurisdictionMile       *shipmentresolver.ShipmentMoveJurisdictionMileResolver
 	shipmentRatingDetail               *shipmentresolver.ShipmentRatingDetailResolver
+	shipmentRatingReviewApproval       *shipmentresolver.ShipmentRatingReviewApprovalResolver
 	tCASubscription                    *tablechangealertresolver.TCASubscriptionResolver
 	tableConfiguration                 *tableconfigurationresolver.TableConfigurationResolver
 	tender                             *tenderresolver.TenderResolver
@@ -1024,16 +1027,17 @@ func FromServices(s *Services) *Resolver {
 		ServiceTypeService: s.ServiceTypeService,
 	}
 	shipmentDeps := &shipmentresolver.Deps{
-		Core:                    s.Core,
-		AnalyticsService:        s.AnalyticsService,
-		ShipmentService:         s.ShipmentService,
-		ShipmentCommentService:  s.ShipmentCommentService,
-		ShipmentEventService:    s.ShipmentEventService,
-		TrackingEventService:    s.TrackingEventService,
-		ShipmentImportAssistant: s.ShipmentImportAssistant,
-		InvoiceService:          s.InvoiceService,
-		DriverSettlementRepo:    s.DriverSettlementRepo,
-		CarrierSettlementRepo:   s.CarrierSettlementRepo,
+		Core:                        s.Core,
+		AnalyticsService:            s.AnalyticsService,
+		ShipmentService:             s.ShipmentService,
+		ShipmentCommentService:      s.ShipmentCommentService,
+		ShipmentRatingReviewService: s.ShipmentRatingReviewService,
+		ShipmentEventService:        s.ShipmentEventService,
+		TrackingEventService:        s.TrackingEventService,
+		ShipmentImportAssistant:     s.ShipmentImportAssistant,
+		InvoiceService:              s.InvoiceService,
+		DriverSettlementRepo:        s.DriverSettlementRepo,
+		CarrierSettlementRepo:       s.CarrierSettlementRepo,
 	}
 	shipmentboardDeps := &shipmentboardresolver.Deps{
 		Core:                   s.Core,
@@ -1334,6 +1338,7 @@ func FromServices(s *Services) *Resolver {
 		formulaLibraryImport:         &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps},
 		formulaLibraryVersion:        &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps},
 		formulaTemplate:              &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps},
+		formulaTemplateTable:         &formulatemplateresolver.FormulaTemplateTableResolver{Deps: formulatemplateDeps},
 		fuelCard:                     &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps},
 		fuelCardDeskCard:             &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps},
 		fuelFeedStatus:               &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps},
@@ -1639,6 +1644,7 @@ func FromServices(s *Services) *Resolver {
 		},
 		rateAgreement:                &rateresolver.RateAgreementResolver{Deps: rateDeps},
 		rateMatrix:                   &rateresolver.RateMatrixResolver{Deps: rateDeps},
+		rateMatrixVersion:            &rateresolver.RateMatrixVersionResolver{Deps: rateDeps},
 		reportSchedule:               &reportresolver.ReportScheduleResolver{Deps: reportDeps},
 		reviewRating:                 &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
 		riskDecision:                 &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
@@ -1656,6 +1662,7 @@ func FromServices(s *Services) *Resolver {
 		shipmentMove:                 &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps},
 		shipmentMoveJurisdictionMile: &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps},
 		shipmentRatingDetail:         &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps},
+		shipmentRatingReviewApproval: &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps},
 		tCASubscription:              &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps},
 		tableConfiguration:           &tableconfigurationresolver.TableConfigurationResolver{Deps: tableconfigurationDeps},
 		tender:                       &tenderresolver.TenderResolver{Deps: tenderDeps},
@@ -2353,6 +2360,10 @@ func (r *Resolver) FormulaTemplate() generated.FormulaTemplateResolver {
 	return r.formulaTemplate
 }
 
+func (r *Resolver) FormulaTemplateTable() generated.FormulaTemplateTableResolver {
+	return r.formulaTemplateTable
+}
+
 func (r *Resolver) FuelCard() generated.FuelCardResolver {
 	return r.fuelCard
 }
@@ -2893,6 +2904,10 @@ func (r *Resolver) RateMatrix() generated.RateMatrixResolver {
 	return r.rateMatrix
 }
 
+func (r *Resolver) RateMatrixVersion() generated.RateMatrixVersionResolver {
+	return r.rateMatrixVersion
+}
+
 func (r *Resolver) ReportSchedule() generated.ReportScheduleResolver {
 	return r.reportSchedule
 }
@@ -2959,6 +2974,10 @@ func (r *Resolver) ShipmentMoveJurisdictionMile() generated.ShipmentMoveJurisdic
 
 func (r *Resolver) ShipmentRatingDetail() generated.ShipmentRatingDetailResolver {
 	return r.shipmentRatingDetail
+}
+
+func (r *Resolver) ShipmentRatingReviewApproval() generated.ShipmentRatingReviewApprovalResolver {
+	return r.shipmentRatingReviewApproval
 }
 
 func (r *Resolver) TCASubscription() generated.TCASubscriptionResolver {

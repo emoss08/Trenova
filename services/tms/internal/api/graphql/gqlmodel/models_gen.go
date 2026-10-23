@@ -6964,7 +6964,9 @@ type RateAgreementVersion struct {
 }
 
 // A rate table a tariff looks values up in: one to four axes, such as origin zone
-// by destination zone, and a value of one Tariff type in every cell.
+// by destination zone, and a value of one Tariff type in every cell. The matrix
+// is a draft that editors change; approving a submitted draft publishes it as the
+// next numbered version, which formula template versions pin.
 type RateMatrix struct {
 	ID             string `json:"id"`
 	BusinessUnitID string `json:"businessUnitId"`
@@ -6972,29 +6974,46 @@ type RateMatrix struct {
 	Code           string `json:"code"`
 	Name           string `json:"name"`
 	Description    string `json:"description"`
-	Status         string `json:"status"`
+	// Draft while it has unpublished changes, InReview once submitted, Active when
+	// the draft is the newest published version, Inactive once archived.
+	Status formulatemplate.Status `json:"status"`
 	// What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int.
 	ValueType string `json:"valueType"`
-	// The matrix's axes, by position. Read by rateMatrix only.
+	// The draft's axes, by position. Read by rateMatrix only.
 	Dimensions []*RateMatrixDimension `json:"dimensions,omitempty"`
-	// How many cells the grid holds.
+	// How many cells the draft holds.
 	CellCount int `json:"cellCount"`
-	// The grid's cells, a page at a time: offset skips that many, and limit takes
+	// The draft's cells, a page at a time: offset skips that many, and limit takes
 	// at most 100.
-	Cells     []*RateMatrixCell `json:"cells"`
-	Version   int               `json:"version"`
-	CreatedAt int               `json:"createdAt"`
-	UpdatedAt int               `json:"updatedAt"`
+	Cells []*RateMatrixCell `json:"cells"`
+	// The newest published version, which tariffs read by default; 0 before the first.
+	PublishedVersionNumber int  `json:"publishedVersionNumber"`
+	PublishedAt            *int `json:"publishedAt,omitempty"`
+	// Whether the draft differs from the newest published version.
+	HasDraftChanges bool    `json:"hasDraftChanges"`
+	SubmittedByID   *string `json:"submittedById,omitempty"`
+	SubmittedAt     *int    `json:"submittedAt,omitempty"`
+	ApprovedByID    *string `json:"approvedById,omitempty"`
+	ApprovedAt      *int    `json:"approvedAt,omitempty"`
+	ReviewComment   string  `json:"reviewComment"`
+	Version         int     `json:"version"`
+	CreatedAt       int     `json:"createdAt"`
+	UpdatedAt       int     `json:"updatedAt"`
 }
 
 // One cell of a rate matrix: a key or a range on each axis, by position (d0 is
-// the first axis), and the value it holds.
+// the first axis), and the value it holds. On a ZipRange axis the key is the
+// range's first postal code and keyTo its last, both inclusive.
 type RateMatrixCell struct {
 	ID              string  `json:"id"`
 	D0Key           string  `json:"d0Key"`
 	D1Key           string  `json:"d1Key"`
 	D2Key           string  `json:"d2Key"`
 	D3Key           string  `json:"d3Key"`
+	D0KeyTo         string  `json:"d0KeyTo"`
+	D1KeyTo         string  `json:"d1KeyTo"`
+	D2KeyTo         string  `json:"d2KeyTo"`
+	D3KeyTo         string  `json:"d3KeyTo"`
 	D0Min           *string `json:"d0Min,omitempty"`
 	D0Max           *string `json:"d0Max,omitempty"`
 	D1Min           *string `json:"d1Min,omitempty"`
@@ -10012,6 +10031,19 @@ type ShipmentRatingDetail struct {
 	// The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound.
 	Source      string `json:"source"`
 	Explanation string `json:"explanation"`
+	// True while the bill's reviews wait on a person's approval, which holds the shipment out of billing.
+	AwaitingReview bool `json:"awaitingReview"`
+	// Who approved the reviews this rating carries, and when. Null until a person approves them.
+	ReviewApproval *ShipmentRatingReviewApproval `json:"reviewApproval,omitempty"`
+}
+
+// A person's approval of the reviews a tariff asked for. A re-rate that comes back with the
+// same reviews keeps it; different reviews hold the shipment again.
+type ShipmentRatingReviewApproval struct {
+	Reviews      []string     `json:"reviews"`
+	ApprovedByID string       `json:"approvedById"`
+	ApprovedAt   int          `json:"approvedAt"`
+	ApprovedBy   *tenant.User `json:"approvedBy,omitempty"`
 }
 
 // A charge the shipment's other engines left out because the tariff already billed its code.
@@ -10570,9 +10602,12 @@ type TableLayoutInput struct {
 
 // The bill a tariff produced for a shipment.
 type TariffBill struct {
-	Currency         string              `json:"currency"`
-	Lines            []*TariffBillLine   `json:"lines"`
-	Notes            []string            `json:"notes"`
+	Currency string            `json:"currency"`
+	Lines    []*TariffBillLine `json:"lines"`
+	Notes    []string          `json:"notes"`
+	// What the tariff asks a person to check before the shipment bills. A shipment whose
+	// bill has reviews is rated but held out of billing until a person approves the rating.
+	Reviews          []string            `json:"reviews"`
 	FreightTotal     string              `json:"freightTotal"`
 	AccessorialTotal string              `json:"accessorialTotal"`
 	Total            string              `json:"total"`
@@ -10596,6 +10631,10 @@ type TariffBillLine struct {
 	Rate         *string `json:"rate,omitempty"`
 	RateUnit     string  `json:"rateUnit"`
 	Amount       string  `json:"amount"`
+	// Set when the charge's own minimum or maximum changed its amount.
+	Limit *TariffLineLimit `json:"limit,omitempty"`
+	// freight on the adjustment of a minimum or maximum that bounds the freight lines; empty otherwise.
+	On string `json:"on"`
 }
 
 // A best or worst block the tariff evaluated: the methods it weighed and the one it
@@ -10620,6 +10659,14 @@ type TariffChoiceOption struct {
 	Subtotal *string `json:"subtotal,omitempty"`
 	// Why the option did not apply, in the reader's language when the engine wrote it. Null unless it refused.
 	Refusal *string `json:"refusal,omitempty"`
+}
+
+// How a charge's own minimum or maximum changed its amount.
+type TariffLineLimit struct {
+	// Minimum or Maximum.
+	Kind string `json:"kind"`
+	// The amount the charge came to before its limit.
+	Computed string `json:"computed"`
 }
 
 // One person on a manager's team.

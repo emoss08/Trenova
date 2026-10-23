@@ -11,7 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
@@ -183,38 +186,17 @@ func (r *QueryResolver) RateMatrix(ctx context.Context, id string) (*gqlmodel.Ra
 	return rateMatrixCardToModel(entity), nil
 }
 
-func (r *RateMatrixResolver) CellCount(ctx context.Context, obj *gqlmodel.RateMatrix) (int, error) {
-	page, err := r.matrixCells(ctx, obj, 0, 1)
-	if err != nil {
-		return 0, err
-	}
-
-	return page.Total, nil
-}
-
 func (r *RateMatrixResolver) Cells(ctx context.Context, obj *gqlmodel.RateMatrix, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error) {
-	from := 0
-	if offset != nil {
-		from = max(*offset, 0)
-	}
-	size := maxMatrixCellPage
-	if limit != nil {
-		size = min(max(*limit, 1), maxMatrixCellPage)
-	}
-
-	page, err := r.matrixCells(ctx, obj, from, size)
+	matrixID, err := base.ParseIDField("id", obj.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	cells := make([]*gqlmodel.RateMatrixCell, 0, len(page.Items))
-	for _, cell := range page.Items {
-		if cell != nil {
-			cells = append(cells, rateMatrixCellToModel(cell))
-		}
-	}
-
-	return cells, nil
+	return r.matrixCellPage(ctx, &cellPageRequest{
+		key:    ratematrix.VersionKey{RateMatrixID: matrixID, VersionNumber: ratematrix.DraftVersion},
+		offset: offset,
+		limit:  limit,
+	})
 }
 
 func (r *RateAgreementResolver) Lanes(ctx context.Context, obj *gqlmodel.RateAgreement, first *int) ([]*gqlmodel.RateAgreementLane, error) {
@@ -250,4 +232,98 @@ func (r *RateAgreementResolver) LaneCount(ctx context.Context, obj *gqlmodel.Rat
 	}
 
 	return page.Count, nil
+}
+
+func (r *QueryResolver) RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrix.RateMatrixVersion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	matrixID, err := base.ParseIDField("rateMatrixId", rateMatrixID)
+	if err != nil {
+		return nil, err
+	}
+
+	limit := 0
+	if first != nil {
+		limit = *first
+	}
+
+	return r.RateMatrixService.ListVersions(ctx, &ratematrixports.ListVersionsRequest{
+		TenantInfo:   base.TenantInfo(authCtx),
+		RateMatrixID: matrixID,
+		Limit:        limit,
+	})
+}
+
+func (r *QueryResolver) RateMatrixVersion(ctx context.Context, rateMatrixID string, versionNumber int) (*ratematrix.RateMatrixVersion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	matrixID, err := base.ParseIDField("rateMatrixId", rateMatrixID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.RateMatrixService.GetVersion(ctx, &ratematrixports.GetVersionRequest{
+		TenantInfo:    base.TenantInfo(authCtx),
+		RateMatrixID:  matrixID,
+		VersionNumber: int64(versionNumber),
+	})
+}
+
+func (r *QueryResolver) RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrix.RateMatrixReview, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	matrixID, err := base.ParseIDField("rateMatrixId", rateMatrixID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.RateMatrixService.ListReviews(ctx, &ratematrixports.ListReviewsRequest{
+		TenantInfo:   base.TenantInfo(authCtx),
+		RateMatrixID: matrixID,
+	})
+}
+
+func (r *QueryResolver) RateMatrixUsages(ctx context.Context, rateMatrixID string, versionNumber *int) ([]*formulatemplateports.MatrixUsage, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	matrixID, err := base.ParseIDField("rateMatrixId", rateMatrixID)
+	if err != nil {
+		return nil, err
+	}
+
+	var number *int64
+	if versionNumber != nil {
+		value := int64(*versionNumber)
+		number = &value
+	}
+
+	return r.RateMatrixService.ListUsages(ctx, &ratematrixservice.ListUsagesRequest{
+		TenantInfo:    base.TenantInfo(authCtx),
+		RateMatrixID:  matrixID,
+		VersionNumber: number,
+	})
+}
+
+func (r *RateMatrixVersionResolver) Dimensions(ctx context.Context, obj *ratematrix.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error) {
+	return rateMatrixDimensionsToModel(obj.OrderedDimensions()), nil
+}
+
+func (r *RateMatrixVersionResolver) Cells(ctx context.Context, obj *ratematrix.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error) {
+	return r.matrixCellPage(ctx, &cellPageRequest{
+		key:    obj.Key(),
+		offset: offset,
+		limit:  limit,
+	})
 }

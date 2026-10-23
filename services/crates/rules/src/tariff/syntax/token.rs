@@ -31,7 +31,7 @@ pub enum TokenKind {
     Money,
     /// `18%`.
     Percent,
-    /// `@2026-10-22`, `@2026-10-22T08:00-05:00`.
+    /// `@2026-10-22`, `@2026-10-22T08:00-05:00`, `@17:30`.
     Date,
     /// The opening quote and literal characters of a text, up to an interpolation or the end.
     Text,

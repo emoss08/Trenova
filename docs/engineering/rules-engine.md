@@ -112,6 +112,8 @@ reports an internal error. No input, however malformed, may make the crate panic
     `{"$q": "1200", "u": "lb"}`, `{"$q": "18", "u": "%"}`, `{"$q": "450", "u": "$"}`;
   - `Date` and `DateTime` are `{"$date": "2026-10-22"}` and
     `{"$date": "2026-10-22T08:00:00-05:00"}` (RFC 3339 with the offset the value carries);
+  - `Time` (a time of day, no date and no offset) is `{"$time": "17:30:00"}`, always written
+    with seconds; `"17:30"` is read too;
   - an enum variant is a JSON string (`"Delivery"`), read as the declared enum;
   - `none` is JSON `null`;
   - lists and records are arrays and objects; a record key never starts with `$`.
@@ -121,8 +123,8 @@ reports an internal error. No input, however malformed, may make the crate panic
   another dimension, a variant the enum lacks, a missing or unknown record field, `null` where
   the type is not optional, a fraction where an `Int` is needed, nesting past 64 levels. A
   record field whose type is optional may be left out. Encoding is canonical: decimals
-  normalised (`"2.5"`, never `"2.50"`), date-times with seconds and their offset, and every
-  object's keys sorted by name.
+  normalised (`"2.5"`, never `"2.50"`), date-times with seconds and their offset, times with
+  seconds, and every object's keys sorted by name.
 - **Text positions** are UTF-16 code units: `{"from": 3, "to": 6}`, half-open. Inside the crate
   everything is a byte `Span`, converted at the edge by `span::Utf16Index`.
 - **User-facing text** is a `Message`: `{"message": "unknown name {0}", "args": ["foo"]}`. The
@@ -243,13 +245,20 @@ pins only the fields shown:
 - `inputs` are the root's, in declaration order: `name`, `doc` (the doc comment as written, or
   `null`), `type` (display text), `descriptor` (for building the form: `money`, `quantity` with
   `dimension` and `unit`, `list` with `item`, `optional` with `inner`, `record` with `name` and
-  `fields` (each `{name, doc, type}`), `enum` with `name` and `variants`, and `int`, `number`,
-  `percent`, `text`, `bool`, `date`, `dateTime`), `required` (no default), `default` (a wire
+  `fields` (each `{name, doc, type}`), `enum` with `name`, `variants` and `ordered` (true for
+  `FreightClass` and `Weekday`, whose variants have an order, so a form may offer a range of
+  them), and `int`, `number`, `percent`, `text`, `bool`, `date`, `dateTime`, `time`),
+  `required` (no default), `default` (a wire
   value, when the default folds), `constraint` and the name's `range`.
 - `constraint` is the input's `where` clause, folded: `null` when it has none,
   `{"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}}` (the minimum is
   always inclusive; an open end is `null`), or `{"oneOf": [wire, …]}`. For a `List<T>` input it
-  bounds each item. A constraint that does not fold is a checker error, never sent.
+  bounds each item. A constraint that does not fold is a checker error, never sent. A range's
+  ends compare as the language orders them: numbers, money and quantities across units, dates,
+  date-times and times in time order, `FreightClass` and `Weekday` variants in declaration
+  order, and text in Unicode scalar order, character by character (`"30000"..="39999"`), so a
+  form that validates as the user types must compare text the same way (JavaScript's `<` on
+  strings compares UTF-16 code units, which differs only past the Basic Multilingual Plane).
 - `imports` is every library the program loads, directly or not, dependencies first, with its
   pinned `version`: the context's for an organisation library, the crate's own for `std.*`.
 - `outline.items` are `{kind, name, code?, depth, range, selection}`, where `kind` is also
@@ -299,11 +308,14 @@ error.
 The checker's are listed in the header of `src/tariff/check/mod.rs`: unknown names (with "did
 you mean" fixes), `unknown-code` and `inactive-code`, `type-mismatch`, `unit-mismatch`,
 `optional` (with `?? zero`, `if let` and `require let` fixes), scope rules, call rules, rate
-table rules, charge and total-clause rules, `match` exhaustiveness and overlap, the warnings
-(`unused`, `unreachable`, `no-charge`, `needless-fallback`, `bounds` for code an input's
-`where` bounds make dead, and the rest), `unknown-option` for a `chosen` compared with a label
-that is no option, `constraint` (including a test's `given` outside the bounds), and
-`input-value`.
+table rules, charge and total-clause rules (a line limit or total clause whose minimum is
+above its maximum is `total-order` or `charge-option`), `match` exhaustiveness and overlap, the
+warnings (`unused`, `unreachable`, `no-charge`, `needless-fallback`, `bounds` for code an
+input's `where` bounds make dead, `bill-order` for a `bill.charge(…)` of a line billed only
+later, and the rest), `misplaced` for a `best` used as a value anywhere but the whole value of
+a `let`, `var` or assignment and for `bill` or `review` outside a tariff's own code,
+`unknown-option` for a `chosen` compared with a label that is no option, `constraint`
+(including a test's `given` outside the bounds), and `input-value`.
 
 ### The gate
 
@@ -336,8 +348,14 @@ and every conditional accessorial's condition together. Request (the op module's
   affects another's result, and results come back in request order with their `id`.
 - **The record** is the record being rated, `{"shipment", "lane", "customer", "fuel",
   "rating"}` in wire values, decoded strictly against the schema: a missing or unknown root or
-  field, or a value of the wrong type or unit, is a `record` error naming its path ("The record
-  does not fit the schema at {0}: {1}"). `record` absent or `null` rates against the sample
+  field (an optional field may be left out, as `null`), or a value of the wrong type or unit, is
+  a `record` error naming its path ("The record does not fit the schema at {0}: {1}"). The host
+  sends `shipment.accessorials` (the user-entered additional charges only, `[{"code",
+  "quantity": {"$n"}}]`), each stop's `legDistance` (a distance in the organisation's unit,
+  `null` on the first stop) and `location.category`, `location.facilityType` (variant names or
+  `null`) and `location.requiresAppointment`, and `rating.holidays` (`[{"date": {"$date"},
+  "name"}]`: the organisation's holidays, recurring ones expanded, from the year before the
+  rating date's year to the year after). `record` absent or `null` rates against the sample
   record; a program's own `record` overrides the shared one.
 - **Inputs** are a map from input name to wire value. A value is decoded against the input's
   declared type; one that does not fit is an `input` error at the input's declaration, and a
@@ -354,8 +372,10 @@ Response:
 {"results": [{"id": "rule-1", "status": "rated" | "refused" | "error" | "needs",
   "bill": {"lines": [{"kind": "charge", "label": "Linehaul", "code": null, "freight": true,
                       "amount": {"$q": "1908.2", "u": "$"}, "quantity": …, "rate": …,
-                      "range": {"from": 0, "to": 40}}],
-           "notes": [{"text": "…", "range": …}], "freightTotal": …, "accessorialTotal": …,
+                      "limit": null | {"kind": "minimum" | "maximum", "computed": {"$q": "1175", "u": "$"}},
+                      "on": null | "freight", "range": {"from": 0, "to": 40}}],
+           "notes": [{"text": "…", "range": …}], "reviews": [{"text": "…", "range": …}],
+           "freightTotal": …, "accessorialTotal": …,
            "total": …, "converted": {"currency": "CAD", "rate": "1.3502", "lines": […],
            "total": …}},
   "value": true,
@@ -377,7 +397,7 @@ Response:
   `chosen` is the kept option's label, or `null` when every option refused. Each option's
   `status` is `chosen`, `lost` or `refused`, with its exact `subtotal` (money) or its `refusal`
   (shaped like a result's). A tariff with no choices sends `"choices": []`; a condition never has
-  any. The trace also records each choice as a `choice` event (`label`, `chosen`).
+  any. The trace also records each choice as a `choice` event (`label`, `chosen`, `subtotal`).
 
 - **The four statuses.** `rated`: a tariff's `bill`, or a condition's `value` (true or
   false). `refused`: a `refusal`, whose `message` is the author's interpolated text (`fail`,
@@ -388,8 +408,15 @@ Response:
   `rounding` for the total clauses' adjustment lines, which carry no label (the host labels
   them in the reader's language) and no range. `freight` is true for an uncoded line;
   adjustments are uncoded, so they count as freight. `amount` is money; `quantity` and `rate`
-  are the wire values a `charge … (quantity:, rate:)` gave, else `null`. A zero line is dropped
-  and noted on the trace. `freightTotal`, `accessorialTotal` and `total` are money; the lines
+  are the wire values a `charge … (quantity:, rate:)` gave, else `null`. `limit` is `null`
+  unless the charge's `minimum:` or `maximum:` changed its amount: then `kind` names the limit
+  and `computed` is the amount it replaced (rounded to cents like the line), so the quantity
+  and rate no longer multiply to `amount` and the invoice says the minimum (or maximum)
+  applied. `on` is `freight` for the adjustment of a `minimum … on freight` or `maximum … on
+  freight` clause and `null` on every other line. A zero line is dropped and noted on the
+  trace. `notes` and `reviews` are `{text, range}` in the order they ran: a `review` asks the
+  host to hold the rated bill for approval with its reasons (a losing `best` option's are
+  dropped, as its notes are). `freightTotal`, `accessorialTotal` and `total` are money; the lines
   always add up to the total. With `exchange`, `converted` gives each line's amount in the
   billing currency (in `lines`' order, rounded to cents with the bill's round mode), the total
   rounded with the bill's mode and increment, and any difference on the rounding line's
@@ -400,8 +427,10 @@ Response:
   produced), each with its `range`: `bind` and `assign` (`name`, `value`, `display`), `branch`
   (`taken`: the branch's index, or `null` when nothing ran), `arm`, `loop` (`name`,
   `iterations`), `iteration` (`name`, `index`, `value`, `display`), `charge` (`label`, `code`,
-  `value`, `display`), `dropped` (a zero line), `note`, `refusal` and `lookup` (an index into
-  `lookups`). It keeps at most 2,000 events (then one `{"kind": "truncated"}`), 50 iterations
+  `value`, `display`, and `limit`: `null`, or `{kind, computed}` with the exact amount a line
+  limit replaced), `dropped` (a zero line), `note` and `review` (`text`), `refusal`, `choice`
+  (`label`, `chosen`, and `subtotal`: the kept option's exact subtotal, the value a `let`
+  binds, or `null`) and `lookup` (an index into `lookups`). It keeps at most 2,000 events (then one `{"kind": "truncated"}`), 50 iterations
   per loop, 50 items of a list and 500 characters of display text. `display` is the text
   interpolation would write.
 - **Lookups** are every table read, at most 500: `{table, op, keys, match, adjusted, value,
@@ -512,16 +541,21 @@ applies to each test. Output:
   text (`1000 lb`, `$250.00`); a listed `vary` item displays as written (`[pickup(), delivery()]`).
 - **Coverage** is the root file's regions with their `hits` across every test and property case
   of the run, in source order. `kind` is `if` (a branch block of an `if` or `else if`), `else`,
-  `arm` (a `match` arm), `loop` (a `for` body), `option`, `charge`, `refusal` (a `fail`, the
-  refusing side of a `require` or of `?? fail`) or `function` (a function body); `range` is the
-  region's block or statement. `reached` counts regions with `hits > 0`. `coverage` is `null`
+  `arm` (a `match` arm), `loop` (a `for` body), `option`, `charge`, `review`, `refusal` (a
+  `fail`, the refusing side of a `require` or of `?? fail`), `function` (a function body), or
+  `applies` and `notApplies` (a condition's final expression, entered when a test sees it give
+  `true` or `false`; both have that expression's `range`); `range` is the region's block or
+  statement. `reached` counts regions with `hits > 0`. `coverage` is `null`
   when the file does not check, when any test ended in `needs`, or when `names` ran only some
   tests.
 
 - A test starts from the sample record and the inputs' defaults, applies its `given`s in order
-  (a record path or `input.name`), runs the file, then runs its `expect`s with `charge(CODE)`,
-  `charge("Label")`, `total` and `lines` in scope. A test in a library runs its body with no
-  rating.
+  (a record path, `input.name` or a table cell `tables.Code[k, …]`), runs the file, then runs its
+  `expect`s with `charge(CODE)`, `charge("Label")`, `chosen("Label")`, `total`, `lines` and
+  `reviews` (the review reasons, a `List<Text>`) in scope, or a condition's `applies`. A table the
+  test gives cells of holds only those cells for the test (`Tables::with_given`): its lookups
+  never read the request's cells and never record needs. A test in a library runs its body with
+  no rating.
 - A failing `expect` reports each operand's `display` and wire `value`, so the author sees what
   the tariff computed. An evaluation error makes the status `error`, with the error. `bill` is
   the test's bill, when it rated.
@@ -544,8 +578,11 @@ applies to each test. Output:
 "Save as test" (`src/tariff/eval/scaffold.rs`). Input: `{"source", "context"?, "record": {…} |
 null, "inputs"?, "name"}`. It rates the tariff against the record and writes a `test` block that
 pins the result: a `given` for every record field that differs from the sample record (stops and
-commodities through the test constructors, leaving out what the constructors fill in), a `given
-input.x` for every input that differs from its default, an `expect charge(CODE)` (or
+commodities through the test constructors, leaving out what the constructors fill in, a stop's
+location written field by field), a `given tables.Code[k, …] = value` for every cell the rating
+found by `[…]`, `.cell(…)` or `.band(x)` (a band as its floor; `.interpolate` leaves its table
+live), so the saved test reads no live matrix data, a `given input.x` for every input that
+differs from its default, an `expect charge(CODE)` (or
 `charge("Label")` for freight) per charge and `expect total`, or `expect fails "…"` when the
 rating was refused. Output: `{"test": "test \"…\" {\n given …\n expect …\n}\n"}`; or `{"test":
 null, "error": …}` when the tariff does not check, the record does not fit or the rating fails;
@@ -563,11 +600,12 @@ same tree with the same comments, and formatting it again changes nothing.
 
 `tariff.tokens`: `{"source"}` gives `{"tokens": [{"from": 0, "to": 6, "kind": "keyword"}, …]}`,
 every token but newlines and the end of the file, classed for highlighting: `keyword`, `name`,
-`function`, `field`, `type`, `code`, `number`, `unit`, `money`, `percent`, `date`, `text`,
-`escape`, `interpolation`, `punct`, `comment`, `doc` or `error`. The lexer reads every
-`camelCase` word as a name; the tokens beside it class it further, so a name before `(` is a
-`function` (called, or declared with `fn`) and a name after `.` or `?.` is a `field`
-(`src/tariff/syntax/ops.rs`). Both read the tokens alone, so a broken file still highlights.
+`function`, `field`, `type`, `code`, `number`, `unit`, `money`, `percent`, `date` (dates,
+date-times and times of day: `@2026-10-22`, `@17:30`), `text`, `escape`, `interpolation`,
+`punct`, `comment`, `doc` or `error`. The lexer reads every `camelCase` word as a name; the
+tokens beside it class it further, so a name before `(` is a `function` (called, or declared
+with `fn`) and a name after `.` or `?.` is a `field` (`src/tariff/syntax/ops.rs`). Both read the
+tokens alone, so a broken file still highlights.
 
 `tariff.setName`: `{"source", "name"}` gives `{"source": "…", "change": {"range", "insert"}}`,
 the file with its header naming `name` and the one edit that makes it, in UTF-16 code units. The
@@ -635,16 +673,18 @@ doc in it is a `Message`.
               "params": [{"name", "type", "default"}], "returns", "doc"}],
  "tableMethods": [{"name", "doc"}],
  "units": [{"unit", "dimension", "factor", "si"}],
- "keywords": […], "contextual": ["as", "cents", "to", "up", "down", "half", "even", "total", "lines"],
+ "keywords": […], "contextual": ["as", "cents", "to", "up", "down", "half", "even", "total", "lines", "applies"],
  "schema": {"roots": [{"name", "doc", "type", "fields"}], "records": [{"name", "fields"}],
-            "enums": [{"name", "variants"}]}}
+            "enums": [{"name", "variants", "ordered"}]}}
 ```
 
-The modules are `std.ltl`, `std.fuel`, `std.time` and `std.accessorials`, in that order. A
+The modules are `std.ltl`, `std.fuel`, `std.time`, `std.accessorials` and `std.tiers`, in that
+order. A
 schema field is `{name, type, descriptor, words, doc, fields}`. `keywords` are the lexer's
 reserved words, never names; `contextual` are the lexer's contextual words (keywords only where
 the grammar uses them, which `tariff.tokens` classes as `keyword` there and `name` elsewhere)
-and the test-only names `total` and `lines`, so a parameter may be called `to`. A unit's
+and the test-only names `total`, `lines` and `applies`, so a parameter may be called `to`.
+`methods` ends with the shipment's own `requested(code: CODE) -> Bool` (receiver `Shipment`). A unit's
 `dimension` is its base's name, `Percent` for `%` and `Count` for a count label. The catalog is static data;
 the Go host caches it per module version.
 
@@ -712,9 +752,10 @@ A refusal is not an error: it is the tariff declining to rate, with the author's
 The module has no clock, no randomness and no I/O. `rating.date` is in the record the host
 sends, so a tariff rates the same record the same way every time. The sample record (what a
 request without a record, every test and the Studio's preview start from) is the schema's
-defaults: an empty `New` shipment with one pickup and one delivery stop and no commodities, a
-blank lane, a sample customer, no fuel price, and a `Sell` rating in `USD` on
-`2026-01-05T12:00:00Z` (`src/tariff/eval/record.rs`), so a test's answer never depends on the
+defaults: an empty `New` shipment with one pickup and one delivery stop (no leg distances,
+blank locations), no commodities and no requested accessorials, a blank lane, a sample customer,
+no fuel price, and a `Sell` rating in `USD` on `2026-01-05T12:00:00Z` with no holidays
+(`src/tariff/eval/record.rs`), so a test's answer never depends on the
 day it runs. Wire values encode canonically and objects' keys are sorted, so the same answer
 is the same bytes.
 
@@ -1518,6 +1559,27 @@ still-needed table whole (`LoadWhole`, `loaded` absent), and a fifth evaluation 
 cells is `ErrUnresolvedNeeds`. The loop is one `cellLoad` (`rating/app/tariff/cells.go`) that the
 rater, the test runs and "Save as test" share; `ContextSource.TableStamp` gives the
 organisation's lookup stamp the browser keeps its loaded cells by.
+
+**The record.** `RecordSource.Build` fills the record from a shipment the rating hydrator
+loaded (`ratinghydration`: one batched read per relation for every shipment in a batch,
+stop locations' categories included). `shipment.accessorials` are the shipment's own
+additional charges only (never system-generated or tariff lines, which would feed back on a
+re-rate), their codes from the loaded charge or the organisation's catalog; each stop's
+`legDistance` is its move's stored distance when the move has two stops, `0` when it starts
+where the previous move ended, else `null`; `rating.holidays` are the organisation's holidays
+(not blackouts) from the year before the rating date to the year after, recurring ones
+expanded into each year, read once per organisation and year through
+`ratetablecache.Memoize`, the same per-batch memo the tables use.
+
+**Reviews hold billing.** A rated bill's `reviews` (`tarifftypes.Bill.Reviews`) apply the
+charges but hold the shipment out of billing: `RatingDetail.AwaitsReview` is true until a
+person approves through `approveShipmentRatingReview` (`shipmentratingreviewservice`, billing
+queue update permission, refused to agents, audited on the shipment), which stores a
+`RatingReviewApproval` naming the reviews it approved. A re-rate keeps the approval while the
+reviews are the same, holds again when they change and clears the hold when there are none.
+While held, approving the queue item (by hand, in bulk or automatically), every invoice path
+and invoice runs refuse (`shipment.RatingReviewHoldError`), and the queue item carries a
+`ratingReviewHold` and a `RatingAwaitingReview` check, as detention holds do.
 
 **The resolver.** `TemplateResolver.ResolveBilling` (the `tariffports.Resolver` rating calls)
 returns a template's billing version as of a date with its source, stored input declarations,

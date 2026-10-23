@@ -345,5 +345,49 @@
         "total": 4
       }
     }
+  },
+  {
+    "name": "a condition's two outcomes are regions",
+    "tests": "condition \"c\"\nshipment.hazmat and (if shipment.reefer { true } else { false })\ntest \"a cold hazmat load applies\" {\n  given shipment.hazmat = true\n  given shipment.reefer = true\n  expect applies\n}\ntest \"a plain load does not\" {\n  expect not applies\n}\n",
+    "expect": {
+      "coverage": {
+        "reached": 3,
+        "regions": [
+          {
+            "hits": 1,
+            "kind": "applies",
+            "range": {
+              "from": 14,
+              "to": 78
+            }
+          },
+          {
+            "hits": 1,
+            "kind": "notApplies",
+            "range": {
+              "from": 14,
+              "to": 78
+            }
+          },
+          {
+            "hits": 1,
+            "kind": "if",
+            "range": {
+              "from": 56,
+              "to": 60
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "else",
+            "range": {
+              "from": 70,
+              "to": 75
+            }
+          }
+        ],
+        "total": 4
+      }
+    }
   }
 ]

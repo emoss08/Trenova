@@ -3,11 +3,18 @@ import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useEditRecordReset } from "@/hooks/use-edit-record-reset";
 import type { RateMatrixRow } from "@/lib/graphql/rate-tables";
+import { rateMatrix } from "@/lib/queries/rate-matrix";
 import { apiService } from "@/services/api";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { rateMatrixSchema, type RateMatrix } from "@trenova/shared/types/rate";
-import { File06Icon, Grid01Icon, TableIcon } from "@trenova/shared/components/icons";
+import {
+  ClockRewindIcon,
+  File06Icon,
+  Grid01Icon,
+  TableIcon,
+} from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { DimensionEditor } from "./dimension-editor";
@@ -15,12 +22,13 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { MatrixGridEditor } from "./matrix-grid-editor";
 import { MatrixGridEditorSkeleton } from "./matrix-grid-editor-skeleton";
 import { RateMatrixForm } from "./rate-matrix-form";
+import { RateMatrixVersions } from "./rate-matrix-versions";
 
 const DEFAULT_MATRIX: Partial<RateMatrix> = {
   code: "",
   name: "",
   description: "",
-  status: "Active",
+  status: "Draft",
   valueType: "Money",
   dimensions: [],
 };
@@ -32,6 +40,7 @@ export function RateMatrixPanel({
   row,
 }: DataTablePanelProps<RateMatrixRow>) {
   const t = useT();
+  const queryClient = useQueryClient();
 
   const form = useForm<RateMatrix>({
     resolver: zodResolver(rateMatrixSchema) as Resolver<RateMatrix>,
@@ -75,8 +84,18 @@ export function RateMatrixPanel({
           </LazyComponent>
         ),
       },
+      ...(mode === "edit"
+        ? [
+            {
+              value: "versions",
+              label: t("Versions"),
+              icon: ClockRewindIcon,
+              content: <RateMatrixVersions rateMatrixId={row?.id} />,
+            },
+          ]
+        : []),
     ],
-    [row?.id, t],
+    [mode, row?.id, t],
   );
 
   if (mode === "edit") {
@@ -93,12 +112,15 @@ export function RateMatrixPanel({
         formTabs={formTabs}
         isRecordLoading={isLoading || !isSeated}
         recordFailed={isError}
-        mutationFn={(values, currentRow) => {
+        mutationFn={async (values, currentRow) => {
           if (!currentRow.id) {
             throw new Error("No Rate Matrix ID selected");
           }
 
-          return apiService.rateMatrixService.update(currentRow.id, values);
+          const saved = await apiService.rateMatrixService.update(currentRow.id, values);
+          // A change to the draft moves its review state, which the Versions tab shows.
+          void queryClient.invalidateQueries({ queryKey: rateMatrix._def });
+          return saved;
         }}
       />
     );

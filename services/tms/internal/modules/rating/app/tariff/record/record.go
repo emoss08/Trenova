@@ -7,8 +7,11 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 )
@@ -59,6 +62,8 @@ type Input struct {
 	Fuel         Fuel
 	Rating       Rating
 	DistanceUnit string
+	Holidays     []Holiday
+	ChargeCodes  map[pulid.ID]string
 }
 
 func PlaceOf(stop *shipment.Stop) Place {
@@ -90,12 +95,14 @@ func Build(in *Input) (rules.RawJSON, error) {
 		distanceUnit = DistanceMiles
 	}
 	zone := in.Rating.At.Location()
+	out := buildShipment(in.Shipment, distanceUnit, zone)
+	out.Accessorials = buildAccessorials(in.Shipment.AdditionalCharges, in.ChargeCodes)
 	encoded, err := sonic.Marshal(&root{
-		Shipment: buildShipment(in.Shipment, distanceUnit, zone),
+		Shipment: out,
 		Lane:     buildLane(&in.Origin, &in.Destination),
 		Customer: buildCustomer(in.Shipment),
 		Fuel:     buildFuel(&in.Fuel),
-		Rating:   buildRating(&in.Rating),
+		Rating:   buildRating(&in.Rating, in.Holidays),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("encode the tariff record: %w", err)
@@ -122,28 +129,34 @@ type temperature struct {
 }
 
 type shipmentRoot struct {
-	ProNumber    string             `json:"proNumber"`
-	Status       string             `json:"status"`
-	Weight       rules.RawJSON      `json:"weight"`
-	Pieces       rules.RawJSON      `json:"pieces"`
-	Distance     rules.RawJSON      `json:"distance"`
-	Duration     rules.RawJSON      `json:"duration"`
-	LinearFeet   rules.RawJSON      `json:"linearFeet"`
-	Volume       rules.RawJSON      `json:"volume"`
-	Density      rules.RawJSON      `json:"density"`
-	Hazmat       bool               `json:"hazmat"`
-	Reefer       bool               `json:"reefer"`
-	Temperature  temperature        `json:"temperature"`
-	FreightClass rules.RawJSON      `json:"freightClass"`
-	HighestClass rules.RawJSON      `json:"highestClass"`
-	ServiceType  reference          `json:"serviceType"`
-	ShipmentType *reference         `json:"shipmentType"`
-	TractorType  *reference         `json:"tractorType"`
-	TrailerType  *reference         `json:"trailerType"`
-	Stops        []*stopRecord      `json:"stops"`
-	Commodities  []*commodityRecord `json:"commodities"`
-	Pickup       *stopRecord        `json:"pickup"`
-	Delivery     *stopRecord        `json:"delivery"`
+	ProNumber    string               `json:"proNumber"`
+	Status       string               `json:"status"`
+	Weight       rules.RawJSON        `json:"weight"`
+	Pieces       rules.RawJSON        `json:"pieces"`
+	Distance     rules.RawJSON        `json:"distance"`
+	Duration     rules.RawJSON        `json:"duration"`
+	LinearFeet   rules.RawJSON        `json:"linearFeet"`
+	Volume       rules.RawJSON        `json:"volume"`
+	Density      rules.RawJSON        `json:"density"`
+	Hazmat       bool                 `json:"hazmat"`
+	Reefer       bool                 `json:"reefer"`
+	Temperature  temperature          `json:"temperature"`
+	FreightClass rules.RawJSON        `json:"freightClass"`
+	HighestClass rules.RawJSON        `json:"highestClass"`
+	ServiceType  reference            `json:"serviceType"`
+	ShipmentType *reference           `json:"shipmentType"`
+	TractorType  *reference           `json:"tractorType"`
+	TrailerType  *reference           `json:"trailerType"`
+	Stops        []*stopRecord        `json:"stops"`
+	Commodities  []*commodityRecord   `json:"commodities"`
+	Pickup       *stopRecord          `json:"pickup"`
+	Delivery     *stopRecord          `json:"delivery"`
+	Accessorials []*accessorialRecord `json:"accessorials"`
+}
+
+type accessorialRecord struct {
+	Code     string        `json:"code"`
+	Quantity rules.RawJSON `json:"quantity"`
 }
 
 type window struct {
@@ -152,12 +165,15 @@ type window struct {
 }
 
 type stopLocation struct {
-	City     string `json:"city"`
-	State    string `json:"state"`
-	Zip      string `json:"zip"`
-	Zip3     string `json:"zip3"`
-	Country  string `json:"country"`
-	Timezone string `json:"timezone"`
+	City                string        `json:"city"`
+	State               string        `json:"state"`
+	Zip                 string        `json:"zip"`
+	Zip3                string        `json:"zip3"`
+	Country             string        `json:"country"`
+	Timezone            string        `json:"timezone"`
+	Category            rules.RawJSON `json:"category"`
+	FacilityType        rules.RawJSON `json:"facilityType"`
+	RequiresAppointment bool          `json:"requiresAppointment"`
 }
 
 type stopRecord struct {
@@ -171,6 +187,7 @@ type stopRecord struct {
 	Dwell       rules.RawJSON `json:"dwell"`
 	Pieces      rules.RawJSON `json:"pieces"`
 	Weight      rules.RawJSON `json:"weight"`
+	LegDistance rules.RawJSON `json:"legDistance"`
 	Location    stopLocation  `json:"location"`
 }
 
@@ -220,10 +237,16 @@ type fuelRoot struct {
 }
 
 type ratingRoot struct {
-	Date      rules.RawJSON `json:"date"`
-	Mode      string        `json:"mode"`
-	SellTotal rules.RawJSON `json:"sellTotal"`
-	Currency  string        `json:"currency"`
+	Date      rules.RawJSON    `json:"date"`
+	Mode      string           `json:"mode"`
+	SellTotal rules.RawJSON    `json:"sellTotal"`
+	Currency  string           `json:"currency"`
+	Holidays  []*holidayRecord `json:"holidays"`
+}
+
+type holidayRecord struct {
+	Date rules.RawJSON `json:"date"`
+	Name string        `json:"name"`
 }
 
 func buildShipment(
@@ -279,8 +302,13 @@ func buildShipment(
 			Description: entity.TrailerType.Description,
 		}
 	}
-	for i, stop := range entity.OrderedStops() {
+	ordered := entity.OrderedStops()
+	legs := legDistances(entity, ordered)
+	for i, stop := range ordered {
 		record := buildStop(stop, int64(i+1), zone)
+		if distance, ok := legs[stop]; ok {
+			record.LegDistance = rules.QuantityValue(distance, distanceUnit)
+		}
 		out.Stops = append(out.Stops, record)
 		if stop.IsCanceled() {
 			continue
@@ -321,21 +349,23 @@ func ratingPieces(entity *shipment.Shipment) *int64 {
 
 func buildStop(stop *shipment.Stop, sequence int64, fallback *time.Location) *stopRecord {
 	zone := fallback
-	location := stopLocation{Timezone: fallback.String()}
+	location := stopLocation{
+		Timezone:     fallback.String(),
+		Category:     rules.NoneValue(),
+		FacilityType: rules.NoneValue(),
+	}
 	if stop.Location != nil {
 		place := PlaceOf(stop)
-		location = stopLocation{
-			City:     place.City,
-			State:    place.State,
-			Zip:      place.Zip,
-			Zip3:     Zip3(place.Zip),
-			Country:  place.Country,
-			Timezone: fallback.String(),
-		}
+		location.City = place.City
+		location.State = place.State
+		location.Zip = place.Zip
+		location.Zip3 = Zip3(place.Zip)
+		location.Country = place.Country
 		if stop.Location.Timezone != "" {
 			zone = timeutils.LoadLocation(stop.Location.Timezone)
 			location.Timezone = zone.String()
 		}
+		applyCategory(&location, stop.Location.LocationCategory)
 	}
 	record := &stopRecord{
 		Sequence:    rules.IntValue(sequence),
@@ -346,12 +376,13 @@ func buildStop(stop *shipment.Stop, sequence int64, fallback *time.Location) *st
 			Start: rules.NoneValue(),
 			End:   optionalTime(stop.ScheduledWindowEnd, zone),
 		},
-		Arrival:   optionalTime(stop.ActualArrival, zone),
-		Departure: optionalTime(stop.ActualDeparture, zone),
-		Dwell:     rules.NoneValue(),
-		Pieces:    optionalInt(stop.Pieces),
-		Weight:    rules.NoneValue(),
-		Location:  location,
+		Arrival:     optionalTime(stop.ActualArrival, zone),
+		Departure:   optionalTime(stop.ActualDeparture, zone),
+		Dwell:       rules.NoneValue(),
+		Pieces:      optionalInt(stop.Pieces),
+		Weight:      rules.NoneValue(),
+		LegDistance: rules.NoneValue(),
+		Location:    location,
 	}
 	if stop.ScheduledWindowStart > 0 {
 		record.Window.Start = timeValue(stop.ScheduledWindowStart, zone)
@@ -366,6 +397,94 @@ func buildStop(stop *shipment.Stop, sequence int64, fallback *time.Location) *st
 		record.Weight = rules.QuantityValue(decimal.NewFromInt(*stop.Weight), unitWeight)
 	}
 	return record
+}
+
+func applyCategory(location *stopLocation, category *locationcategory.LocationCategory) {
+	if category == nil {
+		return
+	}
+	if category.Type.IsValid() {
+		location.Category = rules.TextValue(category.Type.String())
+	}
+	if category.FacilityType.IsValid() {
+		location.FacilityType = rules.TextValue(category.FacilityType.String())
+	}
+	location.RequiresAppointment = category.RequiresAppointment
+}
+
+func legDistances(
+	entity *shipment.Shipment,
+	ordered []*shipment.Stop,
+) map[*shipment.Stop]decimal.Decimal {
+	moveOf := make(map[*shipment.Stop]*shipment.ShipmentMove, len(ordered))
+	for _, move := range entity.Moves {
+		if move == nil {
+			continue
+		}
+		for _, stop := range move.Stops {
+			if stop != nil {
+				moveOf[stop] = move
+			}
+		}
+	}
+
+	out := make(map[*shipment.Stop]decimal.Decimal, len(ordered))
+	for i := 1; i < len(ordered); i++ {
+		previous, stop := ordered[i-1], ordered[i]
+		move := moveOf[stop]
+		if move == moveOf[previous] {
+			if distance, ok := singleLegDistance(move); ok {
+				out[stop] = distance
+			}
+			continue
+		}
+		if stop.LocationID.IsNotNil() && stop.LocationID == previous.LocationID {
+			out[stop] = decimal.Zero
+		}
+	}
+	return out
+}
+
+func singleLegDistance(move *shipment.ShipmentMove) (decimal.Decimal, bool) {
+	if move == nil || move.IsCanceled() || move.Distance == nil || *move.Distance < 0 {
+		return decimal.Zero, false
+	}
+	stops := 0
+	for _, stop := range move.Stops {
+		if stop != nil {
+			stops++
+		}
+	}
+	if stops != 2 {
+		return decimal.Zero, false
+	}
+	return decimal.NewFromFloat(*move.Distance), true
+}
+
+func buildAccessorials(
+	charges []*shipment.AdditionalCharge,
+	codes map[pulid.ID]string,
+) []*accessorialRecord {
+	out := make([]*accessorialRecord, 0, len(charges))
+	for _, charge := range charges {
+		if charge == nil || charge.IsSystemGenerated || charge.IsTariff {
+			continue
+		}
+		code := codes[charge.AccessorialChargeID]
+		if item := charge.AccessorialCharge; item != nil &&
+			item.ID == charge.AccessorialChargeID {
+			code = item.Code
+		}
+		code = accessorialcharge.NormalizeCode(code)
+		if code == "" {
+			continue
+		}
+		out = append(out, &accessorialRecord{
+			Code:     code,
+			Quantity: rules.IntValue(int64(charge.Unit)),
+		})
+	}
+	return out
 }
 
 func buildCommodity(line *shipment.ShipmentCommodity) *commodityRecord {
@@ -446,7 +565,7 @@ func buildFuel(fuel *Fuel) *fuelRoot {
 	return out
 }
 
-func buildRating(rating *Rating) *ratingRoot {
+func buildRating(rating *Rating, holidays []Holiday) *ratingRoot {
 	mode := rating.Mode
 	if mode != ModeBuy {
 		mode = ModeSell
@@ -456,6 +575,13 @@ func buildRating(rating *Rating) *ratingRoot {
 		Mode:      mode,
 		SellTotal: rules.NoneValue(),
 		Currency:  rating.Currency,
+		Holidays:  make([]*holidayRecord, 0, len(holidays)),
+	}
+	for i := range holidays {
+		out.Holidays = append(out.Holidays, &holidayRecord{
+			Date: rules.DateValue(holidays[i].Date),
+			Name: holidays[i].Name,
+		})
 	}
 	if rating.SellTotal.Valid {
 		out.SellTotal = rules.MoneyValue(rating.SellTotal.Decimal)

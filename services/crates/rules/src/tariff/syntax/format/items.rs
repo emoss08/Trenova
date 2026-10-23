@@ -235,6 +235,7 @@ impl Formatter<'_> {
             }
             StmtKind::Charge(charge) => self.charge(charge, stmt.span.end),
             StmtKind::Note(text) => Doc::Concat(vec![Doc::text("note "), self.text_doc(text)]),
+            StmtKind::Review(text) => Doc::Concat(vec![Doc::text("review "), self.text_doc(text)]),
             StmtKind::Fail(text) => Doc::Concat(vec![Doc::text("fail "), self.text_doc(text)]),
             StmtKind::If(statement) => {
                 let mut parts = Vec::new();
@@ -296,7 +297,8 @@ impl Formatter<'_> {
         }
     }
 
-    fn choose(&mut self, choose: &Choose, end: u32) -> Doc {
+    /// `best "Label" { option … }`, as a statement or a value.
+    pub(super) fn choose(&mut self, choose: &Choose, end: u32) -> Doc {
         let mut body = self.vertical(&choose.options, false, |option| option.span, Self::choice);
         body.extend(self.closing(end));
         Doc::Concat(vec![
@@ -314,13 +316,26 @@ impl Formatter<'_> {
     /// The statements only tests and properties hold.
     fn test_stmt(&mut self, kind: &StmtKind) -> Doc {
         match kind {
-            StmtKind::Given { target, value } => {
+            StmtKind::Given {
+                target,
+                keys,
+                value,
+            } => {
                 let path: Vec<&str> = target.iter().map(|name| name.text.as_str()).collect();
-                let value = self.expr(value);
-                Doc::Concat(vec![
-                    Doc::text(format!("given {} = ", path.join("."))),
-                    value,
-                ])
+                let mut parts = vec![Doc::text(format!("given {}", path.join(".")))];
+                if let Some(keys) = keys {
+                    parts.push(Doc::text("["));
+                    for (index, key) in keys.iter().enumerate() {
+                        if index > 0 {
+                            parts.push(Doc::text(", "));
+                        }
+                        parts.push(self.expr(key));
+                    }
+                    parts.push(Doc::text("]"));
+                }
+                parts.push(Doc::text(" = "));
+                parts.push(self.expr(value));
+                Doc::Concat(parts)
             }
             StmtKind::Expect(Expect::Holds(value)) => {
                 Doc::Concat(vec![Doc::text("expect "), self.expr(value)])
@@ -388,11 +403,17 @@ impl Formatter<'_> {
 
     fn total(&mut self, clause: &TotalClause) -> Doc {
         match clause {
-            TotalClause::Minimum(value) => {
-                Doc::Concat(vec![Doc::text("minimum "), self.expr(value)])
-            }
-            TotalClause::Maximum(value) => {
-                Doc::Concat(vec![Doc::text("maximum "), self.expr(value)])
+            TotalClause::Minimum(bound) | TotalClause::Maximum(bound) => {
+                let word = if matches!(clause, TotalClause::Minimum(_)) {
+                    "minimum "
+                } else {
+                    "maximum "
+                };
+                let mut parts = vec![Doc::text(word), self.expr(&bound.amount)];
+                if let Some(on) = &bound.on {
+                    parts.push(Doc::text(format!(" on {}", on.text)));
+                }
+                Doc::Concat(parts)
             }
             TotalClause::Round { mode, to } => {
                 let mode = match mode {

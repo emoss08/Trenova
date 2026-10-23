@@ -61,7 +61,7 @@ func TariffBillToModel(bill *tarifftypes.Bill) *gqlmodel.TariffBill {
 	lines := make([]*gqlmodel.TariffBillLine, 0, len(bill.Lines))
 	for i := range bill.Lines {
 		line := &bill.Lines[i]
-		lines = append(lines, &gqlmodel.TariffBillLine{
+		model := &gqlmodel.TariffBillLine{
 			Kind:         string(line.Kind),
 			Label:        line.Label,
 			Code:         line.Code,
@@ -70,16 +70,29 @@ func TariffBillToModel(bill *tarifftypes.Bill) *gqlmodel.TariffBill {
 			Rate:         DecimalPtrString(line.Rate),
 			RateUnit:     line.RateUnit,
 			Amount:       line.Amount.String(),
-		})
+			On:           line.On,
+		}
+		if line.Limit != nil {
+			model.Limit = &gqlmodel.TariffLineLimit{
+				Kind:     string(line.Limit.Kind),
+				Computed: line.Limit.Computed.String(),
+			}
+		}
+		lines = append(lines, model)
 	}
 	notes := make([]string, 0, len(bill.Notes))
 	for _, note := range bill.Notes {
 		notes = append(notes, note.Text)
 	}
+	reviews := make([]string, 0, len(bill.Reviews))
+	for _, review := range bill.Reviews {
+		reviews = append(reviews, review.Text)
+	}
 	out := &gqlmodel.TariffBill{
 		Currency:         bill.Currency,
 		Lines:            lines,
 		Notes:            notes,
+		Reviews:          reviews,
 		FreightTotal:     bill.FreightTotal.String(),
 		AccessorialTotal: bill.AccessorialTotal.String(),
 		Total:            bill.Total.String(),

@@ -65,6 +65,23 @@ export const formulaImportsSchema = z
   .transform((value) => value ?? []);
 
 /**
+ * A rate table a saved version reads, `tables.<code>`, pinned to the published matrix version its
+ * check read. Rating with the version reads that version's cells, so publishing a newer matrix
+ * version never reprices a contract until a new template version is approved.
+ */
+export const formulaTablePinSchema = z.object({
+  code: z.string(),
+  rateMatrixId: z.string(),
+  versionNumber: z.number().int(),
+});
+export type FormulaTablePin = z.output<typeof formulaTablePinSchema>;
+
+export const formulaTablePinsSchema = z
+  .array(formulaTablePinSchema)
+  .nullish()
+  .transform((value) => value ?? []);
+
+/**
  * A formula template as the API sends it and the Studio edits it. `source` is the whole tariff;
  * `inputs`, `imports` and `testCount` are what the server's `tariff.check` derived from it when
  * it was saved, so a contract form can read the declarations without the module.
@@ -85,6 +102,7 @@ export const formulaTemplateSchema = z.object({
   status: formulaTemplateStatusSchema.default("Draft"),
   inputs: tariffInputDeclarationsSchema,
   imports: formulaImportsSchema,
+  tables: formulaTablePinsSchema,
   testCount: z.number().int().default(0),
   submittedById: z.string().nullish(),
   submittedAt: z.number().nullish(),
@@ -178,6 +196,7 @@ export const formulaTemplateVersionSchema = z.object({
   status: formulaTemplateStatusSchema,
   inputs: tariffInputDeclarationsSchema,
   imports: formulaImportsSchema,
+  tables: formulaTablePinsSchema,
   testCount: z.number().int().default(0),
   effectiveFrom: z.number().nullish(),
   changeMessage: z.string().optional(),

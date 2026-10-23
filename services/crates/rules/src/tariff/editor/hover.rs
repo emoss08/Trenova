@@ -24,7 +24,9 @@ use crate::span::{Range, Span};
 use crate::tariff::check::describe::{quote, snippet, unit_text};
 use crate::tariff::check::lower::BUILTIN_TYPES;
 use crate::tariff::check::methods;
-use crate::tariff::check::{SymbolId, SymbolKind, TABLE_METHODS};
+use crate::tariff::check::{
+    REQUESTED, REQUESTED_DOC, REQUESTED_SIGNATURE, SymbolId, SymbolKind, TABLE_METHODS,
+};
 use crate::tariff::docs::Doc;
 use crate::tariff::eval::time::Date;
 use crate::tariff::schema::TableShape;
@@ -162,6 +164,7 @@ impl Hovered<'_, '_> {
                         | ExprKind::Percent(_)
                         | ExprKind::Date(_)
                         | ExprKind::DateTime(_)
+                        | ExprKind::Time(_)
                 )
         })?;
         let range = Span::new(expr.span.start, expr.span.end.max(span.end));
@@ -380,11 +383,27 @@ impl Hovered<'_, '_> {
             .unwrapped()
             .clone();
         if let Type::Record(record) = &receiver
+            && record.name.as_deref() == Some("Bill")
+            && matches!(&target.kind, ExprKind::Name(root) if root.text == "bill")
+            && name.text == "charge"
+        {
+            let mut hover = Hover::new(span);
+            hover.signature = Some(String::from("bill.charge(line: CODE | Text) -> Money?"));
+            hover.doc = Some(Doc::message(crate::tariff::schema::BILL_CHARGE_DOC));
+            return Some(hover);
+        }
+        if let Type::Record(record) = &receiver
             && let Some(found) = record.field(&name.text)
         {
             let mut hover = Hover::new(span).typed(Some(&found.ty));
             hover.signature = Some(format!("{}: {}", found.name, type_text(&found.ty)));
             hover.doc.clone_from(&found.doc);
+            return Some(hover);
+        }
+        if name.text == REQUESTED && session.schema.root("shipment") == Some(&receiver) {
+            let mut hover = Hover::new(span);
+            hover.signature = Some(String::from(REQUESTED_SIGNATURE));
+            hover.doc = Some(Doc::Message(Message::new(REQUESTED_DOC)));
             return Some(hover);
         }
         let method = methods::find(&receiver, &name.text)?;
@@ -569,6 +588,17 @@ impl Hovered<'_, '_> {
         };
         let position = target.iter().position(|part| part.span == span)?;
         let (head, rest) = target.split_first()?;
+        if let ("tables", [code]) = (head.text.as_str(), rest)
+            && code.span == span
+        {
+            let table = self
+                .session
+                .context
+                .tables
+                .iter()
+                .find(|table| table.code == code.text)?;
+            return Some(table_hover(span, table));
+        }
         if head.text == "input" {
             let name = rest.first().filter(|name| name.span == span)?;
             let id = self.session.global(ModuleId::ROOT, &name.text)?;
@@ -701,7 +731,7 @@ fn table_hover(span: Span, table: &TableShape) -> Hover {
 }
 
 /// What a literal is worth in plainer terms: a quantity in SI units, a percent as a factor, a
-/// date's weekday.
+/// date's weekday, a time of day's place on the clock.
 fn literal_doc(expr: &Expr, written: &str) -> Option<Message> {
     match &expr.kind {
         ExprKind::Number {
@@ -753,6 +783,21 @@ fn literal_doc(expr: &Expr, written: &str) -> Option<Message> {
                 [Arg::from(written.to_owned()), Arg::from(day.weekday())],
             ))
         }
+        ExprKind::Time(time) => Some(Message::with(
+            message!(
+                "`{0}` is a time of day, {1} minutes after midnight, with no date and no offset: it compares with a date-time's `.time`, the clock where the date-time is"
+            ),
+            [
+                Arg::from(written.to_owned()),
+                Arg::from(
+                    Decimal::from(time.seconds())
+                        .checked_div(Decimal::from(60))
+                        .unwrap_or_default()
+                        .normalize()
+                        .to_string(),
+                ),
+            ],
+        )),
         _ => None,
     }
 }

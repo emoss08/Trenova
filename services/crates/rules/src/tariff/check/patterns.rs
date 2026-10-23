@@ -11,11 +11,18 @@
 //! - **Overlapping** ranges and repeated variants or literals between two arms are errors that
 //!   name both arms, so a weight-break table can never bill a weight twice.
 //!
-//! Ranges of numbers, percents, money, quantities and dates are intervals on a line. The line
-//! is cut at every bound any arm writes, so each piece is either inside or outside every arm,
-//! and coverage is decided per piece. `Int` and `Date` lines are discrete (`..=4` and `5..`
-//! leave no gap); the others are continuous (`..500 lb` and `500 lb..` leave none either, since
-//! the start of a range is inclusive). Guarded arms never count toward coverage.
+//! Ranges of numbers, percents, money, quantities, dates, date-times and times of day are
+//! intervals on a line. The line is cut at every bound any arm writes, so each piece is either
+//! inside or outside every arm, and coverage is decided per piece. `Int`, `Date` and `Time` lines
+//! are discrete (`..=4` and `5..` leave no gap); the others are continuous (`..500 lb` and
+//! `500 lb..` leave none either, since the start of a range is inclusive). A line may have a
+//! [`Domain`]: a time of day runs from `@00:00` to `@23:59:59`, so pieces outside it need no arm.
+//! Guarded arms never count toward coverage.
+//!
+//! Text is a [`Space::Text`]: its literals are never all of it, so without ranges a text match
+//! needs `_`. Once an arm writes a text range (`"300".."320"`), the text is a continuous line in
+//! Unicode scalar order, starting at the empty text, and its literals are points on it. A range
+//! of an ordered enum (`Mon..=Fri`) is lowered by the checker to the variants it spans.
 //!
 //! The work is bounded: past [`WORK_LIMIT`] steps the analysis stops and reports nothing more,
 //! so a pathological match costs a bounded amount of time.
@@ -45,7 +52,7 @@ pub enum Pat {
     /// A range, or a number, money, quantity, percent or date literal (a closed interval of one
     /// point).
     Interval(Interval),
-    /// A literal on a line that is never fully covered: text.
+    /// A text literal: a point on the text line.
     Literal(String),
     /// A record pattern: fields not written match anything.
     Record(Vec<(String, Pat)>),
@@ -53,11 +60,48 @@ pub enum Pat {
     Or(Vec<Pat>),
 }
 
+/// A position on a line: a number (a quantity in the match's first unit, a date as days, a
+/// date-time or a time as seconds) or a text.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Key {
+    /// A position on a number line.
+    Number(Decimal),
+    /// A text, ordered by Unicode scalar values.
+    Text(String),
+}
+
+impl Key {
+    /// The next position on a discrete line; a text has none, so it stays.
+    fn next(&self) -> Self {
+        match self {
+            Self::Number(value) => Self::Number(value.checked_add(Decimal::ONE).unwrap_or(*value)),
+            Self::Text(_) => self.clone(),
+        }
+    }
+
+    /// The previous position on a discrete line.
+    fn previous(&self) -> Self {
+        match self {
+            Self::Number(value) => Self::Number(value.checked_sub(Decimal::ONE).unwrap_or(*value)),
+            Self::Text(_) => self.clone(),
+        }
+    }
+}
+
+/// The values a line holds, both ends included: a time of day from 0 to 86 399 seconds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Domain {
+    /// The least value.
+    pub min: Decimal,
+    /// The greatest value.
+    pub max: Decimal,
+}
+
 /// One end of an interval.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Bound {
     /// The value, in one unit for every bound of the match.
-    pub value: Decimal,
+    pub value: Key,
     /// Whether the end itself is inside the interval.
     pub inclusive: bool,
     /// The bound as written, for messages: `5_000 lb`.
@@ -82,12 +126,16 @@ pub enum Space {
     Bool,
     /// The variants of an enum.
     Enum(Vec<String>),
-    /// An ordered line; `discrete` for whole numbers and dates.
+    /// An ordered line; `discrete` for whole numbers, dates and times of day.
     Line {
         /// Whether only whole steps exist.
         discrete: bool,
+        /// The values the line holds, when it is bounded.
+        domain: Option<Domain>,
     },
-    /// Values no finite set of patterns covers without `_` (text, lists).
+    /// Text: literals, and once a range is written, a line in Unicode scalar order.
+    Text,
+    /// Values no finite set of patterns covers without `_` (lists).
     Open,
     /// A record's fields.
     Record(Vec<(String, Space)>),
@@ -515,6 +563,7 @@ fn pat_covers(pat: &Pat, ctor: &Ctor) -> bool {
         (Pat::Bool(a), Ctor::Bool(b)) => a == b,
         (Pat::Variant(a), Ctor::Variant(b)) | (Pat::Literal(a), Ctor::Literal(b)) => a == b,
         (Pat::Interval(interval), Ctor::Segment(segment)) => contains(interval, segment),
+        (Pat::Literal(text), Ctor::Segment(segment)) => contains(&point(text), segment),
         (Pat::None, Ctor::Some) => false,
         _ => matches!(
             (pat, ctor),
@@ -533,8 +582,8 @@ fn constructors(space: &Space, rows: &[Vec<Pat>], head: &Pat) -> Vec<Ctor> {
         Space::Bool => vec![Ctor::Bool(true), Ctor::Bool(false)],
         Space::Enum(variants) => variants.iter().cloned().map(Ctor::Variant).collect(),
         Space::Record(_) => vec![Ctor::Record],
-        Space::Line { discrete } => {
-            let mut intervals: Vec<&Interval> = Vec::new();
+        Space::Line { discrete, domain } => {
+            let mut intervals: Vec<Interval> = Vec::new();
             let heads = rows
                 .iter()
                 .filter_map(|row| row.first())
@@ -542,16 +591,38 @@ fn constructors(space: &Space, rows: &[Vec<Pat>], head: &Pat) -> Vec<Ctor> {
             for pat in heads {
                 for alt in expand_or_ref(pat) {
                     if let Pat::Interval(interval) = alt {
-                        intervals.push(interval);
+                        intervals.push(interval.clone());
                     }
                 }
             }
             segments(&intervals, *discrete)
                 .into_iter()
+                .filter(|segment| domain.is_none_or(|domain| inside(segment, &domain)))
                 .map(Ctor::Segment)
                 .collect()
         }
-        Space::Open => {
+        Space::Text if text_line(rows, head) => {
+            let mut intervals: Vec<Interval> = Vec::new();
+            let heads = rows
+                .iter()
+                .filter_map(|row| row.first())
+                .chain(std::iter::once(head));
+            for pat in heads {
+                for alt in expand_or_ref(pat) {
+                    match alt {
+                        Pat::Interval(interval) => intervals.push(interval.clone()),
+                        Pat::Literal(text) => intervals.push(point(text)),
+                        _ => {}
+                    }
+                }
+            }
+            segments(&intervals, false)
+                .into_iter()
+                .filter(|segment| !below_empty_text(segment))
+                .map(Ctor::Segment)
+                .collect()
+        }
+        Space::Text | Space::Open => {
             let mut literals: Vec<String> = Vec::new();
             let mut push = |pat: &Pat| {
                 for alt in expand_or_ref(pat) {
@@ -583,8 +654,74 @@ fn expand_or_ref(pat: &Pat) -> Vec<&Pat> {
     }
 }
 
+/// Whether a text column is cut as a line: some pattern in it is a range.
+fn text_line(rows: &[Vec<Pat>], head: &Pat) -> bool {
+    rows.iter()
+        .filter_map(|row| row.first())
+        .chain(std::iter::once(head))
+        .any(|pat| {
+            expand_or_ref(pat)
+                .iter()
+                .any(|alt| matches!(alt, Pat::Interval(_)))
+        })
+}
+
+/// A text literal as a point on the text line.
+fn point(text: &str) -> Interval {
+    let bound = Bound {
+        value: Key::Text(text.to_owned()),
+        inclusive: true,
+        label: text_label(text),
+    };
+    Interval {
+        lo: Some(bound.clone()),
+        hi: Some(bound),
+    }
+}
+
+/// A text as Tariff writes it: quoted, with its quotes, backslashes and braces escaped.
+fn text_label(text: &str) -> String {
+    let mut out = String::with_capacity(text.len() + 2);
+    out.push('"');
+    for c in text.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '{' => out.push_str("{{"),
+            '}' => out.push_str("}}"),
+            other => out.push(other),
+        }
+    }
+    out.push('"');
+    out
+}
+
+/// Whether a piece of the text line lies below the empty text, where no text is.
+fn below_empty_text(segment: &Segment) -> bool {
+    segment.lo.is_none()
+        && segment
+            .hi
+            .as_ref()
+            .is_some_and(|hi| !hi.inclusive && hi.value == Key::Text(String::new()))
+}
+
+/// Whether a piece of a bounded line holds any value of its domain.
+fn inside(segment: &Segment, domain: &Domain) -> bool {
+    let min = Key::Number(domain.min);
+    let max = Key::Number(domain.max);
+    let below = segment
+        .hi
+        .as_ref()
+        .is_some_and(|hi| hi.value < min || (hi.value == min && !hi.inclusive));
+    let above = segment
+        .lo
+        .as_ref()
+        .is_some_and(|lo| lo.value > max || (lo.value == max && !lo.inclusive));
+    !below && !above
+}
+
 /// The pieces a line is cut into by the bounds of the intervals written on it.
-fn segments(intervals: &[&Interval], discrete: bool) -> Vec<Segment> {
+fn segments(intervals: &[Interval], discrete: bool) -> Vec<Segment> {
     let mut bounds: Vec<Bound> = Vec::new();
     for interval in intervals {
         let lo = interval.lo.clone();
@@ -601,7 +738,7 @@ fn segments(intervals: &[&Interval], discrete: bool) -> Vec<Segment> {
             }
         }
     }
-    bounds.sort_by_key(|bound| bound.value);
+    bounds.sort_by(|a, b| a.value.cmp(&b.value));
     let mut out = Vec::with_capacity(bounds.len() * 2 + 1);
     let mut previous: Option<Bound> = None;
     for bound in bounds {
@@ -646,11 +783,11 @@ fn segments(intervals: &[&Interval], discrete: bool) -> Vec<Segment> {
 /// is `..5`.
 fn half_open(bound: &Bound) -> Bound {
     if bound.inclusive {
-        let value = bound.value.checked_add(Decimal::ONE).unwrap_or(bound.value);
+        let value = bound.value.next();
         return Bound {
+            label: discrete_label(&value, &bound.label),
             value,
             inclusive: false,
-            label: discrete_label(value, &bound.label),
         };
     }
     bound.clone()
@@ -672,9 +809,9 @@ fn contains(interval: &Interval, segment: &Segment) -> bool {
         (Some(_), None) => false,
         (Some(hi), Some(end)) => {
             let hi_value = if segment.discrete && hi.inclusive {
-                hi.value.checked_add(Decimal::ONE).unwrap_or(hi.value)
+                hi.value.next()
             } else {
-                hi.value
+                hi.value.clone()
             };
             let hi_inclusive = hi.inclusive && !segment.discrete;
             match hi_value.cmp(&end.value) {
@@ -766,6 +903,11 @@ fn leaf_overlap(a: &Pat, b: &Pat, space: &Space) -> Option<Message> {
         (Pat::Variant(x), Pat::Variant(y)) | (Pat::Literal(x), Pat::Literal(y)) if x == y => {
             Some(Message::with(message!("`{0}`"), [Arg::Text(x.clone())]))
         }
+        (Pat::Literal(text), Pat::Interval(interval))
+        | (Pat::Interval(interval), Pat::Literal(text)) => {
+            intersection(&point(text), interval)?;
+            Some(Message::with(message!("`{0}`"), [Arg::Text(text.clone())]))
+        }
         (Pat::Bool(x), Pat::Bool(y)) if x == y => {
             Some(Message::with(message!("`{0}`"), [Arg::Text(x.to_string())]))
         }
@@ -777,7 +919,7 @@ fn leaf_overlap(a: &Pat, b: &Pat, space: &Space) -> Option<Message> {
 fn line_discrete(space: &Space) -> bool {
     match space {
         Space::Optional(inner) => line_discrete(inner),
-        Space::Line { discrete } => *discrete,
+        Space::Line { discrete, .. } => *discrete,
         _ => false,
     }
 }
@@ -882,8 +1024,11 @@ fn label(bound: &Bound) -> Arg {
 }
 
 /// An interval in words: `below 500 lb`, `5_000 lb and above`, `from 500 lb up to 2_000 lb`.
+/// On a discrete line an excluded end is named by the last value inside (`..5` is `4 and
+/// below`), except on a time line, whose seconds an author rarely writes: `..@08:00` stays
+/// `below @08:00`.
 fn describe_interval(lo: Option<&Bound>, hi: Option<&Bound>, discrete: bool) -> Message {
-    let hi = if discrete {
+    let hi = if discrete && !hi.is_some_and(|bound| time_label(&bound.label)) {
         hi.map(inclusive_end)
     } else {
         hi.cloned()
@@ -913,20 +1058,37 @@ fn inclusive_end(bound: &Bound) -> Bound {
     if bound.inclusive {
         return bound.clone();
     }
-    let value = bound.value.checked_sub(Decimal::ONE).unwrap_or(bound.value);
+    let value = bound.value.previous();
     Bound {
+        label: discrete_label(&value, &bound.label),
         value,
         inclusive: true,
-        label: discrete_label(value, &bound.label),
     }
 }
 
-/// A label for a computed whole-number bound: the number, or the date for a date line (whose
-/// labels start with `@`).
-fn discrete_label(value: Decimal, like: &str) -> String {
+/// Whether a bound's label is a time of day (`@17:30`): an `@` literal with a `:` and no `-`.
+fn time_label(label: &str) -> bool {
+    label.starts_with('@') && label.contains(':') && !label.contains('-')
+}
+
+/// A label for a computed whole-number bound: the number, the date for a date line (whose
+/// labels start with `@` and hold a `-`), or the time of day for a time line (`@17:30`, with the
+/// seconds when they aren't zero).
+fn discrete_label(value: &Key, like: &str) -> String {
+    let Key::Number(value) = value else {
+        return like.to_owned();
+    };
+    let whole = i64::try_from(value.trunc().mantissa()).unwrap_or_default();
+    if time_label(like) {
+        let (hour, minute, second) = (whole / 3_600, whole % 3_600 / 60, whole % 60);
+        return if second == 0 {
+            format!("@{hour:02}:{minute:02}")
+        } else {
+            format!("@{hour:02}:{minute:02}:{second:02}")
+        };
+    }
     if like.starts_with('@') {
-        let days = i64::try_from(value.trunc().mantissa()).unwrap_or_default();
-        let (year, month, day) = super::consts::civil_from_days(days);
+        let (year, month, day) = super::consts::civil_from_days(whole);
         return format!("@{year:04}-{month:02}-{day:02}");
     }
     value.normalize().to_string()
@@ -934,15 +1096,110 @@ fn discrete_label(value: Decimal, like: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{ArmPat, Bound, Interval, Pat, Space, analyze};
+    use super::{ArmPat, Bound, Domain, Interval, Key, Pat, Space, analyze};
     use rust_decimal::Decimal;
 
     fn bound(value: i64, inclusive: bool) -> Bound {
         Bound {
-            value: Decimal::from(value),
+            value: Key::Number(Decimal::from(value)),
             inclusive,
             label: format!("{value} lb"),
         }
+    }
+
+    fn named(coverage: &super::Coverage) -> Vec<String> {
+        coverage
+            .missing
+            .iter()
+            .map(crate::message::Message::english)
+            .collect()
+    }
+
+    fn time(seconds: i64, inclusive: bool, label: &str) -> Bound {
+        Bound {
+            value: Key::Number(Decimal::from(seconds)),
+            inclusive,
+            label: label.to_owned(),
+        }
+    }
+
+    fn text(value: &str, inclusive: bool) -> Bound {
+        Bound {
+            value: Key::Text(value.to_owned()),
+            inclusive,
+            label: format!("\"{value}\""),
+        }
+    }
+
+    #[test]
+    fn a_day_of_times_is_covered_from_midnight_to_the_last_second() {
+        let space = Space::Line {
+            discrete: true,
+            domain: Some(Domain {
+                min: Decimal::ZERO,
+                max: Decimal::from(86_399),
+            }),
+        };
+        let day = arms(vec![
+            Pat::Interval(Interval {
+                lo: Some(time(0, true, "@00:00")),
+                hi: Some(time(28_800, false, "@08:00")),
+            }),
+            Pat::Interval(Interval {
+                lo: Some(time(28_800, true, "@08:00")),
+                hi: Some(time(86_399, true, "@23:59:59")),
+            }),
+        ]);
+        assert!(analyze(&space, &day).missing.is_empty());
+        let short = arms(vec![Pat::Interval(Interval {
+            lo: Some(time(0, true, "@00:00")),
+            hi: Some(time(61_200, false, "@17:00")),
+        })]);
+        assert_eq!(named(&analyze(&space, &short)), ["`@17:00` and above"]);
+        let early = arms(vec![Pat::Interval(Interval {
+            lo: Some(time(28_800, true, "@08:00")),
+            hi: None,
+        })]);
+        assert_eq!(named(&analyze(&space, &early)), ["below `@08:00`"]);
+    }
+
+    #[test]
+    fn text_ranges_cut_a_line_and_literals_are_points_on_it() {
+        let zips = arms(vec![
+            Pat::Interval(Interval {
+                lo: None,
+                hi: Some(text("300", false)),
+            }),
+            Pat::Interval(Interval {
+                lo: Some(text("300", true)),
+                hi: Some(text("320", false)),
+            }),
+            Pat::Interval(Interval {
+                lo: Some(text("320", true)),
+                hi: None,
+            }),
+        ]);
+        let coverage = analyze(&Space::Text, &zips);
+        assert!(coverage.missing.is_empty(), "{:?}", coverage.missing);
+        let gap = arms(vec![
+            Pat::Interval(Interval {
+                lo: Some(text("300", true)),
+                hi: Some(text("320", false)),
+            }),
+            Pat::Literal(String::from("310")),
+        ]);
+        let coverage = analyze(&Space::Text, &gap);
+        assert_eq!(coverage.overlaps.len(), 1);
+        assert_eq!(
+            coverage.overlaps.first().map(|(_, _, m)| m.english()),
+            Some(String::from("`310`"))
+        );
+        assert_eq!(named(&coverage), ["below `\"300\"`", "`\"320\"` and above"]);
+        let literals = arms(vec![Pat::Literal(String::from("a"))]);
+        assert_eq!(
+            named(&analyze(&Space::Text, &literals)),
+            ["any other value"]
+        );
     }
 
     fn range(lo: Option<i64>, hi: Option<i64>) -> Pat {
@@ -963,7 +1220,10 @@ mod tests {
     }
 
     fn line() -> Space {
-        Space::Line { discrete: false }
+        Space::Line {
+            discrete: false,
+            domain: None,
+        }
     }
 
     #[test]
@@ -1045,7 +1305,10 @@ mod tests {
 
     #[test]
     fn discrete_lines_have_no_gaps_between_whole_numbers() {
-        let space = Space::Line { discrete: true };
+        let space = Space::Line {
+            discrete: true,
+            domain: None,
+        };
         let coverage = analyze(
             &space,
             &arms(vec![

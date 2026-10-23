@@ -4,8 +4,9 @@
 //! Events are recorded in execution order for the root file's statements (a library's insides
 //! are its own business; a call into one shows as the binding it produced): bindings and
 //! assignments with their values, the branch an `if` took and the arm a `match` took, each loop
-//! with its iteration count and its first iterations, charges, dropped zero lines, notes,
-//! refusals, the option each `best` and `worst` kept, and table lookups. Values are wire
+//! with its iteration count and its first iterations, charges (with the line limit that
+//! applied), dropped zero lines, notes, review reasons, refusals, the option each `best` and
+//! `worst` kept with its subtotal, and table lookups. Values are wire
 //! values plus the text interpolation would write.
 //!
 //! The trace is capped so a long loop cannot make the response large: at most
@@ -13,6 +14,7 @@
 //! loop, lists shown to [`MAX_ITEMS`] items and display text to [`MAX_DISPLAY`] characters.
 //! Lookups are kept separately for the response's `lookups`, capped at [`MAX_LOOKUPS`].
 
+use super::bill::Limited;
 use super::tables::Lookup;
 use super::value::Value;
 use crate::span::{Span, Utf16Index};
@@ -95,6 +97,8 @@ pub enum Event {
         code: Option<String>,
         /// The exact amount.
         amount: Decimal,
+        /// The charge's limit, when one changed the amount, with the exact amount it replaced.
+        limit: Option<Limited>,
         /// The statement.
         span: Span,
     },
@@ -114,6 +118,13 @@ pub enum Event {
         /// The statement.
         span: Span,
     },
+    /// A `review` reason.
+    Review {
+        /// The text.
+        text: String,
+        /// The statement.
+        span: Span,
+    },
     /// The program refused to rate.
     Refusal {
         /// The author's text.
@@ -128,6 +139,8 @@ pub enum Event {
         label: String,
         /// The kept option's label.
         chosen: Option<String>,
+        /// The kept option's exact subtotal: the choice's value.
+        subtotal: Option<Decimal>,
         /// The statement.
         span: Span,
     },
@@ -205,6 +218,11 @@ impl Trace {
             )]));
         }
         Json::Array(events)
+    }
+
+    /// The lookups kept, in the order they ran.
+    pub fn lookups(&self) -> impl Iterator<Item = &Lookup> {
+        self.lookups.iter().map(|(lookup, _)| lookup)
     }
 
     /// The lookups on the wire.
@@ -350,8 +368,16 @@ fn event_json(event: &Event, index: &Utf16Index) -> Json {
             label,
             code: charge_code,
             amount,
+            limit,
             span,
-        } => charge_json(label, charge_code.as_ref(), *amount, *span, index),
+        } => charge_json(
+            label,
+            charge_code.as_ref(),
+            *amount,
+            limit.as_ref(),
+            *span,
+            index,
+        ),
         Event::Dropped {
             label,
             code: charge_code,
@@ -362,6 +388,11 @@ fn event_json(event: &Event, index: &Utf16Index) -> Json {
             ("text", text(note)),
             ("range", range(*span, index)),
         ]),
+        Event::Review { text: reason, span } => object(vec![
+            ("kind", text("review")),
+            ("text", text(reason)),
+            ("range", range(*span, index)),
+        ]),
         Event::Refusal { message, span } => object(vec![
             ("kind", text("refusal")),
             ("message", text(message)),
@@ -370,13 +401,9 @@ fn event_json(event: &Event, index: &Utf16Index) -> Json {
         Event::Choice {
             label,
             chosen,
+            subtotal,
             span,
-        } => object(vec![
-            ("kind", text("choice")),
-            ("label", text(label)),
-            ("chosen", code(chosen.as_ref())),
-            ("range", range(*span, index)),
-        ]),
+        } => choice_json(label, chosen.as_ref(), *subtotal, *span, index),
         Event::Lookup { index: at, span } => object(vec![
             ("kind", text("lookup")),
             ("lookup", Json::from(*at)),
@@ -385,11 +412,32 @@ fn event_json(event: &Event, index: &Utf16Index) -> Json {
     }
 }
 
+/// A finished choice, on the wire: the option it kept and that option's subtotal.
+fn choice_json(
+    label: &str,
+    chosen: Option<&String>,
+    subtotal: Option<Decimal>,
+    span: Span,
+    index: &Utf16Index,
+) -> Json {
+    object(vec![
+        ("kind", text("choice")),
+        ("label", text(label)),
+        ("chosen", code(chosen)),
+        (
+            "subtotal",
+            subtotal.map_or(Json::Null, |amount| encode(&Value::money(amount))),
+        ),
+        ("range", range(span, index)),
+    ])
+}
+
 /// A charge added to the bill, on the wire.
 fn charge_json(
     label: &str,
     charge_code: Option<&String>,
     amount: Decimal,
+    limit: Option<&Limited>,
     span: Span,
     index: &Utf16Index,
 ) -> Json {
@@ -400,7 +448,17 @@ fn charge_json(
         ("code", code(charge_code)),
         value,
         display,
+        ("limit", limit.map_or(Json::Null, limit_json)),
         ("range", range(span, index)),
+    ])
+}
+
+/// A charge's limit that changed its amount, on the wire: `{"kind", "computed"}`.
+#[must_use]
+pub fn limit_json(limit: &Limited) -> Json {
+    object(vec![
+        ("kind", text(limit.kind.as_str())),
+        ("computed", encode(&Value::money(limit.computed))),
     ])
 }
 

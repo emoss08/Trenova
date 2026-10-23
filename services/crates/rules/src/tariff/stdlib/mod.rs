@@ -11,6 +11,7 @@ pub const MODULES: &[(&str, &str)] = &[
     ("std.fuel", include_str!("fuel.tariff")),
     ("std.time", include_str!("time.tariff")),
     ("std.accessorials", include_str!("accessorials.tariff")),
+    ("std.tiers", include_str!("tiers.tariff")),
 ];
 
 /// The source of the standard library module at `path`.

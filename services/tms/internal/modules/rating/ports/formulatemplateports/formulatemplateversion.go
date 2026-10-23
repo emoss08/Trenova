@@ -108,6 +108,22 @@ type ListLibraryUsagesRequest struct {
 	Limit         int
 }
 
+type ListMatrixUsagesRequest struct {
+	TenantInfo    pagination.TenantInfo
+	RateMatrixID  pulid.ID
+	VersionNumber *int64
+	Limit         int
+}
+
+type MatrixUsage struct {
+	TemplateID          pulid.ID               `json:"templateId"`
+	TemplateName        string                 `json:"templateName"`
+	TemplateStatus      formulatemplate.Status `json:"templateStatus"`
+	TemplateVersion     int64                  `json:"templateVersion"`
+	VersionStatus       formulatemplate.Status `json:"versionStatus"`
+	MatrixVersionNumber int64                  `json:"matrixVersionNumber"`
+}
+
 type LibraryUsage struct {
 	TemplateID           pulid.ID               `json:"templateId"`
 	TemplateName         string                 `json:"templateName"`
@@ -193,4 +209,9 @@ type FormulaTemplateVersionRepository interface {
 		ctx context.Context,
 		req *ListLibraryUsagesRequest,
 	) ([]*LibraryUsage, error)
+
+	ListMatrixUsages(
+		ctx context.Context,
+		req *ListMatrixUsagesRequest,
+	) ([]*MatrixUsage, error)
 }

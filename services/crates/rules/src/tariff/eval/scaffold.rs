@@ -4,11 +4,15 @@
 //! - a `given` for every record field that differs from the sample record (nested records
 //!   field by field; stops and commodities through the test constructors, leaving out fields
 //!   equal to the defaults, sequences equal to the stop's position and dwells equal to the
-//!   departure minus the arrival; `pickup` and `delivery` only when they are not the stops
+//!   departure minus the arrival, and writing a stop's location field by field (`zip3: "752"`); `pickup` and `delivery` only when they are not the stops
 //!   they would follow);
+//! - a `given tables.Code[k, …] = value` for every cell the rating found by `[…]`, `.cell(…)` or
+//!   `.band(x)` (a range axis written as the band's floor), so the test holds the cells it reads
+//!   instead of reading the matrix's live data;
 //! - a `given input.x` for every input whose value differs from its default;
-//! - an `expect charge(CODE)` (or `charge("Label")` for freight) per charge, and
-//!   `expect total`; or `expect fails "…"` when the rating was refused.
+//! - an `expect charge(CODE)` (or `charge("Label")` for freight) per charge, `expect total`,
+//!   and `expect reviews == […]` when the bill asks for review; or `expect fails "…"` when the
+//!   rating was refused.
 //!
 //! Request: `{"source", "context", "record": {…} | null, "inputs": {…}, "name": "…"}`.
 //! Response: `{"test": "test \"…\" {\n  given …\n  expect …\n}\n"}`; or `{"test": null,
@@ -24,13 +28,14 @@ use super::ops::{error_json, gate, needs_json};
 use super::record::{decode_record, sample, settle, stop, with_dwell};
 use super::run::{Outcome, Request, run_program};
 use super::tables::Tables;
+use super::trace::Trace;
 use super::value::{Record, Value, format_decimal, format_quantity, money_digits};
 use crate::message::Message;
 use crate::ops::{OpResult, decode, encode};
 use crate::span::Utf16Index;
 use crate::tariff::check::Analysis;
 use crate::tariff::context::Context;
-use crate::tariff::schema::{ENUMS, Schema};
+use crate::tariff::schema::{Axis, ENUMS, Schema, TableShape};
 use crate::tariff::syntax::ast::FileKind;
 use crate::tariff::syntax::program::load;
 use crate::tariff::types::Type;
@@ -110,8 +115,20 @@ pub fn op(input: &serde_json::value::RawValue) -> OpResult {
         limits: Limits::DEFAULT,
         trace: false,
     });
+    let cells = cell_givens(&run.trace, &input.context.tables, &schema);
     let expects = match run.outcome {
-        Outcome::Rated { bill, .. } => charge_expects(&bill.lines, bill.total),
+        Outcome::Rated { bill, .. } => {
+            let mut expects = charge_expects(&bill.lines, bill.total);
+            if !bill.reviews.is_empty() {
+                let reasons: Vec<String> = bill
+                    .reviews
+                    .iter()
+                    .map(|review| text_literal(&review.text))
+                    .collect();
+                expects.push(format!("expect reviews == [{}]", reasons.join(", ")));
+            }
+            expects
+        }
         Outcome::Refused(refusal) => vec![format!(
             "expect fails {}",
             text_literal(&refusal.message.text())
@@ -135,6 +152,7 @@ pub fn op(input: &serde_json::value::RawValue) -> OpResult {
     };
     let writer = Writer { schema: &schema };
     let mut givens = writer.record_givens(&record, &sample(&input.context.settings));
+    givens.extend(cells);
     let linked = Linked::new(&program);
     givens.extend(input_givens(&Inputs {
         linked,
@@ -150,6 +168,83 @@ pub fn op(input: &serde_json::value::RawValue) -> OpResult {
     test.push_str("}\n");
     output.insert(String::from("test"), Json::String(test));
     encode(&Json::Object(output))
+}
+
+/// A `given tables.Code[k, …] = value` for each cell the rating found, each once, in the order
+/// first read. `.interpolate(x)` reads no one cell, so its table is left live.
+fn cell_givens(trace: &Trace, shapes: &[TableShape], schema: &Schema) -> Vec<String> {
+    let writer = Writer { schema };
+    let mut out: Vec<String> = Vec::new();
+    for lookup in trace.lookups() {
+        let (Some(matched), false) = (&lookup.matched, lookup.pending) else {
+            continue;
+        };
+        let Some(shape) = shapes.iter().find(|shape| shape.code == lookup.table) else {
+            continue;
+        };
+        let Some(value_type) = shape.value() else {
+            continue;
+        };
+        let value = match (lookup.op, &lookup.value) {
+            ("index", value) => value.clone(),
+            ("cell", Value::Record(cell)) => {
+                let bare = matches!(cell.get("minimum"), Some(Value::None))
+                    && matches!(cell.get("deficit"), Some(Value::Bool(false)));
+                match cell.get("value") {
+                    Some(value) if bare => value.clone(),
+                    _ => Value::Record(Rc::clone(cell)),
+                }
+            }
+            ("band", Value::Record(band)) => band.get("value").cloned().unwrap_or(Value::None),
+            _ => continue,
+        };
+        let keys: Option<Vec<String>> = shape
+            .axes
+            .iter()
+            .zip(matched)
+            .map(|(axis, at)| cell_key(&writer, axis, at))
+            .collect();
+        let Some(keys) = keys.filter(|keys| keys.len() == shape.axes.len()) else {
+            continue;
+        };
+        let ty = if matches!(value, Value::Record(_)) {
+            crate::tariff::check::cell_type(value_type)
+        } else {
+            value_type
+        };
+        let line = format!(
+            "given tables.{}[{}] = {}",
+            shape.code,
+            keys.join(", "),
+            writer.literal(&value, &ty)
+        );
+        if !out.contains(&line) {
+            out.push(line);
+        }
+    }
+    out
+}
+
+/// One axis's key of a found cell as source: an exact key as text (or its `FreightClass`
+/// variant), a band as its floor in the axis's unit.
+fn cell_key(writer: &Writer<'_>, axis: &Axis, at: &Json) -> Option<String> {
+    if let Some(key) = at.get("key").and_then(Json::as_str) {
+        return Some(match axis.key_type(writer.schema) {
+            Type::Enum(enumeration) => variant_literal(key, &enumeration.name),
+            _ => text_literal(key),
+        });
+    }
+    let floor = crate::wire::parse_decimal(at.get("min")?.as_str()?).ok()?;
+    let unit = axis.unit.as_deref().or(match axis.kind.as_str() {
+        "WeightBreak" => Some("lb"),
+        "Distance" => Some("mi"),
+        "LinearFeet" => Some("ft"),
+        _ => None,
+    });
+    Some(match (axis.key_type(writer.schema), unit) {
+        (Type::Quantity(_), Some(unit)) => format!("{} {unit}", format_decimal(floor)),
+        _ => format_decimal(floor),
+    })
 }
 
 /// One `expect` per charge code or freight label, then the total.
@@ -366,6 +461,7 @@ impl Writer<'_> {
             (Value::Text(text), _) => text_literal(text),
             (Value::Date(date), _) => format!("@{}", date.iso()),
             (Value::DateTime(at), _) => format!("@{}", at.iso()),
+            (Value::Time(time), _) => format!("@{}", time.display()),
             (Value::Enum(variant), Type::Enum(enumeration)) => {
                 variant_literal(variant, &enumeration.name)
             }
@@ -449,6 +545,22 @@ impl Writer<'_> {
             let Some(actual) = fields.get(&field.name) else {
                 continue;
             };
+            if let (Value::Record(location), Some(Value::Record(blank)), Type::Record(shape)) =
+                (actual, defaults.get(&field.name), &field.ty)
+                && field.name == "location"
+            {
+                for part in &shape.fields {
+                    let (Some(value), Some(default)) =
+                        (location.get(&part.name), blank.get(&part.name))
+                    else {
+                        continue;
+                    };
+                    if !value.equals(default).unwrap_or(false) {
+                        args.push(format!("{}: {}", part.name, self.literal(value, &part.ty)));
+                    }
+                }
+                continue;
+            }
             let skip = match field.name.as_str() {
                 "kind" => true,
                 "sequence" => {

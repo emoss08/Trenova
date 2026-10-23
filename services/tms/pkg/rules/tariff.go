@@ -8,6 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/i18n"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
@@ -113,9 +114,11 @@ type TariffAxis struct {
 }
 
 type TariffCellPosition struct {
-	Key string           `json:"key,omitempty"`
-	Min *decimal.Decimal `json:"min,omitempty"`
-	Max *decimal.Decimal `json:"max,omitempty"`
+	Key  string           `json:"key,omitempty"`
+	Min  *decimal.Decimal `json:"min,omitempty"`
+	Max  *decimal.Decimal `json:"max,omitempty"`
+	From string           `json:"from,omitempty"`
+	To   string           `json:"to,omitempty"`
 }
 
 type TariffCell struct {
@@ -128,6 +131,8 @@ type TariffCell struct {
 type TariffTable struct {
 	Code      string       `json:"code"`
 	Name      string       `json:"name,omitempty"`
+	Version   int64        `json:"version,omitempty"`
+	MatrixID  pulid.ID     `json:"-"`
 	Axes      []TariffAxis `json:"axes"`
 	ValueType string       `json:"valueType"`
 	Cells     []TariffCell `json:"cells"`
@@ -221,6 +226,11 @@ type TariffImport struct {
 	Version string `json:"version,omitempty"`
 }
 
+type TariffTableRead struct {
+	Code    string `json:"code"`
+	Version *int64 `json:"version"`
+}
+
 type TariffChargeRef struct {
 	Label string      `json:"label"`
 	Code  string      `json:"code,omitempty"`
@@ -233,6 +243,7 @@ type TariffCheck struct {
 	Diagnostics []TariffDiagnostic `json:"diagnostics"`
 	Inputs      []TariffInput      `json:"inputs"`
 	Imports     []TariffImport     `json:"imports"`
+	Tables      []TariffTableRead  `json:"tables"`
 	Outline     RawJSON            `json:"outline,omitempty"`
 	Charges     []TariffChargeRef  `json:"charges"`
 }
@@ -275,7 +286,14 @@ type TariffLine struct {
 	Amount   TariffQuantity `json:"amount"`
 	Quantity RawJSON        `json:"quantity,omitempty"`
 	Rate     RawJSON        `json:"rate,omitempty"`
+	Limit    *TariffLimit   `json:"limit"`
+	On       *string        `json:"on"`
 	Range    *TariffRange   `json:"range"`
+}
+
+type TariffLimit struct {
+	Kind     string         `json:"kind"`
+	Computed TariffQuantity `json:"computed"`
 }
 
 type TariffNote struct {
@@ -293,6 +311,7 @@ type TariffConverted struct {
 type TariffBill struct {
 	Lines            []TariffLine     `json:"lines"`
 	Notes            []TariffNote     `json:"notes"`
+	Reviews          []TariffNote     `json:"reviews"`
 	FreightTotal     TariffQuantity   `json:"freightTotal"`
 	AccessorialTotal TariffQuantity   `json:"accessorialTotal"`
 	Total            TariffQuantity   `json:"total"`

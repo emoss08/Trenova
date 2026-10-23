@@ -68,6 +68,7 @@ func statusChangeFixture(
 		l:            zap.NewNop(),
 		db:           passthroughDB{},
 		repo:         repo,
+		shipmentRepo: unheldShipments(t),
 		auditService: audit,
 		realtime:     realtime,
 		validator:    testValidator(),

@@ -295,6 +295,8 @@ pub enum StmtKind {
     Charge(Charge),
     /// `note "Text"`.
     Note(Text),
+    /// `review "Text"`: the rating bills, and asks to be approved before it is used.
+    Review(Text),
     /// `if … { … } else if … { … } else { … }`.
     If(IfStmt),
     /// `best "Label" { option "A" { … } … }` or `worst "Label" { … }`.
@@ -320,10 +322,14 @@ pub enum StmtKind {
     Continue,
     /// `minimum`, `maximum` or `round`.
     Total(TotalClause),
-    /// `given shipment.weight = 1_240 lb`, in tests.
+    /// `given shipment.weight = 1_240 lb`, or a rate table's cell `given tables.Zones["A",
+    /// "B"] = $20/cwt`, in tests and properties.
     Given {
-        /// The path overridden: a schema root's field (`shipment.weight`) or `input.name`.
+        /// The path overridden: a schema root's field (`shipment.weight`), `input.name`, or
+        /// `tables.Code` for a cell.
         target: Vec<Name>,
+        /// A cell's keys, one per axis, when the target is a table: `["A", "B"]`.
+        keys: Option<Vec<Expr>>,
         /// The value it takes.
         value: Expr,
     },
@@ -499,10 +505,10 @@ pub struct ForStmt {
 /// A total clause.
 #[derive(Debug, Clone, PartialEq)]
 pub enum TotalClause {
-    /// `minimum amount`.
-    Minimum(Expr),
-    /// `maximum amount`.
-    Maximum(Expr),
+    /// `minimum amount` or `minimum amount on freight`.
+    Minimum(TotalBound),
+    /// `maximum amount` or `maximum amount on freight`.
+    Maximum(TotalBound),
     /// `round [half even | up | down] to (cents | $X)`.
     Round {
         /// How.
@@ -510,6 +516,24 @@ pub enum TotalClause {
         /// To what.
         to: RoundTo,
     },
+}
+
+/// The amount of a `minimum` or `maximum` clause and what it bounds.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TotalBound {
+    /// The amount.
+    pub amount: Expr,
+    /// `on freight`: the name after `on`, when written; without it the clause bounds the whole
+    /// bill. The checker accepts only `freight`.
+    pub on: Option<Name>,
+}
+
+impl TotalBound {
+    /// Whether the clause bounds the freight lines only.
+    #[must_use]
+    pub fn on_freight(&self) -> bool {
+        self.on.is_some()
+    }
 }
 
 /// How a `round` clause rounds.
@@ -637,6 +661,25 @@ pub struct DateTimeLit {
     pub offset_minutes: i16,
 }
 
+/// A time-of-day literal: `@17:30`, `@07:30:15`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TimeLit {
+    /// The hour, 0 to 23.
+    pub hour: u8,
+    /// The minute.
+    pub minute: u8,
+    /// The second; 0 when not written.
+    pub second: u8,
+}
+
+impl TimeLit {
+    /// Seconds since midnight.
+    #[must_use]
+    pub fn seconds(self) -> i64 {
+        i64::from(self.hour) * 3_600 + i64::from(self.minute) * 60 + i64::from(self.second)
+    }
+}
+
 /// A unit as written after a number, after `$x/` or in a type: `lb`, `ft3`, `lb/ft3`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnitExpr {
@@ -699,6 +742,8 @@ pub enum ExprKind {
     Date(DateLit),
     /// `@2026-10-22T08:00-05:00`.
     DateTime(DateTimeLit),
+    /// `@17:30`.
+    Time(TimeLit),
     /// `true` or `false`.
     Bool(bool),
     /// `none`.
@@ -786,6 +831,9 @@ pub enum ExprKind {
         /// The arms, whose bodies are [`ArmBody::Expr`].
         arms: Vec<Arm>,
     },
+    /// `best "Label" { … }` or `worst "Label" { … }` as a value: the kept option's subtotal.
+    /// The checker allows it only as the whole value of a `let`, `var` or assignment.
+    Choose(Box<Choose>),
     /// `x => body` or `(a, b) => body`, only as an argument to a list method.
     Lambda {
         /// The parameters.
@@ -904,10 +952,11 @@ pub enum PatternKind {
     Wildcard,
     /// `none`.
     None,
-    /// A literal: a number with its unit, money, a percent, text, a date, `true`, `false`. A
-    /// negative number is a [`ExprKind::Unary`] negation of a literal.
+    /// A literal: a number with its unit, money, a percent, text, a date, a time, `true`,
+    /// `false`. A negative number is a [`ExprKind::Unary`] negation of a literal.
     Literal(Expr),
-    /// `lo..hi`, `lo..=hi`, `..hi`, `lo..`, with literal ends.
+    /// `lo..hi`, `lo..=hi`, `..hi`, `lo..`, with literal ends or, for an ordered enum, variant
+    /// ends ([`ExprKind::Path`]: `Mon..=Fri`).
     Range {
         /// The start, when written.
         start: Option<Expr>,

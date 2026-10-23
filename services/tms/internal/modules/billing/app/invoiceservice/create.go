@@ -95,6 +95,9 @@ func (s *Service) CreateInvoicesFromShipments(
 	if err = s.guardDetentionHolds(ctx, req.TenantInfo, []pulid.ID{shp.ID}); err != nil {
 		return nil, err
 	}
+	if err = shipment.RatingReviewHoldError([]*shipment.Shipment{shp}); err != nil {
+		return nil, err
+	}
 
 	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	if err != nil {

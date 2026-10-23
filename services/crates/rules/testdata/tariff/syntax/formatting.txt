@@ -391,14 +391,14 @@ fn residential(fee: Money = $95) = fee
 
 === long parameter lists break
 library "l"
-fn businessDuration(start: DateTime, end: DateTime, open: Int = 8, close: Int = 17, zone: Text = "UTC") -> Duration = end - start
+fn businessDuration(start: DateTime, end: DateTime, open: Time = @08:00, close: Time = @17:00, zone: Text = "UTC") -> Duration = end - start
 ---
 library "l"
 fn businessDuration(
   start: DateTime,
   end: DateTime,
-  open: Int = 8,
-  close: Int = 17,
+  open: Time = @08:00,
+  close: Time = @17:00,
   zone: Text = "UTC",
 ) -> Duration = end - start
 
@@ -571,3 +571,54 @@ property "p" {
   assume true
   expect total nondecreasing in shipment.weight
 }
+
+=== given table cells
+tariff "t"
+test "x"{
+given tables.Zones[ "A","B" ]=$20/cwt
+given tables.Breaks[1_000 lb]={value:$25/cwt,minimum:none,deficit:false}
+expect total==$1
+}
+---
+tariff "t"
+test "x" {
+  given tables.Zones["A", "B"] = $20/cwt
+  given tables.Breaks[1_000 lb] = { value: $25/cwt, minimum: none, deficit: false }
+  expect total == $1
+}
+
+=== a choice as a value, a review and a freight clause
+tariff "t"
+let   linehaul   =   best "Linehaul" {
+option "A" { charge "A" (quantity: 1 mi, rate: $2/mi,   minimum: $5) }
+option "B" { charge "B" = $2 }
+}
+review   "Check {linehaul}"
+minimum   $400   on   freight
+---
+tariff "t"
+let linehaul = best "Linehaul" {
+  option "A" {
+    charge "A" (quantity: 1 mi, rate: $2/mi, minimum: $5)
+  }
+  option "B" {
+    charge "B" = $2
+  }
+}
+review "Check {linehaul}"
+minimum $400 on freight
+
+=== times of day and variant ranges keep their spelling
+tariff "t"
+let a = match rating.date.weekday {
+Mon..=Fri=>@08:00
+Sat|Sun=>@10:30:00
+}
+let b = a in @08:00..@17:00
+---
+tariff "t"
+let a = match rating.date.weekday {
+  Mon..=Fri => @08:00
+  Sat | Sun => @10:30:00
+}
+let b = a in @08:00..@17:00

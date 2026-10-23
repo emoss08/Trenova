@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
@@ -104,6 +105,7 @@ type FactoryParams struct {
 	FuelCardByID                              *FuelCardByIDLoaderFactory
 	TractorByID                               *TractorByIDLoaderFactory
 	FormulaLibraryByID                        *FormulaLibraryByIDLoaderFactory
+	RateMatrixByID                            *RateMatrixByIDLoaderFactory
 	ShipmentMoveJurisdictionMilesByMoveID     *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory
 	UserByID                                  *UserByIDLoaderFactory
 	DocumentByID                              *DocumentByIDLoaderFactory
@@ -195,6 +197,7 @@ type Factory struct {
 	fuelCardByID                              *FuelCardByIDLoaderFactory
 	tractorByID                               *TractorByIDLoaderFactory
 	formulaLibraryByID                        *FormulaLibraryByIDLoaderFactory
+	rateMatrixByID                            *RateMatrixByIDLoaderFactory
 	shipmentMoveJurisdictionMilesByMoveID     *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory
 	userByID                                  *UserByIDLoaderFactory
 	documentByID                              *DocumentByIDLoaderFactory
@@ -286,6 +289,7 @@ type set struct {
 	fuelCardByID                              *dataloadgen.Loader[string, *fuelpurchase.FuelCard]
 	tractorByID                               *dataloadgen.Loader[string, *tractor.Tractor]
 	formulaLibraryByID                        *dataloadgen.Loader[string, *formulalibrary.FormulaLibrary]
+	rateMatrixByID                            *dataloadgen.Loader[string, *ratematrix.RateMatrix]
 	shipmentMoveJurisdictionMilesByMoveID     *dataloadgen.Loader[string, []*shipment.ShipmentMoveJurisdictionMile]
 	userByID                                  *dataloadgen.Loader[string, *tenant.User]
 	documentByID                              *dataloadgen.Loader[string, *document.Document]
@@ -384,6 +388,7 @@ func NewFactory(p FactoryParams) *Factory {
 		fuelCardByID:                              p.FuelCardByID,
 		tractorByID:                               p.TractorByID,
 		formulaLibraryByID:                        p.FormulaLibraryByID,
+		rateMatrixByID:                            p.RateMatrixByID,
 		shipmentMoveJurisdictionMilesByMoveID:     p.ShipmentMoveJurisdictionMilesByMoveID,
 		userByID:                                  p.UserByID,
 		documentByID:                              p.DocumentByID,
@@ -537,6 +542,7 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 		fuelCardByID:         newFuelCardByIDLoader(f.fuelCardByID, tenantInfo),
 		tractorByID:          newTractorByIDLoader(f.tractorByID, tenantInfo),
 		formulaLibraryByID:   newFormulaLibraryByIDLoader(f.formulaLibraryByID, tenantInfo),
+		rateMatrixByID:       newRateMatrixByIDLoader(f.rateMatrixByID, tenantInfo),
 		shipmentMoveJurisdictionMilesByMoveID: newShipmentMoveJurisdictionMilesByMoveIDLoader(
 			f.shipmentMoveJurisdictionMilesByMoveID,
 			tenantInfo,

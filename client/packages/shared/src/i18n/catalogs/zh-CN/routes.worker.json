@@ -72,7 +72,6 @@
   "Approved days this year": "今年已批准的天数",
   "Approved {0, plural, one {# PTO request} other {# PTO requests}}": "已批准{0, plural, other { # 个带薪假申请}}",
   "Approved {0, plural, one {# PTO request} other {# PTO requests}}; {1} failed": "已批准{0, plural, other { # 个带薪假申请}}；{1} 个失败",
-  "Archive {0}": "归档 {0}",
   "Archiving removes this credential from the active file. Use Renew instead when the worker has a newer card.": "归档会将此证照从有效档案中移除。若司机已取得较新的证卡，请改用“更新”。",
   "Arrow keys move a month and T returns to today {0}": "方向键可切换月份，按 T 可回到今天 {0}",
   "Assembled on read from the credentials, documents, previous-employer investigations and testing record. 49 CFR 391.51.": "于读取时，由证照、文档、前雇主核查与检测记录汇总而成。49 CFR 391.51。",

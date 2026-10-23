@@ -3,7 +3,8 @@
 // the on-demand protocol"). The organisation's context carries only the shapes of tables with an
 // exact axis; `tariff.test` answers the key combinations a test read that the context did not
 // carry, the Studio loads those cells from the server and runs the tests again. The cells are
-// kept per rate table stamp, so a change to a matrix, which moves the stamp, drops them.
+// kept per rate table stamp, so publishing or archiving a matrix, which moves the stamp, drops
+// them. The context holds each table's newest published version; the stamp names those versions.
 
 import type {
   TariffContext,

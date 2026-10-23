@@ -1,0 +1,351 @@
+[
+ {
+  "name": "a line's minimum raises it, and the line says so",
+  "source": "tariff \"t\"\ninput rate: Money/mi = $2/mi\ncharge \"Linehaul\" (quantity: shipment.distance, rate: rate, minimum: $450)\ncharge \"Fuel\" as FSC = bill.freight * 10%",
+  "facts": {
+   "shipment": {
+    "distance": {
+     "$q": "100",
+     "u": "mi"
+    }
+   }
+  },
+  "trace": true,
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "kind": "charge",
+      "label": "Linehaul",
+      "amount": {
+       "$q": "450",
+       "u": "$"
+      },
+      "quantity": {
+       "$q": "100",
+       "u": "mi"
+      },
+      "rate": {
+       "$q": "2",
+       "u": "$/mi"
+      },
+      "limit": {
+       "kind": "minimum",
+       "computed": {
+        "$q": "200",
+        "u": "$"
+       }
+      },
+      "on": null
+     },
+     {
+      "label": "Fuel",
+      "amount": {
+       "$q": "45",
+       "u": "$"
+      },
+      "limit": null,
+      "on": null
+     }
+    ],
+    "total": {
+     "$q": "495",
+     "u": "$"
+    }
+   },
+   "trace": [
+    {
+     "kind": "charge",
+     "label": "Linehaul",
+     "value": {
+      "$q": "450",
+      "u": "$"
+     },
+     "limit": {
+      "kind": "minimum",
+      "computed": {
+       "$q": "200",
+       "u": "$"
+      }
+     }
+    },
+    {
+     "kind": "charge",
+     "label": "Fuel",
+     "value": {
+      "$q": "45",
+      "u": "$"
+     },
+     "limit": null
+    }
+   ]
+  }
+ },
+ {
+  "name": "a line's maximum lowers it; a limit not reached leaves the line as it was",
+  "source": "tariff \"t\"\ncharge \"Linehaul\" (quantity: shipment.distance, rate: $2/mi, minimum: $100, maximum: $1_500)\ncharge \"Stops\" (minimum: $10) = $25",
+  "facts": {
+   "shipment": {
+    "distance": {
+     "$q": "1000",
+     "u": "mi"
+    }
+   }
+  },
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "label": "Linehaul",
+      "amount": {
+       "$q": "1500",
+       "u": "$"
+      },
+      "limit": {
+       "kind": "maximum",
+       "computed": {
+        "$q": "2000",
+        "u": "$"
+       }
+      }
+     },
+     {
+      "label": "Stops",
+      "amount": {
+       "$q": "25",
+       "u": "$"
+      },
+      "limit": null
+     }
+    ],
+    "total": {
+     "$q": "1525",
+     "u": "$"
+    }
+   }
+  }
+ },
+ {
+  "name": "a line that comes out at zero still bills its minimum",
+  "source": "tariff \"t\"\ncharge \"Linehaul\" = $100\ncharge \"Detention\" as DET (minimum: $50) = $65/h * 0 h",
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "label": "Linehaul",
+      "amount": {
+       "$q": "100",
+       "u": "$"
+      }
+     },
+     {
+      "label": "Detention",
+      "code": "DET",
+      "amount": {
+       "$q": "50",
+       "u": "$"
+      },
+      "limit": {
+       "kind": "minimum",
+       "computed": {
+        "$q": "0",
+        "u": "$"
+       }
+      }
+     }
+    ],
+    "accessorialTotal": {
+     "$q": "50",
+     "u": "$"
+    },
+    "total": {
+     "$q": "150",
+     "u": "$"
+    }
+   }
+  }
+ },
+ {
+  "name": "a line's minimum above its maximum stops the rating",
+  "source": "tariff \"t\"\ninput low: Money = $500\ninput high: Money = $400\ncharge \"Linehaul\" (minimum: low, maximum: high) = $450",
+  "expect": {
+   "status": "error",
+   "error": {
+    "code": "argument",
+    "message": {
+     "message": "The charge's minimum {0} is above its maximum {1}",
+     "args": [
+      "$500.00",
+      "$400.00"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "name": "a freight minimum tops up the freight before the whole bill's minimum",
+  "source": "tariff \"t\"\ncharge \"Linehaul\" = $300\ncharge \"Fuel\" as FSC = $20\nminimum $400 on freight\nminimum $450",
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "kind": "charge",
+      "label": "Linehaul",
+      "amount": {
+       "$q": "300",
+       "u": "$"
+      },
+      "on": null
+     },
+     {
+      "kind": "charge",
+      "label": "Fuel",
+      "amount": {
+       "$q": "20",
+       "u": "$"
+      },
+      "on": null
+     },
+     {
+      "kind": "minimum",
+      "label": null,
+      "freight": true,
+      "amount": {
+       "$q": "100",
+       "u": "$"
+      },
+      "on": "freight",
+      "range": null
+     },
+     {
+      "kind": "minimum",
+      "label": null,
+      "freight": true,
+      "amount": {
+       "$q": "30",
+       "u": "$"
+      },
+      "on": null,
+      "range": null
+     }
+    ],
+    "freightTotal": {
+     "$q": "430",
+     "u": "$"
+    },
+    "accessorialTotal": {
+     "$q": "20",
+     "u": "$"
+    },
+    "total": {
+     "$q": "450",
+     "u": "$"
+    }
+   }
+  }
+ },
+ {
+  "name": "a freight maximum brings the freight down and leaves the accessorials",
+  "source": "tariff \"t\"\ncharge \"Linehaul\" = $600\ncharge \"Fuel\" as FSC = $50\nmaximum $500 on freight\nmaximum $5_000",
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "label": "Linehaul",
+      "amount": {
+       "$q": "600",
+       "u": "$"
+      }
+     },
+     {
+      "label": "Fuel",
+      "amount": {
+       "$q": "50",
+       "u": "$"
+      }
+     },
+     {
+      "kind": "maximum",
+      "amount": {
+       "$q": "-100",
+       "u": "$"
+      },
+      "on": "freight"
+     }
+    ],
+    "freightTotal": {
+     "$q": "500",
+     "u": "$"
+    },
+    "total": {
+     "$q": "550",
+     "u": "$"
+    }
+   }
+  }
+ },
+ {
+  "name": "freight limits compare exact amounts, and rounding runs last",
+  "source": "tariff \"t\"\ncharge \"A\" = $100.004\ncharge \"B\" = $299.996\ncharge \"Fee\" as FSC = $10.005\ncharge \"Other fee\" as DET = $10.005\nminimum $400 on freight",
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "label": "A",
+      "amount": {
+       "$q": "100",
+       "u": "$"
+      }
+     },
+     {
+      "label": "B",
+      "amount": {
+       "$q": "300",
+       "u": "$"
+      }
+     },
+     {
+      "label": "Fee",
+      "amount": {
+       "$q": "10.01",
+       "u": "$"
+      }
+     },
+     {
+      "label": "Other fee",
+      "amount": {
+       "$q": "10.01",
+       "u": "$"
+      }
+     },
+     {
+      "kind": "rounding",
+      "amount": {
+       "$q": "-0.01",
+       "u": "$"
+      },
+      "on": null
+     }
+    ],
+    "freightTotal": {
+     "$q": "399.99",
+     "u": "$"
+    },
+    "accessorialTotal": {
+     "$q": "20.02",
+     "u": "$"
+    },
+    "total": {
+     "$q": "420.01",
+     "u": "$"
+    }
+   }
+  }
+ }
+]

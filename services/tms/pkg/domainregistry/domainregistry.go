@@ -117,6 +117,8 @@ func RegisterEntities() []any {
 		&ratematrix.RateMatrix{},
 		&ratematrix.RateMatrixDimension{},
 		&ratematrix.RateMatrixCell{},
+		&ratematrix.RateMatrixVersion{},
+		&ratematrix.RateMatrixReview{},
 		&ratesimulation.RateSimulation{},
 		&ratesimulation.RateSimulationResult{},
 		&rateimport.RateImportBatch{},

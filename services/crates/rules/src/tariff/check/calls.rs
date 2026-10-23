@@ -18,6 +18,17 @@ use crate::tariff::types::{FieldDef, RecordType, Type};
 use crate::tariff::units::{Unit, simple};
 use std::sync::Arc;
 
+/// The shipment's method that tests what the user asked for: `shipment.requested(LIFT)`.
+pub const REQUESTED: &str = "requested";
+
+/// `shipment.requested(…)` as signature help, hover and completion show it.
+pub const REQUESTED_SIGNATURE: &str = "requested(code: CODE) -> Bool";
+
+/// What `shipment.requested(…)` does.
+pub const REQUESTED_DOC: &str = message!(
+    "Whether the user put an accessorial with this charge code on the shipment: `shipment.requested(LIFT)`."
+);
+
 /// The test record constructors and the schema record each builds.
 pub const CONSTRUCTORS: &[(&str, &str)] = &[
     ("pickup", "Stop"),
@@ -65,6 +76,10 @@ impl Checker<'_> {
                     && self.is_tables(root)
                 {
                     return self.table_method(expr, code, name, args);
+                }
+                if self.is_bill(target) {
+                    self.record(callee, Type::Error);
+                    return self.bill_call(expr, target, name, args);
                 }
                 self.method_call(expr, callee, target, name, *optional, args)
             }
@@ -389,7 +404,7 @@ impl Checker<'_> {
     }
 
     /// The span of a call's parentheses, where a missing argument is reported.
-    fn parens_span(&self, call: &Expr) -> Span {
+    pub(super) fn parens_span(&self, call: &Expr) -> Span {
         let ExprKind::Call { callee, .. } = &call.kind else {
             return call.span;
         };
@@ -421,6 +436,11 @@ impl Checker<'_> {
         let Some(receiver) = self.receiver(callee, target, optional) else {
             return self.skip_args(args);
         };
+        if name.text == REQUESTED && self.schema.root("shipment") == Some(&receiver) {
+            self.record(callee, Type::Error);
+            let result = self.requested(expr, args);
+            return self.optional_result(target, optional, result);
+        }
         let Some(method) = methods::find(&receiver, &name.text) else {
             if matches!(&receiver, Type::Record(record) if record.field(&name.text).is_some()) {
                 self.report(Diagnostic::error(
@@ -575,6 +595,7 @@ impl Checker<'_> {
             Rule::Text => Type::Text,
             Rule::TextList => Type::list(Type::Text),
             Rule::Date => Type::Date,
+            Rule::Time => Type::Time,
             Rule::Weekday => self
                 .schema
                 .enumeration("Weekday")
@@ -662,6 +683,17 @@ impl Checker<'_> {
             Message::with(
                 message!("{0} compares values, but these are {1}: give each a fallback first"),
                 [quote(method.name), Arg::from(words(value))],
+            )
+        } else if let Type::Enum(_) = value {
+            Message::with(
+                message!(
+                    "{0} compares values, and {1} can't be ordered: only {2} order their variants"
+                ),
+                [
+                    quote(method.name),
+                    Arg::from(words(value)),
+                    Arg::from(operators::ordered_enums()),
+                ],
             )
         } else {
             Message::with(
@@ -869,7 +901,9 @@ impl Checker<'_> {
         if let Some((constructor, _)) = CONSTRUCTORS.iter().find(|(c, _)| *c == name.text) {
             self.callee(expr, Callee::Constructor(constructor));
         }
+        let location = location_record(&record);
         let mut seen: Vec<&str> = Vec::new();
+        let mut parts: Vec<(&Name, Span)> = Vec::new();
         for arg in args {
             let Some(field_name) = &arg.name else {
                 self.report(Diagnostic::error(
@@ -894,38 +928,130 @@ impl Checker<'_> {
                 ));
             }
             seen.push(&field_name.text);
-            if let Some(field) = record.field(&field_name.text) {
-                let ty = field.ty.clone();
-                self.expect(
-                    &arg.value,
-                    &ty,
-                    &Want::Field {
-                        field: field_name.text.clone(),
-                    },
-                );
-            } else {
-                self.skip_args(std::slice::from_ref(arg));
-                let candidates: Vec<String> =
-                    record.fields.iter().map(|f| f.name.clone()).collect();
-                let found = Message::with(
-                    message!("{0} has no field {1}"),
-                    [
-                        quote(record.name.as_deref().unwrap_or_default()),
-                        quote(&field_name.text),
-                    ],
-                );
-                let diagnostic = Self::did_you_mean(
-                    "unknown-field",
-                    field_name.span,
-                    &field_name.text,
-                    &candidates,
-                    found.clone(),
-                    found,
-                );
-                self.report(diagnostic);
+            if self.constructor_field(&record, location.as_deref(), field_name, arg) {
+                parts.push((field_name, arg.span));
+            }
+        }
+        if seen.contains(&"location") {
+            for (part, span) in parts {
+                self.report(Diagnostic::error(
+                    "duplicate-argument",
+                    span,
+                    Message::with(
+                        message!(
+                            "{0} is a field of `location`, which is given whole too: set it inside `location`, or leave `location` out"
+                        ),
+                        [quote(&part.text)],
+                    ),
+                ));
             }
         }
         Type::Record(record)
+    }
+
+    /// One named argument of a test constructor: a field of the record, or of a stop's
+    /// location (which gives `true`). An unknown name is reported with the closest field.
+    fn constructor_field(
+        &mut self,
+        record: &RecordType,
+        location: Option<&RecordType>,
+        field_name: &Name,
+        arg: &CallArg,
+    ) -> bool {
+        let own = record.field(&field_name.text).map(|field| (field, false));
+        let found = own.or_else(|| {
+            location
+                .and_then(|location| location.field(&field_name.text))
+                .map(|field| (field, true))
+        });
+        let Some((field, part)) = found else {
+            self.skip_args(std::slice::from_ref(arg));
+            let candidates: Vec<String> = record
+                .fields
+                .iter()
+                .chain(location.iter().flat_map(|location| location.fields.iter()))
+                .map(|f| f.name.clone())
+                .collect();
+            let found = Message::with(
+                message!("{0} has no field {1}"),
+                [
+                    quote(record.name.as_deref().unwrap_or_default()),
+                    quote(&field_name.text),
+                ],
+            );
+            let diagnostic = Self::did_you_mean(
+                "unknown-field",
+                field_name.span,
+                &field_name.text,
+                &candidates,
+                found.clone(),
+                found,
+            );
+            self.report(diagnostic);
+            return false;
+        };
+        let ty = field.ty.clone();
+        let shown = if part {
+            format!("location.{}", field_name.text)
+        } else {
+            field_name.text.clone()
+        };
+        self.expect(&arg.value, &ty, &Want::Field { field: shown });
+        part
+    }
+
+    /// `shipment.requested(CODE)`: whether the user put an accessorial with that code on the
+    /// shipment. The code is written bare, and judged against the catalog with the module's
+    /// other codes ([`super::codes`]).
+    fn requested(&mut self, expr: &Expr, args: &[CallArg]) -> Type {
+        self.callee(expr, Callee::Requested);
+        let [arg] = args else {
+            self.report(Diagnostic::error(
+                "arity",
+                self.parens_span(expr),
+                Message::new(message!(
+                    "`shipment.requested(…)` takes one accessorial charge code, as in `shipment.requested(LIFT)`"
+                )),
+            ));
+            self.skip_args(args);
+            return Type::Bool;
+        };
+        if let Some(name) = &arg.name {
+            self.report(Diagnostic::error(
+                "argument-order",
+                name.span,
+                Message::new(message!(
+                    "`shipment.requested(…)` takes its code without a name, as in `shipment.requested(LIFT)`"
+                )),
+            ));
+        }
+        match &arg.value.kind {
+            ExprKind::Name(code) if is_code(&code.text) => {
+                self.record(&arg.value, Type::Text);
+            }
+            _ => {
+                self.expr(&arg.value, None);
+                let mut diagnostic = Diagnostic::error(
+                    "requested-code",
+                    arg.value.span,
+                    Message::new(message!(
+                        "`shipment.requested(…)` takes an accessorial charge code written bare, as in `shipment.requested(LIFT)`"
+                    )),
+                );
+                if let ExprKind::Text(text) = &arg.value.kind
+                    && let Some(literal) = text.literal()
+                    && is_code(&literal)
+                {
+                    diagnostic = diagnostic.with_fix(replace(
+                        Message::with(message!("Write it as {0}"), [quote(&literal)]),
+                        arg.value.span,
+                        literal,
+                    ));
+                }
+                self.report(diagnostic);
+            }
+        }
+        Type::Bool
     }
 
     /// `charge(CODE)` or `charge("Label")` in a tariff's test: the amount billed, or `none`.
@@ -1029,6 +1155,18 @@ impl Checker<'_> {
             }
             None => false,
         }
+    }
+}
+
+/// The record type of a stop's `location`, whose fields a stop constructor also takes by name;
+/// `None` for a record without one.
+#[must_use]
+pub fn location_record(record: &RecordType) -> Option<Arc<RecordType>> {
+    match record.field("location").map(|field| &field.ty) {
+        Some(Type::Record(location)) if record.name.as_deref() == Some("Stop") => {
+            Some(Arc::clone(location))
+        }
+        _ => None,
     }
 }
 

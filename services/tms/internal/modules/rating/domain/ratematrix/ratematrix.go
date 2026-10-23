@@ -12,9 +12,11 @@ package ratematrix
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,6 +37,8 @@ const (
 	maxCodeLength        = 64
 	maxNameLength        = 100
 	maxDescriptionLength = 500
+
+	DraftVersion int64 = 0
 )
 
 type RateMatrix struct {
@@ -45,11 +49,22 @@ type RateMatrix struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
-	Code        string             `json:"code"        bun:"code,type:VARCHAR(64),notnull"`
-	Name        string             `json:"name"        bun:"name,type:VARCHAR(100),notnull"`
-	Description string             `json:"description" bun:"description,type:TEXT,nullzero"`
-	ValueType   string             `json:"valueType"   bun:"value_type,type:VARCHAR(32),notnull"`
-	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code        string                 `json:"code"        bun:"code,type:VARCHAR(64),notnull"`
+	Name        string                 `json:"name"        bun:"name,type:VARCHAR(100),notnull"`
+	Description string                 `json:"description" bun:"description,type:TEXT,nullzero"`
+	ValueType   string                 `json:"valueType"   bun:"value_type,type:VARCHAR(32),notnull"`
+	Status      formulatemplate.Status `json:"status"      bun:"status,type:formula_template_status_enum,notnull,default:'Draft'"`
+
+	SubmittedByID          *pulid.ID  `json:"submittedById"          bun:"submitted_by_id,type:VARCHAR(100)"`
+	SubmittedAt            *int64     `json:"submittedAt"            bun:"submitted_at,type:BIGINT"`
+	ApprovedByID           *pulid.ID  `json:"approvedById"           bun:"approved_by_id,type:VARCHAR(100)"`
+	ApprovedAt             *int64     `json:"approvedAt"             bun:"approved_at,type:BIGINT"`
+	ReviewComment          string     `json:"reviewComment"          bun:"review_comment,type:TEXT,nullzero"`
+	PublishedVersionNumber int64      `json:"publishedVersionNumber" bun:"published_version_number,type:BIGINT,notnull,default:0"`
+	PublishedAt            *int64     `json:"publishedAt"            bun:"published_at,type:BIGINT"`
+	HasDraftChanges        bool       `json:"hasDraftChanges"        bun:"has_draft_changes,type:BOOLEAN,notnull"`
+	DraftCellCount         int64      `json:"draftCellCount"         bun:"draft_cell_count,type:BIGINT,notnull,default:0"`
+	DraftEditorIDs         []pulid.ID `json:"draftEditorIds"         bun:"draft_editor_ids,type:JSONB,notnull,default:'[]'"`
 
 	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -66,9 +81,59 @@ type RateMatrix struct {
 // payload that omits them validates the same way it will be stored.
 func (rm *RateMatrix) applyDefaults() {
 	if rm.Status == "" {
-		rm.Status = domaintypes.StatusActive
+		rm.Status = formulatemplate.StatusDraft
+	}
+	if rm.DraftEditorIDs == nil {
+		rm.DraftEditorIDs = []pulid.ID{}
 	}
 	rm.ValueType = strings.TrimSpace(rm.ValueType)
+}
+
+func (rm *RateMatrix) IsPublished() bool {
+	return rm.PublishedVersionNumber > 0
+}
+
+func (rm *RateMatrix) IsServed() bool {
+	return rm.IsPublished() && rm.Status != formulatemplate.StatusInactive
+}
+
+func (rm *RateMatrix) RecordEditor(userID pulid.ID) {
+	if userID.IsNil() || slices.Contains(rm.DraftEditorIDs, userID) {
+		return
+	}
+	rm.DraftEditorIDs = append(slices.Clone(rm.DraftEditorIDs), userID)
+}
+
+func (rm *RateMatrix) EditedBy(userID pulid.ID) bool {
+	return slices.Contains(rm.DraftEditorIDs, userID)
+}
+
+func (rm *RateMatrix) ClearApproval() {
+	rm.SubmittedByID = nil
+	rm.SubmittedAt = nil
+	rm.ApprovedByID = nil
+	rm.ApprovedAt = nil
+	rm.ReviewComment = ""
+}
+
+func (rm *RateMatrix) HasMaterialChange(other *RateMatrix) bool {
+	if other == nil {
+		return true
+	}
+	if rm.ValueType != other.ValueType || rm.Code != other.Code ||
+		len(rm.Dimensions) != len(other.Dimensions) {
+		return true
+	}
+	mine, theirs := rm.OrderedDimensions(), other.OrderedDimensions()
+	if len(mine) != len(theirs) {
+		return true
+	}
+	for i := range mine {
+		if !mine[i].SameShape(theirs[i]) {
+			return true
+		}
+	}
+	return false
 }
 
 func (rm *RateMatrix) Validate(multiErr *errortypes.MultiError) {
@@ -97,8 +162,12 @@ func (rm *RateMatrix) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&rm.Status,
 			validation.Required.Error("Status is required"),
-			validation.In(domaintypes.StatusActive, domaintypes.StatusInactive).
-				Error("Status is invalid"),
+			validation.In(
+				formulatemplate.StatusDraft,
+				formulatemplate.StatusInReview,
+				formulatemplate.StatusActive,
+				formulatemplate.StatusInactive,
+			).Error("Status is invalid"),
 		),
 	))
 
@@ -117,6 +186,7 @@ func (rm *RateMatrix) StampDimensions() {
 		dimension.RateMatrixID = rm.ID
 		dimension.OrganizationID = rm.OrganizationID
 		dimension.BusinessUnitID = rm.BusinessUnitID
+		dimension.VersionNumber = DraftVersion
 	}
 }
 
@@ -201,6 +271,10 @@ func (rm *RateMatrix) OrderedDimensions() []*RateMatrixDimension {
 
 func (rm *RateMatrix) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
+
+	if rm.DraftEditorIDs == nil {
+		rm.DraftEditorIDs = []pulid.ID{}
+	}
 
 	switch query.(type) {
 	case *bun.InsertQuery:

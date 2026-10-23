@@ -187,7 +187,11 @@ fn arguments(
             .iter()
             .map(|param| param.name.to_owned())
             .collect(),
-        Callee::Conversion(_) | Callee::ChargeLookup | Callee::Table { .. } => return,
+        Callee::Conversion(_)
+        | Callee::ChargeLookup
+        | Callee::Requested
+        | Callee::BillCharge
+        | Callee::Table { .. } => return,
     };
     for (arg, name) in args.iter().take_while(|arg| arg.name.is_none()).zip(&names) {
         if arg.value.span.start < range.start || arg.value.span.start > range.end {
@@ -224,6 +228,7 @@ fn needs_name(session: &Session<'_>, value: &Expr, name: &str, count: usize) -> 
             | ExprKind::None
             | ExprKind::Date(_)
             | ExprKind::DateTime(_)
+            | ExprKind::Time(_)
     );
     count >= 2 || literal
 }

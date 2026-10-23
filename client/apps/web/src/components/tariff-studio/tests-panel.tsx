@@ -8,6 +8,7 @@ import {
   CheckCircleIcon,
   ChevronRightIcon,
   FilePlus02Icon,
+  Flag01Icon,
   PlusIcon,
   XCircleIcon,
 } from "@trenova/shared/components/icons";
@@ -225,6 +226,12 @@ function TestRow({
             {property && (
               <Badge variant="neutral" appearance="outline" className="shrink-0">
                 {t("Property")}
+              </Badge>
+            )}
+            {test.bill && test.bill.reviews.length > 0 && (
+              <Badge variant="warning" appearance="outline" className="shrink-0 gap-1">
+                <Flag01Icon aria-hidden className="size-3" />
+                {t("{0, plural, one {# review} other {# reviews}}", test.bill.reviews.length)}
               </Badge>
             )}
           </span>

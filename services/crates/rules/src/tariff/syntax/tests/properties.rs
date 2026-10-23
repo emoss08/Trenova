@@ -233,6 +233,31 @@ fn the_outline_lists_declarations_charges_totals_and_tests() {
     }
 }
 
+#[test]
+fn the_outline_lists_a_choice_written_as_a_value_and_a_freight_clause() {
+    let source = "tariff \"t\"\nlet linehaul = best \"Linehaul\" {\n  option \"A\" { charge \"A\" = $1 }\n  option \"B\" { charge \"B\" = $2 }\n}\nminimum $400 on freight\n";
+    let file = parse(source);
+    assert!(file.diagnostics.is_empty(), "{:?}", file.diagnostics);
+    let found = outline(source, &file);
+    let entries: Vec<(OutlineKind, &str, u32)> = found
+        .items
+        .iter()
+        .map(|item| (item.kind, item.name.as_str(), item.depth))
+        .collect();
+    assert_eq!(
+        entries,
+        vec![
+            (OutlineKind::Header, "t", 0),
+            (OutlineKind::Choice, "Linehaul", 0),
+            (OutlineKind::Option, "A", 1),
+            (OutlineKind::Charge, "A", 2),
+            (OutlineKind::Option, "B", 1),
+            (OutlineKind::Charge, "B", 2),
+            (OutlineKind::Total, "minimum on freight", 0),
+        ]
+    );
+}
+
 /// Every `message!` template in the front end is a valid ICU template: braces are placeholders
 /// (`{0}`, `{0, plural, …}`) or quoted (`'{'`).
 #[test]

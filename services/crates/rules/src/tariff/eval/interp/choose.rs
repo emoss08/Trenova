@@ -9,7 +9,11 @@
 //! every option refuses, the rating refuses with the first option's refusal.
 //!
 //! Every evaluation is recorded ([`crate::tariff::eval::bill::Choices`]) with each option's
-//! subtotal or refusal, and traced as a `choice` event.
+//! subtotal or refusal, and traced as a `choice` event with the kept option's subtotal, which is
+//! also the choice's value when it is written as one (`let linehaul = best "Linehaul" { … }`).
+//!
+//! While an option runs, the bill outside the choice waits on the interpreter's stack of outer
+//! bills, so `bill` reads it plus the option's own lines.
 
 use super::expr::internal;
 use super::{Env, Flow, Interp};
@@ -30,10 +34,20 @@ impl<'a> Interp<'_, 'a> {
         choose: &'a Choose,
         span: Span,
     ) -> Result<Flow, Stop> {
+        self.choice(env, choose, span).map(|_| Flow::Normal)
+    }
+
+    /// Runs a `best` or `worst`, bills the option it keeps and gives that option's subtotal.
+    pub(super) fn choice(
+        &mut self,
+        env: &mut Env,
+        choose: &'a Choose,
+        span: Span,
+    ) -> Result<Decimal, Stop> {
         let slot = self.choices.begin();
-        let outer = std::mem::take(&mut self.bill);
+        self.outer.push(std::mem::take(&mut self.bill));
         let ran = self.options(env, choose);
-        self.bill = outer;
+        self.bill = self.outer.pop().unwrap_or_default();
         let (records, mut bills) = ran?;
         let chosen = pick(choose.kind, &records);
         let record = ChoiceRecord {
@@ -43,10 +57,17 @@ impl<'a> Interp<'_, 'a> {
             chosen,
             options: records,
         };
+        let subtotal = chosen
+            .and_then(|index| record.options.get(index))
+            .and_then(|option| match option.outcome {
+                OptionOutcome::Billed(subtotal) => Some(subtotal),
+                OptionOutcome::Refused(_) => None,
+            });
         if self.traced(env) {
             self.trace.push(Event::Choice {
                 label: record.label.clone(),
                 chosen: record.chosen_label().map(str::to_owned),
+                subtotal,
                 span,
             });
         }
@@ -64,7 +85,7 @@ impl<'a> Interp<'_, 'a> {
         {
             Some(kept) => {
                 self.bill.splice(kept);
-                Ok(Flow::Normal)
+                Ok(subtotal.unwrap_or_default())
             }
             None => match first_refusal {
                 Some(refusal) => Err(Stop::Refused(refusal)),

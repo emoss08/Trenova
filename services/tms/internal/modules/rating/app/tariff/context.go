@@ -37,7 +37,7 @@ func (c *Contexts) Context(
 	if err != nil {
 		return nil, err
 	}
-	tables, err := c.tables.Shapes(ctx, req.TenantInfo, settings.DistanceUnit)
+	tables, err := c.tables.Shapes(ctx, req.TenantInfo, settings.DistanceUnit, req.Tables)
 	if err != nil {
 		return nil, err
 	}

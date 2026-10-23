@@ -50,33 +50,53 @@ var RateMatrixTable = buncolgen.TableInfo{
 //	q.Where(RateMatrixColumns.ID.Eq(), id)           // WHERE rmx.id = ?
 //	q.Order(RateMatrixColumns.CreatedAt.OrderDesc())  // ORDER BY rmx.created_at DESC
 var RateMatrixColumns = struct {
-	ID             buncolgen.Column // "id" → qualified: "rmx.id"
-	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "rmx.business_unit_id"
-	OrganizationID buncolgen.Column // "organization_id" → qualified: "rmx.organization_id"
-	Code           buncolgen.Column // "code" → qualified: "rmx.code"
-	Name           buncolgen.Column // "name" → qualified: "rmx.name"
-	Description    buncolgen.Column // "description" → qualified: "rmx.description"
-	ValueType      buncolgen.Column // "value_type" → qualified: "rmx.value_type"
-	Status         buncolgen.Column // "status" → qualified: "rmx.status"
-	Version        buncolgen.Column // "version" → qualified: "rmx.version"
-	CreatedAt      buncolgen.Column // "created_at" → qualified: "rmx.created_at"
-	UpdatedAt      buncolgen.Column // "updated_at" → qualified: "rmx.updated_at"
-	SearchVector   buncolgen.Column // "search_vector" → qualified: "rmx.search_vector"
-	Rank           buncolgen.Column // "rank" → qualified: "rmx.rank"
+	ID                     buncolgen.Column // "id" → qualified: "rmx.id"
+	BusinessUnitID         buncolgen.Column // "business_unit_id" → qualified: "rmx.business_unit_id"
+	OrganizationID         buncolgen.Column // "organization_id" → qualified: "rmx.organization_id"
+	Code                   buncolgen.Column // "code" → qualified: "rmx.code"
+	Name                   buncolgen.Column // "name" → qualified: "rmx.name"
+	Description            buncolgen.Column // "description" → qualified: "rmx.description"
+	ValueType              buncolgen.Column // "value_type" → qualified: "rmx.value_type"
+	Status                 buncolgen.Column // "status" → qualified: "rmx.status"
+	SubmittedByID          buncolgen.Column // "submitted_by_id" → qualified: "rmx.submitted_by_id"
+	SubmittedAt            buncolgen.Column // "submitted_at" → qualified: "rmx.submitted_at"
+	ApprovedByID           buncolgen.Column // "approved_by_id" → qualified: "rmx.approved_by_id"
+	ApprovedAt             buncolgen.Column // "approved_at" → qualified: "rmx.approved_at"
+	ReviewComment          buncolgen.Column // "review_comment" → qualified: "rmx.review_comment"
+	PublishedVersionNumber buncolgen.Column // "published_version_number" → qualified: "rmx.published_version_number"
+	PublishedAt            buncolgen.Column // "published_at" → qualified: "rmx.published_at"
+	HasDraftChanges        buncolgen.Column // "has_draft_changes" → qualified: "rmx.has_draft_changes"
+	DraftCellCount         buncolgen.Column // "draft_cell_count" → qualified: "rmx.draft_cell_count"
+	DraftEditorIDs         buncolgen.Column // "draft_editor_ids" → qualified: "rmx.draft_editor_ids"
+	Version                buncolgen.Column // "version" → qualified: "rmx.version"
+	CreatedAt              buncolgen.Column // "created_at" → qualified: "rmx.created_at"
+	UpdatedAt              buncolgen.Column // "updated_at" → qualified: "rmx.updated_at"
+	SearchVector           buncolgen.Column // "search_vector" → qualified: "rmx.search_vector"
+	Rank                   buncolgen.Column // "rank" → qualified: "rmx.rank"
 }{
-	ID:             buncolgen.NewColumn("id", "rmx"),
-	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "rmx"),
-	OrganizationID: buncolgen.NewColumn("organization_id", "rmx"),
-	Code:           buncolgen.NewColumn("code", "rmx"),
-	Name:           buncolgen.NewColumn("name", "rmx"),
-	Description:    buncolgen.NewColumn("description", "rmx"),
-	ValueType:      buncolgen.NewColumn("value_type", "rmx"),
-	Status:         buncolgen.NewColumn("status", "rmx"),
-	Version:        buncolgen.NewColumn("version", "rmx"),
-	CreatedAt:      buncolgen.NewColumn("created_at", "rmx"),
-	UpdatedAt:      buncolgen.NewColumn("updated_at", "rmx"),
-	SearchVector:   buncolgen.NewColumn("search_vector", "rmx"),
-	Rank:           buncolgen.NewColumn("rank", "rmx"),
+	ID:                     buncolgen.NewColumn("id", "rmx"),
+	BusinessUnitID:         buncolgen.NewColumn("business_unit_id", "rmx"),
+	OrganizationID:         buncolgen.NewColumn("organization_id", "rmx"),
+	Code:                   buncolgen.NewColumn("code", "rmx"),
+	Name:                   buncolgen.NewColumn("name", "rmx"),
+	Description:            buncolgen.NewColumn("description", "rmx"),
+	ValueType:              buncolgen.NewColumn("value_type", "rmx"),
+	Status:                 buncolgen.NewColumn("status", "rmx"),
+	SubmittedByID:          buncolgen.NewColumn("submitted_by_id", "rmx"),
+	SubmittedAt:            buncolgen.NewColumn("submitted_at", "rmx"),
+	ApprovedByID:           buncolgen.NewColumn("approved_by_id", "rmx"),
+	ApprovedAt:             buncolgen.NewColumn("approved_at", "rmx"),
+	ReviewComment:          buncolgen.NewColumn("review_comment", "rmx"),
+	PublishedVersionNumber: buncolgen.NewColumn("published_version_number", "rmx"),
+	PublishedAt:            buncolgen.NewColumn("published_at", "rmx"),
+	HasDraftChanges:        buncolgen.NewColumn("has_draft_changes", "rmx"),
+	DraftCellCount:         buncolgen.NewColumn("draft_cell_count", "rmx"),
+	DraftEditorIDs:         buncolgen.NewColumn("draft_editor_ids", "rmx"),
+	Version:                buncolgen.NewColumn("version", "rmx"),
+	CreatedAt:              buncolgen.NewColumn("created_at", "rmx"),
+	UpdatedAt:              buncolgen.NewColumn("updated_at", "rmx"),
+	SearchVector:           buncolgen.NewColumn("search_vector", "rmx"),
+	Rank:                   buncolgen.NewColumn("rank", "rmx"),
 }
 
 // RateMatrixFieldMap maps JSON API field names to database column names.
@@ -84,17 +104,27 @@ var RateMatrixColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by RateMatrix.GetStaticFieldMap().
 var RateMatrixFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"code":           "code",
-	"name":           "name",
-	"description":    "description",
-	"valueType":      "value_type",
-	"status":         "status",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"code":                   "code",
+	"name":                   "name",
+	"description":            "description",
+	"valueType":              "value_type",
+	"status":                 "status",
+	"submittedById":          "submitted_by_id",
+	"submittedAt":            "submitted_at",
+	"approvedById":           "approved_by_id",
+	"approvedAt":             "approved_at",
+	"reviewComment":          "review_comment",
+	"publishedVersionNumber": "published_version_number",
+	"publishedAt":            "published_at",
+	"hasDraftChanges":        "has_draft_changes",
+	"draftCellCount":         "draft_cell_count",
+	"draftEditorIds":         "draft_editor_ids",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // RateMatrixInsertableColumns lists column names suitable for INSERT statements on the "rate_matrices" table.
@@ -108,6 +138,16 @@ var RateMatrixInsertableColumns = []string{
 	"description",
 	"value_type",
 	"status",
+	"submitted_by_id",
+	"submitted_at",
+	"approved_by_id",
+	"approved_at",
+	"review_comment",
+	"published_version_number",
+	"published_at",
+	"has_draft_changes",
+	"draft_cell_count",
+	"draft_editor_ids",
 	"version",
 	"created_at",
 	"updated_at",
@@ -178,17 +218,27 @@ func RateMatrixApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun
 //	RateMatrixFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var RateMatrixFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Code           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
-	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	ValueType      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "valueType" → DB: "value_type"
-	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Code                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	ValueType              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "valueType" → DB: "value_type"
+	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	SubmittedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
+	SubmittedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedAt" → DB: "submitted_at"
+	ApprovedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
+	ApprovedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedAt" → DB: "approved_at"
+	ReviewComment          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewComment" → DB: "review_comment"
+	PublishedVersionNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "publishedVersionNumber" → DB: "published_version_number"
+	PublishedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "publishedAt" → DB: "published_at"
+	HasDraftChanges        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hasDraftChanges" → DB: "has_draft_changes"
+	DraftCellCount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "draftCellCount" → DB: "draft_cell_count"
+	DraftEditorIDs         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "draftEditorIds" → DB: "draft_editor_ids"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -213,6 +263,36 @@ var RateMatrixFilter = struct {
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("status", op, value)
+	},
+	SubmittedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("submittedById", op, value)
+	},
+	SubmittedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("submittedAt", op, value)
+	},
+	ApprovedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("approvedById", op, value)
+	},
+	ApprovedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("approvedAt", op, value)
+	},
+	ReviewComment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("reviewComment", op, value)
+	},
+	PublishedVersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("publishedVersionNumber", op, value)
+	},
+	PublishedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("publishedAt", op, value)
+	},
+	HasDraftChanges: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("hasDraftChanges", op, value)
+	},
+	DraftCellCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("draftCellCount", op, value)
+	},
+	DraftEditorIDs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("draftEditorIds", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)
@@ -255,10 +335,15 @@ var RateMatrixCellColumns = struct {
 	BusinessUnitID  buncolgen.Column // "business_unit_id" → qualified: "rmc.business_unit_id"
 	OrganizationID  buncolgen.Column // "organization_id" → qualified: "rmc.organization_id"
 	RateMatrixID    buncolgen.Column // "rate_matrix_id" → qualified: "rmc.rate_matrix_id"
+	VersionNumber   buncolgen.Column // "version_number" → qualified: "rmc.version_number"
 	D0Key           buncolgen.Column // "d0_key" → qualified: "rmc.d0_key"
 	D1Key           buncolgen.Column // "d1_key" → qualified: "rmc.d1_key"
 	D2Key           buncolgen.Column // "d2_key" → qualified: "rmc.d2_key"
 	D3Key           buncolgen.Column // "d3_key" → qualified: "rmc.d3_key"
+	D0KeyTo         buncolgen.Column // "d0_key_to" → qualified: "rmc.d0_key_to"
+	D1KeyTo         buncolgen.Column // "d1_key_to" → qualified: "rmc.d1_key_to"
+	D2KeyTo         buncolgen.Column // "d2_key_to" → qualified: "rmc.d2_key_to"
+	D3KeyTo         buncolgen.Column // "d3_key_to" → qualified: "rmc.d3_key_to"
 	D0Min           buncolgen.Column // "d0_min" → qualified: "rmc.d0_min"
 	D0Max           buncolgen.Column // "d0_max" → qualified: "rmc.d0_max"
 	D1Min           buncolgen.Column // "d1_min" → qualified: "rmc.d1_min"
@@ -277,10 +362,15 @@ var RateMatrixCellColumns = struct {
 	BusinessUnitID:  buncolgen.NewColumn("business_unit_id", "rmc"),
 	OrganizationID:  buncolgen.NewColumn("organization_id", "rmc"),
 	RateMatrixID:    buncolgen.NewColumn("rate_matrix_id", "rmc"),
+	VersionNumber:   buncolgen.NewColumn("version_number", "rmc"),
 	D0Key:           buncolgen.NewColumn("d0_key", "rmc"),
 	D1Key:           buncolgen.NewColumn("d1_key", "rmc"),
 	D2Key:           buncolgen.NewColumn("d2_key", "rmc"),
 	D3Key:           buncolgen.NewColumn("d3_key", "rmc"),
+	D0KeyTo:         buncolgen.NewColumn("d0_key_to", "rmc"),
+	D1KeyTo:         buncolgen.NewColumn("d1_key_to", "rmc"),
+	D2KeyTo:         buncolgen.NewColumn("d2_key_to", "rmc"),
+	D3KeyTo:         buncolgen.NewColumn("d3_key_to", "rmc"),
 	D0Min:           buncolgen.NewColumn("d0_min", "rmc"),
 	D0Max:           buncolgen.NewColumn("d0_max", "rmc"),
 	D1Min:           buncolgen.NewColumn("d1_min", "rmc"),
@@ -305,10 +395,15 @@ var RateMatrixCellFieldMap = map[string]string{
 	"businessUnitId":  "business_unit_id",
 	"organizationId":  "organization_id",
 	"rateMatrixId":    "rate_matrix_id",
+	"versionNumber":   "version_number",
 	"d0Key":           "d0_key",
 	"d1Key":           "d1_key",
 	"d2Key":           "d2_key",
 	"d3Key":           "d3_key",
+	"d0KeyTo":         "d0_key_to",
+	"d1KeyTo":         "d1_key_to",
+	"d2KeyTo":         "d2_key_to",
+	"d3KeyTo":         "d3_key_to",
 	"d0Min":           "d0_min",
 	"d0Max":           "d0_max",
 	"d1Min":           "d1_min",
@@ -331,10 +426,15 @@ var RateMatrixCellInsertableColumns = []string{
 	"business_unit_id",
 	"organization_id",
 	"rate_matrix_id",
+	"version_number",
 	"d0_key",
 	"d1_key",
 	"d2_key",
 	"d3_key",
+	"d0_key_to",
+	"d1_key_to",
+	"d2_key_to",
+	"d3_key_to",
 	"d0_min",
 	"d0_max",
 	"d1_min",
@@ -415,10 +515,15 @@ var RateMatrixCellFilter = struct {
 	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	RateMatrixID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMatrixId" → DB: "rate_matrix_id"
+	VersionNumber   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
 	D0Key           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d0Key" → DB: "d0_key"
 	D1Key           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d1Key" → DB: "d1_key"
 	D2Key           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d2Key" → DB: "d2_key"
 	D3Key           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d3Key" → DB: "d3_key"
+	D0KeyTo         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d0KeyTo" → DB: "d0_key_to"
+	D1KeyTo         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d1KeyTo" → DB: "d1_key_to"
+	D2KeyTo         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d2KeyTo" → DB: "d2_key_to"
+	D3KeyTo         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d3KeyTo" → DB: "d3_key_to"
 	D0Min           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d0Min" → DB: "d0_min"
 	D0Max           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d0Max" → DB: "d0_max"
 	D1Min           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "d1Min" → DB: "d1_min"
@@ -445,6 +550,9 @@ var RateMatrixCellFilter = struct {
 	RateMatrixID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("rateMatrixId", op, value)
 	},
+	VersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("versionNumber", op, value)
+	},
 	D0Key: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("d0Key", op, value)
 	},
@@ -456,6 +564,18 @@ var RateMatrixCellFilter = struct {
 	},
 	D3Key: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("d3Key", op, value)
+	},
+	D0KeyTo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("d0KeyTo", op, value)
+	},
+	D1KeyTo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("d1KeyTo", op, value)
+	},
+	D2KeyTo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("d2KeyTo", op, value)
+	},
+	D3KeyTo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("d3KeyTo", op, value)
 	},
 	D0Min: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("d0Min", op, value)
@@ -528,6 +648,7 @@ var RateMatrixDimensionColumns = struct {
 	BusinessUnitID   buncolgen.Column // "business_unit_id" → qualified: "rmd.business_unit_id"
 	OrganizationID   buncolgen.Column // "organization_id" → qualified: "rmd.organization_id"
 	RateMatrixID     buncolgen.Column // "rate_matrix_id" → qualified: "rmd.rate_matrix_id"
+	VersionNumber    buncolgen.Column // "version_number" → qualified: "rmd.version_number"
 	Position         buncolgen.Column // "position" → qualified: "rmd.position"
 	Kind             buncolgen.Column // "kind" → qualified: "rmd.kind"
 	MatchMode        buncolgen.Column // "match_mode" → qualified: "rmd.match_mode"
@@ -541,6 +662,7 @@ var RateMatrixDimensionColumns = struct {
 	BusinessUnitID:   buncolgen.NewColumn("business_unit_id", "rmd"),
 	OrganizationID:   buncolgen.NewColumn("organization_id", "rmd"),
 	RateMatrixID:     buncolgen.NewColumn("rate_matrix_id", "rmd"),
+	VersionNumber:    buncolgen.NewColumn("version_number", "rmd"),
 	Position:         buncolgen.NewColumn("position", "rmd"),
 	Kind:             buncolgen.NewColumn("kind", "rmd"),
 	MatchMode:        buncolgen.NewColumn("match_mode", "rmd"),
@@ -560,6 +682,7 @@ var RateMatrixDimensionFieldMap = map[string]string{
 	"businessUnitId":   "business_unit_id",
 	"organizationId":   "organization_id",
 	"rateMatrixId":     "rate_matrix_id",
+	"versionNumber":    "version_number",
 	"position":         "position",
 	"kind":             "kind",
 	"matchMode":        "match_mode",
@@ -577,6 +700,7 @@ var RateMatrixDimensionInsertableColumns = []string{
 	"business_unit_id",
 	"organization_id",
 	"rate_matrix_id",
+	"version_number",
 	"position",
 	"kind",
 	"match_mode",
@@ -652,6 +776,7 @@ var RateMatrixDimensionFilter = struct {
 	BusinessUnitID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	OrganizationID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	RateMatrixID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMatrixId" → DB: "rate_matrix_id"
+	VersionNumber    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
 	Position         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "position" → DB: "position"
 	Kind             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
 	MatchMode        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchMode" → DB: "match_mode"
@@ -672,6 +797,9 @@ var RateMatrixDimensionFilter = struct {
 	},
 	RateMatrixID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("rateMatrixId", op, value)
+	},
+	VersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("versionNumber", op, value)
 	},
 	Position: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("position", op, value)
@@ -696,5 +824,425 @@ var RateMatrixDimensionFilter = struct {
 	},
 	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// RateMatrixReview — table "rate_matrix_reviews", alias "rmr"
+// ---------------------------------------------------------------------------
+
+// RateMatrixReviewTable holds the table name, alias, and primary key columns
+// for the "rate_matrix_reviews" table. The alias "rmr" is used in all generated
+// SQL fragments (e.g. "rmr.id = ?").
+var RateMatrixReviewTable = buncolgen.TableInfo{
+	Name:       "rate_matrix_reviews",
+	Alias:      "rmr",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// RateMatrixReviewColumns provides type-safe column references for the "rate_matrix_reviews" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(RateMatrixReviewColumns.ID.String())
+//	// SELECT rmr.id FROM rate_matrix_reviews AS rmr
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(RateMatrixReviewColumns.ID.Eq(), id)           // WHERE rmr.id = ?
+//	q.Order(RateMatrixReviewColumns.CreatedAt.OrderDesc())  // ORDER BY rmr.created_at DESC
+var RateMatrixReviewColumns = struct {
+	ID                  buncolgen.Column // "id" → qualified: "rmr.id"
+	OrganizationID      buncolgen.Column // "organization_id" → qualified: "rmr.organization_id"
+	BusinessUnitID      buncolgen.Column // "business_unit_id" → qualified: "rmr.business_unit_id"
+	RateMatrixID        buncolgen.Column // "rate_matrix_id" → qualified: "rmr.rate_matrix_id"
+	Round               buncolgen.Column // "round" → qualified: "rmr.round"
+	Decision            buncolgen.Column // "decision" → qualified: "rmr.decision"
+	ActorID             buncolgen.Column // "actor_id" → qualified: "rmr.actor_id"
+	Comment             buncolgen.Column // "comment" → qualified: "rmr.comment"
+	BaseVersionNumber   buncolgen.Column // "base_version_number" → qualified: "rmr.base_version_number"
+	RequestedReviewerID buncolgen.Column // "requested_reviewer_id" → qualified: "rmr.requested_reviewer_id"
+	ReviewerNote        buncolgen.Column // "reviewer_note" → qualified: "rmr.reviewer_note"
+	CreatedAt           buncolgen.Column // "created_at" → qualified: "rmr.created_at"
+}{
+	ID:                  buncolgen.NewColumn("id", "rmr"),
+	OrganizationID:      buncolgen.NewColumn("organization_id", "rmr"),
+	BusinessUnitID:      buncolgen.NewColumn("business_unit_id", "rmr"),
+	RateMatrixID:        buncolgen.NewColumn("rate_matrix_id", "rmr"),
+	Round:               buncolgen.NewColumn("round", "rmr"),
+	Decision:            buncolgen.NewColumn("decision", "rmr"),
+	ActorID:             buncolgen.NewColumn("actor_id", "rmr"),
+	Comment:             buncolgen.NewColumn("comment", "rmr"),
+	BaseVersionNumber:   buncolgen.NewColumn("base_version_number", "rmr"),
+	RequestedReviewerID: buncolgen.NewColumn("requested_reviewer_id", "rmr"),
+	ReviewerNote:        buncolgen.NewColumn("reviewer_note", "rmr"),
+	CreatedAt:           buncolgen.NewColumn("created_at", "rmr"),
+}
+
+// RateMatrixReviewFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by RateMatrixReview.GetStaticFieldMap().
+var RateMatrixReviewFieldMap = map[string]string{
+	"id":                  "id",
+	"organizationId":      "organization_id",
+	"businessUnitId":      "business_unit_id",
+	"rateMatrixId":        "rate_matrix_id",
+	"round":               "round",
+	"decision":            "decision",
+	"actorId":             "actor_id",
+	"comment":             "comment",
+	"baseVersionNumber":   "base_version_number",
+	"requestedReviewerId": "requested_reviewer_id",
+	"reviewerNote":        "reviewer_note",
+	"createdAt":           "created_at",
+}
+
+// RateMatrixReviewInsertableColumns lists column names suitable for INSERT statements on the "rate_matrix_reviews" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var RateMatrixReviewInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"rate_matrix_id",
+	"round",
+	"decision",
+	"actor_id",
+	"comment",
+	"base_version_number",
+	"requested_reviewer_id",
+	"reviewer_note",
+	"created_at",
+}
+
+// RateMatrixReviewRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(RateMatrixReviewRelations.Actor)
+//	// Bun eager-loads the Actor association via a separate query
+var RateMatrixReviewRelations = struct {
+	Actor             string
+	RequestedReviewer string
+}{
+	Actor:             "Actor",
+	RequestedReviewer: "RequestedReviewer",
+}
+
+// RateMatrixReviewScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE rmr.organization_id = ? AND rmr.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	ratematrixcol.RateMatrixReviewScopeTenant(sq, ti).
+//		Where(ratematrixcol.RateMatrixReviewColumns.ID.Eq(), id)
+func RateMatrixReviewScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, RateMatrixReviewColumns.OrganizationID, RateMatrixReviewColumns.BusinessUnitID, ti)
+}
+
+// RateMatrixReviewScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return ratematrixcol.RateMatrixReviewScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(ratematrixcol.RateMatrixReviewColumns.ID.In(), bun.List(ids))
+//	})
+func RateMatrixReviewScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, RateMatrixReviewColumns.OrganizationID, RateMatrixReviewColumns.BusinessUnitID, ti)
+}
+
+// RateMatrixReviewScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return ratematrixcol.RateMatrixReviewScopeTenantDelete(dq, req.TenantInfo).
+//			Where(ratematrixcol.RateMatrixReviewColumns.ID.Eq(), id)
+//	})
+func RateMatrixReviewScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, RateMatrixReviewColumns.OrganizationID, RateMatrixReviewColumns.BusinessUnitID, ti)
+}
+
+// RateMatrixReviewApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(ratematrixcol.RateMatrixReviewApplyTenant(tenantInfo))
+func RateMatrixReviewApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(RateMatrixReviewColumns.OrganizationID, RateMatrixReviewColumns.BusinessUnitID, ti)
+}
+
+// RateMatrixReviewFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "rate_matrix_reviews" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	RateMatrixReviewFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var RateMatrixReviewFilter = struct {
+	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	RateMatrixID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMatrixId" → DB: "rate_matrix_id"
+	Round               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "round" → DB: "round"
+	Decision            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decision" → DB: "decision"
+	ActorID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actorId" → DB: "actor_id"
+	Comment             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
+	BaseVersionNumber   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baseVersionNumber" → DB: "base_version_number"
+	RequestedReviewerID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedReviewerId" → DB: "requested_reviewer_id"
+	ReviewerNote        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewerNote" → DB: "reviewer_note"
+	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	RateMatrixID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("rateMatrixId", op, value)
+	},
+	Round: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("round", op, value)
+	},
+	Decision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("decision", op, value)
+	},
+	ActorID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("actorId", op, value)
+	},
+	Comment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("comment", op, value)
+	},
+	BaseVersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("baseVersionNumber", op, value)
+	},
+	RequestedReviewerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("requestedReviewerId", op, value)
+	},
+	ReviewerNote: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("reviewerNote", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// RateMatrixVersion — table "rate_matrix_versions", alias "rmv"
+// ---------------------------------------------------------------------------
+
+// RateMatrixVersionTable holds the table name, alias, and primary key columns
+// for the "rate_matrix_versions" table. The alias "rmv" is used in all generated
+// SQL fragments (e.g. "rmv.id = ?").
+var RateMatrixVersionTable = buncolgen.TableInfo{
+	Name:       "rate_matrix_versions",
+	Alias:      "rmv",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// RateMatrixVersionColumns provides type-safe column references for the "rate_matrix_versions" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(RateMatrixVersionColumns.ID.String())
+//	// SELECT rmv.id FROM rate_matrix_versions AS rmv
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(RateMatrixVersionColumns.ID.Eq(), id)           // WHERE rmv.id = ?
+//	q.Order(RateMatrixVersionColumns.CreatedAt.OrderDesc())  // ORDER BY rmv.created_at DESC
+var RateMatrixVersionColumns = struct {
+	ID             buncolgen.Column // "id" → qualified: "rmv.id"
+	OrganizationID buncolgen.Column // "organization_id" → qualified: "rmv.organization_id"
+	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "rmv.business_unit_id"
+	RateMatrixID   buncolgen.Column // "rate_matrix_id" → qualified: "rmv.rate_matrix_id"
+	VersionNumber  buncolgen.Column // "version_number" → qualified: "rmv.version_number"
+	Code           buncolgen.Column // "code" → qualified: "rmv.code"
+	Name           buncolgen.Column // "name" → qualified: "rmv.name"
+	Description    buncolgen.Column // "description" → qualified: "rmv.description"
+	ValueType      buncolgen.Column // "value_type" → qualified: "rmv.value_type"
+	CellCount      buncolgen.Column // "cell_count" → qualified: "rmv.cell_count"
+	ChangeMessage  buncolgen.Column // "change_message" → qualified: "rmv.change_message"
+	SubmittedByID  buncolgen.Column // "submitted_by_id" → qualified: "rmv.submitted_by_id"
+	PublishedByID  buncolgen.Column // "published_by_id" → qualified: "rmv.published_by_id"
+	CreatedAt      buncolgen.Column // "created_at" → qualified: "rmv.created_at"
+}{
+	ID:             buncolgen.NewColumn("id", "rmv"),
+	OrganizationID: buncolgen.NewColumn("organization_id", "rmv"),
+	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "rmv"),
+	RateMatrixID:   buncolgen.NewColumn("rate_matrix_id", "rmv"),
+	VersionNumber:  buncolgen.NewColumn("version_number", "rmv"),
+	Code:           buncolgen.NewColumn("code", "rmv"),
+	Name:           buncolgen.NewColumn("name", "rmv"),
+	Description:    buncolgen.NewColumn("description", "rmv"),
+	ValueType:      buncolgen.NewColumn("value_type", "rmv"),
+	CellCount:      buncolgen.NewColumn("cell_count", "rmv"),
+	ChangeMessage:  buncolgen.NewColumn("change_message", "rmv"),
+	SubmittedByID:  buncolgen.NewColumn("submitted_by_id", "rmv"),
+	PublishedByID:  buncolgen.NewColumn("published_by_id", "rmv"),
+	CreatedAt:      buncolgen.NewColumn("created_at", "rmv"),
+}
+
+// RateMatrixVersionFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by RateMatrixVersion.GetStaticFieldMap().
+var RateMatrixVersionFieldMap = map[string]string{
+	"id":             "id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"rateMatrixId":   "rate_matrix_id",
+	"versionNumber":  "version_number",
+	"code":           "code",
+	"name":           "name",
+	"description":    "description",
+	"valueType":      "value_type",
+	"cellCount":      "cell_count",
+	"changeMessage":  "change_message",
+	"submittedById":  "submitted_by_id",
+	"publishedById":  "published_by_id",
+	"createdAt":      "created_at",
+}
+
+// RateMatrixVersionInsertableColumns lists column names suitable for INSERT statements on the "rate_matrix_versions" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var RateMatrixVersionInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"rate_matrix_id",
+	"version_number",
+	"code",
+	"name",
+	"description",
+	"value_type",
+	"cell_count",
+	"change_message",
+	"submitted_by_id",
+	"published_by_id",
+	"created_at",
+}
+
+// RateMatrixVersionRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(RateMatrixVersionRelations.PublishedBy)
+//	// Bun eager-loads the PublishedBy association via a separate query
+var RateMatrixVersionRelations = struct {
+	PublishedBy string
+}{
+	PublishedBy: "PublishedBy",
+}
+
+// RateMatrixVersionScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE rmv.organization_id = ? AND rmv.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	ratematrixcol.RateMatrixVersionScopeTenant(sq, ti).
+//		Where(ratematrixcol.RateMatrixVersionColumns.ID.Eq(), id)
+func RateMatrixVersionScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, RateMatrixVersionColumns.OrganizationID, RateMatrixVersionColumns.BusinessUnitID, ti)
+}
+
+// RateMatrixVersionScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return ratematrixcol.RateMatrixVersionScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(ratematrixcol.RateMatrixVersionColumns.ID.In(), bun.List(ids))
+//	})
+func RateMatrixVersionScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, RateMatrixVersionColumns.OrganizationID, RateMatrixVersionColumns.BusinessUnitID, ti)
+}
+
+// RateMatrixVersionScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return ratematrixcol.RateMatrixVersionScopeTenantDelete(dq, req.TenantInfo).
+//			Where(ratematrixcol.RateMatrixVersionColumns.ID.Eq(), id)
+//	})
+func RateMatrixVersionScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, RateMatrixVersionColumns.OrganizationID, RateMatrixVersionColumns.BusinessUnitID, ti)
+}
+
+// RateMatrixVersionApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(ratematrixcol.RateMatrixVersionApplyTenant(tenantInfo))
+func RateMatrixVersionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(RateMatrixVersionColumns.OrganizationID, RateMatrixVersionColumns.BusinessUnitID, ti)
+}
+
+// RateMatrixVersionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "rate_matrix_versions" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	RateMatrixVersionFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var RateMatrixVersionFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	RateMatrixID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMatrixId" → DB: "rate_matrix_id"
+	VersionNumber  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
+	Code           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	ValueType      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "valueType" → DB: "value_type"
+	CellCount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cellCount" → DB: "cell_count"
+	ChangeMessage  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeMessage" → DB: "change_message"
+	SubmittedByID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
+	PublishedByID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "publishedById" → DB: "published_by_id"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	RateMatrixID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("rateMatrixId", op, value)
+	},
+	VersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("versionNumber", op, value)
+	},
+	Code: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("code", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("name", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("description", op, value)
+	},
+	ValueType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("valueType", op, value)
+	},
+	CellCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("cellCount", op, value)
+	},
+	ChangeMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("changeMessage", op, value)
+	},
+	SubmittedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("submittedById", op, value)
+	},
+	PublishedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("publishedById", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
 	},
 }

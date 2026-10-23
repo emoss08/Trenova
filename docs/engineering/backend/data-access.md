@@ -44,6 +44,11 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
 - **Select options** use `dbhelper.SelectOptions`.
 - **Bulk writes** are one statement (`Set(...).Where(cols.ID.In(), ...)`) checked with
   `dberror.CheckBulkRowsAffected`, never a loop of single updates.
+- **Versioned child sets** (a published version's rows copied from a draft) are copied in one
+  `INSERT … SELECT` built from the generated `…InsertableColumns`, with new ids made in SQL
+  (`ratematrixrepository.CopyVersion`), never read into Go and written back. Rows of an
+  immutable version are keyed by `(parent, version_number)`, and a cache of them needs no
+  invalidation (`pkg/ratetablecache`).
 
 ## Concurrency
 

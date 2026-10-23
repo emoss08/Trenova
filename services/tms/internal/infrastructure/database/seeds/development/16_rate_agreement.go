@@ -383,18 +383,9 @@ func (s *RateAgreementSeed) createMatrix(
 		Code:           rateMatrixCode,
 		Name:           "Zone to Zone Truckload",
 		Description:    "Per-mile linehaul by origin region and destination region",
-		Status:         domaintypes.StatusActive,
 		ValueType:      ratematrix.ValueTypeMoney + "/mi",
 		CreatedAt:      refs.now,
 		UpdatedAt:      refs.now,
-	}
-
-	if _, err := tx.NewInsert().Model(matrix).Exec(ctx); err != nil {
-		return fmt.Errorf("insert rate matrix: %w", err)
-	}
-
-	if err := sc.TrackCreated(ctx, "rate_matrices", matrix.ID, s.Name()); err != nil {
-		return fmt.Errorf("track rate matrix: %w", err)
 	}
 
 	refs.matrixID = matrix.ID
@@ -426,10 +417,6 @@ func (s *RateAgreementSeed) createMatrix(
 		},
 	}
 
-	if _, err := tx.NewInsert().Model(&dimensions).Exec(ctx); err != nil {
-		return fmt.Errorf("insert rate matrix dimensions: %w", err)
-	}
-
 	defs := zoneMatrixCells()
 	cells := make([]*ratematrix.RateMatrixCell, 0, len(defs))
 
@@ -454,8 +441,16 @@ func (s *RateAgreementSeed) createMatrix(
 		})
 	}
 
-	if _, err := tx.NewInsert().Model(&cells).Exec(ctx); err != nil {
-		return fmt.Errorf("insert rate matrix cells: %w", err)
+	if err := insertPublishedMatrix(ctx, tx, &seededMatrix{
+		matrix:     matrix,
+		dimensions: dimensions,
+		cells:      cells,
+	}); err != nil {
+		return err
+	}
+
+	if err := sc.TrackCreated(ctx, "rate_matrices", matrix.ID, s.Name()); err != nil {
+		return fmt.Errorf("track rate matrix: %w", err)
 	}
 
 	sc.Logger().Info("Created rate matrix %s with %d cells", rateMatrixCode, len(cells))
