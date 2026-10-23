@@ -6,10 +6,13 @@
 //! that module's source. Names resolve through the checker's references (an imported name goes
 //! to the library that declares it, a module alias to its `use`); fields of declared record
 //! types, variants of declared enums, type names in annotations, named arguments and `use`
-//! paths resolve through the program's declarations. The schema's roots, fields and enums have
-//! no source, so they have no target.
+//! paths resolve through the program's declarations; a property's `vary` name goes to its
+//! `vary`, and a test's `chosen("…")` to the `best` or `worst` with that label. The schema's
+//! roots, fields and enums have no source, so they have no target.
 
+use super::choices::{choice_named, chosen_at};
 use super::cursor::{Node, Scopes, locate, token_at};
+use super::occurrences::{input_target_at, local_at, split_qualified};
 use super::session::Session;
 use crate::span::Span;
 use crate::tariff::check::describe::snippet;
@@ -40,6 +43,13 @@ pub fn definition(session: &Session<'_>, offset: u32) -> Vec<Target> {
     let Some(token) = file.tokens.get(index) else {
         return Vec::new();
     };
+    if token.kind == TokenKind::Text {
+        let scopes = Scopes::of(session.source(), file);
+        session.tick(scopes.exprs.len());
+        return chosen_choice(session, &scopes, offset)
+            .into_iter()
+            .collect();
+    }
     if !super::cursor::is_word(token.kind) || token.kind == TokenKind::Unit {
         return Vec::new();
     }
@@ -47,7 +57,10 @@ pub fn definition(session: &Session<'_>, offset: u32) -> Vec<Target> {
     if let Some(target) = module_path(session, span) {
         return vec![target];
     }
-    if let Some((_, id)) = session.symbol_at(offset) {
+    if let Some((_, id)) = session
+        .symbol_at(offset)
+        .or_else(|| input_target_at(session, span).map(|id| (span, id)))
+    {
         let Some(symbol) = session.symbol(id) else {
             return Vec::new();
         };
@@ -61,6 +74,14 @@ pub fn definition(session: &Session<'_>, offset: u32) -> Vec<Target> {
     }
     let scopes = Scopes::of(session.source(), file);
     session.tick(scopes.exprs.len());
+    if let Some(local) = local_at(session, &scopes, span) {
+        let declared = session
+            .declared_at(ModuleId::ROOT, local.span)
+            .and_then(|id| session.symbol(id))
+            .and_then(|symbol| Some((symbol.module?, symbol.span?)));
+        let (module, name) = declared.unwrap_or((ModuleId::ROOT, local.span));
+        return vec![declaration(session, module, name)];
+    }
     member(session, &scopes, span)
         .or_else(|| variant(session, &scopes, span))
         .or_else(|| argument(session, &scopes, span))
@@ -115,17 +136,22 @@ fn declares(stmt: &crate::tariff::syntax::ast::Stmt, name: Span) -> bool {
         StmtKind::If(statement) => statement.branches.iter().any(|(condition, _)| {
             matches!(condition, crate::tariff::syntax::ast::Condition::Let { name: bound, .. } if bound.span == name)
         }),
+        StmtKind::Vary { target, .. } => {
+            super::cursor::vary_name(target).is_some_and(|bound| bound.span == name)
+        }
         _ => false,
     }
 }
 
-/// The module a declared type's qualified name (`org.fees.Break`, `Break`) is in, and the
-/// name there.
-fn split_qualified<'n>(session: &Session<'_>, qualified: &'n str) -> Option<(ModuleId, &'n str)> {
-    match qualified.rsplit_once('.') {
-        Some((path, name)) => Some((session.program.module_named(path)?.id, name)),
-        None => Some((ModuleId::ROOT, qualified)),
-    }
+/// The choice a test's `chosen("…")` names: the whole `best` or `worst`, its label selected.
+fn chosen_choice(session: &Session<'_>, scopes: &Scopes<'_>, offset: u32) -> Option<Target> {
+    let (_, label) = chosen_at(session, scopes, offset)?;
+    let choose = choice_named(session.file(), &label)?;
+    Some(Target {
+        module: ModuleId::ROOT,
+        range: choose.span,
+        selection: choose.label.span,
+    })
 }
 
 /// A field of a declared record type, read with `.`.

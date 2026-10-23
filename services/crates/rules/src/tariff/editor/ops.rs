@@ -10,7 +10,9 @@
 //!   "kind", "detail", "doc", "insert", "snippet", "sort", "range"?}]}`, the items in `sort`
 //!   order; `snippet` inserts use `${1:placeholder}` tab stops and `$0` for the final cursor.
 //! - `tariff.hover` `{source, context, offset, values?}` → `null`, or `{"range", "contents":
-//!   {"signature", "type", "unit", "doc", "value"?: {"value", "display", "times"}}}`.
+//!   {"signature", "type", "unit", "doc", "value"?: {"value", "display", "times"},
+//!   "constraint"?: Message}}`; `constraint` is an input's `where` clause in words (`from
+//!   $0.50/mi to $15/mi`).
 //! - `tariff.signature` `{source, context, offset}` → `{"signatures": [{"label", "doc",
 //!   "parameters": [{"label": [from, to], "doc"}]}], "active": 0 | null, "activeParameter": n |
 //!   null}`.
@@ -189,6 +191,9 @@ pub fn hover(input: &RawValue) -> OpResult {
     });
     if let (Some(value), Some(object)) = (found.value, contents.as_object_mut()) {
         object.insert(String::from("value"), value);
+    }
+    if let (Some(constraint), Some(object)) = (found.constraint, contents.as_object_mut()) {
+        object.insert(String::from("constraint"), json!(constraint));
     }
     encode(&json!({ "range": range(index, found.range), "contents": contents }))
 }

@@ -364,6 +364,58 @@
      }
     ]
    }
+  },
+  {
+   "name": "new syntax: a vary name's type",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary w in 1 lb..40_000 lb",
+    "  expect total >= $1/lb * w",
+    "}"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "type",
+      "label": ": Weight",
+      "line": "  vary w⟨: Weight⟩ in 1 lb..40_000 lb"
+     }
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a vary name over a list",
+   "source": [
+    "tariff \"t\"",
+    "enum Service { Standard, Guaranteed }",
+    "property \"p\" {",
+    "  vary service in [Standard, Guaranteed]",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "type",
+      "label": ": Service",
+      "line": "  vary service⟨: Service⟩ in [Standard, Guaranteed]"
+     }
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a vary of a record path has no hint",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "hints": []
+   }
   }
  ]
 }

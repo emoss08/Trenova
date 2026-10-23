@@ -8,11 +8,13 @@ use crate::message::{Arg, Message};
 use crate::tariff::check::describe::{base_noun, snippet, unit_noun};
 use crate::tariff::check::methods::Method;
 use crate::tariff::check::{SymbolId, SymbolKind};
+use crate::tariff::constraint::Constraint;
 use crate::tariff::docs::Doc;
 use crate::tariff::syntax::ast::{FnDecl, Item, ItemKind};
 use crate::tariff::syntax::program::{Decl, ModuleId};
 use crate::tariff::types::Type;
 use crate::tariff::units::{Base, Simple};
+use crate::tariff::wire::decode;
 
 /// The most fields an inline record type shows before `…`.
 const SHOWN_FIELDS: usize = 4;
@@ -230,19 +232,22 @@ fn declaration(session: &Session<'_>, id: SymbolId) -> Option<String> {
                 function_signature(session, module, decl).label
             )
         }
-        ItemKind::Input(input) => match &input.default {
-            Some(default) => format!(
-                "input {}: {} = {}",
-                input.name.text,
-                flat(snippet(source, input.ty.span)),
-                flat(snippet(source, default.span))
-            ),
-            None => format!(
+        ItemKind::Input(input) => {
+            let mut text = format!(
                 "input {}: {}",
                 input.name.text,
                 flat(snippet(source, input.ty.span))
-            ),
-        },
+            );
+            if let Some(default) = &input.default {
+                text.push_str(" = ");
+                text.push_str(&flat(snippet(source, default.span)));
+            }
+            if let Some(constraint) = &input.constraint {
+                text.push_str(" where ");
+                text.push_str(&flat(snippet(source, constraint.span)));
+            }
+            text
+        }
         ItemKind::Const(constant) => {
             let ty = match (&constant.ty, &symbol.ty) {
                 (Some(ty), _) => flat(snippet(source, ty.span)),
@@ -290,6 +295,58 @@ fn declaration(session: &Session<'_>, id: SymbolId) -> Option<String> {
         ItemKind::Use(_) | ItemKind::Stmt(_) => return None,
     };
     Some(text)
+}
+
+/// The values an input's folded `where` constraint accepts, in the words the contract-value
+/// findings use ([`crate::tariff::constraint::message`]), each value written as interpolation
+/// writes it: `from $0.50/mi to $15.00/mi`, `at least 1 and below 10`, `at least $1.00`,
+/// `at most $10.00`, `below 5`, `one of [Standard, Guaranteed]`. `ty` is the input's type.
+#[must_use]
+pub fn constraint_doc(constraint: &Constraint, ty: &Type) -> Message {
+    let item = constraint_item(ty);
+    let shown = |json: &serde_json::Value| {
+        decode(json, &item, "").map_or_else(|_| json.to_string(), |value| value.display())
+    };
+    match constraint {
+        Constraint::Range {
+            min,
+            max,
+            max_inclusive,
+        } => {
+            let low = min.as_ref().map(|json| Arg::from(shown(json)));
+            let high = max.as_ref().map(|json| Arg::from(shown(json)));
+            match (low, high) {
+                (Some(low), Some(high)) if *max_inclusive => {
+                    Message::with(message!("from {0} to {1}"), [low, high])
+                }
+                (Some(low), Some(high)) => {
+                    Message::with(message!("at least {0} and below {1}"), [low, high])
+                }
+                (Some(low), None) => Message::with(message!("at least {0}"), [low]),
+                (None, Some(high)) if *max_inclusive => {
+                    Message::with(message!("at most {0}"), [high])
+                }
+                (None, Some(high)) => Message::with(message!("below {0}"), [high]),
+                (None, None) => Message::new(message!("any value")),
+            }
+        }
+        Constraint::OneOf(values) => {
+            let listed: Vec<String> = values.iter().map(shown).collect();
+            Message::with(
+                message!("one of {0}"),
+                [Arg::from(format!("[{}]", listed.join(", ")))],
+            )
+        }
+    }
+}
+
+/// The type a constraint's values have: an item's for a list input, the inner type for an
+/// optional one.
+fn constraint_item(ty: &Type) -> Type {
+    match ty {
+        Type::List(item) | Type::Optional(item) => constraint_item(item),
+        other => other.clone(),
+    }
 }
 
 /// The doc comment of a function's declaration, translated when the module is the standard
@@ -510,11 +567,15 @@ pub const KEYWORD_DOCS: &[(&str, &str)] = &[
     ),
     (
         "in",
-        message!("Tests membership in a list or range, and names the list a `for` walks."),
+        message!(
+            "Tests membership in a list or range, names the list a `for` walks, and gives the values a `vary` takes or the target a monotone `expect` follows."
+        ),
     ),
     (
         "where",
-        message!("Keeps only the items a condition holds for."),
+        message!(
+            "Keeps only the items a condition holds for; after an input, bounds the values a contract may set: `where $0.50/mi..=$15/mi` or `where [Standard, Guaranteed]`."
+        ),
     ),
     ("break", message!("Leaves the innermost `for` loop.")),
     (
@@ -577,12 +638,64 @@ pub const KEYWORD_DOCS: &[(&str, &str)] = &[
         message!("Declares a test, run against the sample record on every change."),
     ),
     (
+        "property",
+        message!(
+            "Declares a property: a rule checked over many shipments, the cases chosen from the `vary` ranges, run on every change like a test."
+        ),
+    ),
+    (
+        "vary",
+        message!(
+            "Makes a field, an input or a new name take many values in a property: `vary shipment.weight in 1 lb..40_000 lb`."
+        ),
+    ),
+    (
+        "assume",
+        message!(
+            "Skips the cases of a property where a condition is false; it is read before the tariff runs, so it can't read the bill."
+        ),
+    ),
+    (
+        "nondecreasing",
+        message!(
+            "In a property, `expect value nondecreasing in target`: the value never falls as the varied target grows."
+        ),
+    ),
+    (
+        "nonincreasing",
+        message!(
+            "In a property, `expect value nonincreasing in target`: the value never rises as the varied target grows."
+        ),
+    ),
+    (
+        "best",
+        message!(
+            "Bills the cheapest of several methods: each `option` runs, and the one with the lowest subtotal joins the bill."
+        ),
+    ),
+    (
+        "worst",
+        message!(
+            "Bills the dearest of several methods: each `option` runs, and the one with the highest subtotal joins the bill."
+        ),
+    ),
+    (
+        "option",
+        message!(
+            "One method of a `best` or `worst`: its charges are its subtotal, and an option that refuses is out of the running."
+        ),
+    ),
+    (
         "given",
-        message!("Sets a field of the sample record or an input for this test."),
+        message!(
+            "Sets a field of the sample record or an input for this test, or for every case of a property."
+        ),
     ),
     (
         "expect",
-        message!("A `Bool` the test needs to hold after the tariff has run."),
+        message!(
+            "A `Bool` the test needs to hold after the tariff has run; in a property, it must hold in every case, or `expect value nondecreasing in target` must hold as the target grows."
+        ),
     ),
     (
         "and",

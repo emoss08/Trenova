@@ -19,8 +19,9 @@
 //!   where a value or a statement goes.
 //! - [`occurrences`]: what a name names and every place it is written, shared by references and
 //!   rename (and the scope resolution of names the checker did not reach).
-//! - [`choices`], [`literals`]: the file's `best`/`worst` labels and `chosen` calls, and
-//!   literals' types and values, read from the syntax tree.
+//! - [`choices`], [`vary`], [`literals`]: the file's `best`/`worst` labels and `chosen` calls,
+//!   a property's `vary` names and their types, and literals' types and values, read from the
+//!   syntax tree.
 //! - [`describe`]: declarations and signatures written as Tariff code, and the one-line docs of
 //!   keywords and units.
 //! - [`values`]: the last preview's trace, read back for hover and inlay values.
@@ -47,6 +48,7 @@ pub mod rename;
 pub mod session;
 pub mod signature;
 pub mod values;
+pub mod vary;
 
 #[cfg(test)]
 mod tests;
