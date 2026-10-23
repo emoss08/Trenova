@@ -16,9 +16,9 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -40,22 +40,23 @@ type RatingSkip struct {
 }
 
 type RatingDetail struct {
-	Bill                *tarifftypes.Bill  `json:"bill,omitempty"`
-	Refusal             string             `json:"refusal,omitempty"`
-	Source              string             `json:"source,omitempty"`
-	RatedAt             int64              `json:"ratedAt"`
-	RateQuoteID         string             `json:"rateQuoteId,omitempty"`
-	AgreementID         string             `json:"agreementId,omitempty"`
-	AgreementName       string             `json:"agreementName,omitempty"`
-	RuleID              string             `json:"ruleId,omitempty"`
-	RuleLabel           string             `json:"ruleLabel,omitempty"`
-	FormulaTemplateID   string             `json:"formulaTemplateId,omitempty"`
-	FormulaTemplateName string             `json:"formulaTemplateName,omitempty"`
-	VersionNumber       int64              `json:"versionNumber,omitempty"`
-	Inputs              tarifftypes.Inputs `json:"inputs,omitempty"`
-	Skipped             []RatingSkip       `json:"skipped,omitempty"`
-	Explanation         string             `json:"explanation,omitempty"`
-	Trace               rules.RawJSON      `json:"trace,omitempty"`
+	Bill                *tarifftypes.Bill    `json:"bill,omitempty"`
+	Refusal             string               `json:"refusal,omitempty"`
+	Choices             []tarifftypes.Choice `json:"choices,omitempty"`
+	Source              string               `json:"source,omitempty"`
+	RatedAt             int64                `json:"ratedAt"`
+	RateQuoteID         string               `json:"rateQuoteId,omitempty"`
+	AgreementID         string               `json:"agreementId,omitempty"`
+	AgreementName       string               `json:"agreementName,omitempty"`
+	RuleID              string               `json:"ruleId,omitempty"`
+	RuleLabel           string               `json:"ruleLabel,omitempty"`
+	FormulaTemplateID   string               `json:"formulaTemplateId,omitempty"`
+	FormulaTemplateName string               `json:"formulaTemplateName,omitempty"`
+	VersionNumber       int64                `json:"versionNumber,omitempty"`
+	Inputs              tarifftypes.Inputs   `json:"inputs,omitempty"`
+	Skipped             []RatingSkip         `json:"skipped,omitempty"`
+	Explanation         string               `json:"explanation,omitempty"`
+	Trace               rules.RawJSON        `json:"trace,omitempty"`
 }
 
 type FreightLine struct {

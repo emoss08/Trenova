@@ -67,6 +67,10 @@ func formulaInputDeclarationsToModel(
 		if err != nil {
 			return nil, err
 		}
+		constraint, err := constraintToModel(input.Constraint)
+		if err != nil {
+			return nil, err
+		}
 		items = append(items, &gqlmodel.FormulaInputDeclaration{
 			Name:       input.Name,
 			Doc:        input.Doc,
@@ -74,9 +78,21 @@ func formulaInputDeclarationsToModel(
 			Descriptor: descriptor,
 			Required:   input.Required,
 			Default:    defaultValue,
+			Constraint: constraint,
 		})
 	}
 	return items, nil
+}
+
+func constraintToModel(constraint *rules.TariffConstraint) (any, error) {
+	if constraint == nil {
+		return nil, nil //nolint:nilnil // an input without a where clause accepts every value
+	}
+	encoded, err := sonic.Marshal(constraint)
+	if err != nil {
+		return nil, err
+	}
+	return decodeWire(encoded)
 }
 
 func decodeWire(raw rules.RawJSON) (any, error) {

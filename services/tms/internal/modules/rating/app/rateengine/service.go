@@ -173,7 +173,7 @@ func (s *Service) rateFromAgreement(
 		rule:       winner,
 	}, trace)
 	if err != nil {
-		trace.Error = err.Error()
+		trace.Error = errortypes.LocalizedText(ctx, err)
 		fields.Outcome = ratequote.OutcomeError
 		return s.finish(ctx, req, rateCtx, trace, fields)
 	}
@@ -393,6 +393,7 @@ type quoteFields struct {
 	Outcome           ratequote.Outcome
 	Bill              *tarifftypes.Bill
 	Refusal           string
+	Choices           []tarifftypes.Choice
 	Currency          string
 	AgreementID       *pulid.ID
 	RuleID            *pulid.ID
@@ -408,6 +409,7 @@ type quoteFields struct {
 func (f *quoteFields) apply(result *priced) {
 	f.Bill = result.bill
 	f.Refusal = result.refusal
+	f.Choices = result.choices
 	f.Inputs = result.inputs
 	f.Conditions = result.conditions
 	if result.template != nil {
@@ -459,6 +461,7 @@ func (s *Service) finish(
 		TariffInputs:        fields.Inputs,
 		Bill:                fields.Bill,
 		Refusal:             fields.Refusal,
+		Choices:             fields.Choices,
 		Agreement:           fields.Agreement,
 		Conditions:          fields.Conditions,
 	}, nil

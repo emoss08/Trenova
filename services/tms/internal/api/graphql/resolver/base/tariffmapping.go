@@ -92,3 +92,28 @@ func TariffBillToModel(bill *tarifftypes.Bill) *gqlmodel.TariffBill {
 	}
 	return out
 }
+
+func TariffChoicesToModel(choices []tarifftypes.Choice) []*gqlmodel.TariffChoice {
+	out := make([]*gqlmodel.TariffChoice, 0, len(choices))
+	for i := range choices {
+		choice := &choices[i]
+		options := make([]*gqlmodel.TariffChoiceOption, 0, len(choice.Options))
+		for j := range choice.Options {
+			option := &choice.Options[j]
+			options = append(options, &gqlmodel.TariffChoiceOption{
+				Label:    option.Label,
+				Status:   string(option.Status),
+				Subtotal: DecimalPtrString(option.Subtotal),
+				Refusal:  StringPtrFromValue(option.Refusal),
+			})
+		}
+		out = append(out, &gqlmodel.TariffChoice{
+			Label:    choice.Label,
+			Kind:     string(choice.Kind),
+			Currency: choice.Currency,
+			Chosen:   choice.Chosen,
+			Options:  options,
+		})
+	}
+	return out
+}

@@ -199,6 +199,7 @@ func (r *Rater) result(
 	}
 	out.Trace = result.Trace
 	out.Lookups = result.Lookups
+	out.Choices = result.Choices
 
 	switch result.Status {
 	case rules.TariffRated:
