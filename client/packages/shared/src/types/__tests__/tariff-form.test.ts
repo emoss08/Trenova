@@ -102,6 +102,7 @@ const expected = {
     },
   ],
   notes: [{ text: "Peg $1.20", range: null }],
+  reviews: [],
   freightTotal: { $q: "1908.21", u: "$" },
   accessorialTotal: { $q: "190.82", u: "$" },
   total: { $q: "2099.03", u: "$" },
@@ -120,6 +121,35 @@ describe("readStoredTariffBill", () => {
 
   it("reads a bill it has already read unchanged", () => {
     expect(readStoredTariffBill(readStoredTariffBill(graphql))).toEqual(expected);
+  });
+
+  it("reads the reviews a bill asks for as REST stores them and as GraphQL returns them", () => {
+    const reviews = [
+      { text: "Holiday pickup", range: null },
+      { text: "Liftgate billed on a dock delivery", range: null },
+    ];
+
+    expect(
+      readStoredTariffBill({
+        ...stored,
+        reviews: [{ text: "Holiday pickup" }, { text: "Liftgate billed on a dock delivery" }],
+      })?.reviews,
+    ).toEqual(reviews);
+    expect(
+      readStoredTariffBill({
+        ...graphql,
+        reviews: ["Holiday pickup", "Liftgate billed on a dock delivery"],
+      })?.reviews,
+    ).toEqual(reviews);
+    expect(
+      readStoredTariffBill(readStoredTariffBill({ ...graphql, reviews: ["Holiday pickup"] }))
+        ?.reviews,
+    ).toEqual([{ text: "Holiday pickup", range: null }]);
+  });
+
+  it("reads a bill without reviews, or with null, as asking for none", () => {
+    expect(readStoredTariffBill({ ...graphql, reviews: null })?.reviews).toEqual([]);
+    expect(readStoredTariffBill(stored)?.reviews).toEqual([]);
   });
 
   it("reads the exchange a bill was priced through", () => {

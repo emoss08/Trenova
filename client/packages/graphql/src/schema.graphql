@@ -21219,6 +21219,11 @@ type Mutation {
   Approve journal entries awaiting approval. Each entry is decided on its own.
   """
   approveJournalEntries(input: JournalReviewInput!): JournalReviewResult!
+  """
+  Approves the reviews the tariff asked for on the shipment's rating, which releases the
+  shipment to be billed. A person's decision: an agent cannot make it.
+  """
+  approveShipmentRatingReview(shipmentId: ID!): Shipment!
   approveWorkerPTO(id: ID!): WorkerPTO!
   archiveDocumentTemplateVersion(id: ID!): DocumentTemplateVersion!
   archivePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
@@ -30026,6 +30031,10 @@ type ShipmentRatingDetail {
   agreementId: String!
   agreementName: String!
   """
+  True while the bill's reviews wait on a person's approval, which holds the shipment out of billing.
+  """
+  awaitingReview: Boolean!
+  """
   The bill the tariff produced. Null when the tariff refused or the shipment is rated by hand.
   """
   bill: TariffBill
@@ -30042,6 +30051,10 @@ type ShipmentRatingDetail {
   ratedAt: Timestamp!
   """The tariff's reason for refusing to rate the shipment."""
   refusal: String!
+  """
+  Who approved the reviews this rating carries, and when. Null until a person approves them.
+  """
+  reviewApproval: ShipmentRatingReviewApproval
   ruleId: String!
   ruleLabel: String!
   skipped: [ShipmentRatingSkip!]!
@@ -30058,6 +30071,17 @@ type ShipmentRatingDetail {
   The template version that rated the shipment. Zero when it was rated by hand.
   """
   versionNumber: Int!
+}
+
+"""
+A person's approval of the reviews a tariff asked for. A re-rate that comes back with the
+same reviews keeps it; different reviews hold the shipment again.
+"""
+type ShipmentRatingReviewApproval {
+  approvedAt: Timestamp!
+  approvedBy: User
+  approvedById: ID!
+  reviews: [String!]!
 }
 
 """
@@ -30886,6 +30910,11 @@ type TariffBill {
   freightTotal: Decimal!
   lines: [TariffBillLine!]!
   notes: [String!]!
+  """
+  What the tariff asks a person to check before the shipment bills. A shipment whose
+  bill has reviews is rated but held out of billing until a person approves the rating.
+  """
+  reviews: [String!]!
   total: Decimal!
 }
 

@@ -662,6 +662,15 @@ export type ShipmentCommodityCreateInput = z.infer<typeof shipmentCommodityCreat
 export const ratingSkipSchema = z.object({ code: z.string(), source: z.string() });
 export type RatingSkip = z.infer<typeof ratingSkipSchema>;
 
+/** A person's approval of the reviews a tariff asked for on a shipment's rating. */
+export const ratingReviewApprovalSchema = z.object({
+  reviews: z.array(z.string()).nullish(),
+  approvedById: z.string(),
+  approvedAt: z.number(),
+  approvedBy: z.object({ id: z.string().nullish(), name: z.string() }).nullish(),
+});
+export type RatingReviewApproval = z.infer<typeof ratingReviewApprovalSchema>;
+
 /**
  * How the shipment was last rated: the tariff version that ran, its bill line
  * by line (or why it refused), the input values it ran with, and the contract
@@ -694,6 +703,10 @@ export const ratingDetailSchema = z.object({
   ruleLabel: z.string().nullish(),
   source: z.string().nullish(),
   explanation: z.string().nullish(),
+  /** True while the bill's reviews wait on a person's approval, holding the shipment out of billing. */
+  awaitingReview: z.boolean().nullish(),
+  /** Who approved the reviews this rating carries, and when; null until someone does. */
+  reviewApproval: ratingReviewApprovalSchema.nullish(),
 });
 export type RatingDetail = z.infer<typeof ratingDetailSchema>;
 

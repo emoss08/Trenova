@@ -1,17 +1,27 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import type { TariffInputDeclaration } from "@trenova/shared/types/tariff";
 import { MemoryRouter } from "react-router";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ShipmentBillingDetails from "../shipment-billing-details";
 
-const { getBillingProfile, getUIPolicy, getDeclaredInputs } = vi.hoisted(() => ({
+const { getBillingProfile, getUIPolicy, getDeclaredInputs, approveRating } = vi.hoisted(() => ({
   getBillingProfile: vi.fn(),
   getUIPolicy: vi.fn(),
   getDeclaredInputs: vi.fn(),
+  approveRating: vi.fn(),
+}));
+
+vi.mock("@/lib/graphql/shipment", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  approveShipmentRatingReviewGraphQL: approveRating,
+}));
+vi.mock("@/hooks/use-permission", () => ({
+  usePermission: () => ({ allowed: true, isLoading: false }),
 }));
 
 vi.mock("@/services/api", () => ({
@@ -126,6 +136,11 @@ const RATED: Partial<Shipment> = {
   } as unknown as Shipment["ratingDetail"],
 };
 
+function VersionProbe() {
+  const { watch } = useFormContext<Shipment>();
+  return <output aria-label="version">{String(watch("version") ?? "")}</output>;
+}
+
 function Harness({ values }: { values: Partial<Shipment> }) {
   const form = useForm<Shipment>({ defaultValues: values as Shipment });
   const [client] = useState(
@@ -136,6 +151,7 @@ function Harness({ values }: { values: Partial<Shipment> }) {
       <MemoryRouter>
         <FormProvider {...form}>
           <ShipmentBillingDetails />
+          <VersionProbe />
         </FormProvider>
       </MemoryRouter>
     </QueryClientProvider>
@@ -267,5 +283,54 @@ describe("ShipmentBillingDetails on a tariff", () => {
       screen.getByText("Choose a rating method to set the values its tariff reads."),
     ).toBeInTheDocument();
     expect(getDeclaredInputs).not.toHaveBeenCalled();
+  });
+
+  it("holds a rating the tariff asked to review and approves it in place", async () => {
+    getDeclaredInputs.mockResolvedValue(DECLARATIONS);
+    const held = {
+      ...(RATED.ratingDetail as object),
+      bill: {
+        ...((RATED.ratingDetail as { bill: object }).bill as object),
+        reviews: ["Holiday pickup"],
+      },
+      awaitingReview: true,
+      reviewApproval: null,
+    } as unknown as Shipment["ratingDetail"];
+    approveRating.mockResolvedValue({
+      ...RATED,
+      version: 8,
+      ratingDetail: {
+        ...(held as object),
+        awaitingReview: false,
+        reviewApproval: {
+          reviews: ["Holiday pickup"],
+          approvedById: "usr_1",
+          approvedAt: 1_800_000_000,
+          approvedBy: { id: "usr_1", name: "Avery Lane" },
+        },
+      },
+    });
+    render(<Harness values={{ ...RATED, version: 7, ratingDetail: held }} />);
+
+    const hold = await screen.findByTestId("rating-review-hold");
+    expect(within(hold).getByRole("list", { name: "Reviews" })).toHaveTextContent("Holiday pickup");
+
+    await userEvent.click(within(hold).getByRole("button", { name: "Approve rating" }));
+
+    expect(await screen.findByTestId("rating-review-approved")).toHaveTextContent(
+      /Approved for billing by Avery Lane/,
+    );
+    expect(approveRating).toHaveBeenCalledWith("shp_1");
+    await waitFor(() => expect(screen.getByLabelText("version")).toHaveTextContent("8"));
+    expect(screen.queryByTestId("rating-review-hold")).not.toBeInTheDocument();
+  });
+
+  it("shows no review hold for a rating the tariff asked nothing about", async () => {
+    getDeclaredInputs.mockResolvedValue(DECLARATIONS);
+    render(<Harness values={RATED} />);
+
+    expect(await screen.findByText("Linehaul")).toBeInTheDocument();
+    expect(screen.queryByTestId("rating-review-hold")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("rating-review-approved")).not.toBeInTheDocument();
   });
 });
