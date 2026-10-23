@@ -325,7 +325,7 @@ given shipment.weight = 1 lb
 ---
 tariff "t"
 given shipment.weight = 1[lb]
-! misplaced 11..16 `given` can only be used inside a `test` block
+! misplaced 11..16 `given` can only be used inside a `test` or `property` block
 
 === expect nested in an if inside a test
 tariff "t"
@@ -339,7 +339,7 @@ tariff "t"
 test "t"
   if true
     expect true
-! misplaced 38..44 `expect` can only be used inside a `test` block
+! misplaced 38..44 `expect` can only be used inside a `test` or `property` block
 
 === declarations inside a block
 tariff "t"

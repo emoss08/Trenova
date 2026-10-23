@@ -45,6 +45,12 @@ pub enum OutlineKind {
     Total,
     /// A `test`.
     Test,
+    /// A `property`.
+    Property,
+    /// A `best` or `worst`.
+    Choice,
+    /// An `option` of a choice.
+    Option,
 }
 
 impl OutlineKind {
@@ -61,6 +67,9 @@ impl OutlineKind {
             Self::Charge => "charge",
             Self::Total => "total",
             Self::Test => "test",
+            Self::Property => "property",
+            Self::Choice => "choice",
+            Self::Option => "option",
         }
     }
 }
@@ -236,6 +245,17 @@ impl Builder<'_> {
                 });
                 self.block(&test.body, 0);
             }
+            ItemKind::Property(property) => {
+                self.push(OutlineItem {
+                    kind: OutlineKind::Property,
+                    name: property.name.text.clone(),
+                    code: None,
+                    depth: 0,
+                    span: item.span,
+                    selection: property.name.span,
+                });
+                self.block(&property.body, 0);
+            }
             ItemKind::Stmt(stmt) => self.stmt(stmt, 0),
         }
     }
@@ -301,6 +321,28 @@ impl Builder<'_> {
                 }
             }
             StmtKind::For(statement) => self.block(&statement.body, depth + 1),
+            StmtKind::Choose(choose) => {
+                self.push(OutlineItem {
+                    kind: OutlineKind::Choice,
+                    name: choose.label.text.clone(),
+                    code: None,
+                    depth,
+                    span: choose.span,
+                    selection: choose.label.span,
+                });
+                self.fold(choose.span, FoldKind::Block);
+                for option in &choose.options {
+                    self.push(OutlineItem {
+                        kind: OutlineKind::Option,
+                        name: option.label.text.clone(),
+                        code: None,
+                        depth: depth + 1,
+                        span: option.span,
+                        selection: option.label.span,
+                    });
+                    self.block(&option.body, depth + 2);
+                }
+            }
             StmtKind::Match(statement) => {
                 self.fold(statement.span, FoldKind::Block);
                 for arm in &statement.arms {

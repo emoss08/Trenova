@@ -286,6 +286,7 @@ fn declaration(session: &Session<'_>, id: SymbolId) -> Option<String> {
             )
         }
         ItemKind::Test(test) => format!("test \"{}\"", test.name.text),
+        ItemKind::Property(property) => format!("property \"{}\"", property.name.text),
         ItemKind::Use(_) | ItemKind::Stmt(_) => return None,
     };
     Some(text)

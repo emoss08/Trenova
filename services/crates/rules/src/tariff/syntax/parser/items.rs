@@ -21,6 +21,7 @@ use crate::tariff::syntax::ast::Item;
 use crate::tariff::syntax::ast::ItemKind;
 use crate::tariff::syntax::ast::Name;
 use crate::tariff::syntax::ast::Param;
+use crate::tariff::syntax::ast::Property;
 use crate::tariff::syntax::ast::Test;
 use crate::tariff::syntax::ast::TypeDecl;
 use crate::tariff::syntax::ast::TypeExprKind;
@@ -270,6 +271,9 @@ impl Parser<'_> {
 
     /// A declaration, when the current token starts one.
     fn declaration(&mut self) -> Option<ItemKind> {
+        if self.at_labelled("property") {
+            return Some(ItemKind::Property(self.property_item()));
+        }
         if self.kind() != TokenKind::Keyword {
             return None;
         }
@@ -393,7 +397,18 @@ impl Parser<'_> {
             self.missing_type()
         };
         let default = self.eat("=").map(|_| self.expr());
-        Input { name, ty, default }
+        let constraint = if self.at_word("where") && !self.newline_before() {
+            self.bump();
+            Some(self.expr())
+        } else {
+            None
+        };
+        Input {
+            name,
+            ty,
+            default,
+            constraint,
+        }
     }
 
     fn const_item(&mut self) -> Const {
@@ -658,6 +673,27 @@ impl Parser<'_> {
             }
         };
         Test { name, body }
+    }
+
+    fn property_item(&mut self) -> Property {
+        self.mark(TokenKind::Keyword);
+        self.bump();
+        let name = self.literal_name(Message::new(message!(
+            "Expected the property's name in quotes after `property`"
+        )));
+        let body = if self.at("{") {
+            self.block(BlockKind::Property)
+        } else {
+            self.expected(Message::new(message!(
+                "Expected the property's body in braces"
+            )));
+            let at = self.previous_span().end;
+            crate::tariff::syntax::ast::Block {
+                stmts: Vec::new(),
+                span: Span::new(at, at),
+            }
+        };
+        Property { name, body }
     }
 }
 

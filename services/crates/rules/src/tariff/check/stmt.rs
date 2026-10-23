@@ -108,6 +108,15 @@ impl Checker<'_> {
                 }
             }
             StmtKind::Total(clause) => self.total(stmt, clause),
+            StmtKind::Choose(_) | StmtKind::Vary { .. } | StmtKind::Assume(_) => {
+                self.report(Diagnostic::error(
+                    "phase0",
+                    stmt.span,
+                    Message::new(message!(
+                        "Phase 0 placeholder: this construct is not implemented yet"
+                    )),
+                ));
+            }
             StmtKind::Given { target, value } => self.given(stmt, target, value),
             StmtKind::Expect(expect) => {
                 self.expected_yet = true;
@@ -117,6 +126,15 @@ impl Checker<'_> {
                     }
                     Expect::Fails(Some(text)) => self.text_parts(text),
                     Expect::Fails(None) => {}
+                    Expect::Monotone { .. } => {
+                        self.report(Diagnostic::error(
+                            "phase0",
+                            stmt.span,
+                            Message::new(message!(
+                                "Phase 0 placeholder: this construct is not implemented yet"
+                            )),
+                        ));
+                    }
                 }
             }
             StmtKind::Expr(value) => {

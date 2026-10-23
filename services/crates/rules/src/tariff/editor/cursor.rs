@@ -287,6 +287,10 @@ impl<'a> Locator<'a, '_> {
                 self.body = Body::Test;
                 self.block(&test.body);
             }
+            ItemKind::Property(property) => {
+                self.body = Body::Test;
+                self.block(&property.body);
+            }
             ItemKind::Stmt(stmt) => {
                 self.body = Body::Top;
                 self.stmt(stmt);
@@ -357,6 +361,7 @@ impl<'a> Locator<'a, '_> {
             StmtKind::Assign { value, .. }
             | StmtKind::Return(value)
             | StmtKind::Expr(value)
+            | StmtKind::Assume(value)
             | StmtKind::Given { value, .. } => {
                 self.expr(value);
             }
@@ -390,6 +395,16 @@ impl<'a> Locator<'a, '_> {
                 }
                 self.block(&statement.body);
             }
+            StmtKind::Choose(choose) => {
+                for option in &choose.options {
+                    self.block(&option.body);
+                }
+            }
+            StmtKind::Vary { values, .. } => {
+                if let Some(values) = values {
+                    self.expr(values);
+                }
+            }
             StmtKind::Require { condition, message } => {
                 self.condition(condition);
                 self.text(message);
@@ -405,7 +420,7 @@ impl<'a> Locator<'a, '_> {
                 }
             },
             StmtKind::Expect(expect) => match expect {
-                Expect::Holds(value) => {
+                Expect::Holds(value) | Expect::Monotone { value, .. } => {
                     self.expr(value);
                 }
                 Expect::Fails(Some(text)) => self.text(text),
@@ -815,6 +830,7 @@ impl<'a> ScopeWalker<'a, '_> {
                 }
             }
             ItemKind::Test(test) => self.block(&test.body),
+            ItemKind::Property(property) => self.block(&property.body),
             ItemKind::Stmt(stmt) => {
                 if top {
                     let from = Extent::TopLevel {
@@ -883,7 +899,10 @@ impl<'a> ScopeWalker<'a, '_> {
                     ..
                 },
             )
-            | StmtKind::Expect(Expect::Holds(value)) => self.expr(value),
+            | StmtKind::Expect(Expect::Holds(value) | Expect::Monotone { value, .. })
+            | StmtKind::Assume(value) => {
+                self.expr(value);
+            }
             StmtKind::Charge(charge) => {
                 self.text(&charge.label);
                 for option in &charge.options {
@@ -907,6 +926,16 @@ impl<'a> ScopeWalker<'a, '_> {
             StmtKind::Match(statement) => {
                 self.expr(&statement.scrutinee);
                 self.arms(&statement.arms);
+            }
+            StmtKind::Choose(choose) => {
+                for option in &choose.options {
+                    self.block(&option.body);
+                }
+            }
+            StmtKind::Vary { values, .. } => {
+                if let Some(values) = values {
+                    self.expr(values);
+                }
             }
             StmtKind::For(statement) => {
                 self.expr(&statement.iterable);
