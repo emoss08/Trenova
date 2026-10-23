@@ -871,3 +871,37 @@ mutation OverrideCarrierEquipmentVerification($id: ID!, $reason: String!) {
     ...CarrierEquipmentVerificationFields
   }
 }
+
+# The Desk's carrier intelligence events: changes found on carriers'
+# authority, insurance and safety records, newest first, a page at a time.
+query DeskCarrierIntelEvents(
+  $input: DataTableConnectionInput!
+  $filter: CarrierIntelEventFilterInput
+  $includeTotalCount: Boolean = false
+) {
+  carrierIntelEvents(input: $input, filter: $filter) {
+    edges {
+      node {
+        id
+        carrierId
+        subjectName
+        dotNumber
+        subjectType
+        category
+        severity
+        action
+        status
+        summary
+        detectedAt
+        acknowledgedAt
+        resolvedAt
+        resolution
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

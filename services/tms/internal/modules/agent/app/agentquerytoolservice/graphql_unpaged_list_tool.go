@@ -117,7 +117,6 @@ func newGraphQLUnpagedListTool(
 			read.Operation)
 	}
 	if spec.rank != nil || spec.defaultsAt != nil || len(spec.instead) > 0 || spec.combine != nil ||
-		len(spec.outside) > 0 || spec.amounts ||
 		(spec.queryNote == "") != (len(spec.matches) == 0) {
 		return nil, fmt.Errorf("%s: %w", spec.name, errUnpagedSpec)
 	}
@@ -134,6 +133,12 @@ func newGraphQLUnpagedListTool(
 	}
 	if params, err = annotate(spec.name, params, spec.notes); err != nil {
 		return nil, err
+	}
+	if spec.amounts && slices.ContainsFunc(params, func(p graphQLParam) bool {
+		_, minor := moneyName(p.Name)
+		return minor
+	}) {
+		return nil, fmt.Errorf("%s: %w", spec.name, errUnpagedSpec)
 	}
 	for _, name := range required {
 		if !slices.ContainsFunc(params, func(p graphQLParam) bool { return p.Name == name }) {
@@ -414,6 +419,12 @@ func (t *graphQLUnpagedListTool) Query(
 			t.spec.shape(item, hidden, clk)
 		}
 	}
+	if t.spec.amounts {
+		for _, item := range items {
+			presentAmounts(item)
+		}
+		withheld = presentedPaths(withheld)
+	}
 
 	criteria := describeCriteria(t.spec.entityPlural, t.params, args, query)
 	outcome := map[string]any{
@@ -454,6 +465,9 @@ func (t *graphQLUnpagedListTool) Query(
 	if len(withheld) > 0 {
 		outcome[outcomeWithheld] = withheld
 		outcome[outcomeWithheldNote] = withheldNote
+	}
+	if marked := markedRows(&t.spec, items); len(marked) > 0 {
+		return &markedRecord{record: outcome, outside: marked}, nil
 	}
 
 	return outcome, nil

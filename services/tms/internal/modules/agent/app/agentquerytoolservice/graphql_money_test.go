@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -111,6 +112,30 @@ func TestOutsideRecords_MarkOnlyRecordsThatShowTheText(t *testing.T) {
 	assert.Equal(t, []agent.RecordRef{{EntityType: "driver_expense", ID: "dexp_1"}}, got)
 	assert.Empty(t, outsideRecords(permission.ResourceDriverExpense, nil,
 		map[string]any{"id": "dexp_1", "description": "x"}))
+}
+
+func TestWithBeside_KeepsThePagesMarks(t *testing.T) {
+	t.Parallel()
+
+	marks := []agent.RecordRef{{EntityType: "driver_expense", ID: "dexp_1"}}
+	combined, err := withBeside(&graphQLListOutcome{
+		Count:   1,
+		Items:   []map[string]any{{"id": "dexp_1", "description": "Lumper at the dock"}},
+		outside: marks,
+	}, map[string]any{"tolerance": "5.00"})
+	require.NoError(t, err)
+
+	carrier, ok := combined.(agent.TaintCarrier)
+	require.True(t, ok, "records read alongside a page keep the page's marks")
+	assert.Equal(t, marks, carrier.TaintedRecords())
+	encoded, err := sonic.Marshal(combined)
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), `"tolerance":"5.00"`)
+
+	plain, err := withBeside(&graphQLListOutcome{Count: 0}, map[string]any{"tolerance": "5.00"})
+	require.NoError(t, err)
+	_, marked := plain.(agent.TaintCarrier)
+	assert.False(t, marked)
 }
 
 func TestDriverEarnings_AreReadByTheWorkersID(t *testing.T) {

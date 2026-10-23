@@ -8993,12 +8993,22 @@ type CarrierIntelEventEdge {
 }
 
 input CarrierIntelEventFilterInput {
+  """Only this carrier's events."""
   carrierId: ID
   categories: [CarrierIntelSection!]
+  """
+  Only events nobody has resolved or dismissed yet: Open and Acknowledged.
+  """
   openOnly: Boolean
   severities: [CarrierIntelSeverity!]
   statuses: [CarrierIntelEventStatus!]
+  """
+  Only events about this subject, by its id or DOT number as the event names it.
+  """
   subjectId: String
+  """
+  Only events about this kind of subject: a carrier, an organization, a customer or a prospect vetted by its DOT number.
+  """
   subjectType: CarrierIntelSubjectType
 }
 

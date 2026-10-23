@@ -48,9 +48,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `carrier_list_capacity_postings` | field-no-op | carrierCapacityPostings | propose DeskCarrierCapacityPostings | cursor | DataTable + typed carrierId, openOnly | Root field reads the same CarrierCapacityPostingRepository; no persisted op selects it. |
-| `carrier_list_intelligence_events` | op | carrierIntelEvents | CarrierIntelEventTable (alt CarrierIntelEventInbox) | cursor | DataTable + bespoke CarrierIntelEventFilterInput (statuses, severities, categories, carrierId, openOnly) | Same CarrierIntelService.ListEvents. fromDate/toDate (DetectedFrom/To) not typed: send as fieldFilters on detectedAt. Picked Table (no Desk op); Inbox is the triage view. |
-| `carrier_list_invoice_matches` | op | carrierInvoiceMatches | CarrierInvoiceMatches | limit/offset | typed args status, carrierId | Same CarrierSettlementService.ListInvoiceMatches. |
 
 
 ## dispatch
@@ -208,10 +205,10 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 31 |
-| op, converted (rows removed) | 88 |
-| field-no-op, not yet converted | 1 |
-| field-no-op, converted (rows removed) | 5 |
+| op, not yet converted | 29 |
+| op, converted (rows removed) | 90 |
+| field-no-op, not yet converted | 0 |
+| field-no-op, converted (rows removed) | 6 |
 | partial, not yet converted | 13 |
 | partial, converted (rows removed) | 17 |
 | none | 21 |

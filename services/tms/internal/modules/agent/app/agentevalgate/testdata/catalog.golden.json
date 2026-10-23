@@ -5795,79 +5795,94 @@
     },
     {
       "name": "carrier_list_capacity_postings",
-      "description": "List trucks carriers have said they have available: carrier, origin, destination, equipment, the window and the rate asked. Filter availableTo on or after today for offers still open. Filters: rateMethod (Flat|PerMile); source (Manual|Email|EDI); text: carrierId, originLocationId, originStateId, destinationStateId, equipmentTypeId; date: availableFrom, availableTo, createdAt; number: truckCount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List trucks carriers have said they have available: carrier, origin, destination, equipment, the window and the rate asked. Pass openOnly for the offers whose window has not closed. Filters: availableFromFrom/To, availableToFrom/To, carrierId, createdAtFrom/To, destinationStateId, equipmentTypeId, hasDestinationState, hasEquipmentType, hasOriginLocation, hasOriginState, note, openOnly, originLocationId, originRadiusMilesMin/Max, originStateId, rateMethod, rateMin/Max, source, truckCountMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "carrierId",
-                    "originLocationId",
-                    "originStateId",
-                    "destinationStateId",
-                    "equipmentTypeId",
-                    "availableFrom",
-                    "availableTo",
-                    "truckCount",
-                    "rateMethod",
-                    "source",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "carrier_list_capacity_postings.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "carrier_list_capacity_postings.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "availableFromFrom": {
+            "description": "Only records whose available from is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "availableFromTo": {
+            "description": "Only records whose available from is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "availableToFrom": {
+            "description": "Only records whose available to is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "availableToTo": {
+            "description": "Only records whose available to is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "carrierId": {
+            "description": "Only this carrier's records, by the carrier's id, from carrier_list or carrier_get. Never guess one.",
+            "type": "string",
+            "x-recordOf": "carrier"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "destinationStateId": {
+            "description": "The state's id, from an originStateId or destinationStateId on a row of this tool, or a location's stateId from location_get. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "us_state"
+            ]
+          },
+          "equipmentTypeId": {
+            "description": "Only postings of this equipment type, by its id, from equipment_list_types. Never guess one.",
+            "type": "string",
+            "x-recordOf": "equipment_type"
+          },
+          "hasDestinationState": {
+            "description": "true for only records that have a destination state, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasEquipmentType": {
+            "description": "true for only records that have a equipment type, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasOriginLocation": {
+            "description": "true for only records that have a origin location, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasOriginState": {
+            "description": "true for only records that have a origin state, false for only those that have none.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -5876,13 +5891,57 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
+          "note": {
+            "description": "Only records whose notes contains this text.",
+            "type": "string"
+          },
+          "openOnly": {
+            "description": "Only postings whose window has not closed.",
+            "type": "boolean"
+          },
+          "originLocationId": {
+            "description": "Only postings from this location, by the location's id, from location_list or location_get. Never guess one.",
+            "type": "string",
+            "x-recordOf": "location"
+          },
+          "originRadiusMilesMax": {
+            "description": "How far from the origin location the carrier will pick up. Only records whose origin radius miles is at most this.",
             "type": "integer"
           },
+          "originRadiusMilesMin": {
+            "description": "How far from the origin location the carrier will pick up. Only records whose origin radius miles is at least this.",
+            "type": "integer"
+          },
+          "originStateId": {
+            "description": "The state's id, from an originStateId or destinationStateId on a row of this tool, or a location's stateId from location_get. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "us_state"
+            ]
+          },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "rateMax": {
+            "description": "Per loaded mile for PerMile, the whole move for Flat; null when the carrier did not quote. Only records whose rate is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "rateMethod": {
+            "description": "Only records whose rate method is one of these.",
+            "items": {
+              "enum": [
+                "Flat",
+                "PerMile"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CarrierCapacityRateMethod"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "rateMin": {
+            "description": "Per loaded mile for PerMile, the whole move for Flat; null when the carrier did not quote. Only records whose rate is at least this. Write it as a decimal, such as 1250.00.",
             "type": "string"
           },
           "sortBy": {
@@ -5890,10 +5949,22 @@
             "enum": [
               "availableFrom",
               "availableTo",
-              "createdAt"
+              "carrierId",
+              "createdAt",
+              "destinationStateId",
+              "equipmentTypeId",
+              "notes",
+              "originLocationId",
+              "originRadiusMiles",
+              "originStateId",
+              "rate",
+              "rateMethod",
+              "source",
+              "truckCount",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "carrier_list_capacity_postings.sortBy"
+            "x-enumOf": "carrier_list_capacity_postings.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -5903,6 +5974,28 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "source": {
+            "description": "Only records whose source is one of these.",
+            "items": {
+              "enum": [
+                "Manual",
+                "Email",
+                "EDI"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CarrierCapacitySource"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "truckCountMax": {
+            "description": "Only records whose truck count is at most this.",
+            "type": "integer"
+          },
+          "truckCountMin": {
+            "description": "Only records whose truck count is at least this.",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -5936,23 +6029,53 @@
     },
     {
       "name": "carrier_list_intelligence_events",
-      "description": "List carrier intelligence events, newest first: changes found on carriers' authority, insurance and safety records. Each row gives the carrier, the category, the severity, what the rule did, the summary, when it was detected and whether anyone acknowledged or resolved it. Filter by status (openOnly for the ones not settled yet), severity, category such as Authority or Insurance, a carrier, or the days it was detected. Pass a row's id to carrier_get_intelligence_event for its prior and current values, or to carrier_acknowledge_intelligence_event or carrier_resolve_intelligence_event.",
+      "description": "List carrier intelligence events, newest first: changes found on carriers' authority, insurance and safety records. Each row gives the carrier, the category, the severity, what the rule did, the summary, when it was detected and whether anyone acknowledged or resolved it. Pass a row's id to carrier_get_intelligence_event for its prior and current values, or to carrier_acknowledge_intelligence_event or carrier_resolve_intelligence_event. Filters: acknowledgedAtFrom/To, action, carrierId, category, detectedFrom/To, dotNumber, openOnly, provider, resolution, resolvedAtFrom/To, severity, source, status, subject, subjectName, subjectType, summary.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "acknowledgedAtFrom": {
+            "description": "Only records whose acknowledged at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "acknowledgedAtTo": {
+            "description": "Only records whose acknowledged at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "action": {
+            "description": "Only records whose action is one of these.",
+            "items": {
+              "enum": [
+                "Block",
+                "Warn",
+                "Notify",
+                "Off"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CarrierIntelRuleAction"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
           "after": {
-            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
           "carrierId": {
-            "description": "Only this carrier's events, by id from carrier_list or carrier_get.",
+            "description": "Only this carrier's records, by the carrier's id, from carrier_list or carrier_get. Never guess one.",
             "type": "string",
             "x-recordOf": "carrier"
           },
           "category": {
-            "description": "Only events about these parts of a carrier's record, such as Authority or Insurance.",
+            "description": "Only records whose categories is one of these. The parts of a carrier's record, such as Authority or Insurance.",
             "items": {
-              "description": "A category.",
               "enum": [
                 "Identity",
                 "Authority",
@@ -5971,17 +6094,29 @@
                 "Benchmarks"
               ],
               "type": "string",
-              "x-enumOf": "carrierIntel.category"
+              "x-enumOf": "graphql.CarrierIntelSection"
             },
-            "maxItems": 15,
+            "minItems": 1,
             "type": "array"
           },
-          "fromDate": {
-            "description": "Only events detected on or after this day. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+          "detectedFrom": {
+            "description": "Only records whose detected at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
               "2026-10-01"
             ],
             "format": "date",
+            "type": "string"
+          },
+          "detectedTo": {
+            "description": "Only records whose detected at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "dotNumber": {
+            "description": "Only records whose dot number contains this text.",
             "type": "string"
           },
           "limit": {
@@ -5995,14 +6130,49 @@
             "description": "Only events nobody has resolved or dismissed yet: Open and Acknowledged.",
             "type": "boolean"
           },
+          "provider": {
+            "description": "Only records whose provider contains this text.",
+            "type": "string"
+          },
           "query": {
             "description": "Words to find in the carrier's name, its DOT number or the event's summary.",
             "type": "string"
           },
-          "severity": {
-            "description": "Only events of these severities.",
+          "resolution": {
+            "description": "Only records whose resolution is one of these.",
             "items": {
-              "description": "A severity.",
+              "enum": [
+                "CarrierUpdated",
+                "CarrierBlocked",
+                "OverrideGranted",
+                "NoActionRequired",
+                "FalsePositive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CarrierIntelEventResolution"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "resolvedAtFrom": {
+            "description": "Only records whose resolved at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "resolvedAtTo": {
+            "description": "Only records whose resolved at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "severity": {
+            "description": "Only records whose severities is one of these.",
+            "items": {
               "enum": [
                 "Critical",
                 "High",
@@ -6011,15 +6181,75 @@
                 "Info"
               ],
               "type": "string",
-              "x-enumOf": "carrierIntel.severity"
+              "x-enumOf": "graphql.CarrierIntelSeverity"
             },
-            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "acknowledgedAt",
+              "acknowledgedById",
+              "action",
+              "carrierId",
+              "category",
+              "createdAt",
+              "currentValue",
+              "detectedAt",
+              "dotNumber",
+              "fieldPath",
+              "priorValue",
+              "provider",
+              "resolution",
+              "resolutionNote",
+              "resolvedAt",
+              "resolvedById",
+              "ruleCode",
+              "severity",
+              "snapshotId",
+              "source",
+              "status",
+              "subjectId",
+              "subjectName",
+              "subjectType",
+              "summary",
+              "updatedAt",
+              "vendorChangedAt"
+            ],
+            "type": "string",
+            "x-enumOf": "carrier_list_intelligence_events.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
+          "source": {
+            "description": "Only records whose source is one of these.",
+            "items": {
+              "enum": [
+                "NativeChangeFeed",
+                "SnapshotDiff",
+                "RuleEvaluation",
+                "EquipmentVerification",
+                "Enrollment",
+                "ProviderError",
+                "Override"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CarrierIntelEventSource"
+            },
+            "minItems": 1,
             "type": "array"
           },
           "status": {
-            "description": "Only events in these statuses. Open and Acknowledged ones are not settled yet.",
+            "description": "Only records whose statuses is one of these. Open and Acknowledged ones are not settled yet.",
             "items": {
-              "description": "A status.",
               "enum": [
                 "Open",
                 "Acknowledged",
@@ -6027,17 +6257,32 @@
                 "Dismissed"
               ],
               "type": "string",
-              "x-enumOf": "carrierIntel.eventStatus"
+              "x-enumOf": "graphql.CarrierIntelEventStatus"
             },
-            "maxItems": 4,
+            "minItems": 1,
             "type": "array"
           },
-          "toDate": {
-            "description": "Only events detected on or before this day. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
-            "examples": [
-              "2026-10-01"
+          "subject": {
+            "description": "Only events about this subject, by its id or DOT number as the event names it. Only records whose subject id contains this text.",
+            "type": "string"
+          },
+          "subjectName": {
+            "description": "Only records whose subject name contains this text.",
+            "type": "string"
+          },
+          "subjectType": {
+            "description": "Only events about this kind of subject: a carrier, an organization, a customer or a prospect vetted by its DOT number. Only records whose subject type is this.",
+            "enum": [
+              "Carrier",
+              "Organization",
+              "Customer",
+              "Prospect"
             ],
-            "format": "date",
+            "type": "string",
+            "x-enumOf": "graphql.CarrierIntelSubjectType"
+          },
+          "summary": {
+            "description": "Only records whose summary contains this text.",
             "type": "string"
           }
         },
@@ -6071,29 +6316,28 @@
     },
     {
       "name": "carrier_list_invoice_matches",
-      "description": "List carrier freight invoices matched against what each load was expected to cost, with the variance. Each has the carrier's invoice number, the match status and how it was matched. Narrow to one carrier or a status such as Variance. An invoice a carrier sent over EDI is the carrier's own text.",
+      "description": "List carrier freight invoices matched against what each load was expected to cost, with the variance. Each has the carrier's invoice number, the match status, how it was matched and where the invoice came from (source: EDI, Document or Manual). The totals can be withheld at your data access. An invoice a carrier sent over EDI is the carrier's own text.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "carrierId": {
-            "description": "Only this carrier's invoices, by id from carrier_list.",
+            "description": "Only this carrier's records, by the carrier's id, from carrier_list or carrier_get. Never guess one.",
             "type": "string",
             "x-recordOf": "carrier"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "status": {
-            "description": "Only matches in this status.",
+            "description": "Only records whose status is this.",
             "enum": [
               "Suggested",
               "Matched",
@@ -6102,14 +6346,14 @@
               "Rejected"
             ],
             "type": "string",
-            "x-enumOf": "carrierSettlement.invoiceMatchStatus"
+            "x-enumOf": "graphql.CarrierInvoiceMatchStatus"
           }
         },
         "type": "object"
       },
       "policy": {
         "kind": "query",
-        "resource": "carrier_settlement",
+        "resource": "carrier_invoice_match",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
