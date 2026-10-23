@@ -18,6 +18,7 @@ type FleetCodeEdge { node: FleetCode! }
 type Query {
   fleetCodes(input: DataTableConnectionInput!, includeTotalCount: Boolean!, region: String!): FleetCodeConnection!
   fleetCode(id: ID!): FleetCode
+  managerFleetCode(managerId: ID!, region: String): FleetCode
 }
 `
 
@@ -53,6 +54,16 @@ func TestUnsupplied_RefusesARequiredVariableTheToolCannotSend(t *testing.T) {
 		"a get sends the id": {
 			verb: verbGet,
 			text: `query FleetCode($id: ID!) { fleetCode(id: $id) { id } }`,
+		},
+		"a get keyed by another record sends that record's id": {
+			verb: verbGet,
+			text: `query ManagerFleetCode($managerId: ID!) { managerFleetCode(managerId: $managerId) { id } }`,
+		},
+		"a get cannot send a second key": {
+			verb: verbGet,
+			text: `query ManagerFleetCode($managerId: ID!, $region: String!) {
+				managerFleetCode(managerId: $managerId, region: $region) { id } }`,
+			refused: true,
 		},
 		"a get cannot send a list's input": {
 			verb: verbGet,
@@ -122,14 +133,14 @@ type Event { id: ID! }
 type Recognition { id: ID! }
 type Query {
   workerEvents(workerId: ID, openOnly: Boolean): [Event!]!
-  workerRecognitions(workerId: ID!, filter: CodeFilter, region: String): [Recognition!]!
+  workerRecognitions(workerId: ID!, filter: CodeFilter, region: String, limit: Int): [Recognition!]!
 }
 `
 
 func TestAlongsideKeys_AKeyedReadTakesOnlyWhatTheListsCallSends(t *testing.T) {
-	t.Parallel()
-
 	schema := gqlparser.MustLoadSchema(&ast.Source{Input: alongsideSchema})
+	boundSchema = schema
+	t.Cleanup(func() { boundSchema = nil })
 	list := &binding{
 		Tool: "worker_list_events",
 		Verb: verbList,
@@ -138,36 +149,52 @@ func TestAlongsideKeys_AKeyedReadTakesOnlyWhatTheListsCallSends(t *testing.T) {
 				workerEvents(workerId: $workerId, openOnly: $openOnly) { id } }`),
 	}
 	cases := map[string]struct {
-		text string
-		keys []string
+		text    string
+		keys    []string
+		set     []string
+		refused bool
 	}{
 		"keyed by the worker the call names": {
 			text: `query DeskWorkerRecognitions($workerId: ID!) {
 				workerRecognitions(workerId: $workerId) { id } }`,
 			keys: []string{"workerId"},
 		},
-		"a variable the call does not send": {
-			text: `query DeskWorkerRecognitions($workerId: ID!, $region: String) {
+		"an optional variable the call does not send is the spec's to set": {
+			text: `query DeskWorkerRecognitions($workerId: ID!, $region: String, $limit: Int) {
+				workerRecognitions(workerId: $workerId, region: $region, limit: $limit) { id } }`,
+			keys: []string{"workerId"},
+			set:  []string{"region", "limit"},
+		},
+		"a required variable the call does not send": {
+			text: `query DeskWorkerRecognitions($workerId: ID!, $region: String!) {
 				workerRecognitions(workerId: $workerId, region: $region) { id } }`,
+			refused: true,
 		},
 		"an input object": {
 			text: `query DeskWorkerRecognitions($workerId: ID!, $filter: CodeFilter) {
 				workerRecognitions(workerId: $workerId, filter: $filter) { id } }`,
+			refused: true,
 		},
-		"keyed by nothing": {
+		"only variables the spec sets, keyed by nothing the call names": {
+			text: `query DeskWorkerRecognitions($region: String) {
+				workerRecognitions(workerId: "wrk_1", region: $region) { id } }`,
+			refused: true,
+		},
+		"no variable at all, read on every call": {
 			text: `query DeskWorkerRecognitions {
 				workerRecognitions(workerId: "wrk_1") { id } }`,
 		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			keys, problem := alongsideKeys(list,
+			keys, set, problem := alongsideKeys(list,
 				supplyOperation(t, schema, "DeskWorkerRecognitions", tc.text),
 				"DeskWorkerRecognitions")
-			assert.Equal(t, tc.keys, keys)
-			assert.Equal(t, tc.keys == nil, problem != "", problem)
+			if !tc.refused {
+				assert.Equal(t, tc.keys, keys)
+				assert.Equal(t, tc.set, set)
+			}
+			assert.Equal(t, tc.refused, problem != "", problem)
 		})
 	}
 }
@@ -306,4 +333,62 @@ func TestBindAlongsideAndInstead_KeyedByTheCall(t *testing.T) {
 	assert.Contains(t, problem, "where the list's is")
 	_, problem = bindInstead(catalog, list, "Overview")
 	assert.Contains(t, problem, "no variable of its own")
+}
+
+const keyedGetSchema = `
+type HoursState { workerId: ID! }
+type Assignment { id: ID! }
+type Query {
+  hoursState(workerId: ID!): HoursState
+  hoursStates(workerIds: [ID!]): [HoursState!]!
+  assignments(workerId: ID!, activeOnly: Boolean): [Assignment!]!
+  everyAssignment(activeOnly: Boolean): [Assignment!]!
+}
+`
+
+func TestGetKey_AGetSendsTheIDOfTheRecordItReads(t *testing.T) {
+	t.Parallel()
+
+	schema := gqlparser.MustLoadSchema(&ast.Source{Input: keyedGetSchema})
+	cases := map[string]struct {
+		text string
+		key  string
+	}{
+		"by its own id": {
+			text: `query Hours($id: ID!) { hoursState(workerId: $id) { workerId } }`,
+			key:  "id",
+		},
+		"by the id of the record it belongs to": {
+			text: `query Hours($workerId: ID!) { hoursState(workerId: $workerId) { workerId } }`,
+			key:  "workerId",
+		},
+		"by nothing it requires": {
+			text: `query Hours($workerIds: [ID!]) { hoursStates(workerIds: $workerIds) { workerId } }`,
+		},
+		"by two ids, neither of them its own": {
+			text: `query Hours($workerId: ID!, $otherId: ID!) {
+				a: hoursState(workerId: $workerId) { workerId }
+				b: hoursState(workerId: $otherId) { workerId } }`,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tc.key, getKey(supplyOperation(t, schema, "Hours", tc.text)))
+		})
+	}
+}
+
+func TestKeyedWhole_AGetReadsTheListOneRecordHolds(t *testing.T) {
+	t.Parallel()
+
+	schema := gqlparser.MustLoadSchema(&ast.Source{Input: keyedGetSchema})
+	assert.True(t, keyedWhole(schema.Query.Fields.ForName("assignments")))
+	assert.False(t, keyedWhole(schema.Query.Fields.ForName("everyAssignment")),
+		"a list keyed by no record is not one record's")
+	assert.False(t, keyedWhole(schema.Query.Fields.ForName("hoursState")),
+		"one record is not a list")
+	assert.False(t, keyedWhole(schema.Query.Fields.ForName("hoursStates")),
+		"a list of ids names no one record")
 }

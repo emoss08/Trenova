@@ -5,6 +5,8 @@ replaces the expr-flavoured formula language. Nothing has launched, so nothing h
 back by compatibility: every formula, seed, catalog template, corpus case, prompt and doc is
 rewritten.
 
+For the syntax at a glance, see the [cheat sheet](tariff-cheat-sheet.md).
+
 The engine stays as it is: the `trenova-rules` crate, one WebAssembly module, exact decimals,
 metered evaluation, no clock, no randomness, no I/O, and the browser and the server agreeing.
 The language is what changes.
@@ -114,8 +116,12 @@ contract. The standard library (`std`) ships with the module and is versioned wi
 - **Keywords:** `tariff library condition use input let var const fn type enum private charge
   note if else match for in where break continue return minimum maximum round require fail fails
   test given expect and or not true false none`. `as`, `to`, `up`, `down`, `half`, `even`,
-  `cents`, `total`, `lines` and the unit names are contextual: they mean something only where the
-  grammar expects them, and are ordinary names elsewhere (`fn billed(weight: Weight, to: Weight)`).
+  `cents`, `total`, `lines`, `best`, `worst`, `option`, `property`, `vary`, `assume`,
+  `nondecreasing`, `nonincreasing` and the unit names are contextual: they mean something only
+  where the grammar expects them, and are ordinary names elsewhere (`fn billed(weight: Weight, to:
+  Weight)`, `let option = 2`). `assume` followed directly by `(` is a call (`assume(x)`
+  calls a function named `assume`); with a space before the parenthesis it starts the
+  statement, so `assume (shipment.weight ?? 0 lb) > 10 lb` is an `assume`.
 - **Text:** `"double quoted"`, with `{expr}` interpolation, `{{` for a literal brace and the usual
   escapes. There are no raw strings and no single quotes. Interpolation writes any value that
   can't be empty: numbers, percents, money, quantities, dates, enums (as their variant), and
@@ -293,8 +299,9 @@ A schema field that can be empty has type `T?` (`shipment.weight: Weight?`). Usi
   Constants and defaults (of inputs and of function parameters) are compile-time values:
   computed from literals and other constants only, never from the record, an input, a
   binding or another parameter.
-- `input name: Type = default`: a value the contract or template supplies. Inputs are only
-  declared at file level; their doc comments label the Studio's inputs form.
+- `input name: Type = default where constraint`: a value the contract or template supplies.
+  Inputs are only declared at file level; their doc comments label the Studio's inputs form, and
+  the optional `where` constraint bounds the values a contract may set (see "Input constraints").
 
 A name may not shadow a schema root, an input, a function or another name in scope. That last
 rule is today's `let` rule, kept.
@@ -309,6 +316,7 @@ block is a scope.
 | `let`, `var`, `const` | bindings (above) |
 | `name = expr`, `name += expr`, `name -= expr` | reassign a `var` in scope; the type cannot change |
 | `charge "Label" as CODE (options) = expr` | add a line to the bill (below); tariffs only |
+| `best "Label" { option "A" { … } option "B" { … } }`, `worst "Label" { … }` | bill the cheapest (or dearest) of several methods (below); tariffs only |
 | `note "Text {interpolated}"` | add a note to the bill: no amount, shown on the rate trace, the receipt and the invoice's notes |
 | `if cond { … } else if cond { … } else { … }` | conditional; as a statement the branches need no value |
 | `if let x = optional { … } else { … }` | bind an optional when present |
@@ -320,12 +328,12 @@ block is a scope.
 | `fail "message"` | refuse to rate |
 | `return expr` | functions only |
 | `minimum`, `maximum`, `round` | total clauses, last in a tariff (below) |
-| `test "name" { … }` | a test (below); file level only |
+| `test "name" { … }`, `property "name" { … }` | a test or a property (below); file level only |
 
 There is no `while` and no recursion. A `for` walks a list or a range whose length is known
 when the loop starts, so every formula terminates. A function body is the same statement
-language without `charge`, `note`, total clauses or `test`. Functions compute values; tariffs
-bill them.
+language without `charge`, `note`, `best`, `worst`, total clauses, `test` or `property`.
+Functions compute values; tariffs bill them.
 
 ## Expressions
 
@@ -475,7 +483,13 @@ charge "Detention, stop {stop.sequence}" as DET (quantity: billable, rate: $65/h
     and "Deficit weight" shows both.
   - **Coded charges are accessorials.** `as CODE` names an active code in the organisation's
     accessorial charge catalog (`FSC`, `DET`, `LIFT`; the checker refuses an unknown or inactive
-    code). The line becomes a system-generated additional charge owned by the tariff (replaced on
+    code). An unknown code is reported once, at its first use, with every other use as related
+    places. It suggests a code spelled nearly the same, or else a catalog code whose description
+    matches the charge's label ("`FSC` isn't in the accessorial charge catalog. `FUEL` is "Fuel
+    surcharge"; did you mean `FUEL`?"), with a fix that writes it at every use, and a second fix
+    that bills the line as freight instead by removing `as CODE`. The Studio adds **Add CODE to
+    accessorial charges**, which opens the catalog's create form with the code filled in and the
+    charge's label as its description. The line becomes a system-generated additional charge owned by the tariff (replaced on
     every re-rate), an accessorial invoice line carrying the code, and an EDI 210 charge whose
     code is the catalog code.
   - **Amounts.** A coded charge must be positive. An uncoded charge may be negative (a discount
@@ -505,6 +519,51 @@ The template's old breakdown lines, its minimum, maximum and rounding policy fie
 engine's discount, absolute-minimum, deficit-distance, guardrail and agreement-rounding steps are
 gone: each is a line or a clause in the tariff, where it can be read, tested and changed.
 
+### Choosing between methods
+
+Contracts often bill "the lower of" two methods: per mile or flat, LTL or volume, the actual
+weight or the next break. `best` writes that down and keeps the losing methods visible:
+
+```tariff
+best "Linehaul" {
+  option "Per mile" {
+    charge "Linehaul" (quantity: shipment.distance, rate: rate)
+  }
+  option "Flat" {
+    charge "Flat rate" = flatRate
+  }
+  option "Volume" {
+    require (shipment.weight ?? 0 lb) >= 6_000 lb else "Volume rates start at 6,000 lb"
+    charge "Volume" = volumeRate * (shipment.weight ?? 0 lb)
+  }
+}
+```
+
+- **What runs.** Each `option` block runs in order, in its own scope: it reads every name in scope
+  where the `best` is written, and its own `let`s end with it. It may not assign a `var` declared
+  outside the `best` (the checker refuses it), so a losing option leaves no trace in the rest of
+  the file.
+- **What is compared.** An option's subtotal is the exact sum of the charge lines it billed
+  (freight and coded, before rounding). `best` keeps the option with the lowest subtotal, `worst`
+  the one with the highest (the buy side's "greater of", a floor price); a tie goes to the option
+  written first. The chosen option's lines and notes join the bill where the `best` is written;
+  the others are dropped. Total clauses still apply to the whole bill afterwards.
+- **Refusing options.** An option that refuses (`fail`, `require`, `?? fail`) is out of the
+  running: that is how an option says "I don't apply to this shipment". When every option refuses,
+  the rating refuses with the first option's message. An evaluation error inside an option stops
+  the rating, as anywhere else: errors are bugs, not choices.
+- **The trace.** Every evaluation of a `best` or `worst` is recorded with each option's subtotal
+  or refusal and which one won, shown in the Studio's preview and on the shipment's rating detail.
+- **Rules.** A `best` has a label, unique among the file's choices, and at least two options, each
+  with a label unique within it. It may appear wherever a `charge` may, including inside `if`,
+  `for`, `match` arms and another option. An option with no `charge` on any path is a warning: it
+  bills `$0`, so `best` always picks it.
+- **In tests**, `chosen("Linehaul")` is the label of the option the last evaluation of that choice
+  kept, as `Text?` (`none` when the choice was not reached or every option refused):
+  `expect chosen("Linehaul") == "Flat"`. Comparing it (`==`, `!=`, `in [...]`) with a label that
+  is no option of that choice is an error (`unknown-option`), with the nearest option's label as
+  a fix.
+
 ## Contracts and inputs
 
 A tariff's `input`s are its contract interface: they are what a rate agreement sets.
@@ -531,8 +590,55 @@ A tariff's `input`s are its contract interface: they are what a rate agreement s
   whole contract, not just a rate.
 - **Matrices are tables.** A rate matrix loses its formula template and rounding and gains a value
   type; tariffs read it by code (below).
+- **Input constraints** (below) bound what a contract may set.
 - **The fallback template** (the billing control's) runs with its defaults. **The buy side** rates
   with `rating.mode == Buy` and `rating.sellTotal` set.
+
+### Input constraints
+
+A `where` clause bounds the values an input accepts, so a fat-fingered contract value is refused
+when it is saved instead of billed:
+
+```tariff
+/// Paid per loaded mile.
+input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi
+input freeStops: Int = 2 where 0..=10
+input service: Service = Standard where [Standard, Guaranteed]
+```
+
+- **Forms.** A constraint is a compile-time value (literals and constants, like a default):
+  - a range of the input's type, for an ordered type (numbers, `Int`, money, quantities, rates,
+    percents, dates, date-times): `lo..hi` includes `lo` and excludes `hi`, `lo..=hi` includes
+    both, and either end may be left off (`1..`, `..=$15/mi`);
+  - a list of the input's type, for any type with equality: the value must be one of them.
+  For an optional input (`T?`) the constraint applies when a value is set; `none` always passes.
+  For a `List<T>` input of an ordered or comparable `T`, it applies to every item. Record inputs
+  take no constraint.
+- **The default must satisfy it**; the checker refuses one that does not.
+- **Contract values.** `tariff.check`'s `values` validation refuses a rule or agreement value
+  outside the constraint with an `input-value` finding that names the bounds: "`rate` must be
+  from $0.50/mi to $15.00/mi; $235.00/mi is outside it". `tariff.check` reports each input's
+  constraint, so the rule editor shows the bounds and validates as the user types.
+- **At rating time** a value outside the constraint (a value saved before the constraint was
+  added) stops the rating with an `input` error naming the input, the value and the bounds.
+- **In tests and properties**, a `given input.x` outside the constraint is an error (`constraint`)
+  naming the bounds, since no contract can set that value, so a test built on it proves nothing.
+  For a list constraint it suggests the nearest listed value, with a fix that writes it. A
+  property's `vary input.x` with no range of its own varies over the constraint.
+- **What the bounds decide.** Where an input is read by its own name, the checker knows its
+  values, and warns (`bounds`) about code the bounds make dead. It is a warning because the code
+  runs; the bill is unaffected.
+  - A comparison with a compile-time value (`==`, `!=`, `<`, `<=`, `>`, `>=`, `in [...]`) whose
+    answer the bounds fix is "never true" or "always true", quoting the constraint: with `input
+    rate: Money/mi where $0.50/mi..=$15/mi`, `rate > $20/mi` is never true and `rate >=
+    $0.50/mi` always is.
+  - Against a list constraint, a value outside the list names the values the input takes, and
+    suggests the nearest of them with a fix: `service == "Guarenteed"` is never true, because
+    `service` is only ever `"Standard"` or `"Guaranteed"`; did you mean `"Guaranteed"`?
+  - A `match` arm whose pattern (a value, a range or a variant) the bounds rule out is "never
+    matched".
+  An input read through another binding (`let s = service`), or compared with a value computed
+  at run time, is not judged.
 
 ## Accessorials and conditions
 
@@ -660,6 +766,87 @@ test "a load with no weight refuses to rate" {
 - Tests replace the Studio's test-case rows and recorded scenarios: "Save as test" in the preview
   writes a `test` block from a real shipment's facts into the source.
 
+### Properties
+
+A test checks one shipment. A **property** checks a rule over a whole range of shipments, which is
+where pricing bugs hide: the weight-break inversion where 999 lb bills more than 1,000 lb, the
+short load that bills below the minimum, the discount that goes negative.
+
+```tariff
+property "heavier never bills less" {
+  vary shipment.weight in 1 lb..40_000 lb
+  expect total nondecreasing in shipment.weight
+}
+
+property "never below the minimum" {
+  vary shipment.distance in 1 mi..3_000 mi
+  vary input.rate
+  given fuel.price = $3.20/gal
+  expect total >= $450
+}
+```
+
+- **`vary target in values`** makes `target` take many values. The target is a record path or
+  `input.name`, exactly as `given` takes, or a new `camelCase` name, bound for the rest of the
+  property (the only form a library may use, to test its functions). The values are:
+  - a range of an ordered type with both ends written: `1 lb..40_000 lb`, `$1/mi..=$5/mi`,
+    `@2026-01-01..@2027-01-01`;
+  - a list of values: `[Standard, Expedited]`, `[[pickup(), delivery()], [pickup(), delivery(),
+    delivery()]]`.
+
+  `in values` may be left out for a `Bool` (both values), an enum (every variant), an optional
+  enum or `Bool` (also `none`), and an input with a range or list constraint (the constraint).
+- **`given`** sets a field or input for every case, as in a test. **`assume cond`** skips the
+  cases where `cond` is false; it reads the record, inputs, `vary` names, functions and constants,
+  and runs before the rating, so it cannot read the bill.
+- **`expect cond`** must hold in every case. **`expect value nondecreasing in target`** (or
+  `nonincreasing`) must hold as the varied `target` grows, with every other varied value fixed:
+  `value` is any ordered expression the case can compute (`total`, `charge(FSC) ?? $0`,
+  `lines.len`), and `target` must be varied over a range in this property. `expect fails` is not
+  allowed: a property states what holds when the tariff rates; narrow it with `assume` or the
+  ranges instead.
+- **Cases.** The engine picks the values deterministically: the same file always runs the same
+  cases.
+  - For a range, it takes both ends; every *landmark* inside the range (a literal, constant,
+    input default or set value of the same dimension anywhere in the file or its libraries, and
+    every band edge of a range-keyed rate table axis of that dimension), each with its neighbours
+    one *step* either side; and evenly spread points, until the axis has 24 values. The step is 1
+    in the last decimal place the range's ends are written with (`1 lb..40_000 lb` steps by
+    1 lb, `$0.50/mi..$15/mi` by $0.01/mi), a day for dates and a minute for date-times.
+  - For a list, every item.
+  - With one `vary`, every value is a case. With several, every combination when there are at
+    most 256, otherwise each axis's landmarks against the other axes' ends, filled up to 256 with
+    combinations drawn from a generator seeded by the property's name.
+- **Failures shrink.** When an `expect` fails, the engine looks for the simplest failing case: for
+  each axis in turn it searches, by halving, for the smallest value from the range's start that
+  still fails, keeping the others fixed (an item list keeps its first failing item). For a
+  `nondecreasing` failure it reports the two neighbouring values whose results are out of order,
+  narrowed by halving the gap between them ("999 lb bills $310, 1000 lb bills $250"). A case
+  that refuses to rate fails the property with the refusal's message.
+- **Results.** A property passes, fails with its counterexample (each varied value, the failed
+  expectation's values, the case's bill) or ends in error, like a test. The Studio shows the
+  counterexample and can save it as an ordinary `test`, so the bug stays fixed.
+- **Rules.** Properties live at file level in tariffs and libraries. A property needs at least one
+  `vary`; its ranges must be finite, with compile-time ends, and an input's range must lie inside
+  the input's constraint. Its `vary`s, `given`s and `assume`s come first, before its other
+  statements; a `given` may not read a varied name, and a path is varied at most once and never
+  also given. Its `expect`s follow the test rules (they read the bill, the record and the file's
+  functions and constants), so a saved counterexample always checks. At most 256 cases run per
+  property, under the file's budget.
+
+Properties are tests: the Studio runs them on every change, and a version with a failing property
+cannot be saved for review or submitted.
+
+### Coverage
+
+Every test and property case records which parts of the file it ran. `tariff.test` reports the
+file's **regions** with how many times each ran: each block of an `if`, `else if` and `else`
+(statement or expression), each `match` arm, each `for` body, each `option`, each `charge`, each
+refusal (`fail`, the refusing side of `require` and of `?? fail`) and each function body. The
+Studio marks the lines of regions no test reached, shows "Tests reach 18 of 21 regions" in the
+tests panel, and lists unreached regions as a readiness warning before submit. Coverage counts the
+root file's regions only; a library has its own.
+
 ## Module operations
 
 The crate's `formula.*` operations are replaced by `tariff.*`, with the same envelope, budgets,
@@ -669,10 +856,11 @@ The crate's `formula.*` operations are replaced by `tariff.*`, with the same env
 |---|---|
 | `tariff.check` | parses and checks a file with the libraries it imports, against the schema, the tables' shapes and the organisation's accessorial codes; returns diagnostics with fixes, the declared inputs (name, type, default, doc), the outline, symbols and inferred types (for inlay hints) and the imports it pinned |
 | `tariff.evaluate` | rates a batch of programs (a tariff or condition with its libraries, input values and record) and returns, per program, the bill (charges with label, code, amount, quantity, rate and source range; notes; adjustments; total) or the refusal, plus lookups and per-statement values for the trace |
-| `tariff.test` | runs a file's tests against the sample record; returns each test's result, the failing expectation and the values involved |
+| `tariff.test` | runs a file's tests and properties against the sample record; returns each one's result, the failing expectation and the values involved, a property's counterexample, and the file's coverage |
 | `tariff.format` | formats a file (one canonical style) |
 | `tariff.tokens` | the token stream for highlighting |
-| `tariff.complete`, `tariff.hover`, `tariff.signature`, `tariff.definition`, `tariff.rename`, `tariff.inlays` | the editor's language features at a cursor or for a range |
+| `tariff.complete`, `tariff.hover`, `tariff.signature`, `tariff.definition`, `tariff.references`, `tariff.rename`, `tariff.inlays` | the editor's language features at a cursor or for a range |
+| `tariff.actions` | the refactorings available for a selection, each a set of edits: today "Promote to input" |
 | `tariff.scaffoldTest` | writes a `test` block from a real shipment's record and its bill, for the Studio's "Save as test" |
 | `tariff.catalog` | the standard library's modules, types and functions, and every built-in method, with their docs |
 
@@ -737,7 +925,14 @@ The Studio edits one source file. Everything else is a view of it, computed by t
   value), folding and the outline (inputs, functions, charges, tests);
 - highlighting from `tariff.tokens`, so no TypeScript lexer remains;
 - the inputs panel, from the `input` declarations, holding the preview's sample values;
-- the tests panel, from the `test` blocks, run in the browser on every change;
+- the tests panel, from the `test` and `property` blocks, run in the browser on every change, with
+  a property's counterexample and a "Save as test" that writes it as a `test`;
+- coverage in the gutter: the lines of regions no test reached, with the count in the tests panel;
+- references: every place a name is declared, read or written, highlighted at the cursor and
+  listed on request;
+- refactorings from `tariff.actions`: **Promote to input** turns a selected literal (`$2.35/mi`)
+  into an `input` declaration with that default and puts the new name in its place, ready to
+  rename, optionally replacing every equal literal in the file;
 - the bill preview: each charge with its code, quantity and rate, the notes and the adjustments.
 
 Every editor operation answers from one call on a file that may not parse, in UTF-16 positions.
@@ -773,6 +968,12 @@ tests, and refuses a new name that would collide with one in scope.
 7. **No recursion and no `while`.** Termination holds by construction.
 8. **Organisation libraries**, versions pinned per template version, and a standard library
    written in Tariff.
+9. **Properties are tests.** Deterministic, landmark-driven cases with shrinking, so a property
+   fails the same way in the browser, on the server and in review.
+10. **"Lower of" is a construct.** `best` and `worst` choose between whole methods and record the
+    losers, instead of each contract hand-coding comparisons.
+11. **Inputs carry their bounds.** A contract value outside them is refused when saved, and the
+    form shows them.
 
 ## Appendix A: grammar
 
@@ -794,12 +995,13 @@ The normative syntax, in EBNF:
 file        = header NL { doc } { item } ;
 header      = ( "tariff" | "library" | "condition" ) string ;
 doc         = "///" text NL ;
-item        = { doc } ( use | input | const | typeDecl | enumDecl | fnDecl | test | stmt ) ;
+item        = { doc } ( use | input | const | typeDecl | enumDecl | fnDecl | test | property | stmt ) ;
 
 use         = "use" modulePath [ "." "{" name { "," name } [ "," ] "}" ] [ "as" name ] NL ;
 modulePath  = ( "std" | "org" ) "." name { "." name } ;
 
-input       = "input" name ":" type [ "=" expr ] NL ;
+input       = "input" name ":" type [ "=" expr ] [ "where" expr ] NL ;
+                                                              (* the constraint: a range or a list *)
 const       = [ "private" ] "const" name [ ":" type ] "=" expr NL ;
 typeDecl    = [ "private" ] "type" TypeName "=" recordType NL ;
 enumDecl    = [ "private" ] "enum" TypeName "{" TypeName { "," TypeName } [ "," ] "}" NL ;
@@ -815,11 +1017,12 @@ recordType  = "{" field { "," field } [ "," ] "}" ;
 field       = name ":" type ;
 
 test        = "test" string block ;
+property    = "property" string block ;
 block       = "{" { stmt } "}" ;
 
 stmt        = letStmt | varStmt | assign | charge | note | ifStmt | matchStmt | forStmt
-            | require | fail | return | "break" NL | "continue" NL | total
-            | given | expect | expr NL ;
+            | choose | require | fail | return | "break" NL | "continue" NL | total
+            | given | vary | assume | expect | expr NL ;
 letStmt     = "let" name [ ":" type ] "=" expr NL ;
 varStmt     = "var" name [ ":" type ] "=" expr NL ;
 assign      = name ( "=" | "+=" | "-=" ) expr NL ;
@@ -827,6 +1030,8 @@ charge      = "charge" string [ "as" CODE ] [ "(" option { "," option } ")" ] [ 
                                                               (* "= expr" may be left out only with quantity: and rate: *)
 option      = name ":" expr ;
 note        = "note" string NL ;
+choose      = ( "best" | "worst" ) string "{" { option } "}" ;
+option      = "option" string block ;
 ifStmt      = "if" condition block { "else" "if" condition block } [ "else" block ] ;
 condition   = expr | "let" name "=" expr ;
 matchStmt   = "match" expr "{" { arm } "}" ;
@@ -842,7 +1047,12 @@ return      = "return" expr NL ;
 total       = ( "minimum" | "maximum" ) expr NL
             | "round" [ "half" "even" | "up" | "down" ] "to" ( "cents" | expr ) NL ;
 given       = "given" lvalue "=" expr NL ;                    (* tests only *)
-expect      = "expect" ( expr | "fails" [ string ] ) NL ;     (* tests only *)
+vary        = "vary" ( lvalue | name ) [ "in" expr ] NL ;     (* properties only *)
+assume      = "assume" expr NL ;                              (* properties only *)
+expect      = "expect" ( expr [ ( "nondecreasing" | "nonincreasing" ) "in" lvalue ]
+                       | "fails" [ string ] ) NL ;            (* tests and properties; the
+                                                                 monotone form and no "fails"
+                                                                 in properties *)
 lvalue      = name { "." name } ;                             (* shipment.weight, input.rate *)
 
 expr        = coalesce ;

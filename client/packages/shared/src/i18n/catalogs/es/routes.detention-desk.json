@@ -1,4 +1,5 @@
 {
+  "After driver pay": "Después del pago al conductor",
   "Approve charge": "Aprobar el cargo",
   "Collectable now": "Cobrable ahora",
   "Connecting": "Conectando",
@@ -51,6 +52,7 @@
   "Waiving": "Eximiendo",
   "Waiving forgives the money but keeps the record, so discretionary revenue loss stays measurable instead of disappearing into free text.": "La exención condona el importe pero conserva el registro, de modo que la pérdida discrecional de ingresos sigue siendo medible en lugar de desaparecer en texto libre.",
   "What is the customer disputing?": "¿Qué está disputando el cliente?",
+  "You pay more than you bill": "Paga más de lo que factura",
   "engine {0}": "motor {0}",
   "free time": "tiempo libre de cargo",
   "late {0}": "retraso {0}",

@@ -88,6 +88,18 @@ models:
     fields:
       hold:
         resolver: true
+  RateAgreement:
+    fields:
+      lanes:
+        resolver: true
+      laneCount:
+        resolver: true
+  RateMatrix:
+    fields:
+      cellCount:
+        resolver: true
+      cells:
+        resolver: true
   Shipment:
     fields:
       orderNumber:
@@ -1974,6 +1986,8 @@ models:
         resolver: true
       factoringCompany:
         resolver: true
+      lines:
+        resolver: true
   FactoringRemittanceSuggestion:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceSuggestion
@@ -2051,6 +2065,8 @@ models:
       netDeltaAmount:
         resolver: true
       rerateVariancePercent:
+        resolver: true
+      supportingDocumentIds:
         resolver: true
   InvoiceAdjustmentLine:
     model:
@@ -4357,11 +4373,17 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.CapScope
   DetentionOccurrence:
     fields:
+      calculationTrace:
+        resolver: true
       location:
         resolver: true
       approvedBy:
         resolver: true
       waivedBy:
+        resolver: true
+  DetentionPreviewResult:
+    fields:
+      calculationTrace:
         resolver: true
   DetentionOccurrenceStatus:
     model:
@@ -5007,6 +5029,12 @@ models:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.Entry
     fields:
+      changes:
+        resolver: true
+      previousState:
+        resolver: true
+      currentState:
+        resolver: true
       resource:
         resolver: true
       operation:

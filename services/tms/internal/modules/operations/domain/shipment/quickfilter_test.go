@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestQuickFilterSpecValidate(t *testing.T) {
@@ -76,4 +77,14 @@ func TestQuickFiltersNeed(t *testing.T) {
 	for _, filter := range CountableQuickFilters() {
 		assert.True(t, filter.IsValid())
 	}
+}
+
+func TestAuthorizeQuickFiltersRefusesALowMarginFilterWithoutMargins(t *testing.T) {
+	t.Parallel()
+
+	lowMargin := []QuickFilterSpec{Quick(QuickFilterLate), Quick(QuickFilterLowMargin)}
+	require.Error(t, AuthorizeQuickFilters(lowMargin, false))
+	require.NoError(t, AuthorizeQuickFilters(lowMargin, true))
+	require.NoError(t, AuthorizeQuickFilters([]QuickFilterSpec{Quick(QuickFilterLate)}, false),
+		"a filter that does not read margins needs no group")
 }

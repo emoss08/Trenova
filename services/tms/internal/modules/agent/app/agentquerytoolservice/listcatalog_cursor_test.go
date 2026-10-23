@@ -11,10 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
-	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -75,54 +71,6 @@ func (r *pagedEquipmentTypeRepo) List(
 	return r.page(req.Cursor), nil
 }
 
-type pagedFuelPurchaseRepo struct {
-	fuelpurchaseports.FuelPurchaseRepository
-	purchases *cursorRepo[*fuelpurchase.FuelPurchase]
-	cards     *cursorRepo[*fuelpurchase.FuelCard]
-	batches   *cursorRepo[*fuelpurchase.ImportBatch]
-}
-
-func (r *pagedFuelPurchaseRepo) ListPurchases(
-	_ context.Context,
-	req *fuelpurchaseports.ListFuelPurchasesRequest,
-) (*pagination.CursorListResult[*fuelpurchase.FuelPurchase], error) {
-	return r.purchases.page(req.Cursor), nil
-}
-
-func (r *pagedFuelPurchaseRepo) ListCards(
-	_ context.Context,
-	req *fuelpurchaseports.ListFuelCardsRequest,
-) (*pagination.CursorListResult[*fuelpurchase.FuelCard], error) {
-	return r.cards.page(req.Cursor), nil
-}
-
-func (r *pagedFuelPurchaseRepo) ListImportBatches(
-	_ context.Context,
-	req *fuelpurchaseports.ListImportBatchesRequest,
-) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error) {
-	return r.batches.page(req.Cursor), nil
-}
-
-type pagedIFTARepo struct {
-	iftaports.IFTARepository
-	returns *cursorRepo[*ifta.Return]
-	entries *cursorRepo[*ifta.JurisdictionMileageEntry]
-}
-
-func (r *pagedIFTARepo) ListReturns(
-	_ context.Context,
-	req *iftaports.ListReturnsRequest,
-) (*pagination.CursorListResult[*ifta.Return], error) {
-	return r.returns.page(req.Cursor), nil
-}
-
-func (r *pagedIFTARepo) ListMileageEntries(
-	_ context.Context,
-	req *iftaports.ListMileageEntriesRequest,
-) (*pagination.CursorListResult[*ifta.JurisdictionMileageEntry], error) {
-	return r.entries.page(req.Cursor), nil
-}
-
 type cursorListCase struct {
 	tool     agentports.AgentQueryTool
 	received func() pagination.CursorInfo
@@ -169,45 +117,6 @@ func TestCursorListCatalog_PagesByAfterAndNextCursor(t *testing.T) {
 				newListEquipmentTypesTool(&pagedEquipmentTypeRepo{cursorRepo: repo}),
 				repo,
 			)
-		},
-		"fuel purchases": func() cursorListCase {
-			repo := newCursorRepo(cursorCaseRows, func(id pulid.ID) *fuelpurchase.FuelPurchase {
-				return &fuelpurchase.FuelPurchase{ID: id}
-			})
-			return cursorCase(
-				newListFuelPurchasesTool(&pagedFuelPurchaseRepo{purchases: repo}),
-				repo,
-			)
-		},
-		"fuel cards": func() cursorListCase {
-			repo := newCursorRepo(cursorCaseRows, func(id pulid.ID) *fuelpurchase.FuelCard {
-				return &fuelpurchase.FuelCard{ID: id}
-			})
-			return cursorCase(newListFuelCardsTool(&pagedFuelPurchaseRepo{cards: repo}), repo)
-		},
-		"fuel purchase imports": func() cursorListCase {
-			repo := newCursorRepo(cursorCaseRows, func(id pulid.ID) *fuelpurchase.ImportBatch {
-				return &fuelpurchase.ImportBatch{ID: id}
-			})
-			return cursorCase(
-				newListFuelPurchaseImportsTool(&pagedFuelPurchaseRepo{batches: repo}),
-				repo,
-			)
-		},
-		"IFTA returns": func() cursorListCase {
-			repo := newCursorRepo(cursorCaseRows, func(id pulid.ID) *ifta.Return {
-				return &ifta.Return{ID: id}
-			})
-			return cursorCase(newListIFTAReturnsTool(&pagedIFTARepo{returns: repo}), repo)
-		},
-		"IFTA mileage entries": func() cursorListCase {
-			repo := newCursorRepo(
-				cursorCaseRows,
-				func(id pulid.ID) *ifta.JurisdictionMileageEntry {
-					return &ifta.JurisdictionMileageEntry{ID: id}
-				},
-			)
-			return cursorCase(newListIFTAMileageEntriesTool(&pagedIFTARepo{entries: repo}), repo)
 		},
 	}
 

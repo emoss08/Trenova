@@ -108,13 +108,23 @@ type graphQLListSpec struct {
 	// template an EDI message was rendered from, the path it was dropped
 	// at), left out of the parameters so the ones people use stay readable.
 	unoffered []string
-	resource  permission.Resource
+	// matches are the row fields, by dotted path, an unpaged list whose root
+	// takes no search argument matches a free-text query against in the rows
+	// it read (program.code), as its repository tool did; queryNote then
+	// describes that query.
+	matches  []string
+	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
-	// marks names, for a Marked read, the record a row carries outside text
-	// in (a match's EDI carrier invoice), which the run is tainted with.
-	marks func(row map[string]any) (agent.RecordRef, bool)
+	// outside are the fields whose text someone outside the organization
+	// wrote (a driver's own description); a record that shows one is marked
+	// as read from outside, as reads Marked declares.
+	outside []string
+	// amounts shows each amount the record holds in minor units as the
+	// decimal a person reads, and filters it by that decimal (graphql_money.go).
+	amounts bool
+	marks   func(row map[string]any) (agent.RecordRef, bool)
 }
 
 // idReference is where a list's id parameter points: the resource, what the
@@ -210,6 +220,9 @@ func newGraphQLListTool(
 	if params, err = instantParams(spec.name, params, spec.instants); err != nil {
 		return nil, err
 	}
+	if spec.amounts {
+		params = amountParams(params)
+	}
 	if tabled {
 		params = withInputParams(params, inputParams(inputType))
 	}
@@ -217,7 +230,7 @@ func newGraphQLListTool(
 	if err != nil {
 		return nil, err
 	}
-	params = append(params, args...)
+	params = withRootArgs(params, args)
 	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
 	instead, err := insteadReads(spec, &read)
 	if err != nil {
@@ -247,7 +260,7 @@ func newGraphQLListTool(
 		return nil, err
 	}
 
-	return &graphQLListTool{
+	tool := &graphQLListTool{
 		spec:     *spec,
 		read:     read,
 		input:    input,
@@ -263,7 +276,24 @@ func newGraphQLListTool(
 		reader:      reader,
 		permissions: permissions,
 		registry:    fieldsensitivity.DefaultRegistry(),
-	}, nil
+	}
+	tool.params = slices.DeleteFunc(params, func(param graphQLParam) bool {
+		return tool.confidential(&param)
+	})
+
+	return tool, nil
+}
+
+// confidential marks a parameter on a Confidential field, which no reader's
+// data access reaches (a card provider's own card id): offering it would
+// only lead to a refusal.
+func (t *graphQLListTool) confidential(param *graphQLParam) bool {
+	if param.OnInput {
+		return false
+	}
+	resource, name := t.fieldOwner(param.Field)
+
+	return !fieldsensitivity.Visible(t.registry, resource, name, permission.SensitivityRestricted)
 }
 
 // pagesByCursor reports whether a list's root takes its own first and after,
@@ -484,8 +514,10 @@ func annotate(
 func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
-		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), accountingReadSpecs(),
-		ediReadSpecs(), carrierReadSpecs(),
+		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), operationsReadSpecs(),
+		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(), rateReadSpecs(),
+		workforceProgrammeReadSpecs(), formulaReadSpecs(), fuelReadSpecs(), settlementReadSpecs(),
+		factoringReadSpecs(), billingReadSpecs(), carrierReadSpecs(),
 	)
 }
 
@@ -623,7 +655,8 @@ func describedName(param graphQLParam) (string, bool) {
 		return param.Name + "/" + suffixTo, true
 	case paramAtLeast:
 		return param.Name + "/" + suffixMax, true
-	case paramIn, paramEquals, paramContains, paramPresent, paramReference, paramReferences:
+	case paramIn, paramEquals, paramContains, paramPresent, paramReference, paramReferences,
+		paramDayText:
 		return param.Name, true
 	}
 
@@ -763,6 +796,55 @@ type graphQLListOutcome struct {
 	Total            *int             `json:"total,omitempty"`
 	WithheldByAccess []string         `json:"withheldByAccess,omitempty"`
 	WithheldNote     string           `json:"withheldNote,omitempty"`
+
+	outside []agent.RecordRef
+}
+
+// TaintedRecords is on the value: a list returns its outcome by value, as
+// its callers and the runtime's taint carrier read it.
+//
+//nolint:gocritic // the outcome is passed by value wherever a list returns it
+func (o graphQLListOutcome) TaintedRecords() []agent.RecordRef { return o.outside }
+
+// outsideRecords are the records among items that show text written outside
+// the organization in one of the fields named, each under its kind.
+func outsideRecords(
+	resource permission.Resource,
+	fields []string,
+	items ...map[string]any,
+) []agent.RecordRef {
+	if len(fields) == 0 {
+		return nil
+	}
+	var out []agent.RecordRef
+	for _, item := range items {
+		id, _ := item[recordIDField].(string)
+		if id == "" {
+			continue
+		}
+		for _, field := range fields {
+			if text, _ := item[field].(string); strings.TrimSpace(text) != "" {
+				out = append(out, agent.RecordRef{EntityType: resource.String(), ID: id})
+				break
+			}
+		}
+	}
+
+	return out
+}
+
+func markedRows(spec *graphQLListSpec, items []map[string]any) []agent.RecordRef {
+	out := outsideRecords(spec.resource, spec.outside, items...)
+	if spec.marks == nil {
+		return out
+	}
+	for _, item := range items {
+		if ref, marked := spec.marks(item); marked {
+			out = append(out, ref)
+		}
+	}
+
+	return out
 }
 
 func (t *graphQLListTool) Query(
@@ -842,6 +924,7 @@ func (t *graphQLListTool) Query(
 		HasMore:          page.hasMore,
 		Total:            page.total,
 		WithheldByAccess: page.withheld,
+		outside:          markedRows(&t.spec, page.items),
 	}
 	if page.hasMore {
 		outcome.NextCursor = window.next(page.endCursor)
@@ -859,19 +942,15 @@ func (t *graphQLListTool) Query(
 	}
 	outcome.Note = strings.Join(notes, " ")
 	if len(beside) == 0 {
-		return withMarks(&t.spec, page.items, outcome), nil
-	}
-	combined, err := withBeside(&outcome, beside)
-	if err != nil {
-		return nil, err
+		return outcome, nil
 	}
 
-	return withMarks(&t.spec, page.items, combined), nil
+	return withBeside(&outcome, beside)
 }
 
 // withBeside is a page's outcome with the records read alongside it, each
 // under its key.
-func withBeside(outcome *graphQLListOutcome, beside map[string]any) (map[string]any, error) {
+func withBeside(outcome *graphQLListOutcome, beside map[string]any) (any, error) {
 	out := make(map[string]any, len(beside)+10)
 	encoded, err := sonic.Marshal(outcome)
 	if err != nil {
@@ -882,6 +961,9 @@ func withBeside(outcome *graphQLListOutcome, beside map[string]any) (map[string]
 	}
 	for key, value := range beside {
 		out[key] = value
+	}
+	if len(outcome.outside) > 0 {
+		return &markedRecord{record: out, outside: outcome.outside}, nil
 	}
 
 	return out, nil
@@ -946,6 +1028,12 @@ func (t *graphQLListTool) page(
 		for _, item := range page.items {
 			t.spec.shape(item, withheld, clk)
 		}
+	}
+	if t.spec.amounts {
+		for _, item := range page.items {
+			presentAmounts(item)
+		}
+		page.withheld = presentedPaths(page.withheld)
 	}
 	if info, ok := connection[connectionPageInfo].(map[string]any); ok {
 		page.hasMore, _ = info[pageHasNext].(bool)
@@ -1053,6 +1141,17 @@ func (t *graphQLListTool) relativeWithheld(paths []string) []string {
 		t.read.RootField+"."+connectionEdges+"."+connectionNode+".")
 }
 
+// carried reports whether any row holds the field.
+func carried(items []map[string]any, name string) bool {
+	for _, item := range items {
+		if _, ok := item[name]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
 // compact drops what tells a model nothing: nulls, empty lists and type
 // names, in the record and in each record it carries.
 func compact(node map[string]any) map[string]any {
@@ -1091,11 +1190,12 @@ func selectedColumns(fields []graphQLField, items []map[string]any) []string {
 		if !field.Selected {
 			continue
 		}
-		for _, item := range items {
-			if _, ok := item[field.Name]; ok {
-				out = append(out, field.Name)
-				break
+		for _, name := range []string{field.Name, presentedName(field.Name)} {
+			if slices.Contains(out, name) || !carried(items, name) {
+				continue
 			}
+			out = append(out, name)
+			break
 		}
 	}
 
@@ -1255,8 +1355,13 @@ func (t *graphQLListTool) nearMiss(
 }
 
 func (t *graphQLListTool) keptOut(condition any) string {
-	return fmt.Sprintf("No %s matched every condition. Without the condition on %v "+
-		"some do, so that one alone keeps them out.", t.spec.entityPlural, condition)
+	named := fmt.Sprint(condition)
+	if t.spec.amounts {
+		named = presentedName(named)
+	}
+
+	return fmt.Sprintf("No %s matched every condition. Without the condition on %s "+
+		"some do, so that one alone keeps them out.", t.spec.entityPlural, named)
 }
 
 // runView reads a composed table view through the same operation, so the

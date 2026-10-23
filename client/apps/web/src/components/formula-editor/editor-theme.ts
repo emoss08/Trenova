@@ -39,9 +39,6 @@ export const lightTheme = EditorView.theme(
       borderLeftColor: "var(--foreground)",
       borderLeftWidth: "2px",
     },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
-      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-    },
     ".cm-activeLine": {
       backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
     },
@@ -173,9 +170,6 @@ export const darkTheme = EditorView.theme(
       borderLeftColor: "var(--foreground)",
       borderLeftWidth: "2px",
     },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
-      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-    },
     ".cm-activeLine": {
       backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
     },
@@ -274,6 +268,16 @@ export const darkTheme = EditorView.theme(
  * inline values. Every colour is a token, so it follows the theme.
  */
 export const languageServiceTheme = EditorView.theme({
+  // Selected code reads as selected text does everywhere in Trenova: solid amber, with the
+  // app's dark ink from its own ::selection. The selector matches CodeMirror's base theme, whose
+  // dark teal otherwise wins while the editor has focus. Out of focus the browser drops the
+  // selection's ink, so the amber fades to a tint the syntax colours read on.
+  "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground": {
+    backgroundColor: "var(--selection)",
+  },
+  ".cm-selectionLayer .cm-selectionBackground": {
+    backgroundColor: "var(--highlight-fill)",
+  },
   ".cm-lintRange-error": {
     backgroundImage: "none",
     textDecoration: "underline wavy var(--danger)",
@@ -475,5 +479,147 @@ export const languageServiceTheme = EditorView.theme({
   ".cm-tariff-rename-refusal": {
     margin: "0",
     color: "var(--danger-foreground)",
+  },
+  ".cm-tariff-hover-constraint": {
+    display: "flex",
+    gap: "6px",
+    alignItems: "baseline",
+    fontFamily: "'Geist Mono', monospace",
+    fontSize: "11px",
+    fontVariantNumeric: "tabular-nums",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-hover-label": {
+    fontFamily: "inherit",
+    color: "var(--foreground-subtle)",
+  },
+  ".cm-tariff-occurrence": {
+    backgroundColor: "var(--editor-reference)",
+    borderRadius: "2px",
+  },
+  // The other uses of selected text, as the editor's own search marks them, in the same tint.
+  ".cm-selectionMatch": {
+    backgroundColor: "var(--editor-reference)",
+  },
+  ".cm-tariff-occurrence-write": {
+    backgroundColor: "var(--editor-reference-write)",
+  },
+  ".cm-tooltip .cm-tariff-notice, .cm-tooltip.cm-tariff-notice": {
+    padding: "4px 8px",
+    fontSize: "12px",
+    fontFamily: "inherit",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-actions ul": {
+    listStyle: "none",
+    margin: "0",
+    padding: "4px",
+    display: "flex",
+    flexDirection: "column",
+    minWidth: "220px",
+  },
+  ".cm-tariff-action": {
+    display: "block",
+    width: "100%",
+    textAlign: "left",
+    padding: "5px 8px",
+    borderRadius: "var(--radius-control)",
+    fontSize: "12px",
+    fontFamily: "inherit",
+    color: "var(--foreground)",
+    backgroundColor: "transparent",
+    cursor: "pointer",
+  },
+  ".cm-tariff-action code": {
+    fontFamily: "'Geist Mono', monospace",
+    fontSize: "11px",
+  },
+  ".cm-tariff-action:hover, .cm-tariff-action[aria-current='true']": {
+    backgroundColor: "var(--surface-hover)",
+  },
+  ".cm-tariff-coverage-gutter": {
+    width: "6px",
+  },
+  ".cm-tariff-coverage-gutter .cm-gutterElement": {
+    padding: "0",
+    display: "flex",
+    justifyContent: "center",
+  },
+  ".cm-tariff-coverage-gap": {
+    display: "block",
+    width: "3px",
+    height: "100%",
+    minHeight: "1.6em",
+    borderRadius: "1px",
+    backgroundColor: "var(--editor-coverage-gap)",
+  },
+  ".cm-tooltip .cm-tariff-coverage-tip, .cm-tooltip.cm-tariff-coverage-tip": {
+    padding: "4px 8px",
+    fontSize: "12px",
+    fontFamily: "inherit",
+    color: "var(--foreground)",
+  },
+  ".cm-tooltip .cm-tariff-diagnostics": {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    padding: "8px 10px",
+    maxWidth: "360px",
+    fontSize: "12px",
+    whiteSpace: "normal",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-diagnostic": {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "6px",
+    paddingLeft: "8px",
+    borderLeft: "2px solid var(--foreground-subtle)",
+  },
+  ".cm-tariff-diagnostic p": {
+    margin: "0",
+    flexBasis: "100%",
+  },
+  ".cm-tariff-diagnostic-error": {
+    borderLeftColor: "var(--danger)",
+  },
+  ".cm-tariff-diagnostic-warning": {
+    borderLeftColor: "var(--warning)",
+  },
+  ".cm-tariff-diagnostic-fix": {
+    height: "22px",
+    padding: "0 8px",
+    borderRadius: "var(--radius-control)",
+    border: "1px solid var(--border)",
+    backgroundColor: "var(--card)",
+    fontSize: "11px",
+    color: "var(--foreground)",
+    cursor: "pointer",
+  },
+  "&.cm-editor .cm-fat-cursor": {
+    backgroundColor: "var(--selection)",
+    color: "var(--selection-foreground)",
+  },
+  "&.cm-editor:not(.cm-focused) .cm-fat-cursor": {
+    backgroundColor: "transparent",
+    outline: "1px solid var(--selection)",
+  },
+  ".cm-panels .cm-vim-panel": {
+    minHeight: "24px",
+    alignItems: "center",
+    padding: "0 12px",
+    fontFamily: "'Geist Mono', monospace",
+    fontSize: "11px",
+    color: "var(--foreground-muted)",
+    backgroundColor: "var(--sunken)",
+  },
+  ".cm-vim-panel input": {
+    fontFamily: "inherit",
+    fontSize: "inherit",
+    color: "var(--foreground)",
+  },
+  "&.cm-editor .cm-searchMatch": {
+    backgroundColor: "color-mix(in oklab, var(--warning) 30%, transparent)",
   },
 });

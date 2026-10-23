@@ -1,0 +1,349 @@
+[
+  {
+    "name": "every region kind is counted",
+    "tests": "tariff \"Coverage\"\n\nfn surcharge(miles: Distance) -> Money {\n  if miles > 100 mi {\n    return $10\n  }\n  return $0\n}\n\ninput rate: Money/mi = $2/mi\n\nlet w = shipment.weight ?? 0 lb\nlet band = match w {\n  ..1_000 lb => \"light\"\n  _ => \"heavy\"\n}\nlet price = fuel.price ?? fail \"No fuel price\"\nif shipment.hazmat {\n  require w < 5_000 lb else \"Hazmat over 5,000 lb\"\n  charge \"Hazmat\" = $25\n} else if band == \"heavy\" {\n  charge \"Heavy\" = $15\n} else {\n  note \"Standard at {price}\"\n}\nmatch shipment.status {\n  New => {\n    charge \"New\" = $1\n  }\n  _ => {}\n}\nfor stop in shipment.stops {\n  charge \"Stop {stop.sequence}\" = $5\n}\nbest \"Linehaul\" {\n  option \"Per mile\" {\n    charge \"Per mile\" = rate * shipment.distance\n  }\n  option \"Flat\" {\n    charge \"Flat\" = $50 + surcharge(shipment.distance)\n  }\n}\nlet kind = if shipment.reefer { \"cold\" } else { \"dry\" }\nnote \"{kind}\"\nif (shipment.pieces ?? 0) == 999 {\n  fail \"Never\"\n}\n\ntest \"light\" {\n  given fuel.price = $3/gal\n  expect total > $0\n}\n\ntest \"hazmat\" {\n  given fuel.price = $3/gal\n  given shipment.hazmat = true\n  given shipment.weight = 6_000 lb\n  expect fails\n}\n\nproperty \"heavier\" {\n  vary shipment.weight in 1 lb..2_000 lb\n  given fuel.price = $3/gal\n  expect total > $0\n}\n",
+    "expect": {
+      "tests": [
+        {
+          "name": "light",
+          "kind": "test",
+          "status": "passed",
+          "cases": 1,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": {
+            "total": {
+              "$q": "11",
+              "u": "$"
+            }
+          }
+        },
+        {
+          "name": "hazmat",
+          "kind": "test",
+          "status": "passed",
+          "cases": 1,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": null
+        },
+        {
+          "name": "heavier",
+          "kind": "property",
+          "status": "passed",
+          "cases": 24,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 17,
+        "regions": [
+          {
+            "hits": 25,
+            "kind": "function",
+            "range": {
+              "from": 58,
+              "to": 114
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "if",
+            "range": {
+              "from": 80,
+              "to": 100
+            }
+          },
+          {
+            "hits": 15,
+            "kind": "arm",
+            "range": {
+              "from": 201,
+              "to": 222
+            }
+          },
+          {
+            "hits": 11,
+            "kind": "arm",
+            "range": {
+              "from": 225,
+              "to": 237
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "refusal",
+            "range": {
+              "from": 266,
+              "to": 286
+            }
+          },
+          {
+            "hits": 1,
+            "kind": "if",
+            "range": {
+              "from": 306,
+              "to": 384
+            }
+          },
+          {
+            "hits": 1,
+            "kind": "refusal",
+            "range": {
+              "from": 310,
+              "to": 358
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "charge",
+            "range": {
+              "from": 361,
+              "to": 382
+            }
+          },
+          {
+            "hits": 10,
+            "kind": "if",
+            "range": {
+              "from": 409,
+              "to": 435
+            }
+          },
+          {
+            "hits": 10,
+            "kind": "charge",
+            "range": {
+              "from": 413,
+              "to": 433
+            }
+          },
+          {
+            "hits": 15,
+            "kind": "else",
+            "range": {
+              "from": 441,
+              "to": 473
+            }
+          },
+          {
+            "hits": 25,
+            "kind": "arm",
+            "range": {
+              "from": 500,
+              "to": 534
+            }
+          },
+          {
+            "hits": 25,
+            "kind": "charge",
+            "range": {
+              "from": 513,
+              "to": 530
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "arm",
+            "range": {
+              "from": 537,
+              "to": 544
+            }
+          },
+          {
+            "hits": 50,
+            "kind": "loop",
+            "range": {
+              "from": 574,
+              "to": 614
+            }
+          },
+          {
+            "hits": 50,
+            "kind": "charge",
+            "range": {
+              "from": 578,
+              "to": 612
+            }
+          },
+          {
+            "hits": 25,
+            "kind": "option",
+            "range": {
+              "from": 635,
+              "to": 707
+            }
+          },
+          {
+            "hits": 25,
+            "kind": "charge",
+            "range": {
+              "from": 659,
+              "to": 703
+            }
+          },
+          {
+            "hits": 25,
+            "kind": "option",
+            "range": {
+              "from": 710,
+              "to": 784
+            }
+          },
+          {
+            "hits": 25,
+            "kind": "charge",
+            "range": {
+              "from": 730,
+              "to": 780
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "if",
+            "range": {
+              "from": 819,
+              "to": 825
+            }
+          },
+          {
+            "hits": 25,
+            "kind": "else",
+            "range": {
+              "from": 835,
+              "to": 840
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "if",
+            "range": {
+              "from": 890,
+              "to": 908
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "refusal",
+            "range": {
+              "from": 894,
+              "to": 906
+            }
+          }
+        ],
+        "total": 24
+      }
+    }
+  },
+  {
+    "name": "a file that does not check has no coverage",
+    "tests": "tariff \"t\"\ncharge \"x\" = $1 + 1 lb\n",
+    "expect": {
+      "error": {
+        "code": "check",
+        "message": {
+          "args": [
+            "`$1`",
+            {
+              "message": "money"
+            },
+            "`1 lb`",
+            {
+              "message": "a weight"
+            },
+            {
+              "args": [
+                "`$1 + 1 lb`",
+                {
+                  "message": "money"
+                },
+                {
+                  "message": "a weight"
+                }
+              ],
+              "message": "{0} adds {1} to {2}."
+            },
+            {
+              "message": "Both sides must be the same kind of value."
+            }
+          ],
+          "message": "{0} is {1} and {2} is {3}. {4} {5}"
+        },
+        "range": {
+          "from": 24,
+          "to": 33
+        }
+      },
+      "tests": [],
+      "needs": [],
+      "coverage": null
+    }
+  },
+  {
+    "name": "a library reports its own regions",
+    "tests": "library \"l\"\nfn pick(x: Int) -> Int = match x {\n  0 => 1\n  _ => x\n}\nfn never(x: Int) -> Int = x ?? 0\ntest \"pick\" {\n  expect pick(0) == 1\n}\n",
+    "expect": {
+      "tests": [
+        {
+          "name": "pick",
+          "kind": "test",
+          "status": "passed",
+          "cases": 1,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 2,
+        "regions": [
+          {
+            "hits": 1,
+            "kind": "function",
+            "range": {
+              "from": 37,
+              "to": 66
+            }
+          },
+          {
+            "hits": 1,
+            "kind": "arm",
+            "range": {
+              "from": 49,
+              "to": 55
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "arm",
+            "range": {
+              "from": 58,
+              "to": 64
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "function",
+            "range": {
+              "from": 93,
+              "to": 99
+            }
+          }
+        ],
+        "total": 4
+      }
+    }
+  }
+]

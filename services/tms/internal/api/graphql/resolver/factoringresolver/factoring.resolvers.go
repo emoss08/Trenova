@@ -1318,3 +1318,25 @@ func (r *QueryResolver) FactoringRemittancePlan(ctx context.Context, input gqlmo
 	}
 	return r.FactoringRemittanceService.PlanApply(ctx, req, actorutil.FromAuthContext(authCtx))
 }
+
+func (r *FactoringRemittanceResolver) Lines(ctx context.Context, obj *factoring.Remittance, matchStatuses []factoring.RemittanceMatchStatus) ([]*factoring.RemittanceLine, error) {
+	if obj == nil {
+		return []*factoring.RemittanceLine{}, nil
+	}
+	if obj.Lines != nil {
+		return linesIn(obj.Lines, matchStatuses), nil
+	}
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	full, err := r.FactoringRemittanceService.Get(ctx, factoringports.GetRemittanceRequest{
+		TenantInfo:   base.TenantInfo(authCtx),
+		ID:           obj.ID,
+		IncludeLines: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return linesIn(full.Lines, matchStatuses), nil
+}

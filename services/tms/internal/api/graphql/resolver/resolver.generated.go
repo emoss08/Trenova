@@ -67,6 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionshadowresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringcompanyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalperiodresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalyearresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
@@ -95,6 +96,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orderresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgholidayresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgstructureresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/pageaccessresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptopolicyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
@@ -244,6 +246,7 @@ type Resolver struct {
 	dQFFile                            *workerdqfresolver.DQFFileResolver
 	dQFItem                            *workerdqfresolver.DQFItemResolver
 	detentionOccurrence                *detentionresolver.DetentionOccurrenceResolver
+	detentionPreviewResult             *detentionresolver.DetentionPreviewResultResolver
 	disciplinaryLadder                 *workersafetyresolver.DisciplinaryLadderResolver
 	distanceProfile                    *distanceprofileresolver.DistanceProfileResolver
 	documentTemplate                   *documenttemplateresolver.DocumentTemplateResolver
@@ -368,6 +371,8 @@ type Resolver struct {
 	portalCredential                   *driverportalresolver.PortalCredentialResolver
 	portalTraining                     *workertrainingresolver.PortalTrainingResolver
 	query                              *queryResolver
+	rateAgreement                      *rateresolver.RateAgreementResolver
+	rateMatrix                         *rateresolver.RateMatrixResolver
 	reviewRating                       *performancereviewresolver.ReviewRatingResolver
 	riskDecision                       *securityactivityresolver.RiskDecisionResolver
 	role                               *roleresolver.RoleResolver
@@ -768,6 +773,10 @@ func FromServices(s *Services) *Resolver {
 		Core:                    s.Core,
 		FactoringCompanyService: s.FactoringCompanyService,
 	}
+	fiscalperiodDeps := &fiscalperiodresolver.Deps{
+		Core:                s.Core,
+		FiscalPeriodService: s.FiscalPeriodService,
+	}
 	fiscalyearDeps := &fiscalyearresolver.Deps{
 		Core:              s.Core,
 		FiscalYearService: s.FiscalYearService,
@@ -892,6 +901,10 @@ func FromServices(s *Services) *Resolver {
 	}
 	orgstructureDeps := &orgstructureresolver.Deps{
 		Core: s.Core,
+	}
+	pageaccessDeps := &pageaccessresolver.Deps{
+		Core:              s.Core,
+		PageAccessService: s.PageAccessService,
 	}
 	performancereviewDeps := &performancereviewresolver.Deps{
 		Core:                     s.Core,
@@ -1268,6 +1281,7 @@ func FromServices(s *Services) *Resolver {
 		dQFFile:                      &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps},
 		dQFItem:                      &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps},
 		detentionOccurrence:          &detentionresolver.DetentionOccurrenceResolver{Deps: detentionDeps},
+		detentionPreviewResult:       &detentionresolver.DetentionPreviewResultResolver{Deps: detentionDeps},
 		disciplinaryLadder:           &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps},
 		distanceProfile:              &distanceprofileresolver.DistanceProfileResolver{Deps: distanceprofileDeps},
 		documentTemplate:             &documenttemplateresolver.DocumentTemplateResolver{Deps: documenttemplateDeps},
@@ -1548,6 +1562,7 @@ func FromServices(s *Services) *Resolver {
 			extractionshadowQuery:         &extractionshadowQuery{Deps: extractionshadowDeps},
 			factoringQuery:                &factoringQuery{Deps: factoringDeps},
 			factoringcompanyQuery:         &factoringcompanyQuery{Deps: factoringcompanyDeps},
+			fiscalperiodQuery:             &fiscalperiodQuery{Deps: fiscalperiodDeps},
 			fiscalyearQuery:               &fiscalyearQuery{Deps: fiscalyearDeps},
 			fleetcodeQuery:                &fleetcodeQuery{Deps: fleetcodeDeps},
 			fleetsafetyQuery:              &fleetsafetyQuery{Deps: fleetsafetyDeps},
@@ -1576,6 +1591,7 @@ func FromServices(s *Services) *Resolver {
 			orderQuery:                    &orderQuery{Deps: orderDeps},
 			orgholidayQuery:               &orgholidayQuery{Deps: orgholidayDeps},
 			orgstructureQuery:             &orgstructureQuery{Deps: orgstructureDeps},
+			pageaccessQuery:               &pageaccessQuery{Deps: pageaccessDeps},
 			performancereviewQuery:        &performancereviewQuery{Deps: performancereviewDeps},
 			ptopolicyQuery:                &ptopolicyQuery{Deps: ptopolicyDeps},
 			rateQuery:                     &rateQuery{Deps: rateDeps},
@@ -1620,6 +1636,8 @@ func FromServices(s *Services) *Resolver {
 			workersafetyQuery:             &workersafetyQuery{Deps: workersafetyDeps},
 			workertrainingQuery:           &workertrainingQuery{Deps: workertrainingDeps},
 		},
+		rateAgreement:                &rateresolver.RateAgreementResolver{Deps: rateDeps},
+		rateMatrix:                   &rateresolver.RateMatrixResolver{Deps: rateDeps},
 		reviewRating:                 &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
 		riskDecision:                 &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
 		role:                         &roleresolver.RoleResolver{Deps: roleDeps},
@@ -2123,6 +2141,10 @@ func (r *Resolver) DQFItem() generated.DQFItemResolver {
 
 func (r *Resolver) DetentionOccurrence() generated.DetentionOccurrenceResolver {
 	return r.detentionOccurrence
+}
+
+func (r *Resolver) DetentionPreviewResult() generated.DetentionPreviewResultResolver {
+	return r.detentionPreviewResult
 }
 
 func (r *Resolver) DisciplinaryLadder() generated.DisciplinaryLadderResolver {
@@ -2786,6 +2808,7 @@ type queryResolver struct {
 	*extractionshadowQuery
 	*factoringQuery
 	*factoringcompanyQuery
+	*fiscalperiodQuery
 	*fiscalyearQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
@@ -2814,6 +2837,7 @@ type queryResolver struct {
 	*orderQuery
 	*orgholidayQuery
 	*orgstructureQuery
+	*pageaccessQuery
 	*performancereviewQuery
 	*ptopolicyQuery
 	*rateQuery
@@ -2857,6 +2881,14 @@ type queryResolver struct {
 	*workeroverviewQuery
 	*workersafetyQuery
 	*workertrainingQuery
+}
+
+func (r *Resolver) RateAgreement() generated.RateAgreementResolver {
+	return r.rateAgreement
+}
+
+func (r *Resolver) RateMatrix() generated.RateMatrixResolver {
+	return r.rateMatrix
 }
 
 func (r *Resolver) ReviewRating() generated.ReviewRatingResolver {
@@ -3298,6 +3330,7 @@ type (
 	extractionshadowQuery           = extractionshadowresolver.QueryResolver
 	factoringQuery                  = factoringresolver.QueryResolver
 	factoringcompanyQuery           = factoringcompanyresolver.QueryResolver
+	fiscalperiodQuery               = fiscalperiodresolver.QueryResolver
 	fiscalyearQuery                 = fiscalyearresolver.QueryResolver
 	fleetcodeQuery                  = fleetcoderesolver.QueryResolver
 	fleetsafetyQuery                = fleetsafetyresolver.QueryResolver
@@ -3326,6 +3359,7 @@ type (
 	orderQuery                      = orderresolver.QueryResolver
 	orgholidayQuery                 = orgholidayresolver.QueryResolver
 	orgstructureQuery               = orgstructureresolver.QueryResolver
+	pageaccessQuery                 = pageaccessresolver.QueryResolver
 	performancereviewQuery          = performancereviewresolver.QueryResolver
 	ptopolicyQuery                  = ptopolicyresolver.QueryResolver
 	rateQuery                       = rateresolver.QueryResolver

@@ -3,6 +3,7 @@ package formulatemplate
 const (
 	StandardFlatRate          = "Flat Rate"
 	StandardPerMile           = "Per Mile"
+	StandardPerMileOrFlat     = "Per Mile or Flat"
 	StandardPerStop           = "Per Stop"
 	StandardPerPound          = "Per Pound"
 	StandardPerPallet         = "Per Pallet"

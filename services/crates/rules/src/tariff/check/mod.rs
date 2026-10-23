@@ -38,7 +38,7 @@
 //! | Code | Finding |
 //! |---|---|
 //! | `unknown-name`, `unknown-type`, `unknown-field`, `unknown-member`, `unknown-function`, `unknown-variant`, `unknown-unit`, `unknown-table`, `unknown-argument` | a name nothing declares, with a "did you mean" fix |
-//! | `unknown-code`, `inactive-code` | a charge code not in the accessorial catalog, or inactive |
+//! | `unknown-code`, `inactive-code` | a charge code not in the accessorial catalog (once per code, suggesting a code by spelling or by description), or inactive |
 //! | `type-mismatch` | a value of the wrong type, with a fix writing a literal's unit |
 //! | `unit-mismatch` | operands an operator does not combine, explained in pricing words |
 //! | `optional` | a value that may be empty used where a value is needed; fixes: `?? zero`, `if let`, `require let` (and `?.` for a member) |
@@ -49,13 +49,21 @@
 //! | `charge-amount`, `charge-option`, `misplaced`, `total-order`, `round-step` | charges, notes, total clauses and statements in the wrong place |
 //! | `match-exhaustive`, `match-overlap`, `empty-range`, `pattern-binding` | `match` |
 //! | `missing-return`, `return-type`, `recursion`, `recursive-type`, `const-type`, `condition-result`, `annotation-needed`, `branch-mismatch`, `missing-field`, `duplicate`, `given-order`, `given-target`, `not-indexable`, `not-iterable`, `not-summable`, `unordered`, `never-none`, `interpolation`, `pattern`, `quotient`, `unit-type`, `type-arguments`, `range`, `overflow`, `divide-by-zero` | the other rules |
-//! | `unused`, `unused-value`, `unreachable`, `unreachable-arm`, `no-charge`, `not-billed`, `needless-fallback`, `needless-optional-chain`, `needless-let` | warnings |
+//! | `vary-target`, `vary-values`, `vary-range`, `vary-read`, `vary-missing`, `assume-bill`, `monotone-target` | properties (`check/property.rs`); a property also uses `given-order`, `duplicate`, `range`, `empty-range`, `unordered`, `not-constant` and `shadow` |
+//! | `unused`, `unused-value`, `unreachable`, `unreachable-arm`, `no-charge`, `not-billed`, `needless-fallback`, `needless-optional-chain`, `needless-let`, `bounds` | warnings; `bounds` is a comparison or `match` arm an input's `where` bounds decide |
+//! | `constraint` | an input's `where` constraint: not a range or a list, on a record input, a range of an unordered type or with no end, an empty range or list, a default or a test's `given` outside it |
+//! | `choice`, `duplicate`, `unknown-choice` | `best` and `worst`: an empty label, fewer than two options, a label used twice; `chosen(…)` naming no choice |
+//! | `unknown-option` | `chosen(…)` compared with a label that is no option of that choice |
 //! | `input-value` | a contract input value that does not fit (`tariff.check` with `values`; a `path`, no range) |
 
 mod arms;
+mod bounds;
 mod calls;
 pub mod catalog;
 mod checker;
+mod choose;
+mod codes;
+mod constraints;
 pub mod consts;
 mod decls;
 pub mod describe;
@@ -66,9 +74,11 @@ pub mod lower;
 pub mod methods;
 pub mod operators;
 pub mod ops;
+mod options;
 pub mod patterns;
 mod problems;
 mod program;
+mod property;
 mod scope;
 mod stmt;
 mod tables;
@@ -212,6 +222,8 @@ pub enum SymbolKind {
     LambdaParam,
     /// A name bound by `if let`, `require let` or a `match` pattern.
     Binding,
+    /// A property's `vary` name.
+    Vary,
     /// A module imported whole, by its alias.
     Module,
     /// A `test`.
@@ -235,6 +247,7 @@ impl SymbolKind {
             Self::LoopVariable => "loop",
             Self::LambdaParam => "lambda",
             Self::Binding => "binding",
+            Self::Vary => "vary",
             Self::Module => "module",
             Self::Test => "test",
         }
@@ -338,6 +351,8 @@ pub struct InputInfo {
     pub required: bool,
     /// The default, as a wire value, when it has one that folds.
     pub default: Option<serde_json::Value>,
+    /// The `where` constraint, folded; `None` when the input has none or it does not fold.
+    pub constraint: Option<crate::tariff::constraint::Constraint>,
     /// Where the input's name is declared.
     pub span: Span,
 }

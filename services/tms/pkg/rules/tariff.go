@@ -60,6 +60,35 @@ const (
 	TariffTestNeeds  = TariffTestStatus("needs")
 )
 
+type TariffTestKind string
+
+const (
+	TariffTestKindTest     = TariffTestKind("test")
+	TariffTestKindProperty = TariffTestKind("property")
+)
+
+type TariffChoiceKind string
+
+const (
+	TariffChoiceBest  = TariffChoiceKind("best")
+	TariffChoiceWorst = TariffChoiceKind("worst")
+)
+
+type TariffOptionStatus string
+
+const (
+	TariffOptionChosen  = TariffOptionStatus("chosen")
+	TariffOptionLost    = TariffOptionStatus("lost")
+	TariffOptionRefused = TariffOptionStatus("refused")
+)
+
+type TariffMonotoneDirection string
+
+const (
+	TariffNondecreasing = TariffMonotoneDirection("nondecreasing")
+	TariffNonincreasing = TariffMonotoneDirection("nonincreasing")
+)
+
 var errTariffResponse = errors.New("rules: the tariff module answered with an unexpected shape")
 
 type TariffRange struct {
@@ -164,14 +193,26 @@ type TariffHeader struct {
 	Name string     `json:"name"`
 }
 
+type TariffRangeConstraint struct {
+	Min          RawJSON `json:"min"`
+	Max          RawJSON `json:"max"`
+	MaxInclusive bool    `json:"maxInclusive"`
+}
+
+type TariffConstraint struct {
+	Range *TariffRangeConstraint `json:"range,omitempty"`
+	OneOf []RawJSON              `json:"oneOf,omitempty"`
+}
+
 type TariffInput struct {
-	Name       string       `json:"name"`
-	Doc        string       `json:"doc,omitempty"`
-	Type       string       `json:"type"`
-	Descriptor RawJSON      `json:"descriptor"`
-	Required   bool         `json:"required"`
-	Default    RawJSON      `json:"default,omitempty"`
-	Range      *TariffRange `json:"range,omitempty"`
+	Name       string            `json:"name"`
+	Doc        string            `json:"doc,omitempty"`
+	Type       string            `json:"type"`
+	Descriptor RawJSON           `json:"descriptor"`
+	Required   bool              `json:"required"`
+	Default    RawJSON           `json:"default,omitempty"`
+	Constraint *TariffConstraint `json:"constraint,omitempty"`
+	Range      *TariffRange      `json:"range,omitempty"`
 }
 
 type TariffImport struct {
@@ -328,6 +369,22 @@ type TariffNeed struct {
 	Keys  []string `json:"keys"`
 }
 
+type TariffChoiceOption struct {
+	Label    string             `json:"label"`
+	Range    *TariffRange       `json:"range"`
+	Status   TariffOptionStatus `json:"status"`
+	Subtotal RawJSON            `json:"subtotal"`
+	Refusal  *TariffRefusal     `json:"refusal"`
+}
+
+type TariffChoice struct {
+	Label   string               `json:"label"`
+	Kind    TariffChoiceKind     `json:"kind"`
+	Range   *TariffRange         `json:"range"`
+	Chosen  *string              `json:"chosen"`
+	Options []TariffChoiceOption `json:"options"`
+}
+
 type TariffResult struct {
 	ID      string           `json:"id"`
 	Status  TariffStatus     `json:"status"`
@@ -336,6 +393,7 @@ type TariffResult struct {
 	Refusal *TariffRefusal   `json:"refusal,omitempty"`
 	Error   *TariffEvalError `json:"error,omitempty"`
 	Needs   []TariffNeed     `json:"needs,omitempty"`
+	Choices []TariffChoice   `json:"choices"`
 	Trace   RawJSON          `json:"trace,omitempty"`
 	Lookups RawJSON          `json:"lookups,omitempty"`
 }
@@ -371,19 +429,97 @@ type TariffTestFailure struct {
 	Values  []TariffTestValue `json:"values,omitempty"`
 }
 
+type TariffShownValue struct {
+	Display string  `json:"display"`
+	Value   RawJSON `json:"value"`
+}
+
+type TariffMonotoneSide struct {
+	At     TariffShownValue `json:"at"`
+	Result TariffShownValue `json:"result"`
+}
+
+type TariffMonotone struct {
+	Target     string                  `json:"target"`
+	Expression string                  `json:"expression"`
+	Direction  TariffMonotoneDirection `json:"direction"`
+	Before     TariffMonotoneSide      `json:"before"`
+	After      TariffMonotoneSide      `json:"after"`
+}
+
+type TariffVariedValue struct {
+	Target  string  `json:"target"`
+	Display string  `json:"display"`
+	Value   RawJSON `json:"value"`
+}
+
+type TariffCounterexample struct {
+	Values   []TariffVariedValue `json:"values"`
+	Monotone *TariffMonotone     `json:"monotone"`
+	Refusal  *TariffRefusal      `json:"refusal"`
+	Test     string              `json:"test"`
+}
+
 type TariffTestResult struct {
-	Name     string              `json:"name"`
-	Range    TariffRange         `json:"range"`
-	Status   TariffTestStatus    `json:"status"`
-	Failures []TariffTestFailure `json:"failures,omitempty"`
-	Bill     RawJSON             `json:"bill,omitempty"`
-	Error    *TariffEvalError    `json:"error,omitempty"`
+	Name           string                `json:"name"`
+	Range          TariffRange           `json:"range"`
+	Kind           TariffTestKind        `json:"kind"`
+	Status         TariffTestStatus      `json:"status"`
+	Failures       []TariffTestFailure   `json:"failures,omitempty"`
+	Bill           RawJSON               `json:"bill,omitempty"`
+	Error          *TariffEvalError      `json:"error,omitempty"`
+	Cases          int                   `json:"cases"`
+	Skipped        int                   `json:"skipped"`
+	Counterexample *TariffCounterexample `json:"counterexample"`
+}
+
+func (r *TariffTestResult) IsProperty() bool {
+	return r.Kind == TariffTestKindProperty
+}
+
+type TariffCoverageKind string
+
+const (
+	TariffCoverageIf       = TariffCoverageKind("if")
+	TariffCoverageElse     = TariffCoverageKind("else")
+	TariffCoverageArm      = TariffCoverageKind("arm")
+	TariffCoverageLoop     = TariffCoverageKind("loop")
+	TariffCoverageOption   = TariffCoverageKind("option")
+	TariffCoverageCharge   = TariffCoverageKind("charge")
+	TariffCoverageRefusal  = TariffCoverageKind("refusal")
+	TariffCoverageFunction = TariffCoverageKind("function")
+)
+
+type TariffRegion struct {
+	Range TariffRange        `json:"range"`
+	Kind  TariffCoverageKind `json:"kind"`
+	Hits  int                `json:"hits"`
+}
+
+type TariffCoverage struct {
+	Regions []TariffRegion `json:"regions"`
+	Reached int            `json:"reached"`
+	Total   int            `json:"total"`
+}
+
+func (c *TariffCoverage) Unreached() []TariffRegion {
+	if c == nil {
+		return nil
+	}
+	out := make([]TariffRegion, 0, c.Total-c.Reached)
+	for i := range c.Regions {
+		if c.Regions[i].Hits == 0 {
+			out = append(out, c.Regions[i])
+		}
+	}
+	return out
 }
 
 type TariffTestRun struct {
-	Tests []TariffTestResult `json:"tests"`
-	Needs []TariffNeed       `json:"needs,omitempty"`
-	Error *TariffEvalError   `json:"error,omitempty"`
+	Tests    []TariffTestResult `json:"tests"`
+	Needs    []TariffNeed       `json:"needs,omitempty"`
+	Coverage *TariffCoverage    `json:"coverage"`
+	Error    *TariffEvalError   `json:"error,omitempty"`
 }
 
 func (r *TariffTestRun) Passed() bool {

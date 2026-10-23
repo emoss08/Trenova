@@ -2,7 +2,6 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -10,9 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -54,13 +51,6 @@ type workItemReader interface {
 		tenant pagination.TenantInfo,
 		receiptID pulid.ID,
 	) (*bankreceiptworkitem.WorkItem, error)
-}
-
-type customerPaymentLister interface {
-	List(
-		ctx context.Context,
-		req *customerpaymentports.ListCustomerPaymentsRequest,
-	) (*pagination.ListResult[*customerpayment.Payment], error)
 }
 
 // bankReceiptRow is a receipt in the words the model needs: when the money
@@ -412,168 +402,4 @@ func pulidString(id pulid.ID) string {
 	}
 
 	return id.String()
-}
-
-// customerPaymentRow is a posted payment in the words the model needs to
-// tell whether it is the one a receipt represents.
-type customerPaymentRow struct {
-	ID              string                  `json:"id"`
-	CustomerID      string                  `json:"customerId"`
-	PaymentDate     optionalDate            `json:"paymentDate"`
-	Amount          string                  `json:"amount"`
-	AppliedAmount   string                  `json:"appliedAmount"`
-	UnappliedAmount string                  `json:"unappliedAmount"`
-	Currency        string                  `json:"currency"`
-	Method          string                  `json:"method"`
-	ReferenceNumber string                  `json:"referenceNumber,omitempty"`
-	Memo            string                  `json:"memo,omitempty"`
-	Status          string                  `json:"status"`
-	Applications    []paymentApplicationRow `json:"applications,omitempty"`
-}
-
-type paymentApplicationRow struct {
-	InvoiceID      string `json:"invoiceId"`
-	Amount         string `json:"amount"`
-	ShortPayAmount string `json:"shortPayAmount,omitempty"`
-}
-
-func customerPaymentRowFrom(payment *customerpayment.Payment) customerPaymentRow {
-	row := customerPaymentRow{
-		ID:              payment.ID.String(),
-		CustomerID:      pulidString(payment.CustomerID),
-		PaymentDate:     recordedDate(payment.PaymentDate),
-		Amount:          money.DecimalFromMinor(payment.AmountMinor).StringFixed(2),
-		AppliedAmount:   money.DecimalFromMinor(payment.AppliedAmountMinor).StringFixed(2),
-		UnappliedAmount: money.DecimalFromMinor(payment.UnappliedAmountMinor).StringFixed(2),
-		Currency:        payment.CurrencyCode,
-		Method:          string(payment.PaymentMethod),
-		ReferenceNumber: payment.ReferenceNumber,
-		Memo:            payment.Memo,
-		Status:          string(payment.Status),
-	}
-	if row.Currency == "" {
-		row.Currency = money.DefaultCurrencyCode
-	}
-	if len(payment.Applications) > 0 {
-		row.Applications = make([]paymentApplicationRow, 0, len(payment.Applications))
-		for _, application := range payment.Applications {
-			if application == nil {
-				continue
-			}
-			entry := paymentApplicationRow{
-				InvoiceID: application.InvoiceID.String(),
-				Amount:    money.DecimalFromMinor(application.AppliedAmountMinor).StringFixed(2),
-			}
-			if application.ShortPayAmountMinor > 0 {
-				entry.ShortPayAmount = money.DecimalFromMinor(application.ShortPayAmountMinor).
-					StringFixed(2)
-			}
-			row.Applications = append(row.Applications, entry)
-		}
-	}
-
-	return row
-}
-
-type listCustomerPaymentsTool struct {
-	payments customerPaymentLister
-}
-
-func newListCustomerPaymentsTool(payments customerPaymentLister) agentports.AgentQueryTool {
-	return &listCustomerPaymentsTool{payments: payments}
-}
-
-func (t *listCustomerPaymentsTool) Name() string { return "receivable_list_customer_payments" }
-
-func (t *listCustomerPaymentsTool) Description() string {
-	return "List recorded customer payments, newest first, with the amount, how much of " +
-		"it is applied to invoices, the method, the reference and the memo. Search by " +
-		"reference or memo text, narrow to one customer, or include reversed payments. " +
-		"Use it to find the payment a bank receipt represents when receivable_get_bank_receipt " +
-		"suggested nothing, and to see whether a customer's payment is already recorded " +
-		"before posting another."
-}
-
-func (t *listCustomerPaymentsTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"query": map[string]any{
-				"type":        "string",
-				"description": "Words to look for in the reference number or the memo.",
-			},
-			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
-				"Optional: only this customer's payments, by id from "+
-					"customer_list or a candidate's customerId in receivable_get_bank_receipt."),
-			paramStatus: agenttoolschema.Enum(
-				"Which payments to list. Defaults to Posted.", customerPaymentListStatuses,
-			),
-			paramLimit: limitSchema(defaultBankReceiptRows, maxBankReceiptRows),
-		},
-		"additionalProperties": false,
-	}
-}
-
-func (t *listCustomerPaymentsTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceCustomerPayment,
-	})
-}
-
-func (t *listCustomerPaymentsTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	limit := optionalInt(params.Params, paramLimit, defaultBankReceiptRows)
-	if limit <= 0 || limit > maxBankReceiptRows {
-		limit = maxBankReceiptRows
-	}
-
-	criteria := filtercatalog.NewCriteria("customer payments").At(clockFor(params))
-
-	req := &customerpaymentports.ListCustomerPaymentsRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: tenantOf(params),
-			Pagination: pagination.Info{Limit: limit},
-			Query:      strings.TrimSpace(optionalString(params.Params, "query")),
-		},
-		Status: customerpayment.StatusPosted,
-	}
-	criteria.Text(req.Filter.Query)
-
-	if raw := optionalString(params.Params, "customerId"); raw != "" {
-		customerID, err := pulid.Parse(raw)
-		if err != nil {
-			return nil, fmt.Errorf("customerId %q is not a record id", raw)
-		}
-		req.CustomerID = customerID
-		criteria.Field("customer", raw)
-	}
-
-	if raw := optionalString(params.Params, "status"); raw != "" {
-		status := customerpayment.Status(raw)
-		if status != customerpayment.StatusPosted && status != customerpayment.StatusReversed {
-			return nil, fmt.Errorf("status %q is not Posted or Reversed", raw)
-		}
-		req.Status = status
-	}
-	criteria.Field("status", string(req.Status))
-
-	result, err := t.payments.List(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	rows := make([]customerPaymentRow, 0, len(result.Items))
-	for _, payment := range result.Items {
-		if payment != nil {
-			rows = append(rows, customerPaymentRowFrom(payment))
-		}
-	}
-
-	return searchResult(criteria, rows, result.Total), nil
 }

@@ -4,9 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
@@ -30,14 +28,7 @@ var (
 	)
 	listShipmentStatuses  = agenttoolschema.Source("shipment.status", shipmentStatuses)
 	weatherSeverityLevels = agenttoolschema.Source("weather.severity", weatherSeverities)
-	accessorialAppliesTo  = agenttoolschema.Source(
-		"accessorialCharge.appliesTo",
-		[]string{"Pickup", "Delivery"},
-	)
-	detentionUrgencies = agenttoolschema.Source("detention.urgency", []string{
-		"Lost", "NoticeOverdue", "NoticeDueSoon", detentionservice.UrgencyAwaitingApproval,
-	})
-	watchtowerKindSource = agenttoolschema.Source(
+	watchtowerKindSource  = agenttoolschema.Source(
 		"watchtower.sourceKind",
 		watchtowerKindValues(),
 	)
@@ -87,12 +78,8 @@ var (
 		"rating.side",
 		[]string{"Customer", "Carrier"},
 	)
-	reportRunFormats            = agenttoolschema.Source("report.format", report.AllFormats())
-	customerPaymentListStatuses = agenttoolschema.Source(
-		"customerPayment.listStatus",
-		[]customerpayment.Status{customerpayment.StatusPosted, customerpayment.StatusReversed},
-	)
-	memoryKinds = agenttoolschema.Source("agent.memoryKind", []agent.MemoryKind{
+	reportRunFormats = agenttoolschema.Source("report.format", report.AllFormats())
+	memoryKinds      = agenttoolschema.Source("agent.memoryKind", []agent.MemoryKind{
 		agent.MemoryKindInstruction,
 		agent.MemoryKindFact,
 		agent.MemoryKindCorrection,

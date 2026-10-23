@@ -37,6 +37,8 @@ export const TARIFF_COMPLETE_OP = "tariff.complete";
 export const TARIFF_HOVER_OP = "tariff.hover";
 export const TARIFF_SIGNATURE_OP = "tariff.signature";
 export const TARIFF_DEFINITION_OP = "tariff.definition";
+export const TARIFF_REFERENCES_OP = "tariff.references";
+export const TARIFF_ACTIONS_OP = "tariff.actions";
 export const TARIFF_RENAME_OP = "tariff.rename";
 export const TARIFF_INLAYS_OP = "tariff.inlays";
 export const TARIFF_CATALOG_OP = "tariff.catalog";
@@ -53,6 +55,8 @@ export const TARIFF_OPERATIONS = [
   TARIFF_HOVER_OP,
   TARIFF_SIGNATURE_OP,
   TARIFF_DEFINITION_OP,
+  TARIFF_REFERENCES_OP,
+  TARIFF_ACTIONS_OP,
   TARIFF_RENAME_OP,
   TARIFF_INLAYS_OP,
   TARIFF_CATALOG_OP,
@@ -386,6 +390,8 @@ const hoverSchema = z
       unit: nullableText,
       /** Markdown. */
       doc: docSchema,
+      /** An input's `where` bound in words ("from $0.50/mi to $15.00/mi"), apart from its doc. */
+      constraint: tariffMessageSchema.nullish().transform((value) => value ?? null),
       /** What the binding came to in the last preview, and how many times it was bound. */
       value: z
         .object({
@@ -474,7 +480,71 @@ export function tariffDefinition(
   return definitionSchema.parse(rules.call(TARIFF_DEFINITION_OP, cursorInput(request))).targets;
 }
 
+const referencesSchema = z.object({
+  references: z.array(
+    z.object({
+      range: tariffRangeSchema,
+      /** Where the name is declared, read, or written (a `var` assignment, a `given` or `vary`). */
+      kind: z.enum(["declaration", "read", "write"]),
+      /** The library the use is in (`std.ltl`, `org.fees`), or null for this file. */
+      module: nullableText,
+    }),
+  ),
+});
+export type TariffReference = z.output<typeof referencesSchema>["references"][number];
+
+/**
+ * Every use of the name at the cursor, in source order: in this file, and its declaration, which
+ * for an imported name is in the library's source. Empty when the cursor is on no name.
+ */
+export function tariffReferences(
+  rules: RulesRuntime,
+  request: TariffCursorRequest & { includeDeclaration?: boolean },
+): TariffReference[] {
+  return referencesSchema.parse(
+    rules.call(TARIFF_REFERENCES_OP, {
+      ...cursorInput(request),
+      ...(request.includeDeclaration === false ? { includeDeclaration: false } : {}),
+    }),
+  ).references;
+}
+
 const editSchema = z.object({ range: tariffRangeSchema, insert: z.string() });
+
+const actionsSchema = z.object({
+  actions: z.array(
+    z.object({
+      /** `promote-input`, or `promote-input-all` when equal literals elsewhere go with it. */
+      id: z.string(),
+      title: tariffMessageSchema,
+      edits: z.array(editSchema),
+      /** The range to select once the edits are applied (the new name, to rename it). */
+      select: tariffRangeSchema.nullish().transform((value) => value ?? null),
+    }),
+  ),
+});
+export type TariffAction = z.output<typeof actionsSchema>["actions"][number];
+
+/** The refactorings the module offers for a selection (Promote to input), each a set of edits. */
+export function tariffActions(
+  rules: RulesRuntime,
+  request: {
+    source: string;
+    context: TariffContext;
+    kind?: TariffFileKind;
+    from: number;
+    to: number;
+  },
+): TariffAction[] {
+  return actionsSchema.parse(
+    rules.call(TARIFF_ACTIONS_OP, {
+      source: request.source,
+      context: wireContext(request.context),
+      ...(request.kind ? { kind: request.kind } : {}),
+      range: { from: request.from, to: request.to },
+    }),
+  ).actions;
+}
 
 const renameSchema = z.union([
   z.object({ edits: z.array(editSchema) }),

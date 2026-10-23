@@ -35,8 +35,6 @@ func buildContext(
 		shipment.QuickFilterUncovered)
 	writeFact(&builder, "Loads accruing detention", facts.Detention, shipment.QuickFilterDetention)
 	writeFact(&builder, "Loads ready to bill", facts.ReadyToBill, shipment.QuickFilterReadyToBill)
-	writeFact(&builder, "Loads running on a thin margin", facts.LowMargin,
-		shipment.QuickFilterLowMargin)
 	builder.WriteString("Suggested actions waiting for a dispatcher: ")
 	builder.WriteString(strconv.Itoa(facts.OpenSuggestions))
 	builder.WriteString("\n")

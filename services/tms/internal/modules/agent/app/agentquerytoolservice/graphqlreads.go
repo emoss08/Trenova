@@ -74,6 +74,9 @@ type graphQLAlongside struct {
 	// Variables are a read made instead's variables, described by the root
 	// field arguments they are sent as.
 	Variables []graphQLVariable
+	// Set are the optional variables of a keyed read that the list's call
+	// does not declare, which the spec sets as the screen does.
+	Set []string
 }
 
 type graphQLField struct {
@@ -113,14 +116,16 @@ const (
 
 // unfilteredFields are selected by operations but are never what a person
 // narrows a list by: the tenant, the row's version, its id, which a get reads,
-// and the Google Places id an address was geocoded to, which nothing a model
-// reads supplies.
+// the Google Places id an address was geocoded to, which nothing a model
+// reads supplies, and the words of a cancelled record's reason, which the
+// conventions keep for the reason a cancel is given.
 var unfilteredFields = map[string]struct{}{
 	recordIDField:        {},
 	tenantOrganizationID: {},
 	tenantBusinessUnitID: {},
 	rowVersion:           {},
 	geocodedPlaceID:      {},
+	cancelReason:         {},
 }
 
 const (
@@ -128,7 +133,11 @@ const (
 	tenantBusinessUnitID = "businessUnitId"
 	rowVersion           = "version"
 	geocodedPlaceID      = "placeId"
+	cancelReason         = "cancelReason"
 	fieldNotes           = "notes"
+	fieldCancelReason    = "cancelReason"
+	paramReason          = "reason"
+	paramNote            = "note"
 	recordIDField        = "id"
 	// graphQLEnumSource names an enum parameter's values by the schema's own
 	// enum type, which is where they are declared.
@@ -158,6 +167,16 @@ const (
 	// coarse.
 	paramInstantFrom
 	paramInstantTo
+	// paramDayText is a day sent as the text a String argument takes (a fuel
+	// index price's day), not as a timestamp.
+	paramDayText
+)
+
+const (
+	// dayTextFormat is what the description of a String argument that takes
+	// a day says it is written as, and dayTextLayout how it is parsed.
+	dayTextFormat = "YYYY-MM-DD"
+	dayTextLayout = "2006-01-02"
 )
 
 // graphQLParam is one typed parameter of a tool that reads through GraphQL,
@@ -177,6 +196,9 @@ type graphQLParam struct {
 	// argument the screen sends, it is not judged by a record field's
 	// sensitivity.
 	OnInput bool
+	// Minor marks an amount filter on a field held in minor units, which the
+	// call sends as a decimal (amountMin on amountMinor).
+	Minor bool
 	// Arg is the root variable an argument parameter is sent as (a drift
 	// list's integrationType), and ArgField the field of that variable's
 	// filter input it sets (statuses), when it is one.
@@ -376,6 +398,8 @@ func inputValue(param *graphQLParam, args map[string]any, raw any, clk clock) (a
 			return nil, err
 		}
 		return endOfDay(clk, day), nil
+	case paramDayText:
+		return readDayText(args, param.Name)
 	case paramIn, paramEquals, paramContains, paramAtLeast, paramAtMost, paramPresent,
 		paramReference, paramReferences, paramInstantFrom, paramInstantTo:
 	}
@@ -402,12 +426,36 @@ func (r *graphQLRead) typedParams() []graphQLParam {
 		if !config.FilterableFields[field.Name] {
 			continue
 		}
-		params = append(params, paramsFor(field)...)
+		derived := paramsFor(field)
+		if field.Type == graphQLTypeString && config.EnumMap[field.Name] {
+			derived = exactParams(derived)
+		}
+		params = append(params, derived...)
 	}
 	params = append(params, r.nestedParams(config.FilterableFields)...)
 	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
 
 	return params
+}
+
+// exactParams turns a text parameter into an equality one, for a String field
+// whose column is a database enum (a journal entry's status): the database
+// cannot match part of an enum value, and a model names the whole value.
+func exactParams(params []graphQLParam) []graphQLParam {
+	out := slices.Clone(params)
+	for idx := range out {
+		if out[idx].Kind != paramContains {
+			continue
+		}
+		words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(out[idx].Field))
+		out[idx].Kind = paramEquals
+		out[idx].Schema = map[string]any{
+			toolschema.KeyType:        toolschema.TypeString,
+			toolschema.KeyDescription: "Only records whose " + words + " is exactly this.",
+		}
+	}
+
+	return out
 }
 
 // nestedParams are the parameters of the filters the configuration allows
@@ -488,7 +536,8 @@ func (r *graphQLRead) sortable() []string {
 // field, which a parameter derived from it takes; its filter still names the
 // field.
 var conventionNames = map[string]string{
-	fieldNotes: "note",
+	fieldNotes:        paramNote,
+	fieldCancelReason: paramReason,
 }
 
 // paramsFor derives a field's parameters, named by the conventions.
@@ -774,10 +823,19 @@ func compileFilter(
 			return compare(dbtype.OpGreaterThanOrEqual, at), true, nil
 		}
 		return compare(dbtype.OpLessThanOrEqual, at), true, nil
-	case paramAtLeast:
-		return compare(dbtype.OpGreaterThanOrEqual, args[param.Name]), true, nil
-	case paramAtMost:
-		return compare(dbtype.OpLessThanOrEqual, args[param.Name]), true, nil
+	case paramAtLeast, paramAtMost:
+		value := args[param.Name]
+		if param.Minor {
+			minor, minorErr := minorUnits(value, param.Name)
+			if minorErr != nil {
+				return nil, false, minorErr
+			}
+			value = minor
+		}
+		if param.Kind == paramAtLeast {
+			return compare(dbtype.OpGreaterThanOrEqual, value), true, nil
+		}
+		return compare(dbtype.OpLessThanOrEqual, value), true, nil
 	case paramPresent:
 		has, ok := args[param.Name].(bool)
 		if !ok {
@@ -787,7 +845,19 @@ func compileFilter(
 			return compare(dbtype.OpIsNotNull, nil), true, nil
 		}
 		return compare(dbtype.OpIsNull, nil), true, nil
+	case paramDayText:
 	}
 
 	return nil, false, fmt.Errorf("parameter %q has no filter", param.Name)
+}
+
+// readDayText is a day a String argument takes, checked as a day and sent as
+// the text the argument's description names.
+func readDayText(args map[string]any, name string) (string, error) {
+	raw := strings.TrimSpace(optionalString(args, name))
+	if _, err := time.Parse(dayTextLayout, raw); err != nil {
+		return "", fmt.Errorf("parameter %q must be a date as %s", name, dayTextFormat)
+	}
+
+	return raw, nil
 }

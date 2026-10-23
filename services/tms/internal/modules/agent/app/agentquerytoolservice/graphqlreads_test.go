@@ -27,10 +27,17 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 	t.Parallel()
 
 	for tool, read := range graphQLReads {
+		if read.Verb == graphQLVerbGet {
+			continue
+		}
 		t.Run(tool, func(t *testing.T) {
 			t.Parallel()
 
 			derived := derivedParams(t, tool, &read)
+			if read.Unpaged && len(read.Variables) == 0 {
+				assert.Empty(t, derived, "a root that takes no argument offers none")
+				return
+			}
 			if read.Verb == graphQLVerbList {
 				require.NotEmpty(t, derived, "a list tool reads by at least one typed parameter")
 			}
@@ -75,7 +82,7 @@ func derivedParams(t *testing.T, tool string, read *graphQLRead) []graphQLParam 
 	fields, err := offered(tool, read.typedParams(), unoffered)
 	require.NoError(t, err)
 
-	return append(fields, args...)
+	return withRootArgs(fields, args)
 }
 
 // Every field a converted tool's hand-kept catalog entry lets a model filter

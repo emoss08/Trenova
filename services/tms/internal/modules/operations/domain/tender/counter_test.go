@@ -39,7 +39,8 @@ func TestACounterBelowTheFloorNeedsApproval(t *testing.T) {
 	assert.True(t, verdict.NeedsApproval)
 	assert.False(t, verdict.AutoAccept, "auto-accept never reaches below the floor")
 	assert.True(t, decimal.NewFromFloat(7.5).Equal(verdict.MarginPercent.Decimal))
-	assert.Equal(t, "the counter leaves a margin of 7.5%, below the 10% floor", verdict.Explanation)
+	assert.Equal(t, "the counter is below the margin floor", verdict.Explanation,
+		"the explanation reaches every dispatcher, so it states no margin")
 }
 
 func TestACounterExactlyAtTheFloorClearsIt(t *testing.T) {

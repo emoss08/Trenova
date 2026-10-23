@@ -13,6 +13,7 @@ const MOCK_ORIGIN =
 export const DRAFT_TEMPLATE_ID = "fmt_studio_draft";
 export const REVIEW_TEMPLATE_ID = "fmt_studio_review";
 export const ACTIVE_TEMPLATE_ID = "fmt_studio_active";
+export const LTL_TEMPLATE_ID = "fmt_studio_ltl";
 
 export const ACCESSORIALS_LIBRARY_ID = "fl_studio_accessorials";
 export const FUEL_LIBRARY_ID = "fl_studio_fuel";
@@ -622,6 +623,71 @@ test "stops past the second bill $75 each" {
 }`;
 }
 
+/**
+ * The LTL tariff: bounded inputs (a rate range, a minimum range and a service list), a weight
+ * break that inverts at 1,000 lb so its property fails with a monotone counterexample, a `best`
+ * of three linehaul methods (the volume method refuses below 45,000 lb), and a hazmat fee no
+ * test reaches, so coverage has a gap.
+ */
+export const LTL_SOURCE = `tariff "LTL weight breaks"
+
+/// Less-than-truckload by the pound, with a break at 1,000 lb, the lower of three linehaul methods, and a hazmat fee.
+
+/// The rate per pound under the break.
+input rate: Money/lb = $0.31/lb where $0.05/lb..=$2/lb
+/// The rate per pound at and over the break.
+input breakRate: Money/lb = $0.25/lb where $0.05/lb..=$2/lb
+/// The least a shipment pays.
+input minimumCharge: Money = $95 where $25..=$500
+/// The service level the contract sells.
+input service: Text = "Standard" where ["Standard", "Guaranteed"]
+
+let weight = shipment.weight ?? 0 lb
+
+if weight >= 1_000 lb {
+  charge "Freight" = weight * breakRate
+} else {
+  charge "Freight" = weight * rate
+}
+
+best "Linehaul" {
+  option "Per mile" {
+    charge "Linehaul" (quantity: shipment.distance, rate: $1.10/mi)
+  }
+  option "Flat" {
+    charge "Flat linehaul" = $425
+  }
+  option "Volume" {
+    require weight >= 45_000 lb else "Volume rates start at 45,000 lb"
+    charge "Volume linehaul" = weight * $0.06/lb
+  }
+}
+
+if shipment.hazmat {
+  charge "Hazmat" as HAZ = $175
+}
+
+note "Service: {service}"
+minimum minimumCharge
+
+property "heavier never bills less" {
+  vary shipment.weight in 1 lb..40_000 lb
+  expect total nondecreasing in shipment.weight
+}
+
+property "never below the minimum" {
+  vary shipment.distance in 1 mi..3_000 mi
+  vary input.rate
+  expect total >= $95
+}
+
+test "a 500 lb load bills by the pound" {
+  given shipment.weight = 500 lb
+  given shipment.distance = 200 mi
+  expect charge("Freight") == $155
+}
+`;
+
 /** Template usage, by the kinds the server counts. */
 export const USAGE = [
   { type: "rate_agreement", count: 6 },
@@ -862,7 +928,27 @@ export function createFormulaTemplates(anchor) {
     ],
   });
 
-  return [draft, review, active];
+  const ltlName = "LTL weight breaks";
+  const ltl = savedTemplate(anchor, {
+    id: LTL_TEMPLATE_ID,
+    name: ltlName,
+    status: "Draft",
+    description:
+      "LTL by the pound with a break at 1,000 lb, the lower of three linehaul methods and a hazmat fee.",
+    versions: [
+      {
+        source: LTL_SOURCE,
+        status: "Draft",
+        by: USER.id,
+        daysAgo: 3,
+        message: "Initial version",
+      },
+    ],
+    usages: [],
+    reviews: [],
+  });
+
+  return [draft, review, active, ltl];
 }
 
 // --- Standard templates -----------------------------------------------------------------------

@@ -133,6 +133,14 @@ fragment CustomerPaymentReference on CustomerPayment {
   referenceNumber
 }
 
+fragment DOTRandomDrawReference on DOTRandomDraw {
+  id
+}
+
+fragment DOTRandomDrawEntryReference on DOTRandomDrawEntry {
+  id
+}
+
 fragment DOTRandomPoolReference on DOTRandomPool {
   id
   code
@@ -147,6 +155,12 @@ fragment DocumentTypeReference on DocumentType {
   color
   documentClassification
   documentCategory
+}
+
+fragment DriverPayEventReference on DriverPayEvent {
+  id
+  workerId
+  status
 }
 
 fragment DriverSettlementReference on DriverSettlement {
@@ -228,6 +242,10 @@ fragment FactoringCompanyReference on FactoringCompany {
   name
 }
 
+fragment FactoringInvoiceStateReference on FactoringInvoiceState {
+  customerId
+}
+
 fragment FactoringSubmissionReference on FactoringSubmission {
   id
   number
@@ -257,6 +275,14 @@ fragment FuelCardReference on FuelCard {
   status
 }
 
+fragment FuelIndexPriceReference on FuelIndexPrice {
+  id
+}
+
+fragment FuelProgramCurrentRateReference on FuelProgramCurrentRate {
+  id
+}
+
 fragment FuelPurchaseReference on FuelPurchase {
   id
   tractorId
@@ -265,6 +291,14 @@ fragment FuelPurchaseReference on FuelPurchase {
   vendor
   vendorCity
   fuelType
+}
+
+fragment FuelPurchaseImportBatchReference on FuelPurchaseImportBatch {
+  id
+  provider
+  origin
+  fileName
+  rowCount
 }
 
 fragment FuelSurchargeProgramReference on FuelSurchargeProgram {
@@ -303,6 +337,11 @@ fragment InvoiceReference on Invoice {
   billToName
   settlementStatus
   disputeStatus
+}
+
+fragment InvoiceAdjustmentReference on InvoiceAdjustment {
+  id
+  status
 }
 
 fragment InvoiceDisputeReference on InvoiceDispute {
@@ -610,6 +649,10 @@ fragment WorkerDisciplinaryActionReference on WorkerDisciplinaryAction {
   id
   status
   issuedAt
+}
+
+fragment WorkerEarningsSummaryReference on WorkerEarningsSummary {
+  workerId
 }
 
 fragment WorkerInjuryReference on WorkerInjury {

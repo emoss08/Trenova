@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -171,4 +171,15 @@ func (r *QueryResolver) InvoiceAdjustmentOperationsSummary(ctx context.Context) 
 	}
 
 	return r.InvoiceAdjustmentService.GetOperationsSummary(ctx, base.TenantInfo(authCtx))
+}
+
+func (r *InvoiceAdjustmentResolver) SupportingDocumentIds(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]string, error) {
+	ids := make([]string, 0, len(obj.DocumentReferences))
+	for _, reference := range obj.DocumentReferences {
+		if reference != nil && reference.DocumentID.IsNotNil() {
+			ids = append(ids, reference.DocumentID.String())
+		}
+	}
+
+	return ids, nil
 }

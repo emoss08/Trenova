@@ -10,11 +10,14 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportrows"
@@ -201,6 +204,14 @@ func (f *fakePermissions) GetResourcePermissions(
 	return &permissionports.ResourcePermissionDetail{Resource: resource}, nil
 }
 
+func (f *fakePermissions) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, f, userID, orgID, resources)
+}
+
 func (f *fakePermissions) Check(
 	_ context.Context,
 	req *permissionports.PermissionCheckRequest,
@@ -271,8 +282,8 @@ func reportingTools(
 		runner,
 		newGetReportRunTool(service),
 		newDescribeReportTool(service),
-		newListReportDatasetsTool(permissions),
-		newDescribeReportDatasetTool(permissions),
+		newListReportDatasetsTool(catalogResolver(permissions)),
+		newDescribeReportDatasetTool(catalogResolver(permissions)),
 		newPreviewReportTool(service),
 		newListReportRunsTool(service),
 		newCompareReportRunsTool(service),
@@ -281,6 +292,24 @@ func reportingTools(
 	}
 
 	return service, permissions, tools
+}
+
+// catalogResolver decides the catalog as production does: reference views by
+// refview, and every protected group granted.
+func catalogResolver(engine permissionports.PermissionEngine) *reportaccess.Resolver {
+	registry := permission.NewRegistry()
+	return reportaccess.New(reportaccess.Params{
+		Engine:   engine,
+		Registry: registry,
+		Views:    refview.NewPort(refview.New(registry), engine),
+		Fields:   allGroups{},
+	})
+}
+
+type allGroups struct{}
+
+func (allGroups) Visible(context.Context, *permissionports.RequestActor) permission.FieldGroupSet {
+	return permission.AllFieldGroups()
 }
 
 /*

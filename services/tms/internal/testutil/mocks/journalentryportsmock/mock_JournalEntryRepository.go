@@ -75,7 +75,7 @@ type MockJournalEntryRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetJournalEntryByIDRequest
+//   - req journalentryports.GetJournalEntryByIDRequest
 func (_e *MockJournalEntryRepository_Expecter) GetByID(ctx any, req any) *MockJournalEntryRepository_GetByID_Call {
 	return &MockJournalEntryRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -98,8 +98,8 @@ func (_c *MockJournalEntryRepository_GetByID_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockJournalEntryRepository_GetByID_Call) Return(entry *journalentry.JournalEntry, err error) *MockJournalEntryRepository_GetByID_Call {
-	_c.Call.Return(entry, err)
+func (_c *MockJournalEntryRepository_GetByID_Call) Return(journalEntry *journalentry.JournalEntry, err error) *MockJournalEntryRepository_GetByID_Call {
+	_c.Call.Return(journalEntry, err)
 	return _c
 }
 
@@ -143,7 +143,7 @@ type MockJournalEntryRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListJournalEntriesRequest
+//   - req *journalentryports.ListJournalEntriesRequest
 func (_e *MockJournalEntryRepository_Expecter) List(ctx any, req any) *MockJournalEntryRepository_List_Call {
 	return &MockJournalEntryRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
@@ -176,6 +176,74 @@ func (_c *MockJournalEntryRepository_List_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// ListConnection provides a mock function for the type MockJournalEntryRepository
+func (_mock *MockJournalEntryRepository) ListConnection(ctx context.Context, req *journalentryports.ListJournalEntryConnectionRequest) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*journalentry.JournalEntry]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *journalentryports.ListJournalEntryConnectionRequest) (*pagination.CursorListResult[*journalentry.JournalEntry], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *journalentryports.ListJournalEntryConnectionRequest) *pagination.CursorListResult[*journalentry.JournalEntry]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*journalentry.JournalEntry])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *journalentryports.ListJournalEntryConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockJournalEntryRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockJournalEntryRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *journalentryports.ListJournalEntryConnectionRequest
+func (_e *MockJournalEntryRepository_Expecter) ListConnection(ctx any, req any) *MockJournalEntryRepository_ListConnection_Call {
+	return &MockJournalEntryRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockJournalEntryRepository_ListConnection_Call) Run(run func(ctx context.Context, req *journalentryports.ListJournalEntryConnectionRequest)) *MockJournalEntryRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *journalentryports.ListJournalEntryConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*journalentryports.ListJournalEntryConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockJournalEntryRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*journalentry.JournalEntry], err error) *MockJournalEntryRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockJournalEntryRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *journalentryports.ListJournalEntryConnectionRequest) (*pagination.CursorListResult[*journalentry.JournalEntry], error)) *MockJournalEntryRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MarkReversed provides a mock function for the type MockJournalEntryRepository
 func (_mock *MockJournalEntryRepository) MarkReversed(ctx context.Context, req journalentryports.MarkJournalEntryReversedRequest) error {
 	ret := _mock.Called(ctx, req)
@@ -200,7 +268,7 @@ type MockJournalEntryRepository_MarkReversed_Call struct {
 
 // MarkReversed is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.MarkJournalEntryReversedRequest
+//   - req journalentryports.MarkJournalEntryReversedRequest
 func (_e *MockJournalEntryRepository_Expecter) MarkReversed(ctx any, req any) *MockJournalEntryRepository_MarkReversed_Call {
 	return &MockJournalEntryRepository_MarkReversed_Call{Call: _e.mock.On("MarkReversed", ctx, req)}
 }

@@ -33,14 +33,18 @@ func clearApprovalFields(template *formulatemplate.FormulaTemplate) {
 	template.ReviewComment = ""
 }
 
-// carryApprovalFields keeps the review stamps the workflow wrote, whatever an
-// update payload says about them.
-func carryApprovalFields(template, original *formulatemplate.FormulaTemplate) {
-	template.SubmittedByID = original.SubmittedByID
-	template.SubmittedAt = original.SubmittedAt
-	template.ApprovedByID = original.ApprovedByID
-	template.ApprovedAt = original.ApprovedAt
-	template.ReviewComment = original.ReviewComment
+// withContent is the stored template with the content a save writes: its name,
+// description and source, under the version the editor read. Status, review
+// stamps, lineage and metadata stay the server's, whatever the payload says.
+func withContent(
+	original, payload *formulatemplate.FormulaTemplate,
+) *formulatemplate.FormulaTemplate {
+	next := *original
+	next.Name = payload.Name
+	next.Description = payload.Description
+	next.Source = payload.Source
+	next.Version = payload.Version
+	return &next
 }
 
 func extractVersionPair(

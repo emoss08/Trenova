@@ -105,10 +105,15 @@ var translatorCalls = map[string]int{
 }
 
 var labelledGeneratedFiles = map[string]struct{}{
-	"catalog_gen.go": {},
+	"catalog_gen.go":   {},
+	"viewwords_gen.go": {},
 }
 
-func isTranslatorCall(fun ast.Expr) (int, bool) {
+func isTranslatorCall(fun ast.Expr, inI18n bool) (int, bool) {
+	if ident, isIdent := fun.(*ast.Ident); isIdent && inI18n {
+		idx, ok := translatorCalls[ident.Name]
+		return idx, ok
+	}
 	sel, ok := fun.(*ast.SelectorExpr)
 	if !ok {
 		return 0, false
@@ -182,6 +187,7 @@ func (e *extractor) parseFile(path string) error {
 	}
 
 	discarded := discardedCalls(file)
+	inI18n := file.Name.Name == "i18n"
 
 	rel, err := filepath.Rel(e.repoRoot, path)
 	if err != nil {
@@ -209,7 +215,7 @@ func (e *extractor) parseFile(path string) error {
 			return true
 		}
 
-		if idx, ok := isTranslatorCall(call.Fun); ok {
+		if idx, ok := isTranslatorCall(call.Fun, inI18n); ok {
 			if idx < len(call.Args) {
 				if msg, isLiteral := stringLiteral(call.Args[idx]); isLiteral &&
 					strings.TrimSpace(msg) != "" {

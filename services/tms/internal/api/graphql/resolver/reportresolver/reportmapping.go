@@ -8,10 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -25,7 +25,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var reportSensitivityRegistry = permission.NewRegistry()
 
 func reportIRFromGraphQL(input *gqlmodel.ReportIRInput) *report.Definition {
 	def := &report.Definition{
@@ -734,59 +733,67 @@ func reportRunConnectionToModel(
 
 func reportCatalogToModel(
 	ctx context.Context,
-	engine permissionports.PermissionEngine,
-	tenant pagination.TenantInfo,
-) (*gqlmodel.ReportCatalog, error) {
-	catalog := &reportcatalog.Default
-
+	catalog *reportingservice.Catalog,
+) *gqlmodel.ReportCatalog {
+	locale := i18n.FromContext(ctx)
 	entities := make([]*gqlmodel.ReportCatalogEntity, 0, len(catalog.Entities))
 	for i := range catalog.Entities {
 		entity := &catalog.Entities[i]
-
-		detail, err := engine.GetResourcePermissions(
-			ctx, tenant.UserID, tenant.OrgID, entity.Resource.String(),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("resolve permissions for %q: %w", entity.Resource, err)
-		}
-		if !hasReportReadOperation(detail) {
+		if !entity.Usable() {
 			continue
 		}
-
-		entities = append(entities, catalogEntityToModel(i18n.FromContext(ctx), entity, detail))
+		entities = append(entities, catalogEntityToModel(locale, catalog.Kinds, entity))
 	}
 
 	return &gqlmodel.ReportCatalog{
 		Version:  catalog.Version,
 		Entities: entities,
-	}, nil
+	}
 }
 
-func hasReportReadOperation(detail *permissionports.ResourcePermissionDetail) bool {
-	for _, op := range detail.Operations {
-		if op == permission.OpRead {
-			return true
-		}
+func reportFieldAccessToModel(decision reportaccess.Decision) gqlmodel.ReportFieldAccess {
+	switch decision {
+	case reportaccess.Available:
+		return gqlmodel.ReportFieldAccessAvailable
+	case reportaccess.NeedsKindRead:
+		return gqlmodel.ReportFieldAccessNeedsKindRead
+	case reportaccess.WithheldByCeiling:
+		return gqlmodel.ReportFieldAccessWithheldByCeiling
+	case reportaccess.NeedsFieldGroup:
+		return gqlmodel.ReportFieldAccessNeedsFieldGroup
+	default:
+		return gqlmodel.ReportFieldAccessNeedsKindRead
 	}
-	return false
+}
+
+func catalogKindToModel(
+	locale i18n.Locale,
+	kinds *reportaccess.Resolver,
+	resource permission.Resource,
+) *gqlmodel.ReportCatalogKind {
+	if resource == "" {
+		return nil
+	}
+	label := resource.String()
+	if kinds != nil {
+		label = kinds.KindLabel(resource)
+	}
+	return &gqlmodel.ReportCatalogKind{
+		Resource: resource.String(),
+		Label:    i18n.Translate(locale, label),
+	}
 }
 
 func catalogEntityToModel(
 	locale i18n.Locale,
-	entity *reportcatalog.Entity,
-	detail *permissionports.ResourcePermissionDetail,
+	kinds *reportaccess.Resolver,
+	decided *reportaccess.Entity,
 ) *gqlmodel.ReportCatalogEntity {
+	entity := decided.Entity
 	fields := make([]*gqlmodel.ReportCatalogField, 0, len(entity.Fields))
 	for i := range entity.Fields {
 		field := &entity.Fields[i]
-		sensitivity := reportSensitivityRegistry.GetFieldSensitivity(
-			entity.Resource.String(), field.Key,
-		)
-
-		accessible := detail.MaxSensitivity.CanAccess(sensitivity)
-		if accessible && len(detail.AccessibleFields) > 0 {
-			accessible = containsString(detail.AccessibleFields, field.Key)
-		}
+		use := decided.Fields[i]
 
 		enumValues := make([]*gqlmodel.ReportCatalogEnumValue, 0, len(field.EnumValues))
 		for _, ev := range field.EnumValues {
@@ -801,31 +808,42 @@ func catalogEntityToModel(
 			aggregations = append(aggregations, string(agg))
 		}
 
+		var protection *gqlmodel.ReportFieldProtection
+		if use.Group != "" {
+			protection = &gqlmodel.ReportFieldProtection{Group: use.Group, Held: use.HoldsGroup}
+		}
+
 		fields = append(fields, &gqlmodel.ReportCatalogField{
-			Key:          field.Key,
-			Label:        i18n.Translate(locale, field.Label),
-			Description:  nilIfEmpty(i18n.Translate(locale, field.Description)),
-			Type:         string(field.Type),
-			Format:       nilIfEmpty(string(field.Format)),
-			Nullable:     field.Nullable,
-			EnumValues:   enumValues,
-			Aggregations: aggregations,
-			Filterable:   field.Filterable,
-			Groupable:    field.Groupable,
-			Accessible:   accessible,
-			Sensitivity:  sensitivity.String(),
+			Key:             field.Key,
+			Label:           i18n.Translate(locale, field.Label),
+			Description:     nilIfEmpty(i18n.Translate(locale, field.Description)),
+			Type:            string(field.Type),
+			Format:          nilIfEmpty(string(field.Format)),
+			Nullable:        field.Nullable,
+			EnumValues:      enumValues,
+			Aggregations:    aggregations,
+			Filterable:      field.Filterable,
+			Groupable:       field.Groupable,
+			Access:          reportFieldAccessToModel(use.Decision),
+			InReferenceView: use.Reference,
+			Protection:      protection,
+			Sensitivity:     use.Sensitivity.String(),
 		})
 	}
 
 	edges := make([]*gqlmodel.ReportCatalogEdge, 0, len(entity.Edges))
 	for i := range entity.Edges {
 		edge := &entity.Edges[i]
+		use := decided.Edges[i]
 		edges = append(edges, &gqlmodel.ReportCatalogEdge{
-			Name:        edge.Name,
-			Label:       i18n.Translate(locale, edge.Label),
-			Target:      edge.Target,
-			Cardinality: string(edge.Cardinality),
-			Traversable: edge.Traversable,
+			Name:            edge.Name,
+			Label:           i18n.Translate(locale, edge.Label),
+			Target:          edge.Target,
+			Cardinality:     string(edge.Cardinality),
+			Traversable:     edge.Traversable,
+			Access:          reportFieldAccessToModel(use.Decision),
+			InReferenceView: use.Reference,
+			NeedsReadOf:     catalogKindToModel(locale, kinds, use.Kind),
 		})
 	}
 
@@ -837,6 +855,8 @@ func catalogEntityToModel(
 		Description:       nilIfEmpty(i18n.Translate(locale, entity.Description)),
 		Category:          entity.Category,
 		OwnScopeSupported: entity.OwnershipColumn != "",
+		Readable:          decided.Readable,
+		Exportable:        decided.Exportable,
 		Fields:            fields,
 		Edges:             edges,
 	}
@@ -884,15 +904,6 @@ func encodeReportRow(row reportports.ReportRow) []any {
 		encoded[i] = value
 	}
 	return encoded
-}
-
-func containsString(values []string, value string) bool {
-	for _, v := range values {
-		if v == value {
-			return true
-		}
-	}
-	return false
 }
 
 func nilIfEmpty(s string) *string {

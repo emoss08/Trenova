@@ -24,13 +24,20 @@ const (
 // reference view rule (refview) about records it shows inside others, such as
 // the customer of a shipment on a report.
 type ReferenceViews interface {
-	// Person is one person's access for the length of one request. check,
-	// when set, is how the surface already asks for a kind's read, so the two
-	// share its memo.
-	Person(
-		actor *RequestActor,
-		check func(ctx context.Context, kind permission.Resource) (bool, error),
-	) LinkedFields
+	// Person is one person's access for the length of one request, sharing
+	// what the surface already knows of their grants.
+	Person(actor *RequestActor, grants PersonGrants) LinkedFields
+}
+
+// PersonGrants is how a surface hands the reference view rule what it has
+// already read of one person's grants, so the two share one read. A nil
+// function is answered by the permission engine.
+type PersonGrants struct {
+	// Reads reports whether the person may read a kind.
+	Reads func(ctx context.Context, kind permission.Resource) (bool, error)
+	// Detail is the person's permission detail on a kind, which their
+	// ceiling on a record of it reached through another is read from.
+	Detail func(ctx context.Context, kind permission.Resource) (*ResourcePermissionDetail, error)
 }
 
 // LinkedFields answers for the records one person reaches through records

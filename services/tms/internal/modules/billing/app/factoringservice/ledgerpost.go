@@ -203,7 +203,7 @@ func (s *LedgerService) applyInvoiceEffect(
 		OrganizationID:   inv.OrganizationID,
 		BusinessUnitID:   inv.BusinessUnitID,
 		CustomerID:       inv.CustomerID,
-		SourceObjectType: reserveSourceObject,
+		SourceObjectType: customerledger.SourceFactoringItem,
 		SourceObjectID:   entry.ID.String(),
 		SourceEventType:  in.event.String(),
 		RelatedInvoiceID: inv.ID,

@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -37,10 +36,6 @@ const (
 )
 
 type adjustmentReader interface {
-	GetDetail(
-		ctx context.Context,
-		req *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
-	) (*invoiceadjustment.InvoiceAdjustment, error)
 	GetLineage(
 		ctx context.Context,
 		req *invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest,
@@ -49,13 +44,6 @@ type adjustmentReader interface {
 		ctx context.Context,
 		req *invoiceadjustmentports.ListApprovalQueueRequest,
 	) (*pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem], error)
-}
-
-type disputeLister interface {
-	ListByInvoiceIDs(
-		ctx context.Context,
-		req *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest,
-	) (map[pulid.ID][]*invoice.InvoiceDispute, error)
 }
 
 type creditApplicationLister interface {
@@ -334,222 +322,6 @@ func adjustmentRowFrom(
 		ReplacementInvoiceID: pulidString(adjustment.ReplacementInvoiceID),
 		SubmittedAt:          pointerDate(adjustment.SubmittedAt),
 	}
-}
-
-type adjustmentLineRow struct {
-	ID              string `json:"id"`
-	InvoiceLineID   string `json:"invoiceLineId"`
-	LineNumber      int    `json:"lineNumber"`
-	Description     string `json:"description"`
-	CreditQuantity  string `json:"creditQuantity,omitempty"`
-	Credit          string `json:"creditAmount,omitempty"`
-	RebillQuantity  string `json:"rebillQuantity,omitempty"`
-	Rebill          string `json:"rebillAmount,omitempty"`
-	RemainingCredit string `json:"remainingEligibleAmount,omitempty"`
-}
-
-type adjustmentDetail struct {
-	adjustmentRow
-
-	PolicyReason    string              `json:"policyReason,omitempty"`
-	RejectionReason string              `json:"rejectionReason,omitempty"`
-	ExecutionError  string              `json:"executionError,omitempty"`
-	ApprovalNeeded  bool                `json:"approvalRequired"`
-	Lines           []adjustmentLineRow `json:"lines"`
-	DocumentIDs     []string            `json:"supportingDocumentIds,omitempty"`
-	Withheld        []string            `json:"withheldByAccess,omitempty"`
-}
-
-type getInvoiceAdjustmentTool struct {
-	adjustments adjustmentReader
-	access      fieldAccess
-}
-
-func newGetInvoiceAdjustmentTool(
-	adjustments adjustmentReader,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &getInvoiceAdjustmentTool{adjustments: adjustments, access: newFieldAccess(permissions)}
-}
-
-func (t *getInvoiceAdjustmentTool) Name() string { return "invoice_get_adjustment" }
-
-func (t *getInvoiceAdjustmentTool) Description() string {
-	return "Retrieve one invoice adjustment by id: its kind, status, approval, reason, the " +
-		"invoices it made and each line it credits or rebills against the invoice's lines."
-}
-
-func (t *getInvoiceAdjustmentTool) ParamSchema() map[string]any {
-	return idSchema(
-		paramAdjustmentID,
-		agenttoolschema.KindID("The adjustment's id, from invoice_list_adjustments.",
-			permission.KindInvoiceAdjustment),
-	)
-}
-
-func (t *getInvoiceAdjustmentTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
-}
-
-func (t *getInvoiceAdjustmentTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-	id, err := requirePulid(params.Params, paramAdjustmentID)
-	if err != nil {
-		return nil, err
-	}
-
-	adjustment, err := t.adjustments.GetDetail(
-		ctx,
-		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
-			AdjustmentID: id,
-			TenantInfo:   tenantOf(params),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	show, gate := amountsFor(ctx, t.access, params)
-	detail := &adjustmentDetail{
-		adjustmentRow:   adjustmentRowFrom(adjustment, show),
-		PolicyReason:    adjustment.PolicyReason,
-		RejectionReason: adjustment.RejectionReason,
-		ExecutionError:  adjustment.ExecutionError,
-		ApprovalNeeded:  adjustment.ApprovalRequired,
-		Lines:           make([]adjustmentLineRow, 0, len(adjustment.Lines)),
-	}
-	for _, line := range adjustment.Lines {
-		if line == nil {
-			continue
-		}
-		detail.Lines = append(detail.Lines, adjustmentLineRow{
-			ID:              line.ID.String(),
-			InvoiceLineID:   line.OriginalLineID.String(),
-			LineNumber:      line.LineNumber,
-			Description:     line.Description,
-			CreditQuantity:  nonZero(line.CreditQuantity),
-			Credit:          show.of(line.CreditAmount.Abs()),
-			RebillQuantity:  nonZero(line.RebillQuantity),
-			Rebill:          show.of(line.RebillAmount),
-			RemainingCredit: show.of(line.RemainingEligibleAmount),
-		})
-	}
-	for _, reference := range adjustment.DocumentReferences {
-		if reference != nil {
-			detail.DocumentIDs = append(detail.DocumentIDs, reference.DocumentID.String())
-		}
-	}
-	detail.Withheld = gate.Withheld()
-
-	return detail, nil
-}
-
-func nonZero(value decimal.Decimal) string {
-	if value.IsZero() {
-		return ""
-	}
-
-	return value.String()
-}
-
-type disputeRow struct {
-	ID                     string       `json:"id"`
-	InvoiceID              string       `json:"invoiceId"`
-	Status                 string       `json:"status"`
-	ReasonCode             string       `json:"reasonCode"`
-	DisputedAmount         string       `json:"disputedAmount,omitempty"`
-	Notes                  string       `json:"notes,omitempty"`
-	OpenedAt               optionalDate `json:"openedAt"`
-	Resolution             string       `json:"resolution,omitempty"`
-	ResolutionAdjustmentID string       `json:"resolutionAdjustmentId,omitempty"`
-	ResolutionNotes        string       `json:"resolutionNotes,omitempty"`
-	ResolvedAt             optionalDate `json:"resolvedAt"`
-}
-
-type listInvoiceDisputesTool struct {
-	disputes disputeLister
-	access   fieldAccess
-}
-
-func newListInvoiceDisputesTool(
-	disputes disputeLister,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &listInvoiceDisputesTool{disputes: disputes, access: newFieldAccess(permissions)}
-}
-
-func (t *listInvoiceDisputesTool) Name() string { return "invoice_list_disputes" }
-
-func (t *listInvoiceDisputesTool) Description() string {
-	return "List the dispute cases on invoices, open and closed, newest first: the reason, " +
-		"the amount in dispute, the notes and how each was resolved. Find disputed invoices " +
-		"with invoice_list filtered to disputeStatus Disputed."
-}
-
-func (t *listInvoiceDisputesTool) ParamSchema() map[string]any {
-	return objectSchema(map[string]any{
-		paramReceivableInvoices: agenttoolschema.RecordIDs(
-			permission.ResourceInvoice,
-			"The invoices, from invoice_list or invoice_get.",
-			maxReceivableInvoices,
-		),
-	}, paramReceivableInvoices)
-}
-
-func (t *listInvoiceDisputesTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoiceDispute})
-}
-
-func (t *listInvoiceDisputesTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-	ids, err := requireIDList(params.Params, paramReceivableInvoices, maxReceivableInvoices)
-	if err != nil {
-		return nil, err
-	}
-
-	byInvoice, err := t.disputes.ListByInvoiceIDs(ctx,
-		&invoiceports.ListInvoiceDisputesByInvoiceIDsRequest{
-			TenantInfo: tenantOf(params),
-			InvoiceIDs: ids,
-		})
-	if err != nil {
-		return nil, err
-	}
-
-	show, gate := amountsFor(ctx, t.access, params)
-	rows := make([]disputeRow, 0, len(ids))
-	for _, id := range ids {
-		for _, dispute := range byInvoice[id] {
-			if dispute == nil {
-				continue
-			}
-			rows = append(rows, disputeRow{
-				ID:                     dispute.ID.String(),
-				InvoiceID:              dispute.InvoiceID.String(),
-				Status:                 string(dispute.Status),
-				ReasonCode:             string(dispute.ReasonCode),
-				DisputedAmount:         show.of(dispute.DisputedAmount),
-				Notes:                  dispute.Notes,
-				OpenedAt:               recordedDate(dispute.OpenedAt),
-				Resolution:             string(dispute.Resolution),
-				ResolutionAdjustmentID: pulidString(dispute.ResolutionAdjustmentID),
-				ResolutionNotes:        dispute.ResolutionNotes,
-				ResolvedAt:             pointerDate(dispute.ResolvedAt),
-			})
-		}
-	}
-
-	return newReceivableList(rows, gate), nil
 }
 
 type creditApplicationRow struct {
@@ -1098,8 +870,6 @@ func (t *listInvoiceShareCandidatesTool) Query(
 func receivableToolProviders() []any {
 	return []any{
 		provideListInvoiceAdjustmentsTool,
-		provideGetInvoiceAdjustmentTool,
-		provideListInvoiceDisputesTool,
 		provideListCreditMemoApplicationsTool,
 		provideListInvoiceRunsTool,
 		provideGetInvoiceRunTool,
@@ -1114,20 +884,6 @@ func provideListInvoiceAdjustmentsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListInvoiceAdjustmentsTool(adjustments, invoices, permissions)
-}
-
-func provideGetInvoiceAdjustmentTool(
-	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetInvoiceAdjustmentTool(adjustments, permissions)
-}
-
-func provideListInvoiceDisputesTool(
-	disputes invoiceports.InvoiceDisputeRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListInvoiceDisputesTool(disputes, permissions)
 }
 
 func provideListCreditMemoApplicationsTool(

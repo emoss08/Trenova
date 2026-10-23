@@ -5,7 +5,8 @@
 //! are its own business; a call into one shows as the binding it produced): bindings and
 //! assignments with their values, the branch an `if` took and the arm a `match` took, each loop
 //! with its iteration count and its first iterations, charges, dropped zero lines, notes,
-//! refusals and table lookups. Values are wire values plus the text interpolation would write.
+//! refusals, the option each `best` and `worst` kept, and table lookups. Values are wire
+//! values plus the text interpolation would write.
 //!
 //! The trace is capped so a long loop cannot make the response large: at most
 //! [`MAX_EVENTS`] events (then one `truncated` event), [`MAX_ITERATIONS`] recorded iterations per
@@ -118,6 +119,16 @@ pub enum Event {
         /// The author's text.
         message: String,
         /// Where it is written.
+        span: Span,
+    },
+    /// A `best` or `worst` finished: the label of the option it kept, or `None` when every
+    /// option refused.
+    Choice {
+        /// The choice's label.
+        label: String,
+        /// The kept option's label.
+        chosen: Option<String>,
+        /// The statement.
         span: Span,
     },
     /// A table lookup: the index into the response's `lookups`.
@@ -340,27 +351,12 @@ fn event_json(event: &Event, index: &Utf16Index) -> Json {
             code: charge_code,
             amount,
             span,
-        } => {
-            let [value, display] = value_fields(&Value::money(*amount));
-            object(vec![
-                ("kind", text("charge")),
-                ("label", text(label)),
-                ("code", code(charge_code.as_ref())),
-                value,
-                display,
-                ("range", range(*span, index)),
-            ])
-        }
+        } => charge_json(label, charge_code.as_ref(), *amount, *span, index),
         Event::Dropped {
             label,
             code: charge_code,
             span,
-        } => object(vec![
-            ("kind", text("dropped")),
-            ("label", text(label)),
-            ("code", code(charge_code.as_ref())),
-            ("range", span.map_or(Json::Null, |span| range(span, index))),
-        ]),
+        } => dropped_json(label, charge_code.as_ref(), *span, index),
         Event::Note { text: note, span } => object(vec![
             ("kind", text("note")),
             ("text", text(note)),
@@ -371,10 +367,54 @@ fn event_json(event: &Event, index: &Utf16Index) -> Json {
             ("message", text(message)),
             ("range", range(*span, index)),
         ]),
+        Event::Choice {
+            label,
+            chosen,
+            span,
+        } => object(vec![
+            ("kind", text("choice")),
+            ("label", text(label)),
+            ("chosen", code(chosen.as_ref())),
+            ("range", range(*span, index)),
+        ]),
         Event::Lookup { index: at, span } => object(vec![
             ("kind", text("lookup")),
             ("lookup", Json::from(*at)),
             ("range", range(*span, index)),
         ]),
     }
+}
+
+/// A charge added to the bill, on the wire.
+fn charge_json(
+    label: &str,
+    charge_code: Option<&String>,
+    amount: Decimal,
+    span: Span,
+    index: &Utf16Index,
+) -> Json {
+    let [value, display] = value_fields(&Value::money(amount));
+    object(vec![
+        ("kind", text("charge")),
+        ("label", text(label)),
+        ("code", code(charge_code)),
+        value,
+        display,
+        ("range", range(span, index)),
+    ])
+}
+
+/// A zero line dropped from the bill, on the wire.
+fn dropped_json(
+    label: &str,
+    charge_code: Option<&String>,
+    span: Option<Span>,
+    index: &Utf16Index,
+) -> Json {
+    object(vec![
+        ("kind", text("dropped")),
+        ("label", text(label)),
+        ("code", code(charge_code)),
+        ("range", span.map_or(Json::Null, |span| range(span, index))),
+    ])
 }

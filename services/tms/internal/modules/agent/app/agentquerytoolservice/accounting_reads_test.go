@@ -335,7 +335,7 @@ func TestAccountingConnection_NeverConnected(t *testing.T) {
 	record := map[string]any{
 		"integrationType": "Xero", "providerName": "Xero", "available": false,
 	}
-	connectionMeaning(record)
+	connectionMeaning(record, nil, clock{})
 	assert.Equal(t, "NeverConnected", record[accountingStatusField])
 	assert.Equal(t, sendingNotStarted, record["sending"])
 	assert.Contains(t, record[accountingMeaningField], "not set up on this Trenova instance")

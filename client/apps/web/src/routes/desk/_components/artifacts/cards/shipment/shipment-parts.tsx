@@ -1,5 +1,6 @@
 import { formatList, formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { clampUnit, cn, formatPercent } from "@trenova/shared/lib/utils";
 import { Fragment } from "react";
 import { CardIcon } from "../../record-card/record-card";
@@ -357,6 +358,22 @@ export function ChargesBlock({ charges }: { charges: Charges }) {
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * The margin for a reader without the margins field group: the server withholds the
+ * shipment's estimate, so the card says so rather than leaving the margin out unexplained.
+ */
+export function MarginWithheld() {
+  const t = useT();
+  return (
+    <div className="dk-sh-margin dk-unknown">
+      <div className="dk-sh-mh">
+        <span>{t("Margin")}</span>
+        <WithheldValue group="Margins" />
+      </div>
+    </div>
   );
 }
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentrunrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -111,11 +112,13 @@ func (r *repository) List(
 		cols := agentcol.AgentRunEventColumns
 		events := make([]*agent.AgentRunEvent, 0, 32)
 
-		q := r.db.DBForContext(ctx).NewSelect().
+		db := r.db.DBForContext(ctx)
+		q := db.NewSelect().
 			Model(&events).
 			Apply(agentcol.AgentRunEventApplyTenant(req.TenantInfo)).
 			Where(cols.OwnerKind.Eq(), req.OwnerKind).
 			Where(cols.OwnerID.Eq(), req.OwnerID).
+			Apply(ofReadableRuns(db, req.Reader)).
 			Order(cols.Sequence.OrderAsc())
 
 		if req.After > 0 {
@@ -164,7 +167,8 @@ func (r *repository) ListConnection(
 						)
 
 						return ownedBy(sq, req.OwnerKind).
-							Apply(agentcol.AgentRunEventApplyTenant(req.Filter.TenantInfo))
+							Apply(agentcol.AgentRunEventApplyTenant(req.Filter.TenantInfo)).
+							Apply(ofReadableRuns(dba, req.Reader))
 					}).
 					Count(ctx)
 				if err != nil {
@@ -190,7 +194,7 @@ func (r *repository) ListConnection(
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
-						ownedBy(sq, req.OwnerKind),
+						ownedBy(sq, req.OwnerKind).Apply(ofReadableRuns(dba, req.Reader)),
 						agentcol.AgentRunEventTable.Alias,
 						req.Filter,
 						req.Cursor,
@@ -216,6 +220,32 @@ func ownedBy(sq *bun.SelectQuery, ownerKind string) *bun.SelectQuery {
 	}
 
 	return sq.Where(agentcol.AgentRunEventColumns.OwnerKind.Eq(), ownerKind)
+}
+
+func ofReadableRuns(
+	db bun.IDB,
+	reader agentports.RunReader,
+) func(*bun.SelectQuery) *bun.SelectQuery {
+	return func(q *bun.SelectQuery) *bun.SelectQuery {
+		if !reader.ForPerson() {
+			return q
+		}
+
+		events := agentcol.AgentRunEventColumns
+		runs := agentcol.AgentRunColumns
+		readable := db.NewSelect().
+			Model((*agent.AgentRun)(nil)).
+			ColumnExpr("1").
+			Where(runs.ID.EqColumn(events.OwnerID)).
+			Where(runs.OrganizationID.EqColumn(events.OrganizationID)).
+			Where(runs.BusinessUnitID.EqColumn(events.BusinessUnitID)).
+			Apply(agentrunrepository.ReadableBy(db, reader))
+
+		return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where(events.OwnerKind.NotEq(), agentports.RunStepOwnerAgentRun).
+				WhereOr("EXISTS (?)", readable)
+		})
+	}
 }
 
 // Prune drops a batch of old events. Deliberately not tenant-scoped: the sweep

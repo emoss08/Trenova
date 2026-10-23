@@ -99,6 +99,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orderexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgholidayexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgstructureexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pageaccessexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
@@ -395,6 +396,7 @@ type ResolverRoot interface {
 	DQFFile() DQFFileResolver
 	DQFItem() DQFItemResolver
 	DetentionOccurrence() DetentionOccurrenceResolver
+	DetentionPreviewResult() DetentionPreviewResultResolver
 	DisciplinaryLadder() DisciplinaryLadderResolver
 	DistanceProfile() DistanceProfileResolver
 	DocumentTemplate() DocumentTemplateResolver
@@ -519,6 +521,8 @@ type ResolverRoot interface {
 	PortalCredential() PortalCredentialResolver
 	PortalTraining() PortalTrainingResolver
 	Query() QueryResolver
+	RateAgreement() RateAgreementResolver
+	RateMatrix() RateMatrixResolver
 	ReviewRating() ReviewRatingResolver
 	RiskDecision() RiskDecisionResolver
 	Role() RoleResolver
@@ -945,6 +949,9 @@ type ApprovalDelegationResolver interface {
 }
 
 type AuditEntryResolver interface {
+	Changes(ctx context.Context, obj *audit.Entry) (map[string]any, error)
+	PreviousState(ctx context.Context, obj *audit.Entry) (map[string]any, error)
+	CurrentState(ctx context.Context, obj *audit.Entry) (map[string]any, error)
 	Resource(ctx context.Context, obj *audit.Entry) (string, error)
 	Operation(ctx context.Context, obj *audit.Entry) (string, error)
 	EntityRef(ctx context.Context, obj *audit.Entry) (*string, error)
@@ -1209,8 +1216,13 @@ type DQFItemResolver interface {
 
 type DetentionOccurrenceResolver interface {
 	Location(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*location.Location, error)
+	CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (map[string]any, error)
 	ApprovedBy(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*tenant.User, error)
 	WaivedBy(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*tenant.User, error)
+}
+
+type DetentionPreviewResultResolver interface {
+	CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionPreviewResult) (map[string]any, error)
 }
 
 type DisciplinaryLadderResolver interface {
@@ -1420,6 +1432,7 @@ type FactoringRemittanceResolver interface {
 	AppliedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
 	CreatedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
 	FactoringCompany(ctx context.Context, obj *factoring.Remittance) (*factoringcompany.FactoringCompany, error)
+	Lines(ctx context.Context, obj *factoring.Remittance, matchStatuses []factoring.RemittanceMatchStatus) ([]*factoring.RemittanceLine, error)
 }
 
 type FactoringRemittanceLineResolver interface {
@@ -1792,6 +1805,7 @@ type InvoiceAdjustmentResolver interface {
 	RebillTotalAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	NetDeltaAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	RerateVariancePercent(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
+	SupportingDocumentIds(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]string, error)
 }
 
 type InvoiceAdjustmentApprovalQueueItemResolver interface {
@@ -2713,7 +2727,6 @@ type QueryResolver interface {
 	ArDsoTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARDSOTrendPoint, error)
 	ArAgingTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARAgingTrendPoint, error)
 	ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*customerledgerports.ARCashFlowPoint, error)
-	ArCollectionPerformance(ctx context.Context, periodDays *int) (*customerledgerports.ARCollectionPerformance, error)
 	ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*customerledgerports.ARTopOverdueCustomer, error)
 	ArCollectionsWorklist(ctx context.Context, limit *int) ([]*customerledgerports.ARCollectionsWorklistItem, error)
 	ArCustomerProfile(ctx context.Context, customerID string) (*customerledgerports.ARCustomerProfile, error)
@@ -2896,7 +2909,7 @@ type QueryResolver interface {
 	DeskMemorySettings(ctx context.Context) (*gqlmodel.DeskMemorySettings, error)
 	DetentionPolicies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DetentionPolicyConnection, error)
 	DetentionPolicy(ctx context.Context, id string) (*gqlmodel.DetentionPolicy, error)
-	DetentionDesk(ctx context.Context) ([]*gqlmodel.DetentionDeskEntry, error)
+	DetentionDesk(ctx context.Context, includeAwaitingApproval *bool, urgency *gqlmodel.DetentionDeskUrgency, shipmentID *string, proNumber *string) ([]*gqlmodel.DetentionDeskEntry, error)
 	DetentionOccurrence(ctx context.Context, id string) (*gqlmodel.DetentionOccurrenceDetail, error)
 	ShipmentDetention(ctx context.Context, shipmentID string) ([]*gqlmodel.DetentionOccurrence, error)
 	DetentionDisputePacket(ctx context.Context, occurrenceID string) (*gqlmodel.DetentionDisputePacket, error)
@@ -3056,6 +3069,7 @@ type QueryResolver interface {
 	FactoringRemittancePlan(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringports.RemittancePlan, error)
 	FactoringCompanies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FactoringCompanyConnection, error)
 	FactoringCompany(ctx context.Context, id string) (*factoringcompany.FactoringCompany, error)
+	FiscalPeriods(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalPeriodConnection, error)
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
 	FiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error)
 	FleetCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FleetCodeConnection, error)
@@ -3097,7 +3111,7 @@ type QueryResolver interface {
 	HomeLayoutPresets(ctx context.Context) ([]*gqlmodel.HomeLayoutPreset, error)
 	HomeLayoutPreset(ctx context.Context, id string) (*gqlmodel.HomeLayoutPreset, error)
 	HomeLayoutPreview(ctx context.Context, presetID *string, roleID *string) (*gqlmodel.HomeLayout, error)
-	IFTAJurisdictions(ctx context.Context, membersOnly *bool) ([]*ifta.Jurisdiction, error)
+	IFTAJurisdictions(ctx context.Context, membersOnly *bool, countryCode *string, activeOnly *bool) ([]*ifta.Jurisdiction, error)
 	IFTATaxRates(ctx context.Context, input gqlmodel.IFTATaxRatesInput) (*gqlmodel.IFTATaxRateConnection, error)
 	IFTAMileageEntries(ctx context.Context, input gqlmodel.IFTAMileageEntriesInput) (*gqlmodel.IFTAJurisdictionMileageEntryConnection, error)
 	IFTAMileageEntry(ctx context.Context, id string) (*ifta.JurisdictionMileageEntry, error)
@@ -3127,8 +3141,9 @@ type QueryResolver interface {
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
 	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)
-	InvoiceDisputes(ctx context.Context, invoiceID string) ([]*invoice.InvoiceDispute, error)
+	InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoice.InvoiceDispute, error)
 	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
+	JournalEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
 	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)
 	JournalSourceByObject(ctx context.Context, sourceType string, sourceID string) (*journalsource.Source, error)
 	JournalReviewTable(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
@@ -3158,6 +3173,10 @@ type QueryResolver interface {
 	JobPositionHolders(ctx context.Context, id string) ([]*gqlmodel.PositionHolder, error)
 	MyTeam(ctx context.Context, includeInactive *bool) ([]*gqlmodel.TeamMember, error)
 	ApprovalDelegations(ctx context.Context, delegatorID *string, delegateID *string, activeOnly *bool) ([]*worker.ApprovalDelegation, error)
+	PageAccess(ctx context.Context, location string) (*gqlmodel.PageAccess, error)
+	PageAccessPreview(ctx context.Context, input gqlmodel.PageAccessPreviewInput) (*gqlmodel.PageAccess, error)
+	PageAccessScreens(ctx context.Context) ([]*gqlmodel.PageAccessScreen, error)
+	RoleResourceGuides(ctx context.Context, input gqlmodel.RoleResourceGuideInput) ([]*gqlmodel.RoleResourceGuide, error)
 	PerformanceReviewTemplates(ctx context.Context, input gqlmodel.PerformanceReviewTemplatesInput) (*gqlmodel.PerformanceReviewTemplateConnection, error)
 	PerformanceReviewTemplate(ctx context.Context, id string) (*worker.PerformanceReviewTemplate, error)
 	ActivePerformanceReviewTemplates(ctx context.Context) ([]*worker.PerformanceReviewTemplate, error)
@@ -3174,8 +3193,10 @@ type QueryResolver interface {
 	PTOBalanceSummary(ctx context.Context) (*workerports.PTOBalanceSummary, error)
 	PTOLiabilityReport(ctx context.Context, asOf *int) (*ptoledgerservice.LiabilityReport, error)
 	RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error)
+	RateAgreement(ctx context.Context, id string) (*gqlmodel.RateAgreement, error)
 	RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error)
 	RateMatrices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateMatrixConnection, error)
+	RateMatrix(ctx context.Context, id string) (*gqlmodel.RateMatrix, error)
 	RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error)
 	RecurringShipments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringShipmentConnection, error)
 	RecurringShipment(ctx context.Context, id string) (*recurringshipment.RecurringShipment, error)
@@ -3275,7 +3296,7 @@ type QueryResolver interface {
 	TelematicsStatus(ctx context.Context) (*gqlmodel.TelematicsStatus, error)
 	Organization(ctx context.Context, id string, includeState *bool, includeBu *bool) (*tenant.Organization, error)
 	Tender(ctx context.Context, id string) (*tender.Tender, error)
-	TendersByShipment(ctx context.Context, shipmentID string) ([]*tender.Tender, error)
+	TendersByShipment(ctx context.Context, shipmentID string, shipmentMoveID *string) ([]*tender.Tender, error)
 	LiveTenderByMove(ctx context.Context, moveID string) (*tender.Tender, error)
 	Timesheets(ctx context.Context, filter *gqlmodel.TimesheetFilterInput) ([]*worker.Timesheet, error)
 	Timesheet(ctx context.Context, id string) (*worker.Timesheet, error)
@@ -3364,6 +3385,16 @@ type QueryResolver interface {
 	WorkerTrainingRecord(ctx context.Context, id string) (*worker.WorkerTrainingRecord, error)
 	WorkerTrainingSummary(ctx context.Context, workerID string) (*worker.WorkerTrainingSummary, error)
 	MyTraining(ctx context.Context) ([]*driverportalservice.PortalTraining, error)
+}
+
+type RateAgreementResolver interface {
+	Lanes(ctx context.Context, obj *gqlmodel.RateAgreement, first *int) ([]*gqlmodel.RateAgreementLane, error)
+	LaneCount(ctx context.Context, obj *gqlmodel.RateAgreement) (int, error)
+}
+
+type RateMatrixResolver interface {
+	CellCount(ctx context.Context, obj *gqlmodel.RateMatrix) (int, error)
+	Cells(ctx context.Context, obj *gqlmodel.RateMatrix, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
 }
 
 type ReviewRatingResolver interface {
@@ -3928,6 +3959,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		orderexec.Shard,
 		orgholidayexec.Shard,
 		orgstructureexec.Shard,
+		pageaccessexec.Shard,
 		performancereviewexec.Shard,
 		preludeexec.Shard,
 		ptopolicyexec.Shard,
@@ -4088,6 +4120,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"DQFFile":                            func() any { return r.DQFFile() },
 			"DQFItem":                            func() any { return r.DQFItem() },
 			"DetentionOccurrence":                func() any { return r.DetentionOccurrence() },
+			"DetentionPreviewResult":             func() any { return r.DetentionPreviewResult() },
 			"DisciplinaryLadder":                 func() any { return r.DisciplinaryLadder() },
 			"DistanceProfile":                    func() any { return r.DistanceProfile() },
 			"DocumentTemplate":                   func() any { return r.DocumentTemplate() },
@@ -4212,6 +4245,8 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"PortalCredential":                   func() any { return r.PortalCredential() },
 			"PortalTraining":                     func() any { return r.PortalTraining() },
 			"Query":                              func() any { return r.Query() },
+			"RateAgreement":                      func() any { return r.RateAgreement() },
+			"RateMatrix":                         func() any { return r.RateMatrix() },
 			"ReviewRating":                       func() any { return r.ReviewRating() },
 			"RiskDecision":                       func() any { return r.RiskDecision() },
 			"Role":                               func() any { return r.Role() },

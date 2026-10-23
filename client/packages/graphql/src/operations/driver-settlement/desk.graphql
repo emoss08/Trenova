@@ -108,3 +108,82 @@ query DeskDriverSettlementCard($id: ID!) @requiresRead(kind: "escrow_account") @
     }
   }
 }
+
+# A worker settlement as the Desk's agent reads it: the statement and its
+# totals, the flags it raised, each line by id (the adjustment tools take a
+# line's id), and the disputes raised on it.
+query DeskDriverSettlementStatement($id: ID!) {
+  driverSettlement(id: $id) {
+    id
+    workerId
+    settlementNumber
+    status
+    classification
+    payProfileName
+    periodStart
+    periodEnd
+    payDate
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    carryForwardInMinor
+    carryForwardOutMinor
+    netPayMinor
+    totalMiles
+    shipmentCount
+    currencyCode
+    hasExceptions
+    exceptions {
+      code
+      severity
+      message
+    }
+    notes
+    submittedAt
+    approvedAt
+    postedAt
+    paidAt
+    paymentMethod
+    voidedAt
+    voidReason
+    worker {
+      ...WorkerReference
+    }
+    lines {
+      id
+      lineNumber
+      category
+      description
+      proNumber
+      shipmentId
+      payEventId
+      quantity
+      rate
+      amountMinor
+    }
+    disputes {
+      id
+      status
+      category
+      settlementLineId
+      resolvedAt
+      createdAt
+    }
+  }
+}
+
+# The active pay codes a settlement line, an adjustment or a recurring pay
+# schedule posts under, each with the id of the GL account it maps to.
+query DeskPayCodeOptions($direction: PayCodeDirection) {
+  payCodeOptions(direction: $direction) {
+    id
+    code
+    name
+    description
+    direction
+    taxable
+    countsTowardGuarantee
+    isSystem
+    glAccountId
+  }
+}

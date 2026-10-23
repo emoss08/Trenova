@@ -85,6 +85,7 @@ type RateResult struct {
 	WireBill   *rules.TariffBill
 	Refusal    *rules.TariffRefusal
 	Conditions map[string]bool
+	Choices    []rules.TariffChoice
 	Trace      rules.RawJSON
 	Lookups    rules.RawJSON
 }

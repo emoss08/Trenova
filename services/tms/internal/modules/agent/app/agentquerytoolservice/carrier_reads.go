@@ -18,15 +18,12 @@ const (
 	matchSourceManual   = "Manual"
 )
 
-// carrierReference is a carrier's id, from the carrier lists.
 var carrierReference = idReference{
 	resource: permission.ResourceCarrier,
 	what:     "Only this carrier's records, by the carrier's id",
 	source:   carrierSource,
 }
 
-// carrierReadSpecs are the carrier lists, each read through the operation
-// the Desk reads it with.
 func carrierReadSpecs() []graphQLListSpec {
 	return []graphQLListSpec{
 		carrierIntelEventsListSpec(), capacityPostingsListSpec(), invoiceMatchesListSpec(),
@@ -57,7 +54,8 @@ func carrierIntelEventsListSpec() graphQLListSpec {
 		unoffered: []string{
 			"status", "severity", "category", "carrierId", "subjectType", "subjectId",
 			"fieldPath", "ruleCode", "priorValue", "currentValue", "vendorChangedAt",
-			"acknowledgedById", "resolvedById", "snapshotId", "updatedAt", "createdAt",
+			"acknowledgedById", "resolvedById", "resolutionNote", "snapshotId", "updatedAt",
+			"createdAt",
 		},
 		notes: map[string]string{
 			paramStatus:   "Open and Acknowledged ones are not settled yet.",
@@ -120,7 +118,8 @@ func invoiceMatchesListSpec() graphQLListSpec {
 			rationale: "Lists carrier invoices, some of which a carrier sent over EDI with " +
 				"its own invoice text; nothing changes and nothing is sent.",
 		},
-		shape: matchSource,
+		shape:   matchSource,
+		amounts: true,
 		marks: func(row map[string]any) (agent.RecordRef, bool) {
 			id := stringOf(row[fieldEDICarrierInvoiceID])
 			return agent.RecordRef{EntityType: carrierInvoiceEntity, ID: id}, id != ""
@@ -128,8 +127,6 @@ func invoiceMatchesListSpec() graphQLListSpec {
 	}
 }
 
-// matchSource says where a match's invoice came from: a carrier's EDI 210,
-// a document read by extraction, or a person's entry.
 func matchSource(row map[string]any, _ map[string]struct{}, _ clock) {
 	switch {
 	case stringOf(row[fieldEDICarrierInvoiceID]) != "":

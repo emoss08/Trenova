@@ -22,6 +22,7 @@ import {
 } from "../../builder/_components/builder-state";
 import { FilterValueEditor } from "../../builder/_components/filter-value-editor";
 import { refKey } from "./dashboard-state";
+import { isFieldAvailable } from "@/lib/report-catalog-access";
 
 type TileFilterPopoverProps = {
   index: CatalogIndex;
@@ -60,7 +61,7 @@ export function useTileFilterFields(
     for (const raw of refs) {
       const ref = preferReferenceField(index, ir.entity, raw);
       const field = resolveField(index, ir.entity, ref);
-      if (!field?.filterable || !field.accessible) continue;
+      if (!field?.filterable || !isFieldAvailable(field)) continue;
 
       const id = refKey(ref);
       if (byKey.has(id)) continue;

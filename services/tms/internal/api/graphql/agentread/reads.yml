@@ -14,8 +14,36 @@ reads:
     operation: DeskCarrierCard
     reason: The carrier's own card; DeskCarrierIntel reads the same root for the intelligence panel.
   - tool: customer_get
+    operation: DeskCustomerCard
+    reason: The customer's own card; DeskCustomerUpdatePreferences reads the same root for the status update desk.
+  - tool: customer_get_update_preferences
+    operation: DeskCustomerUpdatePreferences
+    reason: The tool reads one field set of the customer, its status update preference and recipients, which DeskCustomerCard does not select.
   - tool: location_get
+  - tool: invoice_list
+  - tool: invoice_get
+    operation: DeskInvoiceDetail
+    reason: The tool returns each line by id, which an adjustment names; the card (DeskInvoiceCard) leaves the lines to the invoice's page.
+  - tool: invoice_get_adjustment
+    operation: DeskInvoiceAdjustmentCard
+    reason: An adjustment is read by invoiceAdjustment, whose type claims no record kind of its own, so no rule finds it from the tool's name.
+  - tool: invoice_list_disputes
+    operation: DeskInvoiceDisputes
+    reason: The dispute cases on the invoices named are read whole by invoiceDisputes, keyed by the invoices.
+  - tool: receivable_list_customer_payments
   - tool: document_list_types
+  - tool: ledger_list_fiscal_periods
+  - tool: ledger_list_journal_entries
+    operation: DeskJournalEntries
+    reason: Every journal entry is read by journalEntries; journalReviewTable reads the same record but only the entries still waiting to be approved or posted.
+  - tool: ledger_list_journal_reversals
+  - tool: ledger_list_manual_journals
+  - tool: ledger_get_journal_entry
+    operation: DeskJournalEntryCard
+    reason: The Desk's journal entry card, read by journalEntryCard, carries each line's account and the approval and reversal history the tool returns; journalEntry reads the bare entry.
+  - tool: ledger_get_manual_journal
+    operation: DeskManualJournalCard
+    reason: The Desk's manual journal card, read by manualJournalCard, carries each line's account and the entries the journal became; no operation reads manualJournal alone.
   - tool: equipment_list_manufacturers
   - tool: equipment_list_tractors
   - tool: equipment_list_trailers
@@ -25,6 +53,24 @@ reads:
     operation: DeskVehiclePositions
     reason: The tool is named for positions, which no kind claims; its rows are each tractor's latest reading.
   - tool: equipment_list_types
+  - tool: formula_list_templates
+  - tool: formula_get_template
+  - tool: formula_list_libraries
+  - tool: formula_get_library
+  - tool: fuel_list_cards
+  - tool: fuel_list_purchases
+  - tool: fuel_list_purchase_imports
+    operation: DeskFuelPurchaseImports
+    reason: A staged statement is the FuelPurchaseImportBatch record, read by fuelPurchaseImports.
+  - tool: fuel_list_ifta_returns
+    operation: DeskIftaReturns
+    reason: The tool says IFTA where its record kind says ifta_return; the returns are read by iftaReturns.
+  - tool: fuel_list_ifta_mileage_entries
+    operation: DeskIftaMileageEntries
+    reason: A mileage entry is the ifta_jurisdiction_mileage record, read by iftaMileageEntries.
+  - tool: fuel_list_ifta_jurisdictions
+    operation: DeskIftaJurisdictions
+    reason: The jurisdictions fuel tax is reported by are one global list, read whole by iftaJurisdictions.
   - tool: location_list_categories
   - tool: masterdata_list_accessorial_charges
   - tool: masterdata_list_commodities
@@ -69,6 +115,69 @@ reads:
     operation: DeskWorkerCredentialList
     reason: Credentials are read by workerCredentials, one worker's or those falling due across the organization.
     alongside: [DeskWorkerCredentialTypes]
+  - tool: settlement_list_driver
+    operation: DriverSettlementTable
+    reason: Driver settlements are read by driverSettlements; mySettlements is the driver portal's own.
+  - tool: settlement_list_pay_events
+    operation: DriverPayEventTable
+    reason: A driver's pay events are the DriverPayEvent record, read by driverPayEvents.
+  - tool: settlement_list_carrier
+    operation: CarrierSettlementTable
+    reason: The organization's carrier settlements, each naming its carrier; DeskCarrierSettlements reads one carrier's for its card and names none.
+  - tool: settlement_get_carrier
+    operation: CarrierSettlementDetail
+    reason: The tool returns each cost line by id, as the line tools take them; the Desk's card sums the lines by kind.
+  - tool: settlement_get_dispute
+  - tool: settlement_list_driver_expenses
+  - tool: settlement_list_advances
+    operation: PayAdvanceTable
+    reason: Advances are the PayAdvance record, read by payAdvances.
+  - tool: settlement_list_escrow_accounts
+    operation: EscrowAccountTable
+    reason: Escrow accounts are the EscrowAccount record, read by escrowAccounts.
+  - tool: settlement_list_recurring_deductions
+    operation: RecurringDeductionTable
+    reason: Recurring deductions are the RecurringDeduction record, read by recurringDeductions.
+  - tool: settlement_list_recurring_earnings
+    operation: RecurringEarningTable
+    reason: Recurring earnings are the RecurringEarning record, read by recurringEarnings.
+  - tool: settlement_list_pay_profiles
+    operation: PayProfileTable
+    reason: Pay profiles are the PayProfile record, read by payProfiles.
+  - tool: settlement_get_driver
+    operation: DeskDriverSettlementStatement
+    reason: The tool returns each line by id, as the adjustment tools take them, and the disputes raised on it; the Desk's card sums the lines by how each was paid.
+  - tool: settlement_get_driver_earnings
+    operation: WorkerEarningsSummary
+    reason: A driver's unsettled pay is read by workerEarningsSummary, keyed by the worker.
+  - tool: settlement_list_pay_codes
+    operation: DeskPayCodeOptions
+    reason: The active pay codes are read whole by payCodeOptions, as settlement lines and adjustments choose from them.
+  - tool: settlement_list_pay_assignments
+    operation: WorkerPayAssignments
+    reason: A driver's pay profile assignments are read whole by workerPayAssignments, keyed by the worker.
+  - tool: order_list
+  - tool: order_get
+    operation: DeskOrder
+    reason: The agent reads an order with every leg it groups in one call; DeskOrderCard pages its legs through shipments.
+  - tool: shipment_list_recurring
+    operation: DeskRecurringShipments
+    reason: Recurring shipments are the RecurringShipment record, read by recurringShipments, which no rule finds from the tool's name.
+  - tool: exception_list_service_failure_reason_codes
+  - tool: exception_list_service_failures
+    operation: ServiceFailureTable
+    reason: The register's row carries the version resolving a failure takes; DeskRecordFailures is one record's compact view without it.
+  - tool: exception_get_service_failure
+  - tool: detention_get_occurrence
+    operation: DeskDetentionCard
+    reason: A detention occurrence is read whole, with its evidence, notices and price now, by detentionOccurrence, which no rule finds from the tool's name.
+    entity: github.com/emoss08/trenova/internal/modules/operations/domain/detention.DetentionOccurrence
+  - tool: detention_list_occurrences
+    operation: DeskDetentionOccurrences
+    reason: The open clocks and the charges waiting on approval are read by detentionDesk, which no rule finds from the tool's name.
+  - tool: dispatch_list_tenders
+    operation: DeskShipmentTenders
+    reason: A shipment's tenders are read whole by tendersByShipment, keyed by the shipment.
   - tool: accounting_get_connection
     operation: DeskAccountingConnection
     reason: The link to an accounting system is read by accountingSyncStatus, keyed by the system rather than by a record's id.
@@ -95,6 +204,24 @@ reads:
     operation: DeskAccountingSyncRecords
     reason: The sync ledger is read by accountingSyncRecords, whose typed filter matches the tool's; accountingSyncRecordTable reads the same records for the data table.
     instead: [DeskAccountingSyncObjectStates]
+  - tool: factoring_get_readiness
+    operation: DeskFactoringReadiness
+    reason: An invoice's readiness is evaluated now by factoringReadiness, keyed by the invoice rather than by a record of its own.
+  - tool: factoring_get_remittance
+  - tool: factoring_get_reserve_balance
+    operation: FactoringReserveBalance
+    reason: What a factor holds is read by factoringReserveBalance, keyed by the factor rather than by a record's id.
+  - tool: factoring_get_submission
+  - tool: factoring_list_agreements
+    operation: DeskFactoringAgreements
+    reason: A factor's agreements are read whole by factoringAgreements, keyed by the factor.
+  - tool: factoring_list_noas
+  - tool: factoring_list_readiness
+    operation: DeskFactoringInvoiceStates
+    reason: Readiness is the FactoringInvoiceState record, read by factoringInvoiceStates, which no kind claims.
+    alongside: [FactoringSummary]
+  - tool: factoring_list_remittances
+  - tool: factoring_list_submissions
   - tool: edi_list_partners
     operation: DeskEdiPartners
     reason: A trading partner is a record kind of the EDI resource, read by ediPartners, which no rule finds from the resource.
@@ -125,6 +252,35 @@ reads:
   - tool: edi_get_ack_health
     operation: DeskEdiAckHealth
     reason: Acknowledgment health is read by ediAckHealth, keyed by its own arguments rather than a record's id.
+  - tool: rate_list_agreements
+    entity: github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.RateAgreement
+  - tool: rate_get_agreement
+    entity: github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.RateAgreement
+  - tool: rate_list_fuel_index_prices
+    operation: DeskFuelIndexPrices
+    reason: A fuel index's prices are read whole by fuelIndexPriceHistory, keyed by the index.
+  - tool: rate_list_fuel_surcharge_programs
+    operation: DeskFuelProgramCurrentRates
+    reason: The tool reads each active program's current rate, which fuelProgramCurrentRates computes, not the programs themselves.
+  - tool: worker_get
+  - tool: worker_get_credential
+  - tool: worker_get_dot_random_draw
+    operation: DotRandomDraw
+    reason: A random testing round is a DOT random draw, read with its selections by dotRandomDraw, which no rule finds from the tool's name.
+  - tool: worker_get_hos
+    operation: WorkerHosState
+    reason: A driver's hours of service are read by workerHosState, keyed by the worker; DeskWorkerHos reads the violations beside it, which the tool never returned.
+  - tool: worker_get_schedule
+    operation: WorkerShiftAssignments
+    reason: A worker's schedule is read whole by workerShiftAssignments, keyed by the worker, with their stated availability and open swaps beside it.
+    alongside: [WorkerAvailabilityPreferences, ShiftSwapRequests]
+  - tool: worker_list_dot_random_draws
+    operation: DotRandomDraws
+    reason: Random testing rounds are read by dotRandomDraws, one pool's or every pool's, with the active pools beside them.
+    alongside: [DotRandomPools]
+  - tool: worker_list_shift_templates
+    operation: ShiftTemplates
+    reason: Shift patterns are read whole by shiftTemplates, which no rule binds because it does not page.
   - tool: carrier_list_intelligence_events
     operation: DeskCarrierIntelEvents
     reason: The tool is named for the carrier it watches; its records are the events, read by carrierIntelEvents with their screen's filter.

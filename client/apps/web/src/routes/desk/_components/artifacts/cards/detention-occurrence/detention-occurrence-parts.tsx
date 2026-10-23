@@ -1,5 +1,6 @@
 import { AlertTriangleIcon, Link01Icon, Mail01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatDetentionMinutes } from "@trenova/shared/lib/detention";
 import { cn } from "@trenova/shared/lib/utils";
@@ -147,20 +148,23 @@ export function DetentionPaySplit({
   currency,
 }: {
   bill: number;
-  pay: number;
-  margin: number;
+  pay: number | null;
+  margin: number | null;
   payNote: string;
   payShare: number;
   currency: string;
 }) {
   const t = useT();
   const payPercent = payShare * 100;
+  const withheld = pay === null || margin === null;
   return (
     <div className="dk-dtn-split">
-      <div className="dk-dtn-splitbar" aria-hidden>
-        <i className="dk-pay" style={{ width: `${payPercent}%` }} />
-        {margin > 0 && <i className="dk-margin" style={{ width: `${100 - payPercent}%` }} />}
-      </div>
+      {!withheld && (
+        <div className="dk-dtn-splitbar" aria-hidden>
+          <i className="dk-pay" style={{ width: `${payPercent}%` }} />
+          {margin > 0 && <i className="dk-margin" style={{ width: `${100 - payPercent}%` }} />}
+        </div>
+      )}
       <dl>
         <div>
           <dt>{t("Bill the customer")}</dt>
@@ -169,14 +173,23 @@ export function DetentionPaySplit({
         <div className="dk-pay">
           <dt>{t("Worker's detention pay")}</dt>
           <dd>
-            {money(pay, currency)}
+            {pay === null ? <WithheldValue group="Margins" /> : money(pay, currency)}
             <span>{payNote}</span>
           </dd>
         </div>
-        <div className={cn(margin >= 0 ? "dk-margin" : "dk-loss")}>
-          <dt>{margin >= 0 ? t("Kept") : t("Short")}</dt>
-          <dd>{money(margin, currency)}</dd>
-        </div>
+        {margin === null ? (
+          <div>
+            <dt>{t("Kept")}</dt>
+            <dd>
+              <WithheldValue group="Margins" />
+            </dd>
+          </div>
+        ) : (
+          <div className={cn(margin >= 0 ? "dk-margin" : "dk-loss")}>
+            <dt>{margin >= 0 ? t("Kept") : t("Short")}</dt>
+            <dd>{money(margin, currency)}</dd>
+          </div>
+        )}
       </dl>
     </div>
   );

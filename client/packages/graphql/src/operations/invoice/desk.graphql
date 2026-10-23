@@ -154,3 +154,113 @@ fragment DeskInvoiceNeighbor on Invoice {
   postedAt
   billToName
 }
+
+# The Desk's invoice list: what a register row says about each invoice, for
+# finding what is unpaid, overdue or in dispute. Amounts follow the reader's
+# data access.
+query DeskInvoices($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  invoices(input: $input) {
+    edges {
+      node {
+        id
+        number
+        status
+        settlementStatus
+        disputeStatus
+        billType
+        customerId
+        billToName
+        shipmentProNumber
+        totalAmount
+        currencyCode
+        invoiceDate
+        dueDate
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+# One invoice as the Desk reads it to act on it: its state, totals, what is
+# still owed, and every line by id, which an adjustment names. The card above
+# leaves the lines to the invoice's page.
+query DeskInvoiceDetail($id: ID!) {
+  invoice(id: $id) {
+    id
+    number
+    status
+    billType
+    scope
+    settlementStatus
+    disputeStatus
+    sendStatus
+    ediSendStatus
+    paymentTerm
+    currencyCode
+    customerId
+    billToName
+    billToCode
+    billToCity
+    billToState
+    shipmentId
+    shipmentProNumber
+    shipmentBol
+    orderId
+    orderNumber
+    shipmentCount
+    invoiceDate
+    dueDate
+    serviceDate
+    postedAt
+    sentAt
+    voidedAt
+    isAdjustmentArtifact
+    supersedesInvoiceId
+    supersededByInvoiceId
+    pdfDocumentId
+    subtotalAmount
+    otherAmount
+    totalAmount
+    appliedAmount
+    openBalance
+    memo
+    remittanceInstructions
+    voidReason
+    lastSendError
+    lastEdiError
+    lines {
+      id
+      lineNumber
+      type
+      description
+      chargeCode
+      accessorialChargeId
+      shipmentProNumber
+      quantity
+      unitPrice
+      amount
+    }
+  }
+}
+
+# The dispute cases on the invoices named, open and closed, each invoice's
+# newest first.
+query DeskInvoiceDisputes($invoiceIds: [ID!]!) {
+  invoiceDisputes(invoiceIds: $invoiceIds) {
+    id
+    invoiceId
+    customerId
+    status
+    reasonCode
+    disputedAmount
+    notes
+    openedAt
+    resolution
+    resolutionAdjustmentId
+    resolutionNotes
+    resolvedAt
+  }
+}

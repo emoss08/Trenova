@@ -45,6 +45,7 @@ export function InputField<T extends FieldValues>({
             error={fieldState.error?.message}
             className={className}
             layout={layout}
+            htmlFor={inputId}
           >
             <Input
               {...field}

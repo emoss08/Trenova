@@ -27,6 +27,7 @@ import {
 } from "./builder-state";
 import { CatalogFieldTree, type FieldSelection } from "./catalog-field-tree";
 import { FilterValueEditor } from "./filter-value-editor";
+import { isFieldAvailable } from "@/lib/report-catalog-access";
 
 type MeasureFilterEditorProps = {
   index: CatalogIndex;
@@ -90,7 +91,7 @@ function ScopedFieldPicker({
             </p>
             <div className="min-h-0 flex-1 overflow-y-auto">
               {scopeEntity.fields
-                .filter((field) => field.filterable && field.accessible)
+                .filter((field) => field.filterable && isFieldAvailable(field))
                 .map((field) => (
                   <button
                     key={field.key}
@@ -114,7 +115,7 @@ function ScopedFieldPicker({
             index={index}
             entityKey={ir.entity}
             className="h-full"
-            filterFields={(field) => field.filterable && field.accessible}
+            filterFields={(field) => field.filterable && isFieldAvailable(field)}
             onSelectField={handleSelection}
           />
         )}
@@ -141,7 +142,7 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
     const entity = scoped
       ? resolvePathEntity(index, ir.entity, column.ref?.path)
       : index.entities.get(ir.entity);
-    const field = entity?.fields.find((f) => f.filterable && f.accessible);
+    const field = entity?.fields.find((f) => f.filterable && isFieldAvailable(f));
     if (!field) return;
 
     setFilters([

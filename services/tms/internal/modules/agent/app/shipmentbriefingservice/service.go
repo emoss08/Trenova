@@ -41,7 +41,6 @@ var factFilters = [...]shipment.QuickFilter{
 	shipment.QuickFilterUncovered,
 	shipment.QuickFilterDetention,
 	shipment.QuickFilterReadyToBill,
-	shipment.QuickFilterLowMargin,
 }
 
 type Params struct {
@@ -360,7 +359,6 @@ func (s *Service) Facts(
 		facts.Uncovered = totals[3].Count
 		facts.Detention = totals[4].Count
 		facts.ReadyToBill = totals[5].Count
-		facts.LowMargin = totals[6].Count
 		return nil
 	})
 	g.Go(func() error {

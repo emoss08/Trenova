@@ -9,8 +9,9 @@
 //! - `"source"`: a whole file for `tariff.evaluate`, with optional `"inputs"`, `"record"`,
 //!   `"context"`, `"exchange"`, `"budget"`, `"trace"` and `"kind"`; `"expect"` is matched against
 //!   the program's result.
-//! - `"tests"`: a file for `tariff.test`, with an optional `"context"` and `"names"`; `"expect"`
-//!   is matched against the response's `tests` (or the whole response when it is an object).
+//! - `"tests"`: a file for `tariff.test`, with an optional `"context"`, `"names"` and
+//!   `"budget"`; `"expect"` is matched against the response's `tests` (or the whole response
+//!   when it is an object).
 //! - `"op"` and `"input"`: any operation; `"expect"` is matched against the response.
 //!
 //! A case may also give `"facts"`: a partial record merged onto the sample record (objects
@@ -138,7 +139,7 @@ fn run(case: &Value) -> Result<(), String> {
     }
     if let Some(source) = case.get("tests").and_then(Value::as_str) {
         let mut input = json!({"source": source});
-        for key in ["context", "names"] {
+        for key in ["context", "names", "budget"] {
             if let Some(value) = case.get(key) {
                 input[key] = value.clone();
             }

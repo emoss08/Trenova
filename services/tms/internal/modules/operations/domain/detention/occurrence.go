@@ -64,8 +64,8 @@ type DetentionOccurrence struct {
 	GrossAmount        decimal.Decimal           `json:"grossAmount"        bun:"gross_amount,type:NUMERIC(19,4),notnull,default:0"`
 	BillableAmount     decimal.Decimal           `json:"billableAmount"     bun:"billable_amount,type:NUMERIC(19,4),notnull,default:0"`
 	DriverPayMinutes   int32                     `json:"driverPayMinutes"   bun:"driver_pay_minutes,type:INTEGER,notnull"`
-	DriverPayAmount    decimal.Decimal           `json:"driverPayAmount"    bun:"driver_pay_amount,type:NUMERIC(19,4),notnull,default:0"`
-	NetMargin          decimal.Decimal           `json:"netMargin"          bun:"net_margin,type:NUMERIC(19,4),notnull,default:0"`
+	DriverPayAmount    decimal.NullDecimal       `json:"driverPayAmount"    bun:"driver_pay_amount,type:NUMERIC(19,4),notnull,default:0"`
+	NetMargin          decimal.NullDecimal       `json:"netMargin"          bun:"net_margin,type:NUMERIC(19,4),notnull,default:0"`
 	CapApplied         CapKind                   `json:"capApplied"         bun:"cap_applied,type:detention_cap_kind_enum,notnull,default:'None'"`
 	ConvertedToLayover bool                      `json:"convertedToLayover" bun:"converted_to_layover,type:BOOLEAN,notnull"`
 	Currency           string                    `json:"currency"           bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
@@ -172,7 +172,7 @@ func (o *DetentionOccurrence) Waive(
 	o.WaivedByID = &userID
 	o.WaivedAt = &now
 	o.BillableAmount = decimal.Zero
-	o.NetMargin = o.BillableAmount.Sub(o.DriverPayAmount)
+	o.NetMargin = decimal.NewNullDecimal(o.BillableAmount.Sub(o.DriverPayAmount.Decimal))
 
 	return nil
 }

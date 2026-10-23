@@ -21,7 +21,7 @@ export type TariffTestCells = "ready" | "loading" | "failed" | "unresolved";
 export type TariffTestsState =
   /** The file has errors, so its tests cannot run until they are fixed. */
   | { status: "blocked"; errors: number }
-  /** The file has no `test` blocks. */
+  /** The file has no `test` or `property` blocks. */
   | { status: "empty" }
   | {
       status: "ran";
@@ -60,7 +60,7 @@ export function useTariffTests({
   tablesStamp: string;
   /** The checker's error count for the current source. */
   errors: number;
-  /** How many `test` blocks the outline lists. */
+  /** How many `test` and `property` blocks the outline lists. */
   testCount: number;
 }): TariffTestsState {
   const settled = useSettledValue(source, TESTS_SETTLE_MS);
@@ -114,7 +114,7 @@ export function useTariffTests({
   if (!run) {
     return {
       status: "ran",
-      run: { tests: [], needs: [], error: null },
+      run: { tests: [], needs: [], error: null, coverage: null },
       passed: 0,
       failed: 0,
       stale: true,

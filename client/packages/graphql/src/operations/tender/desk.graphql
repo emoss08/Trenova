@@ -1,0 +1,34 @@
+# A shipment's tenders as the Desk reads them, newest first, each offer in
+# rank order with its carrier, rate, counter and timing. What a carrier wrote
+# (a decline reason, a counter note) and where an offer was delivered are left
+# out: the Desk reads none of it.
+query DeskShipmentTenders($shipmentId: ID!, $shipmentMoveId: ID) {
+  tendersByShipment(shipmentId: $shipmentId, shipmentMoveId: $shipmentMoveId) {
+    id
+    shipmentMoveId
+    mode
+    status
+    acceptedOfferId
+    bounceCount
+    escalationRound
+    createdAt
+    offers {
+      id
+      carrierId
+      rank
+      rateMethod
+      rate
+      channel
+      status
+      sentAt
+      expiresAt
+      respondedAt
+      responseSource
+      counterRate
+      counterNeedsApproval
+      carrier {
+        ...CarrierReference
+      }
+    }
+  }
+}

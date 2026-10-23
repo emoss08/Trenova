@@ -1,7 +1,8 @@
 //! The checker's corpus (`testdata/tariff/check/*.json`) and its end-to-end tests.
 //!
 //! A corpus file is `{"cases": [case, …]}`. A case gives `source` (a string or a list of
-//! lines), optionally `kind`, `context` (as `tariff.check` takes it) and `values`, and the
+//! lines), optionally `kind`, `context` (as `tariff.check` takes it) and `values` (whose
+//! `input-value` findings, `{"code", "path", "message"}`, come after the others), and the
 //! findings it must produce, all of them, in order of position: `{"code", "at": "snippet"
 //! (its first occurrence, or the `nth`), "message": "English text", "severity" (when not
 //! the code's usual one), "module" (for a finding in a library), "fixes": [{"label",
@@ -16,6 +17,10 @@ use crate::tariff::syntax::program::{ModuleId, load};
 use serde_json::{Value as Json, json};
 
 const CORPUS: &[(&str, &str)] = &[
+    (
+        "bounds",
+        include_str!("../../../testdata/tariff/check/bounds.json"),
+    ),
     (
         "types",
         include_str!("../../../testdata/tariff/check/types.json"),
@@ -71,6 +76,18 @@ const CORPUS: &[(&str, &str)] = &[
     (
         "inputs",
         include_str!("../../../testdata/tariff/check/inputs.json"),
+    ),
+    (
+        "constraints",
+        include_str!("../../../testdata/tariff/check/constraints.json"),
+    ),
+    (
+        "choices",
+        include_str!("../../../testdata/tariff/check/choices.json"),
+    ),
+    (
+        "properties",
+        include_str!("../../../testdata/tariff/check/properties.json"),
     ),
 ];
 
@@ -216,6 +233,7 @@ fn run_case(file: &str, case: &Json) -> Option<String> {
             .filter(|_| module.0 != 0);
         actual.push(written(module_source, path, diagnostic));
     }
+    actual.extend(value_findings(&analysis, case.get("values")));
     let expected: Vec<Json> = case
         .get("diagnostics")
         .and_then(Json::as_array)
@@ -267,6 +285,28 @@ fn run_case(file: &str, case: &Json) -> Option<String> {
     (!problems.is_empty()).then(|| format!("{file}/{name}:\n{}", problems.join("\n")))
 }
 
+/// The `input-value` findings of a case's contract `values` (`{"rule": {…}, "agreement":
+/// {…}}`), as the corpus writes them: `{"code", "path", "message"}`, after the checker's.
+fn value_findings(analysis: &super::Analysis, values: Option<&Json>) -> Vec<Json> {
+    let Some(values) = values else {
+        return Vec::new();
+    };
+    let rule = values.get("rule").and_then(Json::as_object);
+    let agreement = values.get("agreement").and_then(Json::as_object);
+    super::inputs::validate(&analysis.inputs, rule, agreement)
+        .into_iter()
+        .map(|finding| {
+            json!({
+                "code": "input-value",
+                "at": "",
+                "path": finding.path,
+                "message": finding.message.english(),
+                "fixes": [],
+            })
+        })
+        .collect()
+}
+
 /// The type the checker recorded for the expression whose source is exactly `snippet`.
 fn type_at(
     program: &crate::tariff::syntax::program::Program,
@@ -311,6 +351,7 @@ fn visit_item(
             FnBody::Block(block) => super::visit::block(block, &mut |_| {}, visit),
         },
         ItemKind::Test(test) => super::visit::block(&test.body, &mut |_| {}, visit),
+        ItemKind::Property(property) => super::visit::block(&property.body, &mut |_| {}, visit),
         ItemKind::Const(decl) => super::visit::expr(&decl.value, visit),
         ItemKind::Input(decl) => {
             if let Some(default) = &decl.default {
@@ -397,8 +438,17 @@ fn spec_file(index: usize, block: &str) -> String {
                 lines.join("\n")
             )
         }
+        5 => format!(
+            "tariff \"t\"\ninput rate: Money/mi = $2/mi\ninput flatRate: Money = $500\ninput volumeRate: Money/lb = $0.10/lb\n{block}\n"
+        ),
         6 => format!(
+            "tariff \"t\"\nenum Service {{ Standard, Guaranteed, Expedited }}\n{block}\ncharge \"x\" = rate * shipment.distance + $1 * freeStops\nnote \"{{service}}\"\n"
+        ),
+        8 => format!(
             "tariff \"t\"\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\ncharge \"Linehaul\" = $1/lb * w\n{block}\n"
+        ),
+        9 => format!(
+            "tariff \"t\"\ninput rate: Money/mi = $2.35/mi where $1/mi..=$5/mi\ncharge \"Linehaul\" (quantity: shipment.distance, rate: rate)\ncharge \"Weight\" = $0.01/lb * (shipment.weight ?? 0 lb)\nminimum $450\n{block}\n"
         ),
         _ => block.to_owned(),
     }
@@ -407,7 +457,7 @@ fn spec_file(index: usize, block: &str) -> String {
 #[test]
 fn the_references_examples_check_clean() {
     let blocks = spec_blocks();
-    assert_eq!(blocks.len(), 7, "the reference's tariff blocks changed");
+    assert_eq!(blocks.len(), 10, "the reference's tariff blocks changed");
     let context = spec_context();
     for (index, block) in blocks.iter().enumerate() {
         let source = spec_file(index, block);

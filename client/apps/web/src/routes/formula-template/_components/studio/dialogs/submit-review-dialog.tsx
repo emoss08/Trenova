@@ -17,7 +17,8 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
+import type { FormulaTemplate, ReadinessCheck } from "@trenova/shared/types/formula-template";
+import type { ReadinessSourceLink } from "@/components/tariff-studio/readiness-view";
 import { CheckIcon, Send01Icon } from "@trenova/shared/components/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
@@ -57,10 +58,16 @@ export function SubmitReviewDialog({
   open,
   onOpenChange,
   template,
+  liveChecks,
+  link,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   template: FormulaTemplate;
+  /** The Studio's live checks, shown for what the server's readiness does not judge. */
+  liveChecks?: readonly ReadinessCheck[];
+  /** Takes a readiness row's region to the source, closing the dialog. */
+  link?: ReadinessSourceLink;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -153,6 +160,8 @@ export function SubmitReviewDialog({
                   templateId={templateId}
                   step="submit"
                   onReadinessChange={setReady}
+                  liveChecks={liveChecks}
+                  link={link}
                 />
               )}
               <Label>{t("Reviewer")}</Label>

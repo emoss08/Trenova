@@ -396,7 +396,8 @@ func applyBuySideRating(
 }
 
 // enforceMarginFloor stops an assignment the organization said it would not
-// accept.
+// accept. The refusal names no figure: whoever assigns the carrier may not
+// hold the margins field group.
 //
 // Enforcement is off by default, because a floor that blocks loads on the day
 // it is switched on is a floor nobody will keep switched on. When it is on, the
@@ -412,7 +413,7 @@ func enforceMarginFloor(
 	}
 
 	return errortypes.NewBusinessError(
-		"This assignment is outside the contract's margin terms: {0}", verdict.Explanation,
+		"This assignment is outside the contract's margin terms; override the margin floor to assign it anyway",
 	)
 }
 

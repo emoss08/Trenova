@@ -574,7 +574,19 @@ var PortalPtoSpec TypeSpec
 
 var RateAgreementSpec TypeSpec
 
+var RateAgreementAccessorialSpec TypeSpec
+
+var RateAgreementFuelBindingSpec TypeSpec
+
+var RateAgreementLaneSpec TypeSpec
+
+var RateAgreementVersionSpec TypeSpec
+
 var RateMatrixSpec TypeSpec
+
+var RateMatrixCellSpec TypeSpec
+
+var RateMatrixDimensionSpec TypeSpec
 
 var RateQuoteSpec TypeSpec
 
@@ -15209,6 +15221,12 @@ func init() {
 					Target: &FactoringCompanySpec,
 				},
 			},
+			{
+				Name: "lines",
+				Relation: &RelationSpec{
+					Target: &FactoringRemittanceLineSpec,
+				},
+			},
 		},
 	}
 
@@ -15869,6 +15887,14 @@ func init() {
 			{
 				Name:        "closedAt",
 				FieldMapKey: "closedAt",
+			},
+			{
+				Name:        "reopenedAt",
+				FieldMapKey: "reopenedAt",
+			},
+			{
+				Name:        "reopenReason",
+				FieldMapKey: "reopenReason",
 			},
 			{
 				Name:        "version",
@@ -18926,6 +18952,26 @@ func init() {
 				FieldMapKey: "pdfDocumentId",
 			},
 			{
+				Name:        "lastSendError",
+				FieldMapKey: "lastSendError",
+			},
+			{
+				Name:        "memo",
+				FieldMapKey: "memo",
+			},
+			{
+				Name:        "remittanceInstructions",
+				FieldMapKey: "remittanceInstructions",
+			},
+			{
+				Name:        "supersedesInvoiceId",
+				FieldMapKey: "supersedesInvoiceId",
+			},
+			{
+				Name:        "supersededByInvoiceId",
+				FieldMapKey: "supersededByInvoiceId",
+			},
+			{
 				Name:        "isAdjustmentArtifact",
 				FieldMapKey: "isAdjustmentArtifact",
 			},
@@ -19240,6 +19286,10 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &InvoiceAdjustmentLineSpec,
 				},
+			},
+			{
+				Name:    "supportingDocumentIds",
+				Special: "supportingDocumentIds",
 			},
 		},
 	}
@@ -20467,6 +20517,10 @@ func init() {
 			{
 				Name:        "totalCredit",
 				FieldMapKey: "totalCredit",
+			},
+			{
+				Name:    "isBalanced",
+				Special: "balance",
 			},
 			{
 				Name:        "approvedAt",
@@ -22153,6 +22207,34 @@ func init() {
 				FieldMapKey: "currentVersionNumber",
 			},
 			{
+				Name:        "billToCustomerId",
+				FieldMapKey: "billToCustomerId",
+			},
+			{
+				Name:    "lanes",
+				Special: "lanes",
+			},
+			{
+				Name:    "laneCount",
+				Special: "laneCount",
+			},
+			{
+				Name: "accessorials",
+				Relation: &RelationSpec{
+					Target: &RateAgreementAccessorialSpec,
+				},
+			},
+			{
+				Name: "fuelBinding",
+				Relation: &RelationSpec{
+					Target: &RateAgreementFuelBindingSpec,
+				},
+			},
+			{
+				Name:    "currentVersion",
+				Special: "currentVersion",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -22163,6 +22245,198 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	RateAgreementAccessorialSpec = TypeSpec{
+		TypeName: "RateAgreementAccessorial",
+		FieldMap: rateagreementcol.RateAgreementAccessorialFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "accessorialChargeId",
+				FieldMapKey: "accessorialChargeId",
+			},
+			{
+				Name:        "method",
+				FieldMapKey: "method",
+			},
+			{
+				Name:        "rateUnit",
+				FieldMapKey: "rateUnit",
+			},
+			{
+				Name:        "waived",
+				FieldMapKey: "waived",
+			},
+			{
+				Name:        "autoApply",
+				FieldMapKey: "autoApply",
+			},
+			{
+				Name:        "freeUnits",
+				FieldMapKey: "freeUnits",
+			},
+			{
+				Name:        "effectiveFrom",
+				FieldMapKey: "effectiveFrom",
+			},
+			{
+				Name:        "effectiveTo",
+				FieldMapKey: "effectiveTo",
+			},
+			{
+				Name:        "amount",
+				FieldMapKey: "amount",
+			},
+			{
+				Name:        "maxAmount",
+				FieldMapKey: "maxAmount",
+			},
+			{
+				Name:        "condition",
+				FieldMapKey: "condition",
+			},
+		},
+	}
+
+	RateAgreementFuelBindingSpec = TypeSpec{
+		TypeName: "RateAgreementFuelBinding",
+		FieldMap: rateagreementcol.RateAgreementFuelBindingFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "fuelSurchargeProgramId",
+				FieldMapKey: "fuelSurchargeProgramId",
+			},
+			{
+				Name:        "waived",
+				FieldMapKey: "waived",
+			},
+		},
+	}
+
+	RateAgreementLaneSpec = TypeSpec{
+		TypeName: "RateAgreementLane",
+		FieldMap: rateagreementcol.RateAgreementRuleFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "label",
+				FieldMapKey: "label",
+			},
+			{
+				Name:        "originScopeType",
+				FieldMapKey: "originScopeType",
+			},
+			{
+				Name:        "originScopeValue",
+				FieldMapKey: "originScopeValue",
+			},
+			{
+				Name:        "originCity",
+				FieldMapKey: "originCity",
+			},
+			{
+				Name:        "destinationScopeType",
+				FieldMapKey: "destinationScopeType",
+			},
+			{
+				Name:        "destinationScopeValue",
+				FieldMapKey: "destinationScopeValue",
+			},
+			{
+				Name:        "destinationCity",
+				FieldMapKey: "destinationCity",
+			},
+			{
+				Name:        "direction",
+				FieldMapKey: "direction",
+			},
+			{
+				Name:        "priority",
+				FieldMapKey: "priority",
+			},
+			{
+				Name:        "effectiveFrom",
+				FieldMapKey: "effectiveFrom",
+			},
+			{
+				Name:        "effectiveTo",
+				FieldMapKey: "effectiveTo",
+			},
+			{
+				Name:        "hazmatOnly",
+				FieldMapKey: "hazmatOnly",
+			},
+			{
+				Name:        "tempControlOnly",
+				FieldMapKey: "tempControlOnly",
+			},
+			{
+				Name:        "formulaTemplateId",
+				FieldMapKey: "formulaTemplateId",
+			},
+			{
+				Name:        "currency",
+				FieldMapKey: "currency",
+			},
+			{
+				Name:        "inputs",
+				FieldMapKey: "inputs",
+			},
+		},
+	}
+
+	RateAgreementVersionSpec = TypeSpec{
+		TypeName: "RateAgreementVersion",
+		FieldMap: rateagreementcol.RateAgreementVersionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "versionNumber",
+				FieldMapKey: "versionNumber",
+			},
+			{
+				Name:        "effectiveFrom",
+				FieldMapKey: "effectiveFrom",
+			},
+			{
+				Name:        "effectiveTo",
+				FieldMapKey: "effectiveTo",
+			},
+			{
+				Name:        "changeMessage",
+				FieldMapKey: "changeMessage",
 			},
 		},
 	}
@@ -22208,6 +22482,20 @@ func init() {
 				FieldMapKey: "valueType",
 			},
 			{
+				Name: "dimensions",
+				Relation: &RelationSpec{
+					Target: &RateMatrixDimensionSpec,
+				},
+			},
+			{
+				Name:    "cellCount",
+				Special: "cellCount",
+			},
+			{
+				Name:    "cells",
+				Special: "cells",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -22218,6 +22506,120 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	RateMatrixCellSpec = TypeSpec{
+		TypeName: "RateMatrixCell",
+		FieldMap: ratematrixcol.RateMatrixCellFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "d0Key",
+				FieldMapKey: "d0Key",
+			},
+			{
+				Name:        "d1Key",
+				FieldMapKey: "d1Key",
+			},
+			{
+				Name:        "d2Key",
+				FieldMapKey: "d2Key",
+			},
+			{
+				Name:        "d3Key",
+				FieldMapKey: "d3Key",
+			},
+			{
+				Name:        "d0Min",
+				FieldMapKey: "d0Min",
+			},
+			{
+				Name:        "d0Max",
+				FieldMapKey: "d0Max",
+			},
+			{
+				Name:        "d1Min",
+				FieldMapKey: "d1Min",
+			},
+			{
+				Name:        "d1Max",
+				FieldMapKey: "d1Max",
+			},
+			{
+				Name:        "d2Min",
+				FieldMapKey: "d2Min",
+			},
+			{
+				Name:        "d2Max",
+				FieldMapKey: "d2Max",
+			},
+			{
+				Name:        "d3Min",
+				FieldMapKey: "d3Min",
+			},
+			{
+				Name:        "d3Max",
+				FieldMapKey: "d3Max",
+			},
+			{
+				Name:        "deficitEligible",
+				FieldMapKey: "deficitEligible",
+			},
+			{
+				Name:        "value",
+				FieldMapKey: "value",
+			},
+			{
+				Name:        "minCharge",
+				FieldMapKey: "minCharge",
+			},
+		},
+	}
+
+	RateMatrixDimensionSpec = TypeSpec{
+		TypeName: "RateMatrixDimension",
+		FieldMap: ratematrixcol.RateMatrixDimensionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "position",
+				FieldMapKey: "position",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "matchMode",
+				FieldMapKey: "matchMode",
+			},
+			{
+				Name:        "label",
+				FieldMapKey: "label",
+			},
+			{
+				Name:        "keyNormalization",
+				FieldMapKey: "keyNormalization",
+			},
+			{
+				Name:        "rangeOverflow",
+				FieldMapKey: "rangeOverflow",
 			},
 		},
 	}

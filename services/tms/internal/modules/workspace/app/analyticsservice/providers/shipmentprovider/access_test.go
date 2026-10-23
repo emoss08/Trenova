@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -43,6 +44,14 @@ func (e *readerEngine) GetResourcePermissions(
 		return nil, nil
 	}
 	return &permissionports.ResourcePermissionDetail{Resource: resource, MaxSensitivity: e.ceiling}, nil
+}
+
+func (e *readerEngine) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, e, userID, orgID, resources)
 }
 
 type groupAccess struct {
@@ -229,17 +238,24 @@ func TestLaneHeatmap_ShowsRegionsUnlessTheCeilingWithholdsAState(t *testing.T) {
 	assert.Nil(t, held["laneHeatmap"])
 }
 
-func TestProfitability_ShowsTheAverageMarginOnlyWithTheMarginsGroup(t *testing.T) {
+func TestProfitability_ShowsTheMarginFiguresOnlyWithTheMarginsGroup(t *testing.T) {
 	t.Parallel()
 
-	shown := &ProfitabilityCard{AvgMarginPct: new(18.5), HasMargin: true, AvgCPM: 1.9}
+	shown := &ProfitabilityCard{
+		AvgMarginPct: new(18.5), HasMargin: true, AvgCPM: 1.9, UnprofitableCount: new(3),
+	}
 	reader{margins: true}.gate(t, map[string]any{"profitability": shown})
 	require.NotNil(t, shown.AvgMarginPct)
 	assert.InDelta(t, 18.5, *shown.AvgMarginPct, 0.001)
+	require.NotNil(t, shown.UnprofitableCount)
+	assert.Equal(t, 3, *shown.UnprofitableCount)
 
-	held := &ProfitabilityCard{AvgMarginPct: new(18.5), HasMargin: true, AvgCPM: 1.9}
+	held := &ProfitabilityCard{
+		AvgMarginPct: new(18.5), HasMargin: true, AvgCPM: 1.9, UnprofitableCount: new(3),
+	}
 	reader{}.gate(t, map[string]any{"profitability": held})
 	assert.Nil(t, held.AvgMarginPct)
+	assert.Nil(t, held.UnprofitableCount, "how many loads lost money is a margin figure")
 	assert.True(t, held.HasMargin)
 	assert.InDelta(t, 1.9, held.AvgCPM, 0.001)
 }

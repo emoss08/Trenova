@@ -153,10 +153,13 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
             ? translate("Hidden")
             : `${analytics.profitability.avgMarginPct.toFixed(1)}%`,
         raw: analytics.profitability.avgMarginPct ?? 0,
-        sub: translate(
-          "{0, plural, one {# unprofitable load} other {# unprofitable loads}}",
-          analytics.profitability.unprofitableCount,
-        ),
+        sub:
+          analytics.profitability.unprofitableCount === null
+            ? undefined
+            : translate(
+                "{0, plural, one {# unprofitable load} other {# unprofitable loads}}",
+                analytics.profitability.unprofitableCount,
+              ),
         href: SHIPMENTS_HREF,
       };
     case "revenuePerMile":

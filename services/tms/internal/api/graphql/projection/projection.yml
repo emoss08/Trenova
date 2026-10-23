@@ -437,6 +437,13 @@ virtuals:
     - permissionScope
   FormulaTemplate:
     - usageCount
+  RateMatrix:
+    - cellCount
+    - cells
+  RateAgreement:
+    - lanes
+    - laneCount
+    - currentVersion
   VehiclePosition:
     - tractorCode
     - primaryWorkerId
@@ -555,8 +562,13 @@ virtuals:
     - shortName
   AIAnalyticsCauseCount:
     - blame
+  InvoiceAdjustment:
+    - supportingDocumentIds
 
 specials:
+  ManualJournal:
+    balance:
+      - isBalanced
   Tractor:
     lastKnownLocation:
       - lastKnownLocation
@@ -595,6 +607,7 @@ modelOverrides:
   ShipmentTenderEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
   ShipmentHoldEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
   ShipmentCommentEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
+  RateAgreementLane: github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.RateAgreementRule
 
 always:
   AgentProposal:

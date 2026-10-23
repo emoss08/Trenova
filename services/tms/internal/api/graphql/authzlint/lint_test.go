@@ -16,6 +16,10 @@ var authOnlyAllowlist = map[string]string{
 		"authenticated user in the tenant: forms on pages a user cannot open still need " +
 		"their dropdowns, and the payload is id, label and display metadata only",
 
+	"QueryResolver.PageAccess": "describes the caller's own access to a screen: the " +
+		"screen's needs from the build's static page access manifest and the caller's own " +
+		"grants, never record data or another person's access",
+
 	"QueryResolver.Notifications":               "returns only the calling user's own notifications",
 	"QueryResolver.NotificationUnreadCount":     "returns only the calling user's own notifications",
 	"MutationResolver.MarkNotificationsRead":    "acts only on the calling user's own notifications",

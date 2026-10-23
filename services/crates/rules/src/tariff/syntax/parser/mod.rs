@@ -226,6 +226,19 @@ impl<'a> Parser<'a> {
         self.newline.get(self.pos).copied().unwrap_or(true)
     }
 
+    /// Whether a newline comes before the token `ahead` places past the current one.
+    fn newline_before_nth(&self, ahead: usize) -> bool {
+        self.newline.get(self.pos + ahead).copied().unwrap_or(true)
+    }
+
+    /// Whether the cursor is on the contextual word `word` followed, on the same line, by text
+    /// in quotes: the start of a `property`, `best`, `worst` or `option`.
+    fn at_labelled(&self, word: &str) -> bool {
+        self.at_word(word)
+            && self.peek_nth(1).kind == TokenKind::Text
+            && !self.newline_before_nth(1)
+    }
+
     fn at_eof(&self) -> bool {
         self.kind() == TokenKind::Eof
     }
@@ -473,8 +486,9 @@ impl<'a> Parser<'a> {
                 .get(start.wrapping_sub(1))
                 .is_some_and(|byte| *byte == b'\n');
         column_zero
-            && token.kind == TokenKind::Keyword
-            && ITEM_KEYWORDS.contains(&self.slice(token.span))
+            && ((token.kind == TokenKind::Keyword
+                && ITEM_KEYWORDS.contains(&self.slice(token.span)))
+                || self.at_labelled("property"))
     }
 
     // ---- limits ----

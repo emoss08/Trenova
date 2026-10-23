@@ -638,7 +638,9 @@ describe("renderEvent", () => {
     expect(screen.getByTestId("detail").textContent).toBe("No carrier was left to ask again");
   });
 
-  it("renders a counter-offer below the floor with the offered rate and margin", () => {
+  // Every reader of a shipment reads its activity, so a counter's margin never rides on the
+  // event; the offer carries it, to the margins field group alone.
+  it("renders a counter-offer below the floor with the offered rate and no margin", () => {
     const result = renderEvent(
       tenderEvent({
         type: "TenderCountered",
@@ -659,7 +661,7 @@ describe("renderEvent", () => {
       "Sunset Logistics countered the tender for #PRO-2026-1042 at $1,850.00",
     );
     expect(screen.getByTestId("detail").textContent).toBe(
-      "Offered $1,500.00 · margin 7.50% · below the margin floor, needs approval",
+      "Offered $1,500.00 · below the margin floor, needs approval",
     );
   });
 

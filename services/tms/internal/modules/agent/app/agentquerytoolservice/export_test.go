@@ -42,6 +42,10 @@ var (
 	NewListTractorsTool           = newListTractorsTool
 	NewListTrailersTool           = newListTrailersTool
 	NewListWorkersTool            = newListWorkersTool
+	NewListOrdersTool             = newListOrdersTool
+	NewListRecurringShipmentsTool = newListRecurringShipmentsTool
+	NewListFormulaTemplatesTool   = newListFormulaTemplatesTool
+	NewListInvoicesTool           = newListInvoicesTool
 )
 
 // ConvertedListNames are the list tools read through GraphQL by a spec.
@@ -113,7 +117,10 @@ func ConvertedGetCall(tool agentports.AgentQueryTool, id pulid.ID) map[string]an
 		return nil
 	}
 	call := requiredCall(get.params, get.required)
-	if get.byID {
+	switch {
+	case get.byID && get.spec.batch > 0:
+		call[get.spec.paramName] = []any{id.String()}
+	case get.byID:
 		call[get.spec.paramName] = id.String()
 	}
 
@@ -132,7 +139,7 @@ func requiredCall(params []graphQLParam, required []string) map[string]any {
 			call[param.Name] = values[0]
 			continue
 		}
-		call[param.Name] = pulid.MustNew("x_").String()
+		call[param.Name] = requiredID(param)
 	}
 
 	return call
@@ -169,9 +176,24 @@ func MinimalCall(tool agentports.AgentQueryTool) map[string]any {
 	call := make(map[string]any, len(keyed.required))
 	for _, name := range keyed.required {
 		call[name] = pulid.MustNew("wrk_").String()
+		for _, param := range keyed.params {
+			if param.Name == name && param.Kind == paramReferences {
+				call[name] = []any{pulid.MustNew("wrk_").String()}
+			}
+		}
 	}
 
 	return call
+}
+
+// requiredID is an id for a required argument, or a list of one for an
+// argument that takes several.
+func requiredID(param graphQLParam) any {
+	if param.Kind == paramReferences {
+		return []any{pulid.MustNew("x_").String()}
+	}
+
+	return pulid.MustNew("x_").String()
 }
 
 // ExpectedMention is how a converted list's description must name one of its

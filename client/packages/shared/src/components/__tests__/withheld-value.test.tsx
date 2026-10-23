@@ -16,6 +16,18 @@ describe("WithheldValue", () => {
     expect(container.querySelector('[data-slot="locked-reference-icon"]')).not.toBeNull();
   });
 
+  it("names the protected field group a withheld margin needs", () => {
+    const { container } = render(<WithheldValue group="Margins" />);
+
+    expect(container.textContent).toBe("Hidden");
+    expect(
+      screen
+        .getByText("Hidden")
+        .closest('[data-slot="locked-reference"]')
+        ?.getAttribute("aria-description"),
+    ).toBe("You don't have access to margins");
+  });
+
   it("names a kind without a label of its own in words", () => {
     render(<WithheldValue kind="agent_memory" />);
 

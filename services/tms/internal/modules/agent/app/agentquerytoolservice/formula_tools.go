@@ -10,9 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
@@ -39,7 +37,48 @@ const (
 	proposalAppliedNote = "The page applied this to the editor; the person can undo it. It " +
 		"shows in the page draft on your next turn."
 	sourceParamDescription = "The whole Tariff source file, exactly as it should read."
+
+	toolListFormulaTemplates  = "formula_list_templates"
+	toolGetFormulaTemplate    = "formula_get_template"
+	toolListFormulaLibraries  = "formula_list_libraries"
+	toolGetFormulaLibrary     = "formula_get_library"
+	pluralFormulaTemplates    = "formula templates"
+	pluralFormulaLibraries    = "formula libraries"
+	noteActiveFormulaTemplate = "Only Active ones price shipments."
+	noteActiveFormulaLibrary  = "Templates import the latest Active version."
+	formulaTemplatesSummary   = "List formula templates, the Tariff rating methods a " +
+		"shipment, rule or agreement is priced with. Use it to turn a rating method a person " +
+		"named into its id; only Active ones price shipments. A row carries only a " +
+		"template's name, description, status, version and test count: read one whole, " +
+		"with its source and inputs, with formula_get_template."
+	formulaLibrariesSummary = "List the organisation's formula libraries: Tariff modules of " +
+		"shared functions a template imports with use org.<name>. A row carries the " +
+		"library's path, description, status, version and test count: read one whole, with " +
+		"its source, with formula_get_library."
 )
+
+// formulaReadSpecs are the formula templates and libraries, read through the
+// operations the Desk sends for their lists: each row's name, status,
+// version and test count, the source itself read whole by the get tools.
+func formulaReadSpecs() []graphQLListSpec {
+	return []graphQLListSpec{
+		{
+			name:         toolListFormulaTemplates,
+			entityPlural: pluralFormulaTemplates,
+			summary:      formulaTemplatesSummary,
+			resource:     permission.ResourceFormulaTemplate,
+			notes:        map[string]string{paramStatus: noteActiveFormulaTemplate},
+		},
+		{
+			name:         toolListFormulaLibraries,
+			entityPlural: pluralFormulaLibraries,
+			summary:      formulaLibrariesSummary,
+			searchTerms:  []string{"list libraries", "shared libraries", "formula libraries"},
+			resource:     permission.ResourceFormulaLibrary,
+			notes:        map[string]string{paramStatus: noteActiveFormulaLibrary},
+		},
+	}
+}
 
 type formulaWorkbench interface {
 	Language(
@@ -62,10 +101,6 @@ type formulaWorkbench interface {
 
 func formulaToolProviders() []any {
 	return []any{
-		newListFormulaTemplatesTool,
-		newGetFormulaTemplateTool,
-		newListFormulaLibrariesTool,
-		newGetFormulaLibraryTool,
 		provideDescribeFormulaLanguageTool,
 		provideCheckFormulaTool,
 		provideRunFormulaTestsTool,
@@ -99,18 +134,18 @@ type formulaTemplateRow struct {
 	TestCount     int32  `json:"testCount"`
 }
 
+// newListFormulaTemplatesTool is the repository-backed list
+// shipment_match_records composes and the table composer's filter catalog
+// still describes; the registered tool reads through GraphQL.
 func newListFormulaTemplatesTool(
 	repo formulatemplateports.FormulaTemplateRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "formula_list_templates",
-		entityPlural: "formula templates",
-		summary: "List formula templates, the Tariff rating methods a shipment, rule or " +
-			"agreement is priced with. Use it to turn a rating method a person named into its " +
-			"id. A row carries only a template's name, description, status, version and test " +
-			"count: read one whole, with its source and inputs, with formula_get_template.",
-		resource: permission.ResourceFormulaTemplate,
-		config:   querybuilder.GetFieldConfiguration((*formulatemplate.FormulaTemplate)(nil)),
+		name:         toolListFormulaTemplates,
+		entityPlural: pluralFormulaTemplates,
+		summary:      formulaTemplatesSummary,
+		resource:     permission.ResourceFormulaTemplate,
+		config:       querybuilder.GetFieldConfiguration((*formulatemplate.FormulaTemplate)(nil)),
 		fields: []listField{
 			{Name: "name", Kind: filterText, Sortable: true},
 			{
@@ -144,12 +179,11 @@ func newListFormulaTemplatesTool(
 	})
 }
 
-func newGetFormulaTemplateTool(
-	repo formulatemplateports.FormulaTemplateRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
-		name:   "formula_get_template",
+// formulaTemplateGetSpec reads one formula template whole through
+// DeskFormulaTemplateCard.
+func formulaTemplateGetSpec() getSpec {
+	return getSpec{
+		name:   toolGetFormulaTemplate,
 		entity: "formula template",
 		searchTerms: []string{
 			"formula template details", "read a formula", "tariff source", "formula inputs",
@@ -161,80 +195,14 @@ func newGetFormulaTemplateTool(
 			"a name rather than an id.",
 		paramName: "formulaTemplateId",
 		idSource:  "from formula_list_templates",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
-				TemplateID: id,
-				TenantInfo: tenant,
-			})
-		},
-	}, permissions)
+	}
 }
 
-type formulaLibraryRow struct {
-	ID            string `json:"id"`
-	Path          string `json:"path"`
-	Description   string `json:"description,omitempty"`
-	Status        string `json:"status"`
-	VersionNumber int64  `json:"versionNumber"`
-	TestCount     int32  `json:"testCount"`
-}
-
-func newListFormulaLibrariesTool(
-	repo formulalibraryports.FormulaLibraryRepository,
-) agentports.AgentQueryTool {
-	return newListTool(listSpec{
-		name:         "formula_list_libraries",
-		entityPlural: "formula libraries",
-		searchTerms:  []string{"list libraries", "shared libraries", "formula libraries"},
-		summary: "List the organisation's formula libraries: Tariff modules of shared " +
-			"functions a template imports with use org.<name>. A row carries the library's " +
-			"path, description, status, version and test count: read one whole, with its " +
-			"source, with formula_get_library.",
-		resource:      permission.ResourceFormulaLibrary,
-		config:        querybuilder.GetFieldConfiguration((*formulalibrary.FormulaLibrary)(nil)),
-		pagesByCursor: true,
-		fields: []listField{
-			{Name: "name", Kind: filterText, Sortable: true},
-			{
-				Name:   "status",
-				Kind:   filterEnum,
-				Values: formulaStatuses,
-				Note:   "templates import the latest Active version",
-			},
-			{Name: "createdAt", Kind: filterDate, Sortable: true},
-		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
-			result, err := repo.ListConnection(
-				ctx,
-				&formulalibraryports.ListLibraryConnectionRequest{
-					Filter: opts,
-					Cursor: cursor,
-				},
-			)
-			if err != nil {
-				return listPage{}, err
-			}
-
-			return cursorListPage(result, func(item *formulalibrary.FormulaLibrary) any {
-				return formulaLibraryRow{
-					ID:            item.ID.String(),
-					Path:          formulalibrary.Path(item.Name),
-					Description:   item.Description,
-					Status:        string(item.Status),
-					VersionNumber: item.CurrentVersionNumber,
-					TestCount:     item.TestCount,
-				}
-			})
-		},
-	})
-}
-
-func newGetFormulaLibraryTool(
-	repo formulalibraryports.FormulaLibraryRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
-		name:   "formula_get_library",
+// formulaLibraryGetSpec reads one formula library whole through
+// DeskFormulaLibraryCard.
+func formulaLibraryGetSpec() getSpec {
+	return getSpec{
+		name:   toolGetFormulaLibrary,
 		entity: entityFormulaLibrary,
 		searchTerms: []string{
 			entityFormulaLibrary, "library source", "shared functions", "org module", "use org",
@@ -245,13 +213,7 @@ func newGetFormulaLibraryTool(
 			"template imports or changing the library.",
 		paramName: "formulaLibraryId",
 		idSource:  "from formula_list_libraries",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, &formulalibraryports.GetLibraryByIDRequest{
-				LibraryID:  id,
-				TenantInfo: tenant,
-			})
-		},
-	}, permissions)
+	}
 }
 
 type describeFormulaLanguageTool struct {
@@ -356,7 +318,8 @@ func (t *checkFormulaTool) Name() string { return "formula_check" }
 func (t *checkFormulaTool) Description() string {
 	return "Check a Tariff source against this organisation's tables, codes and libraries. " +
 		"It returns every error and warning with its line and column and the fixes the " +
-		"checker offers, the inputs it declares, the libraries it imports and the charges " +
+		"checker offers, the inputs it declares with the values each accepts, the libraries " +
+		"it imports and the charges " +
 		"it bills. Check before you show or explain source; fix every error."
 }
 
@@ -449,10 +412,13 @@ func provideRunFormulaTestsTool(
 func (t *runFormulaTestsTool) Name() string { return "formula_run_tests" }
 
 func (t *runFormulaTestsTool) Description() string {
-	return "Run the test blocks of a Tariff source with Trenova's engine: each test's name, " +
-		"line, whether it passed, and what each failed expectation actually came to. A " +
-		"source that does not check runs no tests; its errors come back instead. Run the " +
-		"tests before you propose source, and write a test for every case you claim it prices."
+	return "Run the test and property blocks of a Tariff source with Trenova's engine, and " +
+		"see which pass and how much of the file they reach. Each result gives its name, " +
+		"line, whether it passed and what each failed expectation actually came to; a " +
+		"property adds how many cases ran and its counterexample, with a test block that " +
+		"reproduces it; coverage lists each region no test reaches. A source that does not " +
+		"check runs no tests; its errors come back instead. Run the tests before you propose " +
+		"source, and write a test for every case you claim it prices."
 }
 
 func (t *runFormulaTestsTool) ParamSchema() map[string]any {
@@ -499,6 +465,9 @@ func (t *runFormulaTestsTool) Query(
 	case checked.Tests.Total == 0:
 		result.Note = "The source has no test blocks. Write test \"…\" { given … expect … } " +
 			"for each case the person cares about."
+	case checked.Tests.Coverage != nil && !checked.Tests.Coverage.Complete():
+		result.Note = pricedByEngineNote + " No test reaches the regions listed under " +
+			"tests.coverage.unreached; add a test that runs each one the person relies on."
 	}
 	return result, nil
 }
@@ -519,8 +488,9 @@ func (t *previewFormulaTool) Name() string { return "formula_preview" }
 
 func (t *previewFormulaTool) Description() string {
 	return "Rate a formula template's Tariff source for a saved shipment or the sample record. " +
-		"With the input values given, it returns the bill line by line, or the refusal or " +
-		"error and where in the source it came from. Use it to learn what a formula charges " +
+		"With the input values given, it returns the bill line by line and every best or " +
+		"worst choice with each option's subtotal, or the refusal or error and where in the " +
+		"source it came from. Use it to learn what a formula charges " +
 		"a real load; say an amount only when a tool gave it."
 }
 

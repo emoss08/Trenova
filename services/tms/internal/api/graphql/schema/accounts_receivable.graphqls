@@ -78,6 +78,8 @@ type ARCustomerStatement {
 }
 
 type ARBalanceOverview {
+  "Whether the tenant has ever posted an invoice or debit memo."
+  hasInvoiced: Boolean!
   totalOpenMinor: Int!
   overdueMinor: Int!
   unappliedCashMinor: Int!
@@ -94,12 +96,9 @@ type ARDashboardKPIs {
   overview: ARBalanceOverview!
   currentDsoDays: Float!
   dsoDeltaDays: Float!
-  cei: Float!
-  avgDaysToPay: Float!
   overduePercent: Float!
-  writeOffRatio: Float!
-  disputeRate: Float!
-  shortPayRate: Float!
+  "Collection performance over the trailing 91 days."
+  collection: ARCollectionPerformance!
 }
 
 type ARDSOTrendPoint {
@@ -305,7 +304,6 @@ extend type Query {
   arDsoTrend(weeks: Int): [ARDSOTrendPoint!]!
   arAgingTrend(weeks: Int): [ARAgingTrendPoint!]!
   arCashFlowForecast(pastWeeks: Int, futureWeeks: Int): [ARCashFlowPoint!]!
-  arCollectionPerformance(periodDays: Int): ARCollectionPerformance!
   arTopOverdueCustomers(limit: Int): [ARTopOverdueCustomer!]!
   arCollectionsWorklist(limit: Int): [ARCollectionsWorklistItem!]!
   arCustomerProfile(customerId: ID!): ARCustomerProfile!

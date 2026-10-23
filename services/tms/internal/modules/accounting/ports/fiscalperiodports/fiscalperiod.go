@@ -12,6 +12,12 @@ type ListFiscalPeriodsRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListFiscalPeriodConnectionRequest struct {
+	Filter              *pagination.QueryOptions `json:"filter"`
+	Cursor              pagination.CursorInfo    `json:"-"`
+	FiscalPeriodColumns []string                 `json:"-"`
+}
+
 type GetFiscalPeriodByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -106,6 +112,10 @@ type FiscalPeriodRepository interface {
 		ctx context.Context,
 		req *ListFiscalPeriodsRequest,
 	) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListFiscalPeriodConnectionRequest,
+	) (*pagination.CursorListResult[*fiscalperiod.FiscalPeriod], error)
 	SelectOptions(
 		ctx context.Context,
 		req *FiscalPeriodSelectOptionsRequest,

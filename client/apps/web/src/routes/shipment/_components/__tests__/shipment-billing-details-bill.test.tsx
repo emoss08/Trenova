@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import type { TariffInputDeclaration } from "@trenova/shared/types/tariff";
 import { MemoryRouter } from "react-router";
@@ -153,6 +153,53 @@ describe("ShipmentBillingDetails on a tariff", () => {
     expect(screen.getByText("XDROP")).toBeInTheDocument();
     expect(screen.getByText("Acme 2026 — Dallas to Chicago")).toBeInTheDocument();
     expect(screen.getByText("v4")).toBeInTheDocument();
+  });
+
+  it("shows what each choice kept, with every option's subtotal or refusal", async () => {
+    getDeclaredInputs.mockResolvedValue(DECLARATIONS);
+    // `ShipmentRatingDetail.choices` as GraphQL reads it: subtotals as Decimals, refusals as text.
+    const ratingDetail = {
+      ...(RATED.ratingDetail as object),
+      choices: [
+        {
+          label: "Linehaul",
+          kind: "best",
+          currency: "USD",
+          chosen: "Flat",
+          options: [
+            { label: "Per mile", status: "lost", subtotal: "1908.2", refusal: null },
+            { label: "Flat", status: "chosen", subtotal: "1500", refusal: null },
+            {
+              label: "Volume",
+              status: "refused",
+              subtotal: null,
+              refusal: "Volume rates start at 6,000 lb",
+            },
+          ],
+        },
+      ],
+    } as unknown as Shipment["ratingDetail"];
+    render(<Harness values={{ ...RATED, ratingDetail }} />);
+
+    const choices = await screen.findByRole("region", { name: "Choices" });
+    expect(within(choices).getByText("Chose Flat")).toBeInTheDocument();
+    expect(within(choices).getByText("Lowest wins")).toBeInTheDocument();
+    const rows = within(choices).getAllByRole("listitem");
+    expect(rows.map((row) => row.getAttribute("data-status"))).toEqual([
+      "lost",
+      "chosen",
+      "refused",
+    ]);
+    expect(within(rows[0]!).getByText("$1,908.20")).toBeInTheDocument();
+    expect(within(rows[1]!).getByText("$1,500.00")).toBeInTheDocument();
+    expect(within(rows[2]!).getByText("Volume rates start at 6,000 lb")).toBeInTheDocument();
+  });
+
+  it("shows no choices for a rating that made none", async () => {
+    getDeclaredInputs.mockResolvedValue(DECLARATIONS);
+    render(<Harness values={RATED} />);
+    expect(await screen.findByText("Linehaul")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Choices" })).not.toBeInTheDocument();
   });
 
   it("edits the shipment's own input values for its tariff in place of a base rate", async () => {

@@ -280,6 +280,13 @@
         "tariff \"t\"",
         "charge \"Fuel\" as FSC = $10"
        ]
+      },
+      {
+       "label": "Bill as a freight line instead: remove `as FCS`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Fuel\" = $10"
+       ]
       }
      ],
      "message": "`FCS` isn't in the accessorial charge catalog. Did you mean `FSC`?"
@@ -320,7 +327,16 @@
     {
      "at": "ZZZZZZ",
      "code": "unknown-code",
-     "message": "`ZZZZZZ` isn't in the accessorial charge catalog"
+     "message": "`ZZZZZZ` isn't in the accessorial charge catalog",
+     "fixes": [
+      {
+       "label": "Bill as a freight line instead: remove `as ZZZZZZ`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Fuel\" = $10"
+       ]
+      }
+     ]
     }
    ],
    "name": "an unknown code with nothing close",
@@ -383,7 +399,16 @@
     {
      "at": "FSC",
      "code": "unknown-code",
-     "message": "`FSC` isn't in the accessorial charge catalog"
+     "message": "`FSC` isn't in the accessorial charge catalog",
+     "fixes": [
+      {
+       "label": "Bill as a freight line instead: remove `as FSC`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Fuel\" = $10"
+       ]
+      }
+     ]
     }
    ],
    "name": "an empty catalog refuses every code",
@@ -725,6 +750,123 @@
    "source": [
     "tariff \"t\"",
     "charge \"Linehaul\" (quantity: 2, rate: $1/mi)"
+   ]
+  },
+  {
+   "name": "an unknown code is reported once, suggesting the catalog code its label describes",
+   "context": {
+    "codes": [
+     {
+      "code": "FUEL",
+      "description": "Fuel Surcharge",
+      "active": true
+     },
+     {
+      "code": "DET",
+      "description": "Detention",
+      "active": true
+     }
+    ]
+   },
+   "source": [
+    "tariff \"t\"",
+    "input percent: Percent = 20%",
+    "let linehaul = $2/mi * shipment.distance",
+    "worst \"Fuel\" {",
+    "  option \"Share\" {",
+    "    charge \"Fuel surcharge\" as FSC = linehaul * percent",
+    "  }",
+    "  option \"Floor\" {",
+    "    charge \"Fuel surcharge\" as FSC = $75",
+    "  }",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "FSC",
+     "code": "unknown-code",
+     "fixes": [
+      {
+       "label": "Change every use to `FUEL`",
+       "result": [
+        "tariff \"t\"",
+        "input percent: Percent = 20%",
+        "let linehaul = $2/mi * shipment.distance",
+        "worst \"Fuel\" {",
+        "  option \"Share\" {",
+        "    charge \"Fuel surcharge\" as FUEL = linehaul * percent",
+        "  }",
+        "  option \"Floor\" {",
+        "    charge \"Fuel surcharge\" as FUEL = $75",
+        "  }",
+        "}"
+       ]
+      },
+      {
+       "label": "Bill as a freight line instead: remove `as FSC`",
+       "result": [
+        "tariff \"t\"",
+        "input percent: Percent = 20%",
+        "let linehaul = $2/mi * shipment.distance",
+        "worst \"Fuel\" {",
+        "  option \"Share\" {",
+        "    charge \"Fuel surcharge\" = linehaul * percent",
+        "  }",
+        "  option \"Floor\" {",
+        "    charge \"Fuel surcharge\" = $75",
+        "  }",
+        "}"
+       ]
+      }
+     ],
+     "message": "`FSC` isn't in the accessorial charge catalog. `FUEL` is \"Fuel Surcharge\"; did you mean `FUEL`?",
+     "related": [
+      {
+       "at": "FSC",
+       "line": 9,
+       "message": "`FSC` is also used here"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "an unknown code a test reads gets no freight fix",
+   "context": {
+    "codes": [
+     {
+      "code": "FUEL",
+      "description": "Fuel Surcharge",
+      "active": true
+     },
+     {
+      "code": "DET",
+      "description": "Detention",
+      "active": true
+     }
+    ]
+   },
+   "source": [
+    "tariff \"t\"",
+    "charge \"Lumper\" as LMP = $40",
+    "test \"t\" {",
+    "  expect charge(LMP) == $40",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "LMP",
+     "code": "unknown-code",
+     "fixes": [],
+     "message": "`LMP` isn't in the accessorial charge catalog",
+     "related": [
+      {
+       "at": "LMP",
+       "line": 4,
+       "message": "`LMP` is also used here"
+      }
+     ]
+    }
    ]
   }
  ]

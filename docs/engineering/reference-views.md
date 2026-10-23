@@ -89,12 +89,31 @@ Internal.
 - **Reports and exports.** The report catalog generator classifies every field and edge
   `reference` or `kind_read` from its resource's reference view (`reportcatalog.Classify`);
   entities that are part of another record are marked `withinRecord` and are always `kind_read`.
-  The compiler (`reporting/compiler/authorize.go`) requires read, and export for a run, on the
-  root entity and on any joined entity a `kind_read` field or edge is used from; a joined entity
-  used only through reference fields needs no read of its own, and each of those fields is decided
-  by `refview` through `permissionports.ReferenceViews`, so the role's ceiling applies inside the
-  view. Table exports and dashboard exports compile through the same check. Protected fields are
-  declared in the catalog (`protected: Personal|Margins`) and refused without the group.
+  One package decides what a caller may use of that catalog:
+  `reporting/reportaccess`. `Access.Field` and `Access.Edge` are the rule: on a kind the caller
+  reads, a field is held to their ceiling; on a kind they cannot read, only a `reference` field
+  is usable, decided by `refview` through `permissionports.ReferenceViews` (ceiling included);
+  an edge is a field of its source, and a pick edge needs read on each kind it picks rows from;
+  a protected field (`protected: Personal|Margins`) needs its group either way. Every report
+  surface asks it, from one `GetResourcePermissionsBatch` read of the caller's permissions per
+  request:
+  - the compiler (`compiler/authorize.go`), which also requires read, and export for a run, on
+    the root and on any entity whose own rows the query reads or whose `kind_read` fields it
+    uses; its refusals (`Resolver.Reason`) name the missing kind read, tier or group;
+  - the `reportCatalog` query (`reporting.Service.Catalog`), which returns every kind the caller
+    reads plus every kind they can reach only through a join, with `readable`, `exportable`
+    and, per field and edge, `access` (`Available`, `NeedsKindRead`, `WithheldByCeiling`,
+    `NeedsFieldGroup`), `inReferenceView`, `protection { group held }` and `needsReadOf`;
+  - drill-through, and the agent's `report_list_datasets` and `report_get_dataset`, which
+    describe a reference-only dataset, mark edges `referenceOnly` and say what a closed field
+    or edge `needs`.
+
+  The builder starts a report only from a readable kind, lists only the reference view of a kind
+  reached through a join ("Reference only — the rest needs {Kind} read"), shows protected fields
+  with a lock and their group, disables what is unavailable with its reason, and gives a saved
+  report that names unavailable fields an alert that lists them and removes them
+  (`lib/report-catalog-access.ts`, `unavailable-fields-alert.tsx`). Table exports and dashboard
+  exports compile through the same check.
 - **Row-level security.** The `read_scope` policies on shipments, orders, invoices and workers
   narrow only by an `own` or `team` grant. A kind the reader cannot read at all is not narrowed in
   the database, so a linked record of those four kinds is returned and shows its reference view,
@@ -122,8 +141,9 @@ asks the same port, `permissionports.ReferenceViews`, which refview implements:
   loads and trend are figures about the customer and need customer read, and the customer mix
   lists names in revenue order, so the order alone would rank them: without customer read the
   whole customer mix is `null`, and the card says the reader needs access to customers
-  (`WithheldPanel`). The average margin needs the margins field group. The client draws every
-  other `null` with `WithheldValue`.
+  (`WithheldPanel`). The average margin, and how many loads lost money, need the margins field
+  group (see "Margins" in [permissions.md](permissions.md)). The client draws every other
+  `null` with `WithheldValue`, and a protected field with `WithheldValue group="Margins"`.
 - **Insights** (`insightservice`). A finding names a customer, a location or a driver beside figures
   about it, which no view carries, so the reader needs read on every kind it names, not a view.
   Each detector declares those kinds in `Resources()`; each finding lists the kinds it names in
@@ -140,7 +160,8 @@ asks the same port, `permissionports.ReferenceViews`, which refview implements:
    `customer { ...CustomerReference }` and needs nothing else. The fragment selects `id` and the
    view's own fields; the bookkeeping fields are allowed but not selected. A type of a kind that
    carries neither an `id` nor a field of the view (a detail or a summary of the kind, such as
-   `EdiMessageDetail` or `EdiAckHealth`) is never linked to, so it gets no fragment.
+   `EdiMessageDetail`, `EdiAckHealth`, `FuelIndexLatestPrice` or `FactoringSummary`) is never
+   linked to, so it gets no fragment.
 2. **When the screen needs more, say so.** Selecting a linked record's field outside its view
    needs `@requiresRead(kind: "customer")` on the operation (repeat it for each kind). The field
    must be nullable, and the screen draws the field's withheld state where it is null for a reader
@@ -149,11 +170,94 @@ asks the same port, `permissionports.ReferenceViews`, which refview implements:
 3. **A card or overview that is about one record.** A root field that returns a card wrapping a
    record its resolver checks (`journalEntryCard` checks `journal_entry` read) declares
    `@authorizes(resource: "journal_entry")`, so that record is the root record and not a linked
-   one. A test holds the declaration to the resolver's check.
+   one. A test holds the declaration to the resolver's check. A card whose own parts carry the
+   record's data (a journal's lines and their amounts) also declares `@kind` of that record
+   (`JournalEntryCard @kind(resource: "journal_entry")`), so those parts are gated by the
+   record's sensitivities; the records it carries of a kind the root declares with `@authorizes`
+   are still the root's own, and the card's own fields are declared in that kind's
+   sensitivities. A card of a kind has no reference fragment.
 4. **A projection of a kind.** A type that carries another kind's data under its own name
    (`ShipmentCustomer`, `InboundShipmentRef`) declares `@kind(resource: "customer")`, so the guard
    gates it as that kind. A field named for a kind that returns some other type fails CI until the
    type declares its kind or the field is listed, with its reason, in `notAKind`.
+
+## The page access manifest
+
+`services/tms/pkg/pageaccess/manifest_gen.json` records, for every screen (route) of the web app:
+
+- `requires`: the permissions its route's loaders demand;
+- `operations`: the GraphQL operations its code runs, and `endpoints`: the REST endpoints it calls,
+  each with the permissions its route checks before the handler (empty when the handler checks
+  for itself);
+- `reads`: the kinds its queries return from their root resolvers, which need the kind's read;
+- `references`: the kinds it shows only through their reference views;
+- `declared`: the kinds whose further fields it asks for with `@requiresRead`;
+
+and, per operation, every field it selects on a linked record of each kind (a field written
+`Move.status` is of a record that is part of the kind, which has no view of its own). The server
+embeds it, so a build always describes the app it was built with.
+
+It is derived, never written by hand, in two steps:
+
+1. `pnpm --filter @trenova/web access:generate` (`client/apps/web/scripts/page-access/`) reads the
+   route tree the product guide reads (`scripts/product-guide/sources.mjs`) and, for each route,
+   every module reachable from its page module through static and dynamic imports, short of the
+   app shell (what `main.tsx` loads statically). A module that imports documents is held to the
+   documents of the exports its importers name, so a page that imports one wrapper of
+   `lib/graphql/shipment.ts` runs that wrapper's operation, not all of them; a query key factory is
+   one module, so a page that imports it runs every operation the factory can. REST calls are
+   `api.<method>(path)` literals, and an `apiService.<service>.<method>` is resolved to that one
+   service method. It writes `pkg/pageaccess/screens_gen.json`.
+2. `go run ./internal/api/graphql/gqlext/refgen` reads that file, walks each operation with
+   `gqlext.Operations` (the same walk the field guard's checks are built on, so a root, a linked
+   record and a part of one are reached exactly as at run time) and joins each REST call to its
+   route through `routelint` and `permissionlint`. It writes `manifest_gen.json`.
+
+A mutation's payload is a root record its resolver checked with its own operation, so a mutation
+adds no kind to `reads`; its linked fields are listed like any other.
+
+## Page access panel and viewing a screen as a role
+
+The keybinds config binds `Ctrl+Alt+P` to a **Page access** panel for administrators, who hold role
+read, and on every screen of a development build. It has no menu entry: it is a tool for
+administrators and developers, reached only by its keybind. It opens a lazy
+sheet (`components/page-access/`) that is not in the first visit's download. It shows what the screen
+needs, which kinds the reader holds read on, and which linked fields come back as reference view
+only, from:
+
+- `pageAccess(location:)` for the reader's own access. It checks only authentication (listed in
+  `authOnlyAllowlist`): it describes the caller's own grants against the static manifest. Every
+  permission the screen needs is asked of the engine in one `CheckBatch`.
+- `pageAccessPreview(input:)` for a role, saved (`roleId`) or as the role editor holds it
+  (`draft`), with the roles it inherits. It needs role read, like the role editor. The grants are
+  united by `permission.GrantsOf` with their implied operations and the widest ceiling, wrapped in
+  `refview.RoleAccess`, and every field goes through `refview` (`Decide`, `DecidePart`) with the
+  role's ceiling (`fieldsensitivity.RoleCeiling`), so the preview cannot disagree with the guard.
+  It is worked out before organization access policies (ABAC), and an inherited role from another
+  organization is refused.
+
+Neither reads a record; both are `internal/modules/identity/app/pageaccessservice`. The role editor
+draws the same report in **Preview a screen**, with the screens from `pageAccessScreens`.
+
+## Role editor sentences
+
+Each resource row of the role editor's Advanced tab says what granting and withholding its read
+means, from `roleResourceGuides(input:)` (role read; a category's resources at a time, at most 64).
+The sentences are built by `pageaccessservice.Guide` from the registry, not written per kind:
+
+- with read, every field of the kind's records, on their own screens and wherever another record
+  shows one;
+- without it, the view's fields as words wherever a record the role can read links to one, naming
+  the linking kinds the most screens read first, and that the rest needs the kind's read;
+- the view's fields that rank above the role's ceiling and stay withheld;
+- **Screens this affects**: every screen of the manifest that requires, reads, declares or
+  references the kind.
+
+The words for each view and the kinds that link to each are generated by refgen into
+`pageaccessservice/viewwords_gen.go` (`pagemanifest.RenderWords`): bookkeeping fields left out, an
+address's parts as one address, a link's id beside the link as the link, and a carrier being the
+family of the type holding the field. The Go extractor reads that file's `Label:` values, so each
+word is a catalog entry, and lists are joined in the request's language by `i18n.List`.
 
 ## Adding a field to a reference view
 
@@ -164,7 +268,9 @@ The change needs a security review on the pull request, which names every screen
 
 1. add the field to the kind's `ReferenceView`;
 2. run `go run ./internal/api/graphql/gqlext/refgen` and `pnpm --filter @trenova/graphql codegen`;
-3. drop any `@requiresRead` the operation no longer needs.
+3. drop any `@requiresRead` the operation no longer needs;
+4. run `task i18n` and translate the field's new words, if the role editor names it in a way no
+   view did before.
 
 ## What CI checks
 
@@ -182,8 +288,20 @@ Each failure says what to add.
 | `TestEveryRootOfADatabaseScopedKindChecksItsRead` (gqlext) | a root field returns shipments, orders, invoices or workers, directly or through a connection, without its resolver checking the kind's read |
 | `TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler` (responseguard) | a REST response returns a shipment, order, invoice or worker as its own record outside that kind's handler |
 | `TestReferenceFragmentsAreGenerated` (gqlext) | the generated fragments or views are out of date |
+| `access:check` (`test-client.yml`) | a route, an import or a REST call moved what a screen runs and `screens_gen.json` was not regenerated |
+| `TestPageAccessManifestIsGenerated` (pagemanifest) | `manifest_gen.json` differs from what refgen writes from the screens, the operations, the schema, the registry and the routes |
+| `TestViewWordsAreGenerated` (pagemanifest) | a view or a link between kinds changed and `viewwords_gen.go` was not regenerated |
 | `TestEveryFieldAndEdgeIsClassifiedByItsReferenceView` (reportcatalog) | a report catalog field or edge is unclassified, or its class disagrees with the registry's view |
+| `TestCatalogAnnotationsAgreeWithTheCompiler` (reporting compiler) | for one of four roles, a catalog field the builder marks available is refused by the compiler, or one it marks unavailable compiles |
+| `TestReportSurfacesDecideAccessOnlyThroughReportaccess` (reportaccess) | the compiler, the reporting service, the report resolvers or the agent's report tools call an access primitive (`CanAccess`, `Decide`, `Person`, `InReferenceView`, `Classify`, `Visible`) instead of asking reportaccess |
+| `TestTheCompilerAndTheCatalogShareTheDecision` (reportaccess) | the compiler or the catalog stops deciding through `Access.Field` and `Access.Edge` |
 | `TestEveryProtectedFieldIsGatedInTheReportCatalog` (gqlext) | a schema `@protected` field is not marked `protected` in the report catalog, or the reverse |
+| `TestEveryMarginFieldIsProtectedByTheMarginsGroup` (gqlext) | a GraphQL field named for a margin or profit is not `@protected(group: Margins)`, is not on a type reached only through such fields, and is not listed in `unprotectedMarginNames` with why |
+| `TestEveryMarginEnumValueSaysWhereItIsRefused` (gqlext) | an enum value named for a margin is not listed in `marginEnumValues` with where it is refused |
+| `TestEveryProtectedTypeSaysWhatStandsBehindIt` (gqlext) | a type with protected fields names neither the entity REST withholds it through nor why only GraphQL serves it |
+| `TestEveryMarginFieldARESTResponseCarriesIsWithheld` (responseguard) | a JSON field a REST response carries, named for a margin or profit, has no `WithholdFields` in `restMargins` that clears it, and is not listed in `unprotectedRESTMarginNames` with why |
+| `TestEveryRESTMarginIsClearedWithoutTheMarginsGroupAndKeptWithIt` (responseguard) | a type in `restMargins` leaves a margin to a caller without the group, or clears one for a caller with it |
+| `TestEveryProtectedFieldIsWithheldFromTheAuditTrail` (responseguard) | a field a stored record's `WithholdFields` clears (worker, credential and every domain type in `restMargins`) stays in an audit entry of that record for a reader without the group, because no `permission.ProtectedPaths` entry covers it, or is withheld from a reader with every group |
 | `TestEveryRelationAResponseReachesIsClassified` (responseguard) | a REST response reaches a struct through a bun relation that is neither a kind nor listed in `carried` |
 | `TestEveryKindAgreesWithTheGraphQLGuard` (responseguard) | a Go type is gated as a different kind on REST than the GraphQL type bound to it |
 | `TestHandlersWriteEveryResponseThroughTheGuard` (responseguard) | a handler writes a response with gin directly instead of `helpers.JSON` |

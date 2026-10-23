@@ -1,5 +1,6 @@
-# The Desk's worker card: who the worker is, whether they can be dispatched,
-# and the license and medical dates their qualification hangs on, without the
+# The Desk's worker card, which the agent's worker_get reads too: who the
+# worker is, how to reach them, whether they can be dispatched, and the
+# license, medical and review dates their qualification hangs on, without the
 # PTO, custom fields and tenant details the edit panel loads.
 query DeskWorkerCard($id: ID!) {
   worker(id: $id) {
@@ -12,10 +13,14 @@ query DeskWorkerCard($id: ID!) {
     phoneNumber
     email
     city
+    postalCode
+    emergencyContactName
+    emergencyContactPhone
     externalId
     assignmentBlocked
     canBeAssigned
     availableForDispatch
+    leaveType
     createdAt
     state {
       abbreviation
@@ -39,9 +44,16 @@ query DeskWorkerCard($id: ID!) {
       twicExpiry
       physicalDueDate
       mvrDueDate
+      lastMvrCheck
+      nextTrainingDue
       hireDate
+      terminationDate
+      complianceStatus
       isQualified
       disqualificationReason
+      safetyRating
+      eldExempt
+      shortHaulExempt
       licenseState {
         abbreviation
       }

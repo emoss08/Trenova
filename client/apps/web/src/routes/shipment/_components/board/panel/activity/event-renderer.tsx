@@ -443,7 +443,6 @@ function renderTender(event: ShipmentTenderEvent, ctx: RenderContext): RenderedE
     case "TenderCountered": {
       const counterRate = metadataMoney(event.metadata, "counterRate");
       const offeredRate = metadataMoney(event.metadata, "offeredRate");
-      const margin = metadataString(event.metadata, "marginPercent");
       const needsApproval = event.metadata.needsApproval === true;
       return {
         headline: counterRate
@@ -461,7 +460,6 @@ function renderTender(event: ShipmentTenderEvent, ctx: RenderContext): RenderedE
         detail:
           [
             offeredRate ? translate("Offered {0}", offeredRate) : undefined,
-            margin ? translate("margin {0}%", margin) : undefined,
             needsApproval ? translate("below the margin floor, needs approval") : undefined,
           ]
             .filter(Boolean)

@@ -1,0 +1,724 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "the spec's best checks",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/mi",
+    "input flatRate: Money = $900",
+    "input volumeRate: Money/lb = $0.10/lb",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat rate\" = flatRate",
+    "  }",
+    "  option \"Volume\" {",
+    "    require (shipment.weight ?? 0 lb) >= 6_000 lb else \"Volume rates start at 6,000 lb\"",
+    "    charge \"Volume\" = volumeRate * (shipment.weight ?? 0 lb)",
+    "  }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a choice may be written wherever a charge may",
+   "source": [
+    "tariff \"t\"",
+    "enum Zone { A, B }",
+    "input zone: Zone = A",
+    "if shipment.distance > 100 mi {",
+    "  worst \"Floor\" {",
+    "    option \"Minimum\" { charge \"Minimum\" = $100 }",
+    "    option \"Per mile\" { charge \"Per mile\" = $1/mi * shipment.distance }",
+    "  }",
+    "}",
+    "for stop in shipment.stops {",
+    "  best \"Stop fee\" {",
+    "    option \"Flat\" { charge \"Stop {stop.sequence}\" = $50 }",
+    "    option \"Per hour\" { charge \"Stop {stop.sequence} time\" = $1/h * (stop.dwell ?? 0 h) }",
+    "  }",
+    "}",
+    "match zone {",
+    "  A => {",
+    "    best \"Zone A\" {",
+    "      option \"One\" { charge \"One\" = $1 }",
+    "      option \"Nested\" {",
+    "        worst \"Inner\" {",
+    "          option \"Two\" { charge \"Two\" = $2 }",
+    "          option \"Three\" { charge \"Three\" = $3 }",
+    "        }",
+    "      }",
+    "    }",
+    "  }",
+    "  B => { charge \"B\" = $4 }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "best \"In a function\" {\n    option \"A\" { charge \"A\" = $1 }\n    option \"B\" { charge \"B\" = $2 }\n  }",
+     "code": "misplaced",
+     "message": "A `best` can't be written here: a function computes values; only a tariff bills them"
+    },
+    {
+     "at": "charge \"A\" = $1",
+     "code": "misplaced",
+     "message": "A charge can't be written here: a function computes values; only a tariff bills them"
+    },
+    {
+     "at": "charge \"B\" = $2",
+     "code": "misplaced",
+     "message": "A charge can't be written here: a function computes values; only a tariff bills them"
+    },
+    {
+     "at": "worst \"In a test\" {\n    option \"A\" { charge \"A\" = $1 }\n    option \"B\" { charge \"B\" = $2 }\n  }",
+     "code": "misplaced",
+     "message": "A `worst` can't be written here: a test checks the bill the tariff makes"
+    },
+    {
+     "at": "charge \"A\" = $1",
+     "code": "misplaced",
+     "message": "A charge can't be written here: a test checks the bill the tariff makes",
+     "nth": 2
+    },
+    {
+     "at": "charge \"B\" = $2",
+     "code": "misplaced",
+     "message": "A charge can't be written here: a test checks the bill the tariff makes",
+     "nth": 2
+    }
+   ],
+   "name": "a choice can't be written in a function, a test or a condition",
+   "source": [
+    "tariff \"t\"",
+    "fn pick() -> Money {",
+    "  best \"In a function\" {",
+    "    option \"A\" { charge \"A\" = $1 }",
+    "    option \"B\" { charge \"B\" = $2 }",
+    "  }",
+    "  return $1",
+    "}",
+    "charge \"x\" = pick()",
+    "test \"t\" {",
+    "  worst \"In a test\" {",
+    "    option \"A\" { charge \"A\" = $1 }",
+    "    option \"B\" { charge \"B\" = $2 }",
+    "  }",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "best \"L\" {\n  option \"A\" { charge \"A\" = $1 }\n  option \"B\" { charge \"B\" = $2 }\n}",
+     "code": "misplaced",
+     "message": "A `best` can't be written here: a condition decides true or false and bills nothing"
+    },
+    {
+     "at": "charge \"A\" = $1",
+     "code": "misplaced",
+     "message": "A charge can't be written here: a condition decides true or false and bills nothing"
+    },
+    {
+     "at": "charge \"B\" = $2",
+     "code": "misplaced",
+     "message": "A charge can't be written here: a condition decides true or false and bills nothing"
+    }
+   ],
+   "name": "a choice can't be written in a condition",
+   "source": [
+    "condition \"c\"",
+    "best \"L\" {",
+    "  option \"A\" { charge \"A\" = $1 }",
+    "  option \"B\" { charge \"B\" = $2 }",
+    "}",
+    "shipment.distance > 1 mi"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"\"",
+     "code": "choice",
+     "message": "`best` needs a label, as in `best \"Linehaul\"`: it names the choice on the trace and in `chosen(…)`"
+    }
+   ],
+   "name": "a choice needs a label",
+   "source": [
+    "tariff \"t\"",
+    "best \"\" {",
+    "  option \"A\" { charge \"A\" = $1 }",
+    "  option \"B\" { charge \"B\" = $2 }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"Linehaul\"",
+     "code": "duplicate",
+     "message": "Another choice is already labelled `Linehaul`: each `best` and `worst` needs its own label, so the trace and `chosen(…)` can tell them apart",
+     "nth": 2,
+     "related": [
+      {
+       "at": "\"Linehaul\"",
+       "line": 2,
+       "message": "First labelled here"
+      }
+     ]
+    }
+   ],
+   "name": "a choice's label is unique in the file",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" { charge \"A\" = $1 }",
+    "  option \"B\" { charge \"B\" = $2 }",
+    "}",
+    "if shipment.distance > 1 mi {",
+    "  worst \"Linehaul\" {",
+    "    option \"C\" { charge \"C\" = $1 }",
+    "    option \"D\" { charge \"D\" = $2 }",
+    "  }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "best \"Only\"",
+     "code": "choice",
+     "message": "`best` needs at least two options to choose between: one `option \"Label\"` block for each method"
+    },
+    {
+     "at": "worst \"None\"",
+     "code": "choice",
+     "message": "`worst` needs at least two options to choose between: one `option \"Label\"` block for each method"
+    }
+   ],
+   "name": "a choice needs two options",
+   "source": [
+    "tariff \"t\"",
+    "best \"Only\" {",
+    "  option \"A\" { charge \"A\" = $1 }",
+    "}",
+    "worst \"None\" {",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"A\"",
+     "code": "duplicate",
+     "message": "This `best` already has an option labelled `A`",
+     "nth": 3,
+     "related": [
+      {
+       "at": "\"A\"",
+       "line": 3,
+       "message": "First labelled here"
+      }
+     ]
+    },
+    {
+     "at": "\"\"",
+     "code": "choice",
+     "message": "An option needs a label, as in `option \"Per mile\"`: it names the method on the trace"
+    }
+   ],
+   "name": "an option's label is written and unique in its choice",
+   "source": [
+    "tariff \"t\"",
+    "best \"L\" {",
+    "  option \"A\" { charge \"A\" = $1 }",
+    "  option \"A\" { charge \"A2\" = $2 }",
+    "  option \"\" { charge \"C\" = $3 }",
+    "}",
+    "best \"M\" {",
+    "  option \"A\" { charge \"D\" = $1 }",
+    "  option \"B\" { charge \"E\" = $2 }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "option",
+     "code": "misplaced",
+     "message": "An `option` can only be written inside `best` or `worst`"
+    }
+   ],
+   "name": "an option outside a choice is the parser's finding only",
+   "source": [
+    "tariff \"t\"",
+    "option \"A\" { charge \"A\" = $1 }"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "fee",
+     "code": "unknown-name",
+     "fixes": [
+      {
+       "label": "Change to `fuel`",
+       "result": [
+        "tariff \"t\"",
+        "best \"L\" {",
+        "  option \"A\" {",
+        "    let fee = $1",
+        "    charge \"A\" = fee",
+        "  }",
+        "  option \"B\" {",
+        "    let fee = $2",
+        "    charge \"B\" = fee",
+        "  }",
+        "}",
+        "charge \"after\" = fuel"
+       ]
+      }
+     ],
+     "message": "Nothing is named `fee`. Did you mean `fuel`?",
+     "nth": 5
+    }
+   ],
+   "name": "an option is a scope of its own",
+   "source": [
+    "tariff \"t\"",
+    "best \"L\" {",
+    "  option \"A\" {",
+    "    let fee = $1",
+    "    charge \"A\" = fee",
+    "  }",
+    "  option \"B\" {",
+    "    let fee = $2",
+    "    charge \"B\" = fee",
+    "  }",
+    "}",
+    "charge \"after\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "count",
+     "code": "assign",
+     "message": "An option can't change `count`, which is declared outside its `best`: a losing option must leave nothing behind. Declare the `var` inside the option, or bill the amount with `charge`",
+     "nth": 2,
+     "related": [
+      {
+       "at": "count",
+       "line": 2,
+       "message": "It is declared here"
+      }
+     ]
+    },
+    {
+     "at": "outer",
+     "code": "assign",
+     "message": "An option can't change `outer`, which is declared outside its `worst`: a losing option must leave nothing behind. Declare the `var` inside the option, or bill the amount with `charge`",
+     "nth": 2,
+     "related": [
+      {
+       "at": "outer",
+       "line": 13,
+       "message": "It is declared here"
+      }
+     ]
+    }
+   ],
+   "name": "an option can't assign a var declared outside its choice",
+   "source": [
+    "tariff \"t\"",
+    "var count = 0",
+    "best \"L\" {",
+    "  option \"A\" {",
+    "    count += 1",
+    "    var own = $1",
+    "    for stop in shipment.stops {",
+    "      own += $1",
+    "    }",
+    "    charge \"A\" = own",
+    "  }",
+    "  option \"B\" {",
+    "    var outer = $0",
+    "    worst \"Inner\" {",
+    "      option \"C\" {",
+    "        outer = $1",
+    "        charge \"C\" = $1",
+    "      }",
+    "      option \"D\" { charge \"D\" = $2 }",
+    "    }",
+    "    charge \"B\" = outer",
+    "  }",
+    "}",
+    "count += 1",
+    "charge \"x\" = $1 * count"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"Nothing\"",
+     "code": "no-charge",
+     "message": "The option `Nothing` bills no charge on any path, so it is always $0 and `best` always picks it"
+    },
+    {
+     "at": "\"Nothing\"",
+     "code": "no-charge",
+     "message": "The option `Nothing` bills no charge on any path, so it is always $0 and `worst` picks it only when every other option bills $0 or less",
+     "nth": 2
+    },
+    {
+     "at": "x",
+     "code": "unused",
+     "message": "`x` is never used"
+    }
+   ],
+   "name": "an option that bills nothing is always $0",
+   "source": [
+    "tariff \"t\"",
+    "best \"L\" {",
+    "  option \"Nothing\" { note \"free\" }",
+    "  option \"Some\" { charge \"A\" = $1 }",
+    "  option \"Never\" { fail \"Not offered\" }",
+    "  option \"Sometimes\" {",
+    "    if shipment.distance > 1 mi { charge \"B\" = $2 }",
+    "  }",
+    "}",
+    "worst \"M\" {",
+    "  option \"Nothing\" { let x = 1 }",
+    "  option \"Some\" { charge \"C\" = $1 }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "continue",
+     "code": "misplaced",
+     "message": "`continue` can't leave an option of a `best`: each option runs to its end or refuses, and the choice compares what they billed"
+    },
+    {
+     "at": "break",
+     "code": "misplaced",
+     "message": "`break` can't leave an option of a `best`: each option runs to its end or refuses, and the choice compares what they billed",
+     "nth": 2
+    }
+   ],
+   "name": "break and continue can't leave an option",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops {",
+    "  best \"L\" {",
+    "    option \"A\" {",
+    "      if stop.sequence > 1 { continue }",
+    "      charge \"A\" = $1",
+    "    }",
+    "    option \"B\" {",
+    "      for other in shipment.stops {",
+    "        break",
+    "      }",
+    "      charge \"B\" = $2",
+    "      break",
+    "    }",
+    "  }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "minimum $5",
+     "code": "misplaced",
+     "message": "Total clauses (`minimum`, `maximum`, `round`) apply to the whole bill, so they go at a tariff's top level, after its charges"
+    }
+   ],
+   "name": "total clauses don't go in an option",
+   "source": [
+    "tariff \"t\"",
+    "best \"L\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "    minimum $5",
+    "  }",
+    "  option \"B\" { charge \"B\" = $2 }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "the contextual words are names elsewhere",
+   "source": [
+    "tariff \"t\"",
+    "let best = 1",
+    "let worst = 2",
+    "let option = 3",
+    "let property = 4",
+    "let vary = 5",
+    "let assume = 6",
+    "let nondecreasing = 7",
+    "let nonincreasing = 8",
+    "charge \"x\" = $1 * (best + worst + option + property + vary + assume + nondecreasing + nonincreasing)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "chosen reads a choice by its label in a test",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/mi",
+    "input flatRate: Money = $900",
+    "input volumeRate: Money/lb = $0.10/lb",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat rate\" = flatRate",
+    "  }",
+    "  option \"Volume\" {",
+    "    require (shipment.weight ?? 0 lb) >= 6_000 lb else \"Volume rates start at 6,000 lb\"",
+    "    charge \"Volume\" = volumeRate * (shipment.weight ?? 0 lb)",
+    "  }",
+    "}",
+    "test \"the flat rate wins\" {",
+    "  given shipment.distance = 500 mi",
+    "  expect chosen(\"Linehaul\") == \"Flat\"",
+    "  expect charge(\"Flat rate\") == $900",
+    "}"
+   ],
+   "types": {
+    "chosen(\"Linehaul\")": "Text?"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"Linehual\"",
+     "code": "unknown-choice",
+     "fixes": [
+      {
+       "label": "Change to `\"Linehaul\"`",
+       "result": [
+        "tariff \"t\"",
+        "input rate: Money/mi = $2.35/mi",
+        "input flatRate: Money = $900",
+        "input volumeRate: Money/lb = $0.10/lb",
+        "best \"Linehaul\" {",
+        "  option \"Per mile\" {",
+        "    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+        "  }",
+        "  option \"Flat\" {",
+        "    charge \"Flat rate\" = flatRate",
+        "  }",
+        "  option \"Volume\" {",
+        "    require (shipment.weight ?? 0 lb) >= 6_000 lb else \"Volume rates start at 6,000 lb\"",
+        "    charge \"Volume\" = volumeRate * (shipment.weight ?? 0 lb)",
+        "  }",
+        "}",
+        "test \"t\" {",
+        "  expect chosen(\"Linehaul\") == \"Flat\"",
+        "  expect chosen(\"Fuel\") == none",
+        "}"
+       ]
+      }
+     ],
+     "message": "This tariff has no choice labelled `Linehual`. Did you mean `Linehaul`?"
+    },
+    {
+     "at": "\"Fuel\"",
+     "code": "unknown-choice",
+     "message": "This tariff has no choice labelled `Fuel`: `chosen(…)` reads a `best` or `worst` by its label"
+    }
+   ],
+   "name": "chosen names a choice the file declares",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/mi",
+    "input flatRate: Money = $900",
+    "input volumeRate: Money/lb = $0.10/lb",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat rate\" = flatRate",
+    "  }",
+    "  option \"Volume\" {",
+    "    require (shipment.weight ?? 0 lb) >= 6_000 lb else \"Volume rates start at 6,000 lb\"",
+    "    charge \"Volume\" = volumeRate * (shipment.weight ?? 0 lb)",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(\"Linehual\") == \"Flat\"",
+    "  expect chosen(\"Fuel\") == none",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "label",
+     "code": "type-mismatch",
+     "message": "`chosen(…)` takes a choice's label in quotes, as in `chosen(\"Linehaul\")`",
+     "nth": 2
+    },
+    {
+     "at": "\"{label}\"",
+     "code": "type-mismatch",
+     "message": "`chosen(…)` takes a choice's label in quotes, as in `chosen(\"Linehaul\")`"
+    },
+    {
+     "at": "chosen()",
+     "code": "arity",
+     "message": "`chosen(…)` takes one choice label in quotes, as in `chosen(\"Linehaul\")`"
+    },
+    {
+     "at": "chosen(\"Linehaul\", \"Flat\")",
+     "code": "arity",
+     "message": "`chosen(…)` takes one choice label in quotes, as in `chosen(\"Linehaul\")`"
+    }
+   ],
+   "name": "chosen takes one label in quotes",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/mi",
+    "input flatRate: Money = $900",
+    "input volumeRate: Money/lb = $0.10/lb",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat rate\" = flatRate",
+    "  }",
+    "  option \"Volume\" {",
+    "    require (shipment.weight ?? 0 lb) >= 6_000 lb else \"Volume rates start at 6,000 lb\"",
+    "    charge \"Volume\" = volumeRate * (shipment.weight ?? 0 lb)",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  let label = \"Linehaul\"",
+    "  expect chosen(label) == \"Flat\"",
+    "  expect chosen(\"{label}\") == \"Flat\"",
+    "  expect chosen() == none",
+    "  expect chosen(\"Linehaul\", \"Flat\") == none",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "chosen(\"Linehaul\")",
+     "code": "test-only",
+     "message": "`chosen(…)` reads which option a choice kept, so it can only be used inside a tariff's `test` block"
+    }
+   ],
+   "name": "chosen is for a tariff's tests only",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/mi",
+    "input flatRate: Money = $900",
+    "input volumeRate: Money/lb = $0.10/lb",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat rate\" = flatRate",
+    "  }",
+    "  option \"Volume\" {",
+    "    require (shipment.weight ?? 0 lb) >= 6_000 lb else \"Volume rates start at 6,000 lb\"",
+    "    charge \"Volume\" = volumeRate * (shipment.weight ?? 0 lb)",
+    "  }",
+    "}",
+    "let picked = chosen(\"Linehaul\")",
+    "note \"{picked ?? \"none\"}\""
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a function named chosen is the file's own",
+   "source": [
+    "tariff \"t\"",
+    "fn chosen(label: Text) -> Money = $1",
+    "charge \"x\" = chosen(\"a\")"
+   ]
+  },
+  {
+   "name": "chosen compared with a label that is no option suggests the nearest",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Per mile\" = $1",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $2",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(\"Linehaul\") == \"Flta\"",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "\"Flta\"",
+     "code": "unknown-option",
+     "fixes": [
+      {
+       "label": "Change to `\"Flat\"`",
+       "result": [
+        "tariff \"t\"",
+        "best \"Linehaul\" {",
+        "  option \"Per mile\" {",
+        "    charge \"Per mile\" = $1",
+        "  }",
+        "  option \"Flat\" {",
+        "    charge \"Flat\" = $2",
+        "  }",
+        "}",
+        "test \"t\" {",
+        "  expect chosen(\"Linehaul\") == \"Flat\"",
+        "}"
+       ]
+      }
+     ],
+     "message": "The choice `Linehaul` has no option labelled `Flta`. Did you mean `Flat`?"
+    }
+   ]
+  },
+  {
+   "name": "chosen compared with a label nothing like an option lists the options",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Per mile\" = $1",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $2",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(\"Linehaul\") != \"Zone rate\"",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "\"Zone rate\"",
+     "code": "unknown-option",
+     "fixes": [],
+     "message": "The choice `Linehaul` has no option labelled `Zone rate`: its options are `\"Per mile\", \"Flat\"`"
+    }
+   ]
+  }
+ ]
+}

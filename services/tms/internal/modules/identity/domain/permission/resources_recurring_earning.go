@@ -28,6 +28,8 @@ func (r *Registry) registerRecurringEarningResource() {
 			"amountMinor":     SensitivityRestricted,
 			"paidToDateMinor": SensitivityRestricted,
 			"totalCapMinor":   SensitivityRestricted,
+			"payCode":         SensitivityInternal,
+			"worker":          SensitivityInternal,
 		},
 	})
 

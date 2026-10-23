@@ -105,6 +105,23 @@ func (v *Views) Decide(
 	return Visible
 }
 
+// DecidePart is Decide for a field of a record that is part of a record of a
+// kind, such as a stop of a linked shipment: it has no reference view of its
+// own, so reached through a linked record all of it needs the kind's read.
+func (v *Views) DecidePart(
+	ctx context.Context,
+	access Access,
+	kind permission.Resource,
+	field string,
+	reach Reach,
+) Decision {
+	if reach == Nested && !access.Reads(ctx, kind) {
+		return WithheldKind
+	}
+
+	return v.Decide(ctx, access, kind, field, reach)
+}
+
 // Filter splits a record's fields into those the caller may be shown and
 // those withheld, in the order given.
 func (v *Views) Filter(

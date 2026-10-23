@@ -290,7 +290,7 @@ func (p *Provider) getProfitability(
 	}
 
 	card := &ProfitabilityCard{
-		UnprofitableCount: summary.UnprofitableCount,
+		UnprofitableCount: &summary.UnprofitableCount,
 		ShipmentCount:     summary.ShipmentCount,
 		TotalMiles:        summary.TotalMiles,
 	}

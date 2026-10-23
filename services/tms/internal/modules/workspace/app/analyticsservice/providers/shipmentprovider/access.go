@@ -55,7 +55,7 @@ func (p *Provider) accessFor(
 	actor := analyticsActor(opts)
 	access := &cardAccess{}
 	if p.views != nil {
-		access.linked = p.views.Person(actor, nil)
+		access.linked = p.views.Person(actor, permissionports.PersonGrants{})
 	}
 	if p.fieldAccess != nil {
 		access.groups = p.fieldAccess.Visible(ctx, actor)
@@ -120,6 +120,7 @@ func (a *cardAccess) gate(ctx context.Context, data map[string]any) {
 		case *ProfitabilityCard:
 			if card != nil && !a.showsMargins() {
 				card.AvgMarginPct = nil
+				card.UnprofitableCount = nil
 			}
 		}
 	}

@@ -367,10 +367,9 @@ func TestDescribeReportDataset_NamesFieldsAndWhatTheActorMayReadOfThem(t *testin
 	_, permissions, tools := reportingTools(t)
 	permissions.readable = map[string]*permissionports.ResourcePermissionDetail{
 		"shipment": {
-			Resource:         "shipment",
-			Operations:       []permission.Operation{permission.OpRead},
-			MaxSensitivity:   permission.SensitivityConfidential,
-			AccessibleFields: []string{"status"},
+			Resource:       "shipment",
+			Operations:     []permission.Operation{permission.OpRead},
+			MaxSensitivity: permission.SensitivityPublic,
 		},
 	}
 
@@ -412,11 +411,8 @@ func TestDescribeReportDataset_NamesFieldsAndWhatTheActorMayReadOfThem(t *testin
 	assert.NotEmpty(t, status.EnumValues)
 	assert.Contains(t, status.Aggregations, "count")
 	assert.False(t, status.NoFilter)
-	assert.False(t, status.Closed)
-
-	other, found := fields["customerId"]
-	require.True(t, found)
-	assert.True(t, other.Closed, "a field outside the role's allowlist is named but closed")
+	assert.True(t, status.Closed, "a field ranked above the role's ceiling is named but closed")
+	assert.Equal(t, "internal access", status.Needs)
 }
 
 func TestDescribeReportDataset_NarrowsFieldsByText(t *testing.T) {
@@ -570,18 +566,77 @@ func TestDescribeReportDataset_SaysHowToWidenASearchThatMatchedNothing(t *testin
 	assert.Contains(t, description.Note, "fewer or broader words")
 }
 
-func TestDescribeReportDataset_HidesADatasetTheActorCannotRead(t *testing.T) {
+func TestDescribeReportDataset_ADatasetTheActorCannotReadShowsOnlyItsReferenceFields(t *testing.T) {
+	t.Parallel()
+
+	_, permissions, tools := reportingTools(t)
+	permissions.readable = map[string]*permissionports.ResourcePermissionDetail{}
+
+	result, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
+		"dataset": "customer",
+	}))
+	require.NoError(t, err)
+
+	description, ok := result.(datasetDescription)
+	require.True(t, ok)
+	assert.Contains(t, description.Note, "You cannot read Customers (it needs customer read)")
+	keys := make([]string, 0, len(description.Fields))
+	for _, field := range description.Fields {
+		keys = append(keys, field.Key)
+		assert.Falsef(t, field.Closed, "%s is in the customer view and was closed", field.Key)
+	}
+	assert.Contains(t, keys, "name")
+	assert.NotContains(t, keys, "dotNumber",
+		"a field outside the view needs customer read and is left out")
+	assert.Equal(t, len(description.Fields), description.FieldCount,
+		"the count is of the fields this person can use")
+}
+
+func TestDescribeReportDataset_RefusesADatasetWithNothingTheActorMayUse(t *testing.T) {
 	t.Parallel()
 
 	_, permissions, tools := reportingTools(t)
 	permissions.readable = map[string]*permissionports.ResourcePermissionDetail{}
 
 	_, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
-		"dataset": "shipment",
+		"dataset": "worker_profile",
 	}))
 
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "it needs worker read")
 	assert.Contains(t, err.Error(), "report_list_datasets")
+}
+
+func TestDescribeReportDataset_AnEdgeToAKindTheActorCannotReadIsReferenceOnly(t *testing.T) {
+	t.Parallel()
+
+	_, permissions, tools := reportingTools(t)
+	permissions.readable = map[string]*permissionports.ResourcePermissionDetail{
+		"shipment": {
+			Resource:       "shipment",
+			Operations:     []permission.Operation{permission.OpRead},
+			MaxSensitivity: permission.SensitivityRestricted,
+		},
+	}
+
+	result, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
+		"dataset": "shipment",
+	}))
+	require.NoError(t, err)
+
+	description, ok := result.(datasetDescription)
+	require.True(t, ok)
+	var customer *datasetEdgeRow
+	for i := range description.Edges {
+		if description.Edges[i].Name == "customer" {
+			customer = &description.Edges[i]
+		}
+	}
+	require.NotNil(t, customer)
+	assert.True(t, customer.ReferenceOnly)
+	assert.Empty(t, customer.Needs)
+	assert.Contains(t, customer.TargetFields, "name")
+	assert.NotContains(t, customer.TargetFields, "dotNumber")
 }
 
 func TestDescribeReportDataset_RefusesAnUnknownDataset(t *testing.T) {

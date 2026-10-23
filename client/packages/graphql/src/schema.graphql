@@ -1948,6 +1948,8 @@ type ARBalanceOverview {
   buckets: ARAgingBucketTotals!
   disputedInvoiceCount: Int!
   disputedOpenMinor: Int!
+  """Whether the tenant has ever posted an invoice or debit memo."""
+  hasInvoiced: Boolean!
   openInvoiceCount: Int!
   overdueInvoiceCount: Int!
   overdueMinor: Int!
@@ -2067,15 +2069,12 @@ type ARDSOTrendPoint {
 
 type ARDashboardKPIs {
   asOfDate: Timestamp!
-  avgDaysToPay: Float!
-  cei: Float!
+  """Collection performance over the trailing 91 days."""
+  collection: ARCollectionPerformance!
   currentDsoDays: Float!
-  disputeRate: Float!
   dsoDeltaDays: Float!
   overduePercent: Float!
   overview: ARBalanceOverview!
-  shortPayRate: Float!
-  writeOffRatio: Float!
 }
 
 type ARLedgerEntry {
@@ -7774,12 +7773,16 @@ type CapacityMatch {
   deadheadMiles: Float
   destinationCity: String!
   fitPercent: Float
-  marginPercent: Float
+  """Null to a reader without the margins field group."""
+  marginPercent: Float @protected(group: Margins)
   moveId: ID!
   originCity: String!
   pickupAt: Timestamp
   proNumber: String
-  quote: Decimal
+  """
+  What the carrier would cost. Null to a reader without the margins field group, since beside the revenue it gives the margin.
+  """
+  quote: Decimal @protected(group: Margins)
   revenue: Decimal!
   shipmentId: ID!
 }
@@ -10377,7 +10380,10 @@ type CostingControl {
   milesPerGallon: Decimal!
   organizationId: ID!
   plannedMonthlyMiles: Int
-  targetMarginPercent: Decimal
+  """
+  The margin the organization aims for. Null to a reader without the margins field group.
+  """
+  targetMarginPercent: Decimal @protected(group: Margins)
   updatedAt: Timestamp!
   useLiveFuelPrice: Boolean!
   version: Int!
@@ -10923,8 +10929,12 @@ type CustomerDetentionStat {
   customerId: ID!
   customerName: String!
   disputeCount: Int!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  """
+  What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+  """
+  driverPayAmount: Decimal @protected(group: Margins)
+  """Null to a reader without the margins field group."""
+  netMargin: Decimal @protected(group: Margins)
   stopCount: Int!
   suppressedCount: Int!
   waivedAmount: Decimal!
@@ -11219,7 +11229,7 @@ type CustomerTrackingProfile {
 One selection round. The seed and method are the evidence of how the draw was
 made: the same seed over the same roster reproduces the same names.
 """
-type DOTRandomDraw {
+type DOTRandomDraw @kind(resource: "dot_random_pool") {
   alcoholSelected: Int!
   alcoholTarget: Int!
   businessUnitId: ID!
@@ -11247,7 +11257,7 @@ type DOTRandomDraw {
   version: Int!
 }
 
-type DOTRandomDrawEntry {
+type DOTRandomDrawEntry @kind(resource: "dot_random_pool") {
   businessUnitId: ID!
   completedAt: Timestamp
   createdAt: Timestamp!
@@ -11845,10 +11855,14 @@ type DetentionBacktestBucket {
   billableCount: Int!
   """proposedAmount minus baselineAmount."""
   delta: Decimal!
-  driverPayAmount: Decimal!
+  """
+  What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+  """
+  driverPayAmount: Decimal @protected(group: Margins)
   key: String!
   label: String!
-  netMargin: Decimal!
+  """Null to a reader without the margins field group."""
+  netMargin: Decimal @protected(group: Margins)
   proposedAmount: Decimal!
   stopCount: Int!
 }
@@ -11867,9 +11881,12 @@ type DetentionBacktestResult {
   byCustomer: [DetentionBacktestBucket!]!
   byFacility: [DetentionBacktestBucket!]!
   from: Timestamp!
-  negativeMarginStops: Int!
-  proposedDriverPay: Decimal!
-  proposedNetMargin: Decimal!
+  """Null to a reader without the margins field group."""
+  negativeMarginStops: Int @protected(group: Margins)
+  """Null to a reader without the margins field group."""
+  proposedDriverPay: Decimal @protected(group: Margins)
+  """Null to a reader without the margins field group."""
+  proposedNetMargin: Decimal @protected(group: Margins)
   proposedRevenue: Decimal!
   revenueDelta: Decimal!
   stopsBillable: Int!
@@ -11920,8 +11937,12 @@ type DetentionCollectability {
   summary: String!
 }
 
-type DetentionDeskEntry {
+type DetentionDeskEntry @kind(resource: "detention") {
   amountAtRisk: Decimal!
+  """
+  The minutes it bills: a running clock's as of now, a stopped charge's as recorded.
+  """
+  billableMinutes: Int!
   minutesUntilFreeEnds: Int!
   minutesUntilNoticeDue: Int
   noticeWindowOpen: Boolean!
@@ -11931,6 +11952,10 @@ type DetentionDeskEntry {
 
 enum DetentionDeskUrgency {
   Accruing
+  """
+  A stopped charge waiting on approval; its shipment cannot be invoiced until it is approved or waived.
+  """
+  AwaitingApproval
   FreeTimeEnding
   Lost
   Normal
@@ -11943,7 +11968,7 @@ input DetentionDisputeInput {
   occurrenceId: ID!
 }
 
-type DetentionDisputePacket {
+type DetentionDisputePacket @kind(resource: "detention") {
   chainVerified: Boolean!
   collectability: DetentionCollectability!
   evidence: [DetentionEvidence!]
@@ -12063,7 +12088,7 @@ enum DetentionNotificationStatus {
   Sent
 }
 
-type DetentionOccurrence {
+type DetentionOccurrence @kind(resource: "detention") {
   additionalChargeId: ID
   appointmentEnd: Timestamp
   appointmentStart: Timestamp
@@ -12093,7 +12118,10 @@ type DetentionOccurrence {
   detentionPolicyId: ID
   disputeNote: String!
   disputedAt: Timestamp
-  driverPayAmount: Decimal!
+  """
+  What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+  """
+  driverPayAmount: Decimal @protected(group: Margins)
   driverPayMinutes: Int!
   evidenceHead: String!
   freeMinutesGranted: Int!
@@ -12108,7 +12136,8 @@ type DetentionOccurrence {
   location: Location
   locationId: ID!
   locationName: String!
-  netMargin: Decimal!
+  """Null to a reader without the margins field group."""
+  netMargin: Decimal @protected(group: Margins)
   noticeDeadlineAt: Timestamp
   noticeDueAt: Timestamp
   noticeSentAt: Timestamp
@@ -12137,7 +12166,7 @@ type DetentionOccurrence {
   waiverReason: DetentionWaiverReason
 }
 
-type DetentionOccurrenceDetail {
+type DetentionOccurrenceDetail @kind(resource: "detention") {
   collectability: DetentionCollectability!
   """Null once the clock has stopped."""
   currentlyBillable: DetentionClockPrice
@@ -12296,10 +12325,14 @@ type DetentionPreviewResult {
   billableMinutes: Int!
   calculationTrace: JSON
   capApplied: DetentionCapKind!
-  driverPayAmount: Decimal!
+  """
+  What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+  """
+  driverPayAmount: Decimal @protected(group: Margins)
   freeMinutesGranted: Int!
   grossAmount: Decimal!
-  netMargin: Decimal!
+  """Null to a reader without the margins field group."""
+  netMargin: Decimal @protected(group: Margins)
   notificationStatus: DetentionNotificationStatus!
   policySnapshot: JSON!
   rawDwellMinutes: Int!
@@ -13399,7 +13432,7 @@ Events are recomputed while Accrued (e.g. if charges change), locked once
 Settled, and Voided if the shipment cancels. This is what powers real-time
 "earned so far this period" visibility.
 """
-type DriverPayEvent {
+type DriverPayEvent @kind(resource: "driver_settlement") {
   businessUnitId: ID!
   components: [DriverPayEventComponent!]
   createdAt: Timestamp!
@@ -15584,11 +15617,15 @@ type FacilityDetentionStat {
   billedAmount: Decimal!
   breachCount: Int!
   disputeCount: Int!
-  driverPayAmount: Decimal!
+  """
+  What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+  """
+  driverPayAmount: Decimal @protected(group: Margins)
   locationId: ID!
   locationName: String!
   medianDwellMinutes: Float!
-  netMargin: Decimal!
+  """Null to a reader without the margins field group."""
+  netMargin: Decimal @protected(group: Margins)
   p90DwellMinutes: Float!
   stopCount: Int!
   suppressedCount: Int!
@@ -15890,7 +15927,7 @@ enum FactoringInvoiceEffect {
 }
 
 """Whether an invoice is ready to factor, and why not."""
-type FactoringInvoiceState {
+type FactoringInvoiceState @kind(resource: "invoice") {
   checks: [FactoringCheck!]!
   customer: Customer
   customerId: ID!
@@ -16071,6 +16108,8 @@ type FactoringRemittance {
   """The message it came in on, when it was emailed."""
   inboundMessageId: ID
   lineCount: Int!
+  """Its lines in the file's order, or only those in these match statuses."""
+  lines(matchStatuses: [FactoringRemittanceMatchStatus!]): [FactoringRemittanceLine!]!
   mapping: [FactoringRemittanceColumn!]!
   matchedCount: Int!
   organizationId: ID!
@@ -16298,7 +16337,7 @@ input FactoringRemittanceVersionInput {
 }
 
 """What a factor holds and has paid, from its reserve entries."""
-type FactoringReserveBalance {
+type FactoringReserveBalance @kind(resource: "factoring_reserve") {
   """Cash advanced at funding."""
   advancedMinor: Int!
   """Cash paid back for chargebacks, net of reversals."""
@@ -16583,7 +16622,7 @@ enum FactoringSubmissionStatus {
   Sent
 }
 
-type FactoringSummary {
+type FactoringSummary @kind(resource: "invoice") {
   """
   Funded recourse invoices whose chargeback window closes within a week, by what the organization would repay.
   """
@@ -16726,10 +16765,24 @@ type FiscalPeriod {
   organizationId: ID!
   periodNumber: Int!
   periodType: PeriodType
+  """Why the period was last reopened; empty when it never was."""
+  reopenReason: String
+  reopenedAt: Timestamp
   startDate: Timestamp!
   status: FiscalPeriodStatus!
   updatedAt: Timestamp!
   version: Int!
+}
+
+type FiscalPeriodConnection {
+  edges: [FiscalPeriodEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FiscalPeriodEdge {
+  cursor: String!
+  node: FiscalPeriod!
 }
 
 enum FiscalPeriodStatus {
@@ -16810,15 +16863,20 @@ type FleetCodeEdge {
   node: FleetCode!
 }
 
+"""
+What the fleet's loads cost over a window. The margin figures, and the revenue
+that would let a reader work the margin out from the cost, are null to a reader
+without the margins field group.
+"""
 type FleetCostSummary {
   avgCpm: Decimal!
-  avgMarginPercent: Decimal
+  avgMarginPercent: Decimal @protected(group: Margins)
   emptyMiles: Float!
   shipmentCount: Int!
   totalEstimatedCost: Decimal!
   totalMiles: Float!
-  totalRevenue: Decimal!
-  unprofitableCount: Int!
+  totalRevenue: Decimal @protected(group: Margins)
+  unprofitableCount: Int @protected(group: Margins)
 }
 
 """
@@ -16953,6 +17011,13 @@ type FormSubmissionField {
 An input a formula declares. Its value comes from the rate agreement rule, then the agreement, then this default.
 """
 type FormulaInputDeclaration {
+  """
+  The values the input accepts, from its where clause, or null when it has none:
+  {"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}} (the
+  minimum is inclusive and an open end is null) or {"oneOf": [wire, ...]}. For a
+  list input it bounds each item.
+  """
+  constraint: Any
   """The default as a wire value, or null when the input has none."""
   default: Any
   """
@@ -17383,7 +17448,7 @@ input FuelIndexInput {
   source: FuelIndexSource!
 }
 
-type FuelIndexLatestPrice {
+type FuelIndexLatestPrice @kind(resource: "fuel_surcharge_program") {
   """Latest price minus the previously published price."""
   delta: Decimal
   index: FuelIndex!
@@ -17391,7 +17456,7 @@ type FuelIndexLatestPrice {
   previous: FuelIndexPrice
 }
 
-type FuelIndexPrice {
+type FuelIndexPrice @kind(resource: "fuel_surcharge_program") {
   businessUnitId: ID!
   currency: String!
   enteredById: ID
@@ -17423,8 +17488,13 @@ type FuelJurisdictionGallons {
   purchaseCount: Int!
 }
 
-type FuelProgramCurrentRate {
+"""
+A fuel surcharge program's surcharge this week, from the index price in effect.
+"""
+type FuelProgramCurrentRate @kind(resource: "fuel_surcharge_program") {
   flatAmount: Decimal
+  """The program's id: a program has one current rate."""
+  id: ID!
   matchedRow: FuelSurchargeTableRow
   percent: Decimal
   price: FuelIndexPrice
@@ -17545,7 +17615,7 @@ A fuel card statement staged for review. The bytes live on a Document bound to
 the batch; staging reads that document, parses every row, resolves cards,
 tractors and jurisdictions, and reports what would commit.
 """
-type FuelPurchaseImportBatch {
+type FuelPurchaseImportBatch @kind(resource: "fuel_purchase_import") {
   businessUnitId: ID!
   committedAt: Timestamp
   committedById: ID
@@ -19529,9 +19599,13 @@ type Invoice {
   isSplitBill: Boolean!
   lastEdiError: String!
   lastEdiMessageId: ID
+  """Why the last email delivery failed; empty when it did not."""
+  lastSendError: String!
   """Late charges assessed on this invoice, newest first."""
   lateChargeAssessments: [LateChargeAssessment!]!
   lines: [InvoiceLine!]
+  """The note printed on the invoice for the customer."""
+  memo: String!
   memoKind: InvoiceMemoKind
   memoReason: String!
   number: String!
@@ -19576,6 +19650,8 @@ type Invoice {
   Other invoices that bill any shipment on this one, split-bill siblings first.
   """
   relatedInvoices: [Invoice!]!
+  """How the customer is told to pay, as printed on the invoice."""
+  remittanceInstructions: String!
   scope: InvoiceScope!
   """How the lines on this invoice are organised for the reader."""
   sectionBy: InvoiceSectionKey!
@@ -19596,6 +19672,10 @@ type Invoice {
   shipperCustomerId: ID
   status: InvoiceStatus!
   subtotalAmount: Decimal!
+  """The invoice that replaced this one in a correction chain."""
+  supersededByInvoiceId: ID
+  """The invoice this one replaces in a correction chain."""
+  supersedesInvoiceId: ID
   totalAmount: Decimal
   updatedAt: Timestamp!
   version: Int!
@@ -19610,9 +19690,11 @@ type Invoice {
 }
 
 """
-A credit, rebill, reversal, or write-off raised against a posted invoice.
+A credit, rebill, reversal, or write-off raised against a posted invoice. Its
+fields follow the invoice's sensitivities: what it credits is the invoice's
+money.
 """
-type InvoiceAdjustment {
+type InvoiceAdjustment @kind(resource: "invoice") {
   accountingDate: Timestamp!
   approvalRequired: Boolean!
   approvalStatus: InvoiceAdjustmentApprovalStatus!
@@ -19648,6 +19730,8 @@ type InvoiceAdjustment {
   status: InvoiceAdjustmentStatus!
   submittedAt: Timestamp
   submittedById: ID
+  """The documents the submitter attached as support for the adjustment."""
+  supportingDocumentIds: [ID!]!
   updatedAt: Timestamp!
   version: Int!
   wouldCreateUnappliedCredit: Boolean!
@@ -20243,6 +20327,10 @@ type JournalCardLine {
   debitAmount: Int!
   description: String!
   glAccountId: ID!
+  """
+  Whether the line has been reconciled. A manual journal's lines never are: they reconcile once posted, as journal entry lines.
+  """
+  isReconciled: Boolean!
   lineNumber: Int!
   """
   Null when the line names no location or the reader may not read locations.
@@ -20264,6 +20352,8 @@ type JournalCardPosting {
 
 type JournalEntry {
   accountingDate: Timestamp!
+  """What the approver wrote when approving it; empty when nothing was."""
+  approvalNotes: String!
   approvedAt: Timestamp
   approvedById: ID
   batchId: ID!
@@ -20271,6 +20361,10 @@ type JournalEntry {
   createdAt: Timestamp!
   createdById: ID
   description: String!
+  """
+  The day the entry was written, which can differ from the day it books to.
+  """
+  entryDate: Timestamp!
   entryNumber: String!
   entryType: String!
   fiscalPeriodId: ID!
@@ -20287,6 +20381,9 @@ type JournalEntry {
   referenceId: String!
   referenceNumber: String!
   referenceType: String!
+  rejectedAt: Timestamp
+  """Why it was rejected; empty unless it was."""
+  rejectionReason: String!
   requiresApproval: Boolean!
   reversalDate: Timestamp
   reversalOfId: ID
@@ -20298,7 +20395,7 @@ type JournalEntry {
   version: Int!
 }
 
-type JournalEntryCard {
+type JournalEntryCard @kind(resource: "journal_entry") {
   approvedBy: User
   createdBy: User
   entry: JournalEntry!
@@ -20939,6 +21036,8 @@ type ManualJournal {
   currencyCode: String!
   description: String!
   id: ID!
+  """Whether it has debits and they equal its credits."""
+  isBalanced: Boolean!
   organizationId: ID!
   postedBatchId: ID
   reason: String
@@ -20956,7 +21055,7 @@ type ManualJournal {
   version: Int!
 }
 
-type ManualJournalCard {
+type ManualJournalCard @kind(resource: "manual_journal") {
   approvedBy: User
   cancelledBy: User
   createdBy: User
@@ -23033,6 +23132,119 @@ enum PackingGroup {
   III
 }
 
+"""
+What a screen needs and what a person or a role would see on it, from the
+page access manifest. It never carries record data.
+"""
+type PageAccess {
+  """The route, or a kind the screen reads as root records, is refused."""
+  blocked: Boolean!
+  endpoints: [PageAccessEndpoint!]!
+  kinds: [PageAccessKind!]!
+  """The screen's English name from the navigation, or empty."""
+  name: String!
+  operations: [String!]!
+  """The route the location is, such as /shipments/:id."""
+  path: String!
+  requires: [PageAccessRequirement!]!
+  """How many selected fields of linked records come back null."""
+  withheld: Int!
+}
+
+"""What the field guard does with one field of a linked record."""
+enum PageAccessDecision {
+  VISIBLE
+  """
+  Outside the kind's reference view, and the reader cannot read the kind.
+  """
+  WITHHELD_KIND
+  """Above the reader's sensitivity ceiling."""
+  WITHHELD_SENSITIVITY
+}
+
+input PageAccessDraftPermissionInput {
+  operations: [String!]!
+  resource: String!
+}
+
+"""
+A REST endpoint a screen calls, and what its route checks before its handler.
+"""
+type PageAccessEndpoint {
+  method: String!
+  path: String!
+  requires: [PageAccessRequirement!]!
+}
+
+"""
+One field a screen selects on a linked record. A name written Type.field is a
+field of a record that is part of the kind, which has no view of its own.
+"""
+type PageAccessField {
+  decision: PageAccessDecision!
+  inView: Boolean!
+  name: String!
+}
+
+"""One kind a screen depends on, and what the reader sees of it there."""
+type PageAccessKind {
+  canRead: Boolean!
+  fields: [PageAccessField!]!
+  resource: String!
+  resourceName: String!
+  use: PageAccessUse!
+  withheld: Int!
+}
+
+input PageAccessPreviewInput {
+  """The role being edited."""
+  draft: PageAccessRoleDraftInput
+  """A path in the app, such as /shipments/shp_123."""
+  location: String!
+  """A saved role to preview. Exactly one of roleId and draft is set."""
+  roleId: ID
+}
+
+"""A permission a screen's route or one of its REST endpoints checks."""
+type PageAccessRequirement {
+  allowed: Boolean!
+  operation: String!
+  operationName: String!
+  resource: String!
+  resourceName: String!
+}
+
+"""A role as the role editor holds it before it is saved."""
+input PageAccessRoleDraftInput {
+  maxSensitivity: String!
+  parentRoleIds: [ID!]
+  permissions: [PageAccessDraftPermissionInput!]!
+}
+
+"""A screen of the page access manifest."""
+type PageAccessScreen {
+  name: String!
+  path: String!
+}
+
+"""
+How a screen depends on one kind of record (docs/engineering/reference-views.md).
+"""
+enum PageAccessUse {
+  """
+  The screen asks for fields beyond the kind's reference view with @requiresRead.
+  """
+  DECLARED
+  """
+  The screen reads records of the kind as root records, which needs the kind's read.
+  """
+  READ
+  """The screen shows the kind only through its reference view."""
+  REFERENCE
+  """The screen's route, or a REST endpoint it calls, checks the kind."""
+  REQUIRED
+}
+
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
@@ -23223,7 +23435,7 @@ rate overrides on the assignment when individual drivers earn different rates.
 The classification drives W-2 vs 1099 treatment and which GL expense account
 settlements post to.
 """
-type PayProfile {
+type PayProfile @kind(resource: "driver_pay_profile") {
   activeAssignmentCount: Int!
   businessUnitId: ID!
   classification: PayeeClassification!
@@ -24063,7 +24275,8 @@ without the grant receives null for every field in the set.
 """
 enum ProtectedFieldGroup {
   """
-  The margin floor and pay ceiling a rate agreement sets against the sell price.
+  Every margin figure: a margin, a margin percent, a margin floor or target, and
+  the cost beside a revenue that would give the margin away.
   """
   Margins
   """
@@ -24402,7 +24615,6 @@ type Query {
   arAgingSummary(asOfDate: Timestamp): ARAgingSummary!
   arAgingTrend(weeks: Int): [ARAgingTrendPoint!]!
   arCashFlowForecast(futureWeeks: Int, pastWeeks: Int): [ARCashFlowPoint!]!
-  arCollectionPerformance(periodDays: Int): ARCollectionPerformance!
   arCollectionsWorklist(limit: Int): [ARCollectionsWorklistItem!]!
   arCustomerLedger(customerId: ID!): [ARLedgerEntry!]!
   arCustomerProfile(customerId: ID!): ARCustomerProfile!
@@ -24547,7 +24759,18 @@ type Query {
   deskMemoriesByIds(ids: [ID!]!): [DeskMemory!]!
   deskMemorySettings: DeskMemorySettings!
   detentionCustomerStats(input: DetentionStatsInput!): [CustomerDetentionStat!]!
-  detentionDesk: [DetentionDeskEntry!]!
+  detentionDesk(
+    """
+    Also list the stopped charges waiting on approval, whose shipments cannot be invoiced until someone approves or waives them.
+    """
+    includeAwaitingApproval: Boolean = false
+    """A shipment's PRO number, or part of it, ignoring case."""
+    proNumber: String
+    """Only this shipment's occurrences."""
+    shipmentId: ID
+    """How soon someone has to act, as the board ranks it."""
+    urgency: DetentionDeskUrgency
+  ): [DetentionDeskEntry!]!
   detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!
   detentionFacilityStats(input: DetentionStatsInput!): [FacilityDetentionStat!]!
   detentionOccurrence(id: ID!): DetentionOccurrenceDetail!
@@ -24577,7 +24800,11 @@ type Query {
   documentType(id: ID!): DocumentType
   documentTypes(input: DataTableConnectionInput!): DocumentTypeConnection!
   dotRandomDraw(id: ID!): DOTRandomDraw! @authorizes(resource: "dot_random_pool")
-  dotRandomDraws(poolId: ID): [DOTRandomDraw!]!
+  """Random selection rounds, newest first: one pool's, or every pool's."""
+  dotRandomDraws(
+    """The pool whose rounds are read. Leave it out for every pool's."""
+    poolId: ID
+  ): [DOTRandomDraw!]!
   dotRandomPool(id: ID!): DOTRandomPool!
   dotRandomPools(input: DOTRandomPoolsInput!): DOTRandomPoolConnection!
   dqfRetentionCandidates: [DQFRetentionCandidate!]!
@@ -24712,6 +24939,8 @@ type Query {
   factoringSummary: FactoringSummary!
   """Null until the factor's delivery is set up."""
   factoringTransport(factoringCompanyId: ID!): FactoringTransport
+  """Every fiscal period of every fiscal year, latest start first."""
+  fiscalPeriods(input: DataTableConnectionInput!): FiscalPeriodConnection!
   fiscalYear(id: ID!): FiscalYear
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fleetCode(id: ID!): FleetCode
@@ -24732,7 +24961,17 @@ type Query {
   fuelCards(input: FuelCardsInput!): FuelCardConnection!
   fuelDashboard: [FuelIndexLatestPrice!]!
   fuelIndex(id: ID!): FuelIndex
-  fuelIndexPriceHistory(from: String, indexId: ID!, limit: Int, to: String): [FuelIndexPrice!]!
+  """The prices on file for one fuel index, newest first."""
+  fuelIndexPriceHistory(
+    """The earliest price day to include, as YYYY-MM-DD."""
+    from: String
+    """The fuel index whose prices are read."""
+    indexId: ID!
+    """How many prices to read, at most 520; 104 when left out."""
+    limit: Int
+    """The latest price day to include, as YYYY-MM-DD."""
+    to: String
+  ): [FuelIndexPrice!]!
   fuelIndexes(input: DataTableConnectionInput!): FuelIndexConnection!
   fuelProgramCurrentRates: [FuelProgramCurrentRate!]! @authorizes(resource: "fuel_surcharge_program")
   fuelPurchase(id: ID!): FuelPurchase!
@@ -24767,7 +25006,16 @@ type Query {
   """
   The global jurisdiction list, about sixty rows. Fetched once and cached on the client.
   """
-  iftaJurisdictions(membersOnly: Boolean = false): [IFTAJurisdiction!]!
+  iftaJurisdictions(
+    """
+    Only the jurisdictions fuel tax is reported by now, leaving out the retired ones.
+    """
+    activeOnly: Boolean = false
+    """Only this country's jurisdictions: US, CA or MX."""
+    countryCode: String
+    """Only IFTA member jurisdictions."""
+    membersOnly: Boolean = false
+  ): [IFTAJurisdiction!]!
   iftaMileageEntries(input: IFTAMileageEntriesInput!): IFTAJurisdictionMileageEntryConnection!
   iftaMileageEntry(id: ID!): IFTAJurisdictionMileageEntry!
   iftaPeriod(quarter: Int!, year: Int!): IFTAPeriod!
@@ -24799,12 +25047,25 @@ type Query {
   """Adjustments whose policy holds them for finance approval."""
   invoiceAdjustmentApprovals(input: InvoiceAdjustmentApprovalsInput!): InvoiceAdjustmentApprovalQueueConnection!
   invoiceAdjustmentOperationsSummary: InvoiceAdjustmentOperationsSummary!
-  invoiceDisputes(invoiceId: ID!): [InvoiceDispute!]!
+  """
+  The dispute cases on one invoice, or on several, each invoice's newest first.
+  Name the invoice by invoiceId or the invoices by invoiceIds (at most 100),
+  not both.
+  """
+  invoiceDisputes(
+    invoiceId: ID
+    """The invoices whose dispute cases are read, at most 100."""
+    invoiceIds: [ID!]
+  ): [InvoiceDispute!]!
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
   jobPosition(id: ID!): JobPosition!
   """Everyone in a position from either roster, workers first."""
   jobPositionHolders(id: ID!): [PositionHolder!]!
   jobPositions(activeOnly: Boolean, drivingOnly: Boolean): [JobPosition!]!
+  """
+  Every journal entry in the general ledger, whatever its status, newest accounting date first.
+  """
+  journalEntries(input: DataTableConnectionInput!): JournalEntryConnection!
   journalEntriesBySource(sourceId: String!, sourceType: String!): [JournalEntry!]!
   journalEntry(id: ID!): JournalEntry
   """A journal entry as the Desk card draws it, read in one pass."""
@@ -24993,6 +25254,16 @@ type Query {
   chase.
   """
   outstandingEmploymentVerifications: [WorkerEmploymentVerification!]!
+  """
+  The caller's own access to the screen at a location: what it needs, which
+  kinds they read, and which linked fields come back as reference view only.
+  Null when no screen is at the location.
+  """
+  pageAccess(location: String!): PageAccess
+  """What a person holding only a role would need and see on a screen."""
+  pageAccessPreview(input: PageAccessPreviewInput!): PageAccess
+  """Every screen of the page access manifest, to choose one to preview."""
+  pageAccessScreens: [PageAccessScreen!]!
   payAdvance(id: ID!): PayAdvance
   payAdvances(input: DataTableConnectionInput!): PayAdvanceConnection!
   payCode(id: ID!): PayCode
@@ -25027,8 +25298,15 @@ type Query {
   ptoLiabilityReport(asOf: Timestamp): PTOLiabilityReport!
   ptoPolicies(input: PTOPoliciesInput!): PTOPolicyConnection!
   ptoPolicy(id: ID!): PTOPolicy!
+  """
+  One rate agreement with its accessorials, fuel binding and current version;
+  its lanes are read a page at a time.
+  """
+  rateAgreement(id: ID!): RateAgreement
   rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
+  """One rate matrix with its axes; its cells are read a page at a time."""
+  rateMatrix(id: ID!): RateMatrix
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   """
@@ -25065,6 +25343,10 @@ type Query {
   resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
   riskDecisions(input: DataTableConnectionInput!): RiskDecisionConnection!
   role(id: ID!): Role
+  """
+  The role editor's sentences for each resource, with the screens it affects.
+  """
+  roleResourceGuides(input: RoleResourceGuideInput!): [RoleResourceGuide!]!
   roles(input: DataTableConnectionInput!): RoleConnection!
   rota(filter: RotaFilterInput): Rota!
   routingGuide(id: ID!): RoutingGuide
@@ -25096,7 +25378,12 @@ type Query {
   shiftSwapRequest(id: ID!): ShiftSwapRequest!
   shiftSwapRequests(limit: Int, openOnly: Boolean, since: Timestamp, workerId: ID): [ShiftSwapRequest!]!
   shiftTemplate(id: ID!): ShiftTemplate!
-  shiftTemplates(activeOnly: Boolean, limit: Int): [ShiftTemplate!]!
+  shiftTemplates(
+    """Only the patterns in use, leaving out the retired ones."""
+    activeOnly: Boolean
+    """At most this many patterns, from 1 to 200; 200 when left out."""
+    limit: Int
+  ): [ShiftTemplate!]!
   shipment(expandShipmentDetails: Boolean = false, id: ID!, status: String): Shipment
   shipmentAnalytics(input: ShipmentAnalyticsInput!): ShipmentAnalytics!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
@@ -25123,7 +25410,11 @@ type Query {
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
   shipmentFormSubmissions(shipmentId: ID!): [TelematicsFormSubmission!]!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
-  shipmentProfitability(shipmentId: ID!): ShipmentProfitability!
+  """
+  A shipment's revenue against its estimated cost. Null to a reader without the
+  margins field group: every figure in it is the margin or works it out.
+  """
+  shipmentProfitability(shipmentId: ID!): ShipmentProfitability @protected(group: Margins)
   shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
   shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
   shipmentSuggestions(timezone: String!): ShipmentSuggestionQueue!
@@ -25154,7 +25445,11 @@ type Query {
   telematicsFormMappings: [TelematicsFormMapping!]!
   telematicsStatus: TelematicsStatus!
   tender(id: ID!): Tender
-  tendersByShipment(shipmentId: ID!): [Tender!]!
+  tendersByShipment(
+    shipmentId: ID!
+    """Only the tenders of this move of the shipment."""
+    shipmentMoveId: ID
+  ): [Tender!]!
   timeClockEntries(from: Timestamp, limit: Int, to: Timestamp, workerId: ID!): [TimeClockEntry!]!
   timesheet(id: ID!): Timesheet!
   timesheets(filter: TimesheetFilterInput): [Timesheet!]!
@@ -25407,7 +25702,13 @@ type Query {
   ): [WorkerSafetyEvent!]!
   workerSafetyScorecard(workerId: ID!): SafetyScorecard!
   workerSafetyViolations(safetyEventId: ID, workerId: ID): [WorkerSafetyViolation!]!
-  workerShiftAssignments(activeOnly: Boolean, workerId: ID!): [WorkerShiftAssignment!]!
+  workerShiftAssignments(
+    """
+    Only the pattern the worker is on today, leaving out past and future ones.
+    """
+    activeOnly: Boolean
+    workerId: ID!
+  ): [WorkerShiftAssignment!]!
   """
   A worker's total compensation. The signed-in driver reads their own through
   myTotalCompensation instead.
@@ -25453,26 +25754,47 @@ are what decide the price of a shipment; the agreement itself carries the terms
 they are all written under.
 """
 type RateAgreement {
+  """The accessorial schedule. Read by rateAgreement only."""
+  accessorials: [RateAgreementAccessorial!]
   agreementType: RateAgreementType!
   approvedAt: Timestamp
   approvedById: ID
   autoRenew: Boolean!
+  """
+  The customer invoices for this agreement's freight go to, when not the party itself.
+  """
+  billToCustomerId: ID
   businessUnitId: ID!
   carrierId: ID
   code: String!
   contractRef: String!
   createdAt: Timestamp!
   currency: String!
+  """
+  The version of the header terms in force now. Read by rateAgreement only.
+  """
+  currentVersion: RateAgreementVersion
   currentVersionNumber: Int!
   customerId: ID
   description: String!
   effectiveFrom: Timestamp!
   effectiveTo: Timestamp
+  """
+  The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only.
+  """
+  fuelBinding: RateAgreementFuelBinding
   id: ID!
   """
   Values every rule's tariff prices with unless the rule sets its own, by input name. Each value is a Tariff wire value.
   """
   inputs: JSON!
+  """How many live lanes the agreement holds."""
+  laneCount: Int!
+  """
+  The live lanes: active rules in force now or starting later, most specific
+  first. first takes at most 100.
+  """
+  lanes(first: Int = 50): [RateAgreementLane!]!
   marginFloorPercent: Decimal @protected(group: Margins)
   maxPayPercentOfSell: Decimal @protected(group: Margins)
   name: String!
@@ -25488,6 +25810,25 @@ type RateAgreement {
   version: Int!
 }
 
+"""An accessorial an agreement prices, and on what terms."""
+type RateAgreementAccessorial {
+  accessorialChargeId: ID!
+  amount: Decimal!
+  autoApply: Boolean!
+  """
+  The Tariff condition a shipment meets for the charge to apply; empty applies always.
+  """
+  condition: String!
+  effectiveFrom: Timestamp
+  effectiveTo: Timestamp
+  freeUnits: Int
+  id: ID!
+  maxAmount: Decimal
+  method: String!
+  rateUnit: String!
+  waived: Boolean!
+}
+
 type RateAgreementConnection {
   edges: [RateAgreementEdge!]!
   pageInfo: PageInfo!
@@ -25497,6 +25838,41 @@ type RateAgreementConnection {
 type RateAgreementEdge {
   cursor: String!
   node: RateAgreement!
+}
+
+"""How an agreement prices fuel: the program it binds, or a waiver."""
+type RateAgreementFuelBinding {
+  fuelSurchargeProgramId: ID!
+  id: ID!
+  waived: Boolean!
+}
+
+"""
+One priced lane of a rate agreement: where it applies, when, and the tariff
+and inputs it prices with.
+"""
+type RateAgreementLane {
+  currency: String!
+  destinationCity: String!
+  destinationScopeType: String!
+  destinationScopeValue: String!
+  direction: String!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  """The tariff that prices the lane."""
+  formulaTemplateId: ID!
+  hazmatOnly: Boolean!
+  id: ID!
+  """
+  The values the lane's tariff prices with, by input name. Each value is a Tariff wire value.
+  """
+  inputs: JSON!
+  label: String!
+  originCity: String!
+  originScopeType: String!
+  originScopeValue: String!
+  priority: Int!
+  tempControlOnly: Boolean!
 }
 
 enum RateAgreementPartyType {
@@ -25521,15 +25897,33 @@ enum RateAgreementType {
   Tariff
 }
 
+"""The header terms of an agreement as they stood for a window."""
+type RateAgreementVersion {
+  changeMessage: String!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  id: ID!
+  versionNumber: Int!
+}
+
 """
 A rate table a tariff looks values up in: one to four axes, such as origin zone
 by destination zone, and a value of one Tariff type in every cell.
 """
 type RateMatrix {
   businessUnitId: ID!
+  """How many cells the grid holds."""
+  cellCount: Int!
+  """
+  The grid's cells, a page at a time: offset skips that many, and limit takes
+  at most 100.
+  """
+  cells(limit: Int = 100, offset: Int = 0): [RateMatrixCell!]!
   code: String!
   createdAt: Timestamp!
   description: String!
+  """The matrix's axes, by position. Read by rateMatrix only."""
+  dimensions: [RateMatrixDimension!]
   id: ID!
   name: String!
   organizationId: ID!
@@ -25542,10 +25936,44 @@ type RateMatrix {
   version: Int!
 }
 
+"""
+One cell of a rate matrix: a key or a range on each axis, by position (d0 is
+the first axis), and the value it holds.
+"""
+type RateMatrixCell {
+  d0Key: String!
+  d0Max: Decimal
+  d0Min: Decimal
+  d1Key: String!
+  d1Max: Decimal
+  d1Min: Decimal
+  d2Key: String!
+  d2Max: Decimal
+  d2Min: Decimal
+  d3Key: String!
+  d3Max: Decimal
+  d3Min: Decimal
+  deficitEligible: Boolean!
+  id: ID!
+  minCharge: Decimal
+  value: Decimal!
+}
+
 type RateMatrixConnection {
   edges: [RateMatrixEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+}
+
+"""One axis of a rate matrix: what it keys on and how a value matches it."""
+type RateMatrixDimension {
+  id: ID!
+  keyNormalization: String!
+  kind: String!
+  label: String!
+  matchMode: String!
+  position: Int!
+  rangeOverflow: String!
 }
 
 type RateMatrixEdge {
@@ -26119,15 +26547,31 @@ input ReportBandInput {
   width: Float
 }
 
+"""
+The report catalog as the caller may use it: every kind they can read, and
+every kind they cannot read that they can still reach through a join, with
+only its reference-view fields available.
+"""
 type ReportCatalog {
   entities: [ReportCatalogEntity!]!
   version: String!
 }
 
 type ReportCatalogEdge {
+  """
+  Whether the caller may follow the edge in a report and, when not, what they lack.
+  """
+  access: ReportFieldAccess!
   cardinality: String!
+  """Whether the edge is in its source kind's reference view."""
+  inReferenceView: Boolean!
   label: String!
   name: String!
+  """
+  The kind whose read the caller lacks to follow the edge, when access is
+  NeedsKindRead.
+  """
+  needsReadOf: ReportCatalogKind
   target: String!
   traversable: Boolean!
 }
@@ -26136,11 +26580,19 @@ type ReportCatalogEntity {
   category: String!
   description: String
   edges: [ReportCatalogEdge!]!
+  """Whether a run may export the kind's own fields."""
+  exportable: Boolean!
   fields: [ReportCatalogField!]!
   key: String!
   label: String!
   ownScopeSupported: Boolean!
   pluralLabel: String!
+  """
+  Whether the caller may read the kind. A report starts only from a kind the
+  caller reads; one they cannot read is reached through a join, and only its
+  reference-view fields are available.
+  """
+  readable: Boolean!
   resource: String!
 }
 
@@ -26150,18 +26602,37 @@ type ReportCatalogEnumValue {
 }
 
 type ReportCatalogField {
-  accessible: Boolean!
+  """
+  Whether the caller may use the field in a report and, when not, what they lack.
+  """
+  access: ReportFieldAccess!
   aggregations: [String!]!
   description: String
   enumValues: [ReportCatalogEnumValue!]!
   filterable: Boolean!
   format: String
   groupable: Boolean!
+  """
+  Whether the field is in its kind's reference view, so a report can show it
+  through a join from a record the caller reads without the kind's own read.
+  """
+  inReferenceView: Boolean!
   key: String!
   label: String!
   nullable: Boolean!
+  """
+  The protected field group the field belongs to, and whether the caller holds it.
+  """
+  protection: ReportFieldProtection
   sensitivity: String!
   type: String!
+}
+
+"""A kind of record, as the report catalog names it."""
+type ReportCatalogKind {
+  """The kind's plural label, such as Customers."""
+  label: String!
+  resource: String!
 }
 
 input ReportChartGoalInput {
@@ -26361,6 +26832,31 @@ input ReportDrillInput {
 input ReportDrillValueInput {
   columnId: String!
   value: Any
+}
+
+"""
+Whether a caller may use a catalog field or edge in a report, decided by the
+rule the report compiler applies, so a field marked Available compiles and
+any other is refused.
+"""
+enum ReportFieldAccess {
+  """The caller may use it."""
+  Available
+  """It is in a protected field group the caller's role does not grant."""
+  NeedsFieldGroup
+  """
+  It is outside its kind's reference view, and the caller cannot read the
+  kind. Through a join, only the kind's reference-view fields can be used.
+  """
+  NeedsKindRead
+  """It is ranked above the caller's sensitivity ceiling."""
+  WithheldByCeiling
+}
+
+type ReportFieldProtection {
+  group: ProtectedFieldGroup!
+  """Whether the caller's role grants the group."""
+  held: Boolean!
 }
 
 input ReportFieldRefInput {
@@ -26641,7 +27137,8 @@ type ResolvedCostProfile {
   fuel: FuelCostResolution
   glWindow: GLActualsWindow
   includeDeadheadMiles: Boolean!
-  targetMarginPercent: Decimal
+  """Null to a reader without the margins field group."""
+  targetMarginPercent: Decimal @protected(group: Margins)
   totalCpm: Decimal!
   variableCpm: Decimal!
 }
@@ -26812,6 +27309,38 @@ type RoleConnection {
 type RoleEdge {
   cursor: String!
   node: Role!
+}
+
+"""
+What granting and withholding a resource's read means, in sentences built from
+the permission registry, the resource's reference view and the kinds that link
+to it, translated for the request.
+"""
+type RoleResourceGuide {
+  """
+  The view's fields above the role's sensitivity ceiling, or null when none are.
+  """
+  ceiling: String
+  granted: String!
+  name: String!
+  resource: String!
+  screens: [RoleResourceScreen!]!
+  withheld: String!
+}
+
+input RoleResourceGuideInput {
+  maxSensitivity: String!
+  """At most 64 resources, such as one category of the role editor."""
+  resources: [String!]!
+}
+
+"""
+A screen a resource's grant changes, and how it depends on the resource.
+"""
+type RoleResourceScreen {
+  name: String!
+  path: String!
+  use: PageAccessUse!
 }
 
 """
@@ -27764,7 +28293,7 @@ type SettlementWorkspaceSummary {
 }
 
 """One driver asking another to take a day."""
-type ShiftSwapRequest {
+type ShiftSwapRequest @kind(resource: "shift_swap") {
   businessUnitId: ID!
   """The day offered back, when the swap is a trade rather than a hand-off."""
   counterpartyShiftDate: Timestamp
@@ -27911,7 +28440,10 @@ type Shipment {
   ownerId: ID
   pieces: Int
   proNumber: String!
-  profitabilityEstimate: ShipmentProfitabilityEstimate
+  """
+  The shipment's estimated cost and margin. Null to a reader without the margins field group.
+  """
+  profitabilityEstimate: ShipmentProfitabilityEstimate @protected(group: Margins)
   rateAgreementId: ID
   rateAgreementRuleId: ID
   """Freezes the numbers of a shipment that has already been invoiced."""
@@ -29436,11 +29968,14 @@ type ShipmentProfitability {
 type ShipmentProfitabilityAnalytics {
   avgCpm: Float!
   """Null when the reader does not hold the margins field group."""
-  avgMarginPct: Float
+  avgMarginPct: Float @protected(group: Margins)
   hasMargin: Boolean!
   shipmentCount: Int!
   totalMiles: Float!
-  unprofitableCount: Int!
+  """
+  How many loads lost money. Null when the reader does not hold the margins field group.
+  """
+  unprofitableCount: Int @protected(group: Margins)
 }
 
 type ShipmentProfitabilityEstimate {
@@ -29504,6 +30039,8 @@ type ShipmentRatingDetail {
   The bill the tariff produced. Null when the tariff refused or the shipment is rated by hand.
   """
   bill: TariffBill
+  """Every best and worst the tariff evaluated, in the order they ran."""
+  choices: [TariffChoice!]!
   explanation: String!
   formulaTemplateId: String!
   formulaTemplateName: String!
@@ -30385,6 +30922,42 @@ type TariffBillLine {
   rateUnit: String!
 }
 
+"""
+A best or worst block the tariff evaluated: the methods it weighed and the one it
+kept. A choice inside a loop appears once for each time it ran.
+"""
+type TariffChoice {
+  """The label of the option kept. Null when every option refused."""
+  chosen: String
+  """
+  The currency the subtotals are in: the tariff's own, before any conversion the bill shows.
+  """
+  currency: String!
+  """best keeps the lowest subtotal, worst the highest."""
+  kind: String!
+  label: String!
+  options: [TariffChoiceOption!]!
+}
+
+"""
+One method a choice weighed: what it would have billed, or why it did not apply.
+"""
+type TariffChoiceOption {
+  label: String!
+  """
+  Why the option did not apply, in the reader's language when the engine wrote it. Null unless it refused.
+  """
+  refusal: String
+  """
+  chosen when the choice kept this option, lost when another won, refused when it did not apply.
+  """
+  status: String!
+  """
+  The exact sum of the charge lines the option billed, before rounding. Null when it refused.
+  """
+  subtotal: Decimal
+}
+
 """One person on a manager's team."""
 type TeamMember {
   complianceStatus: String!
@@ -30534,9 +31107,10 @@ type TenderOffer {
   counterDecidedAt: Timestamp
   counterDecidedById: ID
   """
-  The margin the counter leaves, as a percentage of the sell price. Null when the load has no sell price.
+  The margin the counter leaves, as a percentage of the sell price. Null when the
+  load has no sell price, or to a reader without the margins field group.
   """
-  counterMarginPercent: Decimal
+  counterMarginPercent: Decimal @protected(group: Margins)
   """
   True when the counter is below the margin floor, so taking it needs the tender approve permission.
   """
@@ -32928,7 +33502,7 @@ type Worker {
 }
 
 """What a worker would rather work on one weekday, 0 for Sunday."""
-type WorkerAvailabilityPreference {
+type WorkerAvailabilityPreference @kind(resource: "worker_schedule") {
   businessUnitId: ID!
   createdAt: Timestamp!
   dayOfWeek: Int!
@@ -33482,7 +34056,7 @@ type WorkerDisciplinaryAction {
 Live pay position for one driver: unsettled earnings accrued to date,
 outstanding advances, and escrow balance.
 """
-type WorkerEarningsSummary {
+type WorkerEarningsSummary @kind(resource: "driver_settlement") {
   accruedEventCount: Int!
   accruedGrossMinor: Int!
   escrowBalanceMinor: Int!
@@ -34010,7 +34584,7 @@ resolved through their assignment effective on the shipment's delivery date.
 Assigning a new profile automatically ends the previous open assignment, so the
 history is a contiguous, auditable record of how the driver was paid over time.
 """
-type WorkerPayAssignment {
+type WorkerPayAssignment @kind(resource: "driver_pay_profile") {
   businessUnitId: ID!
   createdAt: Timestamp!
   createdById: ID
@@ -34334,7 +34908,7 @@ type WorkerSafetyViolation @kind(resource: "worker_safety_event") {
 }
 
 """Which pattern a worker is on, for which period."""
-type WorkerShiftAssignment {
+type WorkerShiftAssignment @kind(resource: "worker_schedule") {
   assignedById: ID
   businessUnitId: ID!
   createdAt: Timestamp!

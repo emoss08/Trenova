@@ -85,7 +85,16 @@ extend type Invoice {
 }
 
 extend type Query {
-  invoiceDisputes(invoiceId: ID!): [InvoiceDispute!]!
+  """
+  The dispute cases on one invoice, or on several, each invoice's newest first.
+  Name the invoice by invoiceId or the invoices by invoiceIds (at most 100),
+  not both.
+  """
+  invoiceDisputes(
+    invoiceId: ID
+    "The invoices whose dispute cases are read, at most 100."
+    invoiceIds: [ID!]
+  ): [InvoiceDispute!]!
 }
 
 extend type Mutation {

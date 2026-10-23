@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
@@ -31,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -48,6 +51,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryversionrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplateversionrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/commodityrepository"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/documenttyperepository"
@@ -69,6 +81,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/fuelpurchaserepository"
+	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/iftarepository"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerptorepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
@@ -84,12 +102,14 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -111,6 +131,13 @@ type referenceCase struct {
 	marked               map[string]any
 	oldMarked            map[string]any
 	old                  agentports.AgentQueryTool
+	// readsWith attaches what a read of the case needs beside the tenant,
+	// such as the loader a card's counts resolve through.
+	readsWith func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context
+	// withheldAtInternal are the fields a get withholds even at the default
+	// agent data access (a detention occurrence's margin, which needs the
+	// Margins field group); a case that names none withholds nothing.
+	withheldAtInternal []string
 }
 
 // customerCacheMiss is a customer cache that holds nothing, so every get
@@ -121,6 +148,17 @@ func (customerCacheMiss) GetByID(
 	context.Context,
 	customerports.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
+	return nil, customerports.ErrCacheMiss
+}
+
+// workerCacheMiss is a worker cache that holds nothing, so every get reads
+// the repository.
+type workerCacheMiss struct{}
+
+func (workerCacheMiss) GetByID(
+	context.Context,
+	workerports.GetWorkerByIDRequest,
+) (*worker.Worker, error) {
 	return nil, customerports.ErrCacheMiss
 }
 
@@ -146,10 +184,16 @@ func boolFilter(field string, value bool) (typed, old map[string]any) {
 }
 
 // convertedListCases builds every list converted by a spec over one RLS
-// connection, and the resolver services the read executor reaches.
+// connection, and the resolver services the read executor reaches. A case
+// whose rows need records no repository here writes (a pay event's
+// shipment) writes them through admin, which row-level security does not
+// hold.
 //
 //nolint:funlen // one entry per converted list
-func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.ResolverParams) {
+func convertedListCases(
+	conn *postgres.Connection,
+	admin *bun.DB,
+) ([]referenceCase, agentread.ResolverParams) {
 	logger := zap.NewNop()
 	equipmentTypes := equipmenttyperepository.New(equipmenttyperepository.Params{DB: conn, Logger: logger})
 	fleetCodes := fleetcoderepository.New(fleetcoderepository.Params{DB: conn, Logger: logger})
@@ -184,6 +228,20 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		types: equipmentTypes, manufacturers: manufacturers, workers: workers,
 	}
 
+	formulaTemplates := formulatemplaterepository.New(
+		formulatemplaterepository.Params{DB: conn, Logger: logger})
+	formulaVersions := formulatemplateversionrepository.New(
+		formulatemplateversionrepository.Params{DB: conn, Logger: logger})
+	libraries := formulalibraryrepository.New(
+		formulalibraryrepository.Params{DB: conn, Logger: logger})
+	libraryVersions := formulalibraryversionrepository.New(
+		formulalibraryversionrepository.Params{DB: conn, Logger: logger})
+	fuel := fuelpurchaserepository.New(fuelpurchaserepository.Params{DB: conn, Logger: logger})
+	iftaRepo := iftarepository.New(iftarepository.Params{
+		DB: conn, Logger: logger, JurisdictionCache: jurisdictionCacheMiss{},
+	})
+	fuelParts := &fuelParts{parts: parts, tractors: tractors}
+
 	services := agentread.ResolverParams{
 		EquipmentTypeService: equipmenttypeservice.New(
 			equipmenttypeservice.Params{Logger: logger, Repo: equipmentTypes}),
@@ -214,7 +272,8 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 			Logger: logger, Repo: training, WorkerRepo: workers,
 		}),
 		WorkerService: workerservice.New(workerservice.Params{
-			Logger: logger, Repo: workers, CustomFieldsValuesService: customFields,
+			Logger: logger, Repo: workers, CacheRepo: workerCacheMiss{},
+			CustomFieldsValuesService: customFields,
 		}),
 		WorkerPTOService: workerptoservice.New(workerptoservice.Params{
 			Logger: logger, Repo: timeOff, WorkerRepo: workers,
@@ -222,8 +281,24 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		TrailerService: trailerservice.New(trailerservice.Params{
 			Logger: logger, Repo: trailers, CustomFieldsValuesService: customFields,
 		}),
+		FormulaTemplateService: formulatemplateservice.New(formulatemplateservice.Params{
+			Logger: logger, Repo: formulaTemplates, VersionRepo: formulaVersions,
+			Resolver: tariff.NewTemplateResolver(tariff.TemplateResolverParams{
+				Templates: formulaTemplates, Versions: formulaVersions,
+				LibraryVersions: libraryVersions,
+			}),
+		}),
+		FormulaLibraryService: formulalibraryservice.New(formulalibraryservice.Params{
+			Logger: logger, Repo: libraries, VersionRepo: libraryVersions,
+		}),
+		FuelPurchaseService: fuelpurchaseservice.New(fuelpurchaseservice.Params{
+			Logger: logger, Repo: fuel, IFTARepo: iftaRepo,
+		}),
+		IFTAService: iftaservice.New(iftaservice.Params{Logger: logger, Repo: iftaRepo, Fuel: fuel}),
 	}
 
+	formulaStats := loaders.NewFormulaTemplateStatsLoaderFactory(
+		loaders.FormulaTemplateStatsLoaderFactoryParams{TemplateRepo: formulaTemplates})
 	systemTyped, systemOld := boolFilter("isSystem", true)
 	parkingTyped, parkingOld := boolFilter("hasSecureParking", true)
 	retiredTyped, retiredOld := boolFilter("active", false)
@@ -468,9 +543,190 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 				return writeLeaveUnderWay(ctx, timeOff, driver, marked)
 			},
 		},
+		{
+			tool: "formula_list_templates", marked: inactive, oldMarked: oldInactive,
+			old: agentquerytoolservice.NewListFormulaTemplatesTool(formulaTemplates),
+			readsWith: func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context {
+				return formulaStats.Attach(ctx, pagination.TenantInfo{
+					OrgID:  tenant.Actor.OrganizationID,
+					BuID:   tenant.Actor.BusinessUnitID,
+					UserID: tenant.Actor.UserID,
+				})
+			},
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				row, err := formulaTemplates.Create(ctx, &formulatemplate.FormulaTemplate{
+					BusinessUnitID: bu, OrganizationID: org, Name: "Formula " + label,
+					Source: "formula\n", Status: formulaStatusOf(marked),
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "formula_list_libraries", marked: inactive,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				row, err := libraries.Create(ctx, &formulalibrary.FormulaLibrary{
+					BusinessUnitID: bu, OrganizationID: org, Name: "lib" + strings.ToLower(label),
+					Source: "library\n", Status: formulaStatusOf(marked),
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "fuel_list_cards", marked: suspended,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				status := fuelpurchase.CardStatusActive
+				if marked {
+					status = fuelpurchase.CardStatusSuspended
+				}
+				row, err := fuel.CreateCard(ctx, &fuelpurchase.FuelCard{
+					BusinessUnitID: bu, OrganizationID: org, Provider: fuelpurchase.CardProviderComdata,
+					LastFour: fmt.Sprintf("%04d", len(label)*100+int(label[len(label)-1])),
+					Label:    "Card " + label, Status: status,
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "fuel_list_purchases", marked: taxPaidTyped,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				tractorID, jurisdictionID, err := fuelParts.write(ctx, tenant, "F"+label)
+				if err != nil {
+					return pulid.Nil, err
+				}
+				bu, org := tenantOf(tenant)
+				purchase := &fuelpurchase.FuelPurchase{
+					BusinessUnitID: bu, OrganizationID: org, TractorID: tractorID,
+					JurisdictionID: jurisdictionID, PurchasedAt: timeutils.NowUnix() - 86400,
+					Vendor: "Pilot", FuelType: domaintypes.IFTAFuelTypeDiesel,
+					Quantity: decimal.NewFromInt(100), QuantityUnit: fuelpurchase.QuantityUnitGallon,
+					Gallons: decimal.NewFromInt(100), TotalAmountMinor: 38990, CurrencyCode: "USD",
+					TransactionReference: "ref-" + label, Source: fuelpurchase.PurchaseSourceManual,
+					TaxPaid: marked, CreatedByID: tenant.Actor.UserID,
+				}
+				purchase.Normalize()
+				row, err := fuel.CreatePurchase(ctx, purchase)
+				return created(row, err)
+			},
+		},
+		{
+			tool: "fuel_list_purchase_imports", marked: failedImports,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				status := fuelpurchase.ImportStatusPending
+				if marked {
+					status = fuelpurchase.ImportStatusFailed
+				}
+				row, err := fuel.CreateImportBatch(ctx, &fuelpurchase.ImportBatch{
+					ID: pulid.MustNew("fpib_"), BusinessUnitID: bu, OrganizationID: org,
+					Provider: fuelpurchase.CardProviderComdata, Origin: fuelpurchase.ImportOriginUpload,
+					Status: status, FileName: "statement-" + label + ".csv", DefaultCurrency: "USD",
+					RowCount: 3,
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "fuel_list_ifta_returns", marked: finalized,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				status := ifta.ReturnStatusDraft
+				var finalizedAt *int64
+				if marked {
+					status = ifta.ReturnStatusFinalized
+					finalizedAt = new(timeutils.NowUnix())
+				}
+				index := int(label[len(label)-1] - '0')
+				row, err := iftaRepo.CreateReturn(ctx, &ifta.Return{
+					BusinessUnitID: bu, OrganizationID: org, Year: 2020 + index, Quarter: 1,
+					Status: status, FinalizedAt: finalizedAt, Timezone: "America/Chicago",
+					PeriodStart: 1, PeriodEnd: 2,
+					CurrencyCode: "USD",
+					Problems:     []ifta.Problem{{Code: ifta.ProblemMissingRate, Message: "No rate"}},
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "fuel_list_ifta_mileage_entries", marked: loadedTyped,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				tractorID, jurisdictionID, err := fuelParts.write(ctx, tenant, "M"+label)
+				if err != nil {
+					return pulid.Nil, err
+				}
+				bu, org := tenantOf(tenant)
+				row, err := iftaRepo.CreateMileageEntry(ctx, &ifta.JurisdictionMileageEntry{
+					BusinessUnitID: bu, OrganizationID: org, TractorID: tractorID,
+					JurisdictionID: jurisdictionID, TraveledAt: timeutils.NowUnix() - 86400,
+					Year: 2026, Quarter: 3, Miles: decimal.NewFromInt(120), Loaded: marked,
+					Source: ifta.MileageSourceManual, CreatedByID: tenant.Actor.UserID,
+				})
+				return created(row, err)
+			},
+		},
 	}
+	cases = append(cases, settlementListCases(conn, admin, &services)...)
 
 	return cases, services
+}
+
+func formulaStatusOf(marked bool) formulatemplate.Status {
+	if marked {
+		return formulatemplate.StatusInactive
+	}
+
+	return formulatemplate.StatusActive
+}
+
+var (
+	suspended     = map[string]any{"status": []any{"Suspended"}}
+	failedImports = map[string]any{"status": []any{"Failed"}}
+	finalized     = map[string]any{"status": []any{"Finalized"}}
+	taxPaidTyped  = map[string]any{"taxPaid": true}
+	loadedTyped   = map[string]any{"loaded": true}
+)
+
+// jurisdictionCacheMiss is a jurisdiction cache that holds nothing, so every
+// read loads the global list.
+type jurisdictionCacheMiss struct{}
+
+func (jurisdictionCacheMiss) GetAll(context.Context) ([]*ifta.Jurisdiction, error) {
+	return nil, nil
+}
+
+func (jurisdictionCacheMiss) Set(context.Context, []*ifta.Jurisdiction) error { return nil }
+
+func (jurisdictionCacheMiss) Invalidate(context.Context) error { return nil }
+
+// fuelParts writes what a fuel purchase or a mileage entry names: a tractor,
+// with its type, make and driver, beside the tenant's own jurisdiction.
+type fuelParts struct {
+	parts    *equipmentParts
+	tractors tractorports.TractorRepository
+}
+
+func (p *fuelParts) write(
+	ctx context.Context,
+	tenant *agentreadtest.Tenant,
+	label string,
+) (tractorID, jurisdictionID pulid.ID, err error) {
+	typeID, makeID, driverID, err := p.parts.write(ctx, tenant, label)
+	if err != nil {
+		return pulid.Nil, pulid.Nil, err
+	}
+	saved, err := p.tractors.Create(ctx, &tractor.Tractor{
+		BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
+		Status: domaintypes.EquipmentStatusAvailable, Code: label, EquipmentTypeID: typeID,
+		EquipmentManufacturerID: makeID, PrimaryWorkerID: driverID,
+		FuelType: domaintypes.IFTAFuelTypeDiesel,
+	})
+	if err != nil {
+		return pulid.Nil, pulid.Nil, err
+	}
+
+	return saved.ID, tenant.JurisdictionID, nil
 }
 
 // writeLeaveUnderWay writes leave that began three days ago and is still
@@ -576,6 +832,9 @@ func writeReferenceRows(
 		tenant: tenant,
 		ctx:    readscope.With(dbscope.WithTenant(t.Context(), tenant.Scope()), nil),
 	}
+	if c.readsWith != nil {
+		out.ctx = c.readsWith(out.ctx, tenant)
+	}
 	for idx := range referenceRowsPerTenant {
 		marked := idx == referenceRowsPerTenant-1
 		id, err := c.write(out.ctx, tenant, fmt.Sprintf("%s%d", label, idx), marked)
@@ -649,76 +908,109 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 	t.Cleanup(cleanup)
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	cases, services := convertedListCases(conn)
+	cases, services := convertedListCases(conn, admin)
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
 	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services})
 
-	mine := agentreadtest.SeedTenant(t, admin, "A")
-	theirs := agentreadtest.SeedTenant(t, admin, "B")
-
+	env := &convertedListEnv{
+		engine: engine,
+		reader: reader,
+		public: public,
+		mine:   agentreadtest.SeedTenant(t, admin, "A"),
+		theirs: agentreadtest.SeedTenant(t, admin, "B"),
+	}
 	for idx := range cases {
 		c := &cases[idx]
-		t.Run(c.tool, func(t *testing.T) {
-			converted, err := agentquerytoolservice.ConvertedListTool(c.tool, reader, engine)
-			require.NoError(t, err)
-			ours := writeReferenceRows(t, c, mine, "A")
-			other := writeReferenceRows(t, c, theirs, "B")
-			actor := mine.Actor
+		t.Run(c.tool, func(t *testing.T) { checkConvertedList(t, c, env) })
+	}
+}
 
-			byDefault := ours.rows
-			if c.readsActiveByDefault {
-				byDefault = slices.DeleteFunc(slices.Clone(ours.rows), func(id string) bool {
-					return slices.Contains(ours.marked, id)
-				})
-			}
+// convertedListEnv is what a converted list is read against: the engine
+// and readers at the default data access and at Public, and two tenants.
+type convertedListEnv struct {
+	engine permissionports.PermissionEngine
+	reader agentports.GraphQLReader
+	public agentports.GraphQLReader
+	mine   *agentreadtest.Tenant
+	theirs *agentreadtest.Tenant
+	// attach adds to a tenant's context the loaders an operation's resolvers
+	// read through, as the reader's caller does for a request.
+	attach func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context
+}
 
-			t.Run("every page once, and nothing of another tenant", func(t *testing.T) {
-				ids, pages := walk(t, ours.ctx, converted, actor, nil)
-				assert.Greater(t, pages, 1, "the walk must cross a page")
-				assert.ElementsMatch(t, byDefault, ids)
-				for _, id := range other.rows {
-					assert.NotContains(t, ids, id)
-				}
-			})
+// within is the context a tenant's rows are read in.
+func (e *convertedListEnv) within(ctx context.Context, tenant *agentreadtest.Tenant) context.Context {
+	if e.attach == nil {
+		return ctx
+	}
 
-			t.Run("a typed filter narrows to what it names", func(t *testing.T) {
-				converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
-				assert.ElementsMatch(t, ours.marked, converted)
-			})
+	return e.attach(ctx, tenant)
+}
 
-			if c.old != nil {
-				t.Run("the same rows the repository tool paged through", func(t *testing.T) {
-					converted, _ := walk(t, ours.ctx, converted, actor, nil)
-					before, _ := walk(t, ours.ctx, c.old, actor, nil)
-					assert.ElementsMatch(t, before, converted)
-				})
+// checkConvertedList holds one converted list to its tenant's rows under
+// row-level security, to the repository tool's rows where it has one, to its
+// typed filter, and to what a Public role may not see.
+func checkConvertedList(t *testing.T, c *referenceCase, env *convertedListEnv) {
+	t.Helper()
 
-				t.Run("a typed filter narrows as the repository tool's filter did", func(t *testing.T) {
-					converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
-					before, _ := walk(t, ours.ctx, c.old, actor, c.oldMarked)
-					assert.ElementsMatch(t, before, converted)
-				})
-			}
+	converted, err := agentquerytoolservice.ConvertedListTool(c.tool, env.reader, env.engine)
+	require.NoError(t, err)
+	ours := writeReferenceRows(t, c, env.mine, "A")
+	other := writeReferenceRows(t, c, env.theirs, "B")
+	actor := env.mine.Actor
 
-			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
-				hidden, err := agentquerytoolservice.ConvertedListTool(c.tool, public, &publicRole{})
-				require.NoError(t, err)
-				page := callTool(t, ours.ctx, hidden, actor, map[string]any{"limit": 50})
-				withheld, _ := page["withheldByAccess"].([]any)
-				require.NotEmpty(t, withheld)
-				items, _ := page["items"].([]any)
-				require.Len(t, items, len(byDefault))
-				for _, item := range items {
-					row, _ := item.(map[string]any)
-					assert.Contains(t, row, "id")
-					for _, field := range withheld {
-						assert.NotContains(t, row, field)
-					}
-				}
-			})
+	byDefault := ours.rows
+	if c.readsActiveByDefault {
+		byDefault = slices.DeleteFunc(slices.Clone(ours.rows), func(id string) bool {
+			return slices.Contains(ours.marked, id)
 		})
 	}
+
+	t.Run("every page once, and nothing of another tenant", func(t *testing.T) {
+		ids, pages := walk(t, ours.ctx, converted, actor, nil)
+		assert.Greater(t, pages, 1, "the walk must cross a page")
+		assert.ElementsMatch(t, byDefault, ids)
+		for _, id := range other.rows {
+			assert.NotContains(t, ids, id)
+		}
+	})
+
+	t.Run("a typed filter narrows to what it names", func(t *testing.T) {
+		converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
+		assert.ElementsMatch(t, ours.marked, converted)
+	})
+
+	if c.old != nil {
+		t.Run("the same rows the repository tool paged through", func(t *testing.T) {
+			converted, _ := walk(t, ours.ctx, converted, actor, nil)
+			before, _ := walk(t, ours.ctx, c.old, actor, nil)
+			assert.ElementsMatch(t, before, converted)
+		})
+
+		t.Run("a typed filter narrows as the repository tool's filter did", func(t *testing.T) {
+			converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
+			before, _ := walk(t, ours.ctx, c.old, actor, c.oldMarked)
+			assert.ElementsMatch(t, before, converted)
+		})
+	}
+
+	t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
+		hidden, err := agentquerytoolservice.ConvertedListTool(c.tool, env.public, &publicRole{})
+		require.NoError(t, err)
+		page := callTool(t, ours.ctx, hidden, actor, map[string]any{"limit": 50})
+		withheld, _ := page["withheldByAccess"].([]any)
+		require.NotEmpty(t, withheld)
+		items, _ := page["items"].([]any)
+		require.Len(t, items, len(byDefault))
+		for _, item := range items {
+			row, _ := item.(map[string]any)
+			assert.Contains(t, row, "id")
+			for _, field := range withheld {
+				assert.NotContains(t, row, field)
+			}
+		}
+	})
 }
 
 // A tractor's drivers are workers. A reader who may read tractors but not
@@ -731,7 +1023,7 @@ func TestConvertedLists_ATractorsDriversShowTheirReferenceView(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	cases, services := convertedListCases(conn)
+	cases, services := convertedListCases(conn, admin)
 	idx := slices.IndexFunc(cases, func(c referenceCase) bool {
 		return c.tool == "equipment_list_tractors"
 	})
@@ -810,7 +1102,7 @@ func TestConvertedLists_WorkerListIsNarrowedToTheTeamOnBothPaths(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	_, services := convertedListCases(conn)
+	_, services := convertedListCases(conn, admin)
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: zap.NewNop()})
 	tenant := agentreadtest.SeedTenant(t, admin, "A")
 	tenantCtx := dbscope.WithTenant(t.Context(), tenant.Scope())

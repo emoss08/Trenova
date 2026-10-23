@@ -47,9 +47,33 @@ type getSpec struct {
 	// alongside are the reads it makes beside the record, keyed by the
 	// call (a sync record's tries by its id).
 	alongside []alongsideSpec
-	// shape applies to the record what the screen's resolver does not
-	// (what a sync record's status means).
-	shape func(record map[string]any)
+	// shape applies to a record read through GraphQL what the card's
+	// resolver does not, given the fields withheld from it and the call
+	// (what a sync record's status means; a NonCompliant worker cannot be
+	// assigned; a driver's clocks in minutes; a customer that takes no
+	// routine notices).
+	shape func(record map[string]any, withheld map[string]struct{}, clk clock)
+	// absent is what a get whose root returns nothing answers, where nothing
+	// is itself the finding (no ELD has reported a driver's hours) rather
+	// than a missing record.
+	absent func(id pulid.ID) map[string]any
+	// keyResource is the resource of the record a get is keyed by when that
+	// is not its own (a driver's earnings, read by the worker's id).
+	keyResource permission.Resource
+	// amounts shows each amount the record holds in minor units as its
+	// decimal (graphql_money.go), and minorUnits are fields that hold minor
+	// units under a name the schema does not mark with Minor.
+	amounts    bool
+	minorUnits []string
+	// batch makes the get's parameter a list of at most this many ids,
+	// each read on its own, and shapeEach applies to each record of a batch
+	// what one read alone does not (fewer of an invoice's lines).
+	batch     int
+	shapeEach func(record map[string]any)
+	// outside are the fields whose text someone outside the organization
+	// wrote (a driver's own description); a record that shows one is marked
+	// as read from outside, as reads Marked declares.
+	outside []string
 }
 
 type getTool struct {
@@ -86,7 +110,9 @@ func (t *getTool) Policy() agentports.ToolPolicy {
 // is still held to a prefix rather than checked for shape alone.
 func (t *getTool) ParamSchema() map[string]any {
 	property := agenttoolschema.IDText(t.spec.idDescription())
-	if len(t.spec.kinds) > 0 {
+	if t.spec.keyResource != "" {
+		property = agenttoolschema.RecordIDText(t.spec.keyResource, t.spec.idDescription())
+	} else if len(t.spec.kinds) > 0 {
 		property = agenttoolschema.KindID(t.spec.idDescription(), t.spec.kinds...)
 	} else if _, typed := t.spec.resource.IDPrefix(); typed {
 		property = agenttoolschema.RecordIDText(t.spec.resource, t.spec.idDescription())
@@ -210,12 +236,27 @@ func locationGetSpec() getSpec {
 func graphQLGetSpecs() []getSpec {
 	return append([]getSpec{
 		customerGetSpec(),
+		customerUpdatePreferencesGetSpec(),
 		carrierGetSpec(),
 		locationGetSpec(),
 		carrierIntelEventGetSpec(),
 		tractorGetSpec(),
 		trailerGetSpec(),
-	}, slices.Concat(accountingGetSpecs(), ediGetSpecs())...)
+		orderGetSpec(),
+		serviceFailureGetSpec(),
+		detentionOccurrenceGetSpec(),
+		journalEntryGetSpec(),
+		manualJournalGetSpec(),
+		rateAgreementGetSpec(),
+		workerGetSpec(),
+		workerCredentialGetSpec(),
+		dotRandomDrawGetSpec(),
+		workerHOSGetSpec(),
+		formulaTemplateGetSpec(),
+		formulaLibraryGetSpec(),
+		invoiceGetSpec(),
+		invoiceAdjustmentGetSpec(),
+	}, slices.Concat(accountingGetSpecs(), ediGetSpecs(), settlementGetSpecs(), factoringGetSpecs())...)
 }
 
 // graphQLGetProviders registers each spec as its own get tool.
@@ -241,10 +282,12 @@ func getCatalogSpecs() []getSpec {
 		carrierGetSpec(),
 		tractorGetSpec(),
 		trailerGetSpec(),
+		invoiceGetSpec(),
+		invoiceAdjustmentGetSpec(),
 		locationGetSpec(),
-		specOfGet(newGetDetentionOccurrenceTool(nil, nil, nil)),
-		specOfGet(newGetServiceFailureTool(nil, nil)),
-		specOfGet(newGetFormulaTemplateTool(nil, nil)),
+		detentionOccurrenceGetSpec(),
+		serviceFailureGetSpec(),
+		formulaTemplateGetSpec(),
 	}
 }
 

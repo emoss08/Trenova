@@ -177,25 +177,6 @@ func (r *QueryResolver) ArCashFlowForecast(ctx context.Context, pastWeeks *int, 
 	)
 }
 
-func (r *QueryResolver) ArCollectionPerformance(ctx context.Context, periodDays *int) (*customerledgerports.ARCollectionPerformance, error) {
-	authCtx, err := r.RequirePermission(
-		ctx,
-		permission.ResourceAccountsReceivable,
-		permission.OpRead,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.AccountsReceivableService.GetCollectionPerformance(
-		ctx,
-		customerledgerports.GetARCollectionMetricsRequest{
-			TenantInfo: base.TenantInfo(authCtx),
-			PeriodDays: base.DerefInt(periodDays),
-		},
-	)
-}
-
 func (r *QueryResolver) ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*customerledgerports.ARTopOverdueCustomer, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,

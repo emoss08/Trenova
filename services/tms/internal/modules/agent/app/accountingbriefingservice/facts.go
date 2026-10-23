@@ -27,7 +27,6 @@ type ledgerSnapshot struct {
 	openItems []*customerledgerports.AROpenItem
 	worklist  *collectionports.WorklistPage
 	drafts    *customerledgerports.ARDraftInvoices
-	collected *customerledgerports.ARCollectionPerformance
 }
 
 func (s *Service) Facts(
@@ -99,17 +98,6 @@ func (s *Service) read(
 		snapshot.drafts, err = s.receivables.GetDraftInvoices(gctx, analytics)
 		return err
 	})
-	g.Go(func() error {
-		var err error
-		snapshot.collected, err = s.receivables.GetCollectionPerformance(
-			gctx,
-			customerledgerports.GetARCollectionMetricsRequest{
-				TenantInfo: tenantInfo,
-				PeriodDays: accountingbrief.CollectionWindowDays,
-			},
-		)
-		return err
-	})
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
@@ -121,7 +109,13 @@ func foldBalances(facts *accountingbrief.Facts, snapshot *ledgerSnapshot) {
 	if kpis := snapshot.kpis; kpis != nil {
 		facts.DSOTenths = toTenths(kpis.CurrentDSODays)
 		facts.DSODeltaTenths = toTenths(kpis.DSODeltaDays)
-		facts.CEIPercent = int(math.Round(kpis.CEI))
+		if collection := kpis.Collection; collection != nil {
+			facts.CEIPercent = int(math.Round(collection.CEI))
+			if totals := collection.Totals; totals != nil {
+				facts.CollectedWindowMinor = totals.CollectedMinor
+				facts.BilledWindowMinor = totals.CreditSalesMinor
+			}
+		}
 		if overview := kpis.Overview; overview != nil {
 			facts.OpenMinor = overview.TotalOpenMinor
 			facts.OpenInvoices = overview.OpenInvoiceCount
@@ -137,10 +131,6 @@ func foldBalances(facts *accountingbrief.Facts, snapshot *ledgerSnapshot) {
 		facts.UnappliedPayments = stats.UnappliedPaymentCount
 		facts.CollectedTodayMinor = stats.PostedTodayMinor
 		facts.PaymentsToday = stats.PostedTodayCount
-	}
-	if collected := snapshot.collected; collected != nil && collected.Totals != nil {
-		facts.CollectedWindowMinor = collected.Totals.CollectedMinor
-		facts.BilledWindowMinor = collected.Totals.CreditSalesMinor
 	}
 	if len(snapshot.top) > 0 && snapshot.top[0] != nil && snapshot.top[0].OverdueMinor > 0 {
 		facts.TopCustomerID = snapshot.top[0].CustomerID
