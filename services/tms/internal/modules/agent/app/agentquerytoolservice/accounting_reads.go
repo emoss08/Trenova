@@ -102,7 +102,7 @@ func accountingReadSpecs() []graphQLListSpec {
 			entityPlural: "inbound changes",
 			summary: "List inbound changes: payments the accounting system recorded against " +
 				"invoices or bills Trenova sent, newest first. Each says what it pays and " +
-				"whether it was brought into Trenova, and if not why (reason), with " +
+				"whether Trenova applied it, and if not why (reason), with " +
 				"canApply and canIgnore. Pass a Proposed row's id to " +
 				"accounting_apply_inbound_change or accounting_ignore_inbound_change.",
 			searchTerms: []string{"inbound changes", "payments the accounting system recorded"},

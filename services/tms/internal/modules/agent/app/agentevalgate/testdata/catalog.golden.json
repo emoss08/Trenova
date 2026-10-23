@@ -1037,7 +1037,7 @@
     },
     {
       "name": "accounting_list_inbound_changes",
-      "description": "List inbound changes: payments the accounting system recorded against invoices or bills Trenova sent, newest first. Each says what it pays and whether it was brought into Trenova, and if not why (reason), with canApply and canIgnore. Pass a Proposed row's id to accounting_apply_inbound_change or accounting_ignore_inbound_change. Filters: amountMinorMin/Max, currencyCode, decidedAtFrom/To, detectedAtFrom/To, externalId, externalNumber, externalUrl, hasPartyObject, kind, note, partyName, providerModifiedAtFrom/To, providerModifiedBy, reason, resolution, status, system, txnDateFrom/To, updatedAtFrom/To.",
+      "description": "List inbound changes: payments the accounting system recorded against invoices or bills Trenova sent, newest first. Each says what it pays and whether Trenova applied it, and if not why (reason), with canApply and canIgnore. Pass a Proposed row's id to accounting_apply_inbound_change or accounting_ignore_inbound_change. Filters: amountMinorMin/Max, currencyCode, decidedAtFrom/To, detectedAtFrom/To, externalId, externalNumber, externalUrl, hasPartyObject, kind, note, partyName, providerModifiedAtFrom/To, providerModifiedBy, reason, resolution, status, system, txnDateFrom/To, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
