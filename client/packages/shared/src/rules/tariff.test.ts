@@ -588,11 +588,14 @@ describe("choices", () => {
         ],
       },
     ]);
+    const kept = preview.choices[0]?.options[0]?.subtotal;
+    expect(kept).not.toBeNull();
     expect(preview.trace).toContainEqual(
       expect.objectContaining({
         kind: "choice",
         label: "Linehaul",
         chosen: "Per mile",
+        subtotal: kept,
         range: expect.objectContaining({ from: ltlAt('best "Linehaul"') }),
       }),
     );
