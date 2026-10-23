@@ -21,6 +21,8 @@ type ManualJournal {
   currencyCode: String!
   totalDebit: Int!
   totalCredit: Int!
+  "Whether it has debits and they equal its credits."
+  isBalanced: Boolean!
   approvedAt: Timestamp
   approvedById: ID
   rejectedAt: Timestamp
@@ -48,7 +50,7 @@ type ManualJournalConnection {
   totalCount: Int
 }
 
-type ManualJournalCard {
+type ManualJournalCard @kind(resource: "manual_journal") {
   journal: ManualJournal!
   lines: [JournalCardLine!]!
   requestedPeriod: FiscalPeriod

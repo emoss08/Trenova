@@ -315,7 +315,7 @@ func (s *Service) linkedFields(
 		APIKeyID:       req.Principal.APIKeyID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		OrganizationID: req.TenantInfo.OrgID,
-	}, check)
+	}, permissionports.PersonGrants{Reads: check})
 }
 
 // readsOnly is the answer without reference views: a linked record's fields

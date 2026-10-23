@@ -27,6 +27,9 @@ type ShipmentBoardScopeRequest struct {
 	Filter       *pagination.QueryOptions
 	QuickFilters []shipment.QuickFilterSpec
 	Timezone     string
+	// Margins is whether the reader holds the margins field group. Without it
+	// a filter that selects loads by margin is refused and not counted.
+	Margins bool
 }
 
 type ShipmentStageSummary struct {

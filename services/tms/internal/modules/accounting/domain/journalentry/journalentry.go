@@ -206,6 +206,8 @@ func (e *JournalEntry) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightB,
 			},
+			{Name: "status", Type: domaintypes.FieldTypeEnum},
+			{Name: "entry_type", Type: domaintypes.FieldTypeEnum},
 		},
 	}
 }

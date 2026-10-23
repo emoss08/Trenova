@@ -503,20 +503,34 @@ export function receiptRows(
   };
 }
 
-/** What the customer is billed, what the worker is paid for the wait, and what is kept. */
+function amountOrNull(value: string | null | undefined): number | null {
+  return value === null || value === undefined ? null : Number(value) || 0;
+}
+
+/**
+ * What the customer is billed, what the worker is paid for the wait, and what is kept. The pay
+ * and what is kept are null to a reader without the margins field group: beside the bill the
+ * pay gives the margin away.
+ */
 export function paySplit(
   occurrence: Occurrence,
   t: TranslateFn,
-): { bill: number; pay: number; margin: number; payNote: string; payShare: number } {
+): {
+  bill: number;
+  pay: number | null;
+  margin: number | null;
+  payNote: string;
+  payShare: number;
+} {
   const bill = Number(occurrence.billableAmount) || 0;
-  const pay = Number(occurrence.driverPayAmount) || 0;
-  const margin = Number(occurrence.netMargin) || 0;
+  const pay = amountOrNull(occurrence.driverPayAmount);
+  const margin = amountOrNull(occurrence.netMargin);
   return {
     bill,
     pay,
     margin,
     payNote: t("{0} payable", formatDetentionMinutes(occurrence.driverPayMinutes)),
-    payShare: bill > 0 ? Math.min(1, Math.max(0, pay / bill)) : 0,
+    payShare: bill > 0 && pay !== null ? Math.min(1, Math.max(0, pay / bill)) : 0,
   };
 }
 

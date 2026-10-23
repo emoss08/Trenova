@@ -1,0 +1,36 @@
+# The Desk's IFTA return list, read by the agent's fuel_list_ifta_returns: each
+# quarter's return, where it stands, its miles, gallons and net tax due, and
+# the problems it carries, without the per-jurisdiction lines the return page
+# loads.
+query DeskIftaReturns($input: IFTAReturnsInput!, $includeTotalCount: Boolean = false) {
+  iftaReturns(input: $input) {
+    edges {
+      node {
+        id
+        year
+        quarter
+        status
+        amendmentNumber
+        totalMiles
+        totalGallons
+        totalTaxPaidGallons
+        netDue
+        currencyCode
+        finalizedAt
+        filedAt
+        filingReference
+        problems {
+          code
+          message
+          jurisdictionCode
+          fuelType
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}

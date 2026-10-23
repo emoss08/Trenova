@@ -1,6 +1,8 @@
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DataTableToolbarSlots } from "@trenova/shared/types/data-table";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { ShipmentBoard } from "../shipment-board";
 
 const { dataTableProps, urlState, setUrl } = vi.hoisted(() => ({
@@ -85,6 +87,8 @@ describe("ShipmentBoard toolbar", () => {
     dataTableProps.mockClear();
     setUrl.mockClear();
     urlState.qf = [];
+    clearPermissions();
+    seedPermissions({ [Resource.ProtectedMargins]: Operation.Read });
   });
 
   it("keeps the table's standard search and filter builder", () => {
@@ -115,6 +119,19 @@ describe("ShipmentBoard toolbar", () => {
       qf: [{ filter: "Late" }, { filter: "Uncovered" }],
       expanded: null,
     });
+  });
+
+  it("offers no low margin filter to a reader without the margins field group", () => {
+    seedPermissions({});
+    const { toolbar } = renderBoard();
+
+    expect((toolbar.searchSuggestions?.items ?? []).map((item) => item.label)).toEqual([
+      "Late",
+      "Uncovered",
+      "Moving",
+      "Delivering today",
+      "Reefer",
+    ]);
   });
 
   it("shows applied quick filters as chips that remove and clear them", () => {

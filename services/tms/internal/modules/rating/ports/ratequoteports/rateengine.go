@@ -154,7 +154,9 @@ type ShopOption struct {
 	Cost     decimal.Decimal   `json:"cost"`
 	Currency string            `json:"currency"`
 
-	Margin ratetypes.MarginVerdict `json:"margin"`
+	// Margin is null when the option was not priced, and to a reader without
+	// the margins field group.
+	Margin *ratetypes.MarginVerdict `json:"margin"`
 
 	Quote       *ratequote.RateQuote `json:"quote,omitempty"`
 	AgreementID *pulid.ID            `json:"agreementId,omitempty"`

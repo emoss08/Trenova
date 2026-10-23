@@ -128,6 +128,13 @@ func TestGraphQLGet_TheCardSelectsWhatTheSummaryPromises(t *testing.T) {
 		"carrier_get_intelligence_event": {
 			"severity", "priorValue", "currentValue", "acknowledgedAt", "resolvedAt",
 		},
+		"edi_get_partner":      {"partner", "customer", "readiness", "transports"},
+		"edi_get_inbound_file": {"file", "messages", "raw"},
+		"edi_get_message":      {"message", "decoded", "diagnostics", "raw"},
+		"edi_get_transfer":     {"transfer", "unresolvedMappings", "canAccept"},
+		"edi_get_ack_health": {
+			"ackStatusCounts", "partners", "overdueByPartner", "recentDeadLettered",
+		},
 	} {
 		names := selected(tool)
 		for _, field := range want {

@@ -438,7 +438,7 @@ func (e *FieldGuardExtension) reachOf(
 			}
 			break
 		}
-		if _, record := e.resources[f.Object]; record {
+		if _, record := e.resources[f.Object]; record && !returnedByRoot(f) {
 			throughRecord = true
 		}
 		if nested {
@@ -465,6 +465,13 @@ func (e *FieldGuardExtension) reachOf(
 	}
 
 	return recordContext{kind: kind, reach: refview.Nested}
+}
+
+// returnedByRoot reports whether a field belongs to the type its root field
+// returns: a card of a kind, whose records of a kind the root declares with
+// @authorizes are the root's own, as they are when the card has no kind.
+func returnedByRoot(fc *graphql.FieldContext) bool {
+	return fc.Parent != nil && isRoot(fc.Parent.Object)
 }
 
 // wrapper reports whether a field's parent type only carries what its root
@@ -529,13 +536,8 @@ func (e *FieldGuardExtension) visible(ctx context.Context) permission.FieldGroup
 
 func (e *FieldGuardExtension) resolveVisible(ctx context.Context) permission.FieldGroupSet {
 	authCtx, ok := gqlctx.AuthContext(ctx)
-	if !ok || authCtx == nil || e.engine == nil {
+	if !ok {
 		return 0
 	}
-	return fieldsensitivity.VisibleGroups(
-		ctx,
-		func(ctx context.Context, resource permission.Resource) (bool, error) {
-			return base.CheckPermission(ctx, e.engine, authCtx, resource, permission.OpRead)
-		},
-	)
+	return base.VisibleFieldGroups(ctx, e.engine, authCtx)
 }

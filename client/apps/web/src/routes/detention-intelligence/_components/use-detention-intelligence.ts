@@ -32,8 +32,10 @@ export type DetentionRollup = {
   stopCount: number;
   breachCount: number;
   billed: number;
-  driverPay: number;
-  netMargin: number;
+  /** Null when the reader does not hold the margins field group. */
+  driverPay: number | null;
+  /** Null when the reader does not hold the margins field group. */
+  netMargin: number | null;
   waived: number;
   disputeCount: number;
   suppressedCount: number;
@@ -69,8 +71,14 @@ function rollupFacilities(rows: FacilityDetentionStat[] | undefined): DetentionR
       totals.stopCount += row.stopCount;
       totals.breachCount += row.breachCount;
       totals.billed += row.billedAmount;
-      totals.driverPay += row.driverPayAmount;
-      totals.netMargin += row.netMargin;
+      totals.driverPay =
+        totals.driverPay === null || row.driverPayAmount === null
+          ? null
+          : totals.driverPay + row.driverPayAmount;
+      totals.netMargin =
+        totals.netMargin === null || row.netMargin === null
+          ? null
+          : totals.netMargin + row.netMargin;
       totals.waived += row.waivedAmount;
       totals.disputeCount += row.disputeCount;
       totals.suppressedCount += row.suppressedCount;

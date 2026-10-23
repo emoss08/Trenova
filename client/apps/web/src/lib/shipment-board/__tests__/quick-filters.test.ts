@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   addQuickFilter,
+  applicableQuickFilters,
   parseQuickFilters,
+  quickFilterMenu,
   quickFilterKey,
   removeQuickFilter,
   serializeQuickFilters,
@@ -52,15 +54,33 @@ describe("quickFilterLabel", () => {
     const { quickFilterLabel } = await import("../quick-filters");
     expect(quickFilterLabel({ filter: "Late" }, t)).toBe("Late");
     expect(quickFilterLabel({ filter: "DeliveringToday" }, t)).toBe("Delivering today");
-    expect(quickFilterLabel({ filter: "DeliveryHour", hour: 23 }, t)).toBe("Delivering 23:00–00:00");
+    expect(quickFilterLabel({ filter: "DeliveryHour", hour: 23 }, t)).toBe(
+      "Delivering 23:00–00:00",
+    );
     expect(
       quickFilterLabel({ filter: "PickupWindow", windowStartMinutes: 0, windowEndMinutes: 120 }, t),
     ).toBe("Pickup in < 2h");
     expect(
-      quickFilterLabel({ filter: "PickupWindow", windowStartMinutes: 120, windowEndMinutes: 360 }, t),
+      quickFilterLabel(
+        { filter: "PickupWindow", windowStartMinutes: 120, windowEndMinutes: 360 },
+        t,
+      ),
     ).toBe("Pickup in 2–6h");
     expect(quickFilterLabel({ filter: "PickupWindow", windowStartMinutes: 760 }, t)).toBe(
       "Pickup after 13h",
     );
+  });
+});
+
+describe("the low margin filter", () => {
+  it("is offered only to a reader with the margins field group", () => {
+    expect(quickFilterMenu(true).map((entry) => entry.filter)).toContain("LowMargin");
+    expect(quickFilterMenu(false).map((entry) => entry.filter)).not.toContain("LowMargin");
+  });
+
+  it("is dropped from a shared link for a reader the server would refuse it to", () => {
+    const tokens = [{ filter: "Late" as const }, { filter: "LowMargin" as const }];
+    expect(applicableQuickFilters(tokens, false)).toEqual([{ filter: "Late" }]);
+    expect(applicableQuickFilters(tokens, true)).toEqual(tokens);
   });
 });

@@ -9,6 +9,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
@@ -39,7 +40,7 @@ func (r *MutationResolver) UpdateCostingControl(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	if _, err = r.CostingService.Update(ctx, entity, authCtx.UserID); err != nil {
+	if _, err = r.CostingService.Update(ctx, entity, actorutil.FromAuthContext(authCtx)); err != nil {
 		return nil, err
 	}
 

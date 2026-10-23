@@ -9,6 +9,8 @@ import {
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { FacilityDetentionStat } from "@trenova/shared/types/detention";
 import { ChevronDownIcon, WarehouseIcon } from "@trenova/shared/components/icons";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
 import {
@@ -43,7 +45,7 @@ function sortFacilities(
 
   switch (sort) {
     case "margin":
-      return sorted.sort((a, b) => a.netMargin - b.netMargin);
+      return sorted.sort((a, b) => (a.netMargin ?? 0) - (b.netMargin ?? 0));
     case "breach":
       return sorted.sort((a, b) => breachRateOf(b) - breachRateOf(a));
     case "p90":
@@ -73,7 +75,10 @@ function FacilityRow({
   const [open, setOpen] = useState(false);
 
   const breachRate = breachRateOf(row);
-  const marginPerStop = row.stopCount > 0 ? row.netMargin / row.stopCount : 0;
+  const netMargin = row.netMargin;
+  const driverPay = row.driverPayAmount;
+  const marginPerStop =
+    netMargin === null ? null : row.stopCount > 0 ? netMargin / row.stopCount : 0;
 
   return (
     <div>
@@ -127,9 +132,13 @@ function FacilityRow({
           <p className="truncate text-sm leading-tight font-medium tabular-nums">
             {formatCurrency(row.billedAmount)}
           </p>
-          <p className={cn("text-2xs mt-0.5 truncate tabular-nums", deltaToneClass(row.netMargin))}>
-            {t("{0} net", formatSignedCurrency(row.netMargin))}
-          </p>
+          {netMargin === null ? (
+            <WithheldValue group="Margins" className="text-2xs mt-0.5" />
+          ) : (
+            <p className={cn("text-2xs mt-0.5 truncate tabular-nums", deltaToneClass(netMargin))}>
+              {t("{0} net", formatSignedCurrency(netMargin))}
+            </p>
+          )}
         </div>
 
         <ChevronDownIcon
@@ -161,21 +170,28 @@ function FacilityRow({
               />
               <MetricCell
                 label={t("Driver pay")}
-                value={formatCurrency(row.driverPayAmount)}
+                value={
+                  driverPay === null ? <WithheldValue group="Margins" /> : formatCurrency(driverPay)
+                }
                 detail={
-                  row.billedAmount > 0
-                    ? t(
-                        "{0}% of billed",
-                        Math.round((row.driverPayAmount / row.billedAmount) * 100),
-                      )
-                    : t("nothing billed")
+                  driverPay === null
+                    ? undefined
+                    : row.billedAmount > 0
+                      ? t("{0}% of billed", Math.round((driverPay / row.billedAmount) * 100))
+                      : t("nothing billed")
                 }
               />
               <MetricCell
                 label={t("Margin per stop")}
-                value={formatCurrency(marginPerStop)}
-                valueClassName={deltaToneClass(marginPerStop)}
-                detail={t("{0} total", formatCurrency(row.netMargin))}
+                value={
+                  marginPerStop === null ? (
+                    <WithheldValue group="Margins" />
+                  ) : (
+                    formatCurrency(marginPerStop)
+                  )
+                }
+                valueClassName={marginPerStop === null ? undefined : deltaToneClass(marginPerStop)}
+                detail={netMargin === null ? undefined : t("{0} total", formatCurrency(netMargin))}
               />
               <MetricCell
                 label={t("Leakage")}
@@ -207,6 +223,10 @@ export function FacilityProfiles({
   onRetry: () => void;
 }) {
   const t = useT();
+  const marginsVisible = useProtectedFieldAccess("Margins");
+  const sortOptions = marginsVisible
+    ? SORT_OPTIONS
+    : SORT_OPTIONS.filter((option) => option.value !== "margin");
 
   const [sort, setSort] = useState<FacilitySort>("billed");
   const [expanded, setExpanded] = useState(false);
@@ -230,7 +250,7 @@ export function FacilityProfiles({
       action={
         rows.length > 1 ? (
           <SegmentedControl
-            items={SORT_OPTIONS}
+            items={sortOptions}
             value={sort}
             onValueChange={setSort}
             aria-label={t("Rank facilities by")}

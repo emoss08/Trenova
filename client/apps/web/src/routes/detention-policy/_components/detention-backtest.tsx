@@ -23,7 +23,8 @@ import {
   RefreshCw01Icon,
 } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useFormContext, useWatch } from "react-hook-form";
 
 const WINDOW_OPTIONS = [
@@ -45,7 +46,7 @@ function StatCell({
   className,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   className?: string;
 }) {
   return (
@@ -165,7 +166,7 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
       tone: "bad" as const,
       text: t("{0} suppressed, no notice", result.stopsSuppressed),
     },
-    result.negativeMarginStops > 0 && {
+    (result.negativeMarginStops ?? 0) > 0 && {
       tone: "bad" as const,
       text: t("{0} negative margin", result.negativeMarginStops),
     },
@@ -211,11 +212,30 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
         </div>
 
         <div className="divide-border border-border grid grid-cols-3 divide-x border-t">
-          <StatCell label={t("Driver pay")} value={formatCurrency(result.proposedDriverPay)} />
+          <StatCell
+            label={t("Driver pay")}
+            value={
+              result.proposedDriverPay === null ? (
+                <WithheldValue group="Margins" />
+              ) : (
+                formatCurrency(result.proposedDriverPay)
+              )
+            }
+          />
           <StatCell
             label={t("Net margin")}
-            value={formatCurrency(result.proposedNetMargin)}
-            className={deltaToneClass(result.proposedNetMargin)}
+            value={
+              result.proposedNetMargin === null ? (
+                <WithheldValue group="Margins" />
+              ) : (
+                formatCurrency(result.proposedNetMargin)
+              )
+            }
+            className={
+              result.proposedNetMargin === null
+                ? undefined
+                : deltaToneClass(result.proposedNetMargin)
+            }
           />
           <StatCell
             label={t("Avg per billed stop")}

@@ -19,6 +19,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import {
   getCostingControlGraphQL,
   updateCostCategoryGraphQL,
@@ -191,6 +192,7 @@ function CostBasisCard() {
   const t = useT();
 
   const { control } = useFormContext<CostControlFormValues>();
+  const marginsWithheld = !useProtectedFieldAccess("Margins");
   const useLiveFuelPrice = useWatch({ control, name: "useLiveFuelPrice" });
 
   return (
@@ -255,9 +257,15 @@ function CostBasisCard() {
               control={control}
               name="targetMarginPercent"
               label={t("Target margin percent")}
-              description={t(
-                "Margin threshold used to color-code shipment profitability. Margins below this show as thin; defaults to 10% when unset.",
-              )}
+              placeholder={marginsWithheld ? t("Hidden") : undefined}
+              disabled={marginsWithheld}
+              description={
+                marginsWithheld
+                  ? t("Your role does not include margins.")
+                  : t(
+                      "Margin threshold used to color-code shipment profitability. Margins below this show as thin; defaults to 10% when unset.",
+                    )
+              }
             />
           </FormControl>
         </FormGroup>

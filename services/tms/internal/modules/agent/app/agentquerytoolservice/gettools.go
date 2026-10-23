@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -38,6 +39,24 @@ type getSpec struct {
 	source      agent.TaintSource
 	rationale   string
 	fetch       func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
+	// A get that reads through GraphQL takes its operation's other
+	// variables as parameters, named, typed and noted as a list's are.
+	names      map[string]string
+	references map[string]idReference
+	notes      map[string]string
+	// alongside are the reads it makes beside the record, keyed by the
+	// call (a sync record's tries by its id).
+	alongside []alongsideSpec
+	// shape applies to a record read through GraphQL what the card's
+	// resolver does not, given the fields withheld from it and the call
+	// (what a sync record's status means; a NonCompliant worker cannot be
+	// assigned; a driver's clocks in minutes; a customer that takes no
+	// routine notices).
+	shape func(record map[string]any, withheld map[string]struct{}, clk clock)
+	// absent is what a get whose root returns nothing answers, where nothing
+	// is itself the finding (no ELD has reported a driver's hours) rather
+	// than a missing record.
+	absent func(id pulid.ID) map[string]any
 }
 
 type getTool struct {
@@ -196,14 +215,27 @@ func locationGetSpec() getSpec {
 // graphQLGetSpecs are every get tool that reads through GraphQL by a spec
 // alone.
 func graphQLGetSpecs() []getSpec {
-	return []getSpec{
+	return append([]getSpec{
 		customerGetSpec(),
+		customerUpdatePreferencesGetSpec(),
 		carrierGetSpec(),
 		locationGetSpec(),
 		carrierIntelEventGetSpec(),
 		tractorGetSpec(),
 		trailerGetSpec(),
-	}
+		orderGetSpec(),
+		serviceFailureGetSpec(),
+		detentionOccurrenceGetSpec(),
+		journalEntryGetSpec(),
+		manualJournalGetSpec(),
+		rateAgreementGetSpec(),
+		workerGetSpec(),
+		workerCredentialGetSpec(),
+		dotRandomDrawGetSpec(),
+		workerHOSGetSpec(),
+		formulaTemplateGetSpec(),
+		formulaLibraryGetSpec(),
+	}, slices.Concat(accountingGetSpecs(), ediGetSpecs())...)
 }
 
 // graphQLGetProviders registers each spec as its own get tool.
@@ -230,9 +262,9 @@ func getCatalogSpecs() []getSpec {
 		tractorGetSpec(),
 		trailerGetSpec(),
 		locationGetSpec(),
-		specOfGet(newGetDetentionOccurrenceTool(nil, nil, nil)),
-		specOfGet(newGetServiceFailureTool(nil, nil)),
-		specOfGet(newGetFormulaTemplateTool(nil, nil)),
+		detentionOccurrenceGetSpec(),
+		serviceFailureGetSpec(),
+		formulaTemplateGetSpec(),
 	}
 }
 

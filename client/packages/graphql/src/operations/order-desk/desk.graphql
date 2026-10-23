@@ -31,3 +31,40 @@ query DeskOrderCard($id: ID!) {
     }
   }
 }
+
+# One order as the Desk's agent reads it: the card's fields with every leg it
+# groups, so a question about the order's shipments is answered in one read.
+query DeskOrder($id: ID!) {
+  order(id: $id) {
+    id
+    status
+    orderNumber
+    poNumber
+    bol
+    currencyCode
+    quotedAmount
+    baseAmount
+    totalAmount
+    createdAt
+    updatedAt
+    customer {
+      ...CustomerReference
+    }
+    legs {
+      id
+      proNumber
+      status
+      bol
+    }
+    charges {
+      id
+      description
+      amount
+      invoiceId
+      invoicedAt
+      allocations {
+        id
+      }
+    }
+  }
+}

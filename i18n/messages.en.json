@@ -21059,6 +21059,15 @@
       "routes/desk"
     ]
   },
+  "After driver pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
   "After guidance": {
     "sites": 1,
     "scope": [
@@ -21608,7 +21617,7 @@
     ]
   },
   "Agent run not found": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -40193,7 +40202,7 @@
     ]
   },
   "Billed": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -79042,6 +79051,15 @@
       "routes/shipment-control"
     ]
   },
+  "Detention margin by customer needs access to margins.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Detention notice due": {
     "sites": 1,
     "scope": [
@@ -85253,7 +85271,7 @@
     ]
   },
   "Driver pay": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -87204,15 +87222,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "EDI acknowledgment health": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "EDI approval workflow is not configured": {
@@ -97360,6 +97369,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Every margin figure: margins and margin percents, margin floors and targets, and a cost shown beside the revenue it gives the margin of": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Every matched line is booked to the ledger through the factor's schedules. Only an opposite entry undoes a booking.": {
@@ -108056,6 +108074,15 @@
       "routes/agent-control"
     ]
   },
+  "Filtering loads by margin needs access to margins": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Filters": {
     "sites": 6,
     "scope": [
@@ -110788,7 +110815,7 @@
     ]
   },
   "Forgiven": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -118654,14 +118681,17 @@
     ]
   },
   "Hidden": {
-    "sites": 14,
+    "sites": 18,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "packages/shared/components",
       "routes/agent-control",
+      "routes/cost-control",
       "routes/desk",
+      "routes/dispatch-control",
       "routes/home",
       "routes/rate-agreement",
       "routes/shipment",
@@ -121023,6 +121053,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "How much of each billed detention dollar survives driver pay needs access to margins.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "How much of the result the sample covers.": {
@@ -130567,6 +130606,15 @@
       "rules/tariff"
     ]
   },
+  "It is built on {0}, which your role cannot read. Ask an administrator for access, or start a new report.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "It is decided in the conversation it was proposed in.": {
     "sites": 1,
     "scope": [
@@ -133523,7 +133571,7 @@
     ]
   },
   "Kept": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -146165,7 +146213,7 @@
     ]
   },
   "Margin": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -146238,7 +146286,7 @@
     ]
   },
   "Margin per stop": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -146256,12 +146304,14 @@
     ]
   },
   "Margins": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/reports"
     ]
   },
   "Margins are tight — review before assigning.": {
@@ -155477,6 +155527,15 @@
       "routes/osha"
     ]
   },
+  "Needs the {0} field group": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Needs work": {
     "sites": 1,
     "scope": [
@@ -155520,6 +155579,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Needs {0} read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "NeedsReview": {
@@ -155789,7 +155857,7 @@
     ]
   },
   "Net detention margin": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -157104,7 +157172,7 @@
     ]
   },
   "New report": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -184463,6 +184531,15 @@
       "routes/edi"
     ]
   },
+  "Overdue age must be between 60 and 2592000 seconds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Overdue invoices are charged once per thirty-day period at the customer's late charge rate, after their grace period, as one debit memo per customer per run.": {
     "sites": 1,
     "scope": [
@@ -192219,7 +192296,7 @@
     ]
   },
   "Personal": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -192231,6 +192308,7 @@
       "packages/shared/lib",
       "packages/shared/types",
       "routes/dispatch-console",
+      "routes/reports",
       "routes/shipment",
       "routes/worker"
     ]
@@ -199504,7 +199582,7 @@
     ]
   },
   "Profitability estimate": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -203835,6 +203913,15 @@
     ],
     "areas": [
       "routes/routing-guide"
+    ]
+  },
+  "Ranking carriers by margin needs access to margins": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Rate": {
@@ -209424,6 +209511,15 @@
       "go/other"
     ]
   },
+  "Reconciliation status must be Unmatched, MappingRequired, Matched or Variance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Reconciliation summary": {
     "sites": 1,
     "scope": [
@@ -211871,6 +211967,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Reference only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "Reference only — the rest needs {0} read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Reference the clause this policy encodes, so a dispute can cite it.": {
@@ -214862,6 +214976,15 @@
     ]
   },
   "Remove tile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "Remove unavailable fields": {
     "sites": 1,
     "scope": [
       "ts"
@@ -267740,15 +267863,6 @@
       "routes/admin"
     ]
   },
-  "The margin floor and pay ceiling a rate agreement sets against the sell price": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The market area this end covers": {
     "sites": 1,
     "scope": [
@@ -270171,6 +270285,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The preview and runs are refused until they are removed or your access changes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "The preview could not be drawn": {
@@ -276159,6 +276282,15 @@
       "go/other"
     ]
   },
+  "The window must be between 1 and 720 hours": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "The window must be between 1 and {0} days": {
     "sites": 2,
     "scope": [
@@ -278109,7 +278241,7 @@
       "go/other"
     ]
   },
-  "This assignment is outside the contract's margin terms: {0}": {
+  "This assignment is outside the contract's margin terms; override the margin floor to assign it anyway": {
     "sites": 1,
     "scope": [
       "go"
@@ -289305,6 +289437,15 @@
       "go/other"
     ]
   },
+  "Transaction set must be 204, 210, 214, 990, 997 or 999": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Transaction set purpose code": {
     "sites": 1,
     "scope": [
@@ -292675,7 +292816,7 @@
     ]
   },
   "Unavailable": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -292684,7 +292825,17 @@
       "packages/shared/lib",
       "routes/admin",
       "routes/desk",
-      "routes/factoring"
+      "routes/factoring",
+      "routes/reports"
+    ]
+  },
+  "Unavailable at your role's sensitivity level": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Uncancel": {
@@ -314853,6 +315004,15 @@
       "go/other"
     ]
   },
+  "You cannot open this report's data": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "You cannot read this agent": {
     "sites": 1,
     "scope": [
@@ -315421,6 +315581,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "You pay more than you bill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
     ]
   },
   "You raised this credit memo, so someone else must approve and post it": {
@@ -316909,11 +317078,13 @@
     ]
   },
   "Your role does not include margins.": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/cost-control",
+      "routes/dispatch-control",
       "routes/rate-agreement"
     ]
   },
@@ -322910,6 +323081,15 @@
       "routes/inbox"
     ]
   },
+  "file name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "file size": {
     "sites": 1,
     "scope": [
@@ -324175,14 +324355,31 @@
       "go/other"
     ]
   },
-  "margin {0}%": {
-    "sites": 2,
+  "margin {0}": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
-      "routes/shipment"
+      "apps/web/lib"
+    ]
+  },
+  "margin {0}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "margins": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "matched by radius": {
@@ -324824,7 +325021,7 @@
     ]
   },
   "nothing waived": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -325384,6 +325581,15 @@
       "go/other"
     ]
   },
+  "origin": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "origin city": {
     "sites": 2,
     "scope": [
@@ -325705,6 +325911,15 @@
       "go/other"
     ]
   },
+  "personal details": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "pgvector is installed, but the tables that hold the index were never created. Run this on the server; running services notice within five minutes:": {
     "sites": 1,
     "scope": [
@@ -325839,7 +326054,7 @@
     ]
   },
   "provider": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -325902,7 +326117,7 @@
     ]
   },
   "quote {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -326298,6 +326513,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "row count": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "row limit reached": {
@@ -330113,6 +330337,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# field in this report is unavailable to you} other {# fields in this report are unavailable to you}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0, plural, one {# field scored} other {# fields scored}}": {
@@ -339823,6 +340056,15 @@
       "go/other"
     ]
   },
+  "{0} is above your role's sensitivity level": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0} is already mapped to {1}": {
     "sites": 1,
     "scope": [
@@ -340219,6 +340461,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} is no longer in the catalog": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0} is no longer ready to move up a tier on this agent": {
@@ -342717,6 +342968,15 @@
       "rules/tariff"
     ]
   },
+  "{0} needs the {1} field group": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0} needs two whole numbers, but {1} is {2} and {3} is {4}. Round first with {5}": {
     "sites": 2,
     "scope": [
@@ -342757,6 +343017,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} needs {1} read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0} negative margin": {
@@ -343837,7 +344106,7 @@
     ]
   },
   "{0} on {1}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -343847,7 +344116,8 @@
       "routes/agent-control",
       "routes/customer-ledger",
       "routes/desk",
-      "routes/holiday"
+      "routes/holiday",
+      "routes/reports"
     ]
   },
   "{0} on {1}, opens in a new tab": {
@@ -344366,7 +344636,7 @@
     ]
   },
   "{0} put in play": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -347880,7 +348150,7 @@
     ]
   },
   "{0}% of exposure": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -349454,6 +349724,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "· margin": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "· margin {0}": {

@@ -33,6 +33,31 @@ export const QUICK_FILTER_MENU = [
   dotClassName: string;
 }>;
 
+/**
+ * A filter that selects loads by their margin. The server refuses it to a reader without the
+ * margins field group, since the loads it returns say which ones run thin, and does not count it.
+ */
+export function quickFilterNeedsMargins(filter: ShipmentQuickFilter): boolean {
+  return filter === "LowMargin";
+}
+
+/** The quick filters a reader may pick, in menu order. */
+export function quickFilterMenu(marginsVisible: boolean) {
+  return marginsVisible
+    ? QUICK_FILTER_MENU
+    : QUICK_FILTER_MENU.filter((entry) => !quickFilterNeedsMargins(entry.filter));
+}
+
+/** A shared board link's quick filters, less any the reader may not apply. */
+export function applicableQuickFilters(
+  tokens: readonly QuickFilterToken[],
+  marginsVisible: boolean,
+): QuickFilterToken[] {
+  return marginsVisible
+    ? [...tokens]
+    : tokens.filter((token) => !quickFilterNeedsMargins(token.filter));
+}
+
 const isWholeNumber = (value: unknown, min: number, max: number) =>
   typeof value === "number" && Number.isInteger(value) && value >= min && value <= max;
 

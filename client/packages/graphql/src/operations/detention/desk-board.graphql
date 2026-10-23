@@ -1,0 +1,38 @@
+# The detention board as the Desk reads it: each open clock, or stopped charge
+# waiting on approval, with its load, place, notice status and what it would
+# bill now.
+query DeskDetentionOccurrences(
+  $includeAwaitingApproval: Boolean
+  $urgency: DetentionDeskUrgency
+  $shipmentId: ID
+  $proNumber: String
+) {
+  detentionDesk(
+    includeAwaitingApproval: $includeAwaitingApproval
+    urgency: $urgency
+    shipmentId: $shipmentId
+    proNumber: $proNumber
+  ) {
+    occurrence {
+      id
+      shipmentId
+      shipmentProNumber
+      customerName
+      locationName
+      stopType
+      status
+      notificationStatus
+      arrivedAt
+      freeTimeExpiresAt
+      noticeSentAt
+      currency
+      requiresApproval
+    }
+    minutesUntilFreeEnds
+    minutesUntilNoticeDue
+    noticeWindowOpen
+    billableMinutes
+    amountAtRisk
+    urgency
+  }
+}

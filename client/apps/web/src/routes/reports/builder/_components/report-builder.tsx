@@ -49,6 +49,7 @@ import { PivotPanel } from "./pivot-panel";
 import { PreviewGrid } from "./preview-grid";
 import { DEFAULT_REPORT_META, SaveReportDialog, type ReportMeta } from "./save-report-dialog";
 import { SortLimitPanel } from "./sort-limit-panel";
+import { UnavailableFieldsAlert } from "./unavailable-fields-alert";
 
 const PREVIEW_DEBOUNCE_MS = 600;
 
@@ -124,6 +125,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
   });
 
   const entity = index.entities.get(ir.entity);
+  const rootBlocked = ir.entity !== "" && !entity?.readable;
   const parameters: ReportParameterDef[] = ir.parameters ?? [];
 
   const tabCounts: Record<InspectorTab, number> = {
@@ -254,7 +256,9 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
         </div>
       )}
 
-      {!ir.entity ? (
+      <UnavailableFieldsAlert index={index} ir={ir} onChange={setIR} />
+
+      {rootBlocked ? null : !ir.entity ? (
         <EntityPicker catalog={catalog} onSelect={(entityKey) => setIR(emptyIR(entityKey))} />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_360px]">

@@ -19,6 +19,7 @@ import {
   offerWindowLabel,
   optionIsPriced,
   shopOptionNote,
+  shopStrategies,
   shopStrategyExplanation,
   shopStrategyLabel,
   type MarginTone,
@@ -35,8 +36,8 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
-
-const STRATEGIES: ShopStrategy[] = ["LeastCost", "BestMargin", "GuideRank", "FastestAccept"];
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 
 const TONE_CLASS: Record<MarginTone, string> = {
   breach: "text-destructive",
@@ -64,6 +65,7 @@ type CarrierShoppingPanelProps = {
  */
 export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPanelProps) {
   const t = useT();
+  const marginsVisible = useProtectedFieldAccess("Margins");
 
   const [strategy, setStrategy] = useState<ShopStrategy>("LeastCost");
   const [result, setResult] = useState<ShopResult | undefined>();
@@ -96,7 +98,7 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {STRATEGIES.map((each) => (
+              {shopStrategies(marginsVisible).map((each) => (
                 <SelectItem key={each} value={each}>
                   {shopStrategyLabel(each)}
                 </SelectItem>
@@ -157,7 +159,7 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
             <tbody>
               {result.options.map((option) => {
                 const priced = optionIsPriced(option);
-                const note = shopOptionNote(option, sellPriced);
+                const note = shopOptionNote(option, sellPriced, marginsVisible);
                 const tone = marginTone(option.margin, sellPriced);
 
                 return (
@@ -199,7 +201,15 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
                     <td
                       className={`border-b px-3 py-2 text-right font-mono text-xs ${TONE_CLASS[tone]}`}
                     >
-                      {priced && sellPriced ? `${option.margin.percent}%` : "—"}
+                      {!priced ? (
+                        "—"
+                      ) : !marginsVisible ? (
+                        <WithheldValue group="Margins" />
+                      ) : sellPriced && option.margin ? (
+                        `${option.margin.percent}%`
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="border-b px-3 py-2 text-right font-mono text-xs">
                       {priced ? decidingValue(option, result.strategy) : "—"}

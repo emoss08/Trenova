@@ -1,0 +1,36 @@
+# The recurring shipment series the Desk lists: each series' customer and lane,
+# its schedule, when it next generates and the last shipment it made, a page
+# at a time.
+query DeskRecurringShipments($input: DataTableConnectionInput!, $includeTotalCount: Boolean!) {
+  recurringShipments(input: $input) {
+    edges {
+      node {
+        id
+        name
+        status
+        customerId
+        sourceShipmentId
+        lastGeneratedShipmentId
+        cronExpression
+        timezone
+        autoGenerate
+        nextOccurrenceAt
+        generationCount
+        customer {
+          ...CustomerReference
+        }
+        originLocation {
+          ...LocationReference
+        }
+        destinationLocation {
+          ...LocationReference
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+  }
+}

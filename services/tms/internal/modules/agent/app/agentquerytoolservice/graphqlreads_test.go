@@ -27,19 +27,20 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 	t.Parallel()
 
 	for tool, read := range graphQLReads {
+		if read.Verb == graphQLVerbGet {
+			continue
+		}
 		t.Run(tool, func(t *testing.T) {
 			t.Parallel()
 
-			params := read.typedParams
-			if read.Unpaged {
-				params = func() []graphQLParam {
-					derived, _, err := read.argumentParams(tool)
-					require.NoError(t, err)
-					return derived
-				}
+			derived := derivedParams(t, tool, &read)
+			if read.Unpaged && len(read.Variables) == 0 {
+				assert.Empty(t, derived, "a root that takes no argument offers none")
+				return
 			}
-			derived := params()
-			require.NotEmpty(t, derived, "a list tool reads by at least one typed parameter")
+			if read.Verb == graphQLVerbList {
+				require.NotEmpty(t, derived, "a list tool reads by at least one typed parameter")
+			}
 
 			names := make(map[string]struct{}, len(derived))
 			for _, param := range derived {
@@ -50,6 +51,29 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 			}
 		})
 	}
+}
+
+// derivedParams are every parameter a bound read derives, in the shape its
+// root field reads: an unpaged list's arguments, a paged list's record
+// fields and root arguments, a get's arguments but its id.
+func derivedParams(t *testing.T, tool string, read *graphQLRead) []graphQLParam {
+	t.Helper()
+
+	if read.Unpaged {
+		derived, _, err := read.argumentParams(tool)
+		require.NoError(t, err)
+		return derived
+	}
+	skip := map[string]struct{}{includeTotalCount: {}, graphQLIDVariable: {}}
+	if input, _, tabled := read.tableInput(); tabled {
+		skip[input] = struct{}{}
+	} else if read.Verb == graphQLVerbList {
+		skip[inputFirst], skip[inputAfter] = struct{}{}, struct{}{}
+	}
+	args, _, _, err := read.rootParams(tool, skip)
+	require.NoError(t, err)
+
+	return withRootArgs(read.typedParams(), args)
 }
 
 // Every field a converted tool's hand-kept catalog entry lets a model filter

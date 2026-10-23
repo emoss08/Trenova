@@ -23,7 +23,17 @@ func PersonCeiling(
 	}
 
 	detail, err := engine.GetResourcePermissions(ctx, userID, organizationID, resource.String())
-	if err != nil || detail == nil {
+	if err != nil {
+		return permission.SensitivityInternal
+	}
+
+	return CeilingOf(detail)
+}
+
+// CeilingOf is PersonCeiling from a permission detail the caller already
+// holds.
+func CeilingOf(detail *permissionports.ResourcePermissionDetail) permission.FieldSensitivity {
+	if detail == nil {
 		return permission.SensitivityInternal
 	}
 

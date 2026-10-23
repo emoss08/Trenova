@@ -12,45 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
-
-var protectedFieldResources = map[string]permission.Resource{
-	"WorkerProfile":    permission.ResourceWorker,
-	"WorkerCredential": permission.ResourceWorkerCredential,
-	"RateAgreement":    permission.ResourceRateAgreement,
-}
-
-func protectedEntities() map[string]func() permission.FieldWithholder {
-	return map[string]func() permission.FieldWithholder{
-		"WorkerProfile": func() permission.FieldWithholder {
-			return &worker.WorkerProfile{
-				DOB:            315532800,
-				LicenseNumber:  "D1234567",
-				TWICCardNumber: "TWIC-998877",
-				LastDrugTest:   1767225600,
-			}
-		},
-		"WorkerCredential": func() permission.FieldWithholder {
-			return &worker.WorkerCredential{Number: "CDL-445566"}
-		},
-		"RateAgreement": func() permission.FieldWithholder {
-			return &rateagreement.RateAgreement{
-				MarginFloorPercent:  decimal.NewNullDecimal(decimal.RequireFromString("12.5")),
-				MaxPayPercentOfSell: decimal.NewNullDecimal(decimal.RequireFromString("85")),
-			}
-		},
-	}
-}
 
 func loadProtectedFields(t *testing.T) ProtectedFieldMap {
 	t.Helper()
@@ -65,6 +34,15 @@ func loadProtectedFields(t *testing.T) ProtectedFieldMap {
 func TestProtectedFieldsAreTheDeclaredSet(t *testing.T) {
 	t.Parallel()
 
+	margins := func(fields ...string) map[string]permission.FieldGroup {
+		out := make(map[string]permission.FieldGroup, len(fields))
+		for _, field := range fields {
+			out[field] = permission.FieldGroupMargins
+		}
+		return out
+	}
+	detentionPay := margins("driverPayAmount", "netMargin")
+
 	assert.Equal(t, ProtectedFieldMap{
 		"WorkerProfile": {
 			"dob":            permission.FieldGroupPersonal,
@@ -75,52 +53,95 @@ func TestProtectedFieldsAreTheDeclaredSet(t *testing.T) {
 		"WorkerCredential": {
 			"number": permission.FieldGroupPersonal,
 		},
-		"RateAgreement": {
-			"marginFloorPercent":  permission.FieldGroupMargins,
-			"maxPayPercentOfSell": permission.FieldGroupMargins,
-		},
+		"RateAgreement":                  margins("marginFloorPercent", "maxPayPercentOfSell"),
+		"CostingControl":                 margins("targetMarginPercent"),
+		"ResolvedCostProfile":            margins("targetMarginPercent"),
+		"FleetCostSummary":               margins("avgMarginPercent", "unprofitableCount", "totalRevenue"),
+		"Query":                          margins("shipmentProfitability"),
+		"Shipment":                       margins("profitabilityEstimate"),
+		"ShipmentProfitabilityAnalytics": margins("avgMarginPct", "unprofitableCount"),
+		"TenderOffer":                    margins("counterMarginPercent"),
+		"CapacityMatch":                  margins("quote", "marginPercent"),
+		"DetentionOccurrence":            detentionPay,
+		"FacilityDetentionStat":          detentionPay,
+		"CustomerDetentionStat":          detentionPay,
+		"DetentionPreviewResult":         detentionPay,
+		"DetentionBacktestBucket":        detentionPay,
+		"DetentionBacktestResult": margins(
+			"proposedDriverPay", "proposedNetMargin", "negativeMarginStops",
+		),
 	}, loadProtectedFields(t))
+}
+
+func TestEveryProtectedTypeSaysWhatStandsBehindIt(t *testing.T) {
+	t.Parallel()
+
+	declared := protectedTypes()
+	for object := range loadProtectedFields(t) {
+		entry, ok := declared[object]
+		require.Truef(t, ok,
+			"%s has protected fields but no entry in protectedTypes; name the resource that "+
+				"classifies them, the entity REST withholds them through, or why only "+
+				"GraphQL serves the type", object)
+		assert.Truef(t, entry.entity != nil || entry.graphQLOnly != "",
+			"%s names neither the entity REST withholds it through nor why only GraphQL "+
+				"serves it", object)
+	}
+	fields := loadProtectedFields(t)
+	for object := range declared {
+		_, used := fields[object]
+		assert.Truef(t, used, "%s is in protectedTypes but has no protected field; remove it",
+			object)
+	}
 }
 
 func TestEveryProtectedFieldIsConfidentialInTheRegistry(t *testing.T) {
 	t.Parallel()
 
 	registry := permission.NewRegistry()
+	declared := protectedTypes()
+	checked := 0
 	for object, fields := range loadProtectedFields(t) {
-		resource, mapped := protectedFieldResources[object]
-		require.Truef(t, mapped,
-			"%s has protected fields but no resource in protectedFieldResources; name the "+
-				"resource that guards it so its classification can be checked", object)
+		resource := declared[object].resource
+		if resource == "" {
+			continue
+		}
 		for field := range fields {
+			checked++
 			assert.Equalf(t, permission.SensitivityConfidential,
 				registry.GetFieldSensitivity(resource.String(), field),
 				"%s.%s is protected, so %s must classify %q as confidential, which keeps it "+
 					"out of agent tools, reports and previews too", object, field, resource, field)
 		}
 	}
+	assert.Positive(t, checked)
 }
 
 func TestEveryProtectedFieldIsWithheldByItsEntity(t *testing.T) {
 	t.Parallel()
 
-	entities := protectedEntities()
+	declared := protectedTypes()
 	for object, fields := range loadProtectedFields(t) {
-		build, ok := entities[object]
-		require.Truef(t, ok,
-			"%s has protected fields but no entity in protectedEntities; the REST routes and "+
-				"write paths withhold and keep them through the entity", object)
+		entry := declared[object]
+		if entry.entity == nil {
+			continue
+		}
 
-		visible := build()
+		visible := entry.entity()
 		visible.WithholdFields(permission.AllFieldGroups())
-		withheld := build()
+		withheld := entry.entity()
 		withheld.WithholdFields(0)
 
 		visibleJSON := decodeJSON(t, visible)
 		withheldJSON := decodeJSON(t, withheld)
 		for field := range fields {
-			assert.NotEmptyf(t, visibleJSON[field],
+			key := field
+			if name, renamed := entry.jsonNames[field]; renamed {
+				key = name
+			}
+			assert.NotEmptyf(t, visibleJSON[key],
 				"%s.%s was cleared for a reader who holds every group", object, field)
-			assert.Emptyf(t, withheldJSON[field],
+			assert.Emptyf(t, withheldJSON[key],
 				"%s.%s was left in place for a reader who holds no group", object, field)
 		}
 	}

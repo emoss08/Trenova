@@ -20,6 +20,7 @@ import { useState } from "react";
 import { refLabel, refTargetEntity, resolveField, type CatalogIndex } from "./builder-state";
 import { CatalogFieldTree, type FieldSelection } from "./catalog-field-tree";
 import { FilterValueEditor } from "./filter-value-editor";
+import { isFieldAvailable } from "@/lib/report-catalog-access";
 
 const MAX_GROUP_DEPTH = 3;
 
@@ -62,7 +63,7 @@ function FieldPickerButton({
           index={index}
           entityKey={ir.entity}
           className="h-full"
-          filterFields={(field) => field.filterable && field.accessible}
+          filterFields={(field) => field.filterable && isFieldAvailable(field)}
           onSelectField={(selection) => {
             onSelect(selection);
             setOpen(false);
@@ -212,7 +213,7 @@ function GroupEditor({
 
   const defaultFilter = (): ReportFieldFilter | null => {
     const entity = index.entities.get(ir.entity);
-    const firstField = entity?.fields.find((field) => field.filterable && field.accessible);
+    const firstField = entity?.fields.find((field) => field.filterable && isFieldAvailable(field));
     if (!firstField) return null;
     return {
       ref: { field: firstField.key },

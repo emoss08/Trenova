@@ -436,23 +436,21 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "unprofitableCount",
-				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FleetCostSummary)
 					return obj.UnprofitableCount, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
 				Name:     "totalRevenue",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FleetCostSummary)
 					return obj.TotalRevenue, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
 				Name:     "totalEstimatedCost",
@@ -634,7 +632,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "shipmentProfitability",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
@@ -644,7 +641,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentProfitability(ctx, fc.Args["shipmentId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentProfitability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentProfitability),
+				Marshal: gqlexec.Marshal(marshalOShipmentProfitability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentProfitability),
 			},
 			{
 				Name:       "fleetCostSummary",
@@ -1530,14 +1527,6 @@ func marshalNResolvedCostProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ResolvedCostProfile", v)
 }
 
-func marshalNShipmentProfitability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentProfitability(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentProfitability) graphql.Marshaler {
-	if v == nil {
-		gqlexec.NullViolation(ctx)
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "ShipmentProfitability", v)
-}
-
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -1597,4 +1586,11 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func marshalOShipmentProfitability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentProfitability(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentProfitability) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ShipmentProfitability", v)
 }

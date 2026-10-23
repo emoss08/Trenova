@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -309,12 +311,8 @@ func (f *fakeShopper) Shop(
 	return f.result, nil
 }
 
-func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) {
-	t.Parallel()
-
-	carrierA := pulid.MustNew("carr_")
-	carrierB := pulid.MustNew("carr_")
-	shopper := &fakeShopper{result: &ratequoteports.ShopResult{
+func shopResultWithMargin(carrierA, carrierB pulid.ID) *ratequoteports.ShopResult {
+	return &ratequoteports.ShopResult{
 		Strategy:  ratequoteports.ShopStrategyBestMargin,
 		SellTotal: decimal.NewNullDecimal(decimal.NewFromInt(2000)),
 		Options: []*ratequoteports.ShopOption{
@@ -326,7 +324,7 @@ func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) 
 				Cost:        decimal.NewFromInt(1500),
 				Currency:    "USD",
 				GuideRank:   2,
-				Margin: ratetypes.MarginVerdict{
+				Margin: &ratetypes.MarginVerdict{
 					Amount:  decimal.NewFromInt(500),
 					Percent: decimal.NewFromInt(25),
 				},
@@ -337,26 +335,46 @@ func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) 
 			},
 		},
 		Warnings: []string{"No Contract Inc has no agreement on this lane"},
+	}
+}
+
+func marginsReader() *fakePermissions {
+	return &fakePermissions{readable: map[string]*permissionports.ResourcePermissionDetail{
+		permission.ResourceProtectedMargins.String(): {
+			Resource:       permission.ResourceProtectedMargins.String(),
+			Operations:     []permission.Operation{permission.OpRead},
+			MaxSensitivity: permission.SensitivityConfidential,
+		},
 	}}
+}
+
+func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) {
+	t.Parallel()
+
+	carrierA := pulid.MustNew("carr_")
+	carrierB := pulid.MustNew("carr_")
+	shopper := &fakeShopper{result: shopResultWithMargin(carrierA, carrierB)}
 	tool := newShopCarriersTool(shopper, &shopCarriers{carriers: []*carrier.Carrier{
 		{ID: carrierA, Status: carrier.StatusActive, ComplianceStatus: carrier.ComplianceStatusQualified},
 		{ID: carrierB, Status: carrier.StatusActive, ComplianceStatus: carrier.ComplianceStatusPending},
-	}})
+	}}, marginsReader())
 
 	shipmentID := pulid.MustNew("shp_")
-	result, err := tool.Query(t.Context(), testParams(map[string]any{
+	result, err := tool.Query(t.Context(), chatParams(map[string]any{
 		"shipmentId": shipmentID.String(),
 		"strategy":   "BestMargin",
 		"carrierIds": []any{carrierA.String(), carrierB.String()},
 		"limit":      2,
-	}))
+	}, ""))
 	require.NoError(t, err)
 
 	view := result.(*shopView)
 	require.Len(t, view.Options, 2)
 	assert.True(t, view.Options[0].Priced)
+	require.NotNil(t, view.Options[0].MarginPercent)
 	assert.Equal(t, "25", view.Options[0].MarginPercent.String())
 	assert.False(t, view.Options[1].Priced)
+	assert.Nil(t, view.Options[1].MarginPercent, "an option nobody priced has no margin")
 	assert.Equal(t, "Qualified", view.Options[0].Compliance)
 	assert.Equal(t, "Active", view.Options[0].Status)
 	assert.Equal(t, "Pending", view.Options[1].Compliance,
@@ -370,6 +388,64 @@ func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) 
 	assert.Equal(t, []pulid.ID{carrierA, carrierB}, shopper.lastReq.CarrierIDs)
 	assert.Equal(t, 2, shopper.lastReq.Limit)
 	assert.False(t, shopper.lastReq.Persist)
+}
+
+func TestShopCarriers_ShowsNoMarginToAPersonWithoutTheMarginsGroup(t *testing.T) {
+	t.Parallel()
+
+	carrierA := pulid.MustNew("carr_")
+	carrierB := pulid.MustNew("carr_")
+	shopper := &fakeShopper{result: shopResultWithMargin(carrierA, carrierB)}
+	tool := newShopCarriersTool(shopper, &shopCarriers{}, &fakePermissions{
+		readable: map[string]*permissionports.ResourcePermissionDetail{},
+	})
+	shipmentID := pulid.MustNew("shp_")
+
+	_, err := tool.Query(t.Context(), chatParams(map[string]any{
+		"shipmentId": shipmentID.String(),
+		"strategy":   "BestMargin",
+	}, ""))
+	require.Error(t, err, "ranking by margin would tell them which carrier leaves the most")
+	assert.Nil(t, shopper.lastReq, "nothing is shopped for a refused strategy")
+
+	result, err := tool.Query(t.Context(), chatParams(map[string]any{
+		"shipmentId": shipmentID.String(),
+	}, ""))
+	require.NoError(t, err)
+	view := result.(*shopView)
+	assert.Nil(t, view.SellTotal, "the sell total beside each cost gives the margin away")
+	require.Len(t, view.Options, 2)
+	assert.Nil(t, view.Options[0].MarginAmount)
+	assert.Nil(t, view.Options[0].MarginPercent)
+	assert.Nil(t, view.Options[0].BelowFloor)
+	assert.Equal(t, "1500", view.Options[0].Cost.String(), "the carrier's cost still shows")
+}
+
+func TestShopCarriers_HoldsAnAgentToItsDataAccess(t *testing.T) {
+	t.Parallel()
+
+	shopFor := func() agentports.AgentQueryTool {
+		shopper := &fakeShopper{
+			result: shopResultWithMargin(pulid.MustNew("carr_"), pulid.MustNew("carr_")),
+		}
+		return newShopCarriersTool(shopper, &shopCarriers{}, marginsReader())
+	}
+
+	result, err := shopFor().Query(t.Context(), chatParams(map[string]any{
+		"shipmentId": pulid.MustNew("shp_").String(),
+	}, permission.SensitivityInternal))
+	require.NoError(t, err)
+	view := result.(*shopView)
+	assert.Nil(t, view.Options[0].MarginPercent,
+		"an agent whose data access stops at Internal is shown no margin for its person")
+
+	result, err = shopFor().Query(t.Context(), chatParams(map[string]any{
+		"shipmentId": pulid.MustNew("shp_").String(),
+	}, permission.SensitivityRestricted))
+	require.NoError(t, err)
+	view = result.(*shopView)
+	require.NotNil(t, view.Options[0].MarginPercent)
+	assert.Equal(t, "25", view.Options[0].MarginPercent.String())
 }
 
 type shopCarriers struct{ carriers []*carrier.Carrier }

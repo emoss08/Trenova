@@ -23,12 +23,15 @@ func (s *Service) scope(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
+	if err := shipment.AuthorizeQuickFilters(req.QuickFilters, req.Margins); err != nil {
+		return nil, err
+	}
 
 	margin, detention := shipment.QuickFiltersNeed(req.QuickFilters)
 	basis, err := s.quickFilters.Resolve(ctx, &shipmentports.ResolveShipmentQuickFilterBasisRequest{
 		TenantInfo: req.Filter.TenantInfo,
 		Timezone:   req.Timezone,
-		Margin:     margin || needAll,
+		Margin:     margin || (needAll && req.Margins),
 		Detention:  detention || needAll,
 	})
 	if err != nil {
@@ -136,7 +139,13 @@ func (s *Service) QuickFilterCounts(
 		return nil, err
 	}
 
-	filters := shipment.CountableQuickFilters()
+	filters := make([]shipment.QuickFilter, 0, len(shipment.CountableQuickFilters()))
+	for _, filter := range shipment.CountableQuickFilters() {
+		if filter.NeedsMargin() && !req.Margins {
+			continue
+		}
+		filters = append(filters, filter)
+	}
 	specs := make([]shipment.QuickFilterSpec, 0, len(filters))
 	for _, filter := range filters {
 		specs = append(specs, shipment.Quick(filter))

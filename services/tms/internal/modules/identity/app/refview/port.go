@@ -25,9 +25,10 @@ func NewPort(views *Views, engine permissionports.PermissionEngine) *Port {
 
 func (p *Port) Person(
 	actor *permissionports.RequestActor,
-	check func(ctx context.Context, kind permission.Resource) (bool, error),
+	grants permissionports.PersonGrants,
 ) permissionports.LinkedFields {
-	return linkedFields{views: p.views, access: NewPersonAccess(p.engine, actor, check)}
+	access := NewPersonAccess(p.engine, actor, grants.Reads).WithDetail(grants.Detail)
+	return linkedFields{views: p.views, access: access}
 }
 
 type linkedFields struct {

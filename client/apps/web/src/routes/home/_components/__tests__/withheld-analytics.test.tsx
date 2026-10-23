@@ -111,18 +111,28 @@ describe("withheld shipment analytics", () => {
     const hidden = resolveMetric(
       "marginPercent",
       homeData({
-        profitability: { ...defaultAnalyticsData.profitability, avgMarginPct: null },
+        profitability: {
+          ...defaultAnalyticsData.profitability,
+          avgMarginPct: null,
+          unprofitableCount: null,
+        },
       }),
     );
     expect(hidden?.display).toBe("Hidden");
+    expect(hidden?.sub, "how many loads lost money is a margin figure too").toBeUndefined();
 
     const shown = resolveMetric(
       "marginPercent",
       homeData({
-        profitability: { ...defaultAnalyticsData.profitability, avgMarginPct: 18.46 },
+        profitability: {
+          ...defaultAnalyticsData.profitability,
+          avgMarginPct: 18.46,
+          unprofitableCount: 3,
+        },
       }),
     );
     expect(shown?.display).toBe("18.5%");
+    expect(shown?.sub).toBe("3 unprofitable loads");
   });
 
   it("keeps a withheld lane heatmap apart from one that has not loaded", () => {

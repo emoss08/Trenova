@@ -410,7 +410,13 @@ func (r *QueryResolver) ReportCatalog(ctx context.Context) (*gqlmodel.ReportCata
 		return nil, err
 	}
 
-	return reportCatalogToModel(ctx, r.PermissionEngine, base.TenantInfo(authCtx))
+	req := reportingRequest(authCtx)
+	catalog, err := r.ReportingService.Catalog(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	return reportCatalogToModel(ctx, catalog), nil
 }
 
 func (r *QueryResolver) CannedReports(ctx context.Context) ([]*gqlmodel.CannedReport, error) {
