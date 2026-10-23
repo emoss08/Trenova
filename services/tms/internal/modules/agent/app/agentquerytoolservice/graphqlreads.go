@@ -332,8 +332,12 @@ func inputFieldParams(field *graphQLField) []graphQLParam {
 			}}}
 	}
 	if field.Kind == graphQLKindEnum && !field.List {
+		what := "Only records whose " + words + " is this."
+		if field.Name == inputSort {
+			what = "How the list is ordered."
+		}
 		return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramEquals,
-			Schema: agenttoolschema.Enum(describe("Only records whose "+words+" is this."),
+			Schema: agenttoolschema.Enum(describe(what),
 				agenttoolschema.Derived(graphQLEnumSource+field.Type, field.Enum))}}
 	}
 

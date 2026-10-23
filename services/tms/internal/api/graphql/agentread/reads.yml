@@ -297,6 +297,15 @@ reads:
   - tool: report_list_schedules
     operation: DeskReportSchedules
     reason: Report schedules are read by reportSchedules, one saved report's whole or a page of every one the organization has.
+  - tool: inbox_get_inbound_message
+  - tool: inbox_list_inbound_messages
+  - tool: inbox_list_email_profiles
+  - tool: inbox_list_capture_batches
+    instead: [DeskCaptureBatch]
+  - tool: inbox_list_triage_assignees
+    operation: TriageAssignees
+    reason: The people a message can be assigned to are read whole by triageAssignees, which returns no record kind of its own.
+    alongside: [TriageSettings]
   - tool: insight_get_daily_briefing
     operation: TodaysBriefing
     reason: The tool is named for the insight family it answers in; todaysBriefing reads the morning's page, cut to the sections the caller may read.

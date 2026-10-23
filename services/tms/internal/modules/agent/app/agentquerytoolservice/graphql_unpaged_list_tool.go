@@ -116,7 +116,7 @@ func newGraphQLUnpagedListTool(
 		return nil, fmt.Errorf("%s reads %s, which is not an unpaged list", spec.name,
 			read.Operation)
 	}
-	if spec.rank != nil || spec.defaultsAt != nil || len(spec.instead) > 0 || spec.combine != nil ||
+	if spec.rank != nil || spec.defaultsAt != nil || len(spec.instead) > 0 ||
 		(spec.queryNote == "") != (len(spec.matches) == 0) {
 		return nil, fmt.Errorf("%s: %w", spec.name, errUnpagedSpec)
 	}
@@ -453,6 +453,9 @@ func (t *graphQLUnpagedListTool) Query(
 	)
 	if err != nil {
 		return nil, err
+	}
+	if t.spec.combine != nil {
+		t.spec.combine(items, beside)
 	}
 	for key, rows := range beside {
 		outcome[key] = rows

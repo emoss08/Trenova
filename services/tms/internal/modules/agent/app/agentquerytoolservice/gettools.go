@@ -275,7 +275,10 @@ func graphQLGetSpecs() []getSpec {
 		homeLayoutGetSpec(),
 		rateMatrixGetSpec(),
 		dailyBriefingGetSpec(),
-	}, slices.Concat(accountingGetSpecs(), ediGetSpecs(), settlementGetSpecs(), factoringGetSpecs())...)
+	}, slices.Concat(
+		accountingGetSpecs(), ediGetSpecs(), settlementGetSpecs(), factoringGetSpecs(),
+		inboxGetSpecs(),
+	)...)
 }
 
 // graphQLGetProviders registers each spec as its own get tool.

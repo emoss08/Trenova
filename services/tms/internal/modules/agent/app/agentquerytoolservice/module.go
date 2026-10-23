@@ -6,9 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
@@ -17,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"go.uber.org/fx"
 )
@@ -81,7 +78,6 @@ func coreToolProviders() []any {
 		provideGetShipmentTrackingTool,
 		provideGetDispatchBoardTool,
 		provideListWeatherAlertsTool,
-		provideListEmailProfilesTool,
 		provideGetShipmentDraftTool,
 		provideGetDocumentSummaryTool,
 		provideReadAttachmentTool,
@@ -94,9 +90,7 @@ func coreToolProviders() []any {
 		provideGetInsightTool,
 		provideListBankReceiptExceptionsTool,
 		provideGetBankReceiptTool,
-		provideGetInboundMessageTool,
 		provideListInboundMessagesTool,
-		provideListTriageAssigneesTool,
 		provideSearchDocumentsTool,
 		newListHomeWidgetsTool,
 		newFindInTrenovaTool,
@@ -197,10 +191,6 @@ func provideListWeatherAlertsTool(
 	return newListWeatherAlertsTool(weather)
 }
 
-func provideListEmailProfilesTool(profiles *emailservice.Service) agentports.AgentQueryTool {
-	return newListEmailProfilesTool(profiles)
-}
-
 func provideGetDocumentSummaryTool(
 	documents documentports.DocumentRepository,
 	content documentports.DocumentContentService,
@@ -275,27 +265,6 @@ func provideGetBankReceiptTool(
 	items bankreceiptworkitemports.BankReceiptWorkItemRepository,
 ) agentports.AgentQueryTool {
 	return newGetBankReceiptTool(receipts, items)
-}
-
-func provideGetInboundMessageTool(
-	messages *inboundmessageservice.Service,
-	replies inboundmessageports.InboundReplyRepository,
-) agentports.AgentQueryTool {
-	return newGetInboundMessageTool(messages, replies)
-}
-
-func provideListInboundMessagesTool(
-	messages *inboundmessageservice.Service,
-	searcher agentports.RetrievalSearcher,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListInboundMessagesTool(messages, searcher, permissions)
-}
-
-func provideListTriageAssigneesTool(
-	inbox *inboundmessageservice.Service,
-) agentports.AgentQueryTool {
-	return newListTriageAssigneesTool(inbox)
 }
 
 func provideSearchDocumentsTool(

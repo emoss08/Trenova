@@ -497,13 +497,14 @@ func (r *QueryResolver) CaptureBatches(ctx context.Context, input gqlmodel.Captu
 			UseCursor:  true,
 			Sort:       captureBatchSort(input.Sort),
 		},
-		Cursor:      cursor,
-		Statuses:    input.Statuses,
-		Mine:        input.Mine != nil && *input.Mine,
-		TargetType:  stringutils.FromPtr(input.TargetType),
-		Search:      stringutils.FromPtr(input.Query),
-		CreatedFrom: int64(typeutils.ValueOrZero(input.CreatedFrom)),
-		CreatedTo:   int64(typeutils.ValueOrZero(input.CreatedTo)),
+		Cursor:       cursor,
+		Statuses:     input.Statuses,
+		Mine:         input.Mine != nil && *input.Mine,
+		TargetType:   stringutils.FromPtr(input.TargetType),
+		Search:       stringutils.FromPtr(input.Query),
+		CreatedFrom:  int64(typeutils.ValueOrZero(input.CreatedFrom)),
+		CreatedTo:    int64(typeutils.ValueOrZero(input.CreatedTo)),
+		IncludeItems: batchItemsRequested(ctx),
 	}
 	if input.Source != nil {
 		in.Source = *input.Source
