@@ -123,6 +123,8 @@ query DeskRateMatrixCard($id: ID!, $cellOffset: Int = 0) {
     name
     description
     status
+    publishedVersionNumber
+    hasDraftChanges
     valueType
     dimensions {
       id
@@ -140,6 +142,10 @@ query DeskRateMatrixCard($id: ID!, $cellOffset: Int = 0) {
       d1Key
       d2Key
       d3Key
+      d0KeyTo
+      d1KeyTo
+      d2KeyTo
+      d3KeyTo
       d0Min
       d0Max
       d1Min

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f1db18beb786d648e2cadfa078d530057aa3ac95a8098dea0e3b9365fa942169",
+  "version": "sha256:f0cd3b675c60ffe5853c6f94bd85bd63b7736ac897701c97f10b1cc3ce40c9fc",
   "screens": [
     {
       "path": "/",
@@ -8798,6 +8798,7 @@
         "DeskMemoriesByIds",
         "DeskMemorySettings",
         "DismissDeskMemory",
+        "FormulaTemplateTables",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
@@ -9488,7 +9489,8 @@
       "reads": [
         "capture_batch",
         "capture_device",
-        "capture_profile"
+        "capture_profile",
+        "formula_template"
       ],
       "references": [
         "user"
@@ -9526,6 +9528,7 @@
         "DeskMemoriesByIds",
         "DeskMemorySettings",
         "DismissDeskMemory",
+        "FormulaTemplateTables",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
@@ -10216,7 +10219,8 @@
       "reads": [
         "capture_batch",
         "capture_device",
-        "capture_profile"
+        "capture_profile",
+        "formula_template"
       ],
       "references": [
         "user"
@@ -10242,7 +10246,9 @@
         "MyTableLayout",
         "PreviewBulkEdit",
         "RateAgreementTable",
+        "RateMatrixRecord",
         "RateMatrixTable",
+        "RateMatrixVersionAxes",
         "RateZoneTable",
         "ResetMyTableLayout",
         "SaveMyTableLayout",
@@ -10282,6 +10288,26 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/rate-matrices/:param/approve/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "approve"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/archive/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "archive"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/rate-matrices/:param/cells/",
           "requires": [
@@ -10302,6 +10328,56 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/rate-matrices/:param/reject/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "reject"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/request-changes/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "reject"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/restore/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/rate-matrices/:param/reviewers/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/submit/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "submit"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/tables/",
           "requires": []
@@ -10317,7 +10393,9 @@
         "rate_matrix",
         "rate_zone"
       ],
-      "references": [],
+      "references": [
+        "user"
+      ],
       "declared": []
     },
     {
@@ -39549,6 +39627,15 @@
       "declared": []
     },
     {
+      "name": "FormulaTemplateTables",
+      "type": "query",
+      "reads": [
+        "formula_template"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "FuelCardTable",
       "type": "query",
       "reads": [
@@ -40989,11 +41076,36 @@
       "declared": []
     },
     {
+      "name": "RateMatrixRecord",
+      "type": "query",
+      "reads": [
+        "rate_matrix"
+      ],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "profilePicUrl",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "RateMatrixTable",
       "type": "query",
       "reads": [
         "rate_matrix"
       ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "RateMatrixVersionAxes",
+      "type": "query",
+      "reads": [],
       "linked": [],
       "declared": []
     },

@@ -5249,6 +5249,7 @@
         "DeskMemoriesByIds",
         "DeskMemorySettings",
         "DismissDeskMemory",
+        "FormulaTemplateTables",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
@@ -5641,6 +5642,7 @@
         "DeskMemoriesByIds",
         "DeskMemorySettings",
         "DismissDeskMemory",
+        "FormulaTemplateTables",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
@@ -6021,7 +6023,9 @@
         "MyTableLayout",
         "PreviewBulkEdit",
         "RateAgreementTable",
+        "RateMatrixRecord",
         "RateMatrixTable",
+        "RateMatrixVersionAxes",
         "RateZoneTable",
         "ResetMyTableLayout",
         "SaveMyTableLayout",
@@ -6043,12 +6047,40 @@
           "path": "/rate-matrices/:param/"
         },
         {
+          "method": "POST",
+          "path": "/rate-matrices/:param/approve/"
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/archive/"
+        },
+        {
           "method": "GET",
           "path": "/rate-matrices/:param/cells/"
         },
         {
           "method": "PUT",
           "path": "/rate-matrices/:param/cells/"
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/reject/"
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/request-changes/"
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/restore/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-matrices/:param/reviewers/"
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/submit/"
         },
         {
           "method": "GET",

@@ -17154,6 +17154,10 @@ type FormulaTemplate {
   status: FormulaTemplateStatus!
   submittedAt: Timestamp
   submittedById: ID
+  """
+  The rate tables the source reads, each pinned to the published version the last check read.
+  """
+  tables: [FormulaTemplateTable!]!
   """How many test blocks the source holds."""
   testCount: Int!
   updatedAt: Timestamp!
@@ -17180,6 +17184,25 @@ enum FormulaTemplateStatus {
   Draft
   InReview
   Inactive
+}
+
+"""
+A rate table a formula version reads, pinned to the published matrix version it was checked against.
+"""
+type FormulaTemplateTable {
+  """
+  Whether the matrix is archived, so no new template version can read it.
+  """
+  archived: Boolean!
+  """The table's code, as the source reads it: tables.<code>."""
+  code: String!
+  """
+  The matrix's newest published version. Greater than versionNumber when a
+  newer version is available; approving a new template version adopts it.
+  """
+  latestVersionNumber: Int!
+  rateMatrixId: ID!
+  versionNumber: Int!
 }
 
 enum FreightClass {
@@ -25295,8 +25318,22 @@ type Query {
   rateAgreement(id: ID!): RateAgreement
   rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
-  """One rate matrix with its axes; its cells are read a page at a time."""
+  """
+  One rate matrix with its draft's axes; its cells are read a page at a time.
+  """
   rateMatrix(id: ID!): RateMatrix
+  """A rate matrix draft's review history, newest first."""
+  rateMatrixReviews(rateMatrixId: ID!): [RateMatrixReview!]!
+  """
+  The formula template versions that pin a rate matrix, or one of its versions.
+  """
+  rateMatrixUsages(rateMatrixId: ID!, versionNumber: Int): [RateMatrixUsage!]!
+  """
+  One published version of a rate matrix with its axes; its cells are read a page at a time.
+  """
+  rateMatrixVersion(rateMatrixId: ID!, versionNumber: Int!): RateMatrixVersion
+  """A rate matrix's published versions, newest first."""
+  rateMatrixVersions(first: Int, rateMatrixId: ID!): [RateMatrixVersion!]!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   """
@@ -25898,26 +25935,44 @@ type RateAgreementVersion {
 
 """
 A rate table a tariff looks values up in: one to four axes, such as origin zone
-by destination zone, and a value of one Tariff type in every cell.
+by destination zone, and a value of one Tariff type in every cell. The matrix
+is a draft that editors change; approving a submitted draft publishes it as the
+next numbered version, which formula template versions pin.
 """
 type RateMatrix {
+  approvedAt: Timestamp
+  approvedById: ID
   businessUnitId: ID!
-  """How many cells the grid holds."""
+  """How many cells the draft holds."""
   cellCount: Int!
   """
-  The grid's cells, a page at a time: offset skips that many, and limit takes
+  The draft's cells, a page at a time: offset skips that many, and limit takes
   at most 100.
   """
   cells(limit: Int = 100, offset: Int = 0): [RateMatrixCell!]!
   code: String!
   createdAt: Timestamp!
   description: String!
-  """The matrix's axes, by position. Read by rateMatrix only."""
+  """The draft's axes, by position. Read by rateMatrix only."""
   dimensions: [RateMatrixDimension!]
+  """Whether the draft differs from the newest published version."""
+  hasDraftChanges: Boolean!
   id: ID!
   name: String!
   organizationId: ID!
-  status: String!
+  publishedAt: Timestamp
+  """
+  The newest published version, which tariffs read by default; 0 before the first.
+  """
+  publishedVersionNumber: Int!
+  reviewComment: String!
+  """
+  Draft while it has unpublished changes, InReview once submitted, Active when
+  the draft is the newest published version, Inactive once archived.
+  """
+  status: FormulaTemplateStatus!
+  submittedAt: Timestamp
+  submittedById: ID
   updatedAt: Timestamp!
   """
   What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int.
@@ -25928,19 +25983,24 @@ type RateMatrix {
 
 """
 One cell of a rate matrix: a key or a range on each axis, by position (d0 is
-the first axis), and the value it holds.
+the first axis), and the value it holds. On a ZipRange axis the key is the
+range's first postal code and keyTo its last, both inclusive.
 """
 type RateMatrixCell {
   d0Key: String!
+  d0KeyTo: String!
   d0Max: Decimal
   d0Min: Decimal
   d1Key: String!
+  d1KeyTo: String!
   d1Max: Decimal
   d1Min: Decimal
   d2Key: String!
+  d2KeyTo: String!
   d2Max: Decimal
   d2Min: Decimal
   d3Key: String!
+  d3KeyTo: String!
   d3Max: Decimal
   d3Min: Decimal
   deficitEligible: Boolean!
@@ -25969,6 +26029,61 @@ type RateMatrixDimension {
 type RateMatrixEdge {
   cursor: String!
   node: RateMatrix!
+}
+
+"""
+One step of a rate matrix draft's review: who did what, in which round, against which published version.
+"""
+type RateMatrixReview {
+  actor: User
+  actorId: ID
+  baseVersionNumber: Int!
+  comment: String!
+  createdAt: Timestamp!
+  decision: FormulaReviewDecision!
+  id: ID!
+  rateMatrixId: ID!
+  requestedReviewer: User
+  requestedReviewerId: ID
+  reviewerNote: String!
+  round: Int!
+}
+
+"""A formula template version that pins a version of a rate matrix."""
+type RateMatrixUsage {
+  matrixVersionNumber: Int!
+  templateId: ID!
+  templateName: String!
+  templateStatus: FormulaTemplateStatus!
+  templateVersion: Int!
+  versionStatus: FormulaTemplateStatus!
+}
+
+"""
+A published, immutable version of a rate matrix. Formula template versions pin one per table they read.
+"""
+type RateMatrixVersion {
+  cellCount: Int!
+  """
+  The version's cells, a page at a time: offset skips that many, and limit
+  takes at most 100.
+  """
+  cells(limit: Int = 100, offset: Int = 0): [RateMatrixCell!]!
+  """The reviewer's comment when it was published."""
+  changeMessage: String!
+  code: String!
+  createdAt: Timestamp!
+  description: String!
+  """The version's axes, by position."""
+  dimensions: [RateMatrixDimension!]!
+  id: ID!
+  name: String!
+  publishedBy: User
+  publishedById: ID
+  rateMatrixId: ID!
+  submittedById: ID
+  valueType: String!
+  versionNumber: Int!
 }
 
 """

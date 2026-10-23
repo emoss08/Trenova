@@ -5,6 +5,7 @@ import {
   statusSchema,
   tenantInfoSchema,
 } from "./helpers";
+import { formulaTemplateStatusSchema } from "./formula-template";
 import { tariffInputValuesSchema } from "./tariff";
 import { storedTariffBillSchema, tariffFormInputValuesSchema } from "./tariff-form";
 import { translate } from "@trenova/shared/i18n/runtime";
@@ -87,6 +88,7 @@ export const rateMatrixDimensionKindSchema = z.enum([
   "Zone",
   "Zip3",
   "Zip5",
+  "ZipRange",
   "State",
   "Country",
   "WeightBreak",
@@ -169,7 +171,11 @@ export const rateMatrixSchema = z.object({
     .min(1, { error: () => translate("Name is required") })
     .max(100),
   description: z.string().max(500).default(""),
-  status: statusSchema.default("Active"),
+  /**
+   * Set by review, never by a save: Draft while the draft has unpublished changes, InReview once
+   * submitted, Active when the draft is the newest published version, Inactive once archived.
+   */
+  status: formulaTemplateStatusSchema.default("Draft"),
   /**
    * What a cell's number means. The same grid of numbers is a per-mile tariff
    * or a flat table depending on its type, so it is stated on the matrix and a
@@ -180,6 +186,17 @@ export const rateMatrixSchema = z.object({
     .array(rateMatrixDimensionSchema)
     .min(1, { error: () => translate("A matrix needs at least one dimension") })
     .max(4, { error: () => translate("A matrix has at most four dimensions") }),
+  /** The newest published version, the one tariffs read by default; 0 before the first. */
+  publishedVersionNumber: z.number().int().default(0),
+  publishedAt: z.number().nullish(),
+  /** Whether the draft differs from the newest published version. */
+  hasDraftChanges: z.boolean().default(true),
+  draftCellCount: z.number().int().default(0),
+  submittedById: z.string().nullish(),
+  submittedAt: z.number().nullish(),
+  approvedById: z.string().nullish(),
+  approvedAt: z.number().nullish(),
+  reviewComment: z.string().nullish(),
 });
 export type RateMatrix = z.infer<typeof rateMatrixSchema>;
 
@@ -195,6 +212,10 @@ export type RateMatrix = z.infer<typeof rateMatrixSchema>;
  * `ratematrix.RateMatrixCell.ContainsQuantity`. A tariff written "1000 to 2000"
  * rates two thousand pounds at the next tier up, and closed intervals would let
  * two adjacent bands both claim the boundary.
+ *
+ * A postal range axis (`ZipRange`) is the exception: its cell holds a range of
+ * postal codes, `dNKey` its first and `dNKeyTo` its last, both inclusive and of
+ * one length, compared character by character.
  */
 export const rateMatrixCellSchema = z.object({
   id: optionalStringSchema,
@@ -206,6 +227,11 @@ export const rateMatrixCellSchema = z.object({
   d1Key: z.string().max(120).default(""),
   d2Key: z.string().max(120).default(""),
   d3Key: z.string().max(120).default(""),
+
+  d0KeyTo: z.string().max(120).default(""),
+  d1KeyTo: z.string().max(120).default(""),
+  d2KeyTo: z.string().max(120).default(""),
+  d3KeyTo: z.string().max(120).default(""),
 
   d0Min: decimalStringSchema.nullish(),
   d0Max: decimalStringSchema.nullish(),

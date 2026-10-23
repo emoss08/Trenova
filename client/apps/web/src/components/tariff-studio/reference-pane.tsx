@@ -79,7 +79,10 @@ export function dataEntries(
       table.axes.map((axis) => axis.label || axis.kind).join(", "),
       table.valueType,
     ),
-    doc: table.name,
+    doc:
+      table.version === undefined
+        ? table.name
+        : t("{0}, published version {1}", table.name, table.version),
     insert: `tables.${table.code}[]`,
     cursor: `tables.${table.code}[`.length,
   }));

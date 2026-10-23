@@ -2,7 +2,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { rateMatrixValueTypeChoices, statusChoices } from "@/lib/choices";
+import { rateMatrixStatusChoices, rateMatrixValueTypeChoices } from "@/lib/choices";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import type { RateMatrixRow } from "@/lib/graphql/rate-tables";
 
@@ -12,25 +12,54 @@ export function getColumns(t: TranslateFn): ColumnDef<RateMatrixRow>[] {
       accessorKey: "status",
       header: t("Status"),
       cell: ({ row }) => {
-        const choice = statusChoices.find((option) => option.value === row.original.status);
+        const choice = rateMatrixStatusChoices.find(
+          (option) => option.value === row.original.status,
+        );
 
         return choice ? (
-          <ColorOptionValue color={choice.color} value={choice.label} />
+          <ColorOptionValue color={choice.color} value={t(choice.label)} />
         ) : (
           row.original.status
         );
       },
-      size: 110,
+      size: 120,
       minSize: 100,
-      maxSize: 130,
+      maxSize: 140,
       meta: {
         label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
         filterType: "select",
-        filterOptions: statusChoices,
+        filterOptions: rateMatrixStatusChoices,
         defaultFilterOperator: "eq",
+      },
+    },
+    {
+      // Tariffs read the newest published version; a draft with changes is not priced yet.
+      accessorKey: "publishedVersionNumber",
+      header: t("Published"),
+      cell: ({ row }) => {
+        const published = row.original.publishedVersionNumber;
+        if (published === 0) {
+          return <span className="text-muted-foreground text-sm">{t("Never")}</span>;
+        }
+        return (
+          <span className="text-sm">
+            {row.original.hasDraftChanges
+              ? t("v{0}, draft changed", published)
+              : t("v{0}", published)}
+          </span>
+        );
+      },
+      size: 150,
+      minSize: 110,
+      maxSize: 190,
+      meta: {
+        label: t("Published"),
+        apiField: "publishedVersionNumber",
+        filterable: false,
+        sortable: true,
       },
     },
     {

@@ -1,0 +1,92 @@
+# A rate matrix's draft state with its published versions, its review rounds and the formula
+# template versions that pin it, for the matrix panel's Versions tab.
+query RateMatrixRecord($id: ID!) {
+  rateMatrix(id: $id) {
+    id
+    code
+    name
+    status
+    publishedVersionNumber
+    publishedAt
+    hasDraftChanges
+    cellCount
+    submittedById
+    submittedAt
+    approvedById
+    approvedAt
+    reviewComment
+    version
+    updatedAt
+  }
+  rateMatrixVersions(rateMatrixId: $id) {
+    id
+    rateMatrixId
+    versionNumber
+    code
+    name
+    valueType
+    cellCount
+    changeMessage
+    submittedById
+    publishedById
+    createdAt
+    publishedBy {
+      id
+      name
+      username
+      profilePicUrl
+    }
+  }
+  rateMatrixReviews(rateMatrixId: $id) {
+    id
+    rateMatrixId
+    round
+    decision
+    actorId
+    comment
+    baseVersionNumber
+    createdAt
+    actor {
+      id
+      name
+      username
+      profilePicUrl
+    }
+    requestedReviewerId
+    requestedReviewer {
+      id
+      name
+      username
+      profilePicUrl
+    }
+    reviewerNote
+  }
+  rateMatrixUsages(rateMatrixId: $id) {
+    templateId
+    templateName
+    templateStatus
+    templateVersion
+    versionStatus
+    matrixVersionNumber
+  }
+}
+
+# One published version's axes, for reading its cells as a sheet.
+query RateMatrixVersionAxes($id: ID!, $versionNumber: Int!) {
+  rateMatrixVersion(rateMatrixId: $id, versionNumber: $versionNumber) {
+    id
+    rateMatrixId
+    versionNumber
+    valueType
+    cellCount
+    dimensions {
+      id
+      position
+      kind
+      matchMode
+      label
+      keyNormalization
+      rangeOverflow
+    }
+  }
+}

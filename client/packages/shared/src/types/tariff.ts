@@ -426,6 +426,23 @@ export const tariffCheckResultSchema = z.object({
     .array(tariffChargeRefSchema)
     .nullish()
     .transform((value) => value ?? []),
+  /**
+   * The rate tables the file reads, across the modules it imports, each with the published
+   * version the context held (null when the context named none). Approval pins these.
+   */
+  tables: z
+    .array(
+      z.object({
+        code: z.string(),
+        version: z
+          .number()
+          .int()
+          .nullish()
+          .transform((value) => value ?? null),
+      }),
+    )
+    .nullish()
+    .transform((value) => value ?? []),
 });
 export type TariffCheckResult = z.output<typeof tariffCheckResultSchema>;
 
@@ -717,7 +734,10 @@ export const tariffLibrarySourceSchema = z.object({
 });
 export type TariffLibrarySource = z.output<typeof tariffLibrarySourceSchema>;
 
-/** One axis of a rate table: `Exact` or `Range`, what it varies by, and a range's unit. */
+/**
+ * One axis of a rate table: `Exact` or `Range`, what it varies by, and a range's unit. A `Range`
+ * axis of kind `ZipRange` holds postal ranges rather than numeric bands.
+ */
 export const tariffTableAxisSchema = z.object({
   match: z.enum(["Exact", "Range"]),
   kind: z.string(),
@@ -744,11 +764,22 @@ export type TariffTableAxis = z.output<typeof tariffTableAxisSchema>;
 
 const optionalDecimalSchema = decimalTextSchema.nullish().transform((value) => value ?? undefined);
 
-/** One priced cell: a `{key}` on each exact axis and a `{min, max?}` band on each range axis. */
+/**
+ * One priced cell: a `{key}` on each exact axis, a `{min, max?}` band on each range axis and a
+ * `{from, to}` postal range, both ends inclusive, on each `ZipRange` axis.
+ */
 export const tariffTableCellSchema = z.object({
   at: z.array(
     z.object({
       key: z
+        .string()
+        .nullish()
+        .transform((value) => value ?? undefined),
+      from: z
+        .string()
+        .nullish()
+        .transform((value) => value ?? undefined),
+      to: z
         .string()
         .nullish()
         .transform((value) => value ?? undefined),
@@ -787,6 +818,12 @@ export const tariffTableShapeSchema = z.object({
     .string()
     .nullish()
     .transform((value) => value ?? ""),
+  /** The published version the context holds: the newest, or the one a template version pins. */
+  version: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? undefined),
   axes: z.array(tariffTableAxisSchema),
   valueType: z.string(),
   cells: tableCellsSchema,
