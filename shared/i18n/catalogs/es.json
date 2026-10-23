@@ -9332,7 +9332,6 @@
   "Status Mismatch": "Estado no coincidente",
   "Status Update Preference": "Preferencia de actualizaciones de estado",
   "Status Update Recipients": "Destinatarios de actualizaciones de estado",
-  "Status cannot be changed from {0} to {1} here; submit, approve, reject, or archive the library instead": "El estado no se puede cambiar de {0} a {1} aquí; envíe, apruebe, rechace o archive la biblioteca",
   "Status cannot be longer than 100 characters": "El estado no puede superar los 100 caracteres",
   "Status cannot be longer than 50 characters": "El estado no puede superar los 50 caracteres",
   "Status cannot be longer than 80 characters": "El estado no puede superar los 80 caracteres",

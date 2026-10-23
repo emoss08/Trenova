@@ -10,21 +10,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
-import { usePageAccessOffered } from "@/hooks/use-permission";
 import { useSignOut } from "@/hooks/use-sign-out";
 import { settingsPath } from "@/lib/settings-path";
-import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useNavigate } from "react-router";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import {
   ChevronSelectorVerticalIcon,
-  InfoCircleIcon,
   LogOut01Icon,
   Settings01Icon,
 } from "@trenova/shared/components/icons";
-
-const preparePageAccess = () => useAppDialogsStore.getState().prepareDialog("page-access");
-const openPageAccess = () => useAppDialogsStore.getState().openDialog("page-access");
 
 /**
  * `compact` renders the avatar alone as the trigger, for a rail with no room
@@ -36,7 +30,6 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
   const user = useAuthStore((s) => s.user);
   const signOut = useSignOut();
   const navigate = useNavigate();
-  const pageAccessOffered = usePageAccessOffered();
 
   const displayName = user?.name ?? user?.username ?? "User";
 
@@ -118,15 +111,6 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
               onClick={() => void navigate(settingsPath())}
             />
             <LanguageSubmenu />
-            {pageAccessOffered ? (
-              <DropdownMenuItem
-                title={t("Page access")}
-                startContent={<InfoCircleIcon className="size-4" />}
-                onPointerEnter={preparePageAccess}
-                onFocus={preparePageAccess}
-                onClick={openPageAccess}
-              />
-            ) : null}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               title={t("Log out")}

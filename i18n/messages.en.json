@@ -186207,7 +186207,7 @@
     ]
   },
   "Page access": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -250329,15 +250329,6 @@
     ]
   },
   "Status Update Recipients": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Status cannot be changed from {0} to {1} here; submit, approve, reject, or archive the library instead": {
     "sites": 1,
     "scope": [
       "go"
