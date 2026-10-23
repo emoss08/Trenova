@@ -9,7 +9,7 @@ use crate::message;
 use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::diagnostic::{Diagnostic, nearest};
-use crate::tariff::syntax::ast::{BinaryOp, Expr, ExprKind, Stmt, StmtKind};
+use crate::tariff::syntax::ast::{BinaryOp, Choose, Expr, ExprKind, Stmt, StmtKind};
 use crate::tariff::syntax::program::Module;
 use crate::tariff::syntax::walk::{self, Visit};
 use std::collections::BTreeMap;
@@ -38,20 +38,30 @@ struct Choices {
     options: BTreeMap<String, Vec<String>>,
 }
 
+impl Choices {
+    fn add(&mut self, choose: &Choose) {
+        self.options
+            .entry(choose.label.text.clone())
+            .or_default()
+            .extend(
+                choose
+                    .options
+                    .iter()
+                    .map(|option| option.label.text.clone()),
+            );
+    }
+}
+
 impl Visit for Choices {
-    fn expr(&mut self, _expr: &Expr) {}
+    fn expr(&mut self, expr: &Expr) {
+        if let ExprKind::Choose(choose) = &expr.kind {
+            self.add(choose);
+        }
+    }
 
     fn stmt(&mut self, stmt: &Stmt) {
         if let StmtKind::Choose(choose) = &stmt.kind {
-            self.options
-                .entry(choose.label.text.clone())
-                .or_default()
-                .extend(
-                    choose
-                        .options
-                        .iter()
-                        .map(|option| option.label.text.clone()),
-                );
+            self.add(choose);
         }
     }
 }

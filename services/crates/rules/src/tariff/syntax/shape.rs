@@ -17,6 +17,7 @@ use super::ast::File;
 use super::ast::FnBody;
 use super::ast::Item;
 use super::ast::ItemKind;
+use super::ast::Name;
 use super::ast::Pattern;
 use super::ast::PatternKind;
 use super::ast::RoundMode;
@@ -271,6 +272,24 @@ fn input_line(private: &str, input: &super::ast::Input) -> String {
 }
 
 /// A statement that holds no block, on one line.
+/// `given path = value`, or a table cell's `given tables.Code[k, …] = value`.
+fn write_given(line: &mut String, target: &[Name], keys: Option<&[Expr]>, value: &Expr) {
+    let path: Vec<&str> = target.iter().map(|n| n.text.as_str()).collect();
+    let _ = write!(line, "given {}", path.join("."));
+    if let Some(keys) = keys {
+        line.push('[');
+        for (index, key) in keys.iter().enumerate() {
+            if index > 0 {
+                line.push_str(", ");
+            }
+            write_expr(line, key);
+        }
+        line.push(']');
+    }
+    line.push_str(" = ");
+    write_expr(line, value);
+}
+
 fn write_simple_stmt(line: &mut String, kind: &StmtKind) {
     match kind {
         StmtKind::Let(binding) | StmtKind::Var(binding) => {
@@ -312,6 +331,7 @@ fn write_simple_stmt(line: &mut String, kind: &StmtKind) {
             }
         }
         StmtKind::Note(text) => write_word_text(line, "note", text),
+        StmtKind::Review(text) => write_word_text(line, "review", text),
         StmtKind::Fail(text) => write_word_text(line, "fail", text),
         StmtKind::Require { condition, message } => {
             line.push_str("require ");
@@ -322,11 +342,11 @@ fn write_simple_stmt(line: &mut String, kind: &StmtKind) {
         StmtKind::Break => line.push_str("break"),
         StmtKind::Continue => line.push_str("continue"),
         StmtKind::Total(clause) => write_total(line, clause),
-        StmtKind::Given { target, value } => {
-            let path: Vec<&str> = target.iter().map(|n| n.text.as_str()).collect();
-            let _ = write!(line, "given {} = ", path.join("."));
-            write_expr(line, value);
-        }
+        StmtKind::Given {
+            target,
+            keys,
+            value,
+        } => write_given(line, target, keys.as_deref(), value),
         StmtKind::Expect(Expect::Holds(value)) => write_word_expr(line, "expect", value),
         StmtKind::Expect(Expect::Monotone {
             value,
@@ -376,13 +396,16 @@ fn write_word_expr(line: &mut String, word: &str, value: &Expr) {
 
 fn write_total(out: &mut String, clause: &TotalClause) {
     match clause {
-        TotalClause::Minimum(value) => {
-            out.push_str("minimum ");
-            write_expr(out, value);
-        }
-        TotalClause::Maximum(value) => {
-            out.push_str("maximum ");
-            write_expr(out, value);
+        TotalClause::Minimum(bound) | TotalClause::Maximum(bound) => {
+            out.push_str(if matches!(clause, TotalClause::Minimum(_)) {
+                "minimum "
+            } else {
+                "maximum "
+            });
+            write_expr(out, &bound.amount);
+            if let Some(on) = &bound.on {
+                let _ = write!(out, " on {}", on.text);
+            }
         }
         TotalClause::Round { mode, to } => {
             out.push_str(match mode {
@@ -495,7 +518,8 @@ fn write_kind(out: &mut String, kind: &ExprKind) {
         | ExprKind::Money { .. }
         | ExprKind::Percent(_)
         | ExprKind::Date(_)
-        | ExprKind::DateTime(_) => write_literal(out, kind),
+        | ExprKind::DateTime(_)
+        | ExprKind::Time(_) => write_literal(out, kind),
         ExprKind::Bool(value) => {
             let _ = write!(out, "{value}");
         }
@@ -568,12 +592,14 @@ fn write_kind(out: &mut String, kind: &ExprKind) {
         | ExprKind::Record(_)
         | ExprKind::If { .. }
         | ExprKind::Match { .. }
+        | ExprKind::Choose(_)
         | ExprKind::Lambda { .. } => write_compound(out, kind),
         ExprKind::Missing => out.push('?'),
     }
 }
 
-/// Lists, records, `if`, `match` and lambdas.
+/// Lists, records, `if`, `match`, choices and lambdas; a choice's option blocks are written
+/// inline, their statements separated by `;`.
 fn write_compound(out: &mut String, kind: &ExprKind) {
     match kind {
         ExprKind::List(items) => {
@@ -624,6 +650,21 @@ fn write_compound(out: &mut String, kind: &ExprKind) {
             }
             out.push(')');
         }
+        ExprKind::Choose(choose) => {
+            let _ = write!(out, "({} {:?}", choose.kind.keyword(), choose.label.text);
+            for option in &choose.options {
+                let mut body = Shape::default();
+                body.block(0, &option.body);
+                let lines: Vec<&str> = body.text.lines().collect();
+                let _ = write!(
+                    out,
+                    " [option {:?} {{{}}}]",
+                    option.label.text,
+                    lines.join("; ")
+                );
+            }
+            out.push(')');
+        }
         ExprKind::Lambda { params, body } => {
             let params: Vec<&str> = params.iter().map(|p| p.text.as_str()).collect();
             let _ = write!(out, "(lambda ({}) ", params.join(" "));
@@ -662,6 +703,13 @@ fn write_literal(out: &mut String, kind: &ExprKind) {
         }
         ExprKind::Date(date) => {
             let _ = write!(out, "@{:04}-{:02}-{:02}", date.year, date.month, date.day);
+        }
+        ExprKind::Time(time) => {
+            let _ = write!(
+                out,
+                "@{:02}:{:02}:{:02}",
+                time.hour, time.minute, time.second
+            );
         }
         ExprKind::DateTime(at) => {
             let _ = write!(

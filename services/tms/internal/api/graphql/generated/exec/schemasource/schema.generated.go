@@ -18792,6 +18792,21 @@ type FormulaLibraryImport {
   library: FormulaLibrary
 }
 
+"A rate table a formula version reads, pinned to the published matrix version it was checked against."
+type FormulaTemplateTable {
+  "The table's code, as the source reads it: tables.<code>."
+  code: String!
+  rateMatrixId: ID!
+  versionNumber: Int!
+  """
+  The matrix's newest published version. Greater than versionNumber when a
+  newer version is available; approving a new template version adopts it.
+  """
+  latestVersionNumber: Int!
+  "Whether the matrix is archived, so no new template version can read it."
+  archived: Boolean!
+}
+
 type FormulaTemplate {
   id: ID!
   businessUnitId: ID!
@@ -18804,6 +18819,8 @@ type FormulaTemplate {
   inputs: [FormulaInputDeclaration!]!
   "The organization libraries the source imports. Approval pins each to the version approved at that moment."
   imports: [FormulaLibraryImport!]!
+  "The rate tables the source reads, each pinned to the published version the last check read."
+  tables: [FormulaTemplateTable!]!
   "How many test blocks the source holds."
   testCount: Int!
   status: FormulaTemplateStatus!
@@ -24483,7 +24500,9 @@ type RateZoneConnection {
 
 """
 A rate table a tariff looks values up in: one to four axes, such as origin zone
-by destination zone, and a value of one Tariff type in every cell.
+by destination zone, and a value of one Tariff type in every cell. The matrix
+is a draft that editors change; approving a submitted draft publishes it as the
+next numbered version, which formula template versions pin.
 """
 type RateMatrix {
   id: ID!
@@ -24492,15 +24511,19 @@ type RateMatrix {
   code: String!
   name: String!
   description: String!
-  status: String!
+  """
+  Draft while it has unpublished changes, InReview once submitted, Active when
+  the draft is the newest published version, Inactive once archived.
+  """
+  status: FormulaTemplateStatus!
   "What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int."
   valueType: String!
-  "The matrix's axes, by position. Read by rateMatrix only."
+  "The draft's axes, by position. Read by rateMatrix only."
   dimensions: [RateMatrixDimension!]
-  "How many cells the grid holds."
+  "How many cells the draft holds."
   cellCount: Int!
   """
-  The grid's cells, a page at a time: offset skips that many, and limit takes
+  The draft's cells, a page at a time: offset skips that many, and limit takes
   at most 100.
   """
   cells(
@@ -24509,9 +24532,70 @@ type RateMatrix {
     "At most this many cells."
     limit: Int = 100
   ): [RateMatrixCell!]!
+  "The newest published version, which tariffs read by default; 0 before the first."
+  publishedVersionNumber: Int!
+  publishedAt: Timestamp
+  "Whether the draft differs from the newest published version."
+  hasDraftChanges: Boolean!
+  submittedById: ID
+  submittedAt: Timestamp
+  approvedById: ID
+  approvedAt: Timestamp
+  reviewComment: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"A published, immutable version of a rate matrix. Formula template versions pin one per table they read."
+type RateMatrixVersion {
+  id: ID!
+  rateMatrixId: ID!
+  versionNumber: Int!
+  code: String!
+  name: String!
+  description: String!
+  valueType: String!
+  "The version's axes, by position."
+  dimensions: [RateMatrixDimension!]!
+  cellCount: Int!
+  """
+  The version's cells, a page at a time: offset skips that many, and limit
+  takes at most 100.
+  """
+  cells(offset: Int = 0, limit: Int = 100): [RateMatrixCell!]!
+  "The reviewer's comment when it was published."
+  changeMessage: String!
+  submittedById: ID
+  publishedById: ID
+  publishedBy: User
+  createdAt: Timestamp!
+}
+
+"One step of a rate matrix draft's review: who did what, in which round, against which published version."
+type RateMatrixReview {
+  id: ID!
+  rateMatrixId: ID!
+  round: Int!
+  decision: FormulaReviewDecision!
+  actorId: ID
+  actor: User
+  comment: String!
+  baseVersionNumber: Int!
+  requestedReviewerId: ID
+  requestedReviewer: User
+  reviewerNote: String!
+  createdAt: Timestamp!
+}
+
+"A formula template version that pins a version of a rate matrix."
+type RateMatrixUsage {
+  templateId: ID!
+  templateName: String!
+  templateStatus: FormulaTemplateStatus!
+  templateVersion: Int!
+  versionStatus: FormulaTemplateStatus!
+  matrixVersionNumber: Int!
 }
 
 "One axis of a rate matrix: what it keys on and how a value matches it."
@@ -24527,7 +24611,8 @@ type RateMatrixDimension {
 
 """
 One cell of a rate matrix: a key or a range on each axis, by position (d0 is
-the first axis), and the value it holds.
+the first axis), and the value it holds. On a ZipRange axis the key is the
+range's first postal code and keyTo its last, both inclusive.
 """
 type RateMatrixCell {
   id: ID!
@@ -24535,6 +24620,10 @@ type RateMatrixCell {
   d1Key: String!
   d2Key: String!
   d3Key: String!
+  d0KeyTo: String!
+  d1KeyTo: String!
+  d2KeyTo: String!
+  d3KeyTo: String!
   d0Min: Decimal
   d0Max: Decimal
   d1Min: Decimal
@@ -24611,8 +24700,16 @@ extend type Query {
   rateAgreement(id: ID!): RateAgreement
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
-  "One rate matrix with its axes; its cells are read a page at a time."
+  "One rate matrix with its draft's axes; its cells are read a page at a time."
   rateMatrix(id: ID!): RateMatrix
+  "A rate matrix's published versions, newest first."
+  rateMatrixVersions(rateMatrixId: ID!, first: Int): [RateMatrixVersion!]!
+  "One published version of a rate matrix with its axes; its cells are read a page at a time."
+  rateMatrixVersion(rateMatrixId: ID!, versionNumber: Int!): RateMatrixVersion
+  "A rate matrix draft's review history, newest first."
+  rateMatrixReviews(rateMatrixId: ID!): [RateMatrixReview!]!
+  "The formula template versions that pin a rate matrix, or one of its versions."
+  rateMatrixUsages(rateMatrixId: ID!, versionNumber: Int): [RateMatrixUsage!]!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
 }
 `, BuiltIn: false},
@@ -26839,6 +26936,18 @@ type TariffBillLine {
   rate: Decimal
   rateUnit: String!
   amount: Decimal!
+  "Set when the charge's own minimum or maximum changed its amount."
+  limit: TariffLineLimit
+  "freight on the adjustment of a minimum or maximum that bounds the freight lines; empty otherwise."
+  on: String!
+}
+
+"How a charge's own minimum or maximum changed its amount."
+type TariffLineLimit {
+  "Minimum or Maximum."
+  kind: String!
+  "The amount the charge came to before its limit."
+  computed: Decimal!
 }
 
 "The conversion a bill was priced through when the tariff's currency differs from the billing currency."
@@ -26852,6 +26961,11 @@ type TariffBill {
   currency: String!
   lines: [TariffBillLine!]!
   notes: [String!]!
+  """
+  What the tariff asks a person to check before the shipment bills. A shipment whose
+  bill has reviews is rated but held out of billing until a person approves the rating.
+  """
+  reviews: [String!]!
   freightTotal: Decimal!
   accessorialTotal: Decimal!
   total: Decimal!
@@ -26926,6 +27040,21 @@ type ShipmentRatingDetail {
   "The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound."
   source: String!
   explanation: String!
+  "True while the bill's reviews wait on a person's approval, which holds the shipment out of billing."
+  awaitingReview: Boolean!
+  "Who approved the reviews this rating carries, and when. Null until a person approves them."
+  reviewApproval: ShipmentRatingReviewApproval
+}
+
+"""
+A person's approval of the reviews a tariff asked for. A re-rate that comes back with the
+same reviews keeps it; different reviews hold the shipment again.
+"""
+type ShipmentRatingReviewApproval {
+  reviews: [String!]!
+  approvedById: ID!
+  approvedAt: Timestamp!
+  approvedBy: User
 }
 
 """
@@ -28600,6 +28729,11 @@ extend type Mutation {
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   cancelShipment(id: ID!, input: ShipmentCancelInput): Shipment!
   uncancelShipment(id: ID!): Shipment!
+  """
+  Approves the reviews the tariff asked for on the shipment's rating, which releases the
+  shipment to be billed. A person's decision: an agent cannot make it.
+  """
+  approveShipmentRatingReview(shipmentId: ID!): Shipment!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   "Queues the shipment for billing, one item per payer."

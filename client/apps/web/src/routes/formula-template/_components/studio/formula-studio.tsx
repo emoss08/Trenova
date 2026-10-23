@@ -36,6 +36,7 @@ import type { ApprovalAction } from "../approval-action-dialog";
 import "@/components/tariff-studio/tariff-studio.css";
 import { DetailsHero } from "./sections/details-hero";
 import { InputsSection } from "./sections/inputs-section";
+import { TablesSection } from "./sections/tables-section";
 import {
   STUDIO_SECTIONS,
   StudioProvider,
@@ -245,6 +246,7 @@ function FormColumn() {
         <SourceSection />
       </Suspense>
       <InputsSection />
+      <TablesSection />
       <Suspense fallback={<ListSectionSkeleton />}>
         <TestsSection />
       </Suspense>

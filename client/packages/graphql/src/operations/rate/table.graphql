@@ -53,6 +53,10 @@ fragment RateMatrixRowFields on RateMatrix {
   description
   status
   valueType
+  publishedVersionNumber
+  publishedAt
+  hasDraftChanges
+  cellCount
   version
   createdAt
   updatedAt

@@ -30,8 +30,8 @@ export type TariffTableCellsState = {
 /**
  * The rate table cells the browser's Tariff tests have loaded, shared by every screen at one
  * stamp through the query cache (so a session's end clears them with everything else). A load
- * whose answer was read at another stamp means a matrix changed since the context was read: the
- * cells are kept under the new stamp and the context is read again.
+ * whose answer was read at another stamp means a matrix version was published or archived since
+ * the context was read: the cells are kept under the new stamp and the context is read again.
  */
 export function useTariffTableCells(stamp: string): TariffTableCellsState {
   const queryClient = useQueryClient();

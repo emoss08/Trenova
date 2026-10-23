@@ -68,12 +68,15 @@ func (r *Rater) Rate(
 	req *tariffports.RateRequest,
 ) (*tariffports.RateResult, error) {
 	var libraries []rules.TariffLibrary
+	var tables []tarifftypes.TablePin
 	if req.Template != nil {
 		libraries = req.Template.Libraries
+		tables = req.Template.Tables
 	}
 	tariffCtx, err := r.contexts.Context(ctx, &tariffports.ContextRequest{
 		TenantInfo: req.TenantInfo,
 		Libraries:  libraries,
+		Tables:     tables,
 	})
 	if err != nil {
 		return nil, err

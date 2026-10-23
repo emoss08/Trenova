@@ -558,3 +558,75 @@ tariff "t"
 test "t"
   expect total nondecreasing in shipment.weight
 ! misplaced 37..50 `nondecreasing` can only be used inside a `property` block
+
+=== given a table cell
+tariff "t"
+test "t" {
+  given tables.Zones["A", "B"] = $20/cwt
+  given tables.Breaks[1_000 lb] = { value: $25/cwt, minimum: none, deficit: false }
+  expect applies
+}
+---
+tariff "t"
+test "t"
+  given tables.Zones[(text "A"), (text "B")] = $20/[cwt]
+  given tables.Breaks[1000[lb]] = (record value:$25/[cwt] minimum:none deficit:false)
+  expect applies
+
+=== best as a binding's value
+tariff "t"
+let linehaul = best "Linehaul" {
+  option "A" {
+    charge "A" = $1
+  }
+  option "B" {
+    charge "B" = $2
+  }
+}
+total += worst "Floor" {
+  option "C" { charge "C" = $3 }
+  option "D" { charge "D" = $4 }
+}
+---
+tariff "t"
+let linehaul = (best "Linehaul" [option "A" {charge (text "A") = $1}] [option "B" {charge (text "B") = $2}])
+total += (worst "Floor" [option "C" {charge (text "C") = $3}] [option "D" {charge (text "D") = $4}])
+
+=== review
+tariff "t"
+review "Check {shipment.distance}"
+let review = 1
+let other = review + 1
+---
+tariff "t"
+review (text "Check " (. shipment distance))
+let review = 1
+let other = (+ review 1)
+
+=== freight clauses
+tariff "t"
+minimum $400 on freight
+maximum $5_000 on freight
+minimum $450
+---
+tariff "t"
+minimum $400 on freight
+maximum $5000 on freight
+minimum $450
+
+=== a total clause on something other than freight
+tariff "t"
+minimum $400 on fright
+---
+tariff "t"
+minimum $400 on fright
+! syntax 27..33 A minimum or maximum applies `on freight` (the uncoded lines) or, without `on`, to the whole bill; `fright` isn't one of them
+
+=== on and freight are names elsewhere
+tariff "t"
+let on = 1
+let freight = on + 1
+---
+tariff "t"
+let on = 1
+let freight = (+ on 1)

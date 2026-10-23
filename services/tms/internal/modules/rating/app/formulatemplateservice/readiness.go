@@ -26,6 +26,7 @@ const (
 	ReadinessCheckSource     = "source"
 	ReadinessCheckTests      = "tests"
 	ReadinessCheckLibraries  = "libraries"
+	ReadinessCheckTables     = "tables"
 	ReadinessCheckDependents = "dependents"
 	ReadinessCheckCoverage   = "coverage"
 	ReadinessCheckStatus     = "status"
@@ -160,6 +161,7 @@ func (s *Service) Readiness(
 		gate.tests,
 		coverageReadiness(locale, gate.content, resp.Coverage),
 		libraries,
+		tableReadiness(locale, template, gate.content),
 		dependents,
 		statusCheck,
 		reviewerCheck,
@@ -430,6 +432,60 @@ func (s *Service) libraryReadiness(
 		len(template.Imports),
 	)
 	return check, nil
+}
+
+func tableReadiness(
+	locale i18n.Locale,
+	template *formulatemplate.FormulaTemplate,
+	content *contentCheck,
+) ReadinessCheck {
+	check := ReadinessCheck{
+		Key:    ReadinessCheckTables,
+		Label:  i18n.Translate(locale, "Rate table versions"),
+		Status: ReadinessPass,
+	}
+	latest := []tarifftypes.TablePin{}
+	if content != nil && content.checked != nil {
+		latest = content.checked.Tables
+	}
+	if len(latest) == 0 {
+		check.Detail = i18n.Translate(locale, "Reads no rate table")
+		return check
+	}
+
+	pinned := make(map[pulid.ID]int64, len(template.Tables))
+	for _, pin := range template.Tables {
+		pinned[pin.RateMatrixID] = pin.VersionNumber
+	}
+	newer := make([]string, 0, len(latest))
+	for _, pin := range latest {
+		current, ok := pinned[pin.RateMatrixID]
+		if ok && current != pin.VersionNumber {
+			newer = append(newer, i18n.Translate(
+				locale,
+				"{0} v{1} (v{2} is published)",
+				pin.Code,
+				current,
+				pin.VersionNumber,
+			))
+		}
+	}
+	if len(newer) > 0 {
+		check.Status = ReadinessWarn
+		check.Detail = i18n.Translate(
+			locale,
+			"Approval pins the newest published versions: {0}",
+			strings.Join(newer, ", "),
+		)
+		return check
+	}
+
+	check.Detail = i18n.Translate(
+		locale,
+		"Pins {0, plural, one {# rate table} other {# rate tables}} at the newest published version",
+		len(latest),
+	)
+	return check
 }
 
 func dependentsReadiness(ctx context.Context, gate *dependentsGate) ReadinessCheck {

@@ -1270,10 +1270,10 @@
      "customer",
      "fuel",
      "rating",
-     "input"
+     "input",
+     "tables"
     ],
     "excludes": [
-     "tables",
      "total"
     ]
    }
@@ -3083,6 +3083,408 @@
      "\"Per mile\"",
      "FSC"
     ]
+   }
+  },
+  {
+   "name": "the shipment offers requested",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.req| {",
+    "  charge \"x\" = $1",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "requested"
+    ],
+    "items": {
+     "requested": {
+      "kind": "method",
+      "detail": "requested(code: CODE) -> Bool"
+     }
+    }
+   }
+  },
+  {
+   "name": "shipment.requested offers the active codes",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.requested(|) {",
+    "  charge \"x\" = $1",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "FSC",
+     "DET"
+    ],
+    "excludes": [
+     "LIFT",
+     "shipment"
+    ],
+    "items": {
+     "FSC": {
+      "kind": "code",
+      "detail": "Fuel surcharge"
+     }
+    }
+   }
+  },
+  {
+   "name": "a condition's test offers applies",
+   "source": [
+    "condition \"c\"",
+    "shipment.hazmat",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "applies"
+    ],
+    "excludes": [
+     "total",
+     "lines"
+    ],
+    "items": {
+     "applies": {
+      "detail": "Bool"
+     }
+    }
+   }
+  },
+  {
+   "name": "a stop constructor offers its location's fields",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [delivery(|)]",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "legDistance:",
+     "category:",
+     "facilityType:",
+     "requiresAppointment:",
+     "zip3:"
+    ],
+    "items": {
+     "category:": {
+      "detail": "LocationCategory?"
+     }
+    }
+   }
+  },
+  {
+   "name": "a date offers holiday",
+   "source": [
+    "tariff \"t\"",
+    "let h = rating.date.hol|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "holiday"
+    ],
+    "items": {
+     "holiday": {
+      "kind": "property"
+     }
+    }
+   }
+  },
+  {
+   "name": "a given cell offers the table codes",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given tables.|",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "Zones",
+     "Breaks",
+     "ClassRates"
+    ],
+    "excludes": [
+     "shipment"
+    ],
+    "items": {
+     "Zones": {
+      "kind": "table"
+     }
+    }
+   }
+  },
+  {
+   "name": "a vary offers no rate tables",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "property \"p\" {",
+    "  vary |",
+    "  expect total > $0",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "shipment"
+    ],
+    "excludes": [
+     "tables"
+    ]
+   }
+  },
+  {
+   "name": "after bill's dot, its sums and charge(…)",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = bill.|"
+   ],
+   "expect": {
+    "includes": [
+     "freight",
+     "accessorials",
+     "total",
+     "charge"
+    ],
+    "excludes": [
+     "round",
+     "weight"
+    ],
+    "items": {
+     "freight": {
+      "kind": "field",
+      "detail": "Money"
+     },
+     "charge": {
+      "kind": "method",
+      "detail": "charge(line: CODE | Text) -> Money?"
+     }
+    }
+   }
+  },
+  {
+   "name": "bill is a name in a tariff's own code",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = |"
+   ],
+   "expect": {
+    "includes": [
+     "bill",
+     "shipment"
+    ],
+    "items": {
+     "bill": {
+      "kind": "name",
+      "detail": "Bill"
+     }
+    }
+   }
+  },
+  {
+   "name": "bill is no name in a function or a test, which reads reviews instead",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "reviews",
+     "total",
+     "lines"
+    ],
+    "excludes": [
+     "bill"
+    ]
+   }
+  },
+  {
+   "name": "bill is no name in a condition",
+   "source": [
+    "condition \"c\"",
+    "|"
+   ],
+   "expect": {
+    "excludes": [
+     "bill",
+     "review"
+    ]
+   }
+  },
+  {
+   "name": "a charge's options include its limits",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" (quantity: 1 mi, |) = $1"
+   ],
+   "expect": {
+    "includes": [
+     "rate:",
+     "minimum:",
+     "maximum:"
+    ],
+    "excludes": [
+     "quantity:"
+    ]
+   }
+  },
+  {
+   "name": "bill.charge offers the codes and labels the tariff bills",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $1",
+    "charge \"Fuel\" as FSC = $1",
+    "let x = bill.charge(|)"
+   ],
+   "expect": {
+    "includes": [
+     "FSC",
+     "\"Linehaul\""
+    ]
+   }
+  },
+  {
+   "name": "review starts a statement in a tariff",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $1",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "review",
+     "best",
+     "note"
+    ]
+   }
+  },
+  {
+   "name": "a date-time offers its time of day and minutes",
+   "source": [
+    "tariff \"t\"",
+    "let t = rating.date.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "time",
+     "addMinutes",
+     "addHours",
+     "hour"
+    ],
+    "items": {
+     "time": {
+      "kind": "property",
+      "detail": "time: Time"
+     },
+     "addMinutes": {
+      "kind": "method",
+      "detail": "addMinutes(n: Int) -> DateTime"
+     }
+    }
+   }
+  },
+  {
+   "name": "a time of day offers its hour and minute",
+   "source": [
+    "tariff \"t\"",
+    "let t = rating.date.time",
+    "let h = t.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "hour",
+     "minute"
+    ],
+    "excludes": [
+     "addMinutes",
+     "date"
+    ],
+    "items": {
+     "hour": {
+      "kind": "property",
+      "detail": "hour: Int"
+     }
+    }
+   }
+  },
+  {
+   "name": "a freight class offers its number",
+   "source": [
+    "tariff \"t\"",
+    "let c = shipment.freightClass ?? Class50",
+    "let n = c.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "number"
+    ],
+    "items": {
+     "number": {
+      "kind": "property",
+      "detail": "number: Number"
+     }
+    }
+   }
+  },
+  {
+   "name": "Time is a type",
+   "source": [
+    "tariff \"t\"",
+    "input open: Ti|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Time"
+    ]
+   }
+  },
+  {
+   "name": "a variant range's end offers the enum's variants",
+   "source": [
+    "library \"t\"",
+    "fn weekday(day: Weekday) -> Bool = match day {",
+    "  Mon..=| => true",
+    "  _ => false",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "Fri",
+     "Sun"
+    ],
+    "excludes": [
+     "Delivery"
+    ]
+   }
+  },
+  {
+   "name": "a range of freight classes offers the classes",
+   "source": [
+    "tariff \"t\"",
+    "let dense = (shipment.freightClass ?? Class50) in Class50..Cl|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Class85"
+    ],
+    "range": "Cl"
    }
   }
  ]

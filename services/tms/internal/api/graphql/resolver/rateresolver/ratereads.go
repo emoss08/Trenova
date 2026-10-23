@@ -42,28 +42,48 @@ func (r *RateAgreementResolver) agreementLanes(
 	})
 }
 
-// matrixCells is one page of a matrix's grid, with how many cells it holds.
-func (r *RateMatrixResolver) matrixCells(
+type cellPageRequest struct {
+	key    ratematrix.VersionKey
+	offset *int
+	limit  *int
+}
+
+func (d *Deps) matrixCellPage(
 	ctx context.Context,
-	obj *gqlmodel.RateMatrix,
-	offset, limit int,
-) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
+	req *cellPageRequest,
+) ([]*gqlmodel.RateMatrixCell, error) {
+	authCtx, err := d.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
-	matrixID, err := base.ParseIDField("id", obj.ID)
-	if err != nil {
-		return nil, err
+	from := 0
+	if req.offset != nil {
+		from = max(*req.offset, 0)
+	}
+	size := maxMatrixCellPage
+	if req.limit != nil {
+		size = min(max(*req.limit, 1), maxMatrixCellPage)
 	}
 	tenant := base.TenantInfo(authCtx)
 
-	return r.RateMatrixService.ListCells(ctx, &ratematrixports.ListRateMatrixCellsRequest{
-		TenantInfo:   tenant,
-		RateMatrixID: matrixID,
+	page, err := d.RateMatrixService.ListCells(ctx, &ratematrixports.ListRateMatrixCellsRequest{
+		TenantInfo:    tenant,
+		RateMatrixID:  req.key.RateMatrixID,
+		VersionNumber: req.key.VersionNumber,
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
-			Pagination: pagination.Info{Limit: limit, Offset: offset},
+			Pagination: pagination.Info{Limit: size, Offset: from},
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	cells := make([]*gqlmodel.RateMatrixCell, 0, len(page.Items))
+	for _, cell := range page.Items {
+		if cell != nil {
+			cells = append(cells, rateMatrixCellToModel(cell))
+		}
+	}
+	return cells, nil
 }

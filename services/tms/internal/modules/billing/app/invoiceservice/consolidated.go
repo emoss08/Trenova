@@ -140,6 +140,9 @@ func (s *Service) createConsolidatedTx(
 	if err := s.guardDetentionHolds(txCtx, params.TenantInfo, legIDs(params.Legs)); err != nil {
 		return nil, err
 	}
+	if err := shipment.RatingReviewHoldError(params.Legs); err != nil {
+		return nil, err
+	}
 
 	if err := invoicelines.HydrateAccessorials(
 		txCtx,

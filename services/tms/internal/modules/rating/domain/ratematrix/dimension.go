@@ -26,6 +26,7 @@ type RateMatrixDimension struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	RateMatrixID   pulid.ID `json:"rateMatrixId"   bun:"rate_matrix_id,type:VARCHAR(100),notnull"`
+	VersionNumber  int64    `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull,default:0"`
 
 	Position  int16         `json:"position"  bun:"position,type:SMALLINT,notnull"`
 	Kind      DimensionKind `json:"kind"      bun:"kind,type:rate_matrix_dimension_kind_enum,notnull"`
@@ -90,6 +91,11 @@ func (rmd *RateMatrixDimension) Validate(multiErr *errortypes.MultiError) {
 		)
 	}
 
+	if rmd.Kind.IsPostalRange() {
+		rmd.validatePostalRange(multiErr)
+		return
+	}
+
 	// Banding only means something for a quantity. A zone or a freight class
 	// has no ordering to cut into ranges, and a cell keyed by a range on such
 	// an axis could never be matched.
@@ -97,9 +103,45 @@ func (rmd *RateMatrixDimension) Validate(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"matchMode",
 			errortypes.ErrInvalid,
-			"Only a numeric dimension can be matched by range",
+			"Only a numeric dimension or a postal range can be matched by range",
 		)
 	}
+}
+
+func (rmd *RateMatrixDimension) validatePostalRange(multiErr *errortypes.MultiError) {
+	if rmd.MatchMode != MatchModeRange {
+		multiErr.Add(
+			"matchMode",
+			errortypes.ErrInvalid,
+			"A postal range axis is matched by range",
+		)
+	}
+	if rmd.RangeOverflow != "" && rmd.RangeOverflow != RangeOverflowError {
+		multiErr.Add(
+			"rangeOverflow",
+			errortypes.ErrInvalid,
+			"A postal range axis has no overflow policy: a postal code no range holds finds no rate",
+		)
+	}
+}
+
+func (rmd *RateMatrixDimension) SameShape(other *RateMatrixDimension) bool {
+	if other == nil {
+		return false
+	}
+	mine, theirs := *rmd, *other
+	mine.applyModeDefaults()
+	theirs.applyModeDefaults()
+	return mine.Position == theirs.Position &&
+		mine.Kind == theirs.Kind &&
+		mine.MatchMode == theirs.MatchMode &&
+		mine.Label == theirs.Label &&
+		mine.KeyNormalization == theirs.KeyNormalization &&
+		mine.RangeOverflow == theirs.RangeOverflow
+}
+
+func (rmd *RateMatrixDimension) IsPostalRange() bool {
+	return rmd.Kind.IsPostalRange()
 }
 
 // DisplayLabel is the label if one was given, and the kind otherwise, so a

@@ -105,6 +105,18 @@ export const detentionHoldSchema = z.object({
 });
 export type DetentionHold = z.infer<typeof detentionHoldSchema>;
 
+/**
+ * The reviews a tariff asked for on the item's shipment, keeping the item from being approved
+ * until a person approves the rating.
+ */
+export const ratingReviewHoldSchema = z.object({
+  shipmentId: z.string(),
+  reasons: z.array(z.string()).default([]),
+  ratedAt: z.number().nullish(),
+  formulaTemplateName: z.string().nullish(),
+});
+export type RatingReviewHold = z.infer<typeof ratingReviewHoldSchema>;
+
 /** Why a biller set an item aside. */
 export const billingQueueHoldReasonSchema = z.enum([
   "WaitingOnPaperwork",
@@ -296,6 +308,7 @@ export const billingQueueItemSchema = z.object({
     .array(detentionHoldSchema)
     .nullish()
     .transform((value) => value ?? []),
+  ratingReviewHold: ratingReviewHoldSchema.nullish().transform((value) => value ?? null),
   holdReasonCode: nullableEnumSchema(billingQueueHoldReasonSchema),
   heldAt: z.number().nullish(),
   heldById: nullableStringSchema,

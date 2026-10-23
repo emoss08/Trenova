@@ -69,6 +69,7 @@ function template(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate {
     status: "Draft",
     inputs: [],
     imports: [],
+    tables: [],
     testCount: 0,
     version: 1,
     currentVersionNumber: 1,

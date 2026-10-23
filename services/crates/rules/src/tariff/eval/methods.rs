@@ -9,7 +9,11 @@
 //!   `roundDown(to:)`, `abs`, `min`, `max`, `clamp`. The increment is converted into the
 //!   receiver's unit first, so `1_240 lb.roundUp(to: 1 cwt)` is `1300 lb`.
 //! - Dates: `year`, `month`, `day`, `weekday` (a `Weekday`), `weekend`, `addDays(n)`; date-times
-//!   also `hour`, `minute`, `date` and `addHours(n)`, all in the date-time's own offset.
+//!   also `hour`, `minute`, `date`, `time`, `addHours(n)` and `addMinutes(n)`, all in the
+//!   date-time's own offset. `holiday` reads the record's `rating.holidays`, so the interpreter
+//!   answers it.
+//! - Times of day: `hour`, `minute`.
+//! - A `FreightClass`: `number`, the class it names (`Class77_5` is 77.5).
 
 use super::error::{Code, EvalError};
 use super::operators::unit_error;
@@ -34,7 +38,7 @@ pub fn params(receiver: &Value, method: &str) -> &'static [&'static str] {
         "roundUp" | "roundDown" => &["to"],
         "min" | "max" => &["x"],
         "clamp" => &["lo", "hi"],
-        "pow" | "addDays" | "addHours" => &["n"],
+        "pow" | "addDays" | "addHours" | "addMinutes" => &["n"],
         "in" => &["unit"],
         "startsWith" | "endsWith" | "contains" => &["t"],
         "replace" => &["a", "b"],
@@ -84,8 +88,8 @@ fn places(method: &str, args: &[Value]) -> Result<u32, EvalError> {
     }
 }
 
-/// A property of a number, quantity, date or date-time, or `None` when it has none by that
-/// name.
+/// A property of a number, quantity, date, date-time, time of day or freight class, or `None`
+/// when it has none by that name.
 #[must_use]
 pub fn property(value: &Value, name: &str) -> Option<Value> {
     match (value, name) {
@@ -94,7 +98,13 @@ pub fn property(value: &Value, name: &str) -> Option<Value> {
         (Value::DateTime(at), "hour") => Some(Value::int(at.hour())),
         (Value::DateTime(at), "minute") => Some(Value::int(at.minute())),
         (Value::DateTime(at), "date") => Some(Value::Date(at.date())),
+        (Value::DateTime(at), "time") => Some(Value::Time(at.time())),
         (Value::DateTime(at), _) => date_property(at.date(), name),
+        (Value::Time(time), "hour") => Some(Value::int(time.hour())),
+        (Value::Time(time), "minute") => Some(Value::int(time.minute())),
+        (Value::Enum(variant), "number") => {
+            crate::tariff::schema::freight_class_number(variant).map(Value::Number)
+        }
         _ => None,
     }
 }
@@ -345,6 +355,11 @@ fn date_time_method(at: DateTime, name: &str, args: &[Value]) -> Option<Result<V
             days.checked_mul(86_400).ok_or_else(EvalError::overflow)
         }))),
         "addHours" => Some(shift(hours_in_seconds(arg(args, 0)))),
+        "addMinutes" => {
+            Some(shift(whole(name, arg(args, 0)).and_then(|minutes| {
+                minutes.checked_mul(60).ok_or_else(EvalError::overflow)
+            })))
+        }
         _ => None,
     }
 }

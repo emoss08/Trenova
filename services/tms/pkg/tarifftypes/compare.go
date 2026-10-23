@@ -2,6 +2,7 @@ package tarifftypes
 
 import (
 	"bytes"
+	"slices"
 
 	"github.com/emoss08/trenova/pkg/rules"
 )
@@ -16,6 +17,10 @@ func ImportsEqual(a, b []Import) bool {
 		}
 	}
 	return true
+}
+
+func TablePinsEqual(a, b []TablePin) bool {
+	return slices.Equal(a, b)
 }
 
 func ValuesEqual(a, b rules.RawJSON) bool {

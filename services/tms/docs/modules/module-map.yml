@@ -456,6 +456,8 @@ modules:
       - rateconfirmationrepository
       - rateimportrepository
       - ratematrixrepository
+      - ratematrixreviewrepository
+      - ratematrixversionrepository
       - ratequoterepository
       - ratesimulationrepository
       - ratezonerepository
@@ -517,6 +519,7 @@ modules:
       - shipmentinvalidation
       - shipmentmoveservice
       - shipmentquickfilterservice
+      - shipmentratingreviewservice
       - shipmentservice
       - shipmentsuggestionservice
       - shipmenttracking

@@ -3,6 +3,7 @@ import {
   rateAgreementAccessorialSchema,
   rateAgreementRuleSchema,
   rateAgreementSchema,
+  rateMatrixCellSchema,
   rateMatrixDimensionSchema,
   rateMatrixSchema,
 } from "../rate";
@@ -228,5 +229,61 @@ describe("rateMatrixDimensionSchema lookup modes", () => {
         rangeOverflow: "ClampToTopBand",
       }),
     ).toMatchObject({ keyNormalization: "Zip3", rangeOverflow: "ClampToTopBand" });
+  });
+});
+
+describe("rateMatrixSchema review state", () => {
+  const matrix = {
+    code: "ZONE-TL",
+    name: "Zone to Zone Truckload",
+    dimensions: [{ position: 0, kind: "ZipRange", matchMode: "Range", label: "" }],
+  };
+
+  it("reads a new matrix as a draft that was never published", () => {
+    expect(rateMatrixSchema.parse(matrix)).toMatchObject({
+      status: "Draft",
+      publishedVersionNumber: 0,
+      hasDraftChanges: true,
+    });
+  });
+
+  it("keeps the review state the server sends", () => {
+    expect(
+      rateMatrixSchema.parse({
+        ...matrix,
+        status: "InReview",
+        publishedVersionNumber: 3,
+        publishedAt: 1_700_000_000,
+        hasDraftChanges: true,
+        submittedById: "usr_1",
+        reviewComment: "",
+      }),
+    ).toMatchObject({
+      status: "InReview",
+      publishedVersionNumber: 3,
+      publishedAt: 1_700_000_000,
+      submittedById: "usr_1",
+    });
+  });
+
+  it("refuses a status outside the review states", () => {
+    expect(rateMatrixSchema.safeParse({ ...matrix, status: "Published" }).success).toBe(false);
+  });
+});
+
+describe("rateMatrixCellSchema postal ranges", () => {
+  it("keeps a postal range's last code beside its first", () => {
+    expect(
+      rateMatrixCellSchema.parse({ d0Key: "100", d0KeyTo: "149", value: "2.5" }),
+    ).toMatchObject({ d0Key: "100", d0KeyTo: "149", d1KeyTo: "", value: 2.5 });
+  });
+
+  it("reads a cell with no range end as empty on every axis", () => {
+    expect(rateMatrixCellSchema.parse({ d0Key: "A", value: 1 })).toMatchObject({
+      d0KeyTo: "",
+      d1KeyTo: "",
+      d2KeyTo: "",
+      d3KeyTo: "",
+    });
   });
 });

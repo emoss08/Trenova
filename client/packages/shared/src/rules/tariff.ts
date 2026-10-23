@@ -246,6 +246,11 @@ const catalogSchema = z.object({
         doc: docSchema,
         type: z.string(),
         fields: z.array(catalogFieldSchema),
+        /** What a root answers besides its fields: `bill.charge(…)`. */
+        methods: z
+          .array(z.object({ name: z.string(), signature: z.string(), doc: docSchema }))
+          .nullish()
+          .transform((value) => value ?? []),
       }),
     ),
     records: z.array(
@@ -257,7 +262,17 @@ const catalogSchema = z.object({
         fields: z.array(catalogFieldSchema),
       }),
     ),
-    enums: z.array(z.object({ name: z.string(), variants: z.array(z.string()) })),
+    /** `ordered` enums (`FreightClass`, `Weekday`) compare by their variants' order. */
+    enums: z.array(
+      z.object({
+        name: z.string(),
+        variants: z.array(z.string()),
+        ordered: z
+          .boolean()
+          .nullish()
+          .transform((value) => value ?? false),
+      }),
+    ),
   }),
 });
 export type TariffCatalog = z.output<typeof catalogSchema>;

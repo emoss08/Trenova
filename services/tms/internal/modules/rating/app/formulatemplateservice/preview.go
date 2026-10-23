@@ -128,6 +128,7 @@ func previewOf(content *contentCheck) *formulatemplateports.PreviewResult {
 		Diagnostics: check.Diagnostics,
 		Inputs:      tarifftypes.InputDeclsFrom(check.Inputs),
 		Imports:     content.checked.Imports,
+		Tables:      content.checked.Tables,
 		Charges:     check.Charges,
 		Tests:       content.tests.Tests,
 		Choices:     []rules.TariffChoice{},
@@ -140,6 +141,9 @@ func previewOf(content *contentCheck) *formulatemplateports.PreviewResult {
 	}
 	if result.Imports == nil {
 		result.Imports = []tarifftypes.Import{}
+	}
+	if result.Tables == nil {
+		result.Tables = []tarifftypes.TablePin{}
 	}
 	if result.Tests == nil {
 		result.Tests = []rules.TariffTestResult{}
@@ -192,6 +196,7 @@ type sourceRating struct {
 	name      string
 	source    string
 	libraries []rules.TariffLibrary
+	tables    []tarifftypes.TablePin
 	inputs    tarifftypes.Inputs
 	shipment  *tariffports.RatedShipment
 	trace     bool
@@ -210,6 +215,7 @@ func (s *Service) rateSource(
 			Name:      req.name,
 			Source:    req.source,
 			Libraries: req.libraries,
+			Tables:    req.tables,
 		},
 		Inputs: req.inputs,
 		Record: rules.NoneValue(),
@@ -470,6 +476,7 @@ type TestSourceResult struct {
 	Check   *rules.TariffCheck      `json:"check"`
 	Inputs  []tarifftypes.InputDecl `json:"inputs"`
 	Imports []tarifftypes.Import    `json:"imports"`
+	Tables  []tarifftypes.TablePin  `json:"tables"`
 	Tests   *rules.TariffTestRun    `json:"tests"`
 }
 
@@ -494,6 +501,7 @@ func (s *Service) TestSource(
 		Check:   content.checked.Check,
 		Inputs:  tarifftypes.InputDeclsFrom(content.checked.Check.Inputs),
 		Imports: content.checked.Imports,
+		Tables:  content.checked.Tables,
 		Tests:   content.tests,
 	}, nil
 }

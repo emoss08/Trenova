@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -102,6 +103,16 @@ func decodeWire(raw rules.RawJSON) (any, error) {
 	}
 	err := sonic.Unmarshal(raw, &decoded)
 	return decoded, err
+}
+
+func pinnedMatrix(
+	ctx context.Context,
+	pin *tarifftypes.TablePin,
+) (*ratematrix.RateMatrix, error) {
+	if pin == nil || pin.RateMatrixID.IsNil() || !loaders.Available(ctx) {
+		return nil, nil
+	}
+	return loaders.RateMatrixByID(ctx, pin.RateMatrixID.String())
 }
 
 func formulaTemplateStats(

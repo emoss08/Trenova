@@ -26,7 +26,7 @@ type ReseatKeepingEditsParams<T extends FieldValues> = {
   /** The form's values for the record to seat on. */
   values: T;
   /** The values the person's edits are measured from. */
-  base: DeepPartial<T>;
+  base: Readonly<DeepPartial<T>>;
   /** The fields the person edits. */
   fields: readonly Path<T>[];
 };

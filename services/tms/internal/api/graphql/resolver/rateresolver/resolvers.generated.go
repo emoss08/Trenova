@@ -23,3 +23,5 @@ type QueryResolver struct{ *Deps }
 type RateAgreementResolver struct{ *Deps }
 
 type RateMatrixResolver struct{ *Deps }
+
+type RateMatrixVersionResolver struct{ *Deps }

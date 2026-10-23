@@ -18,13 +18,17 @@ export type MatrixDimensionInput = {
   readonly label?: string | null;
 };
 
-/** One cell: its key and band on each axis position; other fields are ignored. */
+/** One cell: its key (and a postal range's last key) and band on each axis; other fields are ignored. */
 export type MatrixCellInput = {
   readonly id?: string | null;
   readonly d0Key?: string | null;
   readonly d1Key?: string | null;
   readonly d2Key?: string | null;
   readonly d3Key?: string | null;
+  readonly d0KeyTo?: string | null;
+  readonly d1KeyTo?: string | null;
+  readonly d2KeyTo?: string | null;
+  readonly d3KeyTo?: string | null;
   readonly d0Min?: DecimalInput;
   readonly d0Max?: DecimalInput;
   readonly d1Min?: DecimalInput;
@@ -57,6 +61,10 @@ function wireCell(cell: MatrixCellInput | null | undefined) {
     d1Key: wireText(cell.d1Key),
     d2Key: wireText(cell.d2Key),
     d3Key: wireText(cell.d3Key),
+    d0KeyTo: wireText(cell.d0KeyTo),
+    d1KeyTo: wireText(cell.d1KeyTo),
+    d2KeyTo: wireText(cell.d2KeyTo),
+    d3KeyTo: wireText(cell.d3KeyTo),
     d0Min: wireDecimal(cell.d0Min),
     d0Max: wireDecimal(cell.d0Max),
     d1Min: wireDecimal(cell.d1Min),

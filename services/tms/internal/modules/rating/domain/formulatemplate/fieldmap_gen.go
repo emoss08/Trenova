@@ -31,3 +31,10 @@ func (e *Review) GetStaticFieldMap() map[string]string {
 func (e *VersionImport) GetStaticFieldMap() map[string]string {
 	return formulatemplatecol.VersionImportFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [VersionTable].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [formulatemplatecol.VersionTableFieldMap] instead of parsing struct tags via reflection.
+func (e *VersionTable) GetStaticFieldMap() map[string]string {
+	return formulatemplatecol.VersionTableFieldMap
+}

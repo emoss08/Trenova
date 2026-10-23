@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -151,12 +150,7 @@ func (s *LookupMatrixSeed) createMatrix(
 		Code:           def.code,
 		Name:           def.name,
 		Description:    def.description,
-		Status:         domaintypes.StatusActive,
 		ValueType:      def.valueType,
-	}
-
-	if _, err := tx.NewInsert().Model(matrix).Exec(ctx); err != nil {
-		return fmt.Errorf("insert lookup matrix %s: %w", def.code, err)
 	}
 
 	kind := ratematrix.DimensionKindCustom
@@ -175,10 +169,6 @@ func (s *LookupMatrixSeed) createMatrix(
 		Label:          def.name,
 	}
 
-	if _, err := tx.NewInsert().Model(dimension).Exec(ctx); err != nil {
-		return fmt.Errorf("insert lookup matrix dimension %s: %w", def.code, err)
-	}
-
 	cells := make([]*ratematrix.RateMatrixCell, 0, len(def.cells))
 	for _, cellDef := range def.cells {
 		cells = append(cells, &ratematrix.RateMatrixCell{
@@ -194,8 +184,12 @@ func (s *LookupMatrixSeed) createMatrix(
 		})
 	}
 
-	if _, err := tx.NewInsert().Model(&cells).Exec(ctx); err != nil {
-		return fmt.Errorf("insert lookup matrix cells %s: %w", def.code, err)
+	if err := insertPublishedMatrix(ctx, tx, &seededMatrix{
+		matrix:     matrix,
+		dimensions: []*ratematrix.RateMatrixDimension{dimension},
+		cells:      cells,
+	}); err != nil {
+		return err
 	}
 
 	if err := sc.TrackCreated(ctx, "rate_matrices", matrix.ID, s.Name()); err != nil {

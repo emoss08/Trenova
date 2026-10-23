@@ -34,7 +34,9 @@ use crate::span::Span;
 use crate::tariff::check::describe::snippet as source_text;
 use crate::tariff::check::lower::BUILTIN_TYPES;
 use crate::tariff::check::methods::{self, ParamKind, Receiver};
-use crate::tariff::check::{CONSTRUCTORS, Callee, SymbolKind, TABLE_METHODS};
+use crate::tariff::check::{
+    CONSTRUCTORS, Callee, REQUESTED, REQUESTED_DOC, REQUESTED_SIGNATURE, SymbolKind, TABLE_METHODS,
+};
 use crate::tariff::docs::Doc;
 use crate::tariff::stdlib;
 use crate::tariff::syntax::ast::{Expr, ExprKind, FileKind, ItemKind, StmtKind};
@@ -685,6 +687,15 @@ fn member(site: &Site<'_, '_>, items: &mut Items) {
             }
             return;
         }
+        ExprKind::Name(name)
+            if name.text == "bill"
+                && site.located.body == Body::Top
+                && site.kind() == FileKind::Tariff
+                && alias_module(site, &name.text).is_none() =>
+        {
+            bill_members(items);
+            return;
+        }
         ExprKind::Name(name) => {
             if let Some(module) = alias_module(site, &name.text) {
                 module_members(site, items, module);
@@ -703,6 +714,33 @@ fn member(site: &Site<'_, '_>, items: &mut Items) {
     let rewrite = (!optional_dot && ty.is_optional())
         .then(|| Span::new(dot_span.start, site.offset.max(dot_span.end)));
     members(items, ty.unwrapped(), rewrite);
+    if session.schema.root("shipment") == Some(ty.unwrapped())
+        && let Some(item) = items.add(Rank::Local, Kind::Method, REQUESTED)
+    {
+        item.detail = Some(String::from(REQUESTED_SIGNATURE));
+        item.doc = Some(Doc::Message(Message::new(REQUESTED_DOC)));
+        item.insert = format!("{REQUESTED}($0)");
+        item.snippet = true;
+        if let Some(span) = rewrite {
+            item.insert = format!("?.{}", item.insert);
+            item.range = Some(span);
+        }
+    }
+}
+
+/// What `bill.` reads: the sums of the bill so far and `charge(…)`.
+fn bill_members(items: &mut Items) {
+    members(
+        items,
+        &Type::Record(crate::tariff::schema::bill_type()),
+        None,
+    );
+    if let Some(item) = items.add(Rank::Expected, Kind::Method, "charge") {
+        item.insert = String::from("charge($0)");
+        item.snippet = true;
+        item.detail = Some(String::from("charge(line: CODE | Text) -> Money?"));
+        item.doc = Some(Doc::message(crate::tariff::schema::BILL_CHARGE_DOC));
+    }
 }
 
 /// The expression a `.` at `dot` reads from.
@@ -970,8 +1008,8 @@ fn table_detail(table: &crate::tariff::schema::TableShape) -> String {
     format!("[{}] -> {}?", axes.join(", "), table.value_type)
 }
 
-/// After `as` in a charge: the active accessorial codes.
-fn codes(site: &Site<'_, '_>, items: &mut Items) {
+/// After `as` in a charge, and in `shipment.requested(…)`: the active accessorial codes.
+pub fn codes(site: &Site<'_, '_>, items: &mut Items) {
     let Some(codes) = &site.session.context.codes else {
         return;
     };
@@ -1206,8 +1244,9 @@ fn input_tail(site: &Site<'_, '_>, items: &mut Items) -> bool {
     after_type
 }
 
-/// `given …` or `vary …`: the fields along the path, or `input.` and the inputs. Returns
-/// whether the position is in the path (before `stop`, the `=` or `in` that ends it).
+/// `given …` or `vary …`: the fields along the path, or `input.` and the inputs, and for a
+/// `given` the rate tables a test may give cells of. Returns whether the position is in the path
+/// (before `stop`, the `=` or `in` that ends it, or a cell's `[`, whose keys are values).
 fn given_path(site: &Site<'_, '_>, items: &mut Items, stop: &str) -> bool {
     let Some(first) = site.line_first() else {
         return false;
@@ -1219,10 +1258,11 @@ fn given_path(site: &Site<'_, '_>, items: &mut Items, stop: &str) -> bool {
         .map(|index| site.text(index))
         .filter(|word| *word != "." && !word.trim().is_empty())
         .collect();
-    if words.contains(&stop) {
+    if words.contains(&stop) || words.contains(&"[") {
         return false;
     }
     let session = site.session;
+    let cells = stop == "=";
     let Some((head, rest)) = words.split_first() else {
         for (root, ty, doc) in &session.schema.roots {
             if let Some(item) = items.add(Rank::Root, Kind::Name, root) {
@@ -1237,8 +1277,24 @@ fn given_path(site: &Site<'_, '_>, items: &mut Items, stop: &str) -> bool {
                 "Sets one of the file's inputs for this test: `given input.rate = $2.10/mi`."
             ))));
         }
+        if cells && let Some(item) = items.add(Rank::Root, Kind::Name, "tables") {
+            item.doc = Some(Doc::Message(Message::new(crate::message!(
+                "Gives a rate table's cell for this test: `given tables.Zones[\"A\", \"B\"] = $20/cwt`. The table then holds only the cells the test gives."
+            ))));
+        }
         return true;
     };
+    if *head == "tables" {
+        if cells && rest.is_empty() {
+            for table in &session.context.tables {
+                if let Some(item) = items.add(Rank::Expected, Kind::Table, &table.code) {
+                    item.detail = Some(table_detail(table));
+                    item.doc = (!table.name.is_empty()).then(|| Doc::Text(table.name.clone()));
+                }
+            }
+        }
+        return true;
+    }
     if *head == "input" {
         if rest.is_empty() {
             names::inputs(site, items, Rank::Expected);
@@ -1413,7 +1469,7 @@ fn inside(site: &Site<'_, '_>, bracket: &Bracket, items: &mut Items) -> Then {
     names::arguments(site, items, call, bracket, at_part_start)
 }
 
-/// A charge's `quantity:` and `rate:` options not written yet.
+/// A charge's `quantity:`, `rate:`, `minimum:` and `maximum:` options not written yet.
 fn charge_options(items: &mut Items, bracket: &Bracket) {
     for (option, doc) in [
         (
@@ -1423,6 +1479,18 @@ fn charge_options(items: &mut Items, bracket: &Bracket) {
         (
             "rate",
             crate::message!("The price per unit of the quantity: the invoice line's unit price."),
+        ),
+        (
+            "minimum",
+            crate::message!(
+                "The least the line bills: a smaller amount is raised to it, and the line says the minimum applied."
+            ),
+        ),
+        (
+            "maximum",
+            crate::message!(
+                "The most the line bills: a larger amount is lowered to it, and the line says the maximum applied."
+            ),
         ),
     ] {
         if bracket.named.iter().any(|(_, name)| name == option) {

@@ -363,6 +363,7 @@ type ResolverParams struct {
 	ShipmentCommentService       shipmentports.ShipmentCommentService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
 	ShipmentImportAssistant      shipmentports.ShipmentImportAssistantService `optional:"true"`
+	ShipmentRatingReviewService  shipmentports.RatingReviewService
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentTypeService          *shipmenttypeservice.Service
 	TableChangeAlertService      *tablechangealertservice.Service
@@ -956,8 +957,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskRateMatrixCard",
-		Hash:     "sha256:df8aeeac3bf7a7d644df2c9c0f5004b417cd111d4498f39d22cb575065641188",
-		Document: "query DeskRateMatrixCard($cellOffset: Int = 0, $id: ID!) { rateMatrix(id: $id) { cellCount cells(offset: $cellOffset, limit: 100) { d0Key d0Max d0Min d1Key d1Max d1Min d2Key d2Max d2Min d3Key d3Max d3Min deficitEligible id minCharge value } code description dimensions { id keyNormalization kind label matchMode position rangeOverflow } id name status valueType } }",
+		Hash:     "sha256:0f2a562ca94bec4efab3edff9ab87045406a79b7d1b7a36b603333a8aed841e1",
+		Document: "query DeskRateMatrixCard($cellOffset: Int = 0, $id: ID!) { rateMatrix(id: $id) { cellCount cells(offset: $cellOffset, limit: 100) { d0Key d0KeyTo d0Max d0Min d1Key d1KeyTo d1Max d1Min d2Key d2KeyTo d2Max d2Min d3Key d3KeyTo d3Max d3Min deficitEligible id minCharge value } code description dimensions { id keyNormalization kind label matchMode position rangeOverflow } hasDraftChanges id name publishedVersionNumber status valueType } }",
 	},
 	{
 		Name:     "DeskRateAgreements",
@@ -1477,16 +1478,17 @@ func NewSchema(p ResolverParams) Schema {
 		ServiceTypeService: p.ServiceTypeService,
 	}
 	shipmentDeps := &shipmentresolver.Deps{
-		Core:                    core,
-		AnalyticsService:        p.AnalyticsService,
-		ShipmentService:         p.ShipmentService,
-		ShipmentCommentService:  p.ShipmentCommentService,
-		ShipmentEventService:    p.ShipmentEventService,
-		TrackingEventService:    p.TrackingEventService,
-		ShipmentImportAssistant: p.ShipmentImportAssistant,
-		InvoiceService:          p.InvoiceService,
-		DriverSettlementRepo:    p.DriverSettlementRepo,
-		CarrierSettlementRepo:   p.CarrierSettlementRepo,
+		Core:                        core,
+		AnalyticsService:            p.AnalyticsService,
+		ShipmentService:             p.ShipmentService,
+		ShipmentCommentService:      p.ShipmentCommentService,
+		ShipmentRatingReviewService: p.ShipmentRatingReviewService,
+		ShipmentEventService:        p.ShipmentEventService,
+		TrackingEventService:        p.TrackingEventService,
+		ShipmentImportAssistant:     p.ShipmentImportAssistant,
+		InvoiceService:              p.InvoiceService,
+		DriverSettlementRepo:        p.DriverSettlementRepo,
+		CarrierSettlementRepo:       p.CarrierSettlementRepo,
 	}
 	shipmenttypeDeps := &shipmenttyperesolver.Deps{
 		Core:                core,
@@ -1837,6 +1839,7 @@ func NewSchema(p ResolverParams) Schema {
 		"FormulaLibraryImport":         func() any { return &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps} },
 		"FormulaLibraryVersion":        func() any { return &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps} },
 		"FormulaTemplate":              func() any { return &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps} },
+		"FormulaTemplateTable":         func() any { return &formulatemplateresolver.FormulaTemplateTableResolver{Deps: formulatemplateDeps} },
 		"FuelCard":                     func() any { return &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps} },
 		"FuelCardDeskCard":             func() any { return &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps} },
 		"FuelFeedStatus":               func() any { return &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps} },
@@ -1898,6 +1901,7 @@ func NewSchema(p ResolverParams) Schema {
 		"PortalTraining":               func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
 		"RateAgreement":                func() any { return &rateresolver.RateAgreementResolver{Deps: rateDeps} },
 		"RateMatrix":                   func() any { return &rateresolver.RateMatrixResolver{Deps: rateDeps} },
+		"RateMatrixVersion":            func() any { return &rateresolver.RateMatrixVersionResolver{Deps: rateDeps} },
 		"ReportSchedule":               func() any { return &reportresolver.ReportScheduleResolver{Deps: reportDeps} },
 		"ReviewRating":                 func() any { return &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps} },
 		"SafetyScorecard":              func() any { return &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps} },
@@ -1912,6 +1916,7 @@ func NewSchema(p ResolverParams) Schema {
 		"ShipmentMove":                 func() any { return &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps} },
 		"ShipmentMoveJurisdictionMile": func() any { return &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps} },
 		"ShipmentRatingDetail":         func() any { return &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps} },
+		"ShipmentRatingReviewApproval": func() any { return &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps} },
 		"TCASubscription":              func() any { return &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps} },
 		"Tender":                       func() any { return &tenderresolver.TenderResolver{Deps: tenderDeps} },
 		"TenderOffer":                  func() any { return &tenderresolver.TenderOfferResolver{Deps: tenderDeps} },

@@ -35,6 +35,12 @@ describe("formatTariffValue", () => {
     );
   });
 
+  it("writes a time of day as its clock, with seconds only when it has some", () => {
+    expect(formatTariffValue({ $time: "17:30:00" }, t)).toBe("5:30 PM");
+    expect(formatTariffValue({ $time: "00:05" }, t)).toBe("12:05 AM");
+    expect(formatTariffValue({ $time: "07:30:15" }, t)).toBe("7:30:15 AM");
+  });
+
   it("writes lists by their size, records field by field, and the scalars in words", () => {
     expect(formatTariffValue([], t)).toBe("0 items");
     expect(formatTariffValue(["752"], t)).toBe("1 item");

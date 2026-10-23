@@ -23,6 +23,11 @@ type GetLocationCategoryByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+type GetLocationCategoriesByIDsRequest struct {
+	TenantInfo          pagination.TenantInfo `json:"-"`
+	LocationCategoryIDs []pulid.ID            `json:"locationCategoryIds"`
+}
+
 type LocationCategoryRepository interface {
 	List(
 		ctx context.Context,
@@ -36,6 +41,10 @@ type LocationCategoryRepository interface {
 		ctx context.Context,
 		req GetLocationCategoryByIDRequest,
 	) (*locationcategory.LocationCategory, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetLocationCategoriesByIDsRequest,
+	) ([]*locationcategory.LocationCategory, error)
 	Create(
 		ctx context.Context,
 		entity *locationcategory.LocationCategory,

@@ -22,6 +22,7 @@ type Template struct {
 	Source        string
 	Inputs        []tarifftypes.InputDecl
 	Imports       []tarifftypes.Import
+	Tables        []tarifftypes.TablePin
 	Libraries     []rules.TariffLibrary
 }
 
@@ -44,6 +45,7 @@ type Checker interface {
 type ContextRequest struct {
 	TenantInfo pagination.TenantInfo
 	Libraries  []rules.TariffLibrary
+	Tables     []tarifftypes.TablePin
 }
 
 type ContextSource interface {

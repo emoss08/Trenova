@@ -160,7 +160,7 @@ func TestBuildMatchesTheModulesSchemaFieldForField(t *testing.T) {
 	built := buildRecord(t)
 	roots := make([]string, 0, len(published.Schema.Roots))
 	for _, root := range published.Schema.Roots {
-		if root.Name == "tables" {
+		if root.Name == "tables" || root.Name == "bill" {
 			continue
 		}
 		roots = append(roots, root.Name)

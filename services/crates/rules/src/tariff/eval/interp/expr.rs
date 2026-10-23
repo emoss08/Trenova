@@ -3,9 +3,10 @@
 use super::{Env, Interp, refusal, unknown_name};
 use crate::message::{Arg, Message};
 use crate::span::Span;
+use crate::tariff::eval::bill::{Sums, Wanted};
 use crate::tariff::eval::error::{EvalError, Stop};
 use crate::tariff::eval::operators::{self, scales_a_percent};
-use crate::tariff::eval::time::{Date, DateTime};
+use crate::tariff::eval::time::{Date, DateTime, Time};
 use crate::tariff::eval::trace::Event;
 use crate::tariff::eval::value::{Value, dollars};
 use crate::tariff::eval::{lists, methods, text};
@@ -81,7 +82,8 @@ impl<'a> Interp<'_, 'a> {
             | ExprKind::Money { .. }
             | ExprKind::Percent(_)
             | ExprKind::Date(_)
-            | ExprKind::DateTime(_) => literal(&expr.kind),
+            | ExprKind::DateTime(_)
+            | ExprKind::Time(_) => literal(&expr.kind),
             ExprKind::Text(text) => self.interpolate(env, text).map(|text| Value::text(&text)),
             ExprKind::Bool(flag) => Ok(Value::Bool(*flag)),
             ExprKind::None => Ok(Value::None),
@@ -167,6 +169,7 @@ impl<'a> Interp<'_, 'a> {
                 crate::message!("A lambda can only be given to a list method"),
                 [],
             )),
+            ExprKind::Choose(choose) => self.choice(env, choose, choose.span).map(Value::money),
             ExprKind::Missing => Err(internal(
                 crate::message!("The tariff is incomplete here"),
                 [],
@@ -240,6 +243,12 @@ impl<'a> Interp<'_, 'a> {
                 match name {
                     "total" => return Ok(Value::money(view.total)),
                     "lines" => return Ok(view.lines_value()),
+                    "applies" => {
+                        if let Some(applies) = view.applies {
+                            return Ok(Value::Bool(applies));
+                        }
+                    }
+                    "reviews" => return Ok(view.reviews_value()),
                     _ => {}
                 }
             }
@@ -320,11 +329,76 @@ impl<'a> Interp<'_, 'a> {
         if let Some(member) = self.module_member(env, target, name) {
             return member;
         }
+        if self.is_bill(env, target) {
+            return self.bill_field(name);
+        }
         let value = self.eval(env, target)?;
         if optional && value.is_none() {
             return Ok(Value::None);
         }
-        property(&value, name)
+        match (&value, name) {
+            (Value::Date(date), "holiday") => self.holiday(*date),
+            (Value::DateTime(at), "holiday") => self.holiday(at.date()),
+            _ => property(&value, name),
+        }
+    }
+
+    /// `.holiday`: whether `date` is the date of one of `rating.holidays`, a step per holiday
+    /// compared.
+    fn holiday(&mut self, date: Date) -> Result<Value, Stop> {
+        let holidays = match self.root("rating") {
+            Some(Value::Record(rating)) => match rating.get("holidays") {
+                Some(Value::List(holidays)) => Rc::clone(holidays),
+                _ => return Ok(Value::Bool(false)),
+            },
+            _ => return Ok(Value::Bool(false)),
+        };
+        self.meter.steps(holidays.len()).map_err(Stop::Failed)?;
+        let found = holidays.iter().any(|holiday| match holiday {
+            Value::Record(holiday) => {
+                matches!(holiday.get("date"), Some(Value::Date(day)) if *day == date)
+            }
+            _ => false,
+        });
+        Ok(Value::Bool(found))
+    }
+
+    /// Whether an expression is `bill`, the bill so far: the name in a root file's own code,
+    /// when nothing in scope or declared takes it.
+    pub(super) fn is_bill(&self, env: &Env, target: &Expr) -> bool {
+        matches!(&target.kind, ExprKind::Name(name) if name.text == "bill")
+            && env.module == 0
+            && !env.function
+            && env.get("bill").is_none()
+            && self.linked.constant(0, "bill").is_none()
+            && self.linked.alias(0, "bill").is_none()
+    }
+
+    /// The sums of the lines billed so far: the bills outside the running options and the
+    /// current one, with the lines `wanted` names summed apart.
+    pub(super) fn sums(&self, wanted: Option<&Wanted>) -> Result<Sums, Stop> {
+        let mut sums = Sums::default();
+        for bill in self.outer.iter().chain(std::iter::once(&self.bill)) {
+            bill.add_to(&mut sums, wanted).map_err(Stop::Failed)?;
+        }
+        Ok(sums)
+    }
+
+    /// `bill.freight`, `bill.accessorials` or `bill.total`.
+    fn bill_field(&self, name: &str) -> Result<Value, Stop> {
+        let sums = self.sums(None)?;
+        let amount = match name {
+            "freight" => sums.freight,
+            "accessorials" => sums.accessorials,
+            "total" => sums.total().map_err(Stop::Failed)?,
+            _ => {
+                return Err(internal(
+                    crate::message!("The bill has no {0}"),
+                    [Arg::from(name)],
+                ));
+            }
+        };
+        Ok(Value::money(amount))
     }
 
     fn index(
@@ -341,10 +415,7 @@ impl<'a> Interp<'_, 'a> {
         }
         match (&target_value, values.as_slice()) {
             (Value::Table(code), _) => {
-                let read = self
-                    .tables
-                    .index(code, &values, &mut self.meter)
-                    .map_err(Stop::Failed)?;
+                let read = self.read_table(|tables, meter| tables.index(code, &values, meter))?;
                 Ok(self.answer(env, read, expr.span))
             }
             (Value::List(items), [Value::Int(at)]) => Ok(at
@@ -515,12 +586,12 @@ pub(super) fn in_range(
         return Ok(false);
     }
     if let Some(start) = start
-        && value.compare(start)?.is_lt()
+        && value.range_compare(start)?.is_lt()
     {
         return Ok(false);
     }
     if let Some(end) = end {
-        let order = value.compare(end)?;
+        let order = value.range_compare(end)?;
         if order.is_gt() || (order.is_eq() && !inclusive) {
             return Ok(false);
         }
@@ -544,7 +615,7 @@ fn literal_number(value: Decimal, integer: bool, unit: Unit) -> Value {
     Value::quantity(value, unit)
 }
 
-/// The value of a number, money, percent, date or date-time literal.
+/// The value of a number, money, percent, date, date-time or time-of-day literal.
 pub(super) fn literal(kind: &ExprKind) -> Result<Value, Stop> {
     match kind {
         ExprKind::Number {
@@ -582,6 +653,9 @@ pub(super) fn literal(kind: &ExprKind) -> Result<Value, Stop> {
             })
             .map(Value::DateTime)
             .ok_or_else(|| Stop::Failed(EvalError::overflow())),
+        ExprKind::Time(literal) => Time::from_seconds(literal.seconds())
+            .map(Value::Time)
+            .ok_or_else(|| Stop::Failed(EvalError::overflow())),
         _ => Err(internal(crate::message!("This is not a literal"), [])),
     }
 }
@@ -610,6 +684,12 @@ pub(super) fn property(value: &Value, name: &str) -> Result<Value, Stop> {
 }
 
 impl super::TestView {
+    /// `reviews`: the review reasons, in order.
+    #[must_use]
+    pub fn reviews_value(&self) -> Value {
+        Value::list(self.reviews.iter().map(|text| Value::text(text)).collect())
+    }
+
     /// `lines`: every line as `{ label, code, amount, kind }`.
     #[must_use]
     pub fn lines_value(&self) -> Value {

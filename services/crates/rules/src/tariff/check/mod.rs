@@ -10,14 +10,15 @@
 //!   the evaluator's static type oracle reads);
 //! - every **symbol** (name, kind, module, declaration span, type, doc) and every
 //!   **reference** to one, so go to definition, rename and hover need no second pass; the first
-//!   symbols are the schema roots, in schema order, then `tables`;
+//!   symbols are the schema roots, in schema order, then `tables` and `bill`;
 //! - the inferred type of every `let`, `var`, loop variable, lambda parameter, pattern binding
 //!   and `=`-bodied function without `->`, for inlay hints ([`ModuleAnalysis::hints`]);
 //! - the resolved **callee** of every call and the **enum** of every variant
 //!   ([`ModuleAnalysis::callees`], [`ModuleAnalysis::variants`],
 //!   [`ModuleAnalysis::pattern_variants`]);
-//! - the root file's **inputs** (with a form descriptor and the default as a wire value) and
-//!   its **imports** with their pinned versions;
+//! - the root file's **inputs** (with a form descriptor and the default as a wire value), its
+//!   **imports** with their pinned versions, and the rate **tables** the program reads
+//!   ([`Analysis::tables`]), which a tariff version pins at the versions the context sent;
 //! - `ok`: no error in any module, the loader's and parser's findings included.
 //!
 //! Modules are checked in dependency order: each module's declarations (`decls`: enums, record
@@ -38,25 +39,28 @@
 //! | Code | Finding |
 //! |---|---|
 //! | `unknown-name`, `unknown-type`, `unknown-field`, `unknown-member`, `unknown-function`, `unknown-variant`, `unknown-unit`, `unknown-table`, `unknown-argument` | a name nothing declares, with a "did you mean" fix |
-//! | `unknown-code`, `inactive-code` | a charge code not in the accessorial catalog (once per code, suggesting a code by spelling or by description), or inactive |
+//! | `unknown-code`, `inactive-code` | a charge code not in the accessorial catalog (once per code, in `charge … as CODE`, `charge(CODE)` and `shipment.requested(CODE)`, suggesting a code by spelling or by description), or inactive |
 //! | `type-mismatch` | a value of the wrong type, with a fix writing a literal's unit |
 //! | `unit-mismatch` | operands an operator does not combine, explained in pricing words |
 //! | `optional` | a value that may be empty used where a value is needed; fixes: `?? zero`, `if let`, `require let` (and `?.` for a member) |
 //! | `ambiguous-variant` | a bare variant of several enums with no type expected; a fix per enum |
-//! | `before-definition`, `shadow`, `assign`, `closed-function`, `test-scope`, `not-constant` | scope rules |
+//! | `before-definition`, `shadow`, `assign`, `closed-function`, `test-scope`, `not-constant` | scope rules; `.holiday` in a function (`closed-function`) or a constant or default (`not-constant`) |
 //! | `arity`, `argument-order`, `duplicate-argument`, `not-callable`, `not-a-value`, `method-call`, `property-call`, `lambda`, `private`, `test-only` | calls |
-//! | `table`, `table-keys`, `table-shape`, `table-value` | rate tables |
-//! | `charge-amount`, `charge-option`, `misplaced`, `total-order`, `round-step` | charges, notes, total clauses and statements in the wrong place |
+//! | `table`, `table-keys`, `table-shape`, `table-value` | rate tables, and a test's given cells (`given-target` for one without keys) |
+//! | `live-table` | a warning: a test or property reads a rate table without giving any of its cells, so it depends on the matrix's live data |
+//! | `requested-code` | `shipment.requested(…)` given anything but a bare charge code |
+//! | `charge-amount`, `charge-option`, `misplaced`, `total-order`, `round-step` | charges (a line's `minimum:` above its `maximum:` is `charge-option`), notes, reviews, total clauses (a freight or whole-bill minimum above a maximum is `total-order`), statements in the wrong place, a choice used as a value anywhere but a binding's whole value, and `bill` read outside a tariff's own code |
 //! | `match-exhaustive`, `match-overlap`, `empty-range`, `pattern-binding` | `match` |
 //! | `missing-return`, `return-type`, `recursion`, `recursive-type`, `const-type`, `condition-result`, `annotation-needed`, `branch-mismatch`, `missing-field`, `duplicate`, `given-order`, `given-target`, `not-indexable`, `not-iterable`, `not-summable`, `unordered`, `never-none`, `interpolation`, `pattern`, `quotient`, `unit-type`, `type-arguments`, `range`, `overflow`, `divide-by-zero` | the other rules |
 //! | `vary-target`, `vary-values`, `vary-range`, `vary-read`, `vary-missing`, `assume-bill`, `monotone-target` | properties (`check/property.rs`); a property also uses `given-order`, `duplicate`, `range`, `empty-range`, `unordered`, `not-constant` and `shadow` |
-//! | `unused`, `unused-value`, `unreachable`, `unreachable-arm`, `no-charge`, `not-billed`, `needless-fallback`, `needless-optional-chain`, `needless-let`, `bounds` | warnings; `bounds` is a comparison or `match` arm an input's `where` bounds decide |
+//! | `unused`, `unused-value`, `unreachable`, `unreachable-arm`, `no-charge`, `not-billed`, `bill-order`, `needless-fallback`, `needless-optional-chain`, `needless-let`, `bounds`, `text-range` | warnings; `bounds` is a comparison or `match` arm an input's `where` bounds decide, `bill-order` a `bill.charge(…)` of a line billed only after it (`check/bill.rs`), `text-range` a text range whose literal ends have different lengths |
 //! | `constraint` | an input's `where` constraint: not a range or a list, on a record input, a range of an unordered type or with no end, an empty range or list, a default or a test's `given` outside it |
 //! | `choice`, `duplicate`, `unknown-choice` | `best` and `worst`: an empty label, fewer than two options, a label used twice; `chosen(…)` naming no choice |
 //! | `unknown-option` | `chosen(…)` compared with a label that is no option of that choice |
 //! | `input-value` | a contract input value that does not fit (`tariff.check` with `values`; a `path`, no range) |
 
 mod arms;
+mod bill;
 mod bounds;
 mod calls;
 pub mod catalog;
@@ -84,16 +88,19 @@ mod stmt;
 mod tables;
 mod visit;
 
-pub use calls::CONSTRUCTORS;
+pub use calls::{CONSTRUCTORS, REQUESTED, REQUESTED_DOC, REQUESTED_SIGNATURE, location_record};
 pub use program::check;
-pub use tables::TABLE_METHODS;
+pub use tables::{TABLE_METHODS, cell_type};
+
+/// What a condition's tests read as its result: `expect applies`.
+pub const APPLIES: &str = "applies";
 
 use crate::span::Span;
 use crate::tariff::diagnostic::{Diagnostic, Severity};
 use crate::tariff::docs::Doc;
 use crate::tariff::syntax::ast::NodeId;
 use crate::tariff::types::{EnumType, Type};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 pub use crate::tariff::syntax::program::{ModuleId, Program};
@@ -132,6 +139,16 @@ impl Analysis {
     #[must_use]
     pub fn symbol(&self, id: SymbolId) -> Option<&Symbol> {
         self.symbols.get(usize::try_from(id.0).ok()?)
+    }
+
+    /// The codes of the rate tables the program reads, in the root or any library it imports,
+    /// each once, in code order: what a tariff version pins.
+    #[must_use]
+    pub fn tables(&self) -> BTreeSet<&str> {
+        self.modules
+            .iter()
+            .flat_map(|module| module.tables.iter().map(String::as_str))
+            .collect()
     }
 
     /// Every finding with the module it is in, the root's first.
@@ -175,6 +192,8 @@ pub struct ModuleAnalysis {
     /// one (an annotation, a parameter, the other side of a comparison): what the editor
     /// completes and offers enum variants for.
     pub expected: BTreeMap<NodeId, Type>,
+    /// The codes of the rate tables the module reads, each once.
+    pub tables: BTreeSet<String>,
 }
 
 impl ModuleAnalysis {
@@ -301,6 +320,10 @@ pub enum Callee {
     Constructor(&'static str),
     /// `charge(CODE)` or `charge("Label")` in a test.
     ChargeLookup,
+    /// `shipment.requested(CODE)`.
+    Requested,
+    /// `bill.charge(CODE)` or `bill.charge("Label")` in a tariff's own code.
+    BillCharge,
     /// A rate table method: `cell`, `band` or `interpolate` (indexing is not a call).
     Table {
         /// The table's code.

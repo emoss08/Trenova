@@ -219,8 +219,8 @@ func (t *BillingQueueDecisionTool) Validate(
 }
 
 // approvalBlock refuses an approval the billing queue would refuse when it
-// ran: a detention charge on the shipment waiting on its own approval, or a
-// flagged check nobody has settled.
+// ran: a detention charge on the shipment waiting on its own approval, a
+// rating the tariff held for review, or a flagged check nobody has settled.
 func approvalBlock(item *billingqueue.BillingQueueItem, status billingqueue.Status) error {
 	if status != billingqueue.StatusApproved {
 		return nil
@@ -231,6 +231,14 @@ func approvalBlock(item *billingqueue.BillingQueueItem, status billingqueue.Stat
 			errortypes.ErrInvalidOperation,
 			"{0} on this item's shipment still waits on approval; approve or waive it first",
 			common.CountOf(len(item.DetentionHolds), "detention charge"),
+		)
+	}
+	if hold := item.RatingReviewHold; hold != nil {
+		return errortypes.NewValidationError(
+			"ratingReviewHold",
+			errortypes.ErrInvalidOperation,
+			"The tariff held this item's rating for review ({0}); a person approves the rating first",
+			hold.Summary(),
 		)
 	}
 	if open := item.OpenIssues(); len(open) > 0 {

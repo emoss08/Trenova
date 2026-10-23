@@ -124,6 +124,17 @@
       "go/other"
     ]
   },
+  "\"{0}\" is not a time of day (HH:MM:SS, from 00:00:00 to 23:59:59)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "\"{0}\" is not a unit": {
     "sites": 2,
     "scope": [
@@ -3115,7 +3126,18 @@
       "rules/tariff"
     ]
   },
-  "A `given` sets a field of the record (`shipment`, `lane`, `customer`, `fuel`, `rating`) or an input (`input.rate`), not {0}": {
+  "A `given` sets a field of the record (`shipment`, `lane`, `customer`, `fuel`, `rating`), an input (`input.rate`) or a rate table's cell (`tables.Zones[\"A\", \"B\"]`), not {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A `given` sets one cell of {0}, with its keys: {1}": {
     "sites": 2,
     "scope": [
       "go",
@@ -3127,6 +3149,17 @@
     ]
   },
   "A `given` sets one value for every case, so it can't read {0}, which varies: vary the field itself instead": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A `review`": {
     "sites": 2,
     "scope": [
       "go",
@@ -4169,7 +4202,7 @@
       "rules/tariff"
     ]
   },
-  "A charge has no option {0}; its options are `quantity` and `rate`": {
+  "A charge has no option {0}; its options are `quantity`, `rate`, `minimum` and `maximum`": {
     "sites": 2,
     "scope": [
       "go",
@@ -4231,7 +4264,7 @@
       "rules/tariff"
     ]
   },
-  "A charge takes only quantity and rate options": {
+  "A charge takes only quantity, rate, minimum and maximum options": {
     "sites": 2,
     "scope": [
       "go",
@@ -4254,6 +4287,17 @@
     ]
   },
   "A charge's options are named: `quantity: …` and `rate: …`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A charge's {0} must be money, but {1} is {2}": {
     "sites": 2,
     "scope": [
       "go",
@@ -7465,6 +7509,17 @@
       "go/other"
     ]
   },
+  "A minimum or maximum applies `on freight` (the uncoded lines) or, without `on`, to the whole bill; `{0}` isn't one of them": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "A mirror entry posts on this date and takes back everything {0} booked": {
     "sites": 1,
     "scope": [
@@ -7656,16 +7711,17 @@
     ]
   },
   "A note for the record (optional)": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-library"
+      "routes/formula-library",
+      "routes/rate-matrix"
     ]
   },
   "A note for the reviewer cannot be longer than 4,000 characters": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -8368,6 +8424,60 @@
       "routes/worker"
     ]
   },
+  "A postal code matches a range when its first characters fall between the two ends, both included. Codes are compared character by character, after trimming and upper-casing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
+  "A postal code matches the range whose ends its first characters fall between, compared character by character after trimming and upper-casing. One that no range holds finds no rate.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
+  "A postal range axis has no overflow policy: a postal code no range holds finds no rate": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A postal range axis is matched by range": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A postal range cannot end before it starts": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A postal range needs its first and its last postal code.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "A posted invoice exceeded the organization reconciliation tolerance and requires follow-up.": {
     "sites": 1,
     "scope": [
@@ -8861,6 +8971,15 @@
       "rules/tariff"
     ]
   },
+  "A range is added across the rates the other axes already hold, and this matrix holds none yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "A range needs a start, an end or both": {
     "sites": 2,
     "scope": [
@@ -8955,6 +9074,24 @@
       "go/other"
     ]
   },
+  "A rate matrix cannot be published by its submitter": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A rate matrix's submitter cannot review it; ask another reviewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A rate or formula change reprices the shipment and cannot be previewed": {
     "sites": 1,
     "scope": [
@@ -8962,6 +9099,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A rate table can't vary: give the cells a property reads, as in `given tables.Zones[\"A\", \"B\"] = $20/cwt`, and vary the record or inputs that look them up": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "A rate table has no method named {0}": {
@@ -11767,6 +11915,17 @@
       "apps/web/components"
     ]
   },
+  "A time of day on a clock, with no date and no offset, written `@17:30`; `at.time` is a date-time's.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "A time-boxed override lets the carrier through for now.": {
     "sites": 1,
     "scope": [
@@ -11919,7 +12078,7 @@
       "rules/tariff"
     ]
   },
-  "A total clause: when the total exceeds it, a negative adjustment brings it down.": {
+  "A total clause: when the total exceeds it, a negative adjustment brings it down; `maximum m on freight` applies to the freight lines only. As a charge option, `maximum: m` makes the line bill at most `m`.": {
     "sites": 2,
     "scope": [
       "go",
@@ -11930,7 +12089,7 @@
       "rules/tariff"
     ]
   },
-  "A total clause: when the total falls short, the difference is billed as a minimum charge adjustment.": {
+  "A total clause: when the total falls short, the difference is billed as a minimum charge adjustment; `minimum m on freight` applies to the freight lines only. As a charge option, `minimum: m` makes the line bill at least `m`.": {
     "sites": 2,
     "scope": [
       "go",
@@ -18013,6 +18172,15 @@
       "routes/rate-matrix"
     ]
   },
+  "Add at least one cell before submitting the draft": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Add at least one fee tier": {
     "sites": 2,
     "scope": [
@@ -18814,6 +18982,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Add range": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Add rate": {
@@ -20135,7 +20312,7 @@
       "routes/admin"
     ]
   },
-  "Adds a line to the bill: `charge \"Label\" as CODE (quantity: q, rate: r) = amount`; in a test, `charge(CODE)` reads a line's amount.": {
+  "Adds a line to the bill: `charge \"Label\" as CODE (quantity: q, rate: r, minimum: lo, maximum: hi) = amount`; in a test, `charge(CODE)` reads a line's amount.": {
     "sites": 2,
     "scope": [
       "go",
@@ -21056,6 +21233,17 @@
       "routes/desk",
       "routes/formula-template",
       "routes/pto-policy"
+    ]
+  },
+  "After a `minimum` or `maximum` amount, what the clause bounds: `on freight`, the uncoded lines.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "After delivery": {
@@ -26149,6 +26337,15 @@
       "rules/tariff"
     ]
   },
+  "An exact key, like a zone code or a freight class": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "An exception about an agent's own work stays for a person to work": {
     "sites": 1,
     "scope": [
@@ -26380,15 +26577,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "An inactive matrix stops pricing, and every lane pointing at it stops with it": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/rate-matrix"
     ]
   },
   "An inactive profile cannot be the default": {
@@ -28763,7 +28951,7 @@
     ]
   },
   "Apply": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -28775,6 +28963,7 @@
       "routes/agent-control",
       "routes/factoring-remittance",
       "routes/invoice",
+      "routes/rate-matrix",
       "routes/reports",
       "routes/worker"
     ]
@@ -29431,6 +29620,15 @@
       "go/other"
     ]
   },
+  "Approval pins the newest published versions: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Approval policy": {
     "sites": 1,
     "scope": [
@@ -29596,6 +29794,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Approve a rate matrix draft as a published version templates can pin": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Approve a swap the two drivers have agreed": {
@@ -29869,6 +30076,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Approve rating": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Approve records": {
@@ -30287,6 +30503,24 @@
       "apps/dash/_components"
     ]
   },
+  "Approved for billing by {0} on {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approved for billing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approved unchanged {0} times in a row · 1 rejection before that": {
     "sites": 1,
     "scope": [
@@ -30590,6 +30824,15 @@
       "routes/worker"
     ]
   },
+  "Approving…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Appt": {
     "sites": 1,
     "scope": [
@@ -30636,7 +30879,7 @@
     ]
   },
   "Archive": {
-    "sites": 35,
+    "sites": 38,
     "scope": [
       "go",
       "ts"
@@ -30650,6 +30893,7 @@
       "routes/formula-template",
       "routes/pto-policy",
       "routes/rate-agreement",
+      "routes/rate-matrix",
       "routes/service-failure-reason-code",
       "routes/worker"
     ]
@@ -30736,6 +30980,15 @@
       "go/other"
     ]
   },
+  "Archive rate matrices so no new template version reads them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Archive records": {
     "sites": 1,
     "scope": [
@@ -30800,16 +31053,17 @@
     ]
   },
   "Archive {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/rate-matrix",
       "routes/worker"
     ]
   },
   "Archived": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -30821,6 +31075,7 @@
       "routes/benefits",
       "routes/desk",
       "routes/edi",
+      "routes/formula-template",
       "routes/org-structure"
     ]
   },
@@ -30960,6 +31215,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Archived. No new template version can read it; those that pin a version keep reading it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Archives the currently published version (if any)": {
@@ -38326,6 +38590,15 @@
       "routes/fuel-management"
     ]
   },
+  "Bands, each covering from its floor up to but not including the next": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Bank Memo": {
     "sites": 1,
     "scope": [
@@ -40383,6 +40656,24 @@
       "apps/web/components"
     ]
   },
+  "Billed {0} ({1}): {2}, its maximum (it came to {3})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Billed {0} ({1}): {2}, its minimum (it came to {3})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Billed {0} · buy rate {1}": {
     "sites": 1,
     "scope": [
@@ -40393,6 +40684,24 @@
     ]
   },
   "Billed {0}: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Billed {0}: {1}, its maximum (it came to {2})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Billed {0}: {1}, its minimum (it came to {2})": {
     "sites": 1,
     "scope": [
       "ts"
@@ -41227,6 +41536,17 @@
       "apps/web/lib"
     ]
   },
+  "Bills as usual and asks for the rating to be approved before it is used, with this text as the reason: `review \"Hazmat over 500 miles\"`.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Bills automatically": {
     "sites": 2,
     "scope": [
@@ -41318,6 +41638,17 @@
       "routes/billing-queue"
     ]
   },
+  "Bills the cheaper of two methods and names what the kept one billed.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Bills the cheaper of two methods; add an `option` for each further one.": {
     "sites": 2,
     "scope": [
@@ -41329,7 +41660,7 @@
       "rules/tariff"
     ]
   },
-  "Bills the cheapest of several methods: each `option` runs, and the one with the lowest subtotal joins the bill.": {
+  "Bills the cheapest of several methods: each `option` runs, and the one with the lowest subtotal joins the bill. `let x = best \"Label\" …` also names that subtotal.": {
     "sites": 2,
     "scope": [
       "go",
@@ -41340,7 +41671,7 @@
       "rules/tariff"
     ]
   },
-  "Bills the dearest of several methods: each `option` runs, and the one with the highest subtotal joins the bill.": {
+  "Bills the dearest of several methods: each `option` runs, and the one with the highest subtotal joins the bill. `let x = worst \"Label\" …` also names that subtotal.": {
     "sites": 2,
     "scope": [
       "go",
@@ -42260,6 +42591,24 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Both ends of a postal range have the same number of characters, as 30000 to 31999 do": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Both ends of a postal range have the same number of characters.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Both read the same number of fields right": {
@@ -44676,7 +45025,7 @@
     ]
   },
   "Cancel": {
-    "sites": 323,
+    "sites": 328,
     "scope": [
       "go",
       "ts"
@@ -44740,6 +45089,7 @@
       "routes/policies",
       "routes/random-testing",
       "routes/rate-agreement",
+      "routes/rate-matrix",
       "routes/reports",
       "routes/scheduling",
       "routes/service-failure",
@@ -49684,6 +50034,17 @@
       "apps/web/components"
     ]
   },
+  "Change to `freight`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Change to `{0}`": {
     "sites": 2,
     "scope": [
@@ -49696,7 +50057,7 @@
     ]
   },
   "Change to {0}": {
-    "sites": 26,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -52577,6 +52938,16 @@
     ]
   },
   "Choose an active reviewer, other than you, who can approve formula templates": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers",
+      "go/other"
+    ]
+  },
+  "Choose an active reviewer, other than you, who can publish rate matrices": {
     "sites": 2,
     "scope": [
       "go"
@@ -57932,24 +58303,26 @@
     ]
   },
   "Comment": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/formula-library",
+      "routes/rate-matrix",
       "routes/worker"
     ]
   },
   "Comment (optional)": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/formula-library",
-      "routes/formula-template"
+      "routes/formula-template",
+      "routes/rate-matrix"
     ]
   },
   "Comment (required)": {
@@ -58641,11 +59014,12 @@
     ]
   },
   "Compare": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/formula-template"
     ]
   },
@@ -58786,6 +59160,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Compare with the saved version": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Compared": {
@@ -59818,6 +60201,15 @@
       "routes/reports"
     ]
   },
+  "Condition applies": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Condition cannot be longer than 20000 characters": {
     "sites": 1,
     "scope": [
@@ -59825,6 +60217,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Condition does not apply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Condition for accessorial {0}": {
@@ -64760,6 +65161,15 @@
       "routes/formula-library"
     ]
   },
+  "Could not archive the matrix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Could not assign training": {
     "sites": 1,
     "scope": [
@@ -65184,6 +65594,15 @@
       "apps/dash/_components"
     ]
   },
+  "Could not publish the matrix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Could not reach Trenova. Check the connection and try again.": {
     "sites": 1,
     "scope": [
@@ -65254,6 +65673,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Could not reject the draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Could not reject the library": {
@@ -65356,12 +65784,13 @@
     ]
   },
   "Could not request changes": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-library"
+      "routes/formula-library",
+      "routes/rate-matrix"
     ]
   },
   "Could not request changes on template": {
@@ -65371,6 +65800,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Could not restore the version": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Could not restore to the selected version": {
@@ -65498,6 +65936,15 @@
     ],
     "areas": [
       "routes/formula-library"
+    ]
+  },
+  "Could not submit the matrix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Could not submit the template": {
@@ -73731,7 +74178,7 @@
     ]
   },
   "Decision is required": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -77804,7 +78251,7 @@
     ]
   },
   "Description": {
-    "sites": 179,
+    "sites": 180,
     "scope": [
       "go",
       "ts"
@@ -83926,7 +84373,7 @@
     ]
   },
   "Draft": {
-    "sites": 55,
+    "sites": 56,
     "scope": [
       "go",
       "ts"
@@ -84503,6 +84950,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "Draws pairs like => and != as one sign in the formula editor and wherever code is shown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Drift Finding": {
@@ -89296,7 +89752,7 @@
     ]
   },
   "Edit": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "ts"
     ],
@@ -89312,6 +89768,7 @@
       "routes/org-structure",
       "routes/policies",
       "routes/random-testing",
+      "routes/rate-matrix",
       "routes/reports",
       "routes/scheduling",
       "routes/shipment",
@@ -94659,6 +95116,15 @@
       "go/other"
     ]
   },
+  "Enums": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Envelope": {
     "sites": 3,
     "scope": [
@@ -96979,7 +97445,7 @@
     ]
   },
   "Every decision but expiry names who made it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -97592,6 +98058,15 @@
       "routes/benefits"
     ]
   },
+  "Every postal range on {0} has {1} characters; {2} has a different length": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Every profile must include the Core capability": {
     "sites": 1,
     "scope": [
@@ -97608,6 +98083,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Every range on this axis has {0, plural, one {# character} other {# characters}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Every record linked in the answer": {
@@ -100679,6 +101163,17 @@
     "areas": [
       "go/other",
       "routes/edi"
+    ]
+  },
+  "Expected what the clause applies to after `on`: `on freight`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "Expected what the option bills, in braces": {
@@ -109189,6 +109684,15 @@
       "routes/desk"
     ]
   },
+  "First postal code of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "First read": {
     "sites": 1,
     "scope": [
@@ -111435,6 +111939,15 @@
       "go/other"
     ]
   },
+  "Formula template versions pin {0}. They keep reading the version they pinned, but no new template version can read it. Confirm to archive it anyway": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Formula template {0} has never been approved, so it cannot rate shipments yet": {
     "sites": 1,
     "scope": [
@@ -111470,6 +111983,15 @@
     "areas": [
       "apps/web/config",
       "routes/formula-template"
+    ]
+  },
+  "Formula templates not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Formula writing": {
@@ -112216,7 +112738,7 @@
     ]
   },
   "From": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -112228,6 +112750,7 @@
       "routes/fuel-management",
       "routes/invoice",
       "routes/org-structure",
+      "routes/rate-matrix",
       "routes/settings"
     ]
   },
@@ -115520,6 +116043,17 @@
       "rules/tariff"
     ]
   },
+  "Gives a rate table's cell for this test: `given tables.Zones[\"A\", \"B\"] = $20/cwt`. The table then holds only the cells the test gives.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Gives up {0}": {
     "sites": 1,
     "scope": [
@@ -116125,6 +116659,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Graduated (progressive) pricing: each tier prices only the part of a distance or weight that falls inside it, as a rate sheet reads \"the first 100 mi at $3.00/mi, the next 400 mi at $2.50/mi, beyond at $2.00/mi\". A tier runs from its `from` up to the next tier's; tiers are read in order of `from`, however the list is written.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "Graduated tiers": {
@@ -118389,6 +118934,15 @@
       "routes/desk"
     ]
   },
+  "Held for review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Held for review: notice not sent in time": {
     "sites": 1,
     "scope": [
@@ -118912,6 +119466,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Hide rates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Hide rows that failed": {
@@ -120554,6 +121117,17 @@
       "apps/web/components"
     ]
   },
+  "How heavy the part is.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "How invoice numbers are generated. 'Custom Prefix' prepends a customer-specific string; 'PO Based' uses the customer's PO number as the invoice identifier.": {
     "sites": 1,
     "scope": [
@@ -120734,6 +121308,17 @@
       "routes/benefits"
     ]
   },
+  "How long after midnight `time` is, in minutes, so the sums above stay exact to the second.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "How long before the model starts answering": {
     "sites": 1,
     "scope": [
@@ -120777,6 +121362,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "How long the part is.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "How long this carrier holds the offer.": {
@@ -121056,6 +121652,17 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "How many were asked for.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "How many whole days the link is good for, or zero when the expiry is not a whole number of days. Use this rather than writing a number into the copy.": {
@@ -121673,7 +122280,7 @@
       "routes/shipment"
     ]
   },
-  "How this tariff grid is identified and whether it is live.": {
+  "How this tariff grid is identified. Changes here edit the draft; tariffs read the published version until a reviewer publishes the next.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -123799,6 +124406,28 @@
       "routes/carrier-sourcing"
     ]
   },
+  "In `minimum m on freight` and `maximum m on freight`: the bill's uncoded lines; `bill.freight` is what they add up to so far.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "In a condition's test, the condition's result: `expect applies`, `expect not applies`.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "In a property, `expect value nondecreasing in target`: the value never falls as the varied target grows.": {
     "sites": 2,
     "scope": [
@@ -123831,6 +124460,17 @@
     ]
   },
   "In a test, the bill's lines: label, code, amount and kind.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "In a test, the bill's review reasons, in order.": {
     "sites": 2,
     "scope": [
       "go",
@@ -123964,7 +124604,7 @@
     ]
   },
   "In review": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -130647,6 +131287,17 @@
       "rules/tariff"
     ]
   },
+  "It is billed here": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "It is built on {0}, which your role cannot read. Ask an administrator for access, or start a new report.": {
     "sites": 1,
     "scope": [
@@ -130699,6 +131350,17 @@
     ]
   },
   "It is given here": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "It is read here": {
     "sites": 2,
     "scope": [
       "go",
@@ -132785,7 +133447,7 @@
     ]
   },
   "Keep editing": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -132895,6 +133557,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Keep my edits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Keep notes under 2000 characters": {
@@ -133905,7 +134576,7 @@
     ]
   },
   "Key cannot be longer than 120 characters": {
-    "sites": 4,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -135413,6 +136084,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Last postal code of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Last purchases": {
@@ -138396,6 +139076,24 @@
       "routes/worker"
     ]
   },
+  "Ligatures in code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
+    ]
+  },
+  "Ligatures · code editor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
+    ]
+  },
   "Light": {
     "sites": 4,
     "scope": [
@@ -140549,6 +141247,15 @@
       "routes/edi"
     ]
   },
+  "Load the saved version": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Load theirs": {
     "sites": 1,
     "scope": [
@@ -141584,6 +142291,15 @@
       "routes/agent-control"
     ]
   },
+  "Loading reviewers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Loading roles…": {
     "sites": 1,
     "scope": [
@@ -142469,6 +143185,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Loading versions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Loading versions...": {
@@ -148071,6 +148796,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Maximum applied · computed {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Maximum authority age cannot be negative": {
     "sites": 1,
     "scope": [
@@ -148145,6 +148879,15 @@
     "areas": [
       "apps/web/components",
       "go/other"
+    ]
+  },
+  "Maximum charge adjustment (freight)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Maximum control number must exceed the minimum": {
@@ -150414,6 +151157,15 @@
       "go/other"
     ]
   },
+  "Minimum applied · computed {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Minimum authority age (days)": {
     "sites": 1,
     "scope": [
@@ -150486,6 +151238,15 @@
     "areas": [
       "apps/web/components",
       "go/other"
+    ]
+  },
+  "Minimum charge adjustment (freight)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Minimum charge cannot be negative": {
@@ -153668,6 +154429,15 @@
       "packages/shared/lib"
     ]
   },
+  "Must be a time of day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "Must be a valid decimal number": {
     "sites": 5,
     "scope": [
@@ -154084,7 +154854,7 @@
     ]
   },
   "Name": {
-    "sites": 167,
+    "sites": 168,
     "scope": [
       "go",
       "ts"
@@ -155559,7 +156329,7 @@
     ]
   },
   "Needs review": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -155568,6 +156338,15 @@
       "packages/shared/components",
       "routes/admin",
       "routes/settlement-workspace"
+    ]
+  },
+  "Needs review: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Needs setup": {
@@ -156165,7 +156944,7 @@
     ]
   },
   "Never": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -156176,7 +156955,8 @@
       "routes/carrier-monitoring",
       "routes/formula-library",
       "routes/formula-template",
-      "routes/jurisdiction-rule"
+      "routes/jurisdiction-rule",
+      "routes/rate-matrix"
     ]
   },
   "Never assigned": {
@@ -156276,6 +157056,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Never published. Tariffs cannot read it until a reviewer publishes the draft.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Never read": {
@@ -157475,6 +158264,15 @@
     "areas": [
       "apps/web/components",
       "routes/desk"
+    ]
+  },
+  "Newer version": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Newest": {
@@ -161719,6 +162517,15 @@
       "routes/desk"
     ]
   },
+  "No formula template version pins this matrix yet. Approving a template version that reads tables.{0} pins its newest published version.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "No formula templates selected": {
     "sites": 1,
     "scope": [
@@ -162988,6 +163795,15 @@
       "routes/formula-library"
     ]
   },
+  "No new template version can read tables.{0} once it is archived. Submitting a draft brings it back.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "No next open fiscal period is available for reversal posting": {
     "sites": 1,
     "scope": [
@@ -164065,6 +164881,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "No ranges yet. A postal code no range holds finds no rate.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "No rate": {
@@ -165818,7 +166643,34 @@
       "apps/web/lib"
     ]
   },
+  "No test reaches this review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "No test runs this loop's body": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "No test sees this condition apply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "No test sees this condition not apply": {
     "sites": 1,
     "scope": [
       "ts"
@@ -166217,6 +167069,15 @@
       "apps/web/components"
     ]
   },
+  "No version has been published yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "No version has been published yet. Create and publish a version from the Versions tab to start parsing documents with this rule set.": {
     "sites": 1,
     "scope": [
@@ -166524,6 +167385,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Nobody else here can publish rate matrices. Anyone with publish permission will see it in their notifications.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Nobody has asked it anything since {0} · it holds 1 tool": {
@@ -169282,14 +170152,15 @@
     ]
   },
   "Note for the reviewer": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/formula-library",
-      "routes/formula-template"
+      "routes/formula-template",
+      "routes/rate-matrix"
     ]
   },
   "Note from {0}": {
@@ -175841,6 +176712,28 @@
       "routes/admin"
     ]
   },
+  "One tier of a graduated distance rate.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "One tier of a graduated weight rate.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "One way": {
     "sites": 1,
     "scope": [
@@ -176456,7 +177349,16 @@
       "go/other"
     ]
   },
-  "Only a numeric dimension can be matched by range": {
+  "Only a numeric dimension or a postal range can be matched by range": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a person can approve a rating the tariff held for review": {
     "sites": 1,
     "scope": [
       "go"
@@ -176706,6 +177608,26 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Only a published matrix that is not under review can be archived; this one is {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a rate table's cell is given with keys, as in `given tables.Zones[\"A\", \"B\"] = $20/cwt`; a field or input is given whole": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "Only a rated reply in a conversation can become an evaluation case": {
@@ -179917,6 +180839,15 @@
       "routes/accounting-sync"
     ]
   },
+  "Open matrix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Open menu": {
     "sites": 1,
     "scope": [
@@ -182628,6 +183559,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "Ordered: its variants compare in this order, so a range of them means something.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Ordering": {
@@ -194025,6 +194965,15 @@
       "apps/web/components"
     ]
   },
+  "Pinned by": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Pinned facts": {
     "sites": 1,
     "scope": [
@@ -194071,6 +195020,33 @@
       "routes/formula-template"
     ]
   },
+  "Pinned v{0}, the newest published version.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Pinned v{0}. Contracts keep reading it, but no new template version can read this table.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Pinned v{0}; v{1} is published. Contracts keep pricing with v{0} until a new template version is approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Pinned{0}": {
     "sites": 1,
     "scope": [
@@ -194096,6 +195072,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Pins {0, plural, one {# rate table} other {# rate tables}} at the newest published version": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Pins {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Pipeline state": {
@@ -196271,6 +197265,25 @@
       "apps/web/lib",
       "packages/shared/lib",
       "routes/rate-zone"
+    ]
+  },
+  "Postal range": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "packages/shared/lib"
+    ]
+  },
+  "Postal ranges, each covering its first through its last postal code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Posted": {
@@ -201362,7 +202375,7 @@
     ]
   },
   "Publish": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -201370,7 +202383,8 @@
     "areas": [
       "go/other",
       "routes/admin",
-      "routes/policies"
+      "routes/policies",
+      "routes/rate-matrix"
     ]
   },
   "Publish a document": {
@@ -201422,6 +202436,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "Publish the draft": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Publish version": {
     "sites": 1,
     "scope": [
@@ -201441,13 +202464,15 @@
     ]
   },
   "Published": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "apps/web/lib",
+      "routes/admin",
+      "routes/rate-matrix"
     ]
   },
   "Published a document": {
@@ -201475,6 +202500,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Published versions": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Published versions cannot be modified. Create a new version to make changes.": {
@@ -204673,6 +205707,15 @@
       "routes/rate-matrix"
     ]
   },
+  "Rate matrix is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Rate method": {
     "sites": 4,
     "scope": [
@@ -204933,16 +205976,26 @@
       "routes/desk"
     ]
   },
-  "Rate tables": {
+  "Rate table versions": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Rate tables": {
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/formula-template"
     ]
   },
-  "Rate tables that tariffs look values up in: their axes and cells": {
+  "Rate tables that tariffs look values up in: their axes, cells and published versions": {
     "sites": 1,
     "scope": [
       "go"
@@ -205393,7 +206446,7 @@
       "routes/rate-agreement"
     ]
   },
-  "Rates save on their own, separately from the rest of this form.": {
+  "Rates save to the draft, separately from the rest of this form. Tariffs read them once a reviewer publishes the draft.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -205511,6 +206564,15 @@
     ],
     "areas": [
       "routes/billing-control"
+    ]
+  },
+  "Rating reviewed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Rating template": {
@@ -207324,6 +208386,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Reads no rate table": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Reads only": {
@@ -212906,7 +213977,7 @@
     ]
   },
   "Reject": {
-    "sites": 47,
+    "sites": 50,
     "scope": [
       "go",
       "ts"
@@ -212929,6 +214000,7 @@
       "routes/journal-reversal",
       "routes/manual-journal",
       "routes/rate-agreement",
+      "routes/rate-matrix",
       "routes/scheduling",
       "routes/worker"
     ]
@@ -213114,6 +214186,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Reject rate matrix drafts under review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Reject records": {
     "sites": 1,
     "scope": [
@@ -213158,6 +214239,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Reject the draft": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Reject the load tender for BOL {0}.": {
@@ -214243,7 +215333,7 @@
     ]
   },
   "Remove": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -214871,7 +215961,7 @@
     ]
   },
   "Remove the parentheses": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -215091,7 +216181,7 @@
     ]
   },
   "Remove {0}": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -215103,6 +216193,7 @@
       "routes/holiday",
       "routes/inbox",
       "routes/order",
+      "routes/rate-matrix",
       "routes/recurring-shipment",
       "routes/shipment",
       "routes/worker"
@@ -217242,13 +218333,14 @@
     ]
   },
   "Request changes": {
-    "sites": 9,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/formula-library",
-      "routes/formula-template"
+      "routes/formula-template",
+      "routes/rate-matrix"
     ]
   },
   "Request connection": {
@@ -220113,7 +221205,7 @@
     ]
   },
   "Restore": {
-    "sites": 34,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -220128,6 +221220,7 @@
       "routes/formula-library",
       "routes/insights",
       "routes/pto-policy",
+      "routes/rate-matrix",
       "routes/review-template",
       "routes/training-course",
       "routes/worker-checklist-template",
@@ -220215,6 +221308,15 @@
       "routes/insights"
     ]
   },
+  "Restore to draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Restore version {0}": {
     "sites": 1,
     "scope": [
@@ -220222,6 +221324,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Restore version {0} to the draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Restore v{0}": {
@@ -220826,7 +221937,7 @@
     ]
   },
   "Retry": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "ts"
     ],
@@ -220848,6 +221959,7 @@
       "routes/fuel-purchase",
       "routes/ifta-return",
       "routes/journal-review",
+      "routes/rate-matrix",
       "routes/shipment"
     ]
   },
@@ -221905,7 +223017,7 @@
     ]
   },
   "Review": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -222232,12 +223344,13 @@
     ]
   },
   "Review history": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/rate-matrix"
     ]
   },
   "Review in Desk": {
@@ -222712,13 +223825,23 @@
     ]
   },
   "Reviewer": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/formula-library",
-      "routes/formula-template"
+      "routes/formula-template",
+      "routes/rate-matrix"
+    ]
+  },
+  "Reviewer: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "Reviewers for formula libraries cannot be listed on this server": {
@@ -222739,6 +223862,15 @@
       "go/other"
     ]
   },
+  "Reviewers for rate matrices cannot be listed on this server": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Reviewing user is required": {
     "sites": 2,
     "scope": [
@@ -222749,12 +223881,13 @@
     ]
   },
   "Reviews": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/web/components",
       "routes/worker"
     ]
   },
@@ -223849,7 +224982,7 @@
     ]
   },
   "Round starts at one": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -228130,6 +229263,15 @@
       "apps/web/config"
     ]
   },
+  "Save the matrix first. Its draft is published from here once a reviewer approves it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Save the matrix first. Rates need something to belong to, and the axes above decide what shape the grid takes.": {
     "sites": 1,
     "scope": [
@@ -228435,12 +229577,22 @@
     ]
   },
   "Saved version": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/formula-template"
+    ]
+  },
+  "Saved version, v{0}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-template"
+      "apps/web/components"
     ]
   },
   "Saved view": {
@@ -228568,6 +229720,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Saving pins the version the check reads.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Saving starts the rollout again and begins a new comparison; what happened before the guard stopped it is no longer counted.": {
@@ -239070,6 +240231,17 @@
       "routes/desk"
     ]
   },
+  "Set one cell of a rate table by its code and keys, as in `given tables.Zones[\"A\", \"B\"] = $20/cwt`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Set one field of {0}, as in {1}": {
     "sites": 2,
     "scope": [
@@ -242080,7 +243252,7 @@
     ]
   },
   "Shipment is required": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go"
     ],
@@ -246533,6 +247705,15 @@
       "routes/admin"
     ]
   },
+  "Someone who works the billing queue approves it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Someone with manage access to the accounting integration has to enter the {0} keys.": {
     "sites": 1,
     "scope": [
@@ -246928,7 +248109,7 @@
     ]
   },
   "Source": {
-    "sites": 47,
+    "sites": 48,
     "scope": [
       "go",
       "ts"
@@ -250272,7 +251453,7 @@
     ]
   },
   "Status": {
-    "sites": 345,
+    "sites": 343,
     "scope": [
       "go",
       "ts"
@@ -252480,7 +253661,7 @@
     ]
   },
   "Submit": {
-    "sites": 18,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -252493,10 +253674,20 @@
       "routes/formula-library",
       "routes/formula-template",
       "routes/manual-journal",
+      "routes/rate-matrix",
       "routes/worker"
     ]
   },
   "Submit a balanced draft manual journal for approval. It waits for an approver; where the organization has manual journal approval turned off, submitting approves it, so only a person does that. Read it with ledger_get_manual_journal first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Submit a rate matrix draft for review": {
     "sites": 1,
     "scope": [
       "go"
@@ -252564,14 +253755,15 @@
     ]
   },
   "Submit for review": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/formula-library",
       "routes/formula-template",
-      "routes/rate-agreement"
+      "routes/rate-agreement",
+      "routes/rate-matrix"
     ]
   },
   "Submit form": {
@@ -252674,12 +253866,13 @@
     ]
   },
   "Submit {0} for review": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-library"
+      "routes/formula-library",
+      "routes/rate-matrix"
     ]
   },
   "Submitted": {
@@ -255496,6 +256689,33 @@
       "routes/formula-template"
     ]
   },
+  "Tariffs read this matrix as tables.{0}, so its code is fixed once a version is published": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
+  "Tariffs read version {0}, and the draft matches it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
+  "Tariffs read version {0}. The draft has changes that are not published.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Tarp": {
     "sites": 2,
     "scope": [
@@ -257693,6 +258913,15 @@
       "routes/worker"
     ]
   },
+  "Tests and the preview read each table's newest published version. Approval pins it for contracts.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Tests live in the source and run on every change. A version with a failing test cannot be submitted.": {
     "sites": 1,
     "scope": [
@@ -259361,6 +260590,28 @@
       "go/other"
     ]
   },
+  "The accessorial charge's catalog code.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The accessorials a user entered on the shipment, never the lines a tariff or program generated.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The account identifier with the VAN provider, if separate from the mailbox.": {
     "sites": 1,
     "scope": [
@@ -260655,6 +261906,28 @@
       "routes/formula-template"
     ]
   },
+  "The bill has no {0}": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The bill has no {0}: read `bill.freight`, `bill.accessorials`, `bill.total` or `bill.charge(…)`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The bill of lading number, when the shipment has one.": {
     "sites": 1,
     "scope": [
@@ -260674,6 +261947,17 @@
     ]
   },
   "The bill rounds to a multiple of this amount, so it must be more than `$0`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The bill so far: the lines billed above this line, exact, after each line's own minimum and maximum and before the total clauses and rounding. Inside a `best` option, the bill outside the choice plus that option's own lines.": {
     "sites": 2,
     "scope": [
       "go",
@@ -261736,6 +263020,37 @@
       "go/other"
     ]
   },
+  "The charge's minimum is above its maximum, so no amount satisfies both": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The charge's minimum {0} is above its maximum {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The charges are applied, but the shipment cannot be billed until someone approves the rating.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The charges can't be divided between payers": {
     "sites": 1,
     "scope": [
@@ -261870,6 +263185,17 @@
   },
   "The city.": {
     "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The class as a number: `Class77_5.number` is `77.5`.": {
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -262467,7 +263793,7 @@
     ]
   },
   "The constraint is written here": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -262489,6 +263815,17 @@
     ]
   },
   "The constraint on {0} lists the values it takes, {1}, so vary it over a list of them, or leave out `in` to take them all": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The constraint on {0}, {1}, is a text range, which has no next value to step to, so say which values it takes: {2}": {
     "sites": 2,
     "scope": [
       "go",
@@ -263817,6 +265154,17 @@
       "go/other"
     ]
   },
+  "The distance from the previous stop, in the organisation's unit; none on the first stop.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The document": {
     "sites": 2,
     "scope": [
@@ -263907,6 +265255,24 @@
       "template/report.delivery.email"
     ]
   },
+  "The draft becomes the next published version. Template versions approved from then on pin it; contracts already rating keep the version their template version pinned.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
+  "The draft goes back to its editors, with your comment.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "The draft invoice is voided and a new one is built from the corrected charges when you approve again": {
     "sites": 1,
     "scope": [
@@ -263916,6 +265282,24 @@
       "routes/billing-queue"
     ]
   },
+  "The draft is not published. A matrix never published is archived; one already published goes back to a draft and tariffs keep reading its newest version.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
+  "The draft is the same as published version {0}; change it before submitting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The draft is voided at once and keeps its number so the audit trail stays readable.": {
     "sites": 1,
     "scope": [
@@ -263923,6 +265307,33 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "The draft is waiting for a reviewer to publish it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
+  "The draft's axes and rates are replaced with the published version's, discarding the draft's changes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
+  "The draft's axes and rates are replaced with this version's. Tariffs keep reading version {0} until the draft is published.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "The drafted agent did not pass the checks a save makes. Try describing the job differently.": {
@@ -265981,6 +267392,28 @@
       "rules/tariff"
     ]
   },
+  "The freight minimum is above the bill's maximum, so no bill satisfies both": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The freight minimum is above the freight maximum, so no freight total satisfies both": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The freight's density, when it has weight and volume.": {
     "sites": 2,
     "scope": [
@@ -266339,6 +267772,28 @@
       "routes/fuel-management"
     ]
   },
+  "The holiday's date.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The holiday's name.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The host name or IP address of the SFTP server.": {
     "sites": 1,
     "scope": [
@@ -266358,6 +267813,17 @@
     ]
   },
   "The hour, 0 to 23, in the date-time's own offset.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The hour, 0 to 23.": {
     "sites": 2,
     "scope": [
       "go",
@@ -266530,6 +267996,17 @@
     ]
   },
   "The instant `n` hours later.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The instant `n` minutes later (earlier when `n` is negative).": {
     "sites": 2,
     "scope": [
       "go",
@@ -267295,6 +268772,17 @@
       "routes/factoring-company"
     ]
   },
+  "The least the line bills: a smaller amount is raised to it, and the line says the minimum applied.": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The least thinking and the fastest replies.": {
     "sites": 1,
     "scope": [
@@ -267513,6 +269001,28 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The line labelled {0} is billed after this line, so this reads `none`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The line labelled {0} is billed only in another option of this choice, so this reads `none`: each option reads the bill outside the choice and its own lines": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "The line was not changed": {
@@ -267976,7 +269486,7 @@
     ]
   },
   "The maximum": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -268312,6 +269822,17 @@
       "go/other"
     ]
   },
+  "The minute, 0 to 59.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The minute.": {
     "sites": 2,
     "scope": [
@@ -268591,6 +270112,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The most the line bills: a larger amount is lowered to it, and the line says the maximum applied.": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "The most thinking and the slowest replies.": {
@@ -269426,6 +270958,17 @@
       "rules/tariff"
     ]
   },
+  "The organisation's holidays from the year before the rating date's year to the year after, in date order.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The organization": {
     "sites": 1,
     "scope": [
@@ -269722,6 +271265,94 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "The part of `distance` each of `tiers` prices, lowest first, leaving out the tiers it doesn't reach; none for a distance of zero or less.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The part of `distance` each of `tiers` prices, lowest first, leaving out the tiers it doesn't reach; none for a distance of zero or less. Refuses to rate when there are no tiers.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The part of `distance` from the tier's start (zero for the lowest, at `index` 0) up to `next`.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The part of `weight` each of `tiers` prices, lowest first, leaving out the tiers it doesn't reach; none for a weight of zero or less.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The part of `weight` each of `tiers` prices, lowest first, leaving out the tiers it doesn't reach; none for a weight of zero or less. Refuses to rate when there are no tiers.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The part of `weight` from the tier's start (zero for the lowest, at `index` 0) up to `next`.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The part of a distance one tier prices.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The part of a weight one tier prices.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "The part of the balance that is past its due date, with currency.": {
@@ -270361,6 +271992,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The postal ranges {0} and {1} on {2} overlap, so one postal code would match both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The preview and runs are refused until they are removed or your access changes.": {
@@ -271133,6 +272773,15 @@
       "apps/web/components"
     ]
   },
+  "The rate table versions it pins changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "The rate table {0} cannot be read with {1} as a key": {
     "sites": 2,
     "scope": [
@@ -271166,7 +272815,51 @@
       "rules/tariff"
     ]
   },
+  "The rate table {0} has a cell without both ends of a postal-code range": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The rate table {0} has a cell without one position per axis": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The rate table {0} has a postal-code range axis with a key normalisation or an overflow policy, which such an axis does not take": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The rate table {0} has a postal-code range that ends before it starts": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The rate table {0} has a postal-code range whose ends are empty or of different lengths": {
     "sites": 2,
     "scope": [
       "go",
@@ -271288,7 +272981,7 @@
     ]
   },
   "The rate table {0} takes {1} keys, not {2}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -271314,6 +273007,28 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "The rate times the part's distance, exact.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The rate times the part's weight, exact.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "The rate {0} is {1} and the quantity {2} is {3}, so they don't multiply to money: a rate is priced per the quantity's unit, as in `(quantity: miles, rate: $2.35/mi)`": {
@@ -272549,6 +274264,15 @@
       "routes/formula-library"
     ]
   },
+  "The reviewer publishes exactly what is saved as the next version. Template versions approved from then on pin it; those already approved keep the version they pinned.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "The reviewer's note. Usually present on a denial and absent on an approval.": {
     "sites": 1,
     "scope": [
@@ -273602,6 +275326,17 @@
       "go/other"
     ]
   },
+  "The shipment has no accessorials to read": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The shipment has no stop ahead to snooze to": {
     "sites": 1,
     "scope": [
@@ -273786,7 +275521,7 @@
       "routes/rate-zone"
     ]
   },
-  "The short name lanes refer to": {
+  "The short name tariffs read it by: tables.<code>": {
     "sites": 1,
     "scope": [
       "ts"
@@ -274604,6 +276339,50 @@
       "routes/agent-control"
     ]
   },
+  "The sum of every line billed so far, exact.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The sum of the accessorial (coded) lines billed so far, exact.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The sum of the freight (uncoded) lines billed so far, exact.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The sum of the lines billed so far with this label (as interpolated) or charge code, as in `bill.charge(\"Linehaul\")` or `bill.charge(FSC)`; `none` when there are none.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The sweep emails the customer the moment the notice window opens, using their configured recipients.": {
     "sites": 1,
     "scope": [
@@ -274725,6 +276504,51 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The tariff held the rating of shipment {0} for review. Approve the rating before the shipment can be billed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The tariff held the rating of {0, plural, one {# shipment} other {# shipments}} for review. Approve each rating before those shipments can be billed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The tariff held this item's rating for review ({0}); a person approves the rating first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The tariff held this rating for review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The tariff held this rating for review; approve the rating first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The tariff is incomplete here": {
@@ -275237,6 +277061,17 @@
       "go/other"
     ]
   },
+  "The tier's rate.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The tightened version added {0}. Your instructions are unchanged.": {
     "sites": 1,
     "scope": [
@@ -275255,7 +277090,7 @@
       "go/other"
     ]
   },
-  "The time between `start` and `end` that falls within business hours, from `open` o'clock to `close` o'clock on weekdays.": {
+  "The time between `start` and `end` that falls within business hours, from `open` to `close` on weekdays, each day read on the date-times' own clock. Zero when `end` is not after `start`, or when `close` is not after `open`.": {
     "sites": 2,
     "scope": [
       "go",
@@ -275266,18 +277101,7 @@
       "rules/tariff"
     ]
   },
-  "The time between `start` and `end` that falls within business hours, from `open` o'clock to `close` o'clock on weekdays. Zero when `end` is not after `start`.": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/rules",
-      "rules/tariff"
-    ]
-  },
-  "The time of day `at` shows on its own clock, in minutes.": {
+  "The time of day, in the date-time's own offset: the clock at the stop, as in `stop.arrival?.time`.": {
     "sites": 2,
     "scope": [
       "go",
@@ -276003,6 +277827,17 @@
     ]
   },
   "The value matched is {0}, so it can never be {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The value matched is {0}, which has no order, so it can't be matched by a range: only {1} order their variants. List the variants instead, as in {2}": {
     "sites": 2,
     "scope": [
       "go",
@@ -281466,6 +283301,15 @@
       "go/other"
     ]
   },
+  "This matrix has never been submitted for review.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "This matrix has no axes, so nothing can ever look a rate up in it.": {
     "sites": 2,
     "scope": [
@@ -281489,6 +283333,15 @@
     ]
   },
   "This matrix has no rates yet. Every lane pointing at it prices nothing until it does.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
+  "This matrix's versions could not be loaded.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -282293,6 +284146,17 @@
       "go/other"
     ]
   },
+  "This property reads the rate table {0} without giving any of its cells, so it passes or fails with the matrix's live data: give the cells it reads, as in {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "This proposal expired on {0} without a decision. Ask the agent again for a current one": {
     "sites": 1,
     "scope": [
@@ -282464,6 +284328,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "This range overlaps {0}, so a postal code in both would match twice.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "This rate agreement could not be read": {
@@ -283321,6 +285194,15 @@
       "go/other"
     ]
   },
+  "This shipment's rating has nothing waiting for review": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This simulation did not finish.": {
     "sites": 1,
     "scope": [
@@ -283475,7 +285357,7 @@
     ]
   },
   "This submission is older than 14 days; ask the author to resubmit": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -283711,7 +285593,7 @@
     ]
   },
   "This tariff never bills a line labelled {0}, so this is always `none`": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -283722,7 +285604,7 @@
     ]
   },
   "This tariff never bills {0}, so this is always `none`": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -283858,7 +285740,29 @@
       "go/other"
     ]
   },
+  "This test reads the rate table {0} without giving any of its cells, so it passes or fails with the matrix's live data: give the cells it reads, as in {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "This text is missing its closing quote": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "This text range's ends have different lengths ({0} and {1} characters). Text compares character by character, as zip ranges need, so text of another length can fall inside it: {2} is inside {3}. Write both ends with the same number of characters": {
     "sites": 2,
     "scope": [
       "go",
@@ -284102,6 +286006,24 @@
       "go/other"
     ]
   },
+  "This version could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
+  "This version holds no rates.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "This version is already archived": {
     "sites": 1,
     "scope": [
@@ -284166,6 +286088,24 @@
     ]
   },
   "This was proposed without noting the record's version, so later edits to it can't be detected.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This was saved again after you started editing. Compare it with your edits before you save.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This was saved again after you started editing. Keep your edits to save them over it, or load the saved version and lose your edits.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -286007,7 +287947,7 @@
     ]
   },
   "To": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -286019,6 +287959,7 @@
       "routes/detention-policy",
       "routes/fuel-management",
       "routes/invoice",
+      "routes/rate-matrix",
       "routes/settings"
     ]
   },
@@ -287707,7 +289648,7 @@
       "rules/tariff"
     ]
   },
-  "Total clauses go in the order `minimum`, `maximum`, `round`": {
+  "Total clauses go in the order `minimum … on freight`, `maximum … on freight`, `minimum`, `maximum`, `round`": {
     "sites": 2,
     "scope": [
       "go",
@@ -295580,7 +297521,7 @@
       "go/other"
     ]
   },
-  "Update billing queue items: post them, release them and resolve their issues": {
+  "Update billing queue items: post them, release them, resolve their issues and approve ratings a tariff held for review": {
     "sites": 1,
     "scope": [
       "go"
@@ -297063,6 +299004,17 @@
     ]
   },
   "Use double quotes": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Use its time of day: {0}": {
     "sites": 2,
     "scope": [
       "go",
@@ -299251,6 +301203,15 @@
       "go/other"
     ]
   },
+  "Version number must be a published version, or 0 for the draft": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Version number must be at least one": {
     "sites": 4,
     "scope": [
@@ -299324,6 +301285,15 @@
       "go/other"
     ]
   },
+  "Version {0} is published and cannot change. Template versions that pin it keep reading these rates.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Version {0}'s tests no longer pass with the libraries it pinned, so it cannot bill again": {
     "sites": 1,
     "scope": [
@@ -299353,7 +301323,7 @@
     ]
   },
   "Versions": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -299366,7 +301336,8 @@
       "routes/desk",
       "routes/edi",
       "routes/formula-library",
-      "routes/rate-agreement"
+      "routes/rate-agreement",
+      "routes/rate-matrix"
     ]
   },
   "Versions define how documents are parsed. Each version contains match criteria, field extraction rules, and stop definitions. Create a draft to get started.": {
@@ -300376,6 +302347,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "View rates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "View receipt": {
@@ -304739,7 +306719,51 @@
       "routes/intake"
     ]
   },
+  "What `distance` costs at graduated `tiers`: the sum of every step's amount.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "What `distance` costs at graduated `tiers`: the sum of every step's amount. Refuses to rate when there are no tiers.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "What `weight` costs at a break: its rate times the weight, and never less than its minimum.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "What `weight` costs at graduated `tiers`: the sum of every step's amount.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "What `weight` costs at graduated `tiers`: the sum of every step's amount. Refuses to rate when there are no tiers.": {
     "sites": 2,
     "scope": [
       "go",
@@ -304969,6 +306993,15 @@
       "routes/formula-template"
     ]
   },
+  "What changed in the rates, and why": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "What changed, and which templates should pin the new version": {
     "sites": 1,
     "scope": [
@@ -305058,6 +307091,28 @@
     ],
     "areas": [
       "routes/dash-control"
+    ]
+  },
+  "What each hundredweight inside the tier is billed at.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "What each mile inside the tier is billed at.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "What each person can do comes from their role. Sharing never grants access.": {
@@ -305764,6 +307819,17 @@
       "routes/accounting-inbound"
     ]
   },
+  "What kind of facility the location is: cross-dock, cold storage, …": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "What kind of message is this?": {
     "sites": 1,
     "scope": [
@@ -305837,13 +307903,14 @@
     ]
   },
   "What needs to change": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/desk",
-      "routes/formula-library"
+      "routes/formula-library",
+      "routes/rate-matrix"
     ]
   },
   "What needs to change (required)": {
@@ -306299,6 +308366,17 @@
     ],
     "areas": [
       "routes/factoring-remittance"
+    ]
+  },
+  "What the location is: a terminal, a warehouse, a port, …": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "What the numbers in the grid mean when a tariff reads them.": {
@@ -308459,6 +310537,28 @@
       "routes/desk"
     ]
   },
+  "Where it ends: the next tier's start, or the distance itself in the last tier it reaches.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Where it ends: the next tier's start, or the weight itself in the last tier it reaches.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Where it fuels": {
     "sites": 1,
     "scope": [
@@ -308787,6 +310887,17 @@
       "routes/desk"
     ]
   },
+  "Where the part starts: the tier's start, or zero for the lowest tier.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Where the platform serves Claude for you.": {
     "sites": 1,
     "scope": [
@@ -308884,6 +310995,28 @@
     ]
   },
   "Where the stop is.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Where the tier starts. The lowest tier also prices any distance below its start.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Where the tier starts. The lowest tier also prices any weight below its start.": {
     "sites": 2,
     "scope": [
       "go",
@@ -309040,7 +311173,7 @@
       "rules/tariff"
     ]
   },
-  "Whether `at` is outside business hours: on a weekend, before `open` o'clock or at or after `close` o'clock.": {
+  "Whether `at` is outside business hours: on a weekend, before `open` or at or after `close`, on `at`'s own clock.": {
     "sites": 2,
     "scope": [
       "go",
@@ -309217,7 +311350,29 @@
       "rules/tariff"
     ]
   },
+  "Whether it is one of the organisation's holidays (`rating.holidays`). It reads the record, so a function can't use it.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Whether it starts with `t`.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Whether its date, in the date-time's own offset, is one of the organisation's holidays (`rating.holidays`). It reads the record, so a function can't use it.": {
     "sites": 2,
     "scope": [
       "go",
@@ -309331,6 +311486,17 @@
       "routes/rate-agreement"
     ]
   },
+  "Whether the location requires an appointment for every visit.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Whether the model may answer with a short read-only script.": {
     "sites": 1,
     "scope": [
@@ -309417,6 +311583,17 @@
     ]
   },
   "Whether the text matches a regular expression, checked in linear time.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Whether the user put an accessorial with this charge code on the shipment: `shipment.requested(LIFT)`.": {
     "sites": 2,
     "scope": [
       "go",
@@ -310947,12 +313124,13 @@
     ]
   },
   "Why it is rejected": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-library"
+      "routes/formula-library",
+      "routes/rate-matrix"
     ]
   },
   "Why it looked": {
@@ -313472,7 +315650,7 @@
       "apps/web/config"
     ]
   },
-  "Write a date as `@2026-10-22`, or a date and time as `@2026-10-22T08:00-05:00`": {
+  "Write a date as `@2026-10-22`, a date and time as `@2026-10-22T08:00-05:00`, or a time of day as `@17:30`": {
     "sites": 2,
     "scope": [
       "go",
@@ -313603,8 +315781,30 @@
       "routes/desk"
     ]
   },
-  "Write it as {0}": {
+  "Write it as the range {0}": {
     "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Write it as the time {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Write it as {0}": {
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -315520,6 +317720,15 @@
       "api/handlers"
     ]
   },
+  "You edited this draft, so another reviewer must publish it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You filed {0} of {1} {2} from {3} by hand": {
     "sites": 1,
     "scope": [
@@ -316444,12 +318653,22 @@
     ]
   },
   "Your edits": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "Your edits match the saved version.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "Your expense for {0} was approved and will be reimbursed on your next settlement.": {
@@ -317176,7 +319395,7 @@
     ]
   },
   "Your review is requested": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -317787,6 +320006,28 @@
       "rules/tariff"
     ]
   },
+  "`.holiday` reads the organisation's holidays (`rating.holidays`), which a function can't see: work it out where the function is called and pass it in, as in `fn fee(holiday: Bool)`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`.holiday` reads the organisation's holidays (`rating.holidays`), which aren't known before rating: a constant or default must be computed from literals and other constants": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "`Int.parse(text)`: the whole number a text spells, or `none`.": {
     "sites": 4,
     "scope": [
@@ -317809,7 +320050,84 @@
       "rules/tariff"
     ]
   },
+  "`applies` reads a condition's result, and only a condition has one: a tariff's tests read its bill (`total`, `lines`, `charge(…)`)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "`assume` runs before the tariff rates, so it can't read the bill ({0}): narrow the cases by the record, the inputs and the varied values": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`bill.charge(…)` takes a charge code such as `FSC` or a label in quotes": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`bill.charge(…)` takes one code or label, as in `bill.charge(FSC)` or `bill.charge(\"Linehaul\")`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`bill.charge` is a method: call it with a label or code, as in `bill.charge(\"Linehaul\")` or `bill.charge(FSC)`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`bill` is the bill so far, so it can't be renamed": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`bill` is the bill so far: read a part of it, as in `bill.freight`, `bill.total` or `bill.charge(\"Linehaul\")`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`bill` reads the bill being built, so it can't be read here: {0}": {
     "sites": 2,
     "scope": [
       "go",
@@ -317952,6 +320270,39 @@
       "rules/tariff"
     ]
   },
+  "`shipment.requested(…)` takes an accessorial charge code written bare, as in `shipment.requested(LIFT)`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`shipment.requested(…)` takes its code without a name, as in `shipment.requested(LIFT)`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`shipment.requested(…)` takes one accessorial charge code, as in `shipment.requested(LIFT)`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "`true` or `false`.": {
     "sites": 2,
     "scope": [
@@ -318063,6 +320414,17 @@
     ]
   },
   "`{0}` is a keyword, so it can't be used as a name": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`{0}` is a time of day, {1} minutes after midnight, with no date and no offset: it compares with a date-time's `.time`, the clock where the date-time is": {
     "sites": 2,
     "scope": [
       "go",
@@ -318226,7 +320588,7 @@
     ]
   },
   "a condition decides true or false and bills nothing": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -318406,7 +320768,7 @@
     ]
   },
   "a library has no bill": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -318677,11 +321039,12 @@
     ]
   },
   "a teammate": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/carrier-monitoring",
       "routes/inbox",
       "routes/shipment"
@@ -318700,6 +321063,17 @@
   },
   "a test checks the bill the tariff makes": {
     "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "a time of day": {
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -325072,6 +327446,15 @@
       "routes/desk"
     ]
   },
+  "not published": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "not trusted": {
     "sites": 1,
     "scope": [
@@ -326106,12 +328489,13 @@
     ]
   },
   "pins v{0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-library"
+      "routes/formula-library",
+      "routes/rate-matrix"
     ]
   },
   "placeholders": {
@@ -326315,6 +328699,15 @@
       "routes/inbox"
     ]
   },
+  "rate matrix": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "rate unit": {
     "sites": 1,
     "scope": [
@@ -326367,6 +328760,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "reads v{0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "reads with": {
@@ -326513,6 +328915,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "requested needs an accessorial charge code": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "requested {0}": {
@@ -327391,6 +329804,28 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "the bill being built": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "the bill so far": {
+    "sites": 6,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "the billing fallback": {
@@ -328565,7 +331000,7 @@
     ]
   },
   "v{0}": {
-    "sites": 34,
+    "sites": 37,
     "scope": [
       "ts"
     ],
@@ -328579,6 +331014,7 @@
       "routes/formula-template",
       "routes/policies",
       "routes/rate-agreement",
+      "routes/rate-matrix",
       "routes/reports",
       "routes/shipment",
       "routes/worker"
@@ -328636,6 +331072,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "v{0}, draft changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "v{0}{1}": {
@@ -329573,6 +332018,15 @@
       "apps/web/hooks"
     ]
   },
+  "{0, plural, one {# cell does} other {# cells do}} not fit the axes as they are now; load the grid again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0, plural, one {# cell is not a number} other {# cells are not numbers}}.": {
     "sites": 1,
     "scope": [
@@ -329607,6 +332061,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "{0, plural, one {# cell} other {# cells}}, published {1} by {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "{0, plural, one {# certification} other {# certifications}} owed": {
@@ -331563,6 +334026,15 @@
       "apps/dash/_components"
     ]
   },
+  "{0, plural, one {# newer table version available} other {# newer table versions available}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0, plural, one {# not accepted} other {# not accepted}}": {
     "sites": 1,
     "scope": [
@@ -332354,6 +334826,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# review} other {# reviews}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# round} other {# rounds}}": {
     "sites": 1,
     "scope": [
@@ -332997,6 +335478,15 @@
       "routes/formula-library"
     ]
   },
+  "{0, plural, one {# template version pins it} other {# template versions pin it}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "{0, plural, one {# template version pins} other {# template versions pin}} a version of this library. Each keeps it until a new template version pins another.": {
     "sites": 1,
     "scope": [
@@ -333004,6 +335494,15 @@
     ],
     "areas": [
       "routes/formula-library"
+    ]
+  },
+  "{0, plural, one {# template version pins} other {# template versions pin}} a version of this matrix. They keep reading the version they pinned. Archive it anyway.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "{0, plural, one {# template weighed} other {# templates weighed}}": {
@@ -335092,6 +337591,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {The tariff asks for # review before this shipment bills} other {The tariff asks for # reviews before this shipment bills}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {This changes # row.} other {This changes # rows.}}": {
     "sites": 1,
     "scope": [
@@ -335635,6 +338143,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} (tariffs read this one)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "{0} ({1, plural, one {# band} other {# bands}})": {
@@ -336470,7 +338987,7 @@
     ]
   },
   "{0} and {1}": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -336996,6 +339513,17 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "{0} bills lines, so it gives a value only as the whole value of a `let`, `var` or assignment: bind it first, as in {1}, and use the name": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} blocked": {
@@ -337583,6 +340111,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} comes after {1}; a range starts at its lower end.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "{0} comes before the property's other statements: `vary`, `given` and `assume` set up each case before the tariff rates": {
     "sites": 2,
     "scope": [
@@ -337604,6 +340141,17 @@
     ]
   },
   "{0} compares values, and {1} can't be ordered": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} compares values, and {1} can't be ordered: only {2} order their variants": {
     "sites": 2,
     "scope": [
       "go",
@@ -339091,6 +341639,15 @@
       "template/tender.offer.email"
     ]
   },
+  "{0} has a published version, and tariffs read it as tables.{0}; a matrix cannot change its code once it has been published": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} has an approved version, and templates import it as {1}; a library cannot be renamed once it has been approved": {
     "sites": 1,
     "scope": [
@@ -339500,6 +342057,15 @@
     ]
   },
   "{0} has not verified this account's email address, so it cannot be matched to a Trenova user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} has published versions that tariffs may pin; archive it instead of deleting it": {
     "sites": 1,
     "scope": [
       "go"
@@ -339993,6 +342559,17 @@
       "rules/tariff"
     ]
   },
+  "{0} is a field of `location`, which is given whole too: set it inside `location`, or leave `location` out": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} is a field of the record a tariff rates, so it can't be renamed": {
     "sites": 2,
     "scope": [
@@ -340111,7 +342688,7 @@
     ]
   },
   "{0} is a property: write it without parentheses": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -340267,7 +342844,7 @@
     ]
   },
   "{0} is already {1}; pick another name": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -340355,6 +342932,17 @@
       "routes/desk"
     ]
   },
+  "{0} is billed after this line, so this reads `none`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} is billed on a {1} statement. Invoicing this freight on its own takes it off that statement — say why to continue.": {
     "sites": 1,
     "scope": [
@@ -340362,6 +342950,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is billed only in another option of this choice, so this reads `none`: each option reads the bill outside the choice and its own lines": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} is carried by {1}": {
@@ -340720,6 +343319,17 @@
     ]
   },
   "{0} is not a real date and time": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} is not a real time of day: hours run from 00 to 23, minutes and seconds from 00 to 59": {
     "sites": 2,
     "scope": [
       "go",
@@ -341342,6 +343952,17 @@
       "go/other"
     ]
   },
+  "{0} is text, which has no order, so it can't be compared with {1}. To test a band of codes such as zips, use a range, compared character by character: {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} is the primary carrier intelligence provider.": {
     "sites": 1,
     "scope": [
@@ -341394,6 +344015,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} is under review; ask for changes or reject it before replacing its draft": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} is used before it is defined. Move this below the line that defines it": {
@@ -341686,7 +344316,7 @@
       "rules/tariff"
     ]
   },
-  "{0} is {1}, which a test can't read: a test reads the bill (`total`, `lines`, `charge(…)`), the record and the file's functions and constants": {
+  "{0} is {1}, which a test can't read: a test reads the bill (`total`, `lines`, `charge(…)`, `reviews`), the record and the file's functions and constants": {
     "sites": 2,
     "scope": [
       "go",
@@ -341719,7 +344349,7 @@
       "rules/tariff"
     ]
   },
-  "{0} is {1}, which can't be ordered: only numbers, money, quantities and dates compare with {2}": {
+  "{0} is {1}, which can't be ordered: only numbers, money, quantities, dates, times and the {2} enums compare with {3}": {
     "sites": 2,
     "scope": [
       "go",
@@ -341741,7 +344371,40 @@
       "rules/tariff"
     ]
   },
+  "{0} is {1}, which has no next value to step to, so it can't be varied over a range: list its values instead, as in {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} is {1}, which has no order, so it can't be compared with {2}: only {3} order their variants. Compare with {4}, or list the variants with {5}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} is {1}, which has no order, so it can't be in a range": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} is {1}, which has no order, so it can't be in a range: only {2} order their variants. List the variants instead, as in {3}": {
     "sites": 2,
     "scope": [
       "go",
@@ -341775,6 +344438,17 @@
     ]
   },
   "{0} is {1}, which has no order, so its constraint can't be a range: list the values it may take, as in `where [a, b]`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} is {1}, which has no order, so its constraint can't be a range: only {2} order their variants. List the values it may take, as in `where [a, b]`": {
     "sites": 2,
     "scope": [
       "go",
@@ -344840,6 +347514,17 @@
       "go/other"
     ]
   },
+  "{0} ranges {1} and {2} overlap, so the same postal code matches both.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/matrix"
+    ]
+  },
   "{0} rate limit reached. Try again in {1} seconds": {
     "sites": 1,
     "scope": [
@@ -345286,6 +347971,15 @@
   },
   "{0} requires an authenticated user": {
     "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} requires the first and last postal code of its range": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -346215,6 +348909,15 @@
       "apps/web/components"
     ]
   },
+  "{0} through {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "{0} time cannot be at {1} because this {2} {3} already in use from {4} to {5}": {
     "sites": 1,
     "scope": [
@@ -346697,6 +349400,15 @@
     ]
   },
   "{0} v{1} (v{2} is approved)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} v{1} (v{2} is published)": {
     "sites": 1,
     "scope": [
       "go"
@@ -348682,6 +351394,15 @@
       "packages/shared/lib"
     ]
   },
+  "{0}, published version {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0}, revocation pending": {
     "sites": 1,
     "scope": [
@@ -348891,6 +351612,15 @@
       "apps/web/components"
     ]
   },
+  "{0}: chose {1} at {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0}: every option refused": {
     "sites": 1,
     "scope": [
@@ -348916,6 +351646,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0}: postal ranges": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
     ]
   },
   "{0}: retrying after {1, plural, one {# failure} other {# failures}}": {

@@ -65,7 +65,8 @@
               "zip": "",
               "zip3": "",
               "country": "",
-              "timezone": "UTC"
+              "timezone": "UTC",
+              "requiresAppointment": false
             }
           },
           {
@@ -97,7 +98,8 @@
               "zip": "",
               "zip3": "",
               "country": "",
-              "timezone": "UTC"
+              "timezone": "UTC",
+              "requiresAppointment": false
             }
           },
           {
@@ -122,7 +124,8 @@
               "zip": "",
               "zip3": "",
               "country": "",
-              "timezone": "UTC"
+              "timezone": "UTC",
+              "requiresAppointment": false
             }
           }
         ],
@@ -155,7 +158,8 @@
             "zip": "",
             "zip3": "",
             "country": "",
-            "timezone": "UTC"
+            "timezone": "UTC",
+            "requiresAppointment": false
           }
         },
         "delivery": {
@@ -180,7 +184,8 @@
             "zip": "",
             "zip3": "",
             "country": "",
-            "timezone": "UTC"
+            "timezone": "UTC",
+            "requiresAppointment": false
           }
         }
       },

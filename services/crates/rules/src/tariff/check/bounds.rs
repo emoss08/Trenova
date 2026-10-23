@@ -1,8 +1,8 @@
 //! What an input's `where` bounds decide, judged once a module is checked:
 //!
 //! - a comparison of the input with a compile-time value (`==`, `!=`, `<`, `<=`, `>`, `>=`,
-//!   `in [...]`, `not in [...]`) whose answer the bounds fix is a `bounds` warning, "never true"
-//!   or "always true", quoting the constraint;
+//!   `in [...]`, `not in [...]`, `in lo..hi`, `not in lo..hi`) whose answer the bounds fix is a
+//!   `bounds` warning, "never true" or "always true", quoting the constraint;
 //! - a `match` arm on the input whose pattern the bounds rule out is a `bounds` warning;
 //! - a test's or property's `given input.x = value` outside the bounds is a `constraint` error,
 //!   since no contract can set that value.
@@ -137,7 +137,7 @@ impl Visit for Judge<'_, '_> {
                 &statement.scrutinee,
                 statement.arms.iter().map(|arm| &arm.pattern),
             ),
-            StmtKind::Given { target, value } => {
+            StmtKind::Given { target, value, .. } => {
                 if let [root, name] = target.as_slice()
                     && root.text == "input"
                 {
@@ -193,10 +193,26 @@ impl Judge<'_, '_> {
         };
         let verdict = match op {
             BinaryOp::In | BinaryOp::NotIn => {
-                let Some(Value::List(values)) = self.fold(other) else {
-                    return;
-                };
-                membership(bounds.folded, &values, op == BinaryOp::In)
+                if let ExprKind::Range {
+                    start,
+                    end,
+                    inclusive,
+                } = &other.kind
+                {
+                    let Some((start, end)) = self.ends(start.as_deref(), end.as_deref()) else {
+                        return;
+                    };
+                    in_range(
+                        bounds.folded,
+                        (start.as_ref(), end.as_ref(), *inclusive),
+                        op == BinaryOp::In,
+                    )
+                } else {
+                    let Some(Value::List(values)) = self.fold(other) else {
+                        return;
+                    };
+                    membership(bounds.folded, &values, op == BinaryOp::In)
+                }
             }
             BinaryOp::Eq
             | BinaryOp::Ne
@@ -227,6 +243,24 @@ impl Judge<'_, '_> {
             Message::with(message, [reason]),
             suggestion,
         ));
+    }
+
+    /// A range's ends, folded (`None` for an end left open), or `None` when an end has no
+    /// compile-time value.
+    fn ends(
+        &self,
+        start: Option<&Expr>,
+        end: Option<&Expr>,
+    ) -> Option<(Option<Value>, Option<Value>)> {
+        let start = match start {
+            Some(start) => Some(self.fold(start)?),
+            None => None,
+        };
+        let end = match end {
+            Some(end) => Some(self.fold(end)?),
+            None => None,
+        };
+        Some((start, end))
     }
 
     fn arms<'p>(&mut self, scrutinee: &Expr, patterns: impl Iterator<Item = &'p Pattern>) {
@@ -262,16 +296,16 @@ impl Judge<'_, '_> {
                 let value = self.fold(literal)?;
                 Some(!admits(bounds.folded, &value)?)
             }
-            PatternKind::Variant { variant, .. } => {
-                let FoldedConstraint::OneOf(values) = bounds.folded else {
-                    return None;
-                };
-                Some(
+            PatternKind::Variant { variant, .. } => match bounds.folded {
+                FoldedConstraint::OneOf(values) => Some(
                     !values
                         .iter()
                         .any(|value| matches!(value, Value::Enum(name) if *name == variant.text)),
-                )
-            }
+                ),
+                FoldedConstraint::Range { .. } => {
+                    Some(!admits(bounds.folded, &Value::Enum(variant.text.clone()))?)
+                }
+            },
             PatternKind::Range {
                 start,
                 end,
@@ -537,6 +571,75 @@ fn membership(folded: &FoldedConstraint, values: &[Value], inside: bool) -> Opti
         verdict(every, !any)
     } else {
         verdict(!any, every)
+    }
+}
+
+/// What the bounds make of `x in start..end` (`not in` when `inside` is false): never when the
+/// range misses every value the bounds admit, always when it holds all of them.
+fn in_range(
+    folded: &FoldedConstraint,
+    (start, end, inclusive): (Option<&Value>, Option<&Value>, bool),
+    inside: bool,
+) -> Option<Verdict> {
+    let never = disjoint(folded, start, end, inclusive)?;
+    let every = contained(folded, start, end, inclusive)?;
+    if inside {
+        verdict(every, never)
+    } else {
+        verdict(never, every)
+    }
+}
+
+/// Whether every value the bounds admit lies in `start..end`: `None` when that can't be told.
+fn contained(
+    folded: &FoldedConstraint,
+    start: Option<&Value>,
+    end: Option<&Value>,
+    inclusive: bool,
+) -> Option<bool> {
+    let within = |value: &Value| -> Option<bool> {
+        if let Some(start) = start
+            && compare(value, start)? == Ordering::Less
+        {
+            return Some(false);
+        }
+        if let Some(end) = end {
+            let order = compare(value, end)?;
+            if order == Ordering::Greater || (order == Ordering::Equal && !inclusive) {
+                return Some(false);
+            }
+        }
+        Some(true)
+    };
+    match folded {
+        FoldedConstraint::OneOf(values) => {
+            let mut every = true;
+            for value in values {
+                every &= within(value)?;
+            }
+            Some(every)
+        }
+        FoldedConstraint::Range {
+            min,
+            max,
+            max_inclusive,
+        } => {
+            let low = match (start, min) {
+                (None, _) => true,
+                (Some(_), None) => false,
+                (Some(start), Some(min)) => compare(start, min)? != Ordering::Greater,
+            };
+            let high = match (end, max) {
+                (None, _) => true,
+                (Some(_), None) => false,
+                (Some(end), Some(max)) => match compare(max, end)? {
+                    Ordering::Less => true,
+                    Ordering::Equal => inclusive || !max_inclusive,
+                    Ordering::Greater => false,
+                },
+            };
+            Some(low && high)
+        }
     }
 }
 

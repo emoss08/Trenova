@@ -22,6 +22,7 @@ const (
 	IssuePODUnsigned               = IssueCode("PODUnsigned")
 	IssueDetentionELDMismatch      = IssueCode("DetentionELDMismatch")
 	IssueDetentionAwaitingApproval = IssueCode("DetentionAwaitingApproval")
+	IssueRatingAwaitingReview      = IssueCode("RatingAwaitingReview")
 	IssueChargesUnsplittable       = IssueCode("ChargesUnsplittable")
 	IssueBillToCreditHold          = IssueCode("BillToCreditHold")
 	IssuePossibleDuplicate         = IssueCode("PossibleDuplicate")

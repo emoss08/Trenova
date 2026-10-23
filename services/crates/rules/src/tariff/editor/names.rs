@@ -15,7 +15,7 @@ use crate::message;
 use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::check::methods::ParamKind;
-use crate::tariff::check::{CONSTRUCTORS, Callee, SymbolKind};
+use crate::tariff::check::{APPLIES, CONSTRUCTORS, Callee, SymbolKind, location_record};
 use crate::tariff::docs::Doc;
 use crate::tariff::schema::TABLES_DOC;
 use crate::tariff::syntax::ast::{Expr, ExprKind, FileKind, ItemKind, StmtKind};
@@ -121,6 +121,9 @@ pub fn expression(site: &Site<'_, '_>, items: &mut Items, expected: Option<&Type
     globals(site, items, expected);
     if matches!(body, Body::Top | Body::Test) {
         roots(site, items, expected);
+    }
+    if body == Body::Top && site.kind() == FileKind::Tariff {
+        bill(items);
     }
     if body == Body::Test {
         test_names(site, items);
@@ -273,8 +276,23 @@ fn roots(site: &Site<'_, '_>, items: &mut Items, expected: Option<&Type>) {
     }
 }
 
-/// What a test reads besides the record: the bill and the record constructors.
+/// `bill`, the bill so far, in a tariff's own code.
+fn bill(items: &mut Items) {
+    if let Some(item) = items.add(Rank::Root, Kind::Name, "bill") {
+        item.detail = Some(String::from("Bill"));
+        item.doc = Some(Doc::message(crate::tariff::schema::BILL_DOC));
+    }
+}
+
+/// What a test reads besides the record: the bill (a condition's result) and the record
+/// constructors.
 fn test_names(site: &Site<'_, '_>, items: &mut Items) {
+    if site.kind() == FileKind::Condition
+        && let Some(item) = items.add(Rank::Global, Kind::Name, APPLIES)
+    {
+        item.detail = Some(String::from("Bool"));
+        item.doc = super::describe::keyword_doc(APPLIES).map(|doc| Doc::Message(Message::new(doc)));
+    }
     if site.kind() == FileKind::Tariff {
         if let Some(item) = items.add(Rank::Global, Kind::Function, "charge") {
             item.insert = String::from("charge($0)");
@@ -296,7 +314,11 @@ fn test_names(site: &Site<'_, '_>, items: &mut Items) {
             item.detail = Some(format!("{CHOSEN}(choice: Text) -> Text?"));
             item.doc = Some(Doc::Message(Message::new(CHOSEN_DOC)));
         }
-        for (word, detail) in [("total", "Money"), ("lines", "List<Line>")] {
+        for (word, detail) in [
+            ("total", "Money"),
+            ("lines", "List<Line>"),
+            ("reviews", "List<Text>"),
+        ] {
             if let Some(item) = items.add(Rank::Global, Kind::Name, word) {
                 item.detail = Some(detail.to_owned());
                 item.doc =
@@ -405,9 +427,9 @@ pub fn statement(site: &Site<'_, '_>, items: &mut Items) -> bool {
         .is_some_and(|item| matches!(item.kind, ItemKind::Property(_)));
     let words: &[&str] = match (file_level, located.body, kind) {
         (true, _, FileKind::Tariff) => &[
-            "use", "input", "let", "var", "const", "fn", "type", "enum", "charge", "note", "if",
-            "match", "for", "require", "fail", "minimum", "maximum", "round", "test", "property",
-            "best", "worst",
+            "use", "input", "let", "var", "const", "fn", "type", "enum", "charge", "note",
+            "review", "if", "match", "for", "require", "fail", "minimum", "maximum", "round",
+            "test", "property", "best", "worst",
         ],
         (true, _, FileKind::Library) => &[
             "use", "const", "fn", "type", "enum", "private", "test", "property",
@@ -426,8 +448,8 @@ pub fn statement(site: &Site<'_, '_>, items: &mut Items) -> bool {
             "given", "expect", "let", "var", "if", "match", "for", "require", "fail",
         ],
         (false, Body::Top, FileKind::Tariff) => &[
-            "let", "var", "charge", "note", "if", "match", "for", "require", "fail", "best",
-            "worst",
+            "let", "var", "charge", "note", "review", "if", "match", "for", "require", "fail",
+            "best", "worst",
         ],
         (false, Body::Top, _) => &["let", "var", "if", "match", "for", "require", "fail"],
         _ => &[],
@@ -445,8 +467,10 @@ pub fn statement(site: &Site<'_, '_>, items: &mut Items) -> bool {
 
 /// Whether the position is directly inside a `best` or `worst`'s braces, between its options.
 fn in_choice(located: &super::cursor::Located<'_>) -> bool {
-    let Some(at) = located.chain.iter().rposition(|node| {
-        matches!(node, super::cursor::Node::Stmt(stmt) if matches!(stmt.kind, StmtKind::Choose(_)))
+    let Some(at) = located.chain.iter().rposition(|node| match node {
+        super::cursor::Node::Stmt(stmt) => matches!(stmt.kind, StmtKind::Choose(_)),
+        super::cursor::Node::Expr(expr) => matches!(expr.kind, ExprKind::Choose(_)),
+        _ => false,
     }) else {
         return false;
     };
@@ -467,6 +491,12 @@ fn construct_snippets(items: &mut Items, file_level: bool, words: &[&str]) {
             "best with two options",
             "best \"${1:Label}\" {\n\toption \"${2:Per mile}\" {\n\t\t$0\n\t}\n\toption \"${3:Flat}\" {\n\t\t\n\t}\n}",
             message!("Bills the cheaper of two methods; add an `option` for each further one."),
+        );
+        snippet(
+            items,
+            "let … = best with two options",
+            "let ${1:linehaul} = best \"${2:Linehaul}\" {\n\toption \"${3:Per mile}\" {\n\t\t$0\n\t}\n\toption \"${4:Flat}\" {\n\t\t\n\t}\n}",
+            message!("Bills the cheaper of two methods and names what the kept one billed."),
         );
     }
     if has("property") && file_level {
@@ -646,8 +676,12 @@ pub fn arguments(
     };
     let params = parameters(site.session, call, &callee);
     match &callee {
-        Callee::ChargeLookup => {
+        Callee::ChargeLookup | Callee::BillCharge => {
             lookups(site, items);
+            return Then::Done;
+        }
+        Callee::Requested => {
+            super::complete::codes(site, items);
             return Then::Done;
         }
         Callee::Method(method) if method.params.iter().any(|p| p.kind == ParamKind::Unit) => {
@@ -760,9 +794,11 @@ pub fn parameters(session: &Session<'_>, call: &Expr, callee: &Callee) -> Vec<Pa
                 .and_then(|(_, record)| session.schema.record(record));
             record
                 .map(|record| {
+                    let location = location_record(&record);
                     record
                         .fields
                         .iter()
+                        .chain(location.iter().flat_map(|location| location.fields.iter()))
                         .map(|field| Parameter {
                             name: field.name.clone(),
                             ty: Some(field.ty.clone()),
@@ -772,7 +808,11 @@ pub fn parameters(session: &Session<'_>, call: &Expr, callee: &Callee) -> Vec<Pa
                 })
                 .unwrap_or_default()
         }
-        Callee::Conversion(_) | Callee::ChargeLookup | Callee::Table { .. } => Vec::new(),
+        Callee::Conversion(_)
+        | Callee::ChargeLookup
+        | Callee::Requested
+        | Callee::BillCharge
+        | Callee::Table { .. } => Vec::new(),
     }
 }
 

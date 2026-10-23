@@ -586,14 +586,8 @@
    ]
   },
   {
-   "diagnostics": [
-    {
-     "at": "\"a\"..\"b\"",
-     "code": "type-mismatch",
-     "message": "The value matched is text, so it can never be a range"
-    }
-   ],
-   "name": "a range pattern on text is refused",
+   "diagnostics": [],
+   "name": "a range pattern on text matches in Unicode order, and needs `_` or an open end",
    "source": [
     "library \"t\"",
     "fn f(t: Text) -> Int = match t {",

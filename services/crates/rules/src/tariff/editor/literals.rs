@@ -4,7 +4,7 @@
 //! from merely similar ones.
 //!
 //! A literal is a number with or without a unit, money, a rate, a percent, text without
-//! interpolation, a date or date-time, `true`/`false`, an enum variant (bare or qualified), or
+//! interpolation, a date, date-time or time of day, `true`/`false`, an enum variant (bare or qualified), or
 //! the negation of a number, money or percent. `none`, lists and records are not literals here.
 
 use super::names::enums;
@@ -24,6 +24,7 @@ pub fn is_literal(expr: &Expr) -> bool {
         | ExprKind::Percent(_)
         | ExprKind::Date(_)
         | ExprKind::DateTime(_)
+        | ExprKind::Time(_)
         | ExprKind::Bool(_)
         | ExprKind::Path { .. } => true,
         ExprKind::Text(text) => text.literal().is_some(),
@@ -67,6 +68,7 @@ pub fn literal_type(session: &Session<'_>, expr: &Expr) -> Option<Type> {
         ExprKind::Text(text) => text.literal().map(|_| Type::Text),
         ExprKind::Date(_) => Some(Type::Date),
         ExprKind::DateTime(_) => Some(Type::DateTime),
+        ExprKind::Time(_) => Some(Type::Time),
         ExprKind::Bool(_) => Some(Type::Bool),
         ExprKind::Path { head, member } => variant_type(session, expr, &head.text, member.as_ref()),
         ExprKind::Unary {

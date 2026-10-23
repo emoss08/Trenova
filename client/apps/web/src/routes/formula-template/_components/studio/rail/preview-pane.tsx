@@ -12,9 +12,11 @@ import {
   AlertCircleIcon,
   Beaker02Icon,
   ChevronRightIcon,
+  Flag01Icon,
   Save01Icon,
   XCircleIcon,
 } from "@trenova/shared/components/icons";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   Alert,
   AlertAction,
@@ -284,6 +286,12 @@ export function PreviewPane() {
           <div className="flex flex-col gap-2 p-3.5">
             <div className="flex items-center gap-2">
               <span className="text-foreground-muted text-xs">{t("Bill")}</span>
+              {result.bill.reviews.length > 0 && (
+                <Badge variant="warning" className="gap-1">
+                  <Flag01Icon aria-hidden className="size-3" />
+                  {t("Held for review")}
+                </Badge>
+              )}
               <span className="flex-1" />
               <SaveAsTest />
             </div>

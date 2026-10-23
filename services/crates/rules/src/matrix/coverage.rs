@@ -14,6 +14,9 @@
 //!     reaches is where pricing stops;
 //!   - **gap** between bands when the next band starts above everything before it reaches;
 //!   - **overlap** when the next band starts below what an earlier band reaches.
+//! - for every zip-range axis, within each slice, an **overlap** when two postal ranges of the
+//!   same length share a code (compared trimmed, upper-cased, character by character in Unicode
+//!   order). Gaps between postal ranges are normal and not reported.
 //!
 //! Bands are swept in order of their lower bound (a missing lower bound first), comparing each
 //! with the furthest reach so far, so a wide band that covers two narrower ones is an overlap
@@ -123,8 +126,16 @@ fn bound_text(value: Option<Decimal>) -> String {
 /// Where a cell sits along one axis: its key, or its band as `min..max`.
 #[must_use]
 pub fn bucket_key(cell: &Cell, slot: usize, dimension: &Dimension) -> String {
-    if dimension.mode() == MatchMode::Exact {
-        return cell.key_at(slot).to_owned();
+    match dimension.mode() {
+        MatchMode::Exact => return cell.key_at(slot).to_owned(),
+        MatchMode::Postal => {
+            return format!(
+                "{}–{}",
+                postal(cell.key_at(slot)),
+                postal(cell.key_to_at(slot))
+            );
+        }
+        MatchMode::Range | MatchMode::Other => {}
     }
     let (min, max) = cell.bounds_at(slot);
     format!("{}..{}", bound_text(min), bound_text(max))
@@ -155,11 +166,104 @@ pub fn find_issues(dimensions: &[(usize, &Dimension)], cells: &[&Cell]) -> Vec<I
     }
     let mut issues = duplicates(dimensions, cells);
     for (position, (slot, dimension)) in dimensions.iter().enumerate() {
-        if dimension.mode() == MatchMode::Range {
-            issues.extend(band_issues(dimensions, cells, position, *slot, dimension));
+        match dimension.mode() {
+            MatchMode::Range => {
+                issues.extend(band_issues(dimensions, cells, position, *slot, dimension));
+            }
+            MatchMode::Postal => {
+                issues.extend(postal_issues(dimensions, cells, position, *slot, dimension));
+            }
+            MatchMode::Exact | MatchMode::Other => {}
         }
     }
     issues
+}
+
+/// A postal code as a zip-range axis compares it: trimmed and upper-cased.
+fn postal(text: &str) -> String {
+    text.trim().to_uppercase()
+}
+
+/// Overlapping postal ranges on a zip-range axis, within each slice: two ranges of the same
+/// length that share a code, compared character by character in Unicode order.
+fn postal_issues(
+    dimensions: &[(usize, &Dimension)],
+    cells: &[&Cell],
+    position: usize,
+    slot: usize,
+    dimension: &Dimension,
+) -> Vec<Issue> {
+    let mut slice_order: Vec<String> = Vec::new();
+    let mut slices: HashMap<String, Vec<(String, String)>> = HashMap::new();
+    for cell in cells {
+        let at = coordinate(cell, dimensions, Some(position));
+        let range = (postal(cell.key_at(slot)), postal(cell.key_to_at(slot)));
+        if range.0.is_empty() || range.0.chars().count() != range.1.chars().count() {
+            continue;
+        }
+        let ranges = slices.entry(at.clone()).or_insert_with(|| {
+            slice_order.push(at);
+            Vec::new()
+        });
+        if !ranges.contains(&range) {
+            ranges.push(range);
+        }
+    }
+
+    let label = dimension.display_label();
+    let multi = dimensions.len() > 1;
+    let mut merged: Vec<Issue> = Vec::new();
+    for at in &slice_order {
+        let Some(ranges) = slices.get_mut(at) else {
+            continue;
+        };
+        ranges.sort_by(|left, right| {
+            left.0
+                .chars()
+                .count()
+                .cmp(&right.0.chars().count())
+                .then_with(|| left.cmp(right))
+        });
+        let mut reach: Option<&(String, String)> = None;
+        for range in ranges.iter() {
+            let overlaps = reach.filter(|earlier| {
+                earlier.0.chars().count() == range.0.chars().count() && range.0 <= earlier.1
+            });
+            if let Some(earlier) = overlaps {
+                let message = Message::with(
+                    message!(
+                        "{0} ranges {1} and {2} overlap, so the same postal code matches both."
+                    ),
+                    [
+                        Arg::from(label.as_str()),
+                        Arg::from(format!("{}–{}", earlier.0, earlier.1)),
+                        Arg::from(format!("{}–{}", range.0, range.1)),
+                    ],
+                );
+                let known = merged.iter_mut().find(|known| known.message == message);
+                if let Some(known) = known {
+                    if multi {
+                        known.slices.push(at.clone());
+                    }
+                } else {
+                    merged.push(Issue {
+                        kind: IssueKind::Overlap,
+                        position: Some(dimension.position),
+                        message,
+                        bands: Vec::new(),
+                        slices: if multi { vec![at.clone()] } else { Vec::new() },
+                    });
+                }
+            }
+            let further = reach.is_none_or(|earlier| {
+                earlier.0.chars().count() != range.0.chars().count() || range.1 > earlier.1
+            });
+            if further {
+                reach = Some(range);
+            }
+        }
+    }
+    merged
 }
 
 fn global(template: &'static str) -> Issue {

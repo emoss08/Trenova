@@ -24,3 +24,17 @@ func (e *RateMatrixCell) GetStaticFieldMap() map[string]string {
 func (e *RateMatrixDimension) GetStaticFieldMap() map[string]string {
 	return ratematrixcol.RateMatrixDimensionFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateMatrixReview].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [ratematrixcol.RateMatrixReviewFieldMap] instead of parsing struct tags via reflection.
+func (e *RateMatrixReview) GetStaticFieldMap() map[string]string {
+	return ratematrixcol.RateMatrixReviewFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateMatrixVersion].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [ratematrixcol.RateMatrixVersionFieldMap] instead of parsing struct tags via reflection.
+func (e *RateMatrixVersion) GetStaticFieldMap() map[string]string {
+	return ratematrixcol.RateMatrixVersionFieldMap
+}

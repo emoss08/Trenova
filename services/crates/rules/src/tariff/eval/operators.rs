@@ -7,7 +7,8 @@
 //!   cancel is a plain `Number`.
 //! - A percent scaled by a number stays a percent (`0.5% × 3` is `1.5%`) unless the static type
 //!   says the product is a number; a percent times money is money.
-//! - `DateTime - DateTime` is a duration, `Date - Date` whole days.
+//! - `DateTime - DateTime` is a duration, `Date - Date` whole days, `Time - Time` the duration
+//!   between two times of one day (negative when the right side is later).
 //!
 //! Every result is exact or an error: overflow past 28 significant digits and division by zero
 //! never wrap, round or panic.
@@ -110,6 +111,7 @@ pub fn sub(left: &Value, right: &Value) -> Result<Value, EvalError> {
         },
         (Value::DateTime(a), Value::DateTime(b)) => duration_between(*b, *a),
         (Value::Date(a), Value::Date(b)) => days_between(*b, *a),
+        (Value::Time(a), Value::Time(b)) => Ok(duration_of_seconds(a.seconds() - b.seconds())),
         _ => Err(wrong("-", left, right)),
     }
 }

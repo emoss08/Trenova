@@ -1,6 +1,12 @@
 import { isNewerRecord, reseatKeepingEdits } from "@/lib/seated-record";
 import { useEffect, useState } from "react";
-import { useFormState, type FieldValues, type Path, type UseFormReturn } from "react-hook-form";
+import {
+  useFormState,
+  type DeepPartial,
+  type FieldValues,
+  type Path,
+  type UseFormReturn,
+} from "react-hook-form";
 
 /** A record as the form holds it: its values and the version a save is checked against. */
 export type SeatedRecord<T extends FieldValues> = {
@@ -67,15 +73,15 @@ export function useSeatedForm<T extends FieldValues>({
     held: newer && !replaces ? record : null,
     seat,
     seatSaved: (saved, sent) => {
-      reseatKeepingEdits({ form, values: saved.values, base: sent, fields });
+      reseatKeepingEdits<T>({ form, values: saved.values, base: sent as DeepPartial<T>, fields });
       setVersion(saved.version);
     },
     keepEdits: () => {
       if (!newer || replaces || !record) return;
-      reseatKeepingEdits({
+      reseatKeepingEdits<T>({
         form,
         values: record.values,
-        base: form.formState.defaultValues ?? {},
+        base: form.formState.defaultValues ?? ({} as DeepPartial<T>),
         fields,
       });
       setVersion(record.version);

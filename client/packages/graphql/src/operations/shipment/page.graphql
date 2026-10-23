@@ -287,8 +287,14 @@ fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
       rate
       rateUnit
       amount
+      limit {
+        kind
+        computed
+      }
+      on
     }
     notes
+    reviews
     freightTotal
     accessorialTotal
     total
@@ -322,6 +328,16 @@ fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   ruleLabel
   source
   explanation
+  awaitingReview
+  reviewApproval {
+    reviews
+    approvedById
+    approvedAt
+    approvedBy {
+      id
+      name
+    }
+  }
 }
 
 fragment ShipmentFields on Shipment {
@@ -1050,6 +1066,12 @@ mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
 
 mutation UncancelShipment($id: ID!) {
   uncancelShipment(id: $id) {
+    ...ShipmentFields
+  }
+}
+
+mutation ApproveShipmentRatingReview($shipmentId: ID!) {
+  approveShipmentRatingReview(shipmentId: $shipmentId) {
     ...ShipmentFields
   }
 }

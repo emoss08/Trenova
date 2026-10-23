@@ -27,11 +27,17 @@ type RateMatrixCell struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	RateMatrixID   pulid.ID `json:"rateMatrixId"   bun:"rate_matrix_id,type:VARCHAR(100),notnull"`
+	VersionNumber  int64    `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull,default:0"`
 
 	D0Key string `json:"d0Key" bun:"d0_key,type:VARCHAR(120),notnull,default:''"`
 	D1Key string `json:"d1Key" bun:"d1_key,type:VARCHAR(120),notnull,default:''"`
 	D2Key string `json:"d2Key" bun:"d2_key,type:VARCHAR(120),notnull,default:''"`
 	D3Key string `json:"d3Key" bun:"d3_key,type:VARCHAR(120),notnull,default:''"`
+
+	D0KeyTo string `json:"d0KeyTo" bun:"d0_key_to,type:VARCHAR(120),notnull,default:''"`
+	D1KeyTo string `json:"d1KeyTo" bun:"d1_key_to,type:VARCHAR(120),notnull,default:''"`
+	D2KeyTo string `json:"d2KeyTo" bun:"d2_key_to,type:VARCHAR(120),notnull,default:''"`
+	D3KeyTo string `json:"d3KeyTo" bun:"d3_key_to,type:VARCHAR(120),notnull,default:''"`
 
 	D0Min decimal.NullDecimal `json:"d0Min" bun:"d0_min,type:NUMERIC(19,4),nullzero"`
 	D0Max decimal.NullDecimal `json:"d0Max" bun:"d0_max,type:NUMERIC(19,4),nullzero"`
@@ -66,6 +72,38 @@ func (rmc *RateMatrixCell) KeyAt(position int16) string {
 	default:
 		return ""
 	}
+}
+
+func (rmc *RateMatrixCell) KeyToAt(position int16) string {
+	switch position {
+	case 0:
+		return rmc.D0KeyTo
+	case 1:
+		return rmc.D1KeyTo
+	case 2:
+		return rmc.D2KeyTo
+	case 3:
+		return rmc.D3KeyTo
+	default:
+		return ""
+	}
+}
+
+func (rmc *RateMatrixCell) SetKeyToAt(position int16, key string) {
+	switch position {
+	case 0:
+		rmc.D0KeyTo = key
+	case 1:
+		rmc.D1KeyTo = key
+	case 2:
+		rmc.D2KeyTo = key
+	case 3:
+		rmc.D3KeyTo = key
+	}
+}
+
+func (rmc *RateMatrixCell) PostalRangeAt(position int16) PostalRange {
+	return NewPostalRange(rmc.KeyAt(position), rmc.KeyToAt(position))
 }
 
 // BoundsAt reads the range stored for the given axis.
@@ -126,6 +164,18 @@ func (rmc *RateMatrixCell) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&rmc.D3Key,
 			validation.Length(0, 120).Error("Key cannot be longer than 120 characters"),
 		),
+		validation.Field(&rmc.D0KeyTo,
+			validation.Length(0, 120).Error("Key cannot be longer than 120 characters"),
+		),
+		validation.Field(&rmc.D1KeyTo,
+			validation.Length(0, 120).Error("Key cannot be longer than 120 characters"),
+		),
+		validation.Field(&rmc.D2KeyTo,
+			validation.Length(0, 120).Error("Key cannot be longer than 120 characters"),
+		),
+		validation.Field(&rmc.D3KeyTo,
+			validation.Length(0, 120).Error("Key cannot be longer than 120 characters"),
+		),
 	))
 
 	if rmc.Value.IsNegative() {
@@ -175,6 +225,12 @@ func (rmc *RateMatrixCell) ValidateAgainst(
 		position := dimension.Position
 		minimum, _ := rmc.BoundsAt(position)
 
+		if dimension.IsPostalRange() {
+			rmc.validatePostalRange(dimension, multiErr)
+			continue
+		}
+		rmc.SetKeyToAt(position, "")
+
 		switch dimension.MatchMode {
 		case MatchModeExact:
 			if rmc.KeyAt(position) == "" {
@@ -193,6 +249,51 @@ func (rmc *RateMatrixCell) ValidateAgainst(
 				)
 			}
 		}
+	}
+}
+
+func (rmc *RateMatrixCell) validatePostalRange(
+	dimension *RateMatrixDimension,
+	multiErr *errortypes.MultiError,
+) {
+	position := dimension.Position
+	postal := rmc.PostalRangeAt(position)
+	rmc.SetKeyAt(position, postal.From)
+	rmc.SetKeyToAt(position, postal.To)
+	rmc.SetBoundsAt(position, decimal.NullDecimal{}, decimal.NullDecimal{})
+
+	switch {
+	case postal.From == "" || postal.To == "":
+		multiErr.Add(
+			keyFieldName(position),
+			errortypes.ErrRequired,
+			"{0} requires the first and last postal code of its range", dimension.DisplayLabel(),
+		)
+	case postal.Length() != len([]rune(postal.To)):
+		multiErr.Add(
+			keyToFieldName(position),
+			errortypes.ErrInvalid,
+			"Both ends of a postal range have the same number of characters, as 30000 to 31999 do",
+		)
+	case postal.From > postal.To:
+		multiErr.Add(
+			keyToFieldName(position),
+			errortypes.ErrInvalid,
+			"A postal range cannot end before it starts",
+		)
+	}
+}
+
+func keyToFieldName(position int16) string {
+	switch position {
+	case 0:
+		return "d0KeyTo"
+	case 1:
+		return "d1KeyTo"
+	case 2:
+		return "d2KeyTo"
+	default:
+		return "d3KeyTo"
 	}
 }
 

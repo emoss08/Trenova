@@ -688,5 +688,309 @@
       ],
       "needs": []
     }
+  },
+  {
+    "name": "given cells on a range axis are bands from each floor to the next",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0"
+                }
+              ],
+              "value": "99"
+            }
+          ]
+        }
+      ]
+    },
+    "tests": "tariff \"t\"\nlet w = shipment.weight ?? 0 lb\nlet rate = tables.Breaks[w] ?? fail \"No break\"\ncharge \"Linehaul\" = rate * w\ntest \"inside a band\" {\n  given shipment.weight = 600 lb\n  given tables.Breaks[0 lb] = $40/cwt\n  given tables.Breaks[500 lb] = $30/cwt\n  given tables.Breaks[1_000 lb] = $20/cwt\n  expect total == $180\n}\ntest \"the top band is open-ended\" {\n  given shipment.weight = 5_000 lb\n  given tables.Breaks[0 lb] = $40/cwt\n  given tables.Breaks[10 cwt] = $20/cwt\n  expect total == $1_000\n}\ntest \"only the given cells\" {\n  given shipment.weight = 600 lb\n  given tables.Breaks[1_000 lb] = $20/cwt\n  expect fails \"No break\"\n}\ntest \"a later given replaces an earlier\" {\n  given shipment.weight = 600 lb\n  given tables.Breaks[0 lb] = $40/cwt\n  given tables.Breaks[0 lb] = $10/cwt\n  expect total == $60\n}\ntest \"no given cells reads the live table\" {\n  given shipment.weight = 600 lb\n  expect total == $594\n}",
+    "expect": [
+      {
+        "name": "inside a band",
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "name": "the top band is open-ended",
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "name": "only the given cells",
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "name": "a later given replaces an earlier",
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "name": "no given cells reads the live table",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "given cells need no live data, and normalise like the table",
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zip3",
+              "normalization": "Trim"
+            },
+            {
+              "match": "Exact",
+              "kind": "Zip3",
+              "normalization": "Trim"
+            }
+          ]
+        }
+      ]
+    },
+    "tests": "tariff \"t\"\nlet rate = tables.Zones[lane.origin.zip3, lane.destination.zip3] ?? fail \"No zone\"\ncharge \"Linehaul\" = rate * 1 cwt\ntest \"a given cell\" {\n  given lane.origin.zip3 = \"752\"\n  given lane.destination.zip3 = \"606\"\n  given tables.Zones[\" 752 \", \"606\"] = $20/cwt\n  expect total == $20\n}\ntest \"a miss among given cells is none\" {\n  given lane.origin.zip3 = \"752\"\n  given lane.destination.zip3 = \"999\"\n  given tables.Zones[\"752\", \"606\"] = $20/cwt\n  expect fails \"No zone\"\n}\ntest \"without cells it needs the live table\" {\n  given lane.origin.zip3 = \"752\"\n  given lane.destination.zip3 = \"606\"\n  expect total == $20\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "a given cell",
+          "status": "passed",
+          "failures": []
+        },
+        {
+          "name": "a miss among given cells is none",
+          "status": "passed",
+          "failures": []
+        },
+        {
+          "name": "without cells it needs the live table",
+          "status": "needs"
+        }
+      ],
+      "needs": [
+        {
+          "table": "Zones",
+          "keys": [
+            "752",
+            "606"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a given cell on a zip-range axis covers that code and the codes it starts",
+    "context": {
+      "tables": [
+        {
+          "code": "Lanes",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "ZipRange",
+              "label": "origin"
+            }
+          ]
+        }
+      ]
+    },
+    "tests": "tariff \"t\"\nlet rate = tables.Lanes[lane.origin.zip] ?? fail \"No lane\"\ncharge \"Linehaul\" = rate\ntest \"the code itself\" {\n  given lane.origin.zip = \"30303\"\n  given tables.Lanes[\"30303\"] = $400\n  expect total == $400\n}\ntest \"a shorter code covers the codes it starts\" {\n  given lane.origin.zip = \"30303\"\n  given tables.Lanes[\" 303 \"] = $350\n  expect total == $350\n}\ntest \"another code misses\" {\n  given lane.origin.zip = \"30404\"\n  given tables.Lanes[\"303\"] = $350\n  expect fails \"No lane\"\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "the code itself",
+          "status": "passed",
+          "failures": []
+        },
+        {
+          "name": "a shorter code covers the codes it starts",
+          "status": "passed",
+          "failures": []
+        },
+        {
+          "name": "another code misses",
+          "status": "passed",
+          "failures": []
+        }
+      ]
+    }
+  },
+  {
+    "name": "a given whole cell carries its minimum and deficit flag",
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zip3",
+              "normalization": "Trim"
+            },
+            {
+              "match": "Exact",
+              "kind": "Zip3",
+              "normalization": "Trim"
+            }
+          ]
+        }
+      ]
+    },
+    "tests": "tariff \"t\"\nlet cell = tables.Zones.cell(lane.origin.zip3, lane.destination.zip3) ?? fail \"No zone\"\ncharge \"Linehaul\" = cell.value * 1 cwt\nminimum cell.minimum ?? $0\ntest \"the cell's minimum applies\" {\n  given lane.origin.zip3 = \"752\"\n  given lane.destination.zip3 = \"606\"\n  given tables.Zones[\"752\", \"606\"] = { value: $20/cwt, minimum: $95, deficit: true }\n  expect total == $95\n  expect (tables.Zones.cell(\"752\", \"606\")?.deficit ?? false)\n}\ntest \"a bare value has no minimum\" {\n  given lane.origin.zip3 = \"752\"\n  given lane.destination.zip3 = \"606\"\n  given tables.Zones[\"752\", \"606\"] = $20/cwt\n  expect total == $20\n  expect not (tables.Zones.cell(\"752\", \"606\")?.deficit ?? true)\n}",
+    "expect": [
+      {
+        "name": "the cell's minimum applies",
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "name": "a bare value has no minimum",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "a property's given cells hold for every case",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0"
+                }
+              ],
+              "value": "99"
+            }
+          ]
+        }
+      ]
+    },
+    "tests": "tariff \"t\"\nlet w = shipment.weight ?? 0 lb\ncharge \"Linehaul\" = (tables.Breaks[w] ?? $0/cwt) * w\nproperty \"never above the given rate\" {\n  vary shipment.weight in 1 lb..2_000 lb\n  given tables.Breaks[0 lb] = $10/cwt\n  expect total <= $200\n}",
+    "expect": [
+      {
+        "name": "never above the given rate",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "a condition's tests read applies",
+    "tests": "condition \"c\"\nshipment.hazmat\ntest \"hazmat applies\" {\n  given shipment.hazmat = true\n  expect applies\n  expect applies == true\n}\ntest \"otherwise it does not\" {\n  expect not applies\n}\ntest \"a wrong expectation fails\" {\n  expect applies\n}",
+    "expect": [
+      {
+        "name": "hazmat applies",
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "name": "otherwise it does not",
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "name": "a wrong expectation fails",
+        "status": "failed",
+        "failures": [
+          {
+            "message": {
+              "message": "This expectation does not hold"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "a condition that refuses fails expect applies with the refusal",
+    "tests": "condition \"c\"\nrequire let w = shipment.weight else \"This needs a weight\"\nw > 1_000 lb\ntest \"no weight\" {\n  expect applies\n}\ntest \"no weight refuses\" {\n  expect fails \"This needs a weight\"\n}",
+    "expect": [
+      {
+        "name": "no weight",
+        "status": "failed",
+        "failures": [
+          {
+            "message": {
+              "message": "The rating was refused: {0}",
+              "args": [
+                "This needs a weight"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "no weight refuses",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "the test constructors set a stop's location fields by name",
+    "tests": "tariff \"t\"\nlet legs = shipment.stops.sum(s => s.legDistance ?? 0 mi)\ncharge \"Legs\" = $1/mi * legs\ntest \"t\" {\n  given shipment.stops = [pickup(), delivery(legDistance: 120 mi, zip3: \"752\", category: Warehouse, facilityType: ColdStorage, requiresAppointment: true)]\n  expect total == $120\n  expect shipment.delivery?.location?.zip3 == \"752\"\n  expect shipment.delivery?.location?.category == Warehouse\n  expect shipment.delivery?.location?.facilityType == ColdStorage\n  expect shipment.delivery?.location?.requiresAppointment ?? false\n  expect shipment.delivery?.location?.timezone == \"UTC\"\n  expect shipment.pickup?.legDistance == none\n  expect shipment.pickup?.location?.category == none\n}",
+    "expect": [
+      {
+        "name": "t",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "tests give holidays and requested accessorials",
+    "context": {
+      "codes": [
+        {
+          "code": "LIFT",
+          "active": true
+        }
+      ]
+    },
+    "tests": "tariff \"t\"\nif shipment.requested(LIFT) {\n  charge \"Liftgate\" as LIFT = $85\n}\nif rating.date.holiday {\n  charge \"Holiday\" = $50\n}\ntest \"neither by default\" {\n  expect total == $0\n}\ntest \"a requested liftgate on a holiday\" {\n  given shipment.accessorials = [{ code: \"RES\", quantity: 1 }, { code: \"LIFT\", quantity: 2 }]\n  given rating.holidays = [{ date: @2026-01-01, name: \"New Year's Day\" }, { date: @2026-01-05, name: \"Sample day\" }]\n  expect charge(LIFT) == $85\n  expect charge(\"Holiday\") == $50\n}",
+    "expect": [
+      {
+        "name": "neither by default",
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "name": "a requested liftgate on a holiday",
+        "status": "passed",
+        "failures": []
+      }
+    ]
   }
 ]

@@ -1,4 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
+import { formatList } from "@trenova/shared/i18n/format";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DateTimePicker } from "@/components/fields/date-field/datetime-picker";
@@ -340,6 +341,7 @@ function getChangeBadges(
 
   const hasSource = changes.some(([k]) => k === "source");
   const importChanges = changes.filter(([k]) => k.startsWith("imports"));
+  const tableChanges = changes.filter(([k]) => k.startsWith("tables"));
   const hasStatus = changes.some(([k]) => k === "status");
   const hasName = changes.some(([k]) => k === "name");
   const hasDescription = changes.some(([k]) => k === "description");
@@ -360,6 +362,14 @@ function getChangeBadges(
         "{0, plural, one {# pinned library changed} other {# pinned libraries changed}}",
         importChanges.length,
       ),
+    });
+  }
+
+  if (tableChanges.length > 0) {
+    badges.push({
+      label: translate("Rate tables"),
+      color: "bg-accent-teal-subtle text-accent-teal-on-subtle",
+      tooltip: translate("The rate table versions it pins changed"),
     });
   }
 
@@ -577,6 +587,15 @@ function VersionItem({
             {version.changeMessage && (
               <p className="text-muted-foreground mb-2 line-clamp-2 text-sm">
                 {version.changeMessage}
+              </p>
+            )}
+
+            {version.tables.length > 0 && (
+              <p className="text-muted-foreground mb-2 font-mono text-xs">
+                {t(
+                  "Pins {0}",
+                  formatList(version.tables.map((pin) => `${pin.code} v${pin.versionNumber}`)),
+                )}
               </p>
             )}
 

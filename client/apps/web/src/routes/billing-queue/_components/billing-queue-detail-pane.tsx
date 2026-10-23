@@ -27,6 +27,7 @@ import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
 import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 import { BillingQueueChargesTab } from "./billing-queue-charges-tab";
 import { BillingQueueDetentionHolds } from "./billing-queue-detention-holds";
+import { BillingQueueRatingReviewHold } from "./billing-queue-rating-review-hold";
 import { BillingQueueDocumentsTab } from "./billing-queue-documents-tab";
 import {
   BillingQueueDetailSkeleton,
@@ -167,6 +168,7 @@ export default function BillingQueueDetailPane({
         </div>
       )}
       <BillingQueueDetentionHolds holds={item.detentionHolds} />
+      <BillingQueueRatingReviewHold hold={item.ratingReviewHold} />
       {item.isAdjustmentOrigin ? (
         <AdjustmentOriginBanner
           rebillStrategy={item.rebillStrategy}

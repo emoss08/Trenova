@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/rateconfirmationrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/rateimportrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratematrixrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratematrixreviewrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratematrixversionrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratequoterepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratesimulationrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratezonerepository"
@@ -52,6 +54,8 @@ func SharedOptions() fx.Option {
 			rateagreementrepository.New,
 			ratezonerepository.New,
 			ratematrixrepository.New,
+			ratematrixversionrepository.New,
+			ratematrixreviewrepository.New,
 			ratesimulationrepository.New,
 			rateimportrepository.New,
 			ratequoterepository.New,

@@ -45,6 +45,12 @@ pub const BUILTIN_TYPES: &[(&str, &str)] = &[
         message!("An instant with its UTC offset, written `@2026-10-22T08:00-05:00`."),
     ),
     (
+        "Time",
+        message!(
+            "A time of day on a clock, with no date and no offset, written `@17:30`; `at.time` is a date-time's."
+        ),
+    ),
+    (
         "Weight",
         message!("A weight: `lb`, `cwt`, `kg`, `t`, `ton`."),
     ),
@@ -89,6 +95,7 @@ pub fn builtin(name: &str) -> Option<Type> {
         "Text" => Type::Text,
         "Date" => Type::Date,
         "DateTime" => Type::DateTime,
+        "Time" => Type::Time,
         other => Type::of(Base::from_name(other)?),
     })
 }

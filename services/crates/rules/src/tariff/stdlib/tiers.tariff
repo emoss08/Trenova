@@ -1,0 +1,173 @@
+library "std.tiers"
+
+/// Graduated (progressive) pricing: each tier prices only the part of a distance or weight that
+/// falls inside it, as a rate sheet reads "the first 100 mi at $3.00/mi, the next 400 mi at
+/// $2.50/mi, beyond at $2.00/mi". A tier runs from its `from` up to the next tier's; tiers are
+/// read in order of `from`, however the list is written.
+
+/// One tier of a graduated distance rate.
+type DistanceTier = {
+  /// Where the tier starts. The lowest tier also prices any distance below its start.
+  from: Distance,
+  /// What each mile inside the tier is billed at.
+  rate: Money/mi,
+}
+
+/// The part of a distance one tier prices.
+type DistanceStep = {
+  /// Where the part starts: the tier's start, or zero for the lowest tier.
+  from: Distance,
+  /// Where it ends: the next tier's start, or the distance itself in the last tier it reaches.
+  to: Distance,
+  /// How long the part is.
+  distance: Distance,
+  /// The tier's rate.
+  rate: Money/mi,
+  /// The rate times the part's distance, exact.
+  amount: Money,
+}
+
+/// One tier of a graduated weight rate.
+type WeightTier = {
+  /// Where the tier starts. The lowest tier also prices any weight below its start.
+  from: Weight,
+  /// What each hundredweight inside the tier is billed at.
+  rate: Money/cwt,
+}
+
+/// The part of a weight one tier prices.
+type WeightStep = {
+  /// Where the part starts: the tier's start, or zero for the lowest tier.
+  from: Weight,
+  /// Where it ends: the next tier's start, or the weight itself in the last tier it reaches.
+  to: Weight,
+  /// How heavy the part is.
+  weight: Weight,
+  /// The tier's rate.
+  rate: Money/cwt,
+  /// The rate times the part's weight, exact.
+  amount: Money,
+}
+
+/// What `distance` costs at graduated `tiers`: the sum of every step's amount. Refuses to rate
+/// when there are no tiers.
+fn byDistance(tiers: List<DistanceTier>, distance: Distance) -> Money = distanceSteps(tiers, distance).sum(s => s.amount)
+
+/// The part of `distance` each of `tiers` prices, lowest first, leaving out the tiers it doesn't
+/// reach; none for a distance of zero or less. Refuses to rate when there are no tiers.
+fn distanceSteps(tiers: List<DistanceTier>, distance: Distance) -> List<DistanceStep> {
+  let sorted = tiers.sortBy(t => t.from)
+  require not sorted.isEmpty else "There are no distance tiers to price {distance} with"
+  return sorted
+    .map((tier, index) => distanceStep(tier, index, sorted[index + 1]?.from ?? distance, distance))
+    .where(s => s.distance > 0 mi)
+}
+
+/// What `weight` costs at graduated `tiers`: the sum of every step's amount. Refuses to rate when
+/// there are no tiers.
+fn byWeight(tiers: List<WeightTier>, weight: Weight) -> Money = weightSteps(tiers, weight).sum(s => s.amount)
+
+/// The part of `weight` each of `tiers` prices, lowest first, leaving out the tiers it doesn't
+/// reach; none for a weight of zero or less. Refuses to rate when there are no tiers.
+fn weightSteps(tiers: List<WeightTier>, weight: Weight) -> List<WeightStep> {
+  let sorted = tiers.sortBy(t => t.from)
+  require not sorted.isEmpty else "There are no weight tiers to price {weight} with"
+  return sorted
+    .map((tier, index) => weightStep(tier, index, sorted[index + 1]?.from ?? weight, weight))
+    .where(s => s.weight > 0 lb)
+}
+
+/// The part of `distance` from the tier's start (zero for the lowest, at `index` 0) up to `next`.
+private fn distanceStep(tier: DistanceTier, index: Int, next: Distance, distance: Distance) -> DistanceStep {
+  let from = if index == 0 { 0 mi } else { tier.from }
+  let to = next.min(distance).max(from)
+  return { from: from, to: to, distance: to - from, rate: tier.rate, amount: tier.rate * (to - from) }
+}
+
+/// The part of `weight` from the tier's start (zero for the lowest, at `index` 0) up to `next`.
+private fn weightStep(tier: WeightTier, index: Int, next: Weight, weight: Weight) -> WeightStep {
+  let from = if index == 0 { 0 lb } else { tier.from }
+  let to = next.min(weight).max(from)
+  return { from: from, to: to, weight: to - from, rate: tier.rate, amount: tier.rate * (to - from) }
+}
+
+test "each tier prices only the miles inside it" {
+  let tiers: List<DistanceTier> = [
+    { from: 0 mi, rate: $3/mi },
+    { from: 100 mi, rate: $2.50/mi },
+    { from: 500 mi, rate: $2/mi },
+  ]
+  expect byDistance(tiers, 50 mi) == $150
+  expect byDistance(tiers, 100 mi) == $300
+  expect byDistance(tiers, 250 mi) == $675
+  expect byDistance(tiers, 500 mi) == $1_300
+  expect byDistance(tiers, 812 mi) == $1_924
+}
+
+test "the steps name each tier's part, lowest first" {
+  let tiers: List<DistanceTier> = [
+    { from: 0 mi, rate: $3/mi },
+    { from: 100 mi, rate: $2.50/mi },
+    { from: 500 mi, rate: $2/mi },
+  ]
+  let steps = distanceSteps(tiers, 250 mi)
+  expect steps.len == 2
+  expect steps[0] == { from: 0 mi, to: 100 mi, distance: 100 mi, rate: $3/mi, amount: $300 }
+  expect steps[1] == { from: 100 mi, to: 250 mi, distance: 150 mi, rate: $2.50/mi, amount: $375 }
+  expect distanceSteps(tiers, 0 mi).isEmpty
+  expect distanceSteps(tiers, 100 mi).len == 1
+}
+
+test "tiers are read in order and the lowest prices what is below it" {
+  let tiers: List<DistanceTier> = [
+    { from: 500 mi, rate: $2/mi },
+    { from: 1 mi, rate: $3/mi },
+    { from: 100 mi, rate: $2.50/mi },
+  ]
+  expect byDistance(tiers, 0.5 mi) == $1.50
+  expect byDistance(tiers, 600 mi) == $1_500
+  expect distanceSteps(tiers, 600 mi)[2]?.rate == $2/mi
+}
+
+test "distances convert into the tiers' units" {
+  let tiers: List<DistanceTier> = [
+    { from: 0 mi, rate: $3/mi },
+    { from: 100 mi, rate: $2.50/mi },
+  ]
+  expect byDistance(tiers, 160.9344 km) == $300
+  expect byDistance(tiers, 321.8688 km) == $550
+}
+
+test "one tier prices every mile at its rate" {
+  let tiers: List<DistanceTier> = [{ from: 0 mi, rate: $2.35/mi }]
+  expect byDistance(tiers, 412 mi) == $968.20
+}
+
+test "no distance tiers refuses to rate" {
+  let tiers: List<DistanceTier> = []
+  let owed = byDistance(tiers, 250 mi)
+  expect fails "There are no distance tiers to price 250 mi with"
+}
+
+test "weight tiers price each part per hundredweight" {
+  let tiers: List<WeightTier> = [
+    { from: 0 lb, rate: $40/cwt },
+    { from: 500 lb, rate: $30/cwt },
+    { from: 2_000 lb, rate: $20/cwt },
+  ]
+  expect byWeight(tiers, 300 lb) == $120
+  expect byWeight(tiers, 1_200 lb) == $410
+  expect byWeight(tiers, 3_000 lb) == $850
+  expect byWeight(tiers, 10 cwt) == $350
+  expect weightSteps(tiers, 1_200 lb) == [
+    { from: 0 lb, to: 500 lb, weight: 500 lb, rate: $40/cwt, amount: $200 },
+    { from: 500 lb, to: 1_200 lb, weight: 700 lb, rate: $30/cwt, amount: $210 },
+  ]
+  expect weightSteps(tiers, -5 lb).isEmpty
+}
+
+test "no weight tiers refuses to rate" {
+  let tiers: List<WeightTier> = []
+  let owed = byWeight(tiers, 1_000 lb)
+  expect fails "There are no weight tiers to price 1000 lb with"
+}

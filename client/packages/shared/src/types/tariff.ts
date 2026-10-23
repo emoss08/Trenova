@@ -41,6 +41,8 @@ export type TariffWireNumber = { $n: string };
 export type TariffWireQuantity = { $q: string; u: string };
 /** `Date` and `DateTime`: `{"$date": "2026-10-22"}`, `{"$date": "2026-10-22T08:00:00-05:00"}`. */
 export type TariffWireDate = { $date: string };
+/** `Time`, a time of day with no date and no offset: `{"$time": "17:30:00"}`. */
+export type TariffWireTime = { $time: string };
 /** A record: field names never start with `$`. */
 export type TariffWireRecord = { [field: string]: TariffWireValue };
 
@@ -56,6 +58,7 @@ export type TariffWireValue =
   | TariffWireNumber
   | TariffWireQuantity
   | TariffWireDate
+  | TariffWireTime
   | TariffWireValue[]
   | TariffWireRecord;
 
@@ -70,6 +73,12 @@ export const tariffWireQuantitySchema = z.strictObject({
   u: z.string().min(1),
 });
 export const tariffWireDateSchema = z.strictObject({ $date: z.string().min(10) });
+
+/** A time of day as the module writes it (`17:30:00`) or reads it (`17:30` too). */
+export const TARIFF_TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
+export const tariffWireTimeSchema = z.strictObject({
+  $time: z.string().regex(TARIFF_TIME_PATTERN),
+});
 
 const tariffWireRecordSchema: z.ZodType<TariffWireRecord> = z.lazy(() =>
   z
@@ -87,6 +96,7 @@ export const tariffWireValueSchema: z.ZodType<TariffWireValue> = z.lazy(() =>
     tariffWireNumberSchema,
     tariffWireQuantitySchema,
     tariffWireDateSchema,
+    tariffWireTimeSchema,
     z.array(tariffWireValueSchema),
     tariffWireRecordSchema,
   ]),
@@ -105,8 +115,10 @@ export type TariffTypeField = {
 /**
  * A type as `tariff.check` describes an input's, for building its form: the scalar kinds,
  * `money`, a `quantity` of a dimension shown in a unit (`Money/Distance` in `$/mi`, `Weight` in
- * `lb`), a `list`, an `optional`, a `record` with its fields, an `enum` with its variants, and
- * `unknown` for a type the checker could not read.
+ * `lb`), a `list`, an `optional`, a `record` with its fields, an `enum` with its variants
+ * (`ordered` when they have an order, as `FreightClass` and `Weekday` do, so a range of them
+ * means something), `time` for a time of day, and `unknown` for a type the checker could not
+ * read.
  */
 export type TariffType =
   | {
@@ -118,6 +130,7 @@ export type TariffType =
         | "text"
         | "date"
         | "dateTime"
+        | "time"
         | "money"
         | "unknown";
     }
@@ -125,7 +138,7 @@ export type TariffType =
   | { kind: "list"; item: TariffType }
   | { kind: "optional"; inner: TariffType }
   | { kind: "record"; name: string | null; fields: TariffTypeField[] }
-  | { kind: "enum"; name: string; variants: string[] };
+  | { kind: "enum"; name: string; variants: string[]; ordered: boolean };
 
 export const tariffTypeSchema: z.ZodType<TariffType> = z.lazy(() =>
   z.discriminatedUnion("kind", [
@@ -138,6 +151,7 @@ export const tariffTypeSchema: z.ZodType<TariffType> = z.lazy(() =>
         "text",
         "date",
         "dateTime",
+        "time",
         "money",
         "unknown",
       ]),
@@ -162,14 +176,24 @@ export const tariffTypeSchema: z.ZodType<TariffType> = z.lazy(() =>
         }),
       ),
     }),
-    z.object({ kind: z.literal("enum"), name: z.string(), variants: z.array(z.string()) }),
+    z.object({
+      kind: z.literal("enum"),
+      name: z.string(),
+      variants: z.array(z.string()),
+      ordered: z
+        .boolean()
+        .nullish()
+        .transform((value) => value ?? false),
+    }),
   ]),
 );
 
 /**
  * An input's `where` clause, folded to values: a range (the minimum always inclusive, the
  * maximum inclusive only when `maxInclusive`, an open end `null`) or a list the value must be
- * one of. For a `List<T>` input it bounds each item; `none` always passes an optional's.
+ * one of. For a `List<T>` input it bounds each item; `none` always passes an optional's. A
+ * range's ends are numbers, quantities, dates, date-times, times, text (ordered by Unicode code
+ * point) or the variants of an ordered enum (ordered by their place in it).
  */
 export const tariffConstraintSchema = z.union([
   z.object({
@@ -229,9 +253,22 @@ export const tariffLineKindSchema = z.enum(["charge", "minimum", "maximum", "rou
 export type TariffLineKind = z.output<typeof tariffLineKindSchema>;
 
 /**
+ * A charge's own `minimum:` or `maximum:` that changed its amount: which one, and what the charge
+ * came to before it (rounded like the line), so its quantity times its rate no longer make its
+ * amount.
+ */
+export const tariffLineLimitSchema = z.object({
+  kind: z.enum(["minimum", "maximum"]),
+  computed: tariffWireQuantitySchema,
+});
+export type TariffLineLimit = z.output<typeof tariffLineLimitSchema>;
+
+/**
  * One line of a bill. A charge has the author's label (the customer's text, shown as written)
  * and a code when it is an accessorial; an adjustment has neither and is labelled in the
- * reader's language. `quantity` and `rate` are there when the charge gave both.
+ * reader's language. `quantity` and `rate` are there when the charge gave both. `limit` is set
+ * when the charge's own minimum or maximum changed its amount, and `on` is `freight` only on the
+ * adjustment of a `minimum … on freight` or `maximum … on freight` clause.
  */
 export const tariffBillLineSchema = z.object({
   kind: tariffLineKindSchema,
@@ -247,6 +284,11 @@ export const tariffBillLineSchema = z.object({
   amount: tariffWireQuantitySchema,
   quantity: tariffWireValueSchema.nullish().transform((value) => value ?? null),
   rate: tariffWireValueSchema.nullish().transform((value) => value ?? null),
+  limit: tariffLineLimitSchema.nullish().transform((value) => value ?? null),
+  on: z
+    .literal("freight")
+    .nullish()
+    .transform((value) => value ?? null),
   range: tariffRangeSchema.nullish().transform((value) => value ?? null),
 });
 export type TariffBillLine = z.output<typeof tariffBillLineSchema>;
@@ -266,10 +308,18 @@ export const tariffConvertedSchema = z.object({
 });
 export type TariffConverted = z.output<typeof tariffConvertedSchema>;
 
-/** A tariff's result: its lines in order, its notes and its totals. Lines add up to `total`. */
+/**
+ * A tariff's result: its lines in order, its notes, the reviews it asks for and its totals. Lines
+ * add up to `total`.
+ */
 export const tariffBillSchema = z.object({
   lines: z.array(tariffBillLineSchema),
   notes: z
+    .array(tariffNoteSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  /** What the tariff asks a person to check before the shipment bills; a rating with any is held. */
+  reviews: z
     .array(tariffNoteSchema)
     .nullish()
     .transform((value) => value ?? []),
@@ -426,6 +476,23 @@ export const tariffCheckResultSchema = z.object({
     .array(tariffChargeRefSchema)
     .nullish()
     .transform((value) => value ?? []),
+  /**
+   * The rate tables the file reads, across the modules it imports, each with the published
+   * version the context held (null when the context named none). Approval pins these.
+   */
+  tables: z
+    .array(
+      z.object({
+        code: z.string(),
+        version: z
+          .number()
+          .int()
+          .nullish()
+          .transform((value) => value ?? null),
+      }),
+    )
+    .nullish()
+    .transform((value) => value ?? []),
 });
 export type TariffCheckResult = z.output<typeof tariffCheckResultSchema>;
 
@@ -539,7 +606,11 @@ export const tariffTestResultSchema = z.object({
 });
 export type TariffTestResult = z.output<typeof tariffTestResultSchema>;
 
-/** What part of a file a coverage region is: a branch, an arm, a loop body, an option, … */
+/**
+ * What part of a file a coverage region is: a branch, an arm, a loop body, an option, a charge, a
+ * `review`, a refusal, a function body, or one of a condition's two outcomes (`applies` and
+ * `notApplies`, both on the condition's final expression).
+ */
 export const tariffRegionKindSchema = z.enum([
   "if",
   "else",
@@ -547,8 +618,11 @@ export const tariffRegionKindSchema = z.enum([
   "loop",
   "option",
   "charge",
+  "review",
   "refusal",
   "function",
+  "applies",
+  "notApplies",
 ]);
 export type TariffRegionKind = z.output<typeof tariffRegionKindSchema>;
 
@@ -622,6 +696,8 @@ export const tariffTraceEventSchema = z.discriminatedUnion("kind", [
     label: z.string(),
     code: z.string().nullable(),
     ...traceValueFields,
+    /** The charge's own minimum or maximum, when it changed the amount the charge billed. */
+    limit: tariffLineLimitSchema.nullish().transform((value) => value ?? null),
     range: tariffRangeSchema,
   }),
   z.object({
@@ -631,6 +707,7 @@ export const tariffTraceEventSchema = z.discriminatedUnion("kind", [
     range: tariffRangeSchema.nullable(),
   }),
   z.object({ kind: z.literal("note"), text: z.string(), range: tariffRangeSchema }),
+  z.object({ kind: z.literal("review"), text: z.string(), range: tariffRangeSchema }),
   z.object({ kind: z.literal("refusal"), message: z.string(), range: tariffRangeSchema }),
   z.object({ kind: z.literal("lookup"), lookup: z.number().int(), range: tariffRangeSchema }),
   z.object({
@@ -640,6 +717,8 @@ export const tariffTraceEventSchema = z.discriminatedUnion("kind", [
       .string()
       .nullish()
       .transform((value) => value ?? null),
+    /** The kept option's exact subtotal (the value a `let` binds); null when every option refused. */
+    subtotal: tariffWireQuantitySchema.nullish().transform((value) => value ?? null),
     range: tariffRangeSchema,
   }),
   z.object({ kind: z.literal("truncated") }),
@@ -717,7 +796,10 @@ export const tariffLibrarySourceSchema = z.object({
 });
 export type TariffLibrarySource = z.output<typeof tariffLibrarySourceSchema>;
 
-/** One axis of a rate table: `Exact` or `Range`, what it varies by, and a range's unit. */
+/**
+ * One axis of a rate table: `Exact` or `Range`, what it varies by, and a range's unit. A `Range`
+ * axis of kind `ZipRange` holds postal ranges rather than numeric bands.
+ */
 export const tariffTableAxisSchema = z.object({
   match: z.enum(["Exact", "Range"]),
   kind: z.string(),
@@ -744,11 +826,22 @@ export type TariffTableAxis = z.output<typeof tariffTableAxisSchema>;
 
 const optionalDecimalSchema = decimalTextSchema.nullish().transform((value) => value ?? undefined);
 
-/** One priced cell: a `{key}` on each exact axis and a `{min, max?}` band on each range axis. */
+/**
+ * One priced cell: a `{key}` on each exact axis, a `{min, max?}` band on each range axis and a
+ * `{from, to}` postal range, both ends inclusive, on each `ZipRange` axis.
+ */
 export const tariffTableCellSchema = z.object({
   at: z.array(
     z.object({
       key: z
+        .string()
+        .nullish()
+        .transform((value) => value ?? undefined),
+      from: z
+        .string()
+        .nullish()
+        .transform((value) => value ?? undefined),
+      to: z
         .string()
         .nullish()
         .transform((value) => value ?? undefined),
@@ -787,6 +880,12 @@ export const tariffTableShapeSchema = z.object({
     .string()
     .nullish()
     .transform((value) => value ?? ""),
+  /** The published version the context holds: the newest, or the one a template version pins. */
+  version: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? undefined),
   axes: z.array(tariffTableAxisSchema),
   valueType: z.string(),
   cells: tableCellsSchema,

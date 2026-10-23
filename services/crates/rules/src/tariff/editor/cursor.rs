@@ -18,9 +18,9 @@
 
 use crate::span::Span;
 use crate::tariff::syntax::ast::{
-    Arg, Arm, ArmBody, Block, Condition, Expect, Expr, ExprKind, File, FnBody, Item, ItemKind,
-    Name, Param, Pattern, PatternKind, RoundTo, Stmt, StmtKind, Text, TextPart, TotalClause,
-    TypeExpr, TypeExprKind,
+    Arg, Arm, ArmBody, Binding, Block, Condition, Expect, Expr, ExprKind, File, FnBody, Item,
+    ItemKind, Name, Param, Pattern, PatternKind, RoundTo, Stmt, StmtKind, Text, TextPart,
+    TotalClause, TypeExpr, TypeExprKind,
 };
 use crate::tariff::syntax::token::{Token, TokenKind};
 
@@ -360,11 +360,16 @@ impl<'a> Locator<'a, '_> {
                 }
                 self.expr(&binding.value);
             }
+            StmtKind::Given { keys, value, .. } => {
+                for key in keys.iter().flatten() {
+                    self.expr(key);
+                }
+                self.expr(value);
+            }
             StmtKind::Assign { value, .. }
             | StmtKind::Return(value)
             | StmtKind::Expr(value)
-            | StmtKind::Assume(value)
-            | StmtKind::Given { value, .. } => {
+            | StmtKind::Assume(value) => {
                 self.expr(value);
             }
             StmtKind::Charge(charge) => {
@@ -376,7 +381,7 @@ impl<'a> Locator<'a, '_> {
                     self.expr(amount);
                 }
             }
-            StmtKind::Note(text) | StmtKind::Fail(text) => self.text(text),
+            StmtKind::Note(text) | StmtKind::Review(text) | StmtKind::Fail(text) => self.text(text),
             StmtKind::If(statement) => {
                 for (condition, block) in &statement.branches {
                     self.condition(condition);
@@ -415,8 +420,8 @@ impl<'a> Locator<'a, '_> {
                 self.text(message);
             }
             StmtKind::Total(clause) => match clause {
-                TotalClause::Minimum(value) | TotalClause::Maximum(value) => {
-                    self.expr(value);
+                TotalClause::Minimum(bound) | TotalClause::Maximum(bound) => {
+                    self.expr(&bound.amount);
                 }
                 TotalClause::Round { to, .. } => {
                     if let RoundTo::Amount(value) = to {
@@ -621,11 +626,20 @@ impl<'a> Locator<'a, '_> {
             ExprKind::Lambda { body, .. } => {
                 self.expr(body);
             }
+            ExprKind::Choose(choose) => {
+                for option in &choose.options {
+                    self.visited += 1;
+                    if self.block(&option.body) {
+                        break;
+                    }
+                }
+            }
             ExprKind::Number { .. }
             | ExprKind::Money { .. }
             | ExprKind::Percent(_)
             | ExprKind::Date(_)
             | ExprKind::DateTime(_)
+            | ExprKind::Time(_)
             | ExprKind::Bool(_)
             | ExprKind::None
             | ExprKind::Name(_)
@@ -864,6 +878,7 @@ impl<'a> ScopeWalker<'a, '_> {
             StmtKind::Assign { .. }
             | StmtKind::Charge(_)
             | StmtKind::Note(_)
+            | StmtKind::Review(_)
             | StmtKind::If(_)
             | StmtKind::Choose(_)
             | StmtKind::Match(_)
@@ -914,21 +929,25 @@ impl<'a> ScopeWalker<'a, '_> {
                 }
                 self.expr(&binding.value);
             }
+            StmtKind::Given { keys, value, .. } => {
+                for key in keys.iter().flatten() {
+                    self.expr(key);
+                }
+                self.expr(value);
+            }
             StmtKind::Assign { value, .. }
             | StmtKind::Return(value)
             | StmtKind::Expr(value)
-            | StmtKind::Given { value, .. }
-            | StmtKind::Total(
-                TotalClause::Minimum(value)
-                | TotalClause::Maximum(value)
-                | TotalClause::Round {
-                    to: RoundTo::Amount(value),
-                    ..
-                },
-            )
+            | StmtKind::Total(TotalClause::Round {
+                to: RoundTo::Amount(value),
+                ..
+            })
             | StmtKind::Expect(Expect::Holds(value) | Expect::Monotone { value, .. })
             | StmtKind::Assume(value) => {
                 self.expr(value);
+            }
+            StmtKind::Total(TotalClause::Minimum(bound) | TotalClause::Maximum(bound)) => {
+                self.expr(&bound.amount);
             }
             StmtKind::Charge(charge) => {
                 self.text(&charge.label);
@@ -939,7 +958,7 @@ impl<'a> ScopeWalker<'a, '_> {
                     self.expr(amount);
                 }
             }
-            StmtKind::Note(text) | StmtKind::Fail(text) => self.text(text),
+            StmtKind::Note(text) | StmtKind::Review(text) | StmtKind::Fail(text) => self.text(text),
             StmtKind::If(statement) => {
                 for (condition, block) in &statement.branches {
                     let extent = Extent::Span(self.block_span(block));
@@ -1123,11 +1142,17 @@ impl<'a> ScopeWalker<'a, '_> {
                 }
                 self.expr(body);
             }
+            ExprKind::Choose(choose) => {
+                for option in &choose.options {
+                    self.block(&option.body);
+                }
+            }
             ExprKind::Number { .. }
             | ExprKind::Money { .. }
             | ExprKind::Percent(_)
             | ExprKind::Date(_)
             | ExprKind::DateTime(_)
+            | ExprKind::Time(_)
             | ExprKind::Bool(_)
             | ExprKind::None
             | ExprKind::Name(_)
@@ -1149,7 +1174,8 @@ pub fn vary_name(target: &[Name]) -> Option<&Name> {
 
 /// Calls `visit` on every statement of a file, each before the statements inside it: the
 /// file-level ones, and those in every block (functions, tests, properties, `if`, `for`,
-/// `match` arms, choice options and misplaced items).
+/// `match` arms, choice options (a choice written as a binding's value too) and misplaced
+/// items).
 pub fn statements<'a>(file: &'a File, visit: &mut impl FnMut(&'a Stmt)) {
     for item in &file.items {
         item_statements(item, visit);
@@ -1206,11 +1232,40 @@ fn stmt_statements<'a>(stmt: &'a Stmt, visit: &mut impl FnMut(&'a Stmt)) {
             }
         }
         StmtKind::Item(item) => item_statements(item, visit),
+        StmtKind::Let(Binding {
+            value:
+                Expr {
+                    kind: ExprKind::Choose(choose),
+                    ..
+                },
+            ..
+        })
+        | StmtKind::Var(Binding {
+            value:
+                Expr {
+                    kind: ExprKind::Choose(choose),
+                    ..
+                },
+            ..
+        })
+        | StmtKind::Assign {
+            value:
+                Expr {
+                    kind: ExprKind::Choose(choose),
+                    ..
+                },
+            ..
+        } => {
+            for option in &choose.options {
+                block_statements(&option.body, visit);
+            }
+        }
         StmtKind::Let(_)
         | StmtKind::Var(_)
         | StmtKind::Assign { .. }
         | StmtKind::Charge(_)
         | StmtKind::Note(_)
+        | StmtKind::Review(_)
         | StmtKind::Require { .. }
         | StmtKind::Fail(_)
         | StmtKind::Return(_)

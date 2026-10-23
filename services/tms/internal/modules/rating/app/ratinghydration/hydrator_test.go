@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
@@ -41,6 +42,7 @@ func TestNew_LoadsEveryRelationTheTariffRecordReads(t *testing.T) {
 		"TrailerType",
 		"Moves.Stops.Location",
 		"Moves.Stops.Location.State",
+		"Moves.Stops.Location.LocationCategory",
 		"Commodities.Commodity",
 		"Commodities.Commodity.HazardousMaterial",
 	} {
@@ -276,6 +278,58 @@ func TestHydrateShipments_LoadsABatchWithOneQueryPerRelationKind(t *testing.T) {
 	assert.Equal(t, "EXP", batch[0].ServiceType.Code)
 	assert.Equal(t, "STD", batch[1].ServiceType.Code)
 	assert.Equal(t, "EXP", batch[2].ServiceType.Code)
+}
+
+func TestHydrateShipments_LoadsEveryStopsCategoryInOneQuery(t *testing.T) {
+	t.Parallel()
+
+	w := ratingtest.NewRelationStore()
+	warehouse := &locationcategory.LocationCategory{
+		ID:                  pulid.MustNew("lc_"),
+		Type:                locationcategory.CategoryWarehouse,
+		RequiresAppointment: true,
+	}
+	terminal := &locationcategory.LocationCategory{
+		ID:   pulid.MustNew("lc_"),
+		Type: locationcategory.CategoryTerminal,
+	}
+	w.Categories[warehouse.ID], w.Categories[terminal.ID] = warehouse, terminal
+
+	dallas := &location.Location{ID: pulid.MustNew("loc_"), LocationCategoryID: warehouse.ID}
+	fresno := &location.Location{ID: pulid.MustNew("loc_"), LocationCategoryID: terminal.ID}
+	reno := &location.Location{ID: pulid.MustNew("loc_"), LocationCategoryID: warehouse.ID}
+	w.Locations[dallas.ID], w.Locations[fresno.ID], w.Locations[reno.ID] = dallas, fresno, reno
+
+	batch := []*shipment.Shipment{
+		{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
+			{LocationID: dallas.ID},
+			{LocationID: fresno.ID},
+		}}}},
+		{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
+			{LocationID: fresno.ID},
+			{LocationID: reno.ID},
+		}}}},
+	}
+
+	err := ratingtest.NewHydrator(t, w).HydrateShipments(
+		t.Context(),
+		&ratequoteports.HydrateShipmentsRequest{Shipments: batch, TenantInfo: tenant()},
+	)
+	require.NoError(t, err)
+
+	require.Len(t, w.Fetches("locationCategory"), 1, "one query for every stop of the batch")
+	assert.Len(t, w.Fetches("locationCategory")[0], 2, "each category is asked for once")
+	for _, entity := range batch {
+		for _, stop := range entity.Moves[0].Stops {
+			require.NotNil(t, stop.Location.LocationCategory)
+		}
+	}
+	assert.True(t, batch[0].Moves[0].Stops[0].Location.LocationCategory.RequiresAppointment)
+	assert.Equal(
+		t,
+		locationcategory.CategoryTerminal,
+		batch[1].Moves[0].Stops[0].Location.LocationCategory.Type,
+	)
 }
 
 func TestHydrateShipments_RefusesABatchSpanningOrganizations(t *testing.T) {

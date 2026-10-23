@@ -1,5 +1,5 @@
 {
-  "version": "sha256:759e58506c04112a1dc1a5c74bd0d8e58595996de7ca2d6efbfc087697e8f267",
+  "version": "sha256:cdfad5b1c3de0a0797d91c24e0c5a02cea53631f9d2901b0c7efc98c3efa055d",
   "screens": [
     {
       "path": "/",
@@ -8800,6 +8800,7 @@
         "DeskMemoriesByIds",
         "DeskMemorySettings",
         "DismissDeskMemory",
+        "FormulaTemplateTables",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
@@ -9490,7 +9491,8 @@
       "reads": [
         "capture_batch",
         "capture_device",
-        "capture_profile"
+        "capture_profile",
+        "formula_template"
       ],
       "references": [
         "user"
@@ -9528,6 +9530,7 @@
         "DeskMemoriesByIds",
         "DeskMemorySettings",
         "DismissDeskMemory",
+        "FormulaTemplateTables",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
@@ -10218,7 +10221,8 @@
       "reads": [
         "capture_batch",
         "capture_device",
-        "capture_profile"
+        "capture_profile",
+        "formula_template"
       ],
       "references": [
         "user"
@@ -10244,7 +10248,9 @@
         "MyTableLayout",
         "PreviewBulkEdit",
         "RateAgreementTable",
+        "RateMatrixRecord",
         "RateMatrixTable",
+        "RateMatrixVersionAxes",
         "RateZoneTable",
         "ResetMyTableLayout",
         "SaveMyTableLayout",
@@ -10284,6 +10290,26 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/rate-matrices/:param/approve/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "approve"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/archive/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "archive"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/rate-matrices/:param/cells/",
           "requires": [
@@ -10304,6 +10330,56 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/rate-matrices/:param/reject/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "reject"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/request-changes/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "reject"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/restore/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/rate-matrices/:param/reviewers/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/rate-matrices/:param/submit/",
+          "requires": [
+            {
+              "resource": "rate_matrix",
+              "operation": "submit"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/tables/",
           "requires": []
@@ -10319,7 +10395,9 @@
         "rate_matrix",
         "rate_zone"
       ],
-      "references": [],
+      "references": [
+        "user"
+      ],
       "declared": []
     },
     {
@@ -11551,6 +11629,7 @@
         }
       ],
       "operations": [
+        "ApproveShipmentRatingReview",
         "AssignBillingQueueBiller",
         "AuditLogTable",
         "BillingTransferCandidates",
@@ -25630,6 +25709,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -26376,6 +26456,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -27377,6 +27458,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -28716,6 +28798,7 @@
         "ActiveWorkerChecklistTemplates",
         "AdjustWorkerPtoBalance",
         "AmendWorkerEmploymentEvent",
+        "ApproveShipmentRatingReview",
         "ApproveWorkerPto",
         "ArAgingSummary",
         "ArAgingTrend",
@@ -31475,6 +31558,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -35233,6 +35317,142 @@
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ApproveShipmentRatingReview",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "accessorial_charge",
+          "fields": [
+            "businessUnitId",
+            "code",
+            "createdAt",
+            "description",
+            "method",
+            "organizationId",
+            "rateUnit",
+            "status",
+            "updatedAt",
+            "version"
+          ]
+        },
+        {
+          "kind": "carrier",
+          "fields": [
+            "code",
+            "name",
+            "scac"
+          ]
+        },
+        {
+          "kind": "commodity",
+          "fields": [
+            "businessUnitId",
+            "createdAt",
+            "description",
+            "fragile",
+            "freightClass",
+            "hazardousMaterialId",
+            "linearFeetPerUnit",
+            "loadingInstructions",
+            "maxQuantityPerShipment",
+            "maxTemperature",
+            "minTemperature",
+            "name",
+            "organizationId",
+            "stackable",
+            "status",
+            "updatedAt",
+            "version",
+            "weightPerUnit"
+          ]
+        },
+        {
+          "kind": "customer",
+          "fields": [
+            "addressLine1",
+            "addressLine2",
+            "allowConsolidation",
+            "businessUnitId",
+            "city",
+            "code",
+            "consolidationPriority",
+            "createdAt",
+            "ediPartner",
+            "exclusiveConsolidation",
+            "externalId",
+            "isGeocoded",
+            "latitude",
+            "longitude",
+            "name",
+            "organizationId",
+            "placeId",
+            "postalCode",
+            "stateId",
+            "status",
+            "updatedAt",
+            "version"
+          ]
+        },
+        {
+          "kind": "edi",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "location",
+          "fields": [
+            "addressLine1",
+            "addressLine2",
+            "city",
+            "code",
+            "latitude",
+            "locationCategoryId",
+            "longitude",
+            "name",
+            "postalCode",
+            "state",
+            "stateId",
+            "status"
+          ]
+        },
+        {
+          "kind": "tractor",
+          "fields": [
+            "code"
+          ]
+        },
+        {
+          "kind": "trailer",
+          "fields": [
+            "code",
+            "equipmentTypeId"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "profilePicUrl",
+            "thumbnailUrl",
+            "username"
+          ]
+        },
+        {
+          "kind": "worker",
+          "fields": [
+            "firstName",
+            "lastName",
+            "profilePicUrl",
+            "wholeName"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -39551,6 +39771,15 @@
       "declared": []
     },
     {
+      "name": "FormulaTemplateTables",
+      "type": "query",
+      "reads": [
+        "formula_template"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "FuelCardTable",
       "type": "query",
       "reads": [
@@ -40991,11 +41220,36 @@
       "declared": []
     },
     {
+      "name": "RateMatrixRecord",
+      "type": "query",
+      "reads": [
+        "rate_matrix"
+      ],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "profilePicUrl",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "RateMatrixTable",
       "type": "query",
       "reads": [
         "rate_matrix"
       ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "RateMatrixVersionAxes",
+      "type": "query",
+      "reads": [],
       "linked": [],
       "declared": []
     },

@@ -19,6 +19,10 @@ use crate::message;
 use crate::tariff::types::Type;
 use crate::tariff::units::Dim;
 
+/// The one property that reads the record (`rating.holidays`), so it is refused where the
+/// record can't be read.
+pub const HOLIDAY: &str = "holiday";
+
 /// The kinds of value that have properties and methods.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Receiver {
@@ -36,6 +40,10 @@ pub enum Receiver {
     Date,
     /// `DateTime`.
     DateTime,
+    /// `Time`.
+    Time,
+    /// The `FreightClass` schema enum.
+    FreightClass,
     /// `List<T>`.
     List,
 }
@@ -52,6 +60,8 @@ impl Receiver {
             Self::Text => "Text",
             Self::Date => "Date",
             Self::DateTime => "DateTime",
+            Self::Time => "Time",
+            Self::FreightClass => "FreightClass",
             Self::List => "List<T>",
         }
     }
@@ -67,6 +77,10 @@ impl Receiver {
             Type::Text => Some(Self::Text),
             Type::Date => Some(Self::Date),
             Type::DateTime => Some(Self::DateTime),
+            Type::Time => Some(Self::Time),
+            Type::Enum(enumeration) if enumeration.name == "FreightClass" => {
+                Some(Self::FreightClass)
+            }
             Type::List(_) => Some(Self::List),
             _ => None,
         }
@@ -128,6 +142,8 @@ pub enum Rule {
     Date,
     /// `Weekday`.
     Weekday,
+    /// `Time`.
+    Time,
     /// `Int` without `places`, `Number` with it.
     Round,
     /// The receiver converted to the unit argument.
@@ -621,6 +637,15 @@ pub static METHODS: &[Method] = &[
         Rule::Bool,
         message!("Whether it falls on a Saturday or Sunday."),
     ),
+    property(
+        "holiday",
+        R::Date,
+        "Bool",
+        Rule::Bool,
+        message!(
+            "Whether it is one of the organisation's holidays (`rating.holidays`). It reads the record, so a function can't use it."
+        ),
+    ),
     method(
         "addDays",
         R::Date,
@@ -672,6 +697,15 @@ pub static METHODS: &[Method] = &[
         message!("The calendar date, in the date-time's own offset."),
     ),
     property(
+        "time",
+        R::DateTime,
+        "Time",
+        Rule::Time,
+        message!(
+            "The time of day, in the date-time's own offset: the clock at the stop, as in `stop.arrival?.time`."
+        ),
+    ),
+    property(
         "weekday",
         R::DateTime,
         "Weekday",
@@ -684,6 +718,15 @@ pub static METHODS: &[Method] = &[
         "Bool",
         Rule::Bool,
         message!("Whether it falls on a Saturday or Sunday, in the date-time's own offset."),
+    ),
+    property(
+        "holiday",
+        R::DateTime,
+        "Bool",
+        Rule::Bool,
+        message!(
+            "Whether its date, in the date-time's own offset, is one of the organisation's holidays (`rating.holidays`). It reads the record, so a function can't use it."
+        ),
     ),
     method(
         "addDays",
@@ -700,6 +743,35 @@ pub static METHODS: &[Method] = &[
         "DateTime",
         Rule::Same,
         message!("The instant `n` hours later."),
+    ),
+    method(
+        "addMinutes",
+        R::DateTime,
+        DAYS,
+        "DateTime",
+        Rule::Same,
+        message!("The instant `n` minutes later (earlier when `n` is negative)."),
+    ),
+    property(
+        "hour",
+        R::Time,
+        "Int",
+        Rule::Int,
+        message!("The hour, 0 to 23."),
+    ),
+    property(
+        "minute",
+        R::Time,
+        "Int",
+        Rule::Int,
+        message!("The minute, 0 to 59."),
+    ),
+    property(
+        "number",
+        R::FreightClass,
+        "Number",
+        Rule::Number,
+        message!("The class as a number: `Class77_5.number` is `77.5`."),
     ),
     property(
         "len",

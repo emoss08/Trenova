@@ -160,13 +160,13 @@ impl<'c> Session<'c> {
         }
     }
 
-    /// The symbol of a schema root (or `tables`).
+    /// The symbol of a schema root (or `tables` or `bill`).
     #[must_use]
     pub fn root_symbol(&self, name: &str) -> Option<SymbolId> {
         self.analysis
             .symbols
             .iter()
-            .take(self.schema.roots.len() + 1)
+            .take(self.schema.roots.len() + 2)
             .position(|symbol| symbol.kind == SymbolKind::Root && symbol.name == name)
             .and_then(|index| u32::try_from(index).ok())
             .map(SymbolId)

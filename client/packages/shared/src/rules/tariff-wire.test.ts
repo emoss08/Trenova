@@ -17,11 +17,51 @@ import {
   tariffNumber,
   tariffPercent,
   tariffQuantity,
+  tariffTime,
   tariffUnitDimension,
   tariffUnitsOf,
   tariffValueProblems,
   TariffWireError,
 } from "./tariff-wire";
+
+describe("times of day", () => {
+  it("reads the module's time and the short form, and writes it back with seconds", () => {
+    expect(decodeTariffValue({ $time: "17:30:00" })).toEqual({
+      kind: "time",
+      value: "17:30:00",
+      hour: 17,
+      minute: 30,
+      second: 0,
+    });
+    const short = decodeTariffValue({ $time: "07:05" });
+    expect(short).toEqual({ kind: "time", value: "07:05:00", hour: 7, minute: 5, second: 0 });
+    expect(encodeTariffValue(short)).toEqual({ $time: "07:05:00" });
+    expect(tariffTime("23:59")).toEqual({ $time: "23:59:00" });
+  });
+
+  it("refuses a time outside one day or in another shape", () => {
+    expect(() => decodeTariffValue({ $time: "25:00:00" })).toThrow(TariffWireError);
+    expect(() => decodeTariffValue({ $time: "7:30" })).toThrow(TariffWireError);
+    expect(() => tariffTime("12:60")).toThrow(TariffWireError);
+    expect(tariffWireValueSchema.safeParse({ $time: "24:00:00" }).success).toBe(false);
+    expect(tariffWireValueSchema.parse({ $time: "17:30" })).toEqual({ $time: "17:30" });
+  });
+
+  it("checks a value against a time descriptor, and a time is not a record", () => {
+    expect(tariffValueProblems({ kind: "time" }, { $time: "08:00:00" })).toEqual([]);
+    expect(tariffValueProblems({ kind: "time" }, { $date: "2026-10-22" })).toEqual([
+      { path: "", problem: "not-time" },
+    ]);
+    expect(tariffValueProblems({ kind: "time" }, "08:00")).toEqual([
+      { path: "", problem: "not-time" },
+    ]);
+    expect(tariffValueProblems({ kind: "optional", inner: { kind: "time" } }, null)).toEqual([]);
+    expect(
+      tariffValueProblems({ kind: "record", name: null, fields: [] }, { $time: "08:00:00" }),
+    ).toEqual([{ path: "", problem: "not-record" }]);
+    expect(emptyTariffValue({ kind: "time" })).toBeNull();
+  });
+});
 
 const breakType: TariffType = {
   kind: "record",
@@ -209,6 +249,7 @@ describe("tariffValueProblems", () => {
       kind: "enum",
       name: "Service",
       variants: ["Standard", "Expedited"],
+      ordered: false,
     };
     expect(tariffValueProblems(service, "Expedited")).toEqual([]);
     expect(tariffValueProblems(service, "Overnight")).toEqual([
@@ -248,5 +289,23 @@ describe("tariffTypeSchema", () => {
         ],
       },
     });
+  });
+
+  it("reads a time of day and whether an enum's variants are ordered", () => {
+    expect(tariffTypeSchema.parse({ kind: "optional", inner: { kind: "time" } })).toEqual({
+      kind: "optional",
+      inner: { kind: "time" },
+    });
+    expect(
+      tariffTypeSchema.parse({
+        kind: "enum",
+        name: "Weekday",
+        ordered: true,
+        variants: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      }),
+    ).toMatchObject({ kind: "enum", name: "Weekday", ordered: true });
+    expect(
+      tariffTypeSchema.parse({ kind: "enum", name: "StopKind", variants: ["Pickup", "Delivery"] }),
+    ).toEqual({ kind: "enum", name: "StopKind", variants: ["Pickup", "Delivery"], ordered: false });
   });
 });

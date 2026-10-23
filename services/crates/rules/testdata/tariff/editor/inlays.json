@@ -416,6 +416,36 @@
    "expect": {
     "hints": []
    }
+  },
+  {
+   "name": "a time of day and a variant range's binding",
+   "source": [
+    "tariff \"t\"",
+    "let t = rating.date.time",
+    "let open = @17:00 - @08:30",
+    "let cls = shipment.freightClass ?? Class50",
+    "charge \"x\" = $1/h * open * cls.number",
+    "note \"{t}\""
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "type",
+      "label": ": Time",
+      "line": "let t⟨: Time⟩ = rating.date.time"
+     },
+     {
+      "kind": "type",
+      "label": ": Duration",
+      "line": "let open⟨: Duration⟩ = @17:00 - @08:30"
+     },
+     {
+      "kind": "type",
+      "label": ": FreightClass",
+      "line": "let cls⟨: FreightClass⟩ = shipment.freightClass ?? Class50"
+     }
+    ]
+   }
   }
  ]
 }
