@@ -5,6 +5,7 @@ package agentread
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accessorialchargeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriercapacityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriersettlementexec"
@@ -71,6 +72,7 @@ import (
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
 	accountingsyncresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accountingsyncresolver"
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	carriercapacityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriercapacityresolver"
 	carrierintelligenceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
 	carrierresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
 	carriersettlementresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriersettlementresolver"
@@ -167,6 +169,7 @@ import (
 	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
+	carriercapacityservice "github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
 	carrierintelservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	carrierservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	customerservice "github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
@@ -233,6 +236,7 @@ type ResolverParams struct {
 	AnalyticsService             kernelports.AnalyticsService
 	AssignmentService            shipmentports.AssignmentService
 	CarrierAssignmentService     *carrierassignmentservice.Service
+	CarrierCapacityService       *carriercapacityservice.Service
 	CarrierCostEventRepo         carriersettlementports.CarrierCostEventRepository
 	CarrierIntelService          *carrierintelservice.Service
 	CarrierService               *carrierservice.Service
@@ -344,6 +348,7 @@ var shards = []*gqlexec.Shard{
 	accessorialchargeexec.Shard,
 	accountingsyncexec.Shard,
 	carrierexec.Shard,
+	carriercapacityexec.Shard,
 	carrierintelligenceexec.Shard,
 	carriersettlementexec.Shard,
 	commodityexec.Shard,
@@ -484,6 +489,21 @@ var operations = []Operation{
 		Name:     "CarrierTable",
 		Hash:     "sha256:24890c58a1d854d5479367fa1e4b5e19d0421b6863081f334b23aef9c9ab6f78",
 		Document: "fragment CarrierContactFields on CarrierContact { businessUnitId carrierId createdAt email id isPrimary name organizationId phone receivesRateConfirmations title updatedAt version } fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy { businessUnitId carrierId coverageAmount createdAt effectiveDate expirationDate id isVerified organizationId policyNumber policyType providerName updatedAt version } fragment CarrierTableRowFields on Carrier { addressLine1 addressLine2 businessUnitId carrierType city code complianceStatus contacts { ...CarrierContactFields } createdAt dbaName disqualifiedReason dotNumber email externalId id insurancePolicies { ...CarrierInsurancePolicyFields } intelBlockingCount intelReviewRequired intelRiskLevel is1099Eligible mcNumber name notes organizationId paymentMethod paymentTermDays phone postalCode qualifiedAt remitAddressLine1 remitAddressLine2 remitCity remitPostalCode remitStateId remitToName safetyRating scac stateId status taxId taxIdType updatedAt version w9OnFile } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carriers(input: $input) { edges { node { ...CarrierTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskCarrierCapacityPostings",
+		Hash:     "sha256:4b95602f19cae3b750d83f31dac06d6450c50127d4e49ed4f37e3a7c47bc1fcd",
+		Document: "query DeskCarrierCapacityPostings($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $openOnly: Boolean = false) { carrierCapacityPostings(input: $input, openOnly: $openOnly) { edges { node { availableFrom availableTo carrier { id name } carrierId destinationState { abbreviation id } destinationStateId equipmentType { code id } equipmentTypeId id originLocation { city id name } originLocationId originRadiusMiles originState { abbreviation id } originStateId rate rateMethod source truckCount version } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskCarrierIntelEvents",
+		Hash:     "sha256:4f0a7418ebcbe9112ed874526d80ea0cfcca953d30bfd13657d8e625fd58a7d4",
+		Document: "query DeskCarrierIntelEvents($filter: CarrierIntelEventFilterInput, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { carrierIntelEvents(input: $input, filter: $filter) { edges { node { acknowledgedAt action carrierId category detectedAt dotNumber id resolution resolvedAt severity status subjectName subjectType summary } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskCarrierInvoiceMatches",
+		Hash:     "sha256:b2e27f1bf3aa74a288238f76fd584509351b8f65e6910d8dd1b03bde7fb8bf9c",
+		Document: "query DeskCarrierInvoiceMatches($carrierId: ID, $limit: Int, $offset: Int, $status: CarrierInvoiceMatchStatus) { carrierInvoiceMatches( status: $status carrierId: $carrierId limit: $limit offset: $offset ) { items { carrier { id name } carrierId carrierSettlementId createdAt currencyCode documentAiExtractionId ediCarrierInvoiceId expectedTotalMinor id invoiceNumber invoiceTotalMinor matchedVia resolutionNote resolvedAt status varianceMinor } } }",
 	},
 	{
 		Name:     "DeskCustomerCard",
@@ -1101,6 +1121,10 @@ func NewSchema(p ResolverParams) Schema {
 		Core:           core,
 		CarrierService: p.CarrierService,
 	}
+	carriercapacityDeps := &carriercapacityresolver.Deps{
+		Core:                   core,
+		CarrierCapacityService: p.CarrierCapacityService,
+	}
 	carrierintelligenceDeps := &carrierintelligenceresolver.Deps{
 		Core:                core,
 		CarrierIntelService: p.CarrierIntelService,
@@ -1402,6 +1426,7 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	mutation := &mutationResolver{
 		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
+		carriercapacityMutation:       &carriercapacityMutation{Deps: carriercapacityDeps},
 		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
 		carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
 		customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
@@ -1444,6 +1469,7 @@ func NewSchema(p ResolverParams) Schema {
 		accessorialchargeQuery:        &accessorialchargeQuery{Deps: accessorialchargeDeps},
 		accountingsyncQuery:           &accountingsyncQuery{Deps: accountingsyncDeps},
 		carrierQuery:                  &carrierQuery{Deps: carrierDeps},
+		carriercapacityQuery:          &carriercapacityQuery{Deps: carriercapacityDeps},
 		carrierintelligenceQuery:      &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
 		carriersettlementQuery:        &carriersettlementQuery{Deps: carriersettlementDeps},
 		commodityQuery:                &commodityQuery{Deps: commodityDeps},
@@ -1527,6 +1553,7 @@ func NewSchema(p ResolverParams) Schema {
 		"Carrier":                      func() any { return &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps} },
 		"CarrierAssignment":            func() any { return &shipmentresolver.CarrierAssignmentResolver{Deps: shipmentDeps} },
 		"CarrierAssignmentAccessorial": func() any { return &shipmentresolver.CarrierAssignmentAccessorialResolver{Deps: shipmentDeps} },
+		"CarrierCapacityPosting":       func() any { return &carriercapacityresolver.CarrierCapacityPostingResolver{Deps: carriercapacityDeps} },
 		"CarrierEquipmentVerification": func() any {
 			return &carrierintelligenceresolver.CarrierEquipmentVerificationResolver{Deps: carrierintelligenceDeps}
 		},
@@ -1749,6 +1776,7 @@ type invoiceResolver struct {
 
 type mutationResolver struct {
 	*accountingsyncMutation
+	*carriercapacityMutation
 	*carrierintelligenceMutation
 	*carriersettlementMutation
 	*customerpaymentMutation
@@ -1792,6 +1820,7 @@ type queryResolver struct {
 	*accessorialchargeQuery
 	*accountingsyncQuery
 	*carrierQuery
+	*carriercapacityQuery
 	*carrierintelligenceQuery
 	*carriersettlementQuery
 	*commodityQuery
@@ -1859,6 +1888,7 @@ type (
 	invoiceInvoice                  = invoiceresolver.InvoiceResolver
 	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
 	accountingsyncMutation          = accountingsyncresolver.MutationResolver
+	carriercapacityMutation         = carriercapacityresolver.MutationResolver
 	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
 	carriersettlementMutation       = carriersettlementresolver.MutationResolver
 	customerpaymentMutation         = customerpaymentresolver.MutationResolver
@@ -1899,6 +1929,7 @@ type (
 	accessorialchargeQuery          = accessorialchargeresolver.QueryResolver
 	accountingsyncQuery             = accountingsyncresolver.QueryResolver
 	carrierQuery                    = carrierresolver.QueryResolver
+	carriercapacityQuery            = carriercapacityresolver.QueryResolver
 	carrierintelligenceQuery        = carrierintelligenceresolver.QueryResolver
 	carriersettlementQuery          = carriersettlementresolver.QueryResolver
 	commodityQuery                  = commodityresolver.QueryResolver

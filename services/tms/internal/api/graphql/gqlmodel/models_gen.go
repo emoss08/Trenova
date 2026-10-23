@@ -2146,13 +2146,17 @@ type CarrierIntelEventEdge struct {
 }
 
 type CarrierIntelEventFilterInput struct {
-	Statuses    []carrierintel.EventStatus `json:"statuses,omitempty"`
-	Severities  []carrierintel.Severity    `json:"severities,omitempty"`
-	Categories  []carrierintel.Section     `json:"categories,omitempty"`
-	CarrierID   *string                    `json:"carrierId,omitempty"`
-	SubjectType *carrierintel.SubjectType  `json:"subjectType,omitempty"`
-	SubjectID   *string                    `json:"subjectId,omitempty"`
-	OpenOnly    *bool                      `json:"openOnly,omitempty"`
+	Statuses   []carrierintel.EventStatus `json:"statuses,omitempty"`
+	Severities []carrierintel.Severity    `json:"severities,omitempty"`
+	Categories []carrierintel.Section     `json:"categories,omitempty"`
+	// Only this carrier's events.
+	CarrierID *string `json:"carrierId,omitempty"`
+	// Only events about this kind of subject: a carrier, an organization, a customer or a prospect vetted by its DOT number.
+	SubjectType *carrierintel.SubjectType `json:"subjectType,omitempty"`
+	// Only events about this subject, by its id or DOT number as the event names it.
+	SubjectID *string `json:"subjectId,omitempty"`
+	// Only events nobody has resolved or dismissed yet: Open and Acknowledged.
+	OpenOnly *bool `json:"openOnly,omitempty"`
 }
 
 type CarrierIntelFetchResult struct {
