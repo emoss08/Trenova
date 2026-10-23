@@ -73,7 +73,7 @@ func derivedParams(t *testing.T, tool string, read *graphQLRead) []graphQLParam 
 	args, _, _, err := read.rootParams(tool, skip)
 	require.NoError(t, err)
 
-	return append(read.typedParams(), args...)
+	return withRootArgs(read.typedParams(), args)
 }
 
 // Every field a converted tool's hand-kept catalog entry lets a model filter

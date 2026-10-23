@@ -16,7 +16,6 @@ const (
 	opShiftSwapRequests    = "ShiftSwapRequests"
 	opDOTRandomPools       = "DotRandomPools"
 	paramPoolID            = "poolId"
-	paramActiveOnly        = "activeOnly"
 	shiftDaysOfWeek        = "daysOfWeek"
 	shiftStartMinute       = "startMinute"
 	shiftDurationMinutes   = "durationMinutes"
@@ -28,6 +27,7 @@ const (
 	shiftTemplatesSummary       = "List the organization's active shift patterns: the days, start time and length of each, and how many weeks it rotates over. worker_assign_shift takes the id."
 	noteActivePatternsByDefault = "Defaults to true, the patterns in use only."
 	noteEveryPool               = "Leave it out for every pool's."
+	openSwapsWithheldReason     = "The open swaps are not shown: they need permission to read shift swaps."
 )
 
 // workforceProgrammeReadSpecs are the scheduling and random testing reads,
@@ -53,6 +53,7 @@ func workforceProgrammeReadSpecs() []graphQLListSpec {
 					operation: opShiftSwapRequests,
 					what:      "open shift swaps",
 					inputs:    map[string]any{wfParamOpenOnly: true, paramLimit: openSwapsShown},
+					withheld:  openSwapsWithheldReason,
 				},
 			},
 		},

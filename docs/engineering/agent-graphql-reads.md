@@ -447,7 +447,9 @@ not judged by a record field's sensitivity, and not a field filter), typed by th
 and described in the schema's words; a required one is required in the schema and refused before
 the read when missing. Keyed reads alongside take it as their key. A spec's `names` give a derived
 parameter the name the tool takes it by: every accounting read calls `integrationType` `system`,
-as the accounting writes do.
+as the accounting writes do. Where a root argument and a record field derive the same parameter
+(a service failure's `shipmentId`), the root argument wins (`withRootArgs`): it is how the screen
+itself narrows the list.
 
 **Connections paged by their root.** A connection whose root takes its own `first` and `after`
 (`accountingSyncRecords(integrationType:, first:, after:, filter:)`) pages as a table input does:

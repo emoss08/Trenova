@@ -268,8 +268,8 @@ func accountingGetSpecs() []getSpec {
 			kinds:       []permission.RecordKind{permission.KindAccountingSyncRecord},
 			paramName:   paramSyncRecordID,
 			idSource:    "from accounting_list_sync_records or the run's subject",
-			shape: func(record map[string]any) {
-				syncRecordActions(record, nil, clock{})
+			shape: func(record map[string]any, withheld map[string]struct{}, clk clock) {
+				syncRecordActions(record, withheld, clk)
 				record[accountingMeaningField] = syncMeaning(record, "the accounting system")
 			},
 			alongside: []alongsideSpec{{
@@ -313,9 +313,9 @@ func accountingGetSpecs() []getSpec {
 				what:   "The Trenova customer, carrier or accessorial charge id",
 				source: "customer_list, carrier_list or masterdata_list_accessorial_charges",
 			}},
-			shape: func(record map[string]any) {
+			shape: func(record map[string]any, withheld map[string]struct{}, clk clock) {
 				if mapping, ok := record["mapping"].(map[string]any); ok {
-					mappingActions(mapping, nil, clock{})
+					mappingActions(mapping, withheld, clk)
 				}
 			},
 		},
@@ -424,7 +424,7 @@ func mappingSetupPath(summary map[string]any) {
 // documents are being sent, and replaces a failure the accounting system
 // worded itself with a pointer to the connection page, as the domain words
 // it for an agent.
-func connectionMeaning(record map[string]any) {
+func connectionMeaning(record map[string]any, _ map[string]struct{}, _ clock) {
 	system := integration.Type(stringOf(record[argIntegrationType]))
 	provider := stringOf(record[accountingProviderField])
 	available, _ := record["available"].(bool)
@@ -496,10 +496,4 @@ func connectionStatusMeaning(
 		return provider + " has never been connected. A person connects it from the " +
 			"integrations page."
 	}
-}
-
-func stringOf(value any) string {
-	text, _ := value.(string)
-
-	return text
 }

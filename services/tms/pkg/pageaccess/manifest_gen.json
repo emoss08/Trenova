@@ -1,5 +1,5 @@
 {
-  "version": "sha256:0790e3410b38626e96804aede72feed9563ed6f3f9984e0665415754d3a1e3d5",
+  "version": "sha256:b4c8ffb2734f021c01905f3c5520e04242b424ab2695826944a5ea6893851ecc",
   "screens": [
     {
       "path": "/",
@@ -726,6 +726,8 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "customer_payment",
         "journal_entry",
         "journal_reversal"
@@ -1734,7 +1736,10 @@
           "requires": []
         }
       ],
-      "reads": [],
+      "reads": [
+        "accounting_integration",
+        "accounting_sync"
+      ],
       "references": [
         "user"
       ],
@@ -1795,7 +1800,10 @@
           "requires": []
         }
       ],
-      "reads": [],
+      "reads": [
+        "accounting_integration",
+        "accounting_sync"
+      ],
       "references": [
         "user"
       ],
@@ -1855,7 +1863,10 @@
           "requires": []
         }
       ],
-      "reads": [],
+      "reads": [
+        "accounting_integration",
+        "accounting_sync"
+      ],
       "references": [
         "user"
       ],
@@ -1961,7 +1972,10 @@
           ]
         }
       ],
-      "reads": [],
+      "reads": [
+        "accounting_integration",
+        "accounting_sync"
+      ],
       "references": [
         "user"
       ],
@@ -5060,7 +5074,10 @@
           ]
         }
       ],
-      "reads": [],
+      "reads": [
+        "accounting_integration",
+        "accounting_sync"
+      ],
       "references": [
         "user"
       ],
@@ -5094,7 +5111,10 @@
         "FinishAccountingAuthorization"
       ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "accounting_integration",
+        "accounting_sync"
+      ],
       "references": [
         "user"
       ],
@@ -5128,7 +5148,10 @@
         "FinishAccountingAuthorization"
       ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "accounting_integration",
+        "accounting_sync"
+      ],
       "references": [
         "user"
       ],
@@ -5162,7 +5185,10 @@
         "FinishAccountingAuthorization"
       ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "accounting_integration",
+        "accounting_sync"
+      ],
       "references": [
         "user"
       ],
@@ -5196,7 +5222,10 @@
         "FinishAccountingAuthorization"
       ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "accounting_integration",
+        "accounting_sync"
+      ],
       "references": [
         "user"
       ],
@@ -6877,6 +6906,8 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "customer",
         "factoring_agreement",
         "factoring_company",
@@ -11473,6 +11504,8 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "factoring_agreement",
         "factoring_company",
         "factoring_noa",
@@ -12799,6 +12832,8 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "carrier_invoice_match",
         "carrier_settlement"
       ],
@@ -13088,6 +13123,8 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "carrier_invoice_match",
         "carrier_settlement"
       ],
@@ -14678,6 +14715,8 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "briefing",
         "capture_batch",
         "capture_device",
@@ -14686,6 +14725,7 @@
         "carrier_invoice_match",
         "carrier_settlement",
         "customer",
+        "detention",
         "detention_policy",
         "driver_settlement",
         "edi",
@@ -14713,6 +14753,7 @@
         "equipment_manufacturer",
         "equipment_type",
         "fleet_code",
+        "fuel_purchase_import",
         "organization",
         "user",
         "worker_credential_type"
@@ -16287,10 +16328,13 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "carrier",
         "carrier_invoice_match",
         "carrier_settlement",
         "customer",
+        "detention",
         "detention_policy",
         "driver_settlement",
         "edi",
@@ -16318,6 +16362,7 @@
         "equipment_manufacturer",
         "equipment_type",
         "fleet_code",
+        "fuel_purchase_import",
         "organization",
         "user",
         "worker_credential_type"
@@ -18039,6 +18084,8 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "capture_batch",
         "capture_device",
         "capture_profile",
@@ -18046,6 +18093,7 @@
         "carrier_invoice_match",
         "carrier_settlement",
         "customer",
+        "detention",
         "detention_policy",
         "driver_settlement",
         "edi",
@@ -18073,6 +18121,7 @@
         "equipment_manufacturer",
         "equipment_type",
         "fleet_code",
+        "fuel_purchase_import",
         "organization",
         "user",
         "worker_credential_type"
@@ -18175,7 +18224,9 @@
         "DeskDetentionCard"
       ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "detention"
+      ],
       "references": [
         "location",
         "user"
@@ -18195,7 +18246,9 @@
         "DeskDetentionCard"
       ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "detention"
+      ],
       "references": [
         "location",
         "user"
@@ -18385,6 +18438,8 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "carrier",
         "carrier_intelligence"
       ],
@@ -26293,6 +26348,7 @@
         "capture_profile",
         "carrier",
         "customer",
+        "detention",
         "equipment_type",
         "invoice",
         "rate_agreement",
@@ -27039,6 +27095,7 @@
         "capture_profile",
         "carrier",
         "customer",
+        "detention",
         "equipment_type",
         "invoice",
         "rate_agreement",
@@ -27231,7 +27288,9 @@
           "requires": []
         }
       ],
-      "reads": [],
+      "reads": [
+        "fuel_purchase_import"
+      ],
       "references": [
         "fuel_card",
         "tractor"
@@ -28021,7 +28080,9 @@
         "capture_profile",
         "carrier",
         "customer",
+        "detention",
         "fuel_purchase",
+        "fuel_purchase_import",
         "invoice",
         "rate_agreement",
         "shipment"
@@ -28544,6 +28605,7 @@
       ],
       "endpoints": [],
       "reads": [
+        "shift_swap",
         "shift_template"
       ],
       "references": [
@@ -29489,18 +29551,23 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "benefit_plan",
         "capture_batch",
         "capture_device",
         "capture_profile",
         "carrier",
         "customer",
+        "detention",
+        "dot_random_pool",
         "invoice",
         "performance_review",
         "performance_review_template",
         "pto_policy",
         "qualification",
         "rate_agreement",
+        "shift_swap",
         "shipment",
         "training_course",
         "worker",
@@ -29514,7 +29581,8 @@
         "worker_leave",
         "worker_pto",
         "worker_recognition",
-        "worker_safety_event"
+        "worker_safety_event",
+        "worker_schedule"
       ],
       "references": [
         "accessorial_charge",
@@ -30374,6 +30442,8 @@
         }
       ],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "driver_settlement"
       ],
       "references": [
@@ -30438,6 +30508,8 @@
       ],
       "endpoints": [],
       "reads": [
+        "accounting_integration",
+        "accounting_sync",
         "driver_settlement",
         "pay_advance",
         "recurring_deduction",
@@ -32243,6 +32315,7 @@
         "capture_profile",
         "carrier",
         "customer",
+        "detention",
         "detention_policy",
         "invoice",
         "location",
@@ -34240,7 +34313,9 @@
     {
       "name": "AccountingDriftFinding",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_sync"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -34254,7 +34329,9 @@
     {
       "name": "AccountingDriftFindingTable",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_sync"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -34275,7 +34352,9 @@
     {
       "name": "AccountingDriftOverview",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_sync"
+      ],
       "linked": [],
       "declared": []
     },
@@ -34289,7 +34368,9 @@
     {
       "name": "AccountingInboundChange",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_sync"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -34303,7 +34384,9 @@
     {
       "name": "AccountingInboundChangeTable",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_sync"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -34324,7 +34407,9 @@
     {
       "name": "AccountingMappingSummary",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_integration"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -34338,7 +34423,9 @@
     {
       "name": "AccountingMappings",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_integration"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -34359,14 +34446,18 @@
     {
       "name": "AccountingSyncAttempts",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_sync"
+      ],
       "linked": [],
       "declared": []
     },
     {
       "name": "AccountingSyncObjectStates",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_sync"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -34380,7 +34471,9 @@
     {
       "name": "AccountingSyncRecord",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_sync"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -34394,7 +34487,9 @@
     {
       "name": "AccountingSyncRecordTable",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_sync"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -34408,7 +34503,9 @@
     {
       "name": "AccountingSyncStatus",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_integration"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -34422,7 +34519,9 @@
     {
       "name": "AccountingSyncSummary",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "accounting_sync"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -35020,7 +35119,14 @@
       "name": "ApplyAccountingInboundChange",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -36197,7 +36303,14 @@
       "name": "ClearAccountingMapping",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -36283,7 +36396,16 @@
       "name": "CommitFuelPurchaseImport",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "fuel_card",
+          "fields": [
+            "label",
+            "lastFour",
+            "provider"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -36348,7 +36470,14 @@
       "name": "ConfirmAccountingMappings",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -36378,7 +36507,14 @@
       "name": "CreateAccountingReferenceRecord",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -36538,7 +36674,16 @@
       "name": "CreateFuelPurchaseImport",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "fuel_card",
+          "fields": [
+            "label",
+            "lastFour",
+            "provider"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -37262,7 +37407,9 @@
     {
       "name": "DeskDetentionCard",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "detention"
+      ],
       "linked": [
         {
           "kind": "location",
@@ -37348,7 +37495,9 @@
     {
       "name": "DeskEdiPartnerMessages",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "edi"
+      ],
       "linked": [],
       "declared": []
     },
@@ -37360,6 +37509,14 @@
         "fuel_purchase"
       ],
       "linked": [
+        {
+          "kind": "fuel_purchase_import",
+          "fields": [
+            "origin",
+            "provider",
+            "version"
+          ]
+        },
         {
           "kind": "tractor",
           "fields": [
@@ -37408,6 +37565,16 @@
             "status",
             "updatedAt",
             "version"
+          ]
+        },
+        {
+          "kind": "fuel_purchase_import",
+          "fields": [
+            "createdAt",
+            "fileName",
+            "origin",
+            "provider",
+            "rowCount"
           ]
         },
         {
@@ -37967,7 +38134,16 @@
       "name": "DiscardFuelPurchaseImport",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "fuel_card",
+          "fields": [
+            "label",
+            "lastFour",
+            "provider"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -37995,7 +38171,14 @@
       "name": "DismissAccountingDrift",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -38161,17 +38344,10 @@
     {
       "name": "DotRandomDraws",
       "type": "query",
-      "reads": [],
-      "linked": [
-        {
-          "kind": "dot_random_pool",
-          "fields": [
-            "code",
-            "name",
-            "period"
-          ]
-        }
+      "reads": [
+        "dot_random_pool"
       ],
+      "linked": [],
       "declared": []
     },
     {
@@ -38340,38 +38516,28 @@
     {
       "name": "EdiCarrierInvoices",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "carrier_invoice_match"
+      ],
       "linked": [],
       "declared": []
     },
     {
       "name": "EdiCommunicationProfileTable",
       "type": "query",
-      "reads": [],
-      "linked": [
-        {
-          "kind": "edi",
-          "fields": [
-            "code",
-            "name"
-          ]
-        }
+      "reads": [
+        "edi"
       ],
+      "linked": [],
       "declared": []
     },
     {
       "name": "EdiInboundFileTable",
       "type": "query",
-      "reads": [],
-      "linked": [
-        {
-          "kind": "edi",
-          "fields": [
-            "code",
-            "name"
-          ]
-        }
+      "reads": [
+        "edi"
       ],
+      "linked": [],
       "declared": []
     },
     {
@@ -38392,16 +38558,10 @@
     {
       "name": "EdiMessageTable",
       "type": "query",
-      "reads": [],
-      "linked": [
-        {
-          "kind": "edi",
-          "fields": [
-            "code",
-            "name"
-          ]
-        }
+      "reads": [
+        "edi"
       ],
+      "linked": [],
       "declared": []
     },
     {
@@ -38466,16 +38626,10 @@
     {
       "name": "EdiTransferTable",
       "type": "query",
-      "reads": [],
-      "linked": [
-        {
-          "kind": "edi",
-          "fields": [
-            "code",
-            "name"
-          ]
-        }
+      "reads": [
+        "edi"
       ],
+      "linked": [],
       "declared": []
     },
     {
@@ -39426,14 +39580,18 @@
     {
       "name": "FuelDashboard",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "fuel_surcharge_program"
+      ],
       "linked": [],
       "declared": []
     },
     {
       "name": "FuelIndexPriceHistory",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "fuel_surcharge_program"
+      ],
       "linked": [],
       "declared": []
     },
@@ -39449,7 +39607,9 @@
     {
       "name": "FuelPurchaseImportRows",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "fuel_purchase_import"
+      ],
       "linked": [
         {
           "kind": "tractor",
@@ -39463,7 +39623,9 @@
     {
       "name": "FuelPurchaseImportTable",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "fuel_purchase_import"
+      ],
       "linked": [
         {
           "kind": "fuel_card",
@@ -39707,7 +39869,14 @@
       "name": "IgnoreAccountingInboundChange",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -41088,7 +41257,14 @@
       "name": "RedateAccountingSync",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -41130,7 +41306,14 @@
       "name": "RejectAccountingMapping",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -41254,7 +41437,14 @@
       "name": "RemoveAccountingApp",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -41438,7 +41628,14 @@
       "name": "ResolveAccountingDrift",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -41858,7 +42055,14 @@
       "name": "SaveAccountingApp",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -41994,7 +42198,14 @@
       "name": "SetAccountingMapping",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -42166,7 +42377,9 @@
     {
       "name": "ShiftSwapRequests",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "shift_swap"
+      ],
       "linked": [
         {
           "kind": "worker",
@@ -42583,7 +42796,14 @@
       "name": "SkipAccountingSync",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -42626,7 +42846,16 @@
       "name": "StageFuelPurchaseImport",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "fuel_card",
+          "fields": [
+            "label",
+            "lastFour",
+            "provider"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -43854,7 +44083,9 @@
     {
       "name": "WorkerAvailabilityPreferences",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "worker_schedule"
+      ],
       "linked": [],
       "declared": []
     },
@@ -44027,6 +44258,7 @@
       "name": "WorkerDrugAlcoholFile",
       "type": "query",
       "reads": [
+        "dot_random_pool",
         "worker_dot_test"
       ],
       "linked": [
@@ -44371,21 +44603,10 @@
     {
       "name": "WorkerShiftAssignments",
       "type": "query",
-      "reads": [],
-      "linked": [
-        {
-          "kind": "shift_template",
-          "fields": [
-            "code",
-            "color",
-            "cycleWeeks",
-            "daysOfWeek",
-            "durationMinutes",
-            "name",
-            "startMinute"
-          ]
-        }
+      "reads": [
+        "worker_schedule"
       ],
+      "linked": [],
       "declared": [
         "shift_template"
       ]

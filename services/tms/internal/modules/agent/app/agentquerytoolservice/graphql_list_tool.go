@@ -218,7 +218,7 @@ func newGraphQLListTool(
 	if err != nil {
 		return nil, err
 	}
-	params = append(params, args...)
+	params = withRootArgs(params, args)
 	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
 	instead, err := insteadReads(spec, &read)
 	if err != nil {

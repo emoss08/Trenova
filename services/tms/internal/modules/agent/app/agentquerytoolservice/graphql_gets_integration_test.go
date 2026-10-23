@@ -337,6 +337,9 @@ func keysOf[V any](m map[string]V) []string {
 	return out
 }
 
+// recordID is the id of the record a card reads at its root.
+func recordID(record map[string]any) any { return record["id"] }
+
 // checkConvertedGet holds one converted get to its tenant's records under
 // row-level security, with nothing withheld at the default data access and
 // what a Public role may not see withheld. idOf finds the record's id in

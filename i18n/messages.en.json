@@ -39835,7 +39835,7 @@
     ]
   },
   "Billed": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -68508,15 +68508,6 @@
       "go/other"
     ]
   },
-  "Ctrl": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Curfew Conflict": {
     "sites": 1,
     "scope": [
@@ -73350,15 +73341,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "Declared inputs": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Declares a compile-time constant at file level, importable from a library.": {
@@ -84752,7 +84734,7 @@
     ]
   },
   "Driver pay": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -86703,15 +86685,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "EDI acknowledgment health": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "EDI approval workflow is not configured": {
@@ -102222,24 +102195,6 @@
       "routes/admin"
     ]
   },
-  "F12": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "F2": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "FCA Canadian diesel": {
     "sites": 1,
     "scope": [
@@ -110078,7 +110033,7 @@
     ]
   },
   "Forgiven": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -117925,14 +117880,17 @@
     ]
   },
   "Hidden": {
-    "sites": 14,
+    "sites": 18,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "packages/shared/components",
       "routes/agent-control",
+      "routes/cost-control",
       "routes/desk",
+      "routes/dispatch-control",
       "routes/home",
       "routes/rate-agreement",
       "routes/shipment",
@@ -132705,7 +132663,7 @@
     ]
   },
   "Kept": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -145307,7 +145265,7 @@
     ]
   },
   "Margin": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -145380,7 +145338,7 @@
     ]
   },
   "Margin per stop": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -154884,7 +154842,7 @@
     ]
   },
   "Net detention margin": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -166163,6 +166121,15 @@
     "areas": [
       "apps/web/lib",
       "packages/shared/lib"
+    ]
+  },
+  "Normal, insert and visual modes with AstroNvim's keys: jj or jk leaves insert mode and Space is the leader.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Normalize phone": {
@@ -183343,6 +183310,15 @@
       "routes/edi"
     ]
   },
+  "Overdue age must be between 60 and 2592000 seconds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Overdue invoices are charged once per thirty-day period at the customer's late charge rate, after their grace period, as one debit memo per customer per run.": {
     "sites": 1,
     "scope": [
@@ -198376,7 +198352,7 @@
     ]
   },
   "Profitability estimate": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -208244,6 +208220,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Reconciliation status must be Unmatched, MappingRequired, Matched or Variance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Reconciliation summary": {
@@ -242476,6 +242461,15 @@
       "routes/worker"
     ]
   },
+  "Show {0} in the source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Show {0} more": {
     "sites": 1,
     "scope": [
@@ -246239,15 +246233,6 @@
     ],
     "areas": [
       "routes/rate-zone"
-    ]
-  },
-  "Space": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Space-separated scopes requested during authentication.": {
@@ -266354,15 +266339,6 @@
       "routes/admin"
     ]
   },
-  "The margin floor and pay ceiling a rate agreement sets against the sell price": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The market area this end covers": {
     "sites": 1,
     "scope": [
@@ -274685,6 +274661,15 @@
       "go/other"
     ]
   },
+  "The window must be between 1 and 720 hours": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "The window must be between 1 and {0} days": {
     "sites": 2,
     "scope": [
@@ -276607,15 +276592,6 @@
     ]
   },
   "This assignment has already ended": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "This assignment is outside the contract's margin terms: {0}": {
     "sites": 1,
     "scope": [
       "go"
@@ -287732,6 +287708,15 @@
       "go/other"
     ]
   },
+  "Transaction set must be 204, 210, 214, 990, 997 or 999": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Transaction set purpose code": {
     "sites": 1,
     "scope": [
@@ -289780,6 +289765,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Turn on Vim keys": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Turn on if the employer reported any accidents; the count is asked next.": {
@@ -299015,6 +299009,51 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Vim": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Vim keys are on. jj or jk leaves insert mode and Space is the leader.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Vim keys could not be loaded. The editor's own keys still work.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Vim keys in the formula editor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
+    ]
+  },
+  "Vim keys · code editor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Violates hazmat segregation rule \"{0}\" ({1}) — conflicts with \"{2}\"": {
@@ -315247,11 +315286,13 @@
     ]
   },
   "Your role does not include margins.": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/cost-control",
+      "routes/dispatch-control",
       "routes/rate-agreement"
     ]
   },
@@ -321137,6 +321178,15 @@
       "routes/inbox"
     ]
   },
+  "file name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "file size": {
     "sites": 1,
     "scope": [
@@ -322412,13 +322462,12 @@
     ]
   },
   "margin {0}%": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
-      "routes/shipment"
+      "apps/web/lib"
     ]
   },
   "margins": {
@@ -323069,7 +323118,7 @@
     ]
   },
   "nothing waived": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -323618,6 +323667,15 @@
       "go/other"
     ]
   },
+  "origin": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "origin city": {
     "sites": 2,
     "scope": [
@@ -324082,7 +324140,7 @@
     ]
   },
   "provider": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -324145,7 +324203,7 @@
     ]
   },
   "quote {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -324541,6 +324599,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "row count": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "row limit reached": {
@@ -341758,7 +341825,7 @@
     ]
   },
   "{0} on {1}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -342288,7 +342355,7 @@
     ]
   },
   "{0} put in play": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -345771,7 +345838,7 @@
     ]
   },
   "{0}% of exposure": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],

@@ -7837,7 +7837,7 @@
             "type": "boolean"
           },
           "proNumber": {
-            "description": "A shipment's PRO number, or part of it, ignoring case. Only records whose pro number contains this text.",
+            "description": "A shipment's PRO number, or part of it, ignoring case.",
             "type": "string"
           },
           "shipmentId": {
@@ -19443,7 +19443,7 @@
     },
     {
       "name": "fuel_list_cards",
-      "description": "List the organization's fuel cards with the provider, the last four digits, the status and the tractor or driver each is assigned to. A card a feed discovered is Suspended and unassigned until someone assigns it with fuel_assign_card, and until then its purchases wait in their import. Filters: assignedTractorId, assignedWorkerId, cancelledAtFrom/To, createdAtFrom/To, discoveredAtFrom/To, discoveredOnly, expiresAtFrom/To, hasAssignedTractor, hasAssignedWorker, label, lastFour, note, provider, reason, status, unassignedOnly, updatedAtFrom/To.",
+      "description": "List the organization's fuel cards with the provider, the last four digits, the status and the tractor or driver each is assigned to. A card a feed discovered is Suspended and unassigned until someone assigns it with fuel_assign_card, and until then its purchases wait in their import. Filters: assignedTractorId, assignedWorkerId, cancelledAtFrom/To, createdAtFrom/To, discoveredAtFrom/To, discoveredOnly, expiresAtFrom/To, hasAssignedTractor, hasAssignedWorker, label, lastFour, note, provider, status, unassignedOnly, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -19576,16 +19576,11 @@
             "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
-          "reason": {
-            "description": "Only records whose cancel reason contains this text.",
-            "type": "string"
-          },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
               "assignedTractorId",
               "assignedWorkerId",
-              "cancelReason",
               "cancelledAt",
               "createdAt",
               "discoveredAt",
@@ -19680,7 +19675,7 @@
             "type": "boolean"
           },
           "countryCode": {
-            "description": "Only this country's jurisdictions: US, CA or MX. Only records whose country code contains this text.",
+            "description": "Only this country's jurisdictions: US, CA or MX.",
             "type": "string"
           },
           "membersOnly": {
@@ -32729,22 +32724,6 @@
             "type": "integer",
             "x-clamp": true
           },
-          "marginFloorPercentMax": {
-            "description": "Only records whose margin floor percent is at most this. Write it as a decimal, such as 1250.00.",
-            "type": "string"
-          },
-          "marginFloorPercentMin": {
-            "description": "Only records whose margin floor percent is at least this. Write it as a decimal, such as 1250.00.",
-            "type": "string"
-          },
-          "maxPayPercentOfSellMax": {
-            "description": "Only records whose max pay percent of sell is at most this. Write it as a decimal, such as 1250.00.",
-            "type": "string"
-          },
-          "maxPayPercentOfSellMin": {
-            "description": "Only records whose max pay percent of sell is at least this. Write it as a decimal, such as 1250.00.",
-            "type": "string"
-          },
           "name": {
             "description": "Only records whose name contains this text.",
             "type": "string"
@@ -32949,7 +32928,7 @@
         "additionalProperties": false,
         "properties": {
           "from": {
-            "description": "The earliest price day to include. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "description": "The earliest price day to include, as YYYY-MM-DD.",
             "examples": [
               "2026-10-01"
             ],
@@ -32971,7 +32950,7 @@
             "x-clamp": true
           },
           "to": {
-            "description": "The latest price day to include. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "description": "The latest price day to include, as YYYY-MM-DD.",
             "examples": [
               "2026-10-01"
             ],

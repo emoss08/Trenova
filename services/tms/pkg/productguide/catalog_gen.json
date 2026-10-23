@@ -1,5 +1,5 @@
 {
-  "version": "sha256:b89388001b2345762d1e541aa64a61ceadc53eb18be5e81c7ce27feff414eee4",
+  "version": "sha256:77a9d251c327696f123ff322d6ac404c214c3801761dd87826d81f58b3f7e3b9",
   "modules": [
     {
       "id": "home",
@@ -6013,7 +6013,11 @@
         "security roles",
         "user groups",
         "RBAC",
-        "permission sets"
+        "permission sets",
+        "page access",
+        "view as role",
+        "role preview",
+        "what a role can see"
       ],
       "tasks": [
         {
@@ -6045,6 +6049,64 @@
             "Use **Search resources...** to find a resource, or expand a category.",
             "Select an operation chip on a resource's row to grant or remove that operation. The box at the start of the row toggles **Grant all** or **Remove all** for that resource, and **All** or **None** on a category header does the same for every resource in the category.",
             "For a granted resource, choose how much data it reaches in the scope selector: **Own data only**, **Organization** or **All data**."
+          ]
+        },
+        {
+          "title": "See what a grant means",
+          "keywords": [
+            "what does this permission do",
+            "without read",
+            "reference view",
+            "which screens use this resource"
+          ],
+          "steps": [
+            "On the create or edit page for a role, go to **Permissions** and expand a category.",
+            "Under each resource's name, a sentence says what the role sees: with read on the resource, every field of its records; without it, what other records still show of it through its reference view, or that it sees none of them. When some of those fields rank above the role's **Max sensitivity**, a second line says they stay withheld too. The sentences follow the permissions and the sensitivity level as you change them.",
+            "Select the screens link under the sentence (for example \"3 screens this affects\") to open **Screens this affects**. It lists each screen the grant changes and how the screen uses the resource: **Required** (the screen's route or an endpoint it calls checks it), **Reads** (the screen lists or opens these records itself), **Asks for more** (it asks for fields beyond the reference view) or **Reference view** (it shows them only through their reference view). Select a screen's name to open it."
+          ]
+        },
+        {
+          "title": "Preview a screen as the role you are editing",
+          "keywords": [
+            "test a role",
+            "try a role before saving",
+            "role preview",
+            "what would this role see"
+          ],
+          "steps": [
+            "On the create or edit page for a role, go to **Preview a screen**, below **Permissions**.",
+            "Under **Screen**, choose a screen from **Choose a screen to preview**.",
+            "The card shows what a person holding only this role, and the roles it inherits, would need and see there, worked out from the form before you save: **What this screen needs** lists each permission the screen checks as **Held** or **Missing**, and **Records on this screen** lists each kind of record it shows as **Can read** or **No read**, with the linked fields that come back withheld. A warning says when the screen would not open, or would open empty.",
+            "Change the permissions or **Max sensitivity**; the preview updates a moment later."
+          ]
+        },
+        {
+          "title": "See what a screen needs and what you see on it",
+          "keywords": [
+            "page access",
+            "why can't I see this",
+            "missing permission",
+            "screen permissions",
+            "access panel"
+          ],
+          "steps": [
+            "On any page, open your account menu and select **Page access**, or press Ctrl+Alt+P. The **Page access** panel opens for the screen you are on.",
+            "**What this screen needs** lists each permission the screen's route and endpoints check, marked **Held** or **Missing** for you.",
+            "**Records on this screen** lists each kind of record the screen shows, whether you **Can read** it, and the linked fields that come back withheld: **Needs read** when they need read on that kind, **Above ceiling** when they rank above your sensitivity ceiling."
+          ]
+        },
+        {
+          "title": "View a screen as another role",
+          "keywords": [
+            "view as role",
+            "impersonate role",
+            "check a role's access",
+            "see what a role sees"
+          ],
+          "steps": [
+            "Open the **Page access** panel on the screen (**Page access** in your account menu, or Ctrl+Alt+P).",
+            "Under **View as**, pick a role. The panel shows what a person holding only that role, and the roles it inherits, would need and see on this screen.",
+            "Clear the role to go back to **You, with your own roles**."
           ]
         },
         {
@@ -6087,7 +6149,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to roles; **New role** needs create access. System roles show the banner \"This is a system role. Some properties may be restricted.\" and their name, sensitivity and description cannot be changed. Changes to a role apply to everyone who holds it. A role's job function (**Core responsibility**) is also what [Home screens](/admin/home-layouts) can assign by.\n\nA role's agents matter for agents limited to specific roles in [AI control](/admin/agent-control): people holding the role, or a role that inherits it, can use those agents and decide what they propose. Agents open to everyone who can use the assistant are included for every role automatically and need not be added; one that is granted anyway shows **Open to everyone**, and the grant applies once it is limited to specific roles. System agents cannot be granted to a role. Changing a role's agents needs update access to roles.",
+      "notes": "Viewing the page needs read access to roles; **New role** needs create access. System roles show the banner \"This is a system role. Some properties may be restricted.\" and their name, sensitivity and description cannot be changed. Changes to a role apply to everyone who holds it. A role's job function (**Core responsibility**) is also what [Home screens](/admin/home-layouts) can assign by.\n\nA role's agents matter for agents limited to specific roles in [AI control](/admin/agent-control): people holding the role, or a role that inherits it, can use those agents and decide what they propose. Agents open to everyone who can use the assistant are included for every role automatically and need not be added; one that is granted anyway shows **Open to everyone**, and the grant applies once it is limited to specific roles. System agents cannot be granted to a role. Changing a role's agents needs update access to roles.\n\nThe **Page access** menu item and Ctrl+Alt+P are offered to people with read access to roles, and **View as** and **Preview a screen** need it too. Neither reads any record: they work out access from the role's grants alone. Organization access policies, data scopes and row-level security can narrow what a person holding the role reads, never widen it, so the real screen may show less.",
       "related": [
         "/admin/users",
         "/admin/home-layouts",
@@ -7635,6 +7697,23 @@
             "Hover a name to see its type, its documentation and what it came to on the preview load. Type inside a function's parentheses to see its parameters. Inferred types and parameter names are drawn in the text in grey.",
             "Press F12 (or Ctrl-click) on a name to jump to where it is declared, including into a library it comes from, and F2 to rename a binding everywhere it is used.",
             "The format button under the editor (or Shift+Alt+F) lays the file out in Tariff's one style. A file with syntax errors is left as it is until it parses."
+          ]
+        },
+        {
+          "title": "Edit the source with Vim keys",
+          "keywords": [
+            "vim",
+            "vim mode",
+            "neovim",
+            "astronvim",
+            "jj escape",
+            "keybindings",
+            "modal editing"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, then select **Vim** in the bar under the editor (or turn on **Vim keys in the formula editor** in [Settings](/settings) under **Preferences**). The choice stays on this device and applies to formula libraries too.",
+            "The editor has normal, insert and visual modes, with the mode shown under the text. Type jj or jk to leave insert mode.",
+            "Space is the leader, as in AstroNvim: gd goes to a definition, K shows the hover card, gl shows the line's problems and ]d or [d moves between them, Space l f formats, Space l r renames, gcc or Space / comments a line, and Space w or :w saves."
           ]
         },
         {
@@ -17462,11 +17541,12 @@
             "24-hour clock",
             "timezone",
             "language",
-            "reduce motion"
+            "reduce motion",
+            "vim keys"
           ],
           "steps": [
             "Open [Settings](/settings) and go to **Preferences**.",
-            "Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement."
+            "Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement. **Vim keys in the formula editor** gives the formula editor Vim's modes and AstroNvim's keys."
           ]
         },
         {

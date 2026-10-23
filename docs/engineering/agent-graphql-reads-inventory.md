@@ -243,11 +243,12 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 83 |
-| op, converted (rows removed) | 36 |
-| field-no-op | 6 |
-| partial, not yet converted | 17 |
-| partial, converted (rows removed) | 13 |
+| op, not yet converted | 59 |
+| op, converted (rows removed) | 60 |
+| field-no-op, not yet converted | 3 |
+| field-no-op, converted (rows removed) | 3 |
+| partial, not yet converted | 13 |
+| partial, converted (rows removed) | 17 |
 | none | 21 |
 | **total** | **176** |
 

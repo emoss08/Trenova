@@ -340,7 +340,7 @@ func ackHealthGetSpec() getSpec {
 // ackHealthMeaning says what the counts mean as the EDI overview words them:
 // how many acknowledgments came back and are awaited, overall and for each
 // partner, how long each overdue message has waited, and what to do next.
-func ackHealthMeaning(record map[string]any) {
+func ackHealthMeaning(record map[string]any, _ map[string]struct{}, _ clock) {
 	asOf, _ := typeutils.IntOf(record["asOf"])
 	overdueAge, _ := typeutils.IntOf(record["overdueAfterSeconds"])
 	record["overdueAfter"] = timeutils.FormatLongDurationMs(int64(overdueAge) * 1000)
