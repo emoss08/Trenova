@@ -53,6 +53,7 @@ func (r *QueryResolver) AgentRunEvents(ctx context.Context, input gqlmodel.DataT
 			Cursor:    tableInput.Cursor,
 			Columns:   agentRunEventColumns(ctx, "edges.node"),
 			OwnerKind: string(agentports.RunStepOwnerAgentRun),
+			Reader:    agentports.PersonRunRead(authCtx.UserID),
 		},
 	)
 	if err != nil {

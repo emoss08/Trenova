@@ -8,9 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -70,6 +70,7 @@ func (s *stubTranscripts) RunTranscript(
 type transcriptCall struct {
 	engine      *grantEngine
 	transcripts *stubTranscripts
+	userID      pulid.ID
 	orgID       pulid.ID
 	buID        pulid.ID
 }
@@ -95,7 +96,7 @@ func (tc *transcriptCall) do(t *testing.T, path string) *httptest.ResponseRecord
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		authctx.SetAuthContext(c, pulid.MustNew("usr_"), tc.buID, tc.orgID)
+		authctx.SetAuthContext(c, tc.userID, tc.buID, tc.orgID)
 		c.Next()
 	})
 	handler.RegisterRoutes(router.Group(""))
@@ -110,6 +111,7 @@ func newTranscriptCall(allowed bool) *transcriptCall {
 	return &transcriptCall{
 		engine:      &grantEngine{allowed: allowed},
 		transcripts: &stubTranscripts{},
+		userID:      pulid.MustNew("usr_"),
 		orgID:       pulid.MustNew("org_"),
 		buID:        pulid.MustNew("bu_"),
 	}
@@ -139,6 +141,8 @@ func TestDownloadTranscript_HandsTheRunOverAsMarkdownUnderTheCallersTenant(t *te
 	require.NotNil(t, request.TenantInfo)
 	assert.Equal(t, tc.orgID, request.TenantInfo.OrgID)
 	assert.Equal(t, tc.buID, request.TenantInfo.BuID)
+	assert.Equal(t, agentports.PersonRunRead(tc.userID), request.Reader,
+		"a run on another person's conversation reads as missing")
 
 	require.Len(t, tc.transcripts.scopes, 1)
 	assert.Equal(t, tc.orgID, tc.transcripts.scopes[0].OrganizationID)

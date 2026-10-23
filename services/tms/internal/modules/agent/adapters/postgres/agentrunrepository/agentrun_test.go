@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -167,4 +167,85 @@ func TestListConnection_WithoutAProjectionLeavesTheTranscriptBehind(t *testing.T
 
 	require.Len(t, log.queries, 1)
 	assert.NotContains(t, log.queries[0], "transcript")
+}
+
+func readEveryWay(t *testing.T, reader agentports.RunReader) []string {
+	t.Helper()
+
+	repo, sqlMock, log := newRunRepository(t)
+	tenant := runTenant()
+	runID := pulid.MustNew("arun_")
+	row := func() *sqlmock.Rows { return sqlmock.NewRows([]string{"id"}).AddRow(runID.String()) }
+
+	sqlMock.ExpectQuery("").WillReturnRows(row())
+	_, err := repo.GetByID(t.Context(), agentports.GetAgentRunByIDRequest{
+		ID:         runID,
+		TenantInfo: &tenant,
+		Reader:     reader,
+	})
+	require.NoError(t, err)
+
+	sqlMock.ExpectQuery("").WillReturnRows(row())
+	_, err = repo.ListByIDs(t.Context(), agentports.ListAgentRunsByIDsRequest{
+		IDs:        []pulid.ID{runID},
+		TenantInfo: tenant,
+		Reader:     reader,
+	})
+	require.NoError(t, err)
+
+	sqlMock.ExpectQuery("").WillReturnRows(row())
+	_, err = repo.ListTranscriptsByIDs(t.Context(), agentports.ListAgentRunsByIDsRequest{
+		IDs:        []pulid.ID{runID},
+		TenantInfo: tenant,
+		Reader:     reader,
+	})
+	require.NoError(t, err)
+
+	sqlMock.ExpectQuery("count(").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+	sqlMock.ExpectQuery(`"ar"."summary"`).WillReturnRows(row())
+	_, err = repo.ListConnection(t.Context(), &agentports.ListAgentRunConnectionRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: tenant,
+			Pagination: pagination.Info{Limit: 10},
+		},
+		Cursor: pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
+		Reader: reader,
+	})
+	require.NoError(t, err)
+
+	require.Len(t, log.queries, 5, "a get, two by-ids reads, a count and a page")
+
+	return log.queries
+}
+
+func TestRunReads_KeepConversationRunsToTheirOwnerForAPerson(t *testing.T) {
+	t.Parallel()
+
+	person := pulid.MustNew("usr_")
+	for _, query := range readEveryWay(t, agentports.PersonRunRead(person)) {
+		assert.Contains(t, query, `(ar.subject_type <> 'AssistantThread')`, query)
+		assert.Contains(t, query, `EXISTS (SELECT 1 FROM "assistant_threads" AS "athr"`, query)
+		assert.Contains(t, query, `(athr.id = ar.subject_id)`, query)
+		assert.Contains(t, query, `(athr.organization_id = ar.organization_id)`, query)
+		assert.Contains(t, query, `(athr.business_unit_id = ar.business_unit_id)`, query)
+		assert.Contains(t, query, `(athr.user_id = '`+person.String()+`')`, query)
+	}
+}
+
+func TestRunReads_ShowNoConversationRunsToAReaderWhoIsNoPerson(t *testing.T) {
+	t.Parallel()
+
+	for _, query := range readEveryWay(t, agentports.PersonRunRead(pulid.Nil)) {
+		assert.Contains(t, query, `(ar.subject_type <> 'AssistantThread')`, query)
+		assert.NotContains(t, query, "assistant_threads", query)
+	}
+}
+
+func TestRunReads_LeaveAnUnattendedReadAsItWas(t *testing.T) {
+	t.Parallel()
+
+	for _, query := range readEveryWay(t, agentports.UnattendedRunRead()) {
+		assert.NotContains(t, query, "AssistantThread", query)
+		assert.NotContains(t, query, "assistant_threads", query)
+	}
 }
