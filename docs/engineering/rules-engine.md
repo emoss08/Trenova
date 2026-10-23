@@ -2,7 +2,8 @@
 
 Some rules have to give the same answer in the browser and on the server, to the cent:
 
-- the formula language, which the Formula Studio checks as you type and the server prices with;
+- Tariff, the rating language, which the Formula Studio checks as you type and the server rates
+  with;
 - how a charge is split between payers;
 - how a report number is rounded and written;
 - how specific a rate agreement lane is;
@@ -27,12 +28,17 @@ conventions are in [rust.md](rust.md).
 | `src/message.rs` | `message!` and `Message`: user-facing text as English ICU templates plus arguments |
 | `src/span.rs` | byte spans inside the crate; UTF-16 `Range` on the wire |
 | `src/wire.rs` | `Dec`: exact decimals on the wire |
-| `src/formula/syntax/` | lexer, parser (error-tolerant), AST, formatter |
-| `src/formula/catalog.rs` | every function, built-in and word operator, with its shape and docs; disabled and reserved names |
-| `src/formula/check/` | static types, diagnostics and fixes, `let` rules, nullable guards, the Studio's analysis |
-| `src/formula/eval/` | values, the metered interpreter, built-in functions, dates and durations, rate table lookups, traces |
-| `src/allocation/`, `src/report/`, `src/lane/`, `src/matrix/` | the non-formula rules |
-| `services/crates/rules/testdata/` | the regression corpora every implementation detail answers to (`conformance.json` and one file per area) |
+| `src/tariff/syntax/` | lexer, error-tolerant parser, syntax tree, outline, formatter, tokens for highlighting, and loading a file with the libraries it imports; `tariff.format`, `tariff.tokens` |
+| `src/tariff/check/` | types, units, inference, flow narrowing, exhaustiveness, modules, inputs, diagnostics with fixes, and the catalog; `tariff.check`, `tariff.catalog` |
+| `src/tariff/eval/` | values with units, the metered interpreter, the bill and its total clauses, rate tables, the trace, the test runner and the test scaffold; `tariff.evaluate`, `tariff.test`, `tariff.scaffoldTest` |
+| `src/tariff/editor/` | completion, hover, signature help, go to definition, rename and inlay hints; the six editor operations |
+| `src/tariff/stdlib/` | the standard library, written in Tariff (`ltl`, `fuel`, `time`, `accessorials`) and compiled in, with its docs as catalog templates |
+| `src/tariff/units.rs`, `types.rs` | exact unit algebra and dimensions; the types the checker infers and wire values decode against |
+| `src/tariff/schema.rs`, `context.rs` | the data roots, schema enums, table and charge code shapes; the context every file is read with |
+| `src/tariff/docs.rs`, `diagnostic.rs` | docs as the author's words or a `Message`; findings and their wire shape |
+| `src/tariff/wire.rs` | Tariff values on the wire, decoded against their types and encoded canonically |
+| `src/allocation/`, `src/report/`, `src/lane/`, `src/matrix/` | the other rules |
+| `services/crates/rules/testdata/` | the regression corpora every implementation detail answers to: one file per area for the other rules, and `tariff/syntax/`, `tariff/check/`, `tariff/eval/` and `tariff/editor/` with one corpus per topic |
 | `services/tms/pkg/rules/` | the Go host: the embedded `rules.wasm`, the wazero runtime and instance pool, typed calls per area |
 | `client/packages/shared/src/rules/` | the browser loader: the same `rules.wasm`, `loadRules()`, synchronous access once loaded, typed calls per area |
 
@@ -57,11 +63,12 @@ The build uses:
 
 CI rebuilds the module and fails when either committed copy differs from it.
 
-The module is about 1.1 MB, 0.4 MB gzipped. The browser fetches it lazily, never on the
-startup path, and the service worker caches it as a hashed asset. Most of the weight is the
-crate's own code, Rust's collections and JSON; `opt-level = "z"` would save about 8% gzipped at
-a cost in speed, which matters on the server's report and rating paths, so the profile stays at
-`"s"`.
+The module is 1,972,029 bytes (1.9 MiB), 741,881 bytes gzipped (`gzip -9`). The browser
+fetches it lazily, never on the startup path, and the service worker caches it as a hashed
+asset. Most of the weight is the crate's own code (Tariff's checker, interpreter, editor
+features and standard library), Rust's collections and JSON. `opt-level = "z"` would shrink it
+at a cost in speed, which matters on the server's report and rating paths, so the profile stays
+at `"s"`.
 
 ### The ABI
 
@@ -77,12 +84,12 @@ The protocol, in order:
 The envelope, request and response:
 
 ```json
-{"op": "formula.check", "input": { ... }}
+{"op": "tariff.check", "input": { ... }}
 {"ok": { ... }}
 {"error": {"code": "malformed" | "unknown_op" | "invalid_input", "detail": "..."}}
 ```
 
-`ok` means the operation ran, whatever it found: a formula full of errors is still a successful
+`ok` means the operation ran, whatever it found: a file full of errors is still a successful
 check.
 
 `error` means the request was unusable. That is always a bug in the caller. Its detail is
@@ -96,13 +103,26 @@ reports an internal error. No input, however malformed, may make the crate panic
 - **Decimals are exact.** An input decimal is a JSON number or a JSON string, read from its text
   and never through `f64` (`wire::Dec`). An output decimal is always a JSON string, because
   `JSON.parse` would turn a number back into a float.
-- **Value trees** are the formula environment, results and trace values. They are JSON, with
-  numbers read exactly. Two kinds have their own encoding:
-  - a date is `{"$date": "2026-01-02T03:04:05-05:00"}`: RFC 3339 with the offset the value
-    carries;
-  - a duration is `{"$duration": "<nanoseconds>"}`.
+- **Tariff values** (input values, the record, the bill, the trace, a test's values) are
+  JSON typed by tag where JSON has none, as `formula-language.md` "Wire values" specifies and
+  `src/tariff/wire.rs` implements:
+  - `Bool` and `Text` are JSON `true`/`false` and strings;
+  - `Int` and `Number` are `{"$n": "1200"}`;
+  - money, quantities, rates and percents are `{"$q": "2.35", "u": "$/mi"}`,
+    `{"$q": "1200", "u": "lb"}`, `{"$q": "18", "u": "%"}`, `{"$q": "450", "u": "$"}`;
+  - `Date` and `DateTime` are `{"$date": "2026-10-22"}` and
+    `{"$date": "2026-10-22T08:00:00-05:00"}` (RFC 3339 with the offset the value carries);
+  - an enum variant is a JSON string (`"Delivery"`), read as the declared enum;
+  - `none` is JSON `null`;
+  - lists and records are arrays and objects; a record key never starts with `$`.
 
-  Object keys starting with `$` are reserved for these tags.
+  A value is decoded against the type it must have, and anything else is refused with its JSON
+  path (`shipment.stops[0].weight`): a bare JSON number where a number is needed, a unit of
+  another dimension, a variant the enum lacks, a missing or unknown record field, `null` where
+  the type is not optional, a fraction where an `Int` is needed, nesting past 64 levels. A
+  record field whose type is optional may be left out. Encoding is canonical: decimals
+  normalised (`"2.5"`, never `"2.50"`), date-times with seconds and their offset, and every
+  object's keys sorted by name.
 - **Text positions** are UTF-16 code units: `{"from": 3, "to": 6}`, half-open. Inside the crate
   everything is a byte `Span`, converted at the edge by `span::Utf16Index`.
 - **User-facing text** is a `Message`: `{"message": "unknown name {0}", "args": ["foo"]}`. The
@@ -114,578 +134,511 @@ reports an internal error. No input, however malformed, may make the crate panic
   app's `web` bundle.
 - **Names** on the wire are camelCase.
 
-## The formula language
+## Tariff
 
-The language keeps expr-lang's syntax and the behaviour the conformance corpus pins, so every
-formula in the standard catalog, the seeds and the docs still means what it did. It is owned
-here now, and these choices are deliberate.
+Tariff is the rating language. [formula-language.md](formula-language.md) is its reference: the
+files, types, units, the bill, the data roots, the standard library and the wire values. This
+section is the module's side: what each `tariff.*` operation takes and answers, the gate in
+front of every run, the on-demand table protocol, the budgets and the error codes. Every shape
+below is copied from the operation's module (`src/tariff/<area>/ops.rs`, whose header states
+it) or from a corpus case.
 
-### Values and types
+The corpora are under `testdata/tariff/`, one file per topic: `syntax/*.txt` (read by
+`src/tariff/syntax/tests/`), `check/*.json` (`src/tariff/check/tests.rs`; `check/ops.json`
+pins `tariff.check`'s and `tariff.catalog`'s responses), `eval/*.json`
+(`tests/tariff_eval_corpus.rs`, which runs each case through `tariff.evaluate` or `tariff.test`)
+and `editor/*.json` (`src/tariff/editor/tests.rs`). A corpus response is matched by inclusion:
+a case names only the keys it pins.
 
-The static types are:
+### What every operation shares
 
-- `Number`, with `Integer` as a static subtype for whole numbers;
-- `String`, `Boolean`, `Date`, `Duration`;
-- `Array`, `Object`, `Nil`;
-- `Any`, for values whose type is not known statically.
+- **Strict input.** Every input object refuses a key it does not know: `{"programs": [],
+  "extra": 1}` is `invalid_input`, as is a `kind` the operation does not take.
+- **`kind`** is optional wherever a source is: `tariff`, `library` or `condition`. With it, the
+  loader refuses a file of another kind (`file-kind`); without it the file's header decides.
+- **`context`** is what a file is read with besides its source (`src/tariff/context.rs`), the
+  same shape for `tariff.check`, `tariff.evaluate`, `tariff.test`, `tariff.scaffoldTest` and
+  the editor operations, so a host builds it once:
 
-**Number** is one exact decimal: `rust_decimal`, 28 significant digits. No float exists
-anywhere; the old engine's `float64` paths are gone.
+  ```json
+  {"libraries": [{"path": "org.fees", "version": "v3", "source": "library \"org.fees\"\nfn fee() -> Money = $5\n"}],
+   "tables": [Table],
+   "codes": [{"code": "DET", "description"?, "active": true}],
+   "settings": {"distanceUnit": "mi" | "km"}}
+  ```
 
-- `Integer` is a static fact about a number, not a second runtime type. A number is `Integer`
-  when it is an integer literal (decimal, hex `0x`, octal `0o` or binary `0b`, `_` separators),
-  a field declared `integer`, `#index`, the result of `+`, `-`, `*` or `%` on integers, of a
-  unary `-` or `+` on one, of a conditional whose branches are both integers, or the result of
-  `int`, `len`, `count`, `findIndex`, `findLastIndex`, `indexOf`, `lastIndexOf`, a bit function
-  or a date method. An input is declared `Number`, so it is never `Integer`.
-- `%`, the bit functions, `..` bounds and `take` need `Integer` operands. The checker refuses
-  others, and the evaluator also refuses a fractional value it meets at run time.
-- `/` divides exactly, to 28 significant digits. Division by zero is an error: a warning when
-  the divisor is a literal zero, a run-time error otherwise.
-- `**`, `^` and `pow` are exact for integer exponents. Fractional exponents and `sqrt` use
-  `rust_decimal`'s maths, which is correct to the last digit it can hold.
-- Overflow is a run-time error, never a wrap.
+  Every field may be left out. `libraries` are the organisation libraries a file may `use
+  org.<name>`; `version` is echoed back in the imports `tariff.check` reports. `tables` are the
+  rate tables (below); the checker reads only their shapes. `codes` absent means the host has
+  not loaded them, so charge codes go unchecked (the editor's first paint); `[]` means there
+  are none. `settings.distanceUnit` is `mi` (the default) or `km`, the unit `shipment.distance`
+  is stored in.
+- **Positions** are UTF-16 code units, half-open `{"from", "to"}`, in the source they are
+  about; an editor operation's `offset` is one too.
+- **A finding** has one wire shape everywhere (`WireDiagnostic` in `src/tariff/diagnostic.rs`):
 
-**Dates** carry an instant and a UTC offset. The server sends each date in the offset of the
-stop it came from.
+  ```json
+  {"range": {"from": 62, "to": 66}, "severity": "error", "code": "unknown-name",
+   "message": {"message": "…", "args": […]},
+   "fixes": [{"label": {"message": "Change to {0}", "args": ["`miles`"]},
+              "changes": [{"range": {"from": 62, "to": 66}, "insert": "miles"}]}],
+   "related": []}
+  ```
 
-- `date(text)` reads these forms: RFC 3339, `2006-01-02T15:04:05`, `2006-01-02T15:04`,
-  `2006-01-02 15:04` and `2006-01-02`. A form without an offset is UTC.
-- `duration(text)` reads Go duration syntax: `1h30m`, with the units `ns`, `us`, `µs`, `ms`, `s`,
-  `m` and `h`.
-- A date adds or subtracts a duration, and a date minus a date is a duration. Both kinds
-  compare.
-- A duration adds, subtracts, and multiplies or divides by a number.
-- Methods on a date: `Year()`, `Month()`, `Day()`, `Hour()`, `Minute()`, `Second()`,
-  `Weekday()` (0 is Sunday), `YearDay()` and `Unix()`.
-- Methods on a duration: `Hours()`, `Minutes()` and `Seconds()`.
+  `severity` is `error`, `warning` or `info`; only an error stops a file from saving, previewing
+  and rating. A fix's changes never overlap. `related` is the other places a finding refers
+  to, each `{range, message}` (a duplicate import's "First imported here"). A finding inside an
+  imported library also carries `"module": "org.bad"`, and its ranges are in that library's
+  source.
+- **A `doc`** is a string or a `Message` (`src/tariff/docs.rs`): a string is the author's words
+  (a doc comment in a tariff or an organisation library, a table's name, a charge code's
+  description), shown as written; a `Message` is text the module ships (the schema's and the
+  built-ins' docs, and the standard library's doc comments, whose templates are the comments
+  with their whitespace collapsed, held in `src/tariff/stdlib/docs.rs`), which the host
+  translates.
+- **Values** are wire values (see "Wire conventions").
 
-There is no time zone database in the module. `timezone()` and `date(text, layout, zone)` are
-not part of the language.
+### `tariff.check`
 
-**Equality and comparison** between different static kinds is an error, wherever the value
-came from. `origin.zip == 75201` is refused (`origin.zip` is text, so the comparison is always
-false). The old engine let it through because relation objects were untyped maps.
-
-**Maps iterate in key order.** `keys`, `values`, `toPairs` and printing all sort by key, so a
-formula's output never depends on hash order.
-
-**Text** is Unicode. `len`, indexing and slicing count characters (Unicode scalar values), not
-bytes.
-
-### Syntax
-
-The grammar, with its precedence:
-
-| Precedence | Operators |
-|---|---|
-| 0 | `\|` pipe; the right side must be a call, and `a \| f(b)` is `f(a, b)` |
-| 10 | `or`, `\|\|` |
-| 15 | `and`, `&&` |
-| 20 | `== != < > <= >= in matches contains startsWith endsWith` |
-| 25 | `..` |
-| 30 | `+ -` |
-| 60 | `* / %` |
-| 100, right-associative | `** ^` |
-| 500 | `??` |
-| unary 50 | `not`, `!` |
-| unary 90 | `-`, `+` |
-
-More of the grammar:
-
-- `not` may prefix `in`, `matches`, `contains`, `startsWith` and `endsWith`.
-- **Chained comparisons:** `0 < x <= 5000` means `0 < x and x <= 5000`. A parenthesised
-  comparison does not chain.
-- **Conditionals:** the ternary `a ? b : c`, its short form `a ?: c` (`a ? a : c`), and
-  `if a { b } else { c }`, which must be parenthesised when used as an operand. A block may not
-  be empty.
-- **Lists:** literals `[1, 2]` and maps `{a: 1, "b c": 2}` (a key is a name, a string or a
-  number). Trailing commas are allowed in lists, maps and calls.
-- **Calls:** a function by name, `round(x, 2)`, or a method on a date or a duration,
-  `pickupDate.Year()`; nothing else is called.
-- `??` binds tighter than every other operator, so mixing it with one needs parentheses:
-  `(a ?? 0) * 2`.
-- **Access:** members `a.b`, optional members `a?.b`, `a?.[i]`, indexes (negative indexes count
-  from the end), slices `a[i:j]` and the range `1..3`.
-- **Predicates:** `{ ... }` or a bare expression in a predicate argument. Inside one, `#` is the
-  element, `.field` its field, `#index` its position and `#acc` the accumulator of `reduce`.
-- **`let`:** `let name = value; body` at top level, inside parentheses, inside an `if` block or
-  inside a predicate.
-  - Sibling scopes may reuse a name.
-  - An inner scope may not redeclare a name in scope.
-  - A `let` may not be named after a field, an input, a function or a built-in.
-- **Literals and comments:**
-  - strings `"..."` and `'...'` with escapes;
-  - raw strings in backticks, where a doubled backtick is a literal one;
-  - comments `//` and `/* */`;
-  - identifiers: letters in any script (`\p{L}`), digits and `_`.
-
-### Functions
-
-`formula.catalog` lists every function. The browser reads it from its own copy of the module;
-server-side Go code (the formula assistant, input-name validation) reads it through
-`rules.Catalog`, which caches it for the life of the process. No HTTP endpoint republishes it.
-The set:
-
-- **Rounding:**
-  - `round(x, d?)`: half away from zero;
-  - `roundUp`, `roundDown`, `roundHalfEven`: `d` between -12 and 12;
-  - `roundTo(x, step)`;
-  - `ceil`, `floor`, `abs`.
-- **Aggregates:** `min`, `max`, `sum`, `avg`, `mean`, `median`. Each takes numbers and lists of
-  numbers, flattened one level. `min` and `max` keep the first of equal values.
-- **Other numbers:** `clamp`, `pow`, `sqrt`, `coalesce`.
-- **Rate tables:** `lookup`, `lookupOr`, `lookup2`, `lookup2Or`, `lookupInterp`,
-  `deficitWeight`. The table name must be a string literal.
-- **Text:**
-  - `upper`, `lower`, `trim`, `trimPrefix`, `trimSuffix`, `hasPrefix`, `hasSuffix`;
-  - `indexOf`, `lastIndexOf`;
-  - `replace`, `split`, `splitAfter`, `join`;
-  - `len`, `string`, `float`, `int`, `type`.
-- **Lists and maps:**
-  - `first`, `last`, `get`, `take`;
-  - `keys`, `values`, `toPairs`, `fromPairs`;
-  - `reverse`, `uniq`, `concat`, `flatten`, `sort`, `sortBy`.
-- **Predicates:**
-  - `all`, `none`, `any`, `one`, `count`;
-  - `filter`, `map`, `find`, `findIndex`, `findLast`, `findLastIndex`;
-  - `groupBy`, `reduce`.
-- **Bits**, on integers: `bitand`, `bitor`, `bitxor`, `bitnand`, `bitshl`, `bitshr`,
-  `bitushr`, `bitnot`.
-- **Dates:** `date`, `duration`.
-
-`now`, `toJSON`, `fromJSON` and `repeat` are disabled, each with a reason and a replacement
-(`now` becomes `ratingTime`). `toBase64`, `fromBase64` and `timezone` are not part of the
-language.
-
-### Budgets
-
-The evaluator meters its work, so a runaway formula stops with an error instead of burning a
-CPU:
-
-- every node evaluated, and every element a built-in visits, costs a step;
-- every byte of text built counts against a text budget;
-- every list element created counts against an items budget.
-
-The defaults are in `eval` and may be lowered per request. The parser caps the source length
-(32,768 UTF-16 code units), the node count (1,000) and the nesting depth (128), so no tree is
-deeper than 128 nodes (see "Limits" under the static operations). On the server, wazero also
-closes an instance when its call's context ends: a deadline kills the work instead of
-abandoning it.
-
-### Errors
-
-A static problem is a diagnostic. It has:
-
-- a range, a severity and a stable `code`;
-- a `Message`;
-- fixes.
-
-The browser and the server get the same diagnostics, and the server refuses any formula with an
-error-severity one.
-
-A run-time problem is an evaluation error. It has:
-
-- a stable `code`;
-- a `Message`;
-- the range of the node that failed;
-- for a missing value, the fields involved and the guards that would fix them.
-
-## Operations
-
-Each area documents its operations here: the input and output, with an example, and the
-`testdata/` file that pins them.
-
-### The static formula operations
-
-`formula.catalog`, `formula.check`, `formula.format`, `formula.signature` and
-`formula.identifier` are the language service: the Formula Studio's editor runs them as you
-type, and the server runs `formula.check` before it saves a formula. Their code is in
-`src/formula/syntax/` (lexer, parser, tree, formatter, statements), `src/formula/catalog.rs` and
-`src/formula/check/` (checker, schema knowledge, cursor lookups); `src/formula/ops.rs` holds the
-handlers. `testdata/conformance.json` pins what the checker accepts and where it reports what it
-refuses (`tests/formula_conformance.rs`); `tests/formula_*.rs` hold the rest, including every case
-the old TypeScript language service was tested with.
-
-Every position is UTF-16 code units, half-open, on the wire, and a byte span inside the crate.
-Every user-facing text is a `Message` (`{"message": "...", "args": [...]}`); a diagnostic carries
-its message flattened into it (`"message"` and `"args"` are the diagnostic's own keys).
-
-#### `formula.catalog`
-
-Every function, builtin, disabled and reserved name. The schema endpoint does not republish
-them: each side reads the catalog from its own copy of the module (Go through `rules.Catalog`).
-
-Input: `{}`. Output:
+Checks a file with the libraries it imports, against the schema, the tables' shapes and the
+charge codes. Input: `{"source", "kind"?, "context"?, "values"?}`. From `check/ops.json`, which
+pins only the fields shown:
 
 ```json
-{
-  "functions": [
-    {
-      "name": "round", "signature": "round(x, decimals?)",
-      "description": {"message": "Rounds a number to the given decimal places (default 0, between -12 and 12)."},
-      "example": {"message": "round(3.14159, 2) // 3.14"},
-      "category": "rounding", "operator": false,
-      "minArgs": 1, "maxArgs": 2, "returns": "Number", "numericArgs": true, "predicate": false
-    }
-  ],
-  "builtins": [
-    {
-      "name": "filter", "signature": "filter(list, predicate)",
-      "description": {"message": "The items the predicate holds for, in order."},
-      "example": {"message": "len(filter(stops, .type == \"Delivery\"))"},
-      "category": "predicate", "operator": false,
-      "minArgs": 2, "maxArgs": 2, "returns": "Array", "numericArgs": false, "predicate": true
-    }
-  ],
-  "disabled": [
-    {
-      "name": "now", "reason": "nondeterministic", "replacement": "ratingTime",
-      "message": {"message": "{0} isn't available in formulas: a formula must price a shipment the same way every time it runs. Use {1}, the date the contract terms are read at", "args": ["`now()`", "`ratingTime`"]}
-    }
-  ],
-  "reserved": ["abs", "all", "and", "..."]
-}
+{"op": "tariff.check", "input": {
+  "source": "tariff \"Dry van TL\"\n\nuse org.fees.{ fee }\n\n/// Paid per loaded mile.\ninput rate: Money/mi = $2.35/mi\ninput minimumCharge: Money\n\ncharge \"Linehaul\" (quantity: shipment.distance, rate: rate)\nfor stop in shipment.stops {\n  charge \"Stop {stop.sequence}\" as DET = fee()\n}\nminimum minimumCharge",
+  "context": {"codes": [{"code": "DET", "active": true}],
+              "libraries": [{"path": "org.fees", "version": "v3", "source": "library \"org.fees\"\nfn fee() -> Money = $5\n"}]}}}
 ```
 
-- `functions` are the 41 entries the reference pane lists (rounding, aggregates, rate tables,
-  text, and the word operators and slice with `operator: true`); `builtins` the 43 list,
-  predicate, bit and date functions. Both have the same shape, and every entry has a
-  description and an example now.
-- `maxArgs` is `-1` for any number of arguments. `returns` is `Number`, `Integer`, `String`,
-  `Boolean`, `Date`, `Duration`, `Array`, `Object` or `Any`. `category` is one of `math`,
-  `rounding`, `aggregate`, `conditional`, `rateTable`, `string`, `list`, `predicate`, `bits` and
-  `date`.
-- `disabled` reasons are `nondeterministic`, `serialization` and `textBuilding`; `replacement` is
-  left out when there is none. `message` is what the checker reports when a formula calls it.
-- `reserved` (sorted) is every name a template input may not take: the keywords and every
-  function, builtin and word operator.
-
-#### `formula.check`
-
-Input:
-
 ```json
-{
-  "source": "let linehaul = baseRate * totalDistance;\nlinehaul + weight * lookup(\"fuel\", 1) + extra",
-  "expect": "amount",
-  "schema": {
-    "variables": [
-      {"name": "weight", "type": "number", "description": "Total weight", "category": "shipment", "nullable": true, "computed": false},
-      {"name": "totalDistance", "type": "number", "nullable": false},
-      {"name": "stops", "type": "array"},
-      {"name": "stops[].type", "type": "string"}
-    ],
-    "inputs": [{"name": "baseRate", "type": "Number"}],
-    "operators": []
-  },
-  "tables": [{"name": "fuel", "axes": 1, "banded": false}]
-}
-```
-
-- `expect`: `amount` (the default; the formula must come to a number) or `predicate` (a yes/no
-  rule: true/false or a number).
-- `schema.variables` is `DescribeSchema`'s variable list as published; extra keys are ignored.
-  A field of a list's items is named `list[].field` (`stops[].weight`); those type `.weight`,
-  `#.weight`, `stops[0].weight` and `first(stops).weight`, and without them an item's fields
-  are not known (and not checked). `schema.inputs` are the template's inputs
-  (`Number`/`String`/`Boolean`, any case). `schema.operators` are word operators beyond
-  `startsWith`, `endsWith`, `contains` and `matches`.
-- `schema: null` (or left out) means the schema has not loaded: the output says
-  `pending: true` and leaves out `unknown-variable` and `unknown-field`. Functions come from
-  the catalog, which is compiled in, so calls, arity, types and `let` rules are still checked.
-- `tables` (optional): the rate tables the formula may read. With it, an unknown table name, a
-  one-axis function on a two-axis table (or the reverse), and `lookupInterp` or `deficitWeight`
-  on a table without bands are errors on the name's literal.
-
-Output:
-
-```json
-{
-  "empty": false,
-  "pending": false,
-  "diagnostics": [
-    {
-      "from": 52, "to": 58, "severity": "warning", "code": "nullable",
-      "message": "{0} is empty on some shipments, and the formula would fail to rate them. Give it a fallback: {1}",
-      "args": ["`weight`", "coalesce(weight, 0)"],
-      "name": "weight",
-      "fixes": [{"kind": "replace", "label": {"message": "Use {0}", "args": ["coalesce(weight, 0)"]}, "changes": [{"from": 52, "to": 58, "insert": "coalesce(weight, 0)"}]}]
-    },
-    {
-      "from": 81, "to": 86, "severity": "error", "code": "unknown-variable",
-      "message": "{0} isn't a shipment field or one of this template's inputs. Declare it as an input, or pick a field from the reference.",
-      "args": ["`extra`"],
-      "name": "extra",
-      "fixes": [{"kind": "declare", "label": {"message": "Declare {0} as a {1} input", "args": ["extra", "Number"]}, "name": "extra", "type": "Number"}]
-    }
+{"ok": {
+  "ok": true,
+  "header": {"kind": "tariff", "name": "Dry van TL"},
+  "diagnostics": [],
+  "inputs": [
+    {"name": "rate", "doc": "Paid per loaded mile.", "type": "Money/mi",
+     "descriptor": {"kind": "quantity", "dimension": "Money/Distance", "unit": "$/mi"},
+     "required": false, "default": {"$q": "2.35", "u": "$/mi"}, "range": {"from": 75, "to": 79}},
+    {"name": "minimumCharge", "doc": null, "type": "Money", "descriptor": {"kind": "money"},
+     "required": true, "default": null}
   ],
-  "resultType": "Number",
-  "reads": ["baseRate", "totalDistance", "weight"],
-  "schemaReads": ["totalDistance", "weight"],
-  "inputReads": ["baseRate"],
-  "functionCalls": ["lookup"],
-  "bindings": [{"name": "linehaul", "type": "Number", "reads": 1, "from": 0, "to": 39, "nameFrom": 4, "nameTo": 12}],
-  "statements": [
-    {"index": 0, "kind": "let", "name": "linehaul", "code": "let linehaul = baseRate * totalDistance", "from": 0, "to": 39},
-    {"index": 1, "kind": "result", "code": "linehaul + weight * lookup(\"fuel\", 1) + extra", "from": 41, "to": 86}
-  ],
-  "lookupTables": [{"name": "fuel", "function": "lookup", "from": 68, "to": 74}]
-}
-```
-
-- **Acceptance.** A formula is accepted iff it has no diagnostic with `severity: "error"`. The
-  browser and the server read the same answer; the server refuses anything else.
-- `diagnostics` are sorted by `from`, then `to`, with duplicates (same range, code and message)
-  removed. `name` is the identifier a finding is about, when it is about one. A `replace` fix's
-  `changes` never overlap; a `declare` fix asks the Studio to add an input of that `type`
-  (`Boolean` for a name such as `isWeekend`, `hasLiftgate`, `requiresEscort`; `Number`
-  otherwise).
-- `empty` is true for a formula of spaces and comments only; it then has one `empty` error.
-- `resultType` is the static type of the last statement (`Integer` is a whole `Number`).
-- `reads` lists every field and input read, inputs first, each in the order it first appears;
-  `schemaReads` and `inputReads` split it; `functionCalls` lists the functions called (not
-  methods). `bindings` are the top-level `let` lines.
-- `statements` replace the old engine's `SplitStatements`: each `let` line and each value, its
-  code from its first token to the last token of its value (no `;`, spaces or comments), with
-  its range. They are listed for a formula that does not parse too, and a value line in the
-  middle is its own statement.
-- `lookupTables` replaces `ExtractLookupTableRefs`: every rate table read by a string literal,
-  in source order, with the function that reads it and the literal's range (one entry per
-  call: a caller that wants one per table and axis count dedupes by `name` and `function`).
-
-The codes:
-
-| Code | Severity | What |
-|---|---|---|
-| `syntax` | error | the text does not follow the grammar (message as the editor always worded it, often with a one-line fix: `;` after a `let`, `==` for `=`, `()` after a piped function), an escape the language does not know, a number that does not fit, or a pointer outside a predicate |
-| `limit` | error | past a parser limit (below) |
-| `empty` | error | nothing but spaces and comments |
-| `unknown-variable` | error | a name that is no field, input or `let`; a "did you mean" replace fix within two edits, and a declare fix |
-| `unknown-field` | error | a field a record or a list's items do not have, at the first unknown part |
-| `unknown-function` | error | a function the catalog does not have (`toBase64`, `fromBase64` and `timezone` are gone), a method a date or duration does not have, or a value called |
-| `disabled-function` | error | `now`, `toJSON`, `fromJSON`, `repeat`; `now()` has a fix to `ratingTime` |
-| `arity` | error | too few or too many arguments, on the parentheses |
-| `type` | error | an operand or argument of the wrong kind, `%`/bits/`..`/`take` on a number that can hold a fraction (fix: `int(x)`), comparing different kinds, a field read from text, a method on a value that has none, a predicate given to a function that takes values (fix: `sum(map(list, .field))`) |
-| `nullable` | warning | a field that can be empty read without a guard (`??`, `coalesce`, `?.`, a `nil` test that guards it, including `x != nil && x ...`), once per field, with the guard as a fix: `coalesce(weight, 0)`, `(shipmentType?.code ?? "")` for a field under an object, `(.weight ?? 0)` for an item's field; dates fall back to `ratingTime`, text to `""`, flags to `false` |
-| `let-unused` | warning | a `let` nothing reads |
-| `let-duplicate` | error | a name already bound in scope |
-| `let-before-definition` | error | a `let` read above the line that defines it |
-| `let-shadows` | error | a `let` named after a field, an input or a function |
-| `let-last` | error | the formula ends on a `let`; a fix returns its name |
-| `result-type` | error | the formula does not come to what `expect` asks |
-| `discarded` | warning | a value line before the last, worked out and thrown away |
-| `divide-by-zero` | warning | a divisor that is a literal zero |
-| `rate-table` | error | a table name that is not a string literal, or (with `tables`) an unknown table or one of the wrong shape |
-
-Messages reuse the TypeScript language service's English templates wherever a check carried
-over, so their translations in `i18n/messages.*.json` still apply. An inner phrase (a value's
-description such as ``"`x` is a number"``, a type's name, a hint sentence) is a nested
-`Message` argument, translated on its own; a template never starts or ends with a space to join
-one, because the template is its catalog key exactly as written.
-
-#### `formula.format`
-
-Input `{"source": "a+b", "width": 80, "operators": []}` (`width` defaults to 80, `operators` to
-none). Output `{"ok": true, "text": "a + b", "changed": true}`, or
-`{"ok": false, "reason": "empty" | "syntax" | "comments"}` when the formula is left alone: it is
-empty, it has a syntax diagnostic (so a part would be lost), or it holds a comment (which the tree
-does not keep). One statement per line, a single space around every operator, a blank line
-between statements kept, a long line broken where it reads best (a sum one term per line with the
-operator leading, a call one argument per line, a ternary one case per line, a `let` after its `=`
-when the value then fits); the author's parentheses, literals and operator spellings are kept.
-Widths count UTF-16 code units. Formatting its own output changes nothing.
-
-#### `formula.signature`
-
-Input `{"source": "round(totalWeight, 2)", "position": 19, "operators": []}`. Output
-`{"name": "round", "active": 1, "from": 5, "to": 21}`: the innermost call around the cursor whose
-function the catalog has (builtins included; not methods or operators), which argument the cursor
-is in (from 0; for a pipe the piped value is argument 0), and the call's parentheses (an unclosed
-call runs to the end of the text). `null` when the cursor is in no such call, on its `(`, or past
-its `)`. The editor reads the signature and description from `formula.catalog` by `name`.
-
-#### `formula.identifier`
-
-Input `{"source": "customer.name + 1", "position": 3, "schema": {...}}` (`schema` optional).
-Output `{"name": "customer.name", "kind": "variable", "from": 0, "to": 13}`, or `null` when the
-cursor is on no name. Dotted paths are one name; strings and comments never count. `kind` is
-`function` (a call), `method` (a call on a value, `pickupDate.Year()`), `field` (after a `.` that
-joins it to no name: an item's `.weight`, or `stops[0].weight`), `let` (bound by a `let` anywhere
-in the formula), `pointer` (`#`, `#acc`, `#index`), and with a schema `input`, `variable` or
-`unknown`; without one every other name is a `variable`.
-
-#### Limits
-
-| Limit | Value | Past it |
-|---|---|---|
-| Source length | 32,768 UTF-16 code units | one `limit` error from that point; nothing is parsed |
-| Nodes | 1,000 (as the old engine allowed) | one `limit` error; the rest reads as the end of the text |
-| Nesting depth | 128 levels (brackets, operands, calls, `else if` chains, the left spine of a long chain) | one `limit` error; the rest reads as the end of the text |
-
-Every tree is therefore at most 128 nodes deep, which is what lets the checker, the formatter and
-the evaluator recurse within WebAssembly's 1 MiB stack (`tests/formula_properties.rs` checks the
-deepest inputs on a 1 MiB thread). A suggestion is never sought for a name longer than 64
-characters, so no step is quadratic in the length of the text: checking a 1,000-node formula
-takes under 2 ms in an unoptimised test build, and a small fraction of that optimised.
-
-`fuzz/` holds cargo-fuzz targets for `formula.check` (with the signature and identifier lookups)
-and `formula.format` (which must give text that parses and formats to itself).
-
-### `formula.evaluate`
-
-Evaluates a batch of formulas against one environment in one boundary crossing: the server sends
-a template's main expression and every breakdown line for a shipment together. The environment
-is read once and the rate tables are indexed once; each program runs under its own budget. The
-host runs `formula.check` first. `schema` is the same as `formula.check` takes, and only its
-`operators` matter here, since the grammar needs them: a published word operator runs the
-two-argument function of its name written infix (`zip hasPrefix "75"`), and one with no such
-function is `unknownName`.
-
-```json
-{"op": "formula.evaluate", "input": {
-  "programs": [
-    {"id": "expression", "source": "lookup(\"fsc\", fuelType) * miles + linehaul", "expect": "amount"},
-    {"id": "linehaul", "source": "baseRate * miles", "expect": "amount"},
-    {"id": "rush", "source": "isRush and miles > 100", "expect": "predicate"}
-  ],
-  "env": {"baseRate": 2.5, "miles": 120, "linehaul": 300, "fuelType": "DIESEL", "isRush": true,
-          "pickup": {"$date": "2026-01-02T08:00:00-06:00"}, "wait": {"$duration": "1800000000000"}},
-  "tables": [{"name": "fsc", "axes": [{"match": "Exact"}],
-              "cells": [{"at": [{"key": "DIESEL"}], "value": "0.35"}]}],
-  "trace": {"statements": false, "lookups": true},
-  "budget": {"steps": 200000}
+  "imports": [{"path": "org.fees", "version": "v3"}],
+  "charges": [{"label": "Linehaul", "code": null}, {"label": "Stop {stop.sequence}", "code": "DET"}],
+  "outline": {
+    "items": [{"kind": "header", "name": "Dry van TL"}, {"kind": "input", "name": "rate"},
+              {"kind": "input", "name": "minimumCharge"},
+              {"kind": "charge", "name": "Linehaul", "depth": 0},
+              {"kind": "charge", "name": "Stop {stop.sequence}", "code": "DET", "depth": 1},
+              {"kind": "total", "name": "minimum"}],
+    "folding": [{"kind": "block", "range": {"from": 216, "to": 266}}]
+  }
 }}
 ```
 
+- `ok` is true when no module has an error finding and no contract value is refused.
+- `header` is the root's `{kind, name}`, or `null` when it has none.
+- `diagnostics`: the loader's and the parser's findings first, then the checker's, each sorted
+  by where it starts.
+- `inputs` are the root's, in declaration order: `name`, `doc` (the doc comment as written, or
+  `null`), `type` (display text), `descriptor` (for building the form: `money`, `quantity` with
+  `dimension` and `unit`, `list` with `item`, `optional` with `inner`, `record` with `name` and
+  `fields` (each `{name, doc, type}`), `enum` with `name` and `variants`, and `int`, `number`,
+  `percent`, `text`, `bool`, `date`, `dateTime`), `required` (no default), `default` (a wire
+  value, when the default folds) and the name's `range`.
+- `imports` is every library the program loads, directly or not, dependencies first, with its
+  pinned `version`: the context's for an organisation library, the crate's own for `std.*`.
+- `outline.items` are `{kind, name, code?, depth, range, selection}`; `outline.folding` the
+  foldable `{range, kind}`s. `charges` lists every `charge` of the root, nested ones included,
+  with its label as written, its code and its range.
+
+**Contract values.** `values` is `{"rule": {name: wire value}, "agreement": {…}}`, the input
+values a rate agreement rule and its agreement set. Each is decoded against its input's type
+with the evaluator's own codec (`src/tariff/wire.rs`), so the checker and the evaluator agree on
+every value. A value that does not fit, a name that is no input, or a required input that
+neither sets is an `input-value` error finding with a `path` and no range (from `check/ops.json`):
+
 ```json
-{"ok": {"results": [
-  {"id": "expression", "value": "342",
-   "lookups": [{"function": "lookup", "table": "fsc", "keys": ["DIESEL"], "value": "0.35",
-                "match": {"matchedKey": "DIESEL"}}]},
-  {"id": "linehaul", "value": "300", "lookups": []},
-  {"id": "rush", "value": true, "lookups": []}
-]}}
+{"severity": "error", "code": "input-value", "path": "rule.drops",
+ "message": {"message": "{0} is not a whole number", "args": ["1.5"]}, "fixes": [], "related": []}
 ```
 
-**Programs.** `expect` is `amount` or `predicate`. Results come back in request order with the
-program's `id`, and either a `value` or an `error`, never both.
+Other paths read `rule.rat` (with "did you mean `rate`"), `agreement.breaks[2].extra` (a field
+`Break` does not have) and `rule.rate` (`{0} has no default, so the rule or the agreement must
+set it`). An `input-value` finding makes `ok` false like any error.
 
-- An **amount** is a decimal string. Anything else is an error, as the Go engine's `toDecimal`
-  and `rejectBooleanAmount` decided: true or false is `booleanAmount`, nil is `nullResult`, text,
-  a date, a list or a map is `nonNumericResult`.
-- A **predicate** is `true`, `false` or a decimal string; the host reads a number as true when it
-  is not zero. A predicate never reads rate tables: every lookup in it is zero (the Go engine's
-  `StubLookup`), so a yes-or-no condition never loads a tenant's tables.
-- A program that does not parse comes back with a `syntax` error at the first diagnostic and is
-  not run; the other programs still run.
+**The codes.** The loader's and the parser's:
 
-**The environment** is a value tree (see Wire conventions): an object of fields and inputs,
-nested objects for relations, lists for stops and commodities. Numbers are read exactly from
-their JSON text; a JSON string is always text, never a number. Dates are `{"$date": ...}` in the
-offset of the stop they came from; durations `{"$duration": "<nanoseconds>"}`. A field the host
-leaves out reads as nil, the same as one sent as `null`. Objects nest at most 32 levels.
+| Code | What |
+|---|---|
+| `syntax` | the text does not follow the grammar, often with a one-line fix |
+| `limit` | past a limit (below) |
+| `header` | a file that does not start with its header, a header off the first line, a second header |
+| `misplaced` | a `test` or `private` inside a block, a lambda outside a list method's arguments, a `fail` that is neither a statement nor after `??` |
+| `doc` (warning) | a `///` doc comment attached to nothing; the fix makes it a plain comment |
+| `file-kind` | the file is not the `kind` the request asked for |
+| `module-path`, `unknown-module`, `unknown-import`, `private-import`, `import-not-library` | a `use` that names no module, no declaration, a `private` one, or a file that is not a library |
+| `duplicate-import`, `import-collision`, `import-cycle`, `duplicate-declaration` | a name imported twice, imported and declared, modules that import each other, a name declared twice |
+| `library-item` | an input, binding or charge in a library |
 
-**Tables.** `tables` absent means the context loaded none: every lookup fails with
-`lookupUnavailable`. `tables: []` means none exist: every lookup fails with `tableNotFound`. Each
-table is one rate matrix, encoded once by the host from the stamped matrix and cached as bytes:
+The checker's are listed in the header of `src/tariff/check/mod.rs`: unknown names (with "did
+you mean" fixes), `unknown-code` and `inactive-code`, `type-mismatch`, `unit-mismatch`,
+`optional` (with `?? zero`, `if let` and `require let` fixes), scope rules, call rules, rate
+table rules, charge and total-clause rules, `match` exhaustiveness and overlap, the warnings
+(`unused`, `unreachable`, `no-charge`, `needless-fallback` and the rest), and `input-value`.
+
+### The gate
+
+`tariff.evaluate`, `tariff.test` and `tariff.scaffoldTest` check a file before they run it
+(`gate` in `src/tariff/eval/ops.rs`). A file that does not load or does not check never runs:
+the answer is an evaluation error with code `check` whose message is the first error finding,
+with its range when the finding is in the root file. A file that checks clean runs with the
+checker's types and its declared input types, so the checker's promises hold at run time. From
+`eval/errors.json`:
+
+```json
+{"status": "error", "error": {"code": "check",
+  "message": {"message": "`expect` can only be used inside a `test` block"}}}
+```
+
+### `tariff.evaluate`
+
+Rates a batch of programs in one boundary crossing: the rate engine sends a template's tariff
+and every conditional accessorial's condition together. Request (the op module's header):
+
+```json
+{"context": Context, "record": {…} | null, "budget": {"steps": 5000} | null, "trace": false,
+ "programs": [{"id": "rule-1", "source": "tariff \"…\" …", "kind": "tariff",
+               "inputs": {"rate": {"$q": "2.35", "u": "$/mi"}}, "record": {…},
+               "exchange": {"rate": "1.3502", "currency": "CAD"}}]}
+```
+
+- **Programs.** `kind` is `tariff` or `condition` (optional). Programs with the same source and
+  kind share one load and one check. Each program is independent: one program's error never
+  affects another's result, and results come back in request order with their `id`.
+- **The record** is the record being rated, `{"shipment", "lane", "customer", "fuel",
+  "rating"}` in wire values, decoded strictly against the schema: a missing or unknown root or
+  field, or a value of the wrong type or unit, is a `record` error naming its path ("The record
+  does not fit the schema at {0}: {1}"). `record` absent or `null` rates against the sample
+  record; a program's own `record` overrides the shared one.
+- **Inputs** are a map from input name to wire value. A value is decoded against the input's
+  declared type; one that does not fit is an `input` error at the input's declaration, and a
+  name that is no input is an `input` error with no range ("This tariff has no input named
+  {0}"). An input with no value and no default refuses to rate, with the crate's message ("The
+  input {0} has no value and no default") at its declaration.
+- **Exchange.** `{rate, currency}` converts a rated bill into the billing currency: `rate` is
+  units of `currency` per unit of the rating currency, an exact decimal (a JSON number or
+  string). A rate that is not above zero is an `argument` error.
+
+Response:
+
+```json
+{"results": [{"id": "rule-1", "status": "rated" | "refused" | "error" | "needs",
+  "bill": {"lines": [{"kind": "charge", "label": "Linehaul", "code": null, "freight": true,
+                      "amount": {"$q": "1908.2", "u": "$"}, "quantity": …, "rate": …,
+                      "range": {"from": 0, "to": 40}}],
+           "notes": [{"text": "…", "range": …}], "freightTotal": …, "accessorialTotal": …,
+           "total": …, "converted": {"currency": "CAD", "rate": "1.3502", "lines": […],
+           "total": …}},
+  "value": true,
+  "refusal": {"message": "No fuel price on …" | {"message": "…", "args": […]}, "range": …},
+  "error": {"code": "divideByZero", "message": {"message": "…", "args": […]}, "range": …},
+  "needs": [{"table": "Zones", "keys": ["752"]}],
+  "trace": [… ] | null, "lookups": […]}]}
+```
+
+- **The four statuses.** `rated`: a tariff's `bill`, or a condition's `value` (true or
+  false). `refused`: a `refusal`, whose `message` is the author's interpolated text (`fail`,
+  `require … else`, `?? fail`), or a `Message` when the crate wrote it (an input with no value),
+  with the range of the statement. `error`: an evaluation `error` (below). `needs`: the
+  `needs`, cells the request did not carry (below). Every result has `trace` and `lookups`.
+- **The bill.** `lines` in billing order. `kind` is `charge`, or `minimum`, `maximum` and
+  `rounding` for the total clauses' adjustment lines, which carry no label (the host labels
+  them in the reader's language) and no range. `freight` is true for an uncoded line;
+  adjustments are uncoded, so they count as freight. `amount` is money; `quantity` and `rate`
+  are the wire values a `charge … (quantity:, rate:)` gave, else `null`. A zero line is dropped
+  and noted on the trace. `freightTotal`, `accessorialTotal` and `total` are money; the lines
+  always add up to the total. With `exchange`, `converted` gives each line's amount in the
+  billing currency (in `lines`' order, rounded to cents with the bill's round mode), the total
+  rounded with the bill's mode and increment, and any difference on the rounding line's
+  converted amount, or as one more trailing entry when the bill has no rounding line, so the
+  converted lines add up to the converted total.
+- **The trace** is `null` unless the request sets `trace: true`. It is the root file's events
+  in execution order (`src/tariff/eval/trace.rs`; a call into a library shows as the binding it
+  produced), each with its `range`: `bind` and `assign` (`name`, `value`, `display`), `branch`
+  (`taken`: the branch's index, or `null` when nothing ran), `arm`, `loop` (`name`,
+  `iterations`), `iteration` (`name`, `index`, `value`, `display`), `charge` (`label`, `code`,
+  `value`, `display`), `dropped` (a zero line), `note`, `refusal` and `lookup` (an index into
+  `lookups`). It keeps at most 2,000 events (then one `{"kind": "truncated"}`), 50 iterations
+  per loop, 50 items of a list and 500 characters of display text. `display` is the text
+  interpolation would write.
+- **Lookups** are every table read, at most 500: `{table, op, keys, match, adjusted, value,
+  display, range}`. `op` is `index`, `cell`, `band` or `interpolate`; `keys` are the wire keys
+  given; `match` is the matched cell's position on each axis (`{"key"}` or `{"min", "max"}`,
+  `max` `null` for an open band), or `null` on a miss; `adjusted` says an overflow policy moved
+  a key into its band.
+
+### Rate tables and the on-demand protocol
+
+The host sends each active rate matrix as a table under `context.tables`
+(`src/tariff/eval/tables.rs`):
+
+```json
+{"code": "Zones", "valueType": "Money/cwt",
+ "axes": [{"match": "Exact", "kind": "Zip3", "normalization": "Zip3"},
+          {"match": "Range", "kind": "WeightBreak", "unit": "lb", "overflow": "ClampToTopBand"}],
+ "cells": [{"at": [{"key": "752"}, {"min": "0", "max": "5000"}], "value": "18.50",
+            "minimum": "75.00", "deficit": false}],
+ "loaded": [["752"]]}
+```
 
 | Field | Meaning |
 |---|---|
-| `name` | the matrix code a formula names |
-| `axes` | one or two axes, in position order: `{match, kind?, normalization?, overflow?}` |
-| `axes[].match` | `Exact` or `Range` (Go's `ratematrix.MatchMode`) |
-| `axes[].kind` | Go's `DimensionKind`; only `FreightClass` changes how keys read; default `Custom` |
-| `axes[].normalization` | `None` (default), `Trim`, `Upper` (trim, upper-case) or `Zip3` (trim, upper-case, first three characters) |
-| `axes[].overflow` | `Error` (default), `ClampToTopBand` or `Nearest` |
-| `cells` | `{at, value}`: `at` has one `{key?, min?, max?}` per axis; `value` an exact decimal |
+| `code`, `name` | the matrix code a tariff names (`tables.Zones`); the matrix's name, for hover |
+| `valueType` | what a cell holds: `Money`, `Money/<unit>`, `Percent`, `Number` or `Int` |
+| `axes` | one to four, in position order: `{match, kind, label?, unit?, normalization?, overflow?}` |
+| `axes[].match` | `Exact` or `Range` |
+| `axes[].kind` | Go's `ratematrix.DimensionKind`; it gives the key's type (a weight for `WeightBreak`, a distance for `Distance`, a length for `LinearFeet`, an `Int` for `PieceCount`, a `Number` for `Quantity`, the `FreightClass` enum for `FreightClass`, text otherwise), and a `FreightClass` axis reads a key as one of the eighteen NMFC classes (`85`, `"77.5"`, `"Class92_5"`, the variant) before normalising |
+| `axes[].unit` | the unit a range axis's bounds are stored in (absent: `lb` for weight breaks, `mi` for distance, `ft` for linear feet; the Go host sends the organisation's distance unit); a quantity key is converted into it first |
+| `axes[].normalization` | an exact axis's key rule: `None` (default), `Trim`, `Upper` (trim, upper-case) or `Zip3` (trim, upper-case, first three characters); stored and looked-up keys pass through the same rule |
+| `axes[].overflow` | a range axis's rule for a key no band covers: `Error` (default) misses, `ClampToTopBand` prices anything at or past the top band's floor at the top band, `Nearest` also takes the bottom band below the first floor and the closest band in a gap |
+| `cells` | `{at, value, minimum?, deficit?}`: one position per axis, `{key}` on an exact axis and `{min, max?}` on a range axis (half-open `[min, max)`, no `max` is open-ended); exact decimals |
+| `loaded` | the exact-axis key combinations whose cells `cells` holds, one normalised key per exact axis |
 
-A range axis matches half-open bands `[min, max)`; a band without `max` is open-ended; a cell
-without `min` on a range axis is ignored, as Go ignored it. A freight-class axis reads `85`,
-`"77.5"` and `"Class92_5"` as the NMFC class before normalising. A table with no axis or more
-than two, a cell whose `at` does not have one entry per axis, or a name sent twice for the same
-number of axes is a request error. A name may be both a one-axis and a two-axis table: `lookup`
-reads one, `lookup2` the other.
+Axes narrow the cells in position order. Cells are kept sorted by their band floors, stably, so
+when overlapping bands leave several cells the one with the lowest floors wins, then the one
+sent first. An exact-axis key may be a list (`tables.Zones[lane.origin.zones,
+lane.destination.zones]`): the combinations are tried in order, the first axis outermost. A
+malformed table (a cell without one position per axis, an exact position without a key, a band
+without a floor, a value type a table cannot hold, a code sent twice) fails only the programs
+that read it, with code `table`, as does reading a code the request did not send.
 
-The lookups are `matrix_lookup.go`'s, in exact decimals: `lookupOr` and `lookup2Or` fall back
-only on a miss (`lookupMiss`); a missing table, the wrong shape or an unusable key always
-surfaces. `lookup2` narrows to the cells whose row matches (overlapping row bands are all
-candidates), takes the first whose column matches, and on a range column retries once with the
-column moved into a band by its overflow policy. `lookupInterp` interpolates between band floors
-and holds the edge values outside them; `deficitWeight` bills the next break's minimum when that
-is cheaper at the next break's rate.
+**Cells load on demand**, because a table can hold hundreds of thousands of cells:
 
-**Traces.** `trace.statements` adds `statements` to each result, from one pass over the program
-(the Go engine compiled it once per statement):
-`{index, kind: "let" | "result", name?, code, from, to, value?, error?}`, with `from` and `to` in
-UTF-16 units. The last statement's `value` is the program's result as above; other values are
-shown as the Go engine's `traceValue` showed them: decimals as strings, dates in UTC to the
-second, durations as `1h30m0s`, text past 500 characters ellipsised, lists and maps to 3 levels
-and 50 items (`"[N items]"`, `"{N fields}"`), nil map entries left out. A failed `let` is shown
-with its error and the trace goes on; the program's result is the first failure.
+- `cells` absent means the request carried none of the table's cells; `cells` with `loaded`
+  absent means `cells` is the whole table; `cells` with `loaded` means it holds exactly the
+  cells of those exact-key combinations (a combination listed with no cells is a real miss).
+- A lookup of a combination the request did not carry is a **need**: it gives a provisional
+  miss and the program keeps running, so one pass finds every need it can. A program that
+  recorded needs answers `status: "needs"` instead of a bill or a refusal, its `needs`
+  deduplicated: `{"table", "keys"}`, one normalised key per exact axis. A table with no exact
+  axis has nothing to load by key, so the host always sends it whole.
+- The host loads those cells and calls again. From `eval/tables.json`, a table whose cells for
+  `A` were loaded and whose `B` cells were not:
 
-`trace.lookups` adds `lookups`, every call in order, for the receipt (Go's `LookupTrace`; the
-scope is the program's `id`): `{function, table, keys, value?, match?, error?}`. `match` is
-`{matchedKey?, bandMin?, bandMax?, adjusted?}`: the normalised key of an exact table, the band of
-a range table, `row × col` of a two-axis cell (a band reads `500–1000` or `500+`), the helper's
-name for `lookupInterp` and `deficitWeight`; `adjusted` says an overflow policy moved the key. A
-miss `lookupOr` absorbed is recorded with its error.
+  ```json
+  {"source": "tariff \"t\"\nlet a = tables.Grid[\"A\", 1 lb] ?? $0/cwt\nlet b = tables.Grid[\"B\", 1 lb]\nnote \"{a}\"",
+   "expect": {"status": "needs", "needs": [{"table": "Grid", "keys": ["B"]}]}}
+  ```
 
-**Budgets.** Each program runs under `budget` (`steps`, `textBytes`, `items`), which may lower the
-defaults and never raise them (raising one is a request error):
+The Go host's side is under "Go callers: Tariff" below: at most four loads, three of cells and
+then the still-needed tables whole. `tariff.test` and `tariff.scaffoldTest` follow the same
+protocol, so a test that reads a matrix runs on the server and in the browser alike.
+`tariff.check` and the editor read shapes only, so a host sends them tables without cells.
+
+### `tariff.test`
+
+Runs a file's own `test` blocks against the sample record (`src/tariff/eval/tests.rs`). Input:
+`{"source", "context"?, "names"?, "budget"?}`; `names` runs only those tests, and the budget
+applies to each test. Output:
+
+```json
+{"tests": [{"name", "range", "status": "passed" | "failed" | "error" | "needs",
+  "failures": [{"range", "message", "values": [{"range", "display", "value"?}]}],
+  "bill": … | null, "error": … | null}],
+ "needs": [{"table": "Grid", "keys": ["A"]}]}
+```
+
+- A test starts from the sample record and the inputs' defaults, applies its `given`s in order
+  (a record path or `input.name`), runs the file, then runs its `expect`s with `charge(CODE)`,
+  `charge("Label")`, `total` and `lines` in scope. A test in a library runs its body with no
+  rating.
+- A failing `expect` reports each operand's `display` and wire `value`, so the author sees what
+  the tariff computed. An evaluation error makes the status `error`, with the error. `bill` is
+  the test's bill, when it rated.
+- A file that does not check answers `{"tests": [], "needs": [], "error": {"code": "check", …}}`.
+- **Needs.** Tests read tables under the on-demand protocol: a lookup of cells the request did
+  not carry is a provisional miss and the test keeps running, so one run finds every need it
+  can, from its `given`s, the rating and its `expect`s. A test that recorded needs ends with
+  status `needs` (no failures, bill or error, since the miss may have caused them), and the
+  response's `needs` is every test's needs, each once. The host loads them and runs the tests
+  again, exactly as it does for `tariff.evaluate` (from `eval/runner.json`):
+
+  ```json
+  {"tests": "tariff \"Grid\"\n…\nlet rate = tables.Grid[lane.destination.zip3, w] ?? fail \"No rate\"\n…",
+   "expect": {"tests": [{"name": "to A", "status": "needs", "failures": []}, …],
+              "needs": [{"table": "Grid", "keys": ["A"]}, {"table": "Grid", "keys": ["B"]}]}}
+  ```
+
+### `tariff.scaffoldTest`
+
+"Save as test" (`src/tariff/eval/scaffold.rs`). Input: `{"source", "context"?, "record": {…} |
+null, "inputs"?, "name"}`. It rates the tariff against the record and writes a `test` block that
+pins the result: a `given` for every record field that differs from the sample record (stops and
+commodities through the test constructors, leaving out what the constructors fill in), a `given
+input.x` for every input that differs from its default, an `expect charge(CODE)` (or
+`charge("Label")` for freight) per charge and `expect total`, or `expect fails "…"` when the
+rating was refused. Output: `{"test": "test \"…\" {\n given …\n expect …\n}\n"}`; or `{"test":
+null, "error": …}` when the tariff does not check, the record does not fit or the rating fails;
+or `{"test": null, "status": "needs", "needs": […]}` when it needs cells the request did not
+carry.
+
+### `tariff.format` and `tariff.tokens`
+
+`tariff.format`: `{"source"}` gives `{"formatted": "…"}`, the file in the one canonical style
+(`src/tariff/syntax/format/mod.rs`: two-space indentation, at most one blank line kept, numbers
+and text as written, comments kept where they are, a line past 100 columns broken one item per
+line). A file with syntax errors is left alone: `{"formatted": null, "diagnostics": [...]}` with
+those findings. The result is checked before it is returned: it parses without errors to the
+same tree with the same comments, and formatting it again changes nothing.
+
+`tariff.tokens`: `{"source"}` gives `{"tokens": [{"from": 0, "to": 6, "kind": "keyword"}, …]}`,
+every token but newlines and the end of the file, classed for highlighting: `keyword`, `name`,
+`type`, `code`, `number`, `unit`, `money`, `percent`, `date`, `text`, `escape`,
+`interpolation`, `punct`, `comment`, `doc` or `error`.
+
+### The editor operations
+
+Each takes the file being edited with its `kind` and `context` and a position or range, loads
+and checks the file (it may be broken) and answers from what is known
+(`src/tariff/editor/ops.rs`):
+
+| Operation | Input | Output |
+|---|---|---|
+| `tariff.complete` | `{source, kind?, context?, offset}` | `{"range": {from, to}, "items": [{"label", "kind", "detail", "doc", "insert", "snippet", "sort", "range"?}]}`, in `sort` order; a snippet uses `${1:placeholder}` tab stops and `$0` for the final cursor; an item's own `range` replaces the list's |
+| `tariff.hover` | `{source, kind?, context?, offset, values?}` | `null`, or `{"range", "contents": {"signature", "type", "unit", "doc", "value"?: {"value", "display", "times"}}}` |
+| `tariff.signature` | `{source, kind?, context?, offset}` | `{"signatures": [{"label", "doc", "parameters": [{"label": [from, to], "doc"}]}], "active": 0 \| null, "activeParameter": n \| null}` |
+| `tariff.definition` | `{source, kind?, context?, offset}` | `{"targets": [{"module": null \| "std.ltl", "range", "selectionRange"}]}`; a target in a library has its ranges in that library's source |
+| `tariff.rename` | `{source, kind?, context?, offset, newName?}` | with `newName`, `{"edits": [{"range", "insert"}]}` or `{"error": Message}`; without it (prepare), `{"range", "placeholder"}` or `{"error": Message}` |
+| `tariff.inlays` | `{source, kind?, context?, range: {from, to}, values?}` | `{"hints": [{"offset", "label", "kind": "type" \| "parameter" \| "value"}]}` |
+
+A completion item's `kind` is `keyword`, `name`, `input`, `function`, `method`, `property`,
+`field`, `type`, `enum`, `variant`, `unit`, `code`, `table`, `module`, `snippet` or `value`.
+`values` is the `trace` a `tariff.evaluate` of the same file returned
+(`src/tariff/editor/values.rs`): hover and inlays show a binding's value from it (its last
+value, and how many times it ran in a loop). A malformed trace is ignored, never a reason to
+refuse the request. Signature help gives a parameter the sentences of its function's doc that
+name it in backticks. Rename refuses keywords, the schema roots and the record's fields, tests
+(renamed by editing their text), and a name the standard library or an organisation library
+declares (rename it there); it refuses a new name of the wrong case for what it names, or one
+that collides with a name already visible where the renamed name is declared or used.
+
+### `tariff.catalog`
+
+Input `{}`. Everything an author can name before declaring anything, with its docs
+(`src/tariff/check/catalog.rs`); the editor's reference pane and Nova's prompt read it. Every
+doc in it is a `Message`.
+
+```json
+{"modules": [{"path": "std.ltl", "doc", "declarations": [{"kind": "fn" | "const" | "type" | "enum",
+               "name", "signature", "doc", "fields"? , "variants"?}]}],
+ "types": [{"name", "doc"}],
+ "methods": [{"receiver", "name", "kind": "property" | "method", "signature",
+              "params": [{"name", "type", "default"}], "returns", "doc"}],
+ "tableMethods": [{"name", "doc"}],
+ "units": [{"unit", "dimension", "factor", "si"}],
+ "keywords": […], "contextual": ["as", "cents", "to", "up", "down", "half", "even", "total", "lines"],
+ "schema": {"roots": [{"name", "doc", "type", "fields"}], "records": [{"name", "fields"}],
+            "enums": [{"name", "variants"}]}}
+```
+
+The modules are `std.ltl`, `std.fuel`, `std.time` and `std.accessorials`, in that order. A
+schema field is `{name, type, descriptor, words, doc, fields}`. `keywords` are the lexer's
+reserved words, never names; `contextual` are the lexer's contextual words (keywords only where
+the grammar uses them, which `tariff.tokens` classes as `keyword` there and `name` elsewhere)
+and the test-only names `total` and `lines`, so a parameter may be called `to`. A unit's
+`dimension` is its base's name, `Percent` for `%` and `Count` for a count label. The catalog is static data;
+the Go host caches it per module version.
+
+### Limits
+
+| Limit | Value | Past it |
+|---|---|---|
+| A file | 256 KiB | one `limit` error; nothing is read |
+| Tokens | 50,000 | one `limit` error where they run out |
+| Nesting depth | 128 levels | one `limit` error; the rest reads as the end of the file |
+| Interpolation inside interpolation | 8 levels | a `limit` error on that text |
+| A program (the root and every library it loads) | 64 modules, 1 MiB of source | a `limit` error on the `use` |
+| A wire value's nesting | 64 levels | refused, as a value that does not fit |
+
+The depth limit bounds every recursion over the tree, which is what keeps the checker, the
+formatter and the evaluator within WebAssembly's stack.
+
+### Budgets
+
+The evaluator meters its work as it happens (`src/tariff/eval/budget.rs`), so a runaway
+program stops at its limit, deterministically, in the browser and on the server alike:
 
 | Budget | Default | Counts |
 |---|---|---|
-| `steps` | 1,000,000 | every node evaluated and every element a built-in visits |
-| `textBytes` | 1,048,576 | every byte of text an operation builds |
-| `items` | 100,000 | every list item and map entry a formula creates |
+| `steps` | 1,000,000 | every node evaluated, and every element a list method or table lookup visits |
+| `textBytes` | 1,048,576 | every byte of text the program builds; text read from the record is free |
+| `items` | 100,000 | every list item and record field the program creates |
+| `callDepth` | 64 | user functions running at once (the checker refuses recursion; this also bounds the native stack) |
 
-**Errors.** An evaluation error is `{code, message, args?, from?, to?, fields?, guards?}`; the
-message is a `Message` template with positional arguments, where the kind of a value is an ICU
-`select` argument (`nil`, `boolean`, `text`, `number`, `date`, `duration`, `list`, `map`). For
-`missingField`, `fields` are the field paths read without a value and `guards` the edit that keeps
-the formula pricing for each (`coalesce(weight, 0)`, `origin?.zip ?? 0`, `.weight ?? 0` inside a
-predicate, `coalesce(pickupDate, ratingTime)` for a date).
+A request's `budget` may lower any of them; a value above a default is ignored, so a budget is
+never raised (`{"steps": 999999999999}` runs under the default). The limits apply to each
+program, and each test, separately. Spending one is a `budget` error ("The tariff used up its
+step budget ({0, plural, one {# step} other {# steps}}) before it finished"). On the server,
+wazero also closes an instance when its call's context ends, so a deadline kills the work
+instead of abandoning it.
+
+### Evaluation errors
+
+An evaluation error is `{code, message, range}`: a stable code the host may branch on, a
+`Message`, and the range in the root file of the node that failed, or `null` before it is
+placed (an unknown input). An error or refusal that leaves a call into a library is moved onto
+the call, so the range is always in the source the author is looking at
+(`src/tariff/eval/error.rs`).
 
 | Code | When |
 |---|---|
-| `syntax` | the program does not parse, or has no statements |
-| `missingField` | a value the formula needs is nil |
-| `unknownName` | a function, `#name` or method that does not exist |
-| `type` | an operand or argument of the wrong kind, or `==` between different kinds |
-| `argument` | an argument of the right kind with an unusable value (`round(x, 13)`, `date("x")`) |
-| `index` | an index outside a list or text |
-| `divideByZero` | `/` or `%` by zero |
-| `overflow` | a number past 28 significant digits, a date past 9999, a duration past 292 years |
-| `nonFinite` | a negative number to a fractional power, zero to a negative power |
-| `regex` | a `matches` pattern that does not compile |
-| `budget` | a budget is spent, or values nest past 32 levels |
-| `lookupMiss`, `tableNotFound`, `tableShape`, `lookupKey`, `lookupUnavailable` | the rate table failures above |
-| `booleanAmount`, `nullResult`, `nonNumericResult` | an amount or predicate that is not a number |
+| `check` | the file does not load or check (the gate); the message is the first error finding |
+| `internal` | the program did something its types rule out, which the gate makes unreachable for a file that checked |
+| `budget` | a budget is spent |
+| `input` | an input value that does not fit its declared type, or names no input |
+| `record` | the record does not fit the schema |
+| `divideByZero` | division or remainder by zero |
+| `overflow` | a result past 28 significant digits, or a date past year 9999 |
+| `conversion` | a unit conversion between dimensions, or one that does not fit |
+| `argument` | an argument of the right kind with an unusable value: a rounding increment of zero, a negative square root, `avg` of an empty list, an exchange rate not above zero |
+| `regex` | a `matches` pattern that does not compile or is too large |
+| `table` | a rate table the request did not send, or one whose cells do not fit its shape |
+| `negativeCharge` | a coded charge with a negative amount |
+| `negativeTotal` | a bill whose freight lines or total come out below zero |
 
-**Where it differs from the Go engine, deliberately.**
+A refusal is not an error: it is the tariff declining to rate, with the author's words.
 
-- Numbers are exact: `0.1 + 0.2` is `0.3`; division by zero is `divideByZero`, where float64 gave
-  ±Inf or NaN; an unused `let` that divides by zero fails the formula. A result keeps 28
-  significant digits: past that its last digit is rounded (`1 / 3 * 3` is
-  `0.9999999999999999999999999999`), and a whole part past 28 digits is `overflow`.
-- A nil reaching an operator is `missingField` naming the one field that caused it; Go named
-  every nil field the formula referenced whenever anything failed.
-- `==` between different kinds is an error at run time too; Go answered false.
-- Rounding decimals, `%`, bits, ranges, slices and `take` need whole numbers; Go truncated 3.9.
-- `int(text)` reads decimal text and truncates (`int("12.7")` is 12); Go's `Atoi` refused it.
-- `type()` answers `number` for every number (one number type); dates and durations answer
-  `date` and `duration`. `string()` writes nil as `nil`, a date in RFC 3339 and maps in key order.
-- `indexOf`, `lastIndexOf`, `len`, indexes and slices count characters, not bytes.
-- `upper` and `lower` use full Unicode case mapping.
-- `min` and `max` take lists, flattened one level, like the other aggregates.
-- A date minus a date that does not fit a duration is `overflow`; Go saturated.
-- `duration()` applies the fraction in integer arithmetic; Go went through float64.
-- `date(text)` reads only the five forms above; `date(text, layout, zone)` and `timezone()` are
-  gone. Map keys built by `groupBy` and `fromPairs` are text (`1` becomes `"1"`).
+### Determinism
 
-The cases are in `testdata/evaluation.json` (ported from the Go engine's tests, each naming the
-Go test it comes from) and the `value`s of `testdata/conformance.json`.
+The module has no clock, no randomness and no I/O. `rating.date` is in the record the host
+sends, so a tariff rates the same record the same way every time. The sample record (what a
+request without a record, every test and the Studio's preview start from) is the schema's
+defaults: an empty `New` shipment with one pickup and one delivery stop and no commodities, a
+blank lane, a sample customer, no fuel price, and a `Sell` rating in `USD` on
+`2026-01-05T12:00:00Z` (`src/tariff/eval/record.rs`), so a test's answer never depends on the
+day it runs. Wire values encode canonically and objects' keys are sorted, so the same answer
+is the same bytes.
+
+### Fuzz targets
+
+`fuzz/` (cargo-fuzz, outside the services workspace, run with `cargo +nightly fuzz run <target>`)
+holds four targets:
+
+- `tariff_parse`: arbitrary text parsed and loaded as a program: a tree every time, the tokens
+  covering the text in order, every diagnostic and fix inside it;
+- `tariff_format`: formatted text parses to the same tree and formats to itself, or the file is
+  refused;
+- `tariff_check`: arbitrary text through `tariff.check`, always one JSON envelope;
+- `tariff_evaluate`: arbitrary text rated against the sample record through `tariff.evaluate`
+  with the trace on: one result for the one program, every time.
+
+No input, however malformed, may make the crate panic.
+
+## Operations
+
+The other areas document their operations here: the input and output, with an example, and the
+`testdata/` file that pins them.
 
 ### Charge allocation (`allocation.*`)
 
@@ -1148,40 +1101,20 @@ names in this list are deleted; `rategeo.MatchLane`, `rategeo.ScopeKeys` and
 Pinned by `testdata/matrix.json`. Dimensions are
 `{"position": 0..3, "matchMode": "Exact" | "Range", "kind": "Zone", "label": ""}`. Cells are the
 GraphQL cell (`id`, `d0Key`..`d3Key`, `d0Min`..`d3Max`; other fields ignored). A blank or `null`
-bound is no bound, and `null` entries are skipped. A position outside 0..3 or more than four
-lookup values is `invalid_input`. A dimension's display label is its trimmed `label`, or else
-the English name of its kind (Zone, Postal prefix, Postal code, State, Country, Weight break,
-Distance, Pieces, Linear feet, Freight class, Equipment, Service, Custom, Quantity). A host that
-translates passes the translated name as `label`.
+bound is no bound, and `null` entries are skipped. A position outside 0..3 is `invalid_input`. A
+dimension's display label is its trimmed `label`, or else the English name of its kind (Zone,
+Postal prefix, Postal code, State, Country, Weight break, Distance, Pieces, Linear feet, Freight
+class, Equipment, Service, Custom, Quantity). A host that translates passes the translated name
+as `label`.
 
 **Bands** are half open, `[min, max)`, and a missing bound is no bound:
-`matrix::band::contains(min, max, value)` is the one implementation (`ContainsQuantity`), and
-the formula evaluator's band lookups should call it.
+`matrix::band::contains(min, max, value)` implements it. Tariff's table lookups
+(`src/tariff/eval/tables.rs`) use the same rule for the cells the host sends, and for
+interpolation's segments; a table band always has a floor (a cell without one is a malformed
+table), since sorting by floor is what makes the lowest band win where bands overlap.
 
-#### `matrix.select`
-
-One lookup and its candidate cells (`SelectCell`):
-
-```json
-{"dimensions": [{"position": 0, "matchMode": "Exact"}, {"position": 1, "matchMode": "Range", "kind": "WeightBreak"}],
- "cells": [{"id": "rmc_1", "d0Key": "SE", "d1Min": 0, "d1Max": 1000}, {"id": "rmc_2", "d0Key": "SE", "d1Min": 1000}],
- "values": [{"keys": ["SE", "SOUTH"]}, {"quantity": "1000"}]}
-```
-
-→ `{"cell": {"index": 1, "id": "rmc_2", "preference": 0, "matchedKeys": ["SE", "1000", "", ""]}}`,
-or `{"error": {"code": "dimension_value_missing", "position": 1, "message": {"message": "No value was supplied for the matrix dimension {0}", "args": ["Weight break"]}}}`,
-or `{"error": {"code": "no_matching_cell", "message": {"message": "No matrix cell matches the supplied values"}}}`.
-
-- Every exact axis needs a key and every banded axis a quantity; the first axis without one, in
-  dimension order, fails the lookup. An axis with another match mode constrains nothing, as in
-  Go.
-- A cell matches when its key on every exact axis is one of that axis's keys and its band on
-  every banded axis contains the quantity.
-- The keys are ordered most preferred first. `preference` is the sum of the matched keys'
-  positions, and the lowest wins, then the lowest cell ID, then the earlier cell in the request
-  (unsaved cells, which sort before saved ones). Go's `sort.Slice` left that last tie
-  unspecified.
-- `matchedKeys` gives per position the key matched, or the quantity normalised.
+A rate is read by a tariff, from a matrix sent as a Tariff table (above); there is no lookup
+operation of its own.
 
 #### `matrix.coverage`
 
@@ -1220,65 +1153,86 @@ Moving it from TypeScript fixed three things. Its messages are TypeScript's Engl
 - It skipped every band after an unbounded one or before a floorless one, missing their
   overlaps.
 
-**What replaces what.** `ContainsQuantity` → `matrix::band::contains`; `SelectCell` →
-`matrix.select` (both deleted from Go; `ratematrix.LookupCell` calls the module);
+**What replaces what.** `ContainsQuantity` → `matrix::band::contains` (deleted from Go, as are
+`SelectCell` and `ratematrix.LookupCell`: tariffs read matrices as tables);
 `findMatrixCoverageIssues` → `matrix.coverage`. They stay native: the sheet
 projection (`buildMatrixGrid`, `sliceBuckets`, `bucketKeyOf`, `cellCoordinate`,
 `coordinateKey`), `axisLabel` and `bandLabel` for headers, which only lay cells out and label
-them. `DensityScale.ClassFor` and the formula lookups' `KeyNormalization` and `RangeOverflow`
-stay in Go with their callers; `ClassFor` uses the same half-open rule as `contains`.
+them. A dimension's `KeyNormalization` and `RangeOverflow` stay settings of the matrix in Go;
+the Tariff host sends them as each table axis's `normalization` and `overflow`
+(`rating/app/tariff/tables.go`).
 
-## The formula server API
+## The Tariff server API
 
-The Studio checks formulas in the browser with the same module the server uses. These are the
-only formula facts that cross HTTP:
+The Studio checks and tests Tariff in the browser with the same module the server uses, so only
+these facts cross HTTP (all under `/api/v1`; every range is the module's `{from, to}` in UTF-16
+code units of the source):
 
-- **`GET /formula-templates/schema?schemaId=`** returns `{schemaId, variables}`.
-  - `variables` is the record's fields, each as `{name, type, description, category, nullable,
-    computed, enum}`.
-  - Every list adds its item fields, named `list[].field` (`stops[].weight`).
-  - Functions, built-ins, disabled and reserved names are not sent: the browser reads them from
-    `formula.catalog` in its own copy of the module, and the server's assistant reads them from
-    `pkg/rules`.
-- **`POST /formula-templates/test`** (the preview) answers:
+- **`GET /formula-templates/context`** returns `{context, libraries, tablesStamp}`. `context` is the
+  organisation's `rules.TariffContext` (settings, table shapes, accessorial codes and the source
+  of every importable library, the latest approved version of each); `libraries` lists them as
+  `{path, libraryId, name, description, versionNumber}`. The browser passes `context` to its own
+  `tariff.check`, `tariff.test` and editor operations, and reads the language itself from
+  `tariff.catalog`.
+- **`POST /formula-templates/context/cells`** (formula-template read) takes `{needs, whole?}`,
+  the `needs` a browser `tariff.test` answered (at most 200, each a table code and at most four
+  keys), and answers the cells of those combinations, or with `whole: true` the tables they
+  name entire, read at the organisation's rate table stamp:
+
+  ```json
+  {"stamp": "12:40:1767225600",
+   "tables": [{"code": "Grid", "cells": [{"at": [{"key": "A"}, {"min": "0"}], "value": "20"}],
+               "loaded": [["A"]]}]}
+  ```
+
+  A table the organisation does not have is left out; a whole table has `loaded: null`. It is
+  a read (write coverage `read-only`, allowed on a read-only plan). The context endpoint's
+  `tablesStamp` is the same stamp: the browser keeps loaded cells per stamp
+  (`lib/tariff-table-cells.ts`), and an answer at another stamp means a matrix changed, so it
+  reads the context again.
+- **`POST /formula-templates/test`** (the preview) takes `{source, inputs?, shipmentId?}`, with
+  `inputs` a map of wire values, and answers:
 
   ```json
   {
-    "valid": false,
-    "result": "125.5",
-    "diagnostics": [{"scope": "expression", "from": 0, "to": 3, "severity": "error", "code": "unknown-variable", "message": "...", "args": ["foo"], "fixes": []}],
-    "error": {"scope": "breakdowns[1].expression", "code": "missingField", "message": "...", "args": [], "from": 4, "to": 10, "fields": ["weight"], "guards": ["coalesce(weight, 0)"]},
-    "statements": [{"index": 0, "kind": "let", "name": "rate", "code": "let rate = 2", "from": 0, "to": 12, "value": "2", "error": null}],
-    "breakdown": [], "resolvedVariables": {}, "guardrail": null, "rounding": null, "receipt": null
+    "valid": true,
+    "diagnostics": [],
+    "inputs": [{"name": "rate", "doc": "...", "type": "Money/mi", "descriptor": {"kind": "quantity", "unit": "$/mi"}, "required": true}],
+    "imports": [{"path": "org.accessorials", "libraryId": "fl_...", "versionNumber": 3}],
+    "charges": [{"label": "Linehaul", "code": null, "range": {"from": 120, "to": 171}}],
+    "bill": {"lines": [], "notes": [], "freightTotal": "865.2", "accessorialTotal": "0", "total": "865.2"},
+    "refusal": null,
+    "error": null,
+    "trace": [],
+    "lookups": [],
+    "tests": [{"name": "...", "range": {"from": 300, "to": 340}, "status": "passed", "failures": []}]
   }
   ```
 
-  The fields:
-  - `diagnostics` holds every finding of `formula.check` on the main expression and on each
-    breakdown line. Each finding carries its `scope`, in the field-path form validation errors use
-    (`expression`, `breakdowns[1].expression`).
-  - `error` is the first evaluation error, with its scope.
-  - `valid` is true when no diagnostic is an error and nothing failed to evaluate.
-  - A statement's `error` is an evaluation error without a scope.
-  - A preview with any error diagnostic is not evaluated: `result`, `breakdown` and `receipt`
-    are null and `statements` come from `formula.check`.
-  - Besides the module's evaluation codes, `error.code` may be one the server adds:
-    `unresolvedField` (the formula reads a field the shipment could not supply, with `fields`),
-    `negativeCharge` (the policy refused a negative amount) and `timeout` (the preview's two
-    seconds ran out).
-  - `breakdown[].error` is plain translated text, not an error object.
-  - `receipt.lookups[]` is `{scope, function, table, keys, value, match?, error?}` from the
-    evaluation's `trace.lookups`; `value` is a JSON number.
-  - A request outside the bounds (expression or variable count, length) is a 400 validation
-    problem, and a shipment that does not exist or cannot be loaded is the usual 404 or 500,
-    not a preview answer.
-  - All positions are UTF-16.
-  - The old fields are gone: `error` as text, `message`, `warnings` (nullable warnings are now
-    `nullable` diagnostics), and `start`/`end`.
-- **Saving a template** validates every expression with `formula.check`. It refuses one with an
-  error-severity diagnostic through the usual validation error on that expression's field path,
-  carrying the translated message of the first error. Each breakdown line is refused on its own
-path (`breakdownDefinitions[i].expression`); warnings never refuse a save.
+  - `diagnostics` are `tariff.check`'s findings, with the latest approved version of each
+    imported library. A source with an error finding is not rated: `bill`, `refusal`, `error` and
+    `trace` are null, and `tests` is empty.
+  - Exactly one of `bill`, `refusal` (`{message, range}`, the source's `fail` or `require`) or
+    `error` (`{code, message, range}`) is set. `error.code` is the module's evaluation code, or
+    `timeout` when the preview's two seconds ran out, or `invalid` when the inputs do not fit
+    the declarations.
+  - Without `shipmentId` the preview rates the sample record; with one it rates that shipment's
+    record, which needs `shipment:read`.
+  - `tests` are the file's own `test` blocks, run by `tariff.test`.
+  - A source over 64 KiB or more than 100 inputs is a 400 validation problem.
+- **`POST /formula-templates/scaffold-test`** takes `{source, inputs?, shipmentId, name}` and
+  answers `{test}`: a `test` block written by `tariff.scaffoldTest` from that shipment's facts,
+  for the person to paste into the source ("Save as test").
+- **Saving** a template (create, update, import, rollback, fork, a schedule of billed content)
+  or a library runs `tariff.check` (kind `tariff` or `library`) and `tariff.test`. An error
+  finding refuses the save with a validation error on `source` carrying the finding's range, so
+  the editor underlines it; the template stores the checker's `inputs` (each with its display
+  `type` and structured `descriptor`), `imports` and `testCount`. Submitting needs a clean
+  check and every test passing; approving pins each `org.*` import to the library version
+  approved at that moment and runs the dependents gate (below).
+- **`/formula-libraries`** (REST writes; reads are GraphQL `formulaLibraries`, `formulaLibrary`,
+  `formulaLibraryVersions`, `formulaLibraryReviews`) holds an organisation's libraries, each a
+  `library "org.<name>"` file whose first line must name it.
 
 ## Hosts
 
@@ -1291,7 +1245,7 @@ own types.
 
 ```go
 err := rules.Call(ctx, "allocation.split", input, &output)  // sonic in and out
-raw, err := rules.CallRaw(ctx, "formula.evaluate", encoded)  // pre-encoded input, raw `ok` out
+raw, err := rules.CallRaw(ctx, "tariff.catalog", []byte("{}")) // pre-encoded input, raw `ok` out
 info, err := rules.Version(ctx)                              // rules.VersionInfo{Version, Operations}
 ```
 
@@ -1331,7 +1285,7 @@ it runs.
 **Timeouts.** The host adds none of its own: the caller's context bounds both the wait and the
 run. A context that has already ended fails before anything compiles or waits. A deadline that
 passes mid-call closes the instance (wazero checks the context while the code runs), so the
-work stops instead of being abandoned. The evaluator's budgets bound a formula inside that.
+work stops instead of being abandoned. The evaluator's budgets bound a program inside that.
 
 **Errors** are sentinels, wrapped with the operation's name:
 
@@ -1366,25 +1320,23 @@ level and every call reports it as `ErrUnavailable`.
 
 ### Go callers
 
-Every Go caller of the allocation, report, lane and matrix rules goes through a typed wrapper in
-`pkg/rules` (`allocation.go`, `report.go`, `lane.go`, `matrix.go`). The wrappers send decimals
-exactly (`decimal.Decimal` marshals as a JSON string), read output decimals back from strings,
-and check that the module answered for as many items as it was asked about. User-facing
-messages decode into `rules.Message`, whose arguments may be nested messages: `shared/i18n`
-translates an argument that is an `i18n.Localizer` in the reader's locale, so
-`Message.ValidationError` and `Message.BusinessError` (and `*rules.MatrixSelectError`, which
-`errortypes` localizes) translate all the way down. No Go code computes these rules any more.
+Every Go caller of the allocation, report and lane rules goes through a typed wrapper in
+`pkg/rules` (`allocation.go`, `report.go`, `lane.go`; Go calls no `matrix.*` operation, which
+only the browser's matrix editor runs). The wrappers send decimals exactly (`decimal.Decimal` marshals as a JSON
+string), read output decimals back from strings, and check that the module answered for as many
+items as it was asked about. User-facing messages decode into `rules.Message`, whose arguments
+may be nested messages: `shared/i18n` translates an argument that is an `i18n.Localizer` in the
+reader's locale, so `Message.ValidationError` and `Message.BusinessError` translate all the way
+down. No Go code computes these rules any more.
 
 | Package | Op | One call per |
 |---|---|---|
 | `operations/domain/shipment`: `ResolveShares`, `ResolveOrderChargeShares`, `BillsWholeChargeToPayer` | `allocation.split` | shipment or order: every charge and its allocation rows in one request |
 | `operations/domain/shipment`: `AdditionalChargeTotals`, `ChargeTotalsByCharge` | `allocation.chargeTotal` | shipment: every accessorial line priced at once |
 | `operations/domain/shipment`: `RebalanceAmountSplits` | `allocation.rebalance` | shipment edit |
-| `rating/domain/ratematrix`: `LookupCell` (from `rateengine/matrix.go`) | `matrix.select` | matrix lookup: the cells the SQL pre-filter returned |
 | `rating/domain/rateagreement`: `ApplyLanes` | `lane.keys`, `lane.specificity` | save: every rule of the agreement, the amendment or the imported sheet |
 | `rating/domain/ratezone`: `RateZone.StampMembers`, through `rategeo.ScopeKeys` | `lane.keys` | zone save: every member |
-| `places/domain/rategeo`: `MatchLane` (from `rateengine`) | `lane.keys` | rating request, twice: the bare ends' keys for zone membership, then the candidates once the zones are known |
-| `places/domain/rategeo`: `ScopeKeys` (from `rateengine/matrix.go`) | `lane.keys` | matrix lookup: every geographic axis |
+| `places/domain/rategeo`: `MatchLane` (from `rateengine.RateContext.LaneKeys` and `tariff.RecordSource.LaneZones`) | `lane.keys` | rating request: the bare ends' keys for zone membership, then the candidate lanes once the zones are known |
 | `pkg/reportfmt`: `Resolve` (from `workspace/app/reporting/compiler`) | `report.resolve` | report compile: every output column |
 | `pkg/reportfmt`: `Batch.Format`, `FormatRow` | `report.format` | chunk of up to `reportfmt.BatchRows` (500) rows across all columns |
 
@@ -1416,94 +1368,110 @@ symbols Excel number formats need, `Spec.Validate`, `Band.Validate`, and `Band.B
 `IsLowest` and `IsWhole`, which the query compiler and drill-through use to filter rows rather
 than to label them.
 
-### Go callers: formulas
+### Go callers: Tariff
 
-The formula engine of the TMS is `rating/app/formula`, and its only language is the module. Go
-owns six things: the schema (`formula/schema`), building each record's environment
-(`formula/environment`), encoding the tenant's rate tables (`formula/tables.go`), the charge
-policy (minimum, maximum, rounding, the breakdown remainder: `formula/policy.go`), the receipt,
-and turning the module's errors into `errortypes` at the API edge. The typed calls are in
-`pkg/rules/formula.go` (`CheckFormula`, `EvaluateFormulas`, `Catalog`) and the value encoder
-in `pkg/rules/formula_value.go`.
+The typed calls are in `pkg/rules/tariff.go` (`CheckTariff`, `EvaluateTariffs`, `TestTariff`,
+`FormatTariff`, `TariffCatalog`, `ScaffoldTariffTest`) and the wire values in
+`pkg/rules/tariff_value.go`; `pkg/tarifftypes` holds what the TMS stores (`Inputs`, `InputDecl`,
+`Import`, the decimal `Bill`) and compares (`DeclsEqual`, `ImportsEqual`, `ValuesEqual`). The host
+of the language is `internal/modules/rating/app/tariff`. Authoring (`tariff.AuthoringModule`)
+owns `check.go`, `test.go`, `catalog.go`, `resolver.go`, `libraries.go`, `describe.go` and
+`errors/`; rating owns the record (`record/`, and `recordsource.go`, which adds the lane's zones
+and the fuel price), the tables (`tables.go`, over `pkg/ratetablecache`), codes, settings, the
+rater and the context source, behind `tariffports.ContextSource`, `tariffports.Rater` and
+`tariffports.RecordBuilder`.
 
-**The environment** is encoded exactly, by `rules.EncodeValue`, never by a generic JSON
-marshaller:
+**The checker.** `tariff.Checker.CheckSource` assembles the context and makes one `tariff.check`
+call. Libraries come two ways:
 
-- `decimal.Decimal` is its exact text as a JSON number; Go integers are numbers;
-- `time.Time` is `{"$date": RFC 3339 with the value's own offset}`, so a stop's appointment keeps
-  its stop's zone; `time.Duration` is `{"$duration": "<nanoseconds>"}`;
-- a nullable value that is empty is `null`; a non-nullable schema field the record leaves empty
-  reads as its type's zero;
-- a `float32` or `float64` anywhere in the tree is refused with its path
-  (`rules.ErrInexactNumber`). The resolver's transforms (`decimal`, `integer`) and the computed
-  fields produce exact values, and `environment.Merge` turns the floats a JSON request body
-  carries (template defaults, overrides) into decimals before they reach the tree;
-- map keys are sorted, and a key starting with `$` is refused (`rules.ErrReservedKey`).
+- `LibrariesLatest` (drafts, saves, the preview): the latest approved version of each `org.*`
+  library the source imports, found by reading the source's `use org.<name>` lines and resolved
+  transitively in batched rounds, one query per round (at most 32 libraries and 8 rounds);
+- `LibrariesPinned` (approved versions, billing): exactly the versions an approved version
+  pinned, read in one query by `(library, version)` and memoised per request.
 
-The environment is built once per rating and not copied per evaluation. A preview without a
-shipment uses `environment.Zero`, the schema's zero values marked as samples; a preview with a
-shipment builds the real one.
+Tables, codes and settings come from `ContextSource`, which sends table shapes only (cells
+load on demand, below). `SourceCheck.Imports` turns the module's imports into pins (`{path,
+libraryId, versionNumber}`). `RunTests` and `TestChecked` (a source that does not check runs no
+tests; `SourceCheck` carries the tenant its context was built for) run `tariff.test`, and
+`ScaffoldTest` runs `tariff.scaffoldTest`, both loading the cells the module `needs` exactly as
+the rater does (below), so saving, submitting, readiness, the preview and "Save as test" all
+pass a tariff that reads a matrix. `TableCells` serves the browser's loads
+(`POST /formula-templates/context/cells`, under "The Tariff server API").
+`Catalog` caches `tariff.catalog` per module version.
 
-**Rate tables** are encoded once per tenant stamp. `formula.NewRateTables` turns the tenant's
-rate matrices into the wire shape (`{name, axes, cells}`, axes in position order), and
-`ratetablecache` keeps the encoded bytes of each table beside its shape under the stamp, per
-request and per process. A call splices the bytes it needs (`EvaluateRequest.Tables` is
-`rules.RawJSON`), so a rating never re-encodes a table. `RateTables.Select` picks them:
+**The rater.** `tariff.Rater.Rate` (the `tariffports.Rater` that `rateengine/pricing.go` and
+the preview, backtest and impact call) rates with one `tariff.evaluate` request, repeated only
+to load cells: the template's tariff as program `tariff`, with its inputs filtered to the
+declared ones and the exchange rate, and every conditional accessorial's condition as program
+`condition:<id>`, all against one record from `RecordSource` and one context. A condition that
+does not come to `true` withholds its charge, and one that does not rate is logged. A tariff's
+`error` is returned as a business error carrying its code (an `input` error as a validation
+error on `inputs`); a refusal comes back in the result.
 
-- a source that names no table function (no `lookup` or `deficitWeight`) sends `[]` and the
-  tables are not even loaded;
-- otherwise only the tables whose name appears quoted in a source are sent;
-- a source with a backslash (an escaped name the selector cannot read) sends every table.
+**Cells on demand.** `Tables.Shapes` sends a table with no exact axis whole (its cells read once
+per lookup stamp and cached in `pkg/ratetablecache`), and a table with an exact axis with
+`cells` absent and `loaded: []`. When a result answers `needs`, the rater loads them and asks
+again: `Tables.LoadCells` reads each needed combination's cells (from the cache, else one query
+per table for every missing combination's stored keys, then cached per combination, an empty
+answer included) and appends them and the combinations to `cells` and `loaded`. The rater loads
+cells after each of its first three evaluations that need them; after a fourth it loads each
+still-needed table whole (`LoadWhole`, `loaded` absent), and a fifth evaluation that still needs
+cells is `ErrUnresolvedNeeds`. The loop is one `cellLoad` (`rating/app/tariff/cells.go`) that the
+rater, the test runs and "Save as test" share; `ContextSource.TableStamp` gives the
+organisation's lookup stamp the browser keeps its loaded cells by.
 
-The same selection gives `formula.check` the table shapes, so a save that names a missing
-table is refused.
+**The resolver.** `TemplateResolver.ResolveBilling` (the `tariffports.Resolver` rating calls)
+returns a template's billing version as of a date with its source, stored input declarations,
+pins and pinned library sources, through the per-request `effectiveversioncache`; a template
+never approved bills nothing, an active template whose versions predate snapshots bills its
+row. `ResolveLibraries` serves `tariffports.LibraryResolver`.
 
-**One call per rating.** `Service.Rate` makes one `formula.evaluate` call for the main
-expression and every breakdown line (program ids `expression` and the line index), with lookup
-tracing on for the receipt and statement tracing on when the preview asks for it. A failing
-line fails only that line. Accessorial conditions are one call per shipment
-(`EvaluatePredicates`, `expect: "predicate"`, one program per condition). The normal path makes
-no `formula.check` call; only when a record field failed to resolve does the rating check its
-sources to learn whether they read it.
+**Templates and libraries.** `formulatemplateservice` and `formulalibraryservice` save through
+the checker (kind `tariff` and `library`), refuse on the first error finding with its range,
+store the derived inputs, imports and test count, and version on a material change (source or
+imports). Approval runs the readiness gates again, pins the imports, and for a template runs the
+**dependents gate**: when the declared inputs differ from the approved version's, every distinct
+set of stored inputs on the rules, agreements and shipments that use the template
+(`rateagreementports.TemplateInputsLister`, grouped in SQL, at most 2,000 sets) is checked with
+`tariff.check`'s `values`, and approval is refused, naming an example and a count, when one no
+longer fits. The billing control's fallback template is checked with no inputs.
 
-**Checks.** Saving a template, readiness, the standard catalog test and the preview check every
-expression with `formula.check`, passing the template's inputs and the table shapes.
-`formula.Refusal` turns the first error of each scope into a validation error on that field
-path. Input names are refused when the catalog reserves them or when they shadow a schema root.
+**The preview, backtest and impact** rate a candidate source through `tariffports.Rater` with a
+two-second timeout per rating (the backtest's past shipments come from
+`tariffports.RatedShipments`, the record of a shipment from `tariffports.RecordBuilder`).
 
-**Errors.**
+**Errors.** `tariff/errors` maps the module's answers:
 
-| Module or host outcome | Becomes |
+| Module outcome | Becomes |
 |---|---|
-| an evaluation error (`FormulaError`) on the main expression | validation on `expression`, with the translated message and `formulaerrors.EvaluationError` as the cause |
-| `missingField` on a field the record could not supply, or a check that the formula reads one | validation on `expression` caused by `formulaerrors.UnresolvedFieldError` (code `unresolvedField` in the preview) |
-| `missingField` on an input the caller marked unavailable (`RateRequest.Unavailable`) | validation on `formulaTemplateId` with that input's message |
-| a negative charge after the policy | validation (code `negativeCharge` in the preview) |
-| an error-severity check diagnostic on save | validation per field path |
+| an error finding of `tariff.check` | validation on `source` with the finding's range (`CheckRefusal`); an `input-value` finding is validation on its `path` |
+| a test that fails or errs at submit or approval | validation naming the failing tests |
+| an evaluation error (`TariffEvalError`) | the preview reports it as `error`; "Save as test" as `Evaluation`, an `EvaluationError` validation on `source` with its code and range; rating as the rater's business error carrying the code |
+| a refusal (`TariffRefusal`) | the preview reports it as `refusal`; rating records its text, a crate-written refusal in the reader's locale (`i18n.FromContext`), as the rating's refusal (`rateengine`) |
 | `ErrRequest`, `ErrTrap`, `ErrUnavailable` | 500, logged; the detail is never shown |
 | `ErrContextDone` | the context's own error, or `timeout` when the preview's deadline ran out |
 
-Every validation row is an `errortypes` validation error, which the REST edge answers as a
-`validation-error` problem (HTTP 400) and GraphQL as a field error, with the message translated
-in the reader's locale.
+`api/helpers/classifier.go` classifies the two error types as validation, so REST answers a
+`validation-error` problem (HTTP 400) whose error carries `range`, and GraphQL a field error;
+messages translate in the reader's locale through `shared/i18n`.
 
-**Deadlines.** Go adds no timeout around a call beyond the caller's context. The preview
-(`POST /formula-templates/test`) and each backtested shipment run under a two-second
-`context.WithTimeout`, the whole backtest under sixty seconds; the module's budgets bound a
-formula inside that.
-
-**Receipts** come from `trace.lookups` (each with its scope: `expression` or the line's name)
-and statements from `trace.statements`. Messages translate through `shared/i18n`, nested
-arguments included; agent tools and the assistant carry the translated message and the code.
+**Nova** reads the language with `formula_describe_language` (the catalog plus the
+organisation's context, `tariff.Findings` and `tariff.SummarizeTests` turning the module's UTF-16
+ranges into lines and character columns, and cutting excerpts, through
+`stringutils.ByteOffsetOfUTF16`, so text after `°F`, `é` or an emoji is placed right and never
+split), checks with `formula_check`, runs tests with `formula_run_tests`, rates with
+`formula_preview`, and proposes whole files with `formula_propose` and `formula_library_propose`,
+which are shown only when the source checks clean and has at least one test, all passing.
 
 ### The browser loader (`client/packages/shared/src/rules`)
 
 ```ts
-const rules = await loadRules();                  // load.ts: Promise<RulesRuntime>
-rules.call("formula.check", { source, schema });  // runtime.ts: synchronous, JSON in and out
-rules.callRaw("formula.evaluate", cachedJson);    // JSON text in, JSON text out
-rulesSync().version();                            // throws RulesNotLoadedError before the load
-const runtime = useRules();                       // hooks/use-rules.ts: suspends until loaded
+const rules = await loadRules();                   // load.ts: Promise<RulesRuntime>
+rules.call("tariff.check", { source, context });   // runtime.ts: synchronous, JSON in and out
+rules.callRaw("tariff.tokens", sourceJson);        // JSON text in, JSON text out
+rulesSync().version();                             // throws RulesNotLoadedError before the load
+const runtime = useRules();                        // hooks/use-rules.ts: suspends until loaded
 ```
 
 **Loading.** `loadRules()` returns one memoised promise. A failed load is forgotten, so the
@@ -1562,11 +1530,14 @@ fetch. The file must be served as `application/wasm`:
 
 ### Browser callers
 
-The typed wrappers beside the loader are `formula.ts`, `allocation.ts` (with
-`allocation-form.ts` for zod), `report.ts`, `lane.ts` and `matrix.ts`; `wire.ts` shapes form values for them, sending a value
-that is not a decimal yet ("abc", `NaN`, "1.") as "not filled in" so a half-typed form never
-refuses the request. Decimal outputs stay strings in every client type and become numbers only
-where a formatter or a chart needs one. Messages are shown with `translateMessage(message, t)`
+The typed wrappers beside the loader are `tariff.ts` (with `tariff-wire.ts` for Tariff's wire
+values, whose unit table, `tariff-units.generated.ts`, `build-wasm.sh install` writes from the
+crate's `SIMPLE_UNITS` through `tests/client_units.rs`, a test that fails when the committed
+copy drifts, since formatting a value must not wait for the module), `allocation.ts` (with `allocation-form.ts` for zod), `report.ts`, `lane.ts` and
+`matrix.ts`; `wire.ts` shapes form values for them, sending a value that is not a decimal yet
+("abc", `NaN`, "1.") as "not filled in" so a half-typed form never refuses the request. Decimal
+outputs stay strings in every client type and become numbers only where a formatter or a chart
+needs one. Messages are shown with `translateMessage(message, t)`
 (`@trenova/shared/i18n/message`), which translates nested messages first; `task i18n-check`
 reports `t(x.message, ...x.args)` and a literal handed to it.
 
@@ -1595,15 +1566,15 @@ Each screen calls once per question for everything it shows, and waits in one of
 | Rate agreement lane editor | `lane.keys`, `lane.specificity`, `lane.coverage` | every lane of the agreement, again only when a field they read changes | `LaneEditorSkeleton` |
 | Lane key labels (`useLaneKeyLabels`: import rate sheet, simulation) | `lane.parse` | every distinct key on screen | `LaneKeyTableSkeleton`, `SimulationPanelSkeleton` |
 | Desk rate agreement card | `lane.keys` | every lane read so far, again when a page arrives | the card's skeleton |
-| Formula Studio editor: linter, hover, signature help, format command (`components/formula-editor`) | `formula.check`, `formula.identifier`, `formula.signature`, `formula.format` | the document at the cursor; one check per text and knowledge, shared by the linter and the Studio's analysis | `StudioSkeleton` (`StudioProvider`), and `ExpressionEditor`'s own `useRules()` for every editor |
-| Formula Studio analysis, reference pane, highlighter and completions | `formula.check`, `formula.catalog` | the main expression; the catalog once per loaded runtime | `StudioSkeleton` |
-| Nova's formula proposal card | `formula.format`, `formula.check` | the proposal's expression and breakdown lines | the Studio's boundary |
-| Desk formula template card | `formula.catalog` | once per loaded runtime, for the highlighter | the card's skeleton |
+| Tariff editor in both Studios (`components/formula-editor`): highlighting, lint, completion, hover, signature help, definition, rename, inlays, folding, format | `tariff.tokens`, `tariff.check`, `tariff.complete`, `tariff.hover`, `tariff.signature`, `tariff.definition`, `tariff.rename`, `tariff.inlays`, `tariff.format` | the document at the cursor or the visible range; one check per text, kind and context (an LRU of four), shared by the linter, the folding and the Studio | `StudioSkeleton` (the Studio's provider), and `TariffEditor`'s own `useRules()` |
+| Template and library Studios: outline, problems, tests panel, readiness, reference pane, "Save as test" on the sample load | `tariff.check`, `tariff.test`, `tariff.catalog`, `tariff.scaffoldTest` | the source once per text (`useTariffWorkbench`); the tests once the source has rested 400 ms, again after each load of the table cells they need (`useTariffTests`: three loads by combination, then the tables whole, through `POST /formula-templates/context/cells`, kept per stamp); the catalog once per loaded runtime | `StudioSkeleton` |
+| Nova's proposal card | `tariff.check`, `tariff.test`, `tariff.format` | the proposed source | the Studio's boundary |
+| Desk formula template card, every read-only source (`TariffCode`) | `tariff.tokens`, `tariff.check` | the source, once per text | the card's skeleton |
 | Rate matrix grid editor | `matrix.coverage` | the whole matrix, on each change of its cells or axes; each axis labelled as the screen names it | `MatrixGridEditorSkeleton` |
 
 Tests read the corpora through `rules/__tests__/corpus.ts`, so a wrapper or screen test asserts
 the case the crate is pinned to, never what the code returned when the test was written.
 
-The Formula Studio is the language's only browser caller, and no formula is parsed, checked or
-formatted in TypeScript; [formula-language-service.md](formula-language-service.md) has the
+The Studios and the read-only views of a source are Tariff's browser callers, and no Tariff is
+lexed, parsed, checked, evaluated or formatted in TypeScript; [formula-language-service.md](formula-language-service.md) has the
 editor's side.

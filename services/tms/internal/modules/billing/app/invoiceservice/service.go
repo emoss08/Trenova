@@ -1232,6 +1232,7 @@ func (s *Service) buildInvoiceEntity(
 		OffCycleReason:     p.OffCycleReason,
 		IsSplitBill:        p.IsSplitBill,
 		Lines:              lines,
+		RatingNotes:        invoicelines.RatingNotes(p.Legs...),
 	}
 
 	applyInvoiceDetail(entity, p.Customer)
@@ -1502,6 +1503,7 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		SupersedesInvoiceID:       adjustment.SourceInvoiceID,
 		SourceInvoiceAdjustmentID: adjustment.SourceAdjustmentID,
 		Lines:                     lines,
+		RatingNotes:               invoicelines.RatingNotes(shp),
 	}
 	if shp != nil {
 		entity.ShipmentID = shp.ID

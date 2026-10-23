@@ -116,6 +116,7 @@ const (
 	ResourceChargeType           Resource = "charge_type"
 	ResourceRevenueCode          Resource = "revenue_code"
 	ResourceFormulaTemplate      Resource = "formula_template"
+	ResourceFormulaLibrary       Resource = "formula_library"
 	ResourceFuelSurchargeProgram Resource = "fuel_surcharge_program"
 	ResourceDetentionPolicy      Resource = "detention_policy"
 	ResourceDetention            Resource = "detention"

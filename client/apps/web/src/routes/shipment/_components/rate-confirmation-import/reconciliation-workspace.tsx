@@ -41,7 +41,6 @@ type ReconciliationWorkspaceProps = {
     customerId: string;
     serviceTypeId: string;
     shipmentTypeId: string;
-    formulaTemplateId: string;
   };
   onSetRequiredField: (fieldKey: string, value: string) => void;
   onSetStopLocation: (stopIndex: number, locationId: string) => void;

@@ -1,168 +1,362 @@
 templates:
   - name: Flat Rate
-    description: Charges a flat rate regardless of shipment characteristics. Uses the base rate entered on the shipment.
-    type: freight_charge
-    expression: baseRate
-    status: active
-    schema_id: shipment
-    variables: []
+    description: One flat amount for the whole shipment, whatever it weighs or however far it goes.
+    source: |
+      tariff "Flat Rate"
+
+      /// Bills one flat amount for the shipment.
+
+      /// The amount the shipment pays.
+      input rate: Money
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
+
+      charge "Flat Rate" = rate
+
+      minimum minimumCharge
+
+      test "bills the flat amount" {
+        given input.rate = $850
+        expect charge("Flat Rate") == $850
+        expect total == $850
+      }
+
+      test "the minimum lifts a lower flat amount" {
+        given input.rate = $200
+        given input.minimumCharge = $250
+        expect total == $250
+      }
 
   - name: Per Mile
-    description: Charges based on total distance traveled. Multiplies the base rate per mile by total shipment distance.
-    type: freight_charge
-    expression: baseRate * totalDistance
-    status: active
-    schema_id: shipment
-    variables: []
+    description: A rate for every mile the shipment travels.
+    source: |
+      tariff "Per Mile"
+
+      /// Bills the rate for every mile of the shipment's distance.
+
+      /// The rate per mile.
+      input rate: Money/mi
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
+
+      charge "Per Mile" (quantity: shipment.distance, rate: rate)
+
+      minimum minimumCharge
+
+      test "bills the rate for every mile" {
+        given input.rate = $2.35/mi
+        given shipment.distance = 400 mi
+        expect charge("Per Mile") == $940
+        expect total == $940
+      }
+
+      test "a short haul bills the minimum" {
+        given input.rate = $2/mi
+        given input.minimumCharge = $450
+        given shipment.distance = 100 mi
+        expect total == $450
+      }
 
   - name: Per Stop
-    description: Charges based on the number of stops. Multiplies the base rate per stop by total number of stops.
-    type: freight_charge
-    expression: baseRate * totalStops
-    status: active
-    schema_id: shipment
-    variables: []
+    description: A rate for every stop on the shipment.
+    source: |
+      tariff "Per Stop"
+
+      /// Bills the rate for every stop, pickups and deliveries alike.
+
+      /// The rate per stop.
+      input rate: Money/stop
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
+
+      charge "Per Stop" (quantity: shipment.stops.len, rate: rate)
+
+      minimum minimumCharge
+
+      test "bills the rate for every stop" {
+        given input.rate = $75/stop
+        given shipment.stops = [pickup(), delivery(), delivery()]
+        expect charge("Per Stop") == $225
+      }
+
+      test "the minimum applies to a two-stop load" {
+        given input.rate = $75/stop
+        given input.minimumCharge = $200
+        expect total == $200
+      }
 
   - name: Per Pound
-    description: Charges based on total shipment weight. Multiplies the base rate per pound by total weight.
-    type: freight_charge
-    expression: baseRate * totalWeight
-    status: active
-    schema_id: shipment
-    variables: []
+    description: A rate for every pound the shipment weighs.
+    source: |
+      tariff "Per Pound"
+
+      /// Bills the rate for every pound of the shipment's weight.
+
+      /// The rate per pound.
+      input rate: Money/lb
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
+
+      require let weight = shipment.weight else "This rate needs the shipment's weight"
+
+      charge "Per Pound" (quantity: weight, rate: rate)
+
+      minimum minimumCharge
+
+      test "bills the rate for every pound" {
+        given input.rate = $0.12/lb
+        given shipment.weight = 2_000 lb
+        expect charge("Per Pound") == $240
+      }
+
+      test "a shipment with no weight refuses to rate" {
+        given input.rate = $0.12/lb
+        given shipment.weight = none
+        expect fails "This rate needs the shipment's weight"
+      }
 
   - name: Per Pallet
-    description: Charges based on number of pallets/pieces. Multiplies the base rate per pallet by total pieces.
-    type: freight_charge
-    expression: baseRate * totalPieces
-    status: active
-    schema_id: shipment
-    variables: []
+    description: A rate for every pallet on the shipment.
+    source: |
+      tariff "Per Pallet"
 
-  - name: Per Linear Foot
-    description: Charges based on linear feet occupied. Multiplies the base rate per linear foot by total linear feet calculated from commodities.
-    type: freight_charge
-    expression: baseRate * totalLinearFeet
-    status: active
-    schema_id: shipment
-    variables: []
+      /// Bills the rate for every pallet, counted from the shipment's pieces.
 
-  - name: Per CWT (Hundredweight)
-    description: Charges based on hundredweight (CWT). Multiplies the base rate per CWT by weight divided by 100, rounded up.
-    type: freight_charge
-    expression: baseRate * ceil(totalWeight / 100)
-    status: active
-    schema_id: shipment
-    variables: []
+      /// The rate per pallet.
+      input rate: Money/pallet
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
+
+      require let pallets = shipment.pieces else "This rate needs the shipment's pallet count"
+
+      charge "Per Pallet" (quantity: pallets, rate: rate)
+
+      minimum minimumCharge
+
+      test "bills the rate for every pallet" {
+        given input.rate = $65/pallet
+        given shipment.pieces = 12
+        expect charge("Per Pallet") == $780
+      }
+
+      test "a shipment with no pallet count refuses to rate" {
+        given input.rate = $65/pallet
+        given shipment.pieces = none
+        expect fails "This rate needs the shipment's pallet count"
+      }
 
   - name: Per Piece
-    description: Charges based on piece count. Multiplies the base rate per piece by total pieces.
-    type: freight_charge
-    expression: baseRate * totalPieces
-    status: active
-    schema_id: shipment
-    variables: []
+    description: A rate for every piece on the shipment.
+    source: |
+      tariff "Per Piece"
+
+      /// Bills the rate for every piece of the shipment.
+
+      /// The rate per piece.
+      input rate: Money/piece
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
+
+      require let pieces = shipment.pieces else "This rate needs the shipment's piece count"
+
+      charge "Per Piece" (quantity: pieces, rate: rate)
+
+      minimum minimumCharge
+
+      test "bills the rate for every piece" {
+        given input.rate = $4.50/piece
+        given shipment.pieces = 40
+        expect charge("Per Piece") == $180
+      }
+
+      test "the minimum applies to a handful of pieces" {
+        given input.rate = $4.50/piece
+        given input.minimumCharge = $95
+        given shipment.pieces = 3
+        expect total == $95
+      }
+
+  - name: Per Linear Foot
+    description: A rate for every linear foot of trailer the shipment occupies.
+    source: |
+      tariff "Per Linear Foot"
+
+      /// Bills the rate for every linear foot of trailer the freight occupies.
+
+      /// The rate per linear foot.
+      input rate: Money/ft
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
+
+      charge "Per Linear Foot" (quantity: shipment.linearFeet, rate: rate)
+
+      minimum minimumCharge
+
+      test "bills the rate for every linear foot" {
+        given input.rate = $28/ft
+        given shipment.linearFeet = 12 ft
+        expect charge("Per Linear Foot") == $336
+      }
+
+      test "the minimum applies when the freight takes little room" {
+        given input.rate = $28/ft
+        given input.minimumCharge = $150
+        given shipment.linearFeet = 2 ft
+        expect total == $150
+      }
+
+  - name: Per CWT (Hundredweight)
+    description: A rate for every hundred pounds, billing to the next hundred.
+    source: |
+      tariff "Per CWT (Hundredweight)"
+
+      /// Bills the rate for every hundred pounds, with the weight billed up to the next hundred.
+
+      /// The rate per hundredweight.
+      input rate: Money/cwt
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
+
+      require let weight = shipment.weight else "This rate needs the shipment's weight"
+
+      let billed = weight.roundUp(to: 100 lb).in(cwt)
+
+      charge "Per CWT (Hundredweight)" (quantity: billed, rate: rate)
+
+      minimum minimumCharge
+
+      test "bills the weight up to the next hundred pounds" {
+        given input.rate = $18.50/cwt
+        given shipment.weight = 1_240 lb
+        expect charge("Per CWT (Hundredweight)") == $240.50
+      }
+
+      test "a shipment with no weight refuses to rate" {
+        given input.rate = $18.50/cwt
+        given shipment.weight = none
+        expect fails "This rate needs the shipment's weight"
+      }
 
   - name: Per Hour
-    description: Charges based on hours of service, such as hourly dray or local work. Multiplies the base rate per hour by the hours computed from stop times, unless billed hours are entered.
-    type: freight_charge
-    expression: "baseRate * (billedHours > 0 ? billedHours : totalHours)"
-    status: active
-    schema_id: shipment
-    variables:
-      - name: billedHours
-        type: number
-        description: Hours to bill when they differ from the shipment's stop times; leave at 0 to use the computed hours
-        required: false
-        default_value: 0
+    description: A rate for every hour of service, from the stop times unless billed hours are set.
+    source: |
+      tariff "Per Hour"
+
+      /// Bills the rate for every hour of service: the billed hours when they are set, otherwise
+      /// the time the shipment took between its stops.
+
+      /// The rate per hour.
+      input rate: Money/h
+      /// Hours to bill instead of the stop times; leave at 0 h to use the stop times.
+      input billedHours: Duration = 0 h
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
+
+      let hours = if billedHours > 0 h { billedHours } else { shipment.duration }
+
+      charge "Per Hour" (quantity: hours, rate: rate)
+
+      minimum minimumCharge
+
+      test "bills the hours the shipment took" {
+        given input.rate = $95/h
+        given shipment.duration = 3 h
+        expect charge("Per Hour") == $285
+      }
+
+      test "billed hours replace the stop times" {
+        given input.rate = $95/h
+        given input.billedHours = 4 h
+        given shipment.duration = 3 h
+        expect charge("Per Hour") == $380
+      }
 
   - name: Percent of Sell Rate
-    description: Buy-side rate written as a share of what the customer pays. The lane's rate is the percentage; the rating engine supplies the sell total.
-    type: freight_charge
-    expression: round(sellTotal * (baseRate / 100), 2)
-    status: active
-    schema_id: shipment
-    variables:
-      - name: sellTotal
-        type: number
-        description: The sell-side total the percentage is taken of, supplied by the rating engine
-        required: false
-        default_value: 0.0
+    description: A buy-side rate written as a share of what the customer pays for the shipment.
+    source: |
+      tariff "Percent of Sell Rate"
 
-  - name: Flat Fee (Use Existing Charges)
-    description: Uses the freight and other charges already entered on the shipment. Adds freight charge amount plus other charge amount.
-    type: freight_charge
-    expression: freightChargeAmount + otherChargeAmount
-    status: active
-    schema_id: shipment
-    variables: []
+      /// Bills a share of the shipment's sell total, for carrier pay written as a percentage.
 
-  - name: Per Mile with Minimum
-    description: Per mile rate with a minimum charge floor. Ensures the charge is at least the minimum regardless of distance.
-    type: freight_charge
-    expression: max(minimumCharge, baseRate * totalDistance)
-    status: active
-    schema_id: shipment
-    variables:
-      - name: minimumCharge
-        type: number
-        description: Minimum charge amount
-        required: true
-        default_value: 250.0
+      /// The share of the sell total to pay.
+      input rate: Percent
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
 
-  - name: Per Mile with Fuel Surcharge
-    description: Per mile rate with a percentage-based fuel surcharge applied on top.
-    type: freight_charge
-    expression: round((baseRate * totalDistance) * (1 + fuelSurchargePercent / 100), 2)
-    status: active
-    schema_id: shipment
-    variables:
-      - name: fuelSurchargePercent
-        type: number
-        description: Fuel surcharge percentage
-        required: true
-        default_value: 18.0
+      require let sell = rating.sellTotal else "This rate needs the shipment's sell total, so it only rates the buy side"
 
-  - name: Hazmat Surcharge
-    description: Applies a hazmat fee only when the shipment contains hazardous materials.
-    type: accessorial_charge
-    expression: "hasHazmat ? hazmatFee : 0"
-    status: active
-    schema_id: shipment
-    variables:
-      - name: hazmatFee
-        type: number
-        description: Hazardous materials handling fee
-        required: true
-        default_value: 175.0
+      charge "Percent of Sell Rate" = sell * rate
 
-  - name: Temperature Control Surcharge
-    description: Applies a reefer fee only when the shipment requires temperature control.
-    type: accessorial_charge
-    expression: "requiresTemperatureControl ? reeferFee : 0"
-    status: active
-    schema_id: shipment
-    variables:
-      - name: reeferFee
-        type: number
-        description: Temperature control/reefer fee
-        required: true
-        default_value: 225.0
+      minimum minimumCharge
 
-  - name: Additional Stop Fee
-    description: Charges for stops beyond a base number. First 2 stops are included, additional stops incur a fee.
-    type: accessorial_charge
-    expression: "totalStops > baseStops ? (totalStops - baseStops) * additionalStopFee : 0"
-    status: active
-    schema_id: shipment
-    variables:
-      - name: baseStops
-        type: number
-        description: Number of stops included in base rate
-        required: true
-        default_value: 2.0
-      - name: additionalStopFee
-        type: number
-        description: Fee per additional stop
-        required: true
-        default_value: 50.0
+      test "pays the share of the sell total" {
+        given input.rate = 80%
+        given rating.mode = Buy
+        given rating.sellTotal = $1_500
+        expect charge("Percent of Sell Rate") == $1_200
+      }
+
+      test "without a sell total it refuses to rate" {
+        given input.rate = 80%
+        given rating.sellTotal = none
+        expect fails "This rate needs the shipment's sell total, so it only rates the buy side"
+      }
+
+  - name: Weight Breaks (LTL)
+    description: An LTL rate per hundredweight by weight break, with deficit weight rating and break minimums.
+    source: |
+      tariff "Weight Breaks (LTL)"
+
+      /// Bills an LTL rate by weight break. The shipment rates at its weight's break, or at the
+      /// next break's minimum weight when that costs less (deficit rating), and never below the
+      /// break's minimum.
+
+      use std.ltl.{ deficit, Break }
+
+      /// The weight breaks, lightest first.
+      input breaks: List<Break>
+      /// Whether a heavier break may bill when it costs less than the actual weight.
+      input allowDeficit: Bool = true
+      /// The least the shipment pays.
+      input minimumCharge: Money = $0
+
+      require let weight = shipment.weight else "This rate needs the shipment's weight"
+
+      let rated = deficit(breaks, actual: weight, allow: allowDeficit)
+
+      charge "Weight Breaks (LTL)" (quantity: rated.weight.in(cwt), rate: rated.rate)
+
+      if rated.deficit {
+        note "Deficit rated at {rated.weight}"
+      }
+
+      minimum (rated.minimum ?? $0).max(minimumCharge)
+
+      test "a weight bills at its own break" {
+        given input.breaks = [
+          { from: 0 lb, rate: $42/cwt, minimum: $90 },
+          { from: 500 lb, rate: $35.50/cwt, minimum: none },
+          { from: 1_000 lb, rate: $28.10/cwt, minimum: none },
+        ]
+        given shipment.weight = 600 lb
+        expect charge("Weight Breaks (LTL)") == $213
+      }
+
+      test "a weight just under a break bills the break when that is cheaper" {
+        given input.breaks = [
+          { from: 0 lb, rate: $42/cwt, minimum: $90 },
+          { from: 500 lb, rate: $35.50/cwt, minimum: none },
+          { from: 1_000 lb, rate: $28.10/cwt, minimum: none },
+        ]
+        given shipment.weight = 950 lb
+        expect charge("Weight Breaks (LTL)") == $281
+      }
+
+      test "a light shipment pays the break minimum" {
+        given input.breaks = [
+          { from: 0 lb, rate: $42/cwt, minimum: $90 },
+          { from: 500 lb, rate: $35.50/cwt, minimum: none },
+        ]
+        given shipment.weight = 100 lb
+        expect total == $90
+      }

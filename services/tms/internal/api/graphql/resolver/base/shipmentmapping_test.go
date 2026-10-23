@@ -37,7 +37,6 @@ func TestShipmentToModel_MapsTypedRelationFields(t *testing.T) {
 		Status:            shipmentdomain.StatusNew,
 		EntryMethod:       shipmentdomain.EntryMethodManual,
 		ProNumber:         "SHP-100",
-		RatingUnit:        1,
 		Customer: &customer.Customer{
 			ID:                    customerID,
 			BusinessUnitID:        buID,
@@ -60,10 +59,9 @@ func TestShipmentToModel_MapsTypedRelationFields(t *testing.T) {
 			OrganizationID:       orgID,
 			Name:                 "Standard",
 			Description:          "Standard tariff",
-			Type:                 formulatemplate.TemplateTypeFreightCharge,
-			Expression:           "base",
+			Source:               "tariff \"Standard\"\n",
+			TestCount:            2,
 			Status:               formulatemplate.StatusActive,
-			SchemaID:             "shipment",
 			Metadata:             map[string]any{"mode": "auto"},
 			Version:              5,
 			SourceVersionNumber:  &sourceVersion,
@@ -132,6 +130,8 @@ func TestShipmentToModel_MapsTypedRelationFields(t *testing.T) {
 	assert.Equal(t, "Acme", model.Customer.Name)
 	require.NotNil(t, model.FormulaTemplate)
 	assert.Equal(t, "Standard", model.FormulaTemplate.Name)
+	assert.Equal(t, "tariff \"Standard\"\n", model.FormulaTemplate.Source)
+	assert.Equal(t, 2, model.FormulaTemplate.TestCount)
 	assert.Equal(t, map[string]any{"mode": "auto"}, model.FormulaTemplate.Metadata)
 	require.Len(t, model.AdditionalCharges, 1)
 	require.NotNil(t, model.AdditionalCharges[0].AccessorialCharge)

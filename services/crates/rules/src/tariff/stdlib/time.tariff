@@ -1,0 +1,67 @@
+library "std.time"
+
+/// Calendar rules for accessorials: weekends, business hours and time spent within them. Every
+/// function reads a date-time on its own clock, in the offset it carries.
+
+/// Whether `at` falls on a Saturday or a Sunday.
+fn weekend(at: DateTime) -> Bool = at.weekend
+
+/// Whether `at` is outside business hours: on a weekend, before `open` o'clock or at or after
+/// `close` o'clock.
+fn afterHours(at: DateTime, open: Int = 8, close: Int = 17) -> Bool = at.weekend or at.hour < open or at.hour >= close
+
+/// The time between `start` and `end` that falls within business hours, from `open` o'clock to
+/// `close` o'clock on weekdays. Zero when `end` is not after `start`.
+fn businessDuration(start: DateTime, end: DateTime, open: Int = 8, close: Int = 17) -> Duration {
+  if end <= start {
+    return 0 min
+  }
+  let first = start.date
+  let days = (end.date - first).in(d).value.floor()
+  var total = 0 min
+  for index in 0..=days {
+    let day = first.addDays(index)
+    if not day.weekend {
+      let opens = if index == 0 { clock(start) } else { 0 min }
+      let closes = if index == days { clock(end) } else { 1_440 min }
+      let from = opens.max(open * 60 min)
+      let until = closes.min(close * 60 min)
+      if until > from {
+        total += until - from
+      }
+    }
+  }
+  return total
+}
+
+/// The time of day `at` shows on its own clock, in minutes.
+private fn clock(at: DateTime) -> Duration {
+  let minutes = (at - @1970-01-01T00:00Z).in(min).value
+  return (at.hour * 60 + at.minute) * 1 min + (minutes - minutes.floor()) * 1 min
+}
+
+test "weekends are Saturday and Sunday on the date-time's own clock" {
+  expect weekend(@2026-10-24T10:00-05:00)
+  expect weekend(@2026-10-25T23:00-05:00)
+  expect not weekend(@2026-10-23T23:30-05:00)
+  expect weekend(@2026-10-24T03:00Z)
+}
+
+test "after hours is before open, from close, or a weekend" {
+  expect afterHours(@2026-10-22T07:59-05:00)
+  expect not afterHours(@2026-10-22T08:00-05:00)
+  expect not afterHours(@2026-10-22T16:59-05:00)
+  expect afterHours(@2026-10-22T17:00-05:00)
+  expect afterHours(@2026-10-24T12:00-05:00)
+  expect not afterHours(@2026-10-22T06:30-05:00, open: 6, close: 22)
+}
+
+test "business duration counts weekday hours between open and close" {
+  expect businessDuration(@2026-10-22T07:00-05:00, @2026-10-22T19:00-05:00) == 9 h
+  expect businessDuration(@2026-10-22T09:30-05:00, @2026-10-22T11:00-05:00) == 90 min
+  expect businessDuration(@2026-10-23T15:00-05:00, @2026-10-26T10:00-05:00) == 4 h
+  expect businessDuration(@2026-10-24T09:00-05:00, @2026-10-25T17:00-05:00) == 0 h
+  expect businessDuration(@2026-10-22T12:00-05:00, @2026-10-22T08:00-05:00) == 0 h
+  expect businessDuration(@2026-10-22T08:00:30Z, @2026-10-22T09:00Z) == 59.5 min
+  expect businessDuration(@2026-10-22T06:00-05:00, @2026-10-22T23:00-05:00, open: 6, close: 22) == 16 h
+}

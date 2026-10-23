@@ -537,6 +537,8 @@ func exclusiveKey(scenario *Scenario) string {
 	switch {
 	case scenario.Exclusive != "":
 		return "scenario:" + strings.ToLower(strings.TrimSpace(scenario.Exclusive))
+	case scenario.Formula != nil && scenario.Formula.editsLibrary():
+		return "library:" + strings.ToLower(strings.TrimSpace(scenario.Formula.Library))
 	case scenario.Formula != nil:
 		return "studio:" + strings.ToLower(strings.TrimSpace(scenario.Formula.Template))
 	default:

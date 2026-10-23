@@ -21,10 +21,7 @@ const DEFAULT_MATRIX: Partial<RateMatrix> = {
   name: "",
   description: "",
   status: "Active",
-  formulaTemplateId: "",
-  currency: "USD",
-  roundingMode: "HalfUp",
-  roundingPrecision: 2,
+  valueType: "Money",
   dimensions: [],
 };
 

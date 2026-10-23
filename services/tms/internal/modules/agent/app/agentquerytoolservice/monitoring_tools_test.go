@@ -2,12 +2,11 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
@@ -22,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -78,16 +77,22 @@ type fakeTelematics struct {
 	positions []*telematics.VehiclePosition
 	hos       []*telematics.WorkerHOSState
 	maxAge    int64
+	tractors  []pulid.ID
 }
 
 func (f *fakeTelematics) ListVehiclePositions(
 	_ context.Context,
-	_ pagination.TenantInfo,
-	maxAgeSeconds int64,
+	req *telematicsports.ListVehiclePositionsRequest,
 ) ([]*telematics.VehiclePosition, error) {
-	f.maxAge = maxAgeSeconds
+	f.maxAge = req.MaxAgeSeconds
+	f.tractors = req.TractorIDs
+	if len(req.TractorIDs) == 0 {
+		return f.positions, nil
+	}
 
-	return f.positions, nil
+	return slices.DeleteFunc(slices.Clone(f.positions), func(p *telematics.VehiclePosition) bool {
+		return !slices.Contains(req.TractorIDs, p.TractorID)
+	}), nil
 }
 
 func (f *fakeTelematics) ListWorkerHOSStates(
@@ -224,6 +229,8 @@ func TestGetShipmentTracking_ComposesStopsAssignmentPositionAndHours(t *testing.
 		snapshot.Position.TractorID,
 		"only the assigned tractor's position is used",
 	)
+	assert.Equal(t, []pulid.ID{tractorID}, feed.tractors,
+		"the read names the assigned tractors rather than reading the fleet")
 	require.NotNil(t, snapshot.Driver)
 	assert.EqualValues(t, 240, snapshot.Driver.DriveRemainingMinutes)
 	require.NotNil(t, snapshot.Estimate)
@@ -268,43 +275,6 @@ func TestGetShipmentTracking_FindsAShipmentByExactProNumber(t *testing.T) {
 	_, err = tool.Query(t.Context(), testParams(map[string]any{}))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "shipmentId or proNumber")
-}
-
-func TestListVehiclePositions_NarrowsToTheTractorsAskedFor(t *testing.T) {
-	t.Parallel()
-
-	wanted := pulid.MustNew("trc_")
-	feed := &fakeTelematics{positions: []*telematics.VehiclePosition{
-		{
-			TractorID: wanted, Latitude: 32.7, Longitude: -96.8, SpeedMph: 61,
-			EngineState: telematics.EngineStateOn, RecordedAt: 1_790_000_000 - 300,
-			Tractor: &tractor.Tractor{
-				Code:          "T-104",
-				PrimaryWorker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
-			},
-		},
-		{TractorID: pulid.MustNew("trc_"), RecordedAt: 1_790_000_000},
-	}}
-	tool := newListVehiclePositionsTool(feed, &fakePermissions{allowed: true})
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{
-		"tractorIds":    []any{wanted.String()},
-		"maxAgeMinutes": 30,
-	}))
-	require.NoError(t, err)
-
-	outcome, ok := result.(searchOutcome)
-	require.True(t, ok)
-	rows, ok := outcome.Items.([]vehiclePositionRow)
-	require.True(t, ok)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "T-104", rows[0].Tractor)
-	assert.Equal(t, "Maria Ortiz", rows[0].Driver)
-	assert.EqualValues(t, 30*60, feed.maxAge)
-	assert.Contains(t, outcome.SearchedFor, "readings newer than 30 minutes")
-
-	_, err = tool.Query(t.Context(), testParams(map[string]any{"tractorIds": []any{"nope"}}))
-	require.Error(t, err)
 }
 
 type fakeBoard struct {
@@ -694,7 +664,6 @@ func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 			&fakeTelematics{},
 			&fakeStopEtaReader{},
 		),
-		newListVehiclePositionsTool(&fakeTelematics{}, &fakePermissions{}),
 		newGetDispatchBoardTool(&fakeBoard{}),
 		newListServiceFailureReasonCodesTool(&fakeReasonCodes{}),
 		newListDetentionDeskTool(&fakeDesk{}),
@@ -706,62 +675,4 @@ func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 		_, err := tool.Query(t.Context(), params)
 		require.ErrorIs(t, err, ErrTenantMismatch, tool.Name())
 	}
-}
-
-// A position is a tractor's, and the tool is gated on tractors; the name of
-// the person driving it is a worker's, and a reader who may not open workers
-// does not learn who is where from the fleet map either. An agent principal
-// reads workers within the platform's allow-list, so it still sees the name.
-func TestListVehiclePositions_NamesTheDriverOnlyToAReaderOfWorkers(t *testing.T) {
-	t.Parallel()
-
-	feed := &fakeTelematics{positions: []*telematics.VehiclePosition{{
-		TractorID: pulid.MustNew("trc_"), RecordedAt: 1_790_000_000,
-		Tractor: &tractor.Tractor{
-			Code:          "T-104",
-			PrimaryWorker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
-		},
-	}}}
-	noWorkers := &fakePermissions{readable: map[string]*permissionports.ResourcePermissionDetail{
-		permission.ResourceTractor.String(): {
-			Operations: []permission.Operation{permission.OpRead},
-		},
-	}}
-
-	rows := vehicleRows(
-		t,
-		newListVehiclePositionsTool(feed, noWorkers),
-		testParams(map[string]any{}),
-	)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "T-104", rows[0].Tractor)
-	assert.Empty(t, rows[0].Driver, "a reader without worker access is not told who is driving")
-
-	agentParams := testParams(map[string]any{})
-	agentParams.Actor = &permissionports.RequestActor{
-		PrincipalType:  permissionports.PrincipalTypeAgent,
-		PrincipalID:    pulid.MustNew("agd_"),
-		OrganizationID: agentParams.OrganizationID,
-		BusinessUnitID: agentParams.BusinessUnitID,
-	}
-	rows = vehicleRows(t, newListVehiclePositionsTool(feed, noWorkers), agentParams)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "Maria Ortiz", rows[0].Driver)
-}
-
-func vehicleRows(
-	t *testing.T,
-	tool agentports.AgentQueryTool,
-	params *agentports.QueryToolParams,
-) []vehiclePositionRow {
-	t.Helper()
-
-	result, err := tool.Query(t.Context(), params)
-	require.NoError(t, err)
-	outcome, ok := result.(searchOutcome)
-	require.True(t, ok)
-	rows, ok := outcome.Items.([]vehiclePositionRow)
-	require.True(t, ok)
-
-	return rows
 }

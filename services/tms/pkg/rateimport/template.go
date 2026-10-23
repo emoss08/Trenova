@@ -31,8 +31,6 @@ var templateColumns = []templateColumn{
 	{header: "Rate", examples: [2]string{"2.85", "1450"}},
 	{header: "Currency", examples: [2]string{"USD", "USD"}},
 	{header: "Minimum Charge", examples: [2]string{"350", ""}},
-	{header: "Maximum Charge", examples: [2]string{"", ""}},
-	{header: "Discount Percent", examples: [2]string{"", ""}},
 }
 
 // TemplateCSV renders the starter sheet somebody fills in instead of guessing

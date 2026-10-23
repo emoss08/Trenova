@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -15,11 +16,11 @@ const (
 	describeMaxTokens        = 1500
 )
 
-const describeSystem = "You are the formula assistant in Trenova's Formula Studio. Write a " +
-	"description for each input listed under Inputs to describe: what the value is for, in " +
-	"words a billing clerk understands, at most 120 characters, no trailing period needed. " +
-	"Read the expression and the template to see how each input is used. Describe only the " +
-	"inputs listed there, by their exact names. " + amountsRule + " " + untrustedNote
+const describeSystem = "You are the formula assistant in Trenova's Formula Studio. Write a doc " +
+	"comment for each input listed under Inputs to describe: what the value is for, in words " +
+	"a billing clerk understands, at most 120 characters, no trailing period needed. Read the " +
+	"source to see how each input is used. Describe only the inputs listed there, by their " +
+	"exact names. " + amountsRule + " " + untrustedNote
 
 func (s *Service) DescribeInputs(
 	ctx context.Context,
@@ -31,18 +32,23 @@ func (s *Service) DescribeInputs(
 		return nil, err
 	}
 
-	blank := make(map[string]struct{}, len(req.Draft.Content.VariableDefinitions))
-	names := make([]string, 0, len(req.Draft.Content.VariableDefinitions))
-	for _, variable := range req.Draft.Content.VariableDefinitions {
-		if variable == nil || variable.Name == "" ||
-			strings.TrimSpace(variable.Description) != "" {
+	tested, err := s.engine.TestSource(ctx, &formulatemplateservice.TestSourceRequest{
+		TenantInfo: req.TenantInfo,
+		Source:     req.Draft.Source,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	blank := make(map[string]struct{}, len(tested.Inputs))
+	names := make([]string, 0, len(tested.Inputs))
+	for i := range tested.Inputs {
+		input := &tested.Inputs[i]
+		if strings.TrimSpace(input.Doc) != "" {
 			continue
 		}
-		if _, dup := blank[variable.Name]; dup {
-			continue
-		}
-		blank[variable.Name] = struct{}{}
-		names = append(names, variable.Name)
+		blank[input.Name] = struct{}{}
+		names = append(names, input.Name)
 	}
 
 	resp := &agentports.DescribeFormulaInputsResponse{Descriptions: map[string]string{}}
@@ -56,7 +62,7 @@ func (s *Service) DescribeInputs(
 		definition: definition,
 		feature:    aiusage.FeatureFormulaGenerate,
 		system:     describeSystem,
-		sections: append(draftSections(&req.Draft), agentports.ContextSection{
+		sections: append(draftSections(&req.Draft, tested.Inputs), agentports.ContextSection{
 			Title:   "Inputs to describe",
 			Content: strings.Join(names, "\n"),
 		}),
@@ -93,29 +99,10 @@ type describeReply struct {
 }
 
 func describeSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"descriptions": map[string]any{
-				"type": "array",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"name": map[string]any{
-							"type":        "string",
-							"description": "The input's exact name",
-						},
-						"description": map[string]any{
-							"type":        "string",
-							"description": "At most 120 characters",
-						},
-					},
-					"required":             []string{"name", "description"},
-					"additionalProperties": false,
-				},
-			},
-		},
-		"required":             []string{"descriptions"},
-		"additionalProperties": false,
-	}
+	return objectSchema(map[string]any{
+		"descriptions": arraySchema(objectSchema(map[string]any{
+			"name":        typedField("string", "The input's exact name"),
+			"description": typedField("string", "At most 120 characters"),
+		}, "name", "description"), ""),
+	}, "descriptions")
 }

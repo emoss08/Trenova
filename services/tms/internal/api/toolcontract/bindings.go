@@ -154,19 +154,14 @@ var Bindings = []Binding{
 			"commodities":       "ShipmentCommodityInput",
 			"additionalCharges": "ShipmentAdditionalChargeInput",
 		},
-		Defaulted: map[string]string{
-			"formulaTemplateId": "left out, the tool seats the rating method and base rate the " +
-				"customer's rate agreement prices the lane with, and refuses when none does",
-		},
 	},
 	{
 		Tool:  "shipment_update",
 		Input: "ShipmentInput",
 		Defaulted: map[string]string{
-			"serviceTypeId":     patchLeavesIt,
-			"shipmentTypeId":    patchLeavesIt,
-			"customerId":        patchLeavesIt,
-			"formulaTemplateId": patchLeavesIt,
+			"serviceTypeId":  patchLeavesIt,
+			"shipmentTypeId": patchLeavesIt,
+			"customerId":     patchLeavesIt,
 		},
 		Extra: map[string]string{
 			"shipmentId": "the mutation takes the shipment as its id argument, beside the input",

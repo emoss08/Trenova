@@ -3,6 +3,7 @@ package assistantservice
 import (
 	"context"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -15,27 +16,74 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
+type pageSubject struct {
+	subjectType agent.SubjectType
+	draft       pagedraft.Surface
+	title       string
+}
+
 type pageSurface struct {
 	systemKey       string
-	subjectType     agent.SubjectType
 	subjectRequired bool
-	draft           pagedraft.Surface
-	title           string
+	subjects        []pageSubject
+}
+
+func (p *pageSurface) subject(subjectType agent.SubjectType) (pageSubject, bool) {
+	if subjectType == "" {
+		return p.subjects[0], true
+	}
+	for _, subject := range p.subjects {
+		if subject.subjectType == subjectType {
+			return subject, true
+		}
+	}
+
+	return pageSubject{}, false
+}
+
+func (p *pageSurface) takesDraft(draft pagedraft.Surface) bool {
+	for _, subject := range p.subjects {
+		if subject.draft == draft {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *pageSurface) nouns() string {
+	nouns := make([]string, 0, len(p.subjects))
+	for _, subject := range p.subjects {
+		nouns = append(nouns, subject.subjectType.NounWithArticle())
+	}
+
+	return strings.Join(nouns, " or ")
 }
 
 var pageSurfaces = map[conversation.ThreadOrigin]pageSurface{
 	conversation.ThreadOriginImport: {
 		systemKey:       agentdefinition.SystemKeyImportAssistant,
-		subjectType:     agent.SubjectDocument,
 		subjectRequired: true,
-		draft:           pagedraft.SurfaceShipmentImport,
-		title:           "Shipment import",
+		subjects: []pageSubject{{
+			subjectType: agent.SubjectDocument,
+			draft:       pagedraft.SurfaceShipmentImport,
+			title:       "Shipment import",
+		}},
 	},
 	conversation.ThreadOriginFormula: {
-		systemKey:   agentdefinition.SystemKeyFormulaAssistant,
-		subjectType: agent.SubjectFormulaTemplate,
-		draft:       pagedraft.SurfaceFormula,
-		title:       "Formula",
+		systemKey: agentdefinition.SystemKeyFormulaAssistant,
+		subjects: []pageSubject{
+			{
+				subjectType: agent.SubjectFormulaTemplate,
+				draft:       pagedraft.SurfaceFormula,
+				title:       "Formula",
+			},
+			{
+				subjectType: agent.SubjectFormulaLibrary,
+				draft:       pagedraft.SurfaceFormulaLibrary,
+				title:       "Formula library",
+			},
+		},
 	},
 }
 
@@ -50,7 +98,8 @@ func (s *Service) OpenPageThread(
 			"origin", errortypes.ErrInvalid, "This page has no assistant conversation",
 		)
 	}
-	if err := checkPageSubject(surface, req); err != nil {
+	subject, err := checkPageSubject(&surface, req)
+	if err != nil {
 		return nil, err
 	}
 	if actor == nil || actor.UserID.IsNil() {
@@ -58,7 +107,7 @@ func (s *Service) OpenPageThread(
 	}
 	if s.systemAgents == nil || s.pageThreads == nil {
 		return nil, errortypes.NewBusinessError(
-			"The {0} assistant is not available on this server", surface.title,
+			"The {0} assistant is not available on this server", subject.title,
 		)
 	}
 
@@ -84,12 +133,12 @@ func (s *Service) OpenPageThread(
 		return nil, err
 	}
 	if req.SubjectID.IsNotNil() {
-		if err = s.assertSubjectReadable(ctx, actor, surface.subjectType); err != nil {
+		if err = s.assertSubjectReadable(ctx, actor, subject.subjectType); err != nil {
 			return nil, err
 		}
 	}
 
-	thread, err := s.claimPageThread(ctx, req, surface, definition, actor)
+	thread, err := s.claimPageThread(ctx, req, subject, definition, actor)
 	if err != nil {
 		return nil, err
 	}
@@ -112,26 +161,32 @@ func pageAgentOf(definition *agentdefinition.Definition) agentports.PageAgent {
 	}
 }
 
-func checkPageSubject(surface pageSurface, req *agentports.OpenPageThreadRequest) error {
-	if req.SubjectType != "" && req.SubjectType != surface.subjectType {
-		return errortypes.NewValidationError(
+func checkPageSubject(
+	surface *pageSurface,
+	req *agentports.OpenPageThreadRequest,
+) (pageSubject, error) {
+	subject, ok := surface.subject(req.SubjectType)
+	if !ok {
+		return pageSubject{}, errortypes.NewValidationError(
 			"subjectType", errortypes.ErrInvalid,
-			"This conversation is about a {0}", surface.subjectType.Noun(),
+			"This conversation is about {0}", surface.nouns(),
 		)
 	}
 	if surface.subjectRequired && req.SubjectID.IsNil() {
-		return errortypes.NewValidationError(
+		return pageSubject{}, errortypes.NewValidationError(
 			"subjectId", errortypes.ErrRequired,
-			"This conversation needs the {0} it is about", surface.subjectType.Noun(),
+			"This conversation needs the {0} it is about", subject.subjectType.Noun(),
 		)
 	}
 	if req.SubjectID.IsNotNil() {
-		if err := surface.subjectType.CheckID(req.SubjectID); err != nil {
-			return errortypes.NewValidationError("subjectId", errortypes.ErrInvalid, err.Error())
+		if err := subject.subjectType.CheckID(req.SubjectID); err != nil {
+			return pageSubject{}, errortypes.NewValidationError(
+				"subjectId", errortypes.ErrInvalid, err.Error(),
+			)
 		}
 	}
 
-	return nil
+	return subject, nil
 }
 
 func (s *Service) assertPageAgentUsable(
@@ -154,13 +209,13 @@ func (s *Service) assertPageAgentUsable(
 func (s *Service) claimPageThread(
 	ctx context.Context,
 	req *agentports.OpenPageThreadRequest,
-	surface pageSurface,
+	subject pageSubject,
 	definition *agentdefinition.Definition,
 	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	subjectType := agent.SubjectType("")
 	if req.SubjectID.IsNotNil() {
-		subjectType = surface.subjectType
+		subjectType = subject.subjectType
 	}
 
 	if req.SubjectID.IsNotNil() {
@@ -195,7 +250,7 @@ func (s *Service) claimPageThread(
 		BusinessUnitID:    req.TenantInfo.BuID,
 		UserID:            actor.UserID,
 		AgentDefinitionID: definition.ID,
-		Title:             surface.title,
+		Title:             subject.title,
 		Status:            conversation.ThreadStatusActive,
 		Origin:            req.Origin,
 		SubjectType:       subjectType,
@@ -217,6 +272,19 @@ func (s *Service) claimPageThread(
 	}
 
 	return s.pageThreads.ClaimPageThread(ctx, thread)
+}
+
+func draftFits(
+	surface *pageSurface,
+	subject pageSubject,
+	thread *conversation.Thread,
+	draft pagedraft.Surface,
+) bool {
+	if thread.HasSubject() {
+		return draft == subject.draft
+	}
+
+	return surface.takesDraft(draft)
 }
 
 func (s *Service) assertPageTurn(
@@ -242,16 +310,17 @@ func (s *Service) assertPageTurn(
 	}
 
 	surface := pageSurfaces[thread.Origin]
+	subject, _ := surface.subject(thread.SubjectType)
 	if thread.Status != conversation.ThreadStatusActive {
 		return errortypes.NewBusinessError(
 			"This conversation was closed when its {0} changed. Reopen the page to start a new one.",
-			surface.subjectType.Noun(),
+			subject.subjectType.Noun(),
 		)
 	}
-	if draft != "" && draft != surface.draft {
+	if draft != "" && !draftFits(&surface, subject, thread, draft) {
 		return errortypes.NewValidationError(
 			"context.draft", errortypes.ErrInvalid,
-			"This conversation takes the page's {0} draft", string(surface.draft),
+			"This conversation takes the page's {0} draft", string(subject.draft),
 		)
 	}
 	if thread.HasSubject() {

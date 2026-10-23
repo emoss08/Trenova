@@ -2,7 +2,6 @@ import {
   accessorialChargeMethodChoices,
   choiceLabel,
   rateAgreementStatusChoices,
-  rateRoundingModeChoices,
   rateUnitChoices,
 } from "@/lib/choices";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -14,8 +13,10 @@ import type {
   RateAgreementFuelBinding,
   RateAgreementLaneSummary,
   RateAgreementRule,
-  RateAgreementRuleBreak,
 } from "@trenova/shared/types/rate";
+import { humanizeTariffName } from "@trenova/shared/lib/tariff-inputs";
+import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
+import type { TariffWireValue } from "@trenova/shared/types/tariff";
 import type { CardTone } from "../../record-card/record-card";
 import { money } from "../../record-card/record-card-values";
 
@@ -186,23 +187,26 @@ export function lifecycleSteps(
   return steps;
 }
 
-/** How a lane is priced: by a formula template at a rate, or by a rate table's cells. */
-export type LanePricing =
-  | { by: "formula"; templateId: string; rate: string | null }
-  | { by: "matrix"; matrixId: string }
-  | { by: "none" };
+/** One term a lane or an agreement sets for its tariff: the input, and its value as written. */
+export type TariffTerm = { key: string; label: string; value: string };
 
-export function lanePricing(rule: RateAgreementRule): LanePricing {
-  if (rule.rateMatrixId) return { by: "matrix", matrixId: rule.rateMatrixId };
-  if (rule.formulaTemplateId) {
-    const rate = decimal(rule.rate);
-    return {
-      by: "formula",
-      templateId: rule.formulaTemplateId,
-      rate: rate === null ? null : figure(rate),
-    };
-  }
-  return { by: "none" };
+/**
+ * The tariff input values a lane (or an agreement) sets, each named the way the form names it
+ * and shown in its unit: `Rate $2.35/mi`, `Breaks 4 items`. An input left unset is not listed;
+ * it takes the agreement's value or the tariff's default.
+ */
+export function tariffTerms(
+  inputs: Readonly<Record<string, unknown>> | null | undefined,
+  currency: string,
+  t: TranslateFn,
+): TariffTerm[] {
+  return Object.entries(inputs ?? {})
+    .filter(([, value]) => value !== undefined)
+    .map(([name, value]) => ({
+      key: name,
+      label: humanizeTariffName(name),
+      value: formatTariffValue(value as TariffWireValue, t, { currency }),
+    }));
 }
 
 /** A percentage the API sends as a whole number of percent, "12.5" for 12.5%. */
@@ -225,35 +229,17 @@ function span(low: number | null, high: number | null, unit: "lb" | "mi", t: Tra
 }
 
 /**
- * What narrows or bounds a lane's price beyond its places: its charge limits,
- * discount, the loads it applies to, and which way it runs.
+ * Which loads a lane applies to beyond its places: the weights and distances it covers, the
+ * freight it is limited to, and which way it runs. What it charges is its tariff's terms.
  */
-export function laneTerms(rule: RateAgreementRule, currency: string, t: TranslateFn): string[] {
-  const minCharge = decimal(rule.minCharge);
-  const maxCharge = decimal(rule.maxCharge);
-  const floor = decimal(rule.absoluteMinCharge);
-  const discount = decimal(rule.discountPercent);
-  const billable = decimal(rule.minBillableDistance);
-  const breaks = rule.breaks.length;
+export function laneTerms(rule: RateAgreementRule, t: TranslateFn): string[] {
   return [
-    minCharge !== null ? t("Min {0}", money(minCharge, currency)) : "",
-    maxCharge !== null ? t("Max {0}", money(maxCharge, currency)) : "",
-    floor !== null ? t("Never under {0}", money(floor, currency)) : "",
-    discount !== null && discount !== 0 ? t("{0} discount", percent(discount)) : "",
-    billable !== null ? t("Bills at least {0} mi", figure(billable, 0)) : "",
-    breaks > 0 ? t("{0, plural, one {# weight break} other {# weight breaks}}", breaks) : "",
     span(decimal(rule.minWeight), decimal(rule.maxWeight), "lb", t),
     span(decimal(rule.minDistance), decimal(rule.maxDistance), "mi", t),
     rule.hazmatOnly ? t("Hazmat only") : "",
     rule.tempControlOnly ? t("Temperature controlled only") : "",
     rule.direction === "Bidirectional" ? t("Both ways") : "",
   ].filter((term) => term !== "");
-}
-
-/** A weight break as its lane lists it: its own label, or the weights it covers. */
-export function breakLabel(weightBreak: RateAgreementRuleBreak, t: TranslateFn): string {
-  if (weightBreak.label.trim() !== "") return weightBreak.label.trim();
-  return span(decimal(weightBreak.fromWeight), decimal(weightBreak.toWeight), "lb", t);
 }
 
 /** An accessorial's terms as a biller reads them: what it charges, and what changes that. */
@@ -282,6 +268,7 @@ export function accessorialTerms(
     accessorial.freeUnits ? t("{0} free", figure(accessorial.freeUnits, 0)) : "",
     cap !== null ? t("Up to {0}", money(cap, currency)) : "",
     accessorial.autoApply ? t("Added automatically") : "",
+    accessorial.autoApply && accessorial.condition ? t("When its condition holds") : "",
   ].filter((term) => term !== "");
 }
 
@@ -307,32 +294,18 @@ export function fuelTerms(
 export type Guardrail = { key: string; label: string; value: string };
 
 /**
- * The agreement's default charge limits and rounding, and the margin it keeps:
- * a floor on margin for what it sells, a cap on pay for what it buys. A reader
- * whose role withholds margins sees that a carrier agreement keeps them, not
- * what they are.
+ * The margin the agreement keeps: a floor on margin for what it sells, a cap on pay for what
+ * it buys. A reader whose role withholds margins sees that a carrier agreement keeps them, not
+ * what they are. Its charge limits and rounding are its tariffs' terms now, not guardrails.
  */
 export function guardrails(
   agreement: RateAgreement,
   t: TranslateFn,
   marginsVisible = true,
 ): Guardrail[] {
-  const minCharge = decimal(agreement.defaultMinCharge);
-  const maxCharge = decimal(agreement.defaultMaxCharge);
   const marginFloor = decimal(agreement.marginFloorPercent);
   const payCap = decimal(agreement.maxPayPercentOfSell);
-  const rows: Guardrail[] = [
-    {
-      key: "min",
-      label: t("Minimum charge"),
-      value: minCharge === null ? t("None") : money(minCharge, agreement.currency),
-    },
-    {
-      key: "max",
-      label: t("Maximum charge"),
-      value: maxCharge === null ? t("None") : money(maxCharge, agreement.currency),
-    },
-  ];
+  const rows: Guardrail[] = [];
   if (!marginsVisible && agreement.partyType === "Carrier") {
     rows.push(
       { key: "margin", label: t("Margin floor"), value: t("Hidden") },
@@ -353,22 +326,12 @@ export function guardrails(
       value: t("{0} of sell", percent(payCap)),
     });
   }
-  rows.push({
-    key: "rounding",
-    label: t("Rounding"),
-    value: t(
-      "{0} · {1, plural, one {# place} other {# places}}",
-      choiceLabel(rateRoundingModeChoices, agreement.roundingMode),
-      agreement.roundingPrecision,
-    ),
-  });
   return rows;
 }
 
 /** Every id the card names by its record, per kind, sorted so the lookup's key holds still. */
 export type AgreementReferences = {
   templates: string[];
-  matrices: string[];
   charges: string[];
   programs: string[];
   customers: string[];
@@ -386,11 +349,7 @@ export function agreementReferences(
   versionAuthors: readonly (string | null | undefined)[],
 ): AgreementReferences {
   return {
-    templates: sortedIds([
-      ...lanes.map((lane) => lane.formulaTemplateId),
-      ...agreement.accessorials.map((accessorial) => accessorial.formulaTemplateId),
-    ]),
-    matrices: sortedIds(lanes.map((lane) => lane.rateMatrixId)),
+    templates: sortedIds(lanes.map((lane) => lane.formulaTemplateId)),
     charges: sortedIds(
       agreement.accessorials.map((accessorial) => accessorial.accessorialChargeId),
     ),
@@ -408,32 +367,18 @@ export type PricingGroup = {
   lanes: number;
   /** The group's share of the live lanes, 0 to 1. */
   share: number;
-  /** The rates its lanes quote, low to high, or nothing when they quote none. */
-  range: string | null;
 };
 
 function groupLabel(group: LanePricingGroup, currency: string, t: TranslateFn): string {
-  const name = group.rateMatrixId
-    ? t("Rate table {0}", group.rateMatrixName || "…")
-    : group.formulaTemplateId
-      ? group.formulaTemplateName || "…"
-      : t("Not priced");
+  const name = group.formulaTemplateName || "…";
   return group.currency && group.currency !== currency
     ? t("{0} · {1}", name, group.currency)
     : name;
 }
 
-function rateRange(group: LanePricingGroup): string | null {
-  const low = decimal(group.minRate);
-  const high = decimal(group.maxRate);
-  if (low === null || high === null) return null;
-  return low === high ? figure(low) : `${figure(low)} – ${figure(high)}`;
-}
-
 /**
- * How the agreement prices its live lanes: each formula template or rate table
- * with the lanes it prices and the range of rates they quote, most lanes
- * first. A group in another currency than the agreement's says which. Past
+ * How the agreement prices its live lanes: each tariff with the lanes it
+ * prices, most lanes first. A group in another currency than the agreement's says which. Past
  * `rows` groups, the rest are folded into one so the section stays its size
  * however many ways an agreement prices.
  */
@@ -447,11 +392,10 @@ export function pricingGroups(
   const sorted = [...summary.groups].sort((a, b) => b.lanes - a.lanes);
   const shown = sorted.length > rows ? sorted.slice(0, rows - 1) : sorted;
   const groups = shown.map((group) => ({
-    key: [group.formulaTemplateId ?? "", group.rateMatrixId ?? "", group.currency].join(":"),
+    key: [group.formulaTemplateId, group.currency].join(":"),
     label: groupLabel(group, currency, t),
     lanes: group.lanes,
     share: share(group.lanes),
-    range: rateRange(group),
   }));
   const rest = sorted.slice(shown.length);
   if (rest.length === 0) return groups;
@@ -463,7 +407,6 @@ export function pricingGroups(
       label: t("{0, plural, one {# other way} other {# other ways}}", rest.length),
       lanes,
       share: share(lanes),
-      range: null,
     },
   ];
 }

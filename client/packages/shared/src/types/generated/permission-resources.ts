@@ -120,6 +120,7 @@ export const Resource = {
   ChargeType: "charge_type",
   RevenueCode: "revenue_code",
   FormulaTemplate: "formula_template",
+  FormulaLibrary: "formula_library",
   FuelSurchargeProgram: "fuel_surcharge_program",
   DetentionPolicy: "detention_policy",
   Detention: "detention",

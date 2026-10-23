@@ -59,7 +59,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -166,23 +165,6 @@ func (g *fakeGenerator) GenerateCreditMemoNumber(
 	return fmt.Sprintf("CM-%03d", g.next), nil
 }
 
-type fakeFormulaCalculator struct {
-	amount decimal.Decimal
-}
-
-func (f *fakeFormulaCalculator) Calculate(
-	_ context.Context,
-	req *formulatemplatetypes.CalculateRequest,
-) (*formulatemplatetypes.CalculateResponse, error) {
-	return &formulatemplatetypes.CalculateResponse{
-		Amount:              f.amount,
-		Variables:           map[string]any{},
-		FormulaTemplateID:   req.TemplateID.String(),
-		FormulaTemplateName: "test-formula",
-		Expression:          "flat",
-	}, nil
-}
-
 type fakeAccessorialRepo struct{}
 
 func (fakeAccessorialRepo) List(
@@ -210,6 +192,13 @@ func (fakeAccessorialRepo) GetByID(
 	context.Context,
 	accessorialchargeports.GetAccessorialChargeByIDRequest,
 ) (*accessorialcharge.AccessorialCharge, error) {
+	return nil, nil
+}
+
+func (fakeAccessorialRepo) ListCatalog(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*accessorialcharge.AccessorialCharge, error) {
 	return nil, nil
 }
 
@@ -1146,11 +1135,8 @@ func newIntegrationHarness(
 		AuditService:    noopAuditService{},
 		WorkflowStarter: starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger: zap.NewNop(),
-			RateEngine: ratingtest.NewFallbackEngine(
-				t,
-				&fakeFormulaCalculator{amount: formulaAmount},
-			),
+			Logger:          zap.NewNop(),
+			RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
 		Generator: &fakeGenerator{},
@@ -1207,11 +1193,8 @@ func (h *integrationHarness) buildService(
 		AuditService:    noopAuditService{},
 		WorkflowStarter: starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger: zap.NewNop(),
-			RateEngine: ratingtest.NewFallbackEngine(
-				t,
-				&fakeFormulaCalculator{amount: formulaAmount},
-			),
+			Logger:          zap.NewNop(),
+			RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
 		Generator: &fakeGenerator{},

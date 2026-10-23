@@ -1299,16 +1299,9 @@ func (s *service) CalculateTotals(
 	entity *shipment.Shipment,
 	userID pulid.ID,
 ) (*shipmentports.ShipmentTotalsResponse, error) {
-	// Shipment totals are derived from the formula template plus nested additional charges.
 	if entity == nil {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("shipment", errortypes.ErrRequired, "Shipment is required")
-		return nil, multiErr
-	}
-
-	if entity.FormulaTemplateID.IsNil() {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("formulaTemplateId", errortypes.ErrRequired, "Formula template is required")
 		return nil, multiErr
 	}
 

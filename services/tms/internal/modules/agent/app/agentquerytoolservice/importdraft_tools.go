@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
@@ -256,7 +255,6 @@ type requiredRecordReader struct {
 	customers     customerports.CustomerRepository
 	serviceTypes  servicetypeports.ServiceTypeRepository
 	shipmentTypes shipmenttypeports.ShipmentTypeRepository
-	formulas      formulatemplateports.FormulaTemplateRepository
 }
 
 func (r requiredRecordReader) resource(field pagedraft.RequiredField) permission.Resource {
@@ -267,8 +265,6 @@ func (r requiredRecordReader) resource(field pagedraft.RequiredField) permission
 		return permission.ResourceServiceType
 	case pagedraft.RequiredShipmentType:
 		return permission.ResourceShipmentType
-	case pagedraft.RequiredFormulaTemplate:
-		return permission.ResourceFormulaTemplate
 	default:
 		return ""
 	}
@@ -308,15 +304,6 @@ func (r requiredRecordReader) label(
 		}
 
 		return codedLabel(found.Code, found.Description), nil
-	case pagedraft.RequiredFormulaTemplate:
-		found, err := r.formulas.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
-			TemplateID: id, TenantInfo: tenant,
-		})
-		if err != nil {
-			return "", err
-		}
-
-		return found.Name, nil
 	default:
 		return "", fmt.Errorf("%q is not a required field", field)
 	}
@@ -342,8 +329,6 @@ func requiredFieldSource(field pagedraft.RequiredField) string {
 		return toolMasterdataListServiceTypes
 	case pagedraft.RequiredShipmentType:
 		return "masterdata_list_shipment_types"
-	case pagedraft.RequiredFormulaTemplate:
-		return "formula_list_templates"
 	default:
 		return "the matching list tool"
 	}
@@ -358,7 +343,6 @@ func provideSetRequiredFieldTool(
 	customers customerports.CustomerRepository,
 	serviceTypes servicetypeports.ServiceTypeRepository,
 	shipmentTypes shipmenttypeports.ShipmentTypeRepository,
-	formulas formulatemplateports.FormulaTemplateRepository,
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &setRequiredFieldTool{
@@ -366,7 +350,6 @@ func provideSetRequiredFieldTool(
 			customers:     customers,
 			serviceTypes:  serviceTypes,
 			shipmentTypes: shipmentTypes,
-			formulas:      formulas,
 		},
 		access: newFieldAccess(permissions),
 	}
@@ -375,10 +358,11 @@ func provideSetRequiredFieldTool(
 func (t *setRequiredFieldTool) Name() string { return string(pagedraft.ActionSetRequiredField) }
 
 func (t *setRequiredFieldTool) Description() string {
-	return "Set the customer, service type, shipment type or rating method on the import " +
-		"page, by record id. Find the record first with customer_list, masterdata_list_service_types, " +
-		"masterdata_list_shipment_types or formula_list_templates, and set it once the person agrees; " +
-		"the page shows the record's own name."
+	return "Set the customer, service type or shipment type on the import page, by record id. " +
+		"Find the record first with customer_list, masterdata_list_service_types or " +
+		"masterdata_list_shipment_types, and set it once the person agrees; the page shows the " +
+		"record's own name. The tendered rate is the shipment's price as written, so the import " +
+		"needs no rating method."
 }
 
 func (t *setRequiredFieldTool) ParamSchema() map[string]any {
@@ -386,15 +370,14 @@ func (t *setRequiredFieldTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			paramField: agenttoolschema.Enum(
-				"Which of the four the record is for.", importRequiredFields,
+				"Which of the three the record is for.", importRequiredFields,
 			),
 			"recordId": agenttoolschema.KindID(
-				"The record's id, from customer_list, masterdata_list_service_types, "+
-					"masterdata_list_shipment_types or formula_list_templates to match the field.",
+				"The record's id, from customer_list, masterdata_list_service_types or "+
+					"masterdata_list_shipment_types to match the field.",
 				permission.RecordKind(permission.ResourceCustomer),
 				permission.RecordKind(permission.ResourceServiceType),
 				permission.RecordKind(permission.ResourceShipmentType),
-				permission.RecordKind(permission.ResourceFormulaTemplate),
 			),
 		},
 		"required":             []string{"field", "recordId"},
@@ -423,8 +406,7 @@ func (t *setRequiredFieldTool) Query(
 	field := pagedraft.RequiredField(fieldName)
 	if !field.IsValid() {
 		return nil, fmt.Errorf(
-			"parameter \"field\" must be customerId, serviceTypeId, shipmentTypeId or " +
-				"formulaTemplateId",
+			"parameter \"field\" must be customerId, serviceTypeId or shipmentTypeId",
 		)
 	}
 

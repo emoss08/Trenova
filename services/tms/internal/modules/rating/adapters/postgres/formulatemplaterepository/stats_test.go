@@ -13,9 +13,6 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-// TestStatsQueryCountsEveryConsumerInOneStatement guards the list page's
-// per-row counts: one statement for the whole page, every table that can
-// reference a template counted, tenant-scoped on every subselect.
 func TestStatsQueryCountsEveryConsumerInOneStatement(t *testing.T) {
 	t.Parallel()
 
@@ -32,21 +29,16 @@ func TestStatsQueryCountsEveryConsumerInOneStatement(t *testing.T) {
 	require.NoError(t, err)
 	text := string(sqlText)
 
-	for _, table := range []string{
-		"shipments",
-		"rate_matrices",
-		"rate_agreement_rules",
-		"rate_agreement_accessorials",
-		"formula_template_test_cases",
-	} {
+	for _, table := range []string{`"shipments"`, `"rate_agreement_rules"`} {
 		assert.Contains(t, text, table, "every consumer of a template is counted")
 	}
 	assert.Contains(t, text, "usage_count")
-	assert.Contains(t, text, "scenario_count")
+	assert.Contains(t, text, "sp.organization_id = ft.organization_id")
+	assert.Contains(t, text, "ragr.business_unit_id = ft.business_unit_id")
 	assert.Contains(t, text, tenant.OrgID.String())
 	assert.Contains(t, text, ids[0].String())
 	assert.Contains(t, text, ids[1].String())
-	assert.Equal(t, 1, countOccurrences(text, "FROM formula_templates AS ft"),
+	assert.Equal(t, 1, countOccurrences(text, `FROM "formula_templates" AS "ft"`),
 		"the page is one statement over formula_templates")
 }
 

@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -65,19 +64,8 @@ func workerGetSpec() getSpec {
 		summary:   workerGetSummary,
 		paramName: paramWorkerID,
 		idSource:  "from worker_list, the page you are on, or this run's subject",
-		shape:     shapeWorkerRecord,
+		shape:     shapeWorkerRow,
 	}
-}
-
-// shapeWorkerRecord applies to the card what the worker list applies to each
-// row: a NonCompliant worker cannot be assigned, and the credential dates are
-// present, null when nothing is on file.
-func shapeWorkerRecord(
-	record map[string]any,
-	withheld map[string]struct{},
-	_ *agentports.QueryToolParams,
-) {
-	shapeWorkerRow(record, withheld)
 }
 
 // workerCredentialGetSpec reads one credential through the operation the
@@ -133,7 +121,7 @@ func workerHOSGetSpec() getSpec {
 func shapeHoursOfService(
 	record map[string]any,
 	_ map[string]struct{},
-	params *agentports.QueryToolParams,
+	clk clock,
 ) {
 	for _, key := range slices.Collect(maps.Keys(record)) {
 		clock, isClock := strings.CutSuffix(key, hosMillis)
@@ -145,10 +133,10 @@ func shapeHoursOfService(
 		record[clock+hosMinutes] = millis / millisPerMinute
 	}
 	recordedAt := int64(optionalInt(record, hosRecordedAt, 0))
-	stale := clockFor(params).Now-recordedAt > hosStaleSeconds
+	stale := clk.Instant()-recordedAt > hosStaleSeconds
 	record[hosStale] = stale
 	if recordedAt > 0 {
-		record[hosRecordedAt] = timeutils.FormatUnixDateTimeIn(recordedAt, params.Timezone)
+		record[hosRecordedAt] = timeutils.FormatUnixDateTimeIn(recordedAt, clk.Timezone)
 	}
 	if stale {
 		record[outcomeNote] = staleHoursNote

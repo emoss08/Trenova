@@ -368,7 +368,7 @@ func TestTheContractCatchesAParameterTheInputDoesNotTake(t *testing.T) {
 
 	joined := strings.Join(problems, "\n")
 	require.Contains(t, joined, "parameter moves.type is not a field of ShipmentMoveInput")
-	require.Contains(t, joined, "ShipmentInput.formulaTemplateId is required by the input")
+	require.Contains(t, joined, "ShipmentInput.serviceTypeId is required by the input")
 	require.Contains(t, joined, "parameter freightTerms offers [Collect, Prepaid] but "+
 		"FreightTerms is [Collect, Prepaid, ThirdParty]")
 }

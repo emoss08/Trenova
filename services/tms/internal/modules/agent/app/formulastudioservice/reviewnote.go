@@ -99,7 +99,7 @@ func (s *Service) backtestSaved(
 	result, err := s.engine.Backtest(ctx, &formulatemplateservice.BacktestRequest{
 		TenantInfo: req.TenantInfo,
 		TemplateID: req.TemplateID,
-		Expression: template.Expression,
+		Source:     template.Source,
 	})
 	if err != nil {
 		s.l.Warn("the review note was drafted without a backtest", zap.Error(err))
@@ -115,25 +115,17 @@ type reviewNoteReply struct {
 }
 
 func reviewNoteSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"note": map[string]any{
-				"type":        "string",
-				"description": "The note, at most 120 words",
-			},
-		},
-		"required":             []string{"note"},
-		"additionalProperties": false,
-	}
+	return objectSchema(map[string]any{
+		"note": typedField("string", "The note, at most 120 words"),
+	}, "note")
 }
 
 func reviewTemplateText(template *formulatemplate.FormulaTemplate) string {
 	return fmt.Sprintf(
-		"Name: %s\nDescription: %s\nCharges: %s\nVersion being submitted: v%d",
+		"Name: %s\nDescription: %s\nTests: %d\nVersion being submitted: v%d",
 		template.Name,
 		stringutils.WithDefault(strings.TrimSpace(template.Description), "(none)"),
-		template.Type,
+		template.TestCount,
 		template.CurrentVersionNumber,
 	)
 }
@@ -141,7 +133,7 @@ func reviewTemplateText(template *formulatemplate.FormulaTemplate) string {
 func diffText(diff *formulatemplateservice.ReviewDiffResponse) string {
 	if !diff.HasApprovedBase {
 		return "This is the template's first version; nothing has been approved before, so " +
-			"all of it is new.\nExpression:\n" + diff.CurrentExpression
+			"all of it is new.\nSource:\n" + diff.CurrentSource
 	}
 	if diff.ChangeCount == 0 {
 		return fmt.Sprintf("Nothing changed since v%d was approved.", diff.BaseVersion)
@@ -166,11 +158,11 @@ func diffText(diff *formulatemplateservice.ReviewDiffResponse) string {
 			changeValue(change.To),
 		))
 	}
-	if diff.BaseExpression != diff.CurrentExpression {
-		builder.WriteString("Approved expression:\n")
-		builder.WriteString(diff.BaseExpression)
-		builder.WriteString("\nSubmitted expression:\n")
-		builder.WriteString(diff.CurrentExpression)
+	if diff.BaseSource != diff.CurrentSource {
+		builder.WriteString("Approved source:\n")
+		builder.WriteString(diff.BaseSource)
+		builder.WriteString("\nSubmitted source:\n")
+		builder.WriteString(diff.CurrentSource)
 	}
 
 	return builder.String()
@@ -199,7 +191,7 @@ func backtestText(summary *formulatemplateports.BacktestSummary) string {
 	}
 
 	return fmt.Sprintf(
-		"Shipments re-rated: %d\nChanged: %d (%d up, %d down)\nFailed to rate: %d\n"+
+		"Shipments re-rated: %d\nChanged: %d (%d up, %d down)\nFailed to rate: %d\nRefused: %d\n"+
 			"Revenue on the approved version: %s\nRevenue on the submitted version: %s\n"+
 			"Difference: %s (%s%%)\nLargest increase: %s\nLargest decrease: %s",
 		summary.EvaluatedCount,
@@ -207,6 +199,7 @@ func backtestText(summary *formulatemplateports.BacktestSummary) string {
 		summary.IncreasedCount,
 		summary.DecreasedCount,
 		summary.ErrorCount,
+		summary.RefusedCount,
 		summary.CurrentTotal.String(),
 		summary.CandidateTotal.String(),
 		summary.TotalDelta.String(),

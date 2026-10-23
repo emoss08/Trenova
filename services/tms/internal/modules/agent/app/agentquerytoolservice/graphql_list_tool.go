@@ -71,8 +71,8 @@ type graphQLListSpec struct {
 	// no order, as the screen's search cannot (closest name first).
 	rank func(query string, rows []map[string]any) []map[string]any
 	// shape applies to each row what the screen's resolver does not, given
-	// the fields withheld from it.
-	shape func(row map[string]any, withheld map[string]struct{})
+	// the fields withheld from it and the call's clock.
+	shape func(row map[string]any, withheld map[string]struct{}, clk clock)
 	// defaults are parameter values a call that omits them reads with (the
 	// active courses, not the retired ones), named in their notes.
 	defaults map[string]any
@@ -166,7 +166,7 @@ func referenced(
 	out := make([]graphQLParam, 0, len(params))
 	used := 0
 	for _, param := range params {
-		if param.Kind != paramReference {
+		if param.Kind != paramReference && param.Kind != paramReferences {
 			out = append(out, param)
 			continue
 		}
@@ -175,7 +175,11 @@ func referenced(
 			continue
 		}
 		param.Schema = agenttoolschema.RecordID(ref.resource, ref.what, ref.source)
-		if len(ref.kinds) > 0 {
+		switch {
+		case param.Kind == paramReferences:
+			param.Schema = agenttoolschema.RecordIDs(ref.resource,
+				agenttoolschema.IDDescription(ref.what, ref.source), unpagedMost)
+		case len(ref.kinds) > 0:
 			param.Schema = agenttoolschema.KindID(
 				agenttoolschema.IDDescription(ref.what, ref.source), ref.kinds...)
 		}
@@ -368,7 +372,7 @@ func describedName(param graphQLParam) (string, bool) {
 		return param.Name + "/" + suffixTo, true
 	case paramAtLeast:
 		return param.Name + "/" + suffixMax, true
-	case paramIn, paramEquals, paramContains, paramPresent, paramReference:
+	case paramIn, paramEquals, paramContains, paramPresent, paramReference, paramReferences:
 		return param.Name, true
 	}
 
@@ -581,8 +585,9 @@ func (t *graphQLListTool) page(
 		for _, path := range page.withheld {
 			withheld[path] = struct{}{}
 		}
+		clk := clockFor(params)
 		for _, item := range page.items {
-			t.spec.shape(item, withheld)
+			t.spec.shape(item, withheld, clk)
 		}
 	}
 	if info, ok := connection[connectionPageInfo].(map[string]any); ok {

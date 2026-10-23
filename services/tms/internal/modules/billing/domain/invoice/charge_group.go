@@ -13,7 +13,7 @@ type ChargeGroup struct {
 	Description         string
 	ChargeCode          string
 	ChargeMethod        accessorialcharge.Method
-	RateUnit            accessorialcharge.RateUnit
+	RateUnit            string
 	Rate                decimal.NullDecimal
 	RateBasisAmount     decimal.NullDecimal
 	Quantity            decimal.Decimal
@@ -29,7 +29,7 @@ type chargeGroupKey struct {
 	accessorialChargeID pulid.ID
 	chargeCode          string
 	chargeMethod        accessorialcharge.Method
-	rateUnit            accessorialcharge.RateUnit
+	rateUnit            string
 	formulaTemplateID   pulid.ID
 	formulaTemplateName string
 	description         string
@@ -110,7 +110,7 @@ func chargeGroupKeyOf(line *InvoiceLine) chargeGroupKey {
 		formulaTemplateID:   line.FormulaTemplateID,
 		formulaTemplateName: line.FormulaTemplateName,
 	}
-	if line.Type != InvoiceLineTypeFreight && line.AccessorialChargeID.IsNil() {
+	if line.Type == InvoiceLineTypeFreight || line.AccessorialChargeID.IsNil() {
 		key.description = line.Description
 	}
 

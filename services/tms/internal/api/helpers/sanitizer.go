@@ -103,6 +103,7 @@ func (s *Sanitizer) extractMultiError(err error) ([]ValidationError, bool) {
 			Args:     e.Args,
 			Code:     string(e.Code),
 			Location: "body",
+			Range:    e.Range,
 		})
 	}
 	return result, true
@@ -120,6 +121,7 @@ func (s *Sanitizer) extractValidationError(err error) ([]ValidationError, bool) 
 		Args:     validErr.Args,
 		Code:     string(validErr.Code),
 		Location: "body",
+		Range:    validErr.Range,
 	}}, true
 }
 

@@ -86,6 +86,7 @@ var recordIDPrefixes = map[Resource]string{
 	ResourceTender:                    "tnd_",
 	ResourceAccessorialCharge:         "acc_",
 	ResourceFormulaTemplate:           "ft_",
+	ResourceFormulaLibrary:            "fl_",
 	ResourceRateMatrix:                "rmx_",
 	ResourceGeneralLedgerAccount:      "gla_",
 	ResourceFiscalPeriod:              "fp_",

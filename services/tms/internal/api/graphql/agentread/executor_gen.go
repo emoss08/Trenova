@@ -235,9 +235,24 @@ var operations = []Operation{
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DocumentTypeTableRowFields on DocumentType { businessUnitId code color createdAt description documentCategory documentClassification id isSystem name organizationId updatedAt version } query DocumentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { documentTypes(input: $input) { edges { node { ...DocumentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
+		Name:     "DeskTractorCard",
+		Hash:     "sha256:7e891cf8b78a2c790d256fc2a4d6f22a889904c19d0eef1b48a232741c3df9a1",
+		Document: "query DeskTractorCard($id: ID!) { tractor(id: $id) { code createdAt equipmentManufacturer { id name } equipmentType { code description id } externalId fleetCode { code id } fuelType id iftaQualified lastKnownLocation { id latitude longitude name } leaseEndDate leaseReference lessorName licensePlateNumber make model ownerWorker { firstName id lastName } ownershipType primaryWorker { firstName id lastName } registrationExpiry registrationNumber secondaryWorker { firstName id lastName } state { abbreviation } status vin year } }",
+	},
+	{
+		Name:     "DeskTrailerCard",
+		Hash:     "sha256:0a228b3ed6cf7d63b60e5ab74e5316d0db769b5c08ecec9ccf5df21e0e74682c",
+		Document: "query DeskTrailerCard($id: ID!) { trailer(id: $id) { code createdAt equipmentManufacturer { id name } equipmentType { code description id } externalId fleetCode { code id } id lastInspectionDate lastKnownLocation { id latitude longitude name } leaseEndDate leaseReference lessorName licensePlateNumber make maxLoadWeight model ownerWorker { firstName id lastName } ownershipType registrationExpiry registrationNumber registrationState { abbreviation } status vin year } }",
+	},
+	{
 		Name:     "EquipmentManufacturerTable",
 		Hash:     "sha256:1ad59b9754cf4b8c511c8cf3af0762a6da6adf252d5bb3fd05b50b349bcdaec7",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer { businessUnitId createdAt description id name organizationId status updatedAt version } query EquipmentManufacturerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentManufacturers(input: $input) { edges { node { ...EquipmentManufacturerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskVehiclePositions",
+		Hash:     "sha256:0c986c67a9359bf90e930fca12fc8de79ac3c8ab034a876baddb44e457941232",
+		Document: "query DeskVehiclePositions($maxAgeSeconds: Int, $tractorIds: [ID!]) { vehiclePositions(maxAgeSeconds: $maxAgeSeconds, tractorIds: $tractorIds) { engineState formattedLocation latitude longitude primaryWorkerName recordedAt speedMph tractorCode tractorId } }",
 	},
 	{
 		Name:     "TractorTable",

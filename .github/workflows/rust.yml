@@ -210,11 +210,13 @@ jobs:
           cargo +nightly fuzz run image_decode -- -max_total_time=90 -rss_limit_mb=2048
           cargo +nightly fuzz run exif_orientation -- -max_total_time=30 -rss_limit_mb=1024
           cargo +nightly fuzz run worker_job -- -max_total_time=30 -rss_limit_mb=1024
-      - name: Formula language
+      - name: Tariff
         working-directory: services/crates/rules/fuzz
         run: |
-          cargo +nightly fuzz run formula_check -- -max_total_time=60 -rss_limit_mb=1024
-          cargo +nightly fuzz run formula_format -- -max_total_time=30 -rss_limit_mb=1024
+          cargo +nightly fuzz run tariff_parse -- -max_total_time=45 -rss_limit_mb=1024
+          cargo +nightly fuzz run tariff_format -- -max_total_time=30 -rss_limit_mb=1024
+          cargo +nightly fuzz run tariff_check -- -max_total_time=60 -rss_limit_mb=1024
+          cargo +nightly fuzz run tariff_evaluate -- -max_total_time=60 -rss_limit_mb=1024
 
   image:
     name: Imaging image

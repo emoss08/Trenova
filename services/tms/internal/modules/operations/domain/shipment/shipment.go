@@ -16,10 +16,10 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -34,42 +34,37 @@ var (
 	_ validationframework.TenantedEntity = (*Shipment)(nil)
 )
 
-type RatingBreakdownItem struct {
-	Name   string  `json:"name"`
-	Label  string  `json:"label,omitempty"`
-	Amount float64 `json:"amount"`
-	Error  string  `json:"error,omitempty"`
-}
-
-type RatingGuardrail struct {
-	Applied   bool     `json:"applied"`
-	Bound     string   `json:"bound,omitempty"`
-	RawResult float64  `json:"rawResult"`
-	MinCharge *float64 `json:"minCharge,omitempty"`
-	MaxCharge *float64 `json:"maxCharge,omitempty"`
+type RatingSkip struct {
+	Code   string `json:"code"`
+	Source string `json:"source"`
 }
 
 type RatingDetail struct {
-	FormulaTemplateID   string                `json:"formulaTemplateId"`
-	FormulaTemplateName string                `json:"formulaTemplateName"`
-	Expression          string                `json:"expression"`
-	ResolvedVariables   map[string]any        `json:"resolvedVariables"`
-	Result              float64               `json:"result"`
-	RatedAt             int64                 `json:"ratedAt"`
-	VersionNumber       int64                 `json:"versionNumber,omitempty"`
-	Breakdown           []RatingBreakdownItem `json:"breakdown,omitempty"`
-	Guardrail           *RatingGuardrail      `json:"guardrail,omitempty"`
-	RateQuoteID         string                `json:"rateQuoteId,omitempty"`
-	AgreementID         string                `json:"agreementId,omitempty"`
-	AgreementName       string                `json:"agreementName,omitempty"`
-	RuleID              string                `json:"ruleId,omitempty"`
-	RuleLabel           string                `json:"ruleLabel,omitempty"`
-	Source              string                `json:"source,omitempty"`
-	Explanation         string                `json:"explanation,omitempty"`
-	// Receipt is the formula's calculation receipt when a formula priced the
-	// load: variables with their sources, rate-table rows consulted, and the
-	// amount before guardrails and rounding.
-	Receipt *formulatypes.Receipt `json:"receipt,omitempty"`
+	Bill                *tarifftypes.Bill  `json:"bill,omitempty"`
+	Refusal             string             `json:"refusal,omitempty"`
+	Source              string             `json:"source,omitempty"`
+	RatedAt             int64              `json:"ratedAt"`
+	RateQuoteID         string             `json:"rateQuoteId,omitempty"`
+	AgreementID         string             `json:"agreementId,omitempty"`
+	AgreementName       string             `json:"agreementName,omitempty"`
+	RuleID              string             `json:"ruleId,omitempty"`
+	RuleLabel           string             `json:"ruleLabel,omitempty"`
+	FormulaTemplateID   string             `json:"formulaTemplateId,omitempty"`
+	FormulaTemplateName string             `json:"formulaTemplateName,omitempty"`
+	VersionNumber       int64              `json:"versionNumber,omitempty"`
+	Inputs              tarifftypes.Inputs `json:"inputs,omitempty"`
+	Skipped             []RatingSkip       `json:"skipped,omitempty"`
+	Explanation         string             `json:"explanation,omitempty"`
+	Trace               rules.RawJSON      `json:"trace,omitempty"`
+}
+
+type FreightLine struct {
+	Label        string           `json:"label"`
+	Quantity     *decimal.Decimal `json:"quantity,omitempty"`
+	QuantityUnit string           `json:"quantityUnit,omitempty"`
+	Rate         *decimal.Decimal `json:"rate,omitempty"`
+	RateUnit     string           `json:"rateUnit,omitempty"`
+	Amount       decimal.Decimal  `json:"amount"`
 }
 
 type Shipment struct {
@@ -101,7 +96,8 @@ type Shipment struct {
 	CancelReason              string                `json:"cancelReason"               bun:"cancel_reason,type:VARCHAR(100),nullzero"`
 	OtherChargeAmount         decimal.NullDecimal   `json:"otherChargeAmount"          bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
 	FreightChargeAmount       decimal.NullDecimal   `json:"freightChargeAmount"        bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
-	BaseRate                  decimal.NullDecimal   `json:"baseRate"                   bun:"base_rate,type:NUMERIC(19,4),notnull,default:0"`
+	TariffInputs              tarifftypes.Inputs    `json:"tariffInputs"               bun:"tariff_inputs,type:JSONB,notnull,default:'{}'"`
+	FreightLines              []FreightLine         `json:"freightLines"               bun:"freight_lines,type:JSONB,notnull,default:'[]'"`
 	TotalChargeAmount         decimal.NullDecimal   `json:"totalChargeAmount"          bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
 	Pieces                    *int64                `json:"pieces"                     bun:"pieces,type:INTEGER,nullzero"`
 	Weight                    *int64                `json:"weight"                     bun:"weight,type:INTEGER,nullzero"`
@@ -118,7 +114,6 @@ type Shipment struct {
 	TransferredToBillingAt    *int64                `json:"transferredToBillingAt"     bun:"transferred_to_billing_at,type:BIGINT,nullzero"`
 	MarkedReadyToBillAt       *int64                `json:"markedReadyToBillAt"        bun:"marked_ready_to_bill_at,type:BIGINT,nullzero"`
 	BilledAt                  *int64                `json:"billedAt"                   bun:"billed_at,type:BIGINT,nullzero"`
-	RatingUnit                int64                 `json:"ratingUnit"                 bun:"rating_unit,type:INTEGER,notnull,default:1"`
 	FuelSurchargeLocked       bool                  `json:"fuelSurchargeLocked"        bun:"fuel_surcharge_locked,type:BOOLEAN,notnull"`
 	RatingDetail              *RatingDetail         `json:"ratingDetail"               bun:"rating_detail,type:JSONB,nullzero"`
 	RateQuoteID               *pulid.ID             `json:"rateQuoteId"                bun:"rate_quote_id,type:VARCHAR(100),nullzero"`
@@ -297,10 +292,12 @@ func RestoreRateOwnedFields(original, updated *Shipment) {
 	}
 
 	updated.RatingDetail = original.RatingDetail
+	updated.FreightLines = original.FreightLines
 }
 
 func (s *Shipment) ClearRatingOutcome() {
 	s.FreightChargeAmount = decimal.NullDecimal{}
+	s.FreightLines = []FreightLine{}
 	s.OtherChargeAmount = decimal.NullDecimal{}
 	s.TotalChargeAmount = decimal.NullDecimal{}
 	s.RatingDetail = nil
@@ -334,7 +331,7 @@ func RatedFieldsEdited(original, updated *Shipment) bool {
 		return true
 	}
 
-	if !decimalutils.NullEqual(original.BaseRate, updated.BaseRate) {
+	if !original.TariffInputs.Equal(updated.TariffInputs) {
 		return true
 	}
 
@@ -708,6 +705,10 @@ func (s *Shipment) IsNew() bool {
 
 func (s *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
+	s.TariffInputs = s.TariffInputs.OrEmpty()
+	if s.FreightLines == nil {
+		s.FreightLines = []FreightLine{}
+	}
 	s.ExternalReference = strings.TrimSpace(s.ExternalReference)
 
 	switch query.(type) {

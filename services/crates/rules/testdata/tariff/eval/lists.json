@@ -1,0 +1,1015 @@
+[
+  {
+    "name": "where keeps matching items",
+    "expr": "xs.where(x => x > 2)",
+    "display": "[3, 4, 5]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "map transforms items",
+    "expr": "xs.map(x => x * 2)",
+    "display": "[6, 2, 8, 2, 10]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "count without a test",
+    "expr": "xs.count()",
+    "display": "5",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "count with a test",
+    "expr": "xs.count(x => x == 1)",
+    "display": "2",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "sum of ints",
+    "expr": "xs.sum()",
+    "display": "14",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "sum with a selector",
+    "expr": "xs.sum(x => x * 10)",
+    "display": "140",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "sum of weights across units",
+    "expr": "ws.sum()",
+    "display": "1700 lb",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "sum of an empty list is zero without static types",
+    "expr": "[].sum()",
+    "display": "0",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "min of ints",
+    "expr": "xs.min() ?? 0",
+    "display": "1",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "max of weights across units",
+    "expr": "ws.max() ?? 0 lb",
+    "display": "1000 lb",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "min of weights across units",
+    "expr": "ws.min() ?? 0 lb",
+    "display": "2 cwt",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "min of an empty list is none",
+    "expr": "[].min() ?? 99",
+    "display": "99",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "avg of ints is a number",
+    "expr": "xs.avg()",
+    "display": "2.8",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "avg of weights",
+    "expr": "ws.avg()",
+    "display": "566.66666666666666666666666667 lb",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "avg of an empty list is an argument error",
+    "expr": "empty.avg()",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]\nlet empty: List<Int> = []",
+    "error": "argument",
+    "message": {
+      "message": "avg needs at least one item: an empty list has no average"
+    }
+  },
+  {
+    "name": "any",
+    "expr": "xs.any(x => x > 4)",
+    "display": "true",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "any of an empty list",
+    "expr": "[].any(x => x > 4)",
+    "display": "false",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "all",
+    "expr": "xs.all(x => x > 0)",
+    "display": "true",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "all of an empty list",
+    "expr": "[].all(x => x > 4)",
+    "display": "true",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "first",
+    "expr": "xs.first() ?? 0",
+    "display": "3",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "first with a test",
+    "expr": "xs.first(x => x > 3) ?? 0",
+    "display": "4",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "last",
+    "expr": "xs.last() ?? 0",
+    "display": "5",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "last with a test",
+    "expr": "xs.last(x => x < 4) ?? 0",
+    "display": "1",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "find",
+    "expr": "xs.find(x => x == 4) ?? 0",
+    "display": "4",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "find nothing",
+    "expr": "xs.find(x => x == 9) ?? 0",
+    "display": "0",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "sortBy is stable and ascending",
+    "expr": "[{ k: 2, v: \"a\" }, { k: 1, v: \"b\" }, { k: 2, v: \"c\" }].sortBy(r => r.k).map(r => r.v)",
+    "display": "[b, a, c]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "sortBy weights across units",
+    "expr": "ws.sortBy(w => w)",
+    "display": "[2 cwt, 500 lb, 1000 lb]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "take",
+    "expr": "xs.take(2)",
+    "display": "[3, 1]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "take more than there are",
+    "expr": "xs.take(10).len",
+    "display": "5",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "skip",
+    "expr": "xs.skip(3)",
+    "display": "[1, 5]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "reverse",
+    "expr": "xs.reverse()",
+    "display": "[5, 1, 4, 1, 3]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "distinct keeps first occurrences",
+    "expr": "xs.distinct()",
+    "display": "[3, 1, 4, 5]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "distinct across units",
+    "expr": "[1 cwt, 100 lb, 2 lb].distinct()",
+    "display": "[1 cwt, 2 lb]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "groupBy in order of first appearance",
+    "expr": "xs.groupBy(x => x % 2).map(g => \"{g.key}:{g.items.len}\")",
+    "display": "[1:4, 0:1]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "a two-parameter lambda gets the index",
+    "expr": "xs.map((x, i) => x * i)",
+    "display": "[0, 1, 8, 3, 20]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "where with the index",
+    "expr": "xs.where((x, i) => i > 2)",
+    "display": "[1, 5]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "lambdas see the enclosing scope",
+    "expr": "xs.where(x => x > limit)",
+    "display": "[4, 5]",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]\nlet limit = 3"
+  },
+  {
+    "name": "chained methods",
+    "expr": "xs.where(x => x > 1).map(x => x * x).sum()",
+    "display": "50",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "stops count deliveries",
+    "expr": "shipment.stops.count(s => s.kind == Delivery)",
+    "display": "2",
+    "facts": {
+      "shipment": {
+        "stops": [
+          {
+            "sequence": {
+              "$n": "1"
+            },
+            "kind": "Pickup",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": {
+              "$q": "1",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          },
+          {
+            "sequence": {
+              "$n": "2"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": {
+              "$q": "3.5",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          },
+          {
+            "sequence": {
+              "$n": "3"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": null,
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          }
+        ],
+        "commodities": [
+          {
+            "name": "a",
+            "freightClass": null,
+            "weight": {
+              "$q": "400",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "2"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          },
+          {
+            "name": "b",
+            "freightClass": null,
+            "weight": {
+              "$q": "900",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "5"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          },
+          {
+            "name": "c",
+            "freightClass": null,
+            "weight": {
+              "$q": "150",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "1"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "stops sum dwell skipping none",
+    "expr": "shipment.stops.where(s => s.dwell != none).sum(s => s.dwell ?? 0 h)",
+    "display": "4.5 h",
+    "facts": {
+      "shipment": {
+        "stops": [
+          {
+            "sequence": {
+              "$n": "1"
+            },
+            "kind": "Pickup",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": {
+              "$q": "1",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          },
+          {
+            "sequence": {
+              "$n": "2"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": {
+              "$q": "3.5",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          },
+          {
+            "sequence": {
+              "$n": "3"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": null,
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          }
+        ],
+        "commodities": [
+          {
+            "name": "a",
+            "freightClass": null,
+            "weight": {
+              "$q": "400",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "2"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          },
+          {
+            "name": "b",
+            "freightClass": null,
+            "weight": {
+              "$q": "900",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "5"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          },
+          {
+            "name": "c",
+            "freightClass": null,
+            "weight": {
+              "$q": "150",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "1"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "max with a selector gives the selected value",
+    "expr": "shipment.commodities.max(c => c.weight) ?? 0 lb",
+    "display": "900 lb",
+    "facts": {
+      "shipment": {
+        "stops": [
+          {
+            "sequence": {
+              "$n": "1"
+            },
+            "kind": "Pickup",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": {
+              "$q": "1",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          },
+          {
+            "sequence": {
+              "$n": "2"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": {
+              "$q": "3.5",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          },
+          {
+            "sequence": {
+              "$n": "3"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": null,
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          }
+        ],
+        "commodities": [
+          {
+            "name": "a",
+            "freightClass": null,
+            "weight": {
+              "$q": "400",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "2"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          },
+          {
+            "name": "b",
+            "freightClass": null,
+            "weight": {
+              "$q": "900",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "5"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          },
+          {
+            "name": "c",
+            "freightClass": null,
+            "weight": {
+              "$q": "150",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "1"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "max with a lambda of the item's own type gives the lambda's value",
+    "expr": "xs.max(x => x * 2) ?? 0",
+    "display": "10",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "min with a lambda gives the lambda's value, not the item",
+    "expr": "xs.min(x => 10 - x) ?? 0",
+    "display": "5",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "commodities sum pieces",
+    "expr": "shipment.commodities.sum(c => c.pieces)",
+    "display": "8",
+    "facts": {
+      "shipment": {
+        "stops": [
+          {
+            "sequence": {
+              "$n": "1"
+            },
+            "kind": "Pickup",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": {
+              "$q": "1",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          },
+          {
+            "sequence": {
+              "$n": "2"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": {
+              "$q": "3.5",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          },
+          {
+            "sequence": {
+              "$n": "3"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": null,
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          }
+        ],
+        "commodities": [
+          {
+            "name": "a",
+            "freightClass": null,
+            "weight": {
+              "$q": "400",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "2"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          },
+          {
+            "name": "b",
+            "freightClass": null,
+            "weight": {
+              "$q": "900",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "5"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          },
+          {
+            "name": "c",
+            "freightClass": null,
+            "weight": {
+              "$q": "150",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "1"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "commodities sortBy weight names",
+    "expr": "shipment.commodities.sortBy(c => c.weight).map(c => c.name)",
+    "display": "[c, a, b]",
+    "facts": {
+      "shipment": {
+        "stops": [
+          {
+            "sequence": {
+              "$n": "1"
+            },
+            "kind": "Pickup",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": {
+              "$q": "1",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          },
+          {
+            "sequence": {
+              "$n": "2"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": {
+              "$q": "3.5",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          },
+          {
+            "sequence": {
+              "$n": "3"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": null,
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          }
+        ],
+        "commodities": [
+          {
+            "name": "a",
+            "freightClass": null,
+            "weight": {
+              "$q": "400",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "2"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          },
+          {
+            "name": "b",
+            "freightClass": null,
+            "weight": {
+              "$q": "900",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "5"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          },
+          {
+            "name": "c",
+            "freightClass": null,
+            "weight": {
+              "$q": "150",
+              "u": "lb"
+            },
+            "pieces": {
+              "$n": "1"
+            },
+            "dimensions": {
+              "length": null,
+              "width": null,
+              "height": null
+            },
+            "volume": null,
+            "density": null,
+            "hazmat": false,
+            "stackable": false
+          }
+        ]
+      }
+    }
+  }
+]

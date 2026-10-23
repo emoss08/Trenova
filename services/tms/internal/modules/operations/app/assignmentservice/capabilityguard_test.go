@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 
@@ -61,7 +60,7 @@ func brokerageOnlyService(
 		holdRepo:     shipmentportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formulatemplateportsmock.NewMockFormulaCalculator(t)),
+			RateEngine:      ratingtest.NewEngine(t),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),

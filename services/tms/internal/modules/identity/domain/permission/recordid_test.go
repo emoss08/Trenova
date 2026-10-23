@@ -51,6 +51,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -270,6 +271,9 @@ var minters = map[permission.Resource]minter{
 	),
 	permission.ResourceFormulaTemplate: mint(
 		func(e *formulatemplate.FormulaTemplate) pulid.ID { return e.ID },
+	),
+	permission.ResourceFormulaLibrary: mint(
+		func(e *formulalibrary.FormulaLibrary) pulid.ID { return e.ID },
 	),
 	permission.ResourceRateMatrix: mint(
 		func(e *ratematrix.RateMatrix) pulid.ID { return e.ID },

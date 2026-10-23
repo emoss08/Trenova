@@ -1,10 +1,11 @@
 package assignmentservice
 
 import (
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/operationstest"

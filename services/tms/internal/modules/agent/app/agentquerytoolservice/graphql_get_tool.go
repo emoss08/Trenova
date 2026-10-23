@@ -93,7 +93,7 @@ func (t *graphQLGetTool) Query(
 		for _, path := range withheld {
 			hidden[path] = struct{}{}
 		}
-		t.spec.shape(record, hidden, params)
+		t.spec.shape(record, hidden, clockFor(params))
 	}
 	if len(withheld) > 0 {
 		record[outcomeWithheld] = withheld

@@ -120,9 +120,11 @@ func TestGraphQLGet_TheCardSelectsWhatTheSummaryPromises(t *testing.T) {
 		return names
 	}
 	for tool, want := range map[string][]string{
-		"carrier_get":  {"insurancePolicies", "contacts", "complianceStatus", "dotNumber", "mcNumber"},
-		"customer_get": {"billingProfile", "addressLine1", "dotNumber"},
-		"location_get": {"latitude", "longitude", "geofenceType", "timezone", "locationCategory"},
+		"carrier_get":           {"insurancePolicies", "contacts", "complianceStatus", "dotNumber", "mcNumber"},
+		"customer_get":          {"billingProfile", "addressLine1", "dotNumber"},
+		"location_get":          {"latitude", "longitude", "geofenceType", "timezone", "locationCategory"},
+		"equipment_get_tractor": {"primaryWorker", "fleetCode", "equipmentType", "leaseEndDate"},
+		"equipment_get_trailer": {"fleetCode", "equipmentType", "maxLoadWeight", "leaseEndDate"},
 		"carrier_get_intelligence_event": {
 			"severity", "priorValue", "currentValue", "acknowledgedAt", "resolvedAt",
 		},

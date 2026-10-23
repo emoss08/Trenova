@@ -32,9 +32,7 @@ func createTemplate(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Name:           name,
-		Type:           formulatemplate.TemplateTypeFreightCharge,
-		Expression:     "totalDistance * 2",
-		SchemaID:       "shipment",
+		Source:         "tariff \"" + name + "\"\n\ncharge \"Flat\" = $10\n",
 		Status:         status,
 	}.Build())
 	require.NoError(t, err)

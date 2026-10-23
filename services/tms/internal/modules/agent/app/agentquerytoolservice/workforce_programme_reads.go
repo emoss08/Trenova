@@ -89,7 +89,7 @@ func workforceProgrammeReadSpecs() []graphQLListSpec {
 
 // shapeShiftTemplate writes a pattern's days, start and length as a person
 // says them (Mon Tue Wed, 06:00, 10:00) beside the stored mask and minutes.
-func shapeShiftTemplate(row map[string]any, _ map[string]struct{}) {
+func shapeShiftTemplate(row map[string]any, _ map[string]struct{}, _ clock) {
 	if mask, ok := row[shiftDaysOfWeek].(string); ok {
 		row["days"] = shiftDays(mask)
 	}

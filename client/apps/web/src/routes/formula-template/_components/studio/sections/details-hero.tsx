@@ -1,20 +1,14 @@
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type {
-  FormulaTemplateFormValues,
-  FormulaTemplateType,
-} from "@trenova/shared/types/formula-template";
-import { Truck01Icon } from "@trenova/shared/components/icons";
+import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
 import { Controller, useFormContext, useFormState } from "react-hook-form";
 import { sectionDomId } from "../studio-context";
 
 /**
  * The template's name and what it is for, written in place: a large
- * borderless name, a description that grows as it is written, then what kind
- * of charge it computes and the schema it reads.
+ * borderless name and a description that grows as it is written. Everything
+ * the template bills is in its source.
  */
 export function DetailsHero() {
   const t = useT();
@@ -78,29 +72,6 @@ export function DetailsHero() {
           />
         )}
       />
-      <div className="flex flex-wrap items-center gap-2 px-1.5 pt-1">
-        <span className="text-foreground-subtle text-xs">{t("Charges")}</span>
-        <Controller
-          name="type"
-          control={control}
-          render={({ field }) => (
-            <SegmentedControl<FormulaTemplateType>
-              aria-label={t("Charges")}
-              value={field.value}
-              onValueChange={field.onChange}
-              items={[
-                { value: "FreightCharge", label: t("Freight") },
-                { value: "AccessorialCharge", label: t("Accessorial") },
-              ]}
-            />
-          )}
-        />
-        <span className="text-foreground-subtle ml-2 text-xs">{t("Schema")}</span>
-        <Badge variant="neutral" className="gap-1">
-          <Truck01Icon className="size-3" />
-          {t("Shipment")}
-        </Badge>
-      </div>
     </section>
   );
 }

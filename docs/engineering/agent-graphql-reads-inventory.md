@@ -100,9 +100,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `equipment_get_tractor` | op | tractor | DeskTractorCard | n/a | id | Same TractorRepository.GetByID. |
-| `equipment_get_trailer` | op | trailer | DeskTrailerCard | n/a | id | Same TrailerRepository.GetByID. |
-| `equipment_list_positions` | partial | vehiclePositions (+ vehiclePosition) | VehiclePositions (+ DeskTractorPosition per tractor) | unpaged list | maxAgeSeconds only | Same TelematicsService.ListVehiclePositions (telematics live read). maxAgeMinutes -> maxAgeSeconds; tractorIds filter missing (vehiclePosition(tractorId) is one at a time). |
 
 ## exception
 
@@ -307,12 +304,12 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 87 |
-| op, converted (rows removed) | 32 |
+| op, not yet converted | 85 |
+| op, converted (rows removed) | 34 |
 | field-no-op, not yet converted | 5 |
 | field-no-op, converted (rows removed) | 1 |
-| partial, not yet converted | 24 |
-| partial, converted (rows removed) | 6 |
+| partial, not yet converted | 23 |
+| partial, converted (rows removed) | 7 |
 | none | 21 |
 | **total** | **176** |
 

@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AccessorialChargeAutocompleteField } from "@/components/autocomplete-fields";
-import { InputField } from "@/components/fields/input-field";
+import { TariffEditorField } from "@/components/formula-editor/tariff-editor";
+import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -17,8 +18,15 @@ const NEW_ACCESSORIAL = {
   amount: null,
   waived: false,
   autoApply: false,
-  applyCondition: "",
+  condition: null,
 } as unknown as RateAgreementAccessorial;
+
+/** What a new condition starts as: a condition file's header and the expression to write. */
+// i18n-ignore: Tariff source, the condition file a new charge starts from
+const NEW_CONDITION = `condition "Applies when"
+
+shipment.hazmat
+`;
 
 /**
  * The contract's own prices for accessorial services.
@@ -188,19 +196,7 @@ export function AccessorialScheduleEditor() {
             </FormGroup>
 
             {autoApplies && (
-              <FormGroup cols={1}>
-                <FormControl cols="full">
-                  <InputField
-                    control={control}
-                    name={`accessorials.${index}.applyCondition` as never}
-                    label={t("Apply condition")}
-                    placeholder={t("totalStops > 2")}
-                    description={t(
-                      "An expression in the same language the rating formulas use. Leave empty to apply to every shipment.",
-                    )}
-                  />
-                </FormControl>
-              </FormGroup>
+              <AccessorialCondition index={index} hasCondition={Boolean(row?.condition)} />
             )}
           </div>
         );
@@ -209,6 +205,62 @@ export function AccessorialScheduleEditor() {
       <Button type="button" variant="outline" size="sm" onClick={() => append(NEW_ACCESSORIAL)}>
         <PlusIcon className="mr-1 size-3.5" />
         {t("Add accessorial")}
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * When an automatic accessorial applies: a Tariff `condition` file whose last line is the
+ * true-or-false rule, checked against each shipment the contract prices. Without one the
+ * charge applies to every shipment.
+ */
+function AccessorialCondition({ index, hasCondition }: { index: number; hasCondition: boolean }) {
+  const t = useT();
+  const { control, setValue } = useFormContext<RateAgreement>();
+  const { context } = useTariffCheckContext();
+  const name = `accessorials.${index}.condition` as const;
+
+  if (!hasCondition) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-md border border-dashed px-3 py-2">
+        <p className="text-muted-foreground text-xs">
+          {t("Applies to every shipment this contract prices.")}
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          onClick={() => setValue(name, NEW_CONDITION, { shouldDirty: true })}
+        >
+          {t("Add condition")}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <TariffEditorField
+        control={control}
+        name={name as never}
+        kind="condition"
+        context={context}
+        variant="mini"
+        label={t("Applies when")}
+        description={t(
+          "A Tariff condition: inputs and bindings, then one true-or-false line. The charge applies only to the shipments it holds for.",
+        )}
+        ariaLabel={t("Condition for accessorial {0}", index + 1)}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="xs"
+        className="text-muted-foreground self-start"
+        onClick={() => setValue(name, null, { shouldDirty: true })}
+      >
+        {t("Remove condition")}
       </Button>
     </div>
   );

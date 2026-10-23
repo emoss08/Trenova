@@ -411,6 +411,10 @@ own name:
   rename as toolcontract does;
 - a wrapped `table: DataTableConnectionInput!` contributes its typed fields by the rule above.
 
+**A list of ids** an unpaged list's argument takes (`vehiclePositions(tractorIds: [ID!])`) is a
+`paramReferences` parameter: typed by the spec's `references` as a list of that resource's ids,
+each checked before the read, and sent as the list.
+
 **Get operations.** The get operation's own arguments become parameters: the id as `<record>Id`,
 marked with its resource. A human key the person may say instead (a PRO number) is a second,
 optional parameter. The generator resolves it through the list operation's exact filter on that
@@ -589,6 +593,9 @@ Each module's PR:
 | Parties | `carrier_get_intelligence_event` | none at Internal | reads `CarrierIntelEvent`. `CarrierIntelEvent` had no kind (it is not named for `carrier_intelligence`), so the guard did not gate it and a reader below Internal got every field; it now declares `@kind(resource: "carrier_intelligence")`, so its fields follow `carrier_intelligence`'s Internal default on every read of the type, the carrier intelligence screens' included, as the repository tool gated them. Who acknowledged or resolved it shows the user reference view |
 | Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows the worker reference view (the driver's name) to a reader who cannot read workers, and nothing else |
 | Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
+| Equipment | `equipment_get_tractor` | none | reads `DeskTractorCard`; its drivers and owner show the worker reference view (their names) to a reader who cannot read workers, and nothing else |
+| Equipment | `equipment_get_trailer` | none | reads `DeskTrailerCard`; every field it selects is Internal, and its owner shows the worker reference view |
+| Equipment | `equipment_list_positions` | none | reads `DeskVehiclePositions`, written for it: each tractor's latest reading. `vehiclePositions` gains `tractorIds`, which `TelematicsService.ListVehiclePositions` passes to the repository's own filter (the shipment tracking tool now names its tractors too, rather than reading the fleet and keeping one). `maxAgeMinutes` becomes the argument's `maxAgeSeconds`, four hours when left out as before. Each row gains `ageMinutes` from its `recordedAt` and the call's clock (`shape` now takes the clock). The repository tool left out the driver's name for a reader who cannot read workers; the row's `primaryWorkerName` is the name the worker reference view shows on the tractor list and card to any tractor reader, so it names the driver as they do |
 | Workforce | `worker_list_training_courses` | none | every field the table selects is Internal |
 | Workforce | `worker_list_time_off` | `reason`, `rejectionReason`, `cancellationReason`, `balanceAfterDays` | `worker_pto` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; its dates, status, type, days and people are now declared Internal, and a leave's reasons and balance stay Restricted, where the repository row returned the reason and decision ungated. Each request's `worker` shows only the worker reference view to a reader who cannot read workers |
 | Workforce | `worker_list_checklists` | none | reads `DeskWorkerChecklists`; every checklist field is Internal. The templates read alongside are root records of their own read |

@@ -3,6 +3,8 @@ package accessorialcharge
 import (
 	"context"
 	"errors"
+	"regexp"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -47,13 +49,22 @@ type AccessorialCharge struct {
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
 }
 
+var CodePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]{2,9}$`)
+
+func NormalizeCode(code string) string {
+	return strings.ToUpper(strings.TrimSpace(code))
+}
+
 func (a *AccessorialCharge) Validate(multiErr *errortypes.MultiError) {
+	a.Code = NormalizeCode(a.Code)
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		a,
 		validation.Field(
 			&a.Code,
 			validation.Required.Error("Code is required"),
-			validation.Length(3, 10).Error("Code must be between 3 and 10 characters"),
+			validation.Match(CodePattern).Error(
+				"Code must be 3 to 10 characters: a letter, then letters, digits or underscores",
+			),
 		),
 		validation.Field(&a.Description,
 			validation.Required.Error("Description is required"),
@@ -116,6 +127,7 @@ func (a *AccessorialCharge) GetTableName() string {
 }
 
 func (a *AccessorialCharge) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	a.Code = NormalizeCode(a.Code)
 	if a.Method != MethodPerUnit {
 		a.RateUnit = ""
 	}

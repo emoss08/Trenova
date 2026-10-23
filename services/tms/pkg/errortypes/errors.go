@@ -64,12 +64,18 @@ func (e *BaseError) LogFields() LogFields {
 	return fields
 }
 
+type SourceRange struct {
+	From int `json:"from"`
+	To   int `json:"to"`
+}
+
 type Error struct {
 	Field    string             `json:"field"`
 	Code     ErrorCode          `json:"code"`
 	Message  string             `json:"message"`
 	Args     []any              `json:"-"`
 	Priority ValidationPriority `json:"priority,omitempty"`
+	Range    *SourceRange       `json:"range,omitempty"`
 	Internal error              `json:"-"`
 }
 
@@ -100,6 +106,16 @@ func NewValidationErrorWithPriority(
 
 func (e *Error) Error() string {
 	return i18n.Format(e.Message, e.Args...)
+}
+
+func (e *Error) WithRange(from, to int) *Error {
+	e.Range = &SourceRange{From: from, To: to}
+	return e
+}
+
+func (e *Error) WithInternal(err error) *Error {
+	e.Internal = err
+	return e
 }
 
 func (e *Error) Unwrap() error {
@@ -221,6 +237,7 @@ func (m *MultiError) AddError(err *Error) {
 		Message:  err.Message,
 		Args:     err.Args,
 		Priority: err.Priority,
+		Range:    err.Range,
 		Internal: err.Internal,
 	}
 

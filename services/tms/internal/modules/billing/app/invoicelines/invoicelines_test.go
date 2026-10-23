@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -55,8 +56,15 @@ func testShipment(charges ...*shipment.AdditionalCharge) *shipment.Shipment {
 		ProNumber:           "SEED-DET-011",
 		BOL:                 "BOL-2026-0211",
 		FreightChargeAmount: decimal.NewNullDecimal(dec("2450")),
-		BaseRate:            decimal.NewNullDecimal(dec("3.5")),
-		AdditionalCharges:   charges,
+		FreightLines: []shipment.FreightLine{{
+			Label:        "Per Mile",
+			Quantity:     new(dec("700")),
+			QuantityUnit: "mi",
+			Rate:         new(dec("3.5")),
+			RateUnit:     "$/mi",
+			Amount:       dec("2450"),
+		}},
+		AdditionalCharges: charges,
 	}
 }
 
@@ -107,7 +115,10 @@ func TestForShipmentNamesEachAccessorialAndHowItWasCalculated(t *testing.T) {
 	freight := lines[0]
 	assert.Equal(t, 4, freight.LineNumber)
 	assert.Equal(t, invoice.InvoiceLineTypeFreight, freight.Type)
-	assert.Equal(t, invoicelines.FreightDescription, freight.Description)
+	assert.Equal(t, "Per Mile", freight.Description)
+	assert.True(t, freight.Quantity.Equal(dec("700")))
+	assert.True(t, freight.UnitPrice.Equal(dec("3.5")))
+	assert.Equal(t, "$/mi", freight.RateUnit)
 	assert.True(t, freight.Amount.Equal(dec("2450")))
 	assert.Equal(t, "Per Mile", freight.FormulaTemplateName)
 	require.True(t, freight.Rate.Valid)
@@ -120,7 +131,7 @@ func TestForShipmentNamesEachAccessorialAndHowItWasCalculated(t *testing.T) {
 	assert.Equal(t, "DET", perUnit.ChargeCode)
 	assert.Equal(t, det.ID, perUnit.AccessorialChargeID)
 	assert.Equal(t, accessorialcharge.MethodPerUnit, perUnit.ChargeMethod)
-	assert.Equal(t, accessorialcharge.RateUnitHour, perUnit.RateUnit)
+	assert.Equal(t, "$/h", perUnit.RateUnit)
 	assert.True(t, perUnit.Rate.Decimal.Equal(dec("75")))
 	assert.True(t, perUnit.Quantity.Equal(dec("2")))
 	assert.True(t, perUnit.Amount.Equal(dec("150")))
@@ -216,7 +227,7 @@ func TestForShipmentNamesTheFormulaFromTheLoadedTemplate(t *testing.T) {
 	shp := testShipment()
 	shp.FormulaTemplateID = templateID
 	shp.FormulaTemplate = &formulatemplate.FormulaTemplate{ID: templateID, Name: "Flat Rate"}
-	shp.BaseRate = decimal.NewNullDecimal(decimal.Zero)
+	shp.FreightLines = nil
 
 	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
 
@@ -253,7 +264,11 @@ func TestForShipmentNamesTheTemplateOfALegacyRatingByItsName(t *testing.T) {
 		assigned string
 		wantID   pulid.ID
 	}{
-		{name: "the assigned template has the rating's name", assigned: "Per Mile", wantID: templateID},
+		{
+			name:     "the assigned template has the rating's name",
+			assigned: "Per Mile",
+			wantID:   templateID,
+		},
 		{name: "the assigned template was renamed or replaced", assigned: "Per CWT", wantID: ""},
 	}
 	for _, tt := range tests {
@@ -263,7 +278,10 @@ func TestForShipmentNamesTheTemplateOfALegacyRatingByItsName(t *testing.T) {
 			shp := testShipment()
 			shp.RatingDetail = &shipment.RatingDetail{FormulaTemplateName: "Per Mile"}
 			shp.FormulaTemplateID = templateID
-			shp.FormulaTemplate = &formulatemplate.FormulaTemplate{ID: templateID, Name: tt.assigned}
+			shp.FormulaTemplate = &formulatemplate.FormulaTemplate{
+				ID:   templateID,
+				Name: tt.assigned,
+			}
 
 			freight := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)[0]
 
@@ -392,4 +410,127 @@ func TestHydrateAccessorialsWithoutARepositoryLeavesChargesAlone(t *testing.T) {
 		),
 	)
 	assert.Nil(t, charge.AccessorialCharge)
+}
+
+func TestForShipmentBillsOneLinePerFreightLine(t *testing.T) {
+	t.Parallel()
+
+	shp := testShipment()
+	shp.FreightChargeAmount = decimal.NewNullDecimal(dec("2600"))
+	shp.FreightLines = []shipment.FreightLine{
+		{
+			Label:        "Linehaul",
+			Quantity:     new(dec("700")),
+			QuantityUnit: "mi",
+			Rate:         new(dec("3.5")),
+			RateUnit:     "$/mi",
+			Amount:       dec("2450"),
+		},
+		{Label: "Minimum charge adjustment", Amount: dec("150")},
+	}
+
+	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+
+	require.Len(t, lines, 2)
+	assert.Equal(t, "Linehaul", lines[0].Description)
+	assert.Equal(t, 1, lines[0].LineNumber)
+	assert.True(t, lines[0].Amount.Equal(dec("2450")))
+	assert.Equal(t, "Minimum charge adjustment", lines[1].Description)
+	assert.Equal(t, 2, lines[1].LineNumber)
+	assert.True(t, lines[1].Quantity.Equal(dec("1")))
+	assert.True(t, lines[1].Amount.Equal(dec("150")))
+	for _, line := range lines {
+		assert.Equal(t, invoice.InvoiceLineTypeFreight, line.Type)
+	}
+}
+
+func TestForShipmentSplitsAPartialFreightShareAcrossTheLinesToTheCent(t *testing.T) {
+	t.Parallel()
+
+	shp := testShipment()
+	shp.FreightChargeAmount = decimal.NewNullDecimal(dec("1000"))
+	shp.FreightLines = []shipment.FreightLine{
+		{Label: "Linehaul", Amount: dec("666.67")},
+		{Label: "Stop charges", Amount: dec("333.33")},
+	}
+	share := &shipment.PayerShare{Charges: []shipment.AllocatedCharge{{
+		Kind:        shipment.ChargeAllocationKindFreight,
+		ChargeTotal: dec("1000"),
+		Amount:      dec("333.33"),
+		Percent:     decimal.NewNullDecimal(dec("33.333")),
+		Partial:     true,
+	}}}
+
+	lines := invoicelines.ForShipmentShare(billingqueue.BillTypeInvoice, shp, share, 1)
+
+	require.Len(t, lines, 2)
+	total := lines[0].Amount.Add(lines[1].Amount)
+	assert.True(t, total.Equal(dec("333.33")), "the lines add up to the share, got %s", total)
+	assert.Contains(t, lines[0].Description, "Linehaul")
+	assert.Contains(t, lines[0].Description, "share")
+	assert.True(t, lines[0].Quantity.Equal(dec("1")), "a partial share is billed as one amount")
+}
+
+func TestForShipmentBillsAShipmentWithoutFreightLinesAsOneLine(t *testing.T) {
+	t.Parallel()
+
+	shp := testShipment()
+	shp.FreightLines = nil
+
+	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+
+	require.Len(t, lines, 1)
+	assert.Equal(t, invoicelines.FreightDescription, lines[0].Description)
+	assert.True(t, lines[0].Amount.Equal(dec("2450")))
+}
+
+func TestForShipmentItemizesATariffAccessorial(t *testing.T) {
+	t.Parallel()
+
+	stop := &accessorialcharge.AccessorialCharge{
+		ID:          pulid.MustNew("acc_"),
+		Code:        "XDROP",
+		Description: "Extra drop",
+	}
+	shp := testShipment(&shipment.AdditionalCharge{
+		AccessorialChargeID: stop.ID,
+		AccessorialCharge:   stop,
+		IsSystemGenerated:   true,
+		IsTariff:            true,
+		Method:              accessorialcharge.MethodFlat,
+		Amount:              dec("150"),
+		Unit:                1,
+		Label:               "Extra drops",
+		Quantity:            decimal.NewNullDecimal(dec("2")),
+		Rate:                decimal.NewNullDecimal(dec("75")),
+		RateUnit:            "$/stop",
+	})
+
+	lines := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
+
+	require.Len(t, lines, 2)
+	accessorial := lines[1]
+	assert.Equal(t, "Extra drops", accessorial.Description)
+	assert.Equal(t, "XDROP", accessorial.ChargeCode)
+	assert.True(t, accessorial.Quantity.Equal(dec("2")))
+	assert.True(t, accessorial.UnitPrice.Equal(dec("75")))
+	assert.Equal(t, "$/stop", accessorial.RateUnit)
+}
+
+func TestRatingNotesCollectEachBillsNotesOnce(t *testing.T) {
+	t.Parallel()
+
+	first := testShipment()
+	first.RatingDetail = &shipment.RatingDetail{Bill: &tarifftypes.Bill{Notes: []tarifftypes.Note{
+		{Text: "Rated on the 2026 contract"}, {Text: " "},
+	}}}
+	second := testShipment()
+	second.RatingDetail = &shipment.RatingDetail{Bill: &tarifftypes.Bill{Notes: []tarifftypes.Note{
+		{Text: "Rated on the 2026 contract"}, {Text: "Fuel at the peg"},
+	}}}
+
+	assert.Equal(t,
+		[]string{"Rated on the 2026 contract", "Fuel at the peg"},
+		invoicelines.RatingNotes(first, nil, second, testShipment()),
+	)
 }
