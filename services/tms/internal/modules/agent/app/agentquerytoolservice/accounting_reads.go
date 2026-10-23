@@ -17,11 +17,13 @@ const (
 	argObjectIDs       = "objectIds"
 	argMappingKey      = "key"
 	argMappingRecordID = "recordId"
+	argStatuses        = "statuses"
 
 	fieldSyncErrorCategory = "errorCategory"
 	fieldMappingTargetType = "targetType"
 	fieldMappingState      = "state"
 	fieldRequiredOnly      = "requiredOnly"
+	fieldMapping           = "mapping"
 
 	syncStateMaxDocuments = 50
 	syncDocumentIDSources = "invoice_list, invoice_get, receivable_list_customer_payments, " +
@@ -156,7 +158,7 @@ func syncRecordsListSpec() graphQLListSpec {
 		queryNote: "Words to find in Trenova or accounting system document numbers.",
 		names: map[string]string{
 			argIntegrationType: paramAccountingSystem,
-			"statuses":         accountingStatusField,
+			argStatuses:        accountingStatusField,
 			"objectTypes":      "documentType",
 			"errorCategories":  fieldSyncErrorCategory,
 			argObjectIDs:       paramDocumentIDs,
@@ -201,7 +203,7 @@ func mappingGapsListSpec() graphQLListSpec {
 			"setup can finish. Each gap carries its id and the candidates Trenova " +
 			"considered; pass them to accounting_get_mapping or accounting_set_mapping.",
 		searchTerms: []string{
-			"mapping", "unmapped", "setup", "match", "gaps", "still needs mapping",
+			fieldMapping, "unmapped", "setup", "match", "gaps", "still needs mapping",
 		},
 		queryNote: "Words to find in the Trenova label or the chosen record's name.",
 		names: map[string]string{
@@ -314,7 +316,7 @@ func accountingGetSpecs() []getSpec {
 				source: "customer_list, carrier_list or masterdata_list_accessorial_charges",
 			}},
 			shape: func(record map[string]any, withheld map[string]struct{}, clk clock) {
-				if mapping, ok := record["mapping"].(map[string]any); ok {
+				if mapping, ok := record[fieldMapping].(map[string]any); ok {
 					mappingActions(mapping, withheld, clk)
 				}
 			},
