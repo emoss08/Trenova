@@ -13955,6 +13955,79 @@ export type FactoringCompanyRecordQueryVariables = Exact<{
 
 export type FactoringCompanyRecordQuery = { factoringCompany: { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string | null, city: string, stateId: string, postalCode: string, email: string | null, phoneNumber: string | null, remittanceInstructions: string | null, noticeOfAssignment: string | null, nonRecourse: boolean, notes: string | null, version: number, createdAt: number, updatedAt: number } | null };
 
+export type DeskFactoringInvoiceStateFieldsFragment = { invoiceId: string, customerId: string, factoringCompanyId: string | null, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null }> } & { ' $fragmentName'?: 'DeskFactoringInvoiceStateFieldsFragment' };
+
+export type DeskFactoringReadinessQueryVariables = Exact<{
+  invoiceId: string | number;
+}>;
+
+
+export type DeskFactoringReadinessQuery = { factoringReadiness: { ' $fragmentRefs'?: { 'DeskFactoringInvoiceStateFieldsFragment': DeskFactoringInvoiceStateFieldsFragment } } };
+
+export type DeskFactoringInvoiceStatesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskFactoringInvoiceStatesQuery = { factoringInvoiceStates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskFactoringInvoiceStateFieldsFragment': DeskFactoringInvoiceStateFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskFactoringAgreementsQueryVariables = Exact<{
+  factoringCompanyId: string | number;
+}>;
+
+
+export type DeskFactoringAgreementsQuery = { factoringAgreements: Array<{ id: string, factoringCompanyId: string, status: FactoringAgreementStatus, effectiveFrom: number, effectiveTo: number | null, advanceRateBp: number, reserveRateBp: number, minimumFeeMinor: number, chargebackWindowDays: number, recourse: FactoringRecourse, accountingTreatment: FactoringAccountingTreatment, fundingDays: number, submissionTime: number, feeTiers: Array<{ daysFrom: number, daysTo: number | null, rateBp: number, flatMinor: number }>, documentTypes: Array<{ id: string, name: string }> }> };
+
+export type DeskFactoringNoasQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskFactoringNoasQuery = { factoringNoas: { totalCount?: number | null, edges: Array<{ node: { id: string, customerId: string, factoringCompanyId: string, status: FactoringNoaStatus, sentAt: number | null, sentTo: string | null, acknowledgedAt: number | null, expiresAt: number | null, releasedAt: number | null, releaseReason: string | null, version: number, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskFactoringSubmissionFieldsFragment = { id: string, number: string, factoringCompanyId: string, status: FactoringSubmissionStatus, currencyCode: string, invoiceCount: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, transportMethod: FactoringTransportMethod, transportTarget: string, attempts: number, lastError: string | null, sentAt: number | null, failedAt: number | null, cancelReason: string | null, createdAt: number, version: number, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'DeskFactoringSubmissionFieldsFragment' };
+
+export type DeskFactoringSubmissionsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskFactoringSubmissionsQuery = { factoringSubmissions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskFactoringSubmissionFieldsFragment': DeskFactoringSubmissionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskFactoringSubmissionQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskFactoringSubmissionQuery = { factoringSubmission: (
+    { items: Array<{ id: string, invoiceId: string, invoiceNumber: string, customerId: string, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, expectedDays: number, status: FactoringSubmissionItemStatus, packetDocumentId: string | null, fundedOn: number | null, advanceMinor: number | null, feeMinor: number | null, reserveMinor: number | null, rejectionReason: string | null, settledOn: number | null, chargedBackOn: number | null, chargebackReason: string | null }> }
+    & { ' $fragmentRefs'?: { 'DeskFactoringSubmissionFieldsFragment': DeskFactoringSubmissionFieldsFragment } }
+  ) };
+
+export type DeskFactoringRemittanceFieldsFragment = { id: string, factoringCompanyId: string, fileName: string | null, source: FactoringRemittanceSource, sourceFormat: FactoringRemittanceFormat | null, status: FactoringRemittanceStatus, defaultKind: FactoringRemittanceLineKind, remittedOn: number | null, currencyCode: string, lineCount: number, matchedCount: number, exceptionCount: number, appliedCount: number, totalCashMinor: number, error: string | null, stagedAt: number | null, appliedAt: number | null, discardReason: string | null, unmappedHeaders: Array<string>, version: number, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'DeskFactoringRemittanceFieldsFragment' };
+
+export type DeskFactoringRemittancesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskFactoringRemittancesQuery = { factoringRemittances: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskFactoringRemittanceFieldsFragment': DeskFactoringRemittanceFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskFactoringRemittanceQueryVariables = Exact<{
+  id: string | number;
+  matchStatuses?: Array<FactoringRemittanceMatchStatus> | FactoringRemittanceMatchStatus | null | undefined;
+}>;
+
+
+export type DeskFactoringRemittanceQuery = { factoringRemittance: (
+    { lines: Array<{ id: string, rowNumber: number, cells: Array<string>, kind: FactoringRemittanceLineKind, invoiceNumber: string | null, factorReference: string | null, debtorName: string | null, faceMinor: number | null, advanceMinor: number | null, feeMinor: number | null, reserveMinor: number | null, cashMinor: number | null, occurredOn: number | null, matchStatus: FactoringRemittanceMatchStatus, matchedBy: FactoringRemittanceMatchedBy | null, submissionItemId: string | null, matchedInvoiceNumber: string | null, matchedSubmissionId: string | null, score: number, reason: FactoringRemittanceMatchReason | null, error: string | null, ignoredReason: string | null, reserveEntryId: string | null, suggestions: Array<{ itemId: string, submissionId: string, invoiceNumber: string, score: number, reason: FactoringRemittanceMatchReason }> }> }
+    & { ' $fragmentRefs'?: { 'DeskFactoringRemittanceFieldsFragment': DeskFactoringRemittanceFieldsFragment } }
+  ) };
+
 export type FactoringReserveEntryFieldsFragment = { id: string, factoringCompanyId: string, agreementId: string, submissionId: string, submissionItemId: string, invoiceId: string, customerId: string, kind: FactoringReserveEntryKind, treatment: FactoringAccountingTreatment, currencyCode: string, cashMinor: number, feeMinor: number, reserveMinor: number, liabilityMinor: number, arMinor: number, journalEntryId: string, accountingDate: number, occurredOn: number, reversesEntryId: string | null, memo: string | null, createdAt: number, invoice: { id: string, number: string } | null, customer: { id: string, code: string, name: string } | null, submission: { id: string, number: string } | null } & { ' $fragmentName'?: 'FactoringReserveEntryFieldsFragment' };
 
 export type FactoringPlannedMovementFieldsFragment = { itemId: string, invoiceId: string, invoiceNumber: string, customerId: string, requestedDate: number, accountingDate: number, fiscalPeriodId: string | null, fiscalPeriodName: string | null, requiresApproval: boolean, movement: { kind: FactoringReserveEntryKind, treatment: FactoringAccountingTreatment, cashMinor: number, feeMinor: number, reserveMinor: number, liabilityMinor: number, arMinor: number, invoiceEffect: FactoringInvoiceEffect, invoiceMinor: number }, lines: Array<{ role: FactoringAccountRole, accountId: string, debit: number, credit: number, account: { id: string, accountCode: string, name: string } | null }> } & { ' $fragmentName'?: 'FactoringPlannedMovementFieldsFragment' };
@@ -16525,6 +16598,8 @@ export type EquipmentTypeReferenceFragment = { id: string, code: string, descrip
 export type EscrowAccountReferenceFragment = { id: string, status: EscrowAccountStatus } & { ' $fragmentName'?: 'EscrowAccountReferenceFragment' };
 
 export type FactoringCompanyReferenceFragment = { id: string, code: string, name: string } & { ' $fragmentName'?: 'FactoringCompanyReferenceFragment' };
+
+export type FactoringInvoiceStateReferenceFragment = { customerId: string } & { ' $fragmentName'?: 'FactoringInvoiceStateReferenceFragment' };
 
 export type FactoringSubmissionReferenceFragment = { id: string, number: string } & { ' $fragmentName'?: 'FactoringSubmissionReferenceFragment' };
 
@@ -19338,6 +19413,7 @@ export { ExtractionRolloutFieldsFragmentDoc, ExtractionRolloutArmFieldsFragmentD
 export { ExtractionShadowSettingsFieldsFragmentDoc, ExtractionShadowResultTableRowFieldsFragmentDoc, ExtractionShadowResultDetailFieldsFragmentDoc, ExtractionShadowSettingsDocument, ExtractionShadowReportDocument, ExtractionShadowResultTableDocument, ExtractionShadowResultDetailDocument, UpdateExtractionShadowSettingsDocument } from "./documents/extraction-shadow/extraction-shadow";
 export { FactoringCompanyTableRowFieldsFragmentDoc, FactoringCompanyTableDocument } from "./documents/factoring-company/table";
 export { FactoringAgreementFieldsFragmentDoc, FactoringAgreementsDocument, FactoringAgreementOwnerDocument, CreateFactoringAgreementDocument, UpdateFactoringAgreementDocument, ActivateFactoringAgreementDocument, EndFactoringAgreementDocument, FactoringCompanyRecordDocument } from "./documents/factoring/agreements";
+export { DeskFactoringInvoiceStateFieldsFragmentDoc, DeskFactoringSubmissionFieldsFragmentDoc, DeskFactoringRemittanceFieldsFragmentDoc, DeskFactoringReadinessDocument, DeskFactoringInvoiceStatesDocument, DeskFactoringAgreementsDocument, DeskFactoringNoasDocument, DeskFactoringSubmissionsDocument, DeskFactoringSubmissionDocument, DeskFactoringRemittancesDocument, DeskFactoringRemittanceDocument } from "./documents/factoring/desk";
 export { FactoringPlannedMovementFieldsFragmentDoc, FactoringReserveEntryFieldsFragmentDoc, FactoringReserveMovementPlanFieldsFragmentDoc, FactoringReserveEntriesDocument, FactoringReserveBalanceDocument, FactoringFundingPlanDocument, FactoringReleasePlanDocument, FactoringChargebackPlanDocument, FactoringChargebackReversalPlanDocument, RecordFactoringFundingDocument, ReleaseFactoringReserveDocument, RecordFactoringChargebackDocument, ReverseFactoringChargebackDocument } from "./documents/factoring/ledger";
 export { FactoringNoaFieldsFragmentDoc, FactoringNoasDocument, FactoringNoaOwnerDocument, DraftFactoringNoaDocument, SendFactoringNoaDocument, AcknowledgeFactoringNoaDocument, ReleaseFactoringNoaDocument } from "./documents/factoring/noas";
 export { FactoringInvoiceStateFieldsFragmentDoc, FactoringInvoiceStateTableDocument, FactoringSummaryDocument, InvoiceFactoringDocument, SetInvoiceFactoringOverrideDocument, RequestMissingFactoringDocumentsDocument } from "./documents/factoring/readiness";
@@ -19400,7 +19476,7 @@ export { DeskRateAgreementPricingDocument } from "./documents/rate/desk";
 export { RateAgreementRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateMatrixRowFieldsFragmentDoc, RateQuoteRowFieldsFragmentDoc, RateAgreementTableDocument, RateZoneTableDocument, RateMatrixTableDocument, RateQuoteTableDocument } from "./documents/rate/table";
 export { DeskRecordActivityDocument } from "./documents/record-activity/desk";
 export { RecurringShipmentTableRowFieldsFragmentDoc, RecurringShipmentTableDocument } from "./documents/recurring-shipment/table";
-export { InboundMailboxReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
+export { InboundMailboxReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringInvoiceStateReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
 export { CannedReportsDocument } from "./documents/reports/canned";
 export { ReportCatalogDocument } from "./documents/reports/catalog";
 export { ReportDashboardFieldsFragmentDoc, ReportDashboardsDocument, ReportDashboardByIdDocument, CreateReportDashboardDocument, UpdateReportDashboardDocument, DeleteReportDashboardDocument } from "./documents/reports/dashboards";

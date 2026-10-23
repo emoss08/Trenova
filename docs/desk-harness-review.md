@@ -1475,6 +1475,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: credentials | `worker_list_credentials` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: party gets | `customer_get`, `location_get`, `carrier_get`, `carrier_get_intelligence_event` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: equipment | `equipment_get_tractor`, `equipment_get_trailer`, `equipment_list_positions` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: factoring | the nine `factoring` reads; `factoring_get_agreement` renamed `factoring_list_agreements` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1637,6 +1638,24 @@ id or by what it maps, with the records it could be set to) and an optional `int
 `accountingSyncObjectStates`. No operation selects what the accounting system said in its own
 words. The descriptions changed, so the embedding fixture is re-recorded; held-out ranking holds
 (keyword 0.99 and 0.95 over 147, hybrid 0.93 and 0.83 over 167), and nothing was tuned against it.
+
+The factoring row converts the nine factoring reads. The queue, notices, schedules and
+remittances read new `Desk*` operations that wrap the table input in each root's own input
+(`factoringNoas(input: {table: $input})`) and narrow by the records' own field filters; the
+queue reads its totals beside every page, the first read alongside keyed by nothing, since
+`factoringSummary` takes no argument. A schedule binds by the rule once a root that takes an id is
+a get even when its record carries `items`, and a remittance reads only the lines a call names
+through `lines(matchStatuses:)`, one safe addition. `factoring_get_agreement` lists a factor's
+agreements, so it is renamed `factoring_list_agreements`, with a migration for stored
+definitions. The readiness state, the queue's totals and a factor's balance had no kind, so the
+guard would have shown their money at any ceiling; they now declare `@kind`, and the five
+factoring kinds, which defaulted to Restricted, declare where a record stands Internal and its
+money Restricted, as the repository tools withheld it by the invoice's amounts. An agreement's
+rates and fees and an unreadable remittance line's cells, which the repository tools returned
+ungated, are now Restricted. A Postgres test reads every factoring list and get under row-level
+security for two tenants. The descriptions changed, so the embedding fixture is re-recorded;
+held-out ranking holds (keyword 0.99 and 0.95 over 147, hybrid 0.93
+and 0.83 over 167, before and after), and nothing was tuned against it.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

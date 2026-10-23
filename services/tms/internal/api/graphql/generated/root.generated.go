@@ -1404,6 +1404,7 @@ type FactoringRemittanceResolver interface {
 	AppliedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
 	CreatedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
 	FactoringCompany(ctx context.Context, obj *factoring.Remittance) (*factoringcompany.FactoringCompany, error)
+	Lines(ctx context.Context, obj *factoring.Remittance, matchStatuses []factoring.RemittanceMatchStatus) ([]*factoring.RemittanceLine, error)
 }
 
 type FactoringRemittanceLineResolver interface {

@@ -434,7 +434,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"What are the factor's terms?",
 			"What are the advance, reserve and fee terms of the factoring agreement in force?",
-			"factoring_get_agreement",
+			"factoring_list_agreements",
 		),
 		ask(
 			"Which schedules failed?",

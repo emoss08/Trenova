@@ -479,7 +479,8 @@ func (r *graphQLRead) sortable() []string {
 // field, which a parameter derived from it takes; its filter still names the
 // field.
 var conventionNames = map[string]string{
-	fieldNotes: "note",
+	fieldNotes:     "note",
+	"cancelReason": "reason",
 }
 
 // paramsFor derives a field's parameters, named by the conventions.

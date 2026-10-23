@@ -17092,7 +17092,7 @@ type FactoringCheck {
 }
 
 "Whether an invoice is ready to factor, and why not."
-type FactoringInvoiceState {
+type FactoringInvoiceState @kind(resource: "invoice") {
   invoiceId: ID!
   factoringCompanyId: ID
   customerId: ID!
@@ -17124,7 +17124,7 @@ type FactoringVerdictTotals {
   amountMinor: Int!
 }
 
-type FactoringSummary {
+type FactoringSummary @kind(resource: "invoice") {
   ready: FactoringVerdictTotals!
   notReady: FactoringVerdictTotals!
   "On a schedule with the factor or being sent to it."
@@ -17333,7 +17333,7 @@ type FactoringReserveEntryConnection {
 }
 
 "What a factor holds and has paid, from its reserve entries."
-type FactoringReserveBalance {
+type FactoringReserveBalance @kind(resource: "factoring_reserve") {
   factoringCompanyId: ID!
   "Reserve the factor holds and has not released or charged back."
   reserveMinor: Int!
@@ -17934,6 +17934,11 @@ extend type CustomerBillingProfile {
 
 extend type FactoringCompany {
   agreements: [FactoringAgreement!]!
+}
+
+extend type FactoringRemittance {
+  "Its lines in the file's order, or only those in these match statuses."
+  lines(matchStatuses: [FactoringRemittanceMatchStatus!]): [FactoringRemittanceLine!]!
 }
 
 extend type Query {
