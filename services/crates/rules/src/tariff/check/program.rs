@@ -280,6 +280,9 @@ fn bodies(declarer: &Declarer<'_>, state: &mut State, out: &mut ModuleAnalysis) 
             used.extend(std::mem::take(&mut checker.used));
         });
     }
+    used.extend(super::property::properties(
+        declarer, state, &globals, out, &billed, &file_lets,
+    ));
     used.extend(names_read_by_declarations(module));
     unused_globals(declarer, &globals, &used, out);
     if let Some(slot) = state.globals.get_mut(index) {

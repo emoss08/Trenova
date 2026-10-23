@@ -165,6 +165,8 @@ pub struct Interp<'p, 'a> {
     pub constructors: bool,
     /// The value of the last expression statement at file level: a condition's result.
     pub last_value: Option<Value>,
+    /// The root file's regions entered, when this run records coverage (`tariff.test` only).
+    pub coverage: Option<super::coverage::Hits>,
     consts: BTreeMap<(usize, String), Value>,
     evaluating: BTreeSet<(usize, String)>,
     regexes: BTreeMap<String, Regex>,
@@ -220,6 +222,7 @@ impl<'p, 'a> Interp<'p, 'a> {
             view: None,
             constructors: false,
             last_value: None,
+            coverage: None,
             consts: BTreeMap::new(),
             evaluating: BTreeSet::new(),
             regexes: BTreeMap::new(),
@@ -283,6 +286,13 @@ impl<'p, 'a> Interp<'p, 'a> {
             _ => None,
         }
     }
+}
+
+/// The value of a number, money, percent, date or date-time literal; `None` for any other
+/// expression.
+#[must_use]
+pub fn literal_value(expr: &crate::tariff::syntax::ast::Expr) -> Option<Value> {
+    expr::literal(&expr.kind).ok()
 }
 
 /// An internal error about a name nothing declares.

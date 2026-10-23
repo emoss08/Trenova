@@ -123,6 +123,7 @@ impl<'a> Interp<'_, 'a> {
                 },
             };
             if guard {
+                self.cover_in(env, arm.span);
                 if self.traced(env) {
                     self.trace.push(Event::Arm {
                         arm: index,

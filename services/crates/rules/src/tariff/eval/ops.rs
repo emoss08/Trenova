@@ -45,13 +45,19 @@
 //! refused. A result that never ran, and a condition, has `"choices": []`. A refusal's `message` is the author's text, or a `Message` when
 //! the crate wrote it (an input with no value).
 //!
-//! `tariff.test` runs a file's tests: `{"source", "context", "names": […] (optional), "budget"
-//! (optional)}` → `{"tests": [{"name", "range", "status": "passed" | "failed" | "error" |
-//! "needs", "failures": [{"range", "message", "values": [{"range", "display", "value"?}]}],
-//! "bill": … | null, "error": … | null}], "needs": [{"table", "keys"}]}`, plus `"error"` at the
-//! top when the file does not check. `needs` is every test's needs, each once: tests read tables
-//! under the on-demand protocol `tariff.evaluate` uses, and a test that needed cells the request
-//! did not carry reports `needs`; the host loads them and runs the tests again.
+//! `tariff.test` runs a file's tests and properties, in source order: `{"source", "context",
+//! "names": […] (optional), "budget" (optional)}` → `{"tests": [{"name", "range", "kind":
+//! "test" | "property", "status": "passed" | "failed" | "error" | "needs", "failures":
+//! [{"range", "message", "values": [{"range", "display", "value"?}]}], "bill": … | null,
+//! "error": … | null, "cases": 24, "skipped": 0, "counterexample": … | null}], "needs":
+//! [{"table", "keys"}], "coverage": {"regions": [{"range", "kind", "hits"}], "reached": 18,
+//! "total": 21} | null}`, plus `"error"` at the top (and `"coverage": null`) when the file does
+//! not check. A test has `cases` 1, `skipped` 0 and `counterexample` `null`; a property's
+//! `counterexample` is [`super::property::Counterexample`]'s wire form. `needs` is every
+//! test's needs, each once: tests read tables under the on-demand protocol `tariff.evaluate`
+//! uses, and a test that needed cells the request did not carry reports `needs`; the host loads
+//! them and runs the tests again. `coverage` ([`super::coverage`]) is `null` when `names` ran
+//! only some tests or a test ended `needs`.
 
 use super::bill::{Choices, Converted, Finished, Line, OptionOutcome};
 use super::budget::{BudgetWire, Limits};
@@ -59,7 +65,7 @@ use super::error::{Code, EvalError, Refusal, RefusalText};
 use super::record::{decode_record, sample};
 use super::run::{Outcome, Request, run_program};
 use super::tables::{Need, Tables};
-use super::tests::{TestRequest, TestResult, needs_of, run_tests};
+use super::tests::{TestRequest, TestResult, needs_of, run_suite};
 use super::trace::range;
 use super::value::{Value, format_decimal};
 use crate::message::{Arg, Message};
@@ -564,12 +570,13 @@ pub fn test(input: &RawValue) -> OpResult {
         Err(error) => {
             output.insert(String::from("tests"), Json::Array(Vec::new()));
             output.insert(String::from("needs"), Json::Array(Vec::new()));
+            output.insert(String::from("coverage"), Json::Null);
             output.insert(String::from("error"), error_json(&error, &index));
             return encode(&Json::Object(output));
         }
     };
     let tables = Tables::build(&input.context.tables);
-    let results = run_tests(&TestRequest {
+    let suite = run_suite(&TestRequest {
         program: &program,
         types: &analysis,
         settings: &input.context.settings,
@@ -582,13 +589,21 @@ pub fn test(input: &RawValue) -> OpResult {
     output.insert(
         String::from("tests"),
         Json::Array(
-            results
+            suite
+                .results
                 .iter()
                 .map(|result| test_json(result, &index))
                 .collect(),
         ),
     );
-    output.insert(String::from("needs"), needs_json(&needs_of(&results)));
+    output.insert(String::from("needs"), needs_json(&needs_of(&suite.results)));
+    output.insert(
+        String::from("coverage"),
+        suite
+            .coverage
+            .as_ref()
+            .map_or(Json::Null, |hits| hits.to_json(&index)),
+    );
     encode(&Json::Object(output))
 }
 
@@ -596,6 +611,7 @@ fn test_json(result: &TestResult, index: &Utf16Index) -> Json {
     object(vec![
         ("name", Json::String(result.name.clone())),
         ("range", range(result.span, index)),
+        ("kind", Json::String(result.kind.as_str().to_owned())),
         ("status", Json::String(result.status.as_str().to_owned())),
         (
             "failures",
@@ -644,6 +660,15 @@ fn test_json(result: &TestResult, index: &Utf16Index) -> Json {
                 .error
                 .as_ref()
                 .map_or(Json::Null, |error| error_json(error, index)),
+        ),
+        ("cases", Json::from(result.cases)),
+        ("skipped", Json::from(result.skipped)),
+        (
+            "counterexample",
+            result
+                .counterexample
+                .as_ref()
+                .map_or(Json::Null, |counterexample| counterexample.to_json(index)),
         ),
     ])
 }

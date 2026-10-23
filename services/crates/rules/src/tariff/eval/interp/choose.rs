@@ -86,6 +86,7 @@ impl<'a> Interp<'_, 'a> {
         let mut records = Vec::with_capacity(choose.options.len());
         let mut bills = Vec::with_capacity(choose.options.len());
         for option in &choose.options {
+            self.cover_in(env, option.span);
             let ran = self.exec_block(env, &option.body);
             let billed = std::mem::take(&mut self.bill);
             let outcome = match ran {

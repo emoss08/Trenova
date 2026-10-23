@@ -81,6 +81,10 @@ const CORPUS: &[(&str, &str)] = &[
         "choices",
         include_str!("../../../testdata/tariff/check/choices.json"),
     ),
+    (
+        "properties",
+        include_str!("../../../testdata/tariff/check/properties.json"),
+    ),
 ];
 
 fn text(value: &Json) -> String {
@@ -343,6 +347,7 @@ fn visit_item(
             FnBody::Block(block) => super::visit::block(block, &mut |_| {}, visit),
         },
         ItemKind::Test(test) => super::visit::block(&test.body, &mut |_| {}, visit),
+        ItemKind::Property(property) => super::visit::block(&property.body, &mut |_| {}, visit),
         ItemKind::Const(decl) => super::visit::expr(&decl.value, visit),
         ItemKind::Input(decl) => {
             if let Some(default) = &decl.default {

@@ -72,11 +72,6 @@ impl<'a> Interp<'_, 'a> {
     fn exec_kind(&mut self, env: &mut Env, stmt: &'a Stmt) -> Result<Flow, Stop> {
         match &stmt.kind {
             StmtKind::Choose(choose) => self.choose(env, choose, stmt.span),
-            StmtKind::Vary { .. } | StmtKind::Assume(_) => Err(Stop::Failed(
-                crate::tariff::eval::error::EvalError::internal(crate::message::Message::new(
-                    crate::message!("Phase 0 placeholder: this construct is not implemented yet"),
-                )),
-            )),
             StmtKind::Let(binding) | StmtKind::Var(binding) => {
                 let value = self.eval(env, &binding.value)?;
                 if self.traced(env) {
@@ -126,10 +121,12 @@ impl<'a> Interp<'_, 'a> {
                 if holds {
                     return Ok(Flow::Normal);
                 }
+                self.cover_in(env, stmt.span);
                 let text = self.interpolate(env, message)?;
                 Err(self.refuse(env, text, stmt.span))
             }
             StmtKind::Fail(message) => {
+                self.cover_in(env, stmt.span);
                 let text = self.interpolate(env, message)?;
                 Err(self.refuse(env, text, stmt.span))
             }
@@ -142,6 +139,10 @@ impl<'a> Interp<'_, 'a> {
             }
             StmtKind::Given { .. } | StmtKind::Expect(_) => Err(internal(
                 crate::message!("given and expect only work inside a test"),
+                [],
+            )),
+            StmtKind::Vary { .. } | StmtKind::Assume(_) => Err(internal(
+                crate::message!("vary and assume only work inside a property"),
                 [],
             )),
             StmtKind::Item(_) => Err(internal(
@@ -217,6 +218,7 @@ impl<'a> Interp<'_, 'a> {
     }
 
     fn charge(&mut self, env: &mut Env, charge: &'a Charge, span: Span) -> Result<(), Stop> {
+        self.cover_in(env, span);
         let label = self.interpolate(env, &charge.label)?;
         let mut quantity = None;
         let mut rate = None;
@@ -319,6 +321,7 @@ impl<'a> Interp<'_, 'a> {
             };
             if holds {
                 self.branch(env, Some(index), span);
+                self.cover_in(env, block.span);
                 let result = self.exec_block(env, block);
                 env.pop();
                 return result;
@@ -327,6 +330,7 @@ impl<'a> Interp<'_, 'a> {
         }
         if let Some(block) = &statement.otherwise {
             self.branch(env, Some(statement.branches.len()), span);
+            self.cover_in(env, block.span);
             self.exec_block(env, block)
         } else {
             self.branch(env, None, span);
@@ -415,6 +419,7 @@ impl<'a> Interp<'_, 'a> {
                         });
                     }
                     ran += 1;
+                    self.cover_in(env, statement.body.span);
                     self.exec_block(env, &statement.body)
                 }
                 Ok(false) => Ok(Flow::Continue),

@@ -180,7 +180,12 @@ pub fn stmt(stmt_node: &Stmt, on_stmt: &mut impl FnMut(&Stmt), visit: &mut impl 
                 ..
             },
         )
-        | StmtKind::Expect(Expect::Holds(value)) => expr(value, visit),
+        | StmtKind::Expect(Expect::Holds(value) | Expect::Monotone { value, .. })
+        | StmtKind::Assume(value)
+        | StmtKind::Vary {
+            values: Some(value),
+            ..
+        } => expr(value, visit),
         _ => {}
     }
 }
