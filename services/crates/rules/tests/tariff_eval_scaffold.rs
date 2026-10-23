@@ -169,6 +169,35 @@ fn a_sample_record_scaffolds_only_what_differs() {
 }
 
 #[test]
+fn a_bill_held_for_review_pins_its_reasons() {
+    let source = r#"tariff "t"
+charge "Linehaul" = $100
+if shipment.hazmat {
+  review "Hazmat: check {{the}} \"permit\""
+}
+review "Always"
+"#;
+    let mut record = sample();
+    merge(&mut record, &json!({"shipment": {"hazmat": true}}));
+    let output = scaffold(&json!({"source": source, "record": record, "name": "held"}));
+    let test = output["test"]
+        .as_str()
+        .map_or_else(|| panic!("no test: {output}"), str::to_owned);
+    assert!(
+        test.contains(r#"expect reviews == ["Hazmat: check {{the}} \"permit\"", "Always"]"#),
+        "{test}"
+    );
+    let response = call("tariff.test", &json!({"source": format!("{source}{test}")}));
+    assert_eq!(
+        response["ok"]["tests"][0]["status"], "passed",
+        "{test}\n{response}"
+    );
+    let plain = scaffold(&json!({"source": source, "record": sample(), "name": "dry"}));
+    let test = plain["test"].as_str().unwrap_or_default();
+    assert!(test.contains(r#"expect reviews == ["Always"]"#), "{test}");
+}
+
+#[test]
 fn a_rating_that_fails_gives_its_error() {
     let output = scaffold(&json!({"source": "tariff \"t\"\ncharge \"x\" = $1 / 0", "name": "x"}));
     assert_eq!(output["test"], Value::Null);

@@ -127,14 +127,16 @@ impl Env {
     }
 }
 
-/// What a test's `expect`s read after the rating: `total` and `lines`, `charge(…)` and
-/// `chosen(…)`, and a condition's `applies`.
+/// What a test's `expect`s read after the rating: `total`, `lines` and `reviews`, `charge(…)`
+/// and `chosen(…)`, and a condition's `applies`.
 #[derive(Debug, Clone)]
 pub struct TestView {
     /// The finished bill's lines.
     pub lines: Vec<Line>,
     /// The finished bill's total.
     pub total: Decimal,
+    /// The finished bill's review reasons, for `reviews`.
+    pub reviews: Vec<String>,
     /// The label each choice kept the last time it ran, by the choice's label, for `chosen(…)`.
     pub chosen: BTreeMap<String, Option<String>>,
     /// A condition's result, for `applies`; `None` for a tariff.
@@ -153,8 +155,11 @@ pub struct Interp<'p, 'a> {
     pub meter: Meter,
     /// The trace.
     pub trace: Trace,
-    /// The bill being built.
+    /// The bill being built: inside an option, that option's own.
     pub bill: Bill,
+    /// The bills outside the options running, outermost first: what `bill` reads besides
+    /// [`Interp::bill`].
+    outer: Vec<Bill>,
     /// The total clauses written.
     pub clauses: Clauses,
     /// The `best` and `worst` choices evaluated.
@@ -221,6 +226,7 @@ impl<'p, 'a> Interp<'p, 'a> {
             meter: setup.meter,
             trace: Trace::new(setup.trace),
             bill: Bill::default(),
+            outer: Vec::new(),
             clauses: Clauses::default(),
             choices: Choices::default(),
             needs: Vec::new(),

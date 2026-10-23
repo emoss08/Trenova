@@ -187,13 +187,18 @@ fn subject(
     if let Some(variant) = variant_at(session, scopes, token.span) {
         return variant_subject(token.span, variant);
     }
-    if session.schema.root(word).is_some() || word == "tables" {
+    if session.schema.root(word).is_some() || word == "tables" || word == "bill" {
         return Err(root_refusal(word));
     }
     Err(nothing())
 }
 
 fn root_refusal(word: &str) -> Message {
+    if word == "bill" {
+        return Message::new(message!(
+            "`bill` is the bill so far, so it can't be renamed"
+        ));
+    }
     Message::with(
         message!("{0} is part of the record a tariff rates, so it can't be renamed"),
         [quote(word)],
@@ -379,6 +384,8 @@ fn name_free(
         }
     } else if session.schema.root(name).is_some() || name == "tables" {
         return Err(taken(name, Message::new(message!("a schema root"))));
+    } else if name == "bill" && session.kind() == crate::tariff::syntax::ast::FileKind::Tariff {
+        return Err(taken(name, Message::new(message!("the bill so far"))));
     }
     if session.program.resolve(ModuleId::ROOT, name).is_some() {
         return Err(taken(name, Message::new(message!("declared in this file"))));

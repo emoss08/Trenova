@@ -805,7 +805,7 @@
     {
      "at": "rate",
      "code": "test-scope",
-     "message": "`rate` is an input, which a test can't read: a test reads the bill (`total`, `lines`, `charge(…)`), the record and the file's functions and constants",
+     "message": "`rate` is an input, which a test can't read: a test reads the bill (`total`, `lines`, `charge(…)`, `reviews`), the record and the file's functions and constants",
      "nth": 3
     }
    ]

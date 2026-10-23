@@ -10,8 +10,9 @@
 //!   `.band(x)` (a range axis written as the band's floor), so the test holds the cells it reads
 //!   instead of reading the matrix's live data;
 //! - a `given input.x` for every input whose value differs from its default;
-//! - an `expect charge(CODE)` (or `charge("Label")` for freight) per charge, and
-//!   `expect total`; or `expect fails "…"` when the rating was refused.
+//! - an `expect charge(CODE)` (or `charge("Label")` for freight) per charge, `expect total`,
+//!   and `expect reviews == […]` when the bill asks for review; or `expect fails "…"` when the
+//!   rating was refused.
 //!
 //! Request: `{"source", "context", "record": {…} | null, "inputs": {…}, "name": "…"}`.
 //! Response: `{"test": "test \"…\" {\n  given …\n  expect …\n}\n"}`; or `{"test": null,
@@ -116,7 +117,18 @@ pub fn op(input: &serde_json::value::RawValue) -> OpResult {
     });
     let cells = cell_givens(&run.trace, &input.context.tables, &schema);
     let expects = match run.outcome {
-        Outcome::Rated { bill, .. } => charge_expects(&bill.lines, bill.total),
+        Outcome::Rated { bill, .. } => {
+            let mut expects = charge_expects(&bill.lines, bill.total);
+            if !bill.reviews.is_empty() {
+                let reasons: Vec<String> = bill
+                    .reviews
+                    .iter()
+                    .map(|review| text_literal(&review.text))
+                    .collect();
+                expects.push(format!("expect reviews == [{}]", reasons.join(", ")));
+            }
+            expects
+        }
         Outcome::Refused(refusal) => vec![format!(
             "expect fails {}",
             text_literal(&refusal.message.text())

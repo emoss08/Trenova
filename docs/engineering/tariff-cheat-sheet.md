@@ -52,7 +52,8 @@ test "no fuel price refuses to rate" {
 ```
 
 The order is always: header, doc, `use`s, `input`s, then bindings and charges top to bottom,
-total clauses (`minimum`, `maximum`, `round`) last, and tests at the end.
+total clauses (`minimum … on freight`, `maximum … on freight`, `minimum`, `maximum`, `round`)
+last, and tests at the end.
 
 ## Files
 
@@ -291,7 +292,10 @@ Methods on values:
 | `charge "Linehaul" (quantity: miles, rate: rate)` | a freight line, amount `rate × quantity`, with both shown on the invoice |
 | `charge "Base" = $100` | a freight line with an amount |
 | `charge "Fuel surcharge" as FSC = …` | an accessorial line, under the catalog code `FSC` |
+| `charge "Linehaul" (quantity: miles, rate: rate, minimum: $450)` | a line that bills at least $450 (`maximum: $2_000`: at most); the line says which limit applied |
 | `note "Text {x}"` | a note on the trace, receipt and invoice; no amount |
+| `review "Text {x}"` | bills as usual, and holds the rating for approval with this reason |
+| `minimum $400 on freight` | tops the freight lines up to $400 (`maximum … on freight` brings them down) |
 | `minimum $450` | tops the total up with a "Minimum charge adjustment" line |
 | `maximum $5_000` | brings the total down with a "Maximum charge adjustment" line |
 | `round to cents` | the default; also `round half even to cents`, `round up to $5`, `round down to $1` |
@@ -302,8 +306,53 @@ Methods on values:
   charges, and the amount must be positive. When the tariff bills a code, nothing else (a
   contract accessorial, the fuel surcharge program) bills it again on that shipment.
 - Charges can sit inside `if`, `match` arms and `for` loops, never inside a function.
-- Total clauses come last, in the order `minimum`, `maximum`, `round`, and apply to the whole
-  bill.
+- Total clauses come last, in the order `minimum … on freight`, `maximum … on freight`,
+  `minimum`, `maximum`, `round`, each once. The `on freight` ones apply to the freight
+  (uncoded) lines, the others to the whole bill; all compare exact amounts, and rounding runs
+  last.
+- `review` can go wherever `note` can. A test reads the reasons as `reviews`.
+
+## Reading the bill so far
+
+```tariff
+tariff "Fuel on the linehaul"
+
+input rate: Money/mi = $2.35/mi
+input fuelPercent: Percent = 32%
+
+charge "Linehaul" (quantity: shipment.distance, rate: rate, minimum: $450)
+charge "Fuel surcharge" as FSC = bill.freight * fuelPercent
+
+if shipment.hazmat and bill.total > $2_000 {
+  review "Hazmat over $2,000: check the permit cost"
+}
+
+test "fuel is priced on the floored linehaul" {
+  given shipment.distance = 100 mi
+  expect charge("Linehaul") == $450
+  expect charge(FSC) == $144
+  expect reviews.isEmpty
+}
+
+test "a large hazmat load waits for approval" {
+  given shipment.distance = 1_000 mi
+  given shipment.hazmat = true
+  expect reviews == ["Hazmat over $2,000: check the permit cost"]
+}
+```
+
+| Read | Is |
+|---|---|
+| `bill.freight` | the uncoded lines billed so far (`Money`, exact) |
+| `bill.accessorials` | the coded lines billed so far |
+| `bill.total` | both |
+| `bill.charge("Linehaul")`, `bill.charge(FSC)` | the lines so far with that label or code (`Money?`, `none` when there are none) |
+
+- `bill` reads only what was billed above it; inside a `best` option, the bill outside the
+  choice plus that option's own lines. Amounts are after each line's `minimum:`/`maximum:` and
+  before total clauses and rounding.
+- `bill` works in a tariff's own code, not in functions, conditions, libraries or tests (tests
+  read `total`, `lines`, `charge(…)` and `reviews`).
 
 ## Choosing the cheaper method
 
@@ -344,6 +393,9 @@ test "a short run bills per mile" {
 
 - `best` keeps the option whose charges add up to the least, `worst` the most; a tie goes to the
   option written first. The kept option's lines join the bill; the others show on the trace.
+- `let linehaul = best "Linehaul" { … }` also binds the kept option's subtotal, ready for
+  `charge "Fuel surcharge" as FSC = linehaul * 32%`. A choice gives a value only as the whole
+  value of a `let`, `var` or assignment.
 - An option that refuses (`require`, `fail`, `?? fail`) is out of the running; when every option
   refuses, the rating refuses with the first one's reason.
 - Each option is its own scope, and may not assign a `var` from outside the choice.
@@ -372,6 +424,7 @@ The message is shown on the shipment, in the Studio and to Nova.
 | `fuel` | `price: Money/gal?`, `priceDate?`, `index?` |
 | `rating` | `date`, `mode` (`Sell` or `Buy`), `sellTotal?`, `currency`, `holidays` (each `date`, `name`) |
 | `tables` | your organisation's active rate matrices, by code |
+| `bill` | in a tariff's own code, the bill so far: `freight`, `accessorials`, `total`, `charge(…)` |
 
 - `shipment.requested(LIFT)` is whether the user put that accessorial on the shipment; the code
   must be in your accessorial charge catalog. Lines a tariff bills are never in
@@ -486,6 +539,7 @@ test "a heavy load rates at the deficit weight when cheaper" {
 | `expect total == $511.20` | the bill's total |
 | `expect charge("Linehaul") == $365.30`, `expect charge(FSC) == $11.75` | one line's amount, by label or code |
 | `expect lines.len == 3` | the whole bill's lines |
+| `expect reviews.isEmpty`, `expect reviews == ["…"]` | the review reasons, in order |
 | `expect fails`, `expect fails "This rate needs a weight"` | that it refuses (with that message) |
 | `expect applies`, `expect not applies` | in a condition's test: what the condition decided |
 
@@ -682,6 +736,8 @@ an existing contract.
 | "`.holiday` reads the organisation's holidays (`rating.holidays`), which a function can't see" | work it out where you call the function and pass it in: `fn fee(holiday: Bool)` |
 | "`rate` must be from $0.50/mi to $15.00/mi; … is outside it" | the default or the contract value is outside the input's `where` bounds |
 | "A choice needs at least two options" | add another `option`, or drop the `best` |
+| "… is billed after this line, so this reads `none`" | move the `bill.charge(…)` below the charge it reads |
+| "A `best` gives a value only as the whole value of a `let` …" | bind the choice first (`let linehaul = best …`), then use the name |
 | "… falls from … at … to … at …: it must not fall as … grows" | a property found the inversion: fix the break, then **Save as test** |
 | "A property can't expect a refusal" | narrow the property with `assume` or its ranges |
 

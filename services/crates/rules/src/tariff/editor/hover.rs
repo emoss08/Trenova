@@ -382,6 +382,16 @@ impl Hovered<'_, '_> {
             .unwrapped()
             .clone();
         if let Type::Record(record) = &receiver
+            && record.name.as_deref() == Some("Bill")
+            && matches!(&target.kind, ExprKind::Name(root) if root.text == "bill")
+            && name.text == "charge"
+        {
+            let mut hover = Hover::new(span);
+            hover.signature = Some(String::from("bill.charge(line: CODE | Text) -> Money?"));
+            hover.doc = Some(Doc::message(crate::tariff::schema::BILL_CHARGE_DOC));
+            return Some(hover);
+        }
+        if let Type::Record(record) = &receiver
             && let Some(found) = record.field(&name.text)
         {
             let mut hover = Hover::new(span).typed(Some(&found.ty));

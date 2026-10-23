@@ -135,6 +135,8 @@ proptest! {
         amounts in proptest::collection::vec((amount(), any::<bool>()), 0..12),
         minimum in proptest::option::of(amount()),
         maximum in proptest::option::of(amount()),
+        freight_minimum in proptest::option::of(amount()),
+        freight_maximum in proptest::option::of(amount()),
         mode in mode(),
         increment in increment(),
         rate in (1i64..5_000_000).prop_map(|units| Decimal::new(units, 6)),
@@ -148,10 +150,18 @@ proptest! {
                 amount: if *coded { value.abs() } else { *value },
                 quantity: None,
                 rate: None,
+                limit: None,
+                on_freight: false,
                 span: None,
             });
         }
-        let clauses = Clauses { minimum, maximum, round: Some((mode, increment)) };
+        let clauses = Clauses {
+            freight_minimum,
+            freight_maximum,
+            minimum,
+            maximum,
+            round: Some((mode, increment)),
+        };
         if let Ok(finished) = bill.finish(&clauses) {
             let sum: Decimal = finished.lines.iter().map(|line| line.amount).sum();
             prop_assert_eq!(sum, finished.total);

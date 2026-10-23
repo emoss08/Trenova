@@ -613,7 +613,7 @@
     {
      "at": "minimum $5",
      "code": "total-order",
-     "message": "Total clauses go in the order `minimum`, `maximum`, `round`",
+     "message": "Total clauses go in the order `minimum … on freight`, `maximum … on freight`, `minimum`, `maximum`, `round`",
      "related": [
       {
        "at": "round to cents",

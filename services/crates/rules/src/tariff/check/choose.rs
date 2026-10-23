@@ -5,6 +5,10 @@
 //! - it may appear only where a `charge` may (a tariff's top level and the blocks inside it,
 //!   another option included), so the billing rule of `stmt` refuses it in functions, tests,
 //!   libraries and conditions;
+//! - as a value (`let linehaul = best "Linehaul" { … }`) it gives the kept option's subtotal,
+//!   `Money`, and only as the whole value of a `let`, `var` or assignment: anywhere else inside
+//!   an expression it is `misplaced`, since it bills lines and must stand where a statement
+//!   does;
 //! - it has a non-empty label, unique among the file's choices, and at least two options, each
 //!   with a non-empty label unique within the choice (the parser already refuses an `option`
 //!   written outside a choice, so that one gets no second finding);
@@ -25,7 +29,7 @@ use crate::span::Span;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
     Arg as CallArg, ArmBody, Block, ChoiceOption, Choose, ChooseKind, Expr, ExprKind, FileKind,
-    Name, Stmt, StmtKind,
+    Name, NodeId, StmtKind,
 };
 use crate::tariff::types::Type;
 
@@ -37,11 +41,35 @@ pub struct ChoiceState {
     floors: Vec<(usize, ChooseKind)>,
     /// The labels of the choices checked so far in this body, with where each is written.
     labels: Vec<(String, Span)>,
+    /// The choice written as the whole value of the `let`, `var` or assignment being checked,
+    /// where a choice may give a value.
+    pub value_at: Option<NodeId>,
 }
 
 impl Checker<'_> {
-    /// A `best` or `worst` statement.
-    pub fn choose(&mut self, stmt: &Stmt, choose: &Choose) {
+    /// A `best` or `worst` written as a value: the kept option's subtotal, when it is the whole
+    /// value of a `let`, `var` or assignment.
+    pub fn choose_value(&mut self, expr: &Expr, choose: &Choose) -> Type {
+        let allowed = self.choice.value_at.take() == Some(expr.id);
+        if !allowed {
+            self.report(Diagnostic::error(
+                "misplaced",
+                Span::new(choose.span.start, choose.label.span.end.max(choose.span.start)),
+                Message::with(
+                    message!("{0} bills lines, so it gives a value only as the whole value of a `let`, `var` or assignment: bind it first, as in {1}, and use the name"),
+                    [
+                        quote(choose.kind.keyword()),
+                        quote(&format!("let subtotal = {} \"{}\" …", choose.kind.keyword(), choose.label.text)),
+                    ],
+                ),
+            ));
+        }
+        self.choose(choose.span, choose);
+        Type::money()
+    }
+
+    /// A `best` or `worst`, as a statement or a value written at `span`.
+    pub fn choose(&mut self, span: Span, choose: &Choose) {
         if is_misplaced_option(choose) {
             for option in &choose.options {
                 self.block(&option.body);
@@ -52,7 +80,7 @@ impl Checker<'_> {
             ChooseKind::Best => Message::new(message!("A `best`")),
             ChooseKind::Worst => Message::new(message!("A `worst`")),
         };
-        self.billing(stmt.span, what);
+        self.billing(span, what);
         self.choice_label(choose);
         if choose.options.len() < 2 {
             self.report(Diagnostic::error(

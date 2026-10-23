@@ -77,12 +77,16 @@ impl Visit for Uses<'_> {
         let [arg] = args.as_slice() else {
             return;
         };
-        let read = match &callee.kind {
+        let reads = match &callee.kind {
             ExprKind::Name(name) => name.text == "charge",
-            ExprKind::Field { name, .. } => name.text == REQUESTED,
+            ExprKind::Field { target, name, .. } => {
+                name.text == REQUESTED
+                    || (name.text == "charge"
+                        && matches!(&target.kind, ExprKind::Name(root) if root.text == "bill"))
+            }
             _ => false,
         };
-        if !read {
+        if !reads {
             return;
         }
         if let ExprKind::Name(code) = &arg.value.kind

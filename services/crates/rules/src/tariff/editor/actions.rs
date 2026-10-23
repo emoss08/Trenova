@@ -51,7 +51,9 @@ pub struct Action {
 }
 
 /// The names a test reads besides the record, which an input must not take.
-const RESERVED: &[&str] = &["input", "tables", "total", "lines", "applies"];
+const RESERVED: &[&str] = &[
+    "input", "tables", "bill", "total", "lines", "reviews", "applies",
+];
 
 /// The most suffixes tried for a free name.
 const MAX_SUFFIX: u32 = 1_000;
@@ -244,13 +246,14 @@ fn base_name(located: &Located<'_>, literal: &Expr) -> String {
                 return String::from("value");
             };
             match (charge, name.text.as_str()) {
-                (Some(charge), "quantity" | "rate")
+                (Some(charge), "quantity" | "rate" | "minimum" | "maximum")
                     if charge.options.iter().any(|option| option.span == arg.span) =>
                 {
-                    let suffix = if name.text == "quantity" {
-                        "Quantity"
-                    } else {
-                        "Rate"
+                    let suffix = match name.text.as_str() {
+                        "quantity" => "Quantity",
+                        "rate" => "Rate",
+                        "minimum" => "Minimum",
+                        _ => "Maximum",
                     };
                     labelled(&charge.label, suffix)
                 }

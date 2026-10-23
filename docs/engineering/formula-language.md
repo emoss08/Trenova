@@ -303,8 +303,9 @@ A schema field that can be empty has type `T?` (`shipment.weight: Weight?`). Usi
   Inputs are only declared at file level; their doc comments label the Studio's inputs form, and
   the optional `where` constraint bounds the values a contract may set (see "Input constraints").
 
-A name may not shadow a schema root, an input, a function or another name in scope. That last
-rule is today's `let` rule, kept.
+A name may not shadow a schema root, an input, a function or another name in scope, and a
+tariff's own code may not name anything `bill` (the bill so far, below). That last rule is
+today's `let` rule, kept.
 
 ## Statements
 
@@ -316,8 +317,9 @@ block is a scope.
 | `let`, `var`, `const` | bindings (above) |
 | `name = expr`, `name += expr`, `name -= expr` | reassign a `var` in scope; the type cannot change |
 | `charge "Label" as CODE (options) = expr` | add a line to the bill (below); tariffs only |
-| `best "Label" { option "A" { … } option "B" { … } }`, `worst "Label" { … }` | bill the cheapest (or dearest) of several methods (below); tariffs only |
+| `best "Label" { option "A" { … } option "B" { … } }`, `worst "Label" { … }` | bill the cheapest (or dearest) of several methods (below); written as the value of a `let`, `var` or assignment (`let linehaul = best "Linehaul" { … }`) it also gives the kept option's subtotal; tariffs only |
 | `note "Text {interpolated}"` | add a note to the bill: no amount, shown on the rate trace, the receipt and the invoice's notes |
+| `review "Text {interpolated}"` | bill as usual, and ask for the rating to be approved before it is used, with this reason (below); tariffs only |
 | `if cond { … } else if cond { … } else { … }` | conditional; as a statement the branches need no value |
 | `if let x = optional { … } else { … }` | bind an optional when present |
 | `match value { pattern => { … } … }` | as a statement, arms are blocks |
@@ -327,12 +329,13 @@ block is a scope.
 | `require cond else "message"`, `require let x = optional else "message"` | refuse to rate unless it holds |
 | `fail "message"` | refuse to rate |
 | `return expr` | functions only |
-| `minimum`, `maximum`, `round` | total clauses, last in a tariff (below) |
+| `minimum`, `maximum` (each also `on freight`), `round` | total clauses, last in a tariff (below) |
 | `test "name" { … }`, `property "name" { … }` | a test or a property (below); file level only |
 
 There is no `while` and no recursion. A `for` walks a list or a range whose length is known
 when the loop starts, so every formula terminates. A function body is the same statement
-language without `charge`, `note`, `best`, `worst`, total clauses, `test` or `property`.
+language without `charge`, `note`, `review`, `best`, `worst`, total clauses, `test` or
+`property`.
 Functions compute values; tariffs bill them.
 
 ## Expressions
@@ -476,18 +479,33 @@ A failed rating is a rating error the user can act on, never a silent `$0`.
 
 ## Charges and the bill
 
-A tariff's result is a **bill**: an ordered list of charge lines, notes, and a total.
+A tariff's result is a **bill**: an ordered list of charge lines, notes, review reasons, and a
+total.
 
 ```tariff
-charge "Linehaul" (quantity: miles, rate: rate)          // amount = rate × quantity
-charge "Fuel surcharge" as FSC = linehaul * fuelPercent
+charge "Linehaul" (quantity: miles, rate: rate, minimum: $450)   // amount = rate × quantity, at least $450
+charge "Fuel surcharge" as FSC = bill.freight * fuelPercent
 charge "Detention, stop {stop.sequence}" as DET (quantity: billable, rate: $65/h)
 ```
 
-- **`charge "Label" [as CODE] [(quantity: q, rate: r)] [= amount]`** adds a line.
+- **`charge "Label" [as CODE] [(quantity: q, rate: r, minimum: lo, maximum: hi)] [= amount]`**
+  adds a line. Each option is written at most once, by name, in any order.
   - With `quantity` and `rate` the amount may be left out: it is `rate × quantity`, and both are
     printed on the invoice line (its quantity, unit price and rate unit). With an amount and no
     options the line shows the amount only.
+  - **Line limits.** `minimum: lo` makes the line bill at least `lo`, and `maximum: hi` at most
+    `hi` (both money). The amount (the written one, or `rate × quantity`) is worked out exactly,
+    then raised to `lo` when it falls short, then lowered to `hi` when it exceeds it; a `lo`
+    above `hi` is an error (the checker's when both fold, else the rating's `argument` error).
+    The line keeps its label, code, quantity and rate and bills the limited amount, and records
+    which limit applied and the amount it replaced (`limit` on the wire), so the invoice and the
+    trace can say "minimum applied" next to the quantity and rate that no longer multiply to
+    it. One line, not a line and an adjustment, is the shape because a limit belongs to the
+    charge: a coded charge's minimum stays that accessorial (an adjustment line would be
+    uncoded, so freight), `charge(…)`, `bill.charge(…)` and `best` see the amount the customer
+    is billed, and the one-owner-per-code rule still sees one line. The limits apply before the
+    zero and sign rules below, so a line whose amount comes out at `$0` with a `minimum:` bills
+    the minimum; put the charge under an `if` when it applies only sometimes.
   - **Uncoded charges are freight.** They sum to the shipment's freight charge, and each becomes
     its own freight line on the invoice, described by its label. A tariff that bills "Linehaul"
     and "Deficit weight" shows both.
@@ -509,17 +527,41 @@ charge "Detention, stop {stop.sequence}" as DET (quantity: billable, rate: $65/h
     the customer's document, and translated in the Studio's own chrome only.
   - Charges may appear inside `if`, `match` arms and `for` loops, never inside a function.
 - **`note "…"`** adds a line with no amount, shown on the trace, the receipt and the invoice notes.
-- **Total clauses** come last, in this order, and apply to the whole bill:
-  - `minimum amount`: when the total falls short, the difference is billed as an uncoded
-    "Minimum charge adjustment" line;
-  - `maximum amount`: when the total exceeds it, an uncoded negative "Maximum charge adjustment"
-    line brings it down;
-  - `round to cents` (half up; the default when no `round` clause is written),
-    `round half even to cents`, `round up to $5`, `round down to $1`: every line is rounded, and
-    any difference between the rounded lines and the rounded total goes on an uncoded "Rounding"
-    line, so the lines always add up to the total. The step may be any money expression (an
-    input, so a contract sets it); it must be more than `$0`, which the checker enforces for a
-    literal and the rating for any other value (an `argument` error).
+- **`review "…"`** asks for the rating to be approved before it is used, with its interpolated
+  text as the reason: `review "Hazmat over 500 miles: check the permit cost"`. It may be written
+  wherever a `note` may (a tariff's top level and the blocks inside it, options included), never
+  in a function, test, library or condition. The rating still succeeds and bills as usual; the
+  bill carries every review reason reached, in order (`reviews`, shaped exactly like `notes`),
+  and the host holds a rated bill that has any for approval instead of applying it. A losing
+  `best` option's reviews are dropped with its lines and notes. A refused rating has no bill,
+  so no reviews.
+- **Total clauses** come last, in this order, each written at most once:
+  1. `minimum amount on freight`: when the freight lines (the uncoded charge lines) add up to
+     less, the difference is billed as an uncoded "Minimum charge adjustment" line;
+  2. `maximum amount on freight`: when the freight lines add up to more, an uncoded negative
+     "Maximum charge adjustment" line brings them down;
+  3. `minimum amount`: when the whole bill's total (the freight adjustments included) falls
+     short, the difference is billed as an uncoded "Minimum charge adjustment" line;
+  4. `maximum amount`: when the total exceeds it, an uncoded negative "Maximum charge
+     adjustment" line brings it down;
+  5. `round to cents` (half up; the default when no `round` clause is written),
+     `round half even to cents`, `round up to $5`, `round down to $1`: every line is rounded, and
+     any difference between the rounded lines and the rounded total goes on an uncoded "Rounding"
+     line, so the lines always add up to the total. The step may be any money expression (an
+     input, so a contract sets it); it must be more than `$0`, which the checker enforces for a
+     literal and the rating for any other value (an `argument` error).
+
+  The freight clauses come first because a whole-bill clause must see the freight the customer
+  is actually billed: `minimum $400 on freight` then `minimum $450` tops freight up to $400 and
+  only then the whole bill to $450. An adjustment line records the scope it applied to (`on` on
+  the wire: `freight` for the freight clauses, `null` for the whole bill's); the host labels it
+  in the reader's language. Every limit compares exact amounts: lines, line limits and clauses
+  are all worked out before anything is rounded, and rounding (step 5) runs last, as always. So
+  the rounded amounts can sit off a limit by the rounding: each line moves by at most half a
+  cent, the total moves to its step, and the rounding line, which is freight, takes up the
+  difference, so the billed freight can differ from a freight limit by up to half a cent per line
+  of the bill, plus the total's step. A freight minimum above a whole-bill maximum (or any minimum above the maximum of
+  its scope) satisfies nothing and is an error when both fold.
 - **One owner per code.** When a tariff bills a code that something else would also generate on
   the same shipment (a contract accessorial, the fuel surcharge program, a detention policy), the
   tariff's line wins, the other is not generated, and the trace says so. Fuel can no longer be
@@ -558,21 +600,82 @@ best "Linehaul" {
   the one with the highest (the buy side's "greater of", a floor price); a tie goes to the option
   written first. The chosen option's lines and notes join the bill where the `best` is written;
   the others are dropped. Total clauses still apply to the whole bill afterwards.
+- **As a value.** Written as the whole value of a `let`, `var` or assignment, a choice bills
+  exactly as the statement does and also gives the kept option's subtotal, as `Money` (the
+  example below). That is the only place a choice gives a value: it bills lines, so it stands where a statement
+  does, and the binding names what it billed. Anywhere else inside an expression (`linehaul * 2`
+  around it, a charge's amount, a condition, a lambda) is an error (`misplaced`): bind it first.
+  When every option refuses, the rating refuses, so the binding is never reached without a
+  value.
 - **Refusing options.** An option that refuses (`fail`, `require`, `?? fail`) is out of the
   running: that is how an option says "I don't apply to this shipment". When every option refuses,
   the rating refuses with the first option's message. An evaluation error inside an option stops
   the rating, as anywhere else: errors are bugs, not choices.
 - **The trace.** Every evaluation of a `best` or `worst` is recorded with each option's subtotal
-  or refusal and which one won, shown in the Studio's preview and on the shipment's rating detail.
+  or refusal and which one won, shown in the Studio's preview and on the shipment's rating detail;
+  its `choice` event carries the kept option's `subtotal`, the value a `let` binds.
 - **Rules.** A `best` has a label, unique among the file's choices, and at least two options, each
   with a label unique within it. It may appear wherever a `charge` may, including inside `if`,
-  `for`, `match` arms and another option. An option with no `charge` on any path is a warning: it
-  bills `$0`, so `best` always picks it.
+  `for`, `match` arms and another option, as a statement or as the value of a `let`, `var` or
+  assignment there. An option with no `charge` on any path is a warning: it bills `$0`, so
+  `best` always picks it.
 - **In tests**, `chosen("Linehaul")` is the label of the option the last evaluation of that choice
   kept, as `Text?` (`none` when the choice was not reached or every option refused):
   `expect chosen("Linehaul") == "Flat"`. Comparing it (`==`, `!=`, `in [...]`) with a label that
   is no option of that choice is an error (`unknown-option`), with the nearest option's label as
   a fix.
+
+The value form, pricing fuel on whichever linehaul was kept:
+
+```tariff
+let linehaul = best "Linehaul" {
+  option "Per mile" { charge "Linehaul" (quantity: shipment.distance, rate: rate) }
+  option "Flat" { charge "Flat rate" = flatRate }
+}
+charge "Fuel surcharge" as FSC = linehaul * fuelPercent
+```
+
+### Reading the bill so far
+
+A charge often depends on what was billed before it: fuel on the linehaul a `best` kept, a
+discount on the freight. `bill` reads the bill being built, at the line where it is read:
+
+```tariff
+best "Linehaul" {
+  option "Per mile" { charge "Linehaul" (quantity: shipment.distance, rate: rate) }
+  option "Flat" { charge "Flat rate" = flatRate }
+}
+charge "Fuel surcharge" as FSC = bill.freight * 32%
+if bill.charge("Flat rate") != none {
+  note "Billed at the flat rate, with {bill.charge(FSC) ?? $0} of fuel"
+}
+```
+
+| Read | Type | Is |
+|---|---|---|
+| `bill.freight` | `Money` | the exact sum of the uncoded lines billed so far |
+| `bill.accessorials` | `Money` | the exact sum of the coded lines billed so far |
+| `bill.total` | `Money` | both |
+| `bill.charge("Label")`, `bill.charge(CODE)` | `Money?` | the sum of the lines billed so far with that label (as interpolated) or code; `none` when there are none |
+
+- **So far, in source order.** Statements run top to bottom, so a read sees exactly the lines
+  billed before it, and the same file always reads the same amounts. Amounts are exact, before
+  any rounding, and after each line's own `minimum:` and `maximum:`, so fuel worked out after a
+  floored linehaul uses the floored amount. Zero lines are not on the bill, and total clauses
+  have not run yet: their adjustments are never read.
+- **Inside a `best` option**, `bill` reads the bill outside the choice plus the lines that option
+  has billed so far: never another option's lines, so each method is priced as if it were the
+  one kept.
+- **Where.** `bill` is read in a tariff's top level and the blocks inside it. A function can't
+  read it (pass the amount in), and neither can a condition or a library, which have no bill.
+  A test reads the finished bill instead, through `total`, `lines`, `charge(…)` and `reviews`.
+  Nothing in a tariff may be named `bill`.
+- **Order warnings.** `bill.charge("Label")` or `bill.charge(CODE)` naming a label or code the
+  tariff bills only later in source order is a warning (`bill-order`: "`FSC` is billed after
+  this line, so this reads `none`"), with the line that bills it as a related place. A charge in
+  a `for` loop around the read may bill before it, on an earlier iteration, and a charge in an
+  option of a choice that is over before the read may have joined the bill, so neither is
+  later. A label or code the tariff never bills is a warning too (`not-billed`), as in tests.
 
 ## Contracts and inputs
 
@@ -755,6 +858,9 @@ now carries instead of assuming miles.
   each of those years, in date order. It holds holidays only, never blackout dates. `date.holiday`
   reads it (see "Methods on values").
 - Volume also has the liquid units `gal` and `l`, for fuel prices.
+- `bill` is not part of the record: a tariff's own code reads it as the bill it is building
+  (`bill.freight`, `bill.accessorials`, `bill.total`, `bill.charge(…)`; see "Reading the bill
+  so far"), and `tariff.catalog` lists it after `tables` with its fields and docs.
 
 ### Rate tables
 
@@ -852,9 +958,12 @@ test "a load with no weight refuses to rate" {
     it. Giving the cells the test reads silences it.
 - `expect` takes a `Bool`; `charge("Label")` or `charge(CODE)` reads a line's amount (`Money?`),
   `total` the bill's total, `lines` the whole list (`{ label: Text, code: Text?, amount: Money,
-  kind: LineKind }`, where `LineKind` is `Charge`, `Minimum`, `Maximum` or `Rounding`); `expect fails` (optionally with the message)
-  expects a refusal. In a condition's tests, `applies` is the condition's result: `expect
-  applies`, `expect not applies`.
+  kind: LineKind }`, where `LineKind` is `Charge`, `Minimum`, `Maximum` or `Rounding`), and
+  `reviews` the review reasons (`List<Text>`, in order: `expect reviews.isEmpty`,
+  `expect reviews == ["Hazmat over 500 miles: check the permit cost"]`); `expect fails`
+  (optionally with the message) expects a refusal. These read the finished bill; the tariff's
+  own code reads the bill so far through `bill`. In a condition's tests, `applies` is the
+  condition's result: `expect applies`, `expect not applies`.
 - Tests replace the Studio's test-case rows and recorded scenarios: "Save as test" in the preview
   writes a `test` block from a real shipment's facts into the source.
 
@@ -936,11 +1045,11 @@ cannot be saved for review or submitted.
 Every test and property case records which parts of the file it ran. `tariff.test` reports the
 file's **regions** with how many times each ran: each block of an `if`, `else if` and `else`
 (statement or expression), each `match` arm, each `for` body, each `option`, each `charge`, each
-refusal (`fail`, the refusing side of `require` and of `?? fail`), each function body, and a
-condition's two outcomes: two regions on its final expression, `applies` and `notApplies`,
-entered when a test or case sees the condition give `true` or `false` (a refusal enters
-neither). The Studio marks the lines of regions no test reached, shows "Tests reach 18 of 21
-regions" in the tests panel, and lists unreached regions as a readiness warning before submit.
+`review`, each refusal (`fail`, the refusing side of `require` and of `?? fail`), each function
+body, and a condition's two outcomes: two regions on its final expression, `applies` and
+`notApplies`, entered when a test or case sees the condition give `true` or `false` (a refusal
+enters neither). The Studio marks the lines of regions no test reached, shows "Tests reach 18 of
+21 regions" in the tests panel, and lists unreached regions as a readiness warning before submit.
 Coverage counts the root file's regions only; a library has its own.
 
 ## Module operations
@@ -951,7 +1060,7 @@ The crate's `formula.*` operations are replaced by `tariff.*`, with the same env
 | Operation | Does |
 |---|---|
 | `tariff.check` | parses and checks a file with the libraries it imports, against the schema, the tables' shapes and the organisation's accessorial codes; returns diagnostics with fixes, the declared inputs (name, type, default, doc), the outline, symbols and inferred types (for inlay hints) and the imports it pinned |
-| `tariff.evaluate` | rates a batch of programs (a tariff or condition with its libraries, input values and record) and returns, per program, the bill (charges with label, code, amount, quantity, rate and source range; notes; adjustments; total) or the refusal, plus lookups and per-statement values for the trace |
+| `tariff.evaluate` | rates a batch of programs (a tariff or condition with its libraries, input values and record) and returns, per program, the bill (charges with label, code, amount, quantity, rate, the limit that applied and source range; notes; review reasons; adjustments with their scope; total) or the refusal, plus lookups and per-statement values for the trace |
 | `tariff.test` | runs a file's tests and properties against the sample record; returns each one's result, the failing expectation and the values involved, a property's counterexample, and the file's coverage |
 | `tariff.format` | formats a file (one canonical style) |
 | `tariff.tokens` | the token stream for highlighting |
@@ -1042,7 +1151,8 @@ The Studio edits one source file. Everything else is a view of it, computed by t
 - refactorings from `tariff.actions`: **Promote to input** turns a selected literal (`$2.35/mi`)
   into an `input` declaration with that default and puts the new name in its place, ready to
   rename, optionally replacing every equal literal in the file;
-- the bill preview: each charge with its code, quantity and rate, the notes and the adjustments.
+- the bill preview: each charge with its code, quantity, rate and any limit that applied, the
+  notes, the review reasons and the adjustments.
 
 Every editor operation answers from one call on a file that may not parse, in UTF-16 positions.
 A `doc` on the wire is a string (the author's words) or a `Message` (a built-in's or the standard
@@ -1129,16 +1239,19 @@ test        = "test" string block ;
 property    = "property" string block ;
 block       = "{" { stmt } "}" ;
 
-stmt        = letStmt | varStmt | assign | charge | note | ifStmt | matchStmt | forStmt
-            | choose | require | fail | return | "break" NL | "continue" NL | total
-            | given | vary | assume | expect | expr NL ;
+stmt        = letStmt | varStmt | assign | charge | note | review | ifStmt | matchStmt
+            | forStmt | choose NL | require | fail | return | "break" NL | "continue" NL
+            | total | given | vary | assume | expect | expr NL ;
 letStmt     = "let" name [ ":" type ] "=" expr NL ;
 varStmt     = "var" name [ ":" type ] "=" expr NL ;
 assign      = name ( "=" | "+=" | "-=" ) expr NL ;
 charge      = "charge" string [ "as" CODE ] [ "(" option { "," option } ")" ] [ "=" expr ] NL ;
-                                                              (* "= expr" may be left out only with quantity: and rate: *)
+                                                              (* options: quantity:, rate:, minimum:,
+                                                                 maximum:; "= expr" may be left out
+                                                                 only with quantity: and rate: *)
 option      = name ":" expr ;
 note        = "note" string NL ;
+review      = "review" string NL ;                            (* tariffs only *)
 choose      = ( "best" | "worst" ) string "{" { option } "}" ;
 option      = "option" string block ;
 ifStmt      = "if" condition block { "else" "if" condition block } [ "else" block ] ;
@@ -1153,7 +1266,7 @@ forStmt     = "for" name "in" expr [ "where" expr ] block ;
 require     = "require" condition "else" string NL ;
 fail        = "fail" string NL ;
 return      = "return" expr NL ;
-total       = ( "minimum" | "maximum" ) expr NL
+total       = ( "minimum" | "maximum" ) expr [ "on" "freight" ] NL
             | "round" [ "half" "even" | "up" | "down" ] "to" ( "cents" | expr ) NL ;
 given       = "given" lvalue [ "[" expr { "," expr } "]" ] "=" expr NL ;
                                                               (* tests and properties; the keys
@@ -1182,7 +1295,8 @@ args        = "(" [ arg { "," arg } [ "," ] ] ")" ;
 arg         = [ name ":" ] ( expr | lambda ) ;
 lambda      = name "=>" expr | "(" name "," name ")" "=>" expr ;
 primary     = literal | name | TypeName [ "." name ] | "(" expr ")" | list | record
-            | ifExpr | matchExpr ;
+            | ifExpr | matchExpr | choose ;               (* a choose only as the whole value
+                                                                 of a let, var or assignment *)
 ifExpr      = "if" condition "{" expr "}" { "else" "if" condition "{" expr "}" } "else" "{" expr "}" ;
 matchExpr   = "match" expr "{" { pattern [ "if" expr ] "=>" expr NL } "}" ;
 list        = "[" [ expr { "," expr } [ "," ] ] "]" ;
@@ -1201,7 +1315,10 @@ dateTime    = date "T" digit2 ":" digit2 [ ":" digit2 ] ( "Z" | ( "+" | "-" ) di
 string      = '"' { char | escape | "{" expr "}" | "{{" | "}}" } '"' ;
 ```
 
-A keyword is never an identifier. Unit names are contextual: `lb` is a unit only directly after
+A keyword is never an identifier. `best`, `worst`, `option` and `review` start their construct
+only when a string follows on the same line, and `on` and `freight` are keywords only after a
+total clause's amount; elsewhere all of them are ordinary names (`bill` is a name too, one a
+tariff may not declare). Unit names are contextual: `lb` is a unit only directly after
 a number, or after `/` in a money literal or a type. Elsewhere it is an ordinary name, except
 as the argument of `.in(…)`, which reads `cwt` or `lb/ft3` as a unit. `$` directly followed
 by `/` and a unit is the money unit, so a whole rate unit is written `.in($/cwt)`. `in` directly

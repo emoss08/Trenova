@@ -12,6 +12,7 @@ use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::diagnostic::Fix;
 use crate::tariff::syntax::ast::Arg as CallArg;
 use crate::tariff::syntax::ast::BinaryOp;
+use crate::tariff::syntax::ast::ChooseKind;
 use crate::tariff::syntax::ast::Condition;
 use crate::tariff::syntax::ast::Expr;
 use crate::tariff::syntax::ast::ExprKind;
@@ -629,6 +630,9 @@ impl Parser<'_> {
                 self.node_with(ExprKind::Text(text), span, height)
             }
             TokenKind::Name if self.peek_is(1, "=>") && !self.guard => self.misplaced_lambda(),
+            TokenKind::Name if self.at_labelled("best") || self.at_labelled("worst") => {
+                self.choose_expr()
+            }
             TokenKind::Name | TokenKind::Code | TokenKind::Unit => {
                 self.bump();
                 if token.kind == TokenKind::Unit {
@@ -646,6 +650,18 @@ impl Parser<'_> {
             }
             _ => self.expected_value(),
         }
+    }
+
+    /// `best "Label" { … }` or `worst "Label" { … }` read as a value.
+    fn choose_expr(&mut self) -> Expr {
+        let kind = if self.at_word("best") {
+            ChooseKind::Best
+        } else {
+            ChooseKind::Worst
+        };
+        let choose = self.choose(kind);
+        let span = choose.span;
+        self.node_with(ExprKind::Choose(Box::new(choose)), span, 4)
     }
 
     fn expected_value(&mut self) -> Expr {

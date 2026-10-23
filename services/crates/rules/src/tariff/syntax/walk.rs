@@ -100,9 +100,11 @@ macro_rules! walker {
             | StmtKind::Return(value)
             | StmtKind::Expr(value)
             | StmtKind::Expect(Expect::Holds(value) | Expect::Monotone { value, .. })
-            | StmtKind::Assume(value)
-            | StmtKind::Total(TotalClause::Minimum(value) | TotalClause::Maximum(value)) => {
+            | StmtKind::Assume(value) => {
                 $expr(value, visit);
+            }
+            StmtKind::Total(TotalClause::Minimum(bound) | TotalClause::Maximum(bound)) => {
+                $expr(& $($m)? bound.amount, visit);
             }
             StmtKind::Total(TotalClause::Round { to, .. }) => {
                 if let RoundTo::Amount(amount) = to {
@@ -119,6 +121,7 @@ macro_rules! walker {
                 }
             }
             StmtKind::Note(text)
+            | StmtKind::Review(text)
             | StmtKind::Fail(text)
             | StmtKind::Expect(Expect::Fails(Some(text))) => {
                 $text(text, visit);
@@ -264,6 +267,11 @@ macro_rules! walker {
                 $arms(arms, visit);
             }
             ExprKind::Lambda { body, .. } => $expr(body, visit),
+            ExprKind::Choose(choose) => {
+                for option in & $($m)? choose.options {
+                    $block(& $($m)? option.body, visit);
+                }
+            }
         }
     }
 

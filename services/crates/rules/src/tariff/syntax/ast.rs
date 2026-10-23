@@ -295,6 +295,8 @@ pub enum StmtKind {
     Charge(Charge),
     /// `note "Text"`.
     Note(Text),
+    /// `review "Text"`: the rating bills, and asks to be approved before it is used.
+    Review(Text),
     /// `if … { … } else if … { … } else { … }`.
     If(IfStmt),
     /// `best "Label" { option "A" { … } … }` or `worst "Label" { … }`.
@@ -503,10 +505,10 @@ pub struct ForStmt {
 /// A total clause.
 #[derive(Debug, Clone, PartialEq)]
 pub enum TotalClause {
-    /// `minimum amount`.
-    Minimum(Expr),
-    /// `maximum amount`.
-    Maximum(Expr),
+    /// `minimum amount` or `minimum amount on freight`.
+    Minimum(TotalBound),
+    /// `maximum amount` or `maximum amount on freight`.
+    Maximum(TotalBound),
     /// `round [half even | up | down] to (cents | $X)`.
     Round {
         /// How.
@@ -514,6 +516,24 @@ pub enum TotalClause {
         /// To what.
         to: RoundTo,
     },
+}
+
+/// The amount of a `minimum` or `maximum` clause and what it bounds.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TotalBound {
+    /// The amount.
+    pub amount: Expr,
+    /// `on freight`: the name after `on`, when written; without it the clause bounds the whole
+    /// bill. The checker accepts only `freight`.
+    pub on: Option<Name>,
+}
+
+impl TotalBound {
+    /// Whether the clause bounds the freight lines only.
+    #[must_use]
+    pub fn on_freight(&self) -> bool {
+        self.on.is_some()
+    }
 }
 
 /// How a `round` clause rounds.
@@ -790,6 +810,9 @@ pub enum ExprKind {
         /// The arms, whose bodies are [`ArmBody::Expr`].
         arms: Vec<Arm>,
     },
+    /// `best "Label" { … }` or `worst "Label" { … }` as a value: the kept option's subtotal.
+    /// The checker allows it only as the whole value of a `let`, `var` or assignment.
+    Choose(Box<Choose>),
     /// `x => body` or `(a, b) => body`, only as an argument to a list method.
     Lambda {
         /// The parameters.

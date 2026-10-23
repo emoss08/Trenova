@@ -68,6 +68,10 @@ impl Checker<'_> {
                 self.billing(stmt.span, Message::new(message!("A note")));
                 self.text_parts(text);
             }
+            StmtKind::Review(text) => {
+                self.billing(stmt.span, Message::new(message!("A `review`")));
+                self.text_parts(text);
+            }
             StmtKind::If(branches) => self.if_stmt(branches),
             StmtKind::Match(statement) => {
                 self.match_arms(
@@ -111,7 +115,7 @@ impl Checker<'_> {
             StmtKind::Total(clause) => self.total(stmt, clause),
             StmtKind::Vary { target, values } => self.vary(target, values.as_ref()),
             StmtKind::Assume(condition) => self.assume(condition),
-            StmtKind::Choose(choose) => self.choose(stmt, choose),
+            StmtKind::Choose(choose) => self.choose(stmt.span, choose),
             StmtKind::Given {
                 target,
                 keys,
@@ -146,6 +150,7 @@ impl Checker<'_> {
     }
 
     fn binding(&mut self, binding: &Binding, kind: LocalKind) {
+        self.value_choice(&binding.value);
         let ty = if let Some(annotation) = &binding.ty {
             let declared = self.lower_type(annotation);
             self.expect(
@@ -201,6 +206,7 @@ impl Checker<'_> {
     }
 
     fn assign(&mut self, target: &Name, op: AssignOp, value: &Expr) {
+        self.value_choice(value);
         let Some(id) = self.scopes.find(&target.text) else {
             self.expr(value, None);
             if self.globals.values.contains_key(&target.text)
@@ -285,6 +291,11 @@ impl Checker<'_> {
         }
     }
 
+    /// Lets a choice written as the whole value of a binding or assignment give its value.
+    fn value_choice(&mut self, value: &Expr) {
+        self.choice.value_at = matches!(value.kind, ExprKind::Choose(_)).then_some(value.id);
+    }
+
     /// The `let` keyword before a binding's name.
     fn let_keyword(&self, name: Span) -> Option<Span> {
         let head = self.source.get(..usize::try_from(name.start).ok()?)?;
@@ -331,8 +342,14 @@ impl Checker<'_> {
         {
             self.code_known(code);
         }
-        let (quantity, rate, unknown_option) = self.charge_options(charge);
-        if let (Some((q, qt)), Some((r, rt))) = (&quantity, &rate) {
+        let options = self.charge_options(charge);
+        let ChargeOptions {
+            quantity,
+            rate,
+            unknown: unknown_option,
+            ..
+        } = &options;
+        if let (Some((q, qt)), Some((r, rt))) = (quantity, rate) {
             let product = operators::arithmetic(BinaryOp::Mul, rt, qt);
             if !matches!(&product, Ok(ty) if ty.is_money() || matches!(ty, Type::Error)) {
                 let mut message = Message::with(
@@ -360,19 +377,40 @@ impl Checker<'_> {
                         ],
                     );
                 }
-                let span = charge.options.first().map_or(stmt.span, |first| {
-                    first
-                        .span
-                        .cover(charge.options.last().map_or(first.span, |last| last.span))
-                });
+                let span = charge
+                    .options
+                    .iter()
+                    .filter(|option| {
+                        option
+                            .name
+                            .as_ref()
+                            .is_some_and(|name| matches!(name.text.as_str(), "quantity" | "rate"))
+                    })
+                    .map(|option| option.span)
+                    .reduce(Span::cover)
+                    .unwrap_or(stmt.span);
                 self.report(Diagnostic::error("charge-option", span, message));
             }
+        }
+        if let (Some(low), Some(high)) = (options.minimum, options.maximum)
+            && super::program::above(self, low, high)
+        {
+            self.report(
+                Diagnostic::error(
+                    "charge-option",
+                    low.span,
+                    Message::new(message!(
+                        "The charge's minimum is above its maximum, so no amount satisfies both"
+                    )),
+                )
+                .with_related(high.span, Message::new(message!("The maximum"))),
+            );
         }
         match &charge.amount {
             Some(amount) => {
                 self.expect(amount, &Type::money(), &Want::Amount);
             }
-            None if (quantity.is_some() && rate.is_some()) || unknown_option => {}
+            None if (quantity.is_some() && rate.is_some()) || *unknown_option => {}
             None => {
                 self.report(Diagnostic::error(
                     "charge-amount",
@@ -385,12 +423,14 @@ impl Checker<'_> {
         }
     }
 
-    /// A charge's `quantity:` and `rate:` options with their types, and whether an unknown
-    /// option was written.
-    fn charge_options<'c>(&mut self, charge: &'c Charge) -> (Given<'c>, Given<'c>, bool) {
+    /// A charge's options: `quantity:` and `rate:` with their types, `minimum:` and `maximum:`
+    /// (money), and whether an unknown option was written.
+    fn charge_options<'c>(&mut self, charge: &'c Charge) -> ChargeOptions<'c> {
         let mut unknown_option = false;
         let mut quantity: Option<(&Expr, Type)> = None;
         let mut rate: Option<(&Expr, Type)> = None;
+        let mut minimum: Option<(&Expr, Type)> = None;
+        let mut maximum: Option<(&Expr, Type)> = None;
         for option in &charge.options {
             let Some(name) = &option.name else {
                 self.expr(&option.value, None);
@@ -406,15 +446,20 @@ impl Checker<'_> {
             let slot = match name.text.as_str() {
                 "quantity" => &mut quantity,
                 "rate" => &mut rate,
+                "minimum" => &mut minimum,
+                "maximum" => &mut maximum,
                 _ => {
                     unknown_option = true;
                     self.expr(&option.value, None);
-                    let candidates = vec![String::from("quantity"), String::from("rate")];
+                    let candidates: Vec<String> = CHARGE_OPTIONS
+                        .iter()
+                        .map(|option| (*option).to_owned())
+                        .collect();
                     let message =
                         Message::with(message!("A charge has no option {0}"), [quote(&name.text)]);
                     let missing = Message::with(
                         message!(
-                            "A charge has no option {0}; its options are `quantity` and `rate`"
+                            "A charge has no option {0}; its options are `quantity`, `rate`, `minimum` and `maximum`"
                         ),
                         [quote(&name.text)],
                     );
@@ -439,10 +484,26 @@ impl Checker<'_> {
                 ));
                 continue;
             }
-            let ty = self.operand(&option.value);
+            let ty = if matches!(name.text.as_str(), "minimum" | "maximum") {
+                self.expect(
+                    &option.value,
+                    &Type::money(),
+                    &Want::Limit {
+                        option: name.text.clone(),
+                    },
+                )
+            } else {
+                self.operand(&option.value)
+            };
             *slot = Some((&option.value, ty));
         }
-        (quantity, rate, unknown_option)
+        ChargeOptions {
+            quantity,
+            rate,
+            minimum: minimum.map(|(value, _)| value),
+            maximum: maximum.map(|(value, _)| value),
+            unknown: unknown_option,
+        }
     }
 
     fn if_stmt(&mut self, statement: &IfStmt) {
@@ -522,8 +583,8 @@ impl Checker<'_> {
             ));
         }
         match clause {
-            TotalClause::Minimum(amount) | TotalClause::Maximum(amount) => {
-                self.expect(amount, &Type::money(), &Want::Total);
+            TotalClause::Minimum(bound) | TotalClause::Maximum(bound) => {
+                self.expect(&bound.amount, &Type::money(), &Want::Total);
             }
             TotalClause::Round {
                 to: RoundTo::Amount(amount),
@@ -729,6 +790,18 @@ impl Checker<'_> {
 
 /// A charge option's value and type, when it is written.
 type Given<'c> = Option<(&'c Expr, Type)>;
+
+/// The options a `charge` takes, by name.
+pub const CHARGE_OPTIONS: &[&str] = &["quantity", "rate", "minimum", "maximum"];
+
+/// A charge's options as written.
+struct ChargeOptions<'c> {
+    quantity: Given<'c>,
+    rate: Given<'c>,
+    minimum: Option<&'c Expr>,
+    maximum: Option<&'c Expr>,
+    unknown: bool,
+}
 
 /// Whether an expression statement refuses to rate when its value is missing (`x ?? fail
 /// "…"`), so it is kept for that.

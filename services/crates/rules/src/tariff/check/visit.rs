@@ -74,7 +74,25 @@ pub fn expr(expr_node: &Expr, visit: &mut impl FnMut(&Expr)) {
             }
         }
         ExprKind::Lambda { body, .. } => expr(body, visit),
+        ExprKind::Choose(choose) => {
+            for option in &choose.options {
+                block(&option.body, &mut |_| {}, visit);
+            }
+        }
         _ => {}
+    }
+}
+
+/// Visits a binding's or assignment's value; a choice written as the value (`let x = best
+/// "…" { … }`) also has its options' statements visited, as a choice statement's are.
+fn value(value: &Expr, on_stmt: &mut impl FnMut(&Stmt), visit: &mut impl FnMut(&Expr)) {
+    if let ExprKind::Choose(choose) = &value.kind {
+        visit(value);
+        for option in &choose.options {
+            block(&option.body, on_stmt, visit);
+        }
+    } else {
+        expr(value, visit);
     }
 }
 
@@ -117,14 +135,17 @@ pub fn block(block_node: &Block, on_stmt: &mut impl FnMut(&Stmt), visit: &mut im
 pub fn stmt(stmt_node: &Stmt, on_stmt: &mut impl FnMut(&Stmt), visit: &mut impl FnMut(&Expr)) {
     on_stmt(stmt_node);
     match &stmt_node.kind {
-        StmtKind::Let(binding) | StmtKind::Var(binding) => expr(&binding.value, visit),
+        StmtKind::Let(binding) | StmtKind::Var(binding) => {
+            self::value(&binding.value, on_stmt, visit);
+        }
+        StmtKind::Assign { value, .. } => self::value(value, on_stmt, visit),
         StmtKind::Given { keys, value, .. } => {
             for key in keys.iter().flatten() {
                 expr(key, visit);
             }
             expr(value, visit);
         }
-        StmtKind::Assign { value, .. } | StmtKind::Return(value) | StmtKind::Expr(value) => {
+        StmtKind::Return(value) | StmtKind::Expr(value) => {
             expr(value, visit);
         }
         StmtKind::Charge(charge) => {
@@ -175,14 +196,13 @@ pub fn stmt(stmt_node: &Stmt, on_stmt: &mut impl FnMut(&Stmt), visit: &mut impl 
             }
         }
         StmtKind::Require { condition, .. } => self::condition(condition, visit),
-        StmtKind::Total(
-            TotalClause::Minimum(value)
-            | TotalClause::Maximum(value)
-            | TotalClause::Round {
-                to: RoundTo::Amount(value),
-                ..
-            },
-        )
+        StmtKind::Total(TotalClause::Minimum(bound) | TotalClause::Maximum(bound)) => {
+            expr(&bound.amount, visit);
+        }
+        StmtKind::Total(TotalClause::Round {
+            to: RoundTo::Amount(value),
+            ..
+        })
         | StmtKind::Expect(Expect::Holds(value) | Expect::Monotone { value, .. })
         | StmtKind::Assume(value)
         | StmtKind::Vary {

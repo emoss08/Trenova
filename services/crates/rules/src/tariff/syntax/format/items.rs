@@ -235,6 +235,7 @@ impl Formatter<'_> {
             }
             StmtKind::Charge(charge) => self.charge(charge, stmt.span.end),
             StmtKind::Note(text) => Doc::Concat(vec![Doc::text("note "), self.text_doc(text)]),
+            StmtKind::Review(text) => Doc::Concat(vec![Doc::text("review "), self.text_doc(text)]),
             StmtKind::Fail(text) => Doc::Concat(vec![Doc::text("fail "), self.text_doc(text)]),
             StmtKind::If(statement) => {
                 let mut parts = Vec::new();
@@ -296,7 +297,8 @@ impl Formatter<'_> {
         }
     }
 
-    fn choose(&mut self, choose: &Choose, end: u32) -> Doc {
+    /// `best "Label" { option … }`, as a statement or a value.
+    pub(super) fn choose(&mut self, choose: &Choose, end: u32) -> Doc {
         let mut body = self.vertical(&choose.options, false, |option| option.span, Self::choice);
         body.extend(self.closing(end));
         Doc::Concat(vec![
@@ -401,11 +403,17 @@ impl Formatter<'_> {
 
     fn total(&mut self, clause: &TotalClause) -> Doc {
         match clause {
-            TotalClause::Minimum(value) => {
-                Doc::Concat(vec![Doc::text("minimum "), self.expr(value)])
-            }
-            TotalClause::Maximum(value) => {
-                Doc::Concat(vec![Doc::text("maximum "), self.expr(value)])
+            TotalClause::Minimum(bound) | TotalClause::Maximum(bound) => {
+                let word = if matches!(clause, TotalClause::Minimum(_)) {
+                    "minimum "
+                } else {
+                    "maximum "
+                };
+                let mut parts = vec![Doc::text(word), self.expr(&bound.amount)];
+                if let Some(on) = &bound.on {
+                    parts.push(Doc::text(format!(" on {}", on.text)));
+                }
+                Doc::Concat(parts)
             }
             TotalClause::Round { mode, to } => {
                 let mode = match mode {

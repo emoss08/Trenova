@@ -137,6 +137,7 @@ impl Checker<'_> {
                 self.lambda_depth -= 1;
                 Type::Error
             }
+            ExprKind::Choose(choose) => self.choose_value(expr, choose),
             ExprKind::Missing => Type::Error,
         }
     }
@@ -302,7 +303,7 @@ impl Checker<'_> {
                 ));
                 return Type::Error;
             }
-            if matches!(name.text.as_str(), "total" | "lines")
+            if matches!(name.text.as_str(), "total" | "lines" | "reviews")
                 && !self.globals.values.contains_key(&name.text)
             {
                 self.report(Diagnostic::error(
@@ -327,6 +328,9 @@ impl Checker<'_> {
         if self.schema.root(&name.text).is_some() || name.text == "tables" {
             return self.root(expr, name);
         }
+        if let Some(ty) = self.bill_read(expr, name) {
+            return ty;
+        }
         if self.file_lets.contains(&name.text) && !matches!(self.body, Body::Top) {
             self.closed(name, Message::new(message!("the tariff's own binding")));
             return Type::Error;
@@ -350,7 +354,7 @@ impl Checker<'_> {
         Type::Error
     }
 
-    /// `total` and `lines` in a tariff's tests, and `applies` in a condition's.
+    /// `total`, `lines` and `reviews` in a tariff's tests, and `applies` in a condition's.
     fn bill_name(&mut self, name: &str) -> Option<Type> {
         if self.kind == crate::tariff::syntax::ast::FileKind::Condition && name == APPLIES {
             return Some(Type::Bool);
@@ -358,12 +362,10 @@ impl Checker<'_> {
         if self.kind != crate::tariff::syntax::ast::FileKind::Tariff {
             return None;
         }
-        if !matches!(name, "total" | "lines") {
-            return None;
-        }
         match name {
             "total" => Some(Type::money()),
             "lines" => Some(Type::list(Type::Record(line_type()))),
+            "reviews" => Some(Type::list(Type::Text)),
             _ => None,
         }
     }
@@ -380,7 +382,7 @@ impl Checker<'_> {
             Body::Test => (
                 "test-scope",
                 message!(
-                    "{0} is {1}, which a test can't read: a test reads the bill (`total`, `lines`, `charge(…)`), the record and the file's functions and constants"
+                    "{0} is {1}, which a test can't read: a test reads the bill (`total`, `lines`, `charge(…)`, `reviews`), the record and the file's functions and constants"
                 ),
             ),
             _ => (
@@ -479,9 +481,9 @@ impl Checker<'_> {
     }
 
     /// The symbol of a schema root: the program's first symbols are the roots, in schema order,
-    /// then `tables`.
+    /// then `tables` and `bill`.
     pub fn root_symbol(&self, name: &str) -> Option<super::SymbolId> {
-        let count = self.schema.roots.len() + 1;
+        let count = self.schema.roots.len() + 2;
         self.symbols
             .iter()
             .take(count)
@@ -696,6 +698,9 @@ impl Checker<'_> {
             && !self.root_member(module, &alias, &name.text)
         {
             return self.module_member(expr, module, &alias, name, false).0;
+        }
+        if self.is_bill(target) {
+            return self.bill_field(target, name);
         }
         if self.is_tables(target) {
             self.report(Diagnostic::error(

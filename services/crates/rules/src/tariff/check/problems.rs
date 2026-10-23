@@ -40,6 +40,10 @@ impl Checker<'_> {
                 message!("A total clause takes money, but {0} is {1}"),
                 [what, is],
             ),
+            Want::Limit { option } => Message::with(
+                message!("A charge's {0} must be money, but {1} is {2}"),
+                [quote(option), what, is],
+            ),
             Want::Argument { param, callee } => Message::with(
                 message!("{0} is {1}, but {2} of {3} takes {4}"),
                 [what, is, quote(param), quote(callee), needed],

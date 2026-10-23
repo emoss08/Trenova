@@ -7,7 +7,8 @@
 //!   be done with them.
 //! - [`interp`]: the interpreter over the syntax tree; [`run`]: one program from inputs to
 //!   [`run::Outcome`], the step the hosts gate behind the checker ([`run::run_program`]).
-//! - [`bill`]: charge lines, notes, total clauses, rounding and exchange.
+//! - [`bill`]: charge lines and their limits, notes, review reasons, total clauses, rounding and
+//!   exchange.
 //! - [`tables`]: rate table lookups, loaded on demand.
 //! - [`record`]: the host's record and the sample record.
 //! - [`budget`], [`trace`], [`error`]: budgets, the rate trace, refusals and errors.

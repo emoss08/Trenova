@@ -1,0 +1,139 @@
+[
+ {
+  "name": "a review bills as usual and carries its reason",
+  "source": "tariff \"t\"\ncharge \"Linehaul\" = $100\nif shipment.hazmat {\n  review \"Hazmat over {shipment.distance}\"\n}\nreview \"Always check\"",
+  "facts": {
+   "shipment": {
+    "hazmat": true,
+    "distance": {
+     "$q": "500",
+     "u": "mi"
+    }
+   }
+  },
+  "trace": true,
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "lines": [
+     {
+      "label": "Linehaul",
+      "amount": {
+       "$q": "100",
+       "u": "$"
+      }
+     }
+    ],
+    "notes": [],
+    "reviews": [
+     {
+      "text": "Hazmat over 500 mi",
+      "range": {
+       "from": 59,
+       "to": 99
+      }
+     },
+     {
+      "text": "Always check",
+      "range": {
+       "from": 102,
+       "to": 123
+      }
+     }
+    ],
+    "total": {
+     "$q": "100",
+     "u": "$"
+    }
+   },
+   "trace": [
+    {
+     "kind": "charge",
+     "label": "Linehaul"
+    },
+    {
+     "kind": "branch",
+     "taken": 0
+    },
+    {
+     "kind": "review",
+     "text": "Hazmat over 500 mi",
+     "range": {
+      "from": 59,
+      "to": 99
+     }
+    },
+    {
+     "kind": "review",
+     "text": "Always check"
+    }
+   ]
+  }
+ },
+ {
+  "name": "no review leaves the list empty",
+  "source": "tariff \"t\"\ncharge \"Linehaul\" = $100\nif shipment.hazmat {\n  review \"Hazmat\"\n}",
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "reviews": []
+   }
+  }
+ },
+ {
+  "name": "a losing option's reviews are dropped with its lines",
+  "source": "tariff \"t\"\nbest \"L\" {\n  option \"A\" {\n    review \"A applied\"\n    charge \"A\" = $1\n  }\n  option \"B\" {\n    review \"B applied\"\n    charge \"B\" = $2\n  }\n}",
+  "expect": {
+   "status": "rated",
+   "bill": {
+    "reviews": [
+     {
+      "text": "A applied"
+     }
+    ],
+    "total": {
+     "$q": "1",
+     "u": "$"
+    }
+   }
+  }
+ },
+ {
+  "name": "tests read the reviews, and a review is a region",
+  "tests": "tariff \"t\"\ncharge \"Linehaul\" = $100\nif shipment.hazmat {\n  review \"Hazmat\"\n}\ntest \"dry freight needs no review\" {\n  expect reviews.isEmpty\n}\ntest \"hazmat waits for approval\" {\n  given shipment.hazmat = true\n  expect reviews == [\"Hazmat\"]\n}\ntest \"a wrong expectation fails\" {\n  given shipment.hazmat = true\n  expect reviews.isEmpty\n}",
+  "expect": {
+   "tests": [
+    {
+     "name": "dry freight needs no review",
+     "status": "passed"
+    },
+    {
+     "name": "hazmat waits for approval",
+     "status": "passed"
+    },
+    {
+     "name": "a wrong expectation fails",
+     "status": "failed"
+    }
+   ],
+   "coverage": {
+    "regions": [
+     {
+      "kind": "charge",
+      "hits": 3
+     },
+     {
+      "kind": "if",
+      "hits": 2
+     },
+     {
+      "kind": "review",
+      "hits": 2
+     }
+    ],
+    "reached": 3,
+    "total": 3
+   }
+  }
+ }
+]

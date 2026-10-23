@@ -969,6 +969,20 @@
    "input": {
     "newName": "flat"
    }
+  },
+  {
+   "name": "prepare refuses the bill",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $1",
+    "let w = bi|ll.freight",
+    "charge \"x\" = w"
+   ],
+   "expect": {
+    "error": {
+     "message": "`bill` is the bill so far, so it can't be renamed"
+    }
+   }
   }
  ]
 }
