@@ -1486,11 +1486,28 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: factoring | the nine `factoring` reads; `factoring_get_agreement` renamed `factoring_list_agreements` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
 | Typed reads through GraphQL: billing and receivables | `invoice_list`, `invoice_get` (up to 50 ids, one read each), `invoice_get_adjustment`, `invoice_list_disputes`, `receivable_list_customer_payments`; 15 more stay on the repository path with their reasons | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.82 → 0.83; keyword 0.95 → 0.95 |
 | Typed reads through GraphQL: carriers | `carrier_list_intelligence_events`, `carrier_list_capacity_postings`, `carrier_list_invoice_matches`, the last carrier rows of the inventory | 632 → 632 | unchanged, 0 pending | not measured (fixture stale, re-recorded separately) | not measured |
+| Typed reads through GraphQL: reports | `report_list_runs`, `report_list_schedules`; `report_list_table_change_alerts` and six more stay on the repository path with their reasons | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.83 → 0.83; keyword 0.95 → 0.95 |
 
 The carrier row's hybrid figures wait for the embedding fixture to be re-recorded with the three
 new descriptions. Keyword ranking on the 147 held-out cases is unchanged (recall@5 0.99, top-1
 0.95); over the development cases it held its floors (recall@5 1.00, top-1 0.96) once the
 intelligence event list left the resolution note unoffered.
+
+The reports row converts the run and schedule lists. Each reads a new `Desk*` operation;
+`ReportRun` gains `rowsStored` and `ReportSchedule` gains `mine`, both declare
+`@kind(resource: "report")`, and `reportSchedules` gains `enabledOnly` and a `limit` bounded as
+every list keyed by an optional record is (one page of 20 across the organization, where it read
+every schedule). The run list says which runs can be compared by the `report.RunStatus` wire
+values, and a Postgres test proves a stored success is comparable, that a colleague's runs are
+never listed and that `mine` only marks the reader's own schedules in the organization's list,
+as the repository tools read them. `report` defaults to Internal, so nothing is newly withheld
+at Internal; below it every field but the id is. The change alert list stays: converting it
+needs `table_change_alert`'s fields declared Internal, which would newly show alert details at
+Internal in the AI audit trail and write previews, so that is left to the owner. The fixture is
+re-recorded after merging the carrier reads, so its hybrid figures cover them and the
+formula-templates guide page too; held-out ranking holds (keyword 0.99 and 0.95 over 147, hybrid
+0.93 and 0.83 over 167, against the billing row's figures, master's last measured), and nothing
+was tuned against it.
 
 The formula and fuel rows' after figures read the 167 held-out cases Tariff (#888) left, whose fixture
 master carries stale; the before figures are the last measured on master (165 cases). Keyword
