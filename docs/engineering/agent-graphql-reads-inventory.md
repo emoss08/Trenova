@@ -103,16 +103,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `factoring_list_remittances` | op | factoringRemittances | FactoringRemittanceTable (alt FactoringRemittances) | cursor | bespoke FactoringRemittanceListInput (table + factoringCompanyId, inboundMessageId, statuses) | Same RemittanceService.ListConnection. Two ops on the root; Table picked per rule. |
 | `factoring_list_submissions` | op | factoringSubmissions | FactoringSubmissionTable | cursor | bespoke FactoringSubmissionListInput (table + factoringCompanyId, statuses) | Same SubmissionService.List. |
 
-## fuel
-
-| tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
-|---|---|---|---|---|---|---|
-| `fuel_list_cards` | op | fuelCards | FuelCardTable | cursor | bespoke FuelCardsInput (DataTable + typed) | Same FuelPurchase repository ListCards via service. |
-| `fuel_list_ifta_jurisdictions` | partial | iftaJurisdictions | IftaJurisdictions | unpaged list | typed membersOnly | Same IFTA ListJurisdictions; countryCode filter missing (client-side only). |
-| `fuel_list_ifta_mileage_entries` | op | iftaMileageEntries | IftaMileageEntryTable | cursor | bespoke IFTAMileageEntriesInput (DataTable + typed) | Same ListMileageEntries. |
-| `fuel_list_ifta_returns` | op | iftaReturns | IftaReturnTable | cursor | bespoke IFTAReturnsInput (DataTable + year, statuses) | Same ListReturns. |
-| `fuel_list_purchase_imports` | op | fuelPurchaseImports | FuelPurchaseImportTable | cursor | bespoke FuelPurchaseImportsInput (DataTable + typed) | Same ListImportBatches. |
-| `fuel_list_purchases` | op | fuelPurchases | FuelPurchaseTable | cursor | bespoke FuelPurchasesInput (DataTable + typed) | Same ListPurchases. |
 
 ## home
 

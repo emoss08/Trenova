@@ -607,7 +607,7 @@ func (r *MutationResolver) BackfillJurisdictionMiles(ctx context.Context, input 
 	return backfillResultToModel(result), nil
 }
 
-func (r *QueryResolver) IFTAJurisdictions(ctx context.Context, membersOnly *bool) ([]*ifta.Jurisdiction, error) {
+func (r *QueryResolver) IFTAJurisdictions(ctx context.Context, membersOnly *bool, countryCode *string, activeOnly *bool) ([]*ifta.Jurisdiction, error) {
 	if _, err := r.RequirePermission(
 		ctx,
 		permission.ResourceFuelPurchase,
@@ -616,9 +616,15 @@ func (r *QueryResolver) IFTAJurisdictions(ctx context.Context, membersOnly *bool
 		return nil, err
 	}
 
-	return r.IftaService.ListJurisdictions(ctx, &iftaports.ListJurisdictionsRequest{
+	req := &iftaports.ListJurisdictionsRequest{
 		MembersOnly: base.BoolValue(membersOnly),
-	})
+		CountryCode: base.StringValue(countryCode),
+	}
+	if base.BoolValue(activeOnly) {
+		req.Statuses = []ifta.JurisdictionStatus{ifta.JurisdictionStatusActive}
+	}
+
+	return r.IftaService.ListJurisdictions(ctx, req)
 }
 
 func (r *QueryResolver) IFTATaxRates(ctx context.Context, input gqlmodel.IFTATaxRatesInput) (*gqlmodel.IFTATaxRateConnection, error) {

@@ -14224,21 +14224,6 @@ export type DeleteSafetyViolationMutationVariables = Exact<{
 
 export type DeleteSafetyViolationMutation = { deleteSafetyViolation: boolean };
 
-export type DeskFormulaLibrariesQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type DeskFormulaLibrariesQuery = { formulaLibraries: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, path: string, description: string, status: FormulaTemplateStatus, currentVersionNumber: number, testCount: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
-
-export type DeskFormulaLibraryCardQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type DeskFormulaLibraryCardQuery = { formulaLibrary: { id: string, name: string, path: string, description: string, source: string, testCount: number, status: FormulaTemplateStatus, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, version: number, sourceLibraryId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } | null };
-
 export type FormulaLibraryQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -14255,21 +14240,6 @@ export type FormulaLibraryTableQueryVariables = Exact<{
 
 
 export type FormulaLibraryTableQuery = { formulaLibraries: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaLibraryTableRowFieldsFragment': FormulaLibraryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
-export type DeskFormulaTemplatesQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type DeskFormulaTemplatesQuery = { formulaTemplates: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, description: string, status: FormulaTemplateStatus, currentVersionNumber: number, testCount: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
-
-export type DeskFormulaTemplateCardQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type DeskFormulaTemplateCardQuery = { formulaTemplate: { id: string, name: string, description: string, source: string, testCount: number, status: FormulaTemplateStatus, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, usageCount: number, createdAt: number, updatedAt: number, inputs: Array<{ name: string, doc: string, type: string, descriptor: unknown, required: boolean, default: unknown }>, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } | null };
 
 export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, status: FormulaTemplateStatus, testCount: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, version: number, currentVersionNumber: number, approvedAt: number | null, usageCount: number, createdAt: number, updatedAt: number, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
 
@@ -14292,6 +14262,14 @@ export type DeskFuelCardCardQuery = { fuelCardDeskCard: { monthStart: number, ye
       { assignedTractor: { id: string, code: string, make: string, model: string } | null }
       & { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } }
     ), month: Array<{ currencyCode: string, purchaseCount: number, gallons: string, untaxedGallons: string, totalAmount: string }>, quarterByJurisdiction: Array<{ jurisdictionId: string, gallons: string, purchaseCount: number, jurisdiction: { id: string, code: string, name: string, countryCode: string } }>, recent: Array<{ ' $fragmentRefs'?: { 'DeskFuelCardPurchaseFieldsFragment': DeskFuelCardPurchaseFieldsFragment } }>, held: Array<{ id: string, rowNumber: number, status: FuelPurchaseImportRowStatus, error: string | null, importBatchId: string, resolutionNotes: Array<string>, parsed: { purchasedAt: number | null, vendor: string | null, vendorCity: string | null, jurisdictionCode: string | null, fuelType: IftaFuelType | null, gallons: string | null, totalAmount: string | null, currencyCode: string | null, tractorCode: string | null } | null }>, heldSpend: Array<{ currencyCode: string, gallons: string, totalAmount: string }>, heldBatches: Array<{ id: string, version: number, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin }>, feed: { lastPolledAt: number | null, lastSuccessAt: number | null, failureCount: number, lastError: string | null } | null, successors: Array<{ ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } }> } };
+
+export type DeskFuelCardsQueryVariables = Exact<{
+  input: FuelCardsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskFuelCardsQuery = { fuelCards: { totalCount?: number | null, edges: Array<{ node: { id: string, provider: FuelCardProvider, lastFour: string, label: string, status: FuelCardStatus, expiresAt: number | null, discoveredAt: number | null, cancelledAt: number | null, assignedTractorId: string | null, assignedWorkerId: string | null, assignedTractor: { id: string, code: string } | null, assignedWorker: { id: string, wholeName: string } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type FuelCardFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, lastFour: string, label: string, externalCardId: string | null, assignedWorkerId: string | null, assignedTractorId: string | null, status: FuelCardStatus, expiresAt: number | null, cancelledAt: number | null, cancelReason: string | null, notes: string | null, discoveredAt: number | null, version: number, createdAt: number, updatedAt: number, assignedWorker: { id: string, wholeName: string, firstName: string, lastName: string } | null, assignedTractor: { id: string, code: string } | null } & { ' $fragmentName'?: 'FuelCardFieldsFragment' };
 
@@ -14346,6 +14324,14 @@ export type SyncFuelCardFeedMutationVariables = Exact<{
 
 
 export type SyncFuelCardFeedMutation = { syncFuelCardFeed: { provider: FuelCardProvider, batchId: string | null, fetched: number, committed: number, queued: number, alreadyImported: number, cardsDiscovered: number } };
+
+export type DeskFuelPurchaseImportsQueryVariables = Exact<{
+  input: FuelPurchaseImportsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskFuelPurchaseImportsQuery = { fuelPurchaseImports: { totalCount?: number | null, edges: Array<{ node: { id: string, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin, status: FuelPurchaseImportStatus, fileName: string | null, rowCount: number, errorCount: number, committedCount: number, error: string | null, stagedAt: number | null, committedAt: number | null, summary: { newCount: number, alreadyImportedCount: number, duplicateInFileCount: number, totalGallons: string, totalAmount: string } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type FuelPurchaseImportBatchFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin, feedReference: string | null, documentId: string | null, fileName: string | null, sourceFormat: FuelImportFormat | null, status: FuelPurchaseImportStatus, defaultFuelType: IftaFuelType | null, defaultFuelCardId: string | null, defaultCurrency: string, mapping: unknown, unmappedHeaders: Array<string>, rowCount: number, errorCount: number, committedCount: number, error: string | null, uploadedById: string | null, stagedAt: number | null, committedAt: number | null, committedById: string | null, version: number, createdAt: number, updatedAt: number, summary: { rowCount: number, newCount: number, duplicateInFileCount: number, alreadyImportedCount: number, errorCount: number, totalGallons: string, totalAmount: string, byFuelType: unknown, byJurisdiction: unknown, earliestPurchasedAt: number | null, latestPurchasedAt: number | null } | null, document: { id: string, fileName: string, originalName: string, fileType: string, fileSize: number, createdAt: number } | null, defaultFuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseImportBatchFieldsFragment' };
 
@@ -14429,6 +14415,14 @@ export type DeskFuelPurchaseCardQuery = { fuelPurchaseDeskCard: { purchase: (
       { tractor: { id: string, code: string, make: string, model: string } | null, fuelCard: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } | null }
       & { ' $fragmentRefs'?: { 'FuelPurchaseFieldsFragment': FuelPurchaseFieldsFragment } }
     ), ifta: { year: number, quarter: number, countsForIfta: boolean, taxPaidGallons: string, ratePerGallon: string | null, taxPaidCredit: string | null, tractorGallons: string, tractorPurchaseCount: number }, previousFill: { id: string, purchasedAt: number, vendor: string | null, vendorCity: string | null, odometer: number | null } | null, provenance: { rowNumber: number, resolutionNotes: Array<string>, batch: { id: string, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin, fileName: string | null, rowCount: number, createdAt: number } } | null, createdBy: { id: string, name: string } | null } };
+
+export type DeskFuelPurchasesQueryVariables = Exact<{
+  input: FuelPurchasesInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskFuelPurchasesQuery = { fuelPurchases: { totalCount?: number | null, edges: Array<{ node: { id: string, tractorId: string, workerId: string | null, jurisdictionId: string, fuelCardId: string | null, importBatchId: string | null, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType, quantity: string, quantityUnit: FuelQuantityUnit, gallons: string, totalAmount: string, currencyCode: string, taxPaid: boolean, cardLastFour: string | null, transactionReference: string | null, source: FuelPurchaseSource, tractor: { id: string, code: string } | null, worker: { id: string, wholeName: string } | null, jurisdiction: { id: string, code: string } } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type FuelPurchaseFieldsFragment = { id: string, businessUnitId: string, organizationId: string, tractorId: string, workerId: string | null, jurisdictionId: string, fuelCardId: string | null, cardLastFour: string | null, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType, quantity: string, quantityUnit: FuelQuantityUnit, gallons: string, unitPrice: string | null, totalAmount: string, currencyCode: string, odometer: number | null, transactionReference: string | null, source: FuelPurchaseSource, importBatchId: string | null, taxPaid: boolean, notes: string | null, createdById: string | null, version: number, createdAt: number, updatedAt: number, tractor: { id: string, code: string } | null, worker: { id: string, wholeName: string, firstName: string, lastName: string } | null, jurisdiction: { id: string, countryCode: string, code: string, name: string }, fuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseFieldsFragment' };
 
@@ -14694,6 +14688,14 @@ export type HomeLayoutPreviewQueryVariables = Exact<{
 
 export type HomeLayoutPreviewQuery = { homeLayoutPreview: { ' $fragmentRefs'?: { 'HomeLayoutFieldsFragment': HomeLayoutFieldsFragment } } };
 
+export type DeskIftaMileageEntriesQueryVariables = Exact<{
+  input: IftaMileageEntriesInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskIftaMileageEntriesQuery = { iftaMileageEntries: { totalCount?: number | null, edges: Array<{ node: { id: string, tractorId: string, jurisdictionId: string, traveledAt: number, year: number, quarter: number, miles: string, loaded: boolean, source: IftaMileageSource, shipmentMoveId: string | null, notes: string | null, tractor: { id: string, code: string } | null, jurisdiction: { id: string, code: string } } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+
 export type IftaMileageEntryFieldsFragment = { id: string, businessUnitId: string, organizationId: string, tractorId: string, jurisdictionId: string, traveledAt: number, year: number, quarter: number, miles: string, loaded: boolean, source: IftaMileageSource, shipmentMoveId: string | null, notes: string | null, createdById: string | null, version: number, createdAt: number, updatedAt: number, tractor: { id: string, code: string } | null, jurisdiction: { id: string, countryCode: string, code: string, name: string } } & { ' $fragmentName'?: 'IftaMileageEntryFieldsFragment' };
 
 export type IftaMileageEntryTableQueryVariables = Exact<{
@@ -14735,6 +14737,15 @@ export type DeleteIftaMileageEntryMutationVariables = Exact<{
 
 export type DeleteIftaMileageEntryMutation = { deleteIftaMileageEntry: boolean };
 
+export type DeskIftaJurisdictionsQueryVariables = Exact<{
+  membersOnly?: boolean | null | undefined;
+  countryCode?: string | null | undefined;
+  activeOnly?: boolean | null | undefined;
+}>;
+
+
+export type DeskIftaJurisdictionsQuery = { iftaJurisdictions: Array<{ id: string, code: string, name: string, countryCode: string, isIftaMember: boolean }> };
+
 export type IftaJurisdictionFieldsFragment = { id: string, countryCode: string, code: string, name: string, usStateId: string | null, isIftaMember: boolean, hasSurcharge: boolean, sortOrder: number, status: IftaJurisdictionStatus } & { ' $fragmentName'?: 'IftaJurisdictionFieldsFragment' };
 
 export type IftaJurisdictionsQueryVariables = Exact<{
@@ -14743,6 +14754,14 @@ export type IftaJurisdictionsQueryVariables = Exact<{
 
 
 export type IftaJurisdictionsQuery = { iftaJurisdictions: Array<{ ' $fragmentRefs'?: { 'IftaJurisdictionFieldsFragment': IftaJurisdictionFieldsFragment } }> };
+
+export type DeskIftaReturnsQueryVariables = Exact<{
+  input: IftaReturnsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskIftaReturnsQuery = { iftaReturns: { totalCount?: number | null, edges: Array<{ node: { id: string, year: number, quarter: number, status: IftaReturnStatus, amendmentNumber: number, totalMiles: string, totalGallons: string, totalTaxPaidGallons: string, netDue: string, currencyCode: string, finalizedAt: number | null, filedAt: number | null, filingReference: string | null, problems: Array<{ code: IftaProblemCode, message: string, jurisdictionCode: string | null, fuelType: IftaFuelType | null }> } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type IftaPeriodFieldsFragment = { year: number, quarter: number, key: string, label: string, start: number, end: number, dueDate: number } & { ' $fragmentName'?: 'IftaPeriodFieldsFragment' };
 
@@ -16429,10 +16448,6 @@ export type CustomerReferenceFragment = { id: string, stateId: string, status: E
 
 export type CustomerPaymentReferenceFragment = { id: string, paymentDate: number, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string } & { ' $fragmentName'?: 'CustomerPaymentReferenceFragment' };
 
-export type DotRandomDrawReferenceFragment = { id: string } & { ' $fragmentName'?: 'DotRandomDrawReferenceFragment' };
-
-export type DotRandomDrawEntryReferenceFragment = { id: string } & { ' $fragmentName'?: 'DotRandomDrawEntryReferenceFragment' };
-
 export type DotRandomPoolReferenceFragment = { id: string, code: string, name: string, period: RandomPeriod } & { ' $fragmentName'?: 'DotRandomPoolReferenceFragment' };
 
 export type DocumentTypeReferenceFragment = { id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory } & { ' $fragmentName'?: 'DocumentTypeReferenceFragment' };
@@ -16462,6 +16477,8 @@ export type FleetCodeReferenceFragment = { id: string, code: string, color: stri
 export type FuelCardReferenceFragment = { id: string, provider: FuelCardProvider, lastFour: string, label: string, status: FuelCardStatus } & { ' $fragmentName'?: 'FuelCardReferenceFragment' };
 
 export type FuelPurchaseReferenceFragment = { id: string, tractorId: string, workerId: string | null, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType } & { ' $fragmentName'?: 'FuelPurchaseReferenceFragment' };
+
+export type FuelPurchaseImportBatchReferenceFragment = { id: string, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin, fileName: string | null, rowCount: number } & { ' $fragmentName'?: 'FuelPurchaseImportBatchReferenceFragment' };
 
 export type FuelSurchargeProgramReferenceFragment = { id: string, name: string, code: string, status: FuelSurchargeProgramStatus } & { ' $fragmentName'?: 'FuelSurchargeProgramReferenceFragment' };
 
@@ -18246,13 +18263,6 @@ export type CancelWorkerChecklistMutationVariables = Exact<{
 
 export type CancelWorkerChecklistMutation = { cancelWorkerChecklist: { ' $fragmentRefs'?: { 'WorkerChecklistFieldsFragment': WorkerChecklistFieldsFragment } } };
 
-export type DeskWorkerCredentialQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type DeskWorkerCredentialQuery = { workerCredential: { id: string, workerId: string, credentialTypeId: string, status: WorkerCredentialStatus, issuingAuthority: string | null, issuedAt: number | null, expiresAt: number | null, daysUntilExpiry: number | null, health: WorkerCredentialHealth, verifiedAt: number | null, documentId: string | null, notes: string | null, archivedAt: number | null, archiveReason: string | null, version: number, credentialType: { ' $fragmentRefs'?: { 'WorkerCredentialTypeReferenceFragment': WorkerCredentialTypeReferenceFragment } } | null, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null } };
-
 export type DeskWorkerCredentialListQueryVariables = Exact<{
   workerId?: string | number | null | undefined;
   includeArchived?: boolean | null | undefined;
@@ -18381,7 +18391,7 @@ export type DeskWorkerCardQueryVariables = Exact<{
 }>;
 
 
-export type DeskWorkerCardQuery = { worker: { id: string, status: EntityStatus, type: WorkerType, driverType: DriverType, firstName: string, lastName: string, phoneNumber: string, email: string, city: string, postalCode: string, emergencyContactName: string, emergencyContactPhone: string, externalId: string, assignmentBlocked: string, canBeAssigned: boolean, availableForDispatch: boolean, leaveType: WorkerLeaveType | null, createdAt: number, state: { abbreviation: string } | null, fleetCode: { id: string, code: string } | null, manager: { id: string, name: string } | null, profile: { licenseNumber: string | null, cdlClass: CdlClass, cdlRestrictions: string, endorsement: EndorsementType, licenseExpiry: number, hazmatExpiry: number | null, medicalCardExpiry: number | null, twicExpiry: number | null, physicalDueDate: number | null, mvrDueDate: number | null, lastMvrCheck: number, nextTrainingDue: number | null, hireDate: number, terminationDate: number | null, complianceStatus: ComplianceStatus, isQualified: boolean, disqualificationReason: string, safetyRating: SafetyRating, eldExempt: boolean, shortHaulExempt: boolean, licenseState: { abbreviation: string } | null } | null } | null };
+export type DeskWorkerCardQuery = { worker: { id: string, status: EntityStatus, type: WorkerType, driverType: DriverType, firstName: string, lastName: string, phoneNumber: string, email: string, city: string, externalId: string, assignmentBlocked: string, canBeAssigned: boolean, availableForDispatch: boolean, createdAt: number, state: { abbreviation: string } | null, fleetCode: { id: string, code: string } | null, manager: { id: string, name: string } | null, profile: { licenseNumber: string | null, cdlClass: CdlClass, cdlRestrictions: string, endorsement: EndorsementType, licenseExpiry: number, hazmatExpiry: number | null, medicalCardExpiry: number | null, twicExpiry: number | null, physicalDueDate: number | null, mvrDueDate: number | null, hireDate: number, isQualified: boolean, disqualificationReason: string, licenseState: { abbreviation: string } | null } | null } | null };
 
 export type DeskWorkerHosQueryVariables = Exact<{
   workerId: string | number;
@@ -19280,15 +19290,14 @@ export { FactoringTransportFieldsFragmentDoc, FactoringTransportDocument, SaveFa
 export { FiscalPeriodFieldsFragmentDoc, FiscalYearTableRowFieldsFragmentDoc, FiscalYearTableDocument } from "./documents/fiscal-year/table";
 export { FleetCodeTableRowFieldsFragmentDoc, FleetCodeTableDocument } from "./documents/fleet-code/table";
 export { FleetSafetyDocument, WorkerSafetyViolationsDocument, RecordSafetyViolationDocument, UpdateSafetyViolationDocument, DeleteSafetyViolationDocument } from "./documents/fleet-safety/operations";
-export { DeskFormulaLibrariesDocument, DeskFormulaLibraryCardDocument } from "./documents/formula-library/desk";
 export { FormulaLibraryDocument } from "./documents/formula-library/record";
 export { FormulaLibraryTableRowFieldsFragmentDoc, FormulaLibraryTableDocument } from "./documents/formula-library/table";
-export { DeskFormulaTemplatesDocument, DeskFormulaTemplateCardDocument } from "./documents/formula-template/desk";
 export { FormulaTemplateTableRowFieldsFragmentDoc, FormulaTemplateTableDocument } from "./documents/formula-template/table";
-export { DeskFuelCardPurchaseFieldsFragmentDoc, DeskFuelCardCardDocument } from "./documents/fuel-card/desk";
+export { DeskFuelCardPurchaseFieldsFragmentDoc, DeskFuelCardCardDocument, DeskFuelCardsDocument } from "./documents/fuel-card/desk";
 export { FuelCardFieldsFragmentDoc, FuelCardTableDocument, FuelCardDocument, CreateFuelCardDocument, UpdateFuelCardDocument, CancelFuelCardDocument, AssignFuelCardDocument, SyncFuelCardFeedDocument } from "./documents/fuel-card/operations";
+export { DeskFuelPurchaseImportsDocument } from "./documents/fuel-purchase-import/desk";
 export { FuelPurchaseImportBatchFieldsFragmentDoc, FuelPurchaseImportRowFieldsFragmentDoc, FuelPurchaseImportDocument, FuelPurchaseImportRowsDocument, FuelPurchaseImportTemplateDocument, CreateFuelPurchaseImportDocument, StageFuelPurchaseImportDocument, CommitFuelPurchaseImportDocument, DiscardFuelPurchaseImportDocument, ResolveFuelPurchaseImportRowsDocument, FuelPurchaseImportTableDocument } from "./documents/fuel-purchase-import/operations";
-export { DeskFuelPurchaseCardDocument } from "./documents/fuel-purchase/desk";
+export { DeskFuelPurchaseCardDocument, DeskFuelPurchasesDocument } from "./documents/fuel-purchase/desk";
 export { FuelPurchaseFieldsFragmentDoc, FuelPurchaseTableDocument, FuelPurchaseDocument, CreateFuelPurchaseDocument, UpdateFuelPurchaseDocument, DeleteFuelPurchaseDocument } from "./documents/fuel-purchase/operations";
 export { FuelIndexFieldsFragmentDoc, FuelSurchargeProgramFieldsFragmentDoc, FuelIndexTableDocument, FuelSurchargeProgramTableDocument, FuelSurchargeProgramDetailDocument, FuelDashboardDocument, FuelIndexPriceHistoryDocument, FuelProgramCurrentRatesDocument, GenerateFuelSurchargeTableDocument, EiaSeriesOptionsDocument, CreateFuelIndexDocument, UpdateFuelIndexDocument, DeleteFuelIndexDocument, AddFuelIndexPriceDocument, UpdateFuelIndexPriceDocument, DeleteFuelIndexPriceDocument, CreateFuelSurchargeProgramDocument, UpdateFuelSurchargeProgramDocument, DeleteFuelSurchargeProgramDocument } from "./documents/fuel-surcharge/operations";
 export { HazardousMaterialTableRowFieldsFragmentDoc, HazardousMaterialTableDocument } from "./documents/hazardous-material/table";
@@ -19297,8 +19306,11 @@ export { HoldReasonTableRowFieldsFragmentDoc, HoldReasonTableDocument } from "./
 export { HomeWidgetFieldsFragmentDoc, HomeLayoutFieldsFragmentDoc, HomeLayoutPresetFieldsFragmentDoc } from "./documents/home-layout/fragments";
 export { UpdateHomeLayoutDocument, ResetHomeLayoutDocument, CreateHomeLayoutPresetDocument, UpdateHomeLayoutPresetDocument, DeleteHomeLayoutPresetDocument } from "./documents/home-layout/mutations";
 export { HomeLayoutDocument, HomeWidgetCatalogDocument, HomeLayoutPresetsDocument, HomeLayoutPresetDocument, HomeLayoutPreviewDocument } from "./documents/home-layout/queries";
+export { DeskIftaMileageEntriesDocument } from "./documents/ifta-jurisdiction-mileage/desk";
 export { IftaMileageEntryFieldsFragmentDoc, IftaMileageEntryTableDocument, IftaMileageEntryDocument, CreateIftaMileageEntryDocument, UpdateIftaMileageEntryDocument, DeleteIftaMileageEntryDocument } from "./documents/ifta-jurisdiction-mileage/operations";
+export { DeskIftaJurisdictionsDocument } from "./documents/ifta-jurisdiction/desk";
 export { IftaJurisdictionFieldsFragmentDoc, IftaJurisdictionsDocument } from "./documents/ifta-jurisdiction/operations";
+export { DeskIftaReturnsDocument } from "./documents/ifta-return/desk";
 export { IftaPeriodFieldsFragmentDoc, IftaReturnLineFieldsFragmentDoc, IftaReturnFieldsFragmentDoc, IftaReturnSummaryFieldsFragmentDoc, IftaReturnForPeriodDocument, IftaReturnDocument, IftaReturnTableDocument, IftaCurrentPeriodDocument, IftaPeriodDocument, GenerateIftaReturnDocument, RecomputeIftaReturnDocument, FinalizeIftaReturnDocument, ReopenIftaReturnDocument, MarkIftaReturnFiledDocument, AmendIftaReturnDocument, DeleteIftaReturnDocument, BackfillJurisdictionMilesDocument } from "./documents/ifta-return/operations";
 export { IftaTaxRateFieldsFragmentDoc, IftaTaxRateTableDocument, UpsertIftaTaxRatesDocument, DeleteIftaTaxRateDocument } from "./documents/ifta-tax-rate/operations";
 export { InboundMailboxFieldsFragmentDoc, InboundMailboxCredentialsFieldsFragmentDoc, InboundShipmentRefFieldsFragmentDoc, TriageUserFieldsFragmentDoc, InboundMessageListFieldsFragmentDoc, InboundAttachmentFieldsFragmentDoc, InboundMessageDetailFieldsFragmentDoc, InboundMessagesDocument, InboundMessageDocument, InboundMessageCountsDocument, InboundMailboxesDocument, ReviewInboundMessageDocument, LinkInboundMessageDocument, CreateInboundMailboxDocument, UpdateInboundMailboxDocument, RotateInboundMailboxTokenDocument, SetInboundMailboxSigningSecretDocument, SetInboundMailboxApiKeyDocument } from "./documents/inbox/inbox";
@@ -19335,7 +19347,7 @@ export { DeskRateAgreementPricingDocument } from "./documents/rate/desk";
 export { RateAgreementRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateMatrixRowFieldsFragmentDoc, RateQuoteRowFieldsFragmentDoc, RateAgreementTableDocument, RateZoneTableDocument, RateMatrixTableDocument, RateQuoteTableDocument } from "./documents/rate/table";
 export { DeskRecordActivityDocument } from "./documents/record-activity/desk";
 export { RecurringShipmentTableRowFieldsFragmentDoc, RecurringShipmentTableDocument } from "./documents/recurring-shipment/table";
-export { InboundMailboxReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomDrawReferenceFragmentDoc, DotRandomDrawEntryReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
+export { InboundMailboxReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelPurchaseImportBatchReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
 export { CannedReportsDocument } from "./documents/reports/canned";
 export { ReportCatalogDocument } from "./documents/reports/catalog";
 export { ReportDashboardFieldsFragmentDoc, ReportDashboardsDocument, ReportDashboardByIdDocument, CreateReportDashboardDocument, UpdateReportDashboardDocument, DeleteReportDashboardDocument } from "./documents/reports/dashboards";
@@ -19379,7 +19391,7 @@ export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/us
 export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument } from "./documents/watchtower/watchtower";
 export { DeskWorkerChecklistsDocument, DeskWorkerChecklistTemplatesDocument } from "./documents/worker-checklist/desk";
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";
-export { DeskWorkerCredentialDocument, DeskWorkerCredentialListDocument, DeskWorkerCredentialTypesDocument } from "./documents/worker-credential/desk";
+export { DeskWorkerCredentialListDocument, DeskWorkerCredentialTypesDocument } from "./documents/worker-credential/desk";
 export { WorkerCredentialTypeFieldsFragmentDoc, WorkerCredentialFieldsFragmentDoc, WorkerCredentialTypeTableDocument, WorkerCredentialsDocument, WorkerCredentialSummaryDocument, CredentialExpiryForecastDocument, CreateWorkerCredentialTypeDocument, UpdateWorkerCredentialTypeDocument, ArchiveWorkerCredentialTypeDocument, RestoreWorkerCredentialTypeDocument, CreateWorkerCredentialDocument, UpdateWorkerCredentialDocument, VerifyWorkerCredentialDocument, ArchiveWorkerCredentialDocument, AttachWorkerCredentialDocumentDocument } from "./documents/worker-credential/operations";
 export { DeskWorkerCardDocument, DeskWorkerHosDocument, DeskWorkerStandingDocument, DeskWorkerCredentialsDocument, DeskWorkersDocument } from "./documents/worker-desk/desk";
 export { DeskWorkerEmploymentVerificationsDocument } from "./documents/worker-dqf/desk";

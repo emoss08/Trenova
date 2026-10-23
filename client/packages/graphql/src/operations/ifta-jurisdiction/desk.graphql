@@ -1,0 +1,16 @@
+# The jurisdictions fuel tax is reported by, read by the agent's
+# fuel_list_ifta_jurisdictions: each one's code, name, country and IFTA
+# membership, narrowed by the server as the agent asks.
+query DeskIftaJurisdictions(
+  $membersOnly: Boolean = false
+  $countryCode: String
+  $activeOnly: Boolean = false
+) {
+  iftaJurisdictions(membersOnly: $membersOnly, countryCode: $countryCode, activeOnly: $activeOnly) {
+    id
+    code
+    name
+    countryCode
+    isIftaMember
+  }
+}

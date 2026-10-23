@@ -19060,7 +19060,7 @@ A fuel card statement staged for review. The bytes live on a Document bound to
 the batch; staging reads that document, parses every row, resolves cards,
 tractors and jurisdictions, and reports what would commit.
 """
-type FuelPurchaseImportBatch {
+type FuelPurchaseImportBatch @kind(resource: "fuel_purchase_import") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -20624,7 +20624,14 @@ extend type Query {
   """
   The global jurisdiction list, about sixty rows. Fetched once and cached on the client.
   """
-  iftaJurisdictions(membersOnly: Boolean = false): [IFTAJurisdiction!]!
+  iftaJurisdictions(
+    "Only IFTA member jurisdictions."
+    membersOnly: Boolean = false
+    "Only this country's jurisdictions: US, CA or MX."
+    countryCode: String
+    "Only the jurisdictions fuel tax is reported by now, leaving out the retired ones."
+    activeOnly: Boolean = false
+  ): [IFTAJurisdiction!]!
   iftaTaxRates(input: IFTATaxRatesInput!): IFTATaxRateConnection!
   iftaMileageEntries(input: IFTAMileageEntriesInput!): IFTAJurisdictionMileageEntryConnection!
   iftaMileageEntry(id: ID!): IFTAJurisdictionMileageEntry!

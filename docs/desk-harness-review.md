@@ -1482,6 +1482,9 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: formula templates and libraries | `formula_list_templates`, `formula_get_template`, `formula_list_libraries`, `formula_get_library` | unchanged | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 
 The formula row's after figures read the 167 held-out cases Tariff (#888) left, whose fixture
+| Typed reads through GraphQL: fuel and IFTA | `fuel_list_cards`, `fuel_list_purchases`, `fuel_list_purchase_imports`, `fuel_list_ifta_returns`, `fuel_list_ifta_mileage_entries`, `fuel_list_ifta_jurisdictions` | unchanged | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
+
+The fuel row's after figures read the 167 held-out cases Tariff (#888) left, whose fixture
 master carries stale; the before figures are the last measured on master (165 cases). Keyword
 ranking is unchanged on the 147 held-out cases (recall@5 0.99, top-1 0.95).
 

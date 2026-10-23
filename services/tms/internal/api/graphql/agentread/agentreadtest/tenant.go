@@ -19,6 +19,10 @@ type Tenant struct {
 	// StateID is a US state written for the tenant, for records that need an
 	// address.
 	StateID pulid.ID
+	// JurisdictionID is an IFTA jurisdiction written beside the tenant, for
+	// the fuel records that name one; the list is global, so the label keeps
+	// two tenants' codes apart.
+	JurisdictionID pulid.ID
 }
 
 // Scope is the tenant's database scope, which row-level security reads.
@@ -47,6 +51,13 @@ func SeedTenant(t *testing.T, admin *bun.DB, label string) *Tenant {
 	}
 	exec("INSERT INTO us_states (id, name, abbreviation) VALUES (?, ?, ?)",
 		state, "State "+label, label+"X")
+	var jurisdiction pulid.ID
+	require.NoError(t, admin.QueryRowContext(ctx, `INSERT INTO ifta_jurisdictions
+		(id, country_code, code, name, is_ifta_member, has_surcharge)
+		VALUES (?, 'US', ?, ?, true, false)
+		ON CONFLICT (country_code, code) DO UPDATE SET name = EXCLUDED.name
+		RETURNING id`,
+		pulid.MustNew("ifj_"), label+"X", "Jurisdiction "+label).Scan(&jurisdiction))
 	exec("INSERT INTO business_units (id, name, code) VALUES (?, ?, ?)",
 		bu, "BU "+label, "BU"+label+bu.String()[3:9])
 	exec(`INSERT INTO organizations (id, state_id, business_unit_id, name, scac_code, dot_number,
@@ -71,6 +82,7 @@ func SeedTenant(t *testing.T, admin *bun.DB, label string) *Tenant {
 			OrganizationID: org,
 			BusinessUnitID: bu,
 		},
-		StateID: pulid.ID(state),
+		StateID:        pulid.ID(state),
+		JurisdictionID: jurisdiction,
 	}
 }

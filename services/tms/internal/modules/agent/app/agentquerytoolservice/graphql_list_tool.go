@@ -248,7 +248,7 @@ func newGraphQLListTool(
 		return nil, err
 	}
 
-	return &graphQLListTool{
+	tool := &graphQLListTool{
 		spec:     *spec,
 		read:     read,
 		input:    input,
@@ -264,7 +264,22 @@ func newGraphQLListTool(
 		reader:      reader,
 		permissions: permissions,
 		registry:    fieldsensitivity.DefaultRegistry(),
-	}, nil
+	}
+	tool.params = slices.DeleteFunc(params, tool.confidential)
+
+	return tool, nil
+}
+
+// confidential marks a parameter on a Confidential field, which no reader's
+// data access reaches (a card provider's own card id): offering it would
+// only lead to a refusal.
+func (t *graphQLListTool) confidential(param graphQLParam) bool {
+	if param.OnInput {
+		return false
+	}
+	resource, name := t.fieldOwner(param.Field)
+
+	return !fieldsensitivity.Visible(t.registry, resource, name, permission.SensitivityRestricted)
 }
 
 // pagesByCursor reports whether a list's root takes its own first and after,
@@ -487,7 +502,7 @@ func graphQLListSpecs() []graphQLListSpec {
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
 		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), operationsReadSpecs(),
 		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(), rateReadSpecs(),
-		workforceProgrammeReadSpecs(), formulaReadSpecs(),
+		workforceProgrammeReadSpecs(), formulaReadSpecs(), fuelReadSpecs(),
 	)
 }
 

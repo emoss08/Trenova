@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -80,6 +81,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/fuelpurchaserepository"
+	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/iftarepository"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerptorepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
@@ -218,6 +225,11 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		formulalibraryrepository.Params{DB: conn, Logger: logger})
 	libraryVersions := formulalibraryversionrepository.New(
 		formulalibraryversionrepository.Params{DB: conn, Logger: logger})
+	fuel := fuelpurchaserepository.New(fuelpurchaserepository.Params{DB: conn, Logger: logger})
+	iftaRepo := iftarepository.New(iftarepository.Params{
+		DB: conn, Logger: logger, JurisdictionCache: jurisdictionCacheMiss{},
+	})
+	fuelParts := &fuelParts{parts: parts, tractors: tractors}
 
 	services := agentread.ResolverParams{
 		EquipmentTypeService: equipmenttypeservice.New(
@@ -268,6 +280,10 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		FormulaLibraryService: formulalibraryservice.New(formulalibraryservice.Params{
 			Logger: logger, Repo: libraries, VersionRepo: libraryVersions,
 		}),
+		FuelPurchaseService: fuelpurchaseservice.New(fuelpurchaseservice.Params{
+			Logger: logger, Repo: fuel, IFTARepo: iftaRepo,
+		}),
+		IFTAService: iftaservice.New(iftaservice.Params{Logger: logger, Repo: iftaRepo, Fuel: fuel}),
 	}
 
 	formulaStats := loaders.NewFormulaTemplateStatsLoaderFactory(
@@ -546,6 +562,99 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 				return created(row, err)
 			},
 		},
+		{
+			tool: "fuel_list_cards", marked: suspended,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				status := fuelpurchase.CardStatusActive
+				if marked {
+					status = fuelpurchase.CardStatusSuspended
+				}
+				row, err := fuel.CreateCard(ctx, &fuelpurchase.FuelCard{
+					BusinessUnitID: bu, OrganizationID: org, Provider: fuelpurchase.CardProviderComdata,
+					LastFour: fmt.Sprintf("%04d", len(label)*100+int(label[len(label)-1])),
+					Label:    "Card " + label, Status: status,
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "fuel_list_purchases", marked: taxPaidTyped,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				tractorID, jurisdictionID, err := fuelParts.write(ctx, tenant, "F"+label)
+				if err != nil {
+					return pulid.Nil, err
+				}
+				bu, org := tenantOf(tenant)
+				purchase := &fuelpurchase.FuelPurchase{
+					BusinessUnitID: bu, OrganizationID: org, TractorID: tractorID,
+					JurisdictionID: jurisdictionID, PurchasedAt: timeutils.NowUnix() - 86400,
+					Vendor: "Pilot", FuelType: domaintypes.IFTAFuelTypeDiesel,
+					Quantity: decimal.NewFromInt(100), QuantityUnit: fuelpurchase.QuantityUnitGallon,
+					Gallons: decimal.NewFromInt(100), TotalAmountMinor: 38990, CurrencyCode: "USD",
+					TransactionReference: "ref-" + label, Source: fuelpurchase.PurchaseSourceManual,
+					TaxPaid: marked, CreatedByID: tenant.Actor.UserID,
+				}
+				purchase.Normalize()
+				row, err := fuel.CreatePurchase(ctx, purchase)
+				return created(row, err)
+			},
+		},
+		{
+			tool: "fuel_list_purchase_imports", marked: failedImports,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				status := fuelpurchase.ImportStatusPending
+				if marked {
+					status = fuelpurchase.ImportStatusFailed
+				}
+				row, err := fuel.CreateImportBatch(ctx, &fuelpurchase.ImportBatch{
+					ID: pulid.MustNew("fpib_"), BusinessUnitID: bu, OrganizationID: org,
+					Provider: fuelpurchase.CardProviderComdata, Origin: fuelpurchase.ImportOriginUpload,
+					Status: status, FileName: "statement-" + label + ".csv", DefaultCurrency: "USD",
+					RowCount: 3,
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "fuel_list_ifta_returns", marked: finalized,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				status := ifta.ReturnStatusDraft
+				var finalizedAt *int64
+				if marked {
+					status = ifta.ReturnStatusFinalized
+					finalizedAt = new(timeutils.NowUnix())
+				}
+				index := int(label[len(label)-1] - '0')
+				row, err := iftaRepo.CreateReturn(ctx, &ifta.Return{
+					BusinessUnitID: bu, OrganizationID: org, Year: 2020 + index, Quarter: 1,
+					Status: status, FinalizedAt: finalizedAt, Timezone: "America/Chicago",
+					PeriodStart: 1, PeriodEnd: 2,
+					CurrencyCode: "USD",
+					Problems:     []ifta.Problem{{Code: ifta.ProblemMissingRate, Message: "No rate"}},
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "fuel_list_ifta_mileage_entries", marked: loadedTyped,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				tractorID, jurisdictionID, err := fuelParts.write(ctx, tenant, "M"+label)
+				if err != nil {
+					return pulid.Nil, err
+				}
+				bu, org := tenantOf(tenant)
+				row, err := iftaRepo.CreateMileageEntry(ctx, &ifta.JurisdictionMileageEntry{
+					BusinessUnitID: bu, OrganizationID: org, TractorID: tractorID,
+					JurisdictionID: jurisdictionID, TraveledAt: timeutils.NowUnix() - 86400,
+					Year: 2026, Quarter: 3, Miles: decimal.NewFromInt(120), Loaded: marked,
+					Source: ifta.MileageSourceManual, CreatedByID: tenant.Actor.UserID,
+				})
+				return created(row, err)
+			},
+		},
 	}
 
 	return cases, services
@@ -557,6 +666,55 @@ func formulaStatusOf(marked bool) formulatemplate.Status {
 	}
 
 	return formulatemplate.StatusActive
+}
+
+var (
+	suspended     = map[string]any{"status": []any{"Suspended"}}
+	failedImports = map[string]any{"status": []any{"Failed"}}
+	finalized     = map[string]any{"status": []any{"Finalized"}}
+	taxPaidTyped  = map[string]any{"taxPaid": true}
+	loadedTyped   = map[string]any{"loaded": true}
+)
+
+// jurisdictionCacheMiss is a jurisdiction cache that holds nothing, so every
+// read loads the global list.
+type jurisdictionCacheMiss struct{}
+
+func (jurisdictionCacheMiss) GetAll(context.Context) ([]*ifta.Jurisdiction, error) {
+	return nil, nil
+}
+
+func (jurisdictionCacheMiss) Set(context.Context, []*ifta.Jurisdiction) error { return nil }
+
+func (jurisdictionCacheMiss) Invalidate(context.Context) error { return nil }
+
+// fuelParts writes what a fuel purchase or a mileage entry names: a tractor,
+// with its type, make and driver, beside the tenant's own jurisdiction.
+type fuelParts struct {
+	parts    *equipmentParts
+	tractors tractorports.TractorRepository
+}
+
+func (p *fuelParts) write(
+	ctx context.Context,
+	tenant *agentreadtest.Tenant,
+	label string,
+) (tractorID, jurisdictionID pulid.ID, err error) {
+	typeID, makeID, driverID, err := p.parts.write(ctx, tenant, label)
+	if err != nil {
+		return pulid.Nil, pulid.Nil, err
+	}
+	saved, err := p.tractors.Create(ctx, &tractor.Tractor{
+		BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
+		Status: domaintypes.EquipmentStatusAvailable, Code: label, EquipmentTypeID: typeID,
+		EquipmentManufacturerID: makeID, PrimaryWorkerID: driverID,
+		FuelType: domaintypes.IFTAFuelTypeDiesel,
+	})
+	if err != nil {
+		return pulid.Nil, pulid.Nil, err
+	}
+
+	return saved.ID, tenant.JurisdictionID, nil
 }
 
 // writeLeaveUnderWay writes leave that began three days ago and is still

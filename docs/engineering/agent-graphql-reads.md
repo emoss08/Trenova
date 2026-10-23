@@ -299,6 +299,11 @@ becomes a parameter. Its type comes from the field's GraphQL type:
 | `Int`, `Float`, `Decimal` | `<field>Min`, `<field>Max` | `gte` / `lte` |
 | `String` | `<field>`: string | `contains` (`eq` for codes the configuration marks exact) |
 
+- **A record kept under another resource names its kind.** An id reference may name a record
+  kind as well as its resource (`kind` on `idReference`): an IFTA jurisdiction is kept under fuel
+  purchases, so `jurisdictionId` is held to the `ifj_` prefix rather than to the purchase's.
+- **A Confidential field is not a parameter.** No reader's data access reaches it (a card
+  provider's own card id), so offering it would only lead to a refusal.
 - **An id with nowhere to get it is not offered.** An `ID` field the tool's `references` does not
   name is left out, keeping only its `has<Thing>` parameter when it is nullable: a model has no
   honest way to get an id no tool lists (`masterdata_list_fleet_codes` takes no `managerId`,
@@ -757,6 +762,12 @@ Each module's PR:
 | Formula | `formula_get_template` | none | reads `DeskFormulaTemplateCard`, added for the Desk: the template whole, as the repository record was (Tariff source, inputs, imports, review state, version), with `usageCount` (one batched loader read) beside it. Every field is Internal, as the repository tool's redactor gated it |
 | Formula | `formula_list_libraries` | none | reads `DeskFormulaLibraries`, added for the Desk: path, description, status, version and test count, as the repository row carried. Every `formula_library` field is Internal; the repository list was not gated, so below Internal it now withholds every field but `id`. The tool came with Tariff after the inventory was taken |
 | Formula | `formula_get_library` | none | reads `DeskFormulaLibraryCard`, added for the Desk (the screen's `FormulaLibrary` reads three roots, its versions and reviews, which a get cannot bind): the library whole. Every field is Internal, as the repository tool's redactor gated it |
+| Fuel | `fuel_list_cards` | none | reads `DeskFuelCards`, added for the Desk: what the repository row carried (provider, last four, label, status, expiry, who carries it), with `unassigned` and `discoveredByFeed` kept by the spec's `shape`. Every `fuel_card` field but `externalCardId` (Confidential, never selected, never a parameter) is Internal; the repository list was not gated, so below Internal it now withholds every field but `id`. The tractor and driver show their reference views to a reader who cannot read them |
+| Fuel | `fuel_list_purchases` | none | reads `DeskFuelPurchases`, added for the Desk: the repository row's fields, with the tractor, driver and jurisdiction as linked records. Every `fuel_purchase` field is Internal, so the amount and card digits read as before at Internal; below Internal everything but `id` is withheld, where the repository list was ungated |
+| Fuel | `fuel_list_purchase_imports` | none | reads `DeskFuelPurchaseImports`, added for the Desk (the table's selection carries the column mapping and per-jurisdiction breakdowns). `FuelPurchaseImportBatch` had no kind, so the guard did not gate it; it now declares `@kind(resource: "fuel_purchase_import")`, and `fuel_purchase_import` gains a reference view (file name, origin, provider, row count) so the fuel card and purchase cards that carry a batch still name it to a reader of theirs. Every field is Internal |
+| Fuel | `fuel_list_ifta_returns` | none | reads `DeskIftaReturns`, added for the Desk: the repository row's figures and each return's problems, with `blockingProblems` counted by the domain's `ProblemCode.Blocks` in the spec's `shape`. Every `ifta_return` field is Internal |
+| Fuel | `fuel_list_ifta_mileage_entries` | none | reads `DeskIftaMileageEntries`, added for the Desk; every `ifta_jurisdiction_mileage` field is Internal |
+| Fuel | `fuel_list_ifta_jurisdictions` | none | reads `DeskIftaJurisdictions`; `iftaJurisdictions` gains `countryCode` and `activeOnly`, which the resolver passes to `ListJurisdictions`, and the spec reads the active ones by default as the repository tool always did. The jurisdictions are global reference data under the root's `fuel_purchase` check and stay ungated, as the repository tool read them: declaring a kind on `IFTAJurisdiction` would withhold a mileage entry's or purchase's jurisdiction code from a reader without fuel purchase read |
 
 The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
 returned every other column at any tier; at a person's role ceiling below Internal each converted
