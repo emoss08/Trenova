@@ -69,3 +69,25 @@ reads:
     operation: DeskWorkerCredentialList
     reason: Credentials are read by workerCredentials, one worker's or those falling due across the organization.
     alongside: [DeskWorkerCredentialTypes]
+  - tool: order_list
+  - tool: order_get
+    operation: DeskOrder
+    reason: The agent reads an order with every leg it groups in one call; DeskOrderCard pages its legs through shipments.
+  - tool: shipment_list_recurring
+    operation: DeskRecurringShipments
+    reason: Recurring shipments are the RecurringShipment record, read by recurringShipments, which no rule finds from the tool's name.
+  - tool: exception_list_service_failure_reason_codes
+  - tool: exception_list_service_failures
+    operation: ServiceFailureTable
+    reason: The register's row carries the version resolving a failure takes; DeskRecordFailures is one record's compact view without it.
+  - tool: exception_get_service_failure
+  - tool: detention_get_occurrence
+    operation: DeskDetentionCard
+    reason: A detention occurrence is read whole, with its evidence, notices and price now, by detentionOccurrence, which no rule finds from the tool's name.
+    entity: github.com/emoss08/trenova/internal/modules/operations/domain/detention.DetentionOccurrence
+  - tool: detention_list_occurrences
+    operation: DeskDetentionOccurrences
+    reason: The open clocks and the charges waiting on approval are read by detentionDesk, which no rule finds from the tool's name.
+  - tool: dispatch_list_tenders
+    operation: DeskShipmentTenders
+    reason: A shipment's tenders are read whole by tendersByShipment, keyed by the shipment.

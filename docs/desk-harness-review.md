@@ -1475,6 +1475,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: credentials | `worker_list_credentials` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: party gets | `customer_get`, `location_get`, `carrier_get`, `carrier_get_intelligence_event` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: equipment | `equipment_get_tractor`, `equipment_get_trailer`, `equipment_list_positions` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: operations | `order_list`, `order_get`, `shipment_list_recurring`, `exception_list_service_failure_reason_codes`, `exception_list_service_failures`, `exception_get_service_failure`, `detention_get_occurrence`, `detention_list_occurrences`, `dispatch_list_tenders` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1621,6 +1622,21 @@ every qualification record. A Postgres test reads each list for one worker and f
 organization, against the repository tool's service read, and checks that an agent at Internal is
 never shown a leave reason, a finding or a drug and alcohol answer. Held-out ranking is unchanged
 (keyword 0.99 and 0.95 over 145, hybrid 0.93 and 0.82 over 165).
+
+The operations row converts nine of the Operations module's reads: the order list and order, the
+recurring series, service failures and their reason codes, one service failure, one detention
+occurrence, the detention board and a shipment's tenders. Four Desk operations were written for
+the agent (`DeskOrder` with an order's legs, `DeskRecurringShipments`, `DeskShipmentTenders`
+without what a carrier wrote, `DeskDetentionOccurrences`), and two roots gained arguments
+additively (`detentionDesk` its filters and the charges held for approval, `tendersByShipment`
+a move). The detention types had no kind and now declare `detention`. A Postgres test reads each
+list against two tenants and the repository tool or service, and reads the order list as a person
+narrowed to their own orders on both paths. `shipment_list`, `shipment_get`,
+`dispatch_get_board` and `exception_list_watchtower_items` stay on the repository path, each for
+the reason the inventory gives. One development case ("which recurring shipments generate
+tomorrow") dropped to second when the series list's description grew its filters, and the list now
+carries search terms; keyword held-out holds at 0.99 and 0.95 over 147, hybrid at 0.93 recall@5,
+with top-1 0.83 over 167 (the case counts grew with master's merges).
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

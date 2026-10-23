@@ -597,10 +597,20 @@ Each module's PR:
 | Workforce | `worker_list_safety_events` | none | reads `DeskWorkerSafetyEvents`, with each worker's recognitions read alongside (`DeskWorkerRecognitions`) when the call names a worker. `worker_safety_event` and `worker_recognition` declare no field sensitivities and default to Internal, as the repository row read them. Each event gains `violations` (a loader, one query per page of events), which the repository tool read beside the events; `WorkerSafetyViolation` now declares `@kind(resource: "worker_safety_event")`, so its fields follow the event's. With no worker the list reads the events still open across the organization, newest first, as the repository tool did (the spec's `unscoped` default); `openOnly: false` lists the closed ones too, and one worker's record is read whole |
 | Workforce | `worker_list_credentials` | none | reads `DeskWorkerCredentialList`, with the active credential types read alongside (`DeskWorkerCredentialTypes`) when the call names a worker. `workerCredentials` takes an optional worker and the repository tool's filters (`expiringWithinDays`, `includeExpired`, `credentialTypeCode`, `requiredOnly`, `limit`), read by `WorkerCredentialService.List`: one worker's credentials, or with no worker or an expiry window the active ones falling due, soonest first, walked in the query. The window counts days from now, as the screen's expiry forecast does and the description says, where the repository tool counted calendar days in the caller's zone: GraphQL carries no caller's day. It pages by cursor over the root's `limit` and `offset`, as the repository tool paged by offset. `worker_credential` defaulted to Restricted with only `number` declared (Confidential), so every field outside its reference view would be withheld at Internal; what a credential is, whose, its dates, health, issuer, verification and whether a scan is on file are now Internal, and the notes and archive reason stay Restricted. The operation never selects `number`, which the repository tool withheld too |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
+| Operations | `order_list` | none | reads `OrderTable`; every order field is Internal, as the repository row gated its amounts. `order` declares an "own" scope, and a person narrowed to their own orders reads the same rows on both paths (`TestConvertedLists_OrderListIsNarrowedToTheOwnerOnBothPaths`) |
+| Operations | `order_get` | none | reads `DeskOrder`, written for it: the card's fields with every leg the order groups (`legs`), named in `reads.yml` because `DeskOrderCard` pages its legs through shipments. The repository tool cut the legs at 50 and the charges at 100; the card reads them whole, as the order page does. The customer shows its reference view |
+| Operations | `shipment_list_recurring` | none | reads `DeskRecurringShipments`, written for it, which adds the last shipment a series made (`lastGeneratedShipmentId`) to what the table shows; every field is Internal |
+| Operations | `exception_list_service_failure_reason_codes` | none | reads `ServiceFailureReasonCodeTable`; it reads the active codes unless the call names `active`, as the repository tool always did, and pages where that tool read one page of 50 |
+| Operations | `exception_list_service_failures` | none | reads `ServiceFailureTable`, named in `reads.yml` because its row carries the `version` resolving a failure takes and `DeskRecordFailures` does not; the shipment and stop show their reference views |
+| Operations | `exception_get_service_failure` | none | reads `DeskServiceFailureCard`; who created, reviewed, resolved or voided it show the user reference view, which is what the repository tool reduced them to |
+| Operations | `detention_get_occurrence` | none at Internal | reads `DeskDetentionCard`, with the evidence, notices, collectability and the price now. `DetentionOccurrence`, `DetentionOccurrenceDetail` and `DetentionDeskEntry` had no kind, so the guard did not gate them; each now declares `@kind(resource: "detention")`, so their fields follow `detention`'s Internal default on every read, the detention screens' included |
+| Operations | `detention_list_occurrences` | none at Internal | reads `DeskDetentionOccurrences`, written for it. `detentionDesk` gains `includeAwaitingApproval`, `urgency`, `shipmentId` and `proNumber` (a PRO number or part of it), read by `DetentionService.ListDeskEntries`, and `DetentionDeskUrgency` gains `AwaitingApproval`, so the charges holding an invoice that the repository tool read beside the board are on the board's own read; the spec reads them by default. Each entry gains `billableMinutes`, priced as of now for a running clock. The tool no longer says which other urgencies a load is at when the one asked for matches nothing; the empty note names the filters instead |
+| Operations | `dispatch_list_tenders` | none | reads `DeskShipmentTenders`, written for it, which leaves out what a carrier wrote (a decline reason, a counter note) and where an offer was delivered, as the repository tool did, so the tool still reads nothing from outside. `tendersByShipment` gains `shipmentMoveId`, filtered in the repository within the shipment's tenders. The spec's `shape` adds `live`, each offer's `answerable` and `backOutAllowed`, and keeps `counterNeedsApproval` on a standing counter only, from the tender rules (`tender.Tender.IsLive`, `CanBounce`) |
 
-None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
-Internal each now withholds every field but `id`, where it used to return them all. No description
-names a field that is newly withheld at Internal, so none changed.
+None of the repository-backed reference, party, equipment or operations lists was gated (only `order_list`
+gated its amounts, all Internal), so at a person's role ceiling below Internal each now withholds every
+field but `id`, where it used to return them all. No description names a field that is newly withheld
+at Internal, so none changed.
 
 ## Permissions, data scopes and refusals
 
@@ -745,9 +755,11 @@ which the tests range over: `TestConvertedLists_ReadWhatTheRepositoryToolsReadUn
 holds each to the above, and `TestConvertedLists_RefuseExactlyWhatAuthorizeRefuses` covers refusal
 for each, as a person and as an unattended agent. A module's PR adds its specs and its cases.
 
-A repository-backed list that another tool composes (`shipment_get` reads its customers and
-locations through `newListCustomersTool` and `newListLocationsTool`) keeps that use until the
-composing tool's own module converts it.
+A repository-backed list that another tool composes (`shipment_find_records` matches a new
+shipment's customer, stops and commodities through `newListCustomersTool`, `newListLocationsTool`
+and `newListCommoditiesTool`) keeps that use until the composing tool converts. The Operations
+module left `shipment_get`, `shipment_list`, `dispatch_get_board` and
+`exception_list_watchtower_items` on the repository path; the inventory says what each needs.
 
 ## Tools with no GraphQL equivalent
 

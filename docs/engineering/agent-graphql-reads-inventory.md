@@ -58,19 +58,11 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 |---|---|---|---|---|---|---|
 | `customer_get_update_preferences` | field-no-op | customer | propose DeskCustomerUpdatePreferences | n/a | id | customer exposes statusUpdatePreference/statusUpdateRecipients, but no persisted op selects them (DeskCustomerCard does not); fallback recipients need emailProfile.toRecipients. |
 
-## detention
-
-| tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
-|---|---|---|---|---|---|---|
-| `detention_get_occurrence` | op | detentionOccurrence | DeskDetentionCard | n/a | id | Resolver DetentionService.GetOccurrenceDetail (priced detail) is a superset of tool repo.GetByID + PriceOpenClock. |
-| `detention_list_occurrences` | partial | detentionDesk (+ shipmentDetention) | DetentionDesk (+ ShipmentDetention for one load) | unpaged list | no args | Same DetentionService.ListDesk; tool filters urgency/proNumber/shipmentId in memory (client can too). Missing: the billing-hold entries from ListAwaitingApproval, which no Query exposes. |
-
 ## dispatch
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `dispatch_get_board` | op | dispatchBoard | DispatchBoard | limit only | bespoke DispatchBoardInput | Same DispatchConsoleService.GetBoard. hoursAhead -> windowStart/windowEnd, uncoveredOnly -> includeCovered:false, query, limit. |
-| `dispatch_list_tenders` | op | tendersByShipment (+ liveTenderByMove) | TendersByShipment (+ LiveTenderByMove for shipmentMoveId) | unpaged list | shipmentId arg | Same TenderService.ListByShipment. |
+| `dispatch_get_board` | op | dispatchBoard | DispatchBoard | limit only | bespoke DispatchBoardInput | Same DispatchConsoleService.GetBoard. hoursAhead -> windowStart/windowEnd, uncoveredOnly -> includeCovered:false, query, limit. Stays on the repository path (Operations PR): the board is one object of moves, drivers and a summary read by a bespoke input, which neither the list nor the get path reads, and its move and driver rows are types no kind claims, so the field guard would not gate them. Converting it needs an object-read tool shape and `@kind` on `DispatchBoardMove` and `DispatchBoardDriver`. |
 
 ## document
 
@@ -105,10 +97,7 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `exception_get_service_failure` | op | serviceFailure | DeskServiceFailureCard | n/a | id | Same repository GetByID via ServiceFailureService. |
-| `exception_list_service_failure_reason_codes` | op | serviceFailureReasonCodes | ServiceFailureReasonCodeTable | cursor | DataTable fieldFilters only | Tool uses SelectOptions (same table); appliesTo -> fieldFilter, query -> input.query. |
-| `exception_list_service_failures` | op | serviceFailures | DeskRecordFailures (alt ServiceFailureTable) | cursor | DataTable + typed shipmentId, locationId | Tool ServiceFailureService.List (offset) vs ListConnection. Desk op picked per rule; it is the record-scoped view, ServiceFailureTable is the unscoped register. |
-| `exception_list_watchtower_items` | partial | watchtowerItems | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | Same WatchtowerService.List. kinds, severities, assignedToMe, unassigned, overdueOnly, orderByDue, includeResolved (-> unresolvedOnly:false) map; unseenOnly has no input (connection returns seenAt, so it can only be filtered client-side). |
+| `exception_list_watchtower_items` | partial | watchtowerItems | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | Same WatchtowerService.List. kinds, severities, assignedToMe, unassigned, overdueOnly, orderByDue, includeResolved (-> unresolvedOnly:false) map; unseenOnly has no input (connection returns seenAt, so it can only be filtered client-side). Stays on the repository path (Operations PR): each item carries taint from its own source (inbound mail, an EDI file, a weather alert, an agent run, the run behind a proposal or plan), worked out per item from the run records, which the GraphQL path's one record kind per binding cannot mark; and unseenOnly needs an input. |
 
 ## factoring
 
@@ -211,13 +200,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
 
-## order
-
-| tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
-|---|---|---|---|---|---|---|
-| `order_get` | op | order | DeskOrderCard | n/a | id | Same OrderService.Get. |
-| `order_list` | op | orders | OrderTable | cursor | DataTable fieldFilters only | repo.List vs ListConnection. |
-
 ## rate
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
@@ -282,11 +264,10 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `shipment_get` | partial | shipment (+ shipments, shipmentComments) | ShipmentDetail (+ ShipmentComments) | n/a | id | Same ShipmentService.Get. proNumber lookup -> shipments fieldFilter proNumber. Shipment holds (ShipmentHoldRepository) are not on the GraphQL Shipment type (only hold events via shipmentEvents). |
+| `shipment_get` | partial | shipment (+ shipments, shipmentComments) | ShipmentDetail (+ ShipmentComments) | n/a | id | Same ShipmentService.Get. proNumber lookup -> shipments fieldFilter proNumber. Shipment holds (ShipmentHoldRepository) are not on the GraphQL Shipment type (only hold events via shipmentEvents). Stays on the repository path (Operations PR): it needs the active holds on `Shipment`, a `DeskShipmentCard` sized for the Desk (ShipmentDetail selects the whole page), the newest comments read beside the card (a get has no reads alongside yet), the PRO number lookup and the summary/full detail switch. |
 | `shipment_get_tracking` | none | - | - | - | - | Composite live read: board moves + stored stop ETAs + live vehicle positions + HOS. No single root; pieces exist as shipment.eta (ShipmentDetail), vehiclePosition (DeskTractorPosition), workerHosState (DeskWorkerHos). |
-| `shipment_list` | op | shipments | DeskRecordShipments (alt ShipmentBoardTable) | cursor | bespoke ShipmentsInput (DataTable + typed) | Same ShipmentRepository list (tool offset, resolver cursor). status -> input.status. Tool resolves party names (customer/location/worker/commodity/type) to ids first; GraphQL wants ids. Desk op picked per rule; ShipmentBoardTable selects the full row. |
+| `shipment_list` | op | shipments | DeskRecordShipments (alt ShipmentBoardTable) | cursor | bespoke ShipmentsInput (DataTable + typed) | Same ShipmentRepository list (tool offset, resolver cursor). status -> input.status. Tool resolves party names (customer/location/worker/commodity/type) to ids first; GraphQL wants ids. Desk op picked per rule; ShipmentBoardTable selects the full row. Stays on the repository path (Operations PR): its words match a customer, a stop's place, a driver, a commodity or a shipment type, resolved to ids and combined per word, and `shipments(query:)` matches only the PRO number and BOL; ShipmentsInput also has no customer, commodity or shipment type ids. Converting it without that search would lose the tool's main use. |
 | `shipment_list_permits` | none | - | - | - | - | Permits and permit requirements have no Query root. |
-| `shipment_list_recurring` | op | recurringShipments | RecurringShipmentTable | cursor | DataTable fieldFilters only | Same repository list. |
 
 ## web
 
@@ -311,11 +292,11 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 91 |
-| op, converted (rows removed) | 28 |
+| op, not yet converted | 83 |
+| op, converted (rows removed) | 36 |
 | field-no-op | 6 |
-| partial, not yet converted | 23 |
-| partial, converted (rows removed) | 7 |
+| partial, not yet converted | 22 |
+| partial, converted (rows removed) | 8 |
 | none | 21 |
 | **total** | **176** |
 
@@ -336,7 +317,6 @@ for read.
 
 | Tool | Named operation | Generator says |
 |---|---|---|
-| `detention_get_occurrence` | `DeskDetentionCard` | DetentionOccurrenceDetail binds to no Go type; name the entity in reads.yml |
 | `dispatch_get_board` | `DispatchBoard` | DispatchBoard binds to no Go type; name the entity in reads.yml |
 | `edi_get_partner` | `DeskEdiPartnerCard` | EdiPartnerCard binds to no Go type; name the entity in reads.yml |
 | `factoring_get_submission` | `FactoringSubmissionDetail` | factoring_get_submission is a get tool, but FactoringSubmissionDetail reads factoringSubmission, which is not one |

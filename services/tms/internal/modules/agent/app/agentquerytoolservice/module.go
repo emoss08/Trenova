@@ -11,8 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
@@ -41,7 +39,6 @@ func ToolProviders() []any {
 		factoringToolProviders(),
 		driverPayToolProviders(),
 		ratingToolProviders(),
-		orderToolProviders(),
 		ediToolProviders(),
 		oversightToolProviders(),
 		importDraftToolProviders(),
@@ -90,11 +87,9 @@ func coreToolProviders() []any {
 		newListBillingQueueItemsTool,
 		newGetBillingQueueItemTool,
 		newListBillingTransferCandidatesTool,
-		provideGetDetentionOccurrenceTool,
 		newListCarrierIntelEventsTool,
 		newGetCustomerUpdatePreferencesTool,
 		newGetAgentRunTool,
-		newGetServiceFailureTool,
 		provideGetWorkerCredentialTool,
 		provideListReportsTool,
 		provideRunReportTool,
@@ -108,9 +103,6 @@ func coreToolProviders() []any {
 		provideGetShipmentTrackingTool,
 		provideGetWorkerHOSTool,
 		provideGetDispatchBoardTool,
-		provideListServiceFailuresTool,
-		provideListServiceFailureReasonCodesTool,
-		provideListDetentionDeskTool,
 		provideListWeatherAlertsTool,
 		provideListEmailProfilesTool,
 		provideGetShipmentDraftTool,
@@ -213,9 +205,9 @@ func providePreviewReportTool(reports *reporting.Service) agentports.AgentQueryT
 	return newPreviewReportTool(reports)
 }
 
-// The monitoring tools read the board, the telematics feed, service failures,
-// the detention desk and the weather feed through the narrow interfaces each
-// declares; the concrete services are what the graph holds.
+// The monitoring tools read the board, the telematics feed and the weather
+// feed through the narrow interfaces each declares; the concrete services are
+// what the graph holds.
 
 func provideGetShipmentTrackingTool(
 	shipments shipmentports.ShipmentRepository,
@@ -234,22 +226,6 @@ func provideGetDispatchBoardTool(
 	board agentports.DispatchConsoleService,
 ) agentports.AgentQueryTool {
 	return newGetDispatchBoardTool(board)
-}
-
-func provideListServiceFailuresTool(
-	failures servicefailureports.ServiceFailureService,
-) agentports.AgentQueryTool {
-	return newListServiceFailuresTool(failures)
-}
-
-func provideListServiceFailureReasonCodesTool(
-	codes servicefailureports.ServiceFailureReasonCodeService,
-) agentports.AgentQueryTool {
-	return newListServiceFailureReasonCodesTool(codes)
-}
-
-func provideListDetentionDeskTool(desk *detentionservice.Service) agentports.AgentQueryTool {
-	return newListDetentionDeskTool(desk)
 }
 
 func provideListWeatherAlertsTool(

@@ -7,15 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -26,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -434,232 +429,6 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 	assert.Equal(t, permission.ResourceShipmentMove, tool.Policy().Resource)
 }
 
-type fakeFailures struct {
-	items   []*servicefailure.ServiceFailure
-	request *servicefailureports.ListServiceFailuresRequest
-}
-
-func (f *fakeFailures) List(
-	_ context.Context,
-	req *servicefailureports.ListServiceFailuresRequest,
-) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
-	f.request = req
-
-	return &pagination.ListResult[*servicefailure.ServiceFailure]{
-		Items: f.items,
-		Total: len(f.items),
-	}, nil
-}
-
-func TestListServiceFailures_FiltersOnStatusAndRendersTheRow(t *testing.T) {
-	t.Parallel()
-
-	reasonID := pulid.MustNew("sfrc_")
-	failures := &fakeFailures{items: []*servicefailure.ServiceFailure{{
-		ID: pulid.MustNew("sf_"), Number: "SF-1", ShipmentID: pulid.MustNew("shp_"),
-		ShipmentMoveID: pulid.MustNew("smv_"), StopID: pulid.MustNew("stp_"),
-		Type: servicefailure.TypeLateDelivery, Source: servicefailure.SourceDetected,
-		Status: servicefailure.StatusOpen, StopType: shipment.StopTypeDelivery,
-		ScheduledCutoff: 1_790_000_000, ActualArrival: 1_790_000_000 + 2700, LateMinutes: 45,
-		ReasonCodeID: &reasonID, ReasonCode: &servicefailure.ReasonCode{Code: "WX", Label: "Weather"},
-		DetectedAt: 1_790_000_000 + 2700, Version: 2,
-	}}}
-	tool := newListServiceFailuresTool(failures)
-
-	result, err := tool.Query(t.Context(), testParams(filterParams(
-		map[string]any{"field": "status", "operator": "eq", "value": "Open"},
-	)))
-	require.NoError(t, err)
-
-	outcome, ok := result.(searchOutcome)
-	require.True(t, ok)
-	require.Equal(t, 1, outcome.Count)
-	rows := outcome.Items.([]any)
-	row, ok := rows[0].(serviceFailureRow)
-	require.True(t, ok)
-	assert.Equal(t, "SF-1", row.Number)
-	assert.EqualValues(t, 45, row.LateMinutes)
-	assert.Equal(t, "WX Weather", row.ReasonCode)
-	assert.EqualValues(t, 2, row.Version)
-	assert.NotEmpty(t, row.ScheduledCutoff)
-
-	require.NotNil(t, failures.request)
-	require.Len(t, failures.request.Filter.FieldFilters, 1)
-	assert.Equal(t, "status", failures.request.Filter.FieldFilters[0].Field)
-
-	_, err = tool.Query(t.Context(), testParams(filterParams(
-		map[string]any{"field": "status", "operator": "eq", "value": "Closed"},
-	)))
-	require.Error(
-		t,
-		err,
-		"a status outside the set is refused, not passed through to match nothing",
-	)
-	assert.Equal(t, permission.ResourceServiceFailure, tool.Policy().Resource)
-}
-
-type fakeReasonCodes struct {
-	codes   []*servicefailure.ReasonCode
-	request *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest
-}
-
-func (f *fakeReasonCodes) SelectOptions(
-	_ context.Context,
-	req *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest,
-) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-	f.request = req
-
-	return &pagination.ListResult[*servicefailure.ReasonCode]{Items: f.codes}, nil
-}
-
-func TestListServiceFailureReasonCodes_ListsActiveCodesForTheStopKind(t *testing.T) {
-	t.Parallel()
-
-	codes := &fakeReasonCodes{codes: []*servicefailure.ReasonCode{
-		{
-			ID:        pulid.MustNew("sfrc_"),
-			Code:      "WX",
-			Label:     "Weather",
-			Category:  servicefailure.ReasonCategoryWeather,
-			AppliesTo: servicefailure.ReasonCodeAppliesToAll,
-			Active:    true,
-		},
-		{ID: pulid.MustNew("sfrc_"), Code: "OLD", Label: "Retired", Active: false},
-	}}
-	tool := newListServiceFailureReasonCodesTool(codes)
-
-	result, err := tool.Query(
-		t.Context(),
-		testParams(map[string]any{"appliesTo": "Delivery", "query": "wea"}),
-	)
-	require.NoError(t, err)
-
-	outcome, ok := result.(searchOutcome)
-	require.True(t, ok)
-	rows, ok := outcome.Items.([]reasonCodeRow)
-	require.True(t, ok)
-	require.Len(t, rows, 1, "a retired code is not offered")
-	assert.Equal(t, "WX", rows[0].Code)
-	assert.Equal(t, "Weather", rows[0].Category)
-
-	require.NotNil(t, codes.request)
-	assert.Equal(t, servicefailure.ReasonCodeAppliesToDelivery, codes.request.AppliesTo)
-	assert.Equal(t, "wea", codes.request.SelectQueryRequest.Query)
-}
-
-type fakeDesk struct {
-	entries  []*detentionservice.DeskEntry
-	awaiting []*detentionservice.DeskEntry
-}
-
-func (f *fakeDesk) ListDesk(
-	_ context.Context,
-	_ pagination.TenantInfo,
-) ([]*detentionservice.DeskEntry, error) {
-	return f.entries, nil
-}
-
-func (f *fakeDesk) ListAwaitingApproval(
-	_ context.Context,
-	_ pagination.TenantInfo,
-) ([]*detentionservice.DeskEntry, error) {
-	return f.awaiting, nil
-}
-
-func TestListDetentionDesk_CarriesTheChargesWaitingOnApproval(t *testing.T) {
-	t.Parallel()
-
-	held := &detentionservice.DeskEntry{
-		Occurrence: &detention.DetentionOccurrence{
-			ID:               pulid.MustNew("dto_"),
-			ShipmentID:       pulid.MustNew("shp_"),
-			Status:           detention.OccurrenceStatusPending,
-			RequiresApproval: true,
-			Currency:         "USD",
-		},
-		AmountAtRisk: decimal.NewFromInt(420),
-		Urgency:      detentionservice.UrgencyAwaitingApproval,
-	}
-	desk := &fakeDesk{
-		entries: []*detentionservice.DeskEntry{{
-			Occurrence: &detention.DetentionOccurrence{
-				ID:     pulid.MustNew("dto_"),
-				Status: detention.OccurrenceStatusAccruing,
-			},
-			Urgency: "Normal",
-		}},
-		awaiting: []*detentionservice.DeskEntry{held},
-	}
-	tool := newListDetentionDeskTool(desk)
-
-	rowsFor := func(params map[string]any) []detentionDeskRow {
-		t.Helper()
-		result, err := tool.Query(t.Context(), testParams(params))
-		require.NoError(t, err)
-		outcome, ok := result.(searchOutcome)
-		require.True(t, ok)
-		rows, ok := outcome.Items.([]detentionDeskRow)
-		require.True(t, ok)
-		return rows
-	}
-
-	all := rowsFor(map[string]any{})
-	require.Len(t, all, 2)
-	assert.Equal(t, "AwaitingApproval", all[1].Urgency)
-	assert.Equal(t, "420.00", all[1].AmountAtRisk)
-
-	onlyHeld := rowsFor(map[string]any{"urgency": "AwaitingApproval"})
-	require.Len(t, onlyHeld, 1)
-	assert.Equal(t, held.Occurrence.ID.String(), onlyHeld[0].OccurrenceID)
-	assert.True(t, onlyHeld[0].RequiresApproval)
-
-	assert.Empty(t, rowsFor(map[string]any{"urgency": "NoticeOverdue"}))
-}
-
-func TestListDetentionDesk_RendersTheOpenOccurrencesByUrgency(t *testing.T) {
-	t.Parallel()
-
-	arrived := int64(1_790_000_000 - 5400)
-	desk := &fakeDesk{entries: []*detentionservice.DeskEntry{
-		{
-			Occurrence: &detention.DetentionOccurrence{
-				ID: pulid.MustNew(
-					"dto_",
-				), ShipmentID: pulid.MustNew("shp_"), ShipmentProNumber: "S1",
-				CustomerName: "Acme", LocationName: "Houston DC", StopType: shipment.StopTypeDelivery,
-				Status: detention.OccurrenceStatusAccruing, NotificationStatus: detention.NotificationStatusPending,
-				ArrivedAt: &arrived, FreeTimeExpiresAt: 1_790_000_000 - 1800, BillableMinutes: 30,
-				Currency: "USD", RequiresApproval: true,
-			},
-			MinutesUntilFreeEnds: -30, NoticeWindowOpen: true,
-			AmountAtRisk: decimal.NewFromFloat(37.5), Urgency: "NoticeOverdue",
-		},
-		{
-			Occurrence: &detention.DetentionOccurrence{
-				ID:     pulid.MustNew("dto_"),
-				Status: detention.OccurrenceStatusAccruing,
-			},
-			Urgency: "NoticeDueSoon",
-		},
-	}}
-	tool := newListDetentionDeskTool(desk)
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"urgency": "NoticeOverdue"}))
-	require.NoError(t, err)
-
-	outcome, ok := result.(searchOutcome)
-	require.True(t, ok)
-	rows, ok := outcome.Items.([]detentionDeskRow)
-	require.True(t, ok)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "S1", rows[0].ProNumber)
-	assert.Equal(t, "37.50", rows[0].AmountAtRisk)
-	assert.True(t, rows[0].NoticeWindowOpen)
-	assert.True(t, rows[0].RequiresApproval)
-	assert.NotEmpty(t, rows[0].ArrivedAt)
-	assert.Equal(t, permission.ResourceDetention, tool.Policy().Resource)
-}
-
 type fakeWeather struct {
 	features []*weatheralertports.WeatherAlertFeature
 }
@@ -733,8 +502,6 @@ func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 		),
 		newGetWorkerHOSTool(&fakeTelematics{}),
 		newGetDispatchBoardTool(&fakeBoard{}),
-		newListServiceFailureReasonCodesTool(&fakeReasonCodes{}),
-		newListDetentionDeskTool(&fakeDesk{}),
 		newListWeatherAlertsTool(&fakeWeather{}),
 	}
 	for _, tool := range tools {
