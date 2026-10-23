@@ -48,9 +48,9 @@ const (
 	noteActiveFormulaLibrary  = "Templates import the latest Active version."
 	formulaTemplatesSummary   = "List formula templates, the Tariff rating methods a " +
 		"shipment, rule or agreement is priced with. Use it to turn a rating method a person " +
-		"named into its id. A row carries only a template's name, description, status, " +
-		"version and test count: read one whole, with its source and inputs, with " +
-		"formula_get_template."
+		"named into its id; only Active ones price shipments. A row carries only a " +
+		"template's name, description, status, version and test count: read one whole, " +
+		"with its source and inputs, with formula_get_template."
 	formulaLibrariesSummary = "List the organisation's formula libraries: Tariff modules of " +
 		"shared functions a template imports with use org.<name>. A row carries the " +
 		"library's path, description, status, version and test count: read one whole, with " +

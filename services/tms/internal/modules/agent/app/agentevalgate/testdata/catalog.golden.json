@@ -16970,7 +16970,7 @@
     },
     {
       "name": "formula_list_templates",
-      "description": "List formula templates, the Tariff rating methods a shipment, rule or agreement is priced with. Use it to turn a rating method a person named into its id. A row carries only a template's name, description, status, version and test count: read one whole, with its source and inputs, with formula_get_template. Filters: approvedAtFrom/To, createdAtFrom/To, currentVersionNumberMin/Max, description, hasApprovedBy, hasSourceTemplate, hasSubmittedBy, name, reviewComment, source, sourceVersionNumberMin/Max, status, submittedAtFrom/To, testCountMin/Max, updatedAtFrom/To.",
+      "description": "List formula templates, the Tariff rating methods a shipment, rule or agreement is priced with. Use it to turn a rating method a person named into its id; only Active ones price shipments. A row carries only a template's name, description, status, version and test count: read one whole, with its source and inputs, with formula_get_template. Filters: approvedAtFrom/To, createdAtFrom/To, currentVersionNumberMin/Max, description, hasApprovedBy, hasSourceTemplate, hasSubmittedBy, name, reviewComment, source, sourceVersionNumberMin/Max, status, submittedAtFrom/To, testCountMin/Max, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
