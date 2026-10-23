@@ -16,8 +16,9 @@
 //! - the resolved **callee** of every call and the **enum** of every variant
 //!   ([`ModuleAnalysis::callees`], [`ModuleAnalysis::variants`],
 //!   [`ModuleAnalysis::pattern_variants`]);
-//! - the root file's **inputs** (with a form descriptor and the default as a wire value) and
-//!   its **imports** with their pinned versions;
+//! - the root file's **inputs** (with a form descriptor and the default as a wire value), its
+//!   **imports** with their pinned versions, and the rate **tables** the program reads
+//!   ([`Analysis::tables`]), which a tariff version pins at the versions the context sent;
 //! - `ok`: no error in any module, the loader's and parser's findings included.
 //!
 //! Modules are checked in dependency order: each module's declarations (`decls`: enums, record
@@ -93,7 +94,7 @@ use crate::tariff::diagnostic::{Diagnostic, Severity};
 use crate::tariff::docs::Doc;
 use crate::tariff::syntax::ast::NodeId;
 use crate::tariff::types::{EnumType, Type};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 pub use crate::tariff::syntax::program::{ModuleId, Program};
@@ -132,6 +133,16 @@ impl Analysis {
     #[must_use]
     pub fn symbol(&self, id: SymbolId) -> Option<&Symbol> {
         self.symbols.get(usize::try_from(id.0).ok()?)
+    }
+
+    /// The codes of the rate tables the program reads, in the root or any library it imports,
+    /// each once, in code order: what a tariff version pins.
+    #[must_use]
+    pub fn tables(&self) -> BTreeSet<&str> {
+        self.modules
+            .iter()
+            .flat_map(|module| module.tables.iter().map(String::as_str))
+            .collect()
     }
 
     /// Every finding with the module it is in, the root's first.
@@ -175,6 +186,8 @@ pub struct ModuleAnalysis {
     /// one (an annotation, a parameter, the other side of a comparison): what the editor
     /// completes and offers enum variants for.
     pub expected: BTreeMap<NodeId, Type>,
+    /// The codes of the rate tables the module reads, each once.
+    pub tables: BTreeSet<String>,
 }
 
 impl ModuleAnalysis {

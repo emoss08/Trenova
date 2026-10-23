@@ -32,22 +32,33 @@
 //!   with the lowest floors wins, then the one sent first: the tie-break is deterministic and the
 //!   same everywhere.
 //!
-//! - An exact-axis key may be a list (`tables.Zones[lane.origin.zones, lane.destination.zones]`):
-//!   the combinations are tried in list order, the first axis outermost, and the first that
-//!   matches wins.
+//! - A **zip-range** axis (`{"match": "Range", "kind": "ZipRange"}`) holds inclusive postal-code
+//!   ranges, `{"from": "30000", "to": "31999"}`, and takes a `Text` key. Both ends and the key
+//!   are trimmed and upper-cased; the ends have the same number of characters, `n`, and `from`
+//!   is not after `to`. A key matches when it has at least `n` characters and its first `n`
+//!   lie between the ends, compared character by character in Unicode order: `30303` and
+//!   `30303-1234` match `30000`–`31999`, and a five-digit key matches a three-digit range by
+//!   its first three digits; a shorter key matches nothing. Normalisation and overflow do not
+//!   apply. When ranges overlap, the first sent wins, as with overlapping bands.
+//! - An exact-axis or zip-range key may be a list (`tables.Zones[lane.origin.zones,
+//!   lane.destination.zones]`): the combinations are tried in list order, the first axis
+//!   outermost, and the first that matches wins.
 //!
 //! **Cells load on demand.** A table can hold hundreds of thousands of cells, so the host sends
-//! only what it expects a rating to read: `loaded` lists the exact-axis key combinations whose
-//! cells `cells` holds (absent: `cells` is the whole table; a table with no exact axes is always
-//! sent whole). A lookup of a combination the request did not carry is a [`Need`]: it gives a
-//! provisional miss and the program keeps running, so one pass finds every need it can. A run
-//! that recorded needs answers `needs` instead of a bill; the host loads those cells and calls
-//! again.
+//! only what it expects a rating to read: `loaded` lists the keyed-axis combinations (one
+//! normalised key per exact or zip-range axis, in axis order) whose cells `cells` holds (absent:
+//! `cells` is the whole table; a table with no keyed axes is always sent whole). For a
+//! zip-range axis the combination holds the key looked up, and the host sends the cells whose
+//! range matches it. A lookup of a combination the request did not carry is a [`Need`]: it
+//! gives a provisional miss and the program keeps running, so one pass finds every need it can.
+//! A run that recorded needs answers `needs` instead of a bill; the host loads those cells and
+//! calls again.
 //!
 //! A malformed table (a cell without one position per axis, an exact position without a key, a
-//! band without a floor, a value that does not fit the value type) fails only the programs that
-//! read it, with code `table`. Every lookup is recorded for the trace: the table, the keys, the
-//! cell or band matched (or the miss) and the value.
+//! band without a floor, a postal range whose ends are missing, differ in length or are out of
+//! order, a value that does not fit the value type) fails only the programs that read it, with
+//! code `table`. Every lookup is recorded for the trace: the table, the keys, the cell or band
+//! matched (or the miss) and the value.
 
 use super::budget::Meter;
 use super::error::{Code, EvalError};
@@ -66,7 +77,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
 /// Where a cell sits on one axis: `{"key": "752"}` on an exact axis, `{"min": "0", "max":
-/// "5000"}` on a range axis (no `max` is open-ended).
+/// "5000"}` on a range axis (no `max` is open-ended), `{"from": "30000", "to": "31999"}` on a
+/// zip-range axis.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AtWire {
@@ -79,6 +91,12 @@ pub struct AtWire {
     /// The band ceiling on a range axis; absent is open-ended.
     #[serde(default)]
     pub max: Option<Dec>,
+    /// The first postal code of a zip-range axis's range, inclusive.
+    #[serde(default)]
+    pub from: Option<String>,
+    /// The last postal code of a zip-range axis's range, inclusive.
+    #[serde(default)]
+    pub to: Option<String>,
 }
 
 /// One cell as the host sends it.
@@ -144,6 +162,31 @@ enum AxisRule {
         bound: BoundKind,
         overflow: Overflow,
     },
+    ZipRange,
+}
+
+/// An inclusive postal-code range, both ends normalised and `len` characters long.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct PostalRange {
+    from: String,
+    to: String,
+    len: usize,
+}
+
+impl PostalRange {
+    /// Whether a normalised key's first `len` characters lie within the range.
+    fn contains(&self, key: &str) -> bool {
+        if key.chars().count() < self.len {
+            return false;
+        }
+        let prefix: String = key.chars().take(self.len).collect();
+        self.from <= prefix && prefix <= self.to
+    }
+}
+
+/// A postal code as a zip-range axis compares it: trimmed and upper-cased.
+fn postal(text: &str) -> String {
+    text.trim().to_uppercase()
 }
 
 /// A cell's band on a range axis. Unlike a matrix band ([`crate::matrix::band`]), a table band
@@ -174,6 +217,7 @@ impl Bounds {
 enum Position {
     Key(String),
     Band(Bounds),
+    Span(PostalRange),
 }
 
 #[derive(Debug, Clone)]
@@ -193,12 +237,12 @@ struct Table {
     by_exact: BTreeMap<Vec<String>, Vec<usize>>,
     /// Whether the request carried cells at all.
     sent: bool,
-    /// The exact-key combinations the cells cover; `None` when they are the whole table.
+    /// The keyed-axis combinations the cells cover; `None` when they are the whole table.
     loaded: Option<BTreeSet<Vec<String>>>,
 }
 
 /// Cells a lookup needs that the request did not carry: the table and one normalised key per
-/// exact axis, in axis order.
+/// keyed (exact or zip-range) axis, in axis order.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Need {
     /// The table's code.
@@ -519,6 +563,20 @@ fn axis_rule(code: &str, axis: &Axis) -> Result<AxisRule, EvalError> {
             },
             freight_class: axis.kind == "FreightClass",
         }),
+        "Range" if axis.is_zip_range() => {
+            let plain = matches!(axis.normalization.as_str(), "" | "None")
+                && matches!(axis.overflow.as_str(), "" | "Error");
+            if plain {
+                Ok(AxisRule::ZipRange)
+            } else {
+                Err(table_error(
+                    crate::message!(
+                        "The rate table {0} has a postal-code range axis with a key normalisation or an overflow policy, which such an axis does not take"
+                    ),
+                    code,
+                ))
+            }
+        }
         "Range" => Ok(AxisRule::Range {
             bound: range_bound(code, axis)?,
             overflow: match axis.overflow.as_str() {
@@ -674,6 +732,7 @@ fn cell(
                     max: position.max.map(Dec::get),
                 })
             }
+            AxisRule::ZipRange => Position::Span(postal_range(code, position)?),
         });
     }
     Ok(Cell {
@@ -682,6 +741,36 @@ fn cell(
         minimum: wire.minimum.map(Dec::get),
         deficit: wire.deficit,
     })
+}
+
+fn postal_range(code: &str, position: &AtWire) -> Result<PostalRange, EvalError> {
+    let (Some(from), Some(to)) = (&position.from, &position.to) else {
+        return Err(table_error(
+            crate::message!(
+                "The rate table {0} has a cell without both ends of a postal-code range"
+            ),
+            code,
+        ));
+    };
+    let (from, to) = (postal(from), postal(to));
+    let len = from.chars().count();
+    if len == 0 || to.chars().count() != len {
+        return Err(table_error(
+            crate::message!(
+                "The rate table {0} has a postal-code range whose ends are empty or of different lengths"
+            ),
+            code,
+        ));
+    }
+    if from > to {
+        return Err(table_error(
+            crate::message!(
+                "The rate table {0} has a postal-code range that ends before it starts"
+            ),
+            code,
+        ));
+    }
+    Ok(PostalRange { from, to, len })
 }
 
 fn cell_value(code: &str, value_type: &Type, value: Decimal) -> Result<Value, EvalError> {
@@ -800,6 +889,21 @@ impl Table {
         }
     }
 
+    /// The normalised postal codes a zip-range axis tries, in order: one, or each item of a
+    /// list key.
+    fn postal_keys(code: &str, key: &Value) -> Result<Vec<String>, EvalError> {
+        let one = |key: &Value| -> Result<String, EvalError> {
+            match key {
+                Value::Text(text) => Ok(postal(text)),
+                other => Err(unusable_key(code, other)),
+            }
+        };
+        match key {
+            Value::List(items) => items.iter().map(one).collect(),
+            other => Ok(vec![one(other)?]),
+        }
+    }
+
     fn range_key(code: &str, bound: &BoundKind, key: &Value) -> Result<Decimal, EvalError> {
         match (bound, key) {
             (BoundKind::Quantity(unit), Value::Quantity(quantity)) => quantity
@@ -836,6 +940,7 @@ impl Table {
             )));
         }
         let mut options: Vec<Vec<String>> = Vec::new();
+        let mut spans: Vec<(usize, usize)> = Vec::new();
         let mut ranges: Vec<(usize, Decimal, Overflow)> = Vec::new();
         for (axis, (rule, key)) in self.axes.iter().zip(keys).enumerate() {
             match rule {
@@ -843,6 +948,10 @@ impl Table {
                     normalization,
                     freight_class,
                 } => options.push(Self::exact_keys(code, key, *normalization, *freight_class)?),
+                AxisRule::ZipRange => {
+                    spans.push((options.len(), axis));
+                    options.push(Self::postal_keys(code, key)?);
+                }
                 AxisRule::Range { bound, overflow } => {
                     ranges.push((axis, Self::range_key(code, bound, key)?, *overflow));
                 }
@@ -860,11 +969,28 @@ impl Table {
                 needs.push(combination);
                 continue;
             }
-            let Some(candidates) = self.by_exact.get(&combination) else {
+            let exact: Vec<String> = combination
+                .iter()
+                .enumerate()
+                .filter(|(index, _)| !spans.iter().any(|(at, _)| at == index))
+                .map(|(_, key)| key.clone())
+                .collect();
+            let Some(candidates) = self.by_exact.get(&exact) else {
                 continue;
             };
             meter.steps(candidates.len())?;
             let mut narrowed = candidates.clone();
+            for (at, axis) in &spans {
+                let Some(key) = combination.get(*at) else {
+                    continue;
+                };
+                narrowed.retain(|index| {
+                    matches!(
+                        self.position(*index, *axis),
+                        Some(Position::Span(range)) if range.contains(key)
+                    )
+                });
+            }
             let mut adjusted = false;
             for (axis, at, overflow) in &ranges {
                 let (next, moved) = self.narrow_band(&narrowed, *axis, *at, *overflow);
@@ -969,6 +1095,12 @@ impl Table {
                                     .max
                                     .map_or(Json::Null, |max| Json::String(format_decimal(max))),
                             );
+                            Json::Object(object)
+                        }
+                        Position::Span(range) => {
+                            let mut object = Map::new();
+                            object.insert(String::from("from"), Json::String(range.from.clone()));
+                            object.insert(String::from("to"), Json::String(range.to.clone()));
                             Json::Object(object)
                         }
                     })

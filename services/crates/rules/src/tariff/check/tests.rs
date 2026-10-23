@@ -273,12 +273,15 @@ fn run_case(file: &str, case: &Json) -> Option<String> {
             }
         }
     }
-    if let Some(inputs) = case.get("inputs") {
-        let out = super::ops::output_for_tests(&program, &analysis);
-        if out.get("inputs") != Some(inputs) {
+    for key in ["inputs", "tables"] {
+        let Some(want) = case.get(key) else {
+            continue;
+        };
+        let out = super::ops::output_for_tests(&program, &analysis, &context);
+        if out.get(key) != Some(want) {
             problems.push(format!(
-                "inputs differ\nexpected: {inputs}\nactual:   {}",
-                out.get("inputs").cloned().unwrap_or(Json::Null)
+                "{key} differ\nexpected: {want}\nactual:   {}",
+                out.get(key).cloned().unwrap_or(Json::Null)
             ));
         }
     }

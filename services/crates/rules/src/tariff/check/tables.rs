@@ -1,9 +1,12 @@
 //! Rate tables: `tables.Code[k, …]`, `.cell(…)`, `.band(x)` and `.interpolate(x)`, typed from
 //! the shapes the context describes.
 //!
-//! Each key is checked against its axis's key type ([`Axis::key_type`]); an exact axis also
-//! takes a list of keys (`lane.origin.zones`), which the evaluator tries in order. A lookup
-//! gives the table's value type, optional, since a miss is `none`.
+//! Each key is checked against its axis's key type ([`Axis::key_type`]); an exact or zip-range
+//! axis also takes a list of keys (`lane.origin.zones`), which the evaluator tries in order. A
+//! zip-range axis takes `Text`, and is not banded, so `.band(x)` and `.interpolate(x)` refuse
+//! it. A lookup gives the table's value type, optional, since a miss is `none`. Every table a
+//! module reads is recorded ([`ModuleAnalysis::tables`](super::ModuleAnalysis::tables)), and
+//! `tariff.check` reports them with their versions so the host can pin them.
 
 use super::Callee;
 use super::checker::{Checker, Want};
@@ -40,8 +43,8 @@ pub const TABLE_METHODS: &[(&str, &str)] = &[
 ];
 
 impl Checker<'_> {
-    /// The table a code names, reporting an unknown one (with a fix to a code that differs
-    /// only in case, or a close one).
+    /// The table a code names, recorded as read, reporting an unknown one (with a fix to a code
+    /// that differs only in case, or a close one).
     fn table(&mut self, code: &Name) -> Option<TableShape> {
         if let Some(shape) = self
             .context
@@ -49,6 +52,7 @@ impl Checker<'_> {
             .iter()
             .find(|shape| shape.code == code.text)
         {
+            self.out.tables.insert(shape.code.clone());
             return Some(shape.clone());
         }
         let lower = code.text.to_lowercase();
@@ -152,8 +156,7 @@ impl Checker<'_> {
     fn table_key(&mut self, key: &Expr, axis: &Axis, shape: &TableShape) {
         let expected = axis.key_type(self.schema);
         let actual = self.expr(key, Some(&expected));
-        let exact = axis.match_mode.eq_ignore_ascii_case("exact");
-        if exact
+        if axis.takes_key_list()
             && let Type::List(item) = &actual
             && expected.accepts(item)
         {
@@ -271,11 +274,7 @@ impl Checker<'_> {
         keys: &[&Expr],
         value: Type,
     ) -> Type {
-        let banded = shape.axes.len() == 1
-            && shape
-                .axes
-                .first()
-                .is_some_and(|axis| axis.match_mode.eq_ignore_ascii_case("range"));
+        let banded = shape.axes.len() == 1 && shape.axes.first().is_some_and(Axis::is_banded);
         if !banded {
             self.report(Diagnostic::error(
                 "table-shape",
