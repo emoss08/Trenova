@@ -21,7 +21,17 @@ type weatherReader interface {
 	) (*weatheralertports.WeatherAlertFeatureCollection, error)
 }
 
-var weatherSeverities = []string{"Extreme", "Severe", "Moderate", "Minor", "Unknown"}
+const (
+	weatherExtreme  = "Extreme"
+	weatherSevere   = "Severe"
+	weatherModerate = "Moderate"
+	weatherMinor    = "Minor"
+	weatherUnknown  = "Unknown"
+)
+
+var weatherSeverities = []string{
+	weatherExtreme, weatherSevere, weatherModerate, weatherMinor, weatherUnknown,
+}
 
 type weatherAlertRow struct {
 	ID          string `json:"id"`
@@ -83,7 +93,7 @@ func (t *listWeatherAlertsTool) Policy() agentports.ToolPolicy {
 
 // severityRank orders NWS severities so "Severe and worse" is a comparison.
 var severityRank = map[string]int{
-	"Extreme": 4, "Severe": 3, "Moderate": 2, "Minor": 1, "Unknown": 0,
+	weatherExtreme: 4, weatherSevere: 3, weatherModerate: 2, weatherMinor: 1, weatherUnknown: 0,
 }
 
 func (t *listWeatherAlertsTool) Query(
@@ -96,7 +106,7 @@ func (t *listWeatherAlertsTool) Query(
 
 	floor := optionalString(params.Params, "severity")
 	if _, known := severityRank[floor]; !known {
-		floor = "Severe"
+		floor = weatherSevere
 	}
 	query := strings.ToLower(optionalString(params.Params, "query"))
 

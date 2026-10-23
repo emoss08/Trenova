@@ -30,6 +30,9 @@ const (
 	fieldBackOutAllowed          = "backOutAllowed"
 	fieldCounterNeedsApproval    = "counterNeedsApproval"
 
+	labelOrder                  = "order"
+	searchTermCharges           = "charges"
+	searchTermLegs              = "legs"
 	pluralOrders                = "orders"
 	pluralRecurringShipments    = "recurring shipments"
 	pluralServiceFailures       = "service failures"
@@ -251,9 +254,9 @@ func stringOf(value any) string {
 func orderGetSpec() getSpec {
 	return getSpec{
 		name:        toolOrderGet,
-		entity:      "order",
+		entity:      labelOrder,
 		summary:     orderGetSummary,
-		searchTerms: []string{"charges", "invoiced", "legs"},
+		searchTerms: []string{searchTermCharges, "invoiced", searchTermLegs},
 		resource:    permission.ResourceOrder,
 		paramName:   "orderId",
 		idSource: "from order_list, the orderId on shipment_get or invoice_get, or the " +

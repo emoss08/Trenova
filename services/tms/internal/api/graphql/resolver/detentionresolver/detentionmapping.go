@@ -891,13 +891,13 @@ func detentionDeskFilter(
 	shipmentID *string,
 	proNumber *string,
 ) (*detentionservice.DeskFilter, error) {
-	shipment, err := base.ParseOptionalIDField("shipmentId", shipmentID)
+	shipmentFilter, err := base.ParseOptionalIDField("shipmentId", shipmentID)
 	if err != nil {
 		return nil, err
 	}
 	filter := &detentionservice.DeskFilter{
 		IncludeAwaitingApproval: base.BoolValue(includeAwaitingApproval),
-		ShipmentID:              shipment,
+		ShipmentID:              shipmentFilter,
 		ProNumber:               base.DerefString(proNumber),
 	}
 	if urgency != nil {
