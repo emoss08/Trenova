@@ -24799,7 +24799,7 @@ input ShiftTemplateInput {
 }
 
 "Which pattern a worker is on, for which period."
-type WorkerShiftAssignment {
+type WorkerShiftAssignment @kind(resource: "worker_schedule") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -24827,7 +24827,7 @@ input AssignShiftInput {
 }
 
 "What a worker would rather work on one weekday, 0 for Sunday."
-type WorkerAvailabilityPreference {
+type WorkerAvailabilityPreference @kind(resource: "worker_schedule") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -24848,7 +24848,7 @@ input SetAvailabilityPreferenceInput {
 }
 
 "One driver asking another to take a day."
-type ShiftSwapRequest {
+type ShiftSwapRequest @kind(resource: "shift_swap") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -24951,9 +24951,18 @@ input RotaFilterInput {
 }
 
 extend type Query {
-  shiftTemplates(activeOnly: Boolean, limit: Int): [ShiftTemplate!]!
+  shiftTemplates(
+    "Only the patterns in use, leaving out the retired ones."
+    activeOnly: Boolean
+    "At most this many patterns, from 1 to 200; 200 when left out."
+    limit: Int
+  ): [ShiftTemplate!]!
   shiftTemplate(id: ID!): ShiftTemplate!
-  workerShiftAssignments(workerId: ID!, activeOnly: Boolean): [WorkerShiftAssignment!]!
+  workerShiftAssignments(
+    workerId: ID!
+    "Only the pattern the worker is on today, leaving out past and future ones."
+    activeOnly: Boolean
+  ): [WorkerShiftAssignment!]!
   workerAvailabilityPreferences(workerId: ID!): [WorkerAvailabilityPreference!]!
   shiftSwapRequests(
     workerId: ID
@@ -31714,7 +31723,7 @@ type DOTRandomPoolConnection {
 One selection round. The seed and method are the evidence of how the draw was
 made: the same seed over the same roster reproduces the same names.
 """
-type DOTRandomDraw {
+type DOTRandomDraw @kind(resource: "dot_random_pool") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -31742,7 +31751,7 @@ type DOTRandomDraw {
   entries: [DOTRandomDrawEntry!]!
 }
 
-type DOTRandomDrawEntry {
+type DOTRandomDrawEntry @kind(resource: "dot_random_pool") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -31927,7 +31936,11 @@ extend type Query {
   workerDrugAlcoholStanding(workerId: ID!): DrugAlcoholStanding!
   dotRandomPools(input: DOTRandomPoolsInput!): DOTRandomPoolConnection!
   dotRandomPool(id: ID!): DOTRandomPool!
-  dotRandomDraws(poolId: ID): [DOTRandomDraw!]!
+  "Random selection rounds, newest first: one pool's, or every pool's."
+  dotRandomDraws(
+    "The pool whose rounds are read. Leave it out for every pool's."
+    poolId: ID
+  ): [DOTRandomDraw!]!
   dotRandomDraw(id: ID!): DOTRandomDraw! @authorizes(resource: "dot_random_pool")
   """
   Selections the worker still owes a collection for.

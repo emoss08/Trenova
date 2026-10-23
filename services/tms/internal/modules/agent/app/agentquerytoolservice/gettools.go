@@ -40,6 +40,15 @@ type getSpec struct {
 	source      agent.TaintSource
 	rationale   string
 	fetch       func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
+	// shape applies to a record read through GraphQL what the card's
+	// resolver does not, given the fields withheld from it and the call (a
+	// NonCompliant worker cannot be assigned; a driver's clocks in minutes).
+	shape func(record map[string]any, withheld map[string]struct{},
+		params *agentports.QueryToolParams)
+	// absent is what a get whose root returns nothing answers, where nothing
+	// is itself the finding (no ELD has reported a driver's hours) rather
+	// than a missing record.
+	absent func(id pulid.ID) map[string]any
 }
 
 type getTool struct {
@@ -220,6 +229,10 @@ func graphQLGetSpecs() []getSpec {
 		carrierGetSpec(),
 		locationGetSpec(),
 		carrierIntelEventGetSpec(),
+		workerGetSpec(),
+		workerCredentialGetSpec(),
+		dotRandomDrawGetSpec(),
+		workerHOSGetSpec(),
 	}
 }
 

@@ -37,7 +37,7 @@ func goTypes(configPath string, bindings []*binding) (map[string]goType, error) 
 	out := make(map[string]goType, len(bindings))
 	var problems []string
 	for _, b := range bindings {
-		if b.unpaged() {
+		if !b.filters() {
 			continue
 		}
 		full := b.Entity

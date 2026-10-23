@@ -785,6 +785,7 @@ export const REFERENCE_VIEWS = {
     "updatedAt",
     "version",
   ],
+  shift_swap: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   shift_template: [
     "businessUnitId",
     "code",
@@ -1016,6 +1017,7 @@ export const REFERENCE_VIEWS = {
     "updatedAt",
     "version",
   ],
+  worker_schedule: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
 } as const satisfies Record<string, readonly string[]>;
 
 export type ReferenceKind = keyof typeof REFERENCE_VIEWS;
@@ -1050,6 +1052,8 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   CustomFieldDefinition: "custom_field_definition",
   Customer: "customer",
   CustomerPayment: "customer_payment",
+  DOTRandomDraw: "dot_random_pool",
+  DOTRandomDrawEntry: "dot_random_pool",
   DOTRandomPool: "dot_random_pool",
   DashControl: "dash_control",
   DetentionPolicy: "detention_policy",
@@ -1123,6 +1127,7 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   ServiceType: "service_type",
   SettlementControl: "settlement_control",
   SettlementDispute: "settlement_dispute",
+  ShiftSwapRequest: "shift_swap",
   ShiftTemplate: "shift_template",
   Shipment: "shipment",
   ShipmentAccessorialCharge: "accessorial_charge",
@@ -1142,6 +1147,7 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   TrainingCourse: "training_course",
   User: "user",
   Worker: "worker",
+  WorkerAvailabilityPreference: "worker_schedule",
   WorkerChecklist: "worker_checklist",
   WorkerChecklistTemplate: "worker_checklist_template",
   WorkerCredential: "worker_credential",
@@ -1157,4 +1163,5 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   WorkerRecognition: "worker_recognition",
   WorkerSafetyEvent: "worker_safety_event",
   WorkerSafetyViolation: "worker_safety_event",
+  WorkerShiftAssignment: "worker_schedule",
 };

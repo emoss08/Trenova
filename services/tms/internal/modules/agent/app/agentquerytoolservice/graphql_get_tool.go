@@ -68,7 +68,7 @@ func (t *graphQLGetTool) Query(
 	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
 		Actor:             params.Actor,
 		Operation:         t.read.Operation,
-		Variables:         map[string]any{graphQLIDVariable: id.String()},
+		Variables:         map[string]any{t.read.getKey(): id.String()},
 		DataAccessCeiling: params.DataAccessCeiling,
 		RequestID:         params.RunID.String(),
 	})
@@ -80,14 +80,45 @@ func (t *graphQLGetTool) Query(
 	}
 
 	node, ok := result.Data[t.read.RootField].(map[string]any)
+	if !ok && t.spec.absent != nil {
+		return t.spec.absent(id), nil
+	}
 	if !ok {
 		return nil, fmt.Errorf("%s %s: %w", t.spec.entity, id, errGraphQLRecordMissing)
 	}
 	record := compact(node)
-	if withheld := relativePaths(result.Withheld, t.read.RootField+"."); len(withheld) > 0 {
+	withheld := relativePaths(result.Withheld, t.read.RootField+".")
+	if t.spec.shape != nil {
+		hidden := make(map[string]struct{}, len(withheld))
+		for _, path := range withheld {
+			hidden[path] = struct{}{}
+		}
+		t.spec.shape(record, hidden, params)
+	}
+	if len(withheld) > 0 {
 		record[outcomeWithheld] = withheld
 		record[outcomeWithheldNote] = withheldNote
 	}
 
 	return record, nil
+}
+
+// getKey is the variable a get's operation takes the record's id in: $id,
+// or the one id it requires, for a record read by the id of the one it
+// belongs to (a driver's hours by $workerId), as the generator proved.
+func (r *graphQLRead) getKey() string {
+	key := ""
+	for _, variable := range r.Variables {
+		if variable.Name == graphQLIDVariable {
+			return graphQLIDVariable
+		}
+		if variable.NonNull && !variable.List && variable.Type == graphQLTypeID {
+			key = variable.Name
+		}
+	}
+	if key == "" {
+		return graphQLIDVariable
+	}
+
+	return key
 }

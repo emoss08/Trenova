@@ -42526,12 +42526,12 @@
     },
     {
       "name": "worker_get_dot_random_draw",
-      "description": "Retrieve one random testing round with every driver it selected. Each selection has its substance, rank and where it stands: selected, notified, completed with its test, excused or missed. It yields the drawEntryId worker_schedule_dot_test and worker_update_dot_random_selection take.",
+      "description": "Retrieve one random testing round with every driver it selected. Each selection has its substance, rank and where it stands: selected, notified, completed with its test, excused or missed. Each selection's id is the drawEntryId worker_schedule_dot_test and worker_update_dot_random_selection take.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "drawId": {
-            "description": "The round, from worker_list_dot_random_draws. Never guess one.",
+            "description": "The random testing round's id, from worker_list_dot_random_draws. Never guess one.",
             "type": "string",
             "x-recordKinds": [
               "dot_random_draw"
@@ -42618,12 +42618,16 @@
     },
     {
       "name": "worker_get_schedule",
-      "description": "Read one worker's schedule: the shift patterns they have been on (the current one open-ended), what they said about each weekday, and their open shift swaps. It gives the shiftAssignmentId and swapId the scheduling tools take.",
+      "description": "Read one worker's schedule: their shift patterns, what they said about each weekday, and their open shift swaps. Items are the patterns they have been on, the current one open-ended; preferences give each weekday's statement (dayOfWeek 0 for Sunday); openSwaps their open swaps. An item's id is the shiftAssignmentId and a swap's id the swapId the scheduling tools take.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "activeOnly": {
+            "description": "Only the pattern the worker is on today, leaving out past and future ones.",
+            "type": "boolean"
+          },
           "workerId": {
-            "description": "The worker, from worker_list.",
+            "description": "The worker, from worker_list. Never guess one.",
             "type": "string",
             "x-recordOf": "worker"
           }
@@ -43485,10 +43489,18 @@
     },
     {
       "name": "worker_list_dot_random_draws",
-      "description": "List the random drug and alcohol testing pools and the rounds drawn from them. Pools carry their annual rates; rounds, newest first, are draft, final or cancelled, with how many drivers each substance needed and got. It yields the poolId and drawId the random testing tools take; worker_get_dot_random_draw names who was picked.",
+      "description": "List the rounds drawn for random drug and alcohol testing, newest first, beside the active pools they are drawn from (pools, with their annual rates). Each round is draft, final or cancelled, with how many drivers each substance needed and got. It yields the poolId and drawId the random testing tools take; worker_get_dot_random_draw names who was picked.",
       "parameters": {
         "additionalProperties": false,
-        "properties": {},
+        "properties": {
+          "poolId": {
+            "description": "The random testing pool, from the pools this list returns or the page you are on. Never guess one. Leave it out for every pool's.",
+            "type": "string",
+            "x-recordKinds": [
+              "dot_random_pool"
+            ]
+          }
+        },
         "type": "object"
       },
       "policy": {
@@ -43804,7 +43816,19 @@
       "description": "List the organization's active shift patterns: the days, start time and length of each, and how many weeks it rotates over. worker_assign_shift takes the id.",
       "parameters": {
         "additionalProperties": false,
-        "properties": {},
+        "properties": {
+          "activeOnly": {
+            "description": "Only the patterns in use, leaving out the retired ones. Defaults to true, the patterns in use only.",
+            "type": "boolean"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          }
+        },
         "type": "object"
       },
       "policy": {

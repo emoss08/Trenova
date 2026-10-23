@@ -51,7 +51,8 @@ type alongsideSpec struct {
 	// what names the records, for the note a cut-short read leaves.
 	what string
 	// inputs are the table input's fields every connection read sends
-	// (active templates, started by hand).
+	// (active templates, started by hand), or the variables a keyed read
+	// sends beside its keys (the open swaps only, at most twenty).
 	inputs map[string]any
 	// scoped reads it only when the call names one of the list's references
 	// (the credential types beside one worker's credentials, not beside what
@@ -159,10 +160,12 @@ func matchAlongside(
 			return nil, fmt.Errorf("%s reads %s alongside, which reads.yml does not list for it",
 				spec.name, beside.operation)
 		}
-		if len(bound[idx].Keys) > 0 && len(beside.inputs) > 0 {
-			return nil, fmt.Errorf("%s reads %s alongside by the call's own %s; it takes "+
-				"no table input", spec.name, beside.operation,
-				strings.Join(bound[idx].Keys, ", "))
+		for name := range beside.inputs {
+			if len(bound[idx].Keys) > 0 && !slices.Contains(bound[idx].Set, name) {
+				return nil, fmt.Errorf("%s reads %s alongside by the call's own %s; it "+
+					"takes no %s of the spec's", spec.name, beside.operation,
+					strings.Join(bound[idx].Keys, ", "), name)
+			}
 		}
 		out = append(out, bound[idx])
 	}
@@ -517,7 +520,10 @@ func alongsideVariables(
 	sent map[string]any,
 ) (variables map[string]any, keyed bool) {
 	if len(bound.Keys) > 0 {
-		variables = make(map[string]any, len(bound.Keys))
+		variables = make(map[string]any, len(bound.Keys)+len(spec.inputs))
+		for name, value := range spec.inputs {
+			variables[name] = value
+		}
 		for _, key := range bound.Keys {
 			value, present := sent[key]
 			if !present || value == nil {

@@ -58,6 +58,9 @@ type graphQLAlongside struct {
 	Input string
 	// Keys are the variables an unpaged read takes from the list's own call.
 	Keys []string
+	// Set are the optional variables of a keyed read that the list's call
+	// does not declare, which the spec sets as the screen does.
+	Set []string
 }
 
 type graphQLField struct {

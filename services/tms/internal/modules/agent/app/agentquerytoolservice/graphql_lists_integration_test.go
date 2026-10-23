@@ -124,6 +124,17 @@ func (customerCacheMiss) GetByID(
 	return nil, customerports.ErrCacheMiss
 }
 
+// workerCacheMiss is a worker cache that holds nothing, so every get reads
+// the repository.
+type workerCacheMiss struct{}
+
+func (workerCacheMiss) GetByID(
+	context.Context,
+	workerports.GetWorkerByIDRequest,
+) (*worker.Worker, error) {
+	return nil, customerports.ErrCacheMiss
+}
+
 func statusOf(marked bool) domaintypes.Status {
 	if marked {
 		return domaintypes.StatusInactive
@@ -214,7 +225,8 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 			Logger: logger, Repo: training, WorkerRepo: workers,
 		}),
 		WorkerService: workerservice.New(workerservice.Params{
-			Logger: logger, Repo: workers, CustomFieldsValuesService: customFields,
+			Logger: logger, Repo: workers, CacheRepo: workerCacheMiss{},
+			CustomFieldsValuesService: customFields,
 		}),
 		WorkerPTOService: workerptoservice.New(workerptoservice.Params{
 			Logger: logger, Repo: timeOff, WorkerRepo: workers,

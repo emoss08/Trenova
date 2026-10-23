@@ -6,85 +6,28 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type stubWorkerCredentials struct {
-	workerports.WorkerCredentialRepository
+// A licence number is Confidential. The credential's operation never selects
+// it, so neither a person nor an agent principal is shown it.
+func TestGetWorkerCredential_NeverReadsTheNumber(t *testing.T) {
+	t.Parallel()
 
-	credential *worker.WorkerCredential
-	last       *workerports.GetWorkerCredentialByIDRequest
-}
-
-func (s *stubWorkerCredentials) GetByID(
-	_ context.Context,
-	req *workerports.GetWorkerCredentialByIDRequest,
-) (*worker.WorkerCredential, error) {
-	s.last = req
-
-	return s.credential, nil
-}
-
-func sampleCredential() *worker.WorkerCredential {
-	expires := int64(1_800_000_000)
-	return &worker.WorkerCredential{
-		ID:               pulid.MustNew("wcred_"),
-		WorkerID:         pulid.MustNew("wrk_"),
-		CredentialTypeID: pulid.MustNew("wct_"),
-		Status:           worker.CredentialStatusActive,
-		Number:           "D1234567",
-		IssuingAuthority: "TX DPS",
-		ExpiresAt:        &expires,
-		CredentialType: &worker.WorkerCredentialType{
-			Name:     "CDL",
-			Category: worker.CredentialCategoryLicense,
-		},
-		Worker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
+	read := graphQLReads[toolWorkerGetCredential]
+	for _, field := range read.Fields {
+		if field.Name == "number" {
+			assert.False(t, field.Selected, "the credential number is never selected")
+		}
 	}
-}
 
-// A licence number is Confidential. Neither a person nor an agent principal is
-// shown it; both are told it was withheld rather than shown a credential with
-// no number on file.
-func TestGetWorkerCredential_WithholdsTheNumberFromEveryone(t *testing.T) {
-	t.Parallel()
-
-	repo := &stubWorkerCredentials{credential: sampleCredential()}
-	tool := newGetWorkerCredentialTool(repo, &fakePermissions{})
-
-	params := testParams(map[string]any{"credentialId": repo.credential.ID.String()})
-	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
-	result, err := tool.Query(t.Context(), params)
+	spec := workerCredentialGetSpec()
+	tool, err := newGraphQLGetTool(&spec, &keyedReader{}, &fakePermissions{})
 	require.NoError(t, err)
-	detail := result.(workerCredentialDetail)
-	assert.Empty(t, detail.Number)
-	assert.Equal(t, []string{"number"}, detail.Withheld)
-	assert.Equal(t, "Maria Ortiz", detail.WorkerName)
-	assert.Equal(t, "CDL", detail.CredentialType)
-	assert.True(t, repo.last.IncludeType)
-	assert.True(t, repo.last.IncludeWorker)
-
-	agentParams := testParams(map[string]any{"credentialId": repo.credential.ID.String()})
-	agentParams.Actor.PrincipalType = permissionports.PrincipalTypeAgent
-	result, err = tool.Query(t.Context(), agentParams)
-	require.NoError(t, err)
-	detail = result.(workerCredentialDetail)
-	assert.Empty(t, detail.Number)
-	assert.Equal(t, []string{"number"}, detail.Withheld)
-	assert.Equal(t, "Maria Ortiz", detail.WorkerName, "the holder's name is Internal and stays")
-}
-
-func TestGetWorkerCredential_IsGatedOnTheCredentialResource(t *testing.T) {
-	t.Parallel()
-
-	tool := newGetWorkerCredentialTool(&stubWorkerCredentials{}, &fakePermissions{})
 	assert.Equal(t, permission.ResourceWorkerCredential, tool.Policy().Resource)
 	assert.Equal(t, "worker_get_credential", tool.Name())
 	assert.Contains(t, tool.Description(), "worker_list_credentials")

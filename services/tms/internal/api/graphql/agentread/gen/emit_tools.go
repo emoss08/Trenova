@@ -53,6 +53,7 @@ type besideRead struct {
 	Resource  string
 	Input     string
 	Keys      []string
+	Set       []string
 }
 
 type toolRead struct {
@@ -123,7 +124,8 @@ var graphQLReads = map[string]graphQLRead{
 {{- range .Alongside }}
 			{Operation: {{ quote .Operation }}, RootField: {{ quote .RootField }}, Resource: {{ quote .Resource }}
 {{- if .Input }}, Input: {{ quote .Input }}{{ end }}
-{{- if .Keys }}, Keys: []string{ {{- range $i, $v := .Keys }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}},
+{{- if .Keys }}, Keys: []string{ {{- range $i, $v := .Keys }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
+{{- if .Set }}, Set: []string{ {{- range $i, $v := .Set }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}},
 {{- end }}
 		},
 {{- end }}
@@ -170,6 +172,9 @@ func writeTools(
 	aliases := make(map[string]string)
 	for _, b := range bindings {
 		gt, typed := types[b.Node]
+		if !b.filters() {
+			gt, typed = goType{}, false
+		}
 		alias := ""
 		if typed {
 			alias = aliasFor(aliases, gt.Path)
@@ -246,6 +251,7 @@ func besideReads(b *binding) []besideRead {
 			Resource:  string(beside.Resource),
 			Input:     beside.Input,
 			Keys:      beside.Keys,
+			Set:       beside.Set,
 		})
 	}
 

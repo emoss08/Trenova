@@ -3,7 +3,6 @@ package agentquerytoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -13,8 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -145,150 +142,6 @@ func newGetServiceFailureTool(
 			})
 		},
 	}, permissions)
-}
-
-// getWorkerCredentialTool reads one credential under the person's field
-// access. A credential number is a licence, TWIC or medical card number, the
-// same personal detail the worker's profile keeps Confidential and the app
-// shows only to a role holding personal details, so it never reaches a model.
-type getWorkerCredentialTool struct {
-	repo   workerports.WorkerCredentialRepository
-	access fieldAccess
-}
-
-func newGetWorkerCredentialTool(
-	repo workerports.WorkerCredentialRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &getWorkerCredentialTool{repo: repo, access: newFieldAccess(permissions)}
-}
-
-func (t *getWorkerCredentialTool) Name() string { return "worker_get_credential" }
-
-func (t *getWorkerCredentialTool) Description() string {
-	return "Retrieve one worker credential by id: its type, the worker who holds it, its " +
-		"status, and when it was issued and expires. It also says whether it was verified " +
-		"and whether a document is on file. Use worker_list_credentials first when you do " +
-		"not have an id."
-}
-
-func (t *getWorkerCredentialTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"credentialId": agenttoolschema.RecordIDText(
-				permission.ResourceWorkerCredential,
-				"The worker credential's id, from worker_list_credentials "+
-					"or the page you are on.",
-			),
-		},
-		"required":             []string{"credentialId"},
-		"additionalProperties": false,
-	}
-}
-
-func (t *getWorkerCredentialTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceWorkerCredential,
-	})
-}
-
-func (t *getWorkerCredentialTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	credentialID, err := requirePulid(params.Params, "credentialId")
-	if err != nil {
-		return nil, err
-	}
-
-	entity, err := t.repo.GetByID(ctx, &workerports.GetWorkerCredentialByIDRequest{
-		ID: credentialID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  params.OrganizationID,
-			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.UserID,
-		},
-		IncludeType:   true,
-		IncludeWorker: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	ceiling := t.access.ceiling(ctx, params, permission.ResourceWorkerCredential)
-
-	return workerCredentialDetailFrom(entity, t.access, ceiling), nil
-}
-
-// workerCredentialDetail is one credential as a model may see it. A number on
-// file is named as withheld, so its absence reads as withheld rather than as
-// not on file.
-type workerCredentialDetail struct {
-	ID               string       `json:"id"`
-	WorkerID         string       `json:"workerId"`
-	WorkerName       string       `json:"workerName,omitempty"`
-	CredentialTypeID string       `json:"credentialTypeId"`
-	CredentialType   string       `json:"credentialType,omitempty"`
-	Category         string       `json:"category,omitempty"`
-	Status           string       `json:"status"`
-	Number           string       `json:"number,omitempty"`
-	IssuingAuthority string       `json:"issuingAuthority,omitempty"`
-	IssuedAt         optionalDate `json:"issuedAt"`
-	ExpiresAt        optionalDate `json:"expiresAt"`
-	Verified         bool         `json:"verified"`
-	VerifiedAt       optionalDate `json:"verifiedAt"`
-	DocumentID       string       `json:"documentId,omitempty"`
-	HasDocument      bool         `json:"hasDocument"`
-	Notes            string       `json:"notes,omitempty"`
-	Archived         bool         `json:"archived"`
-	ArchiveReason    string       `json:"archiveReason,omitempty"`
-	Version          int64        `json:"version"`
-	Withheld         []string     `json:"withheldByAccess,omitempty"`
-}
-
-func workerCredentialDetailFrom(
-	entity *worker.WorkerCredential,
-	access fieldAccess,
-	ceiling permission.FieldSensitivity,
-) workerCredentialDetail {
-	detail := workerCredentialDetail{
-		ID:               entity.ID.String(),
-		WorkerID:         entity.WorkerID.String(),
-		CredentialTypeID: entity.CredentialTypeID.String(),
-		Status:           string(entity.Status),
-		IssuingAuthority: entity.IssuingAuthority,
-		IssuedAt:         pointerDate(entity.IssuedAt),
-		ExpiresAt:        pointerDate(entity.ExpiresAt),
-		Verified:         entity.VerifiedAt != nil,
-		VerifiedAt:       pointerDate(entity.VerifiedAt),
-		HasDocument:      !entity.DocumentID.IsNil(),
-		Notes:            entity.Notes,
-		Archived:         entity.ArchivedAt != nil,
-		ArchiveReason:    entity.ArchiveReason,
-		Version:          entity.Version,
-	}
-	if !entity.DocumentID.IsNil() {
-		detail.DocumentID = entity.DocumentID.String()
-	}
-	if entity.CredentialType != nil {
-		detail.CredentialType = entity.CredentialType.Name
-		detail.Category = string(entity.CredentialType.Category)
-	}
-	if entity.Worker != nil {
-		detail.WorkerName = entity.Worker.FirstName + " " + entity.Worker.LastName
-	}
-	if access.visible(permission.ResourceWorkerCredential, "number", ceiling) {
-		detail.Number = entity.Number
-	} else if entity.Number != "" {
-		detail.Withheld = append(detail.Withheld, "number")
-	}
-
-	return detail
 }
 
 // updatePreferenceWarning is what a customer set to None means for the agent.

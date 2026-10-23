@@ -133,6 +133,14 @@ fragment CustomerPaymentReference on CustomerPayment {
   referenceNumber
 }
 
+fragment DOTRandomDrawReference on DOTRandomDraw {
+  id
+}
+
+fragment DOTRandomDrawEntryReference on DOTRandomDrawEntry {
+  id
+}
+
 fragment DOTRandomPoolReference on DOTRandomPool {
   id
   code

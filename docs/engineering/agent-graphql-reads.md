@@ -236,7 +236,10 @@ The rule, for each listed tool:
    rather than taking it on trust:
    - the operation is persisted and reads one root field;
    - the field's shape matches the tool's verb: a connection, a list or an `items` container for
-     a list tool, one record for a get;
+     a list tool, one record for a get. A get tool may also read the whole list one record holds,
+     keyed by that record's required id (`worker_get_schedule` reads
+     `workerShiftAssignments(workerId:)`): it binds as an unpaged list keyed by the id its call
+     names, and reads beside it as any such list does;
    - the field's resolver checks the tool's own resource for read. The generator reads the check
      from the resolver's code, and `TestGraphQLReadsCheckTheToolsOwnResource` holds every bound
      tool's policy resource to it, so a read meets the same check `authorize` made.
@@ -244,10 +247,14 @@ The rule, for each listed tool:
    A named binding with no reason fails generation. So does one that names the operation the rule
    would pick anyway. So does any binding, by rule or by name, whose operation requires a
    variable the tool's verb cannot send: a list sends its `DataTableConnectionInput` and
-   `includeTotalCount`, a get sends `id`, and a required `$region` would leave every call
-   failing at the server. A list tool never binds to a connection read that selects no `pageInfo`,
+   `includeTotalCount`, a get sends `id` (or, for a record read by the id of the one it belongs to,
+   the operation's only required id: a driver's hours by `$workerId`), and a required `$region`
+   would leave every call failing at the server. A list tool never binds to a connection read that selects no `pageInfo`,
    because it could not page. Where the node's type binds to a generated model (`gqlmodel`), the
-   line also names the `entity` whose filter configuration the resolver compiles with.
+   line also names the `entity` whose filter configuration the resolver compiles with. Only a
+   paged list compiles field filters, so only a paged list's binding carries an entity; a get and
+   an unpaged list read by their arguments alone, and may read a generated model
+   (`WorkerHosState`).
 
    The rule binds about two in five of the tools with an operation (49 of 119 in the trial
    recorded in the inventory). Tool names follow the product's words, not always their record
@@ -385,7 +392,11 @@ recognitions beside their safety events). The generator proves that each of its 
 the list's operation declares, of the same type, and the tool sends it the value the call sent,
 and makes the read only when the call names every one of them: with no worker named, the safety
 events list reads every worker's events and no recognitions. It takes no table input and is never
-cut short. A read alongside marked `scoped` is made only when the call names one of the list's
+cut short. An optional variable of its own that the list's operation does not declare is the
+spec's to set as the screen does (`inputs`): a worker's schedule reads their swaps with
+`openOnly: true` and `limit: 20`, as the repository tool did. The generator records those
+variables, and a spec that sets any other is refused at construction; a required one the list
+does not declare fails generation. A read alongside marked `scoped` is made only when the call names one of the list's
 records: the credential types come beside one worker's credentials, as the repository tool read
 them, and not beside what falls due across the organization.
 
@@ -590,6 +601,13 @@ Each module's PR:
 | Workforce | `worker_list_safety_events` | none | reads `DeskWorkerSafetyEvents`, with each worker's recognitions read alongside (`DeskWorkerRecognitions`) when the call names a worker. `worker_safety_event` and `worker_recognition` declare no field sensitivities and default to Internal, as the repository row read them. Each event gains `violations` (a loader, one query per page of events), which the repository tool read beside the events; `WorkerSafetyViolation` now declares `@kind(resource: "worker_safety_event")`, so its fields follow the event's. With no worker the list reads the events still open across the organization, newest first, as the repository tool did (the spec's `unscoped` default); `openOnly: false` lists the closed ones too, and one worker's record is read whole |
 | Workforce | `worker_list_credentials` | none | reads `DeskWorkerCredentialList`, with the active credential types read alongside (`DeskWorkerCredentialTypes`) when the call names a worker. `workerCredentials` takes an optional worker and the repository tool's filters (`expiringWithinDays`, `includeExpired`, `credentialTypeCode`, `requiredOnly`, `limit`), read by `WorkerCredentialService.List`: one worker's credentials, or with no worker or an expiry window the active ones falling due, soonest first, walked in the query. The window counts days from now, as the screen's expiry forecast does and the description says, where the repository tool counted calendar days in the caller's zone: GraphQL carries no caller's day. It pages by cursor over the root's `limit` and `offset`, as the repository tool paged by offset. `worker_credential` defaulted to Restricted with only `number` declared (Confidential), so every field outside its reference view would be withheld at Internal; what a credential is, whose, its dates, health, issuer, verification and whether a scan is on file are now Internal, and the notes and archive reason stay Restricted. The operation never selects `number`, which the repository tool withheld too |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
+| Workforce | `worker_get` | `leaveType`, `profile.nextTrainingDue`, `profile.safetyRating` | reads `DeskWorkerCard`, which now also selects what the repository row carried (postal code, emergency contact, leave type, termination, last MVR check, next training due, safety rating, compliance status, ELD and short-haul exemptions). `worker` declares none of the three newly withheld fields, so they take its Restricted default, where the repository row returned them ungated; they were not declared Internal, which would widen what a person whose role reaches only Internal sees. The contact, address, hire and termination dates and disqualification reason stay Restricted, as the repository row gated them. `profile.licenseNumber` is Confidential and now named in `withheldByAccess` rather than left out silently. `worker` now declares `profile` Internal: the field that holds the profile took the Restricted default, so the guard withheld the whole profile at Internal (`worker_list` included) even though each of its fields carries its own sensitivity, which still applies. The spec's `shape` folds a NonCompliant credential into `canBeAssigned`, as `worker_list` does |
+| Workforce | `worker_get_credential` | `notes`, `archiveReason` | reads the new `DeskWorkerCredential`; `worker_credential` keeps both Restricted, where the repository row returned them ungated. The operation never selects `number`. `worker_credential` now declares its `worker` and `credentialType` links Internal: they took the Restricted default, so at Internal the guard withheld the holder and the type outright (`worker_list_credentials` included); each linked record is still gated by its own kind, so the holder shows the worker reference view to a reader who cannot read workers |
+| Workforce | `worker_get_dot_random_draw` | none | reads `DotRandomDraw`. `DOTRandomDraw` and `DOTRandomDrawEntry` had no kind (neither is named for `dot_random_pool`), so the guard did not gate them and a reader below Internal got every field; both now declare `@kind(resource: "dot_random_pool")`, whose fields default to Internal, on every read of the type, the random testing page's included. Each selection's `worker` shows the worker reference view (the name the repository row carried) to a reader who cannot read workers |
+| Workforce | `worker_get_hos` | none | reads `WorkerHosState`, the telematics page's single-root read; `DeskWorkerHos` reads the violations beside it, which the tool never returned. `WorkerHosState` has no kind and stays ungated, as the repository tool and the page read it: declaring `worker` would put every clock under the worker's Restricted default |
+| Workforce | `worker_get_schedule` | none | reads `WorkerShiftAssignments` with `WorkerAvailabilityPreferences` and `ShiftSwapRequests` alongside, keyed by the worker; swaps are read only for a reader who may read `shift_swap`, open only, at most 20, as before. The resolvers' team scope governs. `WorkerShiftAssignment` and `WorkerAvailabilityPreference` now declare `@kind(resource: "worker_schedule")` and `ShiftSwapRequest` `@kind(resource: "shift_swap")`, all Internal by default; each assignment's `shiftTemplate` shows the shift template reference view (code, name, colour, start, length) to a reader who cannot read shift templates, and a swap's workers the worker reference view |
+| Workforce | `worker_list_dot_random_draws` | none | reads `DotRandomDraws` (one pool's or every pool's, the server's page of 50) with the active pools alongside (`DotRandomPools`); every field is Internal |
+| Workforce | `worker_list_shift_templates` | none | reads `ShiftTemplates`, the active patterns unless the call asks for the retired ones, 25 unless it asks for more, at most 100; every field is Internal. The spec's `shape` spells out the days, start and length |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
 Internal each now withholds every field but `id`, where it used to return them all. No description
@@ -683,8 +701,13 @@ A list returns what `searchOutcome` returns today, with cursor paging:
   `withheldByAccess`. A get for several ids (`invoice_get`) runs one read per id, at most 10
   concurrently, under one span each. A converted get keeps its `getSpec` (name, summary, id
   parameter, policy) with no `fetch`; `graphQLGetSpecs` lists every one, registers it as a
-  `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, and a card
-  whose root returns nothing is a missing record, not an empty one.
+  `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, or as the
+  one id the operation requires (`$workerId` for `worker_get_hos`), and a card whose root returns
+  nothing is a missing record, not an empty one, unless the spec's `absent` says what nothing
+  means (no ELD has reported the driver's hours, which is the finding). A spec's `shape` applies
+  to the record what the card's resolver does not, as a list's does to each row: `worker_get`
+  folds a NonCompliant credential into `canBeAssigned`, `worker_get_hos` gives the clocks in
+  minutes and marks a reading over twelve hours old as stale.
 
 Size: a `*Table` operation selects what a table row shows, which can be large; shipments are
 about 3 KB a row. The rule therefore prefers `Desk*` operations, which were written to be read by

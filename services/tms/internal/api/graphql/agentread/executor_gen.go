@@ -20,9 +20,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/schedulingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/telematicsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenantexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tractorexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/trailerexec"
@@ -54,8 +56,10 @@ import (
 	locationcategoryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationcategoryresolver"
 	locationresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationresolver"
 	performancereviewresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
+	schedulingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/schedulingresolver"
 	servicetyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
 	shipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
+	telematicsresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsresolver"
 	tenantresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tenantresolver"
 	tractorresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tractorresolver"
 	trailerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/trailerresolver"
@@ -94,6 +98,8 @@ import (
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
+	schedulingservice "github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
+	telematicsservice "github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	workerchecklistservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 	workercredentialservice "github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	workerdqfservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
@@ -138,8 +144,11 @@ type ResolverParams struct {
 	OrganizationService          tenantports.OrganizationService
 	PerformanceReviewService     *performancereviewservice.Service
 	PermissionEngine             permissionports.PermissionEngine
+	SchedulingService            *schedulingservice.Service
 	ServiceTypeService           *servicetypeservice.Service
+	ShipmentService              shipmentports.ShipmentService
 	ShipmentTypeService          *shipmenttypeservice.Service
+	TelematicsService            *telematicsservice.Service
 	TractorService               *tractorservice.Service
 	TrailerService               *trailerservice.Service
 	WorkerChecklistService       *workerchecklistservice.Service
@@ -172,9 +181,11 @@ var shards = []*gqlexec.Shard{
 	locationcategoryexec.Shard,
 	performancereviewexec.Shard,
 	preludeexec.Shard,
+	schedulingexec.Shard,
 	servicetypeexec.Shard,
 	sharedexec.Shard,
 	shipmenttypeexec.Shard,
+	telematicsexec.Shard,
 	tenantexec.Shard,
 	tractorexec.Shard,
 	trailerexec.Shard,
@@ -294,6 +305,41 @@ var operations = []Operation{
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ShipmentTypeTableRowFields on ShipmentType { businessUnitId code color createdAt description id organizationId status updatedAt version } query ShipmentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { shipmentTypes(input: $input) { edges { node { ...ShipmentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
+		Name:     "DeskWorkerCard",
+		Hash:     "sha256:2593751ff11332364a3c1d31b3af5e9ff16060717cce261310f4013ca1cc1439",
+		Document: "query DeskWorkerCard($id: ID!) { worker(id: $id) { assignmentBlocked availableForDispatch canBeAssigned city createdAt driverType email emergencyContactName emergencyContactPhone externalId firstName fleetCode { code id } id lastName leaveType manager { id name } phoneNumber postalCode profile { cdlClass cdlRestrictions complianceStatus disqualificationReason eldExempt endorsement hazmatExpiry hireDate isQualified lastMvrCheck licenseExpiry licenseNumber licenseState { abbreviation } medicalCardExpiry mvrDueDate nextTrainingDue physicalDueDate safetyRating shortHaulExempt terminationDate twicExpiry } state { abbreviation } status type } }",
+	},
+	{
+		Name:     "DeskWorkerCredential",
+		Hash:     "sha256:43246c83f8dc68f9605ada0a2116bdbb5f190c8b62169c95b58acaa631bdf067",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerCredential($id: ID!) { workerCredential(id: $id) { archiveReason archivedAt credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority notes status verifiedAt version worker { ...WorkerReference } workerId } }",
+	},
+	{
+		Name:     "DotRandomDraw",
+		Hash:     "sha256:c20b5525dc92b2ed8d5bf6878bf74630bc7675c5af5eb482ab4236ad5877d2b8",
+		Document: "query DotRandomDraw($id: ID!) { dotRandomDraw(id: $id) { alcoholSelected alcoholTarget drawnAt drugSelected drugTarget entries { completedAt drawId excuseReason id notifiedAt rank status substance testId version worker { firstName id lastName } workerId } finalizedAt id method notes periodEnd periodKey periodStart pool { alcoholRatePercent code drugRatePercent id name period } poolId poolSize seed status version } }",
+	},
+	{
+		Name:     "WorkerHosState",
+		Hash:     "sha256:cc49820a722034cd85add21c54f6a0f71735ab5ee21b8fda9bb4fa168950b241",
+		Document: "query WorkerHosState($workerId: ID!) { workerHosState(workerId: $workerId) { breakLimitMs breakRemainingMs currentTractorId currentVehicleId cycleLimitMs cycleRemainingMs cycleStartedAt cycleTomorrowMs cycleViolationMs driveLimitMs driveRemainingMs dutyStatus provider providerDriverId recordedAt rulesetCycle rulesetJurisdiction rulesetShift shiftDrivingViolationMs shiftLimitMs shiftRemainingMs workerId workerName } }",
+	},
+	{
+		Name:     "WorkerShiftAssignments",
+		Hash:     "sha256:bdc43fb2db6a4a94c02e8099c6920594d996aee4893d241a3d31b2c0b04d565c",
+		Document: "query WorkerShiftAssignments($activeOnly: Boolean, $workerId: ID!) @requiresRead(kind: \"shift_template\") { workerShiftAssignments(workerId: $workerId, activeOnly: $activeOnly) { cycleOffsetWeeks effectiveFrom effectiveTo id notes shiftTemplate { code color cycleWeeks daysOfWeek durationMinutes id name startMinute } shiftTemplateId version workerId } }",
+	},
+	{
+		Name:     "WorkerAvailabilityPreferences",
+		Hash:     "sha256:82ce6da812e6e6af74e5db8188ce3dbfc5048fd70c722a89a8277cb714d0e5a1",
+		Document: "query WorkerAvailabilityPreferences($workerId: ID!) { workerAvailabilityPreferences(workerId: $workerId) { dayOfWeek id note preference version workerId } }",
+	},
+	{
+		Name:     "ShiftSwapRequests",
+		Hash:     "sha256:ddc6208c93f72be57bee681f5003436a37fa8d7092ea6716e72cb13b012b3132",
+		Document: "query ShiftSwapRequests($limit: Int, $openOnly: Boolean, $since: Timestamp, $workerId: ID) { shiftSwapRequests( workerId: $workerId openOnly: $openOnly since: $since limit: $limit ) { counterpartyShiftDate counterpartyWorker { firstName id lastName } counterpartyWorkerId decidedAt id reason requestingWorker { firstName id lastName } requestingWorkerId respondedAt responseNote shiftDate status version } }",
+	},
+	{
 		Name:     "DeskWorkers",
 		Hash:     "sha256:768306c23b69aca4360c7737d6d22df346e3a736a5f398262cb2a8d13c4f03f1",
 		Document: "query DeskWorkers($input: DataTableConnectionInput!) { workers(input: $input) { edges { node { assignmentBlocked availableForDispatch canBeAssigned city createdAt driverType externalId firstName fleetCode { code id } fleetCodeId id lastName profile { cdlClass cdlRestrictions complianceStatus eldExempt endorsement hazmatExpiry isQualified lastComplianceCheck lastMvrCheck licenseExpiry medicalCardExpiry mvrDueDate physicalDueDate shortHaulExempt twicExpiry } status type wholeName } } pageInfo { endCursor hasNextPage } } }",
@@ -317,6 +363,16 @@ var operations = []Operation{
 		Name:     "DeskWorkerCredentialTypes",
 		Hash:     "sha256:936538a76b84f8c1517116ad68a8a7557102c7b7cdb3661acf72a4fcb80bdfcb",
 		Document: "query DeskWorkerCredentialTypes($input: WorkerCredentialTypesInput!) { workerCredentialTypes(input: $input) { edges { node { category code id isRequired name } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DotRandomDraws",
+		Hash:     "sha256:2b9cf8ff63760434e41734de883989c9ec2899d3622a3fe63e1a4cc8f6961db6",
+		Document: "query DotRandomDraws($poolId: ID) { dotRandomDraws(poolId: $poolId) { alcoholSelected alcoholTarget drawnAt drugSelected drugTarget finalizedAt id method notes periodEnd periodKey periodStart pool { code id name period } poolId poolSize seed status version } }",
+	},
+	{
+		Name:     "DotRandomPools",
+		Hash:     "sha256:d9cce52798e8b3e78e73078994d87c7d71fcfabb190a3d2ae1ab7e1f8dd94e7e",
+		Document: "fragment DotRandomPoolFields on DOTRandomPool { alcoholRatePercent code createdAt description drugRatePercent id includedDriverTypes isDefault meetsDotMinimums name period status updatedAt version } query DotRandomPools($input: DOTRandomPoolsInput!) { dotRandomPools(input: $input) { edges { cursor node { ...DotRandomPoolFields } } pageInfo { endCursor hasNextPage } totalCount } }",
 	},
 	{
 		Name:     "DeskWorkerDotTests",
@@ -357,6 +413,11 @@ var operations = []Operation{
 		Name:     "DeskWorkerRecognitions",
 		Hash:     "sha256:59f5ec5f2d59ef1e412f2b632f0ae39d225a3cdc6210d0b606dc7c6a645cd1cd",
 		Document: "query DeskWorkerRecognitions($workerId: ID!) { workerRecognitions(workerId: $workerId) { id kind occurredAt title visibleToWorker } }",
+	},
+	{
+		Name:     "ShiftTemplates",
+		Hash:     "sha256:fed89d4da0d0b311f889914ec96d500d1cb129fe34e089923b4ecbcb676e4a11",
+		Document: "query ShiftTemplates($activeOnly: Boolean, $limit: Int) { shiftTemplates(activeOnly: $activeOnly, limit: $limit) { activeAssignmentCount code color cycleWeeks daysOfWeek description durationMinutes id name startMinute status version } }",
 	},
 	{
 		Name:     "WorkerPtoTable",
@@ -451,6 +512,10 @@ func NewSchema(p ResolverParams) Schema {
 		PerformanceReviewService: p.PerformanceReviewService,
 		DriverPortalService:      p.DriverPortalService,
 	}
+	schedulingDeps := &schedulingresolver.Deps{
+		Core:              core,
+		SchedulingService: p.SchedulingService,
+	}
 	servicetypeDeps := &servicetyperesolver.Deps{
 		Core:               core,
 		ServiceTypeService: p.ServiceTypeService,
@@ -458,6 +523,11 @@ func NewSchema(p ResolverParams) Schema {
 	shipmenttypeDeps := &shipmenttyperesolver.Deps{
 		Core:                core,
 		ShipmentTypeService: p.ShipmentTypeService,
+	}
+	telematicsDeps := &telematicsresolver.Deps{
+		Core:              core,
+		ShipmentService:   p.ShipmentService,
+		TelematicsService: p.TelematicsService,
 	}
 	tenantDeps := &tenantresolver.Deps{
 		Core:                core,
@@ -519,6 +589,8 @@ func NewSchema(p ResolverParams) Schema {
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
 		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
+		schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
+		telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
 		tenantMutation:                &tenantMutation{Deps: tenantDeps},
 		tractorMutation:               &tractorMutation{Deps: tractorDeps},
 		trailerMutation:               &trailerMutation{Deps: trailerDeps},
@@ -549,8 +621,10 @@ func NewSchema(p ResolverParams) Schema {
 		locationQuery:              &locationQuery{Deps: locationDeps},
 		locationcategoryQuery:      &locationcategoryQuery{Deps: locationcategoryDeps},
 		performancereviewQuery:     &performancereviewQuery{Deps: performancereviewDeps},
+		schedulingQuery:            &schedulingQuery{Deps: schedulingDeps},
 		servicetypeQuery:           &servicetypeQuery{Deps: servicetypeDeps},
 		shipmenttypeQuery:          &shipmenttypeQuery{Deps: shipmenttypeDeps},
+		telematicsQuery:            &telematicsQuery{Deps: telematicsDeps},
 		tenantQuery:                &tenantQuery{Deps: tenantDeps},
 		tractorQuery:               &tractorQuery{Deps: tractorDeps},
 		trailerQuery:               &trailerQuery{Deps: trailerDeps},
@@ -640,6 +714,7 @@ func NewSchema(p ResolverParams) Schema {
 		"PortalTraining":          func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
 		"ReviewRating":            func() any { return &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps} },
 		"SafetyScorecard":         func() any { return &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps} },
+		"ShiftTemplate":           func() any { return &schedulingresolver.ShiftTemplateResolver{Deps: schedulingDeps} },
 		"Tractor":                 func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },
 		"Trailer":                 func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
 		"TrainingCourse":          func() any { return &workertrainingresolver.TrainingCourseResolver{Deps: workertrainingDeps} },
@@ -687,6 +762,8 @@ type mutationResolver struct {
 	*equipmenttypeMutation
 	*fleetsafetyMutation
 	*performancereviewMutation
+	*schedulingMutation
+	*telematicsMutation
 	*tenantMutation
 	*tractorMutation
 	*trailerMutation
@@ -718,8 +795,10 @@ type queryResolver struct {
 	*locationQuery
 	*locationcategoryQuery
 	*performancereviewQuery
+	*schedulingQuery
 	*servicetypeQuery
 	*shipmenttypeQuery
+	*telematicsQuery
 	*tenantQuery
 	*tractorQuery
 	*trailerQuery
@@ -742,6 +821,8 @@ type (
 	equipmenttypeMutation          = equipmenttyperesolver.MutationResolver
 	fleetsafetyMutation            = fleetsafetyresolver.MutationResolver
 	performancereviewMutation      = performancereviewresolver.MutationResolver
+	schedulingMutation             = schedulingresolver.MutationResolver
+	telematicsMutation             = telematicsresolver.MutationResolver
 	tenantMutation                 = tenantresolver.MutationResolver
 	tractorMutation                = tractorresolver.MutationResolver
 	trailerMutation                = trailerresolver.MutationResolver
@@ -770,8 +851,10 @@ type (
 	locationQuery                  = locationresolver.QueryResolver
 	locationcategoryQuery          = locationcategoryresolver.QueryResolver
 	performancereviewQuery         = performancereviewresolver.QueryResolver
+	schedulingQuery                = schedulingresolver.QueryResolver
 	servicetypeQuery               = servicetyperesolver.QueryResolver
 	shipmenttypeQuery              = shipmenttyperesolver.QueryResolver
+	telematicsQuery                = telematicsresolver.QueryResolver
 	tenantQuery                    = tenantresolver.QueryResolver
 	tractorQuery                   = tractorresolver.QueryResolver
 	trailerQuery                   = trailerresolver.QueryResolver

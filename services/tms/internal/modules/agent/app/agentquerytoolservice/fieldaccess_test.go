@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -157,6 +157,8 @@ func TestRedactor_GatesWorkersAndCarrierAssignmentsBelowTheCeiling(t *testing.T)
 	assert.NotContains(t, worker, "email")
 	assert.NotContains(t, worker, "phoneNumber")
 	assert.NotContains(t, worker, "manager", "the manager is Restricted on the worker")
+	assert.Equal(t, map[string]any{"endorsement": "X"}, worker["profile"],
+		"the profile holds the worker's fields, each gated by its own sensitivity")
 
 	carrier := objectAt(t, document, "carrierAssignment")
 	assert.Equal(t, "Pat Carrier", carrier["externalDriverName"])
@@ -167,7 +169,6 @@ func TestRedactor_GatesWorkersAndCarrierAssignmentsBelowTheCeiling(t *testing.T)
 		"worker.email",
 		"worker.manager",
 		"worker.phoneNumber",
-		"worker.profile",
 	}, document["withheldByAccess"])
 }
 

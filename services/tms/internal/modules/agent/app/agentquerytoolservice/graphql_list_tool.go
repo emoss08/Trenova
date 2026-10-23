@@ -101,6 +101,10 @@ type idReference struct {
 	resource permission.Resource
 	what     string
 	source   string
+	// kinds name the record the id is of where its resource covers several
+	// (a random testing pool of dot_random_pool), so it is held to their
+	// prefixes.
+	kinds []permission.RecordKind
 }
 
 type graphQLListTool struct {
@@ -171,6 +175,10 @@ func referenced(
 			continue
 		}
 		param.Schema = agenttoolschema.RecordID(ref.resource, ref.what, ref.source)
+		if len(ref.kinds) > 0 {
+			param.Schema = agenttoolschema.KindID(
+				agenttoolschema.IDDescription(ref.what, ref.source), ref.kinds...)
+		}
 		out = append(out, param)
 		used++
 	}
@@ -222,6 +230,7 @@ func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
 		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(),
+		workforceProgrammeReadSpecs(),
 	)
 }
 
