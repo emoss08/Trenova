@@ -51,7 +51,7 @@ pub struct Action {
 }
 
 /// The names a test reads besides the record, which an input must not take.
-const RESERVED: &[&str] = &["input", "tables", "total", "lines"];
+const RESERVED: &[&str] = &["input", "tables", "total", "lines", "applies"];
 
 /// The most suffixes tried for a free name.
 const MAX_SUFFIX: u32 = 1_000;

@@ -288,6 +288,7 @@ fn bodies(declarer: &Declarer<'_>, state: &mut State, out: &mut ModuleAnalysis) 
     super::bounds::check(module, state, &globals, out);
     super::options::check(module, out);
     super::codes::check(module, declarer.context, out);
+    super::tables::live(module, declarer.context, out);
     if let Some(slot) = state.globals.get_mut(index) {
         *slot = globals;
     }

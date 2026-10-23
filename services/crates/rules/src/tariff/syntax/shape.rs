@@ -17,6 +17,7 @@ use super::ast::File;
 use super::ast::FnBody;
 use super::ast::Item;
 use super::ast::ItemKind;
+use super::ast::Name;
 use super::ast::Pattern;
 use super::ast::PatternKind;
 use super::ast::RoundMode;
@@ -271,6 +272,24 @@ fn input_line(private: &str, input: &super::ast::Input) -> String {
 }
 
 /// A statement that holds no block, on one line.
+/// `given path = value`, or a table cell's `given tables.Code[k, …] = value`.
+fn write_given(line: &mut String, target: &[Name], keys: Option<&[Expr]>, value: &Expr) {
+    let path: Vec<&str> = target.iter().map(|n| n.text.as_str()).collect();
+    let _ = write!(line, "given {}", path.join("."));
+    if let Some(keys) = keys {
+        line.push('[');
+        for (index, key) in keys.iter().enumerate() {
+            if index > 0 {
+                line.push_str(", ");
+            }
+            write_expr(line, key);
+        }
+        line.push(']');
+    }
+    line.push_str(" = ");
+    write_expr(line, value);
+}
+
 fn write_simple_stmt(line: &mut String, kind: &StmtKind) {
     match kind {
         StmtKind::Let(binding) | StmtKind::Var(binding) => {
@@ -322,11 +341,11 @@ fn write_simple_stmt(line: &mut String, kind: &StmtKind) {
         StmtKind::Break => line.push_str("break"),
         StmtKind::Continue => line.push_str("continue"),
         StmtKind::Total(clause) => write_total(line, clause),
-        StmtKind::Given { target, value } => {
-            let path: Vec<&str> = target.iter().map(|n| n.text.as_str()).collect();
-            let _ = write!(line, "given {} = ", path.join("."));
-            write_expr(line, value);
-        }
+        StmtKind::Given {
+            target,
+            keys,
+            value,
+        } => write_given(line, target, keys.as_deref(), value),
         StmtKind::Expect(Expect::Holds(value)) => write_word_expr(line, "expect", value),
         StmtKind::Expect(Expect::Monotone {
             value,

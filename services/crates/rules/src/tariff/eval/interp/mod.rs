@@ -128,7 +128,7 @@ impl Env {
 }
 
 /// What a test's `expect`s read after the rating: `total` and `lines`, `charge(…)` and
-/// `chosen(…)`.
+/// `chosen(…)`, and a condition's `applies`.
 #[derive(Debug, Clone)]
 pub struct TestView {
     /// The finished bill's lines.
@@ -137,6 +137,8 @@ pub struct TestView {
     pub total: Decimal,
     /// The label each choice kept the last time it ran, by the choice's label, for `chosen(…)`.
     pub chosen: BTreeMap<String, Option<String>>,
+    /// A condition's result, for `applies`; `None` for a tariff.
+    pub applies: Option<bool>,
 }
 
 /// The interpreter's state for one run of one program.
@@ -167,6 +169,9 @@ pub struct Interp<'p, 'a> {
     pub last_value: Option<Value>,
     /// The root file's regions entered, when this run records coverage (`tariff.test` only).
     pub coverage: Option<super::coverage::Hits>,
+    /// The tables a test sees once it gives cells ([`Tables::with_given`]), read instead of the
+    /// request's.
+    pub given_tables: Option<Rc<Tables>>,
     consts: BTreeMap<(usize, String), Value>,
     evaluating: BTreeSet<(usize, String)>,
     regexes: BTreeMap<String, Regex>,
@@ -223,6 +228,7 @@ impl<'p, 'a> Interp<'p, 'a> {
             constructors: false,
             last_value: None,
             coverage: None,
+            given_tables: None,
             consts: BTreeMap::new(),
             evaluating: BTreeSet::new(),
             regexes: BTreeMap::new(),
@@ -269,6 +275,18 @@ impl<'p, 'a> Interp<'p, 'a> {
         let regex = text::compile(pattern)?;
         self.regexes.insert(pattern.to_owned(), regex.clone());
         Ok(regex)
+    }
+
+    /// Reads a rate table: from the test's given tables when it has them, else the request's.
+    fn read_table(
+        &mut self,
+        read: impl FnOnce(&Tables, &mut Meter) -> Result<super::tables::Read, EvalError>,
+    ) -> Result<super::tables::Read, Stop> {
+        let tables: &Tables = match &self.given_tables {
+            Some(given) => given,
+            None => self.tables,
+        };
+        read(tables, &mut self.meter).map_err(Stop::Failed)
     }
 
     fn record_needs(&mut self, needs: Vec<Need>) {

@@ -4,16 +4,25 @@
 //! Each key is checked against its axis's key type ([`Axis::key_type`]); an exact axis also
 //! takes a list of keys (`lane.origin.zones`), which the evaluator tries in order. A lookup
 //! gives the table's value type, optional, since a miss is `none`.
+//!
+//! A test's `given tables.Code[k, …] = value` is held to the same shape ([`Checker::given_cell`]):
+//! one key per axis (never a list), and a value of the table's value type or a whole cell. After
+//! a module is checked, [`live`] warns (`live-table`) at each test or property that reads a
+//! table without giving any of its cells.
 
 use super::Callee;
+use super::ModuleAnalysis;
 use super::checker::{Checker, Want};
 use super::describe::{quote, words};
 use super::fixes::replace;
 use crate::message;
 use crate::message::{Arg, Message};
+use crate::span::Span;
+use crate::tariff::context::Context;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::schema::{Axis, TableShape};
-use crate::tariff::syntax::ast::{Arg as CallArg, Expr, Name};
+use crate::tariff::syntax::ast::{Arg as CallArg, Expr, ExprKind, ItemKind, Name, StmtKind};
+use crate::tariff::syntax::program::Module;
 use crate::tariff::types::{FieldDef, RecordType, Type};
 use std::sync::Arc;
 
@@ -117,8 +126,8 @@ impl Checker<'_> {
         })
     }
 
-    /// Checks a lookup's keys against the table's axes.
-    fn table_keys(&mut self, at: &Expr, shape: &TableShape, keys: &[&Expr]) {
+    /// Checks a lookup's keys (or, with `cell`, a given cell's keys) against the table's axes.
+    fn table_keys(&mut self, at: Span, shape: &TableShape, keys: &[&Expr], cell: bool) {
         if keys.len() != shape.axes.len() {
             let labels: Vec<String> = shape
                 .axes
@@ -133,7 +142,7 @@ impl Checker<'_> {
                 .collect();
             self.report(Diagnostic::error(
                 "table-keys",
-                at.span,
+                at,
                 Message::with(
                     message!("{0} takes {1, plural, one {# key} other {# keys}} ({2}), but {3, plural, one {# is} other {# are}} given"),
                     [quote(&shape.code), Arg::from(shape.axes.len()), Arg::Text(labels.join(", ")), Arg::from(keys.len())],
@@ -145,15 +154,16 @@ impl Checker<'_> {
                 self.expr(key, None);
                 continue;
             };
-            self.table_key(key, axis, shape);
+            self.table_key(key, axis, shape, cell);
         }
     }
 
-    fn table_key(&mut self, key: &Expr, axis: &Axis, shape: &TableShape) {
+    fn table_key(&mut self, key: &Expr, axis: &Axis, shape: &TableShape, cell: bool) {
         let expected = axis.key_type(self.schema);
         let actual = self.expr(key, Some(&expected));
         let exact = axis.match_mode.eq_ignore_ascii_case("exact");
         if exact
+            && !cell
             && let Type::List(item) = &actual
             && expected.accepts(item)
         {
@@ -175,6 +185,70 @@ impl Checker<'_> {
         );
     }
 
+    /// `given tables.Code[k, …] = value` in a test or property: one key per axis of the axis's
+    /// key type (never a list), and the table's value type or a whole cell
+    /// (`{ value, minimum, deficit }`).
+    pub fn given_cell(&mut self, target: &[Name], keys: Option<&[Expr]>, value: &Expr) {
+        let skip = |checker: &mut Self| {
+            for key in keys.into_iter().flatten() {
+                checker.expr(key, None);
+            }
+            checker.expr(value, None);
+        };
+        let [head, code] = target else {
+            let span = target.first().map_or(value.span, |first| {
+                first
+                    .span
+                    .cover(target.last().map_or(first.span, |last| last.span))
+            });
+            self.report(Diagnostic::error(
+                "given-target",
+                span,
+                Message::new(message!(
+                    "Set one cell of a rate table by its code and keys, as in `given tables.Zones[\"A\", \"B\"] = $20/cwt`"
+                )),
+            ));
+            skip(self);
+            return;
+        };
+        if let Some(symbol) = self.root_symbol(&head.text) {
+            self.reference(head.span, symbol);
+        }
+        let Some(keys) = keys else {
+            self.report(Diagnostic::error(
+                "given-target",
+                code.span,
+                Message::with(
+                    message!("A `given` sets one cell of {0}, with its keys: {1}"),
+                    [
+                        quote(&code.text),
+                        quote(&format!("given tables.{}[…] = …", code.text)),
+                    ],
+                ),
+            ));
+            skip(self);
+            return;
+        };
+        let Some(shape) = self.table(code) else {
+            skip(self);
+            return;
+        };
+        let at = keys.first().map_or(code.span, |first| {
+            first
+                .span
+                .cover(keys.last().map_or(first.span, |last| last.span))
+        });
+        let refs: Vec<&Expr> = keys.iter().collect();
+        self.table_keys(at, &shape, &refs, true);
+        let cell = self.table_value(&shape, code);
+        let path = format!("tables.{}[…]", shape.code);
+        if matches!(value.kind, ExprKind::Record(_)) {
+            self.expect(value, &cell_type(cell), &Want::Given { path });
+        } else {
+            self.expect(value, &cell, &Want::Given { path });
+        }
+    }
+
     /// `tables.Code[k, …]`.
     pub fn table_index(&mut self, expr: &Expr, code: &Name, keys: &[Expr]) -> Type {
         let Some(shape) = self.table(code) else {
@@ -184,7 +258,7 @@ impl Checker<'_> {
             return Type::Error;
         };
         let keys: Vec<&Expr> = keys.iter().collect();
-        self.table_keys(expr, &shape, &keys);
+        self.table_keys(expr.span, &shape, &keys, false);
         let value = self.table_value(&shape, code);
         Type::optional(value)
     }
@@ -251,12 +325,8 @@ impl Checker<'_> {
         let keys: Vec<&Expr> = args.iter().map(|arg| &arg.value).collect();
         let value = self.table_value(&shape, code);
         if known == "cell" {
-            self.table_keys(expr, &shape, &keys);
-            return Type::optional(record(&[
-                ("value", value),
-                ("minimum", Type::optional(Type::money())),
-                ("deficit", Type::Bool),
-            ]));
+            self.table_keys(expr.span, &shape, &keys, false);
+            return Type::optional(cell_type(value));
         }
         self.banded(expr, &shape, method, known, &keys, value)
     }
@@ -290,7 +360,7 @@ impl Checker<'_> {
             }
             return Type::Error;
         }
-        self.table_keys(expr, shape, keys);
+        self.table_keys(expr.span, shape, keys, false);
         let key = shape
             .axes
             .first()
@@ -319,6 +389,16 @@ impl Checker<'_> {
     }
 }
 
+/// What `.cell(…)` gives, and what a test may give a cell as: `{ value, minimum, deficit }`.
+#[must_use]
+pub fn cell_type(value: Type) -> Type {
+    record(&[
+        ("value", value),
+        ("minimum", Type::optional(Type::money())),
+        ("deficit", Type::Bool),
+    ])
+}
+
 fn record(fields: &[(&str, Type)]) -> Type {
     Type::Record(Arc::new(RecordType {
         name: None,
@@ -331,4 +411,81 @@ fn record(fields: &[(&str, Type)]) -> Type {
             })
             .collect(),
     }))
+}
+
+/// Each table a module's code reads, by code, where it is first read, in order.
+fn reads(on: impl FnOnce(&mut dyn FnMut(&Expr))) -> Vec<(String, Span)> {
+    let mut found: Vec<(String, Span)> = Vec::new();
+    on(&mut |expr: &Expr| {
+        if let ExprKind::Field { target, name, .. } = &expr.kind
+            && matches!(&target.kind, ExprKind::Name(root) if root.text == "tables")
+            && !found.iter().any(|(code, _)| *code == name.text)
+        {
+            found.push((name.text.clone(), expr.span));
+        }
+    });
+    found
+}
+
+/// Warns (`live-table`) at each test and property that reads a rate table, in the file's body or
+/// its own, without giving any of its cells: it passes or fails with the matrix's live data.
+pub fn live(module: &Module, context: &Context, out: &mut ModuleAnalysis) {
+    let known = |code: &str| context.tables.iter().any(|shape| shape.code == code);
+    let file = reads(|visit| {
+        for item in &module.file.items {
+            if let ItemKind::Stmt(stmt) = &item.kind {
+                super::visit::stmt(stmt, &mut |_| {}, &mut |expr| visit(expr));
+            }
+        }
+    });
+    for item in &module.file.items {
+        let (name, body, property) = match &item.kind {
+            ItemKind::Test(test) => (&test.name, &test.body, false),
+            ItemKind::Property(property) => (&property.name, &property.body, true),
+            _ => continue,
+        };
+        let own = reads(|visit| super::visit::block(body, &mut |_| {}, &mut |expr| visit(expr)));
+        let given: Vec<&str> = body
+            .stmts
+            .iter()
+            .filter_map(|stmt| match &stmt.kind {
+                StmtKind::Given {
+                    target,
+                    keys: Some(_),
+                    ..
+                } => match target.as_slice() {
+                    [head, code] if head.text == "tables" => Some(code.text.as_str()),
+                    _ => None,
+                },
+                _ => None,
+            })
+            .collect();
+        let mut warned: Vec<&str> = Vec::new();
+        for (code, at) in file.iter().chain(&own) {
+            if !known(code) || given.contains(&code.as_str()) || warned.contains(&code.as_str()) {
+                continue;
+            }
+            warned.push(code);
+            let template = if property {
+                message!(
+                    "This property reads the rate table {0} without giving any of its cells, so it passes or fails with the matrix's live data: give the cells it reads, as in {1}"
+                )
+            } else {
+                message!(
+                    "This test reads the rate table {0} without giving any of its cells, so it passes or fails with the matrix's live data: give the cells it reads, as in {1}"
+                )
+            };
+            out.diagnostics.push(
+                Diagnostic::warning(
+                    "live-table",
+                    name.span,
+                    Message::with(
+                        template,
+                        [quote(code), quote(&format!("given tables.{code}[…] = …"))],
+                    ),
+                )
+                .with_related(*at, Message::new(message!("It is read here"))),
+            );
+        }
+    }
 }

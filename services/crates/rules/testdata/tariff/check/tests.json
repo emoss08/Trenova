@@ -155,12 +155,12 @@
   {
    "diagnostics": [
     {
-     "at": "tables",
+     "at": "Zones",
      "code": "given-target",
-     "message": "A `given` sets a field of the record (`shipment`, `lane`, `customer`, `fuel`, `rating`) or an input (`input.rate`), not `tables`"
+     "message": "A `given` sets one cell of `Zones`, with its keys: `given tables.Zones[…] = …`"
     }
    ],
-   "name": "given something that is not a root",
+   "name": "given a whole table",
    "source": [
     "tariff \"t\"",
     "charge \"x\" = $1",
@@ -615,6 +615,113 @@
      "at": "rated",
      "message": "`rated` is never used"
     }
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "tables",
+     "code": "given-target",
+     "message": "Set one cell of a rate table by its code and keys, as in `given tables.Zones[\"A\", \"B\"] = $20/cwt`"
+    },
+    {
+     "at": "1",
+     "code": "given-target",
+     "message": "Only a rate table's cell is given with keys, as in `given tables.Zones[\"A\", \"B\"] = $20/cwt`; a field or input is given whole",
+     "nth": 2
+    }
+   ],
+   "name": "given a table without a code, and a field with keys",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given tables = 5",
+    "  given shipment.weight[1] = 5 lb",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "customs",
+     "code": "given-target",
+     "message": "A `given` sets a field of the record (`shipment`, `lane`, `customer`, `fuel`, `rating`), an input (`input.rate`) or a rate table's cell (`tables.Zones[\"A\", \"B\"]`), not `customs`"
+    }
+   ],
+   "name": "given something that is not a root",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given customs.x = 5",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a condition's tests read its result as applies",
+   "source": [
+    "condition \"c\"",
+    "shipment.hazmat",
+    "test \"hazmat applies\" {",
+    "  given shipment.hazmat = true",
+    "  expect applies",
+    "}",
+    "test \"otherwise not\" {",
+    "  expect not applies",
+    "}"
+   ],
+   "types": {
+    "applies": "Bool"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "applies",
+     "code": "test-only",
+     "message": "`applies` reads a condition's result, and only a condition has one: a tariff's tests read its bill (`total`, `lines`, `charge(…)`)"
+    }
+   ],
+   "name": "applies is a condition's, in its tests",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  expect applies",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "applies",
+     "code": "unknown-name",
+     "message": "Nothing is named `applies`: declare it with `let` or as an `input`"
+    }
+   ],
+   "name": "a condition's body can't read applies",
+   "source": [
+    "condition \"c\"",
+    "applies"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "the record's new fields are given in tests",
+   "source": [
+    "tariff \"t\"",
+    "let leg = shipment.stops.sum(s => s.legDistance ?? 0 mi)",
+    "charge \"x\" = $1/mi * leg",
+    "test \"t\" {",
+    "  given shipment.accessorials = [{ code: \"LIFT\", quantity: 1 }]",
+    "  given rating.holidays = [{ date: @2026-12-25, name: \"Christmas Day\" }]",
+    "  given shipment.stops = [pickup(category: Warehouse, facilityType: ColdStorage), delivery(legDistance: 120 mi, zip3: \"752\", requiresAppointment: true)]",
+    "  expect total == $120",
+    "}"
    ]
   }
  ]

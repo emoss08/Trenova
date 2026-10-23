@@ -19,6 +19,10 @@ use crate::message;
 use crate::tariff::types::Type;
 use crate::tariff::units::Dim;
 
+/// The one property that reads the record (`rating.holidays`), so it is refused where the
+/// record can't be read.
+pub const HOLIDAY: &str = "holiday";
+
 /// The kinds of value that have properties and methods.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Receiver {
@@ -621,6 +625,15 @@ pub static METHODS: &[Method] = &[
         Rule::Bool,
         message!("Whether it falls on a Saturday or Sunday."),
     ),
+    property(
+        "holiday",
+        R::Date,
+        "Bool",
+        Rule::Bool,
+        message!(
+            "Whether it is one of the organisation's holidays (`rating.holidays`). It reads the record, so a function can't use it."
+        ),
+    ),
     method(
         "addDays",
         R::Date,
@@ -684,6 +697,15 @@ pub static METHODS: &[Method] = &[
         "Bool",
         Rule::Bool,
         message!("Whether it falls on a Saturday or Sunday, in the date-time's own offset."),
+    ),
+    property(
+        "holiday",
+        R::DateTime,
+        "Bool",
+        Rule::Bool,
+        message!(
+            "Whether its date, in the date-time's own offset, is one of the organisation's holidays (`rating.holidays`). It reads the record, so a function can't use it."
+        ),
     ),
     method(
         "addDays",

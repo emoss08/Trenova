@@ -15,7 +15,7 @@ use crate::message;
 use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::check::methods::ParamKind;
-use crate::tariff::check::{CONSTRUCTORS, Callee, SymbolKind};
+use crate::tariff::check::{APPLIES, CONSTRUCTORS, Callee, SymbolKind, location_record};
 use crate::tariff::docs::Doc;
 use crate::tariff::schema::TABLES_DOC;
 use crate::tariff::syntax::ast::{Expr, ExprKind, FileKind, ItemKind, StmtKind};
@@ -273,8 +273,15 @@ fn roots(site: &Site<'_, '_>, items: &mut Items, expected: Option<&Type>) {
     }
 }
 
-/// What a test reads besides the record: the bill and the record constructors.
+/// What a test reads besides the record: the bill (a condition's result) and the record
+/// constructors.
 fn test_names(site: &Site<'_, '_>, items: &mut Items) {
+    if site.kind() == FileKind::Condition
+        && let Some(item) = items.add(Rank::Global, Kind::Name, APPLIES)
+    {
+        item.detail = Some(String::from("Bool"));
+        item.doc = super::describe::keyword_doc(APPLIES).map(|doc| Doc::Message(Message::new(doc)));
+    }
     if site.kind() == FileKind::Tariff {
         if let Some(item) = items.add(Rank::Global, Kind::Function, "charge") {
             item.insert = String::from("charge($0)");
@@ -650,6 +657,10 @@ pub fn arguments(
             lookups(site, items);
             return Then::Done;
         }
+        Callee::Requested => {
+            super::complete::codes(site, items);
+            return Then::Done;
+        }
         Callee::Method(method) if method.params.iter().any(|p| p.kind == ParamKind::Unit) => {
             let dim = receiver_dim(site, call);
             units(items, dim, false);
@@ -760,9 +771,11 @@ pub fn parameters(session: &Session<'_>, call: &Expr, callee: &Callee) -> Vec<Pa
                 .and_then(|(_, record)| session.schema.record(record));
             record
                 .map(|record| {
+                    let location = location_record(&record);
                     record
                         .fields
                         .iter()
+                        .chain(location.iter().flat_map(|location| location.fields.iter()))
                         .map(|field| Parameter {
                             name: field.name.clone(),
                             ty: Some(field.ty.clone()),
@@ -772,7 +785,9 @@ pub fn parameters(session: &Session<'_>, call: &Expr, callee: &Callee) -> Vec<Pa
                 })
                 .unwrap_or_default()
         }
-        Callee::Conversion(_) | Callee::ChargeLookup | Callee::Table { .. } => Vec::new(),
+        Callee::Conversion(_) | Callee::ChargeLookup | Callee::Requested | Callee::Table { .. } => {
+            Vec::new()
+        }
     }
 }
 

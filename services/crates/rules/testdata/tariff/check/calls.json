@@ -692,6 +692,161 @@
     "let s = pickup()",
     "charge \"x\" = $1 * s.sequence"
    ]
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "LIFT",
+      "description": "Liftgate"
+     },
+     {
+      "active": true,
+      "code": "RES",
+      "description": "Residential delivery"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "shipment.requested reads a catalog code",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.requested(LIFT) {",
+    "  charge \"Liftgate\" as LIFT = $85",
+    "}"
+   ],
+   "types": {
+    "shipment.requested(LIFT)": "Bool"
+   }
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "LIFT",
+      "description": "Liftgate"
+     },
+     {
+      "active": true,
+      "code": "RES",
+      "description": "Residential delivery"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "LIFTT",
+     "code": "unknown-code",
+     "message": "`LIFTT` isn't in the accessorial charge catalog. Did you mean `LIFT`?",
+     "related": [
+      {
+       "at": "LIFTT",
+       "line": 2,
+       "message": "`LIFTT` is also used here"
+      }
+     ],
+     "fixes": [
+      {
+       "label": "Change every use to `LIFT`",
+       "result": [
+        "condition \"c\"",
+        "shipment.requested(LIFT) or shipment.requested(LIFT)"
+       ]
+      }
+     ]
+    }
+   ],
+   "name": "shipment.requested judges its code against the catalog",
+   "source": [
+    "condition \"c\"",
+    "shipment.requested(LIFTT) or shipment.requested(LIFTT)"
+   ]
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "LIFT",
+      "description": "Liftgate"
+     },
+     {
+      "active": true,
+      "code": "RES",
+      "description": "Residential delivery"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "\"LIFT\"",
+     "code": "requested-code",
+     "message": "`shipment.requested(…)` takes an accessorial charge code written bare, as in `shipment.requested(LIFT)`",
+     "fixes": [
+      {
+       "label": "Write it as `LIFT`",
+       "result": [
+        "condition \"c\"",
+        "shipment.requested(LIFT) or shipment.requested()"
+       ]
+      }
+     ]
+    },
+    {
+     "at": "()",
+     "code": "arity",
+     "message": "`shipment.requested(…)` takes one accessorial charge code, as in `shipment.requested(LIFT)`"
+    }
+   ],
+   "name": "shipment.requested takes one bare code",
+   "source": [
+    "condition \"c\"",
+    "shipment.requested(\"LIFT\") or shipment.requested()"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "zip3: \"752\"",
+     "code": "duplicate-argument",
+     "message": "`zip3` is a field of `location`, which is given whole too: set it inside `location`, or leave `location` out"
+    },
+    {
+     "at": "categry",
+     "code": "unknown-field",
+     "message": "`Stop` has no field `categry`. Did you mean `category`?",
+     "fixes": [
+      {
+       "label": "Change to `category`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $1",
+        "test \"t\" {",
+        "  given shipment.stops = [pickup(location: { city: \"\", state: \"\", zip: \"\", zip3: \"\", country: \"\", timezone: \"UTC\", category: none, facilityType: none, requiresAppointment: false }, zip3: \"752\"), delivery(category: Warehouse), delivery(category: 5)]",
+        "  expect total > $0",
+        "}"
+       ]
+      }
+     ]
+    },
+    {
+     "at": "5",
+     "code": "type-mismatch",
+     "message": "`5` is a whole number, but the field `location.category` is a value of type `LocationCategory` that may be empty",
+     "nth": 2
+    }
+   ],
+   "name": "a stop constructor takes its location's fields by name",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [pickup(location: { city: \"\", state: \"\", zip: \"\", zip3: \"\", country: \"\", timezone: \"UTC\", category: none, facilityType: none, requiresAppointment: false }, zip3: \"752\"), delivery(categry: Warehouse), delivery(category: 5)]",
+    "  expect total > $0",
+    "}"
+   ]
   }
  ]
 }

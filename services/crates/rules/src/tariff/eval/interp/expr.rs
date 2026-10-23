@@ -240,6 +240,11 @@ impl<'a> Interp<'_, 'a> {
                 match name {
                     "total" => return Ok(Value::money(view.total)),
                     "lines" => return Ok(view.lines_value()),
+                    "applies" => {
+                        if let Some(applies) = view.applies {
+                            return Ok(Value::Bool(applies));
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -324,7 +329,31 @@ impl<'a> Interp<'_, 'a> {
         if optional && value.is_none() {
             return Ok(Value::None);
         }
-        property(&value, name)
+        match (&value, name) {
+            (Value::Date(date), "holiday") => self.holiday(*date),
+            (Value::DateTime(at), "holiday") => self.holiday(at.date()),
+            _ => property(&value, name),
+        }
+    }
+
+    /// `.holiday`: whether `date` is the date of one of `rating.holidays`, a step per holiday
+    /// compared.
+    fn holiday(&mut self, date: Date) -> Result<Value, Stop> {
+        let holidays = match self.root("rating") {
+            Some(Value::Record(rating)) => match rating.get("holidays") {
+                Some(Value::List(holidays)) => Rc::clone(holidays),
+                _ => return Ok(Value::Bool(false)),
+            },
+            _ => return Ok(Value::Bool(false)),
+        };
+        self.meter.steps(holidays.len()).map_err(Stop::Failed)?;
+        let found = holidays.iter().any(|holiday| match holiday {
+            Value::Record(holiday) => {
+                matches!(holiday.get("date"), Some(Value::Date(day)) if *day == date)
+            }
+            _ => false,
+        });
+        Ok(Value::Bool(found))
     }
 
     fn index(
@@ -341,10 +370,7 @@ impl<'a> Interp<'_, 'a> {
         }
         match (&target_value, values.as_slice()) {
             (Value::Table(code), _) => {
-                let read = self
-                    .tables
-                    .index(code, &values, &mut self.meter)
-                    .map_err(Stop::Failed)?;
+                let read = self.read_table(|tables, meter| tables.index(code, &values, meter))?;
                 Ok(self.answer(env, read, expr.span))
             }
             (Value::List(items), [Value::Int(at)]) => Ok(at

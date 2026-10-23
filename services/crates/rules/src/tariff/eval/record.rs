@@ -6,8 +6,8 @@
 //! type or unit is an error naming its path, so a host bug surfaces instead of rating on a guess.
 //!
 //! The sample record is the schema's defaults: an empty `New` shipment with one pickup and one
-//! delivery stop and no commodities, a blank lane, a sample customer, no fuel price, and a sell
-//! rating on 2026-01-05 at noon UTC in US dollars. Tests change it with `given`, and build stops
+//! delivery stop, no commodities and no requested accessorials, a blank lane, a sample customer,
+//! no fuel price, and a sell rating on 2026-01-05 at noon UTC in US dollars with no holidays. Tests change it with `given`, and build stops
 //! and commodities with the test constructors ([`stop`], [`commodity`]).
 
 use super::operators::duration_between;
@@ -86,8 +86,10 @@ pub fn distance_unit(settings: &Settings) -> Unit {
         .unwrap_or_else(|| unit("mi"))
 }
 
-/// The sample stop of a kind (`Pickup`, `Delivery`, `SplitPickup`, `SplitDelivery`). `sequence`
-/// `None` leaves the sequence for [`settle`] to fill from the stop's position.
+/// The sample stop of a kind (`Pickup`, `Delivery`, `SplitPickup`, `SplitDelivery`): no leg
+/// distance, and a blank location in UTC with no category or facility type that requires no
+/// appointment. `sequence` `None` leaves the sequence for [`settle`] to fill from the stop's
+/// position.
 #[must_use]
 pub fn stop(kind: &str, sequence: Option<i64>) -> Value {
     let location = Value::record(vec![
@@ -97,6 +99,9 @@ pub fn stop(kind: &str, sequence: Option<i64>) -> Value {
         ("zip3", Value::text("")),
         ("country", Value::text("")),
         ("timezone", Value::text("UTC")),
+        ("category", Value::None),
+        ("facilityType", Value::None),
+        ("requiresAppointment", Value::Bool(false)),
     ]);
     Value::record(vec![
         ("sequence", sequence.map_or(Value::None, Value::int)),
@@ -112,6 +117,7 @@ pub fn stop(kind: &str, sequence: Option<i64>) -> Value {
         ("dwell", Value::None),
         ("pieces", Value::None),
         ("weight", Value::None),
+        ("legDistance", Value::None),
         ("location", location),
     ])
 }
@@ -184,6 +190,7 @@ pub fn sample(settings: &Settings) -> Value {
         ("delivery", stops.last().cloned().unwrap_or(Value::None)),
         ("stops", Value::list(stops)),
         ("commodities", Value::list(Vec::new())),
+        ("accessorials", Value::list(Vec::new())),
     ]);
     let lane = Value::record(vec![
         ("origin", place()),
@@ -219,6 +226,7 @@ pub fn sample(settings: &Settings) -> Value {
                 ("mode", Value::variant("Sell")),
                 ("sellTotal", Value::None),
                 ("currency", Value::text("USD")),
+                ("holidays", Value::list(Vec::new())),
             ]),
         ),
     ])

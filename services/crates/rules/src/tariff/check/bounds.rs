@@ -137,7 +137,7 @@ impl Visit for Judge<'_, '_> {
                 &statement.scrutinee,
                 statement.arms.iter().map(|arm| &arm.pattern),
             ),
-            StmtKind::Given { target, value } => {
+            StmtKind::Given { target, value, .. } => {
                 if let [root, name] = target.as_slice()
                     && root.text == "input"
                 {

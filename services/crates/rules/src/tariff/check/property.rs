@@ -275,6 +275,17 @@ impl Checker<'_> {
             && head.text != "input"
             && head.text != "tables"
             && self.schema.root(&head.text).is_none();
+        if head.text == "tables" {
+            self.report(Diagnostic::error(
+                "vary-target",
+                span,
+                Message::new(message!(
+                    "A rate table can't vary: give the cells a property reads, as in `given tables.Zones[\"A\", \"B\"] = $20/cwt`, and vary the record or inputs that look them up"
+                )),
+            ));
+            self.skip_values(values);
+            return;
+        }
         if !new_name && self.kind == FileKind::Library {
             self.report(Diagnostic::error(
                 "vary-target",
@@ -422,7 +433,7 @@ impl Checker<'_> {
     }
 
     /// A `given` in a property: it may not set a varied path, nor read a varied name.
-    pub(super) fn property_given(&mut self, target: &[Name], value: &Expr) {
+    pub(super) fn property_given(&mut self, target: &[Name], keys: Option<&[Expr]>, value: &Expr) {
         let Some(scope) = self.property.as_ref() else {
             return;
         };
@@ -451,12 +462,14 @@ impl Checker<'_> {
                 .with_related(at, Message::new(message!("It is varied here"))),
             );
         }
-        self.varied_reads(
-            std::slice::from_ref(value),
-            message!(
-                "A `given` sets one value for every case, so it can't read {0}, which varies: vary the field itself instead"
-            ),
-        );
+        for values in [keys.unwrap_or_default(), std::slice::from_ref(value)] {
+            self.varied_reads(
+                values,
+                message!(
+                    "A `given` sets one value for every case, so it can't read {0}, which varies: vary the field itself instead"
+                ),
+            );
+        }
         if let Some(scope) = self.property.as_mut() {
             scope.given.push((path, span));
         }

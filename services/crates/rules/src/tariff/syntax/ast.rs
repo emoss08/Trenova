@@ -320,10 +320,14 @@ pub enum StmtKind {
     Continue,
     /// `minimum`, `maximum` or `round`.
     Total(TotalClause),
-    /// `given shipment.weight = 1_240 lb`, in tests.
+    /// `given shipment.weight = 1_240 lb`, or a rate table's cell `given tables.Zones["A",
+    /// "B"] = $20/cwt`, in tests and properties.
     Given {
-        /// The path overridden: a schema root's field (`shipment.weight`) or `input.name`.
+        /// The path overridden: a schema root's field (`shipment.weight`), `input.name`, or
+        /// `tables.Code` for a cell.
         target: Vec<Name>,
+        /// A cell's keys, one per axis, when the target is a table: `["A", "B"]`.
+        keys: Option<Vec<Expr>>,
         /// The value it takes.
         value: Expr,
     },

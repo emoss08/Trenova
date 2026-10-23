@@ -24,7 +24,9 @@ use crate::span::{Range, Span};
 use crate::tariff::check::describe::{quote, snippet, unit_text};
 use crate::tariff::check::lower::BUILTIN_TYPES;
 use crate::tariff::check::methods;
-use crate::tariff::check::{SymbolId, SymbolKind, TABLE_METHODS};
+use crate::tariff::check::{
+    REQUESTED, REQUESTED_DOC, REQUESTED_SIGNATURE, SymbolId, SymbolKind, TABLE_METHODS,
+};
 use crate::tariff::docs::Doc;
 use crate::tariff::eval::time::Date;
 use crate::tariff::schema::TableShape;
@@ -387,6 +389,12 @@ impl Hovered<'_, '_> {
             hover.doc.clone_from(&found.doc);
             return Some(hover);
         }
+        if name.text == REQUESTED && session.schema.root("shipment") == Some(&receiver) {
+            let mut hover = Hover::new(span);
+            hover.signature = Some(String::from(REQUESTED_SIGNATURE));
+            hover.doc = Some(Doc::Message(Message::new(REQUESTED_DOC)));
+            return Some(hover);
+        }
         let method = methods::find(&receiver, &name.text)?;
         let mut hover = Hover::new(span);
         hover.signature = Some(method_signature(method, &receiver).label);
@@ -569,6 +577,17 @@ impl Hovered<'_, '_> {
         };
         let position = target.iter().position(|part| part.span == span)?;
         let (head, rest) = target.split_first()?;
+        if let ("tables", [code]) = (head.text.as_str(), rest)
+            && code.span == span
+        {
+            let table = self
+                .session
+                .context
+                .tables
+                .iter()
+                .find(|table| table.code == code.text)?;
+            return Some(table_hover(span, table));
+        }
         if head.text == "input" {
             let name = rest.first().filter(|name| name.span == span)?;
             let id = self.session.global(ModuleId::ROOT, &name.text)?;

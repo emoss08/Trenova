@@ -112,7 +112,11 @@ impl Checker<'_> {
             StmtKind::Vary { target, values } => self.vary(target, values.as_ref()),
             StmtKind::Assume(condition) => self.assume(condition),
             StmtKind::Choose(choose) => self.choose(stmt, choose),
-            StmtKind::Given { target, value } => self.given(stmt, target, value),
+            StmtKind::Given {
+                target,
+                keys,
+                value,
+            } => self.given(stmt, target, keys.as_deref(), value),
             StmtKind::Expect(expect) => {
                 self.expected_yet = true;
                 match expect {
@@ -542,18 +546,42 @@ impl Checker<'_> {
         }
     }
 
-    fn given(&mut self, stmt: &Stmt, target: &[Name], value: &Expr) {
+    fn given(&mut self, stmt: &Stmt, target: &[Name], keys: Option<&[Expr]>, value: &Expr) {
         if !matches!(self.body, Body::Test) {
+            for key in keys.into_iter().flatten() {
+                self.expr(key, None);
+            }
             self.expr(value, None);
             return;
         }
-        self.property_given(target, value);
+        self.property_given(target, keys, value);
         if self.expected_yet {
             self.report(Diagnostic::error(
                 "given-order",
                 stmt.span,
                 Message::new(message!("Every `given` comes before the first `expect`: the tariff runs once, after the givens")),
             ));
+        }
+        if target.first().is_some_and(|head| head.text == "tables") {
+            self.given_cell(target, keys, value);
+            return;
+        }
+        if let Some(keys) = keys {
+            let span = keys.first().map_or(stmt.span, |first| {
+                first
+                    .span
+                    .cover(keys.last().map_or(first.span, |last| last.span))
+            });
+            self.report(Diagnostic::error(
+                "given-target",
+                span,
+                Message::new(message!(
+                    "Only a rate table's cell is given with keys, as in `given tables.Zones[\"A\", \"B\"] = $20/cwt`; a field or input is given whole"
+                )),
+            ));
+            for key in keys {
+                self.expr(key, None);
+            }
         }
         let path: String = target
             .iter()
@@ -611,7 +639,7 @@ impl Checker<'_> {
                 "given-target",
                 head.span,
                 Message::with(
-                    message!("A `given` sets a field of the record (`shipment`, `lane`, `customer`, `fuel`, `rating`) or an input (`input.rate`), not {0}"),
+                    message!("A `given` sets a field of the record (`shipment`, `lane`, `customer`, `fuel`, `rating`), an input (`input.rate`) or a rate table's cell (`tables.Zones[\"A\", \"B\"]`), not {0}"),
                     [quote(&head.text)],
                 ),
             ));

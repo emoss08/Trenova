@@ -618,6 +618,336 @@
     "tariff \"t\"",
     "charge \"x\" = tables.Big[lane.origin.state, lane.destination.state, shipment.weight ?? 0 lb, shipment.distance] ?? $0"
    ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       },
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money/cwt"
+     },
+     {
+      "axes": [
+       {
+        "kind": "WeightBreak",
+        "match": "Range",
+        "unit": "lb"
+       }
+      ],
+      "code": "Breaks",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a test gives table cells, a value or a whole cell",
+   "source": [
+    "tariff \"t\"",
+    "let rate = tables.Zones[lane.origin.zip3, lane.destination.zip3] ?? fail \"No zone rate\"",
+    "let w = shipment.weight ?? 0 lb",
+    "charge \"x\" = rate * w + (tables.Breaks[w] ?? $0/cwt) * w",
+    "test \"t\" {",
+    "  given tables.Zones[\"752\", \"606\"] = $20/cwt",
+    "  given tables.Breaks[0 lb] = $30/cwt",
+    "  given tables.Breaks[1_000 lb] = { value: $25/cwt, minimum: $95, deficit: true }",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       },
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money/cwt"
+     },
+     {
+      "axes": [
+       {
+        "kind": "WeightBreak",
+        "match": "Range",
+        "unit": "lb"
+       }
+      ],
+      "code": "Breaks",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "\"live\"",
+     "code": "live-table",
+     "message": "This test reads the rate table `Breaks` without giving any of its cells, so it passes or fails with the matrix's live data: give the cells it reads, as in `given tables.Breaks[…] = …`",
+     "related": [
+      {
+       "at": "tables.Breaks",
+       "line": 2,
+       "message": "It is read here"
+      }
+     ]
+    },
+    {
+     "at": "\"own read\"",
+     "code": "live-table",
+     "message": "This test reads the rate table `Zones` without giving any of its cells, so it passes or fails with the matrix's live data: give the cells it reads, as in `given tables.Zones[…] = …`",
+     "related": [
+      {
+       "at": "tables.Zones",
+       "line": 8,
+       "message": "It is read here"
+      }
+     ]
+    }
+   ],
+   "name": "a test that reads a table without giving its cells is warned",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.Breaks[shipment.weight ?? 0 lb] ?? $0/cwt) * 1 lb",
+    "test \"live\" {",
+    "  expect total >= $0",
+    "}",
+    "test \"own read\" {",
+    "  given tables.Breaks[0 lb] = $30/cwt",
+    "  expect (tables.Zones[\"A\", \"B\"] ?? $0/cwt) == $0/cwt",
+    "}"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       },
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money/cwt"
+     },
+     {
+      "axes": [
+       {
+        "kind": "WeightBreak",
+        "match": "Range",
+        "unit": "lb"
+       }
+      ],
+      "code": "Breaks",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "\"A\"",
+     "nth": 2,
+     "code": "table-keys",
+     "message": "`Zones` takes 2 keys (Zone, Zone), but 1 is given"
+    },
+    {
+     "at": "[\"A\"]",
+     "code": "type-mismatch",
+     "message": "`[\"A\"]` is a list (`List<Text>`), but `Zone` of `tables.Zones` takes text",
+     "nth": 2
+    },
+    {
+     "at": "$20/mi",
+     "code": "type-mismatch",
+     "message": "`$20/mi` is money per mile, but `tables.Zones[…]` is money per hundredweight"
+    },
+    {
+     "at": "{ value: $20/cwt }",
+     "code": "missing-field",
+     "fixes": [
+      {
+       "label": "Add the missing fields",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = (tables.Zones[\"A\", \"B\"] ?? $0/cwt) * 1 lb",
+        "test \"t\" {",
+        "  given tables.Zones[\"A\"] = $20/cwt",
+        "  given tables.Zones[[\"A\"], \"B\"] = $20/cwt",
+        "  given tables.Zones[\"A\", \"B\"] = $20/mi",
+        "  given tables.Zones[\"A\", \"C\"] = { value: $20/cwt, minimum: none, deficit: false }",
+        "  expect total >= $0",
+        "}"
+       ]
+      }
+     ],
+     "message": "`{ value: Money/cwt, minimum: Money?, deficit: B…` needs the fields `minimum`, `deficit`"
+    }
+   ],
+   "name": "a given cell is held to the table's shape",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.Zones[\"A\", \"B\"] ?? $0/cwt) * 1 lb",
+    "test \"t\" {",
+    "  given tables.Zones[\"A\"] = $20/cwt",
+    "  given tables.Zones[[\"A\"], \"B\"] = $20/cwt",
+    "  given tables.Zones[\"A\", \"B\"] = $20/mi",
+    "  given tables.Zones[\"A\", \"C\"] = { value: $20/cwt }",
+    "  expect total >= $0",
+    "}"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       },
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money/cwt"
+     },
+     {
+      "axes": [
+       {
+        "kind": "WeightBreak",
+        "match": "Range",
+        "unit": "lb"
+       }
+      ],
+      "code": "Breaks",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "Zone",
+     "code": "unknown-table",
+     "fixes": [
+      {
+       "label": "Change to `Zones`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = (tables.Zones[\"A\", \"B\"] ?? $0/cwt) * 1 lb",
+        "test \"t\" {",
+        "  given tables.Zones[\"A\", \"B\"] = $20/cwt",
+        "  given tables.Zones[\"A\", \"B\"] = $20/cwt",
+        "  expect total >= $0",
+        "}"
+       ]
+      }
+     ],
+     "message": "No rate table has the code `Zone`. Did you mean `Zones`?",
+     "nth": 3
+    }
+   ],
+   "name": "a given cell names a table the context has",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.Zones[\"A\", \"B\"] ?? $0/cwt) * 1 lb",
+    "test \"t\" {",
+    "  given tables.Zones[\"A\", \"B\"] = $20/cwt",
+    "  given tables.Zone[\"A\", \"B\"] = $20/cwt",
+    "  expect total >= $0",
+    "}"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       },
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money/cwt"
+     },
+     {
+      "axes": [
+       {
+        "kind": "WeightBreak",
+        "match": "Range",
+        "unit": "lb"
+       }
+      ],
+      "code": "Breaks",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "\"q\"",
+     "code": "vary-missing",
+     "message": "A property needs at least one `vary`: say what changes from case to case, as in `vary shipment.weight in 1 lb..40_000 lb`"
+    },
+    {
+     "at": "\"q\"",
+     "code": "live-table",
+     "message": "This property reads the rate table `Breaks` without giving any of its cells, so it passes or fails with the matrix's live data: give the cells it reads, as in `given tables.Breaks[…] = …`",
+     "related": [
+      {
+       "at": "tables.Breaks",
+       "line": 2,
+       "message": "It is read here"
+      }
+     ]
+    },
+    {
+     "at": "tables.Breaks",
+     "nth": 3,
+     "code": "vary-target",
+     "message": "A rate table can't vary: give the cells a property reads, as in `given tables.Zones[\"A\", \"B\"] = $20/cwt`, and vary the record or inputs that look them up"
+    }
+   ],
+   "name": "a property gives table cells but can't vary a table",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.Breaks[shipment.weight ?? 0 lb] ?? $0/cwt) * 1 lb",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2_000 lb",
+    "  given tables.Breaks[0 lb] = $30/cwt",
+    "  expect total >= $0",
+    "}",
+    "property \"q\" {",
+    "  vary tables.Breaks",
+    "  expect total >= $0",
+    "}"
+   ]
   }
  ]
 }

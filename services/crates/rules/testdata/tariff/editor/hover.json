@@ -349,7 +349,7 @@
    ],
    "expect": {
     "contents": {
-     "signature": "type Stop = { sequence: Int, kind: StopKind, status: StopStatus, appointment: Bool, window: { start: DateTime?, end: DateTime? }, arrival: DateTime?, departure: DateTime?, dwell: Duration?, pieces: Int?, weight: Weight?, location: { city: Text, state: Text, zip: Text, zip3: Text, … } }"
+     "signature": "type Stop = { sequence: Int, kind: StopKind, status: StopStatus, appointment: Bool, window: { start: DateTime?, end: DateTime? }, arrival: DateTime?, departure: DateTime?, dwell: Duration?, pieces: Int?, weight: Weight?, legDistance: Distance?, location: { city: Text, state: Text, zip: Text, zip3: Text, … } }"
     }
    }
   },
@@ -1526,6 +1526,72 @@
        "`\"Nope\"`"
       ]
      }
+    }
+   }
+  },
+  {
+   "name": "shipment.requested",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.reque|sted(FSC) {",
+    "  charge \"x\" = $1",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "requested(code: CODE) -> Bool",
+     "doc": {
+      "message": "Whether the user put an accessorial with this charge code on the shipment: `shipment.requested(LIFT)`."
+     }
+    }
+   }
+  },
+  {
+   "name": "applies in a condition's test",
+   "source": [
+    "condition \"c\"",
+    "shipment.hazmat",
+    "test \"t\" {",
+    "  expect appl|ies",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "applies",
+     "doc": {
+      "message": "In a condition's test, the condition's result: `expect applies`, `expect not applies`."
+     }
+    }
+   }
+  },
+  {
+   "name": "a given cell's table",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.Zones[\"752\", \"606\"] ?? $0/cwt) * 1 cwt",
+    "test \"t\" {",
+    "  given tables.Zo|nes[\"752\", \"606\"] = $20/cwt",
+    "  expect total == $20",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "tables.Zones[origin zip3: Zip3 (Exact), destination zip3: Zip3 (Exact)]"
+    }
+   }
+  },
+  {
+   "name": "a stop constructor's location field",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [delivery(categ|ory: Warehouse)]",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "category: LocationCategory?"
     }
    }
   }

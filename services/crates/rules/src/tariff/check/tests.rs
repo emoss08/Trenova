@@ -171,6 +171,7 @@ fn usual(code: &str) -> Severity {
         "unreachable-arm",
         "not-billed",
         "doc",
+        "live-table",
     ];
     if WARNINGS.contains(&code) {
         Severity::Warning
@@ -738,6 +739,11 @@ const TOKENS: &[&str] = &[
     "round to cents",
     "test \"t\" {",
     "given shipment.weight = 1 lb",
+    "given tables.Zones[\"A\", 5 lb] = $1/cwt",
+    "expect applies",
+    "shipment.requested(FSC)",
+    ".holiday",
+    "delivery(category: Warehouse)",
     "expect total > $0",
     "tables.Zones[",
     "x.in(cwt)",

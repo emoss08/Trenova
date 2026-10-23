@@ -88,9 +88,16 @@ macro_rules! walker {
         visit.stmt(stmt);
         match & $($m)? stmt.kind {
             StmtKind::Let(binding) | StmtKind::Var(binding) => $expr(& $($m)? binding.value, visit),
+            StmtKind::Given { keys, value, .. } => {
+                if let Some(keys) = keys {
+                    for key in keys {
+                        $expr(key, visit);
+                    }
+                }
+                $expr(value, visit);
+            }
             StmtKind::Assign { value, .. }
             | StmtKind::Return(value)
-            | StmtKind::Given { value, .. }
             | StmtKind::Expr(value)
             | StmtKind::Expect(Expect::Holds(value) | Expect::Monotone { value, .. })
             | StmtKind::Assume(value)

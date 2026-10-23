@@ -794,6 +794,50 @@
     "library \"t\"",
     "fn f(r: Money/lb) -> Money/lb = r.in(mi)"
    ]
+  },
+  {
+   "diagnostics": [],
+   "name": "holiday is a date's and a date-time's",
+   "source": [
+    "tariff \"t\"",
+    "let h = rating.date.holiday",
+    "let d = rating.date.date.holiday",
+    "charge \"x\" = if h or d { $1 } else { $2 }"
+   ],
+   "types": {
+    "rating.date.holiday": "Bool",
+    "rating.date.date.holiday": "Bool"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "holiday",
+     "code": "closed-function",
+     "message": "`.holiday` reads the organisation's holidays (`rating.holidays`), which a function can't see: work it out where the function is called and pass it in, as in `fn fee(holiday: Bool)`"
+    }
+   ],
+   "name": "a function can't read holiday",
+   "source": [
+    "tariff \"t\"",
+    "fn fee(at: Date) -> Money = if at.holiday { $10 } else { $0 }",
+    "charge \"x\" = fee(rating.date.date)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "holiday",
+     "code": "not-constant",
+     "message": "`.holiday` reads the organisation's holidays (`rating.holidays`), which aren't known before rating: a constant or default must be computed from literals and other constants"
+    }
+   ],
+   "name": "a constant can't read holiday",
+   "source": [
+    "tariff \"t\"",
+    "const CHRISTMAS = @2026-12-25.holiday",
+    "charge \"x\" = if CHRISTMAS { $1 } else { $2 }"
+   ]
   }
  ]
 }

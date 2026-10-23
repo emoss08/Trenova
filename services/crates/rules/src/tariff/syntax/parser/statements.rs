@@ -860,13 +860,18 @@ impl Parser<'_> {
         let target = self.target_path(Message::new(message!(
             "Expected what to set after `given`, like `given shipment.weight = 1_240 lb`"
         )));
+        let keys = (self.at("[") && !self.newline_before()).then(|| self.bracket_keys().0);
         let value = if self.eat("=").is_some() {
             self.expr()
         } else {
             self.expected(Message::new(message!("Expected `=` and the value to give")));
             self.missing()
         };
-        StmtKind::Given { target, value }
+        StmtKind::Given {
+            target,
+            keys,
+            value,
+        }
     }
 
     fn expect_statement(&mut self, block: BlockKind) -> StmtKind {

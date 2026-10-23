@@ -14,6 +14,7 @@
 //! | `charge` | a `charge` statement | it runs |
 //! | `refusal` | a `fail` statement, a `require` statement, a `?? fail` fallback | it refuses |
 //! | `function` | a function body | the function is called |
+//! | `applies`, `notApplies` | a condition's final expression, twice | a test or case sees the condition give `true`, or `false` |
 //!
 //! Tests and properties are not regions: they are what covers the rest. A library run on its
 //! own reports its own regions; a library a tariff imports is not counted.
@@ -27,8 +28,8 @@ use super::interp::{Env, Interp};
 use crate::span::{Span, Utf16Index};
 use crate::tariff::eval::trace::range;
 use crate::tariff::syntax::ast::{
-    ArmBody, Block, Condition, Expr, ExprKind, File, FnBody, ItemKind, RoundTo, Stmt, StmtKind,
-    Text, TextPart, TotalClause,
+    ArmBody, Block, Condition, Expr, ExprKind, File, FileKind, FnBody, ItemKind, RoundTo, Stmt,
+    StmtKind, Text, TextPart, TotalClause,
 };
 use crate::tariff::syntax::walk;
 use serde_json::{Map, Value as Json};
@@ -54,6 +55,10 @@ pub enum RegionKind {
     Refusal,
     /// A function body.
     Function,
+    /// A condition's final expression giving `true`.
+    Applies,
+    /// A condition's final expression giving `false`.
+    NotApplies,
 }
 
 impl RegionKind {
@@ -69,6 +74,8 @@ impl RegionKind {
             Self::Charge => "charge",
             Self::Refusal => "refusal",
             Self::Function => "function",
+            Self::Applies => "applies",
+            Self::NotApplies => "notApplies",
         }
     }
 }
@@ -85,8 +92,11 @@ pub struct Region {
 /// A file's regions, numbered in source order, with an index by span.
 #[derive(Debug, Default)]
 pub struct Regions {
-    regions: Vec<Region>,
+    list: Vec<Region>,
     by_span: BTreeMap<(u32, u32), usize>,
+    /// A condition's `applies` and `notApplies` regions, which share their span and so are not
+    /// in `by_span`.
+    outcomes: Option<(usize, usize)>,
 }
 
 impl Regions {
@@ -116,21 +126,40 @@ impl Regions {
                 | ItemKind::Property(_) => {}
             }
         }
+        let outcome = condition_result(file);
         let mut regions = found.regions;
+        if let Some(span) = outcome {
+            regions.push(Region {
+                span,
+                kind: RegionKind::Applies,
+            });
+            regions.push(Region {
+                span,
+                kind: RegionKind::NotApplies,
+            });
+        }
         regions.sort_by_key(|region| (region.span.start, std::cmp::Reverse(region.span.end)));
         let mut by_span = BTreeMap::new();
         let mut kept = Vec::with_capacity(regions.len());
+        let (mut applies, mut not_applies) = (None, None);
         for region in regions {
-            let key = (region.span.start, region.span.end);
-            if by_span.contains_key(&key) {
-                continue;
+            match region.kind {
+                RegionKind::Applies => applies = Some(kept.len()),
+                RegionKind::NotApplies => not_applies = Some(kept.len()),
+                _ => {
+                    let key = (region.span.start, region.span.end);
+                    if by_span.contains_key(&key) {
+                        continue;
+                    }
+                    by_span.insert(key, kept.len());
+                }
             }
-            by_span.insert(key, kept.len());
             kept.push(region);
         }
         Self {
-            regions: kept,
+            list: kept,
             by_span,
+            outcomes: applies.zip(not_applies),
         }
     }
 
@@ -143,19 +172,19 @@ impl Regions {
     /// How many regions there are.
     #[must_use]
     pub fn len(&self) -> usize {
-        self.regions.len()
+        self.list.len()
     }
 
     /// Whether the file has no region.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.regions.is_empty()
+        self.list.is_empty()
     }
 
     /// The regions, in source order.
     #[must_use]
     pub fn regions(&self) -> &[Region] {
-        &self.regions
+        &self.list
     }
 }
 
@@ -221,7 +250,36 @@ impl Hits {
     }
 }
 
+/// The span of a condition's final expression: its last file-level expression statement.
+fn condition_result(file: &File) -> Option<Span> {
+    let condition = file
+        .header
+        .as_ref()
+        .is_some_and(|header| header.kind == FileKind::Condition);
+    if !condition {
+        return None;
+    }
+    file.items.iter().rev().find_map(|item| match &item.kind {
+        ItemKind::Stmt(stmt) => match &stmt.kind {
+            StmtKind::Expr(value) => Some(value.span),
+            _ => None,
+        },
+        _ => None,
+    })
+}
+
 impl Interp<'_, '_> {
+    /// Counts a condition's outcome: its `applies` region when it gave `true`, else its
+    /// `notApplies` region, when this run records coverage.
+    pub fn enter_outcome(&mut self, holds: bool) {
+        let Some(hits) = &mut self.coverage else {
+            return;
+        };
+        if let Some((applies, not_applies)) = hits.regions.outcomes {
+            hits.enter(if holds { applies } else { not_applies });
+        }
+    }
+
     /// Counts an entry into region `id`, when this run records coverage.
     pub fn enter_region(&mut self, id: usize) {
         if let Some(hits) = &mut self.coverage {

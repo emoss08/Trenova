@@ -3,10 +3,11 @@
 //! record literals, `[]`, `none`, bare enum variants and the branches of `if` and `match`;
 //! everything else is inferred bottom-up.
 
+use super::APPLIES;
 use super::checker::{Body, Checker, Global, Want};
 use super::describe::{quote, quote_span, zero};
 use super::fixes::replace;
-use super::methods::{self, Rule};
+use super::methods::{self, HOLIDAY, Rule};
 use super::operators::{self, Problem};
 use super::scope::{LocalKind, PathKey};
 use super::{HintKind, SymbolKind};
@@ -291,6 +292,16 @@ impl Checker<'_> {
             if let Some(ty) = self.bill_name(&name.text) {
                 return ty;
             }
+            if name.text == APPLIES && !self.globals.values.contains_key(&name.text) {
+                self.report(Diagnostic::error(
+                    "test-only",
+                    name.span,
+                    Message::new(message!(
+                        "`applies` reads a condition's result, and only a condition has one: a tariff's tests read its bill (`total`, `lines`, `charge(…)`)"
+                    )),
+                ));
+                return Type::Error;
+            }
             if matches!(name.text.as_str(), "total" | "lines")
                 && !self.globals.values.contains_key(&name.text)
             {
@@ -339,8 +350,11 @@ impl Checker<'_> {
         Type::Error
     }
 
-    /// `total` and `lines` in a tariff's tests.
+    /// `total` and `lines` in a tariff's tests, and `applies` in a condition's.
     fn bill_name(&mut self, name: &str) -> Option<Type> {
+        if self.kind == crate::tariff::syntax::ast::FileKind::Condition && name == APPLIES {
+            return Some(Type::Bool);
+        }
         if self.kind != crate::tariff::syntax::ast::FileKind::Tariff {
             return None;
         }
@@ -783,6 +797,10 @@ impl Checker<'_> {
         }
         if let Some(method) = methods::find(ty, &name.text) {
             if method.property {
+                if method.name == HOLIDAY && !self.sees_record() {
+                    self.holiday_closed(name);
+                    return Type::Error;
+                }
                 return self.property_type(method.rule, ty);
             }
             if !called {
@@ -808,6 +826,26 @@ impl Checker<'_> {
         }
         self.unknown_member(expr, ty, name);
         Type::Error
+    }
+
+    /// Reports `.holiday` where the record can't be read: in a function, a constant or a
+    /// default.
+    fn holiday_closed(&mut self, name: &Name) {
+        let (code, message) = match self.body {
+            Body::Function { .. } => (
+                "closed-function",
+                message!(
+                    "`.holiday` reads the organisation's holidays (`rating.holidays`), which a function can't see: work it out where the function is called and pass it in, as in `fn fee(holiday: Bool)`"
+                ),
+            ),
+            _ => (
+                "not-constant",
+                message!(
+                    "`.holiday` reads the organisation's holidays (`rating.holidays`), which aren't known before rating: a constant or default must be computed from literals and other constants"
+                ),
+            ),
+        };
+        self.report(Diagnostic::error(code, name.span, Message::new(message)));
     }
 
     fn property_type(&self, rule: Rule, ty: &Type) -> Type {

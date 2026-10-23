@@ -1,6 +1,7 @@
 //! Charge codes the accessorial charge catalog doesn't have (`unknown-code`), judged once a
 //! module is checked so that each code is reported once: at its first use, with every other use
-//! as a related place.
+//! as a related place. A code is used by `charge … as CODE`, `charge(CODE)` in a test and
+//! `shipment.requested(CODE)`.
 //!
 //! The finding suggests a catalog code spelled nearly the same, or else one whose description
 //! matches a charge's label ("`FUEL` is "Fuel surcharge""), with a fix that writes it at every
@@ -8,7 +9,7 @@
 //! removing `as CODE`. Codes are not judged when the host has not loaded the catalog.
 
 use super::ModuleAnalysis;
-use super::calls::is_code;
+use super::calls::{REQUESTED, is_code};
 use super::describe::quote;
 use super::fixes::changes;
 use crate::message;
@@ -73,10 +74,15 @@ impl Visit for Uses<'_> {
         let ExprKind::Call { callee, args } = &expr.kind else {
             return;
         };
-        let (ExprKind::Name(name), [arg]) = (&callee.kind, args.as_slice()) else {
+        let [arg] = args.as_slice() else {
             return;
         };
-        if name.text != "charge" {
+        let read = match &callee.kind {
+            ExprKind::Name(name) => name.text == "charge",
+            ExprKind::Field { name, .. } => name.text == REQUESTED,
+            _ => false,
+        };
+        if !read {
             return;
         }
         if let ExprKind::Name(code) = &arg.value.kind

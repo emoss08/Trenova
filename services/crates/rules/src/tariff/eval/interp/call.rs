@@ -232,15 +232,25 @@ impl<'a> Interp<'_, 'a> {
                     [],
                 ));
             };
-            if built.get(&name.text).is_none() {
-                return Err(internal(
-                    crate::message!("{0} is not a field this constructor sets"),
-                    [Arg::from(name.text.clone())],
-                ));
-            }
             let value = self.eval(env, &arg.value)?;
-            dwell_given |= name.text == "dwell";
-            built.set(&name.text, value);
+            if built.get(&name.text).is_some() {
+                dwell_given |= name.text == "dwell";
+                built.set(&name.text, value);
+                continue;
+            }
+            match built.get("location") {
+                Some(Value::Record(location)) if stop && location.get(&name.text).is_some() => {
+                    let mut location = (**location).clone();
+                    location.set(&name.text, value);
+                    built.set("location", Value::Record(std::rc::Rc::new(location)));
+                }
+                _ => {
+                    return Err(internal(
+                        crate::message!("{0} is not a field this constructor sets"),
+                        [Arg::from(name.text.clone())],
+                    ));
+                }
+            }
         }
         let value = Value::Record(std::rc::Rc::new(built));
         Ok(if stop {
@@ -248,6 +258,38 @@ impl<'a> Interp<'_, 'a> {
         } else {
             value
         })
+    }
+
+    /// `shipment.requested(CODE)`: whether any of the shipment's accessorials has the code, a
+    /// step per accessorial compared.
+    fn requested(
+        &mut self,
+        shipment: &crate::tariff::eval::value::Record,
+        args: &'a [CallArg],
+    ) -> Result<Value, Stop> {
+        let code = match args.first().map(|arg| &arg.value.kind) {
+            Some(ExprKind::Name(code)) => code.text.as_str(),
+            _ => {
+                return Err(internal(
+                    crate::message!("requested needs an accessorial charge code"),
+                    [],
+                ));
+            }
+        };
+        let Some(Value::List(accessorials)) = shipment.get("accessorials") else {
+            return Err(internal(
+                crate::message!("The shipment has no accessorials to read"),
+                [],
+            ));
+        };
+        self.meter.steps(accessorials.len()).map_err(Stop::Failed)?;
+        let found = accessorials.iter().any(|accessorial| match accessorial {
+            Value::Record(accessorial) => {
+                matches!(accessorial.get("code"), Some(Value::Text(text)) if &**text == code)
+            }
+            _ => false,
+        });
+        Ok(Value::Bool(found))
     }
 
     /// `charge(CODE)` or `charge("Label")` in a test: the matching lines' sum, or `none`.
@@ -307,6 +349,10 @@ impl<'a> Interp<'_, 'a> {
             Value::Table(code) => {
                 let code = code.to_string();
                 self.table_method(env, expr, &code, name, args)
+            }
+            Value::Record(shipment) if name == "requested" => {
+                let shipment = std::rc::Rc::clone(shipment);
+                self.requested(&shipment, args)
             }
             _ => {
                 if name == "in" {
@@ -383,17 +429,16 @@ impl<'a> Interp<'_, 'a> {
         }
         let key = keys.first().cloned().unwrap_or(Value::None);
         let read = match name {
-            "cell" => self.tables.cell(code, &keys, &mut self.meter),
-            "band" => self.tables.band(code, &key, &mut self.meter),
-            "interpolate" => self.tables.interpolate(code, &key, &mut self.meter),
+            "cell" => self.read_table(|tables, meter| tables.cell(code, &keys, meter)),
+            "band" => self.read_table(|tables, meter| tables.band(code, &key, meter)),
+            "interpolate" => self.read_table(|tables, meter| tables.interpolate(code, &key, meter)),
             _ => {
                 return Err(internal(
                     crate::message!("A rate table has no method named {0}"),
                     [Arg::from(name)],
                 ));
             }
-        }
-        .map_err(Stop::Failed)?;
+        }?;
         Ok(self.answer(env, read, expr.span))
     }
 

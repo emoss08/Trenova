@@ -9,12 +9,16 @@
 //!    test constructors (`pickup(…)`, `delivery(…)`, `splitPickup(…)`, `splitDelivery(…)`,
 //!    `commodity(…)`) build stops and commodities from the sample defaults.
 //!    Afterwards each stop without a sequence takes its position, and `shipment.pickup` and
-//!    `shipment.delivery` follow the stops unless a `given` set them;
+//!    `shipment.delivery` follow the stops unless a `given` set them. A `given tables.Code[k,
+//!    …] = value` gives a cell: every table the test gives cells of holds only those cells for
+//!    the rest of the test ([`Tables::with_given`]), so its lookups never read live cells or
+//!    record needs;
 //! 3. runs the file;
 //! 4. runs the rest of its body in order, with `charge(CODE)` / `charge("Label")` (the matching
 //!    lines' sum, or `none`), `chosen("Label")` (the option that choice last kept, or `none`),
-//!    `total` and `lines` in scope. `expect cond` must hold;
-//!    `expect fails` passes when the rating was refused (with that text, when one is given).
+//!    `total` and `lines` in scope, and in a condition `applies` (its result). `expect cond`
+//!    must hold; `expect fails` passes when the rating was refused (with that text, when one is
+//!    given).
 //!
 //! A test in a library runs its body in order with no rating: `expect`s over function calls.
 //! There, `expect fails` passes when the statement before it refused (with that text, when one
@@ -52,7 +56,7 @@ use super::interp::{Env, Interp, Setup, TestView};
 use super::property::Counterexample;
 use super::record::{sample, settle};
 use super::run::{Supplied, bind_inputs, enforce_constraint};
-use super::tables::{Need, Tables};
+use super::tables::{GivenCell, Need, Tables};
 use super::value::{Record, Value};
 use crate::message::{Arg, Message};
 use crate::span::Span;
@@ -293,6 +297,8 @@ pub struct Runner<'r, 'p, 'a> {
     pub needs: Vec<Need>,
     /// The value of each monotone `expect`, in order: `None` when the rating refused.
     pub monotone: Vec<Option<Value>>,
+    /// The tables the test or case being run sees, once it gives table cells.
+    given_tables: Option<Rc<Tables>>,
 }
 
 impl std::fmt::Debug for Runner<'_, '_, '_> {
@@ -358,6 +364,7 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
             failures: Vec::new(),
             needs: Vec::new(),
             monotone: Vec::new(),
+            given_tables: None,
         }
     }
 
@@ -372,6 +379,7 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
             trace: false,
         });
         interp.constructors = true;
+        interp.given_tables.clone_from(&self.given_tables);
         if self.ledger.counting {
             interp.coverage = self
                 .ledger
@@ -451,6 +459,13 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
         let mut env = Env::new(0, false);
         let ran = bind_inputs(&mut interp, &mut env, &Supplied::Values(&inputs))
             .and_then(|()| interp.run_file(&mut env));
+        let applies = match (&ran, self.condition(), &interp.last_value) {
+            (Ok(()), true, Some(Value::Bool(holds))) => Some(*holds),
+            _ => None,
+        };
+        if let Some(holds) = applies {
+            interp.enter_outcome(holds);
+        }
         self.gather(&mut interp);
         let rating = match ran {
             Err(Stop::Failed(error)) => return Err(error),
@@ -466,6 +481,7 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
                 lines: bill.lines.clone(),
                 total: bill.total,
                 chosen: interp.choices.last().clone(),
+                applies,
             });
         }
         let outcome = self.expectations(&mut checker, body, &rating, setup);
@@ -475,6 +491,15 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
             Rating::Rated(bill) => Ended::Rated(Some(bill)),
             Rating::Refused(refusal) => Ended::Refused(refusal),
         })
+    }
+
+    /// Whether the file under test is a condition, whose tests read `applies`.
+    fn condition(&self) -> bool {
+        self.request
+            .program
+            .root()
+            .and_then(|root| root.file.header.as_ref())
+            .is_some_and(|header| header.kind == FileKind::Condition)
     }
 
     /// Whether every `assume` of a case holds, over its record, inputs and varied names.
@@ -575,11 +600,25 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
         body: &'a Block,
         setup: &CaseSetup<'a>,
     ) -> Result<(Value, BTreeMap<String, Value>), EvalError> {
+        self.given_tables = None;
         let mut interp = self.interp(sample(self.request.settings));
-        let applied = apply_givens(&mut interp, body, setup);
+        let applied = apply_givens(&mut interp, body, setup).and_then(|applied| {
+            if applied.cells.is_empty() {
+                return Ok(applied);
+            }
+            let tables = self
+                .request
+                .tables
+                .with_given(&applied.cells, &mut interp.meter)?;
+            self.given_tables = Some(Rc::new(tables));
+            Ok(applied)
+        });
         self.gather(&mut interp);
-        let (inputs, pickup, delivery) = applied?;
-        Ok((settle(&interp.record, pickup, delivery), inputs))
+        let applied = applied?;
+        Ok((
+            settle(&interp.record, applied.pickup, applied.delivery),
+            applied.inputs,
+        ))
     }
 
     fn expect_refused(&mut self, span: Span, refusal: Option<&Refusal>, wanted: Option<&str>) {
@@ -749,14 +788,28 @@ fn assumptions<'a>(
     Ok(true)
 }
 
+/// What a test's `given`s set besides the record.
+struct Applied {
+    /// The input values.
+    inputs: BTreeMap<String, Value>,
+    /// Whether `shipment.pickup` was given.
+    pickup: bool,
+    /// Whether `shipment.delivery` was given.
+    delivery: bool,
+    /// The table cells, in order.
+    cells: Vec<GivenCell>,
+}
+
 /// Applies a test's `given`s and a case's values to the interpreter's record: the input values
-/// they set, and whether they set `shipment.pickup` and `shipment.delivery`.
+/// they set, whether they set `shipment.pickup` and `shipment.delivery`, and the table cells
+/// they give.
 fn apply_givens<'a>(
     interp: &mut Interp<'_, 'a>,
     body: &'a Block,
     setup: &CaseSetup<'a>,
-) -> Result<(BTreeMap<String, Value>, bool, bool), EvalError> {
+) -> Result<Applied, EvalError> {
     let mut inputs = BTreeMap::new();
+    let mut cells = Vec::new();
     let (mut pickup, mut delivery) = (false, false);
     let mut set = |interp: &mut Interp<'_, 'a>, path: &[Name], value: Value, span: Option<Span>| {
         pickup |=
@@ -770,10 +823,30 @@ fn apply_givens<'a>(
         Ok::<(), EvalError>(())
     };
     for stmt in &body.stmts {
-        let StmtKind::Given { target, value } = &stmt.kind else {
+        let StmtKind::Given {
+            target,
+            keys,
+            value,
+        } = &stmt.kind
+        else {
             continue;
         };
         let mut scope = Env::new(0, false);
+        if let ([head, code], Some(keys)) = (target.as_slice(), keys)
+            && head.text == "tables"
+        {
+            let mut values = Vec::with_capacity(keys.len());
+            for key in keys {
+                values.push(interp.eval_in(&mut scope, key).map_err(stopped)?);
+            }
+            cells.push(GivenCell {
+                code: code.text.clone(),
+                keys: values,
+                value: interp.eval_in(&mut scope, value).map_err(stopped)?,
+                span: stmt.span,
+            });
+            continue;
+        }
         let value = interp.eval_in(&mut scope, value).map_err(stopped)?;
         match target.as_slice() {
             [head, name] if head.text == "input" => {
@@ -791,7 +864,12 @@ fn apply_givens<'a>(
         enforce_constraint(interp, name, value)?;
         inputs.insert(name.clone(), value.clone());
     }
-    Ok((inputs, pickup, delivery))
+    Ok(Applied {
+        inputs,
+        pickup,
+        delivery,
+        cells,
+    })
 }
 
 /// A refusal or error from a test's own statements, as the error that stops the test.

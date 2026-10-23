@@ -545,6 +545,24 @@ impl Parser<'_> {
     }
 
     fn index(&mut self, target: Expr) -> Expr {
+        let (keys, close) = self.bracket_keys();
+        let mut height = self.height(&target);
+        for key in &keys {
+            height = height.max(self.height(key));
+        }
+        let span = target.span.cover(close);
+        self.node_with(
+            ExprKind::Index {
+                target: Box::new(target),
+                keys,
+            },
+            span,
+            height,
+        )
+    }
+
+    /// `[k, …]` at the `[`: the keys, and where the closing `]` is.
+    pub(super) fn bracket_keys(&mut self) -> (Vec<Expr>, Span) {
         let open = self.bump().span;
         let mut keys = Vec::new();
         if self.enter() {
@@ -572,19 +590,7 @@ impl Parser<'_> {
             "]",
             Message::new(message!("These brackets are missing their closing `]`")),
         );
-        let mut height = self.height(&target);
-        for key in &keys {
-            height = height.max(self.height(key));
-        }
-        let span = target.span.cover(close);
-        self.node_with(
-            ExprKind::Index {
-                target: Box::new(target),
-                keys,
-            },
-            span,
-            height,
-        )
+        (keys, close)
     }
 
     pub(super) fn primary(&mut self) -> Expr {

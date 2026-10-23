@@ -1270,10 +1270,10 @@
      "customer",
      "fuel",
      "rating",
-     "input"
+     "input",
+     "tables"
     ],
     "excludes": [
-     "tables",
      "total"
     ]
    }
@@ -3082,6 +3082,161 @@
      "\"Flat\"",
      "\"Per mile\"",
      "FSC"
+    ]
+   }
+  },
+  {
+   "name": "the shipment offers requested",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.req| {",
+    "  charge \"x\" = $1",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "requested"
+    ],
+    "items": {
+     "requested": {
+      "kind": "method",
+      "detail": "requested(code: CODE) -> Bool"
+     }
+    }
+   }
+  },
+  {
+   "name": "shipment.requested offers the active codes",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.requested(|) {",
+    "  charge \"x\" = $1",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "FSC",
+     "DET"
+    ],
+    "excludes": [
+     "LIFT",
+     "shipment"
+    ],
+    "items": {
+     "FSC": {
+      "kind": "code",
+      "detail": "Fuel surcharge"
+     }
+    }
+   }
+  },
+  {
+   "name": "a condition's test offers applies",
+   "source": [
+    "condition \"c\"",
+    "shipment.hazmat",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "applies"
+    ],
+    "excludes": [
+     "total",
+     "lines"
+    ],
+    "items": {
+     "applies": {
+      "detail": "Bool"
+     }
+    }
+   }
+  },
+  {
+   "name": "a stop constructor offers its location's fields",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [delivery(|)]",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "legDistance:",
+     "category:",
+     "facilityType:",
+     "requiresAppointment:",
+     "zip3:"
+    ],
+    "items": {
+     "category:": {
+      "detail": "LocationCategory?"
+     }
+    }
+   }
+  },
+  {
+   "name": "a date offers holiday",
+   "source": [
+    "tariff \"t\"",
+    "let h = rating.date.hol|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "holiday"
+    ],
+    "items": {
+     "holiday": {
+      "kind": "property"
+     }
+    }
+   }
+  },
+  {
+   "name": "a given cell offers the table codes",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given tables.|",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "Zones",
+     "Breaks",
+     "ClassRates"
+    ],
+    "excludes": [
+     "shipment"
+    ],
+    "items": {
+     "Zones": {
+      "kind": "table"
+     }
+    }
+   }
+  },
+  {
+   "name": "a vary offers no rate tables",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "property \"p\" {",
+    "  vary |",
+    "  expect total > $0",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "shipment"
+    ],
+    "excludes": [
+     "tables"
     ]
    }
   }

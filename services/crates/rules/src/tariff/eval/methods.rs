@@ -10,6 +10,7 @@
 //!   receiver's unit first, so `1_240 lb.roundUp(to: 1 cwt)` is `1300 lb`.
 //! - Dates: `year`, `month`, `day`, `weekday` (a `Weekday`), `weekend`, `addDays(n)`; date-times
 //!   also `hour`, `minute`, `date` and `addHours(n)`, all in the date-time's own offset.
+//!   `holiday` reads the record's `rating.holidays`, so the interpreter answers it.
 
 use super::error::{Code, EvalError};
 use super::operators::unit_error;

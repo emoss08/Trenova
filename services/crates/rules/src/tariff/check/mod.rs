@@ -38,14 +38,16 @@
 //! | Code | Finding |
 //! |---|---|
 //! | `unknown-name`, `unknown-type`, `unknown-field`, `unknown-member`, `unknown-function`, `unknown-variant`, `unknown-unit`, `unknown-table`, `unknown-argument` | a name nothing declares, with a "did you mean" fix |
-//! | `unknown-code`, `inactive-code` | a charge code not in the accessorial catalog (once per code, suggesting a code by spelling or by description), or inactive |
+//! | `unknown-code`, `inactive-code` | a charge code not in the accessorial catalog (once per code, in `charge … as CODE`, `charge(CODE)` and `shipment.requested(CODE)`, suggesting a code by spelling or by description), or inactive |
 //! | `type-mismatch` | a value of the wrong type, with a fix writing a literal's unit |
 //! | `unit-mismatch` | operands an operator does not combine, explained in pricing words |
 //! | `optional` | a value that may be empty used where a value is needed; fixes: `?? zero`, `if let`, `require let` (and `?.` for a member) |
 //! | `ambiguous-variant` | a bare variant of several enums with no type expected; a fix per enum |
-//! | `before-definition`, `shadow`, `assign`, `closed-function`, `test-scope`, `not-constant` | scope rules |
+//! | `before-definition`, `shadow`, `assign`, `closed-function`, `test-scope`, `not-constant` | scope rules; `.holiday` in a function (`closed-function`) or a constant or default (`not-constant`) |
 //! | `arity`, `argument-order`, `duplicate-argument`, `not-callable`, `not-a-value`, `method-call`, `property-call`, `lambda`, `private`, `test-only` | calls |
-//! | `table`, `table-keys`, `table-shape`, `table-value` | rate tables |
+//! | `table`, `table-keys`, `table-shape`, `table-value` | rate tables, and a test's given cells (`given-target` for one without keys) |
+//! | `live-table` | a warning: a test or property reads a rate table without giving any of its cells, so it depends on the matrix's live data |
+//! | `requested-code` | `shipment.requested(…)` given anything but a bare charge code |
 //! | `charge-amount`, `charge-option`, `misplaced`, `total-order`, `round-step` | charges, notes, total clauses and statements in the wrong place |
 //! | `match-exhaustive`, `match-overlap`, `empty-range`, `pattern-binding` | `match` |
 //! | `missing-return`, `return-type`, `recursion`, `recursive-type`, `const-type`, `condition-result`, `annotation-needed`, `branch-mismatch`, `missing-field`, `duplicate`, `given-order`, `given-target`, `not-indexable`, `not-iterable`, `not-summable`, `unordered`, `never-none`, `interpolation`, `pattern`, `quotient`, `unit-type`, `type-arguments`, `range`, `overflow`, `divide-by-zero` | the other rules |
@@ -84,9 +86,12 @@ mod stmt;
 mod tables;
 mod visit;
 
-pub use calls::CONSTRUCTORS;
+pub use calls::{CONSTRUCTORS, REQUESTED, REQUESTED_DOC, REQUESTED_SIGNATURE, location_record};
 pub use program::check;
-pub use tables::TABLE_METHODS;
+pub use tables::{TABLE_METHODS, cell_type};
+
+/// What a condition's tests read as its result: `expect applies`.
+pub const APPLIES: &str = "applies";
 
 use crate::span::Span;
 use crate::tariff::diagnostic::{Diagnostic, Severity};
@@ -301,6 +306,8 @@ pub enum Callee {
     Constructor(&'static str),
     /// `charge(CODE)` or `charge("Label")` in a test.
     ChargeLookup,
+    /// `shipment.requested(CODE)`.
+    Requested,
     /// A rate table method: `cell`, `band` or `interpolate` (indexing is not a call).
     Table {
         /// The table's code.

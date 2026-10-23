@@ -118,10 +118,13 @@ pub fn stmt(stmt_node: &Stmt, on_stmt: &mut impl FnMut(&Stmt), visit: &mut impl 
     on_stmt(stmt_node);
     match &stmt_node.kind {
         StmtKind::Let(binding) | StmtKind::Var(binding) => expr(&binding.value, visit),
-        StmtKind::Assign { value, .. }
-        | StmtKind::Return(value)
-        | StmtKind::Given { value, .. }
-        | StmtKind::Expr(value) => {
+        StmtKind::Given { keys, value, .. } => {
+            for key in keys.iter().flatten() {
+                expr(key, visit);
+            }
+            expr(value, visit);
+        }
+        StmtKind::Assign { value, .. } | StmtKind::Return(value) | StmtKind::Expr(value) => {
             expr(value, visit);
         }
         StmtKind::Charge(charge) => {

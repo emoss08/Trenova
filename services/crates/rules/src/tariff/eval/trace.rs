@@ -207,6 +207,11 @@ impl Trace {
         Json::Array(events)
     }
 
+    /// The lookups kept, in the order they ran.
+    pub fn lookups(&self) -> impl Iterator<Item = &Lookup> {
+        self.lookups.iter().map(|(lookup, _)| lookup)
+    }
+
     /// The lookups on the wire.
     #[must_use]
     pub fn encode_lookups(&self, index: &Utf16Index) -> Json {

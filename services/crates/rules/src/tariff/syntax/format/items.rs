@@ -314,13 +314,26 @@ impl Formatter<'_> {
     /// The statements only tests and properties hold.
     fn test_stmt(&mut self, kind: &StmtKind) -> Doc {
         match kind {
-            StmtKind::Given { target, value } => {
+            StmtKind::Given {
+                target,
+                keys,
+                value,
+            } => {
                 let path: Vec<&str> = target.iter().map(|name| name.text.as_str()).collect();
-                let value = self.expr(value);
-                Doc::Concat(vec![
-                    Doc::text(format!("given {} = ", path.join("."))),
-                    value,
-                ])
+                let mut parts = vec![Doc::text(format!("given {}", path.join(".")))];
+                if let Some(keys) = keys {
+                    parts.push(Doc::text("["));
+                    for (index, key) in keys.iter().enumerate() {
+                        if index > 0 {
+                            parts.push(Doc::text(", "));
+                        }
+                        parts.push(self.expr(key));
+                    }
+                    parts.push(Doc::text("]"));
+                }
+                parts.push(Doc::text(" = "));
+                parts.push(self.expr(value));
+                Doc::Concat(parts)
             }
             StmtKind::Expect(Expect::Holds(value)) => {
                 Doc::Concat(vec![Doc::text("expect "), self.expr(value)])

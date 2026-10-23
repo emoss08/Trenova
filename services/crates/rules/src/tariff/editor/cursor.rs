@@ -360,11 +360,16 @@ impl<'a> Locator<'a, '_> {
                 }
                 self.expr(&binding.value);
             }
+            StmtKind::Given { keys, value, .. } => {
+                for key in keys.iter().flatten() {
+                    self.expr(key);
+                }
+                self.expr(value);
+            }
             StmtKind::Assign { value, .. }
             | StmtKind::Return(value)
             | StmtKind::Expr(value)
-            | StmtKind::Assume(value)
-            | StmtKind::Given { value, .. } => {
+            | StmtKind::Assume(value) => {
                 self.expr(value);
             }
             StmtKind::Charge(charge) => {
@@ -914,10 +919,15 @@ impl<'a> ScopeWalker<'a, '_> {
                 }
                 self.expr(&binding.value);
             }
+            StmtKind::Given { keys, value, .. } => {
+                for key in keys.iter().flatten() {
+                    self.expr(key);
+                }
+                self.expr(value);
+            }
             StmtKind::Assign { value, .. }
             | StmtKind::Return(value)
             | StmtKind::Expr(value)
-            | StmtKind::Given { value, .. }
             | StmtKind::Total(
                 TotalClause::Minimum(value)
                 | TotalClause::Maximum(value)

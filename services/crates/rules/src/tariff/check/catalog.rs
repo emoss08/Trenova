@@ -21,11 +21,12 @@ use crate::tariff::types::Type;
 use crate::tariff::units::SIMPLE_UNITS;
 use serde_json::{Value as Json, json};
 
-/// The names that mean something only in a test, after the rating: `total` and `lines`. With the
+/// The names that mean something only in a test, after the rating: `total`, `lines` and a
+/// condition's `applies`. With the
 /// lexer's contextual words ([`CONTEXTUAL`]) and the words that start a construct
 /// ([`CONSTRUCT_WORDS`]) they are what the catalog lists as `contextual`: ordinary names
 /// everywhere else, so a parameter may be called `to` and a binding `option`.
-pub const TEST_NAMES: &[&str] = &["total", "lines"];
+pub const TEST_NAMES: &[&str] = &["total", "lines", "applies"];
 
 /// The words the parser reads as a construct only where one can start, and as names everywhere
 /// else: `best`, `worst` and `option` (choices), `property`, `vary` and `assume` (properties),
@@ -60,7 +61,15 @@ pub fn catalog() -> Json {
             })).collect::<Vec<_>>(),
             "returns": method.returns,
             "doc": Doc::message(method.doc),
-        })).collect::<Vec<_>>(),
+        })).chain(std::iter::once(json!({
+            "receiver": "Shipment",
+            "name": super::REQUESTED,
+            "kind": "method",
+            "signature": super::REQUESTED_SIGNATURE,
+            "params": [{"name": "code", "type": "CODE", "default": null}],
+            "returns": "Bool",
+            "doc": Doc::message(super::REQUESTED_DOC),
+        }))).collect::<Vec<_>>(),
         "tableMethods": TABLE_METHODS.iter().map(|(name, doc)| json!({ "name": name, "doc": Doc::message(doc) })).collect::<Vec<_>>(),
         "units": SIMPLE_UNITS.iter().filter(|unit| unit.symbol != "$").map(|unit| json!({
             "unit": unit.symbol,
@@ -288,6 +297,7 @@ mod tests {
             "nonincreasing",
             "total",
             "lines",
+            "applies",
         ] {
             assert!(
                 contextual.contains(&Json::from(word)),

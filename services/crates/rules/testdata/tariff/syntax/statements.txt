@@ -558,3 +558,17 @@ tariff "t"
 test "t"
   expect total nondecreasing in shipment.weight
 ! misplaced 37..50 `nondecreasing` can only be used inside a `property` block
+
+=== given a table cell
+tariff "t"
+test "t" {
+  given tables.Zones["A", "B"] = $20/cwt
+  given tables.Breaks[1_000 lb] = { value: $25/cwt, minimum: none, deficit: false }
+  expect applies
+}
+---
+tariff "t"
+test "t"
+  given tables.Zones[(text "A"), (text "B")] = $20/[cwt]
+  given tables.Breaks[1000[lb]] = (record value:$25/[cwt] minimum:none deficit:false)
+  expect applies

@@ -66,6 +66,30 @@ pub const ENUMS: &[(&str, &[&str])] = &[
     ),
     ("RatingMode", &["Sell", "Buy"]),
     (
+        "LocationCategory",
+        &[
+            "Terminal",
+            "Warehouse",
+            "DistributionCenter",
+            "TruckStop",
+            "RestArea",
+            "CustomerLocation",
+            "Port",
+            "RailYard",
+            "MaintenanceFacility",
+        ],
+    ),
+    (
+        "FacilityType",
+        &[
+            "CrossDock",
+            "StorageWarehouse",
+            "ColdStorage",
+            "HazmatFacility",
+            "IntermodalFacility",
+        ],
+    ),
+    (
         "Weekday",
         &["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     ),
@@ -324,6 +348,21 @@ impl Builder {
             ),
             ("country", Type::Text, message!("The ISO country code.")),
             ("timezone", Type::Text, message!("The IANA time zone.")),
+            (
+                "category",
+                opt(self.enumeration("LocationCategory")),
+                message!("What the location is: a terminal, a warehouse, a port, …"),
+            ),
+            (
+                "facilityType",
+                opt(self.enumeration("FacilityType")),
+                message!("What kind of facility the location is: cross-dock, cold storage, …"),
+            ),
+            (
+                "requiresAppointment",
+                Type::Bool,
+                message!("Whether the location requires an appointment for every visit."),
+            ),
         ]);
         let window = record(&[
             (
@@ -385,6 +424,13 @@ impl Builder {
                     "weight",
                     opt(self.weight.clone()),
                     message!("Weight handled at the stop."),
+                ),
+                (
+                    "legDistance",
+                    opt(self.distance.clone()),
+                    message!(
+                        "The distance from the previous stop, in the organisation's unit; none on the first stop."
+                    ),
                 ),
                 ("location", location, message!("Where the stop is.")),
             ]),
@@ -496,6 +542,24 @@ impl Builder {
                 message!("The first pickup stop."),
             ),
             ("delivery", opt(stop), message!("The last delivery stop.")),
+            (
+                "accessorials",
+                Type::list(record(&[
+                    (
+                        "code",
+                        Type::Text,
+                        message!("The accessorial charge's catalog code."),
+                    ),
+                    (
+                        "quantity",
+                        Type::Number,
+                        message!("How many were asked for."),
+                    ),
+                ])),
+                message!(
+                    "The accessorials a user entered on the shipment, never the lines a tariff or program generated."
+                ),
+            ),
         ]
     }
 
@@ -671,6 +735,16 @@ impl Builder {
                 "currency",
                 Type::Text,
                 message!("The rating currency's ISO code."),
+            ),
+            (
+                "holidays",
+                Type::list(record(&[
+                    ("date", Type::Date, message!("The holiday's date.")),
+                    ("name", Type::Text, message!("The holiday's name.")),
+                ])),
+                message!(
+                    "The organisation's holidays from the year before the rating date's year to the year after, in date order."
+                ),
             ),
         ])
     }

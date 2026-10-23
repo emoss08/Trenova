@@ -725,6 +725,12 @@ pub const KEYWORD_DOCS: &[(&str, &str)] = &[
         "lines",
         message!("In a test, the bill's lines: label, code, amount and kind."),
     ),
+    (
+        "applies",
+        message!(
+            "In a condition's test, the condition's result: `expect applies`, `expect not applies`."
+        ),
+    ),
 ];
 
 /// The one-line explanation of a keyword or contextual word.
