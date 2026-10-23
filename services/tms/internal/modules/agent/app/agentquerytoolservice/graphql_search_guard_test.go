@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -173,11 +173,11 @@ func TestConvertedLists_RefuseAQueryOverWithheldFields(t *testing.T) {
 		{tool: "fuel_list_cards", withheld: "externalCardId", restricted: false},
 		{tool: "settlement_list_driver_expenses", withheld: "description", restricted: true},
 		{tool: "settlement_list_advances", withheld: "notes", restricted: true},
-		{tool: "settlement_list_escrow_accounts", withheld: "balanceMinor", restricted: true},
 		{tool: "receivable_list_customer_payments", withheld: "memo", restricted: true},
 		{tool: "inbox_list_email_profiles", withheld: "host", restricted: true},
 		{tool: "report_list_table_change_alerts", withheld: "name", restricted: true},
 		{tool: "factoring_list_noas"},
+		{tool: "settlement_list_escrow_accounts"},
 		{tool: "accounting_list_sync_records", args: map[string]any{"system": "Xero"}},
 		{tool: "accounting_list_mapping_gaps", args: map[string]any{"system": "Xero"}},
 		{tool: "customer_list"},
@@ -221,5 +221,24 @@ func TestConvertedLists_RefuseAQueryOverWithheldFields(t *testing.T) {
 			require.ErrorContains(t, err, "cannot search by query",
 				"a Confidential field is never matched for anyone")
 		})
+	}
+}
+
+// An escrow account's query matches its status and currency, both Internal,
+// and none of its money: the balance, target and interest rate the builder
+// once fell back to are not searched, so a query reads at Internal.
+func TestEscrowAccounts_SearchTheirStatusAndCurrencyOnly(t *testing.T) {
+	t.Parallel()
+
+	spec := keyedSpec(t, "settlement_list_escrow_accounts")
+	built, err := newGraphQLReadTool(spec, &keyedReader{}, &mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+	list, ok := built.(*graphQLListTool)
+	require.True(t, ok)
+	assert.Equal(t, []string{"status", "currencyCode"}, list.searched)
+	for _, money := range []string{
+		"balanceMinor", "targetAmountMinor", "annualInterestRate",
+	} {
+		assert.NotContains(t, list.searched, money)
 	}
 }

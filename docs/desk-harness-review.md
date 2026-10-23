@@ -1523,6 +1523,9 @@ the escrow account list, whose configuration names no column, refuses because th
 back to every filterable field, its money among them. The notice list's configuration named
 `sentTo`, which Postgres read as `sentto`, so its query failed; it now names `sent_to`. No
 description changed, so the fixture and held-out ranking are unchanged.
+The escrow account list's query failed in the database through that fallback (`operator does not
+exist: bigint ~~* unknown`); its configuration now names its status and currency, both Internal,
+so it searches again at Internal, and matches no money.
 
 The reports row converts the run and schedule lists. Each reads a new `Desk*` operation;
 `ReportRun` gains `rowsStored` and `ReportSchedule` gains `mine`, both declare

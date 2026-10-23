@@ -157,9 +157,16 @@ func (e *EscrowAccount) IsFullyFunded() bool {
 
 func (e *EscrowAccount) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
-		TableAlias:       "escr",
-		UseSearchVector:  false,
-		SearchableFields: []domaintypes.SearchableField{},
+		TableAlias:      "escr",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "status", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "currency_code",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+		},
 	}
 }
 
