@@ -1370,7 +1370,7 @@ impl Checker<'_> {
                     && !matches!(item, Type::Error)
                 {
                     reported = true;
-                    self.report(Diagnostic::error(
+                    let mut diagnostic = Diagnostic::error(
                         "type-mismatch",
                         right.span,
                         Message::with(
@@ -1382,7 +1382,11 @@ impl Checker<'_> {
                                 Arg::from(super::describe::words(&ty)),
                             ],
                         ),
-                    ));
+                    );
+                    if matches!(item, Type::DateTime) && matches!(ty, Type::Time) {
+                        diagnostic = diagnostic.with_fix(self.time_of_day_fix(left, false));
+                    }
+                    self.report(diagnostic);
                 }
             }
             self.record(right, Type::Error);

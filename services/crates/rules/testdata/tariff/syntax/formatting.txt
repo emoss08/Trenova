@@ -391,14 +391,14 @@ fn residential(fee: Money = $95) = fee
 
 === long parameter lists break
 library "l"
-fn businessDuration(start: DateTime, end: DateTime, open: Int = 8, close: Int = 17, zone: Text = "UTC") -> Duration = end - start
+fn businessDuration(start: DateTime, end: DateTime, open: Time = @08:00, close: Time = @17:00, zone: Text = "UTC") -> Duration = end - start
 ---
 library "l"
 fn businessDuration(
   start: DateTime,
   end: DateTime,
-  open: Int = 8,
-  close: Int = 17,
+  open: Time = @08:00,
+  close: Time = @17:00,
   zone: Text = "UTC",
 ) -> Duration = end - start
 

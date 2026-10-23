@@ -49,6 +49,33 @@
   {
    "diagnostics": [
     {
+     "at": "@08:00..@17:00",
+     "code": "type-mismatch",
+     "fixes": [
+      {
+       "label": "Use its time of day: `rating.date.time`",
+       "result": [
+        "tariff \"t\"",
+        "if rating.date.time in @08:00..@17:00 {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      }
+     ],
+     "message": "`rating.date` is a date and time, but the range `@08:00..@17:00` is of a time of day"
+    }
+   ],
+   "name": "a date-time in a time range offers its time",
+   "source": [
+    "tariff \"t\"",
+    "if rating.date in @08:00..@17:00 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
      "at": "shipment.pickup?.arrival == @08:00",
      "code": "type-mismatch",
      "fixes": [

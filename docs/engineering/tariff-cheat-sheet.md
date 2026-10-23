@@ -662,6 +662,7 @@ an existing contract.
 | "This match on … doesn't cover …" | add the missing ranges, or a `_` arm |
 | "… is text, which has no order …" | test a band of codes with a range: `zip in "30000"..="31999"`; the fix rewrites `zip < "31000"` as `zip in .."31000"` |
 | "This text range's ends have different lengths …" | text compares character by character, so `"2"` is inside `"10".."300"`: write both ends with the same number of characters |
+| "… is a date and time and `@17:00` is a time of day …" | compare the date-time's clock, `at.time < @17:00`; the fix writes it |
 | "… has no order: only `FreightClass` and `Weekday` …" | compare the enum with `==`, or list the variants: `service in [Standard, Guaranteed]` |
 | "This arm overlaps an arm above it" | make the ranges meet without overlapping (`..500 lb`, `500 lb..`) |
 | "Comparisons can't be chained" | `1 < n and n < 3` |
