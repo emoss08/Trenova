@@ -95,11 +95,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `inbox_get_inbound_message` | partial | inboundMessage | InboundMessage | n/a | id | Same InboundMessageService.GetByID; the pending reply drafts the tool attaches (InboundReplyRepository.DraftsByMessageIDs) are not on InboundMessage. |
-| `inbox_list_capture_batches` | op | captureBatches (+ captureBatch) | CaptureBatches (+ CaptureBatch for captureBatchId) | cursor | bespoke CaptureBatchesInput | Same CaptureService.ListBatches/GetBatch. |
-| `inbox_list_email_profiles` | op | emailProfiles | EmailProfileTable | cursor | DataTable fieldFilters only | Tool uses SelectProfileOptions (same profiles, lighter); query -> input.query. |
-| `inbox_list_inbound_messages` | partial | inboundMessages | InboundMessages | cursor | bespoke InboundMessagesInput | Same InboundMessageService.List for the filters (classification, mailboxId, status). When query is given the tool uses semantic RetrievalSearcher.SearchInboundMessages; GraphQL query is lexical. |
-| `inbox_list_triage_assignees` | op | triageAssignees (+ triageSettings) | TriageAssignees (+ TriageSettings) | unpaged | none | Same Assignees/Settings. |
 
 ## insight
 
@@ -208,12 +203,12 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 31 |
-| op, converted (rows removed) | 88 |
+| op, not yet converted | 28 |
+| op, converted (rows removed) | 91 |
 | field-no-op, not yet converted | 1 |
 | field-no-op, converted (rows removed) | 5 |
-| partial, not yet converted | 13 |
-| partial, converted (rows removed) | 17 |
+| partial, not yet converted | 11 |
+| partial, converted (rows removed) | 19 |
 | none | 21 |
 | **total** | **176** |
 
