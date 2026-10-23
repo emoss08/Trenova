@@ -2485,6 +2485,545 @@
      }
     }
    }
+  },
+  {
+   "name": "new syntax: a tariff's file level offers property, best and worst",
+   "source": [
+    "tariff \"t\"",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "property",
+     "best",
+     "worst",
+     "test",
+     "property",
+     "best with two options"
+    ],
+    "items": {
+     "best with two options": {
+      "kind": "snippet",
+      "snippet": true,
+      "insert": "best \"${1:Label}\" {\n\toption \"${2:Per mile}\" {\n\t\t$0\n\t}\n\toption \"${3:Flat}\" {\n\t\t\n\t}\n}"
+     },
+     "property": {
+      "kind": "keyword",
+      "doc": {
+       "message": "Declares a property: a rule checked over many shipments, the cases chosen from the `vary` ranges, run on every change like a test."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a library's file level offers property but no choice",
+   "source": [
+    "library \"l\"",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "property",
+     "test",
+     "fn"
+    ],
+    "excludes": [
+     "best",
+     "worst",
+     "charge"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a condition offers neither",
+   "source": [
+    "condition \"c\"",
+    "|"
+   ],
+   "expect": {
+    "excludes": [
+     "property",
+     "best",
+     "worst"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a block where a charge may go offers best and worst",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "charge",
+     "best",
+     "worst"
+    ],
+    "excludes": [
+     "property",
+     "test"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a function offers no choice",
+   "source": [
+    "tariff \"t\"",
+    "fn f() -> Money {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "excludes": [
+     "best",
+     "worst",
+     "charge"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: inside a choice's braces only option",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "option"
+    ],
+    "excludes": [
+     "charge",
+     "let",
+     "best",
+     "input"
+    ],
+    "items": {
+     "option": {
+      "kind": "keyword",
+      "doc": {
+       "message": "One method of a `best` or `worst`: its charges are its subtotal, and an option that refuses is out of the running."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: inside an option what a block offers",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Flat\" {",
+    "    |",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "charge",
+     "best",
+     "let"
+    ],
+    "excludes": [
+     "option",
+     "input"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a property's statements",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "vary",
+     "assume",
+     "given",
+     "expect",
+     "vary … in …"
+    ],
+    "excludes": [
+     "fail",
+     "best",
+     "note"
+    ],
+    "items": {
+     "vary … in …": {
+      "kind": "snippet",
+      "insert": "vary ${1:shipment.weight} in ${2:1 lb..40_000 lb}",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a test offers no vary",
+   "source": [
+    "tariff \"t\"",
+    "test \"t\" {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "given",
+     "expect"
+    ],
+    "excludes": [
+     "vary",
+     "assume"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after vary, the record's roots and input",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "shipment",
+     "input"
+    ],
+    "excludes": [
+     "charge",
+     "vary"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after vary input., the inputs",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "property \"p\" {",
+    "  vary input.|",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "rate"
+    ],
+    "items": {
+     "rate": {
+      "kind": "input",
+      "detail": "Money/mi"
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: after vary shipment., its fields",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.|",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "weight",
+     "distance"
+    ],
+    "excludes": [
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after a vary target, in",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.weight |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "in"
+    ],
+    "excludes": [
+     "weight",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after vary … in, values",
+   "source": [
+    "tariff \"t\"",
+    "const LOW = 1 lb",
+    "property \"p\" {",
+    "  vary shipment.weight in |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "LOW"
+    ],
+    "excludes": [
+     "in"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a vary name is in scope after its line",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary w in 1 lb..2 lb",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "w",
+     "total"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after an expect's value in a property, the directions",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect total |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "nondecreasing",
+     "nonincreasing"
+    ],
+    "excludes": [
+     "shipment"
+    ],
+    "items": {
+     "nondecreasing": {
+      "kind": "keyword",
+      "doc": {
+       "message": "In a property, `expect value nondecreasing in target`: the value never falls as the varied target grows."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a test's expect offers no direction",
+   "source": [
+    "tariff \"t\"",
+    "test \"t\" {",
+    "  expect total |",
+    "}"
+   ],
+   "expect": {
+    "excludes": [
+     "nondecreasing",
+     "nonincreasing"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after a direction, in",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect total nondecreasing |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "in"
+    ],
+    "excludes": [
+     "nondecreasing"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after a direction's in, the varied targets",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  vary input.rate",
+    "  vary w in [1 lb, 2 lb]",
+    "  expect total nondecreasing in |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "shipment.weight",
+     "input.rate",
+     "w"
+    ],
+    "items": {
+     "input.rate": {
+      "kind": "value"
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: after an input's type, where",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "where",
+     "where …..…"
+    ],
+    "excludes": [
+     "shipment",
+     "rate"
+    ],
+    "items": {
+     "where …..…": {
+      "kind": "snippet",
+      "insert": "where ${1:low}..=${2:high}",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: after an input's default, where",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/mi |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "where",
+     "where …..…"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: in an input's constraint, constants",
+   "source": [
+    "tariff \"t\"",
+    "const LOW = $1/mi",
+    "input rate: Money/mi = $2.35/mi where |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "LOW"
+    ],
+    "excludes": [
+     "where",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a test offers chosen",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "chosen"
+    ],
+    "items": {
+     "chosen": {
+      "kind": "function",
+      "detail": "chosen(choice: Text) -> Text?",
+      "insert": "chosen($0)",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: chosen's argument, the file's choice labels",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    worst \"Floor\" {",
+    "      option \"C\" {",
+    "        charge \"C\" = $2",
+    "      }",
+    "      option \"D\" {",
+    "        charge \"D\" = $3",
+    "      }",
+    "    }",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(|) == \"A\"",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "\"Linehaul\"",
+     "\"Floor\""
+    ],
+    "excludes": [
+     "\"A\"",
+     "shipment"
+    ],
+    "items": {
+     "\"Floor\"": {
+      "kind": "value",
+      "detail": "worst \"Floor\""
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a test's charge( finds labels inside options",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    charge \"Flat\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"Per mile\" as FSC = $2",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect charge(|) == $1",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "\"Flat\"",
+     "\"Per mile\"",
+     "FSC"
+    ]
+   }
   }
  ]
 }

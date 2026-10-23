@@ -6,6 +6,7 @@
 //! a file's top level and in tests, inputs only at the top level, file-level bindings nowhere
 //! but the top level, and only constants in a constant's value or a default.
 
+use super::choices::{CHOSEN, CHOSEN_DOC};
 use super::complete::{CompletionItem, Items, Kind, Rank, Site, Then, callee_of, fill_call, units};
 use super::cursor::{Body, Bracket};
 use super::describe::{symbol_signature, type_text};
@@ -41,8 +42,7 @@ fn snippet(items: &mut Items, label: &str, insert: &str, doc: &'static str) {
 
 /// The enums the root file can name, by the name they are written with: the schema's, its
 /// own and the imported ones.
-pub fn enums(site: &Site<'_, '_>) -> Vec<(String, Arc<EnumType>)> {
-    let session = site.session;
+pub fn enums(session: &Session<'_>) -> Vec<(String, Arc<EnumType>)> {
     let mut out: Vec<(String, Arc<EnumType>)> = session
         .schema
         .enums
@@ -284,6 +284,12 @@ fn test_names(site: &Site<'_, '_>, items: &mut Items) {
                 "The amount the bill's lines with this code or label add up to, or `none` when there are none."
             ))));
         }
+        if let Some(item) = items.add(Rank::Global, Kind::Function, CHOSEN) {
+            item.insert = format!("{CHOSEN}($0)");
+            item.snippet = true;
+            item.detail = Some(format!("{CHOSEN}(choice: Text) -> Text?"));
+            item.doc = Some(Doc::Message(Message::new(CHOSEN_DOC)));
+        }
         for (word, detail) in [("total", "Money"), ("lines", "List<Line>")] {
             if let Some(item) = items.add(Rank::Global, Kind::Name, word) {
                 item.detail = Some(detail.to_owned());
@@ -310,7 +316,7 @@ fn test_names(site: &Site<'_, '_>, items: &mut Items) {
 /// The enum variants: the expected enum's first and bare, the others bare when only one enum
 /// has them and qualified (`StopStatus.New`) when several do.
 fn variants(site: &Site<'_, '_>, items: &mut Items, expected: Option<&Type>) {
-    let visible = enums(site);
+    let visible = enums(site.session);
     let wanted = match expected.map(Type::unwrapped) {
         Some(Type::Enum(enumeration)) => Some(Arc::clone(enumeration)),
         _ => None,
@@ -374,16 +380,32 @@ pub fn statement(site: &Site<'_, '_>, items: &mut Items) -> bool {
         }
         return false;
     }
+    if in_choice(located) {
+        keyword(items, Rank::Keyword, "option");
+        snippet(
+            items,
+            "option",
+            "option \"${1:Label}\" {\n\t$0\n}",
+            message!("One method of the choice, with the charges it bills."),
+        );
+        return false;
+    }
     let file_level = located.at_file_level()
         && located
             .item()
             .is_none_or(|item| matches!(item.kind, ItemKind::Stmt(_)));
+    let property = located
+        .item()
+        .is_some_and(|item| matches!(item.kind, ItemKind::Property(_)));
     let words: &[&str] = match (file_level, located.body, kind) {
         (true, _, FileKind::Tariff) => &[
             "use", "input", "let", "var", "const", "fn", "type", "enum", "charge", "note", "if",
-            "match", "for", "require", "fail", "minimum", "maximum", "round", "test",
+            "match", "for", "require", "fail", "minimum", "maximum", "round", "test", "property",
+            "best", "worst",
         ],
-        (true, _, FileKind::Library) => &["use", "const", "fn", "type", "enum", "private", "test"],
+        (true, _, FileKind::Library) => &[
+            "use", "const", "fn", "type", "enum", "private", "test", "property",
+        ],
         (true, _, FileKind::Condition) => &[
             "use", "input", "let", "var", "const", "fn", "type", "enum", "if", "match", "for",
             "require", "fail",
@@ -391,11 +413,15 @@ pub fn statement(site: &Site<'_, '_>, items: &mut Items) -> bool {
         (false, Body::Function, _) => &[
             "let", "var", "if", "match", "for", "require", "fail", "return",
         ],
+        (false, Body::Test, _) if property => &[
+            "vary", "assume", "given", "expect", "let", "var", "if", "match", "for",
+        ],
         (false, Body::Test, _) => &[
             "given", "expect", "let", "var", "if", "match", "for", "require", "fail",
         ],
         (false, Body::Top, FileKind::Tariff) => &[
-            "let", "var", "charge", "note", "if", "match", "for", "require", "fail",
+            "let", "var", "charge", "note", "if", "match", "for", "require", "fail", "best",
+            "worst",
         ],
         (false, Body::Top, _) => &["let", "var", "if", "match", "for", "require", "fail"],
         _ => &[],
@@ -411,8 +437,55 @@ pub fn statement(site: &Site<'_, '_>, items: &mut Items) -> bool {
     !(file_level && kind == FileKind::Library)
 }
 
+/// Whether the position is directly inside a `best` or `worst`'s braces, between its options.
+fn in_choice(located: &super::cursor::Located<'_>) -> bool {
+    let Some(at) = located.chain.iter().rposition(|node| {
+        matches!(node, super::cursor::Node::Stmt(stmt) if matches!(stmt.kind, StmtKind::Choose(_)))
+    }) else {
+        return false;
+    };
+    located
+        .chain
+        .get(at + 1..)
+        .unwrap_or_default()
+        .iter()
+        .all(|node| !matches!(node, super::cursor::Node::Block(_)))
+}
+
+/// The snippets of choices and properties.
+fn construct_snippets(items: &mut Items, file_level: bool, words: &[&str]) {
+    let has = |word: &str| words.contains(&word);
+    if has("best") {
+        snippet(
+            items,
+            "best with two options",
+            "best \"${1:Label}\" {\n\toption \"${2:Per mile}\" {\n\t\t$0\n\t}\n\toption \"${3:Flat}\" {\n\t\t\n\t}\n}",
+            message!("Bills the cheaper of two methods; add an `option` for each further one."),
+        );
+    }
+    if has("property") && file_level {
+        snippet(
+            items,
+            "property",
+            "property \"${1:name}\" {\n\tvary ${2:shipment.weight} in ${3:1 lb..40_000 lb}\n\texpect $0\n}",
+            message!(
+                "A property: vary fields or inputs over ranges with `vary`, and say what holds in every case with `expect`."
+            ),
+        );
+    }
+    if has("vary") {
+        snippet(
+            items,
+            "vary … in …",
+            "vary ${1:shipment.weight} in ${2:1 lb..40_000 lb}",
+            message!("Makes a field, an input or a new name take every value of a range or list."),
+        );
+    }
+}
+
 fn snippets(items: &mut Items, file_level: bool, words: &[&str]) {
     let has = |word: &str| words.contains(&word);
+    construct_snippets(items, file_level, words);
     if has("charge") {
         snippet(
             items,
@@ -718,13 +791,38 @@ fn receiver_dim(site: &Site<'_, '_>, call: &Expr) -> Option<Dim> {
     }
 }
 
+/// In a test's `chosen(`: the labels of the file's choices.
+pub fn choice_labels(site: &Site<'_, '_>, items: &mut Items) {
+    for choose in super::choices::choices(site.session.file()) {
+        let text = format!(
+            "\"{}\"",
+            choose.label.text.replace('\\', "\\\\").replace('"', "\\\"")
+        );
+        if let Some(item) = items.add(Rank::Expected, Kind::Value, &text) {
+            item.detail = Some(format!(
+                "{} \"{}\"",
+                choose.kind.keyword(),
+                choose.label.text
+            ));
+        }
+    }
+}
+
 /// In a test's `charge(`: the codes and literal labels the tariff bills.
 fn lookups(site: &Site<'_, '_>, items: &mut Items) {
     let file = site.session.file();
     let mut billed: Vec<(Option<String>, Option<String>, Span)> = Vec::new();
     for item in &file.items {
-        if let ItemKind::Stmt(stmt) = &item.kind {
-            charges(stmt, &mut billed);
+        if let ItemKind::Stmt(_) = &item.kind {
+            super::cursor::item_statements(item, &mut |stmt| {
+                if let StmtKind::Charge(charge) = &stmt.kind {
+                    billed.push((
+                        charge.code.as_ref().map(|code| code.text.clone()),
+                        charge.label.literal(),
+                        stmt.span,
+                    ));
+                }
+            });
         }
     }
     let descriptions = site.session.context.codes.as_deref().unwrap_or_default();
@@ -744,45 +842,5 @@ fn lookups(site: &Site<'_, '_>, items: &mut Items) {
                 item.detail = Some(String::from("Text"));
             }
         }
-    }
-}
-
-/// The charges a statement bills, nested ones included: code, literal label, where.
-fn charges(
-    stmt: &crate::tariff::syntax::ast::Stmt,
-    out: &mut Vec<(Option<String>, Option<String>, Span)>,
-) {
-    use crate::tariff::syntax::ast::ArmBody;
-    match &stmt.kind {
-        StmtKind::Charge(charge) => out.push((
-            charge.code.as_ref().map(|code| code.text.clone()),
-            charge.label.literal(),
-            stmt.span,
-        )),
-        StmtKind::If(statement) => {
-            for (_, block) in &statement.branches {
-                for inner in &block.stmts {
-                    charges(inner, out);
-                }
-            }
-            for inner in statement.otherwise.iter().flat_map(|block| &block.stmts) {
-                charges(inner, out);
-            }
-        }
-        StmtKind::For(statement) => {
-            for inner in &statement.body.stmts {
-                charges(inner, out);
-            }
-        }
-        StmtKind::Match(statement) => {
-            for arm in &statement.arms {
-                if let ArmBody::Block(block) = &arm.body {
-                    for inner in &block.stmts {
-                        charges(inner, out);
-                    }
-                }
-            }
-        }
-        _ => {}
     }
 }

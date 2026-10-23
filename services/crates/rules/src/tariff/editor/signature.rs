@@ -6,9 +6,11 @@
 //! user and library functions (with the doc comment, and each parameter's doc from the
 //! sentences naming it), module functions, built-in methods (a list method's lambda typed by
 //! the list's items: `where(f: Stop => Bool)`), conversions, the test record constructors,
-//! `charge(…)` in tests, rate table methods and a charge's `(quantity:, rate:)` options. The
-//! active parameter follows a named argument by its name and a positional one by its place.
+//! `charge(…)` and `chosen(…)` in tests, rate table methods and a charge's `(quantity:, rate:)`
+//! options. The active parameter follows a named argument by its name and a positional one by
+//! its place.
 
+use super::choices::{CHOSEN, CHOSEN_DOC, is_chosen};
 use super::complete::{call_with_open, callee_of};
 use super::cursor::{Bracket, Scopes, enclosing, previous};
 use super::describe::{
@@ -100,8 +102,12 @@ fn call_help(
         charge_options()
     } else {
         let call = call_with_open(scopes, open.span.start)?;
-        let callee = callee_of(session, call)?;
-        callee_help(session, call, &callee)?
+        if is_chosen(session, call) {
+            chosen_help()
+        } else {
+            let callee = callee_of(session, call)?;
+            callee_help(session, call, &callee)?
+        }
     };
     let active = active(&help.signature, bracket);
     Some(SignatureHelp {
@@ -166,6 +172,21 @@ fn charge_options() -> Help {
                 "The price per unit of the quantity: the invoice line's unit price."
             )))),
         ],
+    }
+}
+
+/// A test's `chosen("Label")`.
+fn chosen_help() -> Help {
+    Help {
+        signature: build(
+            CHOSEN,
+            &[(String::from("choice"), String::from("Text"), None)],
+            "Text?",
+        ),
+        doc: Some(Doc::Message(Message::new(CHOSEN_DOC))),
+        params: vec![Some(Doc::Message(Message::new(message!(
+            "The choice's label, as written after `best` or `worst`."
+        ))))],
     }
 }
 

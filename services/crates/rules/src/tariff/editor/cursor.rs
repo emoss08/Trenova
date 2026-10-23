@@ -271,8 +271,10 @@ impl<'a> Locator<'a, '_> {
             ItemKind::Input(input) => {
                 self.body = Body::Constant;
                 self.ty(&input.ty);
-                if let Some(default) = &input.default {
-                    self.expr(default);
+                for value in input.default.iter().chain(input.constraint.iter()) {
+                    if self.expr(value) {
+                        break;
+                    }
                 }
             }
             ItemKind::Const(constant) => {
@@ -397,7 +399,10 @@ impl<'a> Locator<'a, '_> {
             }
             StmtKind::Choose(choose) => {
                 for option in &choose.options {
-                    self.block(&option.body);
+                    self.visited += 1;
+                    if self.block(&option.body) {
+                        break;
+                    }
                 }
             }
             StmtKind::Vary { values, .. } => {
@@ -788,8 +793,8 @@ impl<'a> ScopeWalker<'a, '_> {
             }
             ItemKind::Input(input) => {
                 self.ty(&input.ty);
-                if let Some(default) = &input.default {
-                    self.expr(default);
+                for value in input.default.iter().chain(input.constraint.iter()) {
+                    self.expr(value);
                 }
             }
             ItemKind::Const(constant) => {
@@ -851,7 +856,29 @@ impl<'a> ScopeWalker<'a, '_> {
                 condition: Condition::Let { name, .. },
                 ..
             } => self.add(name, extent),
-            _ => {}
+            StmtKind::Vary { target, .. } => {
+                if let Some(name) = vary_name(target) {
+                    self.add(name, extent);
+                }
+            }
+            StmtKind::Assign { .. }
+            | StmtKind::Charge(_)
+            | StmtKind::Note(_)
+            | StmtKind::If(_)
+            | StmtKind::Choose(_)
+            | StmtKind::Match(_)
+            | StmtKind::For(_)
+            | StmtKind::Require { .. }
+            | StmtKind::Fail(_)
+            | StmtKind::Return(_)
+            | StmtKind::Break
+            | StmtKind::Continue
+            | StmtKind::Total(_)
+            | StmtKind::Given { .. }
+            | StmtKind::Assume(_)
+            | StmtKind::Expect(_)
+            | StmtKind::Expr(_)
+            | StmtKind::Item(_) => {}
         }
     }
 
@@ -1107,6 +1134,116 @@ impl<'a> ScopeWalker<'a, '_> {
             | ExprKind::Path { .. }
             | ExprKind::Missing => {}
         }
+    }
+}
+
+/// The name a `vary` declares: its target when that is one name (`vary w in …`), not a record
+/// path or `input.name`.
+#[must_use]
+pub fn vary_name(target: &[Name]) -> Option<&Name> {
+    match target {
+        [name] if !name.text.is_empty() && name.text != "input" => Some(name),
+        _ => None,
+    }
+}
+
+/// Calls `visit` on every statement of a file, each before the statements inside it: the
+/// file-level ones, and those in every block (functions, tests, properties, `if`, `for`,
+/// `match` arms, choice options and misplaced items).
+pub fn statements<'a>(file: &'a File, visit: &mut impl FnMut(&'a Stmt)) {
+    for item in &file.items {
+        item_statements(item, visit);
+    }
+}
+
+/// Calls `visit` on every statement of one item, each before the statements inside it.
+pub fn item_statements<'a>(item: &'a Item, visit: &mut impl FnMut(&'a Stmt)) {
+    match &item.kind {
+        ItemKind::Fn(function) => {
+            if let FnBody::Block(block) = &function.body {
+                block_statements(block, visit);
+            }
+        }
+        ItemKind::Test(test) => block_statements(&test.body, visit),
+        ItemKind::Property(property) => block_statements(&property.body, visit),
+        ItemKind::Stmt(stmt) => stmt_statements(stmt, visit),
+        ItemKind::Use(_)
+        | ItemKind::Input(_)
+        | ItemKind::Const(_)
+        | ItemKind::Type(_)
+        | ItemKind::Enum(_) => {}
+    }
+}
+
+fn block_statements<'a>(block: &'a Block, visit: &mut impl FnMut(&'a Stmt)) {
+    for stmt in &block.stmts {
+        stmt_statements(stmt, visit);
+    }
+}
+
+fn stmt_statements<'a>(stmt: &'a Stmt, visit: &mut impl FnMut(&'a Stmt)) {
+    visit(stmt);
+    match &stmt.kind {
+        StmtKind::If(statement) => {
+            for (_, block) in &statement.branches {
+                block_statements(block, visit);
+            }
+            if let Some(otherwise) = &statement.otherwise {
+                block_statements(otherwise, visit);
+            }
+        }
+        StmtKind::For(statement) => block_statements(&statement.body, visit),
+        StmtKind::Match(statement) => {
+            for arm in &statement.arms {
+                if let ArmBody::Block(block) = &arm.body {
+                    block_statements(block, visit);
+                }
+            }
+        }
+        StmtKind::Choose(choose) => {
+            for option in &choose.options {
+                block_statements(&option.body, visit);
+            }
+        }
+        StmtKind::Item(item) => item_statements(item, visit),
+        StmtKind::Let(_)
+        | StmtKind::Var(_)
+        | StmtKind::Assign { .. }
+        | StmtKind::Charge(_)
+        | StmtKind::Note(_)
+        | StmtKind::Require { .. }
+        | StmtKind::Fail(_)
+        | StmtKind::Return(_)
+        | StmtKind::Break
+        | StmtKind::Continue
+        | StmtKind::Total(_)
+        | StmtKind::Given { .. }
+        | StmtKind::Vary { .. }
+        | StmtKind::Assume(_)
+        | StmtKind::Expect(_)
+        | StmtKind::Expr(_) => {}
+    }
+}
+
+/// The body a byte offset of a file is in, from the file-level item holding it: the cheap
+/// answer [`locate`] gives without descending (a parameter's default reads as the function's
+/// body).
+#[must_use]
+pub fn body_at(file: &File, offset: u32) -> Body {
+    let index = file.items.partition_point(|item| item.span.end < offset);
+    let Some(item) = file
+        .items
+        .get(index)
+        .filter(|item| item.span.start <= offset)
+    else {
+        return Body::Top;
+    };
+    match &item.kind {
+        ItemKind::Fn(_) => Body::Function,
+        ItemKind::Test(_) | ItemKind::Property(_) => Body::Test,
+        ItemKind::Input(_) | ItemKind::Const(_) => Body::Constant,
+        ItemKind::Use(_) | ItemKind::Type(_) | ItemKind::Enum(_) => Body::Declaration,
+        ItemKind::Stmt(_) => Body::Top,
     }
 }
 
