@@ -22216,7 +22216,7 @@
     },
     {
       "name": "invoice_get_adjustment",
-      "description": "Retrieve one invoice adjustment by id: its kind, status and approval, the invoices it made, its supporting documents and each line it credits or rebills against the invoice's lines. Use invoice_list_adjustments first to find one. Its reasons, amounts and quantities are withheld when your data access does not reach them.",
+      "description": "Retrieve one invoice adjustment by id: its kind, status and approval, the invoices it made and each line it credits or rebills. It names its supporting documents. Use invoice_list_adjustments first to find one. Its reasons, amounts and quantities are withheld when your data access does not reach them.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -23069,7 +23069,7 @@
     },
     {
       "name": "invoice_list_disputes",
-      "description": "List the dispute cases on invoices, open and closed, each invoice's newest first: the reason and how each was resolved, with the amount in dispute and the notes where your data access reaches them. Find disputed invoices with invoice_list filtered to disputeStatus Disputed.",
+      "description": "List the dispute cases on the invoices you name, open and closed, each invoice's newest first. Each says the reason and how it was resolved, with the amount in dispute and the notes where your data access reaches them. Find disputed invoices with invoice_list filtered to disputeStatus Disputed.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

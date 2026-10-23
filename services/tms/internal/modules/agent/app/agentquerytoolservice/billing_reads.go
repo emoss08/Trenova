@@ -20,10 +20,10 @@ const (
 	invoicesSummary = "List invoices narrowed by customer, status, whether they are paid or " +
 		"disputed, the amount, or the invoice and due dates. It answers what is unpaid, " +
 		"overdue or in dispute. Totals are withheld when your data access does not reach them."
-	invoiceDisputesSummary = "List the dispute cases on invoices, open and closed, each " +
-		"invoice's newest first: the reason and how each was resolved, with the amount in " +
-		"dispute and the notes where your data access reaches them. Find disputed invoices " +
-		"with invoice_list filtered to disputeStatus Disputed."
+	invoiceDisputesSummary = "List the dispute cases on the invoices you name, open and closed, " +
+		"each invoice's newest first. Each says the reason and how it was resolved, with the " +
+		"amount in dispute and the notes where your data access reaches them. Find disputed " +
+		"invoices with invoice_list filtered to disputeStatus Disputed."
 	customerPaymentsSummary = "List recorded customer payments, newest first, with the " +
 		"amount, how much of it is applied to which invoices, the method and the reference. " +
 		"Search by reference or memo text, narrow to one customer, or include reversed " +
@@ -38,11 +38,10 @@ const (
 		"a number or are looking for what is unpaid. An id that is not an invoice of this " +
 		"organization is named in the note. Amounts, the memo and the void reason are left " +
 		"out, and named in withheldByAccess, when your data access does not reach them."
-	invoiceAdjustmentGetSummary = "Retrieve one invoice adjustment by id: its kind, status " +
-		"and approval, the invoices it made, its supporting documents and each line it " +
-		"credits or rebills against the invoice's lines. Use invoice_list_adjustments first " +
-		"to find one. Its reasons, amounts and quantities are withheld when your data access " +
-		"does not reach them."
+	invoiceAdjustmentGetSummary = "Retrieve one invoice adjustment by id: its kind, status and " +
+		"approval, the invoices it made and each line it credits or rebills. It names its " +
+		"supporting documents. Use invoice_list_adjustments first to find one. Its reasons, " +
+		"amounts and quantities are withheld when your data access does not reach them."
 
 	noteInvoiceStatus    = "Where the invoice is in its own lifecycle, not whether it is paid."
 	noteSettlementStatus = "This is the one to use for \"unpaid\" or \"outstanding\"."
