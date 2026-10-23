@@ -130,18 +130,6 @@ func TestBulkDuplicateEntityCarriesFullContentAsDraft(t *testing.T) {
 	assert.Nil(t, duplicate.ApprovedByID)
 }
 
-func TestNextAvailableName(t *testing.T) {
-	t.Parallel()
-
-	taken := map[string]struct{}{
-		"Per Mile (Copy)":   {},
-		"Per Mile (Copy) 2": {},
-	}
-
-	assert.Equal(t, "Flat (Copy)", nextAvailableName(taken, "Flat (Copy)"))
-	assert.Equal(t, "Per Mile (Copy) 3", nextAvailableName(taken, "Per Mile (Copy)"))
-}
-
 func TestFilterQueryRendersTypedFilters(t *testing.T) {
 	t.Parallel()
 

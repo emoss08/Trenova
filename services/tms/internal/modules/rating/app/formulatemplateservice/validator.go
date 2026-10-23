@@ -112,7 +112,12 @@ func (s *Service) prepareContent(
 	entity *formulatemplate.FormulaTemplate,
 ) error {
 	multiErr := errortypes.NewMultiError()
-	formulatemplate.ValidateContentSizes(multiErr, entity.Source, entity.Description, entity.Metadata)
+	formulatemplate.ValidateContentSizes(
+		multiErr,
+		entity.Source,
+		entity.Description,
+		entity.Metadata,
+	)
 	if multiErr.HasErrors() {
 		return multiErr
 	}
