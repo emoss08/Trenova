@@ -4,6 +4,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -97,6 +98,10 @@ func TestGraphQLGet_SpecsMatchWhatTheGeneratorProved(t *testing.T) {
 		read, ok := graphQLReads[spec.name]
 		require.True(t, ok, spec.name)
 		assert.Equal(t, graphQLVerbGet, read.Verb, spec.name)
+		if read.SelfScoped {
+			assert.Equal(t, agent.ToolScopeSelf, spec.scope, spec.name)
+			continue
+		}
 		assert.Equal(t, string(spec.resource), read.Resource, spec.name)
 	}
 

@@ -105,6 +105,13 @@ func ConvertedGetNames() []string {
 	return names
 }
 
+// ConvertedGetSelfScoped reports whether a converted get reads the caller's
+// own record through a resolver that checks no resource, so only dispatch's
+// authorize of the tool's own policy can refuse it.
+func ConvertedGetSelfScoped(name string) bool {
+	return graphQLReads[name].SelfScoped
+}
+
 // ConvertedGetResource is the resource a converted get reads.
 func ConvertedGetResource(name string) permission.Resource {
 	specs := graphQLGetSpecs()

@@ -85,7 +85,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `home_get_layout` | op | homeLayout | HomeLayout | n/a | none (self-scoped) | Same HomeLayoutService.GetEffective. |
 | `home_list_widgets` | op | homeWidgetCatalog | HomeWidgetCatalog | unpaged | none | Same GetCatalog; category filtered client-side. |
 
 ## inbox
@@ -139,7 +138,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `rate_get_matrix` | partial | rateMatrix | DeskRateMatrixCard | n/a | id, cellOffset | rateMatrix(id), its dimensions and its cells(offset, limit) are in the schema and DeskRateMatrixCard reads them; the tool converts once a get sends its operation's other variables (cellOffset). |
 | `rate_list_confirmations` | none | - | - | - | - | Rate confirmations by move are REST-only. |
 | `rate_list_imports` | none | - | - | - | - | Rate import batches are REST-only. |
 
@@ -200,12 +198,12 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 26 |
-| op, converted (rows removed) | 93 |
+| op, not yet converted | 25 |
+| op, converted (rows removed) | 94 |
 | field-no-op, not yet converted | 0 |
 | field-no-op, converted (rows removed) | 6 |
-| partial, not yet converted | 11 |
-| partial, converted (rows removed) | 19 |
+| partial, not yet converted | 10 |
+| partial, converted (rows removed) | 20 |
 | none | 21 |
 | **total** | **176** |
 
@@ -219,7 +217,7 @@ for read.
 
 - **By the rule:** 49 tools.
 - **By a named operation** (the one this inventory picked): 46 tools.
-- **Not yet:** 21 tools, each with the generator's reason below. Most need `entity` named in
+- **Not yet:** 20 tools, each with the generator's reason below. Most need `entity` named in
   `reads.yml`, because their type binds to a generated model (`gqlmodel`) rather than to the
   record the resolver filters. A few have a shape no list or get tool reads (no arguments at all,
   a catalog, two root fields), and are decided in their module's PR.
@@ -228,7 +226,6 @@ for read.
 |---|---|---|
 | `dispatch_get_board` | `DispatchBoard` | DispatchBoard binds to no Go type; name the entity in reads.yml |
 | `factoring_get_submission` | `FactoringSubmissionDetail` | factoring_get_submission is a get tool, but FactoringSubmissionDetail reads factoringSubmission, which is not one |
-| `home_get_layout` | `HomeLayout` | home_get_layout is a get tool, but HomeLayout reads homeLayout, which is not one |
 | `home_list_widgets` | `HomeWidgetCatalog` | home_list_widgets is a list tool, but HomeWidgetCatalog reads homeWidgetCatalog, which is not one |
 | `receivable_list_credit_memo_applications` | `DeskInvoiceCard` | receivable_list_credit_memo_applications is a list tool, but DeskInvoiceCard reads invoice, which is not one |
 | `report_get` | `ReportDefinitionById` | ReportDefinition binds to no Go type; name the entity in reads.yml |

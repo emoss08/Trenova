@@ -69,6 +69,7 @@ type toolRead struct {
 	RootField   string
 	Node        string
 	Resource    string
+	SelfScoped  bool
 	EntityAlias string
 	EntityType  string
 	Unpaged     bool
@@ -112,6 +113,9 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: {{ quote .RootField }},
 		Node:      {{ quote .Node }},
 		Resource:  {{ quote .Resource }},
+{{- if .SelfScoped }}
+		SelfScoped: true,
+{{- end }}
 {{- if .EntityType }}
 		Entity: func() domaintypes.PostgresSearchable { return new({{ .EntityAlias }}.{{ .EntityType }}) },
 {{- end }}
@@ -220,6 +224,7 @@ func writeTools(
 			RootField:   b.RootField.Name,
 			Node:        b.Node,
 			Resource:    string(b.Resource),
+			SelfScoped:  b.SelfScoped,
 			EntityAlias: alias,
 			EntityType:  gt.Name,
 			Unpaged:     b.unpaged(),
@@ -308,7 +313,7 @@ func besideReads(schema *ast.Schema, reads []*alongside, described bool) []besid
 // carries the schema's own words.
 func variables(schema *ast.Schema, b *binding) []variable {
 	op := b.Operation.Query.Operations[0]
-	arguments := make(map[string]*ast.ArgumentDefinition)
+	arguments := nestedArguments(b.Operation.Query, op.SelectionSet)
 	for _, selection := range op.SelectionSet {
 		root, ok := selection.(*ast.Field)
 		if !ok || root.Name != b.RootField.Name {
@@ -345,6 +350,59 @@ func variables(schema *ast.Schema, b *binding) []variable {
 	}
 
 	return out
+}
+
+// nestedArguments are the arguments of fields below the root that the
+// operation's variables are sent as (a rate matrix's cells(offset:
+// $cellOffset)), so each such variable is described by the argument it feeds.
+func nestedArguments(
+	doc *ast.QueryDocument,
+	selections ast.SelectionSet,
+) map[string]*ast.ArgumentDefinition {
+	out := make(map[string]*ast.ArgumentDefinition)
+	walkArguments(doc, selections, true, out)
+
+	return out
+}
+
+// walkArguments records, below the root, each field argument a variable is
+// sent as.
+func walkArguments(
+	doc *ast.QueryDocument,
+	set ast.SelectionSet,
+	root bool,
+	out map[string]*ast.ArgumentDefinition,
+) {
+	for _, selection := range set {
+		switch node := selection.(type) {
+		case *ast.Field:
+			if !root {
+				fieldArguments(node, out)
+			}
+			walkArguments(doc, node.SelectionSet, false, out)
+		case *ast.InlineFragment:
+			walkArguments(doc, node.SelectionSet, root, out)
+		case *ast.FragmentSpread:
+			if fragment := doc.Fragments.ForName(node.Name); fragment != nil {
+				walkArguments(doc, fragment.SelectionSet, root, out)
+			}
+		}
+	}
+}
+
+// fieldArguments records each argument of one field a variable is sent as.
+func fieldArguments(field *ast.Field, out map[string]*ast.ArgumentDefinition) {
+	if field.Definition == nil {
+		return
+	}
+	for _, argument := range field.Arguments {
+		if argument.Value == nil || argument.Value.Kind != ast.Variable {
+			continue
+		}
+		if def := field.Definition.Arguments.ForName(argument.Name); def != nil {
+			out[argument.Value.Raw] = def
+		}
+	}
 }
 
 // includeSwitches describe each variable an operation reads only to include

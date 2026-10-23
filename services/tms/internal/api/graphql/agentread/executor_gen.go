@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fuelsurchargeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazardousmaterialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/homelayoutexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iftaexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundmessageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundreplyexec"
@@ -104,6 +105,7 @@ import (
 	fuelsurchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fuelsurchargeresolver"
 	hazardousmaterialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/hazardousmaterialresolver"
 	holdreasonresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
+	homelayoutresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/homelayoutresolver"
 	iftaresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/iftaresolver"
 	inboundmessageresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/inboundmessageresolver"
 	inboundreplyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/inboundreplyresolver"
@@ -234,6 +236,7 @@ import (
 	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	workerports "github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
+	homelayoutservice "github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"go.uber.org/fx"
 	zap "go.uber.org/zap"
@@ -306,6 +309,7 @@ type ResolverParams struct {
 	GLAccountRepo                glaccountports.GLAccountRepository
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	HomeLayoutService            *homelayoutservice.Service
 	IFTAService                  *iftaservice.Service
 	InboundMessageService        *inboundmessageservice.Service
 	InboundReplyService          *inboundreplyservice.Service
@@ -403,6 +407,7 @@ var shards = []*gqlexec.Shard{
 	fuelsurchargeexec.Shard,
 	hazardousmaterialexec.Shard,
 	holdreasonexec.Shard,
+	homelayoutexec.Shard,
 	iftaexec.Shard,
 	inboundmessageexec.Shard,
 	inboundreplyexec.Shard,
@@ -773,6 +778,11 @@ var operations = []Operation{
 		Document: "query DeskFuelPurchases($includeTotalCount: Boolean = false, $input: FuelPurchasesInput!) { fuelPurchases(input: $input) { edges { node { cardLastFour currencyCode fuelCardId fuelType gallons id importBatchId jurisdiction { code id } jurisdictionId purchasedAt quantity quantityUnit source taxPaid totalAmount tractor { code id } tractorId transactionReference vendor vendorCity worker { id wholeName } workerId } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
+		Name:     "HomeLayout",
+		Hash:     "sha256:54555d91b387c7e74269ce62063e35106cd2b8291936c35a3d0642268410856f",
+		Document: "fragment HomeLayoutFields on HomeLayout { canCustomize density locked presetId presetName schemaVersion source version widgets { ...HomeWidgetFields } } fragment HomeWidgetFields on HomeWidget { config { cannedKey chartId columnId dashboardId definitionId limit metric metrics text windowDays } h id key title w } query HomeLayout { homeLayout { ...HomeLayoutFields } }",
+	},
+	{
 		Name:     "DeskInboundMessage",
 		Hash:     "sha256:016e6892c15eaa8777f52b0eaf4b4d5fe92479680c97fcbda10e3d9a12549b9a",
 		Document: "query DeskInboundMessage($id: ID!) { inboundMessage(id: $id) { actions { createdShipment { id } done exceptionKind id kind stopsDecision } attachments { contentType documentId failureText fileName filedAs filedShipmentId id kind pageCount } awaitingReply { until } classification confidence conflicts { attachmentId existingAmount existingDocumentId existingShipment { id } id kind newAmount resolution } dueAt failureText fromAddress fromName id loadDraft { fields { key value } source } mailbox { address name } mailboxId matchReason matchedCarrierId matchedCustomerId matchedShipmentId needsReview ownerId receivedAt replyDraft { body draftedByNova subject toAddress } reviewNote snooze { documentTypeId event until watchShipment { id } } status subject textBody threadKey toAddresses } }",
@@ -921,6 +931,11 @@ var operations = []Operation{
 		Name:     "DeskRateAgreementCard",
 		Hash:     "sha256:2336bee6177126db029e2df81fd20bdfdba279f16f9f13c476f62118bf25251d",
 		Document: "query DeskRateAgreementCard($id: ID!) { rateAgreement(id: $id) { accessorials { accessorialChargeId amount autoApply condition effectiveFrom effectiveTo freeUnits id maxAmount method rateUnit waived } agreementType approvedAt autoRenew billToCustomerId carrierId code contractRef currency currentVersion { changeMessage effectiveFrom effectiveTo id versionNumber } customerId description effectiveFrom effectiveTo fuelBinding { fuelSurchargeProgramId id waived } id inputs laneCount lanes(first: 50) { currency destinationCity destinationScopeType destinationScopeValue direction effectiveFrom effectiveTo formulaTemplateId hazmatOnly id inputs label originCity originScopeType originScopeValue priority tempControlOnly } name partyType priority renewalNoticeDays reviewComment status submittedAt } }",
+	},
+	{
+		Name:     "DeskRateMatrixCard",
+		Hash:     "sha256:df8aeeac3bf7a7d644df2c9c0f5004b417cd111d4498f39d22cb575065641188",
+		Document: "query DeskRateMatrixCard($cellOffset: Int = 0, $id: ID!) { rateMatrix(id: $id) { cellCount cells(offset: $cellOffset, limit: 100) { d0Key d0Max d0Min d1Key d1Max d1Min d2Key d2Max d2Min d3Key d3Max d3Min deficitEligible id minCharge value } code description dimensions { id keyNormalization kind label matchMode position rangeOverflow } id name status valueType } }",
 	},
 	{
 		Name:     "DeskRateAgreements",
@@ -1322,6 +1337,10 @@ func NewSchema(p ResolverParams) Schema {
 		Core:              core,
 		HoldReasonService: p.HoldReasonService,
 	}
+	homelayoutDeps := &homelayoutresolver.Deps{
+		Core:              core,
+		HomeLayoutService: p.HomeLayoutService,
+	}
 	iftaDeps := &iftaresolver.Deps{
 		Core:                       core,
 		IftaService:                p.IFTAService,
@@ -1530,6 +1549,7 @@ func NewSchema(p ResolverParams) Schema {
 		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
 		fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
 		fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
+		homelayoutMutation:            &homelayoutMutation{Deps: homelayoutDeps},
 		iftaMutation:                  &iftaMutation{Deps: iftaDeps},
 		inboundmessageMutation:        &inboundmessageMutation{Deps: inboundmessageDeps},
 		inboundreplyMutation:          &inboundreplyMutation{Deps: inboundreplyDeps},
@@ -1587,6 +1607,7 @@ func NewSchema(p ResolverParams) Schema {
 		fuelsurchargeQuery:            &fuelsurchargeQuery{Deps: fuelsurchargeDeps},
 		hazardousmaterialQuery:        &hazardousmaterialQuery{Deps: hazardousmaterialDeps},
 		holdreasonQuery:               &holdreasonQuery{Deps: holdreasonDeps},
+		homelayoutQuery:               &homelayoutQuery{Deps: homelayoutDeps},
 		iftaQuery:                     &iftaQuery{Deps: iftaDeps},
 		inboundmessageQuery:           &inboundmessageQuery{Deps: inboundmessageDeps},
 		inboundreplyQuery:             &inboundreplyQuery{Deps: inboundreplyDeps},
@@ -1924,6 +1945,7 @@ type mutationResolver struct {
 	*fleetsafetyMutation
 	*fuelpurchaseMutation
 	*fuelsurchargeMutation
+	*homelayoutMutation
 	*iftaMutation
 	*inboundmessageMutation
 	*inboundreplyMutation
@@ -1982,6 +2004,7 @@ type queryResolver struct {
 	*fuelsurchargeQuery
 	*hazardousmaterialQuery
 	*holdreasonQuery
+	*homelayoutQuery
 	*iftaQuery
 	*inboundmessageQuery
 	*inboundreplyQuery
@@ -2048,6 +2071,7 @@ type (
 	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
 	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
 	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
+	homelayoutMutation              = homelayoutresolver.MutationResolver
 	iftaMutation                    = iftaresolver.MutationResolver
 	inboundmessageMutation          = inboundmessageresolver.MutationResolver
 	inboundreplyMutation            = inboundreplyresolver.MutationResolver
@@ -2103,6 +2127,7 @@ type (
 	fuelsurchargeQuery              = fuelsurchargeresolver.QueryResolver
 	hazardousmaterialQuery          = hazardousmaterialresolver.QueryResolver
 	holdreasonQuery                 = holdreasonresolver.QueryResolver
+	homelayoutQuery                 = homelayoutresolver.QueryResolver
 	iftaQuery                       = iftaresolver.QueryResolver
 	inboundmessageQuery             = inboundmessageresolver.QueryResolver
 	inboundreplyQuery               = inboundreplyresolver.QueryResolver

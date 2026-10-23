@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -168,8 +169,12 @@ type binding struct {
 	// a get's result.
 	Node     string
 	Resource permission.Resource
-	Reason   string
-	Entity   string
+	// SelfScoped marks a read whose resolver acts only on the caller's own
+	// record (selfscoped.Resolvers) and so checks no resource; the tool's own
+	// policy, scoped to the caller, is the only check.
+	SelfScoped bool
+	Reason     string
+	Entity     string
 	// Alongside are the reads a tool makes beside its own, each checked by
 	// its own resolver for its own resource.
 	Alongside []*alongside
@@ -330,11 +335,7 @@ func readShape(
 		}
 		return verbList, node.Type.Name(), true
 	}
-	if len(field.Arguments) > 0 {
-		return verbGet, def.Name, true
-	}
-
-	return "", "", false
+	return verbGet, def.Name, true
 }
 
 // boundSchema and boundChecks are what a named binding is proven against;
@@ -757,20 +758,22 @@ func namedBinding(r read, chosen *operation) (b *binding, problem string) {
 			r.Tool, want, r.Operation, chosen.Roots[0])
 	}
 	resource, checked := checkedResource(boundChecks, field.Name)
-	if !checked {
+	self := !checked && selfscoped.Root("Query", field.Name)
+	if !checked && !self {
 		return nil, fmt.Sprintf("%s: the resolver of %s checks no read permission, so the "+
 			"tool's own could not be held to it", r.Tool, field.Name)
 	}
 
 	return &binding{
-		Tool:      r.Tool,
-		Verb:      verb,
-		Operation: chosen,
-		RootField: field,
-		Node:      node,
-		Resource:  permission.Resource(resource),
-		Reason:    r.Reason,
-		Entity:    r.Entity,
+		Tool:       r.Tool,
+		Verb:       verb,
+		Operation:  chosen,
+		RootField:  field,
+		Node:       node,
+		Resource:   permission.Resource(resource),
+		SelfScoped: self,
+		Reason:     r.Reason,
+		Entity:     r.Entity,
 	}, ""
 }
 

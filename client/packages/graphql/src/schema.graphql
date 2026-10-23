@@ -25920,7 +25920,12 @@ type RateMatrix {
   The grid's cells, a page at a time: offset skips that many, and limit takes
   at most 100.
   """
-  cells(limit: Int = 100, offset: Int = 0): [RateMatrixCell!]!
+  cells(
+    """At most this many cells."""
+    limit: Int = 100
+    """Skip this many cells, in the matrix's order, for the page after them."""
+    offset: Int = 0
+  ): [RateMatrixCell!]!
   code: String!
   createdAt: Timestamp!
   description: String!

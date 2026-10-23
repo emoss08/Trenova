@@ -32,13 +32,16 @@ type getSpec struct {
 	summary     string
 	searchTerms []string
 	resource    permission.Resource
-	kinds       []permission.RecordKind
-	paramName   string
-	idSource    string
-	reads       agent.ExternalRead
-	source      agent.TaintSource
-	rationale   string
-	fetch       func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
+	// scope narrows the policy to the caller's own records (the person's own
+	// home page).
+	scope     agent.ToolScope
+	kinds     []permission.RecordKind
+	paramName string
+	idSource  string
+	reads     agent.ExternalRead
+	source    agent.TaintSource
+	rationale string
+	fetch     func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
 	// A get that reads through GraphQL takes its operation's other
 	// variables as parameters, named, typed and noted as a list's are.
 	names      map[string]string
@@ -74,6 +77,18 @@ type getSpec struct {
 	// wrote (a driver's own description); a record that shows one is marked
 	// as read from outside, as reads Marked declares.
 	outside []string
+	// pages marks a get whose operation reads one page of a list the record
+	// holds, from an offset the call sends (a rate matrix's cells): the
+	// result says whether more follow and the offset to ask for next.
+	pages *getPages
+}
+
+// getPages names the offset variable a get's operation pages a held list by,
+// the list, and the field that counts all of it.
+type getPages struct {
+	offset string
+	items  string
+	total  string
 }
 
 type getTool struct {
@@ -97,6 +112,7 @@ func (t *getTool) SearchTerms() []string { return t.spec.searchTerms }
 func (t *getTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:  t.spec.resource,
+		scope:     t.spec.scope,
 		reads:     t.spec.reads,
 		source:    t.spec.source,
 		rationale: t.spec.rationale,
@@ -256,6 +272,8 @@ func graphQLGetSpecs() []getSpec {
 		formulaLibraryGetSpec(),
 		invoiceGetSpec(),
 		invoiceAdjustmentGetSpec(),
+		homeLayoutGetSpec(),
+		rateMatrixGetSpec(),
 	}, slices.Concat(
 		accountingGetSpecs(), ediGetSpecs(), settlementGetSpecs(), factoringGetSpecs(),
 		inboxGetSpecs(),
