@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -47,6 +49,7 @@ var ratingRelations = []string{
 	"TrailerType",
 	"Moves.Stops.Location",
 	"Moves.Stops.Location.State",
+	"Moves.Stops.Location.LocationCategory",
 	"Commodities.Commodity",
 	"Commodities.Commodity.HazardousMaterial",
 }
@@ -59,6 +62,7 @@ type Params struct {
 	ShipmentTypeRepo  shipmenttypeports.ShipmentTypeRepository
 	EquipmentTypeRepo equipmenttypeports.EquipmentTypeRepository
 	LocationRepo      locationports.LocationRepository
+	CategoryRepo      locationcategoryports.LocationCategoryRepository
 	StateRepo         usstateports.UsStateRepository
 	CommodityRepo     commodityports.CommodityRepository
 	HazmatRepo        hazardousmaterialports.HazardousMaterialRepository
@@ -199,18 +203,19 @@ func batchTenant(
 
 func relationLoaders(p *Params) map[string]func(context.Context, *hydration) error {
 	return map[string]func(context.Context, *hydration) error{
-		"Moves":                      nil,
-		"Moves.Stops":                nil,
-		"Commodities":                nil,
-		"AdditionalCharges":          nil,
-		relationCustomer:             loadCustomers(p.CustomerRepo),
-		"ServiceType":                loadServiceTypes(p.ServiceTypeRepo),
-		"ShipmentType":               loadShipmentTypes(p.ShipmentTypeRepo),
-		"TractorType":                loadTractorTypes(p.EquipmentTypeRepo),
-		"TrailerType":                loadTrailerTypes(p.EquipmentTypeRepo),
-		"Moves.Stops.Location":       loadStopLocations(p.LocationRepo),
-		"Moves.Stops.Location.State": loadLocationStates(p.StateRepo),
-		"Commodities.Commodity":      loadCommodities(p.CommodityRepo),
+		"Moves":                                 nil,
+		"Moves.Stops":                           nil,
+		"Commodities":                           nil,
+		"AdditionalCharges":                     nil,
+		relationCustomer:                        loadCustomers(p.CustomerRepo),
+		"ServiceType":                           loadServiceTypes(p.ServiceTypeRepo),
+		"ShipmentType":                          loadShipmentTypes(p.ShipmentTypeRepo),
+		"TractorType":                           loadTractorTypes(p.EquipmentTypeRepo),
+		"TrailerType":                           loadTrailerTypes(p.EquipmentTypeRepo),
+		"Moves.Stops.Location":                  loadStopLocations(p.LocationRepo),
+		"Moves.Stops.Location.State":            loadLocationStates(p.StateRepo),
+		"Moves.Stops.Location.LocationCategory": loadLocationCategories(p.CategoryRepo),
+		"Commodities.Commodity":                 loadCommodities(p.CommodityRepo),
 		"Commodities.Commodity.HazardousMaterial": loadHazardousMaterials(p.HazmatRepo),
 	}
 }
@@ -489,6 +494,36 @@ func loadLocationStates(
 			ids []pulid.ID,
 		) ([]*usstate.UsState, error) {
 			return repo.GetByIDs(ctx, ids)
+		},
+	}
+	return func(ctx context.Context, h *hydration) error {
+		return hydrateBelongsTo(ctx, h, link, stopLocationsOf(h.entities))
+	}
+}
+
+func loadLocationCategories(
+	repo locationcategoryports.LocationCategoryRepository,
+) func(context.Context, *hydration) error {
+	link := belongsTo[*location.Location, locationcategory.LocationCategory]{
+		field:      "locationCategoryId",
+		label:      "Location category",
+		foreignKey: func(l *location.Location) pulid.ID { return l.LocationCategoryID },
+		get: func(l *location.Location) *locationcategory.LocationCategory {
+			return l.LocationCategory
+		},
+		set: func(l *location.Location, v *locationcategory.LocationCategory) {
+			l.LocationCategory = v
+		},
+		key: func(v *locationcategory.LocationCategory) pulid.ID { return v.ID },
+		fetch: func(
+			ctx context.Context,
+			tenantInfo pagination.TenantInfo,
+			ids []pulid.ID,
+		) ([]*locationcategory.LocationCategory, error) {
+			return repo.GetByIDs(ctx, locationcategoryports.GetLocationCategoriesByIDsRequest{
+				TenantInfo:          tenantInfo,
+				LocationCategoryIDs: ids,
+			})
 		},
 	}
 	return func(ctx context.Context, h *hydration) error {

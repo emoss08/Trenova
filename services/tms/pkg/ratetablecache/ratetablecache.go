@@ -66,6 +66,12 @@ type shapes struct {
 type memo struct {
 	mu      sync.Mutex
 	entries map[tenantKey]shapes
+	values  map[valueKey]any
+}
+
+type valueKey struct {
+	tenant tenantKey
+	name   string
 }
 
 type cellKey struct {
@@ -102,7 +108,39 @@ func With(ctx context.Context) context.Context {
 	if from(ctx) != nil {
 		return ctx
 	}
-	return context.WithValue(ctx, contextKey{}, &memo{entries: make(map[tenantKey]shapes, 1)})
+	return context.WithValue(ctx, contextKey{}, &memo{
+		entries: make(map[tenantKey]shapes, 1),
+		values:  make(map[valueKey]any, 2),
+	})
+}
+
+func Memoize[T any](
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	name string,
+	load func(ctx context.Context) (T, error),
+) (T, error) {
+	m := from(ctx)
+	if m == nil {
+		return load(ctx)
+	}
+	key := valueKey{tenant: tenantKey{orgID: orgID, buID: buID}, name: name}
+
+	m.mu.Lock()
+	cached, ok := m.values[key]
+	m.mu.Unlock()
+	if value, typed := cached.(T); ok && typed {
+		return value, nil
+	}
+
+	value, err := load(ctx)
+	if err != nil {
+		return value, err
+	}
+	m.mu.Lock()
+	m.values[key] = value
+	m.mu.Unlock()
+	return value, nil
 }
 
 func from(ctx context.Context) *memo {

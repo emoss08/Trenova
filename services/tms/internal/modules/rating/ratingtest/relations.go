@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -38,6 +40,7 @@ type RelationStore struct {
 	ShipmentTypes map[pulid.ID]*shipmenttype.ShipmentType
 	Equipment     map[pulid.ID]*equipmenttype.EquipmentType
 	Locations     map[pulid.ID]*location.Location
+	Categories    map[pulid.ID]*locationcategory.LocationCategory
 	States        map[pulid.ID]*usstate.UsState
 	Commodities   map[pulid.ID]*commodity.Commodity
 	Hazmats       map[pulid.ID]*hazardousmaterial.HazardousMaterial
@@ -52,6 +55,7 @@ func NewRelationStore() *RelationStore {
 		ShipmentTypes: make(map[pulid.ID]*shipmenttype.ShipmentType),
 		Equipment:     make(map[pulid.ID]*equipmenttype.EquipmentType),
 		Locations:     make(map[pulid.ID]*location.Location),
+		Categories:    make(map[pulid.ID]*locationcategory.LocationCategory),
 		States:        make(map[pulid.ID]*usstate.UsState),
 		Commodities:   make(map[pulid.ID]*commodity.Commodity),
 		Hazmats:       make(map[pulid.ID]*hazardousmaterial.HazardousMaterial),
@@ -159,6 +163,24 @@ func (r storeLocations) GetByIDs(
 	return fetchFrom(r.s, "location", req.TenantInfo, req.LocationIDs, r.s.Locations), nil
 }
 
+type storeCategories struct {
+	locationcategoryports.LocationCategoryRepository
+	s *RelationStore
+}
+
+func (r storeCategories) GetByIDs(
+	_ context.Context,
+	req locationcategoryports.GetLocationCategoriesByIDsRequest,
+) ([]*locationcategory.LocationCategory, error) {
+	return fetchFrom(
+		r.s,
+		"locationCategory",
+		req.TenantInfo,
+		req.LocationCategoryIDs,
+		r.s.Categories,
+	), nil
+}
+
 type storeStates struct {
 	usstateports.UsStateRepository
 	s *RelationStore
@@ -199,6 +221,7 @@ func HydratorParams(store *RelationStore) ratinghydration.Params {
 		ShipmentTypeRepo:  storeShipmentTypes{s: store},
 		EquipmentTypeRepo: storeEquipmentTypes{s: store},
 		LocationRepo:      storeLocations{s: store},
+		CategoryRepo:      storeCategories{s: store},
 		StateRepo:         storeStates{s: store},
 		CommodityRepo:     storeCommodities{s: store},
 		HazmatRepo:        storeHazmats{s: store},

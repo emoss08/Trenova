@@ -283,6 +283,41 @@ func (r *repository) GetByID(
 	)
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req locationcategoryports.GetLocationCategoriesByIDsRequest,
+) ([]*locationcategory.LocationCategory, error) {
+	if len(req.LocationCategoryIDs) == 0 {
+		return []*locationcategory.LocationCategory{}, nil
+	}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*locationcategory.LocationCategory, error) {
+			entities := make([]*locationcategory.LocationCategory, 0, len(req.LocationCategoryIDs))
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return locationcategorycol.LocationCategoryScopeTenant(sq, req.TenantInfo).
+						Where(
+							locationcategorycol.LocationCategoryColumns.ID.In(),
+							bun.List(req.LocationCategoryIDs),
+						)
+				}).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to get location categories",
+					zap.String("operation", "GetByIDs"),
+					zap.Error(err),
+				)
+				return nil, err
+			}
+			return entities, nil
+		},
+	)
+}
+
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,

@@ -176,6 +176,74 @@ func (_c *MockLocationCategoryRepository_GetByID_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
+// GetByIDs provides a mock function for the type MockLocationCategoryRepository
+func (_mock *MockLocationCategoryRepository) GetByIDs(ctx context.Context, req locationcategoryports.GetLocationCategoriesByIDsRequest) ([]*locationcategory.LocationCategory, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*locationcategory.LocationCategory
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, locationcategoryports.GetLocationCategoriesByIDsRequest) ([]*locationcategory.LocationCategory, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, locationcategoryports.GetLocationCategoriesByIDsRequest) []*locationcategory.LocationCategory); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*locationcategory.LocationCategory)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, locationcategoryports.GetLocationCategoriesByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockLocationCategoryRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockLocationCategoryRepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetLocationCategoriesByIDsRequest
+func (_e *MockLocationCategoryRepository_Expecter) GetByIDs(ctx any, req any) *MockLocationCategoryRepository_GetByIDs_Call {
+	return &MockLocationCategoryRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
+}
+
+func (_c *MockLocationCategoryRepository_GetByIDs_Call) Run(run func(ctx context.Context, req locationcategoryports.GetLocationCategoriesByIDsRequest)) *MockLocationCategoryRepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 locationcategoryports.GetLocationCategoriesByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(locationcategoryports.GetLocationCategoriesByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockLocationCategoryRepository_GetByIDs_Call) Return(locationCategorys []*locationcategory.LocationCategory, err error) *MockLocationCategoryRepository_GetByIDs_Call {
+	_c.Call.Return(locationCategorys, err)
+	return _c
+}
+
+func (_c *MockLocationCategoryRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req locationcategoryports.GetLocationCategoriesByIDsRequest) ([]*locationcategory.LocationCategory, error)) *MockLocationCategoryRepository_GetByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // List provides a mock function for the type MockLocationCategoryRepository
 func (_mock *MockLocationCategoryRepository) List(ctx context.Context, req *locationcategoryports.ListLocationCategoriesRequest) (*pagination.ListResult[*locationcategory.LocationCategory], error) {
 	ret := _mock.Called(ctx, req)
