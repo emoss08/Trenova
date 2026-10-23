@@ -19310,9 +19310,13 @@ type Invoice {
   isSplitBill: Boolean!
   lastEdiError: String!
   lastEdiMessageId: ID
+  """Why the last email delivery failed; empty when it did not."""
+  lastSendError: String!
   """Late charges assessed on this invoice, newest first."""
   lateChargeAssessments: [LateChargeAssessment!]!
   lines: [InvoiceLine!]
+  """The note printed on the invoice for the customer."""
+  memo: String!
   memoKind: InvoiceMemoKind
   memoReason: String!
   number: String!
@@ -19357,6 +19361,8 @@ type Invoice {
   Other invoices that bill any shipment on this one, split-bill siblings first.
   """
   relatedInvoices: [Invoice!]!
+  """How the customer is told to pay, as printed on the invoice."""
+  remittanceInstructions: String!
   scope: InvoiceScope!
   """How the lines on this invoice are organised for the reader."""
   sectionBy: InvoiceSectionKey!
@@ -19377,6 +19383,10 @@ type Invoice {
   shipperCustomerId: ID
   status: InvoiceStatus!
   subtotalAmount: Decimal!
+  """The invoice that replaced this one in a correction chain."""
+  supersededByInvoiceId: ID
+  """The invoice this one replaces in a correction chain."""
+  supersedesInvoiceId: ID
   totalAmount: Decimal
   updatedAt: Timestamp!
   version: Int!
@@ -19391,9 +19401,11 @@ type Invoice {
 }
 
 """
-A credit, rebill, reversal, or write-off raised against a posted invoice.
+A credit, rebill, reversal, or write-off raised against a posted invoice. Its
+fields follow the invoice's sensitivities: what it credits is the invoice's
+money.
 """
-type InvoiceAdjustment {
+type InvoiceAdjustment @kind(resource: "invoice") {
   accountingDate: Timestamp!
   approvalRequired: Boolean!
   approvalStatus: InvoiceAdjustmentApprovalStatus!
@@ -19429,6 +19441,8 @@ type InvoiceAdjustment {
   status: InvoiceAdjustmentStatus!
   submittedAt: Timestamp
   submittedById: ID
+  """The documents the submitter attached as support for the adjustment."""
+  supportingDocumentIds: [ID!]!
   updatedAt: Timestamp!
   version: Int!
   wouldCreateUnappliedCredit: Boolean!
@@ -24480,7 +24494,16 @@ type Query {
   """Adjustments whose policy holds them for finance approval."""
   invoiceAdjustmentApprovals(input: InvoiceAdjustmentApprovalsInput!): InvoiceAdjustmentApprovalQueueConnection!
   invoiceAdjustmentOperationsSummary: InvoiceAdjustmentOperationsSummary!
-  invoiceDisputes(invoiceId: ID!): [InvoiceDispute!]!
+  """
+  The dispute cases on one invoice, or on several, each invoice's newest first.
+  Name the invoice by invoiceId or the invoices by invoiceIds (at most 100),
+  not both.
+  """
+  invoiceDisputes(
+    invoiceId: ID
+    """The invoices whose dispute cases are read, at most 100."""
+    invoiceIds: [ID!]
+  ): [InvoiceDispute!]!
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
   jobPosition(id: ID!): JobPosition!
   """Everyone in a position from either roster, workers first."""

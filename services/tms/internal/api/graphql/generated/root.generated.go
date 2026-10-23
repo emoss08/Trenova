@@ -1776,6 +1776,7 @@ type InvoiceAdjustmentResolver interface {
 	RebillTotalAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	NetDeltaAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	RerateVariancePercent(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
+	SupportingDocumentIds(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]string, error)
 }
 
 type InvoiceAdjustmentApprovalQueueItemResolver interface {
@@ -3106,7 +3107,7 @@ type QueryResolver interface {
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
 	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)
-	InvoiceDisputes(ctx context.Context, invoiceID string) ([]*invoice.InvoiceDispute, error)
+	InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoice.InvoiceDispute, error)
 	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
 	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)
 	JournalSourceByObject(ctx context.Context, sourceType string, sourceID string) (*journalsource.Source, error)

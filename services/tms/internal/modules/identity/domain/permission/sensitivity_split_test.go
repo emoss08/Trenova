@@ -14,10 +14,7 @@ func TestMedicalRecordsKeepWhatHappenedToThePersonRestricted(t *testing.T) {
 	t.Parallel()
 
 	registry := NewRegistry()
-	cases := map[Resource]struct {
-		internal   []string
-		restricted []string
-	}{
+	cases := map[Resource]sensitivitySplit{
 		ResourceWorkerDOTTest: {
 			internal: []string{
 				"testType", "isDot", "reason", "status", "scheduledAt", "collectedAt",
@@ -68,6 +65,17 @@ func TestMedicalRecordsKeepWhatHappenedToThePersonRestricted(t *testing.T) {
 			},
 		},
 	}
+	assertSplit(t, registry, cases)
+}
+
+type sensitivitySplit struct {
+	internal   []string
+	restricted []string
+}
+
+func assertSplit(t *testing.T, registry *Registry, cases map[Resource]sensitivitySplit) {
+	t.Helper()
+
 	for resource, tc := range cases {
 		for _, field := range tc.internal {
 			assert.Equal(t, SensitivityInternal,
@@ -78,4 +86,42 @@ func TestMedicalRecordsKeepWhatHappenedToThePersonRestricted(t *testing.T) {
 				registry.GetFieldSensitivity(resource.String(), field), "%s.%s", resource, field)
 		}
 	}
+}
+
+// An invoice's, an adjustment's and a dispute's state is Internal, so an
+// agent at the default data access can say where a receivable stands; the
+// money and the words written about it stay Restricted.
+func TestReceivablesKeepTheMoneyAndTheNotesRestricted(t *testing.T) {
+	t.Parallel()
+
+	assertSplit(t, NewRegistry(), map[Resource]sensitivitySplit{
+		ResourceInvoice: {
+			internal: []string{
+				"scope", "shipmentCount", "voidedAt", "ediSendStatus", "chargeCode",
+				"accessorialChargeId", "executionError", "supportingDocumentIds", "kind",
+				"approvalStatus", "lines",
+			},
+			restricted: []string{
+				"totalAmount", "appliedAmount", "openBalance", "memo", "voidReason",
+				"lastEdiError", "reason", "policyReason", "creditAmount", "creditQuantity",
+				"rebillQuantity",
+			},
+		},
+		ResourceInvoiceDispute: {
+			internal: []string{
+				"invoiceId", "customerId", "status", "reasonCode", "openedAt", "resolvedAt",
+				"resolution", "resolutionAdjustmentId",
+			},
+			restricted: []string{
+				"disputedAmount", "disputedAmountMinor", "notes", "resolutionNotes",
+			},
+		},
+		ResourceCustomerPayment: {
+			internal: []string{"applications", "invoiceId", "paymentMethod", "referenceNumber"},
+			restricted: []string{
+				"amountMinor", "appliedAmountMinor", "unappliedAmountMinor", "shortPayAmountMinor",
+				"memo",
+			},
+		},
+	})
 }

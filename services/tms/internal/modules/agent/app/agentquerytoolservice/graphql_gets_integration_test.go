@@ -4,6 +4,7 @@ package agentquerytoolservice_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -87,58 +88,92 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 
 	for name, c := range gets {
 		t.Run(name, func(t *testing.T) {
-			get, err := agentquerytoolservice.ConvertedGetTool(name, reader, engine)
-			require.NoError(t, err)
-			ours := writeReferenceRows(t, c, mine, "A")
-			other := writeReferenceRows(t, c, theirs, "B")
-			actor := mine.Actor
-			param := get.ParamSchema()["required"].([]string)[0]
-
-			t.Run("our record, as the card reads it", func(t *testing.T) {
-				for _, id := range ours.rows {
-					record := callTool(t, ours.ctx, get, actor, map[string]any{param: id})
-					assert.Equal(t, id, record["id"])
-					assert.NotContains(t, record, "withheldByAccess")
-				}
-			})
-
-			t.Run("nothing is withheld at the default agent data access", func(t *testing.T) {
-				data, err := get.Query(ours.ctx, &agentports.QueryToolParams{
-					OrganizationID:    actor.OrganizationID,
-					BusinessUnitID:    actor.BusinessUnitID,
-					Actor:             actor,
-					Timezone:          "America/Chicago",
-					Params:            map[string]any{param: ours.rows[0]},
-					DataAccessCeiling: permission.SensitivityInternal,
-					RunID:             pulid.MustNew("ar_"),
-				})
-				require.NoError(t, err)
-				assert.NotContains(t, asMap(t, data), "withheldByAccess")
-			})
-
-			t.Run("another tenant's record is not found", func(t *testing.T) {
-				_, err := get.Query(ours.ctx, &agentports.QueryToolParams{
-					OrganizationID: actor.OrganizationID,
-					BusinessUnitID: actor.BusinessUnitID,
-					Actor:          actor,
-					Timezone:       "America/Chicago",
-					Params:         map[string]any{param: other.rows[0]},
-					RunID:          pulid.MustNew("ar_"),
-				})
-				require.Error(t, err)
-			})
-
-			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
-				hidden, err := agentquerytoolservice.ConvertedGetTool(name, public, &publicRole{})
-				require.NoError(t, err)
-				record := callTool(t, ours.ctx, hidden, actor, map[string]any{param: ours.rows[0]})
-				withheld, _ := record["withheldByAccess"].([]any)
-				require.NotEmpty(t, withheld)
-				assert.Equal(t, ours.rows[0], record["id"])
-				for _, field := range withheld {
-					assert.NotContains(t, record, field)
-				}
-			})
+			checkConvertedGet(t, name, c, &listReaders{
+				reader: reader, public: public, engine: engine, mine: mine, theirs: theirs,
+			}, nil)
 		})
 	}
+}
+
+// checkConvertedGet holds one converted get to row-level security: each of
+// the tenant's records reads, withholding at the default agent data access
+// only withheldAtInternal, another tenant's is not found, and at Public
+// every withheld field is absent.
+func checkConvertedGet(
+	t *testing.T,
+	name string,
+	c *referenceCase,
+	r *listReaders,
+	withheldAtInternal []string,
+) {
+	t.Helper()
+
+	reader, public, engine, mine, theirs := r.reader, r.public, r.engine, r.mine, r.theirs
+	get, err := agentquerytoolservice.ConvertedGetTool(name, reader, engine)
+	require.NoError(t, err)
+	ours := writeReferenceRows(t, c, mine, "A")
+	other := writeReferenceRows(t, c, theirs, "B")
+	actor := mine.Actor
+	call := func(id string) map[string]any {
+		return agentquerytoolservice.ConvertedGetCall(get, pulid.ID(id))
+	}
+
+	t.Run("our record, as the card reads it", func(t *testing.T) {
+		for _, id := range ours.rows {
+			record := callTool(t, ours.ctx, get, actor, call(id))
+			assert.Equal(t, id, record["id"])
+			withheld, _ := record["withheldByAccess"].([]any)
+			assertWithheld(t, withheldAtInternal, withheld)
+		}
+	})
+
+	t.Run("only what the get documents is withheld at the default agent data access", func(t *testing.T) {
+		data, err := get.Query(ours.ctx, &agentports.QueryToolParams{
+			OrganizationID:    actor.OrganizationID,
+			BusinessUnitID:    actor.BusinessUnitID,
+			Actor:             actor,
+			Timezone:          "America/Chicago",
+			Params:            call(ours.rows[0]),
+			DataAccessCeiling: permission.SensitivityInternal,
+			RunID:             pulid.MustNew("ar_"),
+		})
+		require.NoError(t, err)
+		withheld, _ := asMap(t, data)["withheldByAccess"].([]any)
+		assertWithheld(t, withheldAtInternal, withheld)
+	})
+
+	t.Run("another tenant's record is not found", func(t *testing.T) {
+		_, err := get.Query(ours.ctx, &agentports.QueryToolParams{
+			OrganizationID: actor.OrganizationID,
+			BusinessUnitID: actor.BusinessUnitID,
+			Actor:          actor,
+			Timezone:       "America/Chicago",
+			Params:         call(other.rows[0]),
+			RunID:          pulid.MustNew("ar_"),
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
+		hidden, err := agentquerytoolservice.ConvertedGetTool(name, public, &publicRole{})
+		require.NoError(t, err)
+		record := callTool(t, ours.ctx, hidden, actor, call(ours.rows[0]))
+		withheld, _ := record["withheldByAccess"].([]any)
+		require.NotEmpty(t, withheld)
+		assert.Equal(t, ours.rows[0], record["id"])
+		for _, field := range withheld {
+			assert.NotContains(t, record, field)
+		}
+	})
+}
+
+// assertWithheld holds what a read withheld to what its get documents.
+func assertWithheld(t *testing.T, want []string, withheld []any) {
+	t.Helper()
+
+	got := make([]string, 0, len(withheld))
+	for _, field := range withheld {
+		got = append(got, fmt.Sprint(field))
+	}
+	assert.ElementsMatch(t, want, got)
 }

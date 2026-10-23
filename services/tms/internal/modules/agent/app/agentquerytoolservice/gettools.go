@@ -38,6 +38,12 @@ type getSpec struct {
 	source      agent.TaintSource
 	rationale   string
 	fetch       func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
+	// batch, on a get that reads through GraphQL, makes its parameter a list
+	// of at most this many ids, each read on its own.
+	batch int
+	// shape applies to a record read through GraphQL what the card's
+	// resolver does not, and whether it is one of several read together.
+	shape func(record map[string]any, several bool)
 }
 
 type getTool struct {
@@ -203,6 +209,8 @@ func graphQLGetSpecs() []getSpec {
 		carrierIntelEventGetSpec(),
 		tractorGetSpec(),
 		trailerGetSpec(),
+		invoiceGetSpec(),
+		invoiceAdjustmentGetSpec(),
 	}
 }
 
@@ -229,6 +237,8 @@ func getCatalogSpecs() []getSpec {
 		carrierGetSpec(),
 		tractorGetSpec(),
 		trailerGetSpec(),
+		invoiceGetSpec(),
+		invoiceAdjustmentGetSpec(),
 		locationGetSpec(),
 		specOfGet(newGetDetentionOccurrenceTool(nil, nil, nil)),
 		specOfGet(newGetServiceFailureTool(nil, nil)),

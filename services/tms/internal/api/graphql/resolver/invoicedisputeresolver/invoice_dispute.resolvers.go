@@ -152,27 +152,27 @@ func (r *MutationResolver) WithdrawInvoiceDispute(ctx context.Context, input gql
 	)
 }
 
-func (r *QueryResolver) InvoiceDisputes(ctx context.Context, invoiceID string) ([]*invoice.InvoiceDispute, error) {
+func (r *QueryResolver) InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoice.InvoiceDispute, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoiceDispute, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	id, err := pulid.MustParse(invoiceID)
+	ids, err := disputedInvoiceIDs(invoiceID, invoiceIds)
 	if err != nil {
-		return nil, errortypes.NewValidationError("invoiceId", errortypes.ErrInvalid, "Invalid invoice")
+		return nil, err
 	}
 
 	grouped, err := r.InvoiceDisputeRepo.ListByInvoiceIDs(ctx, &invoiceports.ListInvoiceDisputesByInvoiceIDsRequest{
 		TenantInfo: base.TenantInfo(authCtx),
-		InvoiceIDs: []pulid.ID{id},
+		InvoiceIDs: ids,
 	})
 	if err != nil {
 		return nil, err
 	}
-	disputes := grouped[id]
-	if disputes == nil {
-		disputes = []*invoice.InvoiceDispute{}
+	disputes := make([]*invoice.InvoiceDispute, 0, len(ids))
+	for _, id := range ids {
+		disputes = append(disputes, grouped[id]...)
 	}
 
 	return disputes, nil

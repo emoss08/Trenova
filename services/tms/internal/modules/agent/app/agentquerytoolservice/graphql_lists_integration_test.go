@@ -660,65 +660,89 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 	for idx := range cases {
 		c := &cases[idx]
 		t.Run(c.tool, func(t *testing.T) {
-			converted, err := agentquerytoolservice.ConvertedListTool(c.tool, reader, engine)
-			require.NoError(t, err)
-			ours := writeReferenceRows(t, c, mine, "A")
-			other := writeReferenceRows(t, c, theirs, "B")
-			actor := mine.Actor
-
-			byDefault := ours.rows
-			if c.readsActiveByDefault {
-				byDefault = slices.DeleteFunc(slices.Clone(ours.rows), func(id string) bool {
-					return slices.Contains(ours.marked, id)
-				})
-			}
-
-			t.Run("every page once, and nothing of another tenant", func(t *testing.T) {
-				ids, pages := walk(t, ours.ctx, converted, actor, nil)
-				assert.Greater(t, pages, 1, "the walk must cross a page")
-				assert.ElementsMatch(t, byDefault, ids)
-				for _, id := range other.rows {
-					assert.NotContains(t, ids, id)
-				}
-			})
-
-			t.Run("a typed filter narrows to what it names", func(t *testing.T) {
-				converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
-				assert.ElementsMatch(t, ours.marked, converted)
-			})
-
-			if c.old != nil {
-				t.Run("the same rows the repository tool paged through", func(t *testing.T) {
-					converted, _ := walk(t, ours.ctx, converted, actor, nil)
-					before, _ := walk(t, ours.ctx, c.old, actor, nil)
-					assert.ElementsMatch(t, before, converted)
-				})
-
-				t.Run("a typed filter narrows as the repository tool's filter did", func(t *testing.T) {
-					converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
-					before, _ := walk(t, ours.ctx, c.old, actor, c.oldMarked)
-					assert.ElementsMatch(t, before, converted)
-				})
-			}
-
-			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
-				hidden, err := agentquerytoolservice.ConvertedListTool(c.tool, public, &publicRole{})
-				require.NoError(t, err)
-				page := callTool(t, ours.ctx, hidden, actor, map[string]any{"limit": 50})
-				withheld, _ := page["withheldByAccess"].([]any)
-				require.NotEmpty(t, withheld)
-				items, _ := page["items"].([]any)
-				require.Len(t, items, len(byDefault))
-				for _, item := range items {
-					row, _ := item.(map[string]any)
-					assert.Contains(t, row, "id")
-					for _, field := range withheld {
-						assert.NotContains(t, row, field)
-					}
-				}
+			checkConvertedList(t, c, &listReaders{
+				reader: reader, public: public, engine: engine, mine: mine, theirs: theirs,
 			})
 		})
 	}
+}
+
+// listReaders are the readers and tenants a converted list is checked with:
+// the default reader, one whose role reaches only public fields, and two
+// tenants.
+type listReaders struct {
+	reader *agentread.Reader
+	public *agentread.Reader
+	engine permissionports.PermissionEngine
+	mine   *agentreadtest.Tenant
+	theirs *agentreadtest.Tenant
+}
+
+// checkConvertedList holds one converted list to its repository tool under
+// row-level security: every page once and nothing of another tenant, a
+// typed filter narrows, the repository tool reads the same, and a field the
+// role cannot see stays withheld.
+func checkConvertedList(t *testing.T, c *referenceCase, r *listReaders) {
+	t.Helper()
+
+	reader, public, engine, mine, theirs := r.reader, r.public, r.engine, r.mine, r.theirs
+	converted, err := agentquerytoolservice.ConvertedListTool(c.tool, reader, engine)
+	require.NoError(t, err)
+	ours := writeReferenceRows(t, c, mine, "A")
+	other := writeReferenceRows(t, c, theirs, "B")
+	actor := mine.Actor
+
+	byDefault := ours.rows
+	if c.readsActiveByDefault {
+		byDefault = slices.DeleteFunc(slices.Clone(ours.rows), func(id string) bool {
+			return slices.Contains(ours.marked, id)
+		})
+	}
+
+	t.Run("every page once, and nothing of another tenant", func(t *testing.T) {
+		ids, pages := walk(t, ours.ctx, converted, actor, nil)
+		assert.Greater(t, pages, 1, "the walk must cross a page")
+		assert.ElementsMatch(t, byDefault, ids)
+		for _, id := range other.rows {
+			assert.NotContains(t, ids, id)
+		}
+	})
+
+	t.Run("a typed filter narrows to what it names", func(t *testing.T) {
+		converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
+		assert.ElementsMatch(t, ours.marked, converted)
+	})
+
+	if c.old != nil {
+		t.Run("the same rows the repository tool paged through", func(t *testing.T) {
+			converted, _ := walk(t, ours.ctx, converted, actor, nil)
+			before, _ := walk(t, ours.ctx, c.old, actor, nil)
+			assert.ElementsMatch(t, before, converted)
+		})
+
+		t.Run("a typed filter narrows as the repository tool's filter did", func(t *testing.T) {
+			converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
+			before, _ := walk(t, ours.ctx, c.old, actor, c.oldMarked)
+			assert.ElementsMatch(t, before, converted)
+		})
+	}
+
+	t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
+		hidden, err := agentquerytoolservice.ConvertedListTool(c.tool, public, &publicRole{})
+		require.NoError(t, err)
+		page := callTool(t, ours.ctx, hidden, actor, map[string]any{"limit": 50})
+		withheld, _ := page["withheldByAccess"].([]any)
+		require.NotEmpty(t, withheld)
+		items, _ := page["items"].([]any)
+		require.Len(t, items, len(byDefault))
+		for _, item := range items {
+			row, _ := item.(map[string]any)
+			assert.Contains(t, row, "id")
+			for _, field := range withheld {
+				assert.NotContains(t, row, field)
+			}
+		}
+	})
 }
 
 // A tractor's drivers are workers. A reader who may read tractors but not

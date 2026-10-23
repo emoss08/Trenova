@@ -1475,6 +1475,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: credentials | `worker_list_credentials` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: party gets | `customer_get`, `location_get`, `carrier_get`, `carrier_get_intelligence_event` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: equipment | `equipment_get_tractor`, `equipment_get_trailer`, `equipment_list_positions` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: billing and receivables | `invoice_list`, `invoice_get` (up to 50 ids, one read each), `invoice_get_adjustment`, `invoice_list_disputes`, `receivable_list_customer_payments`; 15 more stay on the repository path with their reasons | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.82 → 0.83; keyword 0.95 → 0.95 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the

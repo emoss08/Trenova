@@ -1,0 +1,34 @@
+# One invoice adjustment as the Desk reads it: what it does, where it stands
+# in approval, the invoices it made and each line it credits or rebills.
+query DeskInvoiceAdjustmentCard($id: ID!) {
+  invoiceAdjustment(id: $id) {
+    id
+    originalInvoiceId
+    kind
+    status
+    approvalStatus
+    approvalRequired
+    rebillStrategy
+    reason
+    policyReason
+    rejectionReason
+    executionError
+    creditTotalAmount
+    rebillTotalAmount
+    creditMemoInvoiceId
+    replacementInvoiceId
+    submittedAt
+    supportingDocumentIds
+    lines {
+      id
+      originalLineId
+      lineNumber
+      description
+      creditQuantity
+      creditAmount
+      rebillQuantity
+      rebillAmount
+      remainingEligibleAmount
+    }
+  }
+}

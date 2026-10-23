@@ -279,6 +279,11 @@ fragment InvoiceReference on Invoice {
   disputeStatus
 }
 
+fragment InvoiceAdjustmentReference on InvoiceAdjustment {
+  id
+  status
+}
+
 fragment InvoiceDisputeReference on InvoiceDispute {
   id
   invoiceId

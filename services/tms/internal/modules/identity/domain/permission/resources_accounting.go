@@ -486,6 +486,7 @@ func (r *Registry) registerAccountingResources() {
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
 			"accountingDate":       SensitivityInternal,
+			"applications":         SensitivityInternal,
 			"businessUnitId":       SensitivityInternal,
 			"createdAt":            SensitivityInternal,
 			"createdById":          SensitivityInternal,

@@ -40,6 +40,7 @@ var (
 	NewListTractorsTool           = newListTractorsTool
 	NewListTrailersTool           = newListTrailersTool
 	NewListWorkersTool            = newListWorkersTool
+	NewListInvoicesTool           = newListInvoicesTool
 )
 
 // ConvertedListNames are the list tools read through GraphQL by a spec.
@@ -111,6 +112,10 @@ func ConvertedGetCall(tool agentports.AgentQueryTool, id pulid.ID) map[string]an
 		return nil
 	}
 
+	if get.spec.batch > 0 {
+		return map[string]any{get.spec.paramName: []any{id.String()}}
+	}
+
 	return map[string]any{get.spec.paramName: id.String()}
 }
 
@@ -140,6 +145,11 @@ func MinimalCall(tool agentports.AgentQueryTool) map[string]any {
 	call := make(map[string]any, len(keyed.required))
 	for _, name := range keyed.required {
 		call[name] = pulid.MustNew("wrk_").String()
+		for _, param := range keyed.params {
+			if param.Name == name && param.Kind == paramReferences {
+				call[name] = []any{pulid.MustNew("inv_").String()}
+			}
+		}
 	}
 
 	return call

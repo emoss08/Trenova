@@ -15,6 +15,17 @@ reads:
     reason: The carrier's own card; DeskCarrierIntel reads the same root for the intelligence panel.
   - tool: customer_get
   - tool: location_get
+  - tool: invoice_list
+  - tool: invoice_get
+    operation: DeskInvoiceDetail
+    reason: The tool returns each line by id, which an adjustment names; the card (DeskInvoiceCard) leaves the lines to the invoice's page.
+  - tool: invoice_get_adjustment
+    operation: DeskInvoiceAdjustmentCard
+    reason: An adjustment is read by invoiceAdjustment, whose type claims no record kind of its own, so no rule finds it from the tool's name.
+  - tool: invoice_list_disputes
+    operation: DeskInvoiceDisputes
+    reason: The dispute cases on the invoices named are read whole by invoiceDisputes, keyed by the invoices.
+  - tool: receivable_list_customer_payments
   - tool: document_list_types
   - tool: equipment_list_manufacturers
   - tool: equipment_list_tractors
