@@ -509,6 +509,7 @@ property "never below the minimum" {
 | `expect total nondecreasing in shipment.weight` | must never fall as the weight grows (`nonincreasing`: never rise) |
 
 - `vary`, `given` and `assume` come first; ranges need both ends.
+- Write a space after `assume` before a parenthesis: `assume(x)` calls a function named `assume`.
 - The same file always runs the same cases (at most 256 per property).
 - A failure is shrunk to the simplest case, or for `nondecreasing`, to the two neighbouring
   values that are out of order ("999 lb bills $310.00, 1000 lb bills $250.00"). **Save as test**
@@ -580,6 +581,22 @@ test "the liftgate defaults to $85" {
 
 A template version pins the library versions it imports, so publishing a library never reprices
 an existing contract.
+
+## In the editor
+
+| Key | Does |
+|---|---|
+| F12 | goes to the definition of the name under the cursor, in this file or a library |
+| Shift+F12 | **Find references**: every use of the name, grouped into this file and libraries |
+| F2 | renames the name everywhere it's used |
+| Ctrl+. (⌘. on a Mac) | **Promote to input**: turns the literal under the cursor (or the selection) into an `input` with that default, then starts a rename so you can name it |
+| Shift+Alt+F | formats the file |
+
+- Resting the cursor on a name highlights every use; places that set it are tinted differently
+  from places that read it.
+- When the literal appears more than once, the same menu also offers to promote every equal
+  literal (same type and value) at once.
+- The same actions are in the menu in the editor's status bar.
 
 ## Common checker errors
 
