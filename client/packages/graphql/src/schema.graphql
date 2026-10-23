@@ -7881,7 +7881,9 @@ type CaptureBatch {
   """Whether items can still be split, merged, filed or discarded."""
   isEditable: Boolean!
   itemCount: Int!
-  """The items, on a single-batch read. A list leaves them out."""
+  """
+  The items, on a single-batch read, or on a list that selects them, read for the whole page at once.
+  """
   items: [CaptureItem!]!
   """The print job's name, for a print."""
   jobName: String!
@@ -31833,7 +31835,7 @@ type TriageArrivalBucket {
 }
 
 """Someone a message can be assigned to."""
-type TriageAssignee {
+type TriageAssignee @kind(resource: "inbound_message") {
   user: User!
   """Waiting messages already assigned to them."""
   waiting: Int!
@@ -32283,7 +32285,7 @@ enum TriageSenderScope {
 }
 
 """The organization's queue settings."""
-type TriageSettings {
+type TriageSettings @kind(resource: "inbound_message") {
   """
   Minutes after midnight, in the organization's time zone, when the day wraps up.
   """

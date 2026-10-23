@@ -1224,6 +1224,8 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   Tractor: "tractor",
   Trailer: "trailer",
   TrainingCourse: "training_course",
+  TriageAssignee: "inbound_message",
+  TriageSettings: "inbound_message",
   User: "user",
   Worker: "worker",
   WorkerAvailabilityPreference: "worker_schedule",

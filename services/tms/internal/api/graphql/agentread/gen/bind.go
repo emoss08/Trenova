@@ -299,6 +299,10 @@ func rootReads(schema *ast.Schema) []rootRead {
 	return out
 }
 
+// readShape is the verb a root field reads by and the record it reads: a list
+// of records, a page of them (items with no id of its own, as DeskMemoryPage),
+// a connection, or one record taken by its arguments. A record read by its id
+// that carries items (a capture batch's) is still one record.
 func readShape(
 	schema *ast.Schema,
 	field *ast.FieldDefinition,

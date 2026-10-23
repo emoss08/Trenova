@@ -430,8 +430,9 @@ A read alongside takes one of two shapes:
   list reads no connection alongside, as its next call pages its own records.
 
 Each read alongside may `shape` its records (`setupPath` on a mapping summary). A list's `combine`
-hook applies what they say to its page: the drift list marks each money difference
-`withinTolerance` by the overview's tolerance, as the repository row did.
+hook applies what they say to its page, paged or unpaged: the drift list marks each money
+difference `withinTolerance` by the overview's tolerance, as the repository row did, and the
+triage assignees mark the on-call person from the queue's settings.
 
 **Reads instead.** A list whose repository tool had a second mode keyed by records of another
 shape (whether named documents reached the accounting system, beside listing the ledger) names
@@ -614,6 +615,12 @@ pages" in [desk-artifacts.md](desk-artifacts.md)), with the cursors the tool han
 read sets `QueryToolParams.IncludeTotal`, which sends `includeTotalCount: true` and returns the
 connection's `totalCount` as `total`; the model's reads never pay for the count, and the
 parameter is not in any tool's schema.
+
+A root that takes neither a table input nor its own `first` and `after`, but a bespoke input that
+holds them (`InboundMessagesInput`, `CaptureBatchesInput`), pages inside that input
+(`graphQLRead.pagedInput`): the page goes in it, its `query` takes the tool's free text, and its
+other fields are typed parameters. A list whose rows are larger than a table row sets its own
+bounds with the spec's `page` (a capture stack with its documents: 5 unless asked, at most 10).
 
 Three kinds of root field do not page this way, and their tools say so:
 
@@ -845,6 +852,16 @@ Each module's PR:
 | Carriers | `carrier_list_invoice_matches` | none | reads `DeskCarrierInvoiceMatches`, an `items` list paged by its root's limit and offset, checked by `carrier_invoice_match` read as its root is; the repository tool checked `carrier_settlement` read, which still reaches it as the parent. `carrier_invoice_match` declared only the EDI invoice's fields, so under its Restricted default every match field but its reference view would be withheld at Internal; the match's links, how it was matched, its resolution and its carrier are now declared Internal, and the invoice, expected and variance totals stay Restricted, as the repository row gated them. The spec sets `amounts` and computes `source` (EDI, Document or Manual) in its `shape`; a match whose invoice a carrier sent over EDI marks the run with that EDI invoice (`marks`) |
 | Reports | `report_list_runs` | none | reads `DeskReportRuns`, added for the Desk. `ReportRun` declares `@kind(resource: "report")` and gains `rowsStored`, whether the run's rows were stored for a comparison, which the repository row worked out from the run itself. `reportRuns` keeps the reader to their own runs (`ListRunsConnection` sets `RequestedBy` from the reader), as the repository tool did. `report` defaults to Internal, so nothing is withheld at Internal; the spec's `shape` marks each run `comparable` with the reason it is not, and leaves a run whose status or storage was withheld unjudged. The repository tool's 25-run cap becomes the cursor page |
 | Reports | `report_list_schedules` | none | reads `DeskReportSchedules`, added for the Desk. `ReportSchedule` declares `@kind(resource: "report")` and gains `mine` (the reader set it up), which the repository row called `yours`; `reportSchedules` gains `enabledOnly` and `limit` (safe additions), the limit bounded by `base.RecordListLimit`: every schedule of a named report, one page of 20 across the organization when no report is named, where the root read every schedule. The list is the organization's on both paths, as the repository tool read it; `mine` widens nothing, it only says which are the reader's |
+| Inbox | `inbox_list_inbound_messages` | none | reads `DeskInboundMessages`, written for it, for a call without words; a call with `query` still ranks by meaning on the retrieval index, narrowed only by `status`, `classification` and `mailboxId`, and any other parameter beside `query` is refused. `InboundMessagesInput` pages inside itself (`first`, `after`), the first list to (`pagedInput`). `status` is now a list of the inbox's statuses, so the repository tool's `waiting` shorthand is gone and the note names InReview and Quarantined. Every field is Internal under `inbound_message`; the mailbox's name and address are its reference view, Internal, so the address shows at Internal as the repository row showed it. Rows gain the matched customer, the attachment count, the thread and its count, the owner and the due time |
+| Inbox | `inbox_get_inbound_message` | none | reads `DeskInboundMessage`. The body is cut at 6,000 characters by the spec's `shape`, which says so (`bodyTruncated`), and the sender is written once (`from`), as before. The reply draft, the load draft, the steps the message asks for (`actions`, which replace the repository view's created shipment, logged exception and stops decision) and the conflicts are the screen's own fields; the mailbox shows as on the list |
+| Inbox | `inbox_list_email_profiles` | none at Internal | reads `DeskEmailProfiles`, written for it: what a profile is called and who mail comes from and goes back to, never how it connects to its provider. `email_profile` defaulted to Restricted with no field sensitivities, so every field but `id` and the name would be withheld at Internal; who mail comes from and where replies go (name, description, sender, reply-to, status, dates) is now declared Internal, and the provider and its credentials stay Restricted. Only an agent read applies these sensitivities to an email profile: no screen carries one inside another record. Active profiles are read unless the call names a status |
+| Inbox | `inbox_list_capture_batches` | none | reads `DeskCaptureBatches`, or `DeskCaptureBatch` instead when the call names `captureBatchId`. A stack carries its documents, so the spec's `page` reads 5 unless asked and at most 10. `captureBatches` now reads every listed stack's items in one query for the page when a list selects them, where the repository tool read each stack again; `CaptureBatch.items` says so. Open stacks unless the call names a status. Every field is Internal under `capture_batch` |
+| Inbox | `inbox_list_triage_assignees` | none | reads `TriageAssignees`, named in `reads.yml`, with the queue's `TriageSettings` alongside on every call (a root that takes no argument, keyed by nothing). `TriageAssignee` and `TriageSettings` had no kind, so the guard did not gate them; both now declare `@kind(resource: "inbound_message")`. Each person is the user reference view with their waiting count; the list's `combine`, now allowed on an unpaged list, marks the on-call person, and the settings' `shape` writes `endOfDay` |
+
+The inbox's repository tools gated nothing, so at a person's role ceiling below Internal each
+converted inbox read now withholds every field but `id` (and an email profile's name below
+Internal), where they returned every column. Nothing they showed at Internal is withheld now, and no
+field above Internal is shown.
 
 At a person's role ceiling a factoring record's money now follows that record's own kind, as
 every converted read does, where the repository tools judged it by the person's ceiling on
@@ -1109,7 +1126,9 @@ The `none` reasons:
 Two `partial` tools keep a mode that only they have. `agent_list_memories` and
 `inbox_list_inbound_messages` rank by meaning when given a `query`, and GraphQL's `query`
 matches text. Each reads through its operation for its filters, and keeps its ranked search for
-`query`, listed in `NoGraphQL` under that mode only.
+`query`, listed in `NoGraphQL` under that mode only. `inbox_list_inbound_messages` does so now: it
+wraps the GraphQL list (`listInboundMessagesTool`) and searches the retrieval index under its own
+access when the call gives words.
 
 ## Rollout
 
