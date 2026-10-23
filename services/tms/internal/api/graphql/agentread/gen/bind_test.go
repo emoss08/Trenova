@@ -205,6 +205,7 @@ enum Sys { Xero, Netsuite }
 input DataTableConnectionInput { first: Int, after: String, query: String, fieldFilters: [Any!], sort: [Any!] }
 input RecordFilter { statuses: [String!], search: String }
 input Nested { inner: RecordFilter! }
+input Region { code: String! }
 type PageInfo { hasNextPage: Boolean!, endCursor: String }
 type Record { id: ID! }
 type RecordEdge { node: Record! }
@@ -218,7 +219,7 @@ type Query {
   states(objectIds: [ID!]!, integrationType: Sys): [State!]!
   stateFilter(objectIds: [ID!]!, filter: RecordFilter): [State!]!
   mismatched(objectIds: [ID!]!, integrationType: String): [State!]!
-  record(id: ID!, region: RecordFilter): Record!
+  record(id: ID!, region: RecordFilter, area: Region): Record!
 }
 `
 
@@ -265,9 +266,13 @@ func TestUnsupplied_RootArgumentsAndFilterInputs(t *testing.T) {
 			verb: verbGet, root: "overview",
 			text: `query Op($integrationType: Sys!) { overview(integrationType: $integrationType) { tolerance } }`,
 		},
-		"a get cannot build an input": {
+		"a get builds an input whose every field is optional": {
 			verb: verbGet, root: "record",
-			text:    `query Op($id: ID!, $region: RecordFilter!) { record(id: $id, region: $region) { id } }`,
+			text: `query Op($id: ID!, $region: RecordFilter!) { record(id: $id, region: $region) { id } }`,
+		},
+		"a get cannot build an input that requires a field": {
+			verb: verbGet, root: "record",
+			text:    `query Op($id: ID!, $area: Region!) { record(id: $id, area: $area) { id } }`,
 			refused: true,
 		},
 	}

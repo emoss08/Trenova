@@ -35,7 +35,7 @@ func (r *graphQLRead) rootParams(
 			continue
 		}
 		if variable.Kind == graphQLKindInput {
-			filter, filterSearchIn := filterInputParams(&variable)
+			filter, filterSearchIn := filterInputParams(&variable, r.Verb == graphQLVerbGet)
 			params = append(params, filter...)
 			if filterSearchIn != "" {
 				search = [2]string{variable.Name, filterSearchIn}
@@ -101,8 +101,13 @@ func variableParams(tool, operation string, variable *graphQLVariable) ([]graphQ
 
 // filterInputParams are a filter input's fields as parameters, each sent inside
 // the variable, and the field it takes free text in, which is the tool's
-// query rather than a parameter of its own.
-func filterInputParams(variable *graphQLVariable) (params []graphQLParam, search string) {
+// query rather than a parameter of its own. A get's input chooses the record
+// rather than filtering rows (a briefing's role), so a described enum or text
+// field of it says only what its own description says.
+func filterInputParams(
+	variable *graphQLVariable,
+	get bool,
+) (params []graphQLParam, search string) {
 	for idx := range graphQLInputs[variable.Type] {
 		field := graphQLInputs[variable.Type][idx]
 		if field.Kind == graphQLKindInput {
@@ -116,6 +121,11 @@ func filterInputParams(variable *graphQLVariable) (params []graphQLParam, search
 			param.OnInput = true
 			param.Arg = variable.Name
 			param.ArgField = field.Name
+			if get && field.Description != "" && !field.List &&
+				(field.Kind == graphQLKindEnum || field.Type == graphQLTypeString) &&
+				param.Kind != paramDayText {
+				param.Schema = withDescription(param.Schema, field.Description)
+			}
 			params = append(params, param)
 		}
 	}

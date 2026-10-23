@@ -274,6 +274,7 @@ func graphQLGetSpecs() []getSpec {
 		invoiceAdjustmentGetSpec(),
 		homeLayoutGetSpec(),
 		rateMatrixGetSpec(),
+		dailyBriefingGetSpec(),
 	}, slices.Concat(accountingGetSpecs(), ediGetSpecs(), settlementGetSpecs(), factoringGetSpecs())...)
 }
 

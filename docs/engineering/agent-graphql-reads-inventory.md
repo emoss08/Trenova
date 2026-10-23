@@ -102,7 +102,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
 | `insight_get` | partial | watchtowerItem | WatchtowerItemDetail | n/a | id | No insight Query root; insights reach GraphQL only as watchtower items of kind Insight. InsightService.GetDetail (evidence, detector detail) is not exposed. |
-| `insight_get_daily_briefing` | op | todaysBriefing | TodaysBriefing | n/a | bespoke TodaysBriefingInput (roleKey, briefingDate) | Same BriefingService.Today; role -> roleKey, date -> briefingDate. |
 | `insight_list` | partial | watchtowerItems (kinds:[Insight]) | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | No insight list root; InsightService.List (category/status browse) differs. severity maps to severities; category and insight status do not. |
 | `insight_list_weather_alerts` | partial | watchtowerItems (kinds:[WeatherAlert]) | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | No weather root; WeatherAlertService.GetActiveAlerts is a feed read. severity maps; query does not. |
 
@@ -203,8 +202,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 28 |
-| op, converted (rows removed) | 91 |
+| op, not yet converted | 27 |
+| op, converted (rows removed) | 92 |
 | field-no-op, not yet converted | 0 |
 | field-no-op, converted (rows removed) | 6 |
 | partial, not yet converted | 12 |

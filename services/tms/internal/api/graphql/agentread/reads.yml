@@ -290,3 +290,6 @@ reads:
     operation: HomeLayout
     reason: The tool is named for the home page, which no kind claims; homeLayout reads the caller's own layout.
   - tool: rate_get_matrix
+  - tool: insight_get_daily_briefing
+    operation: TodaysBriefing
+    reason: The tool is named for the insight family it answers in; todaysBriefing reads the morning's page, cut to the sections the caller may read.

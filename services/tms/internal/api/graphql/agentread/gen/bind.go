@@ -631,7 +631,7 @@ func tableShaped(schema *ast.Schema, name string) bool {
 // enum and id variables as parameters of its own (workerId, a required
 // integrationType), and a list builds any input object: its table input
 // from the table's fields, and a filter input from the filter's own. A get
-// cannot build an input object.
+// builds only an input whose every field is optional.
 func unsupplied(b *binding) string {
 	want := supplied[b.Verb]
 	var missing []string
@@ -656,6 +656,9 @@ func unsupplied(b *binding) string {
 			buildable(variable.Type.Name()) {
 			continue
 		}
+		if b.RootField != nil && b.Verb == verbGet && optional(variable.Type.Name()) {
+			continue
+		}
 		missing = append(missing, "$"+variable.Variable+": "+variable.Type.String())
 	}
 	if len(missing) == 0 {
@@ -664,6 +667,24 @@ func unsupplied(b *binding) string {
 
 	return fmt.Sprintf("%s reads %s, which requires %s; a %s tool's parameters cannot supply it",
 		b.Tool, b.Operation.Name, strings.Join(missing, ", "), b.Verb)
+}
+
+// optional reports whether a get can build an input from its parameters:
+// every field of it is a scalar, an enum or an id the call may leave out
+// (TodaysBriefingInput's role and day), so the call sends what it names and
+// an empty input otherwise.
+func optional(name string) bool {
+	def := boundSchema.Types[name]
+	if def == nil || def.Kind != ast.InputObject {
+		return false
+	}
+	for _, field := range def.Fields {
+		if (field.Type.NonNull && field.DefaultValue == nil) || inputObject(field.Type.Name()) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // buildable reports whether a paged list can build a filter input from its

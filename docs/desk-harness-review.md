@@ -1487,6 +1487,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: billing and receivables | `invoice_list`, `invoice_get` (up to 50 ids, one read each), `invoice_get_adjustment`, `invoice_list_disputes`, `receivable_list_customer_payments`; 15 more stay on the repository path with their reasons | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.82 → 0.83; keyword 0.95 → 0.95 |
 | Typed reads through GraphQL: carriers | `carrier_list_intelligence_events`, `carrier_list_capacity_postings`, `carrier_list_invoice_matches`, the last carrier rows of the inventory | 632 → 632 | unchanged, 0 pending | not measured (fixture stale, re-recorded separately) | not measured |
 | Typed reads through GraphQL: home page and rate matrix | `home_get_layout`, `rate_get_matrix` | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
+| Typed reads through GraphQL: daily briefing | `insight_get_daily_briefing`; the briefing screen is cut to the sections the reader may read | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
 
 The carrier row's descriptions are in the embedding fixture re-recorded with the home page and rate matrix row; hybrid held-out ranking on that fixture is recall@5 0.93, top-1 0.83 over 167 cases, and keyword ranking is unchanged (0.99, 0.95 over 147).
 

@@ -24414,11 +24414,15 @@
         "additionalProperties": false,
         "properties": {
           "date": {
-            "description": "An earlier day as YYYY-MM-DD, in the organization's calendar. Omit it for today.",
+            "description": "An organization-local day; omitted is today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "role": {
-            "description": "Whose morning to read. General is everyone's and the default.",
+            "description": "Whose morning to read; omitted reads the one written for everybody.",
             "enum": [
               "Dispatch",
               "Billing",
@@ -24427,7 +24431,7 @@
               "General"
             ],
             "type": "string",
-            "x-enumOf": "briefing.role"
+            "x-enumOf": "graphql.BriefingRoleKey"
           }
         },
         "type": "object"

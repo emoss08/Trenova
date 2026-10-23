@@ -5,6 +5,7 @@ package agentread
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accessorialchargeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriercapacityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
@@ -72,6 +73,7 @@ import (
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
 	accountingsyncresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accountingsyncresolver"
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	briefingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/briefingresolver"
 	carriercapacityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriercapacityresolver"
 	carrierintelligenceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
 	carrierresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
@@ -142,6 +144,7 @@ import (
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	customerpaymentports "github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -235,6 +238,7 @@ type ResolverParams struct {
 	AccountingSyncService        accountingsyncports.AccountingSyncService
 	AnalyticsService             kernelports.AnalyticsService
 	AssignmentService            shipmentports.AssignmentService
+	BriefingService              briefingports.BriefingService
 	CarrierAssignmentService     *carrierassignmentservice.Service
 	CarrierCapacityService       *carriercapacityservice.Service
 	CarrierCostEventRepo         carriersettlementports.CarrierCostEventRepository
@@ -347,6 +351,7 @@ type ResolverParams struct {
 var shards = []*gqlexec.Shard{
 	accessorialchargeexec.Shard,
 	accountingsyncexec.Shard,
+	briefingexec.Shard,
 	carrierexec.Shard,
 	carriercapacityexec.Shard,
 	carrierintelligenceexec.Shard,
@@ -746,6 +751,11 @@ var operations = []Operation{
 		Document: "fragment HomeLayoutFields on HomeLayout { canCustomize density locked presetId presetName schemaVersion source version widgets { ...HomeWidgetFields } } fragment HomeWidgetFields on HomeWidget { config { cannedKey chartId columnId dashboardId definitionId limit metric metrics text windowDays } h id key title w } query HomeLayout { homeLayout { ...HomeLayoutFields } }",
 	},
 	{
+		Name:     "TodaysBriefing",
+		Hash:     "sha256:65f37d12e5d9c0d23e805a11cf6299ea753996a33e88ac4ebebc9d1c882091d0",
+		Document: "fragment BriefingFields on Briefing { briefingDate headline id narrated readAt roleKey sections { body items { label path value } key path read summary title } status withheldSections { key partial title } } query TodaysBriefing($input: TodaysBriefingInput!) { todaysBriefing(input: $input) { ...BriefingFields } }",
+	},
+	{
 		Name:     "DeskInvoiceDetail",
 		Hash:     "sha256:069d2dc8e358639942c0e5b64e52245e504037875c935a0de73a48c1709ba2c9",
 		Document: "query DeskInvoiceDetail($id: ID!) { invoice(id: $id) { appliedAmount billToCity billToCode billToName billToState billType currencyCode customerId disputeStatus dueDate ediSendStatus id invoiceDate isAdjustmentArtifact lastEdiError lastSendError lines { accessorialChargeId amount chargeCode description id lineNumber quantity shipmentProNumber type unitPrice } memo number openBalance orderId orderNumber otherAmount paymentTerm pdfDocumentId postedAt remittanceInstructions scope sendStatus sentAt serviceDate settlementStatus shipmentBol shipmentCount shipmentId shipmentProNumber status subtotalAmount supersededByInvoiceId supersedesInvoiceId totalAmount voidReason voidedAt } }",
@@ -1117,6 +1127,10 @@ func NewSchema(p ResolverParams) Schema {
 		AccountingInbound:        p.AccountingInboundService,
 		AccountingDrift:          p.AccountingDriftService,
 	}
+	briefingDeps := &briefingresolver.Deps{
+		Core:            core,
+		BriefingService: p.BriefingService,
+	}
 	carrierDeps := &carrierresolver.Deps{
 		Core:           core,
 		CarrierService: p.CarrierService,
@@ -1426,6 +1440,7 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	mutation := &mutationResolver{
 		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
+		briefingMutation:              &briefingMutation{Deps: briefingDeps},
 		carriercapacityMutation:       &carriercapacityMutation{Deps: carriercapacityDeps},
 		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
 		carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
@@ -1468,6 +1483,7 @@ func NewSchema(p ResolverParams) Schema {
 	query := &queryResolver{
 		accessorialchargeQuery:        &accessorialchargeQuery{Deps: accessorialchargeDeps},
 		accountingsyncQuery:           &accountingsyncQuery{Deps: accountingsyncDeps},
+		briefingQuery:                 &briefingQuery{Deps: briefingDeps},
 		carrierQuery:                  &carrierQuery{Deps: carrierDeps},
 		carriercapacityQuery:          &carriercapacityQuery{Deps: carriercapacityDeps},
 		carrierintelligenceQuery:      &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
@@ -1550,6 +1566,7 @@ func NewSchema(p ResolverParams) Schema {
 			return &accountingsyncresolver.AccountingSyncAttentionGroupResolver{Deps: accountingsyncDeps}
 		},
 		"AccountingSyncRecord":         func() any { return &accountingsyncresolver.AccountingSyncRecordResolver{Deps: accountingsyncDeps} },
+		"BriefingSection":              func() any { return &briefingresolver.BriefingSectionResolver{Deps: briefingDeps} },
 		"Carrier":                      func() any { return &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps} },
 		"CarrierAssignment":            func() any { return &shipmentresolver.CarrierAssignmentResolver{Deps: shipmentDeps} },
 		"CarrierAssignmentAccessorial": func() any { return &shipmentresolver.CarrierAssignmentAccessorialResolver{Deps: shipmentDeps} },
@@ -1776,6 +1793,7 @@ type invoiceResolver struct {
 
 type mutationResolver struct {
 	*accountingsyncMutation
+	*briefingMutation
 	*carriercapacityMutation
 	*carrierintelligenceMutation
 	*carriersettlementMutation
@@ -1819,6 +1837,7 @@ type mutationResolver struct {
 type queryResolver struct {
 	*accessorialchargeQuery
 	*accountingsyncQuery
+	*briefingQuery
 	*carrierQuery
 	*carriercapacityQuery
 	*carrierintelligenceQuery
@@ -1888,6 +1907,7 @@ type (
 	invoiceInvoice                  = invoiceresolver.InvoiceResolver
 	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
 	accountingsyncMutation          = accountingsyncresolver.MutationResolver
+	briefingMutation                = briefingresolver.MutationResolver
 	carriercapacityMutation         = carriercapacityresolver.MutationResolver
 	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
 	carriersettlementMutation       = carriersettlementresolver.MutationResolver
@@ -1928,6 +1948,7 @@ type (
 	workertrainingMutation          = workertrainingresolver.MutationResolver
 	accessorialchargeQuery          = accessorialchargeresolver.QueryResolver
 	accountingsyncQuery             = accountingsyncresolver.QueryResolver
+	briefingQuery                   = briefingresolver.QueryResolver
 	carrierQuery                    = carrierresolver.QueryResolver
 	carriercapacityQuery            = carriercapacityresolver.QueryResolver
 	carrierintelligenceQuery        = carrierintelligenceresolver.QueryResolver
