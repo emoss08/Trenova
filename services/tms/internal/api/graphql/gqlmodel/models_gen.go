@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
@@ -4851,6 +4852,17 @@ type FileInboundAttachmentInput struct {
 
 type FilterGroupInput struct {
 	Filters []*FieldFilterInput `json:"filters"`
+}
+
+type FiscalPeriodConnection struct {
+	Edges      []*FiscalPeriodEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type FiscalPeriodEdge struct {
+	Node   *fiscalperiod.FiscalPeriod `json:"node"`
+	Cursor string                     `json:"cursor"`
 }
 
 type FiscalYearConnection struct {

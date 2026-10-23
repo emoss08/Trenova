@@ -3,6 +3,7 @@ package fiscalperiodrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -86,6 +89,84 @@ func (r *repository) List(
 				Items: entities,
 				Total: int(total),
 			}, nil
+		},
+	)
+}
+
+const latestStart = "startDate"
+
+func applyFiscalPeriodColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return q.ColumnExpr(fiscalperiodcol.FiscalPeriodTable.All())
+	}
+
+	return q.Column(columns...)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *fiscalperiodports.ListFiscalPeriodConnectionRequest,
+) (*pagination.CursorListResult[*fiscalperiod.FiscalPeriod], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*fiscalperiod.FiscalPeriod], error) {
+			if len(req.Filter.Sort) == 0 {
+				req.Filter.Sort = []domaintypes.SortField{
+					{Field: latestStart, Direction: dbtype.SortDirectionDesc},
+				}
+			}
+
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*fiscalperiod.FiscalPeriod)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							fiscalperiodcol.FiscalPeriodTable.Alias,
+							req.Filter,
+							(*fiscalperiod.FiscalPeriod)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("count fiscal periods: %w", err)
+				}
+				totalCount = new(int(total))
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*fiscalperiod.FiscalPeriod]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*fiscalperiod.FiscalPeriod) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(items).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyFiscalPeriodColumns(sq, req.FiscalPeriodColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							fiscalperiodcol.FiscalPeriodTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*fiscalperiod.FiscalPeriod)(nil),
+						)
+					},
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("list fiscal periods: %w", err)
+			}
+
+			return result, nil
 		},
 	)
 }

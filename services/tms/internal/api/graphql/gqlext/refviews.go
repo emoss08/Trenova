@@ -42,7 +42,7 @@ func referenceTypes(
 	names = make([]string, 0, len(kinds))
 	for name, kind := range kinds {
 		def, ok := registry.Get(kind.String())
-		if !ok || len(def.ReferenceView) == 0 {
+		if !ok || len(def.ReferenceView) == 0 || !showsView(schema.Types[name], def) {
 			continue
 		}
 		names = append(names, name)
@@ -50,6 +50,20 @@ func referenceTypes(
 	slices.Sort(names)
 
 	return names, kinds, nil
+}
+
+// showsView reports whether a kind type holds its record's id or a field of
+// its view. A card that draws a record (JournalEntryCard) declares the kind
+// so its own parts are gated as the record's, but holds the record rather
+// than being it, so it has no reference fragment.
+func showsView(def *ast.Definition, resource *permission.ResourceDefinition) bool {
+	if def == nil {
+		return false
+	}
+
+	return slices.ContainsFunc(def.Fields, func(field *ast.FieldDefinition) bool {
+		return field.Name == recordIDField || slices.Contains(resource.ReferenceView, field.Name)
+	})
 }
 
 // RenderReferenceFragments writes one fragment per kind type selecting its

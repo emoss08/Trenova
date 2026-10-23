@@ -531,6 +531,9 @@ virtuals:
     - blame
 
 specials:
+  ManualJournal:
+    balance:
+      - isBalanced
   Tractor:
     lastKnownLocation:
       - lastKnownLocation

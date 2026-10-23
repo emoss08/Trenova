@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
@@ -256,6 +257,7 @@ type Params struct {
 	OrgHolidayService            *orgholidayservice.Service
 	WorkflowStarter              kernelports.WorkflowStarter
 	FiscalYearService            *fiscalyearservice.Service
+	FiscalPeriodService          *fiscalperiodservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
@@ -488,6 +490,7 @@ type Services struct {
 	OrgHolidayService            *orgholidayservice.Service
 	WorkflowStarter              kernelports.WorkflowStarter
 	FiscalYearService            *fiscalyearservice.Service
+	FiscalPeriodService          *fiscalperiodservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
@@ -726,6 +729,7 @@ func newServices(p *Params) *Services {
 		OrgHolidayService:            p.OrgHolidayService,
 		WorkflowStarter:              p.WorkflowStarter,
 		FiscalYearService:            p.FiscalYearService,
+		FiscalPeriodService:          p.FiscalPeriodService,
 		FormulaTemplateService:       p.FormulaTemplateService,
 		FuelSurchargeService:         p.FuelSurchargeService,
 		CostingService:               p.CostingService,

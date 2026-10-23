@@ -23,6 +23,11 @@ type ListJournalEntriesRequest struct {
 	AccountingDateEnd   int64                    `json:"accountingDateEnd"`
 }
 
+type ListJournalEntryConnectionRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"-"`
+}
+
 type MarkJournalEntryReversedRequest struct {
 	OriginalEntryID pulid.ID `json:"originalEntryId"`
 	ReversalEntryID pulid.ID `json:"reversalEntryId"`
@@ -38,6 +43,10 @@ type JournalEntryRepository interface {
 		ctx context.Context,
 		req *ListJournalEntriesRequest,
 	) (*pagination.ListResult[*journalentry.JournalEntry], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListJournalEntryConnectionRequest,
+	) (*pagination.CursorListResult[*journalentry.JournalEntry], error)
 	GetByID(ctx context.Context, req GetJournalEntryByIDRequest) (*journalentry.JournalEntry, error)
 	MarkReversed(ctx context.Context, req MarkJournalEntryReversedRequest) error
 }

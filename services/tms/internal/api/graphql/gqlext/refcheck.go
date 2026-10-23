@@ -125,6 +125,9 @@ type linkFrame struct {
 	carried   bool
 	through   bool
 	record    *recordContext
+	// rootRecord marks a record its root field returns itself (a card of a
+	// kind), whose records of a kind the root authorizes are the root's own.
+	rootRecord bool
 }
 
 func (w *linkWalker) selections(
@@ -183,6 +186,7 @@ func (w *linkWalker) field(parent *ast.Definition, f *ast.Field, frame linkFrame
 	}
 	if kind, ok := w.kinds[child.Name]; ok {
 		next.record = w.reach(kind, next)
+		next.rootRecord = isRoot(parent.Name)
 		next.through = false
 	} else if frame.record != nil && frame.record.reach == refview.Nested && !frame.record.part &&
 		w.kindOf(parent) && w.views.InView(frame.record.kind, def.Name) {
@@ -213,7 +217,7 @@ func (w *linkWalker) reach(kind permission.Resource, frame linkFrame) *recordCon
 	if frame.rootField != nil && selfscoped.Root(frame.rootType, frame.rootField.Name) {
 		return &recordContext{kind: kind, reach: refview.SelfScoped}
 	}
-	if frame.record == nil && Authorizes(frame.rootField, kind) {
+	if (frame.record == nil || frame.rootRecord) && Authorizes(frame.rootField, kind) {
 		return &recordContext{kind: kind, reach: refview.Root}
 	}
 	if !frame.nested && (!frame.carried || !w.scoped(kind) || w.checked(frame, kind)) {

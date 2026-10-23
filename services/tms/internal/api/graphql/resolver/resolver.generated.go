@@ -67,6 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionshadowresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringcompanyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalperiodresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalyearresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
@@ -764,6 +765,10 @@ func FromServices(s *Services) *Resolver {
 	factoringcompanyDeps := &factoringcompanyresolver.Deps{
 		Core:                    s.Core,
 		FactoringCompanyService: s.FactoringCompanyService,
+	}
+	fiscalperiodDeps := &fiscalperiodresolver.Deps{
+		Core:                s.Core,
+		FiscalPeriodService: s.FiscalPeriodService,
 	}
 	fiscalyearDeps := &fiscalyearresolver.Deps{
 		Core:              s.Core,
@@ -1539,6 +1544,7 @@ func FromServices(s *Services) *Resolver {
 			extractionshadowQuery:         &extractionshadowQuery{Deps: extractionshadowDeps},
 			factoringQuery:                &factoringQuery{Deps: factoringDeps},
 			factoringcompanyQuery:         &factoringcompanyQuery{Deps: factoringcompanyDeps},
+			fiscalperiodQuery:             &fiscalperiodQuery{Deps: fiscalperiodDeps},
 			fiscalyearQuery:               &fiscalyearQuery{Deps: fiscalyearDeps},
 			fleetcodeQuery:                &fleetcodeQuery{Deps: fleetcodeDeps},
 			fleetsafetyQuery:              &fleetsafetyQuery{Deps: fleetsafetyDeps},
@@ -2768,6 +2774,7 @@ type queryResolver struct {
 	*extractionshadowQuery
 	*factoringQuery
 	*factoringcompanyQuery
+	*fiscalperiodQuery
 	*fiscalyearQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
@@ -3279,6 +3286,7 @@ type (
 	extractionshadowQuery           = extractionshadowresolver.QueryResolver
 	factoringQuery                  = factoringresolver.QueryResolver
 	factoringcompanyQuery           = factoringcompanyresolver.QueryResolver
+	fiscalperiodQuery               = fiscalperiodresolver.QueryResolver
 	fiscalyearQuery                 = fiscalyearresolver.QueryResolver
 	fleetcodeQuery                  = fleetcoderesolver.QueryResolver
 	fleetsafetyQuery                = fleetsafetyresolver.QueryResolver
