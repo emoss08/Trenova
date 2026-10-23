@@ -286,6 +286,10 @@ reads:
     reason: The tool is named for the carrier it watches; its records are the events, read by carrierIntelEvents with their screen's filter.
   - tool: carrier_list_capacity_postings
   - tool: carrier_list_invoice_matches
+  - tool: home_get_layout
+    operation: HomeLayout
+    reason: The tool is named for the home page, which no kind claims; homeLayout reads the caller's own layout.
+  - tool: rate_get_matrix
   - tool: report_list_runs
     operation: DeskReportRuns
     reason: A report run is a record of the report resource, read by reportRuns, which no kind claims by name.

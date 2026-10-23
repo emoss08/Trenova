@@ -25,7 +25,11 @@ type graphQLRead struct {
 	RootField string
 	Node      string
 	Resource  string
-	Entity    func() domaintypes.PostgresSearchable
+	// SelfScoped marks a read whose resolver acts only on the caller's own
+	// record and checks no resource; the tool's policy, scoped to the
+	// caller, is its check.
+	SelfScoped bool
+	Entity     func() domaintypes.PostgresSearchable
 	// Unpaged marks a list whose root field returns every record at once,
 	// keyed by its own arguments (a worker's checklists by workerId).
 	Unpaged bool
