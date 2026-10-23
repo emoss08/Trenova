@@ -191,6 +191,7 @@ func (s *service) GetByID(
 		)
 	}
 	item.DetentionHolds = billingqueue.NewDetentionHolds(holds)
+	item.RatingReviewHold = billingqueue.NewRatingReviewHold(item)
 	s.attachReview(ctx, item, req.TenantInfo)
 
 	return item, nil
@@ -227,6 +228,29 @@ func (s *service) guardDetentionHolds(
 	}
 
 	return detention.BillingHoldError(holds)
+}
+
+func (s *service) guardRatingReview(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if !billingqueue.HeldForRatingReview(item) {
+		return nil
+	}
+	entity := item.Shipment
+	if entity == nil || entity.ID != item.ShipmentID {
+		loaded, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+			ID:         item.ShipmentID,
+			TenantInfo: tenantInfo,
+		})
+		if err != nil {
+			return err
+		}
+		entity = loaded
+	}
+
+	return shipment.RatingReviewHoldError([]*shipment.Shipment{entity})
 }
 
 func (s *service) expandShipmentDetails(
@@ -559,6 +583,14 @@ func (s *service) autoApprove(
 		)
 		return item
 	}
+	if holdErr := s.guardRatingReview(ctx, item, tenantInfo); holdErr != nil {
+		s.l.Info("the tariff held the rating for review; billing queue item left for review",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.String("shipmentId", item.ShipmentID.String()),
+			zap.Error(holdErr),
+		)
+		return item
+	}
 
 	approved, err := s.UpdateStatus(ctx, &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     item.ID,
@@ -751,6 +783,9 @@ func (s *service) UpdateStatus(
 
 		if req.NewStatus == billingqueue.StatusApproved {
 			if holdErr := s.guardDetentionHolds(txCtx, entity, req.TenantInfo); holdErr != nil {
+				return holdErr
+			}
+			if holdErr := s.guardRatingReview(txCtx, entity, req.TenantInfo); holdErr != nil {
 				return holdErr
 			}
 			if issueErr := s.guardOpenIssues(txCtx, entity, req.TenantInfo); issueErr != nil {

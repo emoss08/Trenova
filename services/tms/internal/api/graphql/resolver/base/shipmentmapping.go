@@ -331,7 +331,26 @@ func ratingDetailToModel(
 		RuleLabel:           detail.RuleLabel,
 		Source:              detail.Source,
 		Explanation:         detail.Explanation,
+		AwaitingReview:      detail.AwaitsReview(),
+		ReviewApproval:      ratingReviewApprovalToModel(detail.ReviewApproval),
 	}, nil
+}
+
+func ratingReviewApprovalToModel(
+	approval *shipmentdomain.RatingReviewApproval,
+) *gqlmodel.ShipmentRatingReviewApproval {
+	if approval == nil {
+		return nil
+	}
+	reviews := approval.Reviews
+	if reviews == nil {
+		reviews = []string{}
+	}
+	return &gqlmodel.ShipmentRatingReviewApproval{
+		Reviews:      reviews,
+		ApprovedByID: approval.ApprovedByID.String(),
+		ApprovedAt:   int(approval.ApprovedAt),
+	}
 }
 
 func tenderStatusToModel(status *shipmentdomain.TenderStatus) *gqlmodel.ShipmentTenderStatus {

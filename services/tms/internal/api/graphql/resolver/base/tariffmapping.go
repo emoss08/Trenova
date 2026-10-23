@@ -76,10 +76,15 @@ func TariffBillToModel(bill *tarifftypes.Bill) *gqlmodel.TariffBill {
 	for _, note := range bill.Notes {
 		notes = append(notes, note.Text)
 	}
+	reviews := make([]string, 0, len(bill.Reviews))
+	for _, review := range bill.Reviews {
+		reviews = append(reviews, review.Text)
+	}
 	out := &gqlmodel.TariffBill{
 		Currency:         bill.Currency,
 		Lines:            lines,
 		Notes:            notes,
+		Reviews:          reviews,
 		FreightTotal:     bill.FreightTotal.String(),
 		AccessorialTotal: bill.AccessorialTotal.String(),
 		Total:            bill.Total.String(),

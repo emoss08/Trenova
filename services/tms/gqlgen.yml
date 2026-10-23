@@ -116,6 +116,10 @@ models:
     fields:
       trace:
         resolver: true
+  ShipmentRatingReviewApproval:
+    fields:
+      approvedBy:
+        resolver: true
   ShipmentCustomer:
     fields:
       ediPartner:

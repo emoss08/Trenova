@@ -10004,6 +10004,19 @@ type ShipmentRatingDetail struct {
 	// The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound.
 	Source      string `json:"source"`
 	Explanation string `json:"explanation"`
+	// True while the bill's reviews wait on a person's approval, which holds the shipment out of billing.
+	AwaitingReview bool `json:"awaitingReview"`
+	// Who approved the reviews this rating carries, and when. Null until a person approves them.
+	ReviewApproval *ShipmentRatingReviewApproval `json:"reviewApproval,omitempty"`
+}
+
+// A person's approval of the reviews a tariff asked for. A re-rate that comes back with the
+// same reviews keeps it; different reviews hold the shipment again.
+type ShipmentRatingReviewApproval struct {
+	Reviews      []string     `json:"reviews"`
+	ApprovedByID string       `json:"approvedById"`
+	ApprovedAt   int          `json:"approvedAt"`
+	ApprovedBy   *tenant.User `json:"approvedBy,omitempty"`
 }
 
 // A charge the shipment's other engines left out because the tariff already billed its code.
@@ -10562,9 +10575,12 @@ type TableLayoutInput struct {
 
 // The bill a tariff produced for a shipment.
 type TariffBill struct {
-	Currency         string              `json:"currency"`
-	Lines            []*TariffBillLine   `json:"lines"`
-	Notes            []string            `json:"notes"`
+	Currency string            `json:"currency"`
+	Lines    []*TariffBillLine `json:"lines"`
+	Notes    []string          `json:"notes"`
+	// What the tariff asks a person to check before the shipment bills. A shipment whose
+	// bill has reviews is rated but held out of billing until a person approves the rating.
+	Reviews          []string            `json:"reviews"`
 	FreightTotal     string              `json:"freightTotal"`
 	AccessorialTotal string              `json:"accessorialTotal"`
 	Total            string              `json:"total"`

@@ -155,6 +155,7 @@ func (s *service) reviewFacts(
 		POD:              facts.pod,
 		Detention:        facts.dwells,
 		DetentionHolds:   item.DetentionHolds,
+		RatingReview:     item.RatingReviewHold,
 		Duplicates:       facts.duplicates,
 		CreditHold:       creditHold,
 		CreditHoldReason: holdReason,

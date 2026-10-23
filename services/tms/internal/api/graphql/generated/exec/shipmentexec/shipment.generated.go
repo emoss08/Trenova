@@ -105,6 +105,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentPreviousRatesResponse", Implementors: []string{"ShipmentPreviousRatesResponse"}},
 		{Name: "ShipmentProfitabilityAnalytics", Implementors: []string{"ShipmentProfitabilityAnalytics"}},
 		{Name: "ShipmentRatingDetail", Implementors: []string{"ShipmentRatingDetail"}},
+		{Name: "ShipmentRatingReviewApproval", Implementors: []string{"ShipmentRatingReviewApproval"}},
 		{Name: "ShipmentRatingSkip", Implementors: []string{"ShipmentRatingSkip"}},
 		{Name: "ShipmentReadyToDispatch", Implementors: []string{"ShipmentReadyToDispatch"}},
 		{Name: "ShipmentRevenueToday", Implementors: []string{"ShipmentRevenueToday"}},
@@ -1123,6 +1124,19 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UncancelShipment(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
+			},
+			{
+				Name:       "approveShipmentRatingReview",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Shipment",
+				Args:       field_Mutation_approveShipmentRatingReview_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveShipmentRatingReview(ctx, fc.Args["shipmentId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
 			},
@@ -8659,6 +8673,70 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
+			{
+				Name:     "awaitingReview",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingDetail)
+					return obj.AwaitingReview, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "reviewApproval",
+				HasChild:  true,
+				ChildType: "ShipmentRatingReviewApproval",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingDetail)
+					return obj.ReviewApproval, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOShipmentRatingReviewApproval2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingReviewApproval),
+			},
+		}},
+		{Object: "ShipmentRatingReviewApproval", Fields: []*gqlexec.Field{
+			{
+				Name:     "reviews",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
+					return obj.Reviews, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "approvedById",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
+					return obj.ApprovedByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "approvedAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
+					return obj.ApprovedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:       "approvedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
+					return gqlexec.Resolver[resolverShipmentRatingReviewApproval](ec, "ShipmentRatingReviewApproval").ApprovedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
 		}},
 		{Object: "ShipmentRatingSkip", Fields: []*gqlexec.Field{
 			{
@@ -9630,6 +9708,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
 			{
+				Name:     "reviews",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBill)
+					return obj.Reviews, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
 				Name:     "freightTotal",
 				NonNull:  true,
 				ChildErr: errNoChild1,
@@ -10061,6 +10149,7 @@ var Shard = &gqlexec.Shard{
 		{Root: "ShipmentMove", Check: func(r any) bool { _, ok := r.(resolverShipmentMove); return ok }},
 		{Root: "ShipmentMoveJurisdictionMile", Check: func(r any) bool { _, ok := r.(resolverShipmentMoveJurisdictionMile); return ok }},
 		{Root: "ShipmentRatingDetail", Check: func(r any) bool { _, ok := r.(resolverShipmentRatingDetail); return ok }},
+		{Root: "ShipmentRatingReviewApproval", Check: func(r any) bool { _, ok := r.(resolverShipmentRatingReviewApproval); return ok }},
 	},
 }
 
@@ -10086,6 +10175,7 @@ type resolverMutation interface {
 	UpdateShipment(ctx context.Context, id string, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	CancelShipment(ctx context.Context, id string, input *gqlmodel.ShipmentCancelInput) (*gqlmodel.Shipment, error)
 	UncancelShipment(ctx context.Context, id string) (*gqlmodel.Shipment, error)
+	ApproveShipmentRatingReview(ctx context.Context, shipmentID string) (*gqlmodel.Shipment, error)
 	DuplicateShipment(ctx context.Context, input gqlmodel.ShipmentDuplicateInput) (*gqlmodel.ShipmentDuplicateResponse, error)
 	TransferShipmentOwnership(ctx context.Context, id string, input gqlmodel.ShipmentTransferOwnershipInput) (*gqlmodel.Shipment, error)
 	TransferShipmentToBillingItems(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.ShipmentTransferToBillingResult, error)
@@ -10148,6 +10238,10 @@ type resolverShipmentMoveJurisdictionMile interface {
 
 type resolverShipmentRatingDetail interface {
 	Trace(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (map[string]any, error)
+}
+
+type resolverShipmentRatingReviewApproval interface {
+	ApprovedBy(ctx context.Context, obj *gqlmodel.ShipmentRatingReviewApproval) (*tenant.User, error)
 }
 
 var (
@@ -10329,6 +10423,19 @@ func field_Mutation_uncancelShipment_args(ctx context.Context, ec *gqlexec.Exec,
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_approveShipmentRatingReview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
 	return args, nil
 }
 
@@ -14849,6 +14956,13 @@ func marshalOShipmentRatingDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ShipmentRatingDetail", v)
+}
+
+func marshalOShipmentRatingReviewApproval2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingReviewApproval(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentRatingReviewApproval) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ShipmentRatingReviewApproval", v)
 }
 
 func marshalOShipmentReadyToDispatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentReadyToDispatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentReadyToDispatch) graphql.Marshaler {

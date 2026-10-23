@@ -92,17 +92,17 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 108 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 57 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 49 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 50 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1177 writes: 639 GraphQL mutations and 538 REST writes, after merging 71 REST routes into the mutation they duplicate.
+1178 writes: 640 GraphQL mutations and 538 REST writes, after merging 71 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 459 |
-| Exempt | 718 |
+| Exempt | 719 |
 | — Security | 87 |
 | — Configuration | 276 |
 | — User preference | 40 |
@@ -110,10 +110,10 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Agent administration | 108 |
 | — Counterparty | 35 |
 | — Read-only | 57 |
-| — Attestation | 49 |
+| — Attestation | 50 |
 | — Duplicate | 10 |
 | **Pending** | **0** |
-| Total | 1177 |
+| Total | 1178 |
 
 Of the 459 writes an agent should be able to make, 459 have a tool (100%).
 
@@ -273,7 +273,7 @@ The writes no tool performs yet, and what the tool would do.
 | servicefailure | 9 | 7 | 2 | 0 |
 | servicefailurereasoncode | 6 | 0 | 6 | 0 |
 | servicetype | 4 | 0 | 4 | 0 |
-| shipment | 33 | 21 | 12 | 0 |
+| shipment | 34 | 21 | 13 | 0 |
 | shipmentboard | 4 | 3 | 1 | 0 |
 | shipmentcontrol | 1 | 0 | 1 | 0 |
 | shipmentmove | 4 | 4 | 0 | 0 |
@@ -2008,6 +2008,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation acknowledgeShipmentComment` | Exempt, attestation: Acknowledging a comment says that the person it was addressed to has read it; only that person can say so. |
+| `mutation approveShipmentRatingReview` | Exempt, attestation: Approving the reviews a tariff asked for is the sign-off that releases a held rating to billing; a named person must make it, and the service refuses an agent. |
 | `mutation autoRateShipment`<br>twin `POST /api/v1/shipments/:shipmentID/auto-rate/` | Tool: `shipment_rerate` |
 | `mutation bulkTransferShipmentsToBilling`<br>twin `POST /api/v1/shipments/bulk-transfer-to-billing/` | Tool: `billing_transfer` |
 | `mutation calculateShipmentDistance`<br>twin `POST /api/v1/shipments/calculate-distance/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |

@@ -217,6 +217,9 @@ func (s *Service) resolveGroupLegs(
 	if held {
 		return nil, nil, "Detention charges on some shipments still need approval", nil
 	}
+	if shipment.RatingReviewHoldError(legs) != nil {
+		return nil, nil, "The tariff held the rating of some shipments for review", nil
+	}
 
 	return legs, queueItems, "", nil
 }

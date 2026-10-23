@@ -1508,6 +1508,27 @@ cells is `ErrUnresolvedNeeds`. The loop is one `cellLoad` (`rating/app/tariff/ce
 rater, the test runs and "Save as test" share; `ContextSource.TableStamp` gives the
 organisation's lookup stamp the browser keeps its loaded cells by.
 
+**The record.** `RecordSource.Build` fills the record from a shipment the rating hydrator
+loaded (`ratinghydration`: one batched read per relation for every shipment in a batch,
+stop locations' categories included). `shipment.accessorials` are the shipment's own
+additional charges only (never system-generated or tariff lines, which would feed back on a
+re-rate), their codes from the loaded charge or the organisation's catalog; each stop's
+`legDistance` is its move's stored distance when the move has two stops, `0` when it starts
+where the previous move ended, else `null`; `rating.holidays` are the organisation's holidays
+(not blackouts) from the year before the rating date to the year after, recurring ones
+expanded into each year, read once per organisation and year through
+`ratetablecache.Memoize`, the same per-batch memo the tables use.
+
+**Reviews hold billing.** A rated bill's `reviews` (`tarifftypes.Bill.Reviews`) apply the
+charges but hold the shipment out of billing: `RatingDetail.AwaitsReview` is true until a
+person approves through `approveShipmentRatingReview` (`shipmentratingreviewservice`, billing
+queue update permission, refused to agents, audited on the shipment), which stores a
+`RatingReviewApproval` naming the reviews it approved. A re-rate keeps the approval while the
+reviews are the same, holds again when they change and clears the hold when there are none.
+While held, approving the queue item (by hand, in bulk or automatically), every invoice path
+and invoice runs refuse (`shipment.RatingReviewHoldError`), and the queue item carries a
+`ratingReviewHold` and a `RatingAwaitingReview` check, as detention holds do.
+
 **The resolver.** `TemplateResolver.ResolveBilling` (the `tariffports.Resolver` rating calls)
 returns a template's billing version as of a date with its source, stored input declarations,
 pins and pinned library sources, through the per-request `effectiveversioncache`; a template

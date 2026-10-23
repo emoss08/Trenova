@@ -1,6 +1,8 @@
 package billingqueue
 
 import (
+	"strings"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,4 +43,35 @@ func NewDetentionHolds(occurrences []*detention.DetentionOccurrence) []*Detentio
 	}
 
 	return holds
+}
+
+type RatingReviewHold struct {
+	ShipmentID          pulid.ID `json:"shipmentId"`
+	Reasons             []string `json:"reasons"`
+	RatedAt             int64    `json:"ratedAt"`
+	FormulaTemplateName string   `json:"formulaTemplateName"`
+}
+
+func (h *RatingReviewHold) Summary() string {
+	return strings.Join(h.Reasons, "; ")
+}
+
+func HeldForRatingReview(item *BillingQueueItem) bool {
+	return item != nil && item.ShipmentID.IsNotNil() &&
+		item.BillType != BillTypeCreditMemo &&
+		!IsTerminalStatus(item.Status)
+}
+
+func NewRatingReviewHold(item *BillingQueueItem) *RatingReviewHold {
+	if !HeldForRatingReview(item) || item.Shipment == nil ||
+		!item.Shipment.AwaitsRatingReview() {
+		return nil
+	}
+	detail := item.Shipment.RatingDetail
+	return &RatingReviewHold{
+		ShipmentID:          item.Shipment.ID,
+		Reasons:             detail.ReviewReasons(),
+		RatedAt:             detail.RatedAt,
+		FormulaTemplateName: detail.FormulaTemplateName,
+	}
 }

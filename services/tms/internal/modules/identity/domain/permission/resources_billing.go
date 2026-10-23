@@ -267,7 +267,7 @@ func (r *Registry) registerBillingResources() {
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
-				Description: "Update billing queue items: post them, release them and resolve their issues",
+				Description: "Update billing queue items: post them, release them, resolve their issues and approve ratings a tariff held for review",
 			},
 			{
 				Operation:   OpAssign,
