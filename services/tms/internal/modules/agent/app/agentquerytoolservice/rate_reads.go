@@ -32,12 +32,15 @@ const (
 		"surcharge can be computed."
 	noteOutsideFuelTable = "The index price falls outside every row of this program's table."
 
-	fieldPrice = "price"
+	fieldPrice       = "price"
+	fieldRatePerMile = "ratePerMile"
+	fieldPercent     = "percent"
+	fieldFlatAmount  = "flatAmount"
 )
 
 // fuelSurchargeRates are the fields a program's current rate is given in;
 // a row with none of them was priced outside its table.
-var fuelSurchargeRates = []string{"ratePerMile", "percent", "flatAmount"}
+var fuelSurchargeRates = []string{fieldRatePerMile, fieldPercent, fieldFlatAmount}
 
 // rateReadSpecs are the rate agreement register and the fuel surcharge reads,
 // each through the operation its screen or the Desk sends.
@@ -115,10 +118,16 @@ func noteFuelSurchargeRate(row map[string]any, withheld map[string]struct{}, _ c
 // rateAgreementGetSpec reads one rate agreement through the Desk's card.
 func rateAgreementGetSpec() getSpec {
 	return getSpec{
-		name:        toolRateGetAgreement,
-		entity:      "rate agreement",
-		searchTerms: []string{"contract terms", "lane rules", "lane rates", "minimums", "rule inputs"},
-		resource:    permission.ResourceRateAgreement,
+		name:   toolRateGetAgreement,
+		entity: "rate agreement",
+		searchTerms: []string{
+			"contract terms",
+			"lane rules",
+			"lane rates",
+			"minimums",
+			"rule inputs",
+		},
+		resource: permission.ResourceRateAgreement,
 		summary: "Retrieve one rate agreement, a contract or tariff, by id with its lane rules, " +
 			"their tariffs and inputs (the first 50, and laneCount). It also gives the " +
 			"agreement's own inputs, the current version, the accessorial schedule and the " +

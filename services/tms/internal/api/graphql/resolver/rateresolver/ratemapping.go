@@ -134,17 +134,17 @@ func rateMatrixToModel(entity *ratematrix.RateMatrix) *gqlmodel.RateMatrix {
 	}
 
 	model := &gqlmodel.RateMatrix{
-		ID:                entity.ID.String(),
-		BusinessUnitID:    entity.BusinessUnitID.String(),
-		OrganizationID:    entity.OrganizationID.String(),
-		Code:              entity.Code,
-		Name:              entity.Name,
-		Description:       entity.Description,
-		Status:            string(entity.Status),
-		ValueType:         entity.ValueType,
-		Version:           int(entity.Version),
-		CreatedAt:         int(entity.CreatedAt),
-		UpdatedAt:         int(entity.UpdatedAt),
+		ID:             entity.ID.String(),
+		BusinessUnitID: entity.BusinessUnitID.String(),
+		OrganizationID: entity.OrganizationID.String(),
+		Code:           entity.Code,
+		Name:           entity.Name,
+		Description:    entity.Description,
+		Status:         string(entity.Status),
+		ValueType:      entity.ValueType,
+		Version:        int(entity.Version),
+		CreatedAt:      int(entity.CreatedAt),
+		UpdatedAt:      int(entity.UpdatedAt),
 	}
 
 	return model
@@ -241,7 +241,10 @@ func rateAgreementCardToModel(
 	model.Accessorials = make([]*gqlmodel.RateAgreementAccessorial, 0, len(entity.Accessorials))
 	for _, accessorial := range entity.Accessorials {
 		if accessorial != nil {
-			model.Accessorials = append(model.Accessorials, rateAgreementAccessorialToModel(accessorial))
+			model.Accessorials = append(
+				model.Accessorials,
+				rateAgreementAccessorialToModel(accessorial),
+			)
 		}
 	}
 	if binding := entity.FuelBinding; binding != nil {
