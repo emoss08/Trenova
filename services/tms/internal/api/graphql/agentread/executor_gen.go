@@ -4,23 +4,24 @@ package agentread
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accessorialchargeexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriersettlementexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/commodityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttypeexec"
-	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ediexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentmanufacturerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmenttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalperiodexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetsafetyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazardousmaterialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalentryexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalreversalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationcategoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/manualjournalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
@@ -42,24 +43,25 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workertrainingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
-	accountingsyncresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accountingsyncresolver"
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	carrierintelligenceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
 	carrierresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
-	carriersettlementresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriersettlementresolver"
 	commodityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/commodityresolver"
 	customerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/customerresolver"
 	dispatchconsoleresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
 	documenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/documenttyperesolver"
-	ediresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/ediresolver"
 	equipmentmanufacturerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentmanufacturerresolver"
 	equipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmenttyperesolver"
+	fiscalperiodresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalperiodresolver"
 	fleetcoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	fleetsafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
 	hazardousmaterialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/hazardousmaterialresolver"
 	holdreasonresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
+	journalentryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/journalentryresolver"
+	journalreversalresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/journalreversalresolver"
 	locationcategoryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationcategoryresolver"
 	locationresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationresolver"
+	manualjournalresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/manualjournalresolver"
 	performancereviewresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	servicetyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
 	shipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
@@ -77,10 +79,14 @@ import (
 	workersafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workersafetyresolver"
 	workertrainingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workertrainingresolver"
 	config "github.com/emoss08/trenova/internal/infrastructure/config"
-	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	fiscalperiodservice "github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
+	journalcardservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
+	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
+	journalreversalservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
+	manualjournalservice "github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
+	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
@@ -103,8 +109,6 @@ import (
 	holdreasonservice "github.com/emoss08/trenova/internal/modules/reference/app/holdreasonservice"
 	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
-	carriersettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
-	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	telematicsservice "github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
@@ -129,19 +133,10 @@ type ResolverParams struct {
 	fx.In
 
 	AccessorialChargeService     *accessorialchargeservice.Service
-	AccountingConnectionService  accountingsyncports.AccountingConnectionService
-	AccountingDriftService       accountingsyncports.AccountingDriftService
-	AccountingInboundService     accountingsyncports.AccountingInboundService
-	AccountingMappingService     accountingsyncports.AccountingMappingService
-	AccountingSyncService        accountingsyncports.AccountingSyncService
 	AssignmentService            shipmentports.AssignmentService
 	CarrierAssignmentService     *carrierassignmentservice.Service
-	CarrierCostEventRepo         carriersettlementports.CarrierCostEventRepository
 	CarrierIntelService          *carrierintelservice.Service
 	CarrierService               *carrierservice.Service
-	CarrierSettlementBatchRepo   carriersettlementports.CarrierSettlementBatchRepository
-	CarrierSettlementRepo        carriersettlementports.CarrierSettlementRepository
-	CarrierSettlementService     *carriersettlementservice.Service
 	CommodityService             *commodityservice.Service
 	Config                       *config.Config `optional:"true"`
 	CustomerService              *customerservice.Service
@@ -149,16 +144,21 @@ type ResolverParams struct {
 	DispatchConsoleService       agentports.DispatchConsoleService
 	DocumentTypeService          *documenttypeservice.Service
 	DriverPortalService          *driverportalservice.Service
-	EDIInboundService            *ediinboundservice.Service
-	EDIService                   *ediservice.Service
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
+	FiscalPeriodService          *fiscalperiodservice.Service
 	FleetCodeService             *fleetcodeservice.Service
+	GLAccountRepo                glaccountports.GLAccountRepository
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	JournalCards                 *journalcardservice.Service
+	JournalEntryService          *journalentryservice.Service
+	JournalReversalService       *journalreversalservice.Service
+	JournalReview                journalentryports.JournalReviewService
 	LocationCategoryService      *locationcategoryservice.Service
 	LocationService              *locationservice.Service
 	Logger                       *zap.Logger
+	ManualJournalService         *manualjournalservice.Service
 	OrgStructureService          *orgstructureservice.Service
 	OrganizationService          tenantports.OrganizationService
 	PerformanceReviewService     *performancereviewservice.Service
@@ -183,23 +183,24 @@ type ResolverParams struct {
 
 var shards = []*gqlexec.Shard{
 	accessorialchargeexec.Shard,
-	accountingsyncexec.Shard,
 	carrierexec.Shard,
 	carrierintelligenceexec.Shard,
-	carriersettlementexec.Shard,
 	commodityexec.Shard,
 	customerexec.Shard,
 	dispatchconsoleexec.Shard,
 	documenttypeexec.Shard,
-	ediexec.Shard,
 	equipmentmanufacturerexec.Shard,
 	equipmenttypeexec.Shard,
+	fiscalperiodexec.Shard,
 	fleetcodeexec.Shard,
 	fleetsafetyexec.Shard,
 	hazardousmaterialexec.Shard,
 	holdreasonexec.Shard,
+	journalentryexec.Shard,
+	journalreversalexec.Shard,
 	locationexec.Shard,
 	locationcategoryexec.Shard,
+	manualjournalexec.Shard,
 	performancereviewexec.Shard,
 	preludeexec.Shard,
 	servicetypeexec.Shard,
@@ -224,66 +225,6 @@ var shards = []*gqlexec.Shard{
 // operations are the persisted operations agent tools read through, each
 // byte for byte as the client sends it.
 var operations = []Operation{
-	{
-		Name:     "DeskAccountingConnection",
-		Hash:     "sha256:9e7692ed66d7fa2774c37601c0bbda367337c09761889ab4e3f4059a83923fe3",
-		Document: "query DeskAccountingConnection($integrationType: AccountingSystem!) { accountingSyncStatus(integrationType: $integrationType) { available connection { authMethod autoSync certificateExpiresAt consecutiveFailures externalBooksClosedThrough externalCompanyName externalHomeCurrency externalMultiCurrencyEnabled id lastCheckedAt lastErrorCategory lastErrorMessage lastSuccessAt lastWebhookAt ledgerGranularity ledgerOpeningBalancesSentAt pausedAt pausedReason refreshTokenAbsoluteExpiresAt setupStep status syncEnabledAt syncMode syncStartDate } integrationType providerName } }",
-	},
-	{
-		Name:     "DeskAccountingSyncSummary",
-		Hash:     "sha256:462bf36e94621a410b0ed765fbfb335825761dc1fcf17f8c46d3f7fe921edf99",
-		Document: "query DeskAccountingSyncSummary($integrationType: AccountingSystem!) { accountingSyncSummary(integrationType: $integrationType) { activeBackfill { alreadyQueuedCount enqueuedCount id objectTypes rangeEnd rangeStart status } attention { count errorCategory oldestQueuedAt resolution sampleRecordId status } counts { count status } } }",
-	},
-	{
-		Name:     "DeskAccountingMappingDetail",
-		Hash:     "sha256:420173af6c4055b02de922b0e62e94aa474d3aac9ae76e58a57ac46779025975",
-		Document: "fragment DeskAccountingMappingFields on AccountingMapping { candidates { externalId name reason score } confidence confirmedAt externalId externalName id providerKind reason required source state targetLabel targetType trenovaKey trenovaObjectId } query DeskAccountingMappingDetail($id: ID, $integrationType: AccountingSystem!, $key: String, $optionsQuery: String, $recordId: ID, $targetType: AccountingMappingTargetType) { accountingMappingDetail( integrationType: $integrationType id: $id targetType: $targetType recordId: $recordId key: $key optionsQuery: $optionsQuery ) { mapping { ...DeskAccountingMappingFields } options { accountType externalId itemType label number } } }",
-	},
-	{
-		Name:     "DeskAccountingSyncRecord",
-		Hash:     "sha256:68c36e40139103b93edee12e4ac5b5878c00d580e10084d3fb034320870c9995",
-		Document: "fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncRecord($id: ID!) { accountingSyncRecord(id: $id) { dependsOnRecordId ...DeskAccountingSyncRecordFields } }",
-	},
-	{
-		Name:     "DeskAccountingSyncAttempts",
-		Hash:     "sha256:0d53536090376407a3310cff90284049a61271eab7325dfa5e3a73f9660319b0",
-		Document: "query DeskAccountingSyncAttempts($id: ID!) { accountingSyncAttempts(recordId: $id) { attemptNumber durationMs errorCategory outcome startedAt } }",
-	},
-	{
-		Name:     "DeskAccountingDriftFindings",
-		Hash:     "sha256:6be177e40f0d4b2bffa54def286073430b54319cae5dda0fa52432c73549f117",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskAccountingDriftFindings($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $integrationType: AccountingSystem!) { accountingDriftFindingTable(integrationType: $integrationType, input: $input) { edges { node { currencyCode detail { objectId objectNumber objectType providerMinor trenovaMinor } detectedAt differenceMinor directions externalUrl id kind objectId objectNumber objectType partyName providerMinor providerModifiedAt providerModifiedBy providerState pushed resolution resolutionNote status trenovaMinor trenovaState } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
-	},
-	{
-		Name:     "DeskAccountingDriftOverview",
-		Hash:     "sha256:b05ee1f5a969d6a9a61ff366179a5138ec5c62f4f148543032b03292aec8b052",
-		Document: "query DeskAccountingDriftOverview($integrationType: AccountingSystem!) { accountingDriftOverview(integrationType: $integrationType) { checkError checkedAt currencyCode toleranceMinor } }",
-	},
-	{
-		Name:     "DeskAccountingInboundChanges",
-		Hash:     "sha256:d424983e47bbef0e01e5a2ed2dcdb3937b10e0097b6f543e996f8acdc88a1bbf",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskAccountingInboundChanges($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $integrationType: AccountingSystem!) { accountingInboundChangeTable(integrationType: $integrationType, input: $input) { edges { node { amountMinor currencyCode detectedAt externalNumber externalUrl id kind lines { amountMinor documentKind objectId objectNumber openMinor } methodName partyName partyObjectId providerModifiedBy reason referenceNumber resolution status txnDate } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
-	},
-	{
-		Name:     "DeskAccountingMappings",
-		Hash:     "sha256:6f9bf7a0925150a289ac0d86d302e448d935b383cb0bc11fe58b058d9c4f4492",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingMappingFields on AccountingMapping { candidates { externalId name reason score } confidence confirmedAt externalId externalName id providerKind reason required source state targetLabel targetType trenovaKey trenovaObjectId } query DeskAccountingMappings($after: String, $filter: AccountingMappingFilterInput, $first: Int, $integrationType: AccountingSystem!) { accountingMappings( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { node { ...DeskAccountingMappingFields } } pageInfo { ...DataTablePageInfoFields } } }",
-	},
-	{
-		Name:     "DeskAccountingMappingSummary",
-		Hash:     "sha256:3db823baa840d21940fbbd39de9d6328665112b8aa1aa415fa882b43383c475f",
-		Document: "query DeskAccountingMappingSummary($integrationType: AccountingSystem!) { accountingMappingSummary(integrationType: $integrationType) { canCompleteSetup connection { setupStep status } groups { confirmed proposed targetType unmatched } integrationType providerName requiredConfirmed requiredTotal } }",
-	},
-	{
-		Name:     "DeskAccountingSyncRecords",
-		Hash:     "sha256:42eb3cae5423bd6d5afaf9ce2ba5daddd795e6187e1e9fca379f35a54acc2f2c",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncRecords($after: String, $filter: AccountingSyncRecordFilterInput, $first: Int, $integrationType: AccountingSystem!) { accountingSyncRecords( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { node { ...DeskAccountingSyncRecordFields } } pageInfo { ...DataTablePageInfoFields } } }",
-	},
-	{
-		Name:     "DeskAccountingSyncObjectStates",
-		Hash:     "sha256:416c045ec72a670b82b02fe4e2157cce1f15716df43ba5cef544d95d2a79a85f",
-		Document: "fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncObjectStates($integrationType: AccountingSystem, $objectIds: [ID!]!) { accountingSyncObjectStates( objectIds: $objectIds integrationType: $integrationType ) { objectId objectType providerName record { ...DeskAccountingSyncRecordFields } } }",
-	},
 	{
 		Name:     "DeskCarrierCard",
 		Hash:     "sha256:e2c9ecb82adffabead4f5fa05fffda23b2d62edf912f359397b420922b8dda63",
@@ -313,56 +254,6 @@ var operations = []Operation{
 		Name:     "DocumentTypeTable",
 		Hash:     "sha256:407941510e99bf8b3133b28178542bd908f312b90789fa0c2de2b976f57aa482",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DocumentTypeTableRowFields on DocumentType { businessUnitId code color createdAt description documentCategory documentClassification id isSystem name organizationId updatedAt version } query DocumentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { documentTypes(input: $input) { edges { node { ...DocumentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
-	},
-	{
-		Name:     "DeskEdiAckHealth",
-		Hash:     "sha256:a7e88cdb8e4e743726ee86472b606459e634fe74bb3029dab9913fe2c2381f3b",
-		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiAckHealth($overdueAfterSeconds: Int, $partnerId: ID, $sinceHours: Int, $transactionSet: String) { ediAckHealth( partnerId: $partnerId transactionSet: $transactionSet overdueAfterSeconds: $overdueAfterSeconds sinceHours: $sinceHours ) { ackStatusCounts { count status } answersEverySet asOf overdueAfterSeconds overdueByPartner { messages { deliverySentAt deliveryStatus generatedAt id invoiceId shipmentId transactionControlNumber transactionSet } oldestGeneratedAt overdueCount partnerCode partnerId partnerName } overdueCount overdueNotListed partners { ackStatusCounts { count status } partnerCode partnerId partnerName } recentDeadLettered { ...DeskEdiMessageRowFields } since } }",
-	},
-	{
-		Name:     "DeskEdiInboundFile",
-		Hash:     "sha256:6e2a63b4048a0ccdbe441f3eab16eeca50e48a5e49298eb0e63569969683b9ee",
-		Document: "query DeskEdiInboundFile($id: ID!, $includeRaw: Boolean = false) { ediInboundFile(id: $id) { communicationProfileName file { ediPartnerId failureReason fileName id interchangeControlNumber isaReceiverId isaSenderId method partner { code id name } processedAt rawPurgedAt receivedAt sizeBytes status transactionCount } messageCount messages { ackLastError ackStatus direction generatedAt groupControlNumber id invoiceId segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } raw @include(if: $includeRaw) { sizeBytes text truncated } } }",
-	},
-	{
-		Name:     "DeskEdiMessage",
-		Hash:     "sha256:d426f43a247a5f45d31ade5564aba5bb948bcfd68bf25637f1e45389cda1e680",
-		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiMessage($id: ID!, $includeRaw: Boolean = false) { ediMessage(id: $id) { decoded diagnosticCount diagnostics { code elementPosition message path segmentId severity suggestedFix } message { ackMessageId ackReceivedAt deliveryLastAttemptAt deliveryRemotePath ...DeskEdiMessageRowFields } raw @include(if: $includeRaw) { sizeBytes text truncated } } }",
-	},
-	{
-		Name:     "DeskEdiPartnerCard",
-		Hash:     "sha256:df78682c8a19f34ee150dffef975f96c446ae4d960a3d2715ad0d240ac303230",
-		Document: "fragment DeskEdiPartnerMessageFields on EdiMessage { ackLastError ackReceivedAt ackStatus deliveryAttempts deliveryLastAttemptAt deliveryLastError deliverySentAt deliveryStatus direction generatedAt id interchangeControlNumber status transactionSet } query DeskEdiPartnerCard($id: ID!) { ediPartnerCard(id: $id) { activity { ackStatusCounts { count status } scorecard { avgAckSeconds deadLetteredCount deliverySuccessRate failedCount outboundTotal overdueAckCount p95AckSeconds receivedCount sentCount } series { bucketSeconds bucketStart failedCount outboundCount receivedCount sentCount } seriesSince sets { count deadLetteredCount direction failedCount lastAt transactionSet } since } attention { deadLettered { ...DeskEdiPartnerMessageFields } oldestOverdueAt overdueAckAgeSeconds overdueAckCount overdueAcks { ...DeskEdiPartnerMessageFields } quarantinedFiles { failureReason fileName id receivedAt remotePath sizeBytes } } carriers { carrierCode carrierId carrierName isDefault scac } customer { code id name } documentProfiles { acknowledgment { expected slaInMinutes type } direction envelope { applicationReceiverCode applicationSenderCode componentSeparator elementSeparator interchangeReceiverId interchangeReceiverQualifier interchangeSenderId interchangeSenderQualifier interchangeUsageIndicator repetitionSeparator segmentTerminator } functionalGroupId id name status transactionSet } mappings { counts { count entityType } profileId updatedAt } partner { code connection { acceptedAt capabilities { invoice loadTenderInbound loadTenderOutbound shipmentStatus } id method rejectedAt rejectionReason requestedAt revokedAt status suspendedAt } contactEmail contactName contactPhone country customerId description enabledForInbound enabledForOutbound id internalOrganization { id name } internalOrganizationId kind name status timezone updatedAt } readiness { completedCount items { complete key label } ready totalCount } transports { certificates { expired issuer notAfter notBefore readable role subject } credentials { key onFile required secret } lastPollAttemptAt lastPollError lastPollSuccessAt profile { config id method name status } } } }",
-	},
-	{
-		Name:     "DeskEdiTransfer",
-		Hash:     "sha256:2c4ee84cf1acf4ab1b28f3ed65dbd85da8e7f16188a02cf8fe5644158c606e5d",
-		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfer($id: ID!) { ediTransfer(id: $id) { canAccept transfer { canDecide charges { additional { amount charge method } freight other total } commodities { commodity pieces weight } pieces shipmentTypeLabel stops { address city location pieces postalCode sequence state type weight windowCloses windowOpens } temperatureMax temperatureMin weight ...DeskEdiTransferRowFields } unresolvedMappings { entityType source } } }",
-	},
-	{
-		Name:     "DeskEdiCarrierInvoices",
-		Hash:     "sha256:62983ca1db106053475f19bb620857b5a6f24ba26aad1fb8f2b6075505d4b7c0",
-		Document: "query DeskEdiCarrierInvoices($limit: Int, $offset: Int, $reconciliationStatus: String) { ediCarrierInvoices( reconciliationStatus: $reconciliationStatus limit: $limit offset: $offset ) { items { carrierId currencyCode id invoiceDate invoiceNumber proNumber reconciliationStatus shipmentId shipmentReference suggestedCarrier { id name } totalAmount varianceAmount } } }",
-	},
-	{
-		Name:     "DeskEdiInboundFiles",
-		Hash:     "sha256:721a71b768d0469b9eecfefe10f1e2914ee52e7f9301be0cadcbc8525f05e2c4",
-		Document: "query DeskEdiInboundFiles($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediInboundFiles(input: $input) { edges { node { ediPartnerId failureReason fileName id interchangeControlNumber isaSenderId method partner { code id name } processedAt rawPurgedAt receivedAt sizeBytes status transactionCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
-	},
-	{
-		Name:     "DeskEdiMessages",
-		Hash:     "sha256:d4d7cbee09690ad4b32c7a10a285c7deb069fee7af1e1493ceddf914bb6ef889",
-		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiMessages($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediMessages(input: $input) { edges { node { ...DeskEdiMessageRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
-	},
-	{
-		Name:     "DeskEdiPartners",
-		Hash:     "sha256:c4722993f5fe5eb4a35a6d6af80cbe77173091f1543acf5485df475c1f78fdc1",
-		Document: "query DeskEdiPartners($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediPartners(input: $input) { edges { node { code customerId enabledForInbound enabledForOutbound id internalOrganization { id name } kind name status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
-	},
-	{
-		Name:     "DeskEdiTransfers",
-		Hash:     "sha256:7784367bfe8ea4ffffe44dfadf38a01d672f10f4ab6eb8c7fec39141a2805c84",
-		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfers($direction: EdiTransferDirection!, $inboundFileId: ID, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediTransfers( input: $input direction: $direction inboundFileId: $inboundFileId ) { edges { node { ...DeskEdiTransferRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskTractorCard",
@@ -398,6 +289,36 @@ var operations = []Operation{
 		Name:     "EquipmentTypeTable",
 		Hash:     "sha256:434594d9f9c59a4377be5e555d4baa8f80e86e8a0eea9ec679c7cb7ba3b95f05",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentTypeConfigurationRowFields on EquipmentType { businessUnitId class code color createdAt description id interiorLength organizationId status updatedAt version } query EquipmentTypeTable($classes: [EquipmentClass!], $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentTypes(input: $input, classes: $classes) { edges { node { ...EquipmentTypeConfigurationRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskJournalEntryCard",
+		Hash:     "sha256:19b6ca90530f874add30a452d7613c9f3f904b1e4d3bbf03a9304dec06136629",
+		Document: "fragment DeskJournalCardEntryFields on JournalEntry { accountingDate approvedAt createdAt description entryNumber entryType id isApproved isAutoGenerated isPosted isReversal postedAt requiresApproval reversalDate reversalReason status totalCredit totalDebit } fragment DeskJournalCardLineFields on JournalCardLine { accountCode accountName category creditAmount customerId customerName debitAmount description glAccountId lineNumber locationId locationName } fragment DeskJournalCardPeriodFields on FiscalPeriod { closedAt endDate id name periodNumber startDate status } fragment DeskJournalCardPersonFields on User { id name } fragment DeskJournalCardPostingFields on JournalCardPosting { accountingDate period { ...DeskJournalCardPeriodFields } refusal } query DeskJournalEntryCard($id: ID!) @requiresRead(kind: \"fiscal_period\") { journalEntryCard(id: $id) { approvedBy { ...DeskJournalCardPersonFields } createdBy { ...DeskJournalCardPersonFields } entry { approvalNotes entryDate fiscalPeriodId referenceId referenceNumber referenceType rejectedAt rejectionReason reversalOfId reversedById ...DeskJournalCardEntryFields } lines { isReconciled ...DeskJournalCardLineFields } period { ...DeskJournalCardPeriodFields } postedBy { ...DeskJournalCardPersonFields } posting { ...DeskJournalCardPostingFields } rejectedBy { ...DeskJournalCardPersonFields } reversal { approvedAt cancelReason createdAt id postedAt reasonCode reasonText rejectionReason requestedAccountingDate status } reversalOf { ...DeskJournalCardEntryFields } reversalRequestedBy { ...DeskJournalCardPersonFields } reversedBy { ...DeskJournalCardEntryFields } source { batchNumber id sourceDocumentNumber sourceEventType sourceObjectId sourceObjectType status } } }",
+	},
+	{
+		Name:     "DeskManualJournalCard",
+		Hash:     "sha256:1c91df8041f2edb76527ad3a0a8d2d17411bd31c785ff3aa4972d6552da2226f",
+		Document: "fragment DeskJournalCardEntryFields on JournalEntry { accountingDate approvedAt createdAt description entryNumber entryType id isApproved isAutoGenerated isPosted isReversal postedAt requiresApproval reversalDate reversalReason status totalCredit totalDebit } fragment DeskJournalCardLineFields on JournalCardLine { accountCode accountName category creditAmount customerId customerName debitAmount description glAccountId lineNumber locationId locationName } fragment DeskJournalCardPeriodFields on FiscalPeriod { closedAt endDate id name periodNumber startDate status } fragment DeskJournalCardPersonFields on User { id name } fragment DeskJournalCardPostingFields on JournalCardPosting { accountingDate period { ...DeskJournalCardPeriodFields } refusal } query DeskManualJournalCard($id: ID!) @requiresRead(kind: \"fiscal_period\") { manualJournalCard(id: $id) { approvedBy { ...DeskJournalCardPersonFields } cancelledBy { ...DeskJournalCardPersonFields } createdBy { ...DeskJournalCardPersonFields } entries { ...DeskJournalCardEntryFields } journal { accountingDate approvedAt cancelReason cancelledAt createdAt currencyCode description id isBalanced postedBatchId reason rejectedAt rejectionReason requestNumber status totalCredit totalDebit updatedAt } lines { ...DeskJournalCardLineFields } postedAt postedBy { ...DeskJournalCardPersonFields } posting { ...DeskJournalCardPostingFields } rejectedBy { ...DeskJournalCardPersonFields } requestedPeriod { ...DeskJournalCardPeriodFields } } }",
+	},
+	{
+		Name:     "DeskFiscalPeriods",
+		Hash:     "sha256:c22d5b0498f147c9c963063c7884f23945675a97c198f3042a31c42176ed3276",
+		Document: "query DeskFiscalPeriods($input: DataTableConnectionInput!) { fiscalPeriods(input: $input) { edges { node { closedAt endDate fiscalYearId id isAdjusting lockedAt name periodNumber periodType reopenReason reopenedAt startDate status } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskJournalEntries",
+		Hash:     "sha256:bd92550ddfea9ad1b863ec925f8a74f5092f104f809350e1bdb23051ef59523d",
+		Document: "query DeskJournalEntries($input: DataTableConnectionInput!) { journalEntries(input: $input) { edges { node { accountingDate description entryDate entryNumber entryType fiscalPeriodId id isAutoGenerated isReversal referenceNumber referenceType status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskJournalReversals",
+		Hash:     "sha256:382e6ca816a39498faeaeaa777da093470eefbdb85add044b97019f75e1b18fe",
+		Document: "query DeskJournalReversals($input: DataTableConnectionInput!) { journalReversals(input: $input) { edges { node { approvedAt cancelReason createdAt id originalJournalEntryId postedAt reasonCode reasonText rejectionReason requestedAccountingDate resolvedFiscalPeriodId reversalJournalEntryId status } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskManualJournals",
+		Hash:     "sha256:2b8491c72820af80533bbfa7b71e23e336b13954455e017f1fa0b56ed556be14",
+		Document: "query DeskManualJournals($input: DataTableConnectionInput!) { manualJournals(input: $input) { edges { node { accountingDate approvedAt cancelReason createdAt currencyCode description id isBalanced postedBatchId reason rejectionReason requestNumber requestedFiscalPeriodId status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } } }",
 	},
 	{
 		Name:     "DeskLocationCard",
@@ -543,14 +464,6 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                     core,
 		AccessorialChargeService: p.AccessorialChargeService,
 	}
-	accountingsyncDeps := &accountingsyncresolver.Deps{
-		Core:                     core,
-		AccountingConnections:    p.AccountingConnectionService,
-		AccountingMappingService: p.AccountingMappingService,
-		AccountingSync:           p.AccountingSyncService,
-		AccountingInbound:        p.AccountingInboundService,
-		AccountingDrift:          p.AccountingDriftService,
-	}
 	carrierDeps := &carrierresolver.Deps{
 		Core:           core,
 		CarrierService: p.CarrierService,
@@ -558,13 +471,6 @@ func NewSchema(p ResolverParams) Schema {
 	carrierintelligenceDeps := &carrierintelligenceresolver.Deps{
 		Core:                core,
 		CarrierIntelService: p.CarrierIntelService,
-	}
-	carriersettlementDeps := &carriersettlementresolver.Deps{
-		Core:                       core,
-		CarrierSettlementService:   p.CarrierSettlementService,
-		CarrierSettlementRepo:      p.CarrierSettlementRepo,
-		CarrierSettlementBatchRepo: p.CarrierSettlementBatchRepo,
-		CarrierCostEventRepo:       p.CarrierCostEventRepo,
 	}
 	commodityDeps := &commodityresolver.Deps{
 		Core:             core,
@@ -585,11 +491,6 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                core,
 		DocumentTypeService: p.DocumentTypeService,
 	}
-	ediDeps := &ediresolver.Deps{
-		Core:              core,
-		EdiService:        p.EDIService,
-		EdiInboundService: p.EDIInboundService,
-	}
 	equipmentmanufacturerDeps := &equipmentmanufacturerresolver.Deps{
 		Core:                         core,
 		EquipmentManufacturerService: p.EquipmentManufacturerService,
@@ -597,6 +498,10 @@ func NewSchema(p ResolverParams) Schema {
 	equipmenttypeDeps := &equipmenttyperesolver.Deps{
 		Core:                 core,
 		EquipmentTypeService: p.EquipmentTypeService,
+	}
+	fiscalperiodDeps := &fiscalperiodresolver.Deps{
+		Core:                core,
+		FiscalPeriodService: p.FiscalPeriodService,
 	}
 	fleetcodeDeps := &fleetcoderesolver.Deps{
 		Core:             core,
@@ -614,6 +519,17 @@ func NewSchema(p ResolverParams) Schema {
 		Core:              core,
 		HoldReasonService: p.HoldReasonService,
 	}
+	journalentryDeps := &journalentryresolver.Deps{
+		Core:                core,
+		GlAccountRepo:       p.GLAccountRepo,
+		JournalEntryService: p.JournalEntryService,
+		JournalCards:        p.JournalCards,
+		JournalReview:       p.JournalReview,
+	}
+	journalreversalDeps := &journalreversalresolver.Deps{
+		Core:                   core,
+		JournalReversalService: p.JournalReversalService,
+	}
 	locationDeps := &locationresolver.Deps{
 		Core:            core,
 		LocationService: p.LocationService,
@@ -621,6 +537,11 @@ func NewSchema(p ResolverParams) Schema {
 	locationcategoryDeps := &locationcategoryresolver.Deps{
 		Core:                    core,
 		LocationCategoryService: p.LocationCategoryService,
+	}
+	manualjournalDeps := &manualjournalresolver.Deps{
+		Core:                 core,
+		ManualJournalService: p.ManualJournalService,
+		JournalCards:         p.JournalCards,
 	}
 	performancereviewDeps := &performancereviewresolver.Deps{
 		Core:                     core,
@@ -694,13 +615,12 @@ func NewSchema(p ResolverParams) Schema {
 		customerCustomerBillingProfile: &customerCustomerBillingProfile{Deps: customerDeps},
 	}
 	mutation := &mutationResolver{
-		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
 		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
-		carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
 		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
 		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
+		journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
 		telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
 		tenantMutation:                &tenantMutation{Deps: tenantDeps},
@@ -718,23 +638,24 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	query := &queryResolver{
 		accessorialchargeQuery:     &accessorialchargeQuery{Deps: accessorialchargeDeps},
-		accountingsyncQuery:        &accountingsyncQuery{Deps: accountingsyncDeps},
 		carrierQuery:               &carrierQuery{Deps: carrierDeps},
 		carrierintelligenceQuery:   &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
-		carriersettlementQuery:     &carriersettlementQuery{Deps: carriersettlementDeps},
 		commodityQuery:             &commodityQuery{Deps: commodityDeps},
 		customerQuery:              &customerQuery{Deps: customerDeps},
 		dispatchconsoleQuery:       &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
 		documenttypeQuery:          &documenttypeQuery{Deps: documenttypeDeps},
-		ediQuery:                   &ediQuery{Deps: ediDeps},
 		equipmentmanufacturerQuery: &equipmentmanufacturerQuery{Deps: equipmentmanufacturerDeps},
 		equipmenttypeQuery:         &equipmenttypeQuery{Deps: equipmenttypeDeps},
+		fiscalperiodQuery:          &fiscalperiodQuery{Deps: fiscalperiodDeps},
 		fleetcodeQuery:             &fleetcodeQuery{Deps: fleetcodeDeps},
 		fleetsafetyQuery:           &fleetsafetyQuery{Deps: fleetsafetyDeps},
 		hazardousmaterialQuery:     &hazardousmaterialQuery{Deps: hazardousmaterialDeps},
 		holdreasonQuery:            &holdreasonQuery{Deps: holdreasonDeps},
+		journalentryQuery:          &journalentryQuery{Deps: journalentryDeps},
+		journalreversalQuery:       &journalreversalQuery{Deps: journalreversalDeps},
 		locationQuery:              &locationQuery{Deps: locationDeps},
 		locationcategoryQuery:      &locationcategoryQuery{Deps: locationcategoryDeps},
+		manualjournalQuery:         &manualjournalQuery{Deps: manualjournalDeps},
 		performancereviewQuery:     &performancereviewQuery{Deps: performancereviewDeps},
 		servicetypeQuery:           &servicetypeQuery{Deps: servicetypeDeps},
 		shipmenttypeQuery:          &shipmenttypeQuery{Deps: shipmenttypeDeps},
@@ -754,25 +675,11 @@ func NewSchema(p ResolverParams) Schema {
 	}
 
 	return newSchema(shards, map[string]func() any{
-		"CustomerBillingProfile":    func() any { return customerBillingProfile },
-		"Mutation":                  func() any { return mutation },
-		"Query":                     func() any { return query },
-		"AccessorialCharge":         func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
-		"AccountingAppCredential":   func() any { return &accountingsyncresolver.AccountingAppCredentialResolver{Deps: accountingsyncDeps} },
-		"AccountingAppSettings":     func() any { return &accountingsyncresolver.AccountingAppSettingsResolver{Deps: accountingsyncDeps} },
-		"AccountingConnection":      func() any { return &accountingsyncresolver.AccountingConnectionResolver{Deps: accountingsyncDeps} },
-		"AccountingDriftFinding":    func() any { return &accountingsyncresolver.AccountingDriftFindingResolver{Deps: accountingsyncDeps} },
-		"AccountingDriftFixPreview": func() any { return &accountingsyncresolver.AccountingDriftFixPreviewResolver{Deps: accountingsyncDeps} },
-		"AccountingInboundChange":   func() any { return &accountingsyncresolver.AccountingInboundChangeResolver{Deps: accountingsyncDeps} },
-		"AccountingInboundLine":     func() any { return &accountingsyncresolver.AccountingInboundLineResolver{Deps: accountingsyncDeps} },
-		"AccountingMapping":         func() any { return &accountingsyncresolver.AccountingMappingResolver{Deps: accountingsyncDeps} },
-		"AccountingReferenceObject": func() any { return &accountingsyncresolver.AccountingReferenceObjectResolver{Deps: accountingsyncDeps} },
-		"AccountingSyncAttempt":     func() any { return &accountingsyncresolver.AccountingSyncAttemptResolver{Deps: accountingsyncDeps} },
-		"AccountingSyncAttentionGroup": func() any {
-			return &accountingsyncresolver.AccountingSyncAttentionGroupResolver{Deps: accountingsyncDeps}
-		},
-		"AccountingSyncRecord": func() any { return &accountingsyncresolver.AccountingSyncRecordResolver{Deps: accountingsyncDeps} },
-		"Carrier":              func() any { return &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps} },
+		"CustomerBillingProfile": func() any { return customerBillingProfile },
+		"Mutation":               func() any { return mutation },
+		"Query":                  func() any { return query },
+		"AccessorialCharge":      func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
+		"Carrier":                func() any { return &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps} },
 		"CarrierEquipmentVerification": func() any {
 			return &carrierintelligenceresolver.CarrierEquipmentVerificationResolver{Deps: carrierintelligenceDeps}
 		},
@@ -816,33 +723,32 @@ func NewSchema(p ResolverParams) Schema {
 		"CarrierMonitoringEnrollment": func() any {
 			return &carrierintelligenceresolver.CarrierMonitoringEnrollmentResolver{Deps: carrierintelligenceDeps}
 		},
-		"CarrierSettlement": func() any { return &carriersettlementresolver.CarrierSettlementResolver{Deps: carriersettlementDeps} },
 		"CarrierSourcingResult": func() any {
 			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
 		},
-		"Commodity":                 func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":                  func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
-		"DOTRandomDraw":             func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomDrawEntry":        func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomPool":             func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
-		"DQFFile":                   func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
-		"DQFItem":                   func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
-		"DisciplinaryLadder":        func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
-		"DrugAlcoholStanding":       func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
-		"EdiAcknowledgmentConfig":   func() any { return &ediresolver.EdiAcknowledgmentConfigResolver{Deps: ediDeps} },
-		"EdiCarrierInvoice":         func() any { return &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps} },
-		"EdiMessage":                func() any { return &ediresolver.EdiMessageResolver{Deps: ediDeps} },
-		"EdiPartnerDocumentProfile": func() any { return &ediresolver.EdiPartnerDocumentProfileResolver{Deps: ediDeps} },
-		"EdiTemplate":               func() any { return &ediresolver.EdiTemplateResolver{Deps: ediDeps} },
-		"EdiTransfer":               func() any { return &ediresolver.EdiTransferResolver{Deps: ediDeps} },
-		"FleetSafetyRank":           func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
-		"FleetSafetyTerminal":       func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
-		"LeaveControl":              func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
-		"LeaveEntitlement":          func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
-		"LocationCategory":          func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"OSHAAnnualSummary":         func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
-		"PTOChartDataPoint":         func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
-		"PerformanceReview":         func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
+		"Commodity":            func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":             func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"DOTRandomDraw":        func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomDrawEntry":   func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomPool":        func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
+		"DQFFile":              func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
+		"DQFItem":              func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
+		"DisciplinaryLadder":   func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
+		"DrugAlcoholStanding":  func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
+		"FleetSafetyRank":      func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
+		"FleetSafetyTerminal":  func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
+		"JournalCardLine":      func() any { return &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps} },
+		"JournalCardPosting":   func() any { return &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps} },
+		"JournalEntry":         func() any { return &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps} },
+		"JournalEntryLine":     func() any { return &journalentryresolver.JournalEntryLineResolver{Deps: journalentryDeps} },
+		"JournalReviewSummary": func() any { return &journalentryresolver.JournalReviewSummaryResolver{Deps: journalentryDeps} },
+		"JournalSourceInfo":    func() any { return &journalentryresolver.JournalSourceInfoResolver{Deps: journalentryDeps} },
+		"LeaveControl":         func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
+		"LeaveEntitlement":     func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
+		"LocationCategory":     func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"OSHAAnnualSummary":    func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
+		"PTOChartDataPoint":    func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
+		"PerformanceReview":    func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
 		"PerformanceReviewTemplate": func() any {
 			return &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
 		},
@@ -890,13 +796,12 @@ type customerBillingProfileResolver struct {
 }
 
 type mutationResolver struct {
-	*accountingsyncMutation
 	*carrierintelligenceMutation
-	*carriersettlementMutation
 	*dispatchconsoleMutation
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
 	*fleetsafetyMutation
+	*journalentryMutation
 	*performancereviewMutation
 	*telematicsMutation
 	*tenantMutation
@@ -915,23 +820,24 @@ type mutationResolver struct {
 
 type queryResolver struct {
 	*accessorialchargeQuery
-	*accountingsyncQuery
 	*carrierQuery
 	*carrierintelligenceQuery
-	*carriersettlementQuery
 	*commodityQuery
 	*customerQuery
 	*dispatchconsoleQuery
 	*documenttypeQuery
-	*ediQuery
 	*equipmentmanufacturerQuery
 	*equipmenttypeQuery
+	*fiscalperiodQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
 	*hazardousmaterialQuery
 	*holdreasonQuery
+	*journalentryQuery
+	*journalreversalQuery
 	*locationQuery
 	*locationcategoryQuery
+	*manualjournalQuery
 	*performancereviewQuery
 	*servicetypeQuery
 	*shipmenttypeQuery
@@ -952,13 +858,12 @@ type queryResolver struct {
 
 type (
 	customerCustomerBillingProfile = customerresolver.CustomerBillingProfileResolver
-	accountingsyncMutation         = accountingsyncresolver.MutationResolver
 	carrierintelligenceMutation    = carrierintelligenceresolver.MutationResolver
-	carriersettlementMutation      = carriersettlementresolver.MutationResolver
 	dispatchconsoleMutation        = dispatchconsoleresolver.MutationResolver
 	equipmentmanufacturerMutation  = equipmentmanufacturerresolver.MutationResolver
 	equipmenttypeMutation          = equipmenttyperesolver.MutationResolver
 	fleetsafetyMutation            = fleetsafetyresolver.MutationResolver
+	journalentryMutation           = journalentryresolver.MutationResolver
 	performancereviewMutation      = performancereviewresolver.MutationResolver
 	telematicsMutation             = telematicsresolver.MutationResolver
 	tenantMutation                 = tenantresolver.MutationResolver
@@ -974,23 +879,24 @@ type (
 	workersafetyMutation           = workersafetyresolver.MutationResolver
 	workertrainingMutation         = workertrainingresolver.MutationResolver
 	accessorialchargeQuery         = accessorialchargeresolver.QueryResolver
-	accountingsyncQuery            = accountingsyncresolver.QueryResolver
 	carrierQuery                   = carrierresolver.QueryResolver
 	carrierintelligenceQuery       = carrierintelligenceresolver.QueryResolver
-	carriersettlementQuery         = carriersettlementresolver.QueryResolver
 	commodityQuery                 = commodityresolver.QueryResolver
 	customerQuery                  = customerresolver.QueryResolver
 	dispatchconsoleQuery           = dispatchconsoleresolver.QueryResolver
 	documenttypeQuery              = documenttyperesolver.QueryResolver
-	ediQuery                       = ediresolver.QueryResolver
 	equipmentmanufacturerQuery     = equipmentmanufacturerresolver.QueryResolver
 	equipmenttypeQuery             = equipmenttyperesolver.QueryResolver
+	fiscalperiodQuery              = fiscalperiodresolver.QueryResolver
 	fleetcodeQuery                 = fleetcoderesolver.QueryResolver
 	fleetsafetyQuery               = fleetsafetyresolver.QueryResolver
 	hazardousmaterialQuery         = hazardousmaterialresolver.QueryResolver
 	holdreasonQuery                = holdreasonresolver.QueryResolver
+	journalentryQuery              = journalentryresolver.QueryResolver
+	journalreversalQuery           = journalreversalresolver.QueryResolver
 	locationQuery                  = locationresolver.QueryResolver
 	locationcategoryQuery          = locationcategoryresolver.QueryResolver
+	manualjournalQuery             = manualjournalresolver.QueryResolver
 	performancereviewQuery         = performancereviewresolver.QueryResolver
 	servicetypeQuery               = servicetyperesolver.QueryResolver
 	shipmenttypeQuery              = shipmenttyperesolver.QueryResolver

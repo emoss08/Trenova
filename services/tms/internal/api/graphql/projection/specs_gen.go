@@ -15871,6 +15871,14 @@ func init() {
 				FieldMapKey: "closedAt",
 			},
 			{
+				Name:        "reopenedAt",
+				FieldMapKey: "reopenedAt",
+			},
+			{
+				Name:        "reopenReason",
+				FieldMapKey: "reopenReason",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -20467,6 +20475,10 @@ func init() {
 			{
 				Name:        "totalCredit",
 				FieldMapKey: "totalCredit",
+			},
+			{
+				Name:    "isBalanced",
+				Special: "balance",
 			},
 			{
 				Name:        "approvedAt",

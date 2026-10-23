@@ -16754,10 +16754,24 @@ type FiscalPeriod {
   organizationId: ID!
   periodNumber: Int!
   periodType: PeriodType
+  """Why the period was last reopened; empty when it never was."""
+  reopenReason: String
+  reopenedAt: Timestamp
   startDate: Timestamp!
   status: FiscalPeriodStatus!
   updatedAt: Timestamp!
   version: Int!
+}
+
+type FiscalPeriodConnection {
+  edges: [FiscalPeriodEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FiscalPeriodEdge {
+  cursor: String!
+  node: FiscalPeriod!
 }
 
 enum FiscalPeriodStatus {
@@ -20276,6 +20290,10 @@ type JournalCardLine {
   debitAmount: Int!
   description: String!
   glAccountId: ID!
+  """
+  Whether the line has been reconciled. A manual journal's lines never are: they reconcile once posted, as journal entry lines.
+  """
+  isReconciled: Boolean!
   lineNumber: Int!
   """
   Null when the line names no location or the reader may not read locations.
@@ -20297,6 +20315,8 @@ type JournalCardPosting {
 
 type JournalEntry {
   accountingDate: Timestamp!
+  """What the approver wrote when approving it; empty when nothing was."""
+  approvalNotes: String!
   approvedAt: Timestamp
   approvedById: ID
   batchId: ID!
@@ -20304,6 +20324,10 @@ type JournalEntry {
   createdAt: Timestamp!
   createdById: ID
   description: String!
+  """
+  The day the entry was written, which can differ from the day it books to.
+  """
+  entryDate: Timestamp!
   entryNumber: String!
   entryType: String!
   fiscalPeriodId: ID!
@@ -20320,6 +20344,9 @@ type JournalEntry {
   referenceId: String!
   referenceNumber: String!
   referenceType: String!
+  rejectedAt: Timestamp
+  """Why it was rejected; empty unless it was."""
+  rejectionReason: String!
   requiresApproval: Boolean!
   reversalDate: Timestamp
   reversalOfId: ID
@@ -20331,7 +20358,7 @@ type JournalEntry {
   version: Int!
 }
 
-type JournalEntryCard {
+type JournalEntryCard @kind(resource: "journal_entry") {
   approvedBy: User
   createdBy: User
   entry: JournalEntry!
@@ -20972,6 +20999,8 @@ type ManualJournal {
   currencyCode: String!
   description: String!
   id: ID!
+  """Whether it has debits and they equal its credits."""
+  isBalanced: Boolean!
   organizationId: ID!
   postedBatchId: ID
   reason: String
@@ -20989,7 +21018,7 @@ type ManualJournal {
   version: Int!
 }
 
-type ManualJournalCard {
+type ManualJournalCard @kind(resource: "manual_journal") {
   approvedBy: User
   cancelledBy: User
   createdBy: User
@@ -24870,6 +24899,8 @@ type Query {
   factoringSummary: FactoringSummary!
   """Null until the factor's delivery is set up."""
   factoringTransport(factoringCompanyId: ID!): FactoringTransport
+  """Every fiscal period of every fiscal year, latest start first."""
+  fiscalPeriods(input: DataTableConnectionInput!): FiscalPeriodConnection!
   fiscalYear(id: ID!): FiscalYear
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fleetCode(id: ID!): FleetCode
@@ -24963,6 +24994,10 @@ type Query {
   """Everyone in a position from either roster, workers first."""
   jobPositionHolders(id: ID!): [PositionHolder!]!
   jobPositions(activeOnly: Boolean, drivingOnly: Boolean): [JobPosition!]!
+  """
+  Every journal entry in the general ledger, whatever its status, newest accounting date first.
+  """
+  journalEntries(input: DataTableConnectionInput!): JournalEntryConnection!
   journalEntriesBySource(sourceId: String!, sourceType: String!): [JournalEntry!]!
   journalEntry(id: ID!): JournalEntry
   """A journal entry as the Desk card draws it, read in one pass."""

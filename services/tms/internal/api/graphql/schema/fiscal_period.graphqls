@@ -29,7 +29,26 @@ type FiscalPeriod {
   adjustmentDeadline: Timestamp
   lockedAt: Timestamp
   closedAt: Timestamp
+  reopenedAt: Timestamp
+  "Why the period was last reopened; empty when it never was."
+  reopenReason: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+type FiscalPeriodEdge {
+  node: FiscalPeriod!
+  cursor: String!
+}
+
+type FiscalPeriodConnection {
+  edges: [FiscalPeriodEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  "Every fiscal period of every fiscal year, latest start first."
+  fiscalPeriods(input: DataTableConnectionInput!): FiscalPeriodConnection!
 }

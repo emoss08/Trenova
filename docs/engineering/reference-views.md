@@ -169,7 +169,12 @@ asks the same port, `permissionports.ReferenceViews`, which refview implements:
 3. **A card or overview that is about one record.** A root field that returns a card wrapping a
    record its resolver checks (`journalEntryCard` checks `journal_entry` read) declares
    `@authorizes(resource: "journal_entry")`, so that record is the root record and not a linked
-   one. A test holds the declaration to the resolver's check.
+   one. A test holds the declaration to the resolver's check. A card whose own parts carry the
+   record's data (a journal's lines and their amounts) also declares `@kind` of that record
+   (`JournalEntryCard @kind(resource: "journal_entry")`), so those parts are gated by the
+   record's sensitivities; the records it carries of a kind the root declares with `@authorizes`
+   are still the root's own, and the card's own fields are declared in that kind's
+   sensitivities. A card of a kind has no reference fragment.
 4. **A projection of a kind.** A type that carries another kind's data under its own name
    (`ShipmentCustomer`, `InboundShipmentRef`) declares `@kind(resource: "customer")`, so the guard
    gates it as that kind. A field named for a kind that returns some other type fails CI until the

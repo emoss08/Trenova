@@ -18341,9 +18341,28 @@ type FiscalPeriod {
   adjustmentDeadline: Timestamp
   lockedAt: Timestamp
   closedAt: Timestamp
+  reopenedAt: Timestamp
+  "Why the period was last reopened; empty when it never was."
+  reopenReason: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+type FiscalPeriodEdge {
+  node: FiscalPeriod!
+  cursor: String!
+}
+
+type FiscalPeriodConnection {
+  edges: [FiscalPeriodEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  "Every fiscal period of every fiscal year, latest start first."
+  fiscalPeriods(input: DataTableConnectionInput!): FiscalPeriodConnection!
 }
 `, BuiltIn: false},
 	{Name: "../schema/fiscal_year.graphqls", Input: `enum FiscalYearStatus {
@@ -22366,6 +22385,8 @@ type JournalEntry {
   fiscalYearId: ID!
   fiscalPeriodId: ID!
   entryNumber: String!
+  "The day the entry was written, which can differ from the day it books to."
+  entryDate: Timestamp!
   entryType: String!
   status: String!
   accountingDate: Timestamp!
@@ -22386,6 +22407,11 @@ type JournalEntry {
   isApproved: Boolean!
   approvedById: ID
   approvedAt: Timestamp
+  "What the approver wrote when approving it; empty when nothing was."
+  approvalNotes: String!
+  rejectedAt: Timestamp
+  "Why it was rejected; empty unless it was."
+  rejectionReason: String!
   postedById: ID
   postedAt: Timestamp
   createdById: ID
@@ -22460,6 +22486,8 @@ type JournalCardLine {
   "Null when the line names no location or the reader may not read locations."
   locationId: ID
   locationName: String!
+  "Whether the line has been reconciled. A manual journal's lines never are: they reconcile once posted, as journal entry lines."
+  isReconciled: Boolean!
 }
 
 "Where a journal not yet posted would land if it posted now, under the organization's closed-period policy."
@@ -22471,7 +22499,7 @@ type JournalCardPosting {
   refusal: String!
 }
 
-type JournalEntryCard {
+type JournalEntryCard @kind(resource: "journal_entry") {
   entry: JournalEntry!
   lines: [JournalCardLine!]!
   period: FiscalPeriod
@@ -22493,6 +22521,8 @@ type JournalEntryCard {
 
 extend type Query {
   journalEntry(id: ID!): JournalEntry
+  "Every journal entry in the general ledger, whatever its status, newest accounting date first."
+  journalEntries(input: DataTableConnectionInput!): JournalEntryConnection!
   journalEntriesBySource(sourceType: String!, sourceId: String!): [JournalEntry!]!
   journalSourceByObject(sourceType: String!, sourceId: String!): JournalSourceInfo
   "Journal entries waiting to be approved or posted, oldest first."
@@ -22933,6 +22963,8 @@ type ManualJournal {
   currencyCode: String!
   totalDebit: Int!
   totalCredit: Int!
+  "Whether it has debits and they equal its credits."
+  isBalanced: Boolean!
   approvedAt: Timestamp
   approvedById: ID
   rejectedAt: Timestamp
@@ -22960,7 +22992,7 @@ type ManualJournalConnection {
   totalCount: Int
 }
 
-type ManualJournalCard {
+type ManualJournalCard @kind(resource: "manual_journal") {
   journal: ManualJournal!
   lines: [JournalCardLine!]!
   requestedPeriod: FiscalPeriod

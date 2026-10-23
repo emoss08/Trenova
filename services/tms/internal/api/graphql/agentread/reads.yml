@@ -16,6 +16,18 @@ reads:
   - tool: customer_get
   - tool: location_get
   - tool: document_list_types
+  - tool: ledger_list_fiscal_periods
+  - tool: ledger_list_journal_entries
+    operation: DeskJournalEntries
+    reason: Every journal entry is read by journalEntries; journalReviewTable reads the same record but only the entries still waiting to be approved or posted.
+  - tool: ledger_list_journal_reversals
+  - tool: ledger_list_manual_journals
+  - tool: ledger_get_journal_entry
+    operation: DeskJournalEntryCard
+    reason: The Desk's journal entry card, read by journalEntryCard, carries each line's account and the approval and reversal history the tool returns; journalEntry reads the bare entry.
+  - tool: ledger_get_manual_journal
+    operation: DeskManualJournalCard
+    reason: The Desk's manual journal card, read by manualJournalCard, carries each line's account and the entries the journal became; no operation reads manualJournal alone.
   - tool: equipment_list_manufacturers
   - tool: equipment_list_tractors
   - tool: equipment_list_trailers

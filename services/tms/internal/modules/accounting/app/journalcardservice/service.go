@@ -95,6 +95,7 @@ type Line struct {
 	CustomerName string
 	LocationID   pulid.ID
 	LocationName string
+	IsReconciled bool
 }
 
 type Posting struct {
@@ -160,6 +161,7 @@ type lineSource struct {
 	credit      int64
 	customerID  pulid.ID
 	locationID  pulid.ID
+	reconciled  bool
 }
 
 func (s *Service) GetJournalEntryCard(
@@ -408,6 +410,7 @@ func entryLines(entry *journalentry.JournalEntry) []lineSource {
 			credit:      line.CreditAmount,
 			customerID:  line.CustomerID,
 			locationID:  line.LocationID,
+			reconciled:  line.IsReconciled,
 		})
 	}
 	return out
@@ -481,6 +484,7 @@ func (s *Service) lines(
 			Description:  src.description,
 			DebitAmount:  src.debit,
 			CreditAmount: src.credit,
+			IsReconciled: src.reconciled,
 		}
 		if parties.IncludeCustomers {
 			line.CustomerID = src.customerID

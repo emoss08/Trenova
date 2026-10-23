@@ -25396,7 +25396,7 @@
     },
     {
       "name": "ledger_get_journal_entry",
-      "description": "Retrieve one journal entry by id with its lines: the GL account each line posts to, its debit or credit, and the entry's source, approval and reversal history. Use ledger_list_journal_entries first when you have a number or a date.",
+      "description": "Retrieve one journal entry by id with its lines and the GL account each posts to. It gives each line's debit or credit when your data access reaches them, and the entry's period, source, approval and reversal history. Use ledger_list_journal_entries first when you have a number or a date.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -25441,7 +25441,7 @@
     },
     {
       "name": "ledger_get_manual_journal",
-      "description": "Retrieve one manual journal request by id with its lines, the account each posts to and its debit or credit. It also says who approved, rejected or cancelled it and why. Use ledger_list_manual_journals first when you have a number.",
+      "description": "Retrieve one manual journal request by id with its lines, the account each posts to and, when your data access reaches them, its debit or credit. It also says who approved, rejected or cancelled it, where it will post, and the journal entries it became. Use ledger_list_manual_journals first when you have a number.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -25611,75 +25611,85 @@
     },
     {
       "name": "ledger_list_fiscal_periods",
-      "description": "List fiscal periods, the months, quarters or adjusting periods the books close by, with their dates and whether each is open, locked or closed. ledger_get_fiscal_close_blockers says what stops one from closing. Filters: status (Inactive|Open|Locked|Closed|PermanentlyClosed): Open accepts postings; Locked and Closed do not; periodType (Month|Quarter|Week|Adjusting); text: name; number: periodNumber; date: startDate, endDate; boolean: isAdjusting. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List fiscal periods, the months, quarters or adjusting periods the books close by, latest first, with their dates and whether each is open, locked or closed. ledger_get_fiscal_close_blockers says what stops one from closing. Filters: adjustmentDeadlineFrom/To, allowAdjustingEntries, closedAtFrom/To, createdAtFrom/To, endDateFrom/To, isAdjusting, lockedAtFrom/To, name, periodNumberMin/Max, periodType, reopenedAtFrom/To, startDateFrom/To, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "periodType",
-                    "name",
-                    "periodNumber",
-                    "startDate",
-                    "endDate",
-                    "isAdjusting"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "ledger_list_fiscal_periods.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "ledger_list_fiscal_periods.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "adjustmentDeadlineFrom": {
+            "description": "Only records whose adjustment deadline is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "adjustmentDeadlineTo": {
+            "description": "Only records whose adjustment deadline is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "allowAdjustingEntries": {
+            "description": "true for only the records whose allowAdjustingEntries is true, false for only those whose allowAdjustingEntries is false.",
+            "type": "boolean"
+          },
+          "closedAtFrom": {
+            "description": "Only records whose closed at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "closedAtTo": {
+            "description": "Only records whose closed at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "endDateFrom": {
+            "description": "Only records whose end date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "endDateTo": {
+            "description": "Only records whose end date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "isAdjusting": {
+            "description": "true for only the records whose isAdjusting is true, false for only those whose isAdjusting is false.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25688,25 +25698,95 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
+          "lockedAtFrom": {
+            "description": "Only records whose locked at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "lockedAtTo": {
+            "description": "Only records whose locked at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
+          },
+          "periodNumberMax": {
+            "description": "Only records whose period number is at most this.",
             "type": "integer"
           },
+          "periodNumberMin": {
+            "description": "Only records whose period number is at least this.",
+            "type": "integer"
+          },
+          "periodType": {
+            "description": "Only records whose period type is one of these.",
+            "items": {
+              "enum": [
+                "Month",
+                "Quarter",
+                "Week",
+                "Adjusting"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.PeriodType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "reopenReason": {
+            "description": "Why the period was last reopened; empty when it never was. Only records whose reopen reason contains this text.",
+            "type": "string"
+          },
+          "reopenedAtFrom": {
+            "description": "Only records whose reopened at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "reopenedAtTo": {
+            "description": "Only records whose reopened at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "adjustmentDeadline",
+              "allowAdjustingEntries",
+              "closedAt",
+              "createdAt",
+              "endDate",
+              "fiscalYearId",
+              "isAdjusting",
+              "lockedAt",
               "name",
               "periodNumber",
+              "periodType",
+              "reopenReason",
+              "reopenedAt",
               "startDate",
-              "endDate"
+              "status",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "ledger_list_fiscal_periods.sortBy"
+            "x-enumOf": "ledger_list_fiscal_periods.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -25716,6 +25796,54 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "startDateFrom": {
+            "description": "Only records whose start date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "startDateTo": {
+            "description": "Only records whose start date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Open accepts postings; Locked and Closed do not.",
+            "items": {
+              "enum": [
+                "Inactive",
+                "Open",
+                "Locked",
+                "Closed",
+                "PermanentlyClosed"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.FiscalPeriodStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -25750,22 +25878,134 @@
     },
     {
       "name": "ledger_list_journal_entries",
-      "description": "List general ledger journal entries, newest accounting date first, with their number, type, status, source reference and debit and credit totals. Narrow by status, source, fiscal period, an accounting date range or text in the number or description. ledger_get_journal_entry opens one with its lines.",
+      "description": "List general ledger journal entries in any status, newest accounting date first, with their number, type, status and source reference. Their debit and credit totals show when your data access reaches them. ledger_get_journal_entry opens one with its lines. Filters: accountingDateFrom/To, approvedAtFrom/To, createdAtFrom/To, description, entryDateFrom/To, entryNumber, entryType, fiscalPeriodId, hasApprovedBy, hasCreatedBy, hasPostedBy, hasReversalOf, hasReversedBy, isApproved, isAutoGenerated, isPosted, isReversal, postedAtFrom/To, referenceId, referenceNumber, referenceType, rejectedAtFrom/To, requiresApproval, reversalDateFrom/To, status.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "fiscalPeriodId": {
-            "description": "Only entries in this fiscal period, by id from ledger_list_fiscal_periods.",
-            "type": "string",
-            "x-recordOf": "fiscal_period"
-          },
-          "fromDate": {
-            "description": "The earliest accounting date. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+          "accountingDateFrom": {
+            "description": "Only records whose accounting date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
               "2026-10-01"
             ],
             "format": "date",
             "type": "string"
+          },
+          "accountingDateTo": {
+            "description": "Only records whose accounting date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "approvalNotes": {
+            "description": "What the approver wrote when approving it; empty when nothing was. Only records whose approval notes contains this text.",
+            "type": "string"
+          },
+          "approvedAtFrom": {
+            "description": "Only records whose approved at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "approvedAtTo": {
+            "description": "Only records whose approved at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "entryDateFrom": {
+            "description": "The day the entry was written, which can differ from the day it books to. Only records whose entry date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "entryDateTo": {
+            "description": "The day the entry was written, which can differ from the day it books to. Only records whose entry date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "entryNumber": {
+            "description": "Only records whose entry number contains this text.",
+            "type": "string"
+          },
+          "entryType": {
+            "description": "Only records whose entry type contains this text. Such as Standard, Adjusting, Closing or Reversal.",
+            "type": "string"
+          },
+          "fiscalPeriodId": {
+            "description": "The fiscal period, from ledger_list_fiscal_periods. Never guess one.",
+            "type": "string",
+            "x-recordOf": "fiscal_period"
+          },
+          "hasApprovedBy": {
+            "description": "true for only records that have a approved by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasCreatedBy": {
+            "description": "true for only records that have a created by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasPostedBy": {
+            "description": "true for only records that have a posted by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasReversalOf": {
+            "description": "true for only records that have a reversal of, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasReversedBy": {
+            "description": "true for only records that have a reversed by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "isApproved": {
+            "description": "true for only the records whose isApproved is true, false for only those whose isApproved is false.",
+            "type": "boolean"
+          },
+          "isAutoGenerated": {
+            "description": "true for only the records whose isAutoGenerated is true, false for only those whose isAutoGenerated is false.",
+            "type": "boolean"
+          },
+          "isPosted": {
+            "description": "true for only the records whose isPosted is true, false for only those whose isPosted is false.",
+            "type": "boolean"
+          },
+          "isReversal": {
+            "description": "true for only the records whose isReversal is true, false for only those whose isReversal is false.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25774,40 +26014,149 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
-          "query": {
-            "description": "Words to look for in the entry number, description or source reference.",
-            "type": "string"
-          },
-          "referenceType": {
-            "description": "Only entries from this source, such as Invoice, CustomerPayment or DriverSettlement.",
-            "type": "string"
-          },
-          "status": {
-            "description": "Only entries in this status.",
-            "enum": [
-              "Draft",
-              "Pending",
-              "Approved",
-              "Posted",
-              "Reversed",
-              "Rejected",
-              "Void"
-            ],
-            "type": "string",
-            "x-enumOf": "journalEntry.status"
-          },
-          "toDate": {
-            "description": "The latest accounting date. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+          "postedAtFrom": {
+            "description": "Only records whose posted at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
               "2026-10-01"
             ],
             "format": "date",
             "type": "string"
+          },
+          "postedAtTo": {
+            "description": "Only records whose posted at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "referenceId": {
+            "description": "Only records whose reference id contains this text. The source record's id, such as an invoice's from invoice_list; referenceType says which kind of record it is.",
+            "type": "string"
+          },
+          "referenceNumber": {
+            "description": "Only records whose reference number contains this text.",
+            "type": "string"
+          },
+          "referenceType": {
+            "description": "Only records whose reference type contains this text. The source, such as Invoice, CustomerPayment or DriverSettlement.",
+            "type": "string"
+          },
+          "rejectedAtFrom": {
+            "description": "Only records whose rejected at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "rejectedAtTo": {
+            "description": "Only records whose rejected at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "rejectionReason": {
+            "description": "Why it was rejected; empty unless it was. Only records whose rejection reason contains this text.",
+            "type": "string"
+          },
+          "requiresApproval": {
+            "description": "true for only the records whose requiresApproval is true, false for only those whose requiresApproval is false.",
+            "type": "boolean"
+          },
+          "reversalDateFrom": {
+            "description": "Only records whose reversal date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "reversalDateTo": {
+            "description": "Only records whose reversal date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "reversalReason": {
+            "description": "Only records whose reversal reason contains this text.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "accountingDate",
+              "approvalNotes",
+              "approvedAt",
+              "approvedById",
+              "batchId",
+              "createdAt",
+              "createdById",
+              "description",
+              "entryDate",
+              "entryNumber",
+              "entryType",
+              "fiscalPeriodId",
+              "fiscalYearId",
+              "isApproved",
+              "isAutoGenerated",
+              "isPosted",
+              "isReversal",
+              "postedAt",
+              "postedById",
+              "referenceId",
+              "referenceNumber",
+              "referenceType",
+              "rejectedAt",
+              "rejectionReason",
+              "requiresApproval",
+              "reversalDate",
+              "reversalOfId",
+              "reversalReason",
+              "reversedById",
+              "status",
+              "totalCredit",
+              "totalDebit"
+            ],
+            "type": "string",
+            "x-enumOf": "ledger_list_journal_entries.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is exactly this. One of Draft, Pending, Approved, Posted, Reversed, Rejected or Void; Pending entries wait for approval and Approved ones wait to post.",
+            "type": "string"
+          },
+          "totalCreditMax": {
+            "description": "Only records whose total credit is at most this.",
+            "type": "integer"
+          },
+          "totalCreditMin": {
+            "description": "Only records whose total credit is at least this.",
+            "type": "integer"
+          },
+          "totalDebitMax": {
+            "description": "Only records whose total debit is at most this.",
+            "type": "integer"
+          },
+          "totalDebitMin": {
+            "description": "Only records whose total debit is at least this.",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -25836,73 +26185,85 @@
     },
     {
       "name": "ledger_list_journal_reversals",
-      "description": "List requests to reverse posted journal entries, newest first, with the entry each reverses, its status, the day it books and why. Narrow by status to find reversals awaiting approval or approved ones still to post. Filters: status (Requested|PendingApproval|Approved|Rejected|Cancelled|Posted): Approved reversals are waiting to be posted; text: reasonCode, originalJournalEntryId; date: requestedAccountingDate, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List requests to reverse posted journal entries, newest first, with the entry each reverses, its status, the day it books and its reason code. Narrow by status to find reversals awaiting approval or approved ones still to post. Filters: approvedAtFrom/To, cancelledAtFrom/To, createdAtFrom/To, hasApprovedBy, hasCancelledBy, hasPostedBatch, hasPostedBy, hasRejectedBy, hasReversalJournalEntry, originalJournalEntryId, postedAtFrom/To, reasonCode, rejectedAtFrom/To, requestedAccountingDateFrom/To, resolvedFiscalPeriodId, reversalJournalEntryId, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "reasonCode",
-                    "originalJournalEntryId",
-                    "requestedAccountingDate",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "ledger_list_journal_reversals.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "ledger_list_journal_reversals.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "approvedAtFrom": {
+            "description": "Only records whose approved at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "approvedAtTo": {
+            "description": "Only records whose approved at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "cancelledAtFrom": {
+            "description": "Only records whose cancelled at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "cancelledAtTo": {
+            "description": "Only records whose cancelled at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "hasApprovedBy": {
+            "description": "true for only records that have a approved by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasCancelledBy": {
+            "description": "true for only records that have a cancelled by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasPostedBatch": {
+            "description": "true for only records that have a posted batch, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasPostedBy": {
+            "description": "true for only records that have a posted by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasRejectedBy": {
+            "description": "true for only records that have a rejected by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasReversalJournalEntry": {
+            "description": "true for only records that have a reversal journal entry, false for only those that have none.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25911,23 +26272,112 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "originalJournalEntryId": {
+            "description": "The journal entry it reverses, from ledger_list_journal_entries. Never guess one.",
+            "type": "string",
+            "x-recordOf": "journal_entry"
+          },
+          "postedAtFrom": {
+            "description": "Only records whose posted at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "postedAtTo": {
+            "description": "Only records whose posted at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
+          },
+          "reasonCode": {
+            "description": "Only records whose reason code contains this text.",
+            "type": "string"
+          },
+          "reasonText": {
+            "description": "Only records whose reason text contains this text.",
+            "type": "string"
+          },
+          "rejectedAtFrom": {
+            "description": "Only records whose rejected at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "rejectedAtTo": {
+            "description": "Only records whose rejected at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "rejectionReason": {
+            "description": "Only records whose rejection reason contains this text.",
+            "type": "string"
+          },
+          "requestedAccountingDateFrom": {
+            "description": "Only records whose requested accounting date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "requestedAccountingDateTo": {
+            "description": "Only records whose requested accounting date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "resolvedFiscalPeriodId": {
+            "description": "The fiscal period, from ledger_list_fiscal_periods. Never guess one.",
+            "type": "string",
+            "x-recordOf": "fiscal_period"
+          },
+          "reversalJournalEntryId": {
+            "description": "The journal entry that posted the reversal, from ledger_list_journal_entries. Never guess one.",
+            "type": "string",
+            "x-recordOf": "journal_entry"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "approvedAt",
+              "approvedById",
+              "cancelledAt",
+              "cancelledById",
+              "createdAt",
+              "originalJournalEntryId",
+              "postedAt",
+              "postedBatchId",
+              "postedById",
+              "reasonCode",
+              "reasonText",
+              "rejectedAt",
+              "rejectedById",
+              "rejectionReason",
               "requestedAccountingDate",
-              "createdAt"
+              "requestedById",
+              "resolvedFiscalPeriodId",
+              "resolvedFiscalYearId",
+              "reversalJournalEntryId",
+              "status",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "ledger_list_journal_reversals.sortBy"
+            "x-enumOf": "ledger_list_journal_reversals.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -25937,6 +26387,39 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Approved reversals are waiting to be posted.",
+            "items": {
+              "enum": [
+                "Requested",
+                "PendingApproval",
+                "Approved",
+                "Rejected",
+                "Cancelled",
+                "Posted"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.JournalReversalStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -25965,73 +26448,109 @@
     },
     {
       "name": "ledger_list_manual_journals",
-      "description": "List manual journal requests, newest first, with their number, status, accounting day and totals, and whether they balance. Narrow by status to find drafts to finish, journals awaiting approval, or approved ones still to post. ledger_get_manual_journal opens one with its lines. Filters: status (Draft|PendingApproval|Approved|Rejected|Cancelled|Posted): Approved journals are waiting to be posted; text: requestNumber, description; date: accountingDate, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List manual journal requests, newest first, with their number, status, accounting day and whether they balance. Their totals show when your data access reaches them. Narrow by status to find drafts to finish, journals awaiting approval, or approved ones still to post. ledger_get_manual_journal opens one with its lines. Filters: accountingDateFrom/To, approvedAtFrom/To, cancelledAtFrom/To, createdAtFrom/To, currencyCode, description, hasApprovedBy, hasCancelledBy, hasCreatedBy, hasPostedBatch, hasRejectedBy, hasUpdatedBy, rejectedAtFrom/To, requestNumber, requestedFiscalPeriodId, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "requestNumber",
-                    "description",
-                    "accountingDate",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "ledger_list_manual_journals.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "ledger_list_manual_journals.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "accountingDateFrom": {
+            "description": "Only records whose accounting date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "accountingDateTo": {
+            "description": "Only records whose accounting date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "approvedAtFrom": {
+            "description": "Only records whose approved at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "approvedAtTo": {
+            "description": "Only records whose approved at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "cancelledAtFrom": {
+            "description": "Only records whose cancelled at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "cancelledAtTo": {
+            "description": "Only records whose cancelled at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "Only records whose currency code contains this text.",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "hasApprovedBy": {
+            "description": "true for only records that have a approved by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasCancelledBy": {
+            "description": "true for only records that have a cancelled by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasCreatedBy": {
+            "description": "true for only records that have a created by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasPostedBatch": {
+            "description": "true for only records that have a posted batch, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasRejectedBy": {
+            "description": "true for only records that have a rejected by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasUpdatedBy": {
+            "description": "true for only records that have a updated by, false for only those that have none.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -26040,24 +26559,71 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
+          },
+          "reason": {
+            "description": "Only records whose reason contains this text.",
+            "type": "string"
+          },
+          "rejectedAtFrom": {
+            "description": "Only records whose rejected at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "rejectedAtTo": {
+            "description": "Only records whose rejected at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "rejectionReason": {
+            "description": "Only records whose rejection reason contains this text.",
+            "type": "string"
+          },
+          "requestNumber": {
+            "description": "Only records whose request number contains this text.",
+            "type": "string"
+          },
+          "requestedFiscalPeriodId": {
+            "description": "The fiscal period, from ledger_list_fiscal_periods. Never guess one.",
+            "type": "string",
+            "x-recordOf": "fiscal_period"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "requestNumber",
               "accountingDate",
-              "createdAt"
+              "approvedAt",
+              "approvedById",
+              "cancelledAt",
+              "cancelledById",
+              "createdAt",
+              "createdById",
+              "currencyCode",
+              "description",
+              "postedBatchId",
+              "reason",
+              "rejectedAt",
+              "rejectedById",
+              "rejectionReason",
+              "requestNumber",
+              "requestedFiscalPeriodId",
+              "requestedFiscalYearId",
+              "status",
+              "totalCredit",
+              "totalDebit",
+              "updatedAt",
+              "updatedById"
             ],
             "type": "string",
-            "x-enumOf": "ledger_list_manual_journals.sortBy"
+            "x-enumOf": "ledger_list_manual_journals.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -26067,6 +26633,55 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Approved journals are waiting to be posted.",
+            "items": {
+              "enum": [
+                "Draft",
+                "PendingApproval",
+                "Approved",
+                "Rejected",
+                "Cancelled",
+                "Posted"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.ManualJournalStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "totalCreditMax": {
+            "description": "Only records whose total credit is at most this.",
+            "type": "integer"
+          },
+          "totalCreditMin": {
+            "description": "Only records whose total credit is at least this.",
+            "type": "integer"
+          },
+          "totalDebitMax": {
+            "description": "Only records whose total debit is at most this.",
+            "type": "integer"
+          },
+          "totalDebitMin": {
+            "description": "Only records whose total debit is at least this.",
+            "type": "integer"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"

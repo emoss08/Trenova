@@ -703,6 +703,17 @@ Each module's PR:
 | EDI | `edi_get_message` | none | `partial`: reads `DeskEdiMessage`, through `ediMessage` and its `EdiMessageDetail`: the message, the document it decoded to, the first fifty findings with their count and, on `includeRaw`, the raw X12's first 16 KB (`raw`, Restricted) |
 | EDI | `edi_get_transfer` | none | `partial`: reads `DeskEdiTransfer`, through `ediTransfer` and its `EdiTransferDetail`: the tender's stops, commodities and rate (`charges`, Restricted, as the repository row gated it), whether it can be decided and accepted, and, for an inbound tender still open, the codes accepting it waits on (`MappingPreviewOf`, from the tender already read) |
 | EDI | `edi_get_ack_health` | none | `partial`: reads `DeskEdiAckHealth`, through `ediAckHealth` (one safe addition), which takes the partner, transaction set, overdue age and window the repository tool took and refuses one out of bounds; a 997 or 999 counts every set it answers in the service, and the tool's `shape` words each partner's answer and how long each overdue message has waited from the read's `asOf` |
+| Ledger | `ledger_list_journal_entries` | none | reads `DeskJournalEntries` on the new `journalEntries` root (journal_entry read), which lists every entry whatever its status, newest accounting date first, as `JournalEntryService.List` did; `journalReviewTable` reads only the entries still waiting to be approved or posted, so it could not serve the tool. The totals stay Restricted and withheld at Internal, as the repository row gated them. `JournalEntry` gains `entryDate`, `approvalNotes`, `rejectedAt` and `rejectionReason`, which the repository tools returned |
+| Ledger | `ledger_list_fiscal_periods` | none | reads `DeskFiscalPeriods` on the new `fiscalPeriods` root (fiscal_period read), latest start first; periods were reachable only under `FiscalYear.periods`, with no filter, sort or paging of their own. `FiscalPeriod` gains `reopenedAt` and `reopenReason`; the reason stays Restricted |
+| Ledger | `ledger_list_manual_journals` | none | reads `DeskManualJournals`; totals, reason and the rejection and cancel reasons stay Restricted, as the repository row gated them. `ManualJournal` gains `isBalanced` (Internal), which the repository row returned ungated |
+| Ledger | `ledger_list_journal_reversals` | none | reads `DeskJournalReversals`; the reason text and the rejection and cancel reasons stay Restricted, as the repository row gated them |
+| Ledger | `ledger_get_journal_entry` | none of what it returned | reads `DeskJournalEntryCard`. `JournalEntryCard` had no kind, so its lines' debits and credits were not gated on any read; it now declares `@kind(resource: "journal_entry")`, so they are Restricted, as the repository tool gated them. The card's own fields (`entry`, `lines`, `period`, `posting`, `source`, the people and the related entries) and a line's account, category and party names, and the posting's refusal, are declared Internal on journal_entry; a record the card carries is still decided by its own kind. The card adds what the repository tool did not read: the reversal request against the entry, whose reason text and rejection and cancel reasons are journal_reversal's and Restricted, and a line's customer and location only to a reader of those kinds. Lines gain `isReconciled` |
+| Ledger | `ledger_get_manual_journal` | none of what it returned | reads `DeskManualJournalCard`. `ManualJournalCard` now declares `@kind(resource: "manual_journal")` for the same reason; its own fields (`journal`, `lines`, `requestedPeriod`, `posting`, the people, `entries`), the lines' account and party names, their customer and location, `postedAt` and the posting's refusal are declared Internal, and their amounts stay Restricted. The entries it became are journal entries carried by the card, shown whole only to a reader of journal entries |
+
+The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
+returned every other column at any tier; at a person's role ceiling below Internal each converted
+ledger read now withholds every field but `id`. Their descriptions say the totals and amounts
+show when the data access reaches them.
 
 None of the repository-backed reference, party, equipment or operations lists was gated (only `order_list`
 gated its amounts, all Internal), so at a person's role ceiling below Internal each now withholds every
@@ -803,7 +814,11 @@ A list returns what `searchOutcome` returns today, with cursor paging:
   concurrently, under one span each. A converted get keeps its `getSpec` (name, summary, id
   parameter, policy) with no `fetch`; `graphQLGetSpecs` lists every one, registers it as a
   `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, and a card
-  whose root returns nothing is a missing record, not an empty one.
+  whose root returns nothing is a missing record, not an empty one. A get's node needs no Go entity: it
+  filters by nothing but its id, so a card type (`JournalEntryCard`) binds as a record does. A
+  card the get reads declares `@kind` of the record it draws, so the parts it carries that have no
+  kind of their own (a journal's lines) are gated by that record's sensitivities rather than by
+  none.
 
 Size: a `*Table` operation selects what a table row shows, which can be large; shipments are
 about 3 KB a row. The rule therefore prefers `Desk*` operations, which were written to be read by

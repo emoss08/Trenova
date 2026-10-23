@@ -27,7 +27,7 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 	t.Parallel()
 
 	for tool, read := range graphQLReads {
-		if read.Verb != graphQLVerbList {
+		if read.Verb == graphQLVerbGet {
 			continue
 		}
 		t.Run(tool, func(t *testing.T) {

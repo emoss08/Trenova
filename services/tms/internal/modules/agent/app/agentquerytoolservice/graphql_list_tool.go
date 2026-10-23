@@ -481,7 +481,7 @@ func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
 		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), operationsReadSpecs(),
-		accountingReadSpecs(), ediReadSpecs(),
+		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(),
 	)
 }
 

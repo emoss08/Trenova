@@ -42,6 +42,13 @@ func (s *Service) ListEntries(
 	return s.entryRepo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *journalentryports.ListJournalEntryConnectionRequest,
+) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
+	return s.entryRepo.ListConnection(ctx, req)
+}
+
 func (s *Service) GetEntry(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

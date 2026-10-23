@@ -14371,6 +14371,13 @@ export type TestFactoringTransportMutationVariables = Exact<{
 
 export type TestFactoringTransportMutation = { testFactoringTransport: { passed: boolean, message: string, transport: { ' $fragmentRefs'?: { 'FactoringTransportFieldsFragment': FactoringTransportFieldsFragment } } } };
 
+export type DeskFiscalPeriodsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DeskFiscalPeriodsQuery = { fiscalPeriods: { edges: Array<{ node: { id: string, fiscalYearId: string, name: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, startDate: number, endDate: number, isAdjusting: boolean, lockedAt: number | null, closedAt: number | null, reopenedAt: number | null, reopenReason: string | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+
 export type FiscalPeriodFieldsFragment = { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, closedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalPeriodFieldsFragment' };
 
 export type FiscalYearTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number, periods: Array<{ ' $fragmentRefs'?: { 'FiscalPeriodFieldsFragment': FiscalPeriodFieldsFragment } }> } & { ' $fragmentName'?: 'FiscalYearTableRowFieldsFragment' };
@@ -15790,9 +15797,19 @@ export type DeskJournalEntryCardQueryVariables = Exact<{
 
 
 export type DeskJournalEntryCardQuery = { journalEntryCard: { entry: (
-      { referenceType: string, referenceId: string, referenceNumber: string, fiscalPeriodId: string, reversalOfId: string | null, reversedById: string | null }
+      { referenceType: string, referenceId: string, referenceNumber: string, fiscalPeriodId: string, reversalOfId: string | null, reversedById: string | null, entryDate: number, approvalNotes: string, rejectedAt: number | null, rejectionReason: string }
       & { ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } }
-    ), lines: Array<{ ' $fragmentRefs'?: { 'DeskJournalCardLineFieldsFragment': DeskJournalCardLineFieldsFragment } }>, period: { ' $fragmentRefs'?: { 'DeskJournalCardPeriodFieldsFragment': DeskJournalCardPeriodFieldsFragment } } | null, posting: { ' $fragmentRefs'?: { 'DeskJournalCardPostingFieldsFragment': DeskJournalCardPostingFieldsFragment } } | null, source: { id: string, sourceObjectType: string, sourceObjectId: string, sourceEventType: string, sourceDocumentNumber: string, status: string, batchNumber: string | null } | null, createdBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, approvedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, postedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, rejectedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, reversalOf: { ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } } | null, reversedBy: { ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } } | null, reversal: { id: string, status: JournalReversalStatus, reasonCode: string, reasonText: string, requestedAccountingDate: number, rejectionReason: string | null, cancelReason: string | null, createdAt: number, approvedAt: number | null, postedAt: number | null } | null, reversalRequestedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null } };
+    ), lines: Array<(
+      { isReconciled: boolean }
+      & { ' $fragmentRefs'?: { 'DeskJournalCardLineFieldsFragment': DeskJournalCardLineFieldsFragment } }
+    )>, period: { ' $fragmentRefs'?: { 'DeskJournalCardPeriodFieldsFragment': DeskJournalCardPeriodFieldsFragment } } | null, posting: { ' $fragmentRefs'?: { 'DeskJournalCardPostingFieldsFragment': DeskJournalCardPostingFieldsFragment } } | null, source: { id: string, sourceObjectType: string, sourceObjectId: string, sourceEventType: string, sourceDocumentNumber: string, status: string, batchNumber: string | null } | null, createdBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, approvedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, postedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, rejectedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, reversalOf: { ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } } | null, reversedBy: { ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } } | null, reversal: { id: string, status: JournalReversalStatus, reasonCode: string, reasonText: string, requestedAccountingDate: number, rejectionReason: string | null, cancelReason: string | null, createdAt: number, approvedAt: number | null, postedAt: number | null } | null, reversalRequestedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null } };
+
+export type DeskJournalEntriesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DeskJournalEntriesQuery = { journalEntries: { edges: Array<{ node: { id: string, entryNumber: string, entryDate: number, accountingDate: number, entryType: string, status: string, fiscalPeriodId: string, referenceType: string, referenceNumber: string, description: string, isReversal: boolean, isAutoGenerated: boolean, totalDebit: number, totalCredit: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type JournalEntryDetailQueryVariables = Exact<{
   id: string | number;
@@ -15845,6 +15862,13 @@ export type PostJournalEntriesMutationVariables = Exact<{
 
 
 export type PostJournalEntriesMutation = { postJournalEntries: { ' $fragmentRefs'?: { 'JournalReviewResultFieldsFragment': JournalReviewResultFieldsFragment } } };
+
+export type DeskJournalReversalsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DeskJournalReversalsQuery = { journalReversals: { edges: Array<{ node: { id: string, status: JournalReversalStatus, originalJournalEntryId: string, reversalJournalEntryId: string | null, requestedAccountingDate: number, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, approvedAt: number | null, postedAt: number | null, rejectionReason: string | null, cancelReason: string | null, createdAt: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type JournalReversalTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, originalJournalEntryId: string, reversalJournalEntryId: string | null, postedBatchId: string | null, status: JournalReversalStatus, requestedAccountingDate: number, resolvedFiscalYearId: string, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, requestedById: string, approvedById: string | null, approvedAt: number | null, rejectedById: string | null, rejectedAt: number | null, rejectionReason: string | null, cancelledById: string | null, cancelledAt: number | null, cancelReason: string | null, postedById: string | null, postedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'JournalReversalTableRowFieldsFragment' };
 
@@ -15924,7 +15948,14 @@ export type DeskManualJournalCardQueryVariables = Exact<{
 }>;
 
 
-export type DeskManualJournalCardQuery = { manualJournalCard: { postedAt: number | null, journal: { id: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, rejectedAt: number | null, rejectionReason: string | null, cancelledAt: number | null, cancelReason: string | null, createdAt: number, updatedAt: number }, lines: Array<{ ' $fragmentRefs'?: { 'DeskJournalCardLineFieldsFragment': DeskJournalCardLineFieldsFragment } }>, requestedPeriod: { ' $fragmentRefs'?: { 'DeskJournalCardPeriodFieldsFragment': DeskJournalCardPeriodFieldsFragment } } | null, posting: { ' $fragmentRefs'?: { 'DeskJournalCardPostingFieldsFragment': DeskJournalCardPostingFieldsFragment } } | null, createdBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, approvedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, rejectedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, cancelledBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, postedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, entries: Array<{ ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } }> } };
+export type DeskManualJournalCardQuery = { manualJournalCard: { postedAt: number | null, journal: { id: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, currencyCode: string, totalDebit: number, totalCredit: number, isBalanced: boolean, postedBatchId: string | null, approvedAt: number | null, rejectedAt: number | null, rejectionReason: string | null, cancelledAt: number | null, cancelReason: string | null, createdAt: number, updatedAt: number }, lines: Array<{ ' $fragmentRefs'?: { 'DeskJournalCardLineFieldsFragment': DeskJournalCardLineFieldsFragment } }>, requestedPeriod: { ' $fragmentRefs'?: { 'DeskJournalCardPeriodFieldsFragment': DeskJournalCardPeriodFieldsFragment } } | null, posting: { ' $fragmentRefs'?: { 'DeskJournalCardPostingFieldsFragment': DeskJournalCardPostingFieldsFragment } } | null, createdBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, approvedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, rejectedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, cancelledBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, postedBy: { ' $fragmentRefs'?: { 'DeskJournalCardPersonFieldsFragment': DeskJournalCardPersonFieldsFragment } } | null, entries: Array<{ ' $fragmentRefs'?: { 'DeskJournalCardEntryFieldsFragment': DeskJournalCardEntryFieldsFragment } }> } };
+
+export type DeskManualJournalsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DeskManualJournalsQuery = { manualJournals: { edges: Array<{ node: { id: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, isBalanced: boolean, approvedAt: number | null, rejectionReason: string | null, cancelReason: string | null, postedBatchId: string | null, createdAt: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type ManualJournalTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ManualJournalTableRowFieldsFragment' };
 
@@ -19477,6 +19508,7 @@ export { FactoringInvoiceStateFieldsFragmentDoc, FactoringInvoiceStateTableDocum
 export { FactoringRemittanceFieldsFragmentDoc, FactoringRemittanceLineFieldsFragmentDoc, FactoringRemittancesDocument, FactoringRemittanceDetailDocument, FactoringRemittanceLinesDocument, FactoringRemittancePlanDocument, CreateFactoringRemittanceDocument, StageFactoringRemittanceDocument, RematchFactoringRemittanceDocument, UpdateFactoringRemittanceLineDocument, ApplyFactoringRemittanceDocument, DiscardFactoringRemittanceDocument, FactoringRemittanceTableDocument } from "./documents/factoring/remittances";
 export { FactoringSubmissionItemFieldsFragmentDoc, FactoringSubmissionFieldsFragmentDoc, FactoringSubmissionTableDocument, FactoringSubmissionDetailDocument, FactoringSubmissionPlanDocument, SubmitInvoicesToFactorDocument, RetryFactoringSubmissionDocument, CancelFactoringSubmissionDocument } from "./documents/factoring/submissions";
 export { FactoringTransportFieldsFragmentDoc, FactoringTransportDocument, SaveFactoringTransportDocument, TestFactoringTransportDocument } from "./documents/factoring/transport";
+export { DeskFiscalPeriodsDocument } from "./documents/fiscal-period/desk";
 export { FiscalPeriodFieldsFragmentDoc, FiscalYearTableRowFieldsFragmentDoc, FiscalYearTableDocument } from "./documents/fiscal-year/table";
 export { FleetCodeTableRowFieldsFragmentDoc, FleetCodeTableDocument } from "./documents/fleet-code/table";
 export { FleetSafetyDocument, WorkerSafetyViolationsDocument, RecordSafetyViolationDocument, UpdateSafetyViolationDocument, DeleteSafetyViolationDocument } from "./documents/fleet-safety/operations";
@@ -19507,16 +19539,17 @@ export { InvoiceRelatedFieldsFragmentDoc, CreditMemoApplicationFieldsFragmentDoc
 export { CreatedInvoiceFieldsFragmentDoc, CreateInvoicesFromShipmentsDocument, VoidInvoiceDocument, CreateMemoDocument, SendInvoiceEdiDocument, ApplyCreditMemoDocument, UnapplyCreditMemoApplicationDocument, OpenInvoiceDisputeDocument, ResolveInvoiceDisputeDocument, WithdrawInvoiceDisputeDocument } from "./documents/invoice/mutations";
 export { InvoiceRegisterRowFieldsFragmentDoc, InvoiceRegisterDocument } from "./documents/invoice/register";
 export { InvoiceTableRowFieldsFragmentDoc, InvoiceTableDocument } from "./documents/invoice/table";
-export { DeskJournalCardLineFieldsFragmentDoc, DeskJournalCardPeriodFieldsFragmentDoc, DeskJournalCardPostingFieldsFragmentDoc, DeskJournalCardPersonFieldsFragmentDoc, DeskJournalCardEntryFieldsFragmentDoc, DeskJournalEntryCardDocument } from "./documents/journal-entry/desk";
+export { DeskJournalCardLineFieldsFragmentDoc, DeskJournalCardPeriodFieldsFragmentDoc, DeskJournalCardPostingFieldsFragmentDoc, DeskJournalCardPersonFieldsFragmentDoc, DeskJournalCardEntryFieldsFragmentDoc, DeskJournalEntryCardDocument, DeskJournalEntriesDocument } from "./documents/journal-entry/desk";
 export { JournalEntryDetailDocument, JournalSourceByObjectDocument, JournalEntriesBySourceDocument } from "./documents/journal-entry/operations";
 export { JournalReviewResultFieldsFragmentDoc, JournalReviewSummaryDocument, JournalReviewTableDocument, ApproveJournalEntriesDocument, PostJournalEntriesDocument } from "./documents/journal-entry/review";
+export { DeskJournalReversalsDocument } from "./documents/journal-reversal/desk";
 export { JournalReversalTableRowFieldsFragmentDoc, JournalReversalTableDocument } from "./documents/journal-reversal/table";
 export { JurisdictionRuleOverrideTableRowFieldsFragmentDoc, JurisdictionRuleOverrideTableDocument } from "./documents/jurisdiction-rule/overrides";
 export { JurisdictionRuleTableRowFieldsFragmentDoc, JurisdictionRuleTableDocument } from "./documents/jurisdiction-rule/table";
 export { LocationCategoryTableRowFieldsFragmentDoc, LocationCategoryTableDocument } from "./documents/location-category/table";
 export { DeskLocationCardDocument, DeskLocationDwellDocument, DeskLocationPoliciesDocument } from "./documents/location-desk/desk";
 export { LocationTableRowFieldsFragmentDoc, LocationTableDocument } from "./documents/location/table";
-export { DeskManualJournalCardDocument } from "./documents/manual-journal/desk";
+export { DeskManualJournalCardDocument, DeskManualJournalsDocument } from "./documents/manual-journal/desk";
 export { ManualJournalTableRowFieldsFragmentDoc, ManualJournalTableDocument } from "./documents/manual-journal/table";
 export { NotificationFieldsFragmentDoc, NotificationListDocument, NotificationUnreadCountDocument, MyNotificationListDocument, MyNotificationUnreadCountDocument, MarkAllMyNotificationsReadDocument, MarkMyNotificationsReadDocument, MarkMyNotificationsUnreadDocument, DismissMyNotificationsDocument, RestoreMyNotificationsDocument, MarkNotificationsReadDocument, MarkNotificationsUnreadDocument, MarkAllNotificationsReadDocument, DismissNotificationsDocument, RestoreNotificationsDocument } from "./documents/notification/operations";
 export { DeskOrderCardDocument, DeskOrderDocument } from "./documents/order-desk/desk";

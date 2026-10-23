@@ -171,14 +171,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `ledger_get_fiscal_close_blockers` | none | - | - | - | - | Fiscal periods and close blockers are REST-only (fiscal_period.graphqls defines types but no Query). |
-| `ledger_get_journal_entry` | op | journalEntryCard (alt journalEntry) | DeskJournalEntryCard (alt JournalEntryDetail) | n/a | id | journalEntry calls JournalEntryService.GetEntry (same records); journalEntryCard is the Desk card (superset, carries account names the tool looks up). Desk picked per rule. |
-| `ledger_get_manual_journal` | op | manualJournalCard (alt manualJournal) | DeskManualJournalCard | n/a | id | manualJournal(id) has no op; the Desk card reads the same journal with its entries. |
+| `ledger_get_fiscal_close_blockers` | none | - | - | - | - | Close blockers are REST-only: `fiscalPeriods` lists the periods, but no Query computes what stops one closing (FiscalPeriodService.GetCloseBlockers). |
 | `ledger_list_accounts` | none | - | - | - | - | GL accounts are REST-only (no glAccounts root). |
-| `ledger_list_fiscal_periods` | partial | fiscalYears (periods) | propose DeskFiscalPeriods (FiscalYearTable does not select periods) | cursor (over years) | DataTable fieldFilters only | Periods are reachable only nested under FiscalYear.periods; no period-level filter/sort/paging and no op selects them. |
-| `ledger_list_journal_entries` | partial | journalReviewTable | JournalReviewTable | cursor | DataTable fieldFilters only | Resolver uses JournalReviewService.List, tool JournalEntryService.List: same rows, different service. fiscalPeriodId/status/referenceType/date window only as fieldFilters; verify review scope does not narrow rows. |
-| `ledger_list_journal_reversals` | op | journalReversals | JournalReversalTable | cursor | DataTable fieldFilters only | Same repository. |
-| `ledger_list_manual_journals` | op | manualJournals | ManualJournalTable | cursor | DataTable fieldFilters only | Same repository. |
 
 ## location
 

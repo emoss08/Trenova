@@ -11,7 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -92,6 +96,74 @@ func (r *repository) List(
 				Items: entries,
 				Total: int(total),
 			}, nil
+		},
+	)
+}
+
+const newestAccountingDate = "accountingDate"
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *journalentryports.ListJournalEntryConnectionRequest,
+) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
+			if len(req.Filter.Sort) == 0 {
+				req.Filter.Sort = []domaintypes.SortField{
+					{Field: newestAccountingDate, Direction: dbtype.SortDirectionDesc},
+				}
+			}
+
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*journalentry.JournalEntry)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							journalentrycol.JournalEntryTable.Alias,
+							req.Filter,
+							(*journalentry.JournalEntry)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("count journal entries: %w", err)
+				}
+				totalCount = new(int(total))
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*journalentry.JournalEntry]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*journalentry.JournalEntry) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(items).
+							ColumnExpr(journalentrycol.JournalEntryTable.All())
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							journalentrycol.JournalEntryTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*journalentry.JournalEntry)(nil),
+						)
+					},
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("list journal entries: %w", err)
+			}
+
+			return result, nil
 		},
 	)
 }
