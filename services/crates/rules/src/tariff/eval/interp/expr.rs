@@ -6,7 +6,7 @@ use crate::span::Span;
 use crate::tariff::eval::bill::{Sums, Wanted};
 use crate::tariff::eval::error::{EvalError, Stop};
 use crate::tariff::eval::operators::{self, scales_a_percent};
-use crate::tariff::eval::time::{Date, DateTime};
+use crate::tariff::eval::time::{Date, DateTime, Time};
 use crate::tariff::eval::trace::Event;
 use crate::tariff::eval::value::{Value, dollars};
 use crate::tariff::eval::{lists, methods, text};
@@ -82,7 +82,8 @@ impl<'a> Interp<'_, 'a> {
             | ExprKind::Money { .. }
             | ExprKind::Percent(_)
             | ExprKind::Date(_)
-            | ExprKind::DateTime(_) => literal(&expr.kind),
+            | ExprKind::DateTime(_)
+            | ExprKind::Time(_) => literal(&expr.kind),
             ExprKind::Text(text) => self.interpolate(env, text).map(|text| Value::text(&text)),
             ExprKind::Bool(flag) => Ok(Value::Bool(*flag)),
             ExprKind::None => Ok(Value::None),
@@ -585,12 +586,12 @@ pub(super) fn in_range(
         return Ok(false);
     }
     if let Some(start) = start
-        && value.compare(start)?.is_lt()
+        && value.range_compare(start)?.is_lt()
     {
         return Ok(false);
     }
     if let Some(end) = end {
-        let order = value.compare(end)?;
+        let order = value.range_compare(end)?;
         if order.is_gt() || (order.is_eq() && !inclusive) {
             return Ok(false);
         }
@@ -614,7 +615,7 @@ fn literal_number(value: Decimal, integer: bool, unit: Unit) -> Value {
     Value::quantity(value, unit)
 }
 
-/// The value of a number, money, percent, date or date-time literal.
+/// The value of a number, money, percent, date, date-time or time-of-day literal.
 pub(super) fn literal(kind: &ExprKind) -> Result<Value, Stop> {
     match kind {
         ExprKind::Number {
@@ -651,6 +652,9 @@ pub(super) fn literal(kind: &ExprKind) -> Result<Value, Stop> {
                 )
             })
             .map(Value::DateTime)
+            .ok_or_else(|| Stop::Failed(EvalError::overflow())),
+        ExprKind::Time(literal) => Time::from_seconds(literal.seconds())
+            .map(Value::Time)
             .ok_or_else(|| Stop::Failed(EvalError::overflow())),
         _ => Err(internal(crate::message!("This is not a literal"), [])),
     }

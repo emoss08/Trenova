@@ -14,7 +14,7 @@
 //!   item by its index.
 //!
 //! Values compare exactly and across units with the evaluator's own comparison
-//! ([`Value::compare`] and [`Value::equals`]): `1 cwt` is inside `0 lb..200 lb`, `$426` equals
+//! ([`Value::range_compare`], which orders text too, and [`Value::equals`]): `1 cwt` is inside `0 lb..200 lb`, `$426` equals
 //! `$426.00`. A bound is read in the kind of the value it is compared with, through the wire
 //! codec, so it keeps the unit it was written in.
 //!
@@ -227,13 +227,18 @@ impl Bounds {
                 max_inclusive,
             } => {
                 let above_min = min.as_ref().is_none_or(|min| {
-                    matches!(value.compare(min), Ok(Ordering::Greater | Ordering::Equal))
+                    matches!(
+                        value.range_compare(min),
+                        Ok(Ordering::Greater | Ordering::Equal)
+                    )
                 });
-                let below_max = max.as_ref().is_none_or(|max| match value.compare(max) {
-                    Ok(Ordering::Less) => true,
-                    Ok(Ordering::Equal) => *max_inclusive,
-                    _ => false,
-                });
+                let below_max = max
+                    .as_ref()
+                    .is_none_or(|max| match value.range_compare(max) {
+                        Ok(Ordering::Less) => true,
+                        Ok(Ordering::Equal) => *max_inclusive,
+                        _ => false,
+                    });
                 above_min && below_max
             }
             Self::OneOf(values) => values
@@ -262,6 +267,7 @@ fn type_like(value: &Value) -> Option<Type> {
         Value::Text(_) => Type::Text,
         Value::Date(_) => Type::Date,
         Value::DateTime(_) => Type::DateTime,
+        Value::Time(_) => Type::Time,
         Value::None | Value::List(_) | Value::Record(_) | Value::Enum(_) | Value::Table(_) => {
             return None;
         }

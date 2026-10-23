@@ -7,7 +7,9 @@
 //! unit algebra the evaluator uses). Text is constant when it has no interpolation.
 
 use crate::span::Span;
-use crate::tariff::syntax::ast::{BinaryOp, DateLit, DateTimeLit, Expr, ExprKind, NodeId, UnaryOp};
+use crate::tariff::syntax::ast::{
+    BinaryOp, DateLit, DateTimeLit, Expr, ExprKind, NodeId, TimeLit, UnaryOp,
+};
 use crate::tariff::types::Type;
 use crate::tariff::units::{Quantity, Unit};
 use rust_decimal::Decimal;
@@ -33,6 +35,8 @@ pub enum Value {
     Date(DateLit),
     /// A date-time.
     DateTime(DateTimeLit),
+    /// A time of day.
+    Time(TimeLit),
     /// An enum variant, by name.
     Enum(String),
     /// `none`.
@@ -89,6 +93,7 @@ impl Folder<'_> {
                 .ok_or(FoldError::NotConstant(expr.span)),
             ExprKind::Date(date) => Ok(Value::Date(*date)),
             ExprKind::DateTime(at) => Ok(Value::DateTime(*at)),
+            ExprKind::Time(time) => Ok(Value::Time(*time)),
             ExprKind::Bool(value) => Ok(Value::Bool(*value)),
             ExprKind::None => Ok(Value::None),
             ExprKind::Path { head, member } => match (self.type_of)(expr.id) {
@@ -268,6 +273,17 @@ fn binary(
             let unit = Unit::parse("d").map_err(|_| FoldError::NotConstant(span))?;
             Ok(Value::Quantity(Quantity::new(Decimal::from(days), unit)))
         }
+        (Value::Time(a), Value::Time(b)) if op == BinaryOp::Sub => {
+            let seconds = Decimal::from(a.seconds() - b.seconds());
+            let (divisor, unit) = if (seconds % Decimal::from(36)).is_zero() {
+                (Decimal::from(3_600), "h")
+            } else {
+                (Decimal::from(60), "min")
+            };
+            let unit = Unit::parse(unit).map_err(|_| FoldError::NotConstant(span))?;
+            let value = arithmetic(BinaryOp::Div, seconds, divisor, span)?;
+            Ok(Value::Quantity(Quantity::new(value, unit)))
+        }
         _ => quantities(op, left, right, span),
     }
 }
@@ -294,18 +310,29 @@ fn quantities(op: BinaryOp, left: &Value, right: &Value, span: Span) -> Result<V
     )))
 }
 
-/// Orders two folded values of one kind, for checks such as `minimum` above `maximum`.
+/// Orders two folded values of one kind, for checks such as `minimum` above `maximum` and an
+/// empty range: numbers, percents, quantities, dates, date-times, times of day, text (in
+/// Unicode scalar order, as ranges compare it) and the variants of an ordered enum.
 #[must_use]
 pub fn compare(a: &Value, b: &Value) -> Option<std::cmp::Ordering> {
     match (a, b) {
         (Value::Quantity(x), Value::Quantity(y)) => x.compare(y).ok(),
         (Value::Percent(x), Value::Percent(y)) => Some(x.cmp(y)),
+        (Value::Date(x), Value::Date(y)) => Some(date_ordinal(*x).cmp(&date_ordinal(*y))),
+        (Value::DateTime(x), Value::DateTime(y)) => {
+            Some(date_time_ordinal(*x).cmp(&date_time_ordinal(*y)))
+        }
+        (Value::Time(x), Value::Time(y)) => Some(x.seconds().cmp(&y.seconds())),
+        (Value::Text(x), Value::Text(y)) => Some(x.cmp(y)),
+        (Value::Enum(x), Value::Enum(y)) => Some(
+            crate::tariff::schema::variant_rank(x)?.cmp(&crate::tariff::schema::variant_rank(y)?),
+        ),
         (x, y) => Some(plain(x)?.cmp(&plain(y)?)),
     }
 }
 
 /// The value in the reference's wire form: `{"$n": "1200"}`, `{"$q": "2.35", "u": "$/mi"}`,
-/// `{"$date": "2026-10-22"}`, variants as strings, `none` as `null`.
+/// `{"$date": "2026-10-22"}`, `{"$time": "17:30:00"}`, variants as strings, `none` as `null`.
 #[must_use]
 pub fn wire(value: &Value) -> Json {
     match value {
@@ -319,6 +346,7 @@ pub fn wire(value: &Value) -> Json {
         Value::Text(text) | Value::Enum(text) => Json::String(text.clone()),
         Value::Date(date) => json!({ "$date": date_text(*date) }),
         Value::DateTime(at) => json!({ "$date": date_time_text(*at) }),
+        Value::Time(time) => json!({ "$time": time_text(*time) }),
         Value::None => Json::Null,
         Value::List(items) => Json::Array(items.iter().map(wire).collect()),
         Value::Record(fields) => {
@@ -355,6 +383,12 @@ pub fn date_time_text(at: DateTimeLit) -> String {
         let _ = write!(out, "{sign}{:02}:{:02}", minutes / 60, minutes % 60);
     }
     out
+}
+
+/// `17:30:00`.
+#[must_use]
+pub fn time_text(time: TimeLit) -> String {
+    format!("{:02}:{:02}:{:02}", time.hour, time.minute, time.second)
 }
 
 /// Days since 1970-01-01 of a proleptic Gregorian date.

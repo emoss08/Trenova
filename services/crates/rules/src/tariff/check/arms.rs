@@ -6,16 +6,17 @@ use super::HintKind;
 use super::checker::{Checker, Want};
 use super::consts::{date_ordinal, date_time_ordinal};
 use super::describe::{quote, quote_span, words};
-use super::patterns::{ArmPat, Bound, Interval, Pat, Space, analyze, listing};
+use super::patterns::{ArmPat, Bound, Domain, Interval, Key, Pat, Space, analyze, listing};
 use super::scope::LocalKind;
 use crate::message;
 use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{Arm, ArmBody, Expr, ExprKind, Pattern, PatternKind, UnaryOp};
-use crate::tariff::types::Type;
+use crate::tariff::types::{EnumType, Type};
 use crate::tariff::units::{Unit, convert};
 use rust_decimal::Decimal;
+use std::sync::Arc;
 
 /// What one match's patterns share while they are typed.
 struct Line {
@@ -401,12 +402,18 @@ impl Checker<'_> {
         inner: &Type,
         line: &mut Line,
     ) -> Pat {
-        if !super::operators::ordered(inner) {
-            self.pattern_error(pattern, inner, Message::new(message!("a range")));
+        if !super::operators::ranged(inner) {
             for part in [start, end].into_iter().flatten() {
                 self.expr(part, None);
             }
+            self.unranged_pattern(pattern, inner);
             return Pat::Any;
+        }
+        if let Type::Enum(enumeration) = inner {
+            return self.variant_range(pattern, (start, end), inclusive, enumeration);
+        }
+        if let (Some(start), Some(end)) = (start, end) {
+            self.text_range_ends(start, end);
         }
         let mut bounds = [None, None];
         for (index, part) in [start, end].into_iter().enumerate() {
@@ -433,16 +440,118 @@ impl Checker<'_> {
         if let (Some(lo), Some(hi)) = (&lo, &hi)
             && (lo.value > hi.value || (lo.value == hi.value && !inclusive))
         {
-            self.report(Diagnostic::error(
-                "empty-range",
-                pattern.span,
-                Message::new(message!(
-                    "This range is empty: its start isn't below its end"
-                )),
-            ));
-            return Pat::Any;
+            return self.empty_range(pattern);
         }
         Pat::Interval(Interval { lo, hi })
+    }
+
+    /// Warns when a text range's literal ends have different lengths.
+    pub fn text_range_ends(&mut self, start: &Expr, end: &Expr) {
+        if let Some(diagnostic) = super::operators::text_range(start, end) {
+            self.report(diagnostic);
+        }
+    }
+
+    /// A pattern range on a type that has none: an enum that isn't ordered names the enums that
+    /// are; anything else says it can't be a range.
+    fn unranged_pattern(&mut self, pattern: &Pattern, inner: &Type) {
+        if let Type::Enum(enumeration) = inner {
+            let listed: Vec<&str> = enumeration
+                .variants
+                .iter()
+                .take(2)
+                .map(|(name, _)| name.as_str())
+                .collect();
+            self.report(Diagnostic::error(
+                "type-mismatch",
+                pattern.span,
+                Message::with(
+                    message!(
+                        "The value matched is {0}, which has no order, so it can't be matched by a range: only {1} order their variants. List the variants instead, as in {2}"
+                    ),
+                    [
+                        Arg::from(words(inner)),
+                        Arg::from(super::operators::ordered_enums()),
+                        quote(&listed.join(" | ")),
+                    ],
+                ),
+            ));
+            return;
+        }
+        self.pattern_error(pattern, inner, Message::new(message!("a range")));
+    }
+
+    /// `Mon..=Fri` on an ordered enum: the variants from the start to the end, in declaration
+    /// order, as alternatives.
+    fn variant_range(
+        &mut self,
+        pattern: &Pattern,
+        (start, end): (Option<&Expr>, Option<&Expr>),
+        inclusive: bool,
+        enumeration: &Arc<EnumType>,
+    ) -> Pat {
+        let inner = Type::Enum(enumeration.clone());
+        let mut ranks = [Some(0), enumeration.variants.len().checked_sub(1)];
+        for (index, part) in [start, end].into_iter().enumerate() {
+            let Some(part) = part else {
+                continue;
+            };
+            let actual = self.expr(part, Some(&inner));
+            if !same_kind(&inner, &actual) {
+                self.pattern_error(
+                    pattern,
+                    &inner,
+                    Message::with(message!("{0}"), [quote_span(self.source, part.span)]),
+                );
+                return Pat::Any;
+            }
+            let ExprKind::Path { head, member } = &part.kind else {
+                self.pattern_error(
+                    pattern,
+                    &inner,
+                    Message::with(message!("{0}"), [quote_span(self.source, part.span)]),
+                );
+                return Pat::Any;
+            };
+            let variant = member.as_ref().unwrap_or(head);
+            let Some(rank) = enumeration.rank(&variant.text) else {
+                return Pat::Any;
+            };
+            let rank = if index == 1 && !inclusive {
+                rank.checked_sub(1)
+            } else {
+                Some(rank)
+            };
+            if let Some(slot) = ranks.get_mut(index) {
+                *slot = rank;
+            }
+        }
+        let [Some(low), Some(high)] = ranks else {
+            return self.empty_range(pattern);
+        };
+        if low > high {
+            return self.empty_range(pattern);
+        }
+        Pat::Or(
+            enumeration
+                .variants
+                .get(low..=high)
+                .unwrap_or_default()
+                .iter()
+                .map(|(name, _)| Pat::Variant(name.clone()))
+                .collect(),
+        )
+    }
+
+    fn empty_range(&mut self, pattern: &Pattern) -> Pat {
+        self.report(Diagnostic::error(
+            "empty-range",
+            pattern.span,
+            Message::new(message!(
+                "This range is empty: its start isn't below its end"
+            )),
+        ));
+        Pat::Any
     }
 
     /// A literal's position on the match's line, in its first unit.
@@ -455,7 +564,14 @@ impl Checker<'_> {
         })
     }
 
-    fn line_value(expr: &Expr, line: &mut Line) -> Option<Decimal> {
+    fn line_value(expr: &Expr, line: &mut Line) -> Option<Key> {
+        if let ExprKind::Text(text) = &expr.kind {
+            return text.literal().map(Key::Text);
+        }
+        Self::number_value(expr, line).map(Key::Number)
+    }
+
+    fn number_value(expr: &Expr, line: &mut Line) -> Option<Decimal> {
         match &expr.kind {
             ExprKind::Number { value, unit, .. } => {
                 let unit = unit
@@ -475,11 +591,12 @@ impl Checker<'_> {
             ExprKind::Percent(value) => Some(*value),
             ExprKind::Date(date) => Some(Decimal::from(date_ordinal(*date))),
             ExprKind::DateTime(at) => Some(Decimal::from(date_time_ordinal(*at))),
+            ExprKind::Time(time) => Some(Decimal::from(time.seconds())),
             ExprKind::Unary {
                 op: UnaryOp::Neg,
                 operand,
                 ..
-            } => Self::line_value(operand, line).map(|value| -value),
+            } => Self::number_value(operand, line).map(|value| -value),
             _ => None,
         }
     }
@@ -531,10 +648,21 @@ pub fn space_of(ty: &Type) -> Space {
                 .map(|(name, _)| name.clone())
                 .collect(),
         ),
-        Type::Int | Type::Date => Space::Line { discrete: true },
-        Type::Number | Type::Percent | Type::Quantity(_) | Type::DateTime => {
-            Space::Line { discrete: false }
-        }
+        Type::Int | Type::Date => Space::Line {
+            discrete: true,
+            domain: None,
+        },
+        Type::Time => Space::Line {
+            discrete: true,
+            domain: Some(Domain {
+                min: Decimal::ZERO,
+                max: Decimal::from(86_399),
+            }),
+        },
+        Type::Number | Type::Percent | Type::Quantity(_) | Type::DateTime => Space::Line {
+            discrete: false,
+            domain: None,
+        },
         Type::Record(record) => Space::Record(
             record
                 .fields
@@ -542,7 +670,8 @@ pub fn space_of(ty: &Type) -> Space {
                 .map(|field| (field.name.clone(), space_of(&field.ty)))
                 .collect(),
         ),
-        Type::Text | Type::List(_) => Space::Open,
+        Type::Text => Space::Text,
+        Type::List(_) => Space::Open,
         Type::Never | Type::Error => Space::Unknown,
     }
 }

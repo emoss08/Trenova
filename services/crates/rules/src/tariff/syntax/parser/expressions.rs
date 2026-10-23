@@ -611,6 +611,7 @@ impl Parser<'_> {
                 let kind = match lexer::parse_date_literal(self.slice(token.span)) {
                     Some(DateLiteral::Date(date)) => ExprKind::Date(date),
                     Some(DateLiteral::DateTime(at)) => ExprKind::DateTime(at),
+                    Some(DateLiteral::Time(time)) => ExprKind::Time(time),
                     None => ExprKind::Missing,
                 };
                 self.leaf(kind, token.span)
@@ -1088,11 +1089,15 @@ impl Parser<'_> {
         self.leaf(ExprKind::Money { value, per }, span)
     }
 
-    /// `PascalCase`, optionally `.member`: a variant, or a type for a conversion.
-    fn path(&mut self) -> Expr {
+    /// `PascalCase`, optionally `.member`: a variant (`StopKind.Delivery`), or a type for a
+    /// conversion (`Int.parse(text)`). Any other `.name` (`Class77_5.number`) is a property of
+    /// the value, read as a field.
+    pub(super) fn path(&mut self) -> Expr {
         let token = self.bump();
         let head = self.name_of(&token);
-        let member = if self.at(".") && self.word_kind_at(1) {
+        let qualified = matches!(self.peek_nth(1).kind, TokenKind::TypeName | TokenKind::Code)
+            || self.peek_is(2, "(");
+        let member = if self.at(".") && self.word_kind_at(1) && qualified {
             self.bump();
             self.any_name()
         } else {

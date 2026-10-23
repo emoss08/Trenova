@@ -183,7 +183,7 @@
     {
      "at": "\"A\"..\"B\"",
      "code": "unordered",
-     "message": "`shipment.proNumber` is text, which has no order, so it can't be varied over a range: list its values instead, as in `vary shipment.proNumber in [a, b]`"
+     "message": "`shipment.proNumber` is text, which has no next value to step to, so it can't be varied over a range: list its values instead, as in `vary shipment.proNumber in [a, b]`"
     }
    ]
   },

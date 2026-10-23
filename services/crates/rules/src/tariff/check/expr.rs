@@ -36,6 +36,7 @@ fn interpolatable(ty: &Type) -> bool {
         | Type::Text
         | Type::Date
         | Type::DateTime
+        | Type::Time
         | Type::Quantity(_)
         | Type::Enum(_) => true,
         Type::List(item) => interpolatable(item),
@@ -88,6 +89,7 @@ impl Checker<'_> {
             }
             ExprKind::Date(_) => Type::Date,
             ExprKind::DateTime(_) => Type::DateTime,
+            ExprKind::Time(_) => Type::Time,
             ExprKind::Bool(_) => Type::Bool,
             ExprKind::None => match expected {
                 Some(ty @ Type::Optional(_)) => ty.clone(),
@@ -859,6 +861,7 @@ impl Checker<'_> {
             Rule::Bool => Type::Bool,
             Rule::Number => Type::Number,
             Rule::Date => Type::Date,
+            Rule::Time => Type::Time,
             Rule::Text => Type::Text,
             Rule::Weekday => self
                 .schema
@@ -1089,7 +1092,18 @@ impl Checker<'_> {
     /// An operand of an operator: its type, with an optional reported (and unwrapped, so one
     /// mistake is reported once).
     pub fn operand(&mut self, expr: &Expr) -> Type {
-        let ty = self.expr(expr, None);
+        self.operand_with(expr, None)
+    }
+
+    /// An operand whose other side has type `like`, which a bare variant (`InTransit`) or
+    /// `none` takes as its expected type.
+    pub fn operand_like(&mut self, expr: &Expr, like: &Type) -> Type {
+        let expected = (!matches!(like, Type::Error | Type::Never)).then_some(like);
+        self.operand_with(expr, expected)
+    }
+
+    fn operand_with(&mut self, expr: &Expr, expected: Option<&Type>) -> Type {
+        let ty = self.expr(expr, expected);
         if let Type::Optional(inner) = &ty {
             let inner = (**inner).clone();
             if !matches!(inner, Type::Never) {
@@ -1160,8 +1174,15 @@ impl Checker<'_> {
                 Type::Bool
             }
             BinaryOp::Lt | BinaryOp::Le | BinaryOp::Gt | BinaryOp::Ge => {
-                let left_ty = self.operand(left);
-                let right_ty = self.operand(right);
+                let bare = |expr: &Expr| matches!(expr.kind, ExprKind::Path { member: None, .. });
+                let (left_ty, right_ty) = if bare(left) && !bare(right) {
+                    let right_ty = self.operand(right);
+                    (self.operand_like(left, &right_ty), right_ty)
+                } else {
+                    let left_ty = self.operand(left);
+                    let right_ty = self.operand_like(right, &left_ty);
+                    (left_ty, right_ty)
+                };
                 if let Err(problem) = operators::compare(&left_ty, &right_ty) {
                     self.operator_error(
                         problem,
@@ -1337,7 +1358,7 @@ impl Checker<'_> {
                     whole,
                 );
             } else {
-                self.report(Diagnostic::error(
+                let mut diagnostic = Diagnostic::error(
                     "type-mismatch",
                     whole,
                     Message::with(
@@ -1349,7 +1370,16 @@ impl Checker<'_> {
                             Arg::from(super::describe::words(r.1)),
                         ],
                     ),
-                ));
+                );
+                for (side, other) in [(l, r), (r, l)] {
+                    if matches!(side.1.unwrapped(), Type::DateTime)
+                        && matches!(other.1.unwrapped(), Type::Time)
+                    {
+                        diagnostic =
+                            diagnostic.with_fix(self.time_of_day_fix(side.0, side.1.is_optional()));
+                    }
+                }
+                self.report(diagnostic);
             }
         }
     }
@@ -1358,28 +1388,32 @@ impl Checker<'_> {
     fn membership(&mut self, left: &Expr, right: &Expr) {
         if let ExprKind::Range { start, end, .. } = &right.kind {
             let item = self.operand(left);
-            if !operators::ordered(&item) {
-                self.report(Diagnostic::error(
-                    "type-mismatch",
-                    left.span,
-                    Message::with(
-                        message!("{0} is {1}, which has no order, so it can't be in a range"),
-                        [
-                            quote_span(self.source, left.span),
-                            Arg::from(super::describe::words(&item)),
-                        ],
-                    ),
-                ));
+            let ranged = operators::ranged(&item);
+            if !ranged {
+                self.unranged(left, &item);
             }
+            if let (Some(start), Some(end)) = (start, end) {
+                self.text_range_ends(start, end);
+            }
+            let expected = (!matches!(item, Type::Error | Type::Never)).then_some(&item);
             let mut reported = false;
             for part in [start, end].into_iter().flatten() {
-                let ty = self.operand(part);
+                let ty = self.expr(part, expected);
+                let ty = if let Type::Optional(inner) = &ty
+                    && !matches!(**inner, Type::Never)
+                {
+                    self.optional_error(part, &ty, true);
+                    (**inner).clone()
+                } else {
+                    ty
+                };
                 if !reported
-                    && operators::compare(&item, &ty).is_err()
+                    && ranged
+                    && operators::range_ends(&item, &ty).is_err()
                     && !matches!(item, Type::Error)
                 {
                     reported = true;
-                    self.report(Diagnostic::error(
+                    let mut diagnostic = Diagnostic::error(
                         "type-mismatch",
                         right.span,
                         Message::with(
@@ -1391,7 +1425,11 @@ impl Checker<'_> {
                                 Arg::from(super::describe::words(&ty)),
                             ],
                         ),
-                    ));
+                    );
+                    if matches!(item, Type::DateTime) && matches!(ty, Type::Time) {
+                        diagnostic = diagnostic.with_fix(self.time_of_day_fix(left, false));
+                    }
+                    self.report(diagnostic);
                 }
             }
             self.record(right, Type::Error);
@@ -1417,6 +1455,41 @@ impl Checker<'_> {
             };
             self.member_of(left, &left_ty, right, &list);
         }
+    }
+
+    /// `x in lo..hi` on a value that forms no range: an enum that isn't ordered names the enums
+    /// that are, and the list to write instead.
+    fn unranged(&mut self, left: &Expr, item: &Type) {
+        let code = quote_span(self.source, left.span);
+        let message = if let Type::Enum(enumeration) = item {
+            let listed: Vec<&str> = enumeration
+                .variants
+                .iter()
+                .take(2)
+                .map(|(name, _)| name.as_str())
+                .collect();
+            Message::with(
+                message!(
+                    "{0} is {1}, which has no order, so it can't be in a range: only {2} order their variants. List the variants instead, as in {3}"
+                ),
+                [
+                    code,
+                    Arg::from(super::describe::words(item)),
+                    Arg::from(operators::ordered_enums()),
+                    quote(&format!(
+                        "{} in [{}]",
+                        self.text(left.span),
+                        listed.join(", ")
+                    )),
+                ],
+            )
+        } else {
+            Message::with(
+                message!("{0} is {1}, which has no order, so it can't be in a range"),
+                [code, Arg::from(super::describe::words(item))],
+            )
+        };
+        self.report(Diagnostic::error("type-mismatch", left.span, message));
     }
 
     fn member_of(&mut self, left: &Expr, item: &Type, right: &Expr, list: &Type) {
@@ -1730,6 +1803,7 @@ pub fn line_type() -> Arc<RecordType> {
             .map(|name| ((*name).to_owned(), None))
             .collect(),
         doc: None,
+        ordered: false,
     });
     let field = |name: &str, ty: Type| FieldDef {
         name: name.to_owned(),

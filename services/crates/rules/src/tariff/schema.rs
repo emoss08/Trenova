@@ -134,6 +134,27 @@ pub const ENUMS: &[(&str, &[&str])] = &[
     ),
 ];
 
+/// The schema enums whose variants have an order: their declaration order, lowest first
+/// (`Class50 < Class55`, `Mon < Tue`). Every other enum, schema or user, has none.
+pub const ORDERED_ENUMS: &[&str] = &["FreightClass", "Weekday"];
+
+/// A variant's place in the ordered schema enum that declares it, counted from 0. The ordered
+/// enums share no variant name, so the name alone decides.
+#[must_use]
+pub fn variant_rank(variant: &str) -> Option<usize> {
+    ENUMS
+        .iter()
+        .filter(|(name, _)| ORDERED_ENUMS.contains(name))
+        .find_map(|(_, variants)| variants.iter().position(|known| *known == variant))
+}
+
+/// The class a `FreightClass` variant names, as written in the NMFC: `Class77_5` is `77.5`.
+#[must_use]
+pub fn freight_class_number(variant: &str) -> Option<rust_decimal::Decimal> {
+    let digits = variant.strip_prefix("Class")?.replace('_', ".");
+    rust_decimal::Decimal::from_str_exact(&digits).ok()
+}
+
 /// How the organisation stores what the schema exposes, as the host sends it.
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -349,6 +370,7 @@ impl Builder {
                     name: (*name).to_owned(),
                     variants: variants.iter().map(|v| ((*v).to_owned(), None)).collect(),
                     doc: None,
+                    ordered: ORDERED_ENUMS.contains(name),
                 })
             })
             .collect();

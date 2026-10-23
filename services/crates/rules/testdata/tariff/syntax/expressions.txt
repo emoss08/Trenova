@@ -426,3 +426,16 @@ let a = "x {} y"
 tariff "t"
 let a = (text "x " ? " y")
 ! syntax 22..24 Expected a value inside the braces; a literal brace is written twice, `'{{'` or `'}}'`
+
+=== a variant's property is a field and a conversion is a path
+tariff "t"
+let a = Class77_5.number
+let b = Int.parse("5")
+let c = StopKind.Delivery
+let d = rating.date.time in @08:00..@17:00
+---
+tariff "t"
+let a = (. Class77_5 number)
+let b = (call Int::parse (text "5"))
+let c = StopKind::Delivery
+let d = (in (. (. rating date) time) (.. @08:00:00 @17:00:00))

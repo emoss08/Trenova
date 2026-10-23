@@ -73,6 +73,7 @@
      "descriptor": {
       "kind": "enum",
       "name": "Service",
+      "ordered": false,
       "variants": [
        "Standard",
        "Guaranteed",
@@ -480,11 +481,6 @@
   {
    "diagnostics": [
     {
-     "at": "\"a\"..\"z\"",
-     "code": "constraint",
-     "message": "`label` is text, which has no order, so its constraint can't be a range: list the values it may take, as in `where [a, b]`"
-    },
-    {
      "at": "false..=true",
      "code": "constraint",
      "message": "`waived` is true or false, which has no order, so its constraint can't be a range: list the values it may take, as in `where [a, b]`"
@@ -492,10 +488,10 @@
     {
      "at": "Standard..Guaranteed",
      "code": "constraint",
-     "message": "`service` is a value of type `Service`, which has no order, so its constraint can't be a range: list the values it may take, as in `where [a, b]`"
+     "message": "`service` is a value of type `Service`, which has no order, so its constraint can't be a range: only `FreightClass` and `Weekday` order their variants. List the values it may take, as in `where [a, b]`"
     }
    ],
-   "name": "a range needs a type with an order",
+   "name": "a range needs a type with an order (text and the ordered enums have one)",
    "source": [
     "tariff \"t\"",
     "enum Service { Standard, Guaranteed }",

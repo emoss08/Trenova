@@ -518,7 +518,8 @@ fn write_kind(out: &mut String, kind: &ExprKind) {
         | ExprKind::Money { .. }
         | ExprKind::Percent(_)
         | ExprKind::Date(_)
-        | ExprKind::DateTime(_) => write_literal(out, kind),
+        | ExprKind::DateTime(_)
+        | ExprKind::Time(_) => write_literal(out, kind),
         ExprKind::Bool(value) => {
             let _ = write!(out, "{value}");
         }
@@ -702,6 +703,13 @@ fn write_literal(out: &mut String, kind: &ExprKind) {
         }
         ExprKind::Date(date) => {
             let _ = write!(out, "@{:04}-{:02}-{:02}", date.year, date.month, date.day);
+        }
+        ExprKind::Time(time) => {
+            let _ = write!(
+                out,
+                "@{:02}:{:02}:{:02}",
+                time.hour, time.minute, time.second
+            );
         }
         ExprKind::DateTime(at) => {
             let _ = write!(

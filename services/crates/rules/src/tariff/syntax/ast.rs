@@ -661,6 +661,25 @@ pub struct DateTimeLit {
     pub offset_minutes: i16,
 }
 
+/// A time-of-day literal: `@17:30`, `@07:30:15`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TimeLit {
+    /// The hour, 0 to 23.
+    pub hour: u8,
+    /// The minute.
+    pub minute: u8,
+    /// The second; 0 when not written.
+    pub second: u8,
+}
+
+impl TimeLit {
+    /// Seconds since midnight.
+    #[must_use]
+    pub fn seconds(self) -> i64 {
+        i64::from(self.hour) * 3_600 + i64::from(self.minute) * 60 + i64::from(self.second)
+    }
+}
+
 /// A unit as written after a number, after `$x/` or in a type: `lb`, `ft3`, `lb/ft3`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnitExpr {
@@ -723,6 +742,8 @@ pub enum ExprKind {
     Date(DateLit),
     /// `@2026-10-22T08:00-05:00`.
     DateTime(DateTimeLit),
+    /// `@17:30`.
+    Time(TimeLit),
     /// `true` or `false`.
     Bool(bool),
     /// `none`.
@@ -931,10 +952,11 @@ pub enum PatternKind {
     Wildcard,
     /// `none`.
     None,
-    /// A literal: a number with its unit, money, a percent, text, a date, `true`, `false`. A
-    /// negative number is a [`ExprKind::Unary`] negation of a literal.
+    /// A literal: a number with its unit, money, a percent, text, a date, a time, `true`,
+    /// `false`. A negative number is a [`ExprKind::Unary`] negation of a literal.
     Literal(Expr),
-    /// `lo..hi`, `lo..=hi`, `..hi`, `lo..`, with literal ends.
+    /// `lo..hi`, `lo..=hi`, `..hi`, `lo..`, with literal ends or, for an ordered enum, variant
+    /// ends ([`ExprKind::Path`]: `Mon..=Fri`).
     Range {
         /// The start, when written.
         start: Option<Expr>,

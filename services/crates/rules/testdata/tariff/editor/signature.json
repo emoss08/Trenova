@@ -646,6 +646,39 @@
     ],
     "activeParameter": 0
    }
+  },
+  {
+   "name": "std.time takes times of day",
+   "source": [
+    "tariff \"t\"",
+    "use std.time.{ afterHours }",
+    "let late = afterHours(rating.date, |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "afterHours(at: DateTime, open: Time = @08:00, close: Time = @17:00) -> Bool"
+     }
+    ],
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "std.tiers prices by distance",
+   "source": [
+    "tariff \"t\"",
+    "use std.tiers.{ byDistance }",
+    "charge \"x\" = byDistance(|)"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "byDistance(tiers: List<DistanceTier>, distance: Distance) -> Money"
+     }
+    ],
+    "activeParameter": 0
+   }
   }
  ]
 }

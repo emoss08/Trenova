@@ -595,6 +595,7 @@ impl Checker<'_> {
             Rule::Text => Type::Text,
             Rule::TextList => Type::list(Type::Text),
             Rule::Date => Type::Date,
+            Rule::Time => Type::Time,
             Rule::Weekday => self
                 .schema
                 .enumeration("Weekday")
@@ -682,6 +683,17 @@ impl Checker<'_> {
             Message::with(
                 message!("{0} compares values, but these are {1}: give each a fallback first"),
                 [quote(method.name), Arg::from(words(value))],
+            )
+        } else if let Type::Enum(_) = value {
+            Message::with(
+                message!(
+                    "{0} compares values, and {1} can't be ordered: only {2} order their variants"
+                ),
+                [
+                    quote(method.name),
+                    Arg::from(words(value)),
+                    Arg::from(operators::ordered_enums()),
+                ],
             )
         } else {
             Message::with(

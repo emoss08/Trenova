@@ -1689,6 +1689,61 @@
      "signature": "let linehaul: Money"
     }
    }
+  },
+  {
+   "name": "a time-of-day literal",
+   "source": [
+    "tariff \"t\"",
+    "let late = rating.date.time > @17:|30",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "range": {
+     "text": "@17:30"
+    },
+    "contents": {
+     "signature": "@17:30",
+     "type": "Time",
+     "doc": {
+      "message": "`{0}` is a time of day, {1} minutes after midnight, with no date and no offset: it compares with a date-time's `.time`, the clock where the date-time is",
+      "args": [
+       "@17:30",
+       "1050"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a date-time's time of day",
+   "source": [
+    "tariff \"t\"",
+    "let t = rating.date.ti|me",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "time: Time",
+     "type": "Time"
+    }
+   }
+  },
+  {
+   "name": "a freight class's number",
+   "source": [
+    "tariff \"t\"",
+    "let c = shipment.freightClass ?? Class50",
+    "let n = c.num|ber",
+    "charge \"x\" = $1 * n"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "number: Number",
+     "doc": {
+      "message": "The class as a number: `Class77_5.number` is `77.5`."
+     }
+    }
+   }
   }
  ]
 }

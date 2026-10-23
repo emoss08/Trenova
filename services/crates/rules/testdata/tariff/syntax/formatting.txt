@@ -391,14 +391,14 @@ fn residential(fee: Money = $95) = fee
 
 === long parameter lists break
 library "l"
-fn businessDuration(start: DateTime, end: DateTime, open: Int = 8, close: Int = 17, zone: Text = "UTC") -> Duration = end - start
+fn businessDuration(start: DateTime, end: DateTime, open: Time = @08:00, close: Time = @17:00, zone: Text = "UTC") -> Duration = end - start
 ---
 library "l"
 fn businessDuration(
   start: DateTime,
   end: DateTime,
-  open: Int = 8,
-  close: Int = 17,
+  open: Time = @08:00,
+  close: Time = @17:00,
   zone: Text = "UTC",
 ) -> Duration = end - start
 
@@ -607,3 +607,18 @@ let linehaul = best "Linehaul" {
 }
 review "Check {linehaul}"
 minimum $400 on freight
+
+=== times of day and variant ranges keep their spelling
+tariff "t"
+let a = match rating.date.weekday {
+Mon..=Fri=>@08:00
+Sat|Sun=>@10:30:00
+}
+let b = a in @08:00..@17:00
+---
+tariff "t"
+let a = match rating.date.weekday {
+  Mon..=Fri => @08:00
+  Sat | Sun => @10:30:00
+}
+let b = a in @08:00..@17:00

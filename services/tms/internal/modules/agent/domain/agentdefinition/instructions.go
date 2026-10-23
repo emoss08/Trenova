@@ -593,7 +593,11 @@ const tariffReference = "Tariff in brief. A file starts with its kind: tariff \"
 	"refuses with require or fail is out of the running. Labels and messages interpolate " +
 	"{expr}. std.ltl has Break, deficit, billed and " +
 	"densityClass; std.fuel has stepPercent and perMile; std.time has weekend, afterHours " +
-	"and businessDuration; std.accessorials has detention and extraStops. Tests sit in " +
+	"and businessDuration, whose open and close are times of day (@08:00; at.time is a " +
+	"date-time's); std.tiers has byDistance and byWeight for graduated tiers; " +
+	"std.accessorials has detention and extraStops. A zip band is a text range, " +
+	"lane.origin.zip in \"30000\"..=\"31999\", and FreightClass and Weekday have an order " +
+	"(Mon..=Fri, Class50..Class85). Tests sit in " +
 	"the file, one statement per line: test \"name\" { given shipment.distance = 412 mi, " +
 	"given input.rate = $2.10/mi, expect charge(\"Linehaul\") == $865.20, expect total " +
 	"== $865.20 }, expect chosen(\"Linehaul\") == \"Flat\" for the option a best kept, and " +

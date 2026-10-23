@@ -123,6 +123,7 @@ fn schema_json(schema: &Schema) -> Json {
         "enums": schema.enums.iter().map(|enumeration| json!({
             "name": enumeration.name,
             "variants": enumeration.variants.iter().map(|(name, _)| name.clone()).collect::<Vec<_>>(),
+            "ordered": enumeration.ordered,
         })).collect::<Vec<_>>(),
     })
 }
@@ -351,16 +352,42 @@ mod tests {
             .cloned()
             .unwrap_or(Json::Null);
         assert_eq!(dwell.get("type").and_then(Json::as_str), Some("Duration?"));
+        let types = out.get("types").cloned().unwrap_or(Json::Null);
+        assert!(find(&types, "name", "Money").is_some());
+    }
+
+    #[test]
+    fn the_catalog_marks_the_ordered_enums_and_lists_times_and_tiers() {
+        let out = catalog();
+        let schema = out.get("schema").cloned().unwrap_or(Json::Null);
+        let enums = schema.get("enums").cloned().unwrap_or(Json::Null);
+        let ordered = |name: &str| {
+            find(&enums, "name", name)
+                .and_then(|found| found.get("ordered").and_then(Json::as_bool))
+        };
+        assert_eq!(ordered("FreightClass"), Some(true));
+        assert_eq!(ordered("Weekday"), Some(true));
+        assert_eq!(ordered("StopKind"), Some(false));
+        let types = out.get("types").cloned().unwrap_or(Json::Null);
+        assert!(find(&types, "name", "Time").is_some());
+        let methods = out.get("methods").cloned().unwrap_or(Json::Null);
+        let receivers: Vec<&str> = methods
+            .as_array()
+            .map(|list| {
+                list.iter()
+                    .filter_map(|method| method.get("receiver").and_then(Json::as_str))
+                    .collect()
+            })
+            .unwrap_or_default();
+        assert!(receivers.contains(&"Time") && receivers.contains(&"FreightClass"));
         assert!(
             find(
-                schema.get("enums").unwrap_or(&Json::Null),
-                "name",
-                "FreightClass"
+                out.get("modules").unwrap_or(&Json::Null),
+                "path",
+                "std.tiers"
             )
             .is_some()
         );
-        let types = out.get("types").cloned().unwrap_or(Json::Null);
-        assert!(find(&types, "name", "Money").is_some());
     }
 
     /// Every `doc` under `value`, with its JSON path.

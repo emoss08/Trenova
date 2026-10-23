@@ -32,6 +32,8 @@ pub enum Type {
     Date,
     /// An instant with its UTC offset.
     DateTime,
+    /// A wall-clock time of day, with no date and no offset.
+    Time,
     /// Money, a rate or a quantity.
     Quantity(QuantityType),
     /// `List<T>`.
@@ -89,6 +91,9 @@ pub struct EnumType {
     pub variants: Vec<(String, Option<Doc>)>,
     /// The enum's doc.
     pub doc: Option<Doc>,
+    /// Whether its variants are ordered, in declaration order: only the schema's
+    /// [`crate::tariff::schema::ORDERED_ENUMS`].
+    pub ordered: bool,
 }
 
 impl EnumType {
@@ -96,6 +101,12 @@ impl EnumType {
     #[must_use]
     pub fn has(&self, variant: &str) -> bool {
         self.variants.iter().any(|(name, _)| name == variant)
+    }
+
+    /// A variant's place in declaration order, counted from 0.
+    #[must_use]
+    pub fn rank(&self, variant: &str) -> Option<usize> {
+        self.variants.iter().position(|(name, _)| name == variant)
     }
 }
 
@@ -249,6 +260,7 @@ impl PartialEq for Type {
             | (Self::Text, Self::Text)
             | (Self::Date, Self::Date)
             | (Self::DateTime, Self::DateTime)
+            | (Self::Time, Self::Time)
             | (Self::Never, Self::Never)
             | (Self::Error, Self::Error) => true,
             (Self::Quantity(left), Self::Quantity(right)) => left.dim == right.dim,
@@ -283,6 +295,7 @@ impl fmt::Display for Type {
             Self::Text => formatter.write_str("Text"),
             Self::Date => formatter.write_str("Date"),
             Self::DateTime => formatter.write_str("DateTime"),
+            Self::Time => formatter.write_str("Time"),
             Self::Quantity(quantity) => write_quantity(quantity, formatter),
             Self::List(item) => write!(formatter, "List<{item}>"),
             Self::Optional(inner) => write!(formatter, "{inner}?"),

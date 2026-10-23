@@ -212,7 +212,7 @@ macro_rules! walker {
             | ExprKind::Money { .. }
             | ExprKind::Percent(_)
             | ExprKind::Date(_)
-            | ExprKind::DateTime(_)
+            | ExprKind::DateTime(_) | ExprKind::Time(_)
             | ExprKind::Bool(_)
             | ExprKind::None
             | ExprKind::Name(_)

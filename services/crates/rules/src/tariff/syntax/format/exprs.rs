@@ -188,9 +188,10 @@ impl Formatter<'_> {
                     None => Doc::text(amount),
                 }
             }
-            ExprKind::Percent(_) | ExprKind::Date(_) | ExprKind::DateTime(_) => {
-                Doc::text(self.literal_text(expr.span.start).to_owned())
-            }
+            ExprKind::Percent(_)
+            | ExprKind::Date(_)
+            | ExprKind::DateTime(_)
+            | ExprKind::Time(_) => Doc::text(self.literal_text(expr.span.start).to_owned()),
             ExprKind::Text(text) => self.text_doc(text),
             ExprKind::Bool(value) => Doc::text(if *value { "true" } else { "false" }),
             ExprKind::None => Doc::text("none"),

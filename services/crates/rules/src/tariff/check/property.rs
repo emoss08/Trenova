@@ -578,13 +578,20 @@ impl Checker<'_> {
             }
         };
         if !super::operators::ordered(&item) {
+            let template = if matches!(item, Type::Text) {
+                message!(
+                    "{0} is {1}, which has no next value to step to, so it can't be varied over a range: list its values instead, as in {2}"
+                )
+            } else {
+                message!(
+                    "{0} is {1}, which has no order, so it can't be varied over a range: list its values instead, as in {2}"
+                )
+            };
             self.report(Diagnostic::error(
                 "unordered",
                 values.span,
                 Message::with(
-                    message!(
-                        "{0} is {1}, which has no order, so it can't be varied over a range: list its values instead, as in {2}"
-                    ),
+                    template,
                     [
                         quote(&target.display),
                         Arg::from(words(&item)),
@@ -912,6 +919,31 @@ impl Checker<'_> {
                 ty: declared.clone(),
                 range: false,
             }),
+            FoldedConstraint::Range { .. }
+                if matches!(constraint_item_type(declared), Type::Text) =>
+            {
+                self.report(
+                    Diagnostic::error(
+                        "vary-values",
+                        target.span,
+                        Message::with(
+                            message!(
+                                "The constraint on {0}, {1}, is a text range, which has no next value to step to, so say which values it takes: {2}"
+                            ),
+                            [
+                                quote(target.input.unwrap_or_default()),
+                                quote_span(self.source, bounds.whole),
+                                quote(&format!("vary {} in [a, b]", target.display)),
+                            ],
+                        ),
+                    )
+                    .with_related(
+                        bounds.whole,
+                        Message::new(message!("The constraint is written here")),
+                    ),
+                );
+                None
+            }
             FoldedConstraint::Range {
                 min: Some(_),
                 max: Some(_),
