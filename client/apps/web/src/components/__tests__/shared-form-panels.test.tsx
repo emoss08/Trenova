@@ -25,7 +25,7 @@ const ROW = {
 } as const;
 
 // Mirrors the shape every route using these panels has: ONE useForm, handed to whichever
-// panel `mode` selects. See routes/accessorial-charge/_components/accessorial-charge-panel.
+// panel `mode` selects. See components/accessorial-charge/accessorial-charge-panel.
 function SharedFormPanels({
   mode,
   onForm,
