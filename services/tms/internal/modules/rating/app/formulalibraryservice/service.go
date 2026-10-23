@@ -224,12 +224,13 @@ func clearApprovalFields(library *formulalibrary.FormulaLibrary) {
 	library.ReviewComment = ""
 }
 
-func carryApprovalFields(library, original *formulalibrary.FormulaLibrary) {
-	library.SubmittedByID = original.SubmittedByID
-	library.SubmittedAt = original.SubmittedAt
-	library.ApprovedByID = original.ApprovedByID
-	library.ApprovedAt = original.ApprovedAt
-	library.ReviewComment = original.ReviewComment
+func withContent(original, payload *formulalibrary.FormulaLibrary) *formulalibrary.FormulaLibrary {
+	next := *original
+	next.Name = payload.Name
+	next.Description = payload.Description
+	next.Source = payload.Source
+	next.Version = payload.Version
+	return &next
 }
 
 func (s *Service) Create(
@@ -283,38 +284,26 @@ func (s *Service) createWithSnapshot(
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *formulalibrary.FormulaLibrary,
+	payload *formulalibrary.FormulaLibrary,
 	userID pulid.ID,
 ) (*formulalibrary.FormulaLibrary, error) {
-	log := s.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
+	log := s.l.With(zap.String("operation", "Update"), zap.String("id", payload.ID.String()))
 
 	original, err := s.repo.GetByID(ctx, &formulalibraryports.GetLibraryByIDRequest{
-		TenantInfo: libraryTenant(entity),
-		LibraryID:  entity.ID,
+		TenantInfo: libraryTenant(payload),
+		LibraryID:  payload.ID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	if entity.Status != original.Status {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"Status cannot be changed from {0} to {1} here; submit, approve, reject, or archive the library instead",
-			original.Status,
-			entity.Status,
-		)
-	}
+	entity := withContent(original, payload)
 	if err = s.refuseRename(ctx, entity, original); err != nil {
 		return nil, err
 	}
-
-	entity.SourceLibraryID = original.SourceLibraryID
-	entity.SourceVersionNumber = original.SourceVersionNumber
 	if err = s.prepareContent(ctx, entity); err != nil {
 		return nil, err
 	}
-	carryApprovalFields(entity, original)
 
 	material := entity.HasMaterialChange(original)
 	comment := "Formula library updated"

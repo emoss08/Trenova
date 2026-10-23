@@ -298,6 +298,43 @@ func TestUpdate_ASourceChangeRevertsApprovalAndSnapshotsAVersion(t *testing.T) {
 	assert.EqualValues(t, 2, snapshot.VersionNumber)
 }
 
+func TestUpdate_AContentSaveKeepsTheServerHeldFields(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	approver := pulid.MustNew("usr_")
+	approvedAt := timeutils.NowUnix() - 60
+	forkedFrom := pulid.MustNew("fl_")
+	original := newLibrary()
+	original.Status = formulatemplate.StatusActive
+	original.ApprovedByID = &approver
+	original.ApprovedAt = &approvedAt
+	original.SourceLibraryID = &forkedFrom
+	payload := &formulalibrary.FormulaLibrary{
+		ID:             original.ID,
+		OrganizationID: original.OrganizationID,
+		BusinessUnitID: original.BusinessUnitID,
+		Name:           original.Name,
+		Description:    "Hazmat, residential and liftgate fees",
+		Source:         original.Source,
+		Version:        original.Version,
+	}
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(returnsLibrary, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	updated, err := deps.svc.Update(t.Context(), payload, newTenantInfo().UserID)
+	require.NoError(t, err)
+
+	assert.Equal(t, payload.Description, updated.Description)
+	assert.Equal(t, formulatemplate.StatusActive, updated.Status, "a save never moves the status")
+	assert.Equal(t, &approver, updated.ApprovedByID)
+	assert.Equal(t, &forkedFrom, updated.SourceLibraryID, "the fork lineage survives a save")
+	assert.EqualValues(t, 1, updated.CurrentVersionNumber)
+	deps.versionRepo.AssertNotCalled(t, "Create")
+}
+
 func TestSubmit_RefusesALibraryWhoseTestsFail(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
