@@ -442,7 +442,9 @@ func connectionMeaning(record map[string]any) {
 	category := accountingsync.ErrorCategory(stringOf(conn["lastErrorCategory"]))
 	if category == "" {
 		delete(conn, "lastErrorMessage")
-	} else if category == accountingsync.ErrorCategoryUnknown {
+		return
+	}
+	if category == accountingsync.ErrorCategoryUnknown {
 		conn["lastErrorMessage"] = "The provider rejected the last call. Its own message " +
 			"is on the connection page."
 	}
