@@ -35,13 +35,15 @@ var (
 	entropyMutex         sync.Mutex
 )
 
-func newULID() ulid.ULID {
+func newULIDAt(t time.Time) ulid.ULID {
 	entropyMutex.Lock()
 	defer entropyMutex.Unlock()
-	return ulid.MustNew(ulid.Timestamp(time.Now()), defaultEntropySource)
+	return ulid.MustNew(ulid.Timestamp(t), defaultEntropySource)
 }
 
-func MustNew(prefix string) ID { return ID(prefix + newULID().String()) }
+func MustNew(prefix string) ID { return MustNewAt(prefix, time.Now()) }
+
+func MustNewAt(prefix string, t time.Time) ID { return ID(prefix + newULIDAt(t).String()) }
 
 func Must(prefix string) *ID {
 	id := MustNew(prefix)

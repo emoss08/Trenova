@@ -235,3 +235,37 @@ describe("reassignChargeResultSchema", () => {
     expect(parsed.canceledItemIds).toEqual(["bqi_1"]);
   });
 });
+
+/**
+ * A credit or debit memo's queue item bills a customer, not a shipment: the API
+ * serializes its empty shipment id as null (pulid.ID.MarshalJSON). Late-charge
+ * and manual memos sit in the queue as Approved items until they post, so the
+ * list must parse them.
+ */
+describe("billingQueueItemSchema.shipmentId", () => {
+  const debitMemoItem = {
+    ...actionFieldsItem,
+    id: "bqi_memo",
+    shipmentId: null,
+    billType: "DebitMemo",
+    allocatedTotalAmount: "0",
+    adjustmentContext: { memo: true, memoKind: "LateCharge" },
+  };
+
+  it("parses a memo item whose shipment id is null", () => {
+    const parsed = billingQueueItemSchema.parse(debitMemoItem);
+
+    expect(parsed.shipmentId).toBeNull();
+    expect(parsed.billType).toBe("DebitMemo");
+  });
+
+  it("reads an empty shipment id as no shipment", () => {
+    const parsed = billingQueueItemSchema.parse({ ...debitMemoItem, shipmentId: "" });
+
+    expect(parsed.shipmentId).toBeNull();
+  });
+
+  it("keeps a shipment item's shipment id", () => {
+    expect(billingQueueItemSchema.parse(actionFieldsItem).shipmentId).toBe("shp_1");
+  });
+});

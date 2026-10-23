@@ -473,6 +473,12 @@ tasks:
           {{.CLI_PATH}} db seed
         fi
 
+  db-seed-volume:
+    desc: "Fill the development organization with volume data (shipments=10000 months=12 seed=0)"
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} db seed-volume --shipments {{.shipments | default 10000}} --months {{.months | default 12}} --seed {{.seed | default 0}}"
+
   db-reset:
     desc: Reset database (drop, create, migrate, seed)
     deps: [generate-seeds, build-cli]
