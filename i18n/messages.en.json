@@ -282902,7 +282902,7 @@
       "go/other"
     ]
   },
-  "This version's inputs no longer accept what {0} already set: {1}. Keep the inputs those contracts use, or change the contracts first": {
+  "This version's inputs no longer accept what {0, plural, one {# contract or shipment} other {# contracts and shipments}} already set: {1}. Keep the inputs those contracts use, or change the contracts first": {
     "sites": 1,
     "scope": [
       "go"
@@ -333804,6 +333804,15 @@
       "apps/web/rules",
       "packages/shared/lib",
       "rules/matrix"
+    ]
+  },
+  "{0} and {1, plural, one {# more} other {# more}}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} and {1}": {

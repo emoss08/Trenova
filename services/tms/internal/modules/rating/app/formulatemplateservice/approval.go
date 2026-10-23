@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/approvalworkflow"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -238,7 +239,7 @@ func (s *Service) approvalContent(
 	if err != nil {
 		return nil, err
 	}
-	if refusal := dependentsRefusal(dependents); refusal != nil {
+	if refusal := dependentsRefusal(i18n.FromContext(ctx), dependents); refusal != nil {
 		return nil, refusal
 	}
 

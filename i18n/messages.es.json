@@ -30248,7 +30248,6 @@
   "This version": "Esta versión",
   "This version changed since you opened it. Reload it and reapply your edits. A published version cannot be edited — create a new draft instead.": "Esta versión cambió desde que la abrió. Vuelva a cargarla y reaplique sus ediciones. Una versión publicada no se puede editar: cree un nuevo borrador en su lugar.",
   "This version is already archived": "Esta versión ya está archivada",
-  "This version's inputs no longer accept what {0} already set: {1}. Keep the inputs those contracts use, or change the contracts first": "Las entradas de esta versión ya no aceptan lo que {0} ya estableció: {1}. Conserve las entradas que usan esos contratos o cambie primero los contratos",
   "This version's template no longer exists": "La plantilla de esta versión ya no existe",
   "This view has unsaved changes": "Esta vista tiene cambios sin guardar",
   "This view no longer names a page.": "Esta vista ya no indica ninguna página.",

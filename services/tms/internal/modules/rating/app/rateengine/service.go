@@ -2,6 +2,7 @@ package rateengine
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -303,7 +304,7 @@ func (s *Service) rateFromFallbackTemplate(
 		currency:   rateCtx.BillingCurrency,
 	}, trace)
 	if err != nil {
-		return nil, err
+		return nil, onShipmentInputs(err)
 	}
 	if result.refusal != "" {
 		return nil, refusalError(result.refusal, nil)
@@ -613,4 +614,16 @@ func (s *Service) hydrate(
 		Shipment:   entity,
 		TenantInfo: tenantInfo,
 	})
+}
+
+const shipmentTariffInputsField = "tariffInputs"
+
+func onShipmentInputs(err error) error {
+	var fieldErr *errortypes.Error
+	if !errors.As(err, &fieldErr) || fieldErr.Field != tariff.InputsField {
+		return err
+	}
+	remapped := *fieldErr
+	remapped.Field = shipmentTariffInputsField
+	return &remapped
 }

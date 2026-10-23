@@ -30248,7 +30248,6 @@
   "This version": "此版本",
   "This version changed since you opened it. Reload it and reapply your edits. A published version cannot be edited — create a new draft instead.": "自您打开后，此版本已有变更。请重新加载并重新应用您的编辑。已发布的版本无法编辑 — 请改为创建新草稿。",
   "This version is already archived": "此版本已归档",
-  "This version's inputs no longer accept what {0} already set: {1}. Keep the inputs those contracts use, or change the contracts first": "此版本的输入已不再接受 {0} 先前设置的值：{1}。请保留那些合同使用的输入，或先更改合同",
   "This version's template no longer exists": "此版本的模板已不存在",
   "This view has unsaved changes": "此视图有未保存的更改",
   "This view no longer names a page.": "此视图不再指向任何页面。",

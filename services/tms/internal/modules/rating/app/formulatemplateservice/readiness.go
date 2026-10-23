@@ -441,7 +441,7 @@ func dependentsReadiness(ctx context.Context, gate *dependentsGate) ReadinessChe
 	switch {
 	case gate.blocking():
 		check.Status = ReadinessFail
-		check.Detail = errortypes.LocalizedText(ctx, dependentsRefusal(gate))
+		check.Detail = errortypes.LocalizedText(ctx, dependentsRefusal(locale, gate))
 	case !gate.Checked:
 		check.Status = ReadinessPass
 		check.Detail = i18n.Translate(

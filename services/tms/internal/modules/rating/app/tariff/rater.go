@@ -18,6 +18,8 @@ const (
 	conditionPrefix = "condition:"
 
 	errorCodeInput = "input"
+
+	InputsField = "inputs"
 )
 
 var (
@@ -226,7 +228,7 @@ func evaluationError(evalErr *rules.TariffEvalError) error {
 		return errMissingResult
 	}
 	if evalErr.Code == errorCodeInput {
-		return evalErr.Message.ValidationError("inputs", errortypes.ErrInvalid)
+		return evalErr.Message.ValidationError(InputsField, errortypes.ErrInvalid)
 	}
 	return evalErr.Message.BusinessError().
 		WithParam("code", evalErr.Code).
