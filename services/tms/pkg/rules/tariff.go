@@ -274,7 +274,14 @@ type TariffLine struct {
 	Amount   TariffQuantity `json:"amount"`
 	Quantity RawJSON        `json:"quantity,omitempty"`
 	Rate     RawJSON        `json:"rate,omitempty"`
+	Limit    *TariffLimit   `json:"limit"`
+	On       *string        `json:"on"`
 	Range    *TariffRange   `json:"range"`
+}
+
+type TariffLimit struct {
+	Kind     string         `json:"kind"`
+	Computed TariffQuantity `json:"computed"`
 }
 
 type TariffNote struct {

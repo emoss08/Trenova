@@ -169,6 +169,13 @@ type Line struct {
 	QuantityUnit string           `json:"quantityUnit,omitempty"`
 	Rate         *decimal.Decimal `json:"rate,omitempty"`
 	RateUnit     string           `json:"rateUnit,omitempty"`
+	Limit        *LineLimit       `json:"limit,omitempty"`
+	On           string           `json:"on,omitempty"`
+}
+
+type LineLimit struct {
+	Kind     LineKind        `json:"kind"`
+	Computed decimal.Decimal `json:"computed"`
 }
 
 type Note struct {

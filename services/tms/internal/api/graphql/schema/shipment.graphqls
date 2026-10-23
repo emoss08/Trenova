@@ -310,6 +310,18 @@ type TariffBillLine {
   rate: Decimal
   rateUnit: String!
   amount: Decimal!
+  "Set when the charge's own minimum or maximum changed its amount."
+  limit: TariffLineLimit
+  "freight on the adjustment of a minimum or maximum that bounds the freight lines; empty otherwise."
+  on: String!
+}
+
+"How a charge's own minimum or maximum changed its amount."
+type TariffLineLimit {
+  "Minimum or Maximum."
+  kind: String!
+  "The amount the charge came to before its limit."
+  computed: Decimal!
 }
 
 "The conversion a bill was priced through when the tariff's currency differs from the billing currency."

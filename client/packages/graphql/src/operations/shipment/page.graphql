@@ -287,6 +287,11 @@ fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
       rate
       rateUnit
       amount
+      limit {
+        kind
+        computed
+      }
+      on
     }
     notes
     reviews

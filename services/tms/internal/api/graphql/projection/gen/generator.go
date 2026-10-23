@@ -72,6 +72,7 @@ var nonProjectionObjects = map[string]string{
 	"ShipmentContractRateCharge":      "GraphQL contract rate preview DTO built by its resolver",
 	"TariffBill":                      jsonbValueObject,
 	"TariffBillLine":                  jsonbValueObject,
+	"TariffLineLimit":                 jsonbValueObject,
 	"TariffBillExchange":              jsonbValueObject,
 	"SelectOption":                    "GraphQL select-option DTO",
 	"SidebarPreferences":              "GraphQL sidebar preferences DTO",

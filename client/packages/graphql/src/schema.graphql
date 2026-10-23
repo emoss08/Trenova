@@ -30935,6 +30935,12 @@ type TariffBillLine {
   """Charge, Minimum, Maximum or Rounding."""
   kind: String!
   label: String!
+  """Set when the charge's own minimum or maximum changed its amount."""
+  limit: TariffLineLimit
+  """
+  freight on the adjustment of a minimum or maximum that bounds the freight lines; empty otherwise.
+  """
+  on: String!
   quantity: Decimal
   quantityUnit: String!
   rate: Decimal
@@ -30975,6 +30981,14 @@ type TariffChoiceOption {
   The exact sum of the charge lines the option billed, before rounding. Null when it refused.
   """
   subtotal: Decimal
+}
+
+"""How a charge's own minimum or maximum changed its amount."""
+type TariffLineLimit {
+  """The amount the charge came to before its limit."""
+  computed: Decimal!
+  """Minimum or Maximum."""
+  kind: String!
 }
 
 """One person on a manager's team."""

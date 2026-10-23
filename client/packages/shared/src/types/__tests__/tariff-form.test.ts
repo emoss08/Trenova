@@ -153,6 +153,80 @@ describe("readStoredTariffBill", () => {
     ).toEqual([{ text: "Holiday pickup", range: null }]);
   });
 
+  it("reads a line's limit and a freight adjustment's scope as REST stores them and as GraphQL returns them", () => {
+    const linehaul = {
+      kind: "charge",
+      label: "Linehaul",
+      code: null,
+      freight: true,
+      amount: { $q: "450", u: "$" },
+      quantity: null,
+      rate: null,
+      limit: { kind: "minimum", computed: { $q: "235", u: "$" } },
+      on: null,
+      range: null,
+    };
+    const adjustment = {
+      kind: "maximum",
+      label: null,
+      code: null,
+      freight: true,
+      amount: { $q: "-50", u: "$" },
+      quantity: null,
+      rate: null,
+      limit: null,
+      on: "freight",
+      range: null,
+    };
+
+    expect(
+      readStoredTariffBill({
+        ...stored,
+        lines: [
+          {
+            kind: "Charge",
+            label: "Linehaul",
+            freight: true,
+            amount: "450",
+            limit: { kind: "Minimum", computed: "235" },
+          },
+          { kind: "Maximum", freight: true, amount: "-50", on: "freight" },
+        ],
+      })?.lines,
+    ).toEqual([linehaul, adjustment]);
+    expect(
+      readStoredTariffBill({
+        ...graphql,
+        lines: [
+          {
+            kind: "Charge",
+            label: "Linehaul",
+            code: "",
+            quantity: null,
+            quantityUnit: "",
+            rate: null,
+            rateUnit: "",
+            amount: "450",
+            limit: { kind: "Minimum", computed: "235" },
+            on: "",
+          },
+          {
+            kind: "Maximum",
+            label: "",
+            code: "",
+            quantity: null,
+            quantityUnit: "",
+            rate: null,
+            rateUnit: "",
+            amount: "-50",
+            limit: null,
+            on: "freight",
+          },
+        ],
+      })?.lines,
+    ).toEqual([linehaul, adjustment]);
+  });
+
   it("reads a bill without reviews, or with null, as asking for none", () => {
     expect(readStoredTariffBill({ ...graphql, reviews: null })?.reviews).toEqual([]);
     expect(readStoredTariffBill(stored)?.reviews).toEqual([]);

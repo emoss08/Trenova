@@ -47,6 +47,61 @@ func TestBillFromReadsLinesQuantitiesAndRates(t *testing.T) {
 	assert.Equal(t, "USD", out.Currency)
 }
 
+func TestBillFromKeepsALinesLimitAndAFreightAdjustmentsScope(t *testing.T) {
+	t.Parallel()
+
+	const raw = `{
+  "lines": [
+    {"kind":"charge","label":"Linehaul","code":null,"freight":true,
+     "amount":{"$q":"450","u":"$"},"quantity":{"$q":"100","u":"mi"},
+     "rate":{"$q":"2.35","u":"$/mi"},
+     "limit":{"kind":"minimum","computed":{"$q":"235","u":"$"}},"on":null,"range":null},
+    {"kind":"maximum","label":null,"code":null,"freight":true,
+     "amount":{"$q":"-50","u":"$"},"limit":null,"on":"freight","range":null}
+  ],
+  "notes":[],
+  "freightTotal":{"$q":"400","u":"$"},
+  "accessorialTotal":{"$q":"0","u":"$"},
+  "total":{"$q":"400","u":"$"}
+}`
+	var wire rules.TariffBill
+	require.NoError(t, sonic.Unmarshal([]byte(raw), &wire))
+	out, err := tarifftypes.BillFrom(&wire, "USD")
+	require.NoError(t, err)
+
+	require.Len(t, out.Lines, 2)
+	require.NotNil(t, out.Lines[0].Limit)
+	assert.Equal(t, tarifftypes.LineMinimum, out.Lines[0].Limit.Kind)
+	assert.Equal(t, "235", out.Lines[0].Limit.Computed.String())
+	assert.Empty(t, out.Lines[0].On)
+	assert.Nil(t, out.Lines[1].Limit)
+	assert.Equal(t, "freight", out.Lines[1].On)
+
+	encoded, err := sonic.Marshal(out.Lines[1])
+	require.NoError(t, err)
+	assert.NotContains(t, string(encoded), "limit")
+}
+
+func TestBillFromRefusesAnUnknownLineLimit(t *testing.T) {
+	t.Parallel()
+
+	const raw = `{
+  "lines": [
+    {"kind":"charge","label":"Linehaul","code":null,"freight":true,
+     "amount":{"$q":"450","u":"$"},
+     "limit":{"kind":"floor","computed":{"$q":"235","u":"$"}},"range":null}
+  ],
+  "notes":[],
+  "freightTotal":{"$q":"450","u":"$"},
+  "accessorialTotal":{"$q":"0","u":"$"},
+  "total":{"$q":"450","u":"$"}
+}`
+	var wire rules.TariffBill
+	require.NoError(t, sonic.Unmarshal([]byte(raw), &wire))
+	_, err := tarifftypes.BillFrom(&wire, "USD")
+	require.ErrorIs(t, err, tarifftypes.ErrBillShape)
+}
+
 func TestBillFromReadsTheReviewsBesideTheNotes(t *testing.T) {
 	t.Parallel()
 

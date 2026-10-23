@@ -10604,6 +10604,10 @@ type TariffBillLine struct {
 	Rate         *string `json:"rate,omitempty"`
 	RateUnit     string  `json:"rateUnit"`
 	Amount       string  `json:"amount"`
+	// Set when the charge's own minimum or maximum changed its amount.
+	Limit *TariffLineLimit `json:"limit,omitempty"`
+	// freight on the adjustment of a minimum or maximum that bounds the freight lines; empty otherwise.
+	On string `json:"on"`
 }
 
 // A best or worst block the tariff evaluated: the methods it weighed and the one it
@@ -10628,6 +10632,14 @@ type TariffChoiceOption struct {
 	Subtotal *string `json:"subtotal,omitempty"`
 	// Why the option did not apply, in the reader's language when the engine wrote it. Null unless it refused.
 	Refusal *string `json:"refusal,omitempty"`
+}
+
+// How a charge's own minimum or maximum changed its amount.
+type TariffLineLimit struct {
+	// Minimum or Maximum.
+	Kind string `json:"kind"`
+	// The amount the charge came to before its limit.
+	Computed string `json:"computed"`
 }
 
 // One person on a manager's team.

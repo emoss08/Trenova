@@ -126,6 +126,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "TariffBillLine", Implementors: []string{"TariffBillLine"}},
 		{Name: "TariffChoice", Implementors: []string{"TariffChoice"}},
 		{Name: "TariffChoiceOption", Implementors: []string{"TariffChoiceOption"}},
+		{Name: "TariffLineLimit", Implementors: []string{"TariffLineLimit"}},
 		{Name: "TrackingEvent", Implementors: []string{"TrackingEvent"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -9859,6 +9860,26 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
+			{
+				Name:      "limit",
+				HasChild:  true,
+				ChildType: "TariffLineLimit",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.Limit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTariffLineLimit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffLineLimit),
+			},
+			{
+				Name:     "on",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.On, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
 		}},
 		{Object: "TariffChoice", Fields: []*gqlexec.Field{
 			{
@@ -9950,6 +9971,28 @@ var Shard = &gqlexec.Shard{
 					return obj.Refusal, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
+		{Object: "TariffLineLimit", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffLineLimit)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "computed",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffLineLimit)
+					return obj.Computed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 		}},
 		{Object: "TrackingEvent", Fields: []*gqlexec.Field{
@@ -15040,6 +15083,13 @@ func marshalOTariffBillExchange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "TariffBillExchange", v)
+}
+
+func marshalOTariffLineLimit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffLineLimit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffLineLimit) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TariffLineLimit", v)
 }
 
 func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {

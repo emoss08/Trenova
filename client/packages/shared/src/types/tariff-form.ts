@@ -50,9 +50,8 @@ export type StoredTariffBillLine = {
   amount: TariffWireQuantity;
   quantity: TariffLineMeasure | null;
   rate: TariffLineMeasure | null;
-  /** The server stores neither a line's limit nor a freight-scoped adjustment's scope. */
-  limit: null;
-  on: null;
+  limit: TariffBillLine["limit"];
+  on: TariffBillLine["on"];
   range: null;
 };
 
@@ -91,6 +90,10 @@ const storedLineSchema = z.object({
   quantityUnit: z.string().nullish(),
   rate: storedDecimalSchema.nullish(),
   rateUnit: z.string().nullish(),
+  limit: z
+    .object({ kind: z.enum(["Minimum", "Maximum"]), computed: storedDecimalSchema })
+    .nullish(),
+  on: z.string().nullish(),
 });
 
 /**
@@ -121,8 +124,13 @@ function storedLine(line: z.output<typeof storedLineSchema>): StoredTariffBillLi
         : { $n: line.quantity as string }
       : null,
     rate: measured ? { $q: line.rate as string, u: line.rateUnit || "$" } : null,
-    limit: null,
-    on: null,
+    limit: line.limit
+      ? {
+          kind: line.limit.kind === "Minimum" ? "minimum" : "maximum",
+          computed: { $q: line.limit.computed, u: "$" },
+        }
+      : null,
+    on: line.on === "freight" ? "freight" : null,
     range: null,
   };
 }
@@ -145,8 +153,11 @@ const readBillSchema = z.object({
       amount: quantitySchema,
       quantity: measureSchema,
       rate: measureSchema,
-      limit: z.null().default(null),
-      on: z.null().default(null),
+      limit: z
+        .object({ kind: z.enum(["minimum", "maximum"]), computed: quantitySchema })
+        .nullable()
+        .default(null),
+      on: z.literal("freight").nullable().default(null),
       range: z.null(),
     }),
   ),

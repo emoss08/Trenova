@@ -91,7 +91,22 @@ func lineFrom(line *rules.TariffLine) (Line, error) {
 		}
 		out.Rate, out.RateUnit = &rate.Value, rate.Unit
 	}
+	if line.Limit != nil {
+		limitKind, known := limitKinds[line.Limit.Kind]
+		if !known {
+			return Line{}, fmt.Errorf("%w: line limit %q", ErrBillShape, line.Limit.Kind)
+		}
+		out.Limit = &LineLimit{Kind: limitKind, Computed: line.Limit.Computed.Value}
+	}
+	if line.On != nil {
+		out.On = *line.On
+	}
 	return out, nil
+}
+
+var limitKinds = map[string]LineKind{
+	"minimum": LineMinimum,
+	"maximum": LineMaximum,
 }
 
 func quantityOrNumber(raw rules.RawJSON) (rules.TariffQuantity, error) {
