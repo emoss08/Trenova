@@ -113,6 +113,7 @@ const (
 	rowVersion           = "version"
 	geocodedPlaceID      = "placeId"
 	fieldNotes           = "notes"
+	fieldCancelReason    = "cancelReason"
 	recordIDField        = "id"
 	// graphQLEnumSource names an enum parameter's values by the schema's own
 	// enum type, which is where they are declared.
@@ -416,8 +417,8 @@ func (r *graphQLRead) sortable() []string {
 // field, which a parameter derived from it takes; its filter still names the
 // field.
 var conventionNames = map[string]string{
-	fieldNotes:     "note",
-	"cancelReason": "reason",
+	fieldNotes:        "note",
+	fieldCancelReason: "reason",
 }
 
 // paramsFor derives a field's parameters, named by the conventions.
