@@ -517,6 +517,24 @@ property "p"
   assume (!= (call charge (text "Linehaul")) none)
   expect true
 
+=== assume with a space before a parenthesis is the statement
+tariff "t"
+fn assume(x: Bool) -> Bool = x
+property "p" {
+  vary shipment.weight in 1 lb..2 lb
+  assume (shipment.weight ?? 0 lb) > 1 lb
+  let ok = assume(true)
+  expect ok
+}
+---
+tariff "t"
+fn assume(x: Bool) -> Bool = x
+property "p"
+  vary shipment.weight in (.. 1[lb] 2[lb])
+  assume (> (paren (?? (. shipment weight) 0[lb])) 1[lb])
+  let ok = (call assume true)
+  expect ok
+
 === a property expects no refusal
 tariff "t"
 property "p" {

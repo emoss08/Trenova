@@ -183,7 +183,7 @@ impl Parser<'_> {
         if self.at_word("vary") && self.starts_target(1) {
             return Some(self.vary(block));
         }
-        if self.at_word("assume") && self.starts_value(1) {
+        if self.at_word("assume") && (self.starts_value(1) || self.spaced_paren(1)) {
             let keyword = self.bump().span;
             self.mark_at(self.pos - 1, TokenKind::Keyword);
             self.property_rule(block, keyword, "assume");
@@ -203,6 +203,15 @@ impl Parser<'_> {
                 self.slice(self.peek_nth(ahead + 1).span),
                 "=" | "+=" | "-=" | "("
             )
+    }
+
+    /// Whether the token `ahead` places on is a `(` on the same line with a space before it:
+    /// `assume (x ?? 0 lb) > 10 lb` is a statement, while `assume(x)` stays a call.
+    fn spaced_paren(&self, ahead: usize) -> bool {
+        let token = self.peek_nth(ahead);
+        !self.newline_before_nth(ahead)
+            && self.slice(token.span) == "("
+            && self.peek_nth(ahead - 1).span.end < token.span.start
     }
 
     /// Whether the token `ahead` places on, on the same line, can start a value rather than

@@ -119,7 +119,9 @@ contract. The standard library (`std`) ships with the module and is versioned wi
   `cents`, `total`, `lines`, `best`, `worst`, `option`, `property`, `vary`, `assume`,
   `nondecreasing`, `nonincreasing` and the unit names are contextual: they mean something only
   where the grammar expects them, and are ordinary names elsewhere (`fn billed(weight: Weight, to:
-  Weight)`, `let option = 2`).
+  Weight)`, `let option = 2`). `assume` followed directly by `(` is a call (`assume(x)`
+  calls a function named `assume`); with a space before the parenthesis it starts the
+  statement, so `assume (shipment.weight ?? 0 lb) > 10 lb` is an `assume`.
 - **Text:** `"double quoted"`, with `{expr}` interpolation, `{{` for a literal brace and the usual
   escapes. There are no raw strings and no single quotes. Interpolation writes any value that
   can't be empty: numbers, percents, money, quantities, dates, enums (as their variant), and

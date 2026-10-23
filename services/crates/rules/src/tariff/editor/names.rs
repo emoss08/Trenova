@@ -384,7 +384,7 @@ pub fn statement(site: &Site<'_, '_>, items: &mut Items) -> bool {
         keyword(items, Rank::Keyword, "option");
         snippet(
             items,
-            "option",
+            "option \"…\" { … }",
             "option \"${1:Label}\" {\n\t$0\n}",
             message!("One method of the choice, with the charges it bills."),
         );
@@ -466,7 +466,7 @@ fn construct_snippets(items: &mut Items, file_level: bool, words: &[&str]) {
     if has("property") && file_level {
         snippet(
             items,
-            "property",
+            "property \"…\" { … }",
             "property \"${1:name}\" {\n\tvary ${2:shipment.weight} in ${3:1 lb..40_000 lb}\n\texpect $0\n}",
             message!(
                 "A property: vary fields or inputs over ranges with `vary`, and say what holds in every case with `expect`."

@@ -2498,10 +2498,15 @@
      "best",
      "worst",
      "test",
-     "property",
+     "property \"…\" { … }",
      "best with two options"
     ],
     "items": {
+     "property \"…\" { … }": {
+      "kind": "snippet",
+      "snippet": true,
+      "insert": "property \"${1:name}\" {\n\tvary ${2:shipment.weight} in ${3:1 lb..40_000 lb}\n\texpect $0\n}"
+     },
      "best with two options": {
       "kind": "snippet",
       "snippet": true,
@@ -2595,7 +2600,8 @@
    ],
    "expect": {
     "includes": [
-     "option"
+     "option",
+     "option \"…\" { … }"
     ],
     "excludes": [
      "charge",
@@ -2604,6 +2610,11 @@
      "input"
     ],
     "items": {
+     "option \"…\" { … }": {
+      "kind": "snippet",
+      "snippet": true,
+      "insert": "option \"${1:Label}\" {\n\t$0\n}"
+     },
      "option": {
       "kind": "keyword",
       "doc": {
