@@ -14,6 +14,7 @@ import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
 import { MotionPreferenceProvider } from "@/components/motion-preference-provider";
+import { CodeLigaturesPreference } from "@/components/code-ligatures-preference";
 import { I18nProvider } from "@trenova/shared/i18n/provider";
 import { registerCatalogSource } from "@trenova/shared/i18n/runtime";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
@@ -159,6 +160,7 @@ export function Providers({ children }: { children: ReactNode }) {
             <MotionPreferenceProvider>
               <LocalizedApp>{children}</LocalizedApp>
               <Toaster position="top-right" />
+              <CodeLigaturesPreference />
             </MotionPreferenceProvider>
             {/*<ReactQueryDevtools
               buttonPosition="bottom-left"

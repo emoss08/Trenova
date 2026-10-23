@@ -491,10 +491,7 @@ function StudioLayout() {
               open={versionHistoryOpen}
               onOpenChange={setVersionHistoryOpen}
               template={template}
-              onRollback={(updated) => {
-                form.reset(updated as unknown as FormulaTemplateFormValues);
-                onTemplateChanged?.(updated);
-              }}
+              onRollback={onTemplateChanged}
             />
           )}
 

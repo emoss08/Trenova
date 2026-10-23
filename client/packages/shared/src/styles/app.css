@@ -5,6 +5,8 @@
 @import "@fontsource-variable/geist";
 @import "@fontsource/ibm-plex-mono";
 @import "@fontsource/geist-mono";
+@import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource-variable/jetbrains-mono/wght-italic.css";
 
 /* The design tokens. Everything below this line consumes them and defines no
    colour, size or elevation of its own. See docs/engineering/design-system.md. */
@@ -843,6 +845,22 @@
   .assistant-caret {
     animation: none;
   }
+}
+
+/* Source code (`font-code`, and the formula editor through the same variables)
+   draws JetBrains Mono's ligatures: `=>`, `->`, `!=`, `<=`, `??` and the rest
+   read as one sign. The person can turn them off in Settings, which sets the
+   root attribute; each glyph keeps its cell, so columns line up either way. */
+:root {
+  --code-ligatures: contextual;
+}
+
+html[data-code-ligatures="off"] {
+  --code-ligatures: none;
+}
+
+.font-code {
+  font-variant-ligatures: var(--code-ligatures);
 }
 
 /* The person asked Trenova for less movement in Settings. Every animation and

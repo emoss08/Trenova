@@ -1,7 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
+import { useSeatedForm, type SeatedRecord } from "@/hooks/use-seated-form";
 import { saveDemotesToDraft } from "@/lib/formula-template-material";
+import { rulesSync } from "@trenova/shared/rules/runtime";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
@@ -10,33 +12,58 @@ import { apiService } from "@/services/api";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   formulaTemplateSchema,
+  type FormulaTemplate,
   type FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { SaveDemoteDialog } from "../_components/studio/dialogs/save-demote-dialog";
 import { FormulaStudio } from "../_components/studio/formula-studio";
 import { StudioSkeleton } from "@/components/tariff-studio/studio-skeletons";
+import {
+  NewerVersionProvider,
+  useNewerVersionCompare,
+} from "@/components/tariff-studio/newer-version";
 
 export const prefetch: RoutePrefetch = ({ params }) => [
   formulaTemplate.context,
   ...(params.id ? [formulaTemplate.get(params.id)] : []),
 ];
 
+const SAVED_FIELDS = ["name", "description", "source"] as const;
+
+type TemplateSave = {
+  values: FormulaTemplateFormValues;
+  sent: FormulaTemplateFormValues;
+};
+
+function seatedTemplate(template: FormulaTemplate): SeatedRecord<FormulaTemplateFormValues> {
+  return { values: template as FormulaTemplateFormValues, version: template.version ?? 0 };
+}
+
+/**
+ * Each template gets its own seat: a jump to another one (a fork, a lineage link) starts from
+ * nothing rather than comparing its version with the last template's.
+ */
 export function FormulaStudioEditPage() {
+  const { id } = useParams<{ id: string }>();
+  return <FormulaTemplateEditor key={id} />;
+}
+
+function FormulaTemplateEditor() {
   const t = useT();
 
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [seatedVersion, setSeatedVersion] = useState<number | null>(null);
   const [pendingDemotingSave, setPendingDemotingSave] = useState<FormulaTemplateFormValues | null>(
     null,
   );
+  const compare = useNewerVersionCompare();
 
   const {
     data: template,
@@ -53,51 +80,53 @@ export function FormulaStudioEditPage() {
     defaultValues: { name: "", description: "", source: "", status: "Draft" },
   });
 
-  useEffect(() => {
-    if (template && template.version !== seatedVersion) {
-      form.reset(template as FormulaTemplateFormValues);
-      // oxlint-disable-next-line react/set-state-in-effect -- form.reset must run before seatedVersion lets the studio mount, so both stay in the effect
-      setSeatedVersion(template.version ?? 0);
-    }
-  }, [template, seatedVersion, form]);
+  const seat = useSeatedForm({
+    form,
+    record: template ? seatedTemplate(template) : null,
+    fields: SAVED_FIELDS,
+  });
 
   const { mutate } = useApiMutation({
-    mutationFn: async (values: FormulaTemplateFormValues) => {
+    mutationFn: async ({ values }: TemplateSave) => {
       return apiService.formulaTemplateService.update(id ?? "", {
-        name: values.name,
         description: values.description ?? "",
         source: values.source,
-        version: template?.version,
+        version: seat.version ?? undefined,
       });
     },
-    onSuccess: async (updated) => {
+    onSuccess: async (updated, { sent }) => {
       // Reseat the form on the saved record right away so the dirty flag —
       // and with it the unsaved-changes guard — clears without waiting for
       // the query refetch.
-      form.reset(updated as FormulaTemplateFormValues);
-      setSeatedVersion(updated.version ?? 0);
+      seat.seatSaved(seatedTemplate(updated), sent);
       await invalidateFormulaTemplate(queryClient);
     },
     form,
     resourceName: "Formula Template",
   });
 
-  const isSeated = seatedVersion !== null;
+  const send = (values: FormulaTemplateFormValues) => mutate({ values, sent: form.getValues() });
 
   const onSave = form.handleSubmit((values) => {
-    if (!isSeated) return;
+    if (!seat.isSeated) return;
+    // A newer version saved since the edits began would refuse this save;
+    // the person sees what it changed and chooses before anything is sent.
+    if (seat.held) {
+      compare.open(form.getValues());
+      return;
+    }
     // A material edit to an approved template takes it out of production the
     // moment it is saved; that is worth a pause, not a toast after the fact.
-    if (saveDemotesToDraft(template ?? null, values)) {
+    if (saveDemotesToDraft(rulesSync(), template ?? null, values)) {
       setPendingDemotingSave(values);
       return;
     }
-    mutate(values);
+    send(values);
   });
 
   const confirmDemotingSave = () => {
     if (pendingDemotingSave) {
-      mutate(pendingDemotingSave);
+      send(pendingDemotingSave);
     }
     setPendingDemotingSave(null);
   };
@@ -118,18 +147,26 @@ export function FormulaStudioEditPage() {
     );
   }
 
-  if (isLoading || !isSeated) {
+  if (isLoading || !seat.isSeated) {
     return <StudioSkeleton />;
   }
 
   return (
     <FormProvider {...form}>
-      <FormulaStudio
-        mode="edit"
-        template={template ?? null}
-        isSubmitting={form.formState.isSubmitting}
-        onSave={() => void onSave()}
-      />
+      <NewerVersionProvider
+        seat={seat}
+        compare={compare}
+        values={() => form.getValues()}
+        savedVersionNumber={template?.currentVersionNumber ?? null}
+      >
+        <FormulaStudio
+          mode="edit"
+          template={template ?? null}
+          isSubmitting={form.formState.isSubmitting}
+          onSave={() => void onSave()}
+          onTemplateChanged={(changed) => seat.seat(seatedTemplate(changed))}
+        />
+      </NewerVersionProvider>
 
       <SaveDemoteDialog
         open={pendingDemotingSave !== null}

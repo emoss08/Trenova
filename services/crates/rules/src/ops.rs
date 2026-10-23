@@ -84,6 +84,7 @@ const OPERATIONS: &[(&str, Handler)] = &[
     ),
     ("tariff.format", crate::tariff::syntax::ops::format),
     ("tariff.tokens", crate::tariff::syntax::ops::tokens),
+    ("tariff.setName", crate::tariff::syntax::ops::set_name),
     ("tariff.complete", crate::tariff::editor::ops::complete),
     ("tariff.hover", crate::tariff::editor::ops::hover),
     ("tariff.signature", crate::tariff::editor::ops::signature),

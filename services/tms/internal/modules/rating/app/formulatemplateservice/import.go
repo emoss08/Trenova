@@ -263,13 +263,18 @@ func (s *Service) buildImportEntities(
 
 	entities := make([]*formulatemplate.FormulaTemplate, 0, len(payloads))
 	for index, payload := range payloads {
+		source, err := s.renamed(ctx, payload.Source, payload.Name)
+		if err != nil {
+			return nil, err
+		}
+
 		entity := formulatemplate.Seed{
-			OrganizationID:       req.TenantInfo.OrgID,
-			BusinessUnitID:       req.TenantInfo.BuID,
-			Name:                 payload.Name,
-			Description:          payload.Description,
-			Source:               payload.Source,
-			Metadata:             payload.Metadata,
+			OrganizationID: req.TenantInfo.OrgID,
+			BusinessUnitID: req.TenantInfo.BuID,
+			Name:           payload.Name,
+			Description:    payload.Description,
+			Source:         source,
+			Metadata:       payload.Metadata,
 		}.Build()
 
 		if payload.SourceTemplateID != nil && !payload.SourceTemplateID.IsNil() {

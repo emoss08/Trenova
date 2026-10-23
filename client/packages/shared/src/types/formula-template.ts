@@ -105,8 +105,11 @@ export type FormulaTemplateFormValues = z.input<typeof formulaTemplateSchema>;
 export const listFormulaTemplateResponseSchema = z.array(formulaTemplateSchema);
 export type ListFormulaTemplateResponse = z.infer<typeof listFormulaTemplateResponseSchema>;
 
-/** What a save writes: the person's content. Status, inputs and imports are the server's. */
-export type FormulaTemplateWrite = Pick<FormulaTemplate, "name" | "description" | "source"> & {
+/**
+ * What a save writes: the person's content. Status, inputs and imports are the server's, and so
+ * is the name, which the server reads from the source's `tariff "…"` header.
+ */
+export type FormulaTemplateWrite = Pick<FormulaTemplate, "description" | "source"> & {
   version?: number;
 };
 

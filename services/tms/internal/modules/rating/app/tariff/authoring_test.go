@@ -356,6 +356,13 @@ func (f *fakeModule) ScaffoldTariffTest(
 	return &rules.TariffScaffold{Test: &block}, nil
 }
 
+func (f *fakeModule) SetTariffName(
+	ctx context.Context,
+	source, name string,
+) (*rules.TariffNamed, error) {
+	return rules.SetTariffName(ctx, source, name)
+}
+
 func (f *fakeModule) TariffCatalog(context.Context) (rules.RawJSON, error) {
 	f.catalogs++
 	return rules.RawJSON(`{"modules":[]}`), nil

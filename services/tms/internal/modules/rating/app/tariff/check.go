@@ -18,6 +18,7 @@ type moduleCalls interface {
 		ctx context.Context,
 		req *rules.TariffScaffoldRequest,
 	) (*rules.TariffScaffold, error)
+	SetTariffName(ctx context.Context, source, name string) (*rules.TariffNamed, error)
 	TariffCatalog(ctx context.Context) (rules.RawJSON, error)
 	Version(ctx context.Context) (rules.VersionInfo, error)
 }
@@ -43,6 +44,13 @@ func (defaultModule) ScaffoldTariffTest(
 	req *rules.TariffScaffoldRequest,
 ) (*rules.TariffScaffold, error) {
 	return rules.ScaffoldTariffTest(ctx, req)
+}
+
+func (defaultModule) SetTariffName(
+	ctx context.Context,
+	source, name string,
+) (*rules.TariffNamed, error) {
+	return rules.SetTariffName(ctx, source, name)
 }
 
 func (defaultModule) TariffCatalog(ctx context.Context) (rules.RawJSON, error) {
@@ -225,4 +233,12 @@ func (c *Checker) CheckWithContext(
 		return nil, fmt.Errorf("check tariff source: %w", err)
 	}
 	return check, nil
+}
+
+func (c *Checker) SetName(ctx context.Context, source, name string) (string, error) {
+	named, err := c.module.SetTariffName(ctx, source, name)
+	if err != nil {
+		return "", fmt.Errorf("set tariff name: %w", err)
+	}
+	return named.Source, nil
 }

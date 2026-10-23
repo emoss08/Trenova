@@ -19,7 +19,7 @@ import {
   type TariffTraceEvent,
 } from "@trenova/shared/types/tariff";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { useActiveEditorRegistration } from "./active-editor";
 import { ReferencesDialog } from "./references-dialog";
@@ -253,6 +253,7 @@ export function TariffEditor({
   return (
     <div
       data-tariff-kind={kind}
+      style={{ "--tariff-editor-min-height": minHeight ?? (mini ? "60px" : "0") } as CSSProperties}
       onFocusCapture={() => setActive?.(viewRef.current)}
       className={cn(
         // CodeMirror stacks its gutters, panels (Vim's mode line) and cards at z-index 200 to
@@ -272,7 +273,6 @@ export function TariffEditor({
         placeholder={placeholder}
         aria-label={ariaLabel}
         aria-invalid={invalid ? "true" : "false"}
-        minHeight={minHeight ?? (mini ? "60px" : undefined)}
         maxHeight={maxHeight}
         extensions={extensions}
         basicSetup={{

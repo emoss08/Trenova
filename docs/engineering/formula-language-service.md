@@ -32,6 +32,7 @@ CodeMirror counts. A refused request throws `RulesRequestError {op, code, detail
 | `tariffCheck(rules, {source, kind, context})` | `tariff.check` | diagnostics with fixes, the header, the declared inputs, the imports, the outline (items and folding) and the charges |
 | `tariffTokens(rules, source)` | `tariff.tokens` | the editor's highlighting and every read-only view of a source (`TariffCode`) |
 | `tariffFormat(rules, source)` | `tariff.format` | the format command and Nova's proposals; `formatted: null` with the syntax errors that stop it |
+| `tariffSetName(rules, source, name)` | `tariff.setName` | the template's name field and its starters: the source with its header naming `name`, and the one edit that makes it |
 | `tariffTest(rules, {source, context})` | `tariff.test` | the tests panel (tests and properties, a property's cases and counterexample), the outline's dots, readiness, the coverage gutter and Nova's proposal card |
 | `tariffScaffoldTest(rules, {source, context, record, inputs, name})` | `tariff.scaffoldTest` | "Save as test" on the sample load (a real shipment is scaffolded on the server) |
 | `tariffCatalog(rules)` | `tariff.catalog` | the reference pane and the definition dialog for a standard library name; memoised per runtime in a `WeakMap` |
@@ -161,6 +162,26 @@ The template studio (`routes/formula-template/_components/studio/`) and the libr
 - `useTariffEditorBinding({read, write})`: reveal a range, apply a fix and append a block
   (a test from "Save as test", Nova, or the tests panel's "Add a test") through the editor, so each
   lands in its undo history; before the editor has loaded they are written to the form.
+- A template's name is its source's `tariff "…"` header. The server sets `name` from the header
+  on every write and takes no name in the payload; Duplicate, Fork and Import rewrite the header
+  (`tariff.setName`) when they name a copy. In the Studio the name field writes the header through
+  the editor (`setName`, one undoable change, focus stays in the field) and the form's `name`
+  follows the header, so readiness, Nova's draft and the field's errors read it. A change to the
+  header alone is a rename, not a material change (`hasMaterialChange`, mirroring the server), so
+  renaming an approved template keeps it approved.
+- The edit pages seat the form through `useSeatedForm` (`hooks/use-seated-form.ts`). Only a
+  newer `version` replaces the form, and only while it has no edits; an older one (the cache
+  before a save's refetch lands) never does. A save sends the seated version, never the query
+  cache's, and reseats on what the server returned, keeping what was typed while it was in
+  flight. A newer version that arrives while the form has edits is held: the source section
+  shows `NewerVersionNotice`, a save opens the comparison instead of being sent, and the person
+  either loads the saved version or keeps their edits over it, which seats the form on that
+  version so the next save is checked against it (`components/tariff-studio/newer-version.tsx`).
+  Each page is keyed by the record's id, so a jump to another record starts its own seat. Never
+  hand the editor a value that is not newer than what it holds: `@uiw/react-codemirror` defers a
+  `value` that arrives within its typing window and applies it later even when a newer one has
+  arrived since, so a stale reset lands after the correct one and the editor shows a source the
+  form no longer holds.
 - `OutlinePanel`, `ProblemsList`, `TestsPanel`, `ReferencePane` (the context's tables, codes and
   libraries, the standard library and the language from `tariff.catalog`), `DefinitionDialog`,
   `SourceStatusBar`, `ReadinessView` and `tariffReadiness` (the live copy of the server's

@@ -276,7 +276,11 @@ func (s *Service) Fork(
 	seed := snapshot
 	seed.OrganizationID = req.TenantInfo.OrgID
 	seed.BusinessUnitID = req.TenantInfo.BuID
-	seed.Name = req.NewName
+	seed.Source, err = s.renamed(ctx, seed.Source, req.NewName)
+	if err != nil {
+		log.Error("failed to name the forked source", zap.Error(err))
+		return nil, err
+	}
 	seed.SourceTemplateID = &req.SourceTemplateID
 	seed.SourceVersionNumber = &sourceVersionNum
 	forkedTemplate := seed.Build()

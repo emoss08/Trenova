@@ -42,6 +42,7 @@ type DisplayValues = {
   sidebar: "open" | "folded";
   reduceMotion: boolean;
   vimKeys: boolean;
+  codeLigatures: boolean;
 };
 
 type AssistantValues = {
@@ -188,12 +189,14 @@ function useDisplayRows() {
   const sidebarCollapsed = useNavigationStore((state) => state.sidebarCollapsed);
   const reduceMotion = useMotionPreferenceStore((state) => state.reduceMotion);
   const vimKeys = useEditorPreferenceStore((state) => state.vimKeys);
+  const codeLigatures = useEditorPreferenceStore((state) => state.codeLigatures);
   const form = useForm<DisplayValues>({
     defaultValues: {
       theme: theme as ThemeChoice,
       sidebar: sidebarCollapsed ? "folded" : "open",
       reduceMotion,
       vimKeys,
+      codeLigatures,
     },
   });
   const themeValue = useWatch({ control: form.control, name: "theme" });
@@ -206,6 +209,7 @@ function useDisplayRows() {
       useNavigationStore.getState().setSidebarCollapsed(next.sidebar === "folded");
       useMotionPreferenceStore.getState().setReduceMotion(next.reduceMotion);
       useEditorPreferenceStore.getState().setVimKeys(next.vimKeys);
+      useEditorPreferenceStore.getState().setCodeLigatures(next.codeLigatures);
     },
   });
 
@@ -258,6 +262,17 @@ function useDisplayRows() {
             label={t("Vim keys in the formula editor")}
             description={t(
               "Normal, insert and visual modes with AstroNvim's keys: jj or jk leaves insert mode and Space is the leader.",
+            )}
+            className="p-0"
+          />
+        </SettingsRow>
+        <SettingsRow id="code-ligatures">
+          <SwitchField
+            control={form.control}
+            name="codeLigatures"
+            label={t("Ligatures in code")}
+            description={t(
+              "Draws pairs like => and != as one sign in the formula editor and wherever code is shown.",
             )}
             className="p-0"
           />
