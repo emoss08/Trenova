@@ -20,8 +20,9 @@ type goType struct {
 
 // goTypes reads, from gqlgen's own configuration, the Go type each bound
 // tool's node binds to, so the tool can ask that entity for the filter
-// configuration the server compiles its filters with. An unpaged list
-// filters by its root field's arguments alone, so it needs none.
+// configuration the server compiles its filters with. Only a list read
+// through a table input filters by a record's fields; any other read takes
+// its root field's arguments alone, so it needs none.
 func goTypes(configPath string, bindings []*binding) (map[string]goType, error) {
 	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
@@ -37,7 +38,7 @@ func goTypes(configPath string, bindings []*binding) (map[string]goType, error) 
 	out := make(map[string]goType, len(bindings))
 	var problems []string
 	for _, b := range bindings {
-		if b.unpaged() {
+		if !b.tabled() {
 			continue
 		}
 		full := b.Entity

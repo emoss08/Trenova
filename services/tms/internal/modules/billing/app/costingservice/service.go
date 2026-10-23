@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -28,6 +29,7 @@ type Params struct {
 	ShipmentRepo shipmentports.ShipmentRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
+	Fields       permissionports.FieldAccess `optional:"true"`
 }
 
 type Service struct {
@@ -38,6 +40,7 @@ type Service struct {
 	shipmentRepo shipmentports.ShipmentRepository
 	validator    *Validator
 	auditService auditports.AuditService
+	fields       permissionports.FieldAccess
 	now          func() time.Time
 }
 
@@ -50,6 +53,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		shipmentRepo: p.ShipmentRepo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
+		fields:       p.Fields,
 		now:          time.Now,
 	}
 }
@@ -64,16 +68,13 @@ func (s *Service) Get(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *costingcontrol.CostingControl,
-	userID pulid.ID,
+	actor *permissionports.RequestActor,
 ) (*costingcontrol.CostingControl, error) {
+	userID := actor.UserID
 	log := s.l.With(
 		zap.String("operation", "Update"),
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
-
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
 
 	original, err := s.repo.GetByOrgID(ctx, &costingcontrolports.GetCostingControlRequest{
 		TenantInfo: pagination.TenantInfo{
@@ -84,6 +85,11 @@ func (s *Service) Update(
 	if err != nil {
 		log.Error("failed to get original costing control", zap.Error(err))
 		return nil, err
+	}
+	entity.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
+
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, entity)

@@ -15,8 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -43,6 +45,11 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[report.ReportDefinition]():             permission.ResourceReport,
 	reflect.TypeFor[servicefailure.ReasonCode]():           permission.ResourceServiceFailureReasonCode,
 	reflect.TypeFor[edi.EDIPartner]():                      permission.ResourceEDI,
+	reflect.TypeFor[edi.EDIMessage]():                      permission.ResourceEDI,
+	reflect.TypeFor[edi.EDICommunicationProfile]():         permission.ResourceEDI,
+	reflect.TypeFor[edi.EDITransfer]():                     permission.ResourceEDI,
+	reflect.TypeFor[edi.EDIInboundFile]():                  permission.ResourceEDI,
+	reflect.TypeFor[edi.CarrierInvoice]():                  permission.ResourceCarrierInvoiceMatch,
 	reflect.TypeFor[email.Profile]():                       permission.ResourceEmailProfile,
 	reflect.TypeFor[email.Message]():                       permission.ResourceEmailLog,
 	reflect.TypeFor[glaccount.GLAccount]():                 permission.ResourceGeneralLedgerAccount,
@@ -59,6 +66,13 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[worker.WorkerEmploymentVerification](): permission.ResourceQualification,
 	reflect.TypeFor[worker.WorkerSafetyViolation]():        permission.ResourceWorkerSafetyEvent,
 	reflect.TypeFor[carrierintel.CarrierIntelEvent]():      permission.ResourceCarrierIntelligence,
+	reflect.TypeFor[fuelsurcharge.FuelIndexPrice]():        permission.ResourceFuelSurchargeProgram,
+	reflect.TypeFor[worker.DOTRandomDraw]():                permission.ResourceDOTRandomPool,
+	reflect.TypeFor[worker.DOTRandomDrawEntry]():           permission.ResourceDOTRandomPool,
+	reflect.TypeFor[worker.WorkerShiftAssignment]():        permission.ResourceWorkerSchedule,
+	reflect.TypeFor[worker.WorkerAvailabilityPreference](): permission.ResourceWorkerSchedule,
+	reflect.TypeFor[worker.ShiftSwapRequest]():             permission.ResourceShiftSwap,
+	reflect.TypeFor[fuelpurchase.ImportBatch]():            permission.ResourceFuelPurchaseImport,
 }
 
 // kindTable maps a Go type to the kind of record it holds.

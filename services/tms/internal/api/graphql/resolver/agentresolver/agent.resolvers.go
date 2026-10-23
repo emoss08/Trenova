@@ -542,6 +542,7 @@ func (r *QueryResolver) AgentRuns(ctx context.Context, input gqlmodel.DataTableC
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: agentRunColumns(ctx, "edges.node"),
+			Reader:  agentports.PersonRunRead(authCtx.UserID),
 		},
 	)
 	if err != nil {
@@ -566,6 +567,7 @@ func (r *QueryResolver) AgentRun(ctx context.Context, id string) (*agent.AgentRu
 	return r.AgentRunService.GetByID(ctx, agentports.GetAgentRunByIDRequest{
 		ID:         runID,
 		TenantInfo: &ti,
+		Reader:     agentports.PersonRunRead(authCtx.UserID),
 	})
 }
 

@@ -69,6 +69,17 @@ func (s *Service) SuggestCarrierForInvoice(
 		})
 	}
 
+	return s.SuggestCarrierFor(ctx, tenantInfo, invoice)
+}
+
+// SuggestCarrierFor is the carrier an invoice no carrier is linked to points
+// to by its SCAC or DOT number, read from the invoice already in hand; nil
+// when it names neither or nothing matches.
+func (s *Service) SuggestCarrierFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	invoice *edi.CarrierInvoice,
+) (*carrier.Carrier, error) {
 	scac := referenceValue(invoice.ReferenceNumbers, "SCAC", "scac")
 	dot := referenceValue(invoice.ReferenceNumbers, "DOT", "dot", "DOT_NUMBER")
 	if scac == "" && dot == "" {

@@ -2,48 +2,17 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
-
-type serviceFailureLister interface {
-	List(
-		ctx context.Context,
-		req *servicefailureports.ListServiceFailuresRequest,
-	) (*pagination.ListResult[*servicefailure.ServiceFailure], error)
-}
-
-type reasonCodeSelector interface {
-	SelectOptions(
-		ctx context.Context,
-		req *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest,
-	) (*pagination.ListResult[*servicefailure.ReasonCode], error)
-}
-
-type detentionDeskReader interface {
-	ListDesk(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-	) ([]*detentionservice.DeskEntry, error)
-	ListAwaitingApproval(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-	) ([]*detentionservice.DeskEntry, error)
-}
 
 type weatherReader interface {
 	GetActiveAlerts(
@@ -52,411 +21,16 @@ type weatherReader interface {
 	) (*weatheralertports.WeatherAlertFeatureCollection, error)
 }
 
-var (
-	serviceFailureStatuses = []string{"Open", "Reviewed", "Resolved", "Voided"}
-	serviceFailureTypes    = []string{
-		"LatePickup",
-		"LateDelivery",
-		"MissedPickup",
-		"MissedDelivery",
-		"AppointmentMissed",
-		"Other",
-	}
-	serviceFailureSources = []string{"Detected", "Manual", "EDI", "Integration"}
-	stopTypes             = []string{"Pickup", "Delivery", "SplitDelivery", "SplitPickup"}
-	weatherSeverities     = []string{"Extreme", "Severe", "Moderate", "Minor", "Unknown"}
+const (
+	weatherExtreme  = "Extreme"
+	weatherSevere   = "Severe"
+	weatherModerate = "Moderate"
+	weatherMinor    = "Minor"
+	weatherUnknown  = "Unknown"
 )
 
-type serviceFailureRow struct {
-	ID              string `json:"id"`
-	Number          string `json:"number"`
-	ShipmentID      string `json:"shipmentId"`
-	MoveID          string `json:"moveId"`
-	StopID          string `json:"stopId"`
-	Type            string `json:"type"`
-	Source          string `json:"source"`
-	Status          string `json:"status"`
-	StopType        string `json:"stopType"`
-	ScheduledCutoff string `json:"scheduledCutoff"`
-	ActualArrival   string `json:"actualArrival,omitempty"`
-	LateMinutes     int64  `json:"lateMinutes"`
-	ReasonCodeID    string `json:"reasonCodeId,omitempty"`
-	ReasonCode      string `json:"reasonCode,omitempty"`
-	Notes           string `json:"notes,omitempty"`
-	DetectedAt      string `json:"detectedAt"`
-	Version         int64  `json:"version"`
-}
-
-func newListServiceFailuresTool(failures serviceFailureLister) agentports.AgentQueryTool {
-	spec := listSpec{
-		name:         "exception_list_service_failures",
-		entityPlural: "service failures",
-		summary: "List the service failures that happened: late and missed pickups and " +
-			"deliveries, with how late, which stop, and whether anyone reviewed or resolved " +
-			"them. Each was detected by the service check or recorded by a person. Filter on " +
-			"status Open for what still needs attention, on detectedAt for a period such as " +
-			"last week, or give a shipmentId. " +
-			"Resolving one takes its id and version, which are in the row.",
-		resource: permission.ResourceServiceFailure,
-		config:   querybuilder.GetFieldConfiguration((*servicefailure.ServiceFailure)(nil)),
-		fields: []listField{
-			{Name: "status", Kind: filterEnum, Values: serviceFailureStatuses, Sortable: true},
-			{Name: "type", Kind: filterEnum, Values: serviceFailureTypes},
-			{Name: "source", Kind: filterEnum, Values: serviceFailureSources},
-			{Name: "stopType", Kind: filterEnum, Values: stopTypes},
-			{Name: "lateMinutes", Kind: filterNumber, Sortable: true},
-			{Name: "detectedAt", Kind: filterDate, Sortable: true},
-			{
-				Name: "shipmentId",
-				Kind: filterText,
-				Note: "an exact shipment id, from shipment_list",
-			},
-		},
-	}
-	spec.fetchIn = func(
-		ctx context.Context,
-		opts *pagination.QueryOptions,
-		_ pagination.CursorInfo,
-		clk clock,
-	) (listPage, error) {
-		result, err := failures.List(
-			ctx,
-			&servicefailureports.ListServiceFailuresRequest{Filter: opts},
-		)
-		if err != nil {
-			return listPage{}, err
-		}
-
-		return offsetListPage(result.Items, func(item *servicefailure.ServiceFailure) any {
-			return toServiceFailureRow(item, clk.Timezone)
-		}), nil
-	}
-
-	return newListTool(spec)
-}
-
-func toServiceFailureRow(item *servicefailure.ServiceFailure, timezone string) serviceFailureRow {
-	row := serviceFailureRow{
-		ID:              item.ID.String(),
-		Number:          item.Number,
-		ShipmentID:      item.ShipmentID.String(),
-		MoveID:          item.ShipmentMoveID.String(),
-		StopID:          item.StopID.String(),
-		Type:            string(item.Type),
-		Source:          string(item.Source),
-		Status:          string(item.Status),
-		StopType:        string(item.StopType),
-		ScheduledCutoff: timeutils.FormatUnixDateTimeIn(item.ScheduledCutoff, timezone),
-		LateMinutes:     item.LateMinutes,
-		Notes:           item.Notes,
-		DetectedAt:      timeutils.FormatUnixDateTimeIn(item.DetectedAt, timezone),
-		Version:         item.Version,
-	}
-	if item.ActualArrival > 0 {
-		row.ActualArrival = timeutils.FormatUnixDateTimeIn(item.ActualArrival, timezone)
-	}
-	if item.ReasonCodeID != nil && !item.ReasonCodeID.IsNil() {
-		row.ReasonCodeID = item.ReasonCodeID.String()
-	}
-	if item.ReasonCode != nil {
-		row.ReasonCode = item.ReasonCode.Code + " " + item.ReasonCode.Label
-	}
-
-	return row
-}
-
-type reasonCodeRow struct {
-	ID          string `json:"id"`
-	Code        string `json:"code"`
-	Label       string `json:"label"`
-	Description string `json:"description,omitempty"`
-	Category    string `json:"category"`
-	AppliesTo   string `json:"appliesTo"`
-	DefaultNote string `json:"defaultNote,omitempty"`
-}
-
-type listReasonCodesTool struct {
-	codes reasonCodeSelector
-}
-
-func newListServiceFailureReasonCodesTool(codes reasonCodeSelector) agentports.AgentQueryTool {
-	return &listReasonCodesTool{codes: codes}
-}
-
-func (t *listReasonCodesTool) Name() string { return "exception_list_service_failure_reason_codes" }
-
-func (t *listReasonCodesTool) Description() string {
-	return "The reason codes a service failure can carry, such as Weather, Shipper " +
-		"delay or Equipment. Call this before exception_resolve_service_failure, which needs a " +
-		"reason code id, and pick the code whose category matches what actually " +
-		"happened; do not resolve with a code that merely sounds close."
-}
-
-func (t *listReasonCodesTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"query": map[string]any{
-				"type":        "string",
-				"description": "Optional text matched against the code and label.",
-			},
-			"appliesTo": agenttoolschema.Enum(
-				"Optional: only codes usable on this kind of stop.", accessorialAppliesTo,
-			),
-		},
-		"additionalProperties": false,
-	}
-}
-
-func (t *listReasonCodesTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceServiceFailureReasonCode,
-	})
-}
-
-func (t *listReasonCodesTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	query := optionalString(params.Params, "query")
-	appliesTo := optionalString(params.Params, "appliesTo")
-	criteria := filtercatalog.NewCriteria("reason codes").At(clockFor(params))
-	criteria.Text(query)
-	criteria.Field("applies to", appliesTo)
-
-	result, err := t.codes.SelectOptions(
-		ctx,
-		&servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest{
-			SelectQueryRequest: &pagination.SelectQueryRequest{
-				TenantInfo: tenantOf(params),
-				Pagination: pagination.Info{Limit: maxListLimit},
-				Query:      query,
-			},
-			AppliesTo: servicefailure.ReasonCodeAppliesTo(appliesTo),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	rows := make([]reasonCodeRow, 0, len(result.Items))
-	for _, code := range result.Items {
-		if code == nil || !code.Active {
-			continue
-		}
-		rows = append(rows, reasonCodeRow{
-			ID:          code.ID.String(),
-			Code:        code.Code,
-			Label:       code.Label,
-			Description: code.Description,
-			Category:    string(code.Category),
-			AppliesTo:   string(code.AppliesTo),
-			DefaultNote: code.DefaultNote,
-		})
-	}
-
-	return searchResult(criteria, rows, len(rows)), nil
-}
-
-type detentionDeskRow struct {
-	OccurrenceID          string `json:"occurrenceId"`
-	ShipmentID            string `json:"shipmentId"`
-	ProNumber             string `json:"proNumber,omitempty"`
-	Customer              string `json:"customer,omitempty"`
-	Location              string `json:"location,omitempty"`
-	StopType              string `json:"stopType"`
-	Status                string `json:"status"`
-	NotificationStatus    string `json:"notificationStatus"`
-	ArrivedAt             string `json:"arrivedAt,omitempty"`
-	FreeTimeExpiresAt     string `json:"freeTimeExpiresAt"`
-	MinutesUntilFreeEnds  int32  `json:"minutesUntilFreeEnds"`
-	MinutesUntilNoticeDue *int32 `json:"minutesUntilNoticeDue,omitempty"`
-	NoticeWindowOpen      bool   `json:"noticeWindowOpen"`
-	NoticeSentAt          string `json:"noticeSentAt,omitempty"`
-	BillableMinutes       int32  `json:"billableMinutes"`
-	AmountAtRisk          string `json:"amountAtRisk"`
-	Currency              string `json:"currency,omitempty"`
-	RequiresApproval      bool   `json:"requiresApproval"`
-	Urgency               string `json:"urgency,omitempty"`
-}
-
-type listDetentionDeskTool struct {
-	desk detentionDeskReader
-}
-
-func newListDetentionDeskTool(desk detentionDeskReader) agentports.AgentQueryTool {
-	return &listDetentionDeskTool{desk: desk}
-}
-
-func (t *listDetentionDeskTool) Name() string { return "detention_list_occurrences" }
-
-func (t *listDetentionDeskTool) Description() string {
-	return "List every open detention occurrence: a truck at a stop past its free time, " +
-		"with minutes until free time ends, notice status and the amount at risk. The " +
-		"notice status says whether the customer notice is due or overdue. Urgency Lost means the notice window " +
-		"closed without a notice and the charge may not be collectable; NoticeOverdue " +
-		"and NoticeDueSoon say what to send. detention_send_notice sends it. The list " +
-		"also carries every stopped charge waiting on approval, as AwaitingApproval: its " +
-		"shipment cannot be invoiced until someone approves or waives it, which " +
-		"detention_approve and detention_waive propose. A running clock is priced as of " +
-		"now, so billableMinutes and amountAtRisk are what it would bill if the truck left " +
-		"this minute. Narrow to one load with shipmentId or proNumber rather than paging " +
-		"through urgencies."
-}
-
-func (t *listDetentionDeskTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"urgency": agenttoolschema.Enum(
-				"Optional: only occurrences at this urgency.", detentionUrgencies,
-			),
-			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"Optional: only this shipment's occurrences, from shipment_list or "+
-					"shipment_get."),
-			"proNumber": map[string]any{
-				"type":        "string",
-				"description": "Optional: only the shipment with this pro number, such as SEED-DET-001.",
-			},
-		},
-		"additionalProperties": false,
-	}
-}
-
-func (t *listDetentionDeskTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceDetention,
-	})
-}
-
-func (t *listDetentionDeskTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	urgency := optionalString(params.Params, "urgency")
-	shipmentID, err := optionalID(params.Params, "shipmentId")
-	if err != nil {
-		return nil, err
-	}
-	proNumber := strings.TrimSpace(optionalString(params.Params, "proNumber"))
-
-	criteria := filtercatalog.NewCriteria("open detention occurrences").At(clockFor(params))
-	criteria.Field("urgency", urgency)
-	if shipmentID.IsNotNil() {
-		criteria.Field("shipment", shipmentID.String())
-	}
-	criteria.Field("pro number", proNumber)
-
-	entries, err := t.entries(ctx, tenantOf(params))
-	if err != nil {
-		return nil, err
-	}
-
-	onLoad := func(entry *detentionservice.DeskEntry) bool {
-		if shipmentID.IsNotNil() && entry.Occurrence.ShipmentID != shipmentID {
-			return false
-		}
-		return proNumber == "" || strings.EqualFold(entry.Occurrence.ShipmentProNumber, proNumber)
-	}
-
-	rows := make([]detentionDeskRow, 0, len(entries))
-	elsewhere := make([]string, 0, 4)
-	for _, entry := range entries {
-		if entry == nil || entry.Occurrence == nil || !onLoad(entry) {
-			continue
-		}
-		if urgency != "" && !strings.EqualFold(entry.Urgency, urgency) {
-			if !slices.Contains(elsewhere, entry.Urgency) {
-				elsewhere = append(elsewhere, entry.Urgency)
-			}
-			continue
-		}
-		rows = append(rows, toDetentionDeskRow(entry, params.Timezone))
-	}
-
-	found := searchResult(criteria, rows, len(rows))
-	if len(rows) == 0 && len(elsewhere) > 0 {
-		found.Note = fmt.Sprintf(
-			"Nothing is at urgency %s, but %d other occurrences match the rest of what you "+
-				"asked, at %s. Call again without urgency to read them rather than trying "+
-				"each urgency in turn.",
-			urgency, countOnLoad(entries, onLoad), strings.Join(elsewhere, ", "),
-		)
-	}
-
-	return found, nil
-}
-
-func countOnLoad(
-	entries []*detentionservice.DeskEntry,
-	onLoad func(*detentionservice.DeskEntry) bool,
-) int {
-	count := 0
-	for _, entry := range entries {
-		if entry != nil && entry.Occurrence != nil && onLoad(entry) {
-			count++
-		}
-	}
-
-	return count
-}
-
-// entries reads the running clocks and the charges waiting on approval. Both
-// are read whatever the urgency asked, so an urgency that matches nothing can
-// say which urgencies the same load is at instead.
-func (t *listDetentionDeskTool) entries(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-) ([]*detentionservice.DeskEntry, error) {
-	open, err := t.desk.ListDesk(ctx, tenant)
-	if err != nil {
-		return nil, err
-	}
-	held, err := t.desk.ListAwaitingApproval(ctx, tenant)
-	if err != nil {
-		return nil, err
-	}
-
-	return append(open, held...), nil
-}
-
-func toDetentionDeskRow(entry *detentionservice.DeskEntry, timezone string) detentionDeskRow {
-	o := entry.Occurrence
-	row := detentionDeskRow{
-		OccurrenceID:          o.ID.String(),
-		ShipmentID:            o.ShipmentID.String(),
-		ProNumber:             o.ShipmentProNumber,
-		Customer:              o.CustomerName,
-		Location:              o.LocationName,
-		StopType:              string(o.StopType),
-		Status:                string(o.Status),
-		NotificationStatus:    string(o.NotificationStatus),
-		FreeTimeExpiresAt:     timeutils.FormatUnixDateTimeIn(o.FreeTimeExpiresAt, timezone),
-		MinutesUntilFreeEnds:  entry.MinutesUntilFreeEnds,
-		MinutesUntilNoticeDue: entry.MinutesUntilNoticeDue,
-		NoticeWindowOpen:      entry.NoticeWindowOpen,
-		BillableMinutes:       entry.BillableMinutes,
-		AmountAtRisk:          entry.AmountAtRisk.StringFixed(2),
-		Currency:              o.Currency,
-		RequiresApproval:      o.RequiresApproval,
-		Urgency:               entry.Urgency,
-	}
-	if o.ArrivedAt != nil && *o.ArrivedAt > 0 {
-		row.ArrivedAt = timeutils.FormatUnixDateTimeIn(*o.ArrivedAt, timezone)
-	}
-	if o.NoticeSentAt != nil && *o.NoticeSentAt > 0 {
-		row.NoticeSentAt = timeutils.FormatUnixDateTimeIn(*o.NoticeSentAt, timezone)
-	}
-
-	return row
+var weatherSeverities = []string{
+	weatherExtreme, weatherSevere, weatherModerate, weatherMinor, weatherUnknown,
 }
 
 type weatherAlertRow struct {
@@ -519,7 +93,7 @@ func (t *listWeatherAlertsTool) Policy() agentports.ToolPolicy {
 
 // severityRank orders NWS severities so "Severe and worse" is a comparison.
 var severityRank = map[string]int{
-	"Extreme": 4, "Severe": 3, "Moderate": 2, "Minor": 1, "Unknown": 0,
+	weatherExtreme: 4, weatherSevere: 3, weatherModerate: 2, weatherMinor: 1, weatherUnknown: 0,
 }
 
 func (t *listWeatherAlertsTool) Query(
@@ -532,7 +106,7 @@ func (t *listWeatherAlertsTool) Query(
 
 	floor := optionalString(params.Params, "severity")
 	if _, known := severityRank[floor]; !known {
-		floor = "Severe"
+		floor = weatherSevere
 	}
 	query := strings.ToLower(optionalString(params.Params, "query"))
 

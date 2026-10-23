@@ -13,6 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@trenova/shared/components/ui/sheet";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import {
@@ -77,7 +78,8 @@ function Section({
 function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
   const t = useT();
 
-  const marginNegative = occurrence.netMargin < 0;
+  const netMargin = occurrence.netMargin;
+  const marginNegative = netMargin !== null && netMargin < 0;
 
   return (
     <KpiStrip minItemWidth="8rem">
@@ -92,13 +94,31 @@ function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
       />
       <KpiStripItem
         label={t("Driver pay")}
-        value={formatCurrency(occurrence.driverPayAmount, occurrence.currency)}
+        value={
+          occurrence.driverPayAmount === null ? (
+            <WithheldValue group="Margins" />
+          ) : (
+            formatCurrency(occurrence.driverPayAmount, occurrence.currency)
+          )
+        }
         sub={t("{0} payable", formatDetentionMinutes(occurrence.driverPayMinutes))}
       />
       <KpiStripItem
         label={t("Net margin")}
-        value={formatCurrency(occurrence.netMargin, occurrence.currency)}
-        sub={marginNegative ? "You pay more than you bill" : "After driver pay"}
+        value={
+          netMargin === null ? (
+            <WithheldValue group="Margins" />
+          ) : (
+            formatCurrency(netMargin, occurrence.currency)
+          )
+        }
+        sub={
+          netMargin === null
+            ? undefined
+            : marginNegative
+              ? t("You pay more than you bill")
+              : t("After driver pay")
+        }
         tone={marginNegative ? "danger" : undefined}
       />
     </KpiStrip>

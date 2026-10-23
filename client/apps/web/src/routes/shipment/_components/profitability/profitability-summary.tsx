@@ -4,6 +4,8 @@ import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profi
 import { shipment } from "@/lib/queries/shipment";
 import { formatCurrency, formatPerMile } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { toneVar } from "@/components/kpi/tone";
 import { MarginPill } from "./margin-pill";
 import { ProfitabilityBreakdownPopover } from "./profitability-breakdown-popover";
@@ -17,13 +19,31 @@ function StatCell({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
+/**
+ * The shipment's cost estimate against its revenue. Every figure in it is the margin or works
+ * it out, so a reader without the margins field group is told it is withheld and nothing is
+ * asked of the server.
+ */
 export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
   const t = useT();
+  const marginsVisible = useProtectedFieldAccess("Margins");
 
   const { data, isLoading } = useQuery({
     ...shipment.profitability(shipmentId),
+    enabled: marginsVisible,
     staleTime: 60_000,
   });
+
+  if (!marginsVisible) {
+    return (
+      <div className="border-border bg-muted/40 flex items-center justify-between gap-2 rounded-md border p-2">
+        <span className="text-xs text-muted-foreground font-medium">
+          {t("Profitability estimate")}
+        </span>
+        <WithheldValue group="Margins" />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

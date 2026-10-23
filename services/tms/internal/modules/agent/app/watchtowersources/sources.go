@@ -289,7 +289,10 @@ func (s *FailedRunSource) Snapshot(
 		{Field: "createdAt", Operator: dbtype.OpGreaterThan, Value: s.now() - failedRunWindow},
 	}
 
-	result, err := s.runs.List(ctx, &agentports.ListAgentRunRequest{Filter: filter})
+	result, err := s.runs.List(ctx, &agentports.ListAgentRunRequest{
+		Filter: filter,
+		Reader: agentports.PersonRunRead(pulid.Nil),
+	})
 	if err != nil {
 		return nil, err
 	}

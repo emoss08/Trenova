@@ -34,7 +34,7 @@ func (r *QueryResolver) Tender(ctx context.Context, id string) (*tender.Tender, 
 	})
 }
 
-func (r *QueryResolver) TendersByShipment(ctx context.Context, shipmentID string) ([]*tender.Tender, error) {
+func (r *QueryResolver) TendersByShipment(ctx context.Context, shipmentID string, shipmentMoveID *string) ([]*tender.Tender, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTender, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -45,9 +45,15 @@ func (r *QueryResolver) TendersByShipment(ctx context.Context, shipmentID string
 		return nil, err
 	}
 
+	parsedMoveID, err := base.ParseOptionalIDField("shipmentMoveId", shipmentMoveID)
+	if err != nil {
+		return nil, err
+	}
+
 	return r.TenderService.ListByShipment(ctx, tenderports.ListTendersByShipmentRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		ShipmentID: parsedShipmentID,
+		TenantInfo:     base.TenantInfo(authCtx),
+		ShipmentID:     parsedShipmentID,
+		ShipmentMoveID: parsedMoveID,
 	})
 }
 

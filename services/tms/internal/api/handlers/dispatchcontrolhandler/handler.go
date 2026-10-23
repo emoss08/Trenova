@@ -3,6 +3,7 @@ package dispatchcontrolhandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -107,7 +108,11 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	updatedEntity, err := h.service.Update(c.Request.Context(), entity, authCtx.UserID)
+	updatedEntity, err := h.service.Update(
+		c.Request.Context(),
+		entity,
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

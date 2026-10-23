@@ -133,6 +133,14 @@ fragment CustomerPaymentReference on CustomerPayment {
   referenceNumber
 }
 
+fragment DOTRandomDrawReference on DOTRandomDraw {
+  id
+}
+
+fragment DOTRandomDrawEntryReference on DOTRandomDrawEntry {
+  id
+}
+
 fragment DOTRandomPoolReference on DOTRandomPool {
   id
   code
@@ -158,6 +166,27 @@ fragment DriverSettlementReference on DriverSettlement {
   periodEnd
 }
 
+fragment EdiCarrierInvoiceReference on EdiCarrierInvoice {
+  id
+  invoiceNumber
+}
+
+fragment EdiCommunicationProfileReference on EdiCommunicationProfile {
+  id
+  status
+  name
+}
+
+fragment EdiInboundFileReference on EdiInboundFile {
+  id
+  status
+}
+
+fragment EdiMessageReference on EdiMessage {
+  id
+  status
+}
+
 fragment EdiPartnerReference on EdiPartner {
   id
   kind
@@ -172,6 +201,11 @@ fragment EdiPartnerCustomerReference on EdiPartnerCustomer {
   id
   name
   code
+}
+
+fragment EdiTransferReference on EdiTransfer {
+  id
+  status
 }
 
 fragment EmailProfileReference on EmailProfile {
@@ -231,6 +265,14 @@ fragment FuelCardReference on FuelCard {
   status
 }
 
+fragment FuelIndexPriceReference on FuelIndexPrice {
+  id
+}
+
+fragment FuelProgramCurrentRateReference on FuelProgramCurrentRate {
+  id
+}
+
 fragment FuelPurchaseReference on FuelPurchase {
   id
   tractorId
@@ -239,6 +281,14 @@ fragment FuelPurchaseReference on FuelPurchase {
   vendor
   vendorCity
   fuelType
+}
+
+fragment FuelPurchaseImportBatchReference on FuelPurchaseImportBatch {
+  id
+  provider
+  origin
+  fileName
+  rowCount
 }
 
 fragment FuelSurchargeProgramReference on FuelSurchargeProgram {

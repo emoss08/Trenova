@@ -1,0 +1,38 @@
+# The prices on file for one fuel index, newest first, as the Desk reads them.
+query DeskFuelIndexPrices($fuelIndexId: ID!, $from: String, $to: String, $limit: Int) {
+  fuelIndexPriceHistory(indexId: $fuelIndexId, from: $from, to: $to, limit: $limit) {
+    id
+    fuelIndexId
+    priceDate
+    price
+    currency
+    isManual
+  }
+}
+
+# This week's surcharge for every active fuel program, as the Desk reads it.
+query DeskFuelProgramCurrentRates {
+  fuelProgramCurrentRates {
+    id
+    program {
+      id
+      code
+      name
+      method
+      fuelIndexId
+      fuelIndex {
+        id
+        name
+      }
+    }
+    price {
+      id
+      priceDate
+      price
+    }
+    ratePerMile
+    percent
+    flatAmount
+    usedFallback
+  }
+}

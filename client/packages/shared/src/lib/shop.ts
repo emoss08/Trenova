@@ -16,6 +16,17 @@ import { formatNumber } from "@trenova/shared/i18n/format";
  * an option that could not be priced.
  */
 
+/**
+ * The strategies a person may rank by. Ranking by margin is refused by the server
+ * to anyone without the margins field group, because the order alone would say
+ * which carrier leaves the most.
+ */
+export function shopStrategies(marginsVisible: boolean): ShopStrategy[] {
+  const all: ShopStrategy[] = ["LeastCost", "BestMargin", "GuideRank", "FastestAccept"];
+
+  return marginsVisible ? all : all.filter((strategy) => strategy !== "BestMargin");
+}
+
 /** How a strategy is described where somebody picks one. */
 const STRATEGY_LABEL: Record<ShopStrategy, string> = defineLabels({
   LeastCost: "Cheapest",
@@ -55,8 +66,8 @@ export type MarginTone = "breach" | "healthy" | "thin" | "unknown";
  */
 export const THIN_MARGIN_PERCENT = 10;
 
-export function marginTone(margin: MarginVerdict, hasSellPrice: boolean): MarginTone {
-  if (!hasSellPrice) return "unknown";
+export function marginTone(margin: MarginVerdict | null, hasSellPrice: boolean): MarginTone {
+  if (!hasSellPrice || !margin) return "unknown";
   if (margin.belowFloor || margin.abovePayCeiling) return "breach";
   if (margin.percent < THIN_MARGIN_PERCENT) return "thin";
 
@@ -70,14 +81,20 @@ export function marginTone(margin: MarginVerdict, hasSellPrice: boolean): Margin
  * ranked where it did, and paraphrasing it here would put two different
  * explanations of the same decision in front of the same person.
  */
-export function shopOptionNote(option: ShopOption, hasSellPrice: boolean): string {
+export function shopOptionNote(
+  option: ShopOption,
+  hasSellPrice: boolean,
+  marginsVisible = true,
+): string {
   if (option.note) return option.note;
 
   if (!optionIsPriced(option)) {
     return "No carrier agreement covers this lane.";
   }
 
-  if (!hasSellPrice) {
+  // Without the margins group the server withholds the sell total, so its
+  // absence says nothing about whether the shipment has a sell price.
+  if (!hasSellPrice && marginsVisible) {
     return "This shipment has no sell price yet, so there is no margin to measure.";
   }
 
@@ -111,7 +128,7 @@ export function assignableOptions(result: ShopResult | undefined): ShopOption[] 
 export function decidingValue(option: ShopOption, strategy: ShopStrategy): string {
   switch (strategy) {
     case "BestMargin":
-      return `${option.margin.percent}%`;
+      return option.margin ? `${option.margin.percent}%` : "—";
     case "GuideRank":
       return option.guideRank > 0 ? `#${option.guideRank}` : "—";
     case "FastestAccept":

@@ -46,7 +46,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_tendersByShipment_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").TendersByShipment(ctx, fc.Args["shipmentId"].(string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").TendersByShipment(ctx, fc.Args["shipmentId"].(string), fc.Args["shipmentMoveId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNTender2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderᚄ),
 			},
@@ -696,7 +696,7 @@ var Shard = &gqlexec.Shard{
 
 type resolverQuery interface {
 	Tender(ctx context.Context, id string) (*tender.Tender, error)
-	TendersByShipment(ctx context.Context, shipmentID string) ([]*tender.Tender, error)
+	TendersByShipment(ctx context.Context, shipmentID string, shipmentMoveID *string) ([]*tender.Tender, error)
 	LiveTenderByMove(ctx context.Context, moveID string) (*tender.Tender, error)
 }
 
@@ -741,7 +741,7 @@ func field_Query_tender_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[
 }
 
 func field_Query_tendersByShipment_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -750,6 +750,14 @@ func field_Query_tendersByShipment_args(ctx context.Context, ec *gqlexec.Exec, r
 		return nil, err
 	}
 	args["shipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentMoveId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentMoveId"] = arg1
 	return args, nil
 }
 
@@ -769,6 +777,14 @@ func field_Query_liveTenderByMove_args(ctx context.Context, ec *gqlexec.Exec, ra
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

@@ -112,6 +112,7 @@ func ediPartnerReadinessToModel(
 	for _, item := range readiness.Items {
 		model.Items = append(model.Items, &gqlmodel.EDIPartnerReadinessItem{
 			Key:      item.Key,
+			Label:    item.Label,
 			Complete: item.Complete,
 		})
 	}

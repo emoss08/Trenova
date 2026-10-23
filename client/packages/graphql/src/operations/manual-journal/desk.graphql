@@ -10,6 +10,8 @@ query DeskManualJournalCard($id: ID!) @requiresRead(kind: "fiscal_period") {
       currencyCode
       totalDebit
       totalCredit
+      isBalanced
+      postedBatchId
       approvedAt
       rejectedAt
       rejectionReason
@@ -45,6 +47,35 @@ query DeskManualJournalCard($id: ID!) @requiresRead(kind: "fiscal_period") {
     postedAt
     entries {
       ...DeskJournalCardEntryFields
+    }
+  }
+}
+
+query DeskManualJournals($input: DataTableConnectionInput!) {
+  manualJournals(input: $input) {
+    edges {
+      node {
+        id
+        requestNumber
+        status
+        description
+        reason
+        accountingDate
+        requestedFiscalPeriodId
+        currencyCode
+        totalDebit
+        totalCredit
+        isBalanced
+        approvedAt
+        rejectionReason
+        cancelReason
+        postedBatchId
+        createdAt
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
     }
   }
 }

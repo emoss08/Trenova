@@ -6,6 +6,7 @@ import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { CapacityMatch, CapacityUnit } from "@/lib/graphql/shipment-board";
 import type { CapacityProvider } from "@/lib/shipment-board/capacity-providers";
 import { shipmentBoard } from "@/lib/queries/shipment-board";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 
@@ -42,6 +43,7 @@ export function CapacityPopover({
   trigger,
 }: CapacityPopoverProps) {
   const t = useT();
+  const marginsVisible = useProtectedFieldAccess("Margins");
   const { data: matches = [], isLoading } = useQuery({
     ...shipmentBoard.capacityMatches(unit.kind, unit.id, MATCH_LIMIT),
     enabled: open,
@@ -79,7 +81,10 @@ export function CapacityPopover({
                     {match.originCity} → {match.destinationCity}
                   </span>
                   <span className="text-muted-foreground truncate font-mono text-xs">
-                    {provider.matchDetail(match, t, clock(match.pickupAt))}
+                    {provider.matchDetail(match, t, {
+                      pickup: clock(match.pickupAt),
+                      marginsVisible,
+                    })}
                   </span>
                 </div>
                 <Button

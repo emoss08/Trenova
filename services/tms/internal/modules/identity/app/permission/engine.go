@@ -816,25 +816,61 @@ func (e *engine) GetResourcePermissions(
 	userID, orgID pulid.ID,
 	resource string,
 ) (*permissionports.ResourcePermissionDetail, error) {
-	log := e.l.With(
-		zap.String("operation", "GetResourcePermissions"),
-		zap.String("userID", userID.String()),
-		zap.String("resource", resource),
-	)
-
-	if _, ok := e.registry.Get(resource); !ok {
-		if _, ok = e.registry.Get(e.registry.GetEffectiveResource(resource)); !ok {
-			return nil, nil //nolint:nilnil // this is expected for non-registered resources
-		}
+	if !e.registered(resource) {
+		return nil, nil //nolint:nilnil // this is expected for non-registered resources
 	}
 
 	load, err := e.getOrComputePermissions(ctx, userID, orgID)
 	if err != nil {
-		log.Error("failed to get permissions", zap.Error(err))
+		e.l.Error("failed to get permissions",
+			zap.String("operation", "GetResourcePermissions"),
+			zap.String("userID", userID.String()),
+			zap.String("resource", resource),
+			zap.Error(err),
+		)
 		return nil, err
 	}
 
 	return e.resourceDetail(load.perms, resource), nil
+}
+
+func (e *engine) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	details := make(map[string]*permissionports.ResourcePermissionDetail, len(resources))
+	if len(resources) == 0 {
+		return details, nil
+	}
+
+	load, err := e.getOrComputePermissions(ctx, userID, orgID)
+	if err != nil {
+		e.l.Error("failed to get permissions",
+			zap.String("operation", "GetResourcePermissionsBatch"),
+			zap.String("userID", userID.String()),
+			zap.Int("resources", len(resources)),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	for _, resource := range resources {
+		if _, seen := details[resource]; seen || !e.registered(resource) {
+			continue
+		}
+		details[resource] = e.resourceDetail(load.perms, resource)
+	}
+
+	return details, nil
+}
+
+func (e *engine) registered(resource string) bool {
+	if _, ok := e.registry.Get(resource); ok {
+		return true
+	}
+	_, ok := e.registry.Get(e.registry.GetEffectiveResource(resource))
+	return ok
 }
 
 func (e *engine) InvalidateUser(ctx context.Context, userID, orgID pulid.ID) error {

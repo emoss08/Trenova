@@ -6,14 +6,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -411,79 +408,95 @@ func TestProposeFormula_RefusesAPersonWhoMayOnlyRead(t *testing.T) {
 	require.ErrorContains(t, err, "formula library", "a template author is not a library author")
 }
 
-type stubFormulaTemplates struct {
-	formulatemplateports.FormulaTemplateRepository
+func formulaGetTool(t *testing.T, spec getSpec, reader agentports.GraphQLReader) *graphQLGetTool {
+	t.Helper()
 
-	entity *formulatemplate.FormulaTemplate
-	last   formulatemplateports.GetFormulaTemplateByIDRequest
-}
-
-func (s *stubFormulaTemplates) GetByID(
-	_ context.Context,
-	req formulatemplateports.GetFormulaTemplateByIDRequest,
-) (*formulatemplate.FormulaTemplate, error) {
-	s.last = req
-
-	return s.entity, nil
-}
-
-func TestGetFormulaTemplate_ReturnsTheSourceWholeFromTheCallersTenant(t *testing.T) {
-	t.Parallel()
-
-	id := pulid.MustNew("ft_")
-	repo := &stubFormulaTemplates{entity: &formulatemplate.FormulaTemplate{
-		ID:     id,
-		Name:   "Per Mile",
-		Source: toolPerMileSource,
-		Status: formulatemplate.StatusActive,
-	}}
-	tool := newGetFormulaTemplateTool(repo, &fakePermissions{allowed: true})
-	params := testParams(map[string]any{"formulaTemplateId": id.String()})
-
-	result, err := tool.Query(t.Context(), params)
+	tool, err := newGraphQLGetTool(&spec, reader, &fakePermissions{allowed: true})
 	require.NoError(t, err)
 
-	assert.Equal(t, id, repo.last.TemplateID)
-	assert.Equal(t, params.OrganizationID, repo.last.TenantInfo.OrgID)
+	return tool
+}
+
+// A formula is explained or changed from the template whole: its Tariff
+// source and the inputs it declares. The list gives only the name and
+// status, so the get reads the card.
+func TestGetFormulaTemplate_ReadsTheSourceWholeThroughTheCard(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("ft_").String()
+	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"DeskFormulaTemplateCard": {Data: map[string]any{"formulaTemplate": map[string]any{
+			"id": id, "name": "Per Mile", "status": "Active", "source": toolPerMileSource,
+			"inputs":  []any{map[string]any{"name": "rate", "type": "Money/mi", "required": true}},
+			"imports": []any{}, "approvedAt": nil,
+		}}},
+	}}
+	tool := formulaGetTool(t, formulaTemplateGetSpec(), reader)
+	assert.Equal(t, permission.ResourceFormulaTemplate, tool.Policy().Resource)
+	assert.Equal(t, agent.ToolKindQuery, tool.Policy().Kind)
+
+	result, err := tool.Query(t.Context(), keyedCall(map[string]any{"formulaTemplateId": id}))
+	require.NoError(t, err)
+
+	sent := reader.sent("DeskFormulaTemplateCard")
+	require.NotNil(t, sent)
+	assert.Equal(t, map[string]any{"id": id}, sent.Variables)
 	document := encodedDocument(t, result)
 	assert.Equal(t, "Per Mile", document["name"])
 	assert.Equal(t, toolPerMileSource, document["source"])
+	assert.Len(t, document["inputs"], 1)
+	assert.NotContains(t, document, "approvedAt", "a null is never carried")
 
-	_, err = tool.Query(t.Context(), testParams(map[string]any{"formulaTemplateId": "Per Mile"}))
+	_, err = tool.Query(t.Context(), keyedCall(map[string]any{"formulaTemplateId": "Per Mile"}))
 	require.Error(t, err)
+	assert.Len(t, reader.requests, 1, "nothing is read for a name passed as an id")
 }
 
-type stubFormulaLibraries struct {
-	formulalibraryports.FormulaLibraryRepository
-
-	entity *formulalibrary.FormulaLibrary
-	last   *formulalibraryports.GetLibraryByIDRequest
-}
-
-func (s *stubFormulaLibraries) GetByID(
-	_ context.Context,
-	req *formulalibraryports.GetLibraryByIDRequest,
-) (*formulalibrary.FormulaLibrary, error) {
-	s.last = req
-	return s.entity, nil
-}
-
-func TestGetFormulaLibrary_IsAReadOfFormulaLibraries(t *testing.T) {
+func TestGetFormulaLibrary_ReadsTheSourceWholeThroughTheCard(t *testing.T) {
 	t.Parallel()
 
-	id := pulid.MustNew("fl_")
-	repo := &stubFormulaLibraries{entity: &formulalibrary.FormulaLibrary{
-		ID:     id,
-		Name:   "accessorials",
-		Source: "library \"org.accessorials\"\n",
+	id := pulid.MustNew("fl_").String()
+	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"DeskFormulaLibraryCard": {Data: map[string]any{"formulaLibrary": map[string]any{
+			"id": id, "name": "accessorials", "path": "org.accessorials",
+			"source": "library \"org.accessorials\"\n",
+		}}},
 	}}
-	tool := newGetFormulaLibraryTool(repo, &fakePermissions{allowed: true})
+	tool := formulaGetTool(t, formulaLibraryGetSpec(), reader)
 	assert.Equal(t, permission.ResourceFormulaLibrary, tool.Policy().Resource)
 
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"formulaLibraryId": id.String()}))
+	result, err := tool.Query(t.Context(), keyedCall(map[string]any{"formulaLibraryId": id}))
 	require.NoError(t, err)
-	assert.Equal(t, id, repo.last.LibraryID)
+	assert.Equal(t, map[string]any{"id": id}, reader.sent("DeskFormulaLibraryCard").Variables)
 	assert.Equal(t, "library \"org.accessorials\"\n", encodedDocument(t, result)["source"])
+}
+
+// What each summary promises, the card's operation selects, and the lists
+// read the Desk's compact rows rather than the source.
+func TestFormulaReads_SelectWhatTheirSummariesPromise(t *testing.T) {
+	t.Parallel()
+
+	selected := func(tool string) map[string]bool {
+		out := make(map[string]bool)
+		for _, field := range graphQLReads[tool].Fields {
+			out[field.Name] = field.Selected
+		}
+		return out
+	}
+	for tool, want := range map[string][]string{
+		toolGetFormulaTemplate:   {"source", "inputs", "imports", "status", "currentVersionNumber"},
+		toolGetFormulaLibrary:    {"source", "imports", "status", "currentVersionNumber"},
+		toolListFormulaTemplates: {"name", "description", "status", "testCount"},
+		toolListFormulaLibraries: {"path", "description", "status", "testCount"},
+	} {
+		fields := selected(tool)
+		for _, field := range want {
+			assert.True(t, fields[field], "%s selects %s", tool, field)
+		}
+	}
+	for _, tool := range []string{toolListFormulaTemplates, toolListFormulaLibraries} {
+		assert.False(t, selected(tool)["source"], "%s selects no source", tool)
+	}
 }
 
 func lineNames(lines []languageLine) []string {

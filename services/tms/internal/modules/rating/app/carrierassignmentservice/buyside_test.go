@@ -484,7 +484,9 @@ func TestEnforceMarginFloor_BlocksABreachWhenEnforcementIsOn(t *testing.T) {
 	)
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "15%")
+	assert.Contains(t, err.Error(), "margin terms")
+	assert.NotContains(t, err.Error(), "%",
+		"the refusal reaches whoever assigns the carrier, so it states no margin")
 }
 
 // With enforcement off the breach is still worth knowing about, but it is not

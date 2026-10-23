@@ -62,7 +62,7 @@ func setupEscalation(
 	move := tenderableMove()
 	control := &dispatchcontrol.DispatchControl{
 		TenderCounterOffersEnabled:          true,
-		TenderCounterMarginFloorPercent:     decimal.NewFromInt(10),
+		TenderCounterMarginFloorPercent:     decimal.NewNullDecimal(decimal.NewFromInt(10)),
 		TenderExhaustedAction:               dispatchcontrol.TenderExhaustedActionRebroadcast,
 		TenderEscalationRateIncreasePercent: decimal.NewFromInt(10),
 		TenderEscalationOfferTTLMinutes:     45,

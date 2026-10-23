@@ -56,6 +56,29 @@ func (a fieldAccess) ceiling(
 	)
 }
 
+// groups is the protected field groups a tool may show computed figures of:
+// those the actor holds, where the agent's data access reaches them, by the
+// same rule the GraphQL read path applies.
+func (a fieldAccess) groups(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+) permission.FieldGroupSet {
+	held := fieldsensitivity.VisibleGroups(
+		ctx,
+		func(ctx context.Context, resource permission.Resource) (bool, error) {
+			return a.mayRead(ctx, params, resource), nil
+		},
+	)
+
+	return fieldsensitivity.AgentVisibleGroups(
+		ctx,
+		held,
+		func(ctx context.Context, resource permission.Resource) permission.FieldSensitivity {
+			return a.ceiling(ctx, params, resource)
+		},
+	)
+}
+
 // visible reports whether one field of a resource may be shown under a
 // ceiling. Confidential is refused outright.
 func (a fieldAccess) visible(

@@ -693,9 +693,23 @@ work read.
 - `agent_list_runs` filters on status, trigger, subject, agent and date; `mine`
   keeps to the calling agent and is on by default when an agent principal runs
   unattended. A run on an assistant conversation is listed only to the person
-  who owns that conversation (`ThreadOwnerRepository`, one batched read), and
-  never to an agent principal or an API key, whose query leaves them out.
+  who owns that conversation, and never to an agent principal or an API key.
   Each tainted row is a `run_record` mark.
+- That ownership rule holds for every read made for a request, not only the
+  tools: each agent-run request carries an `agentports.RunReader`, and
+  `agentrunrepository` applies it in SQL (`subject_type <> 'AssistantThread'` or
+  an `EXISTS` on the thread's primary key and `user_id`), so lists, counts,
+  gets, the by-id loaders and transcripts agree and a page stays full. GraphQL
+  (`agentRuns`, `agentRun`, the run and transcript loaders), the REST run and
+  transcript routes and the tools pass `PersonRunRead(user)`; a nil user is a
+  principal that is no person and sees no conversation's runs. The runtime,
+  workers and system reads pass nothing, which is `UnattendedRunRead`, and see
+  every run as before. A run the reader may not see is "not found", the same
+  error as a missing id. `agentruneventrepository` applies the same reader to
+  a run's events (an `EXISTS` on the owning run through the same predicate),
+  so `agentRunEvents` and the tool's step list hold no hidden run's events;
+  the watchtower's shared failed-run snapshot reads as no person, because a
+  run's summary can repeat a private conversation.
 - `agent_get_run` applies the same ownership rule, answering "not found" rather
   than "forbidden", and can add the run's proposals (at most 20, when the reader
   may read proposals) and its last 50 recorded events, each reduced to its kind,

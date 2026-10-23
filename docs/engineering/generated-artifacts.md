@@ -224,10 +224,14 @@ tool, when:
 - no persisted query, or more than one in a tier, reads that root field alone;
 - an override in `reads.yml` has no `reason`, or names the operation the rule picks anyway;
 - a shard the operations reach asks for a resolver the full root does not build;
-- an operation a list reads `alongside` its own is not persisted, reads a field whose resolver
-  checks no read permission, or is neither a connection read that selects `pageInfo` and needs no
-  variable but its table input nor an unpaged list whose every variable the list's own operation
-  declares with the same type; or a paged list names one.
+- an operation a tool reads `alongside` its own, or a list `instead` of its own, is not
+  persisted, reads a field whose resolver checks no read permission, or has a shape the tool
+  cannot key: alongside, an unpaged list or one record whose every variable the tool's own
+  operation declares with the same type, or, beside an unpaged list only, a connection read
+  that selects `pageInfo` and needs no variable but its table input; instead, an unpaged list or
+  one record with a variable of its own and no input object;
+- a get's operation requires an input object, or a paged list's a filter input with a required
+  input-object field.
 
 Editing a bound operation on the client re-hashes it, and
 `TestEveryBoundOperationIsPersistedAsItIsRun` fails until the generator runs again. Adding a

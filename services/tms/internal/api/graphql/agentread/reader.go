@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/executor"
@@ -172,7 +173,7 @@ func (r *Reader) dispatch(
 	params := &graphql.RawParams{
 		Query:         op.Document,
 		OperationName: op.Name,
-		Variables:     variables,
+		Variables:     wireNumbers(variables),
 		ReadTime: graphql.TraceTiming{
 			Start: graphql.Now(),
 			End:   graphql.Now(),
@@ -191,6 +192,41 @@ func (r *Reader) dispatch(
 	responses, ctx := r.exec.DispatchOperation(ctx, rc)
 
 	return responses(ctx), cost
+}
+
+// maxExactInteger is the largest whole number a float64 holds exactly.
+const maxExactInteger = 1 << 53
+
+// wireNumbers sends a call's whole numbers as integers: a model's arguments
+// arrive as float64, which gqlgen's Int refuses where the HTTP transport
+// hands it a JSON number, and its Float takes an integer as well.
+func wireNumbers(variables map[string]any) map[string]any {
+	out := make(map[string]any, len(variables))
+	for name, value := range variables {
+		out[name] = wireNumber(value)
+	}
+
+	return out
+}
+
+func wireNumber(value any) any {
+	switch v := value.(type) {
+	case float64:
+		if v == math.Trunc(v) && math.Abs(v) <= maxExactInteger {
+			return int64(v)
+		}
+		return v
+	case map[string]any:
+		return wireNumbers(v)
+	case []any:
+		out := make([]any, len(v))
+		for idx, element := range v {
+			out[idx] = wireNumber(element)
+		}
+		return out
+	}
+
+	return value
 }
 
 // authContextFor is the GraphQL principal an actor reads as. A person reads

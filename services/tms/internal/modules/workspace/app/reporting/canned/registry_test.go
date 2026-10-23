@@ -4,14 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/compiler"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,6 +34,14 @@ func (allowAllEngine) GetResourcePermissions(
 		DataScope:      permission.DataScopeOrganization,
 		MaxSensitivity: permission.SensitivityConfidential,
 	}, nil
+}
+
+func (a allowAllEngine) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, a, userID, orgID, resources)
 }
 
 func (allowAllEngine) Check(

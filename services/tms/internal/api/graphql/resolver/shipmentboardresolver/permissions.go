@@ -27,3 +27,7 @@ func (r *QueryResolver) requireCapacityRead(
 
 	return authCtx, nil
 }
+
+func (r *QueryResolver) showsMargins(ctx context.Context, authCtx *authctx.AuthContext) bool {
+	return r.VisibleFieldGroups(ctx, authCtx).Has(permission.FieldGroupMargins)
+}

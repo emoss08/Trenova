@@ -5,15 +5,12 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 )
 
@@ -368,16 +365,13 @@ func (s *Service) detailColumns(
 	req *DrillThroughRequest,
 	entity *reportcatalog.Entity,
 ) ([]report.ColumnSpec, error) {
-	detail, err := s.perms.GetResourcePermissions(
-		ctx, req.TenantInfo.UserID, req.TenantInfo.OrgID, entity.Resource.String(),
-	)
+	access, err := s.access.For(ctx, req.TenantInfo, []permission.Resource{entity.Resource})
 	if err != nil {
-		return nil, fmt.Errorf("resolve permissions for %q: %w", entity.Resource, err)
+		return nil, err
 	}
 
 	columns := make([]report.ColumnSpec, 0, maxDrillColumns)
 	seen := make(map[string]bool, maxDrillColumns)
-	groups := s.fieldGroups(ctx, req.TenantInfo)
 
 	for i := range entity.Fields {
 		field := &entity.Fields[i]
@@ -387,10 +381,11 @@ func (s *Service) detailColumns(
 		if field.Key == "id" || field.Type == reportcatalog.FieldJSON {
 			continue
 		}
-		if !s.fieldVisible(detail, entity, field) {
-			continue
+		use, useErr := access.Field(ctx, entity, field)
+		if useErr != nil {
+			return nil, useErr
 		}
-		if field.Protected != "" && !groups().Has(field.Protected) {
+		if !use.Available() {
 			continue
 		}
 		ref := report.FieldRef{Field: field.Key}
@@ -419,38 +414,4 @@ func (s *Service) detailColumns(
 	}
 
 	return columns, nil
-}
-
-// fieldGroups asks once, and only when a protected field comes up, which
-// protected field groups the person may read.
-func (s *Service) fieldGroups(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-) func() permission.FieldGroupSet {
-	return sync.OnceValue(func() permission.FieldGroupSet {
-		if s.fieldAccess == nil {
-			return 0
-		}
-		return s.fieldAccess.Visible(ctx, permissionports.UserActor(tenant))
-	})
-}
-
-func (s *Service) fieldVisible(
-	detail *permissionports.ResourcePermissionDetail,
-	entity *reportcatalog.Entity,
-	field *reportcatalog.Field,
-) bool {
-	sensitivity := s.permRegistry.GetFieldSensitivity(entity.Resource.String(), field.Key)
-	if !detail.MaxSensitivity.CanAccess(sensitivity) {
-		return false
-	}
-	if len(detail.AccessibleFields) == 0 {
-		return true
-	}
-	for _, allowed := range detail.AccessibleFields {
-		if allowed == field.Key {
-			return true
-		}
-	}
-	return false
 }

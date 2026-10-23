@@ -79,7 +79,7 @@ input ShiftTemplateInput {
 }
 
 "Which pattern a worker is on, for which period."
-type WorkerShiftAssignment {
+type WorkerShiftAssignment @kind(resource: "worker_schedule") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -107,7 +107,7 @@ input AssignShiftInput {
 }
 
 "What a worker would rather work on one weekday, 0 for Sunday."
-type WorkerAvailabilityPreference {
+type WorkerAvailabilityPreference @kind(resource: "worker_schedule") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -128,7 +128,7 @@ input SetAvailabilityPreferenceInput {
 }
 
 "One driver asking another to take a day."
-type ShiftSwapRequest {
+type ShiftSwapRequest @kind(resource: "shift_swap") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -231,9 +231,18 @@ input RotaFilterInput {
 }
 
 extend type Query {
-  shiftTemplates(activeOnly: Boolean, limit: Int): [ShiftTemplate!]!
+  shiftTemplates(
+    "Only the patterns in use, leaving out the retired ones."
+    activeOnly: Boolean
+    "At most this many patterns, from 1 to 200; 200 when left out."
+    limit: Int
+  ): [ShiftTemplate!]!
   shiftTemplate(id: ID!): ShiftTemplate!
-  workerShiftAssignments(workerId: ID!, activeOnly: Boolean): [WorkerShiftAssignment!]!
+  workerShiftAssignments(
+    workerId: ID!
+    "Only the pattern the worker is on today, leaving out past and future ones."
+    activeOnly: Boolean
+  ): [WorkerShiftAssignment!]!
   workerAvailabilityPreferences(workerId: ID!): [WorkerAvailabilityPreference!]!
   shiftSwapRequests(
     workerId: ID

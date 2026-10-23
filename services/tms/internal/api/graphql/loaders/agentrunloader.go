@@ -45,6 +45,7 @@ func newAgentRunByIDLoader(f *AgentRunByIDLoaderFactory,
 			return f.runs.ListByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
+				Reader:     agentports.PersonRunRead(tenantInfo.UserID),
 			})
 		},
 		"Agent run not found",
@@ -82,6 +83,7 @@ func newAgentRunTranscriptByIDLoader(f *AgentRunTranscriptByIDLoaderFactory,
 			return f.runs.ListTranscriptsByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
+				Reader:     agentports.PersonRunRead(tenantInfo.UserID),
 			})
 		},
 		"Agent run not found",

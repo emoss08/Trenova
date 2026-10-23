@@ -7,13 +7,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,10 +35,9 @@ const (
 )
 
 type resourceGrant struct {
-	operations       []permission.Operation
-	dataScope        permission.DataScope
-	maxSensitivity   permission.FieldSensitivity
-	accessibleFields []string
+	operations     []permission.Operation
+	dataScope      permission.DataScope
+	maxSensitivity permission.FieldSensitivity
 }
 
 type fakePermissionEngine struct {
@@ -66,12 +66,19 @@ func (f *fakePermissionEngine) GetResourcePermissions(
 		grant = override
 	}
 	return &permissionports.ResourcePermissionDetail{
-		Resource:         resource,
-		Operations:       grant.operations,
-		DataScope:        grant.dataScope,
-		MaxSensitivity:   grant.maxSensitivity,
-		AccessibleFields: grant.accessibleFields,
+		Resource:       resource,
+		Operations:     grant.operations,
+		DataScope:      grant.dataScope,
+		MaxSensitivity: grant.maxSensitivity,
 	}, nil
+}
+
+func (f *fakePermissionEngine) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, f, userID, orgID, resources)
 }
 
 func (f *fakePermissionEngine) Check(
@@ -596,25 +603,6 @@ func TestAuthorizeFailsClosedOnSensitiveField(t *testing.T) {
 		Columns:   []report.ColumnSpec{dim("c_first", "firstName")},
 	}))
 	require.NoError(t, err)
-}
-
-func TestAuthorizeAccessibleFieldsRestriction(t *testing.T) {
-	engine := allowAllEngine()
-	engine.overrides["shipment"] = resourceGrant{
-		operations:       []permission.Operation{permission.OpRead, permission.OpExport},
-		dataScope:        permission.DataScopeOrganization,
-		maxSensitivity:   permission.SensitivityConfidential,
-		accessibleFields: []string{"proNumber", "status"},
-	}
-	c := newTestCompiler(engine)
-
-	_, err := c.Compile(context.Background(), newRequest(&report.Definition{
-		IRVersion: report.CurrentIRVersion,
-		Entity:    "shipment",
-		Columns:   []report.ColumnSpec{dim("c_bol", "bol")},
-	}))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "accessible field set")
 }
 
 func TestValidationRejectsDimensionAcrossToMany(t *testing.T) {

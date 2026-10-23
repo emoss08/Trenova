@@ -73,6 +73,9 @@ func planExecutor(schema *ast.Schema, opts *options, bindings []*binding) (*exec
 		for _, beside := range b.Alongside {
 			r.operation(beside.Operation.Query)
 		}
+		for _, instead := range b.Instead {
+			r.operation(instead.Operation.Query)
+		}
 	}
 	closeOver(schema, r.shards)
 

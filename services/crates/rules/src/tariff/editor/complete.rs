@@ -780,19 +780,69 @@ fn module_members(site: &Site<'_, '_>, items: &mut Items, module: ModuleId) {
     }
 }
 
-/// Makes a function item insert a call.
+/// Makes a function item insert a call, with a tab stop for each parameter it must be given.
 pub fn fill_call(site: &Site<'_, '_>, item: &mut CompletionItem, module: ModuleId, name: &str) {
-    let params = super::describe::function_decl(site.session, module, name)
-        .map_or(0, |decl| decl.params.len());
-    if params == 0 {
+    let Some(decl) = super::describe::function_decl(site.session, module, name) else {
         item.insert = format!("{name}()");
+        return;
+    };
+    let source = site
+        .session
+        .program
+        .module(module)
+        .map_or("", |found| found.source.as_str());
+    let required: Vec<(&str, String)> = decl
+        .params
+        .iter()
+        .filter(|param| param.default.is_none())
+        .map(|param| {
+            (
+                param.name.text.as_str(),
+                super::describe::flat(source_text(source, param.ty.span)),
+            )
+        })
+        .collect();
+    let (args, snippet) = call_args(decl.params.len(), &required);
+    item.insert = format!("{name}{args}");
+    item.snippet = snippet;
+    item.detail = Some(function_signature(site.session, module, decl).label);
+}
+
+/// A call's arguments as a snippet, and whether it has tab stops: `()` for a call that takes
+/// nothing, the cursor between the parentheses when every parameter has a default, a
+/// placeholder showing the type of a lone required parameter (`round(${1:Money})`), or each
+/// required parameter by name (`deadhead(empty: ${1:Distance}, rate: ${2:Money/mi})`).
+pub fn call_args<T: AsRef<str>>(params: usize, required: &[(&str, T)]) -> (String, bool) {
+    if params == 0 {
+        return (String::from("()"), false);
+    }
+    if required.is_empty() {
+        return (String::from("($0)"), true);
+    }
+    let field =
+        |index: usize, name: &str, ty: &str| format!("${{{index}:{}}}", placeholder(name, ty));
+    let args: Vec<String> = match required {
+        [(name, ty)] => vec![field(1, name, ty.as_ref())],
+        _ => required
+            .iter()
+            .enumerate()
+            .map(|(index, (name, ty))| format!("{name}: {}", field(index + 1, name, ty.as_ref())))
+            .collect(),
+    };
+    (format!("({})", args.join(", ")), true)
+}
+
+/// A placeholder's text, escaped for a snippet: the parameter's type, or its name when the type
+/// is a record written in braces, which a placeholder can't hold.
+fn placeholder(name: &str, ty: &str) -> String {
+    let text = if ty.is_empty() || ty.contains(['{', '}']) {
+        name
     } else {
-        item.insert = format!("{name}($0)");
-        item.snippet = true;
-    }
-    if let Some(decl) = super::describe::function_decl(site.session, module, name) {
-        item.detail = Some(function_signature(site.session, module, decl).label);
-    }
+        ty
+    };
+    text.replace('\\', "\\\\")
+        .replace('$', "\\$")
+        .replace('}', "\\}")
 }
 
 /// The variants of the enum named `name`, for `Enum.`.
@@ -858,7 +908,7 @@ pub fn members(items: &mut Items, ty: &Type, rewrite: Option<Span>) {
     }
 }
 
-/// A method call to insert: `floor()`, `round($0)`, `where(${1:s} => $0)`.
+/// A method call to insert: `floor()`, `max(${1:Money})`, `where(${1:s} => $0)`.
 fn method_insert(method: &methods::Method, ty: &Type) -> (String, bool) {
     let Some(first) = method.params.first() else {
         return (format!("{}()", method.name), false);
@@ -887,7 +937,21 @@ fn method_insert(method: &methods::Method, ty: &Type) -> (String, bool) {
         };
         return (format!("{}(${{1:{name}}} => $0)", method.name), true);
     }
-    (format!("{}($0)", method.name), true)
+    let required: Vec<(&str, String)> = method
+        .params
+        .iter()
+        .filter(|param| param.default.is_none())
+        .map(|param| {
+            let shown = if param.ty == "Self" {
+                type_text(ty.unwrapped())
+            } else {
+                param.ty.to_owned()
+            };
+            (param.name, shown)
+        })
+        .collect();
+    let (args, snippet) = call_args(method.params.len(), &required);
+    (format!("{}{args}", method.name), snippet)
 }
 
 /// A table's axes and value type, for its detail.

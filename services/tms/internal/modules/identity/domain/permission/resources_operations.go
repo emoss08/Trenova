@@ -58,6 +58,9 @@ func (r *Registry) registerOperationsResources() {
 			{Operation: OpDuplicate, DisplayName: "Duplicate", Description: "Duplicate shipments"},
 		},
 		DefaultSensitivity: SensitivityInternal,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"profitabilityEstimate": SensitivityConfidential,
+		},
 		Scopes: []ScopeSupport{
 			{Scope: DataScopeOwn, EnforcedBy: ScopeEnforcedByDatabase},
 		},
@@ -373,6 +376,9 @@ func (r *Registry) registerOperationsResources() {
 		Category:           "Dispatch",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"tenderCounterMarginFloorPercent": SensitivityConfidential,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
