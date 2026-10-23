@@ -3,6 +3,7 @@ package render
 import (
 	"bytes"
 	"context"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"runtime"
@@ -56,7 +57,11 @@ func (f *fakeReader) Next(_ context.Context) (reportports.ReportRow, error) {
 	return row, nil
 }
 
-func (f *fakeReader) Totals(_ context.Context) (reportports.ReportRow, error) { return f.totals, nil }
+func (f *fakeReader) Totals(
+	_ context.Context,
+) (reportports.ReportRow, error) {
+	return f.totals, nil
+}
 
 func (f *fakeReader) RowCount() int64 { return f.pos }
 
@@ -146,6 +151,53 @@ func TestCSVRendererGolden(t *testing.T) {
 		"Ünïcode Cargo 🚚,,,,\n" +
 		truncationNotice + ",,,,\n"
 	assert.Equal(t, want, buf.String())
+}
+
+func TestCSVRendererNeutralisesFormulaCells(t *testing.T) {
+	renderer := NewCSV(CSVParams{Config: testConfig()})
+	var buf bytes.Buffer
+
+	schema := []reportports.ReportResultColumn{
+		testColumn("c0", "=Customer", reportcatalog.FieldString, reportcatalog.FormatNone),
+		testColumn("c1", "Total Charge", reportcatalog.FieldDecimal, reportcatalog.FormatNone),
+		testColumn("c2", "Shipments", reportcatalog.FieldInt, reportcatalog.FormatCount),
+	}
+	rows := []reportports.ReportRow{
+		{"=HYPERLINK(\"http://x\")", decimal.RequireFromString("-99.1"), int64(-3)},
+		{"+1+1", decimal.RequireFromString("5"), int64(4)},
+		{"-2+3", nil, nil},
+		{"@SUM(A1)", nil, nil},
+		{"\tTabbed", nil, nil},
+		{"\rReturned", nil, nil},
+		{"-12", nil, nil},
+		{"a=b", nil, nil},
+	}
+
+	_, err := renderer.Render(t.Context(), &reportports.ReportRenderRequest{
+		Dataset: &fakeReader{
+			schema: schema,
+			rows:   rows,
+			totals: reportports.ReportRow{nil, decimal.RequireFromString("-94.1"), int64(1)},
+		},
+		Sink: &buf,
+		Meta: testMeta(),
+	})
+	require.NoError(t, err)
+
+	records, err := csv.NewReader(&buf).ReadAll()
+	require.NoError(t, err)
+	assert.Equal(t, [][]string{
+		{"'=Customer", "Total Charge", "Shipments"},
+		{"'=HYPERLINK(\"http://x\")", "-99.10", "-3"},
+		{"'+1+1", "5.00", "4"},
+		{"'-2+3", "", ""},
+		{"'@SUM(A1)", "", ""},
+		{"'\tTabbed", "", ""},
+		{"'\rReturned", "", ""},
+		{"'-12", "", ""},
+		{"a=b", "", ""},
+		{totalsLabel, "-94.10", "1"},
+	}, records)
 }
 
 func TestJSONRendererGolden(t *testing.T) {
@@ -493,7 +545,9 @@ func TestRenderersFormatAChunkOfRowsPerModuleCall(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	_, err := NewCSV(CSVParams{Config: testConfig()}).Render(t.Context(), &reportports.ReportRenderRequest{
+	_, err := NewCSV(
+		CSVParams{Config: testConfig()},
+	).Render(t.Context(), &reportports.ReportRenderRequest{
 		Dataset: dataset,
 		Sink:    &buf,
 		Meta:    testMeta(),

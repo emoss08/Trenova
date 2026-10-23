@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportfmt"
+	"github.com/emoss08/trenova/shared/csvutils"
 	"go.uber.org/fx"
 )
 
@@ -49,9 +51,10 @@ func (r *CSVRenderer) Render(
 	schema := req.Dataset.Schema()
 	loc := metaLocation(&req.Meta)
 
+	safe := csvCellGuards(schema)
 	header := make([]string, len(schema))
 	for i := range schema {
-		header[i] = schema[i].Label
+		header[i] = csvutils.SafeCell(schema[i].Label)
 	}
 	if err := writer.Write(header); err != nil {
 		return nil, err
@@ -60,7 +63,7 @@ func (r *CSVRenderer) Render(
 	record := make([]string, len(schema))
 	if err := streamFormatted(ctx, req.Dataset, loc, func(row *reportfmt.Row) error {
 		for i := range row.Cells {
-			record[i] = row.Cells[i].Text
+			record[i] = safe[i](row.Cells[i].Text)
 		}
 		return writer.Write(record)
 	}); err != nil {
@@ -72,6 +75,9 @@ func (r *CSVRenderer) Render(
 		return nil, err
 	}
 	if totals != nil {
+		for i := range totals {
+			totals[i] = safe[i](totals[i])
+		}
 		if err = writer.Write(totals); err != nil {
 			return nil, err
 		}
@@ -95,4 +101,18 @@ func (r *CSVRenderer) Render(
 		Rows:      req.Dataset.RowCount(),
 		Truncated: truncated,
 	}, nil
+}
+
+func csvCellGuards(schema []reportports.ReportResultColumn) []func(string) string {
+	guards := make([]func(string) string, len(schema))
+	for i := range schema {
+		switch schema[i].Type {
+		case reportcatalog.FieldInt, reportcatalog.FieldDecimal:
+			guards[i] = csvutils.SafeNumberCell
+		default:
+			guards[i] = csvutils.SafeCell
+		}
+	}
+
+	return guards
 }
