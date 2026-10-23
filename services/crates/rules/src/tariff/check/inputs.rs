@@ -52,7 +52,10 @@ pub fn describe(root: &Module, state: &State, _: &[ModuleAnalysis]) -> Vec<Input
             descriptor: descriptor(&ty),
             required: input.default.is_none(),
             default: state.defaults.get(&(root.id.0, name.clone())).map(wire),
-            constraint: None,
+            constraint: state
+                .constraints
+                .get(&(root.id.0, name.clone()))
+                .map(super::decls::FoldedConstraint::to_wire),
             ty,
             span: symbol.span,
         });
