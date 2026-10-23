@@ -71,11 +71,7 @@ impl<'a> Interp<'_, 'a> {
 
     fn exec_kind(&mut self, env: &mut Env, stmt: &'a Stmt) -> Result<Flow, Stop> {
         match &stmt.kind {
-            StmtKind::Choose(_) => Err(Stop::Failed(
-                crate::tariff::eval::error::EvalError::internal(crate::message::Message::new(
-                    crate::message!("Phase 0 placeholder: this construct is not implemented yet"),
-                )),
-            )),
+            StmtKind::Choose(choose) => self.choose(env, choose, stmt.span),
             StmtKind::Let(binding) | StmtKind::Var(binding) => {
                 let value = self.eval(env, &binding.value)?;
                 if self.traced(env) {

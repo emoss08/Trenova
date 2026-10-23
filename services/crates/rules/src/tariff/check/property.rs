@@ -40,6 +40,7 @@ use super::{HintKind, ModuleAnalysis};
 use crate::message;
 use crate::message::{Arg, Message};
 use crate::span::Span;
+use crate::tariff::constraint::admits;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
     Block, Expr, ExprKind, FileKind, ItemKind, Name, Property, StmtKind,
@@ -776,14 +777,14 @@ impl Checker<'_> {
                 "The values a `vary` takes are worked out once, before any case, so they can't read {0}, which varies"
             ),
         );
-        if let Some(input) = target.input {
-            self.items_inside(input, items);
+        if let (Some(input), Some(declared)) = (target.input, &target.declared) {
+            self.items_inside(input, declared, items);
         }
         Some(Values { ty, range: false })
     }
 
     /// Reports each item of an input's `vary` list that its constraint refuses.
-    fn items_inside(&mut self, input: &str, items: &[Expr]) {
+    fn items_inside(&mut self, input: &str, declared: &Type, items: &[Expr]) {
         let Some(bounds) = self
             .property
             .as_ref()
@@ -796,7 +797,10 @@ impl Checker<'_> {
             let Ok(value) = self.fold_value(item) else {
                 continue;
             };
-            if !allowed(&bounds.folded, &value) {
+            let constraint = bounds.folded.to_wire();
+            let admitted = crate::tariff::wire::decode(&consts::wire(&value), declared, input)
+                .is_ok_and(|value| admits(&constraint, &value));
+            if !admitted {
                 self.report(Diagnostic::error(
                     "vary-range",
                     item.span,
@@ -1075,34 +1079,5 @@ fn unknown(ty: &Type) -> bool {
         Type::Never => true,
         Type::Optional(inner) | Type::List(inner) => matches!(**inner, Type::Never),
         _ => false,
-    }
-}
-
-/// Whether a constraint accepts a folded value: `none` always passes, and a list passes when
-/// every item does.
-fn allowed(constraint: &FoldedConstraint, value: &Folded) -> bool {
-    match value {
-        Folded::None => true,
-        Folded::List(items) => items.iter().all(|item| allowed(constraint, item)),
-        _ => match constraint {
-            FoldedConstraint::OneOf(values) => values.iter().any(|known| {
-                consts::compare(known, value).map_or(known == value, Ordering::is_eq)
-            }),
-            FoldedConstraint::Range {
-                min,
-                max,
-                max_inclusive,
-            } => {
-                let low = min
-                    .as_ref()
-                    .is_none_or(|min| consts::compare(value, min) != Some(Ordering::Less));
-                let high = max.as_ref().is_none_or(|max| match consts::compare(value, max) {
-                    Some(Ordering::Less) => true,
-                    Some(Ordering::Equal) => *max_inclusive,
-                    _ => false,
-                });
-                low && high
-            }
-        },
     }
 }

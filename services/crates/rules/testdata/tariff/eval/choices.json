@@ -1,0 +1,1574 @@
+[
+  {
+    "name": "the spec's best keeps the cheapest method and records the others",
+    "source": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi\ninput flatRate: Money = $900\ninput volumeRate: Money/lb = $0.10/lb\nbest \"Linehaul\" {\n  option \"Per mile\" {\n    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)\n  }\n  option \"Flat\" {\n    charge \"Flat rate\" = flatRate\n  }\n  option \"Volume\" {\n    require (shipment.weight ?? 0 lb) >= 6_000 lb else \"Volume rates start at 6,000 lb\"\n    charge \"Volume\" = volumeRate * (shipment.weight ?? 0 lb)\n  }\n}",
+    "facts": {
+      "shipment": {
+        "distance": {
+          "$q": "500",
+          "u": "mi"
+        }
+      }
+    },
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "label": "Flat rate",
+            "amount": {
+              "$q": "900",
+              "u": "$"
+            },
+            "range": {
+              "from": 240,
+              "to": 269
+            }
+          }
+        ],
+        "total": {
+          "$q": "900",
+          "u": "$"
+        }
+      },
+      "choices": [
+        {
+          "label": "Linehaul",
+          "kind": "best",
+          "range": {
+            "from": 110,
+            "to": 448
+          },
+          "chosen": "Flat",
+          "options": [
+            {
+              "label": "Per mile",
+              "range": {
+                "from": 130,
+                "to": 217
+              },
+              "status": "lost",
+              "subtotal": {
+                "$q": "1175",
+                "u": "$"
+              },
+              "refusal": null
+            },
+            {
+              "label": "Flat",
+              "range": {
+                "from": 220,
+                "to": 273
+              },
+              "status": "chosen",
+              "subtotal": {
+                "$q": "900",
+                "u": "$"
+              },
+              "refusal": null
+            },
+            {
+              "label": "Volume",
+              "range": {
+                "from": 276,
+                "to": 446
+              },
+              "status": "refused",
+              "subtotal": null,
+              "refusal": {
+                "message": "Volume rates start at 6,000 lb",
+                "range": {
+                  "from": 298,
+                  "to": 381
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a short load bills per mile",
+    "source": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi\ninput flatRate: Money = $900\ninput volumeRate: Money/lb = $0.10/lb\nbest \"Linehaul\" {\n  option \"Per mile\" {\n    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)\n  }\n  option \"Flat\" {\n    charge \"Flat rate\" = flatRate\n  }\n  option \"Volume\" {\n    require (shipment.weight ?? 0 lb) >= 6_000 lb else \"Volume rates start at 6,000 lb\"\n    charge \"Volume\" = volumeRate * (shipment.weight ?? 0 lb)\n  }\n}",
+    "facts": {
+      "shipment": {
+        "distance": {
+          "$q": "100",
+          "u": "mi"
+        }
+      }
+    },
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "label": "Linehaul",
+            "amount": {
+              "$q": "235",
+              "u": "$"
+            },
+            "quantity": {
+              "$q": "100",
+              "u": "mi"
+            },
+            "rate": {
+              "$q": "2.35",
+              "u": "$/mi"
+            }
+          }
+        ]
+      },
+      "choices": [
+        {
+          "chosen": "Per mile",
+          "options": [
+            {
+              "status": "chosen"
+            },
+            {
+              "status": "lost"
+            },
+            {
+              "status": "refused"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "worst keeps the dearest method",
+    "source": "tariff \"t\"\nworst \"Floor\" {\n  option \"Per mile\" { charge \"Per mile\" = $1/mi * shipment.distance }\n  option \"Minimum\" { charge \"Minimum\" = $300 }\n}",
+    "facts": {
+      "shipment": {
+        "distance": {
+          "$q": "250",
+          "u": "mi"
+        }
+      }
+    },
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "label": "Minimum"
+          }
+        ],
+        "total": {
+          "$q": "300",
+          "u": "$"
+        }
+      },
+      "choices": [
+        {
+          "kind": "worst",
+          "chosen": "Minimum",
+          "options": [
+            {
+              "status": "lost",
+              "subtotal": {
+                "$q": "250",
+                "u": "$"
+              }
+            },
+            {
+              "status": "chosen",
+              "subtotal": {
+                "$q": "300",
+                "u": "$"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a tie goes to the option written first, for best and for worst",
+    "source": "tariff \"t\"\nbest \"Low\" {\n  option \"A\" { charge \"A\" = $100.00 }\n  option \"B\" { charge \"B\" = $100 }\n}\nworst \"High\" {\n  option \"C\" { charge \"C\" = $50 }\n  option \"D\" { charge \"D\" = $50.000 }\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "label": "A"
+          },
+          {
+            "label": "C"
+          }
+        ]
+      },
+      "choices": [
+        {
+          "chosen": "A"
+        },
+        {
+          "chosen": "C"
+        }
+      ]
+    }
+  },
+  {
+    "name": "subtotals compare exactly, before rounding",
+    "source": "tariff \"t\"\nbest \"L\" {\n  option \"A\" { charge \"A\" = $10.004 }\n  option \"B\" { charge \"B\" = $10.001 }\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "label": "B",
+            "amount": {
+              "$q": "10",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "10",
+          "u": "$"
+        }
+      },
+      "choices": [
+        {
+          "chosen": "B",
+          "options": [
+            {
+              "subtotal": {
+                "$q": "10.004",
+                "u": "$"
+              }
+            },
+            {
+              "subtotal": {
+                "$q": "10.001",
+                "u": "$"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "the kept option's lines and notes join the bill where the choice is written",
+    "source": "tariff \"t\"\ncharge \"Before\" = $1\nbest \"L\" {\n  option \"A\" {\n    note \"A was used\"\n    charge \"A\" = $20\n  }\n  option \"B\" {\n    note \"B was used\"\n    charge \"B1\" = $5\n    charge \"B2\" as FSC = $6\n  }\n}\ncharge \"After\" = $2\nminimum $50",
+    "context": {
+      "codes": [
+        {
+          "code": "FSC",
+          "active": true
+        }
+      ]
+    },
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "label": "Before"
+          },
+          {
+            "label": "B1"
+          },
+          {
+            "label": "B2",
+            "code": "FSC",
+            "freight": false
+          },
+          {
+            "label": "After"
+          },
+          {
+            "kind": "minimum",
+            "amount": {
+              "$q": "36",
+              "u": "$"
+            }
+          }
+        ],
+        "notes": [
+          {
+            "text": "B was used"
+          }
+        ],
+        "total": {
+          "$q": "50",
+          "u": "$"
+        }
+      },
+      "choices": [
+        {
+          "chosen": "B",
+          "options": [
+            {
+              "subtotal": {
+                "$q": "20",
+                "u": "$"
+              }
+            },
+            {
+              "subtotal": {
+                "$q": "11",
+                "u": "$"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "zero lines are dropped, and a discount counts in the subtotal",
+    "source": "tariff \"t\"\nbest \"L\" {\n  option \"A\" {\n    charge \"Free\" = $0\n    charge \"Paid\" = $30\n  }\n  option \"B\" {\n    charge \"List\" = $50\n    charge \"Discount\" = -$25\n  }\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "label": "List"
+          },
+          {
+            "label": "Discount",
+            "amount": {
+              "$q": "-25",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "25",
+          "u": "$"
+        }
+      },
+      "choices": [
+        {
+          "chosen": "B",
+          "options": [
+            {
+              "subtotal": {
+                "$q": "30",
+                "u": "$"
+              }
+            },
+            {
+              "subtotal": {
+                "$q": "25",
+                "u": "$"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "when every option refuses, the rating refuses with the first option's message",
+    "source": "tariff \"t\"\nbest \"L\" {\n  option \"A\" { fail \"A doesn't apply\" }\n  option \"B\" {\n    let w = shipment.weight ?? fail \"B needs a weight\"\n    charge \"B\" = $1/lb * w\n  }\n}",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "A doesn't apply",
+        "range": {
+          "from": 37,
+          "to": 59
+        }
+      },
+      "choices": [
+        {
+          "label": "L",
+          "chosen": null,
+          "options": [
+            {
+              "label": "A",
+              "status": "refused",
+              "subtotal": null,
+              "refusal": {
+                "message": "A doesn't apply"
+              }
+            },
+            {
+              "label": "B",
+              "status": "refused",
+              "subtotal": null,
+              "refusal": {
+                "message": "B needs a weight"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "an evaluation error inside an option stops the rating",
+    "source": "tariff \"t\"\ninput divisor: Int = 0\nbest \"L\" {\n  option \"A\" { charge \"A\" = $1 }\n  option \"B\" { charge \"B\" = $10 / divisor }\n}",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "divideByZero"
+      },
+      "choices": []
+    }
+  },
+  {
+    "name": "an option's own bindings and vars stay inside it",
+    "source": "tariff \"t\"\nlet base = $10\nbest \"L\" {\n  option \"A\" {\n    var sum = base\n    for stop in shipment.stops { sum += $1 }\n    charge \"A\" = sum\n  }\n  option \"B\" {\n    let sum = base * 2\n    charge \"B\" = sum\n  }\n}\ncharge \"After\" = base",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "label": "A",
+            "amount": {
+              "$q": "12",
+              "u": "$"
+            }
+          },
+          {
+            "label": "After"
+          }
+        ],
+        "total": {
+          "$q": "22",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a best in a loop with a nested worst records each evaluation and traces it",
+    "source": "tariff \"t\"\nfor stop in shipment.stops {\n  best \"Stop fee\" {\n    option \"Flat\" {\n      charge \"Stop {stop.sequence} flat\" = $40\n    }\n    option \"Tiered\" {\n      worst \"Tier\" {\n        option \"Base\" {\n          charge \"Stop {stop.sequence} base\" = $30 * stop.sequence\n        }\n        option \"Floor\" {\n          charge \"Stop {stop.sequence} floor\" = $25\n        }\n      }\n    }\n  }\n}",
+    "trace": true,
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "label": "Stop 1 base",
+            "amount": {
+              "$q": "30",
+              "u": "$"
+            }
+          },
+          {
+            "label": "Stop 2 flat",
+            "amount": {
+              "$q": "40",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "70",
+          "u": "$"
+        }
+      },
+      "choices": [
+        {
+          "label": "Stop fee",
+          "kind": "best",
+          "chosen": "Tiered",
+          "range": {
+            "from": 42,
+            "to": 381
+          },
+          "options": [
+            {
+              "label": "Flat",
+              "range": {
+                "from": 64,
+                "to": 132
+              },
+              "status": "lost",
+              "subtotal": {
+                "$q": "40",
+                "u": "$"
+              },
+              "refusal": null
+            },
+            {
+              "label": "Tiered",
+              "range": {
+                "from": 137,
+                "to": 377
+              },
+              "status": "chosen",
+              "subtotal": {
+                "$q": "30",
+                "u": "$"
+              },
+              "refusal": null
+            }
+          ]
+        },
+        {
+          "label": "Tier",
+          "kind": "worst",
+          "chosen": "Base",
+          "range": {
+            "from": 161,
+            "to": 371
+          },
+          "options": [
+            {
+              "label": "Base",
+              "status": "chosen",
+              "subtotal": {
+                "$q": "30",
+                "u": "$"
+              }
+            },
+            {
+              "label": "Floor",
+              "status": "lost",
+              "subtotal": {
+                "$q": "25",
+                "u": "$"
+              }
+            }
+          ]
+        },
+        {
+          "label": "Stop fee",
+          "kind": "best",
+          "chosen": "Flat",
+          "options": [
+            {
+              "label": "Flat",
+              "status": "chosen",
+              "subtotal": {
+                "$q": "40",
+                "u": "$"
+              }
+            },
+            {
+              "label": "Tiered",
+              "status": "lost",
+              "subtotal": {
+                "$q": "60",
+                "u": "$"
+              }
+            }
+          ]
+        },
+        {
+          "label": "Tier",
+          "kind": "worst",
+          "chosen": "Base",
+          "options": [
+            {
+              "label": "Base",
+              "status": "chosen",
+              "subtotal": {
+                "$q": "60",
+                "u": "$"
+              }
+            },
+            {
+              "label": "Floor",
+              "status": "lost",
+              "subtotal": {
+                "$q": "25",
+                "u": "$"
+              }
+            }
+          ]
+        }
+      ],
+      "trace": [
+        {
+          "kind": "iteration",
+          "name": "stop",
+          "index": 0
+        },
+        {
+          "kind": "charge",
+          "label": "Stop 1 flat"
+        },
+        {
+          "kind": "charge",
+          "label": "Stop 1 base"
+        },
+        {
+          "kind": "charge",
+          "label": "Stop 1 floor"
+        },
+        {
+          "kind": "choice",
+          "label": "Tier",
+          "chosen": "Base",
+          "range": {
+            "from": 161,
+            "to": 371
+          }
+        },
+        {
+          "kind": "choice",
+          "label": "Stop fee",
+          "chosen": "Tiered",
+          "range": {
+            "from": 42,
+            "to": 381
+          }
+        },
+        {
+          "kind": "iteration",
+          "name": "stop",
+          "index": 1
+        },
+        {
+          "kind": "charge",
+          "label": "Stop 2 flat"
+        },
+        {
+          "kind": "charge",
+          "label": "Stop 2 base"
+        },
+        {
+          "kind": "charge",
+          "label": "Stop 2 floor"
+        },
+        {
+          "kind": "choice",
+          "label": "Tier",
+          "chosen": "Base"
+        },
+        {
+          "kind": "choice",
+          "label": "Stop fee",
+          "chosen": "Flat"
+        },
+        {
+          "kind": "loop",
+          "name": "stop",
+          "iterations": 2
+        }
+      ]
+    }
+  },
+  {
+    "name": "the budgets apply across all options",
+    "source": "tariff \"t\"\nbest \"L\" {\n  option \"A\" {\n    var a = $0\n    for i in 0..40 { a += $1 }\n    charge \"A\" = a\n  }\n  option \"B\" {\n    var b = $0\n    for i in 0..40 { b += $1 }\n    charge \"B\" = b\n  }\n}",
+    "budget": {
+      "steps": 150
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "budget"
+      }
+    }
+  },
+  {
+    "name": "a result reports at most 200 choices",
+    "source": "tariff \"t\"\nfor i in 0..250 {\n  best \"L\" {\n    option \"A\" { charge \"A\" = $1 }\n    option \"B\" { charge \"B\" = $2 }\n  }\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "total": {
+          "$q": "250",
+          "u": "$"
+        }
+      },
+      "choices": [
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        },
+        {
+          "label": "L",
+          "chosen": "A"
+        }
+      ]
+    }
+  },
+  {
+    "name": "a tariff without choices sends an empty list, as does a condition",
+    "op": "tariff.evaluate",
+    "input": {
+      "programs": [
+        {
+          "id": "t",
+          "source": "tariff \"t\"\ncharge \"x\" = $1"
+        },
+        {
+          "id": "c",
+          "source": "condition \"c\"\nshipment.distance > 1 mi"
+        },
+        {
+          "id": "bad",
+          "source": "tariff \"t\"\ncharge \"x\" = 1 lb"
+        }
+      ]
+    },
+    "expect": {
+      "ok": {
+        "results": [
+          {
+            "id": "t",
+            "status": "rated",
+            "choices": []
+          },
+          {
+            "id": "c",
+            "status": "rated",
+            "choices": []
+          },
+          {
+            "id": "bad",
+            "status": "error",
+            "choices": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a refused rating still reports the choices it evaluated",
+    "source": "tariff \"t\"\nbest \"L\" {\n  option \"A\" { charge \"A\" = $1 }\n  option \"B\" { charge \"B\" = $2 }\n}\nfail \"No rate after all\"",
+    "expect": {
+      "status": "refused",
+      "choices": [
+        {
+          "label": "L",
+          "chosen": "A"
+        }
+      ]
+    }
+  },
+  {
+    "name": "chosen reads the option each choice kept the last time it ran",
+    "tests": "tariff \"t\"\ninput rate: Money/mi = $2/mi\nbest \"Linehaul\" {\n  option \"Per mile\" { charge \"Linehaul\" = rate * shipment.distance }\n  option \"Flat\" { charge \"Flat\" = $500 }\n}\nif shipment.distance > 1_000 mi {\n  best \"Long haul\" {\n    option \"A\" { charge \"A\" = $1 }\n    option \"B\" { charge \"B\" = $2 }\n  }\n}\nfor stop in shipment.stops {\n  worst \"Stop\" {\n    option \"First\" {\n      require stop.sequence == 1 else \"Only the first stop\"\n      charge \"First stop\" = $5\n    }\n    option \"Other\" { charge \"Other stop\" = $3 }\n  }\n}\ntest \"short loads bill per mile\" {\n  given shipment.distance = 100 mi\n  expect chosen(\"Linehaul\") == \"Per mile\"\n  expect chosen(\"Long haul\") == none\n  expect chosen(\"Stop\") == \"Other\"\n  expect total == $200 + $5 + $3\n}\ntest \"long loads bill flat\" {\n  given shipment.distance = 2_000 mi\n  expect chosen(\"Linehaul\") == \"Flat\"\n  expect chosen(\"Long haul\") == \"A\"\n}\ntest \"a wrong expectation reports what was chosen\" {\n  given shipment.distance = 100 mi\n  expect chosen(\"Linehaul\") == \"Flat\"\n}",
+    "expect": [
+      {
+        "name": "short loads bill per mile",
+        "status": "passed"
+      },
+      {
+        "name": "long loads bill flat",
+        "status": "passed"
+      },
+      {
+        "name": "a wrong expectation reports what was chosen",
+        "status": "failed",
+        "failures": [
+          {
+            "range": {
+              "from": 971,
+              "to": 1006
+            },
+            "message": {
+              "message": "This expectation does not hold"
+            },
+            "values": [
+              {
+                "range": {
+                  "from": 978,
+                  "to": 996
+                },
+                "display": "Per mile",
+                "value": "Per mile"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -166,6 +166,11 @@ pub fn stmt(stmt_node: &Stmt, on_stmt: &mut impl FnMut(&Stmt), visit: &mut impl 
             }
             block(&looped.body, on_stmt, visit);
         }
+        StmtKind::Choose(choose) => {
+            for option in &choose.options {
+                block(&option.body, on_stmt, visit);
+            }
+        }
         StmtKind::Require { condition, .. } => self::condition(condition, visit),
         StmtKind::Total(
             TotalClause::Minimum(value)

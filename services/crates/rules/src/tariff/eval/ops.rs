@@ -32,11 +32,17 @@
 //!   "refusal": {"message": "No fuel price on …" | {"message": "…", "args": […]}, "range": …},
 //!   "error": {"code": "divideByZero", "message": {"message": "…", "args": […]}, "range": …},
 //!   "needs": [{"table": "Zones", "keys": ["752"]}],
+//!   "choices": [{"label": "Linehaul", "kind": "best", "range": …, "chosen": "Flat",
+//!                "options": [{"label": "Per mile", "range": …, "status": "lost",
+//!                             "subtotal": {"$q": "1175", "u": "$"}, "refusal": null}, …]}],
 //!   "trace": [… ] | null, "lookups": […]}]}
 //! ```
 //!
 //! `bill` is present for a rated tariff, `value` for a condition, `refusal`, `error` and
-//! `needs` for those statuses. A refusal's `message` is the author's text, or a `Message` when
+//! `needs` for those statuses. `choices` is every `best` and `worst` the run evaluated, in the
+//! order their evaluation began, at most 200: each option's `status` is `chosen`, `lost` or
+//! `refused`, with its exact `subtotal` or its `refusal`; `chosen` is `null` when every option
+//! refused. A result that never ran, and a condition, has `"choices": []`. A refusal's `message` is the author's text, or a `Message` when
 //! the crate wrote it (an input with no value).
 //!
 //! `tariff.test` runs a file's tests and properties, in source order: `{"source", "context",
@@ -53,7 +59,7 @@
 //! them and runs the tests again. `coverage` ([`super::coverage`]) is `null` when `names` ran
 //! only some tests or a test ended `needs`.
 
-use super::bill::{Converted, Finished, Line};
+use super::bill::{Choices, Converted, Finished, Line, OptionOutcome};
 use super::budget::{BudgetWire, Limits};
 use super::error::{Code, EvalError, Refusal, RefusalText};
 use super::record::{decode_record, sample};
@@ -281,6 +287,7 @@ fn evaluate_one(evaluation: &Evaluation<'_>) -> Json {
         Err(error) => {
             status(&mut result, "error");
             result.insert(String::from("error"), error_json(&error, &index));
+            result.insert(String::from("choices"), Json::Array(Vec::new()));
             result.insert(String::from("trace"), Json::Null);
             result.insert(String::from("lookups"), Json::Array(Vec::new()));
             return Json::Object(result);
@@ -340,6 +347,7 @@ fn evaluate_one(evaluation: &Evaluation<'_>) -> Json {
             result.insert(String::from("needs"), needs_json(needs));
         }
     }
+    result.insert(String::from("choices"), choices_json(&run.choices, &index));
     result.insert(String::from("trace"), run.trace.encode(&index));
     result.insert(String::from("lookups"), run.trace.encode_lookups(&index));
     Json::Object(result)
@@ -460,6 +468,59 @@ pub fn bill_json(bill: &Finished, index: &Utf16Index) -> Json {
         ("accessorialTotal", money(bill.accessorial_total)),
         ("total", money(bill.total)),
     ])
+}
+
+/// The choices a run evaluated on the wire: `[{"label", "kind", "range", "chosen",
+/// "options": [{"label", "range", "status", "subtotal", "refusal"}]}]`.
+#[must_use]
+pub fn choices_json(choices: &Choices, index: &Utf16Index) -> Json {
+    Json::Array(
+        choices
+            .records()
+            .map(|choice| {
+                let options = choice
+                    .options
+                    .iter()
+                    .enumerate()
+                    .map(|(at, option)| {
+                        let (status, subtotal, refusal) = match &option.outcome {
+                            OptionOutcome::Billed(amount) => (
+                                if choice.chosen == Some(at) {
+                                    "chosen"
+                                } else {
+                                    "lost"
+                                },
+                                money(*amount),
+                                Json::Null,
+                            ),
+                            OptionOutcome::Refused(refusal) => {
+                                ("refused", Json::Null, refusal_json(refusal, index))
+                            }
+                        };
+                        object(vec![
+                            ("label", Json::String(option.label.clone())),
+                            ("range", range(option.span, index)),
+                            ("status", Json::String(status.to_owned())),
+                            ("subtotal", subtotal),
+                            ("refusal", refusal),
+                        ])
+                    })
+                    .collect();
+                object(vec![
+                    ("label", Json::String(choice.label.clone())),
+                    ("kind", Json::String(choice.kind.keyword().to_owned())),
+                    ("range", range(choice.span, index)),
+                    (
+                        "chosen",
+                        choice
+                            .chosen_label()
+                            .map_or(Json::Null, |label| Json::String(label.to_owned())),
+                    ),
+                    ("options", Json::Array(options)),
+                ])
+            })
+            .collect(),
+    )
 }
 
 fn converted_json(exchange: &Exchange, converted: &Converted) -> Json {

@@ -212,9 +212,11 @@ pub struct Checker<'a> {
     pub expects_refusal: bool,
     /// What the property being checked has varied and given, when the body is a property's.
     pub property: Option<Box<super::property::PropertyScope>>,
+    /// The choices around the statement being checked, and the labels used so far.
+    pub choice: super::choose::ChoiceState,
 }
 
-/// The charges a tariff writes, for checking `charge(…)` in tests.
+/// The charges and choices a tariff writes, for checking `charge(…)` and `chosen(…)` in tests.
 #[derive(Debug, Default, Clone)]
 pub struct Billed {
     /// Literal labels.
@@ -223,6 +225,8 @@ pub struct Billed {
     pub codes: Vec<String>,
     /// Whether some label interpolates, so any label may match.
     pub any_label: bool,
+    /// The labels of the file's `best` and `worst` choices, for `chosen(…)` in tests.
+    pub choices: Vec<String>,
 }
 
 impl Checker<'_> {

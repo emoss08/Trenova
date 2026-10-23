@@ -8,8 +8,9 @@
 //!    checker lowered from its annotation ([`super::StaticTypes::input_type`]; without the
 //!    checker's types a sent value is an `internal` error), else its default. An input value
 //!    that does not fit is an error with code `input`; so is a value for an input the file does
-//!    not declare. An input with neither a value nor a default refuses to rate, naming the
-//!    input.
+//!    not declare. A value its `where` constraint does not admit is an `input` error too,
+//!    naming the bounds ([`enforce_constraint`]). An input with neither a value nor a default
+//!    refuses to rate, naming the input.
 //! 2. **The body.** The root file's statements run top to bottom.
 //! 3. **The result.** A tariff's bill is finished by its total clauses; a condition's last
 //!    expression is its value. When a table lookup needed cells the request did not carry, the
@@ -17,7 +18,7 @@
 //!    caused it.
 
 use super::StaticTypes;
-use super::bill::{Clauses, Finished};
+use super::bill::{Choices, Clauses, Finished};
 use super::budget::{Limits, Meter};
 use super::error::{Code, EvalError, Refusal, RefusalText, Stop};
 use super::interp::link::Linked;
@@ -88,6 +89,8 @@ pub struct Run {
     pub outcome: Outcome,
     /// What it did.
     pub trace: Trace,
+    /// The `best` and `worst` choices it evaluated.
+    pub choices: Choices,
 }
 
 /// Runs a loaded program.
@@ -119,6 +122,7 @@ pub fn run_program(request: Request<'_>) -> Run {
     Run {
         outcome,
         trace: interp.trace,
+        choices: interp.choices,
     }
 }
 
@@ -230,7 +234,7 @@ pub fn bind_inputs(
                         .at(input.name.span),
                     )
                 })?;
-                decode(json, &ty, name).map_err(|error| {
+                let value = decode(json, &ty, name).map_err(|error| {
                     Stop::Failed(
                         EvalError::with(
                             Code::Input,
@@ -241,7 +245,10 @@ pub fn bind_inputs(
                         )
                         .at(input.name.span),
                     )
-                })?
+                })?;
+                enforce_constraint(interp, name, &value)
+                    .map_err(|error| Stop::Failed(error.at(input.name.span)))?;
+                value
             }
             (None, Some(default)) => {
                 let mut scope = Env::new(0, true);
@@ -260,4 +267,32 @@ pub fn bind_inputs(
         env.bind(name, value, false);
     }
     Ok(())
+}
+
+/// Refuses an input value its `where` constraint does not admit, with an `input` error naming
+/// the input, the value (or the list item, by index) and the bounds. Each value compared is a
+/// metered step.
+///
+/// # Errors
+///
+/// The `input` error, or a `budget` error when a long list spends the step budget.
+pub fn enforce_constraint(
+    interp: &mut Interp<'_, '_>,
+    name: &str,
+    value: &Value,
+) -> Result<(), EvalError> {
+    let Some(constraint) = interp.input_constraint(name) else {
+        return Ok(());
+    };
+    let constraint = constraint.clone();
+    let meter = &mut interp.meter;
+    let found =
+        crate::tariff::constraint::breach_metered(&constraint, value, &mut || meter.step())?;
+    match found {
+        Some(breach) => Err(EvalError::new(
+            Code::Input,
+            breach.message(&constraint, name),
+        )),
+        None => Ok(()),
+    }
 }

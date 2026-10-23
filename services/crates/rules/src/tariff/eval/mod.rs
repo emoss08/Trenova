@@ -40,13 +40,18 @@ use crate::tariff::syntax::program::ModuleId;
 use crate::tariff::types::Type;
 
 /// What the checker knows about a program's types, for the few places a value cannot say what
-/// it is: the `sum` of an empty list, a percent scaled by a number, and the declared type of
-/// each input, which the value a host sends for it is decoded against.
+/// it is: the `sum` of an empty list, a percent scaled by a number, the declared type of each
+/// input, which the value a host sends for it is decoded against, and each input's constraint,
+/// which that value must satisfy.
 pub trait StaticTypes {
     /// The static type of expression `node` in module `module`, when known.
     fn type_of(&self, module: ModuleId, node: NodeId) -> Option<Type>;
     /// The declared type of the root file's input `name`, when known.
     fn input_type(&self, name: &str) -> Option<Type>;
+    /// The folded `where` constraint of the root file's input `name`, when it has one.
+    fn input_constraint(&self, _name: &str) -> Option<&crate::tariff::constraint::Constraint> {
+        None
+    }
 }
 
 /// No static types: every question gets the dynamic default.
@@ -63,6 +68,13 @@ impl StaticTypes for crate::tariff::check::Analysis {
             .iter()
             .find(|input| input.name == name)
             .map(|input| input.ty.clone())
+    }
+
+    fn input_constraint(&self, name: &str) -> Option<&crate::tariff::constraint::Constraint> {
+        self.inputs
+            .iter()
+            .find(|input| input.name == name)
+            .and_then(|input| input.constraint.as_ref())
     }
 }
 

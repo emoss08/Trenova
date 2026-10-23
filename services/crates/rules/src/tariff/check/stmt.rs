@@ -111,15 +111,7 @@ impl Checker<'_> {
             StmtKind::Total(clause) => self.total(stmt, clause),
             StmtKind::Vary { target, values } => self.vary(target, values.as_ref()),
             StmtKind::Assume(condition) => self.assume(condition),
-            StmtKind::Choose(_) => {
-                self.report(Diagnostic::error(
-                    "phase0",
-                    stmt.span,
-                    Message::new(message!(
-                        "Phase 0 placeholder: this construct is not implemented yet"
-                    )),
-                ));
-            }
+            StmtKind::Choose(choose) => self.choose(stmt, choose),
             StmtKind::Given { target, value } => self.given(stmt, target, value),
             StmtKind::Expect(expect) => {
                 self.expected_yet = true;
@@ -251,6 +243,7 @@ impl Checker<'_> {
             self.expr(value, None);
             return;
         }
+        self.assign_in_choice(target, id);
         let want = Want::Annotation {
             name: target.text.clone(),
         };
@@ -298,7 +291,7 @@ impl Checker<'_> {
 
     /// Refuses a billing statement (a charge or note) outside a tariff's top level and its
     /// blocks.
-    fn billing(&mut self, span: Span, what: Message) -> bool {
+    pub(super) fn billing(&mut self, span: Span, what: Message) -> bool {
         let reason = match (&self.body, self.kind) {
             (Body::Function { .. }, _) => Some(Message::new(message!(
                 "a function computes values; only a tariff bills them"
