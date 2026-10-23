@@ -285,6 +285,9 @@ fn bodies(declarer: &Declarer<'_>, state: &mut State, out: &mut ModuleAnalysis) 
     ));
     used.extend(names_read_by_declarations(module));
     unused_globals(declarer, &globals, &used, out);
+    super::bounds::check(module, state, &globals, out);
+    super::options::check(module, out);
+    super::codes::check(module, declarer.context, out);
     if let Some(slot) = state.globals.get_mut(index) {
         *slot = globals;
     }

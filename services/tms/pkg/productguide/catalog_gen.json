@@ -1,5 +1,5 @@
 {
-  "version": "sha256:ab358a1ee1888afce57122c24388516b7766f29999dbfe5b169f53d459d5b2ad",
+  "version": "sha256:95c2ec798d360606f5b6599731127c30315807ec794853f2767d9cb7968588a8",
   "modules": [
     {
       "id": "home",
@@ -7745,6 +7745,37 @@
             "Hover a name to see its type, its documentation and what it came to on the preview load. Type inside a function's parentheses to see its parameters. Inferred types and parameter names are drawn in the text in grey.",
             "Press F12 (or Ctrl-click) on a name to jump to where it is declared, including into a library it comes from, and F2 to rename a binding everywhere it is used.",
             "The format button under the editor (or Shift+Alt+F) lays the file out in Tariff's one style. A file with syntax errors is left as it is until it parses."
+          ]
+        },
+        {
+          "title": "Fix a charge code your catalog doesn't have",
+          "keywords": [
+            "unknown charge code",
+            "accessorial code",
+            "FSC",
+            "add accessorial charge",
+            "charge code missing"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
+            "A `charge … as CODE` whose code isn't in your accessorial charges is listed under the editor once, with every line that uses it. When a code in your catalog is spelled nearly the same, or its description matches the charge's label, the fix beside the problem changes every use to it.",
+            "To bill the line without a code, choose the fix that bills it as a freight line.",
+            "To add the code instead, select **Add … to accessorial charges** beside the problem (shown when you may create accessorial charges). The new charge opens with the code and the charge's label filled in; finish it and save, and the problem clears."
+          ]
+        },
+        {
+          "title": "Catch values a contract can never set",
+          "keywords": [
+            "never true",
+            "always true",
+            "where bounds",
+            "typo",
+            "dead code",
+            "unreachable"
+          ],
+          "steps": [
+            "When a template compares an input with a value its `where` bounds rule out, as in `service == \"Guarenteed\"` when `service` may only be `\"Standard\"` or `\"Guaranteed\"`, the editor warns that the comparison is never true and offers the nearest allowed value as the fix.",
+            "It also warns about comparisons the bounds already decide (`rate > $20/mi` when `rate` stops at $15/mi), `match` arms the bounds rule out, and tests that set an input to a value no contract could set."
           ]
         },
         {

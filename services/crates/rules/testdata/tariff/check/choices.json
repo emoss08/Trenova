@@ -651,6 +651,74 @@
     "fn chosen(label: Text) -> Money = $1",
     "charge \"x\" = chosen(\"a\")"
    ]
+  },
+  {
+   "name": "chosen compared with a label that is no option suggests the nearest",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Per mile\" = $1",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $2",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(\"Linehaul\") == \"Flta\"",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "\"Flta\"",
+     "code": "unknown-option",
+     "fixes": [
+      {
+       "label": "Change to `\"Flat\"`",
+       "result": [
+        "tariff \"t\"",
+        "best \"Linehaul\" {",
+        "  option \"Per mile\" {",
+        "    charge \"Per mile\" = $1",
+        "  }",
+        "  option \"Flat\" {",
+        "    charge \"Flat\" = $2",
+        "  }",
+        "}",
+        "test \"t\" {",
+        "  expect chosen(\"Linehaul\") == \"Flat\"",
+        "}"
+       ]
+      }
+     ],
+     "message": "The choice `Linehaul` has no option labelled `Flta`. Did you mean `Flat`?"
+    }
+   ]
+  },
+  {
+   "name": "chosen compared with a label nothing like an option lists the options",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Per mile\" = $1",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $2",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(\"Linehaul\") != \"Zone rate\"",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "\"Zone rate\"",
+     "code": "unknown-option",
+     "fixes": [],
+     "message": "The choice `Linehaul` has no option labelled `Zone rate`: its options are `\"Per mile\", \"Flat\"`"
+    }
+   ]
   }
  ]
 }

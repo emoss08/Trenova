@@ -1,4 +1,5 @@
-//! Walks over a syntax tree: every expression, in source order, each before its children.
+//! Walks over a syntax tree: every expression and statement, in source order, each before its
+//! children.
 //!
 //! The parser numbers expressions with it; the checker, evaluator and editor may use it to visit
 //! every expression of a file without writing the traversal again. A tree is never deeper than
@@ -25,15 +26,16 @@ use super::ast::TextPart;
 use super::ast::TotalClause;
 
 macro_rules! walker {
-    ($($m:ident)?; $exprs:ident, $item:ident, $block:ident, $condition:ident, $text:ident, $stmt:ident, $arms:ident, $pattern:ident, $expr:ident) => {
-    /// Calls `visit` on every expression of `file`, in source order, each before its children.
-    pub fn $exprs(file: & $($m)? File, visit: &mut impl FnMut(& $($m)? Expr)) {
+    ($($m:ident)?; $visitor:ident; $exprs:ident, $item:ident, $block:ident, $condition:ident, $text:ident, $stmt:ident, $arms:ident, $pattern:ident, $expr:ident) => {
+    /// Calls `visit` on every expression and statement of `file`, in source order, each before
+    /// its children.
+    pub fn $exprs(file: & $($m)? File, visit: &mut impl $visitor) {
         for item in & $($m)? file.items {
             $item(item, visit);
         }
     }
 
-    fn $item(item: & $($m)? Item, visit: &mut impl FnMut(& $($m)? Expr)) {
+    fn $item(item: & $($m)? Item, visit: &mut impl $visitor) {
         match & $($m)? item.kind {
             ItemKind::Use(_) | ItemKind::Type(_) | ItemKind::Enum(_) => {}
             ItemKind::Input(input) => {
@@ -62,19 +64,19 @@ macro_rules! walker {
         }
     }
 
-    fn $block(block: & $($m)? Block, visit: &mut impl FnMut(& $($m)? Expr)) {
+    fn $block(block: & $($m)? Block, visit: &mut impl $visitor) {
         for stmt in & $($m)? block.stmts {
             $stmt(stmt, visit);
         }
     }
 
-    fn $condition(condition: & $($m)? Condition, visit: &mut impl FnMut(& $($m)? Expr)) {
+    fn $condition(condition: & $($m)? Condition, visit: &mut impl $visitor) {
         match condition {
             Condition::Expr(expr) | Condition::Let { value: expr, .. } => $expr(expr, visit),
         }
     }
 
-    fn $text(text: & $($m)? Text, visit: &mut impl FnMut(& $($m)? Expr)) {
+    fn $text(text: & $($m)? Text, visit: &mut impl $visitor) {
         for part in & $($m)? text.parts {
             if let TextPart::Expr(expr) = part {
                 $expr(expr, visit);
@@ -82,7 +84,8 @@ macro_rules! walker {
         }
     }
 
-    fn $stmt(stmt: & $($m)? Stmt, visit: &mut impl FnMut(& $($m)? Expr)) {
+    fn $stmt(stmt: & $($m)? Stmt, visit: &mut impl $visitor) {
+        visit.stmt(stmt);
         match & $($m)? stmt.kind {
             StmtKind::Let(binding) | StmtKind::Var(binding) => $expr(& $($m)? binding.value, visit),
             StmtKind::Assign { value, .. }
@@ -152,7 +155,7 @@ macro_rules! walker {
         }
     }
 
-    fn $arms(arms: & $($m)? [Arm], visit: &mut impl FnMut(& $($m)? Expr)) {
+    fn $arms(arms: & $($m)? [Arm], visit: &mut impl $visitor) {
         for arm in arms {
             $pattern(& $($m)? arm.pattern, visit);
             if let Some(guard) = & $($m)? arm.guard {
@@ -165,7 +168,7 @@ macro_rules! walker {
         }
     }
 
-    fn $pattern(pattern: & $($m)? Pattern, visit: &mut impl FnMut(& $($m)? Expr)) {
+    fn $pattern(pattern: & $($m)? Pattern, visit: &mut impl $visitor) {
         match & $($m)? pattern.kind {
             PatternKind::Literal(expr) => $expr(expr, visit),
             PatternKind::Range { start, end, .. } => {
@@ -192,8 +195,8 @@ macro_rules! walker {
     }
 
     /// Calls `visit` on `expr` and then on each expression inside it, in source order.
-    pub fn $expr(expr: & $($m)? Expr, visit: &mut impl FnMut(& $($m)? Expr)) {
-        visit(expr);
+    pub fn $expr(expr: & $($m)? Expr, visit: &mut impl $visitor) {
+        visit.expr(expr);
         match & $($m)? expr.kind {
             ExprKind::Number { .. }
             | ExprKind::Money { .. }
@@ -260,5 +263,56 @@ macro_rules! walker {
     };
 }
 
-walker!(mut; exprs_mut, item_mut, block_mut, condition_mut, text_mut, stmt_mut, arms_mut, pattern_mut, expr_mut);
-walker!(; exprs, item_ref, block_ref, condition_ref, text_ref, stmt_ref, arms_ref, pattern_ref, expr);
+/// What a walk calls at each node; a closure over expressions is one.
+pub trait Visit {
+    /// An expression, before its children.
+    fn expr(&mut self, expr: &Expr);
+    /// A statement, before its children.
+    fn stmt(&mut self, _stmt: &Stmt) {}
+}
+
+/// What a mutating walk calls at each node; a closure over expressions is one.
+pub trait VisitMut {
+    /// An expression, before its children.
+    fn expr(&mut self, expr: &mut Expr);
+    /// A statement, before its children.
+    fn stmt(&mut self, _stmt: &mut Stmt) {}
+}
+
+/// A closure over expressions, as a visitor.
+struct Exprs<'v, F>(&'v mut F);
+
+impl<F: FnMut(&Expr)> Visit for Exprs<'_, F> {
+    fn expr(&mut self, expr: &Expr) {
+        (self.0)(expr);
+    }
+}
+
+impl<F: FnMut(&mut Expr)> VisitMut for Exprs<'_, F> {
+    fn expr(&mut self, expr: &mut Expr) {
+        (self.0)(expr);
+    }
+}
+
+walker!(mut; VisitMut; nodes_mut, item_mut, block_mut, condition_mut, text_mut, stmt_mut, arms_mut, pattern_mut, node_expr_mut);
+walker!(; Visit; nodes, item_ref, block_ref, condition_ref, text_ref, stmt_ref, arms_ref, pattern_ref, node_expr);
+
+/// Calls `visit` on every expression of `file`, in source order, each before its children.
+pub fn exprs(file: &File, visit: &mut impl FnMut(&Expr)) {
+    nodes(file, &mut Exprs(visit));
+}
+
+/// Calls `visit` on every expression of `file`, mutably, in source order.
+pub fn exprs_mut(file: &mut File, visit: &mut impl FnMut(&mut Expr)) {
+    nodes_mut(file, &mut Exprs(visit));
+}
+
+/// Calls `visit` on `expr` and then on each expression inside it, in source order.
+pub fn expr(expr: &Expr, visit: &mut impl FnMut(&Expr)) {
+    node_expr(expr, &mut Exprs(visit));
+}
+
+/// Calls `visit` on `expr` and then on each expression inside it, mutably, in source order.
+pub fn expr_mut(expr: &mut Expr, visit: &mut impl FnMut(&mut Expr)) {
+    node_expr_mut(expr, &mut Exprs(visit));
+}

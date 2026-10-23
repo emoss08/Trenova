@@ -1008,7 +1008,8 @@ impl Checker<'_> {
     }
 
     /// Checks a charge code against the context's codes; true when it is known (or codes are
-    /// not loaded).
+    /// not loaded). An inactive code is reported here; an unknown one once per code, with all
+    /// its uses, by [`super::codes`].
     pub fn code_known(&mut self, code: &Name) -> bool {
         let Some(codes) = &self.context.codes else {
             return true;
@@ -1026,29 +1027,7 @@ impl Checker<'_> {
                 ));
                 false
             }
-            None => {
-                let candidates: Vec<String> = codes
-                    .iter()
-                    .filter(|c| c.active)
-                    .map(|c| c.code.clone())
-                    .collect();
-                let diagnostic = Self::did_you_mean(
-                    "unknown-code",
-                    code.span,
-                    &code.text,
-                    &candidates,
-                    Message::with(
-                        message!("{0} isn't in the accessorial charge catalog"),
-                        [quote(&code.text)],
-                    ),
-                    Message::with(
-                        message!("{0} isn't in the accessorial charge catalog"),
-                        [quote(&code.text)],
-                    ),
-                );
-                self.report(diagnostic);
-                false
-            }
+            None => false,
         }
     }
 }

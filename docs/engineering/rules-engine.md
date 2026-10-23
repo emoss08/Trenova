@@ -300,7 +300,10 @@ The checker's are listed in the header of `src/tariff/check/mod.rs`: unknown nam
 you mean" fixes), `unknown-code` and `inactive-code`, `type-mismatch`, `unit-mismatch`,
 `optional` (with `?? zero`, `if let` and `require let` fixes), scope rules, call rules, rate
 table rules, charge and total-clause rules, `match` exhaustiveness and overlap, the warnings
-(`unused`, `unreachable`, `no-charge`, `needless-fallback` and the rest), and `input-value`.
+(`unused`, `unreachable`, `no-charge`, `needless-fallback`, `bounds` for code an input's
+`where` bounds make dead, and the rest), `unknown-option` for a `chosen` compared with a label
+that is no option, `constraint` (including a test's `given` outside the bounds), and
+`input-value`.
 
 ### The gate
 

@@ -65,8 +65,8 @@ catalog changes, since each of those can make the other stale.
 - A guide for a path the router does not serve, or two guides for one path.
 - A navigation entry pointing at a path no route serves.
 - A **bold** label that is not text the app shows: an i18n string used by the
-  client, a navigation label, a quick action, a page title, or a table's
-  generated "New {thing}" button.
+  client (a placeholder such as `{0}` written as "…"), a navigation label, a
+  quick action, a page title, or a table's generated "New {thing}" button.
 - A markdown link or a `related` entry that is not a page in the app.
 - A record link whose page no route serves.
 - A catalog that differs from what the generator would write.

@@ -1,0 +1,413 @@
+{
+ "cases": [
+  {
+   "name": "a text input compared with a value outside its list, with the nearest as a fix",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "if service == \"Guarenteed\" {",
+    "  charge \"Guaranteed\" = $150",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "service == \"Guarenteed\"",
+     "code": "bounds",
+     "fixes": [
+      {
+       "label": "Change to `\"Guaranteed\"`",
+       "result": [
+        "tariff \"t\"",
+        "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+        "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+        "enum Level { Low, Mid, High }",
+        "input level: Level = Low where [Low, Mid]",
+        "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+        "note \"Service {service} at level {level}\"",
+        "if service == \"Guaranteed\" {",
+        "  charge \"Guaranteed\" = $150",
+        "}"
+       ]
+      }
+     ],
+     "message": "This is never true: `service` is only ever one of `[\"Standard\", \"Guaranteed\"]`. Did you mean `\"Guaranteed\"`?",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "name": "not equal to a value outside the list is always true",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "if service != \"Guarenteed\" {",
+    "  charge \"Standard\" = $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "service != \"Guarenteed\"",
+     "code": "bounds",
+     "fixes": [
+      {
+       "label": "Change to `\"Guaranteed\"`",
+       "result": [
+        "tariff \"t\"",
+        "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+        "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+        "enum Level { Low, Mid, High }",
+        "input level: Level = Low where [Low, Mid]",
+        "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+        "note \"Service {service} at level {level}\"",
+        "if service != \"Guaranteed\" {",
+        "  charge \"Standard\" = $0",
+        "}"
+       ]
+      }
+     ],
+     "message": "This is always true: `service` is only ever one of `[\"Standard\", \"Guaranteed\"]`. Did you mean `\"Guaranteed\"`?",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "name": "a value inside the list is not judged",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "if service == \"Guaranteed\" {",
+    "  charge \"Guaranteed\" = $150",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "in a list with no value the input takes is never true",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "if service in [\"Express\", \"Rush\"] {",
+    "  charge \"Rush\" = $50",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "service in [\"Express\", \"Rush\"]",
+     "code": "bounds",
+     "fixes": [],
+     "message": "This is never true: `service` is only ever one of `[\"Standard\", \"Guaranteed\"]`",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "name": "a text match arm outside the list is never matched",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "let fee = match service {",
+    "  \"Standard\" => $0",
+    "  \"Guarenteed\" => $150",
+    "  _ => $0",
+    "}",
+    "charge \"Service\" = fee"
+   ],
+   "diagnostics": [
+    {
+     "at": "\"Guarenteed\"",
+     "code": "bounds",
+     "fixes": [
+      {
+       "label": "Change to `\"Guaranteed\"`",
+       "result": [
+        "tariff \"t\"",
+        "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+        "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+        "enum Level { Low, Mid, High }",
+        "input level: Level = Low where [Low, Mid]",
+        "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+        "note \"Service {service} at level {level}\"",
+        "let fee = match service {",
+        "  \"Standard\" => $0",
+        "  \"Guaranteed\" => $150",
+        "  _ => $0",
+        "}",
+        "charge \"Service\" = fee"
+       ]
+      }
+     ],
+     "message": "This arm is never matched: `service` is only ever one of `[\"Standard\", \"Guaranteed\"]`. Did you mean `\"Guaranteed\"`?",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "name": "an enum arm the list leaves out is never matched",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "let fee = match level {",
+    "  Low => $0",
+    "  Mid => $10",
+    "  High => $20",
+    "}",
+    "charge \"Level\" = fee"
+   ],
+   "diagnostics": [
+    {
+     "at": "High",
+     "code": "bounds",
+     "fixes": [],
+     "message": "This arm is never matched: `level` is only ever one of `[Low, Mid]`",
+     "nth": 2,
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "name": "a comparison above the range's top is never true",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "if rate > $20/mi {",
+    "  charge \"Premium\" = $1",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "rate > $20/mi",
+     "code": "bounds",
+     "fixes": [],
+     "message": "This is never true: `rate` is always within `$0.50/mi..=$15/mi`",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "name": "the same comparison written the other way round",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "if $20/mi < rate {",
+    "  charge \"Premium\" = $1",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "$20/mi < rate",
+     "code": "bounds",
+     "fixes": [],
+     "message": "This is never true: `rate` is always within `$0.50/mi..=$15/mi`",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "name": "a comparison with the range's bottom is always true",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "if rate >= $0.50/mi {",
+    "  charge \"Base\" = $1",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "rate >= $0.50/mi",
+     "code": "bounds",
+     "fixes": [],
+     "message": "This is always true: `rate` is always within `$0.50/mi..=$15/mi`",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "name": "a comparison inside the range is not judged",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "if rate > $5/mi {",
+    "  charge \"Premium\" = $1",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "a range arm below the bounds is never matched",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "let fee = match rate {",
+    "  ..$0.25/mi => $1",
+    "  _ => $2",
+    "}",
+    "charge \"Fee\" = fee"
+   ],
+   "diagnostics": [
+    {
+     "at": "..$0.25/mi",
+     "code": "bounds",
+     "fixes": [],
+     "message": "This arm is never matched: `rate` is always within `$0.50/mi..=$15/mi`",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "name": "an input read through another binding is not judged",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "let s = service",
+    "if s == \"Guarenteed\" {",
+    "  charge \"Guaranteed\" = $150",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "a test's given outside a list constraint, with the nearest as a fix",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "test \"t\" {",
+    "  given input.service = \"Guarenteed\"",
+    "  expect total == $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "\"Guarenteed\"",
+     "code": "constraint",
+     "fixes": [
+      {
+       "label": "Change to `\"Guaranteed\"`",
+       "result": [
+        "tariff \"t\"",
+        "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+        "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+        "enum Level { Low, Mid, High }",
+        "input level: Level = Low where [Low, Mid]",
+        "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+        "note \"Service {service} at level {level}\"",
+        "test \"t\" {",
+        "  given input.service = \"Guaranteed\"",
+        "  expect total == $0",
+        "}"
+       ]
+      }
+     ],
+     "message": "`service` must be one of [Standard, Guaranteed]; Guarenteed isn't, so no contract can set it and this test proves nothing"
+    }
+   ]
+  },
+  {
+   "name": "a test's given outside a range",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "test \"t\" {",
+    "  given input.rate = $30/mi",
+    "  expect total == $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "$30/mi",
+     "code": "constraint",
+     "fixes": [],
+     "message": "`rate` must be from $0.50/mi to $15.00/mi; $30.00/mi is outside it, so no contract can set it and this test proves nothing"
+    }
+   ]
+  },
+  {
+   "name": "a given inside the bounds is fine",
+   "source": [
+    "tariff \"t\"",
+    "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+    "input rate: Money/mi = $2/mi where $0.50/mi..=$15/mi",
+    "enum Level { Low, Mid, High }",
+    "input level: Level = Low where [Low, Mid]",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "note \"Service {service} at level {level}\"",
+    "test \"t\" {",
+    "  given input.rate = $3/mi",
+    "  given input.service = \"Guaranteed\"",
+    "  given shipment.distance = 10 mi",
+    "  expect total == $30",
+    "}"
+   ],
+   "diagnostics": []
+  }
+ ]
+}

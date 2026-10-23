@@ -483,7 +483,13 @@ charge "Detention, stop {stop.sequence}" as DET (quantity: billable, rate: $65/h
     and "Deficit weight" shows both.
   - **Coded charges are accessorials.** `as CODE` names an active code in the organisation's
     accessorial charge catalog (`FSC`, `DET`, `LIFT`; the checker refuses an unknown or inactive
-    code). The line becomes a system-generated additional charge owned by the tariff (replaced on
+    code). An unknown code is reported once, at its first use, with every other use as related
+    places. It suggests a code spelled nearly the same, or else a catalog code whose description
+    matches the charge's label ("`FSC` isn't in the accessorial charge catalog. `FUEL` is "Fuel
+    surcharge"; did you mean `FUEL`?"), with a fix that writes it at every use, and a second fix
+    that bills the line as freight instead by removing `as CODE`. The Studio adds **Add CODE to
+    accessorial charges**, which opens the catalog's create form with the code filled in and the
+    charge's label as its description. The line becomes a system-generated additional charge owned by the tariff (replaced on
     every re-rate), an accessorial invoice line carrying the code, and an EDI 210 charge whose
     code is the catalog code.
   - **Amounts.** A coded charge must be positive. An uncoded charge may be negative (a discount
@@ -554,7 +560,9 @@ best "Linehaul" {
   bills `$0`, so `best` always picks it.
 - **In tests**, `chosen("Linehaul")` is the label of the option the last evaluation of that choice
   kept, as `Text?` (`none` when the choice was not reached or every option refused):
-  `expect chosen("Linehaul") == "Flat"`.
+  `expect chosen("Linehaul") == "Flat"`. Comparing it (`==`, `!=`, `in [...]`) with a label that
+  is no option of that choice is an error (`unknown-option`), with the nearest option's label as
+  a fix.
 
 ## Contracts and inputs
 
@@ -613,8 +621,24 @@ input service: Service = Standard where [Standard, Guaranteed]
   constraint, so the rule editor shows the bounds and validates as the user types.
 - **At rating time** a value outside the constraint (a value saved before the constraint was
   added) stops the rating with an `input` error naming the input, the value and the bounds.
-- **In tests and properties**, a `given input.x` outside the constraint is an error, and a
+- **In tests and properties**, a `given input.x` outside the constraint is an error (`constraint`)
+  naming the bounds, since no contract can set that value, so a test built on it proves nothing.
+  For a list constraint it suggests the nearest listed value, with a fix that writes it. A
   property's `vary input.x` with no range of its own varies over the constraint.
+- **What the bounds decide.** Where an input is read by its own name, the checker knows its
+  values, and warns (`bounds`) about code the bounds make dead. It is a warning because the code
+  runs; the bill is unaffected.
+  - A comparison with a compile-time value (`==`, `!=`, `<`, `<=`, `>`, `>=`, `in [...]`) whose
+    answer the bounds fix is "never true" or "always true", quoting the constraint: with `input
+    rate: Money/mi where $0.50/mi..=$15/mi`, `rate > $20/mi` is never true and `rate >=
+    $0.50/mi` always is.
+  - Against a list constraint, a value outside the list names the values the input takes, and
+    suggests the nearest of them with a fix: `service == "Guarenteed"` is never true, because
+    `service` is only ever `"Standard"` or `"Guaranteed"`; did you mean `"Guaranteed"`?
+  - A `match` arm whose pattern (a value, a range or a variant) the bounds rule out is "never
+    matched".
+  An input read through another binding (`let s = service`), or compared with a value computed
+  at run time, is not judged.
 
 ## Accessorials and conditions
 
