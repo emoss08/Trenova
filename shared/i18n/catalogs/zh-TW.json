@@ -8235,6 +8235,7 @@
   "Report run": "報表執行",
   "Report schedule disabled": "報表排程已停用",
   "Report schedule skipped": "報表排程已略過",
+  "Report schedules are listed for a person, and this request has no person": "報表排程是依人員列出的，而此請求沒有對應的人員",
   "ReportDefinition not found": "找不到報表定義",
   "Reported mileage, inspections and power units fall outside industry benchmarks.": "回報的里程、檢查次數與動力車輛數超出業界基準範圍。",
   "Reported time cannot be in the future": "回報時間不能是未來時間",

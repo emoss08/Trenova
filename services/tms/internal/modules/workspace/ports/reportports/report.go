@@ -176,6 +176,7 @@ type GetReportScheduleRequest struct {
 
 type ListReportSchedulesRequest struct {
 	TenantInfo   pagination.TenantInfo
+	VisibleTo    pulid.ID
 	DefinitionID pulid.ID
 	EnabledOnly  bool
 	Limit        int

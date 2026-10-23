@@ -44,6 +44,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   AlertTriangleIcon,
@@ -769,6 +770,7 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
 
 function ScheduleRow({
   schedule,
+  canManage,
   onEdit,
   onDelete,
   onToggleEnabled,
@@ -776,6 +778,7 @@ function ScheduleRow({
   toggling,
 }: {
   schedule: ReportSchedule;
+  canManage: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onToggleEnabled: (enabled: boolean) => void;
@@ -826,6 +829,12 @@ function ScheduleRow({
             {schedule.formats.map((format) => format.toUpperCase()).join(" ")}
           </span>
           <DeliveryFacts schedule={schedule} />
+          {!canManage && (
+            <>
+              <span className="text-muted-foreground/50">·</span>
+              <span>{t("Set up by a teammate")}</span>
+            </>
+          )}
           {schedule.enabled && schedule.nextRunAt ? (
             <>
               <span className="text-muted-foreground/50">·</span>
@@ -838,24 +847,26 @@ function ScheduleRow({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        <div className="flex gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
-          <Button variant="ghost" size="icon" onClick={onEdit} aria-label={t("Edit schedule")}>
-            <Edit02Icon className="size-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onDelete}
-            disabled={deleting}
-            aria-label={t("Delete schedule")}
-          >
-            <Trash01Icon className="text-destructive size-3.5" />
-          </Button>
-        </div>
+        {canManage && (
+          <div className="flex gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
+            <Button variant="ghost" size="icon" onClick={onEdit} aria-label={t("Edit schedule")}>
+              <Edit02Icon className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onDelete}
+              disabled={deleting}
+              aria-label={t("Delete schedule")}
+            >
+              <Trash01Icon className="text-destructive size-3.5" />
+            </Button>
+          </div>
+        )}
         <Switch
           size="sm"
           checked={schedule.enabled}
-          disabled={toggling}
+          disabled={toggling || !canManage}
           onCheckedChange={onToggleEnabled}
           aria-label={schedule.enabled ? "Disable schedule" : "Enable schedule"}
         />
@@ -876,6 +887,7 @@ export function ReportSchedulesDialog({
   const t = useT();
 
   const definitionId = definition?.id;
+  const currentUserId = useAuthStore((state) => state.user?.id);
 
   // Only aggregate columns have a grand total to watch, so a dimension is
   // never offered as an alert target.
@@ -1003,6 +1015,7 @@ export function ReportSchedulesDialog({
               <ScheduleRow
                 key={schedule.id}
                 schedule={schedule}
+                canManage={!!currentUserId && schedule.runAsId === currentUserId}
                 deleting={deletingId === schedule.id}
                 toggling={togglingId === schedule.id}
                 onEdit={() => setEditing(schedule)}

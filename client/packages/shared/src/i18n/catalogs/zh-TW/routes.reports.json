@@ -215,6 +215,7 @@
   "Sends only when {0} is {1} {2}.": "僅在 {0} 為 {1} {2} 時才寄送。",
   "Served from the result cache": "自結果快取提供",
   "Server default": "伺服器預設值",
+  "Set up by a teammate": "由團隊成員設定",
   "Share with everyone who can read this report": "與所有可閱讀此報表的人分享",
   "Show the results in the email": "在電子郵件中顯示結果",
   "Show values": "顯示值",
