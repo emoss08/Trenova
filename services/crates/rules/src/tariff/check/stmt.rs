@@ -108,7 +108,8 @@ impl Checker<'_> {
                 }
             }
             StmtKind::Total(clause) => self.total(stmt, clause),
-            StmtKind::Choose(_) | StmtKind::Vary { .. } | StmtKind::Assume(_) => {
+            StmtKind::Choose(choose) => self.choose(stmt, choose),
+            StmtKind::Vary { .. } | StmtKind::Assume(_) => {
                 self.report(Diagnostic::error(
                     "phase0",
                     stmt.span,
@@ -256,6 +257,7 @@ impl Checker<'_> {
             self.expr(value, None);
             return;
         }
+        self.assign_in_choice(target, id);
         let want = Want::Annotation {
             name: target.text.clone(),
         };
@@ -303,7 +305,7 @@ impl Checker<'_> {
 
     /// Refuses a billing statement (a charge or note) outside a tariff's top level and its
     /// blocks.
-    fn billing(&mut self, span: Span, what: Message) -> bool {
+    pub(super) fn billing(&mut self, span: Span, what: Message) -> bool {
         let reason = match (&self.body, self.kind) {
             (Body::Function { .. }, _) => Some(Message::new(message!(
                 "a function computes values; only a tariff bills them"

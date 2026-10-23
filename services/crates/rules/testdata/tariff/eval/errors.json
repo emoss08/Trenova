@@ -179,7 +179,7 @@
       "error": {
         "code": "check",
         "message": {
-          "message": "`expect` can only be used inside a `test` block"
+          "message": "`expect` can only be used inside a `test` or `property` block"
         }
       }
     }

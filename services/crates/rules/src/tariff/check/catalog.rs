@@ -22,9 +22,24 @@ use crate::tariff::units::SIMPLE_UNITS;
 use serde_json::{Value as Json, json};
 
 /// The names that mean something only in a test, after the rating: `total` and `lines`. With the
-/// lexer's contextual words ([`CONTEXTUAL`]) they are what the catalog lists as `contextual`:
-/// ordinary names everywhere else, so a parameter may be called `to`.
+/// lexer's contextual words ([`CONTEXTUAL`]) and the words that start a construct
+/// ([`CONSTRUCT_WORDS`]) they are what the catalog lists as `contextual`: ordinary names
+/// everywhere else, so a parameter may be called `to` and a binding `option`.
 pub const TEST_NAMES: &[&str] = &["total", "lines"];
+
+/// The words the parser reads as a construct only where one can start, and as names everywhere
+/// else: `best`, `worst` and `option` (choices), `property`, `vary` and `assume` (properties),
+/// and `nondecreasing` and `nonincreasing` (a property's monotone `expect`).
+pub const CONSTRUCT_WORDS: &[&str] = &[
+    "best",
+    "worst",
+    "option",
+    "property",
+    "vary",
+    "assume",
+    "nondecreasing",
+    "nonincreasing",
+];
 
 /// The catalog as JSON.
 #[must_use]
@@ -60,7 +75,7 @@ pub fn catalog() -> Json {
             }),
         })).collect::<Vec<_>>(),
         "keywords": KEYWORDS,
-        "contextual": CONTEXTUAL.iter().chain(TEST_NAMES).collect::<Vec<_>>(),
+        "contextual": CONTEXTUAL.iter().chain(CONSTRUCT_WORDS).chain(TEST_NAMES).collect::<Vec<_>>(),
         "schema": schema_json(&schema),
     })
 }
@@ -256,7 +271,23 @@ mod tests {
             .cloned()
             .unwrap_or_default();
         for word in [
-            "as", "cents", "to", "up", "down", "half", "even", "total", "lines",
+            "as",
+            "cents",
+            "to",
+            "up",
+            "down",
+            "half",
+            "even",
+            "best",
+            "worst",
+            "option",
+            "property",
+            "vary",
+            "assume",
+            "nondecreasing",
+            "nonincreasing",
+            "total",
+            "lines",
         ] {
             assert!(
                 contextual.contains(&Json::from(word)),

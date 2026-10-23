@@ -4,13 +4,15 @@
 //!
 //! 1. starts from the sample record and the inputs' defaults;
 //! 2. applies its `given`s in order: a record path (`shipment.weight`, `lane.origin.zip3`) or
-//!    `input.name`. The test constructors (`pickup(…)`, `delivery(…)`, `splitPickup(…)`,
-//!    `splitDelivery(…)`, `commodity(…)`) build stops and commodities from the sample defaults.
+//!    `input.name` (a value outside the input's `where` constraint is an `input` error). The
+//!    test constructors (`pickup(…)`, `delivery(…)`, `splitPickup(…)`, `splitDelivery(…)`,
+//!    `commodity(…)`) build stops and commodities from the sample defaults.
 //!    Afterwards each stop without a sequence takes its position, and `shipment.pickup` and
 //!    `shipment.delivery` follow the stops unless a `given` set them;
 //! 3. runs the file;
 //! 4. runs the rest of its body in order, with `charge(CODE)` / `charge("Label")` (the matching
-//!    lines' sum, or `none`), `total` and `lines` in scope. `expect cond` must hold;
+//!    lines' sum, or `none`), `chosen("Label")` (the option that choice last kept, or `none`),
+//!    `total` and `lines` in scope. `expect cond` must hold;
 //!    `expect fails` passes when the rating was refused (with that text, when one is given).
 //!
 //! A test in a library runs its body in order with no rating: `expect`s over function calls.
@@ -34,7 +36,7 @@ use super::error::{EvalError, Refusal, Stop};
 use super::interp::link::Linked;
 use super::interp::{Env, Interp, Setup, TestView};
 use super::record::{sample, settle};
-use super::run::{Supplied, bind_inputs};
+use super::run::{Supplied, bind_inputs, enforce_constraint};
 use super::tables::{Need, Tables};
 use super::value::{Record, Value};
 use crate::message::{Arg, Message};
@@ -249,6 +251,7 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
             checker.view = Some(TestView {
                 lines: bill.lines.clone(),
                 total: bill.total,
+                chosen: interp.choices.last().clone(),
             });
         }
         let outcome = self.expectations(&mut checker, test, &rating);
@@ -446,6 +449,8 @@ fn apply_givens<'a>(
         let value = interp.eval_in(&mut scope, value).map_err(stopped)?;
         match target.as_slice() {
             [head, name] if head.text == "input" => {
+                enforce_constraint(interp, &name.text, &value)
+                    .map_err(|error| error.at(stmt.span))?;
                 inputs.insert(name.text.clone(), value);
             }
             path => {
