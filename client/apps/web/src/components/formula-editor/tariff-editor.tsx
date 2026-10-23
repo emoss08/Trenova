@@ -12,14 +12,18 @@ import {
   EMPTY_TARIFF_CONTEXT,
   type TariffCheckResult,
   type TariffContext,
+  type TariffCoverage,
   type TariffFileKind,
   type TariffRange,
   type TariffTraceEvent,
 } from "@trenova/shared/types/tariff";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { useActiveEditorRegistration } from "./active-editor";
+import { ReferencesDialog } from "./references-dialog";
+import { tariffActionMenu } from "./tariff-actions";
+import { setTariffCoverage, tariffCoverage } from "./tariff-coverage";
 import { darkTheme, languageServiceTheme, lightTheme } from "./editor-theme";
 import { highlightRangeExtension, setHighlightRange } from "./highlight-range";
 import { tariffAutocomplete } from "./tariff-complete";
@@ -29,11 +33,14 @@ import { tariffHighlight } from "./tariff-highlight";
 import { tariffHoverCard } from "./tariff-hover";
 import { refreshTariffInlays, tariffInlayHints } from "./tariff-inlays";
 import { tariffLinter } from "./tariff-lint";
-import { tariffNavigation } from "./tariff-navigate";
+import { revealRange, tariffNavigation } from "./tariff-navigate";
+import { tariffNotices } from "./tariff-notice";
+import { tariffReferenceMarks } from "./tariff-references";
 import {
   checkTariffSource,
   type TariffDefinitionTarget,
   type TariffLanguageService,
+  type TariffReferencesRequest,
 } from "./tariff-service";
 import { tariffSignatureHelp } from "./tariff-signature";
 
@@ -54,6 +61,11 @@ export type TariffEditorProps = {
   onCheck?: (result: TariffCheckResult) => void;
   /** The last preview's trace: hover cards and inlay hints show what each binding came to. */
   trace?: readonly TariffTraceEvent[] | null;
+  /**
+   * The last test run's coverage: the lines of regions no test reaches are marked in the gutter.
+   * Null (or left out) draws no coverage gutter.
+   */
+  coverage?: TariffCoverage | null;
   /** Opens a declaration that lives in an imported library (go to definition). */
   onOpenDefinition?: (target: TariffDefinitionTarget) => void;
   /** Told what formatting from the keyboard did, so the page can say why it was refused. */
@@ -81,8 +93,10 @@ export type TariffEditorProps = {
 /**
  * The Tariff source editor. Everything it shows about the text comes from the rules module:
  * highlighting from `tariff.tokens`, findings and their fixes from `tariff.check`, folding from
- * the check's outline, and completion, hover, signature help, go to definition, rename and inlay
- * hints from the editor operations, so the browser holds no grammar of its own. It suspends
+ * the check's outline, and completion, hover, signature help, go to definition, find references
+ * and the marks at the cursor, rename, Promote to input and inlay hints from the editor
+ * operations, and the last test run's coverage in the gutter, so the browser holds no grammar of
+ * its own. It suspends
  * until the module has loaded, so it sits under a Suspense boundary with its screen's skeleton.
  */
 export function TariffEditor({
@@ -92,6 +106,7 @@ export function TariffEditor({
   context,
   onCheck,
   trace = null,
+  coverage = null,
   onOpenDefinition,
   onFormat,
   highlight = null,
@@ -122,6 +137,10 @@ export function TariffEditor({
     onOpenDefinition?.(target),
   );
   const reportFormat = useLatestCallback((result: TariffFormatResult) => onFormat?.(result));
+  const [references, setReferences] = useState<TariffReferencesRequest | null>(null);
+  const showReferences = useLatestCallback((request: TariffReferencesRequest) =>
+    setReferences(request),
+  );
 
   const extensions = useMemo((): Extension[] => {
     const service: TariffLanguageService = {
@@ -130,9 +149,13 @@ export function TariffEditor({
       context: getContext,
       trace: getTrace,
       openDefinition,
+      showReferences,
     };
     const list: Extension[] = [
       tariffHighlight(getRules),
+      tariffNotices(),
+      tariffReferenceMarks(service),
+      tariffActionMenu(),
       tariffLinter(service),
       tariffFolding(service),
       tariffHoverCard(service),
@@ -156,9 +179,9 @@ export function TariffEditor({
         ]),
       ),
     ];
-    if (!mini) list.push(lintGutter());
+    if (!mini) list.push(tariffCoverage(), lintGutter());
     return list;
-  }, [getRules, getKind, getContext, getTrace, openDefinition, reportFormat, mini]);
+  }, [getRules, getKind, getContext, getTrace, openDefinition, showReferences, reportFormat, mini]);
 
   const check = useMemo(
     () => (onCheck ? checkTariffSource(rules, value, kind, context) : null),
@@ -177,12 +200,31 @@ export function TariffEditor({
     viewRef.current?.dispatch({ effects: refreshTariffInlays.of(null) });
   }, [trace]);
 
+  useEffect(() => {
+    if (viewRef.current) setTariffCoverage(viewRef.current, coverage);
+  }, [coverage]);
+
   const handleRef = (instance: ReactCodeMirrorRef | null) => {
     const view = instance?.view ?? null;
     if (view === viewRef.current) return;
     viewRef.current = view;
+    if (view && coverage) setTariffCoverage(view, coverage);
     onView?.(view);
     if (primary) setPrimary?.(view);
+  };
+
+  const pickReference = (reference: TariffReferencesRequest["references"][number]) => {
+    setReferences(null);
+    const view = viewRef.current;
+    if (reference.module === null) {
+      if (view) revealRange(view, reference.range);
+      return;
+    }
+    onOpenDefinition?.({
+      module: reference.module,
+      range: reference.range,
+      name: references?.name ?? "",
+    });
   };
 
   return (
@@ -224,6 +266,17 @@ export function TariffEditor({
           syntaxHighlighting: false,
         }}
         theme={resolvedTheme === "dark" ? darkTheme : lightTheme}
+      />
+      <ReferencesDialog
+        request={references}
+        source={value}
+        context={context}
+        canOpenLibraries={!!onOpenDefinition}
+        onPick={pickReference}
+        onClose={() => {
+          setReferences(null);
+          viewRef.current?.focus();
+        }}
       />
     </div>
   );
