@@ -235,6 +235,14 @@ struct Writer<'s> {
     schema: &'s Schema,
 }
 
+/// A value as Tariff source of type `ty`: stops and commodities through the test
+/// constructors, variants qualified where two schema enums share them. A property's
+/// counterexample writes its `given`s with it.
+#[must_use]
+pub fn source_literal(schema: &Schema, value: &Value, ty: &Type) -> String {
+    Writer { schema }.literal(value, ty)
+}
+
 impl Writer<'_> {
     /// Givens for every field of `record` that differs from `base`.
     fn record_givens(&self, record: &Value, base: &Value) -> Vec<String> {
@@ -545,7 +553,8 @@ fn quantity_literal(quantity: &crate::tariff::units::Quantity) -> String {
 }
 
 /// A text literal: quotes, backslashes, braces and control characters escaped.
-fn text_literal(text: &str) -> String {
+#[must_use]
+pub fn text_literal(text: &str) -> String {
     let mut out = String::with_capacity(text.len() + 2);
     out.push('"');
     for character in text.chars() {

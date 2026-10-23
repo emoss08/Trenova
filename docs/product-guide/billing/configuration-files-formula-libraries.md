@@ -1,6 +1,6 @@
 ---
 path: /billing/configuration-files/formula-libraries
-aliases: [tariff libraries, shared functions, shared rating functions, org libraries, formula modules]
+aliases: [tariff libraries, shared functions, shared rating functions, org libraries, formula modules, library properties, library coverage, find references]
 related:
   - /billing/configuration-files/formula-templates
   - /billing/configuration-files/accessorial-charges
@@ -29,10 +29,28 @@ Keywords: new library, shared functions, write library
 
 ### Write and test a library
 Keywords: library editor, library tests, failing test
-1. Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library. The editor checks the source as you type, with the same suggestions, hover, go to definition (F12), rename (F2) and formatting as the Formula Studio.
+1. Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library. The editor checks the source as you type, with the same suggestions, hover, go to definition (F12), find references (Shift+F12), rename (F2) and formatting as the Formula Studio.
 2. The outline on the left lists the library's functions, constants and tests; a test's dot is green when it passes and red when it fails. **Tests** in the side panel shows each test with the values behind a failing expectation; select one to jump to it, or **Add a test** to start one.
 3. **Reference** lists what the library can use: Tariff's standard library, your other libraries, your rate tables and charge codes.
 4. Select **Ask Nova** above the source, or the **Nova** tab, to have Nova add functions, write tests or fix what the editor underlines. Each change lands in the editor with the lines it changed and whether it checks and its tests pass; **Undo** puts the editor back. Nova only puts a change in the editor when it checks and every test passes; otherwise it says what stops it. Nothing is saved until you save.
+
+### Check a function over many values with a property
+Keywords: property, vary, library property test, counterexample
+1. Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library.
+2. Add a `property` block that varies a new name over a range or a list (`vary stops in 0..20`) and states what every value must satisfy, such as `expect extraStops(stops) >= $0`. A library's property varies its own names; it has no shipment to vary.
+3. In **Tests**, a property is marked **Property** with the number of cases it ran. When one fails, its **Counterexample** shows the simplest failing value; select **Save as test** to add it to the source as a test. A failing property blocks review like a failing test.
+
+### See what no test reaches
+Keywords: library coverage, untested function, unreached
+1. Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library.
+2. A bar in the editor's margin marks every line no test or property case runs, such as a function no test calls; hover it to see what part it is.
+3. **Tests** says how many of the library's parts its tests reach; expand the list to go to each part none reaches. They are listed as a warning under **Readiness** when you submit, and never block it.
+
+### Find every use of a name
+Keywords: find references, where is this used
+1. Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library.
+2. Put the cursor on a name: after a moment its uses in the file are tinted, where it is declared or set differently from where it is read.
+3. Press Shift+F12, or open **Editor actions** under the editor and choose **Find references**, to list each use with its line; select one to go to it.
 
 ### See which templates import a library
 Keywords: library usage, who uses this library, pinned version

@@ -480,6 +480,85 @@ export const languageServiceTheme = EditorView.theme({
     margin: "0",
     color: "var(--danger-foreground)",
   },
+  ".cm-tariff-hover-constraint": {
+    display: "flex",
+    gap: "6px",
+    alignItems: "baseline",
+    fontFamily: "'Geist Mono', monospace",
+    fontSize: "11px",
+    fontVariantNumeric: "tabular-nums",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-hover-label": {
+    fontFamily: "inherit",
+    color: "var(--foreground-subtle)",
+  },
+  ".cm-tariff-occurrence": {
+    backgroundColor: "var(--editor-reference)",
+    borderRadius: "2px",
+  },
+  // The other uses of selected text, as the editor's own search marks them, in the same tint.
+  ".cm-selectionMatch": {
+    backgroundColor: "var(--editor-reference)",
+  },
+  ".cm-tariff-occurrence-write": {
+    backgroundColor: "var(--editor-reference-write)",
+  },
+  ".cm-tooltip .cm-tariff-notice, .cm-tooltip.cm-tariff-notice": {
+    padding: "4px 8px",
+    fontSize: "12px",
+    fontFamily: "inherit",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-actions ul": {
+    listStyle: "none",
+    margin: "0",
+    padding: "4px",
+    display: "flex",
+    flexDirection: "column",
+    minWidth: "220px",
+  },
+  ".cm-tariff-action": {
+    display: "block",
+    width: "100%",
+    textAlign: "left",
+    padding: "5px 8px",
+    borderRadius: "var(--radius-control)",
+    fontSize: "12px",
+    fontFamily: "inherit",
+    color: "var(--foreground)",
+    backgroundColor: "transparent",
+    cursor: "pointer",
+  },
+  ".cm-tariff-action code": {
+    fontFamily: "'Geist Mono', monospace",
+    fontSize: "11px",
+  },
+  ".cm-tariff-action:hover, .cm-tariff-action[aria-current='true']": {
+    backgroundColor: "var(--surface-hover)",
+  },
+  ".cm-tariff-coverage-gutter": {
+    width: "6px",
+  },
+  ".cm-tariff-coverage-gutter .cm-gutterElement": {
+    padding: "0",
+    display: "flex",
+    justifyContent: "center",
+  },
+  ".cm-tariff-coverage-gap": {
+    display: "block",
+    width: "3px",
+    height: "100%",
+    minHeight: "1.6em",
+    borderRadius: "1px",
+    backgroundColor: "var(--editor-coverage-gap)",
+  },
+  ".cm-tooltip .cm-tariff-coverage-tip, .cm-tooltip.cm-tariff-coverage-tip": {
+    padding: "4px 8px",
+    fontSize: "12px",
+    fontFamily: "inherit",
+    color: "var(--foreground)",
+  },
   ".cm-tooltip .cm-tariff-diagnostics": {
     display: "flex",
     flexDirection: "column",

@@ -2,6 +2,7 @@ package rateengine
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -173,7 +174,7 @@ func (s *Service) rateFromAgreement(
 		rule:       winner,
 	}, trace)
 	if err != nil {
-		trace.Error = err.Error()
+		trace.Error = errortypes.LocalizedText(ctx, err)
 		fields.Outcome = ratequote.OutcomeError
 		return s.finish(ctx, req, rateCtx, trace, fields)
 	}
@@ -303,7 +304,7 @@ func (s *Service) rateFromFallbackTemplate(
 		currency:   rateCtx.BillingCurrency,
 	}, trace)
 	if err != nil {
-		return nil, err
+		return nil, onShipmentInputs(err)
 	}
 	if result.refusal != "" {
 		return nil, refusalError(result.refusal, nil)
@@ -393,6 +394,7 @@ type quoteFields struct {
 	Outcome           ratequote.Outcome
 	Bill              *tarifftypes.Bill
 	Refusal           string
+	Choices           []tarifftypes.Choice
 	Currency          string
 	AgreementID       *pulid.ID
 	RuleID            *pulid.ID
@@ -408,6 +410,7 @@ type quoteFields struct {
 func (f *quoteFields) apply(result *priced) {
 	f.Bill = result.bill
 	f.Refusal = result.refusal
+	f.Choices = result.choices
 	f.Inputs = result.inputs
 	f.Conditions = result.conditions
 	if result.template != nil {
@@ -459,6 +462,7 @@ func (s *Service) finish(
 		TariffInputs:        fields.Inputs,
 		Bill:                fields.Bill,
 		Refusal:             fields.Refusal,
+		Choices:             fields.Choices,
 		Agreement:           fields.Agreement,
 		Conditions:          fields.Conditions,
 	}, nil
@@ -610,4 +614,16 @@ func (s *Service) hydrate(
 		Shipment:   entity,
 		TenantInfo: tenantInfo,
 	})
+}
+
+const shipmentTariffInputsField = "tariffInputs"
+
+func onShipmentInputs(err error) error {
+	var fieldErr *errortypes.Error
+	if !errors.As(err, &fieldErr) || fieldErr.Field != tariff.InputsField {
+		return err
+	}
+	remapped := *fieldErr
+	remapped.Field = shipmentTariffInputsField
+	return &remapped
 }

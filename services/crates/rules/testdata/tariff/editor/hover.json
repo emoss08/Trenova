@@ -1034,6 +1034,500 @@
      "doc": "A liftgate at `stops` stops, `fee` each."
     }
    }
+  },
+  {
+   "name": "new syntax: best",
+   "source": [
+    "tariff \"t\"",
+    "be|st \"Linehaul\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "range": {
+     "text": "best"
+    },
+    "contents": {
+     "signature": "best",
+     "doc": {
+      "message": "Bills the cheapest of several methods: each `option` runs, and the one with the lowest subtotal joins the bill."
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: worst",
+   "source": [
+    "tariff \"t\"",
+    "wor|st \"Floor\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "worst",
+     "doc": {
+      "message": "Bills the dearest of several methods: each `option` runs, and the one with the highest subtotal joins the bill."
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: option",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  opt|ion \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "option"
+    }
+   }
+  },
+  {
+   "name": "new syntax: property, vary, assume and a direction",
+   "source": [
+    "tariff \"t\"",
+    "prop|erty \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect total nondecreasing in shipment.weight",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "property"
+    }
+   }
+  },
+  {
+   "name": "new syntax: vary",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  va|ry shipment.weight in 1 lb..2 lb",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "vary",
+     "doc": {
+      "message": "Makes a field, an input or a new name take many values in a property: `vary shipment.weight in 1 lb..40_000 lb`."
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: assume",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  ass|ume shipment.hazmat",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "assume"
+    }
+   }
+  },
+  {
+   "name": "new syntax: nonincreasing",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect total nonincr|easing in shipment.weight",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "nonincreasing",
+     "doc": {
+      "message": "In a property, `expect value nonincreasing in target`: the value never rises as the varied target grows."
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: an input with a range constraint",
+   "source": [
+    "tariff \"t\"",
+    "/// Paid per loaded mile.",
+    "input ra|te: Money/mi = $2.35/mi where $0.50/mi..=$15/mi",
+    "charge \"x\" (quantity: shipment.distance, rate: rate)"
+   ],
+   "expect": {
+    "range": {
+     "text": "rate"
+    },
+    "contents": {
+     "signature": "input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi",
+     "type": "Money/mi",
+     "doc": "Paid per loaded mile.",
+     "constraint": {
+      "message": "from {0} to {1}",
+      "args": [
+       "$0.50/mi",
+       "$15.00/mi"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: an input's constraint from a use",
+   "source": [
+    "tariff \"t\"",
+    "input drops: Int = 2 where 0..10",
+    "charge \"x\" = $1 * dro|ps"
+   ],
+   "expect": {
+    "contents": {
+     "constraint": {
+      "message": "at least {0} and below {1}",
+      "args": [
+       "0",
+       "10"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: an open-ended constraint",
+   "source": [
+    "tariff \"t\"",
+    "input floor: Money = $5 where $1..",
+    "charge \"x\" = flo|or"
+   ],
+   "expect": {
+    "contents": {
+     "constraint": {
+      "message": "at least {0}",
+      "args": [
+       "$1.00"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a constraint with only an end",
+   "source": [
+    "tariff \"t\"",
+    "input cap: Money = $5 where ..=$10",
+    "charge \"x\" = ca|p"
+   ],
+   "expect": {
+    "contents": {
+     "constraint": {
+      "message": "at most {0}",
+      "args": [
+       "$10.00"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a list constraint",
+   "source": [
+    "tariff \"t\"",
+    "enum Service { Standard, Guaranteed, Expedited }",
+    "input service: Service = Standard where [Standard, Guaranteed]",
+    "charge \"x\" = if serv|ice == Standard { $1 } else { $2 }"
+   ],
+   "expect": {
+    "contents": {
+     "constraint": {
+      "message": "one of {0}",
+      "args": [
+       "[Standard, Guaranteed]"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: an input without a constraint has none",
+   "source": [
+    "tariff \"t\"",
+    "input fee: Money = $5",
+    "charge \"x\" = f|ee"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "input fee: Money = $5",
+     "constraint": null
+    }
+   }
+  },
+  {
+   "name": "new syntax: a literal in a constraint",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$1|5/mi",
+    "charge \"x\" (quantity: shipment.distance, rate: rate)"
+   ],
+   "expect": {
+    "range": {
+     "text": "$15/mi"
+    },
+    "contents": {
+     "type": "Money/mi"
+    }
+   }
+  },
+  {
+   "name": "new syntax: a vary name: the type of its values",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary |w in 1 lb..40_000 lb",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "range": {
+     "text": "w"
+    },
+    "contents": {
+     "signature": "vary w: Weight",
+     "type": "Weight",
+     "unit": "lb"
+    }
+   }
+  },
+  {
+   "name": "new syntax: a vary name from a read, over a list",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary service in [Standard, Guaranteed]",
+    "  assume ser|vice == Standard",
+    "  expect total >= $0",
+    "}",
+    "enum Service { Standard, Guaranteed }"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "vary service: Service",
+     "type": "Service"
+    }
+   }
+  },
+  {
+   "name": "new syntax: a vary target's field",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.wei|ght in 1 lb..2 lb",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "range": {
+     "text": "weight"
+    },
+    "contents": {
+     "signature": "shipment.weight: Weight?",
+     "type": "Weight?"
+    }
+   }
+  },
+  {
+   "name": "new syntax: a vary target's input",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "property \"p\" {",
+    "  vary input.ra|te",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "range": {
+     "text": "rate"
+    },
+    "contents": {
+     "signature": "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+     "constraint": {
+      "message": "from {0} to {1}",
+      "args": [
+       "$1.00/mi",
+       "$5.00/mi"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a monotone target's field",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.distance in 1 mi..2 mi",
+    "  expect total nondecreasing in shipment.dist|ance",
+    "}"
+   ],
+   "expect": {
+    "range": {
+     "text": "distance"
+    },
+    "contents": {
+     "signature": "shipment.distance: Distance"
+    }
+   }
+  },
+  {
+   "name": "new syntax: a choice's label",
+   "source": [
+    "tariff \"t\"",
+    "best \"Line|haul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "range": {
+     "text": "\"Linehaul\""
+    },
+    "contents": {
+     "signature": "best \"Linehaul\"",
+     "doc": {
+      "message": "Bills the option with the lowest subtotal of {0}.",
+      "args": [
+       "\"Per mile\", \"Flat\""
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a worst's label",
+   "source": [
+    "tariff \"t\"",
+    "worst \"Fl|oor\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "worst \"Floor\"",
+     "doc": {
+      "message": "Bills the option with the highest subtotal of {0}.",
+      "args": [
+       "\"A\", \"B\""
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: an option's label",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Per |mile\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "range": {
+     "text": "\"Per mile\""
+    },
+    "contents": {
+     "signature": "option \"Per mile\"",
+     "doc": {
+      "message": "One of the methods {0} chooses between.",
+      "args": [
+       "`best \"Linehaul\"`"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a chosen label",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(\"Line|haul\") == \"A\"",
+    "}"
+   ],
+   "expect": {
+    "range": {
+     "text": "\"Linehaul\""
+    },
+    "contents": {
+     "signature": "best \"Linehaul\"",
+     "type": "Text?"
+    }
+   }
+  },
+  {
+   "name": "new syntax: a chosen label no choice has",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  expect chosen(\"No|pe\") == none",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "chosen(\"Nope\")",
+     "type": "Text?",
+     "doc": {
+      "message": "No `best` or `worst` in this file is labelled {0}.",
+      "args": [
+       "`\"Nope\"`"
+      ]
+     }
+    }
+   }
   }
  ]
 }

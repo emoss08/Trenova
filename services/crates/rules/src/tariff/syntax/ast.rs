@@ -121,6 +121,8 @@ pub enum ItemKind {
     Fn(FnDecl),
     /// `test "name" { … }`.
     Test(Test),
+    /// `property "name" { … }`: a test over many cases.
+    Property(Property),
     /// Any statement written at file level: `let`, `charge`, `if`, a total clause, and a
     /// condition's final expression.
     Stmt(Stmt),
@@ -159,6 +161,8 @@ pub struct Input {
     pub ty: TypeExpr,
     /// Its default value; without one, a value must be supplied.
     pub default: Option<Expr>,
+    /// `where constraint`: a range or a list of the values a contract may set.
+    pub constraint: Option<Expr>,
 }
 
 /// `const NAME: Type = value`.
@@ -243,6 +247,15 @@ pub struct Test {
     pub body: Block,
 }
 
+/// `property "name" { … }`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Property {
+    /// The property's name.
+    pub name: Name,
+    /// Its `vary`s, `assume`s, `given`s, `expect`s and any other statements.
+    pub body: Block,
+}
+
 /// `{ … }`: a sequence of statements and a scope.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Block {
@@ -284,6 +297,8 @@ pub enum StmtKind {
     Note(Text),
     /// `if … { … } else if … { … } else { … }`.
     If(IfStmt),
+    /// `best "Label" { option "A" { … } … }` or `worst "Label" { … }`.
+    Choose(Choose),
     /// `match value { pattern => { … } }`.
     Match(MatchStmt),
     /// `for x in list where cond { … }`.
@@ -312,7 +327,18 @@ pub enum StmtKind {
         /// The value it takes.
         value: Expr,
     },
-    /// `expect cond` or `expect fails "message"`, in tests.
+    /// `vary shipment.weight in 1 lb..40_000 lb`, in properties.
+    Vary {
+        /// The path varied (`shipment.weight`, `input.rate`) or a new name (`w`).
+        target: Vec<Name>,
+        /// `in values`: a range or a list; `None` takes the values from the target's type or
+        /// constraint.
+        values: Option<Expr>,
+    },
+    /// `assume cond`, in properties: cases where it is false are skipped.
+    Assume(Expr),
+    /// `expect cond`, `expect fails "message"` or `expect x nondecreasing in target`, in tests
+    /// and properties.
     Expect(Expect),
     /// An expression on its own: a condition's final value, or a call whose result is unused.
     Expr(Expr),
@@ -355,6 +381,50 @@ pub struct Charge {
     pub options: Vec<Arg>,
     /// `= amount`; may be left out only with both `quantity` and `rate`.
     pub amount: Option<Expr>,
+}
+
+/// A choice between methods: `best` or `worst`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Choose {
+    /// Which option wins.
+    pub kind: ChooseKind,
+    /// The choice's label, as written between the quotes.
+    pub label: Name,
+    /// The options, in order.
+    pub options: Vec<ChoiceOption>,
+    /// From `best` or `worst` to the closing brace.
+    pub span: Span,
+}
+
+/// Which option a choice keeps.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ChooseKind {
+    /// `best`: the lowest subtotal.
+    Best,
+    /// `worst`: the highest subtotal.
+    Worst,
+}
+
+impl ChooseKind {
+    /// The keyword.
+    #[must_use]
+    pub const fn keyword(self) -> &'static str {
+        match self {
+            Self::Best => "best",
+            Self::Worst => "worst",
+        }
+    }
+}
+
+/// `option "Label" { … }` inside a choice.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ChoiceOption {
+    /// The option's label, as written between the quotes.
+    pub label: Name,
+    /// What it bills.
+    pub body: Block,
+    /// From `option` to the closing brace.
+    pub span: Span,
 }
 
 /// An `if` statement.
@@ -473,6 +543,38 @@ pub enum Expect {
     /// `expect fails` or `expect fails "message"`: the rating must be refused, with that
     /// message when one is given.
     Fails(Option<Text>),
+    /// `expect value nondecreasing in target`, in properties: `value` must not fall (or, for
+    /// `nonincreasing`, rise) as the varied `target` grows.
+    Monotone {
+        /// The ordered value compared across cases.
+        value: Expr,
+        /// Which way it must go.
+        direction: Direction,
+        /// Where the direction word is written.
+        direction_span: Span,
+        /// The varied path or name it is compared along.
+        target: Vec<Name>,
+    },
+}
+
+/// The direction of a monotone expectation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Direction {
+    /// `nondecreasing`.
+    Nondecreasing,
+    /// `nonincreasing`.
+    Nonincreasing,
+}
+
+impl Direction {
+    /// The word as written.
+    #[must_use]
+    pub const fn word(self) -> &'static str {
+        match self {
+            Self::Nondecreasing => "nondecreasing",
+            Self::Nonincreasing => "nonincreasing",
+        }
+    }
 }
 
 /// A text literal: `"Detention, stop {stop.sequence}"`.

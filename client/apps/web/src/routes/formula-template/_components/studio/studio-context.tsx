@@ -11,6 +11,7 @@ import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import type { EditorView } from "@codemirror/view";
 import { useQuery } from "@tanstack/react-query";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useRules } from "@trenova/shared/hooks/use-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { RulesRuntime } from "@trenova/shared/rules/runtime";
@@ -24,6 +25,7 @@ import type {
 import type {
   TariffCheckResult,
   TariffContext,
+  TariffCoverage,
   TariffFix,
   TariffInputValues,
   TariffRange,
@@ -47,6 +49,7 @@ import {
   useWatch,
   type UseFormReturn,
 } from "react-hook-form";
+import { previewInputsResolution, type PreviewInputsForm } from "./preview-inputs";
 import { useLivePreview, type LivePreviewState } from "./use-live-preview";
 import { useStudioRail } from "@/components/tariff-studio/use-studio-rail";
 
@@ -58,12 +61,7 @@ export const STUDIO_SECTIONS: readonly StudioSection[] = ["details", "source", "
 
 export const sectionDomId = (section: StudioSection) => `studio-section-${section}`;
 
-/**
- * The sample input values the preview rates with, held apart from the template itself. The
- * values are wire values; the form types them loosely because react-hook-form's path types do
- * not terminate on a recursive value type.
- */
-export type PreviewInputsForm = { inputs: Record<string, unknown> };
+export type { PreviewInputsForm };
 
 export type StudioProps = {
   mode: StudioMode;
@@ -87,6 +85,8 @@ type StudioStateValue = {
   tests: TariffTestsState;
   /** Each test's verdict from the last run, by name. */
   testStatus: ReadonlyMap<string, TariffTestStatus>;
+  /** The regions the last test run reached, for the editor's gutter. */
+  coverage: TariffCoverage | null;
   preview: LivePreviewState;
   usage: TemplateUsageResponse | undefined;
   usageTotal: number;
@@ -187,7 +187,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   const text = source ?? "";
 
   const { context, tablesStamp, isError: contextError } = useTariffCheckContext();
-  const { check, errors, warnings, tests, testStatus } = useTariffWorkbench({
+  const { check, errors, warnings, tests, testStatus, coverage } = useTariffWorkbench({
     rules,
     source: text,
     kind: "tariff",
@@ -195,7 +195,14 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     tablesStamp,
   });
 
-  const previewInputs = useForm<PreviewInputsForm>({ defaultValues: { inputs: {} } });
+  // The sample values are checked against the declarations as they are typed, by the same rule
+  // the contract forms use, so a value outside an input's bounds is refused at the field.
+  const declarations = useLatestCallback(() => check.inputs);
+  const previewInputs = useForm<PreviewInputsForm>({
+    defaultValues: { inputs: {} },
+    mode: "onChange",
+    resolver: (values) => previewInputsResolution(values, declarations()),
+  });
   const sampleInputs = useWatch({ control: previewInputs.control, name: "inputs" });
   const preview = useLivePreview({
     source: text,
@@ -223,11 +230,12 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
           errors,
           warnings,
           tests,
+          coverage,
           dirty: isDirty,
         },
         t,
       ),
-    [mode, name, description, text, errors, warnings, tests, isDirty, t],
+    [mode, name, description, text, errors, warnings, tests, coverage, isDirty, t],
   );
 
   const stacked = useMediaQuery("(max-width: 899px)");
@@ -355,6 +363,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       warnings,
       tests,
       testStatus,
+      coverage,
       preview,
       usage,
       usageTotal,
@@ -378,6 +387,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       warnings,
       tests,
       testStatus,
+      coverage,
       preview,
       usage,
       usageTotal,

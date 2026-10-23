@@ -787,6 +787,12 @@ than pointing at an accent, so `pnpm lint:design` holds it to AA on `--card`, `-
 through CSS alone; nothing is highlighted again. A new grammar goes in `lib/highlight/`, built with
 `defineLanguage` (see `graphql.ts`), and is added to the highlighter's list.
 
+The Tariff editor marks over code with three tokens of its own: `--editor-reference` (a read of
+the name at the cursor, and the editor's selection matches), `--editor-reference-write` (where it
+is declared or set, in an amber tint, so a change of value stands out) and
+`--editor-coverage-gap` (the gutter bar beside a line no test reaches). `pnpm lint:design` holds
+the ink and every syntax role to AA on both tints and the bar to 3:1 on the field.
+
 ## Adding a token
 
 1. Check no existing token covers it. Most "missing" colours are a rung you have

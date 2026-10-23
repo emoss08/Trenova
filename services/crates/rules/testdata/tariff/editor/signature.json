@@ -524,6 +524,39 @@
      }
     ]
    }
+  },
+  {
+   "name": "new syntax: chosen",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  expect chosen(|) == none",
+    "}"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "chosen(choice: Text) -> Text?",
+      "doc": {
+       "message": "The label of the option the last evaluation of the `best` or `worst` with this label kept, or `none` when it was not reached or every option refused."
+      },
+      "parameters": [
+       {
+        "label": [
+         7,
+         19
+        ],
+        "doc": {
+         "message": "The choice's label, as written after `best` or `worst`."
+        }
+       }
+      ]
+     }
+    ],
+    "active": 0,
+    "activeParameter": 0
+   }
   }
  ]
 }

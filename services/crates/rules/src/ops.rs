@@ -88,6 +88,8 @@ const OPERATIONS: &[(&str, Handler)] = &[
     ("tariff.hover", crate::tariff::editor::ops::hover),
     ("tariff.signature", crate::tariff::editor::ops::signature),
     ("tariff.definition", crate::tariff::editor::ops::definition),
+    ("tariff.references", crate::tariff::editor::ops::references),
+    ("tariff.actions", crate::tariff::editor::ops::actions),
     ("tariff.rename", crate::tariff::editor::ops::rename),
     ("tariff.inlays", crate::tariff::editor::ops::inlays),
     ("tariff.catalog", crate::tariff::check::ops::catalog),

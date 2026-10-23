@@ -1,4 +1,5 @@
 import { TariffEditor } from "@/components/formula-editor/tariff-editor";
+import { isTestItem } from "@/lib/tariff-outline";
 import { formatTariffDocument } from "@/components/formula-editor/tariff-format";
 import { NovaButton } from "@/components/tariff-studio/nova-button";
 import { ProblemsList } from "@/components/tariff-studio/problems-list";
@@ -64,6 +65,7 @@ export function LibrarySource() {
     warnings,
     testCount,
     tests,
+    coverage,
     context,
     contextError,
     highlight,
@@ -87,7 +89,7 @@ export function LibrarySource() {
   const items = check.outline?.items ?? [];
   const functions = items.filter((item) => item.kind === "function").length;
   const declarations = items.filter(
-    (item) => item.kind !== "function" && item.kind !== "test" && item.kind !== "header",
+    (item) => item.kind !== "function" && !isTestItem(item) && item.kind !== "header",
   ).length;
 
   const handleView = useCallback(
@@ -188,6 +190,7 @@ export function LibrarySource() {
               value={field.value ?? ""}
               onChange={field.onChange}
               context={context}
+              coverage={coverage}
               highlight={highlight}
               onView={handleView}
               onOpenDefinition={openDefinition}
@@ -212,6 +215,7 @@ export function LibrarySource() {
           tests={tests}
           onFormat={format}
           formatDisabled={empty}
+          editor={{ view: () => viewRef.current, kind: "library" }}
         />
         <ProblemsList
           diagnostics={check.diagnostics}

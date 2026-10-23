@@ -453,6 +453,146 @@
    "expect": {
     "targets": []
    }
+  },
+  {
+   "name": "new syntax: a vary name goes to its vary",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary w in 1 lb..2 lb",
+    "  expect total >= $1/lb * |w",
+    "}"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": null,
+      "range": {
+       "text": "vary w in 1 lb..2 lb"
+      },
+      "selectionRange": {
+       "text": "w"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a monotone target goes to its vary",
+   "source": [
+    "tariff \"t\"",
+    "fn f(w: Weight) -> Money = $1/lb * w",
+    "property \"p\" {",
+    "  vary w in 1 lb..2 lb",
+    "  expect f(w) nondecreasing in |w",
+    "}"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "range": {
+       "text": "vary w in 1 lb..2 lb"
+      },
+      "selectionRange": {
+       "text": "w"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a vary's input goes to the input",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "property \"p\" {",
+    "  vary input.ra|te",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "range": {
+       "text": "input rate: Money/mi = $2/mi where $1/mi..=$5/mi"
+      },
+      "selectionRange": {
+       "text": "rate"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a chosen label goes to its choice",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(\"Line|haul\") == \"A\"",
+    "}"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": null,
+      "range": {
+       "text": "best \"Linehaul\" {\n  option \"A\" {\n    charge \"A\" = $1\n  }\n  option \"B\" {\n    charge \"B\" = $2\n  }\n}"
+      },
+      "selectionRange": {
+       "text": "\"Linehaul\""
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a chosen label no choice has goes nowhere",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  expect chosen(\"No|pe\") == none",
+    "}"
+   ],
+   "expect": {
+    "targets": []
+   }
+  },
+  {
+   "name": "new syntax: a let inside an option",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    let fee = $1",
+    "    charge \"A\" = f|ee",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "range": {
+       "text": "let fee = $1"
+      },
+      "selectionRange": {
+       "text": "fee"
+      }
+     }
+    ]
+   }
   }
  ]
 }

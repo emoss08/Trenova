@@ -6,7 +6,7 @@
 
 import { Facet } from "@codemirror/state";
 import type { RulesRuntime } from "@trenova/shared/rules/runtime";
-import { tariffCheck } from "@trenova/shared/rules/tariff";
+import { tariffCheck, type TariffReference } from "@trenova/shared/rules/tariff";
 import {
   EMPTY_TARIFF_CONTEXT,
   type TariffCheckResult,
@@ -16,7 +16,6 @@ import {
   type TariffTraceEvent,
 } from "@trenova/shared/types/tariff";
 
-/** Where a name is declared outside this file: an imported library and the range in its source. */
 /**
  * A declaration in an imported library: the module it is in, its range in that library's
  * source, and the name that was followed (a standard library's source is not shipped to the
@@ -32,9 +31,22 @@ export type TariffLanguageService = {
   trace: () => readonly TariffTraceEvent[];
   /** Opens a declaration that lives in an imported library. */
   openDefinition: (target: TariffDefinitionTarget) => void;
+  /** Lists every use of the name at the cursor (Find references). */
+  showReferences: (request: TariffReferencesRequest) => void;
 };
 
-/** The service an editor's commands ask: rename, go to definition and hover at the cursor. */
+/** What Find references found: the name at the cursor and each use of it, in source order. */
+export type TariffReferencesRequest = {
+  name: string;
+  /** The cursor the search started from. */
+  offset: number;
+  references: readonly TariffReference[];
+};
+
+/**
+ * The service an editor's commands ask: rename, go to definition, hover, find references and
+ * promote to input at the cursor.
+ */
 export const tariffServiceFacet = Facet.define<TariffLanguageService, TariffLanguageService | null>(
   {
     combine: (values) => values[0] ?? null,

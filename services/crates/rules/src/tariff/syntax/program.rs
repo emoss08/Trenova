@@ -717,6 +717,7 @@ fn declare(module: &mut Module) -> Vec<Diagnostic> {
             ItemKind::Enum(enumeration) => Some((&enumeration.name, Decl::Enum(index))),
             ItemKind::Input(input) => Some((&input.name, Decl::Input(index))),
             ItemKind::Test(test) => Some((&test.name, Decl::Test(index))),
+            ItemKind::Property(property) => Some((&property.name, Decl::Test(index))),
             ItemKind::Use(_) | ItemKind::Stmt(_) => None,
         };
         if library && matches!(item.kind, ItemKind::Input(_) | ItemKind::Stmt(_)) {

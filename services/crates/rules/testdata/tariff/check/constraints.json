@@ -1,0 +1,730 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": {
+      "range": {
+       "max": {
+        "$q": "15",
+        "u": "$/mi"
+       },
+       "maxInclusive": true,
+       "min": {
+        "$q": "0.5",
+        "u": "$/mi"
+       }
+      }
+     },
+     "default": {
+      "$q": "2.35",
+      "u": "$/mi"
+     },
+     "descriptor": {
+      "dimension": "Money/Distance",
+      "kind": "quantity",
+      "unit": "$/mi"
+     },
+     "doc": "Paid per loaded mile.",
+     "name": "rate",
+     "range": {
+      "from": 92,
+      "to": 96
+     },
+     "required": false,
+     "type": "Money/mi"
+    },
+    {
+     "constraint": {
+      "range": {
+       "max": {
+        "$n": "10"
+       },
+       "maxInclusive": true,
+       "min": {
+        "$n": "0"
+       }
+      }
+     },
+     "default": {
+      "$n": "2"
+     },
+     "descriptor": {
+      "kind": "int"
+     },
+     "doc": null,
+     "name": "freeStops",
+     "range": {
+      "from": 148,
+      "to": 157
+     },
+     "required": false,
+     "type": "Int"
+    },
+    {
+     "constraint": {
+      "oneOf": [
+       "Standard",
+       "Guaranteed"
+      ]
+     },
+     "default": "Standard",
+     "descriptor": {
+      "kind": "enum",
+      "name": "Service",
+      "variants": [
+       "Standard",
+       "Guaranteed",
+       "Expedited"
+      ]
+     },
+     "doc": null,
+     "name": "service",
+     "range": {
+      "from": 186,
+      "to": 193
+     },
+     "required": false,
+     "type": "Service"
+    }
+   ],
+   "name": "the spec's constraints check and are reported folded",
+   "source": [
+    "tariff \"t\"",
+    "enum Service { Standard, Guaranteed, Expedited }",
+    "/// Paid per loaded mile.",
+    "input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi",
+    "input freeStops: Int = 2 where 0..=10",
+    "input service: Service = Standard where [Standard, Guaranteed]",
+    "charge \"x\" = rate * shipment.distance + $1 * freeStops",
+    "note \"{service}\""
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": {
+      "range": {
+       "max": null,
+       "maxInclusive": false,
+       "min": {
+        "$q": "0",
+        "u": "$"
+       }
+      }
+     },
+     "default": {
+      "$q": "450",
+      "u": "$"
+     },
+     "descriptor": {
+      "kind": "money"
+     },
+     "doc": null,
+     "name": "minimumCharge",
+     "range": {
+      "from": 46,
+      "to": 59
+     },
+     "required": false,
+     "type": "Money"
+    },
+    {
+     "constraint": {
+      "range": {
+       "max": {
+        "$q": "40000",
+        "u": "lb"
+       },
+       "maxInclusive": true,
+       "min": null
+      }
+     },
+     "default": {
+      "$q": "100",
+      "u": "lb"
+     },
+     "descriptor": {
+      "dimension": "Weight",
+      "kind": "quantity",
+      "unit": "lb"
+     },
+     "doc": null,
+     "name": "weight",
+     "range": {
+      "from": 91,
+      "to": 97
+     },
+     "required": false,
+     "type": "Weight"
+    },
+    {
+     "constraint": {
+      "range": {
+       "max": {
+        "$q": "100",
+        "u": "%"
+       },
+       "maxInclusive": false,
+       "min": {
+        "$q": "0",
+        "u": "%"
+       }
+      }
+     },
+     "default": {
+      "$q": "10",
+      "u": "%"
+     },
+     "descriptor": {
+      "kind": "percent"
+     },
+     "doc": null,
+     "name": "share",
+     "range": {
+      "from": 141,
+      "to": 146
+     },
+     "required": false,
+     "type": "Percent"
+    },
+    {
+     "constraint": {
+      "range": {
+       "max": {
+        "$n": "26"
+       },
+       "maxInclusive": false,
+       "min": null
+      }
+     },
+     "default": {
+      "$n": "1"
+     },
+     "descriptor": {
+      "kind": "int"
+     },
+     "doc": null,
+     "name": "pallets",
+     "range": {
+      "from": 183,
+      "to": 190
+     },
+     "required": false,
+     "type": "Int"
+    }
+   ],
+   "name": "open ends, an excluded maximum and a constant bound",
+   "source": [
+    "tariff \"t\"",
+    "const MAX_WEIGHT = 40_000 lb",
+    "input minimumCharge: Money = $450 where $0..",
+    "input weight: Weight = 100 lb where ..=MAX_WEIGHT",
+    "input share: Percent = 10% where 0%..100%",
+    "input pallets: Int = 1 where ..26",
+    "charge \"x\" = minimumCharge + $1/lb * weight * share + $1 * pallets"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": {
+      "range": {
+       "max": {
+        "$q": "1000",
+        "u": "$"
+       },
+       "maxInclusive": true,
+       "min": {
+        "$q": "0",
+        "u": "$"
+       }
+      }
+     },
+     "default": null,
+     "descriptor": {
+      "inner": {
+       "kind": "money"
+      },
+      "kind": "optional"
+     },
+     "doc": null,
+     "name": "cap",
+     "range": {
+      "from": 17,
+      "to": 20
+     },
+     "required": false,
+     "type": "Money?"
+    },
+    {
+     "constraint": {
+      "range": {
+       "max": {
+        "$n": "10"
+       },
+       "maxInclusive": true,
+       "min": {
+        "$n": "0"
+       }
+      }
+     },
+     "default": [
+      {
+       "$n": "1"
+      },
+      {
+       "$n": "2"
+      },
+      {
+       "$n": "10"
+      }
+     ],
+     "descriptor": {
+      "item": {
+       "kind": "int"
+      },
+      "kind": "list"
+     },
+     "doc": null,
+     "name": "stops",
+     "range": {
+      "from": 60,
+      "to": 65
+     },
+     "required": false,
+     "type": "List<Int>"
+    },
+    {
+     "constraint": {
+      "oneOf": [
+       "A",
+       "B"
+      ]
+     },
+     "default": [
+      "A"
+     ],
+     "descriptor": {
+      "item": {
+       "kind": "text"
+      },
+      "kind": "list"
+     },
+     "doc": null,
+     "name": "zones",
+     "range": {
+      "from": 109,
+      "to": 114
+     },
+     "required": false,
+     "type": "List<Text>"
+    }
+   ],
+   "name": "an optional input's constraint applies when it is set, and a list's to each item",
+   "source": [
+    "tariff \"t\"",
+    "input cap: Money? = none where $0..=$1_000",
+    "input stops: List<Int> = [1, 2, 10] where 0..=10",
+    "input zones: List<Text> = [\"A\"] where [\"A\", \"B\"]",
+    "charge \"x\" = (cap ?? $1) + $1 * (stops.len + zones.len)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "dates, date-times and text take constraints",
+   "source": [
+    "tariff \"t\"",
+    "input starts: Date = @2026-06-01 where @2026-01-01..@2027-01-01",
+    "input cutoff: DateTime = @2026-06-01T08:00-05:00 where ..@2026-12-31T00:00Z",
+    "input equipment: Text = \"Dry\" where [\"Dry\", \"Reefer\"]",
+    "charge \"x\" = $1",
+    "note \"{starts} {cutoff} {equipment}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "1 km",
+     "code": "constraint",
+     "message": "`far` must be at least 1 mi; 1 km is below it"
+    }
+   ],
+   "name": "values compare across units",
+   "source": [
+    "tariff \"t\"",
+    "input heavy: Weight = 1 cwt where 0 lb..200 lb",
+    "input far: Distance = 1 km where 1 mi..",
+    "charge \"x\" = $1/lb * heavy + $1/mi * far"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$20/mi",
+     "code": "constraint",
+     "message": "`rate` must be from $0.50/mi to $15.00/mi; $20.00/mi is outside it"
+    }
+   ],
+   "name": "a default outside a closed range names the bounds",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $20/mi where $0.50/mi..=$15/mi",
+    "charge \"x\" = rate * shipment.distance"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "10",
+     "code": "constraint",
+     "message": "`stops` must be at least 0 and below 10; 10 is outside it"
+    },
+    {
+     "at": "100%",
+     "code": "constraint",
+     "message": "`share` must be below 100%; 100% isn't"
+    },
+    {
+     "at": "40_001 lb",
+     "code": "constraint",
+     "message": "`limit` must be at most 40000 lb; 40001 lb is above it"
+    },
+    {
+     "at": "-$5",
+     "code": "constraint",
+     "message": "`floor` must be at least $0.00; -$5.00 is below it"
+    }
+   ],
+   "name": "a default at a range's excluded end is outside it",
+   "source": [
+    "tariff \"t\"",
+    "input stops: Int = 10 where 0..10",
+    "input share: Percent = 100% where ..100%",
+    "input limit: Weight = 40_001 lb where ..=40_000 lb",
+    "input floor: Money = -$5 where $0..",
+    "charge \"x\" = $1 * stops + $1 * share + $1/lb * limit + floor"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Expedited",
+     "code": "constraint",
+     "message": "`service` must be one of [Standard, Guaranteed]; Expedited isn't",
+     "nth": 2
+    },
+    {
+     "at": "[1, 12, 13]",
+     "code": "constraint",
+     "message": "`stops[1]` must be from 0 to 10; 12 is outside it"
+    }
+   ],
+   "name": "a default outside a list, and a list default's item outside a range",
+   "source": [
+    "tariff \"t\"",
+    "enum Service { Standard, Guaranteed, Expedited }",
+    "input service: Service = Expedited where [Standard, Guaranteed]",
+    "input stops: List<Int> = [1, 12, 13] where 0..=10",
+    "charge \"x\" = $1 * stops.len",
+    "note \"{service}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$5/mi",
+     "code": "constraint",
+     "message": "A `where` constraint is a range or a list of values: `lo..hi` (from `lo` up to but not including `hi`), `lo..=hi` (up to and including `hi`), or `[a, b]`; either end of a range may be left off"
+    },
+    {
+     "at": "drops > 0",
+     "code": "constraint",
+     "message": "A `where` constraint is a range or a list of values: `lo..hi` (from `lo` up to but not including `hi`), `lo..=hi` (up to and including `hi`), or `[a, b]`; either end of a range may be left off"
+    }
+   ],
+   "name": "a constraint that is neither a range nor a list",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $5/mi",
+    "input drops: Int = 1 where drops > 0",
+    "charge \"x\" = rate * shipment.distance + $1 * drops"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "[]",
+     "code": "constraint",
+     "message": "`breaks` is a list (`List<Break>`): a record input, or a list of records, takes no `where` constraint",
+     "nth": 2
+    },
+    {
+     "at": "0..",
+     "code": "constraint",
+     "message": "`window` is a record (`{ start: Int, end: Int }`): a record input, or a list of records, takes no `where` constraint"
+    }
+   ],
+   "name": "a record input takes no constraint",
+   "source": [
+    "tariff \"t\"",
+    "type Break = { from: Weight, rate: Money/cwt }",
+    "input breaks: List<Break> = [] where []",
+    "input window: { start: Int, end: Int } = { start: 8, end: 17 } where 0..",
+    "charge \"x\" = $1 * (breaks.len + window.start)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"a\"..\"z\"",
+     "code": "constraint",
+     "message": "`label` is text, which has no order, so its constraint can't be a range: list the values it may take, as in `where [a, b]`"
+    },
+    {
+     "at": "false..=true",
+     "code": "constraint",
+     "message": "`waived` is true or false, which has no order, so its constraint can't be a range: list the values it may take, as in `where [a, b]`"
+    },
+    {
+     "at": "Standard..Guaranteed",
+     "code": "constraint",
+     "message": "`service` is a value of type `Service`, which has no order, so its constraint can't be a range: list the values it may take, as in `where [a, b]`"
+    }
+   ],
+   "name": "a range needs a type with an order",
+   "source": [
+    "tariff \"t\"",
+    "enum Service { Standard, Guaranteed }",
+    "input label: Text = \"a\" where \"a\"..\"z\"",
+    "input waived: Bool = false where false..=true",
+    "input service: Service = Standard where Standard..Guaranteed",
+    "charge \"x\" = $1",
+    "note \"{label} {waived} {service}\""
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a list constraint takes values of any type with equality",
+   "source": [
+    "tariff \"t\"",
+    "input waived: Bool = false where [false]",
+    "input factor: Number = 1.5 where [1, 1.5, 2]",
+    "charge \"x\" = $1 * factor",
+    "note \"{waived}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "10..5",
+     "code": "constraint",
+     "message": "This range is empty: nothing is at least 10 and below 5"
+    },
+    {
+     "at": "5..5",
+     "code": "constraint",
+     "message": "This range is empty: nothing is at least 5 and below 5"
+    },
+    {
+     "at": "10..=5",
+     "code": "constraint",
+     "message": "This range is empty: its start 10 is above its end 5"
+    },
+    {
+     "at": "1 cwt..=99 lb",
+     "code": "constraint",
+     "message": "This range is empty: its start 1 cwt is above its end 99 lb"
+    },
+    {
+     "at": "[]",
+     "code": "constraint",
+     "message": "This list is empty, so no value can satisfy the constraint"
+    }
+   ],
+   "name": "an empty range or list admits nothing",
+   "source": [
+    "tariff \"t\"",
+    "input a: Int = 1 where 10..5",
+    "input b: Int = 1 where 5..5",
+    "input c: Int = 1 where 10..=5",
+    "input d: Weight = 1 lb where 1 cwt..=99 lb",
+    "input e: Int = 1 where []",
+    "input f: Int = 5 where 5..=5",
+    "charge \"x\" = $1 * (a + b + c + e + f) + $1/lb * d"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "..",
+     "code": "constraint",
+     "message": "A range constraint needs at least one end, as in `0..`, `..=10` or `0..=10`"
+    }
+   ],
+   "name": "a range needs an end",
+   "source": [
+    "tariff \"t\"",
+    "input a: Int = 1 where ..",
+    "charge \"x\" = $1 * a"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$0/cwt",
+     "code": "type-mismatch",
+     "message": "`$0/cwt` is money per hundredweight, but `rate` is declared as money per mile"
+    },
+    {
+     "at": "shipment",
+     "code": "not-constant",
+     "message": "`shipment` is the record being rated, which isn't known before rating: a constant or default must be computed from literals and other constants"
+    }
+   ],
+   "name": "a bound of the wrong type or not constant",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $0/cwt..",
+    "input miles: Distance = 1 mi where 0 mi..shipment.distance",
+    "charge \"x\" = rate * miles"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "",
+     "code": "input-value",
+     "message": "`cap` must be at least $0.00 and below $1000.00; $1000.00 is outside it",
+     "path": "rule.cap"
+    },
+    {
+     "at": "",
+     "code": "input-value",
+     "message": "`rate` must be from $0.50/mi to $15.00/mi; $235.00/mi is outside it",
+     "path": "rule.rate"
+    },
+    {
+     "at": "",
+     "code": "input-value",
+     "message": "`service` must be one of [Standard, Guaranteed]; Expedited isn't",
+     "path": "agreement.service"
+    },
+    {
+     "at": "",
+     "code": "input-value",
+     "message": "`share` must be at most 50%; 50.5% is above it",
+     "path": "agreement.share"
+    },
+    {
+     "at": "",
+     "code": "input-value",
+     "message": "`stops[2]` must be from 0 to 10; 11 is outside it",
+     "path": "agreement.stops[2]"
+    }
+   ],
+   "name": "rule and agreement values outside the constraints are refused by path",
+   "source": [
+    "tariff \"t\"",
+    "enum Service { Standard, Guaranteed, Expedited }",
+    "input rate: Money/mi where $0.50/mi..=$15/mi",
+    "input stops: List<Int> = [] where 0..=10",
+    "input cap: Money? = none where $0..$1_000",
+    "input service: Service = Standard where [Standard, Guaranteed]",
+    "input share: Percent = 10% where ..=50%",
+    "charge \"x\" = rate * shipment.distance + $1 * stops.len + (cap ?? $0) + $1 * share",
+    "note \"{service}\""
+   ],
+   "values": {
+    "agreement": {
+     "service": "Expedited",
+     "share": {
+      "$q": "50.5",
+      "u": "%"
+     },
+     "stops": [
+      {
+       "$n": "1"
+      },
+      {
+       "$n": "10"
+      },
+      {
+       "$n": "11"
+      },
+      {
+       "$n": "12"
+      }
+     ]
+    },
+    "rule": {
+     "cap": {
+      "$q": "1000",
+      "u": "$"
+     },
+     "rate": {
+      "$q": "235",
+      "u": "$/mi"
+     }
+    }
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "values inside the constraints, in other units, and none pass",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi where $0.50/mi..=$15/mi",
+    "input heavy: Weight = 1 lb where 0 lb..200 lb",
+    "input cap: Money? = $1 where $0..",
+    "charge \"x\" = rate * shipment.distance + $1/lb * heavy + (cap ?? $0)"
+   ],
+   "values": {
+    "agreement": {
+     "rate": {
+      "$q": "0.5",
+      "u": "$/mi"
+     }
+    },
+    "rule": {
+     "cap": null,
+     "heavy": {
+      "$q": "1.99",
+      "u": "cwt"
+     },
+     "rate": {
+      "$q": "15.00",
+      "u": "$/mi"
+     }
+    }
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "",
+     "code": "input-value",
+     "message": "$/cwt is not a unit of Money/mi",
+     "path": "rule.rate"
+    }
+   ],
+   "name": "a value that does not fit its type is refused for that alone",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi where $0.50/mi..=$15/mi",
+    "charge \"x\" = rate * shipment.distance"
+   ],
+   "values": {
+    "rule": {
+     "rate": {
+      "$q": "235",
+      "u": "$/cwt"
+     }
+    }
+   }
+  }
+ ]
+}

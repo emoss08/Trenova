@@ -1,4 +1,9 @@
-import { ReadinessView, isReadyFor } from "@/components/tariff-studio/readiness-view";
+import {
+  ReadinessView,
+  isReadyFor,
+  type ReadinessSourceLink,
+} from "@/components/tariff-studio/readiness-view";
+import type { ReadinessCheck } from "@trenova/shared/types/formula-template";
 import { ReviewDiffView } from "@/components/tariff-studio/review-diff-view";
 import { ReviewHistoryView } from "@/components/tariff-studio/review-history-view";
 import { describeApiError } from "@/lib/api-error-message";
@@ -46,10 +51,16 @@ export function LibrarySubmitDialog({
   open,
   onOpenChange,
   library,
+  liveChecks,
+  link,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   library: FormulaLibraryRecord;
+  /** The Studio's live checks, shown for what the server's readiness does not judge. */
+  liveChecks?: readonly ReadinessCheck[];
+  /** Takes a readiness row's region to the source, closing the dialog. */
+  link?: ReadinessSourceLink;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -117,6 +128,8 @@ export function LibrarySubmitDialog({
                 isLoading={readiness.isPending}
                 isError={readiness.isError}
                 step="submit"
+                liveChecks={liveChecks}
+                link={link}
               />
               <Label>{t("Reviewer")}</Label>
               {reviewers.isPending ? (

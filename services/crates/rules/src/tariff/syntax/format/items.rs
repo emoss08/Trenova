@@ -7,6 +7,8 @@ use super::exprs::PARENS;
 use crate::tariff::syntax::ast::AssignOp;
 use crate::tariff::syntax::ast::Block;
 use crate::tariff::syntax::ast::Charge;
+use crate::tariff::syntax::ast::ChoiceOption;
+use crate::tariff::syntax::ast::Choose;
 use crate::tariff::syntax::ast::Expect;
 use crate::tariff::syntax::ast::File;
 use crate::tariff::syntax::ast::FnBody;
@@ -62,6 +64,10 @@ impl Formatter<'_> {
                     parts.push(Doc::text(" = "));
                     parts.push(self.expr(default));
                 }
+                if let Some(constraint) = &input.constraint {
+                    parts.push(Doc::text(" where "));
+                    parts.push(self.expr(constraint));
+                }
                 Doc::Concat(parts)
             }
             ItemKind::Const(constant) => {
@@ -108,6 +114,13 @@ impl Formatter<'_> {
                 let body = self.block(&test.body);
                 Doc::Concat(vec![
                     Doc::text(format!("test {} ", self.slice(test.name.span))),
+                    body,
+                ])
+            }
+            ItemKind::Property(property) => {
+                let body = self.block(&property.body);
+                Doc::Concat(vec![
+                    Doc::text(format!("property {} ", self.slice(property.name.span))),
                     body,
                 ])
             }
@@ -263,6 +276,11 @@ impl Formatter<'_> {
                 parts.push(self.block(&statement.body));
                 Doc::Concat(parts)
             }
+            StmtKind::Choose(choose) => self.choose(choose, stmt.span.end),
+            StmtKind::Vary { .. }
+            | StmtKind::Assume(_)
+            | StmtKind::Given { .. }
+            | StmtKind::Expect(_) => self.test_stmt(&stmt.kind),
             StmtKind::Require { condition, message } => Doc::Concat(vec![
                 Doc::text("require "),
                 self.condition(condition),
@@ -273,6 +291,29 @@ impl Formatter<'_> {
             StmtKind::Break => Doc::text("break"),
             StmtKind::Continue => Doc::text("continue"),
             StmtKind::Total(clause) => self.total(clause),
+            StmtKind::Expr(value) => self.expr(value),
+            StmtKind::Item(item) => self.item(item),
+        }
+    }
+
+    fn choose(&mut self, choose: &Choose, end: u32) -> Doc {
+        let mut body = self.vertical(&choose.options, false, |option| option.span, Self::choice);
+        body.extend(self.closing(end));
+        Doc::Concat(vec![
+            Doc::text(format!(
+                "{} {} {{",
+                choose.kind.keyword(),
+                self.slice(choose.label.span)
+            )),
+            Doc::Nest(body),
+            Doc::HardLine,
+            Doc::text("}"),
+        ])
+    }
+
+    /// The statements only tests and properties hold.
+    fn test_stmt(&mut self, kind: &StmtKind) -> Doc {
+        match kind {
             StmtKind::Given { target, value } => {
                 let path: Vec<&str> = target.iter().map(|name| name.text.as_str()).collect();
                 let value = self.expr(value);
@@ -284,15 +325,45 @@ impl Formatter<'_> {
             StmtKind::Expect(Expect::Holds(value)) => {
                 Doc::Concat(vec![Doc::text("expect "), self.expr(value)])
             }
+            StmtKind::Expect(Expect::Monotone {
+                value,
+                direction,
+                target,
+                ..
+            }) => {
+                let path: Vec<&str> = target.iter().map(|name| name.text.as_str()).collect();
+                Doc::Concat(vec![
+                    Doc::text("expect "),
+                    self.expr(value),
+                    Doc::text(format!(" {} in {}", direction.word(), path.join("."))),
+                ])
+            }
             StmtKind::Expect(Expect::Fails(message)) => match message {
                 Some(message) => {
                     Doc::Concat(vec![Doc::text("expect fails "), self.text_doc(message)])
                 }
                 None => Doc::text("expect fails"),
             },
-            StmtKind::Expr(value) => self.expr(value),
-            StmtKind::Item(item) => self.item(item),
+            StmtKind::Vary { target, values } => {
+                let path: Vec<&str> = target.iter().map(|name| name.text.as_str()).collect();
+                let mut parts = vec![Doc::text(format!("vary {}", path.join(".")))];
+                if let Some(values) = values {
+                    parts.push(Doc::text(" in "));
+                    parts.push(self.expr(values));
+                }
+                Doc::Concat(parts)
+            }
+            StmtKind::Assume(value) => Doc::Concat(vec![Doc::text("assume "), self.expr(value)]),
+            _ => Doc::Concat(Vec::new()),
         }
+    }
+
+    fn choice(&mut self, option: &ChoiceOption) -> Doc {
+        let body = self.block(&option.body);
+        Doc::Concat(vec![
+            Doc::text(format!("option {} ", self.slice(option.label.span))),
+            body,
+        ])
     }
 
     fn charge(&mut self, charge: &Charge, end: u32) -> Doc {
