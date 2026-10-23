@@ -336,8 +336,14 @@ and every conditional accessorial's condition together. Request (the op module's
   affects another's result, and results come back in request order with their `id`.
 - **The record** is the record being rated, `{"shipment", "lane", "customer", "fuel",
   "rating"}` in wire values, decoded strictly against the schema: a missing or unknown root or
-  field, or a value of the wrong type or unit, is a `record` error naming its path ("The record
-  does not fit the schema at {0}: {1}"). `record` absent or `null` rates against the sample
+  field (an optional field may be left out, as `null`), or a value of the wrong type or unit, is
+  a `record` error naming its path ("The record does not fit the schema at {0}: {1}"). The host
+  sends `shipment.accessorials` (the user-entered additional charges only, `[{"code",
+  "quantity": {"$n"}}]`), each stop's `legDistance` (a distance in the organisation's unit,
+  `null` on the first stop) and `location.category`, `location.facilityType` (variant names or
+  `null`) and `location.requiresAppointment`, and `rating.holidays` (`[{"date": {"$date"},
+  "name"}]`: the organisation's holidays, recurring ones expanded, from the year before the
+  rating date's year to the year after). `record` absent or `null` rates against the sample
   record; a program's own `record` overrides the shared one.
 - **Inputs** are a map from input name to wire value. A value is decoded against the input's
   declared type; one that does not fit is an `input` error at the input's declaration, and a
@@ -513,15 +519,18 @@ applies to each test. Output:
 - **Coverage** is the root file's regions with their `hits` across every test and property case
   of the run, in source order. `kind` is `if` (a branch block of an `if` or `else if`), `else`,
   `arm` (a `match` arm), `loop` (a `for` body), `option`, `charge`, `refusal` (a `fail`, the
-  refusing side of a `require` or of `?? fail`) or `function` (a function body); `range` is the
-  region's block or statement. `reached` counts regions with `hits > 0`. `coverage` is `null`
+  refusing side of a `require` or of `?? fail`), `function` (a function body), or `applies` and
+  `notApplies` (a condition's final expression, entered when a test sees it give `true` or
+  `false`; both have that expression's `range`); `range` is the region's block or statement. `reached` counts regions with `hits > 0`. `coverage` is `null`
   when the file does not check, when any test ended in `needs`, or when `names` ran only some
   tests.
 
 - A test starts from the sample record and the inputs' defaults, applies its `given`s in order
-  (a record path or `input.name`), runs the file, then runs its `expect`s with `charge(CODE)`,
-  `charge("Label")`, `total` and `lines` in scope. A test in a library runs its body with no
-  rating.
+  (a record path, `input.name` or a table cell `tables.Code[k, …]`), runs the file, then runs its
+  `expect`s with `charge(CODE)`, `charge("Label")`, `total` and `lines` in scope, or a
+  condition's `applies`. A table the test gives cells of holds only those cells for the test
+  (`Tables::with_given`): its lookups never read the request's cells and never record needs. A
+  test in a library runs its body with no rating.
 - A failing `expect` reports each operand's `display` and wire `value`, so the author sees what
   the tariff computed. An evaluation error makes the status `error`, with the error. `bill` is
   the test's bill, when it rated.
@@ -544,8 +553,11 @@ applies to each test. Output:
 "Save as test" (`src/tariff/eval/scaffold.rs`). Input: `{"source", "context"?, "record": {…} |
 null, "inputs"?, "name"}`. It rates the tariff against the record and writes a `test` block that
 pins the result: a `given` for every record field that differs from the sample record (stops and
-commodities through the test constructors, leaving out what the constructors fill in), a `given
-input.x` for every input that differs from its default, an `expect charge(CODE)` (or
+commodities through the test constructors, leaving out what the constructors fill in, a stop's
+location written field by field), a `given tables.Code[k, …] = value` for every cell the rating
+found by `[…]`, `.cell(…)` or `.band(x)` (a band as its floor; `.interpolate` leaves its table
+live), so the saved test reads no live matrix data, a `given input.x` for every input that
+differs from its default, an `expect charge(CODE)` (or
 `charge("Label")` for freight) per charge and `expect total`, or `expect fails "…"` when the
 rating was refused. Output: `{"test": "test \"…\" {\n given …\n expect …\n}\n"}`; or `{"test":
 null, "error": …}` when the tariff does not check, the record does not fit or the rating fails;
@@ -624,7 +636,7 @@ doc in it is a `Message`.
               "params": [{"name", "type", "default"}], "returns", "doc"}],
  "tableMethods": [{"name", "doc"}],
  "units": [{"unit", "dimension", "factor", "si"}],
- "keywords": […], "contextual": ["as", "cents", "to", "up", "down", "half", "even", "total", "lines"],
+ "keywords": […], "contextual": ["as", "cents", "to", "up", "down", "half", "even", "total", "lines", "applies"],
  "schema": {"roots": [{"name", "doc", "type", "fields"}], "records": [{"name", "fields"}],
             "enums": [{"name", "variants"}]}}
 ```
@@ -633,7 +645,8 @@ The modules are `std.ltl`, `std.fuel`, `std.time` and `std.accessorials`, in tha
 schema field is `{name, type, descriptor, words, doc, fields}`. `keywords` are the lexer's
 reserved words, never names; `contextual` are the lexer's contextual words (keywords only where
 the grammar uses them, which `tariff.tokens` classes as `keyword` there and `name` elsewhere)
-and the test-only names `total` and `lines`, so a parameter may be called `to`. A unit's
+and the test-only names `total`, `lines` and `applies`, so a parameter may be called `to`.
+`methods` ends with the shipment's own `requested(code: CODE) -> Bool` (receiver `Shipment`). A unit's
 `dimension` is its base's name, `Percent` for `%` and `Count` for a count label. The catalog is static data;
 the Go host caches it per module version.
 
@@ -701,9 +714,10 @@ A refusal is not an error: it is the tariff declining to rate, with the author's
 The module has no clock, no randomness and no I/O. `rating.date` is in the record the host
 sends, so a tariff rates the same record the same way every time. The sample record (what a
 request without a record, every test and the Studio's preview start from) is the schema's
-defaults: an empty `New` shipment with one pickup and one delivery stop and no commodities, a
-blank lane, a sample customer, no fuel price, and a `Sell` rating in `USD` on
-`2026-01-05T12:00:00Z` (`src/tariff/eval/record.rs`), so a test's answer never depends on the
+defaults: an empty `New` shipment with one pickup and one delivery stop (no leg distances,
+blank locations), no commodities and no requested accessorials, a blank lane, a sample customer,
+no fuel price, and a `Sell` rating in `USD` on `2026-01-05T12:00:00Z` with no holidays
+(`src/tariff/eval/record.rs`), so a test's answer never depends on the
 day it runs. Wire values encode canonically and objects' keys are sorted, so the same answer
 is the same bytes.
 

@@ -282,7 +282,7 @@ Methods on values:
 | `Number` | `round(places: 2)`, `roundHalfEven()`, `floor()`, `ceil()`, `abs()`, `min(x)`, `max(x)`, `clamp(lo, hi)`, `pow(n)`, `sqrt()` |
 | `Percent` | `value` (`18%.value` is `18`) |
 | `Text` | `len`, `isEmpty`, `upper()`, `lower()`, `trim()`, `startsWith(t)`, `endsWith(t)`, `contains(t)`, `replace(a, b)`, `split(sep)`, `matches(pattern)` |
-| `Date`, `DateTime` | `year`, `month`, `day`, `weekday` (`Mon` … `Sun`), `weekend`, `addDays(n)`; on a `DateTime` also `hour`, `minute`, `date`, `addHours(n)` |
+| `Date`, `DateTime` | `year`, `month`, `day`, `weekday` (`Mon` … `Sun`), `weekend`, `holiday` (one of `rating.holidays`; not inside a function), `addDays(n)`; on a `DateTime` also `hour`, `minute`, `date`, `addHours(n)` |
 
 ## Charges and the bill
 
@@ -364,14 +364,22 @@ The message is shown on the shipment, in the Studio and to Nova.
 
 | Root | Highlights |
 |---|---|
-| `shipment` | `weight: Weight?`, `pieces: Int?`, `distance`, `duration`, `linearFeet`, `volume`, `density?`, `hazmat`, `reefer`, `temperature.min?`, `temperature.max?`, `freightClass?`, `highestClass?`, `serviceType.code`, `trailerType?.code`, `stops`, `commodities`, `pickup?`, `delivery?` |
-| a stop | `sequence`, `kind` (`Pickup`, `Delivery`, …), `status`, `appointment`, `window.start?`, `window.end?`, `arrival?`, `departure?`, `dwell?`, `pieces?`, `weight?`, `location.zip3` |
+| `shipment` | `weight: Weight?`, `pieces: Int?`, `distance`, `duration`, `linearFeet`, `volume`, `density?`, `hazmat`, `reefer`, `temperature.min?`, `temperature.max?`, `freightClass?`, `highestClass?`, `serviceType.code`, `trailerType?.code`, `stops`, `commodities`, `pickup?`, `delivery?`, `accessorials` (each `code`, `quantity`), `requested(LIFT)` |
+| a stop | `sequence`, `kind` (`Pickup`, `Delivery`, …), `status`, `appointment`, `window.start?`, `window.end?`, `arrival?`, `departure?`, `dwell?`, `pieces?`, `weight?`, `legDistance?` (from the previous stop), `location.zip3`, `location.category?` (`Warehouse`, `Port`, …), `location.facilityType?` (`ColdStorage`, `CrossDock`, …), `location.requiresAppointment` |
 | a commodity | `name`, `freightClass?`, `weight`, `pieces`, `dimensions`, `volume?`, `density?`, `hazmat`, `stackable` |
 | `lane` | `origin` and `destination` (`city`, `state`, `zip`, `zip3`, `country`, `zones`), `interstate`, `crossBorder` |
 | `customer` | `name`, `code` |
 | `fuel` | `price: Money/gal?`, `priceDate?`, `index?` |
-| `rating` | `date`, `mode` (`Sell` or `Buy`), `sellTotal?`, `currency` |
+| `rating` | `date`, `mode` (`Sell` or `Buy`), `sellTotal?`, `currency`, `holidays` (each `date`, `name`) |
 | `tables` | your organisation's active rate matrices, by code |
+
+- `shipment.requested(LIFT)` is whether the user put that accessorial on the shipment; the code
+  must be in your accessorial charge catalog. Lines a tariff bills are never in
+  `shipment.accessorials`.
+- `rating.holidays` holds your organisation's holidays from last year to next year, and
+  `date.holiday` (or `dateTime.holiday`) is whether a date is one of them:
+  `if (shipment.delivery?.arrival?.holiday ?? false) { … }`. A function can't read it: pass the
+  answer in as a `Bool`.
 
 Hover any field in the Studio for its type and unit; the **Reference** tab lists them all.
 
@@ -393,12 +401,17 @@ test "a zone pair bills its rate" {
   given shipment.weight = 1_000 lb
   given lane.origin.zones = ["A"]
   given lane.destination.zones = ["B"]
+  given tables.Zones["A", "B"] = $20/cwt
+  given tables.Breaks[0 lb] = $30/cwt
+  given tables.Breaks[1_000 lb] = $25/cwt
   expect total == $200
 }
 
 test "a lane with no zone rate refuses" {
   given shipment.weight = 1_000 lb
   given lane.origin.zones = ["Z"]
+  given tables.Zones["A", "B"] = $20/cwt
+  given tables.Breaks[0 lb] = $30/cwt
   expect fails "No zone rate for this lane"
 }
 ```
@@ -411,6 +424,11 @@ test "a lane with no zone rate refuses" {
   the matching band (`min`, `max`, `value`); `.interpolate(x)` interpolates between bands.
 - The checker knows each matrix's dimensions, so the wrong number of keys, or a weight for a
   distance dimension, is an error.
+- In a test, `given tables.Zones["A", "B"] = $20/cwt` sets a cell. Once a test gives a cell of a
+  table, that table holds only the cells the test gave, so the test doesn't change when someone
+  edits the matrix. On a banded dimension the key is the band's floor: `[0 lb]` and `[1_000 lb]`
+  are the bands below 1,000 lb and from 1,000 lb up. A test that reads a table without giving
+  any of its cells gets a warning.
 
 ## Standard library
 
@@ -460,15 +478,21 @@ test "a heavy load rates at the deficit weight when cheaper" {
 | `given input.rate = $2.10/mi` | sets an input |
 | `given shipment.stops = [pickup(), delivery(appointment: true)]` | builds stops; also `splitPickup()`, `splitDelivery()` |
 | `given shipment.commodities = [commodity(pieces: 6, weight: 500 lb)]` | builds commodities |
+| `delivery(legDistance: 120 mi, zip3: "752", category: Warehouse, requiresAppointment: true)` | a stop with its leg and location fields |
+| `given shipment.accessorials = [{ code: "LIFT", quantity: 1 }]` | what the user asked for, read by `shipment.requested(LIFT)` |
+| `given rating.holidays = [{ date: @2026-12-25, name: "Christmas Day" }]` | the holidays `.holiday` reads |
+| `given tables.Zones["A", "B"] = $20/cwt` | sets a rate table cell; the table then holds only the cells the test gives |
+| `given tables.Breaks[1_000 lb] = $25/cwt` | a band from 1,000 lb up to the next band given |
 | `expect total == $511.20` | the bill's total |
 | `expect charge("Linehaul") == $365.30`, `expect charge(FSC) == $11.75` | one line's amount, by label or code |
 | `expect lines.len == 3` | the whole bill's lines |
 | `expect fails`, `expect fails "This rate needs a weight"` | that it refuses (with that message) |
+| `expect applies`, `expect not applies` | in a condition's test: what the condition decided |
 
 - A test reads the bill, the sample shipment, and the file's functions and constants. It
   can't read the tariff's own `let`s: check the charge they feed instead.
-- The sample shipment is one pickup and one delivery with no commodities, and every input has its
-  default.
+- The sample shipment is one pickup and one delivery with no commodities, no requested
+  accessorials and no holidays, and every input has its default.
 - A version with a failing test can't be submitted for review. **Save as test** in the preview
   writes a test from a real shipment.
 
@@ -556,6 +580,39 @@ condition "Residential delivery"
 input residentialZip3s: List<Text> = []
 
 lane.destination.zip3 in residentialZip3s and (shipment.weight ?? 0 lb) < 10_000 lb
+
+test "a residential zip3 applies" {
+  given input.residentialZip3s = ["752"]
+  given lane.destination.zip3 = "752"
+  expect applies
+}
+
+test "a heavy load does not" {
+  given input.residentialZip3s = ["752"]
+  given lane.destination.zip3 = "752"
+  given shipment.weight = 12_000 lb
+  expect not applies
+}
+```
+
+In a condition's tests, `applies` is what the condition decided. A condition can read what the user
+asked for and where the stops are:
+
+```tariff
+condition "Liftgate at a customer location"
+
+shipment.requested(LIFT) and shipment.stops.any(s => s.location.category == CustomerLocation and not s.location.requiresAppointment)
+
+test "a requested liftgate at a customer location applies" {
+  given shipment.accessorials = [{ code: "LIFT", quantity: 1 }]
+  given shipment.stops = [pickup(category: Warehouse), delivery(category: CustomerLocation)]
+  expect applies
+}
+
+test "no liftgate was asked for" {
+  given shipment.stops = [pickup(), delivery(category: CustomerLocation)]
+  expect not applies
+}
 ```
 
 A formula library holds functions, constants, types and enums for templates to import with
@@ -621,6 +678,8 @@ an existing contract.
 | "… calls itself through …" | remove the cycle; functions can't recurse |
 | "A library's constant is part of its interface, so … needs a type" | `const NAME: Money = …` |
 | "… takes 2 keys (…), but 1 is given" | give one key per matrix dimension |
+| "This test reads the rate table … without giving any of its cells" | give the cells it reads: `given tables.Zones["A", "B"] = $20/cwt` |
+| "`.holiday` reads the organisation's holidays (`rating.holidays`), which a function can't see" | work it out where you call the function and pass it in: `fn fee(holiday: Bool)` |
 | "`rate` must be from $0.50/mi to $15.00/mi; … is outside it" | the default or the contract value is outside the input's `where` bounds |
 | "A choice needs at least two options" | add another `option`, or drop the `best` |
 | "… falls from … at … to … at …: it must not fall as … grows" | a property found the inversion: fix the break, then **Save as test** |
