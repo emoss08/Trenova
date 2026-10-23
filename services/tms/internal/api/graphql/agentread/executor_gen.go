@@ -5,6 +5,7 @@ package agentread
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accessorialchargeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/captureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriercapacityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
@@ -79,6 +80,7 @@ import (
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
 	accountingsyncresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accountingsyncresolver"
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	briefingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/briefingresolver"
 	captureresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/captureresolver"
 	carriercapacityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriercapacityresolver"
 	carrierintelligenceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
@@ -156,6 +158,7 @@ import (
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	customerpaymentports "github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -263,6 +266,7 @@ type ResolverParams struct {
 	AccountingSyncService        accountingsyncports.AccountingSyncService
 	AnalyticsService             kernelports.AnalyticsService
 	AssignmentService            shipmentports.AssignmentService
+	BriefingService              briefingports.BriefingService
 	CaptureReleaseService        *capturereleaseservice.Service
 	CaptureService               *captureservice.Service
 	CarrierAssignmentService     *carrierassignmentservice.Service
@@ -389,6 +393,7 @@ type ResolverParams struct {
 var shards = []*gqlexec.Shard{
 	accessorialchargeexec.Shard,
 	accountingsyncexec.Shard,
+	briefingexec.Shard,
 	captureexec.Shard,
 	carrierexec.Shard,
 	carriercapacityexec.Shard,
@@ -830,6 +835,11 @@ var operations = []Operation{
 		Document: "fragment TriageUserFields on User { id name thumbnailUrl username } query TriageSettings { triageSettings { endOfDayMinute onCallUser { ...TriageUserFields } onCallUserId timezone version } }",
 	},
 	{
+		Name:     "TodaysBriefing",
+		Hash:     "sha256:65f37d12e5d9c0d23e805a11cf6299ea753996a33e88ac4ebebc9d1c882091d0",
+		Document: "fragment BriefingFields on Briefing { briefingDate headline id narrated readAt roleKey sections { body items { label path value } key path read summary title } status withheldSections { key partial title } } query TodaysBriefing($input: TodaysBriefingInput!) { todaysBriefing(input: $input) { ...BriefingFields } }",
+	},
+	{
 		Name:     "DeskInvoiceDetail",
 		Hash:     "sha256:069d2dc8e358639942c0e5b64e52245e504037875c935a0de73a48c1709ba2c9",
 		Document: "query DeskInvoiceDetail($id: ID!) { invoice(id: $id) { appliedAmount billToCity billToCode billToName billToState billType currencyCode customerId disputeStatus dueDate ediSendStatus id invoiceDate isAdjustmentArtifact lastEdiError lastSendError lines { accessorialChargeId amount chargeCode description id lineNumber quantity shipmentProNumber type unitPrice } memo number openBalance orderId orderNumber otherAmount paymentTerm pdfDocumentId postedAt remittanceInstructions scope sendStatus sentAt serviceDate settlementStatus shipmentBol shipmentCount shipmentId shipmentProNumber status subtotalAmount supersededByInvoiceId supersedesInvoiceId totalAmount voidReason voidedAt } }",
@@ -1216,6 +1226,10 @@ func NewSchema(p ResolverParams) Schema {
 		AccountingInbound:        p.AccountingInboundService,
 		AccountingDrift:          p.AccountingDriftService,
 	}
+	briefingDeps := &briefingresolver.Deps{
+		Core:            core,
+		BriefingService: p.BriefingService,
+	}
 	captureDeps := &captureresolver.Deps{
 		Core:                  core,
 		CaptureService:        p.CaptureService,
@@ -1569,6 +1583,7 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	mutation := &mutationResolver{
 		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
+		briefingMutation:              &briefingMutation{Deps: briefingDeps},
 		captureMutation:               &captureMutation{Deps: captureDeps},
 		carriercapacityMutation:       &carriercapacityMutation{Deps: carriercapacityDeps},
 		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
@@ -1616,6 +1631,7 @@ func NewSchema(p ResolverParams) Schema {
 	query := &queryResolver{
 		accessorialchargeQuery:        &accessorialchargeQuery{Deps: accessorialchargeDeps},
 		accountingsyncQuery:           &accountingsyncQuery{Deps: accountingsyncDeps},
+		briefingQuery:                 &briefingQuery{Deps: briefingDeps},
 		captureQuery:                  &captureQuery{Deps: captureDeps},
 		carrierQuery:                  &carrierQuery{Deps: carrierDeps},
 		carriercapacityQuery:          &carriercapacityQuery{Deps: carriercapacityDeps},
@@ -1707,6 +1723,7 @@ func NewSchema(p ResolverParams) Schema {
 			return &accountingsyncresolver.AccountingSyncAttentionGroupResolver{Deps: accountingsyncDeps}
 		},
 		"AccountingSyncRecord":         func() any { return &accountingsyncresolver.AccountingSyncRecordResolver{Deps: accountingsyncDeps} },
+		"BriefingSection":              func() any { return &briefingresolver.BriefingSectionResolver{Deps: briefingDeps} },
 		"CaptureBatch":                 func() any { return &captureresolver.CaptureBatchResolver{Deps: captureDeps} },
 		"CaptureCoverSheet":            func() any { return &captureresolver.CaptureCoverSheetResolver{Deps: captureDeps} },
 		"CaptureDevice":                func() any { return &captureresolver.CaptureDeviceResolver{Deps: captureDeps} },
@@ -1970,6 +1987,7 @@ type invoiceResolver struct {
 
 type mutationResolver struct {
 	*accountingsyncMutation
+	*briefingMutation
 	*captureMutation
 	*carriercapacityMutation
 	*carrierintelligenceMutation
@@ -2018,6 +2036,7 @@ type mutationResolver struct {
 type queryResolver struct {
 	*accessorialchargeQuery
 	*accountingsyncQuery
+	*briefingQuery
 	*captureQuery
 	*carrierQuery
 	*carriercapacityQuery
@@ -2099,6 +2118,7 @@ type (
 	invoiceInvoice                  = invoiceresolver.InvoiceResolver
 	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
 	accountingsyncMutation          = accountingsyncresolver.MutationResolver
+	briefingMutation                = briefingresolver.MutationResolver
 	captureMutation                 = captureresolver.MutationResolver
 	carriercapacityMutation         = carriercapacityresolver.MutationResolver
 	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
@@ -2144,6 +2164,7 @@ type (
 	workertrainingMutation          = workertrainingresolver.MutationResolver
 	accessorialchargeQuery          = accessorialchargeresolver.QueryResolver
 	accountingsyncQuery             = accountingsyncresolver.QueryResolver
+	briefingQuery                   = briefingresolver.QueryResolver
 	captureQuery                    = captureresolver.QueryResolver
 	carrierQuery                    = carrierresolver.QueryResolver
 	carriercapacityQuery            = carriercapacityresolver.QueryResolver

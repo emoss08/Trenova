@@ -306,6 +306,9 @@ reads:
     operation: TriageAssignees
     reason: The people a message can be assigned to are read whole by triageAssignees, which returns no record kind of its own.
     alongside: [TriageSettings]
+  - tool: insight_get_daily_briefing
+    operation: TodaysBriefing
+    reason: The tool is named for the insight family it answers in; todaysBriefing reads the morning's page, cut to the sections the caller may read.
   - tool: report_list_table_change_alerts
     operation: DeskTableChangeAlerts
     reason: A change alert is the TCASubscription record of the table change alert resource, read by tcaSubscriptions, which no rule finds from the tool's name.

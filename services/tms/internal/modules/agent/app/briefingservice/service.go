@@ -231,8 +231,9 @@ func (s *Service) writeRole(
 }
 
 // Today reads the briefing for the reader's role on the organization's
-// current day. A missing briefing is not an error: the morning job may
-// simply not have run yet, and the caller says so.
+// current day, cut to the sections they may read. A missing briefing is not
+// an error: the morning job may simply not have run yet, and the caller
+// says so.
 func (s *Service) Today(
 	ctx context.Context,
 	req briefingports.GetBriefingRequest,
@@ -251,11 +252,16 @@ func (s *Service) Today(
 		day = timeutils.CurrentDateInTimezone(location.String())
 	}
 
-	return s.repo.GetForDay(ctx, briefingports.GetBriefingForDayRequest{
+	page, err := s.repo.GetForDay(ctx, briefingports.GetBriefingForDayRequest{
 		TenantInfo:   req.TenantInfo,
 		RoleKey:      roleOrDefault(req.RoleKey),
 		BriefingDate: day,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.readable(ctx, actor, page)
 }
 
 func (s *Service) Get(
@@ -268,7 +274,15 @@ func (s *Service) Get(
 		return nil, err
 	}
 
-	return s.repo.GetByID(ctx, briefingports.GetBriefingByIDRequest{ID: id, TenantInfo: tenant})
+	page, err := s.repo.GetByID(ctx, briefingports.GetBriefingByIDRequest{
+		ID:         id,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.readable(ctx, actor, page)
 }
 
 func (s *Service) List(
@@ -280,11 +294,21 @@ func (s *Service) List(
 		return nil, err
 	}
 
-	return s.repo.List(ctx, briefingports.ListBriefingsQuery{
+	pages, err := s.repo.List(ctx, briefingports.ListBriefingsQuery{
 		TenantInfo: req.TenantInfo,
 		RoleKey:    req.RoleKey,
 		Limit:      req.Limit,
 	})
+	if err != nil {
+		return nil, err
+	}
+	access, err := s.readAccess(ctx, actor)
+	if err != nil {
+		return nil, err
+	}
+	access.withholdAll(pages)
+
+	return pages, nil
 }
 
 func (s *Service) MarkRead(
@@ -297,11 +321,16 @@ func (s *Service) MarkRead(
 		return nil, err
 	}
 
-	return s.repo.MarkRead(
+	page, err := s.repo.MarkRead(
 		ctx,
 		briefingports.GetBriefingByIDRequest{ID: id, TenantInfo: tenant},
 		s.now(),
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.readable(ctx, actor, page)
 }
 
 // Regenerate writes today's briefing again from current figures. It is the
@@ -337,7 +366,25 @@ func (s *Service) Regenerate(
 		return nil, errortypes.NewBusinessError("Today's briefing could not be written")
 	}
 
-	return result.Briefings[0], nil
+	return s.readable(ctx, actor, result.Briefings[0])
+}
+
+// readable is a page as its reader may see it, or nil when there is none.
+func (s *Service) readable(
+	ctx context.Context,
+	actor *permissionports.RequestActor,
+	page *briefing.Briefing,
+) (*briefing.Briefing, error) {
+	if page == nil {
+		return nil, nil //nolint:nilnil // the morning job has not written the page yet
+	}
+	access, err := s.readAccess(ctx, actor)
+	if err != nil {
+		return nil, err
+	}
+	access.withhold(page)
+
+	return page, nil
 }
 
 func (s *Service) assertMayRead(ctx context.Context, actor *permissionports.RequestActor) error {

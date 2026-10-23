@@ -36,7 +36,6 @@ var (
 		watchtower.SeverityWarning.String(),
 		watchtower.SeverityInfo.String(),
 	})
-	briefingRoles        = agenttoolschema.Source("briefing.role", briefingRoleValues())
 	guidePageActions     = agenttoolschema.Source("guide.pageAction", []string{createAction})
 	insightCategories    = agenttoolschema.Source("insight.category", insightCategoryNames())
 	insightSeverities    = agenttoolschema.Source("insight.severity", insightSeverityNames())
