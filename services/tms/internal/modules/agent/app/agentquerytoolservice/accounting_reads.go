@@ -7,6 +7,13 @@ import (
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
+// The fields the accounting lists' bespoke searches match.
+const (
+	fieldSyncObjectNumber      = "objectNumber"
+	fieldSyncExternalDocNumber = "externalDocNumber"
+	fieldMappingTargetLabel    = "targetLabel"
+)
+
 const (
 	paramAccountingSystem = "system"
 	paramSyncRecordID     = "syncRecordId"
@@ -140,6 +147,7 @@ func syncRecordsListSpec() graphQLListSpec {
 	return graphQLListSpec{
 		name:         "accounting_list_sync_records",
 		entityPlural: "sync records",
+		searches:     []string{fieldSyncObjectNumber, fieldSyncExternalDocNumber},
 		summary: "List the documents Trenova sends to the accounting system and where " +
 			"each stands, or say whether particular Trenova documents or parties reached " +
 			"it. List one system's records, newest first, by status (Blocked and " +
@@ -196,6 +204,7 @@ func mappingGapsListSpec() graphQLListSpec {
 	return graphQLListSpec{
 		name:         "accounting_list_mapping_gaps",
 		entityPlural: "mapping gaps",
+		searches:     []string{fieldMappingTargetLabel},
 		summary: "List what still has to be matched to the accounting system before " +
 			"anything can sync. It covers account roles, line types, accessorial charges, " +
 			"customers, carriers, terms and payment methods that are unmatched or only " +

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -336,8 +337,13 @@ func TestEmailProfiles_ListTheActiveOnesUnlessAsked(t *testing.T) {
 		})},
 	}}
 	tool := inboxList(t, "inbox_list_email_profiles", reader)
+	spec := keyedSpec(t, "inbox_list_email_profiles")
+	reached, err := newGraphQLReadTool(spec, reader, &restrictedRole{})
+	require.NoError(t, err)
 
-	_, err := tool.Query(t.Context(), keyedCall(map[string]any{"query": "ops"}))
+	call := keyedCall(map[string]any{"query": "ops"})
+	call.DataAccessCeiling = permission.SensitivityRestricted
+	_, err = reached.Query(t.Context(), call)
 	require.NoError(t, err)
 	input := inputOf(t, reader.sent("DeskEmailProfiles"))
 	assert.Equal(t, "ops", input["query"])

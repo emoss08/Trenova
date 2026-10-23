@@ -446,6 +446,51 @@ func (r *graphQLRead) typedParams() []graphQLParam {
 	return params
 }
 
+// configuredSearch are the record fields a table input's free-text query
+// matches, read from the record's search configuration as the repository's
+// query builder reads it (querybuilder.ApplyCursorFilters): its searchable
+// columns, or, when it names none, every filterable field that is not an
+// enum. A column is named by the record field it is stored in, which is how
+// its sensitivity is declared, not by the column's own name, which an enum
+// column is also filed under. A column of a joined record (customer.name)
+// is never matched by the configuration's search, so it is not read.
+func (r *graphQLRead) configuredSearch() []string {
+	if r.Entity == nil {
+		return nil
+	}
+	entity := r.Entity()
+	config := querybuilder.GetFieldConfiguration(entity)
+	searchable := entity.GetPostgresSearchConfig().SearchableFields
+	if len(searchable) == 0 {
+		fields := querybuilder.ExtractSearchFields(config)
+		slices.Sort(fields)
+
+		return fields
+	}
+	byColumn := make(map[string]string, len(config.FieldMap))
+	for field, column := range config.FieldMap {
+		if _, named := byColumn[column]; named && field == column {
+			continue
+		}
+		byColumn[column] = field
+	}
+	fields := make([]string, 0, len(searchable))
+	for _, column := range searchable {
+		if strings.Contains(column.Name, ".") {
+			continue
+		}
+		field, mapped := byColumn[column.Name]
+		if !mapped {
+			field = stringutils.LowerCamel(column.Name)
+		}
+		if !slices.Contains(fields, field) {
+			fields = append(fields, field)
+		}
+	}
+
+	return fields
+}
+
 // exactParams turns a text parameter into an equality one, for a String field
 // whose column is a database enum (a journal entry's status): the database
 // cannot match part of an enum value, and a model names the whole value.
