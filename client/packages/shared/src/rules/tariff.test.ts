@@ -3,17 +3,20 @@ import {
   type TariffContext,
   type TariffType,
 } from "@trenova/shared/types/tariff";
+import { formulaPreviewResponseSchema } from "@trenova/shared/types/formula-template";
 import { describe, expect, it } from "vitest";
 import { rulesSync } from "./runtime";
 import {
   tariffCatalog,
   tariffCheck,
   tariffComplete,
+  tariffActions,
   tariffDefinition,
   tariffFormat,
   tariffHover,
   tariffInlays,
   tariffPrepareRename,
+  tariffReferences,
   tariffRename,
   tariffScaffoldTest,
   tariffSignature,
@@ -80,6 +83,7 @@ describe("tariffCheck", () => {
         descriptor: { kind: "quantity", dimension: "Money/Distance", unit: "$/mi" },
         required: false,
         default: { $q: "2.35", u: "$/mi" },
+        constraint: null,
       },
       {
         name: "minimumCharge",
@@ -88,6 +92,7 @@ describe("tariffCheck", () => {
         descriptor: { kind: "money" },
         required: false,
         default: { $q: "450", u: "$" },
+        constraint: null,
       },
       {
         name: "extraDropFee",
@@ -96,6 +101,7 @@ describe("tariffCheck", () => {
         descriptor: { kind: "money" },
         required: false,
         default: { $q: "75", u: "$" },
+        constraint: null,
       },
     ]);
   });
@@ -316,6 +322,7 @@ describe("the editor operations", () => {
         type: "Distance",
         unit: "mi",
         doc: null,
+        constraint: null,
         value: null,
       },
     });
@@ -379,5 +386,303 @@ describe("the editor operations", () => {
       label: ": Distance",
       kind: "type",
     });
+  });
+});
+
+// The reference's examples of the new language (formula-language.md, "Input constraints",
+// "Choosing between methods", "Properties" and "Coverage"), in one file: a bounded rate and a
+// list-bounded service level, a `best` of three methods (one refusing on the sample load), a
+// weight break that inverts at 1,000 lb, and a test that reaches only the light branch.
+const LTL = `tariff "LTL"
+
+/// Paid per hundredweight.
+input rate: Money/lb = $0.31/lb where $0.05/lb..=$2/lb
+input service: Text = "Standard" where ["Standard", "Guaranteed"]
+
+let weight = shipment.weight ?? 0 lb
+if weight >= 1_000 lb {
+  charge "Freight" = weight * $0.25/lb
+} else {
+  charge "Freight" = weight * rate
+}
+best "Linehaul" {
+  option "Per mile" {
+    charge "Linehaul" (quantity: shipment.distance, rate: $2/mi)
+  }
+  option "Flat" {
+    charge "Flat rate" = $900
+  }
+  option "Volume" {
+    require weight >= 6_000 lb else "Volume rates start at 6,000 lb"
+    charge "Volume" = weight * $0.10/lb
+  }
+}
+note "Service: {service}"
+
+property "heavier never bills less" {
+  vary shipment.weight in 1 lb..40_000 lb
+  expect total nondecreasing in shipment.weight
+}
+
+test "a light load" {
+  given shipment.weight = 500 lb
+  given shipment.distance = 100 mi
+  expect charge("Freight") == $155
+}
+`;
+
+const ltlAt = (text: string) => LTL.indexOf(text);
+
+describe("input constraints", () => {
+  it("reports each input's folded where clause", () => {
+    const check = tariffCheck(rules, { source: LTL, kind: "tariff", context });
+    expect(check.inputs.map((input) => [input.name, input.constraint])).toEqual([
+      [
+        "rate",
+        {
+          range: {
+            min: { $q: "0.05", u: "$/lb" },
+            max: { $q: "2", u: "$/lb" },
+            maxInclusive: true,
+          },
+        },
+      ],
+      ["service", { oneOf: ["Standard", "Guaranteed"] }],
+    ]);
+  });
+
+  it("refuses a contract value outside the bounds with an input-value finding at its path", () => {
+    const check = tariffCheck(rules, {
+      source: LTL,
+      kind: "tariff",
+      context,
+      values: { rule: { rate: { $q: "3", u: "$/lb" }, service: "Rush" } },
+    });
+    expect(
+      check.diagnostics
+        .filter((finding) => finding.code === "input-value")
+        .map((finding) => [finding.path, finding.message]),
+    ).toEqual([
+      [
+        "rule.rate",
+        {
+          message: "{0} must be from {1} to {2}; {3} is outside it",
+          args: ["`rate`", "$0.05/lb", "$2.00/lb", "$3.00/lb"],
+        },
+      ],
+      [
+        "rule.service",
+        {
+          message: "{0} must be one of {1}; {2} isn't",
+          args: ["`service`", "[Standard, Guaranteed]", "Rush"],
+        },
+      ],
+    ]);
+  });
+
+  it("hovers a constrained input with its bound in words, apart from its doc", () => {
+    const use = ltlAt("weight * rate") + "weight * ".length;
+    expect(
+      tariffHover(rules, { source: LTL, context, kind: "tariff", offset: use + 1 })?.contents,
+    ).toMatchObject({
+      doc: "Paid per hundredweight.",
+      constraint: { message: "from {0} to {1}", args: ["$0.05/lb", "$2.00/lb"] },
+    });
+  });
+});
+
+describe("properties and coverage", () => {
+  const run = tariffTest(rules, { source: LTL, context });
+
+  it("runs a property beside the tests and shrinks its failure to the out-of-order pair", () => {
+    expect(run.tests.map((test) => [test.kind, test.name, test.status])).toEqual([
+      ["property", "heavier never bills less", "failed"],
+      ["test", "a light load", "passed"],
+    ]);
+    const property = run.tests[0];
+    expect(property?.cases).toBe(24);
+    expect(property?.skipped).toBe(0);
+    expect(property?.counterexample?.values).toEqual([
+      { target: "shipment.weight", display: "999 lb", value: { $q: "999", u: "lb" } },
+    ]);
+    expect(property?.counterexample?.monotone).toEqual({
+      target: "shipment.weight",
+      expression: "total",
+      direction: "nondecreasing",
+      before: {
+        at: { display: "999 lb", value: { $q: "999", u: "lb" } },
+        result: expect.objectContaining({ value: expect.objectContaining({ u: "$" }) }),
+      },
+      after: {
+        at: { display: "1000 lb", value: { $q: "1000", u: "lb" } },
+        result: expect.objectContaining({ value: expect.objectContaining({ u: "$" }) }),
+      },
+    });
+    expect(property?.counterexample?.test).toMatch(
+      /^test "heavier never bills less: 999 lb" \{\n {2}given shipment\.weight = 999 lb\n/,
+    );
+  });
+
+  it("gives a test one case and no counterexample", () => {
+    expect(run.tests[1]).toMatchObject({ cases: 1, skipped: 0, counterexample: null });
+  });
+
+  it("counts the regions every case reached, in source order", () => {
+    const coverage = run.coverage;
+    expect(coverage?.total).toBe(coverage?.regions.length);
+    expect(coverage?.reached).toBe(coverage?.regions.filter((region) => region.hits > 0).length);
+    expect(coverage?.regions.map((region) => region.kind)).toEqual([
+      "if",
+      "charge",
+      "else",
+      "charge",
+      "option",
+      "charge",
+      "option",
+      "charge",
+      "option",
+      "refusal",
+      "charge",
+    ]);
+    const starts = coverage?.regions.map((region) => region.range.from) ?? [];
+    expect([...starts].sort((a, b) => a - b)).toEqual(starts);
+  });
+
+  it("sends no coverage when only some tests ran", () => {
+    expect(
+      tariffTest(rules, { source: LTL, context, names: ["a light load"] }).coverage,
+    ).toBeNull();
+  });
+});
+
+describe("choices", () => {
+  it("reads every option of a best with its subtotal or refusal, as the preview carries it", () => {
+    const answer = rules.call("tariff.evaluate", {
+      context: {},
+      record: null,
+      trace: true,
+      programs: [{ id: "ltl", source: LTL, inputs: {} }],
+    }) as { results: Record<string, unknown>[] };
+    const preview = formulaPreviewResponseSchema.parse(answer.results[0]);
+    expect(preview.choices).toEqual([
+      {
+        label: "Linehaul",
+        kind: "best",
+        range: expect.objectContaining({ from: ltlAt('best "Linehaul"') }),
+        chosen: "Per mile",
+        options: [
+          expect.objectContaining({ label: "Per mile", status: "chosen", refusal: null }),
+          expect.objectContaining({
+            label: "Flat",
+            status: "lost",
+            subtotal: { $q: "900", u: "$" },
+            refusal: null,
+          }),
+          expect.objectContaining({
+            label: "Volume",
+            status: "refused",
+            subtotal: null,
+            refusal: expect.objectContaining({ message: "Volume rates start at 6,000 lb" }),
+          }),
+        ],
+      },
+    ]);
+    expect(preview.trace).toContainEqual({
+      kind: "choice",
+      label: "Linehaul",
+      chosen: "Per mile",
+      range: expect.objectContaining({ from: ltlAt('best "Linehaul"') }),
+    });
+  });
+});
+
+describe("tariffReferences", () => {
+  const cursor = (offset: number) => ({ source: SOURCE, context, kind: "tariff" as const, offset });
+
+  it("lists a binding's declaration and every read, in source order", () => {
+    const uses = tariffReferences(rules, cursor(at("drops > 1") + 1));
+    expect(uses).toEqual([
+      { range: { from: at("drops ="), to: at("drops =") + 5 }, kind: "declaration", module: null },
+      { range: { from: at("drops > 1"), to: at("drops > 1") + 5 }, kind: "read", module: null },
+      {
+        range: { from: at("drops - 1"), to: at("drops - 1") + 5 },
+        kind: "read",
+        module: null,
+      },
+    ]);
+  });
+
+  it("leaves the declaration out when asked", () => {
+    const uses = tariffReferences(rules, {
+      ...cursor(at("drops > 1") + 1),
+      includeDeclaration: false,
+    });
+    expect(uses.map((use) => use.kind)).toEqual(["read", "read"]);
+  });
+
+  it("marks an assignment as a write", () => {
+    const source =
+      'tariff "t"\nvar extra = $0\nif shipment.distance > 10 mi {\n  extra = $5\n}\ncharge "x" = extra\n';
+    const uses = tariffReferences(rules, {
+      source,
+      context,
+      kind: "tariff",
+      offset: source.indexOf("extra = $5") + 1,
+    });
+    expect(uses.map((use) => use.kind)).toEqual(["declaration", "write", "read"]);
+  });
+
+  it("puts an imported name's declaration in its library's source", () => {
+    const library = 'library "org.fees"\nfn fee() -> Money = $5\n';
+    const source = 'tariff "t"\nuse org.fees.{ fee }\ncharge "a" = fee()\n';
+    const uses = tariffReferences(rules, {
+      source,
+      context: { ...context, libraries: [{ path: "org.fees", version: "v1", source: library }] },
+      kind: "tariff",
+      offset: source.indexOf("fee()") + 1,
+    });
+    expect(uses[0]).toEqual({
+      range: { from: library.indexOf("fee("), to: library.indexOf("fee(") + 3 },
+      kind: "declaration",
+      module: "org.fees",
+    });
+    expect(uses.slice(1).every((use) => use.module === null)).toBe(true);
+  });
+
+  it("answers nothing off a name", () => {
+    expect(tariffReferences(rules, cursor(at("\n\nlet miles") + 1))).toEqual([]);
+  });
+});
+
+describe("tariffActions", () => {
+  const actionsAt = (source: string, from: number, to = from) =>
+    tariffActions(rules, { source, context, kind: "tariff", from, to });
+
+  it("promotes a charge's amount to an input named after the charge, selecting the new name", () => {
+    const source = 'tariff "t"\ninput rate: Money/mi = $2/mi\ncharge "Flat rate" = $900\n';
+    const [action, ...rest] = actionsAt(source, source.indexOf("$900") + 1);
+    expect(rest).toEqual([]);
+    expect(action?.id).toBe("promote-input");
+    expect(action?.title).toEqual({ message: "Promote {0} to an input", args: ["`$900`"] });
+    let next = source;
+    for (const edit of [...(action?.edits ?? [])].sort((a, b) => b.range.from - a.range.from)) {
+      next = next.slice(0, edit.range.from) + edit.insert + next.slice(edit.range.to);
+    }
+    expect(next).toBe(
+      'tariff "t"\ninput rate: Money/mi = $2/mi\ninput flatRateAmount: Money = $900\ncharge "Flat rate" = flatRateAmount\n',
+    );
+    expect(next.slice(action?.select?.from, action?.select?.to)).toBe("flatRateAmount");
+  });
+
+  it("offers to promote every equal literal at once", () => {
+    const source = 'tariff "t"\ncharge "a" = $5\ncharge "b" = $5\n';
+    expect(actionsAt(source, source.indexOf("$5") + 1).map((action) => action.id)).toEqual([
+      "promote-input",
+      "promote-input-all",
+    ]);
+  });
+
+  it("offers nothing off a literal", () => {
+    expect(actionsAt(SOURCE, 2)).toEqual([]);
   });
 });

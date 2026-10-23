@@ -8,12 +8,14 @@ import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import {
   tariffBillSchema,
+  tariffChoicesSchema,
   tariffDiagnosticsSchema,
   tariffMessageSchema,
   tariffInputDeclarationsSchema,
   tariffLookupSchema,
   tariffRangeSchema,
   tariffRefusalSchema,
+  tariffRegionKindSchema,
   tariffTestFailureSchema,
   tariffTestResultSchema,
   tariffTestStatusSchema,
@@ -232,7 +234,8 @@ const previewErrorSchema = z.object({
 
 /**
  * What the preview answers: every finding, the bill (or why the tariff refused, or the error
- * that stopped it), the trace and the table lookups, and the file's tests as the server ran them.
+ * that stopped it), the trace, the table lookups, the choices its `best` and `worst` blocks made,
+ * and the file's tests as the server ran them.
  */
 export const formulaPreviewResponseSchema = z.object({
   diagnostics: tariffDiagnosticsSchema,
@@ -248,6 +251,8 @@ export const formulaPreviewResponseSchema = z.object({
     .array(tariffLookupSchema)
     .nullish()
     .transform((value) => value ?? []),
+  /** Every `best` and `worst` the rating evaluated, with each option's subtotal or refusal. */
+  choices: tariffChoicesSchema,
   tests: z
     .array(tariffTestResultSchema)
     .nullish()
@@ -415,6 +420,8 @@ export const readinessCheckSchema = z.object({
   label: z.string(),
   status: z.enum(["pass", "warn", "fail"]),
   detail: z.string().optional(),
+  /** The source regions a check is about (the regions no test reaches), each to reveal. */
+  regions: z.array(z.object({ range: tariffRangeSchema, kind: tariffRegionKindSchema })).nullish(),
 });
 export type ReadinessCheck = z.output<typeof readinessCheckSchema>;
 

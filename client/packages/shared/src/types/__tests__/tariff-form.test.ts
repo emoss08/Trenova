@@ -1,4 +1,4 @@
-import { readStoredTariffBill } from "@trenova/shared/types/tariff-form";
+import { readStoredTariffBill, readStoredTariffChoices } from "@trenova/shared/types/tariff-form";
 import { describe, expect, it } from "vitest";
 
 // The two shapes the server sends a bill in: REST stores `tarifftypes.Bill` (Go's JSON tags in
@@ -130,5 +130,86 @@ describe("readStoredTariffBill", () => {
   it("gives null for something that is not a bill", () => {
     expect(readStoredTariffBill({ total: "x" })).toBeNull();
     expect(readStoredTariffBill(null)).toBeNull();
+  });
+});
+
+describe("readStoredTariffChoices", () => {
+  // GraphQL `ShipmentRatingDetail.choices`: a subtotal is a Decimal, a refusal the server's text.
+  const stored = [
+    {
+      label: "Linehaul",
+      kind: "best",
+      chosen: "Flat",
+      options: [
+        { label: "Per mile", status: "lost", subtotal: "1175.00", refusal: null },
+        { label: "Flat", status: "chosen", subtotal: "900", refusal: null },
+        {
+          label: "Volume",
+          status: "refused",
+          subtotal: null,
+          refusal: "Volume rates start at 6,000 lb",
+        },
+      ],
+    },
+    { label: "Floor", kind: "worst", chosen: null, options: [] },
+  ];
+
+  it("reads a stored choice into the module's wire form", () => {
+    expect(readStoredTariffChoices(stored)).toEqual([
+      {
+        label: "Linehaul",
+        kind: "best",
+        range: null,
+        chosen: "Flat",
+        options: [
+          {
+            label: "Per mile",
+            range: null,
+            status: "lost",
+            subtotal: { $q: "1175.00", u: "$" },
+            refusal: null,
+          },
+          {
+            label: "Flat",
+            range: null,
+            status: "chosen",
+            subtotal: { $q: "900", u: "$" },
+            refusal: null,
+          },
+          {
+            label: "Volume",
+            range: null,
+            status: "refused",
+            subtotal: null,
+            refusal: { message: "Volume rates start at 6,000 lb", range: null },
+          },
+        ],
+      },
+      { label: "Floor", kind: "worst", range: null, chosen: null, options: [] },
+    ]);
+  });
+
+  it("reads GraphQL's upper-case enum values", () => {
+    const [choice] = readStoredTariffChoices([
+      {
+        label: "Floor",
+        kind: "WORST",
+        chosen: "Buy",
+        options: [{ label: "Buy", status: "CHOSEN", subtotal: "10", refusal: null }],
+      },
+    ]);
+    expect(choice?.kind).toBe("worst");
+    expect(choice?.options[0]?.status).toBe("chosen");
+  });
+
+  it("parses a read choice again unchanged", () => {
+    const once = readStoredTariffChoices(stored);
+    expect(readStoredTariffChoices(once)).toEqual(once);
+  });
+
+  it("answers no choices for a rating without any or a value that is not one", () => {
+    expect(readStoredTariffChoices(undefined)).toEqual([]);
+    expect(readStoredTariffChoices(null)).toEqual([]);
+    expect(readStoredTariffChoices("nope")).toEqual([]);
   });
 });
