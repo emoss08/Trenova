@@ -365,14 +365,15 @@ func (r *repository) UpsertPreference(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.WorkerAvailabilityPreference, error) {
+			cols := workercol.WorkerAvailabilityPreferenceColumns
 			if _, err := r.db.DBForContext(ctx).
 				NewInsert().
 				Model(entity).
 				On("CONFLICT (organization_id, business_unit_id, worker_id, day_of_week) DO UPDATE").
-				Set("preference = EXCLUDED.preference").
-				Set("note = EXCLUDED.note").
-				Set("updated_at = EXCLUDED.updated_at").
-				Set("version = worker_availability_preferences.version + 1").
+				Set(cols.Preference.SetExcluded()).
+				Set(cols.Note.SetExcluded()).
+				Set(cols.UpdatedAt.SetExcluded()).
+				Set(cols.Version.IncConflict(1)).
 				Returning("*").
 				Exec(ctx); err != nil {
 				r.l.Error("failed to upsert availability preference", zap.Error(err))
