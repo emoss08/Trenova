@@ -19317,7 +19317,7 @@ type FuelIndexConnection {
   totalCount: Int
 }
 
-type FuelIndexPrice {
+type FuelIndexPrice @kind(resource: "fuel_surcharge_program") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -19393,7 +19393,7 @@ type FuelSurchargeProgramConnection {
   totalCount: Int
 }
 
-type FuelIndexLatestPrice {
+type FuelIndexLatestPrice @kind(resource: "fuel_surcharge_program") {
   index: FuelIndex!
   latest: FuelIndexPrice
   previous: FuelIndexPrice
@@ -19401,7 +19401,12 @@ type FuelIndexLatestPrice {
   delta: Decimal
 }
 
-type FuelProgramCurrentRate {
+"""
+A fuel surcharge program's surcharge this week, from the index price in effect.
+"""
+type FuelProgramCurrentRate @kind(resource: "fuel_surcharge_program") {
+  "The program's id: a program has one current rate."
+  id: ID!
   program: FuelSurchargeProgram!
   price: FuelIndexPrice
   ratePerMile: Decimal
@@ -19498,7 +19503,17 @@ input GenerateFuelTableInput {
 extend type Query {
   fuelIndexes(input: DataTableConnectionInput!): FuelIndexConnection!
   fuelIndex(id: ID!): FuelIndex
-  fuelIndexPriceHistory(indexId: ID!, from: String, to: String, limit: Int): [FuelIndexPrice!]!
+  "The prices on file for one fuel index, newest first."
+  fuelIndexPriceHistory(
+    "The fuel index whose prices are read."
+    indexId: ID!
+    "The earliest price day to include, as YYYY-MM-DD."
+    from: String
+    "The latest price day to include, as YYYY-MM-DD."
+    to: String
+    "How many prices to read, at most 520; 104 when left out."
+    limit: Int
+  ): [FuelIndexPrice!]!
   fuelDashboard: [FuelIndexLatestPrice!]!
   fuelSurchargePrograms(input: DataTableConnectionInput!): FuelSurchargeProgramConnection!
   fuelSurchargeProgram(id: ID!): FuelSurchargeProgram
@@ -23839,9 +23854,83 @@ type RateAgreement {
   approvedAt: Timestamp
   reviewComment: String!
   currentVersionNumber: Int!
+  "The customer invoices for this agreement's freight go to, when not the party itself."
+  billToCustomerId: ID
+  """
+  The live lanes: active rules in force now or starting later, most specific
+  first. first takes at most 100.
+  """
+  lanes(first: Int = 50): [RateAgreementLane!]!
+  "How many live lanes the agreement holds."
+  laneCount: Int!
+  "The accessorial schedule. Read by rateAgreement only."
+  accessorials: [RateAgreementAccessorial!]
+  "The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only."
+  fuelBinding: RateAgreementFuelBinding
+  "The version of the header terms in force now. Read by rateAgreement only."
+  currentVersion: RateAgreementVersion
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"""
+One priced lane of a rate agreement: where it applies, when, and the tariff
+and inputs it prices with.
+"""
+type RateAgreementLane {
+  id: ID!
+  label: String!
+  originScopeType: String!
+  originScopeValue: String!
+  originCity: String!
+  destinationScopeType: String!
+  destinationScopeValue: String!
+  destinationCity: String!
+  direction: String!
+  priority: Int!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  hazmatOnly: Boolean!
+  tempControlOnly: Boolean!
+  "The tariff that prices the lane."
+  formulaTemplateId: ID!
+  currency: String!
+  "The values the lane's tariff prices with, by input name. Each value is a Tariff wire value."
+  inputs: JSON!
+}
+
+"An accessorial an agreement prices, and on what terms."
+type RateAgreementAccessorial {
+  id: ID!
+  accessorialChargeId: ID!
+  method: String!
+  rateUnit: String!
+  waived: Boolean!
+  autoApply: Boolean!
+  freeUnits: Int
+  effectiveFrom: Timestamp
+  effectiveTo: Timestamp
+  amount: Decimal!
+  maxAmount: Decimal
+  "The Tariff condition a shipment meets for the charge to apply; empty applies always."
+  condition: String!
+}
+
+"How an agreement prices fuel: the program it binds, or a waiver."
+type RateAgreementFuelBinding {
+  id: ID!
+  fuelSurchargeProgramId: ID!
+  waived: Boolean!
+}
+
+"The header terms of an agreement as they stood for a window."
+type RateAgreementVersion {
+  id: ID!
+  versionNumber: Int!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  changeMessage: String!
 }
 
 type RateAgreementEdge {
@@ -23898,9 +23987,52 @@ type RateMatrix {
   status: String!
   "What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int."
   valueType: String!
+  "The matrix's axes, by position. Read by rateMatrix only."
+  dimensions: [RateMatrixDimension!]
+  "How many cells the grid holds."
+  cellCount: Int!
+  """
+  The grid's cells, a page at a time: offset skips that many, and limit takes
+  at most 100.
+  """
+  cells(offset: Int = 0, limit: Int = 100): [RateMatrixCell!]!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"One axis of a rate matrix: what it keys on and how a value matches it."
+type RateMatrixDimension {
+  id: ID!
+  position: Int!
+  kind: String!
+  matchMode: String!
+  label: String!
+  keyNormalization: String!
+  rangeOverflow: String!
+}
+
+"""
+One cell of a rate matrix: a key or a range on each axis, by position (d0 is
+the first axis), and the value it holds.
+"""
+type RateMatrixCell {
+  id: ID!
+  d0Key: String!
+  d1Key: String!
+  d2Key: String!
+  d3Key: String!
+  d0Min: Decimal
+  d0Max: Decimal
+  d1Min: Decimal
+  d1Max: Decimal
+  d2Min: Decimal
+  d2Max: Decimal
+  d3Min: Decimal
+  d3Max: Decimal
+  deficitEligible: Boolean!
+  value: Decimal!
+  minCharge: Decimal
 }
 
 type RateMatrixEdge {
@@ -23959,8 +24091,15 @@ type RateQuoteConnection {
 
 extend type Query {
   rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
+  """
+  One rate agreement with its accessorials, fuel binding and current version;
+  its lanes are read a page at a time.
+  """
+  rateAgreement(id: ID!): RateAgreement
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
+  "One rate matrix with its axes; its cells are read a page at a time."
+  rateMatrix(id: ID!): RateMatrix
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
 }
 `, BuiltIn: false},

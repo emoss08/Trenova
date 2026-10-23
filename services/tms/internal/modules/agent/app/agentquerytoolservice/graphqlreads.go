@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -137,6 +138,16 @@ const (
 	// paramReferences is a list of ids an unpaged list's argument takes (the
 	// tractors whose positions are read), sent as the list.
 	paramReferences
+	// paramDayText is a day sent as the text a String argument takes (a fuel
+	// index price's day), not as a timestamp.
+	paramDayText
+)
+
+const (
+	// dayTextFormat is what the description of a String argument that takes
+	// a day says it is written as, and dayTextLayout how it is parsed.
+	dayTextFormat = "YYYY-MM-DD"
+	dayTextLayout = "2006-01-02"
 )
 
 // graphQLParam is one typed parameter of a tool that reads through GraphQL,
@@ -308,6 +319,12 @@ func compileInputs(params []graphQLParam, args map[string]any, clk clock) (map[s
 				return nil, err
 			}
 			out[param.Field] = endOfDay(clk, day)
+		case paramDayText:
+			day, err := readDayText(args, param.Name)
+			if err != nil {
+				return nil, err
+			}
+			out[param.Field] = day
 		case paramIn, paramEquals, paramContains, paramAtLeast, paramAtMost, paramPresent,
 			paramReference, paramReferences:
 			out[param.Field] = raw
@@ -660,7 +677,19 @@ func compileFilter(
 			return compare(dbtype.OpIsNotNull, nil), true, nil
 		}
 		return compare(dbtype.OpIsNull, nil), true, nil
+	case paramDayText:
 	}
 
 	return nil, false, fmt.Errorf("parameter %q has no filter", param.Name)
+}
+
+// readDayText is a day a String argument takes, checked as a day and sent as
+// the text the argument's description names.
+func readDayText(args map[string]any, name string) (string, error) {
+	raw := strings.TrimSpace(optionalString(args, name))
+	if _, err := time.Parse(dayTextLayout, raw); err != nil {
+		return "", fmt.Errorf("parameter %q must be a date as %s", name, dayTextFormat)
+	}
+
+	return raw, nil
 }

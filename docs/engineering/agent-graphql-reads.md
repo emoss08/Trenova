@@ -369,6 +369,20 @@ narrow the call. Any other `Int` argument is a parameter only when the schema de
 `unscoped`, not `defaults`: the safety events list reads what is still open across the
 organization when no worker is named, and one worker's record whole.
 
+A `String` argument that takes a day says so in its schema description (`as YYYY-MM-DD`, the fuel
+index price history's `from` and `to`); the tool offers it as an `agenttoolschema.Date`, refuses
+anything that is not a calendar day before the read, and sends the day as the text the argument
+takes. An id kept inside another resource's records (a fuel index inside fuel surcharge programs)
+is a reference by its record `kinds` rather than its resource, so the runtime still holds it to a
+prefix.
+
+A root that takes no argument at all (`fuelProgramCurrentRates`, a computed rate per active
+program) is an unpaged list with no parameters of its own. Where its repository tool matched a
+free-text query in what it read, the spec keeps that capability with `matches`, the row fields by
+dotted path (`program.code`, `program.name`) a case-insensitive `query` is matched against after
+the read, described by `queryNote`. The query never reaches the server, which has no search for
+it, and only an unpaged list may declare it: a paged list's query is the server's.
+
 **Reads alongside.** Where the repository tool returned records of another kind beside the list
 because the next call needs their ids (the checklist templates a person starts by hand, the review
 templates), the spec names the operation (`alongside`) and the key the result carries the records
@@ -597,10 +611,16 @@ Each module's PR:
 | Workforce | `worker_list_safety_events` | none | reads `DeskWorkerSafetyEvents`, with each worker's recognitions read alongside (`DeskWorkerRecognitions`) when the call names a worker. `worker_safety_event` and `worker_recognition` declare no field sensitivities and default to Internal, as the repository row read them. Each event gains `violations` (a loader, one query per page of events), which the repository tool read beside the events; `WorkerSafetyViolation` now declares `@kind(resource: "worker_safety_event")`, so its fields follow the event's. With no worker the list reads the events still open across the organization, newest first, as the repository tool did (the spec's `unscoped` default); `openOnly: false` lists the closed ones too, and one worker's record is read whole |
 | Workforce | `worker_list_credentials` | none | reads `DeskWorkerCredentialList`, with the active credential types read alongside (`DeskWorkerCredentialTypes`) when the call names a worker. `workerCredentials` takes an optional worker and the repository tool's filters (`expiringWithinDays`, `includeExpired`, `credentialTypeCode`, `requiredOnly`, `limit`), read by `WorkerCredentialService.List`: one worker's credentials, or with no worker or an expiry window the active ones falling due, soonest first, walked in the query. The window counts days from now, as the screen's expiry forecast does and the description says, where the repository tool counted calendar days in the caller's zone: GraphQL carries no caller's day. It pages by cursor over the root's `limit` and `offset`, as the repository tool paged by offset. `worker_credential` defaulted to Restricted with only `number` declared (Confidential), so every field outside its reference view would be withheld at Internal; what a credential is, whose, its dates, health, issuer, verification and whether a scan is on file are now Internal, and the notes and archive reason stay Restricted. The operation never selects `number`, which the repository tool withheld too |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
+| Rates | `rate_list_agreements` | none | reads `DeskRateAgreements`, which selects what the repository row carried and nothing more; the agreement's tariff `inputs` are Restricted and withheld at Internal, as the row gated them. The margin guardrails are `@protected` and never selected |
+| Rates | `rate_get_agreement` | none | reads `DeskRateAgreementCard` on the new `rateAgreement(id)` root. Its lanes are the new `lanes(first: 50)` field, the live lanes (current and starting later) the Desk's card pages, with `laneCount`, where the repository tool loaded every rule in force and cut the result at 50. The agreement's and each lane's tariff `inputs`, an accessorial's amount, cap and condition, the review comment and the version's change message stay Restricted, as the repository view gated them; the container fields (`lanes`, `laneCount`, `accessorials`, `fuelBinding`, `currentVersion`) and `fuelSurchargeProgramId` are declared Internal so their Restricted leaves are judged one by one. Inputs come as Tariff wire values, where the repository view wrote them as display text |
+| Rates | `rate_list_fuel_index_prices` | none | reads `DeskFuelIndexPrices`. `FuelIndexPrice` had no kind, so nothing was gated; it now declares `@kind(resource: "fuel_surcharge_program")` (Internal by default), as do `FuelIndexLatestPrice` and `FuelProgramCurrentRate` that carry it |
+| Rates | `rate_list_fuel_surcharge_programs` | none | reads `DeskFuelProgramCurrentRates`; `FuelProgramCurrentRate` declares `@kind(resource: "fuel_surcharge_program")` and gains `id`, the program's. The repository tool's per-row note (no price on file, a price outside the table) is the spec's `shape`, and is left off a row whose price or rate was withheld |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
 Internal each now withholds every field but `id`, where it used to return them all. No description
-names a field that is newly withheld at Internal, so none changed.
+names a field that is newly withheld at Internal, so none changed. The fuel index price and fuel surcharge
+program reads were not gated either and now withhold the same way below Internal; the rate
+agreement list and get already gated their rates.
 
 ## Permissions, data scopes and refusals
 

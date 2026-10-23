@@ -519,6 +519,8 @@ type ResolverRoot interface {
 	PortalCredential() PortalCredentialResolver
 	PortalTraining() PortalTrainingResolver
 	Query() QueryResolver
+	RateAgreement() RateAgreementResolver
+	RateMatrix() RateMatrixResolver
 	ReviewRating() ReviewRatingResolver
 	RiskDecision() RiskDecisionResolver
 	Role() RoleResolver
@@ -3153,8 +3155,10 @@ type QueryResolver interface {
 	PTOBalanceSummary(ctx context.Context) (*workerports.PTOBalanceSummary, error)
 	PTOLiabilityReport(ctx context.Context, asOf *int) (*ptoledgerservice.LiabilityReport, error)
 	RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error)
+	RateAgreement(ctx context.Context, id string) (*gqlmodel.RateAgreement, error)
 	RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error)
 	RateMatrices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateMatrixConnection, error)
+	RateMatrix(ctx context.Context, id string) (*gqlmodel.RateMatrix, error)
 	RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error)
 	RecurringShipments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringShipmentConnection, error)
 	RecurringShipment(ctx context.Context, id string) (*recurringshipment.RecurringShipment, error)
@@ -3343,6 +3347,16 @@ type QueryResolver interface {
 	WorkerTrainingRecord(ctx context.Context, id string) (*worker.WorkerTrainingRecord, error)
 	WorkerTrainingSummary(ctx context.Context, workerID string) (*worker.WorkerTrainingSummary, error)
 	MyTraining(ctx context.Context) ([]*driverportalservice.PortalTraining, error)
+}
+
+type RateAgreementResolver interface {
+	Lanes(ctx context.Context, obj *gqlmodel.RateAgreement, first *int) ([]*gqlmodel.RateAgreementLane, error)
+	LaneCount(ctx context.Context, obj *gqlmodel.RateAgreement) (int, error)
+}
+
+type RateMatrixResolver interface {
+	CellCount(ctx context.Context, obj *gqlmodel.RateMatrix) (int, error)
+	Cells(ctx context.Context, obj *gqlmodel.RateMatrix, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
 }
 
 type ReviewRatingResolver interface {
@@ -4191,6 +4205,8 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"PortalCredential":                   func() any { return r.PortalCredential() },
 			"PortalTraining":                     func() any { return r.PortalTraining() },
 			"Query":                              func() any { return r.Query() },
+			"RateAgreement":                      func() any { return r.RateAgreement() },
+			"RateMatrix":                         func() any { return r.RateMatrix() },
 			"ReviewRating":                       func() any { return r.ReviewRating() },
 			"RiskDecision":                       func() any { return r.RiskDecision() },
 			"Role":                               func() any { return r.Role() },

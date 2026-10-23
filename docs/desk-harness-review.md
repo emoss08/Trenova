@@ -1475,6 +1475,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: credentials | `worker_list_credentials` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: party gets | `customer_get`, `location_get`, `carrier_get`, `carrier_get_intelligence_event` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: equipment | `equipment_get_tractor`, `equipment_get_trailer`, `equipment_list_positions` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: rates | `rate_list_agreements`, `rate_get_agreement`, `rate_list_fuel_index_prices`, `rate_list_fuel_surcharge_programs` | 632 → 632 | unchanged, 0 pending | 0.93 → pending re-record | 0.82 → pending re-record |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1621,6 +1622,21 @@ every qualification record. A Postgres test reads each list for one worker and f
 organization, against the repository tool's service read, and checks that an agent at Internal is
 never shown a leave reason, a finding or a drug and alcohol answer. Held-out ranking is unchanged
 (keyword 0.99 and 0.95 over 145, hybrid 0.93 and 0.82 over 165).
+
+The rates row converts the agreement register, one agreement, and the two fuel surcharge reads.
+`rate_get_agreement` had no single-record root; `rateAgreement(id)` now reads the header with its
+accessorials, fuel binding and current version, and the agreement's lanes are a field,
+`lanes(first:)` with `laneCount`, paged the way the Desk's agreement card pages them, where the
+repository tool loaded every rule of a tariff that can hold tens of thousands and cut the result at
+fifty. `rateMatrix(id)` gains its dimensions and a paged `cells(offset:, limit:)`, but
+`rate_get_matrix` stays on its path until a get sends its operation's other variables
+(`cellOffset`). The fuel price and program reads were ungated; `FuelIndexPrice`,
+`FuelIndexLatestPrice` and `FuelProgramCurrentRate` now declare the fuel surcharge program kind.
+Two shapes are new: a `String` argument that takes a day as text, and a whole list whose root takes
+no argument but whose repository tool matched a query in what it read (`matches`). Nothing an agent
+at Internal saw before is withheld now, and no field the repository tools hid is shown. The
+agreement descriptions changed, so the embedding fixture is re-recorded; held-out keyword ranking is unchanged
+(0.99 and 0.95 over 147); the hybrid figures wait on the re-recorded fixture.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

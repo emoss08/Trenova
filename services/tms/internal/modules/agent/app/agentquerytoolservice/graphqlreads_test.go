@@ -39,6 +39,10 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 				}
 			}
 			derived := params()
+			if read.Unpaged && len(read.Variables) == 0 {
+				assert.Empty(t, derived, "a root that takes no argument offers none")
+				return
+			}
 			require.NotEmpty(t, derived, "a list tool reads by at least one typed parameter")
 
 			names := make(map[string]struct{}, len(derived))

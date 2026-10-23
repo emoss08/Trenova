@@ -231,6 +231,14 @@ fragment FuelCardReference on FuelCard {
   status
 }
 
+fragment FuelIndexPriceReference on FuelIndexPrice {
+  id
+}
+
+fragment FuelProgramCurrentRateReference on FuelProgramCurrentRate {
+  id
+}
+
 fragment FuelPurchaseReference on FuelPurchase {
   id
   tractorId

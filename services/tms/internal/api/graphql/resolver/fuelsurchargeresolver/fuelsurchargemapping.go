@@ -427,6 +427,7 @@ func fuelProgramCurrentRatesToModel(
 		}
 
 		result = append(result, &gqlmodel.FuelProgramCurrentRate{
+			ID:           entry.Program.ID.String(),
 			Program:      fuelSurchargeProgramToModel(entry.Program),
 			Price:        fuelIndexPriceToModel(entry.Price),
 			RatePerMile:  base.DecimalPtrToStringPtr(entry.RatePerMile),

@@ -203,6 +203,7 @@ func graphQLGetSpecs() []getSpec {
 		carrierIntelEventGetSpec(),
 		tractorGetSpec(),
 		trailerGetSpec(),
+		rateAgreementGetSpec(),
 	}
 }
 

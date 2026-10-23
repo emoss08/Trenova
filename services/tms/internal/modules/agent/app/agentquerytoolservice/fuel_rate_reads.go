@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
@@ -35,10 +33,7 @@ const (
 	fieldSource            = "source"
 	fieldTractorID         = "tractorId"
 	fieldJurisdictionID    = "jurisdictionId"
-	maxFuelIndexPrices     = 104
-	defaultFuelIndexPrices = 26
 	maxReportSchedules     = 50
-	priceDayLayout         = "2006-01-02"
 )
 
 func fuelRateReadProviders() []any {
@@ -46,7 +41,6 @@ func fuelRateReadProviders() []any {
 		newListFuelPurchasesTool,
 		newListFuelCardsTool,
 		newListFuelPurchaseImportsTool,
-		newListFuelIndexPricesTool,
 		newListIFTAJurisdictionsTool,
 		newListIFTAReturnsTool,
 		newListIFTAMileageEntriesTool,
@@ -333,108 +327,6 @@ func newListFuelPurchaseImportsTool(
 			})
 		},
 	})
-}
-
-type fuelIndexPriceRow struct {
-	ID        string `json:"id"`
-	PriceDate string `json:"priceDate"`
-	Price     string `json:"price"`
-	Currency  string `json:"currency"`
-	IsManual  bool   `json:"isManual"`
-}
-
-type listFuelIndexPricesTool struct {
-	prices fuelsurchargeports.FuelIndexPriceRepository
-}
-
-func newListFuelIndexPricesTool(
-	prices fuelsurchargeports.FuelIndexPriceRepository,
-) agentports.AgentQueryTool {
-	return &listFuelIndexPricesTool{prices: prices}
-}
-
-func (t *listFuelIndexPricesTool) Name() string { return "rate_list_fuel_index_prices" }
-
-func (t *listFuelIndexPricesTool) Description() string {
-	return "List the prices on file for one fuel index, newest first, with the day each " +
-		"applies to and whether a person entered it or it was fetched. Only a manual price " +
-		"on a custom index can be corrected, with rate_correct_fuel_index_price; " +
-		"rate_record_fuel_index_price adds the next one."
-}
-
-func (t *listFuelIndexPricesTool) ParamSchema() map[string]any {
-	return objectSchema(map[string]any{
-		paramFuelIndexID: agenttoolschema.KindID("The fuel index, from "+
-			"rate_list_fuel_surcharge_programs. Never guess one.", permission.KindFuelIndex),
-		"from":     agenttoolschema.Date("The earliest price day to include."),
-		"to":       agenttoolschema.Date("The latest price day to include."),
-		paramLimit: limitSchema(defaultFuelIndexPrices, maxFuelIndexPrices),
-	}, paramFuelIndexID)
-}
-
-func (t *listFuelIndexPricesTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{resource: permission.ResourceFuelSurchargeProgram})
-}
-
-func optionalPriceDay(params map[string]any, key string) (string, error) {
-	day := strings.TrimSpace(optionalString(params, key))
-	if day == "" {
-		return "", nil
-	}
-	if _, err := time.Parse(priceDayLayout, day); err != nil {
-		return "", fmt.Errorf("%s must be YYYY-MM-DD, got %q", key, day)
-	}
-
-	return day, nil
-}
-
-func (t *listFuelIndexPricesTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	indexID, err := requirePulid(params.Params, paramFuelIndexID)
-	if err != nil {
-		return nil, err
-	}
-	from, err := optionalPriceDay(params.Params, "from")
-	if err != nil {
-		return nil, err
-	}
-	to, err := optionalPriceDay(params.Params, "to")
-	if err != nil {
-		return nil, err
-	}
-
-	prices, err := t.prices.ListByIndex(ctx, &fuelsurchargeports.ListFuelIndexPricesRequest{
-		FuelIndexID: indexID,
-		TenantInfo:  tenantOf(params),
-		From:        from,
-		To:          to,
-		Limit: min(
-			max(optionalInt(params.Params, paramLimit, defaultFuelIndexPrices), 1),
-			maxFuelIndexPrices,
-		),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	rows := make([]fuelIndexPriceRow, 0, len(prices))
-	for _, price := range prices {
-		rows = append(rows, fuelIndexPriceRow{
-			ID:        price.ID.String(),
-			PriceDate: price.PriceDate,
-			Price:     price.Price.String(),
-			Currency:  price.Currency,
-			IsManual:  price.IsManual,
-		})
-	}
-
-	return map[string]any{"fuelIndexId": indexID.String(), "prices": rows}, nil
 }
 
 type iftaJurisdictionRow struct {

@@ -29410,7 +29410,7 @@
     },
     {
       "name": "rate_get_agreement",
-      "description": "Retrieve one rate agreement, a contract or tariff, by id with its lane rules, their tariffs and inputs. It also gives the agreement's own inputs, the current version, the accessorial schedule and the fuel surcharge binding. rate_explain says how it priced one shipment. Take the id from rate_list_agreements.",
+      "description": "Retrieve one rate agreement, a contract or tariff, by id with its lane rules, their tariffs and inputs (the first 50, and laneCount). It also gives the agreement's own inputs, the current version, the accessorial schedule and the fuel surcharge binding. rate_explain says how it priced one shipment. Take the id from rate_list_agreements.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -29499,19 +29499,151 @@
     },
     {
       "name": "rate_list_agreements",
-      "description": "List rate agreements, the contracts and tariffs that price freight for a customer or pay a carrier. Each has its code, name, party, type, status and effective dates. Narrow to a customer, a carrier, a status or text; rate_get_agreement opens one with its lane rules.",
+      "description": "List rate agreements, the contracts and tariffs that price freight for a customer or pay a carrier. Each has its code, name, party, type, status and effective dates. rate_get_agreement opens one with its lane rules. Filters: agreementType, approvedAtFrom/To, autoRenew, carrierId, code, contractRef, createdAtFrom/To, currency, currentVersionNumberMin/Max, customerId, description, effectiveFromFrom/To, effectiveToFrom/To, hasApprovedBy, hasBillToCustomer, hasCarrier, hasCustomer, hasSubmittedBy, name, partyType, priorityMin/Max, renewalNoticeDaysMin/Max, status, submittedAtFrom/To, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "agreementType": {
+            "description": "Only records whose agreement type is one of these.",
+            "items": {
+              "enum": [
+                "Contract",
+                "Tariff",
+                "Spot",
+                "Project",
+                "Dedicated"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.RateAgreementType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "approvedAtFrom": {
+            "description": "Only records whose approved at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "approvedAtTo": {
+            "description": "Only records whose approved at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "autoRenew": {
+            "description": "true for only the records whose autoRenew is true, false for only those whose autoRenew is false.",
+            "type": "boolean"
+          },
           "carrierId": {
-            "description": "Only this carrier's agreements, by id from carrier_list.",
+            "description": "The carrier, from carrier_list. Never guess one.",
             "type": "string",
             "x-recordOf": "carrier"
           },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "contractRef": {
+            "description": "Only records whose contract ref contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "currency": {
+            "description": "Only records whose currency contains this text.",
+            "type": "string"
+          },
+          "currentVersionNumberMax": {
+            "description": "Only records whose current version number is at most this.",
+            "type": "integer"
+          },
+          "currentVersionNumberMin": {
+            "description": "Only records whose current version number is at least this.",
+            "type": "integer"
+          },
           "customerId": {
-            "description": "Only this customer's agreements, by id from customer_list.",
+            "description": "The customer, from customer_list. Never guess one.",
             "type": "string",
             "x-recordOf": "customer"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "effectiveFromFrom": {
+            "description": "Only records whose effective from is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "effectiveFromTo": {
+            "description": "Only records whose effective from is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "effectiveToFrom": {
+            "description": "Only records whose effective to is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "effectiveToTo": {
+            "description": "Only records whose effective to is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "hasApprovedBy": {
+            "description": "true for only records that have a approved by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasBillToCustomer": {
+            "description": "The customer invoices for this agreement's freight go to, when not the party itself. true for only records that have a bill to customer, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasCarrier": {
+            "description": "true for only records that have a carrier, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasCustomer": {
+            "description": "true for only records that have a customer, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasSubmittedBy": {
+            "description": "true for only records that have a submitted by, false for only those that have none.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -29520,36 +29652,154 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "marginFloorPercentMax": {
+            "description": "Only records whose margin floor percent is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "marginFloorPercentMin": {
+            "description": "Only records whose margin floor percent is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "maxPayPercentOfSellMax": {
+            "description": "Only records whose max pay percent of sell is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "maxPayPercentOfSellMin": {
+            "description": "Only records whose max pay percent of sell is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
           },
           "partyType": {
-            "description": "Customer agreements price what a customer is billed; Carrier agreements price what a carrier is paid.",
-            "enum": [
-              "Customer",
-              "Carrier"
-            ],
-            "type": "string",
-            "x-enumOf": "rateAgreement.partyType"
+            "description": "Only records whose party type is one of these.",
+            "items": {
+              "enum": [
+                "Customer",
+                "Carrier"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.RateAgreementPartyType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "priorityMax": {
+            "description": "Only records whose priority is at most this.",
+            "type": "integer"
+          },
+          "priorityMin": {
+            "description": "Only records whose priority is at least this.",
+            "type": "integer"
           },
           "query": {
             "description": "Words to look for in the agreement's code or name.",
             "type": "string"
           },
-          "status": {
-            "description": "Only agreements in this status.",
+          "renewalNoticeDaysMax": {
+            "description": "Only records whose renewal notice days is at most this.",
+            "type": "integer"
+          },
+          "renewalNoticeDaysMin": {
+            "description": "Only records whose renewal notice days is at least this.",
+            "type": "integer"
+          },
+          "reviewComment": {
+            "description": "Only records whose review comment contains this text.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "Draft",
-              "InReview",
-              "Active",
-              "Suspended",
-              "Expired",
-              "Archived"
+              "agreementType",
+              "approvedAt",
+              "approvedById",
+              "autoRenew",
+              "billToCustomerId",
+              "carrierId",
+              "code",
+              "contractRef",
+              "createdAt",
+              "currency",
+              "currentVersionNumber",
+              "customerId",
+              "description",
+              "effectiveFrom",
+              "effectiveTo",
+              "inputs",
+              "marginFloorPercent",
+              "maxPayPercentOfSell",
+              "name",
+              "partyType",
+              "priority",
+              "renewalNoticeDays",
+              "reviewComment",
+              "status",
+              "submittedAt",
+              "submittedById",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "rateAgreement.status"
+            "x-enumOf": "rate_list_agreements.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Draft",
+                "InReview",
+                "Active",
+                "Suspended",
+                "Expired",
+                "Archived"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.RateAgreementStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "submittedAtFrom": {
+            "description": "Only records whose submitted at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "submittedAtTo": {
+            "description": "Only records whose submitted at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -29637,8 +29887,8 @@
             ]
           },
           "limit": {
-            "description": "How many rows to return: 26 unless you ask, at most 104.",
-            "maximum": 104,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true

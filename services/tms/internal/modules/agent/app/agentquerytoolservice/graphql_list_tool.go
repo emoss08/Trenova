@@ -89,7 +89,12 @@ type graphQLListSpec struct {
 	// alongside are the reads an unpaged list makes beside its own, for
 	// records of another kind its next call needs.
 	alongside []alongsideSpec
-	resource  permission.Resource
+	// matches are the row fields, by dotted path, an unpaged list whose root
+	// takes no search argument matches a free-text query against in the rows
+	// it read (program.code), as its repository tool did; queryNote then
+	// describes that query.
+	matches  []string
+	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
@@ -99,8 +104,22 @@ type graphQLListSpec struct {
 // id is, and the tool a model gets one from.
 type idReference struct {
 	resource permission.Resource
-	what     string
-	source   string
+	// kinds name the record kinds the id is one of, where the id is a record
+	// kept inside its resource (a fuel index inside fuel surcharge programs)
+	// rather than the resource's own.
+	kinds  []permission.RecordKind
+	what   string
+	source string
+}
+
+// schema is the id parameter the reference types: by its kinds where it
+// names them, else by its resource.
+func (r idReference) schema() map[string]any {
+	if len(r.kinds) > 0 {
+		return agenttoolschema.KindID(agenttoolschema.IDDescription(r.what, r.source), r.kinds...)
+	}
+
+	return agenttoolschema.RecordID(r.resource, r.what, r.source)
 }
 
 type graphQLListTool struct {
@@ -170,7 +189,7 @@ func referenced(
 		if !ok {
 			continue
 		}
-		param.Schema = agenttoolschema.RecordID(ref.resource, ref.what, ref.source)
+		param.Schema = ref.schema()
 		if param.Kind == paramReferences {
 			param.Schema = agenttoolschema.RecordIDs(ref.resource,
 				agenttoolschema.IDDescription(ref.what, ref.source), unpagedMost)
@@ -225,7 +244,7 @@ func annotate(
 func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
-		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(),
+		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), rateReadSpecs(),
 	)
 }
 
@@ -363,7 +382,8 @@ func describedName(param graphQLParam) (string, bool) {
 		return param.Name + "/" + suffixTo, true
 	case paramAtLeast:
 		return param.Name + "/" + suffixMax, true
-	case paramIn, paramEquals, paramContains, paramPresent, paramReference, paramReferences:
+	case paramIn, paramEquals, paramContains, paramPresent, paramReference, paramReferences,
+		paramDayText:
 		return param.Name, true
 	}
 

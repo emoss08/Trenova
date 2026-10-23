@@ -91,6 +91,10 @@ func newGraphQLReadTool(
 		return nil, fmt.Errorf("%s pages; only an unpaged list reads alongside its own",
 			spec.name)
 	}
+	if len(spec.matches) > 0 {
+		return nil, fmt.Errorf("%s pages; its query is the server's, not matched in the rows",
+			spec.name)
+	}
 
 	return newGraphQLListTool(spec, reader, permissions)
 }
@@ -108,7 +112,8 @@ func newGraphQLUnpagedListTool(
 		return nil, fmt.Errorf("%s reads %s, which is not an unpaged list", spec.name,
 			read.Operation)
 	}
-	if spec.rank != nil || spec.defaultsAt != nil || spec.queryNote != "" {
+	if spec.rank != nil || spec.defaultsAt != nil ||
+		(spec.queryNote == "") != (len(spec.matches) == 0) {
 		return nil, fmt.Errorf("%s: %w", spec.name, errUnpagedSpec)
 	}
 
@@ -256,6 +261,14 @@ func argumentParam(field *graphQLField) []graphQLParam {
 	if field.Type == graphQLTypeInt && !field.List {
 		return intArgumentParam(field)
 	}
+	if field.Type == graphQLTypeString && !field.List &&
+		strings.Contains(field.Description, dayTextFormat) {
+		return []graphQLParam{{
+			Name: field.Name, Field: field.Name, Kind: paramDayText,
+			Schema: agenttoolschema.Date(strings.TrimSpace(
+				strings.ReplaceAll(field.Description, ", as "+dayTextFormat, ""))),
+		}}
+	}
 
 	return inputFieldParams(field)
 }
@@ -319,6 +332,12 @@ func (t *graphQLUnpagedListTool) ParamSchema() map[string]any {
 	if t.paged {
 		properties[paramAfter] = cursorPageSchema(graphQLListLimit, unpagedMost)[paramAfter]
 	}
+	if len(t.spec.matches) > 0 {
+		properties[graphQLParamQuery] = map[string]any{
+			toolschema.KeyType:        toolschema.TypeString,
+			toolschema.KeyDescription: t.spec.queryNote,
+		}
+	}
 	schema := map[string]any{
 		toolschema.KeyType:                 toolschema.TypeObject,
 		toolschema.KeyProperties:           properties,
@@ -379,9 +398,10 @@ func (t *graphQLUnpagedListTool) Query(
 	if t.paged && len(rows) > window.limit {
 		rows = rows[:window.limit]
 	}
+	query := strings.ToLower(strings.TrimSpace(optionalString(params.Params, graphQLParamQuery)))
 	items := make([]map[string]any, 0, len(rows))
 	for _, row := range rows {
-		if node, ok := row.(map[string]any); ok {
+		if node, ok := row.(map[string]any); ok && matchesQuery(node, t.spec.matches, query) {
 			items = append(items, compact(node))
 		}
 	}
@@ -396,7 +416,7 @@ func (t *graphQLUnpagedListTool) Query(
 		}
 	}
 
-	criteria := describeCriteria(t.spec.entityPlural, t.params, args, "")
+	criteria := describeCriteria(t.spec.entityPlural, t.params, args, query)
 	outcome := map[string]any{
 		outcomeCount:       len(items),
 		outcomeSearchedFor: criteria.Describe(),
@@ -436,6 +456,30 @@ func (t *graphQLUnpagedListTool) Query(
 	}
 
 	return outcome, nil
+}
+
+// matchesQuery reports whether a row holds the query's text, ignoring case,
+// in any of the fields a spec matches it against; no query matches every row.
+func matchesQuery(row map[string]any, paths []string, query string) bool {
+	if query == "" {
+		return true
+	}
+	for _, path := range paths {
+		var value any = row
+		for part := range strings.SplitSeq(path, ".") {
+			object, ok := value.(map[string]any)
+			if !ok {
+				value = nil
+				break
+			}
+			value = object[part]
+		}
+		if text, ok := value.(string); ok && strings.Contains(strings.ToLower(text), query) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // checkArguments refuses a call that leaves out a required argument or names

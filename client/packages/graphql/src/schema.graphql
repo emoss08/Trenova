@@ -17164,7 +17164,7 @@ input FuelIndexInput {
   source: FuelIndexSource!
 }
 
-type FuelIndexLatestPrice {
+type FuelIndexLatestPrice @kind(resource: "fuel_surcharge_program") {
   """Latest price minus the previously published price."""
   delta: Decimal
   index: FuelIndex!
@@ -17172,7 +17172,7 @@ type FuelIndexLatestPrice {
   previous: FuelIndexPrice
 }
 
-type FuelIndexPrice {
+type FuelIndexPrice @kind(resource: "fuel_surcharge_program") {
   businessUnitId: ID!
   currency: String!
   enteredById: ID
@@ -17204,8 +17204,13 @@ type FuelJurisdictionGallons {
   purchaseCount: Int!
 }
 
-type FuelProgramCurrentRate {
+"""
+A fuel surcharge program's surcharge this week, from the index price in effect.
+"""
+type FuelProgramCurrentRate @kind(resource: "fuel_surcharge_program") {
   flatAmount: Decimal
+  """The program's id: a program has one current rate."""
+  id: ID!
   matchedRow: FuelSurchargeTableRow
   percent: Decimal
   price: FuelIndexPrice
@@ -24413,7 +24418,17 @@ type Query {
   fuelCards(input: FuelCardsInput!): FuelCardConnection!
   fuelDashboard: [FuelIndexLatestPrice!]!
   fuelIndex(id: ID!): FuelIndex
-  fuelIndexPriceHistory(from: String, indexId: ID!, limit: Int, to: String): [FuelIndexPrice!]!
+  """The prices on file for one fuel index, newest first."""
+  fuelIndexPriceHistory(
+    """The earliest price day to include, as YYYY-MM-DD."""
+    from: String
+    """The fuel index whose prices are read."""
+    indexId: ID!
+    """How many prices to read, at most 520; 104 when left out."""
+    limit: Int
+    """The latest price day to include, as YYYY-MM-DD."""
+    to: String
+  ): [FuelIndexPrice!]!
   fuelIndexes(input: DataTableConnectionInput!): FuelIndexConnection!
   fuelProgramCurrentRates: [FuelProgramCurrentRate!]! @authorizes(resource: "fuel_surcharge_program")
   fuelPurchase(id: ID!): FuelPurchase!
@@ -24708,8 +24723,15 @@ type Query {
   ptoLiabilityReport(asOf: Timestamp): PTOLiabilityReport!
   ptoPolicies(input: PTOPoliciesInput!): PTOPolicyConnection!
   ptoPolicy(id: ID!): PTOPolicy!
+  """
+  One rate agreement with its accessorials, fuel binding and current version;
+  its lanes are read a page at a time.
+  """
+  rateAgreement(id: ID!): RateAgreement
   rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
+  """One rate matrix with its axes; its cells are read a page at a time."""
+  rateMatrix(id: ID!): RateMatrix
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   """
@@ -25134,26 +25156,47 @@ are what decide the price of a shipment; the agreement itself carries the terms
 they are all written under.
 """
 type RateAgreement {
+  """The accessorial schedule. Read by rateAgreement only."""
+  accessorials: [RateAgreementAccessorial!]
   agreementType: RateAgreementType!
   approvedAt: Timestamp
   approvedById: ID
   autoRenew: Boolean!
+  """
+  The customer invoices for this agreement's freight go to, when not the party itself.
+  """
+  billToCustomerId: ID
   businessUnitId: ID!
   carrierId: ID
   code: String!
   contractRef: String!
   createdAt: Timestamp!
   currency: String!
+  """
+  The version of the header terms in force now. Read by rateAgreement only.
+  """
+  currentVersion: RateAgreementVersion
   currentVersionNumber: Int!
   customerId: ID
   description: String!
   effectiveFrom: Timestamp!
   effectiveTo: Timestamp
+  """
+  The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only.
+  """
+  fuelBinding: RateAgreementFuelBinding
   id: ID!
   """
   Values every rule's tariff prices with unless the rule sets its own, by input name. Each value is a Tariff wire value.
   """
   inputs: JSON!
+  """How many live lanes the agreement holds."""
+  laneCount: Int!
+  """
+  The live lanes: active rules in force now or starting later, most specific
+  first. first takes at most 100.
+  """
+  lanes(first: Int = 50): [RateAgreementLane!]!
   marginFloorPercent: Decimal @protected(group: Margins)
   maxPayPercentOfSell: Decimal @protected(group: Margins)
   name: String!
@@ -25169,6 +25212,25 @@ type RateAgreement {
   version: Int!
 }
 
+"""An accessorial an agreement prices, and on what terms."""
+type RateAgreementAccessorial {
+  accessorialChargeId: ID!
+  amount: Decimal!
+  autoApply: Boolean!
+  """
+  The Tariff condition a shipment meets for the charge to apply; empty applies always.
+  """
+  condition: String!
+  effectiveFrom: Timestamp
+  effectiveTo: Timestamp
+  freeUnits: Int
+  id: ID!
+  maxAmount: Decimal
+  method: String!
+  rateUnit: String!
+  waived: Boolean!
+}
+
 type RateAgreementConnection {
   edges: [RateAgreementEdge!]!
   pageInfo: PageInfo!
@@ -25178,6 +25240,41 @@ type RateAgreementConnection {
 type RateAgreementEdge {
   cursor: String!
   node: RateAgreement!
+}
+
+"""How an agreement prices fuel: the program it binds, or a waiver."""
+type RateAgreementFuelBinding {
+  fuelSurchargeProgramId: ID!
+  id: ID!
+  waived: Boolean!
+}
+
+"""
+One priced lane of a rate agreement: where it applies, when, and the tariff
+and inputs it prices with.
+"""
+type RateAgreementLane {
+  currency: String!
+  destinationCity: String!
+  destinationScopeType: String!
+  destinationScopeValue: String!
+  direction: String!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  """The tariff that prices the lane."""
+  formulaTemplateId: ID!
+  hazmatOnly: Boolean!
+  id: ID!
+  """
+  The values the lane's tariff prices with, by input name. Each value is a Tariff wire value.
+  """
+  inputs: JSON!
+  label: String!
+  originCity: String!
+  originScopeType: String!
+  originScopeValue: String!
+  priority: Int!
+  tempControlOnly: Boolean!
 }
 
 enum RateAgreementPartyType {
@@ -25202,15 +25299,33 @@ enum RateAgreementType {
   Tariff
 }
 
+"""The header terms of an agreement as they stood for a window."""
+type RateAgreementVersion {
+  changeMessage: String!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  id: ID!
+  versionNumber: Int!
+}
+
 """
 A rate table a tariff looks values up in: one to four axes, such as origin zone
 by destination zone, and a value of one Tariff type in every cell.
 """
 type RateMatrix {
   businessUnitId: ID!
+  """How many cells the grid holds."""
+  cellCount: Int!
+  """
+  The grid's cells, a page at a time: offset skips that many, and limit takes
+  at most 100.
+  """
+  cells(limit: Int = 100, offset: Int = 0): [RateMatrixCell!]!
   code: String!
   createdAt: Timestamp!
   description: String!
+  """The matrix's axes, by position. Read by rateMatrix only."""
+  dimensions: [RateMatrixDimension!]
   id: ID!
   name: String!
   organizationId: ID!
@@ -25223,10 +25338,44 @@ type RateMatrix {
   version: Int!
 }
 
+"""
+One cell of a rate matrix: a key or a range on each axis, by position (d0 is
+the first axis), and the value it holds.
+"""
+type RateMatrixCell {
+  d0Key: String!
+  d0Max: Decimal
+  d0Min: Decimal
+  d1Key: String!
+  d1Max: Decimal
+  d1Min: Decimal
+  d2Key: String!
+  d2Max: Decimal
+  d2Min: Decimal
+  d3Key: String!
+  d3Max: Decimal
+  d3Min: Decimal
+  deficitEligible: Boolean!
+  id: ID!
+  minCharge: Decimal
+  value: Decimal!
+}
+
 type RateMatrixConnection {
   edges: [RateMatrixEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+}
+
+"""One axis of a rate matrix: what it keys on and how a value matches it."""
+type RateMatrixDimension {
+  id: ID!
+  keyNormalization: String!
+  kind: String!
+  label: String!
+  matchMode: String!
+  position: Int!
+  rangeOverflow: String!
 }
 
 type RateMatrixEdge {
