@@ -243,9 +243,11 @@ The rule, for each listed tool:
 
    A named binding with no reason fails generation. So does one that names the operation the rule
    would pick anyway. So does any binding, by rule or by name, whose operation requires a
-   variable the tool's verb cannot send: a list sends its `DataTableConnectionInput` and
-   `includeTotalCount`, a get sends `id`, and a required `$region` would leave every call
-   failing at the server. A list tool never binds to a connection read that selects no `pageInfo`,
+   variable the tool cannot send: a list sends its `DataTableConnectionInput` and
+   `includeTotalCount`, a get sends `id`, any tool takes a scalar, enum or id variable as a
+   parameter of its own (a required `$integrationType` is a required parameter), and a paged list
+   builds a filter input whose required fields are scalars, enums or ids. A get never takes an
+   input object. A list tool never binds to a connection read that selects no `pageInfo`,
    because it could not page. Where the node's type binds to a generated model (`gqlmodel`), the
    line also names the `entity` whose filter configuration the resolver compiles with.
 
@@ -369,29 +371,69 @@ narrow the call. Any other `Int` argument is a parameter only when the schema de
 `unscoped`, not `defaults`: the safety events list reads what is still open across the
 organization when no worker is named, and one worker's record whole.
 
-**Reads alongside.** Where the repository tool returned records of another kind beside the list
-because the next call needs their ids (the checklist templates a person starts by hand, the review
-templates), the spec names the operation (`alongside`) and the key the result carries the records
-under, and `reads.yml` lists it under the tool. The generator proves each one as it proves a named
-binding: persisted, one connection root field that selects `pageInfo`, no required variable but
-its table input, and a resolver that checks a read permission. The tool makes the read only when
-the reader may read that kind (`AgentCeilings.Reads`), so a reader without it gets the list and no
-templates, as before, and a refusal is never charged to the budget. It reads at most 100 records
-and says so in `note` when there are more. Only an unpaged list reads alongside; a paged list's
-next call pages its own records.
+**Reads alongside.** Where the repository tool returned records beside its own, because the next
+call needs their ids (the checklist templates a person starts by hand, the review templates) or
+because they say what the tool's records mean (the reconciliation tolerance a drift is judged by,
+the queue beside an accounting connection, a sync record's tries), the spec names the operation
+(`alongside`) and the key the result carries the records under, and `reads.yml` lists it under the
+tool. Any tool reads alongside: an unpaged list, a paged list on every page, and a get beside its
+record. The generator proves each read as it proves a named binding: persisted, one root field,
+and a resolver that checks a read permission. The tool makes the read only when the reader may
+read that kind (`AgentCeilings.Reads`); a reader without it gets the tool's own records, and a
+spec's `withheld` note says what is missing ("The queue is not shown: it needs permission to read
+the accounting sync ledger"). A refusal is never charged to the budget.
 
-A read alongside may instead be an unpaged list keyed by the list's own arguments (a worker's
-recognitions beside their safety events). The generator proves that each of its variables is one
-the list's operation declares, of the same type, and the tool sends it the value the call sent,
-and makes the read only when the call names every one of them: with no worker named, the safety
-events list reads every worker's events and no recognitions. It takes no table input and is never
-cut short. A read alongside marked `scoped` is made only when the call names one of the list's
-records: the credential types come beside one worker's credentials, as the repository tool read
-them, and not beside what falls due across the organization.
+A read alongside takes one of two shapes:
+
+- **Keyed by the call.** An unpaged list or one record (an overview, a summary) whose every
+  variable the tool's own operation declares, of the same type. The tool sends it the value the
+  call sent, under the variable's name, and makes the read only when the call names every one of
+  them: with no worker named, the safety events list reads every worker's events and no
+  recognitions. A get's are keyed by the get's own `id` (`DeskAccountingSyncAttempts($id)` reads
+  `accountingSyncAttempts(recordId: $id)`). It takes no table input and is never cut short. A read
+  alongside marked `scoped` is made only when the call names one of the list's records: the
+  credential types come beside one worker's credentials, as the repository tool read them, and
+  not beside what falls due across the organization.
+- **A connection beside an unpaged list**, read through its table input with no other required
+  variable, selecting `pageInfo`: at most 100 records, with a `note` when there are more. A paged
+  list reads no connection alongside, as its next call pages its own records.
+
+Each read alongside may `shape` its records (`setupPath` on a mapping summary). A list's `combine`
+hook applies what they say to its page: the drift list marks each money difference
+`withinTolerance` by the overview's tolerance, as the repository row did.
+
+**Reads instead.** A list whose repository tool had a second mode keyed by records of another
+shape (whether named documents reached the accounting system, beside listing the ledger) names
+that mode's operation under `instead` in `reads.yml` and in its spec. The generator proves it as
+it proves a read alongside, and its variables the list's operation does not declare become
+parameters of the tool's own (`objectIds`, named `documentIds`); the ones it shares with the list
+(`integrationType`) take the list's parameter. Naming one of its own parameters chooses the read:
+the tool reads only that operation, refuses any of the list's filters beside it ("parameter
+"status" lists records and does not apply to "documentIds""), and returns its records under the
+spec's key with its `note` ("A document missing from states was never sent"). A parameter the
+list requires and the read made instead does not (`system`, required to list the ledger and
+optional for documents) is required by the list's call, and not in the schema's `required`.
+
+**Root arguments beside the table input.** A paged list's operation may take its root field's
+own arguments beside its table input: a required `integrationType`, an EDI transfer's
+`direction`. Each scalar, enum or id variable is a parameter sent as that variable (`OnInput`, so
+not judged by a record field's sensitivity, and not a field filter), typed by the root argument
+and described in the schema's words; a required one is required in the schema and refused before
+the read when missing. Keyed reads alongside take it as their key. A spec's `names` give a derived
+parameter the name the tool takes it by: every accounting read calls `integrationType` `system`,
+as the accounting writes do.
+
+**Connections paged by their root.** A connection whose root takes its own `first` and `after`
+(`accountingSyncRecords(integrationType:, first:, after:, filter:)`) pages as a table input does:
+`limit` is sent as `first`, the unwrapped cursor as `after`. Its filter input's fields are
+parameters sent inside it (`statuses`, named `status`), and the input's `search` is the tool's
+`query`. Its record type's fields are not filters, so it needs no Go entity and offers no sort;
+the near-miss probes drop one filter input field at a time.
 
 **Operations on another bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
-own name:
+own name, sent inside the input (a side `filter:` beside a table input or a root's own page, as
+above):
 
 - enum lists stay lists;
 - `Timestamp` becomes `Date`/`DateTime`;
@@ -401,7 +443,12 @@ own name:
 - a wrapped `table: DataTableConnectionInput!` contributes its typed fields by the rule above.
 
 **Get operations.** The get operation's own arguments become parameters: the id as `<record>Id`,
-marked with its resource. A human key the person may say instead (a PRO number) is a second,
+marked with its resource, and every other scalar, enum or id variable as it is for a list's root
+arguments, named by the spec's `names`, typed by its `references` and noted by its `notes`. A get
+need not take an id: `accounting_get_connection` reads `accountingSyncStatus(integrationType:)`,
+and `accounting_get_mapping` names a mapping by its id or by its target type with a record or a
+key. A get's `shape` applies to its record what the screen's resolver does not (what a sync
+record's status means). A human key the person may say instead (a PRO number) is a second,
 optional parameter. The generator resolves it through the list operation's exact filter on that
 field, so `shipment_get` with `proNumber` reads `shipments` filtered by `proNumber`, then the card.
 
@@ -590,6 +637,13 @@ Each module's PR:
 | Workforce | `worker_list_safety_events` | none | reads `DeskWorkerSafetyEvents`, with each worker's recognitions read alongside (`DeskWorkerRecognitions`) when the call names a worker. `worker_safety_event` and `worker_recognition` declare no field sensitivities and default to Internal, as the repository row read them. Each event gains `violations` (a loader, one query per page of events), which the repository tool read beside the events; `WorkerSafetyViolation` now declares `@kind(resource: "worker_safety_event")`, so its fields follow the event's. With no worker the list reads the events still open across the organization, newest first, as the repository tool did (the spec's `unscoped` default); `openOnly: false` lists the closed ones too, and one worker's record is read whole |
 | Workforce | `worker_list_credentials` | none | reads `DeskWorkerCredentialList`, with the active credential types read alongside (`DeskWorkerCredentialTypes`) when the call names a worker. `workerCredentials` takes an optional worker and the repository tool's filters (`expiringWithinDays`, `includeExpired`, `credentialTypeCode`, `requiredOnly`, `limit`), read by `WorkerCredentialService.List`: one worker's credentials, or with no worker or an expiry window the active ones falling due, soonest first, walked in the query. The window counts days from now, as the screen's expiry forecast does and the description says, where the repository tool counted calendar days in the caller's zone: GraphQL carries no caller's day. It pages by cursor over the root's `limit` and `offset`, as the repository tool paged by offset. `worker_credential` defaulted to Restricted with only `number` declared (Confidential), so every field outside its reference view would be withheld at Internal; what a credential is, whose, its dates, health, issuer, verification and whether a scan is on file are now Internal, and the notes and archive reason stay Restricted. The operation never selects `number`, which the repository tool withheld too |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
+| Accounting | `accounting_list_drift_findings` | none | reads `DeskAccountingDriftFindings` with the overview alongside (`DeskAccountingDriftOverview`), which gives the tolerance each money difference is marked `withinTolerance` by. `AccountingDriftFinding` and `AccountingDriftOverview` had no kind (a record kind is not a resource), so the guard did not gate them; both now declare `@kind(resource: "accounting_sync")`, whose fields default to Internal, as the repository row read them |
+| Accounting | `accounting_list_inbound_changes` | none | reads `DeskAccountingInboundChanges`; `AccountingInboundChange` now declares `@kind(resource: "accounting_sync")` |
+| Accounting | `accounting_list_sync_records` | none | reads `DeskAccountingSyncRecords`, or, when the call names documents, `DeskAccountingSyncObjectStates` instead. Neither selects `errorMessage` or `errorCode`, the accounting system's own words, which the repository row never returned. `AccountingSyncRecord` and `AccountingSyncObjectState` now declare `@kind(resource: "accounting_sync")`. `accountingSyncObjectStates` gains an optional `integrationType` (one safe change), as the repository tool narrowed by system |
+| Accounting | `accounting_get_sync_record` | none | reads `DeskAccountingSyncRecord` with its tries alongside (`DeskAccountingSyncAttempts`, no error message); `AccountingSyncAttempt` now declares `@kind(resource: "accounting_sync")` |
+| Accounting | `accounting_get_connection` | none | reads `DeskAccountingConnection` with the queue alongside (`DeskAccountingSyncSummary`) only for a reader of `accounting_sync`, as the repository tool did. `AccountingSyncStatus` now declares `@kind(resource: "accounting_integration")` and `AccountingSyncSummary` `@kind(resource: "accounting_sync")`. `accounting_integration` defaults to Restricted with ten fields declared, so every connection field but those would be withheld at Internal; the connection's operational state (status, setup step, sending mode and dates, failure count and category, certificate expiry, pause) is now declared Internal, and its app keys and every field not declared stay Restricted. A failure the accounting system worded itself (`Unknown`) is replaced by a pointer to the connection page, as `AgentErrorSummary` did |
+| Accounting | `accounting_list_mapping_gaps` | none | reads `DeskAccountingMappings` (states Unmatched and Proposed unless the call names others) with the summary alongside (`DeskAccountingMappingSummary`). `AccountingMapping` and `AccountingMappingSummary` now declare `@kind(resource: "accounting_integration")`; what a mapping maps, its state, the chosen record and the candidates are declared Internal |
+| Accounting | `accounting_get_mapping` | none | `partial`: no root read one mapping. `accountingMappingDetail` (one safe addition) names it by id or by target type with a record or a key, as `FindMapping` does, and returns the usable records it could be set to for an `optionsQuery`, as the repository tool searched them; checked by `accounting_integration` read. `AccountingMappingDetail` declares `@kind(resource: "accounting_integration")` |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
 Internal each now withholds every field but `id`, where it used to return them all. No description

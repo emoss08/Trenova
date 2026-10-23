@@ -40,6 +40,17 @@ type getSpec struct {
 	source      agent.TaintSource
 	rationale   string
 	fetch       func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
+	// A get that reads through GraphQL takes its operation's other
+	// variables as parameters, named, typed and noted as a list's are.
+	names      map[string]string
+	references map[string]idReference
+	notes      map[string]string
+	// alongside are the reads it makes beside the record, keyed by the
+	// call (a sync record's tries by its id).
+	alongside []alongsideSpec
+	// shape applies to the record what the screen's resolver does not
+	// (what a sync record's status means).
+	shape func(record map[string]any)
 }
 
 type getTool struct {
@@ -215,12 +226,12 @@ func locationGetSpec() getSpec {
 // graphQLGetSpecs are every get tool that reads through GraphQL by a spec
 // alone.
 func graphQLGetSpecs() []getSpec {
-	return []getSpec{
+	return append([]getSpec{
 		customerGetSpec(),
 		carrierGetSpec(),
 		locationGetSpec(),
 		carrierIntelEventGetSpec(),
-	}
+	}, accountingGetSpecs()...)
 }
 
 // graphQLGetProviders registers each spec as its own get tool.

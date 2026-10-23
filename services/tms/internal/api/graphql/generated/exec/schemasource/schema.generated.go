@@ -560,7 +560,7 @@ type AccountingWebhookSubscriptionSummary {
 }
 
 "What an organization's link to one accounting system looks like."
-type AccountingSyncStatus {
+type AccountingSyncStatus @kind(resource: "accounting_integration") {
   integrationType: AccountingSystem!
   providerName: String!
   profile: AccountingProviderProfile!
@@ -580,7 +580,7 @@ One Trenova document on its way to the accounting system, at one revision.
 
 The payload that was sent is kept on the server and not returned here.
 """
-type AccountingSyncRecord {
+type AccountingSyncRecord @kind(resource: "accounting_sync") {
   id: ID!
   objectType: AccountingSyncObjectType!
   "The Trenova document's ID."
@@ -632,7 +632,7 @@ type AccountingSyncRecordConnection {
 }
 
 "One try at sending a sync record."
-type AccountingSyncAttempt {
+type AccountingSyncAttempt @kind(resource: "accounting_sync") {
   id: ID!
   attemptNumber: Int!
   outcome: AccountingSyncAttemptOutcome!
@@ -681,7 +681,7 @@ type AccountingSyncAttentionGroup {
 }
 
 "The state of the accounting sync for one organization and accounting system."
-type AccountingSyncSummary {
+type AccountingSyncSummary @kind(resource: "accounting_sync") {
   integrationType: AccountingSystem!
   providerName: String!
   "Absent until the organization first connects."
@@ -692,7 +692,7 @@ type AccountingSyncSummary {
 }
 
 "Where one Trenova document stands in the accounting system."
-type AccountingSyncObjectState {
+type AccountingSyncObjectState @kind(resource: "accounting_sync") {
   objectType: AccountingSyncObjectType!
   objectId: ID!
   providerName: String!
@@ -852,7 +852,7 @@ Which accounting system record a Trenova record or setting is sent as.
 Only confirmed mappings are used when syncing. A proposal is Trenova's
 suggestion and waits for a person.
 """
-type AccountingMapping {
+type AccountingMapping @kind(resource: "accounting_integration") {
   id: ID!
   targetType: AccountingMappingTargetType!
   "The Trenova record, for accessorial charges, customers and carriers."
@@ -902,7 +902,7 @@ type AccountingMappingGroup {
 }
 
 "Where the organization's mappings stand for one accounting system."
-type AccountingMappingSummary {
+type AccountingMappingSummary @kind(resource: "accounting_integration") {
   integrationType: AccountingSystem!
   providerName: String!
   "Absent until the organization first connects."
@@ -911,6 +911,13 @@ type AccountingMappingSummary {
   requiredTotal: Int!
   requiredConfirmed: Int!
   canCompleteSetup: Boolean!
+}
+
+"One mapping, and the accounting system records it could be set to."
+type AccountingMappingDetail @kind(resource: "accounting_integration") {
+  mapping: AccountingMapping!
+  "Usable records of the kind the mapping maps to whose names match optionsQuery, best first, at most ten. Empty without optionsQuery."
+  options: [AccountingReferenceObject!]!
 }
 
 input AccountingMappingFilterInput {
@@ -1070,7 +1077,7 @@ type AccountingAppliedObject {
 }
 
 "A payment recorded in the accounting system against documents Trenova sent."
-type AccountingInboundChange {
+type AccountingInboundChange @kind(resource: "accounting_sync") {
   id: ID!
   kind: AccountingInboundChangeKind!
   status: AccountingInboundChangeStatus!
@@ -1223,7 +1230,7 @@ type AccountingDriftLine {
 }
 
 "A difference between a document Trenova sent and what the accounting system holds now."
-type AccountingDriftFinding {
+type AccountingDriftFinding @kind(resource: "accounting_sync") {
   id: ID!
   connectionId: ID!
   objectType: AccountingSyncObjectType!
@@ -1293,7 +1300,7 @@ type AccountingDriftSummary {
   resolvedSince: Int!
 }
 
-type AccountingDriftOverview {
+type AccountingDriftOverview @kind(resource: "accounting_sync") {
   connectionId: ID!
   providerName: String!
   "When the last full check finished."
@@ -1335,19 +1342,45 @@ input DismissAccountingDriftInput {
 
 extend type Query {
   "The organization's link to an accounting system, and whether this instance can connect to it at all."
-  accountingSyncStatus(integrationType: AccountingSystem!): AccountingSyncStatus!
+  accountingSyncStatus(
+    "The accounting system, such as QuickBooksOnline or Xero."
+    integrationType: AccountingSystem!
+  ): AccountingSyncStatus!
   "How many mappings are in each state, and whether setup can finish."
-  accountingMappingSummary(integrationType: AccountingSystem!): AccountingMappingSummary!
+  accountingMappingSummary(
+    "The accounting system, such as QuickBooksOnline or Xero."
+    integrationType: AccountingSystem!
+  ): AccountingMappingSummary!
+  "One mapping, named by its id, or by its target type with the Trenova record or setting it is for."
+  accountingMappingDetail(
+    "The accounting system, such as QuickBooksOnline or Xero."
+    integrationType: AccountingSystem!
+    "The mapping's id."
+    id: ID
+    "The kind of Trenova record or setting, when naming it by recordId or key."
+    targetType: AccountingMappingTargetType
+    "The Trenova customer, carrier or accessorial charge the mapping is for."
+    recordId: ID
+    "The Trenova setting the mapping is for, such as an account role, line type, term or payment method."
+    key: String
+    "Words to find in the accounting system's record names, for the records it could be set to."
+    optionsQuery: String
+  ): AccountingMappingDetail!
   accountingMappings(
+    "The accounting system, such as QuickBooksOnline or Xero."
     integrationType: AccountingSystem!
     first: Int
     after: String
     filter: AccountingMappingFilterInput
   ): AccountingMappingConnection!
   "Record counts by status, the groups needing attention and the running backfill."
-  accountingSyncSummary(integrationType: AccountingSystem!): AccountingSyncSummary!
+  accountingSyncSummary(
+    "The accounting system, such as QuickBooksOnline or Xero."
+    integrationType: AccountingSystem!
+  ): AccountingSyncSummary!
   "The sync ledger, newest first."
   accountingSyncRecords(
+    "The accounting system, such as QuickBooksOnline or Xero."
     integrationType: AccountingSystem!
     first: Int
     after: String
@@ -1362,12 +1395,17 @@ extend type Query {
   "Every try at sending a record, newest first."
   accountingSyncAttempts(recordId: ID!): [AccountingSyncAttempt!]!
   "Where each document stands in the accounting system. Documents never queued are left out. At most 200 at a time."
-  accountingSyncObjectStates(objectIds: [ID!]!): [AccountingSyncObjectState!]!
+  accountingSyncObjectStates(
+    objectIds: [ID!]!
+    "Only that accounting system's records. Every system that syncs answers without it."
+    integrationType: AccountingSystem
+  ): [AccountingSyncObjectState!]!
   accountingBackfills(integrationType: AccountingSystem!): [AccountingBackfill!]!
   "Counts of payments recorded in the accounting system, and when changes were last read."
   accountingInboundOverview(integrationType: AccountingSystem!): AccountingInboundOverview!
   "Payments recorded in the accounting system as a data table, newest first."
   accountingInboundChangeTable(
+    "The accounting system, such as QuickBooksOnline or Xero."
     integrationType: AccountingSystem!
     input: DataTableConnectionInput!
   ): AccountingInboundChangeConnection!
@@ -1375,9 +1413,13 @@ extend type Query {
   "What applying a payment would post, without posting it."
   accountingInboundApplyPreview(id: ID!): AccountingInboundApplyPreview!
   "Open and recent differences with the accounting system, and when it was last checked."
-  accountingDriftOverview(integrationType: AccountingSystem!): AccountingDriftOverview!
+  accountingDriftOverview(
+    "The accounting system, such as QuickBooksOnline or Xero."
+    integrationType: AccountingSystem!
+  ): AccountingDriftOverview!
   "Differences with the accounting system as a data table, newest first."
   accountingDriftFindingTable(
+    "The accounting system, such as QuickBooksOnline or Xero."
     integrationType: AccountingSystem!
     input: DataTableConnectionInput!
   ): AccountingDriftFindingConnection!

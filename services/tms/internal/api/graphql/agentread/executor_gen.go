@@ -4,6 +4,7 @@ package agentread
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accessorialchargeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/commodityexec"
@@ -38,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workertrainingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
+	accountingsyncresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accountingsyncresolver"
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	carrierintelligenceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
 	carrierresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
@@ -69,6 +71,7 @@ import (
 	workersafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workersafetyresolver"
 	workertrainingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workertrainingresolver"
 	config "github.com/emoss08/trenova/internal/infrastructure/config"
+	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
@@ -115,6 +118,11 @@ type ResolverParams struct {
 	fx.In
 
 	AccessorialChargeService     *accessorialchargeservice.Service
+	AccountingConnectionService  accountingsyncports.AccountingConnectionService
+	AccountingDriftService       accountingsyncports.AccountingDriftService
+	AccountingInboundService     accountingsyncports.AccountingInboundService
+	AccountingMappingService     accountingsyncports.AccountingMappingService
+	AccountingSyncService        accountingsyncports.AccountingSyncService
 	AssignmentService            shipmentports.AssignmentService
 	CarrierAssignmentService     *carrierassignmentservice.Service
 	CarrierIntelService          *carrierintelservice.Service
@@ -156,6 +164,7 @@ type ResolverParams struct {
 
 var shards = []*gqlexec.Shard{
 	accessorialchargeexec.Shard,
+	accountingsyncexec.Shard,
 	carrierexec.Shard,
 	carrierintelligenceexec.Shard,
 	commodityexec.Shard,
@@ -193,6 +202,66 @@ var shards = []*gqlexec.Shard{
 // operations are the persisted operations agent tools read through, each
 // byte for byte as the client sends it.
 var operations = []Operation{
+	{
+		Name:     "DeskAccountingConnection",
+		Hash:     "sha256:9e7692ed66d7fa2774c37601c0bbda367337c09761889ab4e3f4059a83923fe3",
+		Document: "query DeskAccountingConnection($integrationType: AccountingSystem!) { accountingSyncStatus(integrationType: $integrationType) { available connection { authMethod autoSync certificateExpiresAt consecutiveFailures externalBooksClosedThrough externalCompanyName externalHomeCurrency externalMultiCurrencyEnabled id lastCheckedAt lastErrorCategory lastErrorMessage lastSuccessAt lastWebhookAt ledgerGranularity ledgerOpeningBalancesSentAt pausedAt pausedReason refreshTokenAbsoluteExpiresAt setupStep status syncEnabledAt syncMode syncStartDate } integrationType providerName } }",
+	},
+	{
+		Name:     "DeskAccountingSyncSummary",
+		Hash:     "sha256:462bf36e94621a410b0ed765fbfb335825761dc1fcf17f8c46d3f7fe921edf99",
+		Document: "query DeskAccountingSyncSummary($integrationType: AccountingSystem!) { accountingSyncSummary(integrationType: $integrationType) { activeBackfill { alreadyQueuedCount enqueuedCount id objectTypes rangeEnd rangeStart status } attention { count errorCategory oldestQueuedAt resolution sampleRecordId status } counts { count status } } }",
+	},
+	{
+		Name:     "DeskAccountingMappingDetail",
+		Hash:     "sha256:420173af6c4055b02de922b0e62e94aa474d3aac9ae76e58a57ac46779025975",
+		Document: "fragment DeskAccountingMappingFields on AccountingMapping { candidates { externalId name reason score } confidence confirmedAt externalId externalName id providerKind reason required source state targetLabel targetType trenovaKey trenovaObjectId } query DeskAccountingMappingDetail($id: ID, $integrationType: AccountingSystem!, $key: String, $optionsQuery: String, $recordId: ID, $targetType: AccountingMappingTargetType) { accountingMappingDetail( integrationType: $integrationType id: $id targetType: $targetType recordId: $recordId key: $key optionsQuery: $optionsQuery ) { mapping { ...DeskAccountingMappingFields } options { accountType externalId itemType label number } } }",
+	},
+	{
+		Name:     "DeskAccountingSyncRecord",
+		Hash:     "sha256:68c36e40139103b93edee12e4ac5b5878c00d580e10084d3fb034320870c9995",
+		Document: "fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncRecord($id: ID!) { accountingSyncRecord(id: $id) { dependsOnRecordId ...DeskAccountingSyncRecordFields } }",
+	},
+	{
+		Name:     "DeskAccountingSyncAttempts",
+		Hash:     "sha256:0d53536090376407a3310cff90284049a61271eab7325dfa5e3a73f9660319b0",
+		Document: "query DeskAccountingSyncAttempts($id: ID!) { accountingSyncAttempts(recordId: $id) { attemptNumber durationMs errorCategory outcome startedAt } }",
+	},
+	{
+		Name:     "DeskAccountingDriftFindings",
+		Hash:     "sha256:6be177e40f0d4b2bffa54def286073430b54319cae5dda0fa52432c73549f117",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskAccountingDriftFindings($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $integrationType: AccountingSystem!) { accountingDriftFindingTable(integrationType: $integrationType, input: $input) { edges { node { currencyCode detail { objectId objectNumber objectType providerMinor trenovaMinor } detectedAt differenceMinor directions externalUrl id kind objectId objectNumber objectType partyName providerMinor providerModifiedAt providerModifiedBy providerState pushed resolution resolutionNote status trenovaMinor trenovaState } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskAccountingDriftOverview",
+		Hash:     "sha256:b05ee1f5a969d6a9a61ff366179a5138ec5c62f4f148543032b03292aec8b052",
+		Document: "query DeskAccountingDriftOverview($integrationType: AccountingSystem!) { accountingDriftOverview(integrationType: $integrationType) { checkError checkedAt currencyCode toleranceMinor } }",
+	},
+	{
+		Name:     "DeskAccountingInboundChanges",
+		Hash:     "sha256:d424983e47bbef0e01e5a2ed2dcdb3937b10e0097b6f543e996f8acdc88a1bbf",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskAccountingInboundChanges($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $integrationType: AccountingSystem!) { accountingInboundChangeTable(integrationType: $integrationType, input: $input) { edges { node { amountMinor currencyCode detectedAt externalNumber externalUrl id kind lines { amountMinor documentKind objectId objectNumber openMinor } methodName partyName partyObjectId providerModifiedBy reason referenceNumber resolution status txnDate } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskAccountingMappings",
+		Hash:     "sha256:6f9bf7a0925150a289ac0d86d302e448d935b383cb0bc11fe58b058d9c4f4492",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingMappingFields on AccountingMapping { candidates { externalId name reason score } confidence confirmedAt externalId externalName id providerKind reason required source state targetLabel targetType trenovaKey trenovaObjectId } query DeskAccountingMappings($after: String, $filter: AccountingMappingFilterInput, $first: Int, $integrationType: AccountingSystem!) { accountingMappings( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { node { ...DeskAccountingMappingFields } } pageInfo { ...DataTablePageInfoFields } } }",
+	},
+	{
+		Name:     "DeskAccountingMappingSummary",
+		Hash:     "sha256:3db823baa840d21940fbbd39de9d6328665112b8aa1aa415fa882b43383c475f",
+		Document: "query DeskAccountingMappingSummary($integrationType: AccountingSystem!) { accountingMappingSummary(integrationType: $integrationType) { canCompleteSetup connection { setupStep status } groups { confirmed proposed targetType unmatched } integrationType providerName requiredConfirmed requiredTotal } }",
+	},
+	{
+		Name:     "DeskAccountingSyncRecords",
+		Hash:     "sha256:42eb3cae5423bd6d5afaf9ce2ba5daddd795e6187e1e9fca379f35a54acc2f2c",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncRecords($after: String, $filter: AccountingSyncRecordFilterInput, $first: Int, $integrationType: AccountingSystem!) { accountingSyncRecords( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { node { ...DeskAccountingSyncRecordFields } } pageInfo { ...DataTablePageInfoFields } } }",
+	},
+	{
+		Name:     "DeskAccountingSyncObjectStates",
+		Hash:     "sha256:416c045ec72a670b82b02fe4e2157cce1f15716df43ba5cef544d95d2a79a85f",
+		Document: "fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncObjectStates($integrationType: AccountingSystem, $objectIds: [ID!]!) { accountingSyncObjectStates( objectIds: $objectIds integrationType: $integrationType ) { objectId objectType providerName record { ...DeskAccountingSyncRecordFields } } }",
+	},
 	{
 		Name:     "DeskCarrierCard",
 		Hash:     "sha256:e2c9ecb82adffabead4f5fa05fffda23b2d62edf912f359397b420922b8dda63",
@@ -387,6 +456,14 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                     core,
 		AccessorialChargeService: p.AccessorialChargeService,
 	}
+	accountingsyncDeps := &accountingsyncresolver.Deps{
+		Core:                     core,
+		AccountingConnections:    p.AccountingConnectionService,
+		AccountingMappingService: p.AccountingMappingService,
+		AccountingSync:           p.AccountingSyncService,
+		AccountingInbound:        p.AccountingInboundService,
+		AccountingDrift:          p.AccountingDriftService,
+	}
 	carrierDeps := &carrierresolver.Deps{
 		Core:           core,
 		CarrierService: p.CarrierService,
@@ -513,6 +590,7 @@ func NewSchema(p ResolverParams) Schema {
 		customerCustomerBillingProfile: &customerCustomerBillingProfile{Deps: customerDeps},
 	}
 	mutation := &mutationResolver{
+		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
 		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
 		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
@@ -534,6 +612,7 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	query := &queryResolver{
 		accessorialchargeQuery:     &accessorialchargeQuery{Deps: accessorialchargeDeps},
+		accountingsyncQuery:        &accountingsyncQuery{Deps: accountingsyncDeps},
 		carrierQuery:               &carrierQuery{Deps: carrierDeps},
 		carrierintelligenceQuery:   &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
 		commodityQuery:             &commodityQuery{Deps: commodityDeps},
@@ -566,11 +645,25 @@ func NewSchema(p ResolverParams) Schema {
 	}
 
 	return newSchema(shards, map[string]func() any{
-		"CustomerBillingProfile": func() any { return customerBillingProfile },
-		"Mutation":               func() any { return mutation },
-		"Query":                  func() any { return query },
-		"AccessorialCharge":      func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
-		"Carrier":                func() any { return &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps} },
+		"CustomerBillingProfile":    func() any { return customerBillingProfile },
+		"Mutation":                  func() any { return mutation },
+		"Query":                     func() any { return query },
+		"AccessorialCharge":         func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
+		"AccountingAppCredential":   func() any { return &accountingsyncresolver.AccountingAppCredentialResolver{Deps: accountingsyncDeps} },
+		"AccountingAppSettings":     func() any { return &accountingsyncresolver.AccountingAppSettingsResolver{Deps: accountingsyncDeps} },
+		"AccountingConnection":      func() any { return &accountingsyncresolver.AccountingConnectionResolver{Deps: accountingsyncDeps} },
+		"AccountingDriftFinding":    func() any { return &accountingsyncresolver.AccountingDriftFindingResolver{Deps: accountingsyncDeps} },
+		"AccountingDriftFixPreview": func() any { return &accountingsyncresolver.AccountingDriftFixPreviewResolver{Deps: accountingsyncDeps} },
+		"AccountingInboundChange":   func() any { return &accountingsyncresolver.AccountingInboundChangeResolver{Deps: accountingsyncDeps} },
+		"AccountingInboundLine":     func() any { return &accountingsyncresolver.AccountingInboundLineResolver{Deps: accountingsyncDeps} },
+		"AccountingMapping":         func() any { return &accountingsyncresolver.AccountingMappingResolver{Deps: accountingsyncDeps} },
+		"AccountingReferenceObject": func() any { return &accountingsyncresolver.AccountingReferenceObjectResolver{Deps: accountingsyncDeps} },
+		"AccountingSyncAttempt":     func() any { return &accountingsyncresolver.AccountingSyncAttemptResolver{Deps: accountingsyncDeps} },
+		"AccountingSyncAttentionGroup": func() any {
+			return &accountingsyncresolver.AccountingSyncAttentionGroupResolver{Deps: accountingsyncDeps}
+		},
+		"AccountingSyncRecord": func() any { return &accountingsyncresolver.AccountingSyncRecordResolver{Deps: accountingsyncDeps} },
+		"Carrier":              func() any { return &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps} },
 		"CarrierEquipmentVerification": func() any {
 			return &carrierintelligenceresolver.CarrierEquipmentVerificationResolver{Deps: carrierintelligenceDeps}
 		},
@@ -681,6 +774,7 @@ type customerBillingProfileResolver struct {
 }
 
 type mutationResolver struct {
+	*accountingsyncMutation
 	*carrierintelligenceMutation
 	*dispatchconsoleMutation
 	*equipmentmanufacturerMutation
@@ -703,6 +797,7 @@ type mutationResolver struct {
 
 type queryResolver struct {
 	*accessorialchargeQuery
+	*accountingsyncQuery
 	*carrierQuery
 	*carrierintelligenceQuery
 	*commodityQuery
@@ -736,6 +831,7 @@ type queryResolver struct {
 
 type (
 	customerCustomerBillingProfile = customerresolver.CustomerBillingProfileResolver
+	accountingsyncMutation         = accountingsyncresolver.MutationResolver
 	carrierintelligenceMutation    = carrierintelligenceresolver.MutationResolver
 	dispatchconsoleMutation        = dispatchconsoleresolver.MutationResolver
 	equipmentmanufacturerMutation  = equipmentmanufacturerresolver.MutationResolver
@@ -755,6 +851,7 @@ type (
 	workersafetyMutation           = workersafetyresolver.MutationResolver
 	workertrainingMutation         = workertrainingresolver.MutationResolver
 	accessorialchargeQuery         = accessorialchargeresolver.QueryResolver
+	accountingsyncQuery            = accountingsyncresolver.QueryResolver
 	carrierQuery                   = carrierresolver.QueryResolver
 	carrierintelligenceQuery       = carrierintelligenceresolver.QueryResolver
 	commodityQuery                 = commodityresolver.QueryResolver

@@ -1621,6 +1621,21 @@ organization, against the repository tool's service read, and checks that an age
 never shown a leave reason, a finding or a drug and alcohol answer. Held-out ranking is unchanged
 (keyword 0.99 and 0.95 over 145, hybrid 0.93 and 0.82 over 165).
 
+The accounting row converts the seven accounting sync reads and adds the machinery the remaining
+modules need. A paged list now takes its root field's own arguments beside its table input (the
+required accounting system, as `system`), or pages by the root's own `first` and `after` with a
+filter input whose fields are its parameters; any tool reads keyed records alongside its own (the
+drift overview's tolerance, the connection's queue, a sync record's tries), and a list reads
+another operation instead when a call names that operation's own parameter (the sync state of
+documents named by id). Every accounting record and summary type had no kind, because a record
+kind is not a resource, so the guard gated none of them; each now declares `@kind`. The
+connection and mapping fields the tools read are declared Internal, where the integration's
+Restricted default would have withheld them, and its app keys stay Restricted. Two safe schema
+changes carry the reads the tools made that no root did: `accountingMappingDetail` (one mapping by
+id or by what it maps, with the records it could be set to) and an optional `integrationType` on
+`accountingSyncObjectStates`. No operation selects what the accounting system said in its own
+words. The held-out figures follow with the re-recorded embedding fixture.
+
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
 - One runtime: an agent definition supplies a profile.

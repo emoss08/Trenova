@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
@@ -86,32 +87,83 @@ type graphQLListSpec struct {
 	// inputs are input fields every call sends, as the screen sets them for
 	// its own rendering (each time-off request's worker).
 	inputs map[string]any
-	// alongside are the reads an unpaged list makes beside its own, for
-	// records of another kind its next call needs.
+	// alongside are the reads a list makes beside its own: for records of
+	// another kind its next call needs, or one keyed by the call that says
+	// what its rows mean (the tolerance a drift is judged by).
 	alongside []alongsideSpec
-	resource  permission.Resource
+	// combine applies to a page what the records read alongside it say
+	// about each row (a drift within the tolerance the overview carries).
+	combine func(items []map[string]any, beside map[string]any)
+	// instead are the reads a list makes in place of its own when a call
+	// names their own parameters (the sync state of documents named by id).
+	instead []alongsideSpec
+	// names are the names the tool takes derived parameters by, keyed by
+	// the derived name (integrationType is system).
+	names    map[string]string
+	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
 }
 
 // idReference is where a list's id parameter points: the resource, what the
-// id is, and the tool a model gets one from.
+// id is, and the tool a model gets one from. An id of several kinds (a sync
+// record's document) names the kinds instead of a resource, and a list of
+// ids names the most one call takes.
 type idReference struct {
 	resource permission.Resource
+	kinds    []permission.RecordKind
 	what     string
 	source   string
+	most     int
+}
+
+// schema is the parameter an id or a list of ids becomes.
+func (ref idReference) schema(list bool) map[string]any {
+	description := agenttoolschema.IDDescription(ref.what, ref.source)
+	switch {
+	case list && len(ref.kinds) > 0:
+		return agenttoolschema.KindIDs(description, ref.most, ref.kinds...)
+	case list:
+		return agenttoolschema.RecordIDs(ref.resource, description, ref.most)
+	case len(ref.kinds) > 0:
+		return agenttoolschema.KindID(description, ref.kinds...)
+	}
+
+	return agenttoolschema.RecordID(ref.resource, ref.what, ref.source)
 }
 
 type graphQLListTool struct {
-	spec        graphQLListSpec
-	read        graphQLRead
-	input       string
-	params      []graphQLParam
+	spec  graphQLListSpec
+	read  graphQLRead
+	input string
+	// search is the filter input variable and field a list paged by its
+	// root's own first and after takes its free text in.
+	search [2]string
+	params []graphQLParam
+	// required are the arguments a call that lists records must name, and
+	// demanded those the schema marks required: an argument a read made
+	// instead can do without is required only when listing.
+	required    []string
+	demanded    []string
 	sortable    agenttoolschema.EnumSource[string]
+	beside      besideReads
+	instead     []insteadRead
 	reader      agentports.GraphQLReader
 	permissions permissionports.PermissionEngine
 	registry    *permission.Registry
+}
+
+// insteadRead is a read a list makes in place of its own, and the
+// parameters of its own a call chooses it by.
+type insteadRead struct {
+	spec   *alongsideSpec
+	bound  graphQLAlongside
+	params []graphQLParam
+	// shared are the list's own parameters the read is keyed by too.
+	shared []graphQLParam
+	// derived are its parameters' names before the spec named them.
+	derived []string
 }
 
 func newGraphQLListTool(
@@ -126,30 +178,190 @@ func newGraphQLListTool(
 	if read.Verb != graphQLVerbList {
 		return nil, fmt.Errorf("%s reads %s, which is not a list", spec.name, read.Operation)
 	}
-	input, inputType, ok := read.tableInput()
-	if !ok {
-		return nil, fmt.Errorf("%s: %s takes no table input", spec.name, read.Operation)
+	input, inputType, tabled := read.tableInput()
+	skip := map[string]struct{}{includeTotalCount: {}}
+	switch {
+	case tabled:
+		skip[input] = struct{}{}
+	case read.pagesByCursor():
+		skip[inputFirst], skip[inputAfter] = struct{}{}, struct{}{}
+	default:
+		return nil, fmt.Errorf("%s: %s takes no table input and no page of its own",
+			spec.name, read.Operation)
 	}
-	params := withInputParams(read.typedParams(), inputParams(inputType))
-	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
-	params, err := referenced(spec.name, params, spec.references)
+	params := read.typedParams()
+	if tabled {
+		params = withInputParams(params, inputParams(inputType))
+	}
+	args, required, search, err := read.rootParams(spec.name, skip)
 	if err != nil {
 		return nil, err
 	}
-	if params, err = annotate(spec.name, params, spec.notes); err != nil {
+	params = append(params, args...)
+	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
+	instead, err := insteadReads(spec, &read)
+	if err != nil {
+		return nil, err
+	}
+	theirs := insteadNames(instead)
+	if params, required, err = renamed(spec.name, params, without(spec.names, theirs),
+		required); err != nil {
+		return nil, err
+	}
+	if params, err = referenced(spec.name, params,
+		without(spec.references, theirs)); err != nil {
+		return nil, err
+	}
+	if params, err = annotate(spec.name, params, without(spec.notes, theirs)); err != nil {
+		return nil, err
+	}
+	for idx := range instead {
+		for _, param := range params {
+			if param.ArgField == "" && slices.Contains(instead[idx].bound.Keys, param.Arg) {
+				instead[idx].shared = append(instead[idx].shared, param)
+			}
+		}
+	}
+	bound, err := matchAlongside(spec.name, "alongside", spec.alongside, read.Alongside)
+	if err != nil {
 		return nil, err
 	}
 
 	return &graphQLListTool{
-		spec:        *spec,
-		read:        read,
-		input:       input,
-		params:      params,
-		sortable:    agenttoolschema.Derived(spec.name+".graphqlSortBy", read.sortable()),
+		spec:     *spec,
+		read:     read,
+		input:    input,
+		search:   search,
+		params:   params,
+		required: required,
+		demanded: requiredUnlessInstead(required, instead),
+		sortable: agenttoolschema.Derived(spec.name+".graphqlSortBy", read.sortable()),
+		beside: besideReads{
+			specs: spec.alongside, bound: bound, reader: reader, permissions: permissions,
+		},
+		instead:     instead,
 		reader:      reader,
 		permissions: permissions,
 		registry:    fieldsensitivity.DefaultRegistry(),
 	}, nil
+}
+
+// pagesByCursor reports whether a list's root takes its own first and after,
+// as a connection paged without a table input does.
+func (r *graphQLRead) pagesByCursor() bool {
+	var first, after bool
+	for _, variable := range r.Variables {
+		first = first || (variable.Name == inputFirst && variable.Type == graphQLTypeInt)
+		after = after || (variable.Name == inputAfter && variable.Type == graphQLTypeString)
+	}
+
+	return first && after
+}
+
+// insteadReads pairs each read a spec makes instead of its list's with the
+// one the generator proved, and derives the parameters of its own a call
+// chooses it by, named and typed by the spec as the list's are.
+func insteadReads(spec *graphQLListSpec, read *graphQLRead) ([]insteadRead, error) {
+	bound, err := matchAlongside(spec.name, "instead", spec.instead, read.Instead)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]insteadRead, 0, len(bound))
+	for idx := range bound {
+		instead := insteadRead{spec: &spec.instead[idx], bound: bound[idx]}
+		for _, variable := range bound[idx].Variables {
+			if !slices.Contains(bound[idx].Own, variable.Name) {
+				continue
+			}
+			derived, deriveErr := variableParams(spec.name, bound[idx].Operation, &variable)
+			if deriveErr != nil {
+				return nil, deriveErr
+			}
+			instead.params = append(instead.params, derived...)
+		}
+		for _, param := range instead.params {
+			instead.derived = append(instead.derived, param.Name)
+		}
+		if instead.params, _, err = renamed(spec.name, instead.params,
+			only(spec.names, instead.params), nil); err != nil {
+			return nil, err
+		}
+		if instead.params, err = referenced(spec.name, instead.params,
+			only(spec.references, instead.params)); err != nil {
+			return nil, err
+		}
+		if instead.params, err = annotate(spec.name, instead.params,
+			only(spec.notes, instead.params)); err != nil {
+			return nil, err
+		}
+		out = append(out, instead)
+	}
+
+	return out, nil
+}
+
+// insteadNames are every name the reads made instead of a list's take their
+// own parameters by, derived or given.
+func insteadNames(instead []insteadRead) map[string]struct{} {
+	out := make(map[string]struct{})
+	for _, read := range instead {
+		for _, param := range read.params {
+			out[param.Name] = struct{}{}
+		}
+		for _, name := range read.derived {
+			out[name] = struct{}{}
+		}
+	}
+
+	return out
+}
+
+// without is a spec's map less the keys another read's parameters take.
+func without[V any](m map[string]V, taken map[string]struct{}) map[string]V {
+	out := make(map[string]V, len(m))
+	for key, value := range m {
+		if _, theirs := taken[key]; !theirs {
+			out[key] = value
+		}
+	}
+
+	return out
+}
+
+// only is a spec's map narrowed to the keys a read's parameters take.
+func only[V any](m map[string]V, params []graphQLParam) map[string]V {
+	out := make(map[string]V)
+	for _, param := range params {
+		if value, ok := m[param.Name]; ok {
+			out[param.Name] = value
+		}
+	}
+
+	return out
+}
+
+// requiredUnlessInstead are the list's required arguments that a read made
+// instead of it requires too: a call that chooses the other read need not
+// name one the other read can do without.
+func requiredUnlessInstead(required []string, instead []insteadRead) []string {
+	if len(instead) == 0 {
+		return required
+	}
+	out := make([]string, 0, len(required))
+	for _, name := range required {
+		every := true
+		for _, read := range instead {
+			every = every && slices.ContainsFunc(read.shared, func(p graphQLParam) bool {
+				return p.Name == name && slices.ContainsFunc(read.bound.Variables,
+					func(v graphQLVariable) bool { return v.Name == p.Arg && v.NonNull })
+			})
+		}
+		if every {
+			out = append(out, name)
+		}
+	}
+
+	return out
 }
 
 // referenced types each id parameter by the resource its spec names, drops
@@ -162,7 +374,7 @@ func referenced(
 	out := make([]graphQLParam, 0, len(params))
 	used := 0
 	for _, param := range params {
-		if param.Kind != paramReference {
+		if param.Kind != paramReference && param.Kind != paramReferences {
 			out = append(out, param)
 			continue
 		}
@@ -170,7 +382,7 @@ func referenced(
 		if !ok {
 			continue
 		}
-		param.Schema = agenttoolschema.RecordID(ref.resource, ref.what, ref.source)
+		param.Schema = ref.schema(param.Kind == paramReferences)
 		out = append(out, param)
 		used++
 	}
@@ -221,7 +433,7 @@ func annotate(
 func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
-		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(),
+		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), accountingReadSpecs(),
 	)
 }
 
@@ -359,7 +571,7 @@ func describedName(param graphQLParam) (string, bool) {
 		return param.Name + "/" + suffixTo, true
 	case paramAtLeast:
 		return param.Name + "/" + suffixMax, true
-	case paramIn, paramEquals, paramContains, paramPresent, paramReference:
+	case paramIn, paramEquals, paramContains, paramPresent, paramReference, paramReferences:
 		return param.Name, true
 	}
 
@@ -377,12 +589,19 @@ func (t *graphQLListTool) Policy() agentports.ToolPolicy {
 
 func (t *graphQLListTool) ParamSchema() map[string]any {
 	properties := make(map[string]any, len(t.params)+5)
-	properties[graphQLParamQuery] = map[string]any{
-		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyDescription: t.queryDescription(),
+	if t.input != "" || t.search[0] != "" {
+		properties[graphQLParamQuery] = map[string]any{
+			toolschema.KeyType:        toolschema.TypeString,
+			toolschema.KeyDescription: t.queryDescription(),
+		}
 	}
 	for _, param := range t.params {
 		properties[param.Name] = param.Schema
+	}
+	for _, instead := range t.instead {
+		for _, param := range instead.params {
+			properties[param.Name] = param.Schema
+		}
 	}
 	if len(t.sortable.Names()) > 0 {
 		properties[paramSortBy] = agenttoolschema.Enum(
@@ -397,11 +616,7 @@ func (t *graphQLListTool) ParamSchema() map[string]any {
 		properties[name] = property
 	}
 
-	return map[string]any{
-		toolschema.KeyType:                 toolschema.TypeObject,
-		toolschema.KeyProperties:           properties,
-		toolschema.KeyAdditionalProperties: false,
-	}
+	return argumentSchema(properties, t.demanded)
 }
 
 func (t *graphQLListTool) queryDescription() string {
@@ -411,6 +626,76 @@ func (t *graphQLListTool) queryDescription() string {
 
 	return "Optional free text matched across the searchable columns. Omit it when you are " +
 		"narrowing by a field."
+}
+
+// chooseInstead is the read made in place of the list's own that a call
+// chooses, by naming one of its own parameters.
+func (t *graphQLListTool) chooseInstead(args map[string]any) (*insteadRead, bool) {
+	for idx := range t.instead {
+		for _, param := range t.instead[idx].params {
+			if raw, given := args[param.Name]; given && raw != nil && raw != "" {
+				return &t.instead[idx], true
+			}
+		}
+	}
+
+	return nil, false
+}
+
+// readInstead reads what the call chose in place of the list's own records,
+// refusing any of the list's filters, which do not apply to it.
+func (t *graphQLListTool) readInstead(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+	instead *insteadRead,
+	clk clock,
+) (any, error) {
+	keys := slices.Concat(instead.params, instead.shared)
+	chosen := instead.params[0].Name
+	for name, raw := range params.Params {
+		if raw == nil || raw == "" || name == paramLimit ||
+			slices.ContainsFunc(keys, func(p graphQLParam) bool { return p.Name == name }) {
+			continue
+		}
+		return nil, fmt.Errorf("parameter %q lists records and does not apply to %q, which "+
+			"reads %s instead; leave one of them out", name, chosen, instead.spec.what)
+	}
+	if err := checkReferences(keys, params.Params); err != nil {
+		return nil, err
+	}
+	variables, err := compileArgs(keys, params.Params, clk)
+	if err != nil {
+		return nil, err
+	}
+	resource := permission.Resource(instead.bound.Resource)
+	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
+		Actor:             params.Actor,
+		Operation:         instead.bound.Operation,
+		Variables:         variables,
+		DataAccessCeiling: params.DataAccessCeiling,
+		RequestID:         params.RunID.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err = readFailure(result, resource); err != nil {
+		return nil, err
+	}
+
+	value, prefix, _ := besideValue(&instead.bound, instead.spec, result.Data)
+	outcome := map[string]any{instead.spec.key: value}
+	if rows, ok := value.([]map[string]any); ok {
+		outcome[outcomeCount] = len(rows)
+	}
+	if instead.spec.note != "" {
+		outcome[outcomeNote] = instead.spec.note
+	}
+	if withheld := relativePaths(result.Withheld, prefix); len(withheld) > 0 {
+		outcome[outcomeWithheld] = withheld
+		outcome[outcomeWithheldNote] = withheldNote
+	}
+
+	return outcome, nil
 }
 
 // graphQLListOutcome is one page of a list read through GraphQL, as the model
@@ -436,16 +721,29 @@ func (t *graphQLListTool) Query(
 		return nil, err
 	}
 	clk := clockFor(params)
+	if instead, chosen := t.chooseInstead(params.Params); chosen {
+		return t.readInstead(ctx, params, instead, clk)
+	}
 	if err := t.refuseWithheld(ctx, params); err != nil {
 		return nil, err
 	}
 
 	args := applyDefaults(&t.spec, params.Params, clk)
+	if err := requireArguments(t.required, args); err != nil {
+		return nil, err
+	}
+	if err := checkReferences(t.params, args); err != nil {
+		return nil, err
+	}
 	filters, err := compileFilters(t.params, args, clk)
 	if err != nil {
 		return nil, err
 	}
 	inputs, err := compileInputs(t.params, args, clk)
+	if err != nil {
+		return nil, err
+	}
+	rootArgs, err := compileArgs(t.params, args, clk)
 	if err != nil {
 		return nil, err
 	}
@@ -459,6 +757,7 @@ func (t *graphQLListTool) Query(
 	page, err := t.page(ctx, params, &pageRequest{
 		query:   query,
 		inputs:  inputs,
+		args:    rootArgs,
 		filters: filters,
 		sort:    t.sort(params.Params),
 		limit:   window.limit,
@@ -468,6 +767,16 @@ func (t *graphQLListTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	beside, besideWithheld, besideNotes, err := t.beside.read(
+		ctx, params, rootArgs, namesReference(&t.spec, args),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if t.spec.combine != nil {
+		t.spec.combine(page.items, beside)
+	}
+	page.withheld = append(page.withheld, besideWithheld...)
 
 	if t.spec.rank != nil && query != "" && optionalString(params.Params, paramSortBy) == "" {
 		page.items = t.spec.rank(query, page.items)
@@ -488,19 +797,45 @@ func (t *graphQLListTool) Query(
 	if len(page.withheld) > 0 {
 		outcome.WithheldNote = withheldNote
 	}
+	notes := besideNotes
 	if len(page.items) == 0 && page.first {
-		outcome.Note = criteria.EmptyNote()
-		if near := t.nearMiss(ctx, params, query, inputs, filters); near != "" {
-			outcome.Note = near
+		note := criteria.EmptyNote()
+		if near := t.nearMiss(ctx, params, query, inputs, rootArgs, filters); near != "" {
+			note = near
 		}
+		notes = append([]string{note}, notes...)
+	}
+	outcome.Note = strings.Join(notes, " ")
+	if len(beside) == 0 {
+		return outcome, nil
 	}
 
-	return outcome, nil
+	return withBeside(outcome, beside)
+}
+
+// withBeside is a page's outcome with the records read alongside it, each
+// under its key.
+func withBeside(outcome graphQLListOutcome, beside map[string]any) (map[string]any, error) {
+	out := make(map[string]any, len(beside)+10)
+	encoded, err := sonic.Marshal(outcome)
+	if err != nil {
+		return nil, fmt.Errorf("encode the page: %w", err)
+	}
+	if err = sonic.Unmarshal(encoded, &out); err != nil {
+		return nil, fmt.Errorf("decode the page: %w", err)
+	}
+	for key, value := range beside {
+		out[key] = value
+	}
+
+	return out, nil
 }
 
 type pageRequest struct {
-	query   string
-	inputs  map[string]any
+	query  string
+	inputs map[string]any
+	// args are the root variables the call's argument parameters set.
+	args    map[string]any
 	filters []map[string]any
 	sort    []map[string]any
 	limit   int
@@ -522,31 +857,10 @@ func (t *graphQLListTool) page(
 	params *agentports.QueryToolParams,
 	req *pageRequest,
 ) (*graphQLPage, error) {
-	input := make(map[string]any, len(t.spec.inputs)+len(req.inputs)+5)
-	for name, value := range t.spec.inputs {
-		input[name] = value
-	}
-	for name, value := range req.inputs {
-		input[name] = value
-	}
-	input[inputFirst] = req.limit
-	if req.after != "" {
-		input[inputAfter] = req.after
-	}
-	if req.query != "" {
-		input[inputQuery] = req.query
-	}
-	if len(req.filters) > 0 {
-		input[inputFieldFilters] = req.filters
-	}
-	if len(req.sort) > 0 {
-		input[inputSort] = req.sort
-	}
-
 	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
 		Actor:             params.Actor,
 		Operation:         t.read.Operation,
-		Variables:         map[string]any{t.input: input, includeTotalCount: req.total},
+		Variables:         t.variables(req),
 		DataAccessCeiling: params.DataAccessCeiling,
 		RequestID:         params.RunID.String(),
 	})
@@ -587,6 +901,67 @@ func (t *graphQLListTool) page(
 	}
 
 	return page, nil
+}
+
+// variables are what one page's read sends: the root arguments, and the
+// table input or the root's own page, with the free text where the list
+// takes it.
+func (t *graphQLListTool) variables(req *pageRequest) map[string]any {
+	variables := make(map[string]any, len(req.args)+4)
+	for name, value := range req.args {
+		if filter, ok := value.(map[string]any); ok {
+			value = maps.Clone(filter)
+		}
+		variables[name] = value
+	}
+	if t.input == "" {
+		variables[inputFirst] = req.limit
+		if req.after != "" {
+			variables[inputAfter] = req.after
+		}
+		if req.query != "" {
+			filter, _ := variables[t.search[0]].(map[string]any)
+			if filter == nil {
+				filter = make(map[string]any, 1)
+			}
+			filter[t.search[1]] = req.query
+			variables[t.search[0]] = filter
+		}
+		if t.read.declares(includeTotalCount) {
+			variables[includeTotalCount] = req.total
+		}
+		return variables
+	}
+
+	input := make(map[string]any, len(t.spec.inputs)+len(req.inputs)+5)
+	for name, value := range t.spec.inputs {
+		input[name] = value
+	}
+	for name, value := range req.inputs {
+		input[name] = value
+	}
+	input[inputFirst] = req.limit
+	if req.after != "" {
+		input[inputAfter] = req.after
+	}
+	if req.query != "" {
+		input[inputQuery] = req.query
+	}
+	if len(req.filters) > 0 {
+		input[inputFieldFilters] = req.filters
+	}
+	if len(req.sort) > 0 {
+		input[inputSort] = req.sort
+	}
+	variables[t.input] = input
+	variables[includeTotalCount] = req.total
+
+	return variables
+}
+
+// declares reports whether the read's operation takes a variable.
+func (r *graphQLRead) declares(name string) bool {
+	return slices.ContainsFunc(r.Variables, func(v graphQLVariable) bool { return v.Name == name })
 }
 
 // readFailure turns the operation's errors into the tool's: a refusal the
@@ -747,14 +1122,14 @@ func (t *graphQLListTool) nearMiss(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 	query string,
-	inputs map[string]any,
+	inputs, args map[string]any,
 	filters []map[string]any,
 ) string {
 	probes := 0
 	if query != "" {
 		probes++
 		if page, err := t.page(ctx, params, &pageRequest{
-			inputs: inputs, filters: filters, limit: 1,
+			inputs: inputs, args: args, filters: filters, limit: 1,
 		}); err == nil &&
 			len(page.items) > 0 {
 			return fmt.Sprintf("Nothing matched the text %q, but %s do match the other "+
@@ -768,7 +1143,7 @@ func (t *graphQLListTool) nearMiss(
 		probes++
 		rest := slices.Delete(slices.Clone(filters), idx, idx+1)
 		page, err := t.page(ctx, params, &pageRequest{
-			query: query, inputs: inputs, filters: rest, limit: 1,
+			query: query, inputs: inputs, args: args, filters: rest, limit: 1,
 		})
 		if err == nil && len(page.items) > 0 {
 			return t.keptOut(filters[idx][paramField])
@@ -785,10 +1160,31 @@ func (t *graphQLListTool) nearMiss(
 		rest := maps.Clone(inputs)
 		delete(rest, name)
 		page, err := t.page(ctx, params, &pageRequest{
-			query: query, inputs: rest, filters: filters, limit: 1,
+			query: query, inputs: rest, args: args, filters: filters, limit: 1,
 		})
 		if err == nil && len(page.items) > 0 {
 			return t.keptOut(name)
+		}
+	}
+	for _, param := range t.params {
+		filter, _ := args[param.Arg].(map[string]any)
+		value, set := filter[param.ArgField]
+		if _, toggle := value.(bool); param.ArgField == "" || !set || toggle {
+			continue
+		}
+		if probes >= maxNearMissProbes {
+			break
+		}
+		probes++
+		rest := maps.Clone(args)
+		narrower := maps.Clone(filter)
+		delete(narrower, param.ArgField)
+		rest[param.Arg] = narrower
+		page, err := t.page(ctx, params, &pageRequest{
+			query: query, inputs: inputs, args: rest, filters: filters, limit: 1,
+		})
+		if err == nil && len(page.items) > 0 {
+			return t.keptOut(param.Name)
 		}
 	}
 
@@ -812,6 +1208,10 @@ func (t *graphQLListTool) runView(
 	sorting []domaintypes.SortField,
 	limit int,
 ) (*viewRun, error) {
+	if t.input == "" || len(t.required) > 0 {
+		return nil, fmt.Errorf("%s reads by its own arguments; a table view cannot be "+
+			"composed over it", t.spec.name)
+	}
 	fields := make([]string, 0, len(filters)+len(sorting))
 	for _, filter := range filters {
 		fields = append(fields, filter.Field)

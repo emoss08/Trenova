@@ -16,18 +16,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 **Picking an operation:** a `Desk*` operation on the root field is preferred, then `<Type>Table`, then the only operation on the field. Where a Desk operation is a record-scoped view (DeskRecordFailures, DeskRecordShipments, DeskCustomerRateAgreements, DeskCarrierSettlements, DeskEdiPartnerMessages), the register operation is listed as the alternative.
 
-## accounting
-
-| tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
-|---|---|---|---|---|---|---|
-| `accounting_get_connection` | op | accountingSyncStatus + accountingSyncSummary | AccountingSyncStatus (+ AccountingSyncSummary) | n/a (object) | integrationType arg | Same AccountingConnectionService.Status + AccountingSyncService.Summary. system -> integrationType. Two ops, both needed. |
-| `accounting_get_mapping` | partial | accountingMappings + accountingReferenceObjects | AccountingMappings (+ AccountingReferenceObjects) | cursor (first/after) | bespoke AccountingMappingFilterInput (targetTypes, states, requiredOnly, search) | Tool calls AccountingMappingService.FindMapping (lookup one mapping by key / mappingId / recordId + targetType); no Query reads a single mapping. Reachable only by listing with filter.search/targetTypes. SearchReference = accountingReferenceObjects (same method). |
-| `accounting_get_sync_record` | op | accountingSyncRecord + accountingSyncAttempts | AccountingSyncRecord (+ AccountingSyncAttempts) | n/a | id | Same AccountingSyncService.GetRecord / ListAttempts. |
-| `accounting_list_drift_findings` | op | accountingDriftFindingTable (+ accountingDriftOverview) | AccountingDriftFindingTable (+ AccountingDriftOverview) | cursor | DataTable fieldFilters only | Same AccountingDriftService.List/Overview. Tool sets typed Statuses/Kinds/ObjectTypes/Search; GraphQL has none of these typed, so status/kind/objectType must go as fieldFilters, and tool query (ILIKE number/party) becomes input.query (querybuilder search; verify same columns). |
-| `accounting_list_inbound_changes` | op | accountingInboundChangeTable | AccountingInboundChangeTable | cursor | DataTable fieldFilters only | Same AccountingInboundService.List. status/kind/reason only as fieldFilters (typed Statuses/Kinds/Reasons not exposed); query -> input.query. |
-| `accounting_list_mapping_gaps` | op | accountingMappings + accountingMappingSummary | AccountingMappings (+ AccountingMappingSummary) | cursor (first/after) | bespoke AccountingMappingFilterInput | Same ListMappings/Summary. requiredOnly, targetType -> filter.requiredOnly/targetTypes; gaps = states filter. |
-| `accounting_list_sync_records` | op | accountingSyncRecords (+ accountingSyncObjectStates) | AccountingSyncRecords (+ AccountingSyncObjectStates for documentIds) | cursor (first/after) | bespoke AccountingSyncRecordFilterInput (statuses, objectTypes, errorCategories, objectId, search) | Same ListRecords/ObjectStates. Picked AccountingSyncRecords over AccountingSyncRecordTable: its typed filter matches the tool's status/documentType/errorCategory/query exactly; the Table op only takes DataTable fieldFilters. |
-
 ## agent
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
@@ -314,11 +302,11 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 93 |
-| op, converted (rows removed) | 26 |
+| op, not yet converted | 87 |
+| op, converted (rows removed) | 32 |
 | field-no-op | 6 |
-| partial, not yet converted | 24 |
-| partial, converted (rows removed) | 6 |
+| partial, not yet converted | 23 |
+| partial, converted (rows removed) | 7 |
 | none | 21 |
 | **total** | **176** |
 

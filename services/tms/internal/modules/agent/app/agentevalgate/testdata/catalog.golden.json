@@ -448,12 +448,12 @@
     },
     {
       "name": "accounting_get_connection",
-      "description": "Get whether the accounting system is connected, to which company, and why it last failed. It also says when it last answered, when the authorization must be renewed, whether it was connected by sign-in or with a certificate and when that certificate expires, and whether documents are being sent: sending is NotStarted, Paused, Automatic, or OnRelease when each document waits for a person to release it, with the start date. Once sending has started, queue counts how many documents are in each sync status and groups those needing attention by cause. Use it before explaining why something did not reach the books. It returns status and dates, never credentials.",
+      "description": "Get whether the accounting system is connected, to which company, and why it last failed. It also says when it last answered, when the authorization must be renewed, whether it was connected by sign-in or with a certificate and when that certificate expires, and whether documents are being sent: sending is NotStarted, Paused, Automatic, or OnRelease when each document waits for a person to release it, with the start date. queue counts how many documents are in each sync status and groups those needing attention by cause. Use it before explaining why something did not reach the books. It returns status and dates, never credentials.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "system": {
-            "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
+            "description": "The accounting system, such as QuickBooksOnline or Xero.",
             "enum": [
               "QuickBooksOnline",
               "Xero",
@@ -461,7 +461,7 @@
               "NetSuite"
             ],
             "type": "string",
-            "x-enumOf": "integration.accountingSystem"
+            "x-enumOf": "graphql.AccountingSystem"
           }
         },
         "required": [
@@ -499,27 +499,27 @@
     },
     {
       "name": "accounting_get_mapping",
-      "description": "Get which accounting system record one Trenova record or setting is sent as. Name it by mappingId, or by targetType with recordId for a customer, carrier or accessorial charge, or with key for an account role, line type, term or payment method. With query, it also returns up to ten usable accounting records of the right kind whose names match, so you can choose one for accounting_set_mapping.",
+      "description": "Get which accounting system record one Trenova record or setting is sent as. Name it by mappingId, or by targetType with recordId for a customer, carrier or accessorial charge, or with key for an account role, line type, term or payment method. With query, options holds up to ten usable accounting records of the right kind whose names match, so you can choose one for accounting_set_mapping.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "key": {
-            "description": "The setting's key from accounting_list_mapping_gaps, for the other target types. Examples: \"ARAccount\", \"RevenueAccount\", \"Freight\", \"Net30\", \"ACH\".",
+            "description": "The Trenova setting the mapping is for, such as an account role, line type, term or payment method. Its trenovaKey from accounting_list_mapping_gaps, for the other target types. Examples: \"ARAccount\", \"RevenueAccount\", \"Freight\", \"Net30\", \"ACH\".",
             "type": "string"
           },
           "mappingId": {
-            "description": "The mapping's id from accounting_list_mapping_gaps.",
+            "description": "The accounting mapping's id, from accounting_list_mapping_gaps.",
             "type": "string",
             "x-recordKinds": [
               "accounting_mapping"
             ]
           },
           "query": {
-            "description": "Words to find in the accounting system's record names.",
+            "description": "Words to find in the accounting system's record names, for the records it could be set to.",
             "type": "string"
           },
           "recordId": {
-            "description": "The Trenova customer, carrier or accessorial charge id, from customer_list, carrier_list or masterdata_list_accessorial_charges.",
+            "description": "The Trenova customer, carrier or accessorial charge id, from customer_list, carrier_list or masterdata_list_accessorial_charges. Never guess one.",
             "type": "string",
             "x-recordKinds": [
               "customer",
@@ -528,7 +528,7 @@
             ]
           },
           "system": {
-            "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
+            "description": "The accounting system, such as QuickBooksOnline or Xero.",
             "enum": [
               "QuickBooksOnline",
               "Xero",
@@ -536,7 +536,7 @@
               "NetSuite"
             ],
             "type": "string",
-            "x-enumOf": "integration.accountingSystem"
+            "x-enumOf": "graphql.AccountingSystem"
           },
           "targetType": {
             "description": "The kind of Trenova record or setting, when naming it by recordId or key.",
@@ -553,7 +553,7 @@
               "PaymentMethod"
             ],
             "type": "string",
-            "x-enumOf": "accountingSync.mappingTargetType"
+            "x-enumOf": "graphql.AccountingMappingTargetType"
           }
         },
         "required": [
@@ -693,18 +693,77 @@
     },
     {
       "name": "accounting_list_drift_findings",
-      "description": "List drift: documents Trenova sent to the accounting system that differ there now, newest first. Each row shows both values, who changed it there and when, whether the difference is within the reconciliation tolerance, and the fixes it offers. Filter by status, such as Open, by kind, or by document type. Pass an Open row's id to accounting_resolve_drift_finding or accounting_dismiss_drift_finding.",
+      "description": "List drift: documents Trenova sent to the accounting system that differ there now, newest first. Each row has both values in minor units, who changed it there, withinTolerance, and an open finding's fixes (directions). Pass an Open row's id to accounting_resolve_drift_finding or accounting_dismiss_drift_finding. Filters: currencyCode, detectedAtFrom/To, differenceMinorMin/Max, externalId, externalUrl, fixObjectType, hasFixObject, hasParty, kind, lastSeenAtFrom/To, objectNumber, objectType, partyName, providerMinorMin/Max, providerModifiedAtFrom/To, providerModifiedBy, providerState, resolution, resolutionNote, resolvedAtFrom/To, status, system, trenovaMinorMin/Max, trenovaState, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
-            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
-          "kind": {
-            "description": "Only these kinds of difference.",
+          "currencyCode": {
+            "description": "Only records whose currency code contains this text.",
+            "type": "string"
+          },
+          "detectedAtFrom": {
+            "description": "Only records whose detected at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "detectedAtTo": {
+            "description": "Only records whose detected at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "differenceMinorMax": {
+            "description": "The accounting system's value less Trenova's. Only records whose difference minor is at most this.",
+            "type": "integer"
+          },
+          "differenceMinorMin": {
+            "description": "The accounting system's value less Trenova's. Only records whose difference minor is at least this.",
+            "type": "integer"
+          },
+          "externalId": {
+            "description": "The document's ID in the accounting system. Only records whose external id contains this text.",
+            "type": "string"
+          },
+          "externalUrl": {
+            "description": "A link to the document in the accounting system. Only records whose external url contains this text.",
+            "type": "string"
+          },
+          "fixObjectType": {
+            "description": "What the fix made: the record sent, or the memo, void or reversal posted. Only records whose fix object type is one of these.",
             "items": {
-              "description": "A kind.",
+              "enum": [
+                "SyncRecord",
+                "CreditMemo",
+                "DebitMemo",
+                "InvoiceVoid",
+                "PaymentReversal"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.AccountingDriftFixObject"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "hasFixObject": {
+            "description": "true for only records that have a fix object, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasParty": {
+            "description": "The customer, carrier or driver on the document. true for only records that have a party, false for only those that have none.",
+            "type": "boolean"
+          },
+          "kind": {
+            "description": "Only records whose kind is one of these.",
+            "items": {
               "enum": [
                 "AmountMismatch",
                 "StatusMismatch",
@@ -714,10 +773,26 @@
                 "TrialBalanceMismatch"
               ],
               "type": "string",
-              "x-enumOf": "accountingSync.driftKind"
+              "x-enumOf": "graphql.AccountingDriftKind"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "lastSeenAtFrom": {
+            "description": "Only records whose last seen at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "lastSeenAtTo": {
+            "description": "Only records whose last seen at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -726,50 +801,169 @@
             "type": "integer",
             "x-clamp": true
           },
+          "objectNumber": {
+            "description": "Only records whose object number contains this text.",
+            "type": "string"
+          },
           "objectType": {
-            "description": "Only these document types. Customer means a customer's balance; GLAccount a trial balance account.",
+            "description": "Only records whose object type is one of these.",
             "items": {
-              "description": "A document type.",
               "enum": [
                 "Customer",
-                "GLAccount",
                 "Invoice",
                 "CreditMemo",
                 "DebitMemo",
                 "CustomerPayment",
                 "CreditApplication",
+                "CarrierVendor",
+                "DriverVendor",
                 "CarrierBill",
                 "CarrierBillPayment",
                 "DriverBill",
-                "DriverBillPayment"
+                "DriverBillPayment",
+                "JournalEntry",
+                "JournalSummary",
+                "GLAccount"
               ],
               "type": "string",
-              "x-enumOf": "accountingSync.driftObjectType"
+              "x-enumOf": "graphql.AccountingSyncObjectType"
             },
-            "maxItems": 11,
+            "minItems": 1,
             "type": "array"
+          },
+          "partyName": {
+            "description": "Only records whose party name contains this text.",
+            "type": "string"
+          },
+          "providerMinorMax": {
+            "description": "The accounting system's value, in minor units. Absent when it no longer has the document. Only records whose provider minor is at most this.",
+            "type": "integer"
+          },
+          "providerMinorMin": {
+            "description": "The accounting system's value, in minor units. Absent when it no longer has the document. Only records whose provider minor is at least this.",
+            "type": "integer"
+          },
+          "providerModifiedAtFrom": {
+            "description": "When it was last changed in the accounting system. Only records whose provider modified at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "providerModifiedAtTo": {
+            "description": "When it was last changed in the accounting system. Only records whose provider modified at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "providerModifiedBy": {
+            "description": "Who last changed it there, when the accounting system says. Only records whose provider modified by contains this text.",
+            "type": "string"
+          },
+          "providerState": {
+            "description": "Only records whose provider state contains this text.",
+            "type": "string"
           },
           "query": {
             "description": "Words to find in the document number, the party name or who changed it.",
             "type": "string"
           },
-          "status": {
-            "description": "Only findings in these statuses. Open ones wait for a fix or a dismissal.",
+          "resolution": {
+            "description": "Only records whose resolution is one of these.",
             "items": {
-              "description": "A status.",
+              "enum": [
+                "PushedTrenovaValue",
+                "AdjustedTrenova",
+                "NoLongerDiffers",
+                "Dismissed"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.AccountingDriftResolution"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "resolutionNote": {
+            "description": "Only records whose resolution note contains this text.",
+            "type": "string"
+          },
+          "resolvedAtFrom": {
+            "description": "Only records whose resolved at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "resolvedAtTo": {
+            "description": "Only records whose resolved at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "connectionId",
+              "currencyCode",
+              "detectedAt",
+              "differenceMinor",
+              "externalId",
+              "externalUrl",
+              "fixObjectId",
+              "fixObjectType",
+              "kind",
+              "lastSeenAt",
+              "objectId",
+              "objectNumber",
+              "objectType",
+              "partyId",
+              "partyName",
+              "providerMinor",
+              "providerModifiedAt",
+              "providerModifiedBy",
+              "providerState",
+              "resolution",
+              "resolutionNote",
+              "resolvedAt",
+              "status",
+              "trenovaMinor",
+              "trenovaState",
+              "updatedAt"
+            ],
+            "type": "string",
+            "x-enumOf": "accounting_list_drift_findings.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
               "enum": [
                 "Open",
                 "Resolved",
                 "Dismissed"
               ],
               "type": "string",
-              "x-enumOf": "accountingSync.driftStatus"
+              "x-enumOf": "graphql.AccountingDriftStatus"
             },
-            "maxItems": 3,
+            "minItems": 1,
             "type": "array"
           },
           "system": {
-            "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
+            "description": "The accounting system, such as QuickBooksOnline or Xero.",
             "enum": [
               "QuickBooksOnline",
               "Xero",
@@ -777,7 +971,35 @@
               "NetSuite"
             ],
             "type": "string",
-            "x-enumOf": "integration.accountingSystem"
+            "x-enumOf": "graphql.AccountingSystem"
+          },
+          "trenovaMinorMax": {
+            "description": "Trenova's value, in minor units. Absent when the difference has no amount. Only records whose trenova minor is at most this.",
+            "type": "integer"
+          },
+          "trenovaMinorMin": {
+            "description": "Trenova's value, in minor units. Absent when the difference has no amount. Only records whose trenova minor is at least this.",
+            "type": "integer"
+          },
+          "trenovaState": {
+            "description": "Only records whose trenova state contains this text.",
+            "type": "string"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "required": [
@@ -815,26 +1037,85 @@
     },
     {
       "name": "accounting_list_inbound_changes",
-      "description": "List inbound changes: payments the accounting system recorded against invoices or bills Trenova sent, newest first. Each says what it pays and whether it was brought into Trenova, and if not why. Filter by status, such as Proposed for what waits on a person, by kind, or by reason. Pass a Proposed row's id to accounting_apply_inbound_change or accounting_ignore_inbound_change.",
+      "description": "List inbound changes: payments the accounting system recorded against invoices or bills Trenova sent, newest first. Each says what it pays and whether it was brought into Trenova, and if not why (reason), with canApply and canIgnore. Pass a Proposed row's id to accounting_apply_inbound_change or accounting_ignore_inbound_change. Filters: amountMinorMin/Max, currencyCode, decidedAtFrom/To, detectedAtFrom/To, externalId, externalNumber, externalUrl, hasPartyObject, kind, note, partyName, providerModifiedAtFrom/To, providerModifiedBy, reason, resolution, status, system, txnDateFrom/To, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
-            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
+          "amountMinorMax": {
+            "description": "Only records whose amount minor is at most this.",
+            "type": "integer"
+          },
+          "amountMinorMin": {
+            "description": "Only records whose amount minor is at least this.",
+            "type": "integer"
+          },
+          "currencyCode": {
+            "description": "Only records whose currency code contains this text.",
+            "type": "string"
+          },
+          "decidedAtFrom": {
+            "description": "Only records whose decided at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "decidedAtTo": {
+            "description": "Only records whose decided at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "detectedAtFrom": {
+            "description": "Only records whose detected at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "detectedAtTo": {
+            "description": "Only records whose detected at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "externalId": {
+            "description": "The payment's ID in the accounting system. Only records whose external id contains this text.",
+            "type": "string"
+          },
+          "externalNumber": {
+            "description": "Only records whose external number contains this text.",
+            "type": "string"
+          },
+          "externalUrl": {
+            "description": "A link to the payment in the accounting system. Only records whose external url contains this text.",
+            "type": "string"
+          },
+          "hasPartyObject": {
+            "description": "The Trenova customer, carrier or driver it pays for, once matched. true for only records that have a party object, false for only those that have none.",
+            "type": "boolean"
+          },
           "kind": {
-            "description": "Only customer payments or only bill payments.",
+            "description": "Only records whose kind is one of these.",
             "items": {
-              "description": "A kind.",
               "enum": [
                 "CustomerPayment",
                 "BillPayment"
               ],
               "type": "string",
-              "x-enumOf": "accountingSync.inboundChangeKind"
+              "x-enumOf": "graphql.AccountingInboundChangeKind"
             },
-            "maxItems": 2,
+            "minItems": 1,
             "type": "array"
           },
           "limit": {
@@ -844,14 +1125,41 @@
             "type": "integer",
             "x-clamp": true
           },
+          "note": {
+            "description": "Only records whose note contains this text.",
+            "type": "string"
+          },
+          "partyName": {
+            "description": "The customer or vendor as the accounting system names it. Only records whose party name contains this text.",
+            "type": "string"
+          },
+          "providerModifiedAtFrom": {
+            "description": "When it was last changed in the accounting system. Only records whose provider modified at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "providerModifiedAtTo": {
+            "description": "When it was last changed in the accounting system. Only records whose provider modified at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "providerModifiedBy": {
+            "description": "Who last changed it there, when the accounting system says. Only records whose provider modified by contains this text.",
+            "type": "string"
+          },
           "query": {
             "description": "Words to find in the payment's number or the customer or vendor name.",
             "type": "string"
           },
           "reason": {
-            "description": "Only payments held back for these reasons.",
+            "description": "Why it was not applied on its own. Absent once applied. Only records whose reason is one of these.",
             "items": {
-              "description": "A reason.",
               "enum": [
                 "PolicyPropose",
                 "PeriodNotOpen",
@@ -867,15 +1175,52 @@
                 "ApplyFailed"
               ],
               "type": "string",
-              "x-enumOf": "accountingSync.inboundChangeReason"
+              "x-enumOf": "graphql.AccountingInboundChangeReason"
             },
-            "maxItems": 12,
+            "minItems": 1,
             "type": "array"
           },
+          "resolution": {
+            "description": "What to do about it, in plain language. Only records whose resolution contains this text.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "amountMinor",
+              "currencyCode",
+              "decidedAt",
+              "detectedAt",
+              "externalId",
+              "externalNumber",
+              "externalUrl",
+              "kind",
+              "note",
+              "partyName",
+              "partyObjectId",
+              "providerModifiedAt",
+              "providerModifiedBy",
+              "reason",
+              "resolution",
+              "status",
+              "txnDate",
+              "updatedAt"
+            ],
+            "type": "string",
+            "x-enumOf": "accounting_list_inbound_changes.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
           "status": {
-            "description": "Only payments in these statuses. Proposed ones wait for a person.",
+            "description": "Only records whose status is one of these.",
             "items": {
-              "description": "A status.",
               "enum": [
                 "Detected",
                 "Proposed",
@@ -884,13 +1229,13 @@
                 "Superseded"
               ],
               "type": "string",
-              "x-enumOf": "accountingSync.inboundChangeStatus"
+              "x-enumOf": "graphql.AccountingInboundChangeStatus"
             },
-            "maxItems": 5,
+            "minItems": 1,
             "type": "array"
           },
           "system": {
-            "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
+            "description": "The accounting system, such as QuickBooksOnline or Xero.",
             "enum": [
               "QuickBooksOnline",
               "Xero",
@@ -898,7 +1243,39 @@
               "NetSuite"
             ],
             "type": "string",
-            "x-enumOf": "integration.accountingSystem"
+            "x-enumOf": "graphql.AccountingSystem"
+          },
+          "txnDateFrom": {
+            "description": "The payment date. Only records whose txn date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "txnDateTo": {
+            "description": "The payment date. Only records whose txn date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "required": [
@@ -934,10 +1311,14 @@
     },
     {
       "name": "accounting_list_mapping_gaps",
-      "description": "List what still has to be matched to the accounting system before anything can sync. It covers account roles, line types, accessorial charges, customers, carriers, terms and payment methods that are unmatched or only proposed, and says how many required mappings are confirmed and whether setup can finish. Each gap carries its id and the candidates Trenova considered; pass them to accounting_get_mapping or accounting_set_mapping.",
+      "description": "List what still has to be matched to the accounting system before anything can sync. It covers account roles, line types, accessorial charges, customers, carriers, terms and payment methods that are unmatched or only proposed; summary says how many required mappings are confirmed and whether setup can finish. Each gap carries its id and the candidates Trenova considered; pass them to accounting_get_mapping or accounting_set_mapping. Filters: requiredOnly, state, system, targetType.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
             "maximum": 50,
@@ -945,12 +1326,30 @@
             "type": "integer",
             "x-clamp": true
           },
+          "query": {
+            "description": "Words to find in the Trenova label or the chosen record's name.",
+            "type": "string"
+          },
           "requiredOnly": {
-            "description": "Only the mappings setup cannot finish without.",
+            "description": "true for only the records whose requiredOnly is true, false for only those whose requiredOnly is false. Only the mappings setup cannot finish without.",
             "type": "boolean"
           },
+          "state": {
+            "description": "Only records whose states is one of these. Unmatched and Proposed unless you name others.",
+            "items": {
+              "enum": [
+                "Unmatched",
+                "Proposed",
+                "Confirmed"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.AccountingMappingState"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
           "system": {
-            "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
+            "description": "The accounting system, such as QuickBooksOnline or Xero.",
             "enum": [
               "QuickBooksOnline",
               "Xero",
@@ -958,24 +1357,28 @@
               "NetSuite"
             ],
             "type": "string",
-            "x-enumOf": "integration.accountingSystem"
+            "x-enumOf": "graphql.AccountingSystem"
           },
           "targetType": {
-            "description": "Only gaps of this kind. Leave it out for every kind.",
-            "enum": [
-              "AccountRole",
-              "LineType",
-              "AccessorialCharge",
-              "ItemRole",
-              "Customer",
-              "Carrier",
-              "Driver",
-              "GLAccount",
-              "PaymentTerm",
-              "PaymentMethod"
-            ],
-            "type": "string",
-            "x-enumOf": "accountingSync.mappingTargetType"
+            "description": "Only records whose target types is one of these.",
+            "items": {
+              "enum": [
+                "AccountRole",
+                "LineType",
+                "AccessorialCharge",
+                "ItemRole",
+                "Customer",
+                "Carrier",
+                "Driver",
+                "GLAccount",
+                "PaymentTerm",
+                "PaymentMethod"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.AccountingMappingTargetType"
+            },
+            "minItems": 1,
+            "type": "array"
           }
         },
         "required": [
@@ -1015,16 +1418,16 @@
     },
     {
       "name": "accounting_list_sync_records",
-      "description": "List the documents Trenova sends to the accounting system and where each stands, or say whether particular Trenova documents or parties reached it. Filter one system's records, newest first, by status (Blocked and DeadLettered did not reach the books), document type or error category, or search document numbers. Or pass documentIds of invoices, memos, payments, customers, settlements, carriers or drivers: each gets whether it is tracked, its current record and what that means, across every syncing system unless you name one; a settlement shows its bill or bill payment, whichever needs attention, else the latest, and no record means it was never sent. A record has its status, error category, resolution, tries and the accounting system's number once synced; pass its id to accounting_get_sync_record for the tries or accounting_retry_sync_record once the cause is fixed.",
+      "description": "List the documents Trenova sends to the accounting system and where each stands, or say whether particular Trenova documents or parties reached it. List one system's records, newest first, by status (Blocked and DeadLettered did not reach the books), document type or error category. Or pass documentIds of invoices, memos, payments, customers, settlements, carriers or drivers: states holds each one's current record and what that means, across every syncing system unless you name one; a settlement shows its bill or bill payment, whichever needs attention, else the latest, and a document with no state was never sent. A record has its status, error category, resolution, tries and the accounting system's number once synced; pass its id to accounting_get_sync_record for the tries or accounting_retry_sync_record once the cause is fixed. Filters: documentType, errorCategory, status, system.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
-            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
           "documentIds": {
-            "description": "Up to 50 Trenova document ids, from invoice_list, invoice_get, receivable_list_customer_payments, settlement_list_carrier or settlement_list_driver, or the record on screen, to say whether each reached the accounting system. The filters below list records instead and are left out with it.",
+            "description": "Trenova document ids, or the record on screen, to say whether each reached the accounting system, from invoice_list, invoice_get, receivable_list_customer_payments, settlement_list_carrier or settlement_list_driver. Never guess one. The filters list records instead and are left out with it.",
             "items": {
               "type": "string",
               "x-recordKinds": [
@@ -1040,12 +1443,12 @@
               ]
             },
             "maxItems": 50,
+            "minItems": 1,
             "type": "array"
           },
           "documentType": {
-            "description": "Only these kinds of document.",
+            "description": "Only records whose object types is one of these.",
             "items": {
-              "description": "A document type.",
               "enum": [
                 "Customer",
                 "Invoice",
@@ -1060,18 +1463,18 @@
                 "DriverBill",
                 "DriverBillPayment",
                 "JournalEntry",
-                "JournalSummary"
+                "JournalSummary",
+                "GLAccount"
               ],
               "type": "string",
-              "x-enumOf": "accountingSync.syncObjectType"
+              "x-enumOf": "graphql.AccountingSyncObjectType"
             },
-            "maxItems": 14,
+            "minItems": 1,
             "type": "array"
           },
           "errorCategory": {
-            "description": "Only records that last failed for these reasons.",
+            "description": "Only records whose error categories is one of these.",
             "items": {
-              "description": "An error category.",
               "enum": [
                 "Transient",
                 "RateLimited",
@@ -1086,9 +1489,9 @@
                 "Configuration"
               ],
               "type": "string",
-              "x-enumOf": "accountingSync.syncErrorCategory"
+              "x-enumOf": "graphql.AccountingSyncErrorCategory"
             },
-            "maxItems": 11,
+            "minItems": 1,
             "type": "array"
           },
           "limit": {
@@ -1103,9 +1506,8 @@
             "type": "string"
           },
           "status": {
-            "description": "Only records in these statuses. Blocked and DeadLettered need a person; AwaitingApproval waits to be released.",
+            "description": "Only records whose statuses is one of these. Blocked and DeadLettered need a person; AwaitingApproval waits to be released.",
             "items": {
-              "description": "A sync status.",
               "enum": [
                 "Queued",
                 "AwaitingApproval",
@@ -1118,13 +1520,13 @@
                 "Superseded"
               ],
               "type": "string",
-              "x-enumOf": "accountingSync.syncStatus"
+              "x-enumOf": "graphql.AccountingSyncRecordStatus"
             },
-            "maxItems": 9,
+            "minItems": 1,
             "type": "array"
           },
           "system": {
-            "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\". Required to list records; with documentIds, only that system's records answer, and without it every system that syncs does.",
+            "description": "The accounting system, such as QuickBooksOnline or Xero. Required to list records; with documentIds, only that system's records answer, and without it every system that syncs does.",
             "enum": [
               "QuickBooksOnline",
               "Xero",
@@ -1132,7 +1534,7 @@
               "NetSuite"
             ],
             "type": "string",
-            "x-enumOf": "integration.accountingSystem"
+            "x-enumOf": "graphql.AccountingSystem"
           }
         },
         "type": "object"
@@ -12408,7 +12810,7 @@
     },
     {
       "name": "equipment_list_tractors",
-      "description": "List tractors (power units) narrowed by status, ownership, or a registration or lease date. Use it for questions about which units are out of service or coming due for plates. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, fuelType, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasSecondaryWorker, hasState, iftaQualified, lastKnownLocationId, lastKnownLocationName, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, model, ownerWorkerId, ownershipType, primaryWorkerId, registrationExpiryFrom/To, registrationNumber, secondaryWorkerId, status, updatedAtFrom/To, vin, yearMin/Max.",
+      "description": "List tractors (power units) narrowed by status, ownership, or a registration or lease date. Use it for questions about which units are out of service or coming due for plates. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, fuelType, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasSecondaryWorker, hasState, iftaQualified, includeEquipmentDetails, includeFleetDetails, includeWorkerDetails, lastKnownLocationId, lastKnownLocationName, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, model, ownerWorkerId, ownershipType, primaryWorkerId, registrationExpiryFrom/To, registrationNumber, secondaryWorkerId, status, updatedAtFrom/To, vin, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12505,6 +12907,18 @@
           },
           "iftaQualified": {
             "description": "Whether the tractor's miles and fuel enter the IFTA return. true for only the records whose iftaQualified is true, false for only those whose iftaQualified is false.",
+            "type": "boolean"
+          },
+          "includeEquipmentDetails": {
+            "description": "true for only the records whose includeEquipmentDetails is true, false for only those whose includeEquipmentDetails is false.",
+            "type": "boolean"
+          },
+          "includeFleetDetails": {
+            "description": "true for only the records whose includeFleetDetails is true, false for only those whose includeFleetDetails is false.",
+            "type": "boolean"
+          },
+          "includeWorkerDetails": {
+            "description": "true for only the records whose includeWorkerDetails is true, false for only those whose includeWorkerDetails is false.",
             "type": "boolean"
           },
           "lastKnownLocationId": {
@@ -12731,7 +13145,7 @@
     },
     {
       "name": "equipment_list_trailers",
-      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service or overdue for inspection. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasRegistrationState, lastInspectionDateFrom/To, lastKnownLocationId, lastKnownLocationName, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, maxLoadWeightMin/Max, model, ownerWorkerId, ownershipType, registrationExpiryFrom/To, registrationNumber, status, updatedAtFrom/To, vin, yearMin/Max.",
+      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service or overdue for inspection. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasRegistrationState, includeEquipmentDetails, includeFleetDetails, lastInspectionDateFrom/To, lastKnownLocationId, lastKnownLocationName, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, maxLoadWeightMin/Max, model, ownerWorkerId, ownershipType, registrationExpiryFrom/To, registrationNumber, status, updatedAtFrom/To, vin, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12792,6 +13206,14 @@
           },
           "hasRegistrationState": {
             "description": "true for only records that have a registration state, false for only those that have none.",
+            "type": "boolean"
+          },
+          "includeEquipmentDetails": {
+            "description": "true for only the records whose includeEquipmentDetails is true, false for only those whose includeEquipmentDetails is false.",
+            "type": "boolean"
+          },
+          "includeFleetDetails": {
+            "description": "true for only the records whose includeFleetDetails is true, false for only those whose includeFleetDetails is false.",
             "type": "boolean"
           },
           "lastInspectionDateFrom": {
@@ -13028,7 +13450,7 @@
     },
     {
       "name": "equipment_list_types",
-      "description": "List equipment types — the trailer and tractor classes this organization books against, such as dry van, reefer or flatbed. Use it to turn an equipment name a person used into the id other tools need. Filters: class, code, color, createdAtFrom/To, description, interiorLengthMin/Max, status, updatedAtFrom/To.",
+      "description": "List equipment types — the trailer and tractor classes this organization books against, such as dry van, reefer or flatbed. Use it to turn an equipment name a person used into the id other tools need. Filters: class, classes, code, color, createdAtFrom/To, description, interiorLengthMin/Max, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13038,6 +13460,21 @@
           },
           "class": {
             "description": "Only records whose class is one of these.",
+            "items": {
+              "enum": [
+                "Tractor",
+                "Trailer",
+                "Container",
+                "Other"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EquipmentClass"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "classes": {
+            "description": "Only records whose classes is one of these.",
             "items": {
               "enum": [
                 "Tractor",

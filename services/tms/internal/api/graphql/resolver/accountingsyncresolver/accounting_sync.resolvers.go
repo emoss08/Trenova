@@ -935,7 +935,7 @@ func (r *QueryResolver) AccountingSyncAttempts(ctx context.Context, recordID str
 	return r.AccountingSync.ListAttempts(ctx, base.TenantInfo(authCtx), id)
 }
 
-func (r *QueryResolver) AccountingSyncObjectStates(ctx context.Context, objectIds []string) ([]*accountingsyncports.AccountingSyncObjectState, error) {
+func (r *QueryResolver) AccountingSyncObjectStates(ctx context.Context, objectIds []string, integrationType *integration.Type) ([]*accountingsyncports.AccountingSyncObjectState, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -948,8 +948,9 @@ func (r *QueryResolver) AccountingSyncObjectStates(ctx context.Context, objectId
 	states, err := r.AccountingSync.ObjectStates(
 		ctx,
 		&accountingsyncports.AccountingSyncObjectStatesRequest{
-			TenantInfo: base.TenantInfo(authCtx),
-			ObjectIDs:  ids,
+			TenantInfo:      base.TenantInfo(authCtx),
+			ObjectIDs:       ids,
+			IntegrationType: typeutils.ValueOrZero(integrationType),
 		},
 	)
 	if err != nil {
@@ -1172,4 +1173,28 @@ func (r *MutationResolver) RenewAccountingCertificate(ctx context.Context, input
 		ConnectionID:  connectionID,
 		CertificateID: input.CertificateID,
 	})
+}
+
+func (r *QueryResolver) AccountingMappingDetail(ctx context.Context, integrationType integration.Type, id *string, targetType *accountingsync.MappingTargetType, recordID *string, key *string, optionsQuery *string) (*gqlmodel.AccountingMappingDetail, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	mappingID, err := base.ParseOptionalIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+	objectID, err := base.ParseOptionalIDField("recordId", recordID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingMappingDetail(ctx, &accountingsyncports.SetAccountingMappingRequest{
+		TenantInfo:      base.TenantInfo(authCtx),
+		IntegrationType: integrationType,
+		MappingID:       mappingID,
+		TargetType:      typeutils.ValueOrZero(targetType),
+		TrenovaObjectID: objectID,
+		TrenovaKey:      strings.TrimSpace(base.StringValue(key)),
+	}, strings.TrimSpace(base.StringValue(optionsQuery)))
 }
