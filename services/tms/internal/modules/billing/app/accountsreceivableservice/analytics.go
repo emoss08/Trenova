@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -12,7 +13,7 @@ const (
 	defaultTrendWeeks        = 13
 	maxTrendWeeks            = 52
 	dsoWindowDays            = 91.0
-	collectionPeriodDays     = 91
+	collectionPeriodDays     = customerledger.CollectionWindowDays
 	kpiDeltaWeeks            = 5
 	defaultTopOverdueLimit   = 10
 	defaultWorklistLimit     = 25
@@ -60,18 +61,8 @@ func (s *Service) GetDashboardKPIs(
 	kpis := &customerledgerports.ARDashboardKPIs{
 		AsOfDate:       req.AsOfDate,
 		Overview:       overview,
-		CEI:            computeCEI(totals),
-		AvgDaysToPay:   totals.AvgDaysToPay,
 		OverduePercent: percentOf(overview.OverdueMinor, overview.TotalOpenMinor),
-		WriteOffRatio:  ratioOf(totals.ShortPayMinor, totals.CreditSalesMinor),
-		DisputeRate: ratioOf(
-			int64(totals.DisputedInvoiceCount),
-			int64(totals.PostedInvoiceCount),
-		),
-		ShortPayRate: ratioOf(
-			int64(totals.ShortPayApplicationCount),
-			int64(totals.ApplicationCount),
-		),
+		Collection:     collectionPerformance(totals),
 	}
 	if len(series) > 0 {
 		last := series[len(series)-1]
@@ -147,35 +138,6 @@ func (s *Service) GetCashFlowForecast(
 	req.PastWeeks = min(req.PastWeeks, maxCashFlowWeeks)
 	req.FutureWeeks = min(req.FutureWeeks, maxCashFlowWeeks)
 	return s.analyticsRepo.ListCashFlow(ctx, req)
-}
-
-func (s *Service) GetCollectionPerformance(
-	ctx context.Context,
-	req customerledgerports.GetARCollectionMetricsRequest,
-) (*customerledgerports.ARCollectionPerformance, error) {
-	req.AsOfDate = normalizeAsOf(req.AsOfDate)
-	if req.PeriodDays <= 0 {
-		req.PeriodDays = collectionPeriodDays
-	}
-
-	totals, err := s.analyticsRepo.GetCollectionTotals(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return &customerledgerports.ARCollectionPerformance{
-		Totals:        totals,
-		CEI:           computeCEI(totals),
-		WriteOffRatio: ratioOf(totals.ShortPayMinor, totals.CreditSalesMinor),
-		DisputeRate: ratioOf(
-			int64(totals.DisputedInvoiceCount),
-			int64(totals.PostedInvoiceCount),
-		),
-		ShortPayRate: ratioOf(
-			int64(totals.ShortPayApplicationCount),
-			int64(totals.ApplicationCount),
-		),
-	}, nil
 }
 
 func (s *Service) ListTopOverdueCustomers(
@@ -267,6 +229,24 @@ func computeCEI(totals *customerledgerports.ARCollectionTotals) float64 {
 	numerator := totals.BeginningOpenMinor + totals.CreditSalesMinor - totals.EndingOpenMinor
 	cei := float64(numerator) / float64(denominator) * 100
 	return math.Max(0, math.Min(cei, 100))
+}
+
+func collectionPerformance(
+	totals *customerledgerports.ARCollectionTotals,
+) *customerledgerports.ARCollectionPerformance {
+	return &customerledgerports.ARCollectionPerformance{
+		Totals:        totals,
+		CEI:           computeCEI(totals),
+		WriteOffRatio: ratioOf(totals.ShortPayMinor, totals.CreditSalesMinor),
+		DisputeRate: ratioOf(
+			int64(totals.DisputedInvoiceCount),
+			int64(totals.PostedInvoiceCount),
+		),
+		ShortPayRate: ratioOf(
+			int64(totals.ShortPayApplicationCount),
+			int64(totals.ApplicationCount),
+		),
+	}
 }
 
 func percentOf(part, whole int64) float64 {

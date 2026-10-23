@@ -11,7 +11,8 @@ import { CollectionsPerformanceBodySkeleton } from "./collections-performance-sk
 export function CollectionsPerformanceCard() {
   const t = useT();
 
-  const { data: performance, isLoading } = useQuery(ar.collectionPerformance());
+  const { data: kpis, isLoading } = useQuery(ar.dashboardKpis());
+  const performance = kpis?.collection;
 
   return (
     <SectionPanel

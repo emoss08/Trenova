@@ -57,8 +57,8 @@ export function ARKpiRow() {
       <KpiStripItem
         size="lg"
         label={t("Collection effectiveness")}
-        tone={ceiTone(kpis.cei)}
-        value={`${kpis.cei.toFixed(0)}%`}
+        tone={ceiTone(kpis.collection.cei)}
+        value={`${kpis.collection.cei.toFixed(0)}%`}
       />
       <KpiStripItem
         size="lg"

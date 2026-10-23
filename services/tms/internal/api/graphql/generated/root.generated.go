@@ -2726,7 +2726,6 @@ type QueryResolver interface {
 	ArDsoTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARDSOTrendPoint, error)
 	ArAgingTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARAgingTrendPoint, error)
 	ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*customerledgerports.ARCashFlowPoint, error)
-	ArCollectionPerformance(ctx context.Context, periodDays *int) (*customerledgerports.ARCollectionPerformance, error)
 	ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*customerledgerports.ARTopOverdueCustomer, error)
 	ArCollectionsWorklist(ctx context.Context, limit *int) ([]*customerledgerports.ARCollectionsWorklistItem, error)
 	ArCustomerProfile(ctx context.Context, customerID string) (*customerledgerports.ARCustomerProfile, error)
