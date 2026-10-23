@@ -20796,6 +20796,15 @@
       "routes/desk"
     ]
   },
+  "After driver pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
   "After guidance": {
     "sites": 1,
     "scope": [
@@ -78487,6 +78496,15 @@
       "routes/shipment-control"
     ]
   },
+  "Detention margin by customer needs access to margins.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Detention notice due": {
     "sites": 1,
     "scope": [
@@ -96726,6 +96744,15 @@
       "routes/shipment"
     ]
   },
+  "Every margin figure: margins and margin percents, margin floors and targets, and a cost shown beside the revenue it gives the margin of": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Every matched line is booked to the ledger through the factor's schedules. Only an opposite entry undoes a booking.": {
     "sites": 1,
     "scope": [
@@ -107310,6 +107337,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Filtering loads by margin needs access to margins": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Filters": {
@@ -120186,6 +120222,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "How much of each billed detention dollar survives driver pay needs access to margins.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "How much of the result the sample covers.": {
@@ -202522,6 +202567,15 @@
       "routes/routing-guide"
     ]
   },
+  "Ranking carriers by margin needs access to margins": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Rate": {
     "sites": 29,
     "scope": [
@@ -276432,6 +276486,15 @@
       "go/other"
     ]
   },
+  "This assignment is outside the contract's margin terms; override the margin floor to assign it anyway": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This backs out {0} of cash, reopens the applied invoices, and posts a reversing GL entry. This cannot be undone.": {
     "sites": 1,
     "scope": [
@@ -313550,6 +313613,15 @@
       "go/other"
     ]
   },
+  "You pay more than you bill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
   "You raised this credit memo, so someone else must approve and post it": {
     "sites": 1,
     "scope": [
@@ -322173,6 +322245,15 @@
       "go/other"
     ]
   },
+  "margin {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "margin {0}%": {
     "sites": 2,
     "scope": [
@@ -322181,6 +322262,15 @@
     "areas": [
       "apps/web/lib",
       "routes/shipment"
+    ]
+  },
+  "margins": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "matched by radius": {
@@ -323690,6 +323780,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "personal details": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "pgvector is installed, but the tables that hold the index were never created. Run this on the server; running services notice within five minutes:": {
@@ -347025,6 +347124,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "· margin": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "· margin {0}": {

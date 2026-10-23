@@ -220,7 +220,8 @@ type Shipment {
   orderId: ID
   orderNumber: String
   orderStatus: OrderStatus
-  profitabilityEstimate: ShipmentProfitabilityEstimate
+  "The shipment's estimated cost and margin. Null to a reader without the margins field group."
+  profitabilityEstimate: ShipmentProfitabilityEstimate @protected(group: Margins)
   status: ShipmentStatus!
   tenderStatus: ShipmentTenderStatus
   entryMethod: ShipmentEntryMethod
@@ -1093,9 +1094,10 @@ type ShipmentAnalytics {
 type ShipmentProfitabilityAnalytics {
   avgCpm: Float!
   "Null when the reader does not hold the margins field group."
-  avgMarginPct: Float
+  avgMarginPct: Float @protected(group: Margins)
   hasMargin: Boolean!
-  unprofitableCount: Int!
+  "How many loads lost money. Null when the reader does not hold the margins field group."
+  unprofitableCount: Int @protected(group: Margins)
   shipmentCount: Int!
   totalMiles: Float!
 }

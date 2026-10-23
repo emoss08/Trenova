@@ -38,7 +38,10 @@ without the grant receives null for every field in the set.
 enum ProtectedFieldGroup {
   "A worker's date of birth, licence, TWIC and credential numbers, and drug test dates."
   Personal
-  "The margin floor and pay ceiling a rate agreement sets against the sell price."
+  """
+  Every margin figure: a margin, a margin percent, a margin floor or target, and
+  the cost beside a revenue that would give the margin away.
+  """
   Margins
 }
 

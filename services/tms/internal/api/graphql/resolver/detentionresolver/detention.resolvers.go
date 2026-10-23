@@ -472,3 +472,11 @@ func (r *DetentionOccurrenceResolver) Location(ctx context.Context, obj *gqlmode
 	}
 	return base.OptionalMatch(loaders.LocationByID(ctx, obj.LocationID))
 }
+
+func (r *DetentionOccurrenceResolver) CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (map[string]any, error) {
+	return r.visibleTrace(ctx, obj.CalculationTrace), nil
+}
+
+func (r *DetentionPreviewResultResolver) CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionPreviewResult) (map[string]any, error) {
+	return r.visibleTrace(ctx, obj.CalculationTrace), nil
+}

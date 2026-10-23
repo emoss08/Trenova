@@ -230,12 +230,23 @@ describe("TenderLivePanel counter-offers", () => {
   });
 
   it("shows the counter's rate, margin, note and that it needs approval", () => {
-    seedPermissions(FULL_TENDER_ACCESS);
+    seedPermissions({ ...FULL_TENDER_ACCESS, [Resource.ProtectedMargins]: Operation.Read });
     renderPanel(tender({ offers: [countered()] }));
 
     expect(screen.getByText("Countered at $1,850.00")).toBeInTheDocument();
     expect(screen.getByText("· margin 7.5%")).toBeInTheDocument();
     expect(screen.getByText("“Fuel is up on this lane”")).toBeInTheDocument();
+    expect(screen.getByText("Needs approval")).toBeInTheDocument();
+  });
+
+  it("draws the counter's margin as withheld for a dispatcher without the margins group", () => {
+    seedPermissions(FULL_TENDER_ACCESS);
+    renderPanel(tender({ offers: [countered({ counterMarginPercent: null })] }));
+
+    expect(screen.getByText("Countered at $1,850.00")).toBeInTheDocument();
+    expect(screen.queryByText("· margin 7.5%")).toBeNull();
+    const hidden = screen.getByText("Hidden").closest('[data-slot="locked-reference"]');
+    expect(hidden?.getAttribute("aria-description")).toBe("You don't have access to margins");
     expect(screen.getByText("Needs approval")).toBeInTheDocument();
   });
 

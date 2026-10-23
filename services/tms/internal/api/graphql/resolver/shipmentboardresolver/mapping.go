@@ -11,6 +11,7 @@ import (
 func scopeRequestFromGraphQL(
 	input *gqlmodel.ShipmentBoardScopeInput,
 	tenantInfo pagination.TenantInfo,
+	margins bool,
 ) *shipmentports.ShipmentBoardScopeRequest {
 	return &shipmentports.ShipmentBoardScopeRequest{
 		Filter: base.QueryOptionsFromGraphQL(&base.GqlListOptions{
@@ -21,6 +22,7 @@ func scopeRequestFromGraphQL(
 		}),
 		QuickFilters: base.QuickFilterSpecsFromGraphQL(input.QuickFilters),
 		Timezone:     input.Timezone,
+		Margins:      margins,
 	}
 }
 

@@ -529,13 +529,8 @@ func (e *FieldGuardExtension) visible(ctx context.Context) permission.FieldGroup
 
 func (e *FieldGuardExtension) resolveVisible(ctx context.Context) permission.FieldGroupSet {
 	authCtx, ok := gqlctx.AuthContext(ctx)
-	if !ok || authCtx == nil || e.engine == nil {
+	if !ok {
 		return 0
 	}
-	return fieldsensitivity.VisibleGroups(
-		ctx,
-		func(ctx context.Context, resource permission.Resource) (bool, error) {
-			return base.CheckPermission(ctx, e.engine, authCtx, resource, permission.OpRead)
-		},
-	)
+	return base.VisibleFieldGroups(ctx, e.engine, authCtx)
 }

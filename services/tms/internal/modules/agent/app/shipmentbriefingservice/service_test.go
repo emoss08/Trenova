@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,7 +77,6 @@ func TestDeterministicWording(t *testing.T) {
 			Uncovered:   1,
 			Detention:   2,
 			ReadyToBill: 6,
-			LowMargin:   3,
 		},
 		OperationType: tenant.OperationTypeAsset,
 	})
@@ -341,7 +340,8 @@ func TestFactsResolveTheBasisEveryFactFilterNeeds(t *testing.T) {
 	require.Len(t, f.basis.requests, 1)
 	req := f.basis.requests[0]
 	assert.Equal(t, "America/Chicago", req.Timezone)
-	assert.True(t, req.Margin)
+	assert.False(t, req.Margin,
+		"the brief is shared by every board reader, so it counts no margin-derived set")
 	assert.True(t, req.Detention)
 }
 

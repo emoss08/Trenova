@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:d6d64ada93f19e8a03fb6ff61025877cedf83669d804747bcba699cdca8f84a9"
+const Version = "sha256:8cef850c6361c3a15fe98271454c92bea6aa133431ce5fddc5ce2af345dde63d"
 
 var Default = indexed(defaultCatalog)
 
@@ -18559,6 +18559,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupMargins,
 				},
 				{
 					Key:          "marginAmount",
@@ -18570,6 +18571,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupMargins,
 				},
 				{
 					Key:          "marginPercent",
@@ -18580,6 +18582,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupMargins,
 				},
 				{
 					Key:          "billingCurrency",

@@ -1,7 +1,7 @@
 import { formatMessage } from "@trenova/shared/i18n/format-message";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
-import type { CapacityUnit } from "@/lib/graphql/shipment-board";
+import type { CapacityMatch, CapacityUnit } from "@/lib/graphql/shipment-board";
 import {
   capacityProvidersFor,
   carrierCapacityProvider,
@@ -88,5 +88,53 @@ describe("capacity providers", () => {
     [carrierCapacityProvider, 12, 30, "carriers posting trucks for 30 untendered loads"],
   ])("agrees the headline with both counts", (provider, available, open, expected) => {
     expect(provider.headline(available, open, t)).toBe(expected);
+  });
+});
+
+const match = (overrides: Partial<CapacityMatch>): CapacityMatch =>
+  ({
+    shipmentId: "shp_1",
+    moveId: "smv_1",
+    proNumber: "S-1001",
+    originCity: "Dallas, TX",
+    destinationCity: "Tulsa, OK",
+    pickupAt: 1,
+    revenue: "2400",
+    deadheadMiles: 42.4,
+    quote: "1850",
+    marginPercent: 22.9,
+    fitPercent: 88,
+    ...overrides,
+  }) as CapacityMatch;
+
+describe("a carrier match's detail", () => {
+  it("states the quote and margin to a reader with the Margins group", () => {
+    expect(
+      carrierCapacityProvider.matchDetail(match({}), t, { pickup: "13:40", marginsVisible: true }),
+    ).toBe("pickup 13:40 · quote $1,850.00 · margin 23%");
+  });
+
+  it("leaves out a quote and margin the load does not have", () => {
+    expect(
+      carrierCapacityProvider.matchDetail(match({ quote: null, marginPercent: null }), t, {
+        pickup: "13:40",
+        marginsVisible: true,
+      }),
+    ).toBe("pickup 13:40");
+  });
+
+  it("says the quote and margin are hidden from a reader without the group", () => {
+    expect(
+      carrierCapacityProvider.matchDetail(match({ quote: null, marginPercent: null }), t, {
+        pickup: "13:40",
+        marginsVisible: false,
+      }),
+    ).toBe("pickup 13:40 · quote Hidden · margin Hidden");
+  });
+
+  it("states a driver match's revenue whatever the reader's groups", () => {
+    expect(
+      driverCapacityProvider.matchDetail(match({}), t, { pickup: "13:40", marginsVisible: false }),
+    ).toBe("pickup 13:40 · 42 mi out · $2,400.00");
   });
 });

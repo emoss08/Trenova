@@ -396,6 +396,7 @@ type ResolverRoot interface {
 	DQFFile() DQFFileResolver
 	DQFItem() DQFItemResolver
 	DetentionOccurrence() DetentionOccurrenceResolver
+	DetentionPreviewResult() DetentionPreviewResultResolver
 	DisciplinaryLadder() DisciplinaryLadderResolver
 	DistanceProfile() DistanceProfileResolver
 	DocumentTemplate() DocumentTemplateResolver
@@ -946,6 +947,9 @@ type ApprovalDelegationResolver interface {
 }
 
 type AuditEntryResolver interface {
+	Changes(ctx context.Context, obj *audit.Entry) (map[string]any, error)
+	PreviousState(ctx context.Context, obj *audit.Entry) (map[string]any, error)
+	CurrentState(ctx context.Context, obj *audit.Entry) (map[string]any, error)
 	Resource(ctx context.Context, obj *audit.Entry) (string, error)
 	Operation(ctx context.Context, obj *audit.Entry) (string, error)
 	EntityRef(ctx context.Context, obj *audit.Entry) (*string, error)
@@ -1210,8 +1214,13 @@ type DQFItemResolver interface {
 
 type DetentionOccurrenceResolver interface {
 	Location(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*location.Location, error)
+	CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (map[string]any, error)
 	ApprovedBy(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*tenant.User, error)
 	WaivedBy(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*tenant.User, error)
+}
+
+type DetentionPreviewResultResolver interface {
+	CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionPreviewResult) (map[string]any, error)
 }
 
 type DisciplinaryLadderResolver interface {
@@ -4073,6 +4082,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"DQFFile":                            func() any { return r.DQFFile() },
 			"DQFItem":                            func() any { return r.DQFItem() },
 			"DetentionOccurrence":                func() any { return r.DetentionOccurrence() },
+			"DetentionPreviewResult":             func() any { return r.DetentionPreviewResult() },
 			"DisciplinaryLadder":                 func() any { return r.DisciplinaryLadder() },
 			"DistanceProfile":                    func() any { return r.DistanceProfile() },
 			"DocumentTemplate":                   func() any { return r.DocumentTemplate() },

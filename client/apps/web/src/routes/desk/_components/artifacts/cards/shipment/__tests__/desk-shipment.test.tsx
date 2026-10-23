@@ -426,7 +426,10 @@ function stopNames(container: HTMLElement): string[] {
 }
 
 beforeEach(() => {
-  seedPermissions({ [Resource.Document]: Operation.Read });
+  seedPermissions({
+    [Resource.Document]: Operation.Read,
+    [Resource.ProtectedMargins]: Operation.Read,
+  });
   service.get.mockReset();
   service.getBillingReadiness.mockReset();
   eventService.list.mockReset();
@@ -790,6 +793,23 @@ describe("DeskShipment", () => {
     expect(container.querySelector(".dk-sh-margin")).toBeNull();
     const head = container.querySelector(".dk-rec-head") as HTMLElement;
     expect(within(head).getByText("total")).toBeInTheDocument();
+  });
+
+  it("says the margin is hidden to a reader without the margins field group", async () => {
+    seedPermissions({ [Resource.Document]: Operation.Read });
+    service.get.mockResolvedValue(shipment({ profitabilityEstimate: null }));
+    const { container } = draw();
+    await screen.findByRole("heading", { name: "Dallas, TX → Atlanta, GA" });
+
+    const margin = container.querySelector(".dk-sh-margin") as HTMLElement;
+    expect(margin).not.toBeNull();
+    expect(margin.querySelector(".dk-sh-meter")).toBeNull();
+    expect(
+      within(margin)
+        .getByText("Hidden")
+        .closest('[data-slot="locked-reference"]')
+        ?.getAttribute("aria-description"),
+    ).toBe("You don't have access to margins");
   });
 
   it("does not ask what stands before the invoice while the shipment is moving", async () => {

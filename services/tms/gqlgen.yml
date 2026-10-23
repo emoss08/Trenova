@@ -4357,11 +4357,17 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.CapScope
   DetentionOccurrence:
     fields:
+      calculationTrace:
+        resolver: true
       location:
         resolver: true
       approvedBy:
         resolver: true
       waivedBy:
+        resolver: true
+  DetentionPreviewResult:
+    fields:
+      calculationTrace:
         resolver: true
   DetentionOccurrenceStatus:
     model:
@@ -5007,6 +5013,12 @@ models:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.Entry
     fields:
+      changes:
+        resolver: true
+      previousState:
+        resolver: true
+      currentState:
+        resolver: true
       resource:
         resolver: true
       operation:

@@ -6,6 +6,8 @@ import { deltaToneClass, formatSignedCurrency } from "@trenova/shared/lib/detent
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { CustomerDetentionStat } from "@trenova/shared/types/detention";
 import { Users01Icon } from "@trenova/shared/components/icons";
+import { WithheldPanel } from "@trenova/shared/components/withheld-value";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { useMemo, useState } from "react";
 import {
   Panel,
@@ -29,13 +31,14 @@ function sortCustomers(rows: CustomerDetentionStat[], sort: CustomerSort): Custo
 
   return sort === "billed"
     ? sorted.sort((a, b) => b.billedAmount - a.billedAmount)
-    : sorted.sort((a, b) => a.netMargin - b.netMargin);
+    : sorted.sort((a, b) => (a.netMargin ?? 0) - (b.netMargin ?? 0));
 }
 
 function CustomerRow({ row, scale }: { row: CustomerDetentionStat; scale: number }) {
   const t = useT();
 
-  const losing = row.netMargin < 0;
+  const netMargin = row.netMargin ?? 0;
+  const losing = netMargin < 0;
 
   return (
     <div className="hover:bg-muted/40 flex items-center gap-3 px-3 py-2.5 transition-colors">
@@ -59,21 +62,21 @@ function CustomerRow({ row, scale }: { row: CustomerDetentionStat; scale: number
           {t(
             "{0} billed · {1} paid out · {2, plural, one {# stop} other {# stops}}",
             formatCurrency(row.billedAmount),
-            formatCurrency(row.driverPayAmount),
+            formatCurrency(row.driverPayAmount ?? 0),
             row.stopCount,
           )}
         </p>
       </div>
 
-      <DivergingBar value={row.netMargin} scale={scale} className="hidden sm:block" />
+      <DivergingBar value={netMargin} scale={scale} className="hidden sm:block" />
 
       <span
         className={cn(
           "w-24 shrink-0 text-right text-sm font-medium tabular-nums",
-          deltaToneClass(row.netMargin),
+          deltaToneClass(netMargin),
         )}
       >
-        {formatSignedCurrency(row.netMargin)}
+        {formatSignedCurrency(netMargin)}
       </span>
     </div>
   );
@@ -91,16 +94,17 @@ export function CustomerMargin({
   onRetry: () => void;
 }) {
   const t = useT();
+  const marginsVisible = useProtectedFieldAccess("Margins");
 
   const [sort, setSort] = useState<CustomerSort>("margin");
   const [expanded, setExpanded] = useState(false);
 
   const sorted = useMemo(() => sortCustomers(rows, sort), [rows, sort]);
   const scale = useMemo(
-    () => sorted.reduce((max, row) => Math.max(max, Math.abs(row.netMargin)), 0),
+    () => sorted.reduce((max, row) => Math.max(max, Math.abs(row.netMargin ?? 0)), 0),
     [sorted],
   );
-  const losingCount = useMemo(() => rows.filter((row) => row.netMargin < 0).length, [rows]);
+  const losingCount = useMemo(() => rows.filter((row) => (row.netMargin ?? 0) < 0).length, [rows]);
 
   const visible = expanded ? sorted : sorted.slice(0, COLLAPSED_ROWS);
   const hidden = sorted.length - visible.length;
@@ -113,7 +117,7 @@ export function CustomerMargin({
         "Detention billed against detention paid. A negative margin means the customer's free-time concession is wider than the driver contract grants.",
       )}
       action={
-        rows.length > 1 ? (
+        marginsVisible && rows.length > 1 ? (
           <SegmentedControl
             items={SORT_OPTIONS}
             value={sort}
@@ -123,7 +127,7 @@ export function CustomerMargin({
         ) : null
       }
       footer={
-        sorted.length > 0 ? (
+        marginsVisible && sorted.length > 0 ? (
           <div className="flex items-center justify-between gap-3">
             <p className="text-2xs text-muted-foreground tabular-nums">
               {losingCount > 0
@@ -142,7 +146,9 @@ export function CustomerMargin({
         ) : null
       }
     >
-      {isError ? (
+      {!marginsVisible ? (
+        <WithheldPanel>{t("Detention margin by customer needs access to margins.")}</WithheldPanel>
+      ) : isError ? (
         <PanelError onRetry={onRetry} />
       ) : isLoading ? (
         <PanelRowsSkeleton rows={5} />

@@ -1888,9 +1888,11 @@ type CapacityMatch struct {
 	PickupAt        *int     `json:"pickupAt,omitempty"`
 	Revenue         string   `json:"revenue"`
 	DeadheadMiles   *float64 `json:"deadheadMiles,omitempty"`
-	Quote           *string  `json:"quote,omitempty"`
-	MarginPercent   *float64 `json:"marginPercent,omitempty"`
-	FitPercent      *float64 `json:"fitPercent,omitempty"`
+	// What the carrier would cost. Null to a reader without the margins field group, since beside the revenue it gives the margin.
+	Quote *string `json:"quote,omitempty"`
+	// Null to a reader without the margins field group.
+	MarginPercent *float64 `json:"marginPercent,omitempty"`
+	FitPercent    *float64 `json:"fitPercent,omitempty"`
 }
 
 // The ring drawn around a capacity avatar: hours of service left for a driver, acceptance for a carrier.
@@ -2455,22 +2457,23 @@ type CostCategoryUpdateInput struct {
 }
 
 type CostingControl struct {
-	ID                   string          `json:"id"`
-	BusinessUnitID       string          `json:"businessUnitId"`
-	OrganizationID       string          `json:"organizationId"`
-	FuelIndexID          *string         `json:"fuelIndexId,omitempty"`
-	FuelIndex            *FuelIndex      `json:"fuelIndex,omitempty"`
-	UseLiveFuelPrice     bool            `json:"useLiveFuelPrice"`
-	MilesPerGallon       string          `json:"milesPerGallon"`
-	IncludeDeadheadMiles bool            `json:"includeDeadheadMiles"`
-	GlActualsEnabled     bool            `json:"glActualsEnabled"`
-	GlRollingMonths      int             `json:"glRollingMonths"`
-	PlannedMonthlyMiles  *int            `json:"plannedMonthlyMiles,omitempty"`
-	TargetMarginPercent  *string         `json:"targetMarginPercent,omitempty"`
-	Version              int             `json:"version"`
-	CreatedAt            int             `json:"createdAt"`
-	UpdatedAt            int             `json:"updatedAt"`
-	Categories           []*CostCategory `json:"categories"`
+	ID                   string     `json:"id"`
+	BusinessUnitID       string     `json:"businessUnitId"`
+	OrganizationID       string     `json:"organizationId"`
+	FuelIndexID          *string    `json:"fuelIndexId,omitempty"`
+	FuelIndex            *FuelIndex `json:"fuelIndex,omitempty"`
+	UseLiveFuelPrice     bool       `json:"useLiveFuelPrice"`
+	MilesPerGallon       string     `json:"milesPerGallon"`
+	IncludeDeadheadMiles bool       `json:"includeDeadheadMiles"`
+	GlActualsEnabled     bool       `json:"glActualsEnabled"`
+	GlRollingMonths      int        `json:"glRollingMonths"`
+	PlannedMonthlyMiles  *int       `json:"plannedMonthlyMiles,omitempty"`
+	// The margin the organization aims for. Null to a reader without the margins field group.
+	TargetMarginPercent *string         `json:"targetMarginPercent,omitempty"`
+	Version             int             `json:"version"`
+	CreatedAt           int             `json:"createdAt"`
+	UpdatedAt           int             `json:"updatedAt"`
+	Categories          []*CostCategory `json:"categories"`
 }
 
 type CostingControlInput struct {
@@ -2716,16 +2719,18 @@ type CustomerConnection struct {
 }
 
 type CustomerDetentionStat struct {
-	CustomerID      string `json:"customerId"`
-	CustomerName    string `json:"customerName"`
-	StopCount       int    `json:"stopCount"`
-	BreachCount     int    `json:"breachCount"`
-	BilledAmount    string `json:"billedAmount"`
-	DriverPayAmount string `json:"driverPayAmount"`
-	NetMargin       string `json:"netMargin"`
-	WaivedAmount    string `json:"waivedAmount"`
-	DisputeCount    int    `json:"disputeCount"`
-	SuppressedCount int    `json:"suppressedCount"`
+	CustomerID   string `json:"customerId"`
+	CustomerName string `json:"customerName"`
+	StopCount    int    `json:"stopCount"`
+	BreachCount  int    `json:"breachCount"`
+	BilledAmount string `json:"billedAmount"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin       *string `json:"netMargin,omitempty"`
+	WaivedAmount    string  `json:"waivedAmount"`
+	DisputeCount    int     `json:"disputeCount"`
+	SuppressedCount int     `json:"suppressedCount"`
 }
 
 type CustomerEdge struct {
@@ -3052,9 +3057,11 @@ type DetentionBacktestBucket struct {
 	ProposedAmount string `json:"proposedAmount"`
 	BaselineAmount string `json:"baselineAmount"`
 	// proposedAmount minus baselineAmount.
-	Delta           string `json:"delta"`
-	DriverPayAmount string `json:"driverPayAmount"`
-	NetMargin       string `json:"netMargin"`
+	Delta string `json:"delta"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin *string `json:"netMargin,omitempty"`
 }
 
 type DetentionBacktestInput struct {
@@ -3067,17 +3074,20 @@ type DetentionBacktestInput struct {
 }
 
 type DetentionBacktestResult struct {
-	StopsEvaluated      int                        `json:"stopsEvaluated"`
-	StopsMatched        int                        `json:"stopsMatched"`
-	StopsBillable       int                        `json:"stopsBillable"`
-	StopsForfeited      int                        `json:"stopsForfeited"`
-	StopsSuppressed     int                        `json:"stopsSuppressed"`
-	ProposedRevenue     string                     `json:"proposedRevenue"`
-	BaselineRevenue     string                     `json:"baselineRevenue"`
-	RevenueDelta        string                     `json:"revenueDelta"`
-	ProposedDriverPay   string                     `json:"proposedDriverPay"`
-	ProposedNetMargin   string                     `json:"proposedNetMargin"`
-	NegativeMarginStops int                        `json:"negativeMarginStops"`
+	StopsEvaluated  int    `json:"stopsEvaluated"`
+	StopsMatched    int    `json:"stopsMatched"`
+	StopsBillable   int    `json:"stopsBillable"`
+	StopsForfeited  int    `json:"stopsForfeited"`
+	StopsSuppressed int    `json:"stopsSuppressed"`
+	ProposedRevenue string `json:"proposedRevenue"`
+	BaselineRevenue string `json:"baselineRevenue"`
+	RevenueDelta    string `json:"revenueDelta"`
+	// Null to a reader without the margins field group.
+	ProposedDriverPay *string `json:"proposedDriverPay,omitempty"`
+	// Null to a reader without the margins field group.
+	ProposedNetMargin *string `json:"proposedNetMargin,omitempty"`
+	// Null to a reader without the margins field group.
+	NegativeMarginStops *int                       `json:"negativeMarginStops,omitempty"`
 	ByCustomer          []*DetentionBacktestBucket `json:"byCustomer"`
 	ByFacility          []*DetentionBacktestBucket `json:"byFacility"`
 	From                int                        `json:"from"`
@@ -3177,34 +3187,36 @@ type DetentionOccurrence struct {
 	CustomerID     string `json:"customerId"`
 	LocationID     string `json:"locationId"`
 	// The stop's location, null to someone who may not read locations or when it has been removed.
-	Location           *location.Location           `json:"location,omitempty"`
-	DetentionPolicyID  *string                      `json:"detentionPolicyId,omitempty"`
-	PolicySnapshot     map[string]any               `json:"policySnapshot,omitempty"`
-	CalculationTrace   map[string]any               `json:"calculationTrace,omitempty"`
-	StopType           string                       `json:"stopType"`
-	ScheduleType       string                       `json:"scheduleType"`
-	AppointmentStart   *int                         `json:"appointmentStart,omitempty"`
-	AppointmentEnd     *int                         `json:"appointmentEnd,omitempty"`
-	ArrivedAt          *int                         `json:"arrivedAt,omitempty"`
-	DepartedAt         *int                         `json:"departedAt,omitempty"`
-	ClockStartAt       int                          `json:"clockStartAt"`
-	ClockStopAt        *int                         `json:"clockStopAt,omitempty"`
-	FreeTimeExpiresAt  int                          `json:"freeTimeExpiresAt"`
-	NoticeDueAt        *int                         `json:"noticeDueAt,omitempty"`
-	NoticeDeadlineAt   *int                         `json:"noticeDeadlineAt,omitempty"`
-	IsOpen             bool                         `json:"isOpen"`
-	ArrivedLate        bool                         `json:"arrivedLate"`
-	LateByMinutes      int                          `json:"lateByMinutes"`
-	FreeMinutesGranted int                          `json:"freeMinutesGranted"`
-	RawDwellMinutes    int                          `json:"rawDwellMinutes"`
-	BillableMinutes    int                          `json:"billableMinutes"`
-	RoundedMinutes     int                          `json:"roundedMinutes"`
-	BillableUnits      string                       `json:"billableUnits"`
-	GrossAmount        string                       `json:"grossAmount"`
-	BillableAmount     string                       `json:"billableAmount"`
-	DriverPayMinutes   int                          `json:"driverPayMinutes"`
-	DriverPayAmount    string                       `json:"driverPayAmount"`
-	NetMargin          string                       `json:"netMargin"`
+	Location           *location.Location `json:"location,omitempty"`
+	DetentionPolicyID  *string            `json:"detentionPolicyId,omitempty"`
+	PolicySnapshot     map[string]any     `json:"policySnapshot,omitempty"`
+	CalculationTrace   map[string]any     `json:"calculationTrace,omitempty"`
+	StopType           string             `json:"stopType"`
+	ScheduleType       string             `json:"scheduleType"`
+	AppointmentStart   *int               `json:"appointmentStart,omitempty"`
+	AppointmentEnd     *int               `json:"appointmentEnd,omitempty"`
+	ArrivedAt          *int               `json:"arrivedAt,omitempty"`
+	DepartedAt         *int               `json:"departedAt,omitempty"`
+	ClockStartAt       int                `json:"clockStartAt"`
+	ClockStopAt        *int               `json:"clockStopAt,omitempty"`
+	FreeTimeExpiresAt  int                `json:"freeTimeExpiresAt"`
+	NoticeDueAt        *int               `json:"noticeDueAt,omitempty"`
+	NoticeDeadlineAt   *int               `json:"noticeDeadlineAt,omitempty"`
+	IsOpen             bool               `json:"isOpen"`
+	ArrivedLate        bool               `json:"arrivedLate"`
+	LateByMinutes      int                `json:"lateByMinutes"`
+	FreeMinutesGranted int                `json:"freeMinutesGranted"`
+	RawDwellMinutes    int                `json:"rawDwellMinutes"`
+	BillableMinutes    int                `json:"billableMinutes"`
+	RoundedMinutes     int                `json:"roundedMinutes"`
+	BillableUnits      string             `json:"billableUnits"`
+	GrossAmount        string             `json:"grossAmount"`
+	BillableAmount     string             `json:"billableAmount"`
+	DriverPayMinutes   int                `json:"driverPayMinutes"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin          *string                      `json:"netMargin,omitempty"`
 	CapApplied         detention.CapKind            `json:"capApplied"`
 	ConvertedToLayover bool                         `json:"convertedToLayover"`
 	Currency           string                       `json:"currency"`
@@ -3375,15 +3387,17 @@ type DetentionPolicyTier struct {
 }
 
 type DetentionPreviewResult struct {
-	PolicySnapshot     map[string]any               `json:"policySnapshot"`
-	RawDwellMinutes    int                          `json:"rawDwellMinutes"`
-	FreeMinutesGranted int                          `json:"freeMinutesGranted"`
-	BillableMinutes    int                          `json:"billableMinutes"`
-	RoundedMinutes     int                          `json:"roundedMinutes"`
-	BillableAmount     string                       `json:"billableAmount"`
-	GrossAmount        string                       `json:"grossAmount"`
-	DriverPayAmount    string                       `json:"driverPayAmount"`
-	NetMargin          string                       `json:"netMargin"`
+	PolicySnapshot     map[string]any `json:"policySnapshot"`
+	RawDwellMinutes    int            `json:"rawDwellMinutes"`
+	FreeMinutesGranted int            `json:"freeMinutesGranted"`
+	BillableMinutes    int            `json:"billableMinutes"`
+	RoundedMinutes     int            `json:"roundedMinutes"`
+	BillableAmount     string         `json:"billableAmount"`
+	GrossAmount        string         `json:"grossAmount"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin          *string                      `json:"netMargin,omitempty"`
 	ArrivedLate        bool                         `json:"arrivedLate"`
 	CapApplied         detention.CapKind            `json:"capApplied"`
 	Status             detention.OccurrenceStatus   `json:"status"`
@@ -4601,11 +4615,13 @@ type FacilityDetentionStat struct {
 	MedianDwellMinutes float64 `json:"medianDwellMinutes"`
 	P90DwellMinutes    float64 `json:"p90DwellMinutes"`
 	BilledAmount       string  `json:"billedAmount"`
-	DriverPayAmount    string  `json:"driverPayAmount"`
-	NetMargin          string  `json:"netMargin"`
-	WaivedAmount       string  `json:"waivedAmount"`
-	DisputeCount       int     `json:"disputeCount"`
-	SuppressedCount    int     `json:"suppressedCount"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin       *string `json:"netMargin,omitempty"`
+	WaivedAmount    string  `json:"waivedAmount"`
+	DisputeCount    int     `json:"disputeCount"`
+	SuppressedCount int     `json:"suppressedCount"`
 }
 
 type FactoringAgreementInput struct {
@@ -4876,12 +4892,15 @@ type FleetCodeEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
+// What the fleet's loads cost over a window. The margin figures, and the revenue
+// that would let a reader work the margin out from the cost, are null to a reader
+// without the margins field group.
 type FleetCostSummary struct {
 	AvgCpm             string  `json:"avgCpm"`
 	AvgMarginPercent   *string `json:"avgMarginPercent,omitempty"`
 	ShipmentCount      int     `json:"shipmentCount"`
-	UnprofitableCount  int     `json:"unprofitableCount"`
-	TotalRevenue       string  `json:"totalRevenue"`
+	UnprofitableCount  *int    `json:"unprofitableCount,omitempty"`
+	TotalRevenue       *string `json:"totalRevenue,omitempty"`
 	TotalEstimatedCost string  `json:"totalEstimatedCost"`
 	TotalMiles         float64 `json:"totalMiles"`
 	EmptyMiles         float64 `json:"emptyMiles"`
@@ -7614,9 +7633,10 @@ type ResolvedCategoryRate struct {
 }
 
 type ResolvedCostProfile struct {
-	TotalCpm             string                  `json:"totalCpm"`
-	VariableCpm          string                  `json:"variableCpm"`
-	FixedCpm             string                  `json:"fixedCpm"`
+	TotalCpm    string `json:"totalCpm"`
+	VariableCpm string `json:"variableCpm"`
+	FixedCpm    string `json:"fixedCpm"`
+	// Null to a reader without the margins field group.
 	TargetMarginPercent  *string                 `json:"targetMarginPercent,omitempty"`
 	IncludeDeadheadMiles bool                    `json:"includeDeadheadMiles"`
 	AsOfDate             string                  `json:"asOfDate"`
@@ -8167,11 +8187,12 @@ type Shipment struct {
 	EnteredByID      *string               `json:"enteredById,omitempty"`
 	CanceledByID     *string               `json:"canceledById,omitempty"`
 	// The tariff that rates the shipment. Null when it is rated by hand.
-	FormulaTemplateID     *string                        `json:"formulaTemplateId,omitempty"`
-	ConsolidationGroupID  *string                        `json:"consolidationGroupId,omitempty"`
-	OrderID               *string                        `json:"orderId,omitempty"`
-	OrderNumber           *string                        `json:"orderNumber,omitempty"`
-	OrderStatus           *order.Status                  `json:"orderStatus,omitempty"`
+	FormulaTemplateID    *string       `json:"formulaTemplateId,omitempty"`
+	ConsolidationGroupID *string       `json:"consolidationGroupId,omitempty"`
+	OrderID              *string       `json:"orderId,omitempty"`
+	OrderNumber          *string       `json:"orderNumber,omitempty"`
+	OrderStatus          *order.Status `json:"orderStatus,omitempty"`
+	// The shipment's estimated cost and margin. Null to a reader without the margins field group.
 	ProfitabilityEstimate *ShipmentProfitabilityEstimate `json:"profitabilityEstimate,omitempty"`
 	Status                ShipmentStatus                 `json:"status"`
 	TenderStatus          *ShipmentTenderStatus          `json:"tenderStatus,omitempty"`
@@ -9603,11 +9624,12 @@ type ShipmentProfitability struct {
 type ShipmentProfitabilityAnalytics struct {
 	AvgCpm float64 `json:"avgCpm"`
 	// Null when the reader does not hold the margins field group.
-	AvgMarginPct      *float64 `json:"avgMarginPct,omitempty"`
-	HasMargin         bool     `json:"hasMargin"`
-	UnprofitableCount int      `json:"unprofitableCount"`
-	ShipmentCount     int      `json:"shipmentCount"`
-	TotalMiles        float64  `json:"totalMiles"`
+	AvgMarginPct *float64 `json:"avgMarginPct,omitempty"`
+	HasMargin    bool     `json:"hasMargin"`
+	// How many loads lost money. Null when the reader does not hold the margins field group.
+	UnprofitableCount *int    `json:"unprofitableCount,omitempty"`
+	ShipmentCount     int     `json:"shipmentCount"`
+	TotalMiles        float64 `json:"totalMiles"`
 }
 
 type ShipmentProfitabilityEstimate struct {

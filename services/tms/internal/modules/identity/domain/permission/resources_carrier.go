@@ -210,6 +210,10 @@ func (r *Registry) registerCarrierResources() {
 		},
 		ParentResource:     ResourceCarrier.String(),
 		DefaultSensitivity: SensitivityInternal,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"counterMargin":        SensitivityConfidential,
+			"counterMarginPercent": SensitivityConfidential,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

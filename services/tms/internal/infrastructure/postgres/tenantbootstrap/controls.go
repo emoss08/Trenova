@@ -80,7 +80,7 @@ func CreateControls(ctx context.Context, db bun.IDB, scope Scope) error {
 		BusinessUnitID:                  scope.BusinessUnitID,
 		EnableEtaAlerts:                 true,
 		TenderCounterOffersEnabled:      tenderPolicy.CountersEnabled,
-		TenderCounterMarginFloorPercent: tenderPolicy.CounterMarginFloor,
+		TenderCounterMarginFloorPercent: decimal.NewNullDecimal(tenderPolicy.CounterMarginFloor),
 		TenderMaxEscalations:            tenderPolicy.MaxEscalations,
 		CreatedAt:                       now,
 		UpdatedAt:                       now,
