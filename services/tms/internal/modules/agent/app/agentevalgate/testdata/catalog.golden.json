@@ -34343,10 +34343,6 @@
             "description": "The rate matrix's id, from the page you are on.",
             "type": "string",
             "x-recordOf": "rate_matrix"
-          },
-          "versionNumber": {
-            "description": "A published version to read, as tariffs pinned it. Leave it out to read the draft being edited; publishedVersionNumber names the newest version.",
-            "type": "integer"
           }
         },
         "required": [
