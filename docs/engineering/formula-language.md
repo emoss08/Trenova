@@ -591,17 +591,8 @@ best "Linehaul" {
   written first. The chosen option's lines and notes join the bill where the `best` is written;
   the others are dropped. Total clauses still apply to the whole bill afterwards.
 - **As a value.** Written as the whole value of a `let`, `var` or assignment, a choice bills
-  exactly as the statement does and also gives the kept option's subtotal, as `Money`:
-
-  ```tariff
-  let linehaul = best "Linehaul" {
-    option "Per mile" { charge "Linehaul" (quantity: shipment.distance, rate: rate) }
-    option "Flat" { charge "Flat rate" = flatRate }
-  }
-  charge "Fuel surcharge" as FSC = linehaul * fuelPercent
-  ```
-
-  That is the only place a choice gives a value: it bills lines, so it stands where a statement
+  exactly as the statement does and also gives the kept option's subtotal, as `Money` (the
+  example below). That is the only place a choice gives a value: it bills lines, so it stands where a statement
   does, and the binding names what it billed. Anywhere else inside an expression (`linehaul * 2`
   around it, a charge's amount, a condition, a lambda) is an error (`misplaced`): bind it first.
   When every option refuses, the rating refuses, so the binding is never reached without a
@@ -624,6 +615,16 @@ best "Linehaul" {
   is no option of that choice is an error (`unknown-option`), with the nearest option's label as
   a fix.
 
+The value form, pricing fuel on whichever linehaul was kept:
+
+```tariff
+let linehaul = best "Linehaul" {
+  option "Per mile" { charge "Linehaul" (quantity: shipment.distance, rate: rate) }
+  option "Flat" { charge "Flat rate" = flatRate }
+}
+charge "Fuel surcharge" as FSC = linehaul * fuelPercent
+```
+
 ### Reading the bill so far
 
 A charge often depends on what was billed before it: fuel on the linehaul a `best` kept, a
@@ -634,9 +635,9 @@ best "Linehaul" {
   option "Per mile" { charge "Linehaul" (quantity: shipment.distance, rate: rate) }
   option "Flat" { charge "Flat rate" = flatRate }
 }
-charge "Fuel surcharge" as FUEL = bill.freight * 32%
-if bill.charge(DET) != none {
-  note "Detention billed: {bill.charge(DET) ?? $0}"
+charge "Fuel surcharge" as FSC = bill.freight * 32%
+if bill.charge("Flat rate") != none {
+  note "Billed at the flat rate, with {bill.charge(FSC) ?? $0} of fuel"
 }
 ```
 
@@ -660,7 +661,7 @@ if bill.charge(DET) != none {
   A test reads the finished bill instead, through `total`, `lines`, `charge(…)` and `reviews`.
   Nothing in a tariff may be named `bill`.
 - **Order warnings.** `bill.charge("Label")` or `bill.charge(CODE)` naming a label or code the
-  tariff bills only later in source order is a warning (`bill-order`: "`FUEL` is billed after
+  tariff bills only later in source order is a warning (`bill-order`: "`FSC` is billed after
   this line, so this reads `none`"), with the line that bills it as a related place. A charge in
   a `for` loop around the read may bill before it, on an earlier iteration, and a charge in an
   option of a choice that is over before the read may have joined the bill, so neither is
@@ -797,6 +798,9 @@ now carries instead of assuming miles.
 - The schema enums (`ShipmentStatus`, `StopKind`, `StopStatus`, `FreightClass`, `RatingMode`)
   are enums of the language; `FreightClass` variants are `Class50` through `Class500`.
 - Volume also has the liquid units `gal` and `l`, for fuel prices.
+- `bill` is not part of the record: a tariff's own code reads it as the bill it is building
+  (`bill.freight`, `bill.accessorials`, `bill.total`, `bill.charge(…)`; see "Reading the bill
+  so far"), and `tariff.catalog` lists it after `tables` with its fields and docs.
 
 ### Rate tables
 

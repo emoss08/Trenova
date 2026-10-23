@@ -424,6 +424,7 @@ The message is shown on the shipment, in the Studio and to Nova.
 | `fuel` | `price: Money/gal?`, `priceDate?`, `index?` |
 | `rating` | `date`, `mode` (`Sell` or `Buy`), `sellTotal?`, `currency` |
 | `tables` | your organisation's active rate matrices, by code |
+| `bill` | in a tariff's own code, the bill so far: `freight`, `accessorials`, `total`, `charge(…)` |
 
 Hover any field in the Studio for its type and unit; the **Reference** tab lists them all.
 
