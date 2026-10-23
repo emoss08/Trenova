@@ -7,10 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriersettlementexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/commodityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ediexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentmanufacturerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
@@ -44,10 +46,12 @@ import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	carrierintelligenceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
 	carrierresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
+	carriersettlementresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriersettlementresolver"
 	commodityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/commodityresolver"
 	customerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/customerresolver"
 	dispatchconsoleresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
 	documenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/documenttyperesolver"
+	ediresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/ediresolver"
 	equipmentmanufacturerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentmanufacturerresolver"
 	equipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmenttyperesolver"
 	fleetcoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
@@ -75,6 +79,8 @@ import (
 	config "github.com/emoss08/trenova/internal/infrastructure/config"
 	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
+	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
@@ -97,6 +103,8 @@ import (
 	holdreasonservice "github.com/emoss08/trenova/internal/modules/reference/app/holdreasonservice"
 	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
+	carriersettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	telematicsservice "github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
@@ -128,8 +136,12 @@ type ResolverParams struct {
 	AccountingSyncService        accountingsyncports.AccountingSyncService
 	AssignmentService            shipmentports.AssignmentService
 	CarrierAssignmentService     *carrierassignmentservice.Service
+	CarrierCostEventRepo         carriersettlementports.CarrierCostEventRepository
 	CarrierIntelService          *carrierintelservice.Service
 	CarrierService               *carrierservice.Service
+	CarrierSettlementBatchRepo   carriersettlementports.CarrierSettlementBatchRepository
+	CarrierSettlementRepo        carriersettlementports.CarrierSettlementRepository
+	CarrierSettlementService     *carriersettlementservice.Service
 	CommodityService             *commodityservice.Service
 	Config                       *config.Config `optional:"true"`
 	CustomerService              *customerservice.Service
@@ -137,6 +149,8 @@ type ResolverParams struct {
 	DispatchConsoleService       agentports.DispatchConsoleService
 	DocumentTypeService          *documenttypeservice.Service
 	DriverPortalService          *driverportalservice.Service
+	EDIInboundService            *ediinboundservice.Service
+	EDIService                   *ediservice.Service
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
 	FleetCodeService             *fleetcodeservice.Service
@@ -172,10 +186,12 @@ var shards = []*gqlexec.Shard{
 	accountingsyncexec.Shard,
 	carrierexec.Shard,
 	carrierintelligenceexec.Shard,
+	carriersettlementexec.Shard,
 	commodityexec.Shard,
 	customerexec.Shard,
 	dispatchconsoleexec.Shard,
 	documenttypeexec.Shard,
+	ediexec.Shard,
 	equipmentmanufacturerexec.Shard,
 	equipmenttypeexec.Shard,
 	fleetcodeexec.Shard,
@@ -297,6 +313,56 @@ var operations = []Operation{
 		Name:     "DocumentTypeTable",
 		Hash:     "sha256:407941510e99bf8b3133b28178542bd908f312b90789fa0c2de2b976f57aa482",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DocumentTypeTableRowFields on DocumentType { businessUnitId code color createdAt description documentCategory documentClassification id isSystem name organizationId updatedAt version } query DocumentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { documentTypes(input: $input) { edges { node { ...DocumentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskEdiAckHealth",
+		Hash:     "sha256:a7e88cdb8e4e743726ee86472b606459e634fe74bb3029dab9913fe2c2381f3b",
+		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiAckHealth($overdueAfterSeconds: Int, $partnerId: ID, $sinceHours: Int, $transactionSet: String) { ediAckHealth( partnerId: $partnerId transactionSet: $transactionSet overdueAfterSeconds: $overdueAfterSeconds sinceHours: $sinceHours ) { ackStatusCounts { count status } answersEverySet asOf overdueAfterSeconds overdueByPartner { messages { deliverySentAt deliveryStatus generatedAt id invoiceId shipmentId transactionControlNumber transactionSet } oldestGeneratedAt overdueCount partnerCode partnerId partnerName } overdueCount overdueNotListed partners { ackStatusCounts { count status } partnerCode partnerId partnerName } recentDeadLettered { ...DeskEdiMessageRowFields } since } }",
+	},
+	{
+		Name:     "DeskEdiInboundFile",
+		Hash:     "sha256:6e2a63b4048a0ccdbe441f3eab16eeca50e48a5e49298eb0e63569969683b9ee",
+		Document: "query DeskEdiInboundFile($id: ID!, $includeRaw: Boolean = false) { ediInboundFile(id: $id) { communicationProfileName file { ediPartnerId failureReason fileName id interchangeControlNumber isaReceiverId isaSenderId method partner { code id name } processedAt rawPurgedAt receivedAt sizeBytes status transactionCount } messageCount messages { ackLastError ackStatus direction generatedAt groupControlNumber id invoiceId segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } raw @include(if: $includeRaw) { sizeBytes text truncated } } }",
+	},
+	{
+		Name:     "DeskEdiMessage",
+		Hash:     "sha256:d426f43a247a5f45d31ade5564aba5bb948bcfd68bf25637f1e45389cda1e680",
+		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiMessage($id: ID!, $includeRaw: Boolean = false) { ediMessage(id: $id) { decoded diagnosticCount diagnostics { code elementPosition message path segmentId severity suggestedFix } message { ackMessageId ackReceivedAt deliveryLastAttemptAt deliveryRemotePath ...DeskEdiMessageRowFields } raw @include(if: $includeRaw) { sizeBytes text truncated } } }",
+	},
+	{
+		Name:     "DeskEdiPartnerCard",
+		Hash:     "sha256:df78682c8a19f34ee150dffef975f96c446ae4d960a3d2715ad0d240ac303230",
+		Document: "fragment DeskEdiPartnerMessageFields on EdiMessage { ackLastError ackReceivedAt ackStatus deliveryAttempts deliveryLastAttemptAt deliveryLastError deliverySentAt deliveryStatus direction generatedAt id interchangeControlNumber status transactionSet } query DeskEdiPartnerCard($id: ID!) { ediPartnerCard(id: $id) { activity { ackStatusCounts { count status } scorecard { avgAckSeconds deadLetteredCount deliverySuccessRate failedCount outboundTotal overdueAckCount p95AckSeconds receivedCount sentCount } series { bucketSeconds bucketStart failedCount outboundCount receivedCount sentCount } seriesSince sets { count deadLetteredCount direction failedCount lastAt transactionSet } since } attention { deadLettered { ...DeskEdiPartnerMessageFields } oldestOverdueAt overdueAckAgeSeconds overdueAckCount overdueAcks { ...DeskEdiPartnerMessageFields } quarantinedFiles { failureReason fileName id receivedAt remotePath sizeBytes } } carriers { carrierCode carrierId carrierName isDefault scac } customer { code id name } documentProfiles { acknowledgment { expected slaInMinutes type } direction envelope { applicationReceiverCode applicationSenderCode componentSeparator elementSeparator interchangeReceiverId interchangeReceiverQualifier interchangeSenderId interchangeSenderQualifier interchangeUsageIndicator repetitionSeparator segmentTerminator } functionalGroupId id name status transactionSet } mappings { counts { count entityType } profileId updatedAt } partner { code connection { acceptedAt capabilities { invoice loadTenderInbound loadTenderOutbound shipmentStatus } id method rejectedAt rejectionReason requestedAt revokedAt status suspendedAt } contactEmail contactName contactPhone country customerId description enabledForInbound enabledForOutbound id internalOrganization { id name } internalOrganizationId kind name status timezone updatedAt } readiness { completedCount items { complete key label } ready totalCount } transports { certificates { expired issuer notAfter notBefore readable role subject } credentials { key onFile required secret } lastPollAttemptAt lastPollError lastPollSuccessAt profile { config id method name status } } } }",
+	},
+	{
+		Name:     "DeskEdiTransfer",
+		Hash:     "sha256:2c4ee84cf1acf4ab1b28f3ed65dbd85da8e7f16188a02cf8fe5644158c606e5d",
+		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfer($id: ID!) { ediTransfer(id: $id) { canAccept transfer { canDecide charges { additional { amount charge method } freight other total } commodities { commodity pieces weight } pieces shipmentTypeLabel stops { address city location pieces postalCode sequence state type weight windowCloses windowOpens } temperatureMax temperatureMin weight ...DeskEdiTransferRowFields } unresolvedMappings { entityType source } } }",
+	},
+	{
+		Name:     "DeskEdiCarrierInvoices",
+		Hash:     "sha256:62983ca1db106053475f19bb620857b5a6f24ba26aad1fb8f2b6075505d4b7c0",
+		Document: "query DeskEdiCarrierInvoices($limit: Int, $offset: Int, $reconciliationStatus: String) { ediCarrierInvoices( reconciliationStatus: $reconciliationStatus limit: $limit offset: $offset ) { items { carrierId currencyCode id invoiceDate invoiceNumber proNumber reconciliationStatus shipmentId shipmentReference suggestedCarrier { id name } totalAmount varianceAmount } } }",
+	},
+	{
+		Name:     "DeskEdiInboundFiles",
+		Hash:     "sha256:721a71b768d0469b9eecfefe10f1e2914ee52e7f9301be0cadcbc8525f05e2c4",
+		Document: "query DeskEdiInboundFiles($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediInboundFiles(input: $input) { edges { node { ediPartnerId failureReason fileName id interchangeControlNumber isaSenderId method partner { code id name } processedAt rawPurgedAt receivedAt sizeBytes status transactionCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskEdiMessages",
+		Hash:     "sha256:d4d7cbee09690ad4b32c7a10a285c7deb069fee7af1e1493ceddf914bb6ef889",
+		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiMessages($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediMessages(input: $input) { edges { node { ...DeskEdiMessageRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskEdiPartners",
+		Hash:     "sha256:c4722993f5fe5eb4a35a6d6af80cbe77173091f1543acf5485df475c1f78fdc1",
+		Document: "query DeskEdiPartners($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediPartners(input: $input) { edges { node { code customerId enabledForInbound enabledForOutbound id internalOrganization { id name } kind name status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskEdiTransfers",
+		Hash:     "sha256:7784367bfe8ea4ffffe44dfadf38a01d672f10f4ab6eb8c7fec39141a2805c84",
+		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfers($direction: EdiTransferDirection!, $inboundFileId: ID, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediTransfers( input: $input direction: $direction inboundFileId: $inboundFileId ) { edges { node { ...DeskEdiTransferRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskTractorCard",
@@ -493,6 +559,13 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                core,
 		CarrierIntelService: p.CarrierIntelService,
 	}
+	carriersettlementDeps := &carriersettlementresolver.Deps{
+		Core:                       core,
+		CarrierSettlementService:   p.CarrierSettlementService,
+		CarrierSettlementRepo:      p.CarrierSettlementRepo,
+		CarrierSettlementBatchRepo: p.CarrierSettlementBatchRepo,
+		CarrierCostEventRepo:       p.CarrierCostEventRepo,
+	}
 	commodityDeps := &commodityresolver.Deps{
 		Core:             core,
 		CommodityService: p.CommodityService,
@@ -511,6 +584,11 @@ func NewSchema(p ResolverParams) Schema {
 	documenttypeDeps := &documenttyperesolver.Deps{
 		Core:                core,
 		DocumentTypeService: p.DocumentTypeService,
+	}
+	ediDeps := &ediresolver.Deps{
+		Core:              core,
+		EdiService:        p.EDIService,
+		EdiInboundService: p.EDIInboundService,
 	}
 	equipmentmanufacturerDeps := &equipmentmanufacturerresolver.Deps{
 		Core:                         core,
@@ -618,6 +696,7 @@ func NewSchema(p ResolverParams) Schema {
 	mutation := &mutationResolver{
 		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
 		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
+		carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
 		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
@@ -642,10 +721,12 @@ func NewSchema(p ResolverParams) Schema {
 		accountingsyncQuery:        &accountingsyncQuery{Deps: accountingsyncDeps},
 		carrierQuery:               &carrierQuery{Deps: carrierDeps},
 		carrierintelligenceQuery:   &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
+		carriersettlementQuery:     &carriersettlementQuery{Deps: carriersettlementDeps},
 		commodityQuery:             &commodityQuery{Deps: commodityDeps},
 		customerQuery:              &customerQuery{Deps: customerDeps},
 		dispatchconsoleQuery:       &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
 		documenttypeQuery:          &documenttypeQuery{Deps: documenttypeDeps},
+		ediQuery:                   &ediQuery{Deps: ediDeps},
 		equipmentmanufacturerQuery: &equipmentmanufacturerQuery{Deps: equipmentmanufacturerDeps},
 		equipmenttypeQuery:         &equipmenttypeQuery{Deps: equipmenttypeDeps},
 		fleetcodeQuery:             &fleetcodeQuery{Deps: fleetcodeDeps},
@@ -735,26 +816,33 @@ func NewSchema(p ResolverParams) Schema {
 		"CarrierMonitoringEnrollment": func() any {
 			return &carrierintelligenceresolver.CarrierMonitoringEnrollmentResolver{Deps: carrierintelligenceDeps}
 		},
+		"CarrierSettlement": func() any { return &carriersettlementresolver.CarrierSettlementResolver{Deps: carriersettlementDeps} },
 		"CarrierSourcingResult": func() any {
 			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
 		},
-		"Commodity":           func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":            func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
-		"DOTRandomDraw":       func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomDrawEntry":  func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomPool":       func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
-		"DQFFile":             func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
-		"DQFItem":             func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
-		"DisciplinaryLadder":  func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
-		"DrugAlcoholStanding": func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
-		"FleetSafetyRank":     func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
-		"FleetSafetyTerminal": func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
-		"LeaveControl":        func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
-		"LeaveEntitlement":    func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
-		"LocationCategory":    func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"OSHAAnnualSummary":   func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
-		"PTOChartDataPoint":   func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
-		"PerformanceReview":   func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
+		"Commodity":                 func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":                  func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"DOTRandomDraw":             func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomDrawEntry":        func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomPool":             func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
+		"DQFFile":                   func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
+		"DQFItem":                   func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
+		"DisciplinaryLadder":        func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
+		"DrugAlcoholStanding":       func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
+		"EdiAcknowledgmentConfig":   func() any { return &ediresolver.EdiAcknowledgmentConfigResolver{Deps: ediDeps} },
+		"EdiCarrierInvoice":         func() any { return &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps} },
+		"EdiMessage":                func() any { return &ediresolver.EdiMessageResolver{Deps: ediDeps} },
+		"EdiPartnerDocumentProfile": func() any { return &ediresolver.EdiPartnerDocumentProfileResolver{Deps: ediDeps} },
+		"EdiTemplate":               func() any { return &ediresolver.EdiTemplateResolver{Deps: ediDeps} },
+		"EdiTransfer":               func() any { return &ediresolver.EdiTransferResolver{Deps: ediDeps} },
+		"FleetSafetyRank":           func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
+		"FleetSafetyTerminal":       func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
+		"LeaveControl":              func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
+		"LeaveEntitlement":          func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
+		"LocationCategory":          func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"OSHAAnnualSummary":         func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
+		"PTOChartDataPoint":         func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
+		"PerformanceReview":         func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
 		"PerformanceReviewTemplate": func() any {
 			return &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
 		},
@@ -804,6 +892,7 @@ type customerBillingProfileResolver struct {
 type mutationResolver struct {
 	*accountingsyncMutation
 	*carrierintelligenceMutation
+	*carriersettlementMutation
 	*dispatchconsoleMutation
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
@@ -829,10 +918,12 @@ type queryResolver struct {
 	*accountingsyncQuery
 	*carrierQuery
 	*carrierintelligenceQuery
+	*carriersettlementQuery
 	*commodityQuery
 	*customerQuery
 	*dispatchconsoleQuery
 	*documenttypeQuery
+	*ediQuery
 	*equipmentmanufacturerQuery
 	*equipmenttypeQuery
 	*fleetcodeQuery
@@ -863,6 +954,7 @@ type (
 	customerCustomerBillingProfile = customerresolver.CustomerBillingProfileResolver
 	accountingsyncMutation         = accountingsyncresolver.MutationResolver
 	carrierintelligenceMutation    = carrierintelligenceresolver.MutationResolver
+	carriersettlementMutation      = carriersettlementresolver.MutationResolver
 	dispatchconsoleMutation        = dispatchconsoleresolver.MutationResolver
 	equipmentmanufacturerMutation  = equipmentmanufacturerresolver.MutationResolver
 	equipmenttypeMutation          = equipmenttyperesolver.MutationResolver
@@ -885,10 +977,12 @@ type (
 	accountingsyncQuery            = accountingsyncresolver.QueryResolver
 	carrierQuery                   = carrierresolver.QueryResolver
 	carrierintelligenceQuery       = carrierintelligenceresolver.QueryResolver
+	carriersettlementQuery         = carriersettlementresolver.QueryResolver
 	commodityQuery                 = commodityresolver.QueryResolver
 	customerQuery                  = customerresolver.QueryResolver
 	dispatchconsoleQuery           = dispatchconsoleresolver.QueryResolver
 	documenttypeQuery              = documenttyperesolver.QueryResolver
+	ediQuery                       = ediresolver.QueryResolver
 	equipmentmanufacturerQuery     = equipmentmanufacturerresolver.QueryResolver
 	equipmenttypeQuery             = equipmenttyperesolver.QueryResolver
 	fleetcodeQuery                 = fleetcoderesolver.QueryResolver

@@ -177,8 +177,8 @@ func TestEDIPartnerCardToModel_ReadsTheLinksAndFigures(t *testing.T) {
 		CompletedCount: 1,
 		TotalCount:     2,
 		Items: []*gqlmodel.EDIPartnerReadinessItem{
-			{Key: "details", Complete: true},
-			{Key: "test-case", Complete: false},
+			{Key: "details", Label: "Partner details", Complete: true},
+			{Key: "test-case", Label: "At least one passing test case", Complete: false},
 		},
 	}, model.Readiness)
 }

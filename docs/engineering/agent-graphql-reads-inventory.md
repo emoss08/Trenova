@@ -71,18 +71,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `edi_get_ack_health` | partial | ediPartnerScorecards (+ ediSummary, ediPartnerCard) | EdiPartnerScorecards (+ EdiSummary) | unpaged | sinceHours only | Tool calls EdiService.GetEDIAckHealth, a separate computation. Scorecards/summary carry per-partner and org overdue-ack counts and DeskEdiPartnerCard lists overdue acks per partner, but there is no overdueAfterSeconds, transactionSet or partner filter. |
-| `edi_get_inbound_file` | partial | ediInboundFiles | EdiInboundFileTable | cursor | DataTable + typed status, partnerId | No single ediInboundFile(id) Query; only via list with fieldFilter id. includeRaw (raw payload) and includeMessages not exposed. |
-| `edi_get_message` | partial | ediMessages | DeskEdiPartnerMessages (alt EdiMessageTable) | cursor | DataTable + typed transactionSet, direction, partnerId | No single ediMessage(id) Query; only via list with fieldFilter id. includeRaw not exposed. |
-| `edi_get_partner` | op | ediPartnerCard (+ ediPartnerReadiness) | DeskEdiPartnerCard (+ EdiPartnerReadiness) | n/a | id | Tool GetPartner + GetPartnerReadiness; resolver GetPartnerCard is a superset; readiness is its own op. |
-| `edi_get_transfer` | partial | ediTransfers | EdiTransferTable | cursor | DataTable + required direction | No single ediTransfer(id) Query; MappingPreview (how the transfer maps) not exposed. |
-| `edi_list_carrier_invoices` | op | ediCarrierInvoices (+ suggestCarrierForEdiInvoice) | EdiCarrierInvoices (+ SuggestCarrierForEdiInvoice) | limit/offset | typed reconciliationStatus | Same ListUnmatchedEDIInvoices / SuggestCarrierForInvoice. |
-| `edi_list_inbound_files` | op | ediInboundFiles | EdiInboundFileTable | cursor | DataTable + typed status, partnerId | Same ListInboundFilesCursor. |
-| `edi_list_messages` | partial | ediMessages | DeskEdiPartnerMessages (alt EdiMessageTable) | cursor | DataTable + typed transactionSet, direction, partnerId | Same ListMessagesCursor, but resolver leaves typed ShipmentID, InvoiceID, AckStatus, CreatedAfter/Before unset. ackStatus/deliveryStatus/created window can go as fieldFilters; shipmentId/invoiceId (linked-record filters) cannot. |
-| `edi_list_partners` | op | ediPartners | EdiPartnerTable | cursor | DataTable fieldFilters only | Same ListPartnersCursor; customerId/status as fieldFilters (typed CustomerID not exposed). |
 | `edi_list_tender_changes` | none | - | - | - | - | EDI tender change review queue (ListTenderChanges) has no Query root. |
 | `edi_list_transfer_changes` | none | - | - | - | - | EDI transfer change review queue (ListTransferChanges) has no Query root. |
-| `edi_list_transfers` | op | ediTransfers | EdiTransferTable | cursor | DataTable + required direction | Same List{In,Out}boundTransfersCursor. Tool's direction is optional (GraphQL requires it: two calls for both); inboundFileId/status as fieldFilters (typed InboundFileID not exposed). |
 
 ## equipment
 
@@ -299,11 +289,11 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 85 |
-| op, converted (rows removed) | 34 |
+| op, not yet converted | 80 |
+| op, converted (rows removed) | 39 |
 | field-no-op | 6 |
-| partial, not yet converted | 22 |
-| partial, converted (rows removed) | 8 |
+| partial, not yet converted | 17 |
+| partial, converted (rows removed) | 13 |
 | none | 21 |
 | **total** | **176** |
 
@@ -317,7 +307,7 @@ for read.
 
 - **By the rule:** 49 tools.
 - **By a named operation** (the one this inventory picked): 46 tools.
-- **Not yet:** 22 tools, each with the generator's reason below. Most need `entity` named in
+- **Not yet:** 21 tools, each with the generator's reason below. Most need `entity` named in
   `reads.yml`, because their type binds to a generated model (`gqlmodel`) rather than to the
   record the resolver filters. A few have a shape no list or get tool reads (no arguments at all,
   a catalog, two root fields), and are decided in their module's PR.
@@ -326,7 +316,6 @@ for read.
 |---|---|---|
 | `detention_get_occurrence` | `DeskDetentionCard` | DetentionOccurrenceDetail binds to no Go type; name the entity in reads.yml |
 | `dispatch_get_board` | `DispatchBoard` | DispatchBoard binds to no Go type; name the entity in reads.yml |
-| `edi_get_partner` | `DeskEdiPartnerCard` | EdiPartnerCard binds to no Go type; name the entity in reads.yml |
 | `factoring_get_submission` | `FactoringSubmissionDetail` | factoring_get_submission is a get tool, but FactoringSubmissionDetail reads factoringSubmission, which is not one |
 | `home_get_layout` | `HomeLayout` | home_get_layout is a get tool, but HomeLayout reads homeLayout, which is not one |
 | `home_list_widgets` | `HomeWidgetCatalog` | home_list_widgets is a list tool, but HomeWidgetCatalog reads homeWidgetCatalog, which is not one |

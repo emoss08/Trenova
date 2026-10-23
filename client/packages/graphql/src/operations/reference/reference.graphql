@@ -158,6 +158,27 @@ fragment DriverSettlementReference on DriverSettlement {
   periodEnd
 }
 
+fragment EdiCarrierInvoiceReference on EdiCarrierInvoice {
+  id
+  invoiceNumber
+}
+
+fragment EdiCommunicationProfileReference on EdiCommunicationProfile {
+  id
+  status
+  name
+}
+
+fragment EdiInboundFileReference on EdiInboundFile {
+  id
+  status
+}
+
+fragment EdiMessageReference on EdiMessage {
+  id
+  status
+}
+
 fragment EdiPartnerReference on EdiPartner {
   id
   kind
@@ -172,6 +193,11 @@ fragment EdiPartnerCustomerReference on EdiPartnerCustomer {
   id
   name
   code
+}
+
+fragment EdiTransferReference on EdiTransfer {
+  id
+  status
 }
 
 fragment EmailProfileReference on EmailProfile {

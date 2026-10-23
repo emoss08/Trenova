@@ -107,6 +107,7 @@ query DeskEdiPartnerCard($id: ID!) {
       totalCount
       items {
         key
+        label
         complete
       }
     }

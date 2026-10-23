@@ -95,3 +95,33 @@ reads:
     operation: DeskAccountingSyncRecords
     reason: The sync ledger is read by accountingSyncRecords, whose typed filter matches the tool's; accountingSyncRecordTable reads the same records for the data table.
     instead: [DeskAccountingSyncObjectStates]
+  - tool: edi_list_partners
+    operation: DeskEdiPartners
+    reason: A trading partner is a record kind of the EDI resource, read by ediPartners, which no rule finds from the resource.
+  - tool: edi_list_inbound_files
+    operation: DeskEdiInboundFiles
+    reason: An inbound file is a record kind of the EDI resource, read by ediInboundFiles, which no rule finds from the resource.
+  - tool: edi_list_transfers
+    operation: DeskEdiTransfers
+    reason: A load tender is a record kind of the EDI resource, read by ediTransfers one direction at a time, which no rule finds from the resource.
+  - tool: edi_list_carrier_invoices
+    operation: DeskEdiCarrierInvoices
+    reason: A carrier invoice sent over EDI is read by ediCarrierInvoices under carrier invoice matching, which no rule finds from the record kind.
+  - tool: edi_list_messages
+    operation: DeskEdiMessages
+    reason: Both Desk operations read ediMessages; DeskEdiPartnerMessages is one partner's messages on its card, and the tool lists every partner's.
+  - tool: edi_get_partner
+    operation: DeskEdiPartnerCard
+    reason: A partner is read whole by ediPartnerCard, with its readiness, transports and activity, which no rule finds from the record kind.
+  - tool: edi_get_inbound_file
+    operation: DeskEdiInboundFile
+    reason: An inbound file is read by ediInboundFile with the transaction sets parsed from it, a detail no rule finds from the record kind.
+  - tool: edi_get_message
+    operation: DeskEdiMessage
+    reason: A message is read by ediMessage with its decoded document and findings, a detail no rule finds from the record kind.
+  - tool: edi_get_transfer
+    operation: DeskEdiTransfer
+    reason: A load tender is read by ediTransfer with the mappings accepting it waits on, a detail no rule finds from the record kind.
+  - tool: edi_get_ack_health
+    operation: DeskEdiAckHealth
+    reason: Acknowledgment health is read by ediAckHealth, keyed by its own arguments rather than a record's id.

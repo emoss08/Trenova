@@ -446,6 +446,35 @@ above):
 `paramReferences` parameter: typed by the spec's `references` as a list of that resource's ids,
 each checked before the read, and sent as the list.
 
+**A default for a required argument.** A spec's `defaults` may name a root argument the schema
+requires (`ediTransfers(direction:)`, Inbound unless the call names Outbound, as the repository
+tool read it). The call that omits it is sent the default, so the tool's schema does not require
+it, and the parameter's note says what the default is.
+
+**Instants.** A record's `Timestamp` field gives a day range (`createdAtFrom`/`To`) by default.
+Where people bound it to the minute ("messages created since 08:30") the spec names the field in
+`instants`, and the two ends take `agenttoolschema.DateTime` (RFC 3339 with its offset) and compile
+to `gte`/`lte` on that second. A day sent where an instant is wanted is refused before the read.
+A name in `instants` that is none of the record's dated fields fails construction.
+
+**Fields no one narrows by.** Every filterable field is a parameter, and the description names
+every one an agent at Internal may use. Where that would bury the filters people use under ones
+no one asks for (an EDI message's template, the remote path it was dropped at, its row's
+`updatedAt`), the spec's `unoffered` leaves those fields out, and a name in it that is none of the
+record's filters fails construction. The resolver still accepts them from the screen.
+
+**Text arguments.** A `String` root argument an unpaged list or a get sends as it is (a
+credential type's code, a reconciliation status) takes the schema's description alone, not a
+field filter's "contains this text", since the resolver matches it exactly.
+
+**Include switches.** A get whose operation reads a field only on request
+(`raw @include(if: $includeRaw)`, a message's raw X12) takes the variable as a switch, described
+by the field's own schema description ("true also returns raw: …"), so a call that leaves it off
+never reads the field, and a reader whose ceiling withholds it is told so in `withheldByAccess`.
+
+**Numbers.** A model's numbers arrive as `float64`, which gqlgen's `Int` refuses where the HTTP
+transport hands it a JSON number, so the reader sends every whole number as an integer.
+
 **Get operations.** The get operation's own arguments become parameters: the id as `<record>Id`,
 marked with its resource, and every other scalar, enum or id variable as it is for a list's root
 arguments, named by the spec's `names`, typed by its `references` and noted by its `notes`. A get
@@ -523,7 +552,11 @@ Three kinds of root field do not page this way, and their tools say so:
   offset, so the model learns one convention. An unpaged list whose root takes both a `limit` and
   an `offset` pages this way through `readOffsetWindow`: `offset` is never a parameter, `after`
   is, the read asks for one row past the page, and the cursor is bound to the call's other
-  arguments as a connection cursor is;
+  arguments as a connection cursor is. A root that returns its records under `items`
+  (`ediCarrierInvoices: EdiCarrierInvoiceList`) is read as an unpaged list of those items
+  (`graphQLRead.Items`), and the rule finds its operation as it does a list's; such a root must
+  declare `@authorizes` for its kind, since the field guard reads a record under a container that
+  is not a connection as carried by it;
 - unpaged lists: no `limit` or `after` parameter, and `hasMore` is never set; the list keyed by a
   record (above) returns every record the screen shows for it;
 - `DeskMemoryPage` (`items`, `next`): the tool reads `next` as the cursor.
@@ -651,10 +684,25 @@ Each module's PR:
 | Accounting | `accounting_get_connection` | none | reads `DeskAccountingConnection` with the queue alongside (`DeskAccountingSyncSummary`) only for a reader of `accounting_sync`, as the repository tool did. `AccountingSyncStatus` now declares `@kind(resource: "accounting_integration")` and `AccountingSyncSummary` `@kind(resource: "accounting_sync")`. `accounting_integration` defaults to Restricted with ten fields declared, so every connection field but those would be withheld at Internal; the connection's operational state (status, setup step, sending mode and dates, failure count and category, certificate expiry, pause) is now declared Internal, and its app keys and every field not declared stay Restricted. A failure the accounting system worded itself (`Unknown`) is replaced by a pointer to the connection page, as `AgentErrorSummary` did |
 | Accounting | `accounting_list_mapping_gaps` | none | reads `DeskAccountingMappings` (states Unmatched and Proposed unless the call names others) with the summary alongside (`DeskAccountingMappingSummary`). `AccountingMapping` and `AccountingMappingSummary` now declare `@kind(resource: "accounting_integration")`; what a mapping maps, its state, the chosen record and the candidates are declared Internal |
 | Accounting | `accounting_get_mapping` | none | `partial`: no root read one mapping. `accountingMappingDetail` (one safe addition) names it by id or by target type with a record or a key, as `FindMapping` does, and returns the usable records it could be set to for an `optionsQuery`, as the repository tool searched them; checked by `accounting_integration` read. `AccountingMappingDetail` declares `@kind(resource: "accounting_integration")` |
+| EDI | `edi_list_partners` | none | reads `DeskEdiPartners`, written for it: what a partner row shows, without its contact details or settings. `edi` defaulted to Restricted with no field sensitivities, so every field but `id` would be withheld at Internal; a partner's, message's, file's and tender's operational fields are now declared Internal, and a partner's contact email and phone, the raw X12 and file text, a tender's payload and rate and the mapping snapshot stay Restricted, as the repository tools gated them |
+| EDI | `edi_list_inbound_files` | none | reads `DeskEdiInboundFiles`. `EdiInboundFile` had no kind (it is not named for `edi`), so the guard did not gate it; it now declares `@kind(resource: "edi")`. The ISA sender and receiver ids are parameters named `isaSender` and `isaReceiver`, since they are a partner's identifiers and no record's id |
+| EDI | `edi_list_transfers` | none | reads `DeskEdiTransfers`. `EdiTransfer` now declares `@kind(resource: "edi")` and gains what the repository row read from the tender (BOL, customer, service type, stop count) as fields of its own, with its `direction` and `counterparty` judged from the caller's organization, so a row never reads the Restricted payload. `ediTransfers` gains an optional `inboundFileId` (one safe change), as the repository tool narrowed by the file; `direction` is Inbound unless the call names one, as before |
+| EDI | `edi_list_messages` | none | `partial`: reads `DeskEdiMessages` (named, since `DeskEdiPartnerMessages` reads the same root for one partner's card). `EdiMessage` now declares `@kind(resource: "edi")` and gains `invoiceId` (a safe addition), which, as a filterable field, narrows by invoice as the repository tool did; the creation window is `createdAtFrom`/`To` to the minute (`instants`), where the repository tool took Unix seconds |
+| EDI | `edi_list_carrier_invoices` | none | reads `DeskEdiCarrierInvoices`, an `items` list paged by its root's limit and offset. `EdiCarrierInvoice` had no kind; it now declares `@kind(resource: "carrier_invoice_match")`, whose root `ediCarrierInvoices` now declares `@authorizes` for it, and the kind's fields are declared Internal but the totals, which stay Restricted as the repository row gated them. The suggested carrier is the type's `suggestedCarrier`, resolved only for an invoice no carrier is linked to, from the invoice already read (one carrier lookup per such row, where the repository tool read the invoice again first), and shows the carrier reference view. An unknown reconciliation status is refused |
+| EDI | `edi_get_partner` | none | reads `DeskEdiPartnerCard`, named because no rule finds it from the record kind; its readiness items gain their `label` (a safe addition), as the repository tool listed them. The card also carries each transport's settings, which the repository tool never returned: `EdiCommunicationProfile` now declares `@kind(resource: "edi")` and its `config` is Confidential, so no agent is ever shown it; its credentials are named and said to be on file, never read |
+| EDI | `edi_get_inbound_file` | none | `partial`: reads `DeskEdiInboundFile`, through `ediInboundFile` (one safe addition) and its `EdiInboundFileDetail`, which carries the file, its profile's name, the first fifty transaction sets parsed from it and, on `includeRaw`, its first 16 KB (`raw`, Restricted) |
+| EDI | `edi_get_message` | none | `partial`: reads `DeskEdiMessage`, through `ediMessage` and its `EdiMessageDetail`: the message, the document it decoded to, the first fifty findings with their count and, on `includeRaw`, the raw X12's first 16 KB (`raw`, Restricted) |
+| EDI | `edi_get_transfer` | none | `partial`: reads `DeskEdiTransfer`, through `ediTransfer` and its `EdiTransferDetail`: the tender's stops, commodities and rate (`charges`, Restricted, as the repository row gated it), whether it can be decided and accepted, and, for an inbound tender still open, the codes accepting it waits on (`MappingPreviewOf`, from the tender already read) |
+| EDI | `edi_get_ack_health` | none | `partial`: reads `DeskEdiAckHealth`, through `ediAckHealth` (one safe addition), which takes the partner, transaction set, overdue age and window the repository tool took and refuses one out of bounds; a 997 or 999 counts every set it answers in the service, and the tool's `shape` words each partner's answer and how long each overdue message has waited from the read's `asOf` |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
 Internal each now withholds every field but `id`, where it used to return them all. No description
 names a field that is newly withheld at Internal, so none changed.
+
+The EDI lists and gets were gated only where they named a field (a contact, the raw X12, a
+tender's rate), so at a person's role ceiling below Internal each now withholds every field but
+`id`, where the lists used to return them all. Nothing is newly withheld at Internal, so no EDI
+description changed for it.
 
 ## Permissions, data scopes and refusals
 

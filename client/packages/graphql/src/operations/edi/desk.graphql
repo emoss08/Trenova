@@ -1,0 +1,362 @@
+# The Desk's EDI reads: what an agent and the Desk's EDI cards read about trading
+# partners, the files and messages exchanged with them, load tenders and how
+# partners acknowledge what was sent. Each selects what a row or a card shows,
+# never a credential.
+
+# Trading partners, a page at a time.
+query DeskEdiPartners($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  ediPartners(input: $input) {
+    edges {
+      node {
+        id
+        code
+        name
+        kind
+        status
+        customerId
+        enabledForInbound
+        enabledForOutbound
+        internalOrganization {
+          id
+          name
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+# The files partners sent, newest first.
+query DeskEdiInboundFiles($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  ediInboundFiles(input: $input) {
+    edges {
+      node {
+        id
+        fileName
+        ediPartnerId
+        partner {
+          id
+          code
+          name
+        }
+        method
+        status
+        failureReason
+        transactionCount
+        sizeBytes
+        interchangeControlNumber
+        isaSenderId
+        receivedAt
+        processedAt
+        rawPurgedAt
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+# One inbound file with the transaction sets parsed from it, and its raw text on
+# request.
+query DeskEdiInboundFile($id: ID!, $includeRaw: Boolean = false) {
+  ediInboundFile(id: $id) {
+    file {
+      id
+      fileName
+      ediPartnerId
+      partner {
+        id
+        code
+        name
+      }
+      method
+      status
+      failureReason
+      transactionCount
+      sizeBytes
+      interchangeControlNumber
+      isaSenderId
+      isaReceiverId
+      receivedAt
+      processedAt
+      rawPurgedAt
+    }
+    communicationProfileName
+    messageCount
+    messages {
+      id
+      transactionSet
+      direction
+      status
+      x12Version
+      groupControlNumber
+      transactionControlNumber
+      segmentCount
+      shipmentId
+      invoiceId
+      transferId
+      ackStatus
+      ackLastError
+      generatedAt
+    }
+    raw @include(if: $includeRaw) {
+      text
+      truncated
+      sizeBytes
+    }
+  }
+}
+
+fragment DeskEdiMessageRowFields on EdiMessage {
+  id
+  direction
+  transactionSet
+  status
+  ediPartnerId
+  partner {
+    id
+    code
+    name
+  }
+  shipmentId
+  invoiceId
+  transferId
+  inboundFileId
+  x12Version
+  interchangeControlNumber
+  groupControlNumber
+  transactionControlNumber
+  segmentCount
+  deliveryStatus
+  deliveryAttempts
+  deliveryLastError
+  deliverySentAt
+  ackStatus
+  ackLastError
+  generatedAt
+  rawPurgedAt
+}
+
+# EDI documents both ways, newest first, a page at a time.
+query DeskEdiMessages($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  ediMessages(input: $input) {
+    edges {
+      node {
+        ...DeskEdiMessageRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+# One EDI document: what it decoded to, its delivery and acknowledgment, every
+# finding, and its raw X12 on request.
+query DeskEdiMessage($id: ID!, $includeRaw: Boolean = false) {
+  ediMessage(id: $id) {
+    message {
+      ...DeskEdiMessageRowFields
+      deliveryRemotePath
+      deliveryLastAttemptAt
+      ackMessageId
+      ackReceivedAt
+    }
+    decoded
+    diagnosticCount
+    diagnostics {
+      severity
+      code
+      segmentId
+      elementPosition
+      path
+      message
+      suggestedFix
+    }
+    raw @include(if: $includeRaw) {
+      text
+      truncated
+      sizeBytes
+    }
+  }
+}
+
+fragment DeskEdiTransferRowFields on EdiTransfer {
+  id
+  status
+  direction
+  counterparty {
+    id
+    code
+    name
+  }
+  bol
+  customerLabel
+  serviceTypeLabel
+  stopCount
+  sourceShipmentId
+  targetShipmentId
+  inboundMessageId
+  rejectionReason
+  failureReason
+  submittedAt
+  processedAt
+}
+
+# Load tenders one way, a page at a time.
+query DeskEdiTransfers(
+  $input: DataTableConnectionInput!
+  $direction: EdiTransferDirection!
+  $inboundFileId: ID
+  $includeTotalCount: Boolean = false
+) {
+  ediTransfers(input: $input, direction: $direction, inboundFileId: $inboundFileId) {
+    edges {
+      node {
+        ...DeskEdiTransferRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+# One load tender: its stops, freight and rate, and what accepting it waits on.
+query DeskEdiTransfer($id: ID!) {
+  ediTransfer(id: $id) {
+    transfer {
+      ...DeskEdiTransferRowFields
+      shipmentTypeLabel
+      pieces
+      weight
+      temperatureMin
+      temperatureMax
+      stops {
+        sequence
+        type
+        location
+        address
+        city
+        state
+        postalCode
+        windowOpens
+        windowCloses
+        pieces
+        weight
+      }
+      commodities {
+        commodity
+        weight
+        pieces
+      }
+      charges {
+        freight
+        other
+        total
+        additional {
+          charge
+          method
+          amount
+        }
+      }
+      canDecide
+    }
+    unresolvedMappings {
+      entityType
+      source
+    }
+    canAccept
+  }
+}
+
+# How partners acknowledge what was sent: counts overall and per partner, what
+# is overdue, and recent dead letters.
+query DeskEdiAckHealth(
+  $partnerId: ID
+  $transactionSet: String
+  $overdueAfterSeconds: Int
+  $sinceHours: Int
+) {
+  ediAckHealth(
+    partnerId: $partnerId
+    transactionSet: $transactionSet
+    overdueAfterSeconds: $overdueAfterSeconds
+    sinceHours: $sinceHours
+  ) {
+    asOf
+    since
+    overdueAfterSeconds
+    answersEverySet
+    ackStatusCounts {
+      status
+      count
+    }
+    partners {
+      partnerId
+      partnerName
+      partnerCode
+      ackStatusCounts {
+        status
+        count
+      }
+    }
+    overdueCount
+    overdueByPartner {
+      partnerId
+      partnerName
+      partnerCode
+      overdueCount
+      oldestGeneratedAt
+      messages {
+        id
+        transactionSet
+        shipmentId
+        invoiceId
+        transactionControlNumber
+        deliveryStatus
+        generatedAt
+        deliverySentAt
+      }
+    }
+    overdueNotListed
+    recentDeadLettered {
+      ...DeskEdiMessageRowFields
+    }
+  }
+}
+
+# Freight invoices carriers sent over EDI, newest first, with the carrier an
+# unlinked one points to.
+query DeskEdiCarrierInvoices($reconciliationStatus: String, $limit: Int, $offset: Int) {
+  ediCarrierInvoices(reconciliationStatus: $reconciliationStatus, limit: $limit, offset: $offset) {
+    items {
+      id
+      invoiceNumber
+      carrierId
+      suggestedCarrier {
+        id
+        name
+      }
+      reconciliationStatus
+      proNumber
+      shipmentId
+      shipmentReference
+      invoiceDate
+      currencyCode
+      totalAmount
+      varianceAmount
+    }
+  }
+}
