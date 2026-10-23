@@ -165,6 +165,12 @@ impl<'a> Interp<'_, 'a> {
             };
             scope.bind(&param.name.text, value, false);
         }
+        if module == 0 {
+            self.cover(match &decl.body {
+                FnBody::Expr(body) => body.span,
+                FnBody::Block(block) => block.span,
+            });
+        }
         let result = outcome.and_then(|()| match &decl.body {
             FnBody::Expr(body) => self.eval(&mut scope, body),
             FnBody::Block(block) => match self.exec_block(&mut scope, block)? {

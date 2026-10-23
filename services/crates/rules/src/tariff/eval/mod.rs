@@ -11,17 +11,20 @@
 //! - [`tables`]: rate table lookups, loaded on demand.
 //! - [`record`]: the host's record and the sample record.
 //! - [`budget`], [`trace`], [`error`]: budgets, the rate trace, refusals and errors.
-//! - [`tests`]: the test runner; [`scaffold`]: a test written from a real shipment.
+//! - [`tests`]: the test runner, [`property`] its properties and [`coverage`] the regions they
+//!   reach; [`scaffold`]: a test written from a real shipment.
 //! - [`ops`]: the operations.
 
 pub mod bill;
 pub mod budget;
+pub mod coverage;
 pub mod error;
 pub mod interp;
 pub mod lists;
 pub mod methods;
 pub mod operators;
 pub mod ops;
+pub mod property;
 pub mod record;
 pub mod run;
 pub mod scaffold;
