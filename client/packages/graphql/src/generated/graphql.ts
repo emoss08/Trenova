@@ -14224,6 +14224,21 @@ export type DeleteSafetyViolationMutationVariables = Exact<{
 
 export type DeleteSafetyViolationMutation = { deleteSafetyViolation: boolean };
 
+export type DeskFormulaLibrariesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskFormulaLibrariesQuery = { formulaLibraries: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, path: string, description: string, status: FormulaTemplateStatus, currentVersionNumber: number, testCount: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+
+export type DeskFormulaLibraryCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskFormulaLibraryCardQuery = { formulaLibrary: { id: string, name: string, path: string, description: string, source: string, testCount: number, status: FormulaTemplateStatus, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, version: number, sourceLibraryId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } | null };
+
 export type FormulaLibraryQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -14240,6 +14255,21 @@ export type FormulaLibraryTableQueryVariables = Exact<{
 
 
 export type FormulaLibraryTableQuery = { formulaLibraries: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaLibraryTableRowFieldsFragment': FormulaLibraryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskFormulaTemplatesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskFormulaTemplatesQuery = { formulaTemplates: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, description: string, status: FormulaTemplateStatus, currentVersionNumber: number, testCount: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+
+export type DeskFormulaTemplateCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskFormulaTemplateCardQuery = { formulaTemplate: { id: string, name: string, description: string, source: string, testCount: number, status: FormulaTemplateStatus, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, usageCount: number, createdAt: number, updatedAt: number, inputs: Array<{ name: string, doc: string, type: string, descriptor: unknown, required: boolean, default: unknown }>, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } | null };
 
 export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, status: FormulaTemplateStatus, testCount: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, version: number, currentVersionNumber: number, approvedAt: number | null, usageCount: number, createdAt: number, updatedAt: number, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
 
@@ -19250,8 +19280,10 @@ export { FactoringTransportFieldsFragmentDoc, FactoringTransportDocument, SaveFa
 export { FiscalPeriodFieldsFragmentDoc, FiscalYearTableRowFieldsFragmentDoc, FiscalYearTableDocument } from "./documents/fiscal-year/table";
 export { FleetCodeTableRowFieldsFragmentDoc, FleetCodeTableDocument } from "./documents/fleet-code/table";
 export { FleetSafetyDocument, WorkerSafetyViolationsDocument, RecordSafetyViolationDocument, UpdateSafetyViolationDocument, DeleteSafetyViolationDocument } from "./documents/fleet-safety/operations";
+export { DeskFormulaLibrariesDocument, DeskFormulaLibraryCardDocument } from "./documents/formula-library/desk";
 export { FormulaLibraryDocument } from "./documents/formula-library/record";
 export { FormulaLibraryTableRowFieldsFragmentDoc, FormulaLibraryTableDocument } from "./documents/formula-library/table";
+export { DeskFormulaTemplatesDocument, DeskFormulaTemplateCardDocument } from "./documents/formula-template/desk";
 export { FormulaTemplateTableRowFieldsFragmentDoc, FormulaTemplateTableDocument } from "./documents/formula-template/table";
 export { DeskFuelCardPurchaseFieldsFragmentDoc, DeskFuelCardCardDocument } from "./documents/fuel-card/desk";
 export { FuelCardFieldsFragmentDoc, FuelCardTableDocument, FuelCardDocument, CreateFuelCardDocument, UpdateFuelCardDocument, CancelFuelCardDocument, AssignFuelCardDocument, SyncFuelCardFeedDocument } from "./documents/fuel-card/operations";

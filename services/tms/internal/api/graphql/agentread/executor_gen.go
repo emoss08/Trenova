@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetsafetyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/formulalibraryexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/formulatemplateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazardousmaterialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationcategoryexec"
@@ -51,6 +53,8 @@ import (
 	equipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmenttyperesolver"
 	fleetcoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	fleetsafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
+	formulalibraryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/formulalibraryresolver"
+	formulatemplateresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/formulatemplateresolver"
 	hazardousmaterialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/hazardousmaterialresolver"
 	holdreasonresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
 	locationcategoryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationcategoryresolver"
@@ -89,6 +93,8 @@ import (
 	locationcategoryservice "github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
 	locationservice "github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
+	formulalibraryservice "github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
+	formulatemplateservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	accessorialchargeservice "github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
 	commodityservice "github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
 	documenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
@@ -135,6 +141,8 @@ type ResolverParams struct {
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
 	FleetCodeService             *fleetcodeservice.Service
+	FormulaLibraryService        *formulalibraryservice.Service
+	FormulaTemplateService       *formulatemplateservice.Service
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HoldReasonService            *holdreasonservice.Service
 	LocationCategoryService      *locationcategoryservice.Service
@@ -175,6 +183,8 @@ var shards = []*gqlexec.Shard{
 	equipmenttypeexec.Shard,
 	fleetcodeexec.Shard,
 	fleetsafetyexec.Shard,
+	formulalibraryexec.Shard,
+	formulatemplateexec.Shard,
 	hazardousmaterialexec.Shard,
 	holdreasonexec.Shard,
 	locationexec.Shard,
@@ -268,6 +278,26 @@ var operations = []Operation{
 		Name:     "EquipmentTypeTable",
 		Hash:     "sha256:434594d9f9c59a4377be5e555d4baa8f80e86e8a0eea9ec679c7cb7ba3b95f05",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentTypeConfigurationRowFields on EquipmentType { businessUnitId class code color createdAt description id interiorLength organizationId status updatedAt version } query EquipmentTypeTable($classes: [EquipmentClass!], $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentTypes(input: $input, classes: $classes) { edges { node { ...EquipmentTypeConfigurationRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFormulaLibraryCard",
+		Hash:     "sha256:eecb1fcaff2c172afd10f935e5c97821076fd74e9c71445245e5f63044f62512",
+		Document: "query DeskFormulaLibraryCard($id: ID!) { formulaLibrary(id: $id) { approvedAt approvedById createdAt currentVersionNumber description id imports { libraryId path versionNumber } name path reviewComment source sourceLibraryId sourceVersionNumber status submittedAt submittedById testCount updatedAt version } }",
+	},
+	{
+		Name:     "DeskFormulaTemplateCard",
+		Hash:     "sha256:08f1c28cd04da15bf54108d9f9960de19e39f58b50b31842bf232c893d051c78",
+		Document: "query DeskFormulaTemplateCard($id: ID!) { formulaTemplate(id: $id) { approvedAt approvedById createdAt currentVersionNumber description id imports { libraryId path versionNumber } inputs { default descriptor doc name required type } metadata name reviewComment source sourceTemplateId sourceVersionNumber status submittedAt submittedById testCount updatedAt usageCount version } }",
+	},
+	{
+		Name:     "DeskFormulaLibraries",
+		Hash:     "sha256:99498c8bfa13e79aaf1e29d33fecbf8e47b0b2c4b492a2aeca135b6b53fb5407",
+		Document: "query DeskFormulaLibraries($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { formulaLibraries(input: $input) { edges { node { currentVersionNumber description id name path status testCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFormulaTemplates",
+		Hash:     "sha256:3db4c3533f66404436ec9761cdaf0b0aa1b916a9ab7fc931bc73253e0a785498",
+		Document: "query DeskFormulaTemplates($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { formulaTemplates(input: $input) { edges { node { currentVersionNumber description id name status testCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskLocationCard",
@@ -506,6 +536,14 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                core,
 		WorkerSafetyService: p.WorkerSafetyService,
 	}
+	formulalibraryDeps := &formulalibraryresolver.Deps{
+		Core:                  core,
+		FormulaLibraryService: p.FormulaLibraryService,
+	}
+	formulatemplateDeps := &formulatemplateresolver.Deps{
+		Core:                   core,
+		FormulaTemplateService: p.FormulaTemplateService,
+	}
 	hazardousmaterialDeps := &hazardousmaterialresolver.Deps{
 		Core:                     core,
 		HazardousMaterialService: p.HazardousMaterialService,
@@ -631,6 +669,8 @@ func NewSchema(p ResolverParams) Schema {
 		equipmenttypeQuery:         &equipmenttypeQuery{Deps: equipmenttypeDeps},
 		fleetcodeQuery:             &fleetcodeQuery{Deps: fleetcodeDeps},
 		fleetsafetyQuery:           &fleetsafetyQuery{Deps: fleetsafetyDeps},
+		formulalibraryQuery:        &formulalibraryQuery{Deps: formulalibraryDeps},
+		formulatemplateQuery:       &formulatemplateQuery{Deps: formulatemplateDeps},
 		hazardousmaterialQuery:     &hazardousmaterialQuery{Deps: hazardousmaterialDeps},
 		holdreasonQuery:            &holdreasonQuery{Deps: holdreasonDeps},
 		locationQuery:              &locationQuery{Deps: locationDeps},
@@ -706,23 +746,26 @@ func NewSchema(p ResolverParams) Schema {
 		"CarrierSourcingResult": func() any {
 			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
 		},
-		"Commodity":           func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":            func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
-		"DOTRandomDraw":       func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomDrawEntry":  func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomPool":       func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
-		"DQFFile":             func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
-		"DQFItem":             func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
-		"DisciplinaryLadder":  func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
-		"DrugAlcoholStanding": func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
-		"FleetSafetyRank":     func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
-		"FleetSafetyTerminal": func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
-		"LeaveControl":        func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
-		"LeaveEntitlement":    func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
-		"LocationCategory":    func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"OSHAAnnualSummary":   func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
-		"PTOChartDataPoint":   func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
-		"PerformanceReview":   func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
+		"Commodity":             func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":              func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"DOTRandomDraw":         func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomDrawEntry":    func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomPool":         func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
+		"DQFFile":               func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
+		"DQFItem":               func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
+		"DisciplinaryLadder":    func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
+		"DrugAlcoholStanding":   func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
+		"FleetSafetyRank":       func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
+		"FleetSafetyTerminal":   func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
+		"FormulaLibraryImport":  func() any { return &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps} },
+		"FormulaLibraryVersion": func() any { return &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps} },
+		"FormulaTemplate":       func() any { return &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps} },
+		"LeaveControl":          func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
+		"LeaveEntitlement":      func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
+		"LocationCategory":      func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"OSHAAnnualSummary":     func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
+		"PTOChartDataPoint":     func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
+		"PerformanceReview":     func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
 		"PerformanceReviewTemplate": func() any {
 			return &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
 		},
@@ -805,6 +848,8 @@ type queryResolver struct {
 	*equipmenttypeQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
+	*formulalibraryQuery
+	*formulatemplateQuery
 	*hazardousmaterialQuery
 	*holdreasonQuery
 	*locationQuery
@@ -861,6 +906,8 @@ type (
 	equipmenttypeQuery             = equipmenttyperesolver.QueryResolver
 	fleetcodeQuery                 = fleetcoderesolver.QueryResolver
 	fleetsafetyQuery               = fleetsafetyresolver.QueryResolver
+	formulalibraryQuery            = formulalibraryresolver.QueryResolver
+	formulatemplateQuery           = formulatemplateresolver.QueryResolver
 	hazardousmaterialQuery         = hazardousmaterialresolver.QueryResolver
 	holdreasonQuery                = holdreasonresolver.QueryResolver
 	locationQuery                  = locationresolver.QueryResolver

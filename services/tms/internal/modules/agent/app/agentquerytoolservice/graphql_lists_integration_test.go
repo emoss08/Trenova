@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
@@ -48,6 +50,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryversionrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplateversionrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/commodityrepository"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/documenttyperepository"
@@ -84,6 +95,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -111,6 +123,9 @@ type referenceCase struct {
 	marked               map[string]any
 	oldMarked            map[string]any
 	old                  agentports.AgentQueryTool
+	// readsWith attaches what a read of the case needs beside the tenant,
+	// such as the loader a card's counts resolve through.
+	readsWith func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context
 }
 
 // customerCacheMiss is a customer cache that holds nothing, so every get
@@ -195,6 +210,15 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		types: equipmentTypes, manufacturers: manufacturers, workers: workers,
 	}
 
+	formulaTemplates := formulatemplaterepository.New(
+		formulatemplaterepository.Params{DB: conn, Logger: logger})
+	formulaVersions := formulatemplateversionrepository.New(
+		formulatemplateversionrepository.Params{DB: conn, Logger: logger})
+	libraries := formulalibraryrepository.New(
+		formulalibraryrepository.Params{DB: conn, Logger: logger})
+	libraryVersions := formulalibraryversionrepository.New(
+		formulalibraryversionrepository.Params{DB: conn, Logger: logger})
+
 	services := agentread.ResolverParams{
 		EquipmentTypeService: equipmenttypeservice.New(
 			equipmenttypeservice.Params{Logger: logger, Repo: equipmentTypes}),
@@ -234,8 +258,20 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		TrailerService: trailerservice.New(trailerservice.Params{
 			Logger: logger, Repo: trailers, CustomFieldsValuesService: customFields,
 		}),
+		FormulaTemplateService: formulatemplateservice.New(formulatemplateservice.Params{
+			Logger: logger, Repo: formulaTemplates, VersionRepo: formulaVersions,
+			Resolver: tariff.NewTemplateResolver(tariff.TemplateResolverParams{
+				Templates: formulaTemplates, Versions: formulaVersions,
+				LibraryVersions: libraryVersions,
+			}),
+		}),
+		FormulaLibraryService: formulalibraryservice.New(formulalibraryservice.Params{
+			Logger: logger, Repo: libraries, VersionRepo: libraryVersions,
+		}),
 	}
 
+	formulaStats := loaders.NewFormulaTemplateStatsLoaderFactory(
+		loaders.FormulaTemplateStatsLoaderFactoryParams{TemplateRepo: formulaTemplates})
 	systemTyped, systemOld := boolFilter("isSystem", true)
 	parkingTyped, parkingOld := boolFilter("hasSecureParking", true)
 	retiredTyped, retiredOld := boolFilter("active", false)
@@ -480,9 +516,47 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 				return writeLeaveUnderWay(ctx, timeOff, driver, marked)
 			},
 		},
+		{
+			tool: "formula_list_templates", marked: inactive, oldMarked: oldInactive,
+			old: agentquerytoolservice.NewListFormulaTemplatesTool(formulaTemplates),
+			readsWith: func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context {
+				return formulaStats.Attach(ctx, pagination.TenantInfo{
+					OrgID:  tenant.Actor.OrganizationID,
+					BuID:   tenant.Actor.BusinessUnitID,
+					UserID: tenant.Actor.UserID,
+				})
+			},
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				row, err := formulaTemplates.Create(ctx, &formulatemplate.FormulaTemplate{
+					BusinessUnitID: bu, OrganizationID: org, Name: "Formula " + label,
+					Source: "formula\n", Status: formulaStatusOf(marked),
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "formula_list_libraries", marked: inactive,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				row, err := libraries.Create(ctx, &formulalibrary.FormulaLibrary{
+					BusinessUnitID: bu, OrganizationID: org, Name: "lib" + strings.ToLower(label),
+					Source: "library\n", Status: formulaStatusOf(marked),
+				})
+				return created(row, err)
+			},
+		},
 	}
 
 	return cases, services
+}
+
+func formulaStatusOf(marked bool) formulatemplate.Status {
+	if marked {
+		return formulatemplate.StatusInactive
+	}
+
+	return formulatemplate.StatusActive
 }
 
 // writeLeaveUnderWay writes leave that began three days ago and is still
@@ -587,6 +661,9 @@ func writeReferenceRows(
 	out := &referenceTenant{
 		tenant: tenant,
 		ctx:    readscope.With(dbscope.WithTenant(t.Context(), tenant.Scope()), nil),
+	}
+	if c.readsWith != nil {
+		out.ctx = c.readsWith(out.ctx, tenant)
 	}
 	for idx := range referenceRowsPerTenant {
 		marked := idx == referenceRowsPerTenant-1

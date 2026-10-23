@@ -18186,7 +18186,7 @@
     },
     {
       "name": "formula_list_libraries",
-      "description": "List the organisation's formula libraries: Tariff modules of shared functions a template imports with use org.<name>. A row carries the library's path, description, status, version and test count: read one whole, with its source, with formula_get_library. Filters: status (Active|Inactive|Draft|InReview): templates import the latest Active version; text: name; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List the organisation's formula libraries: Tariff modules of shared functions a template imports with use org.<name>. A row carries the library's path, description, status, version and test count: read one whole, with its source, with formula_get_library. Filters: approvedAtFrom/To, createdAtFrom/To, currentVersionNumberMin/Max, description, hasApprovedBy, hasSourceLibrary, hasSubmittedBy, name, reviewComment, source, sourceVersionNumberMin/Max, status, submittedAtFrom/To, testCountMin/Max, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18194,67 +18194,61 @@
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "name",
-                    "status",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "formula_list_libraries.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "formula_list_libraries.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "approvedAtFrom": {
+            "description": "Only records whose approved at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "approvedAtTo": {
+            "description": "Only records whose approved at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "currentVersionNumberMax": {
+            "description": "Only records whose current version number is at most this.",
+            "type": "integer"
+          },
+          "currentVersionNumberMin": {
+            "description": "Only records whose current version number is at least this.",
+            "type": "integer"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "hasApprovedBy": {
+            "description": "true for only records that have a approved by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasSourceLibrary": {
+            "description": "true for only records that have a source library, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasSubmittedBy": {
+            "description": "true for only records that have a submitted by, false for only those that have none.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -18263,18 +18257,39 @@
             "type": "integer",
             "x-clamp": true
           },
+          "name": {
+            "description": "The module name: templates import the library as org.<name>. Only records whose name contains this text.",
+            "type": "string"
+          },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "reviewComment": {
+            "description": "Only records whose review comment contains this text.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "approvedAt",
+              "approvedById",
+              "createdAt",
+              "currentVersionNumber",
+              "description",
               "name",
-              "createdAt"
+              "reviewComment",
+              "source",
+              "sourceLibraryId",
+              "sourceVersionNumber",
+              "status",
+              "submittedAt",
+              "submittedById",
+              "testCount",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "formula_list_libraries.sortBy"
+            "x-enumOf": "formula_list_libraries.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -18284,6 +18299,73 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "source": {
+            "description": "The library's Tariff source. Only records whose source contains this text.",
+            "type": "string"
+          },
+          "sourceVersionNumberMax": {
+            "description": "Only records whose source version number is at most this.",
+            "type": "integer"
+          },
+          "sourceVersionNumberMin": {
+            "description": "Only records whose source version number is at least this.",
+            "type": "integer"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Templates import the latest Active version.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive",
+                "Draft",
+                "InReview"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.FormulaTemplateStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "submittedAtFrom": {
+            "description": "Only records whose submitted at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "submittedAtTo": {
+            "description": "Only records whose submitted at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "testCountMax": {
+            "description": "How many test blocks the source holds. Only records whose test count is at most this.",
+            "type": "integer"
+          },
+          "testCountMin": {
+            "description": "How many test blocks the source holds. Only records whose test count is at least this.",
+            "type": "integer"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -18317,71 +18399,69 @@
     },
     {
       "name": "formula_list_templates",
-      "description": "List formula templates, the Tariff rating methods a shipment, rule or agreement is priced with. Use it to turn a rating method a person named into its id. A row carries only a template's name, description, status, version and test count: read one whole, with its source and inputs, with formula_get_template. Filters: status (Active|Inactive|Draft|InReview): only Active ones price shipments; text: name; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List formula templates, the Tariff rating methods a shipment, rule or agreement is priced with. Use it to turn a rating method a person named into its id; only Active ones price shipments. A row carries only a template's name, description, status, version and test count: read one whole, with its source and inputs, with formula_get_template. Filters: approvedAtFrom/To, createdAtFrom/To, currentVersionNumberMin/Max, description, hasApprovedBy, hasSourceTemplate, hasSubmittedBy, name, reviewComment, source, sourceVersionNumberMin/Max, status, submittedAtFrom/To, testCountMin/Max, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "name",
-                    "status",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "formula_list_templates.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "formula_list_templates.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "approvedAtFrom": {
+            "description": "Only records whose approved at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "approvedAtTo": {
+            "description": "Only records whose approved at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "currentVersionNumberMax": {
+            "description": "Only records whose current version number is at most this.",
+            "type": "integer"
+          },
+          "currentVersionNumberMin": {
+            "description": "Only records whose current version number is at least this.",
+            "type": "integer"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "hasApprovedBy": {
+            "description": "true for only records that have a approved by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasSourceTemplate": {
+            "description": "true for only records that have a source template, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasSubmittedBy": {
+            "description": "true for only records that have a submitted by, false for only those that have none.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -18390,23 +18470,40 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "reviewComment": {
+            "description": "Only records whose review comment contains this text.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "approvedAt",
+              "approvedById",
+              "createdAt",
+              "currentVersionNumber",
+              "description",
+              "metadata",
               "name",
-              "createdAt"
+              "reviewComment",
+              "source",
+              "sourceTemplateId",
+              "sourceVersionNumber",
+              "status",
+              "submittedAt",
+              "submittedById",
+              "testCount",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "formula_list_templates.sortBy"
+            "x-enumOf": "formula_list_templates.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -18416,6 +18513,73 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "source": {
+            "description": "The formula's Tariff source. Only records whose source contains this text.",
+            "type": "string"
+          },
+          "sourceVersionNumberMax": {
+            "description": "Only records whose source version number is at most this.",
+            "type": "integer"
+          },
+          "sourceVersionNumberMin": {
+            "description": "Only records whose source version number is at least this.",
+            "type": "integer"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Only Active ones price shipments.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive",
+                "Draft",
+                "InReview"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.FormulaTemplateStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "submittedAtFrom": {
+            "description": "Only records whose submitted at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "submittedAtTo": {
+            "description": "Only records whose submitted at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "testCountMax": {
+            "description": "How many test blocks the source holds. Only records whose test count is at most this.",
+            "type": "integer"
+          },
+          "testCountMin": {
+            "description": "How many test blocks the source holds. Only records whose test count is at least this.",
+            "type": "integer"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"

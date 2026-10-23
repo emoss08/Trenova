@@ -231,6 +231,8 @@ func graphQLGetSpecs() []getSpec {
 		workerCredentialGetSpec(),
 		dotRandomDrawGetSpec(),
 		workerHOSGetSpec(),
+		formulaTemplateGetSpec(),
+		formulaLibraryGetSpec(),
 	}, slices.Concat(accountingGetSpecs(), ediGetSpecs())...)
 }
 
@@ -260,7 +262,7 @@ func getCatalogSpecs() []getSpec {
 		locationGetSpec(),
 		detentionOccurrenceGetSpec(),
 		serviceFailureGetSpec(),
-		specOfGet(newGetFormulaTemplateTool(nil, nil)),
+		formulaTemplateGetSpec(),
 	}
 }
 

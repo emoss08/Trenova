@@ -1479,6 +1479,11 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: ledger | `ledger_list_journal_entries`, `ledger_list_fiscal_periods`, `ledger_list_manual_journals`, `ledger_list_journal_reversals`, `ledger_get_journal_entry`, `ledger_get_manual_journal` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 | Typed reads through GraphQL: rates | `rate_list_agreements`, `rate_get_agreement`, `rate_list_fuel_index_prices`, `rate_list_fuel_surcharge_programs` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 | Typed reads through GraphQL: the remaining workforce reads | `worker_get`, `worker_get_credential`, `worker_get_dot_random_draw`, `worker_get_hos`, `worker_get_schedule`, `worker_list_dot_random_draws`, `worker_list_shift_templates` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
+| Typed reads through GraphQL: formula templates and libraries | `formula_list_templates`, `formula_get_template`, `formula_list_libraries`, `formula_get_library` | unchanged | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
+
+The formula row's after figures read the 167 held-out cases Tariff (#888) left, whose fixture
+master carries stale; the before figures are the last measured on master (165 cases). Keyword
+ranking is unchanged on the 147 held-out cases (recall@5 0.99, top-1 0.95).
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the

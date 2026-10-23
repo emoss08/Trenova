@@ -45,6 +45,8 @@ var convertedGets = map[string]string{
 	"equipment_list_tractors": "equipment_get_tractor",
 	"equipment_list_trailers": "equipment_get_trailer",
 	"worker_list":             "worker_get",
+	"formula_list_templates":  "formula_get_template",
+	"formula_list_libraries":  "formula_get_library",
 }
 
 // getCase is one converted get read against real repositories: how to
