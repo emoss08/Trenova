@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/fatih/color"
+	"github.com/redis/go-redis/v9"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -23,10 +24,12 @@ import (
 )
 
 type Manager struct {
-	db       *bun.DB
-	migrator DatabaseMigrator
-	seeder   Seeder
-	cfg      *config.Config
+	db          *bun.DB
+	migrator    DatabaseMigrator
+	seeder      Seeder
+	cfg         *config.Config
+	permissions PermissionCacheInvalidator
+	redisClient *redis.Client
 }
 
 type ManagerParams struct {
@@ -46,16 +49,18 @@ func NewManager(p ManagerParams) *Manager {
 }
 
 type ManagerDeps struct {
-	DB       *bun.DB
-	Migrator DatabaseMigrator
-	Seeder   Seeder
+	DB          *bun.DB
+	Migrator    DatabaseMigrator
+	Seeder      Seeder
+	Permissions PermissionCacheInvalidator
 }
 
 func NewManagerWithDeps(deps ManagerDeps) *Manager {
 	return &Manager{
-		db:       deps.DB,
-		migrator: deps.Migrator,
-		seeder:   deps.Seeder,
+		db:          deps.DB,
+		migrator:    deps.Migrator,
+		seeder:      deps.Seeder,
+		permissions: deps.Permissions,
 	}
 }
 
@@ -76,12 +81,15 @@ func NewManagerFromConfig(cfg ManagerConfig) (*Manager, error) {
 		return nil, fmt.Errorf("failed to create migrator: %w", err)
 	}
 	engine := NewEngine(db, cfg.Registry, cfg.Config)
+	redisClient, permissions := newPermissionCache(cfg.Config)
 
 	return &Manager{
-		db:       db,
-		migrator: mig,
-		seeder:   engine,
-		cfg:      cfg.Config,
+		db:          db,
+		migrator:    mig,
+		seeder:      engine,
+		cfg:         cfg.Config,
+		permissions: permissions,
+		redisClient: redisClient,
 	}, nil
 }
 
@@ -150,10 +158,14 @@ func (m *Manager) GetDB() *bun.DB {
 }
 
 func (m *Manager) Close() error {
-	if m.db != nil {
-		return m.db.Close()
+	var errs []error
+	if m.redisClient != nil {
+		errs = append(errs, m.redisClient.Close())
 	}
-	return nil
+	if m.db != nil {
+		errs = append(errs, m.db.Close())
+	}
+	return errors.Join(errs...)
 }
 
 func (m *Manager) Migrate(ctx context.Context, opts common.OperationOptions) error {
@@ -199,6 +211,13 @@ func (m *Manager) reconcileAdminRoles(ctx context.Context, opts common.Operation
 			result.GrantsAdded,
 			result.GrantsExtended,
 			result.RolesChecked,
+		)
+	}
+
+	if err = invalidatePermissionCaches(ctx, m.permissions, result.ChangedOrganizations); err != nil {
+		color.Yellow(
+			"⚠️  %v; administrators see the new permissions once their cached permissions expire",
+			err,
 		)
 	}
 
