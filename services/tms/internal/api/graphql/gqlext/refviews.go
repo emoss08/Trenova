@@ -42,7 +42,7 @@ func referenceTypes(
 	names = make([]string, 0, len(kinds))
 	for name, kind := range kinds {
 		def, ok := registry.Get(kind.String())
-		if !ok || len(def.ReferenceView) == 0 {
+		if !ok || len(def.ReferenceView) == 0 || !viewable(schema.Types[name], def.ReferenceView) {
 			continue
 		}
 		names = append(names, name)
@@ -50,6 +50,20 @@ func referenceTypes(
 	slices.Sort(names)
 
 	return names, kinds, nil
+}
+
+// viewable reports whether a kind type holds its id or a field of its view. A
+// summary that only carries records of its kind (a fuel index's latest and
+// previous prices) holds neither, is never linked by itself, and has no
+// fragment.
+func viewable(def *ast.Definition, view []string) bool {
+	if def == nil {
+		return false
+	}
+
+	return slices.ContainsFunc(def.Fields, func(field *ast.FieldDefinition) bool {
+		return field.Name == recordIDField || slices.Contains(view, field.Name)
+	})
 }
 
 // RenderReferenceFragments writes one fragment per kind type selecting its

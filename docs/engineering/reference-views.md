@@ -138,7 +138,9 @@ asks the same port, `permissionports.ReferenceViews`, which refview implements:
    `WorkerReference`, …) and the client's copy of the views to
    `@trenova/shared/types/generated/reference-views`. A linking screen selects
    `customer { ...CustomerReference }` and needs nothing else. The fragment selects `id` and the
-   view's own fields; the bookkeeping fields are allowed but not selected.
+   view's own fields; the bookkeeping fields are allowed but not selected. A `@kind` type that
+   holds neither an `id` nor a field of its view (a summary that only carries records of its kind,
+   such as `FuelIndexLatestPrice`) is never linked by itself and gets no fragment.
 2. **When the screen needs more, say so.** Selecting a linked record's field outside its view
    needs `@requiresRead(kind: "customer")` on the operation (repeat it for each kind). The field
    must be nullable, and the screen draws the field's withheld state where it is null for a reader
