@@ -160,8 +160,8 @@ asks the same port, `permissionports.ReferenceViews`, which refview implements:
    `customer { ...CustomerReference }` and needs nothing else. The fragment selects `id` and the
    view's own fields; the bookkeeping fields are allowed but not selected. A type of a kind that
    carries neither an `id` nor a field of the view (a detail or a summary of the kind, such as
-   `EdiMessageDetail`, `EdiAckHealth` or `FuelIndexLatestPrice`) is never linked to, so it gets no
-   fragment.
+   `EdiMessageDetail`, `EdiAckHealth`, `FuelIndexLatestPrice` or `FactoringSummary`) is never
+   linked to, so it gets no fragment.
 2. **When the screen needs more, say so.** Selecting a linked record's field outside its view
    needs `@requiresRead(kind: "customer")` on the operation (repeat it for each kind). The field
    must be nullable, and the screen draws the field's withheld state where it is null for a reader

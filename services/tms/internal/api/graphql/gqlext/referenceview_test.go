@@ -206,6 +206,8 @@ func TestReferenceFragmentsAreGenerated(t *testing.T) {
 			"%s is out of date: run `go run ./internal/api/graphql/gqlext/refgen` from services/tms, "+
 				"then `pnpm --filter @trenova/graphql codegen`", path)
 	}
+	assert.NotContains(t, fragments, "{\n}",
+		"a kind type with none of its view's fields, such as a summary, has no fragment")
 }
 
 // A summary that carries records of its kind but holds neither an id nor a

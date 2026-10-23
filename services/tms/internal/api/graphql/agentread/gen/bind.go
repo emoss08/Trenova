@@ -305,7 +305,8 @@ func readShape(
 	if field.Type.Elem != nil {
 		return verbList, def.Name, true
 	}
-	if items := def.Fields.ForName(itemsField); items != nil && items.Type.Elem != nil {
+	byID := field.Arguments.ForName(idArgument) != nil
+	if items := def.Fields.ForName(itemsField); items != nil && items.Type.Elem != nil && !byID {
 		if node := schema.Types[items.Type.Name()]; node != nil && node.Kind == ast.Object {
 			return verbList, node.Name, true
 		}
@@ -436,7 +437,9 @@ func provenRead(
 }
 
 // keyedShape reports whether a read's root field returns an unpaged list or
-// one record, either of which a call's own arguments key.
+// one record, either of which a call's own arguments key; a record a root
+// returns with no arguments at all (the factoring queue's totals) is one
+// record of the whole organization.
 func keyedShape(field *ast.FieldDefinition) (object, ok bool) {
 	verb, _, shaped := readShape(boundSchema, field)
 	switch {
@@ -444,6 +447,10 @@ func keyedShape(field *ast.FieldDefinition) (object, ok bool) {
 		return false, true
 	case shaped && verb == verbGet:
 		return true, true
+	case !shaped && len(field.Arguments) == 0 && field.Type.Elem == nil:
+		def := boundSchema.Types[field.Type.Name()]
+		return true, def != nil && def.Kind == ast.Object &&
+			!strings.HasSuffix(def.Name, connection)
 	}
 
 	return false, false
@@ -552,7 +559,9 @@ func bindAlongside(
 // the call names every one it requires. An optional variable the tool does
 // not declare is one the tool's spec sets as the screen does (openOnly on a
 // worker's swaps), returned as set; a required one, or an input object, the
-// tool could not send.
+// tool could not send. A read that takes no variable at all is about the
+// whole organization (the factoring queue's totals) and is made on every
+// call.
 func alongsideKeys(
 	list *binding,
 	chosen *operation,
@@ -574,7 +583,7 @@ func alongsideKeys(
 			"list's own call does not supply it", list.Tool, name, variable.Variable,
 			variable.Type.String())
 	}
-	if len(keys) == 0 {
+	if len(keys) == 0 && len(set) > 0 {
 		return nil, nil, fmt.Sprintf("%s reads %s alongside, a read keyed by nothing the "+
 			"call names", list.Tool, name)
 	}

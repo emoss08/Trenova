@@ -56,27 +56,13 @@ var (
 		"integration.accountingSystem",
 		accountingsync.AccountingSystems(),
 	)
-	FactoringQueueVerdicts      = Source("factoring.verdict", factoring.QueueVerdicts())
-	FactoringNoaStatuses        = Source("factoring.noaStatus", factoring.AllNoaStatuses())
-	FactoringSubmissionStatuses = Source(
-		"factoring.submissionStatus",
-		factoring.AllSubmissionStatuses(),
-	)
 	FactoringFundingOutcomes = Source(
 		"factoring.fundingOutcome",
 		factoring.AllFundingOutcomes(),
 	)
-	FactoringRemittanceStatuses = Source(
-		"factoring.remittanceStatus",
-		factoring.AllRemittanceStatuses(),
-	)
 	FactoringRemittanceLineKinds = Source(
 		"factoring.remittanceLineKind",
 		factoring.AllRemittanceLineKinds(),
-	)
-	FactoringRemittanceMatchStatuses = Source(
-		"factoring.remittanceMatchStatus",
-		factoring.AllRemittanceMatchStatuses(),
 	)
 	FactoringRemittanceLineActions = Source(
 		"factoring.remittanceLineAction",

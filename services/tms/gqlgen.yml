@@ -1986,6 +1986,8 @@ models:
         resolver: true
       factoringCompany:
         resolver: true
+      lines:
+        resolver: true
   FactoringRemittanceSuggestion:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceSuggestion

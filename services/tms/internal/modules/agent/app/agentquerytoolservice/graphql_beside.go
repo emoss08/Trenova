@@ -225,7 +225,7 @@ func matchAlongside(
 				tool, beside.operation, how)
 		}
 		for name := range beside.inputs {
-			if len(bound[idx].Keys) > 0 && !slices.Contains(bound[idx].Set, name) {
+			if bound[idx].Input == "" && !slices.Contains(bound[idx].Set, name) {
 				return nil, fmt.Errorf("%s reads %s %s by the call's own %s; it takes "+
 					"no %s of the spec's", tool, beside.operation, how,
 					strings.Join(bound[idx].Keys, ", "), name)

@@ -84,21 +84,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 |---|---|---|---|---|---|---|
 | `exception_list_watchtower_items` | partial | watchtowerItems | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | Same WatchtowerService.List. kinds, severities, assignedToMe, unassigned, overdueOnly, orderByDue, includeResolved (-> unresolvedOnly:false) map; unseenOnly has no input (connection returns seenAt, so it can only be filtered client-side). Stays on the repository path (Operations PR): each item carries taint from its own source (inbound mail, an EDI file, a weather alert, an agent run, the run behind a proposal or plan), worked out per item from the run records, which the GraphQL path's one record kind per binding cannot mark; and unseenOnly needs an input. |
 
-## factoring
-
-| tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
-|---|---|---|---|---|---|---|
-| `factoring_get_agreement` | op | factoringAgreements | FactoringAgreements | unpaged list | factoringCompanyId arg | Same AgreementService.List. |
-| `factoring_get_readiness` | op | invoice (factoringState) [root factoringReadiness has no op] | InvoiceFactoring | n/a | id | factoringReadiness(invoiceId) calls the same ReadinessService.GetReadiness but no persisted op uses it; InvoiceFactoring selects invoice.factoringState. |
-| `factoring_get_remittance` | op | factoringRemittance (+ factoringRemittanceLines) | FactoringRemittanceDetail (+ FactoringRemittanceLines) | lines: cursor | lines: bespoke FactoringRemittanceLineListInput | Same RemittanceService.Get; matchStatuses -> line list filter. |
-| `factoring_get_reserve_balance` | op | factoringReserveBalance | FactoringReserveBalance | n/a | factoringCompanyId arg | Same LedgerService.GetBalance. |
-| `factoring_get_submission` | op | factoringSubmission | FactoringSubmissionDetail | n/a | id | Same SubmissionService.Get. |
-| `factoring_list_noas` | op | factoringNoas | FactoringNoas | cursor | bespoke FactoringNoaListInput (table + customerId, factoringCompanyId, statuses) | Same NoaService.List. |
-| `factoring_list_readiness` | op | factoringInvoiceStates (+ factoringSummary) | FactoringInvoiceStateTable (+ FactoringSummary) | cursor | bespoke FactoringInvoiceStateListInput (table + verdicts, factoringCompanyId, customerId) | Same ReadinessService.ListStates/Summary. |
-| `factoring_list_remittances` | op | factoringRemittances | FactoringRemittanceTable (alt FactoringRemittances) | cursor | bespoke FactoringRemittanceListInput (table + factoringCompanyId, inboundMessageId, statuses) | Same RemittanceService.ListConnection. Two ops on the root; Table picked per rule. |
-| `factoring_list_submissions` | op | factoringSubmissions | FactoringSubmissionTable | cursor | bespoke FactoringSubmissionListInput (table + factoringCompanyId, statuses) | Same SubmissionService.List. |
-
-
 ## home
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
@@ -243,8 +228,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 59 |
-| op, converted (rows removed) | 60 |
+| op, not yet converted | 50 |
+| op, converted (rows removed) | 69 |
 | field-no-op, not yet converted | 3 |
 | field-no-op, converted (rows removed) | 3 |
 | partial, not yet converted | 13 |

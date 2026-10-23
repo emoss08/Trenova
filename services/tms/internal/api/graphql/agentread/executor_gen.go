@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ediexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentmanufacturerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmenttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringcompanyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalperiodexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetsafetyexec"
@@ -26,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazardousmaterialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iftaexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalentryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalreversalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationcategoryexec"
@@ -73,6 +76,8 @@ import (
 	ediresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/ediresolver"
 	equipmentmanufacturerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentmanufacturerresolver"
 	equipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmenttyperesolver"
+	factoringcompanyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/factoringcompanyresolver"
+	factoringresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/factoringresolver"
 	fiscalperiodresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalperiodresolver"
 	fleetcoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	fleetsafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
@@ -83,6 +88,7 @@ import (
 	hazardousmaterialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/hazardousmaterialresolver"
 	holdreasonresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
 	iftaresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/iftaresolver"
+	invoiceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/invoiceresolver"
 	journalentryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/journalentryresolver"
 	journalreversalresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/journalreversalresolver"
 	locationcategoryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationcategoryresolver"
@@ -122,6 +128,7 @@ import (
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -147,6 +154,7 @@ import (
 	carrierintelservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	carrierservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	customerservice "github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
+	factoringcompanyservice "github.com/emoss08/trenova/internal/modules/parties/app/factoringcompanyservice"
 	locationcategoryservice "github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
 	locationservice "github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
@@ -225,6 +233,14 @@ type ResolverParams struct {
 	EDIService                   *ediservice.Service
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
+	FactoringAgreementService    factoringports.AgreementService
+	FactoringCompanyService      *factoringcompanyservice.Service
+	FactoringLedgerService       factoringports.LedgerService
+	FactoringNoaService          factoringports.NoaService
+	FactoringReadinessService    factoringports.ReadinessService
+	FactoringRemittanceService   factoringports.RemittanceService
+	FactoringSubmissionService   factoringports.SubmissionService
+	FactoringTransportService    factoringports.TransportService
 	FiscalPeriodService          *fiscalperiodservice.Service
 	FleetCodeService             *fleetcodeservice.Service
 	FormulaLibraryService        *formulalibraryservice.Service
@@ -299,6 +315,8 @@ var shards = []*gqlexec.Shard{
 	ediexec.Shard,
 	equipmentmanufacturerexec.Shard,
 	equipmenttypeexec.Shard,
+	factoringexec.Shard,
+	factoringcompanyexec.Shard,
 	fiscalperiodexec.Shard,
 	fleetcodeexec.Shard,
 	fleetsafetyexec.Shard,
@@ -309,6 +327,7 @@ var shards = []*gqlexec.Shard{
 	hazardousmaterialexec.Shard,
 	holdreasonexec.Shard,
 	iftaexec.Shard,
+	invoiceexec.Shard,
 	journalentryexec.Shard,
 	journalreversalexec.Shard,
 	locationexec.Shard,
@@ -555,6 +574,56 @@ var operations = []Operation{
 		Name:     "ServiceFailureTable",
 		Hash:     "sha256:802d21c82ae8c40acf8a3e43537d88efc7781983e248ad672961a74b46c52bd0",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceFailureTableRowFields on ServiceFailure { actualArrival detectedAt gracePeriodMinutes id internalNotes lateMinutes notes number reasonCode { code id label } reasonCodeId scheduledCutoff shipment { bol id proNumber } shipmentId shipmentMoveId source status stop { id location { city code id name state { abbreviation } } locationId sequence type } stopId stopType type version x12ExceptionCode x12ReasonCodeOverride x12StatusCodeOverride } query ServiceFailureTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!, $shipmentId: ID) { serviceFailures(input: $input, shipmentId: $shipmentId) { edges { node { ...ServiceFailureTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFactoringReadiness",
+		Hash:     "sha256:bd784b36bf1d48d076c04f024523a62ec71faec6ed5c2eeb4eb1aa0d5d2744f3",
+		Document: "fragment DeskFactoringInvoiceStateFields on FactoringInvoiceState { checks { code documentTypeId documentTypeName fix message passed shipmentId shipmentPro } customerId evaluatedAt factoringCompanyId failedChecks invoiceId openBalanceMinor readySince verdict } query DeskFactoringReadiness($invoiceId: ID!) { factoringReadiness(invoiceId: $invoiceId) { ...DeskFactoringInvoiceStateFields } }",
+	},
+	{
+		Name:     "DeskFactoringRemittance",
+		Hash:     "sha256:a1758dbf17ecd35d86c69e6bcaa3531d61ff95516b411c4a9bc0932bd2e4839e",
+		Document: "fragment DeskFactoringRemittanceFields on FactoringRemittance { appliedAt appliedCount currencyCode defaultKind discardReason error exceptionCount factoringCompany { code id name } factoringCompanyId fileName id lineCount matchedCount remittedOn source sourceFormat stagedAt status totalCashMinor unmappedHeaders version } query DeskFactoringRemittance($id: ID!, $matchStatuses: [FactoringRemittanceMatchStatus!]) { factoringRemittance(id: $id) { lines(matchStatuses: $matchStatuses) { advanceMinor cashMinor cells debtorName error faceMinor factorReference feeMinor id ignoredReason invoiceNumber kind matchStatus matchedBy matchedInvoiceNumber matchedSubmissionId occurredOn reason reserveEntryId reserveMinor rowNumber score submissionItemId suggestions { invoiceNumber itemId reason score submissionId } } ...DeskFactoringRemittanceFields } }",
+	},
+	{
+		Name:     "FactoringReserveBalance",
+		Hash:     "sha256:6fea8f65179421c995c0898686cd9f6fe366fc8d1ca2145a0149edb64b3a6af2",
+		Document: "query FactoringReserveBalance($factoringCompanyId: ID!) { factoringReserveBalance(factoringCompanyId: $factoringCompanyId) { advancedMinor chargedBackMinor entryCount factoringCompanyId feeMinor lastOccurredOn liabilityMinor releasedMinor reserveMinor } }",
+	},
+	{
+		Name:     "DeskFactoringSubmission",
+		Hash:     "sha256:5c7730826d90bc3fff0c3a99174b4ba7e5666010b599b8397c89ce234c3bcda6",
+		Document: "fragment DeskFactoringSubmissionFields on FactoringSubmission { attempts cancelReason createdAt currencyCode expectedAdvanceMinor expectedFeeMinor expectedReserveMinor faceMinor factoringCompany { code id name } factoringCompanyId failedAt id invoiceCount lastError number sentAt status transportMethod transportTarget version } query DeskFactoringSubmission($id: ID!) { factoringSubmission(id: $id) { items { advanceMinor chargebackReason chargedBackOn customerId expectedAdvanceMinor expectedDays expectedFeeMinor expectedReserveMinor faceMinor feeMinor fundedOn id invoiceId invoiceNumber packetDocumentId rejectionReason reserveMinor settledOn status } ...DeskFactoringSubmissionFields } }",
+	},
+	{
+		Name:     "DeskFactoringAgreements",
+		Hash:     "sha256:5830bdf2146c822817a6213365acfae32c0e49de6f9809559715950ad7b5f746",
+		Document: "query DeskFactoringAgreements($factoringCompanyId: ID!) { factoringAgreements(factoringCompanyId: $factoringCompanyId) { accountingTreatment advanceRateBp chargebackWindowDays documentTypes { id name } effectiveFrom effectiveTo factoringCompanyId feeTiers { daysFrom daysTo flatMinor rateBp } fundingDays id minimumFeeMinor recourse reserveRateBp status submissionTime } }",
+	},
+	{
+		Name:     "DeskFactoringNoas",
+		Hash:     "sha256:047e51fb00b9650be00a58a5b0c0abbd548529991d4ef0db0f8e66a4f50c4df1",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskFactoringNoas($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringNoas(input: { table: $input }) { edges { node { acknowledgedAt customer { code id name } customerId expiresAt factoringCompany { code id name } factoringCompanyId id releaseReason releasedAt sentAt sentTo status version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFactoringInvoiceStates",
+		Hash:     "sha256:95c10756b01cd87a2425659a35b3eef347869041ca0cdd5c2e66bd116ca90915",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringInvoiceStateFields on FactoringInvoiceState { checks { code documentTypeId documentTypeName fix message passed shipmentId shipmentPro } customerId evaluatedAt factoringCompanyId failedChecks invoiceId openBalanceMinor readySince verdict } query DeskFactoringInvoiceStates($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringInvoiceStates(input: { table: $input }) { edges { node { ...DeskFactoringInvoiceStateFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "FactoringSummary",
+		Hash:     "sha256:a3630012353a56eda687dfdff013185b2e091e3497b0c464995bbecfc536c3ae",
+		Document: "query FactoringSummary { factoringSummary { chargebacksDue { amountMinor count } funded { amountMinor count } notReady { amountMinor count } ready { amountMinor count } readyUnsubmitted { amountMinor count } reserveHeld { amountMinor count } submitted { amountMinor count } } }",
+	},
+	{
+		Name:     "DeskFactoringRemittances",
+		Hash:     "sha256:87d279c9b8012e8fcca4995f44bc0bef38948bfcda2f710e6e17677e83437f6f",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringRemittanceFields on FactoringRemittance { appliedAt appliedCount currencyCode defaultKind discardReason error exceptionCount factoringCompany { code id name } factoringCompanyId fileName id lineCount matchedCount remittedOn source sourceFormat stagedAt status totalCashMinor unmappedHeaders version } query DeskFactoringRemittances($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringRemittances(input: { table: $input }) { edges { node { ...DeskFactoringRemittanceFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFactoringSubmissions",
+		Hash:     "sha256:3f8ac4bc54493b3b82ba21946befe6d3f0b91bc19c6e9a952c9281ab9fba45cb",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringSubmissionFields on FactoringSubmission { attempts cancelReason createdAt currencyCode expectedAdvanceMinor expectedFeeMinor expectedReserveMinor faceMinor factoringCompany { code id name } factoringCompanyId failedAt id invoiceCount lastError number sentAt status transportMethod transportTarget version } query DeskFactoringSubmissions($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringSubmissions(input: { table: $input }) { edges { node { ...DeskFactoringSubmissionFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskFormulaLibraryCard",
@@ -925,6 +994,20 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                 core,
 		EquipmentTypeService: p.EquipmentTypeService,
 	}
+	factoringDeps := &factoringresolver.Deps{
+		Core:                       core,
+		FactoringAgreementService:  p.FactoringAgreementService,
+		FactoringNoaService:        p.FactoringNoaService,
+		FactoringReadinessService:  p.FactoringReadinessService,
+		FactoringSubmissionService: p.FactoringSubmissionService,
+		FactoringLedgerService:     p.FactoringLedgerService,
+		FactoringRemittanceService: p.FactoringRemittanceService,
+		FactoringTransportService:  p.FactoringTransportService,
+	}
+	factoringcompanyDeps := &factoringcompanyresolver.Deps{
+		Core:                    core,
+		FactoringCompanyService: p.FactoringCompanyService,
+	}
 	fiscalperiodDeps := &fiscalperiodresolver.Deps{
 		Core:                core,
 		FiscalPeriodService: p.FiscalPeriodService,
@@ -969,6 +1052,11 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                       core,
 		IftaService:                p.IFTAService,
 		DistanceCalculationService: p.DistanceCalculationService,
+	}
+	invoiceDeps := &invoiceresolver.Deps{
+		Core:            core,
+		CustomerService: p.CustomerService,
+		InvoiceService:  p.InvoiceService,
 	}
 	journalentryDeps := &journalentryresolver.Deps{
 		Core:                core,
@@ -1107,7 +1195,12 @@ func NewSchema(p ResolverParams) Schema {
 		DriverPortalService:   p.DriverPortalService,
 	}
 	customerBillingProfile := &customerBillingProfileResolver{
-		customerCustomerBillingProfile: &customerCustomerBillingProfile{Deps: customerDeps},
+		customerCustomerBillingProfile:  &customerCustomerBillingProfile{Deps: customerDeps},
+		factoringCustomerBillingProfile: &factoringCustomerBillingProfile{Deps: factoringDeps},
+	}
+	invoice := &invoiceResolver{
+		factoringInvoice: &factoringInvoice{Deps: factoringDeps},
+		invoiceInvoice:   &invoiceInvoice{Deps: invoiceDeps},
 	}
 	mutation := &mutationResolver{
 		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
@@ -1117,10 +1210,13 @@ func NewSchema(p ResolverParams) Schema {
 		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
+		factoringMutation:             &factoringMutation{Deps: factoringDeps},
+		factoringcompanyMutation:      &factoringcompanyMutation{Deps: factoringcompanyDeps},
 		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
 		fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
 		fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
 		iftaMutation:                  &iftaMutation{Deps: iftaDeps},
+		invoiceMutation:               &invoiceMutation{Deps: invoiceDeps},
 		journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
 		orderMutation:                 &orderMutation{Deps: orderDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
@@ -1154,6 +1250,8 @@ func NewSchema(p ResolverParams) Schema {
 		ediQuery:                      &ediQuery{Deps: ediDeps},
 		equipmentmanufacturerQuery:    &equipmentmanufacturerQuery{Deps: equipmentmanufacturerDeps},
 		equipmenttypeQuery:            &equipmenttypeQuery{Deps: equipmenttypeDeps},
+		factoringQuery:                &factoringQuery{Deps: factoringDeps},
+		factoringcompanyQuery:         &factoringcompanyQuery{Deps: factoringcompanyDeps},
 		fiscalperiodQuery:             &fiscalperiodQuery{Deps: fiscalperiodDeps},
 		fleetcodeQuery:                &fleetcodeQuery{Deps: fleetcodeDeps},
 		fleetsafetyQuery:              &fleetsafetyQuery{Deps: fleetsafetyDeps},
@@ -1164,6 +1262,7 @@ func NewSchema(p ResolverParams) Schema {
 		hazardousmaterialQuery:        &hazardousmaterialQuery{Deps: hazardousmaterialDeps},
 		holdreasonQuery:               &holdreasonQuery{Deps: holdreasonDeps},
 		iftaQuery:                     &iftaQuery{Deps: iftaDeps},
+		invoiceQuery:                  &invoiceQuery{Deps: invoiceDeps},
 		journalentryQuery:             &journalentryQuery{Deps: journalentryDeps},
 		journalreversalQuery:          &journalreversalQuery{Deps: journalreversalDeps},
 		locationQuery:                 &locationQuery{Deps: locationDeps},
@@ -1197,6 +1296,7 @@ func NewSchema(p ResolverParams) Schema {
 
 	return newSchema(shards, map[string]func() any{
 		"CustomerBillingProfile":    func() any { return customerBillingProfile },
+		"Invoice":                   func() any { return invoice },
 		"Mutation":                  func() any { return mutation },
 		"Query":                     func() any { return query },
 		"AccessorialCharge":         func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
@@ -1282,6 +1382,24 @@ func NewSchema(p ResolverParams) Schema {
 		"EdiPartnerDocumentProfile":    func() any { return &ediresolver.EdiPartnerDocumentProfileResolver{Deps: ediDeps} },
 		"EdiTemplate":                  func() any { return &ediresolver.EdiTemplateResolver{Deps: ediDeps} },
 		"EdiTransfer":                  func() any { return &ediresolver.EdiTransferResolver{Deps: ediDeps} },
+		"FactoringAgreement":           func() any { return &factoringresolver.FactoringAgreementResolver{Deps: factoringDeps} },
+		"FactoringCheck":               func() any { return &factoringresolver.FactoringCheckResolver{Deps: factoringDeps} },
+		"FactoringCompany":             func() any { return &factoringresolver.FactoringCompanyResolver{Deps: factoringDeps} },
+		"FactoringFundingPlan":         func() any { return &factoringresolver.FactoringFundingPlanResolver{Deps: factoringDeps} },
+		"FactoringInvoiceState":        func() any { return &factoringresolver.FactoringInvoiceStateResolver{Deps: factoringDeps} },
+		"FactoringMovement":            func() any { return &factoringresolver.FactoringMovementResolver{Deps: factoringDeps} },
+		"FactoringNoa":                 func() any { return &factoringresolver.FactoringNoaResolver{Deps: factoringDeps} },
+		"FactoringPlannedLine":         func() any { return &factoringresolver.FactoringPlannedLineResolver{Deps: factoringDeps} },
+		"FactoringPlannedMovement":     func() any { return &factoringresolver.FactoringPlannedMovementResolver{Deps: factoringDeps} },
+		"FactoringRemittance":          func() any { return &factoringresolver.FactoringRemittanceResolver{Deps: factoringDeps} },
+		"FactoringRemittanceLine":      func() any { return &factoringresolver.FactoringRemittanceLineResolver{Deps: factoringDeps} },
+		"FactoringRemittancePlan":      func() any { return &factoringresolver.FactoringRemittancePlanResolver{Deps: factoringDeps} },
+		"FactoringReserveEntry":        func() any { return &factoringresolver.FactoringReserveEntryResolver{Deps: factoringDeps} },
+		"FactoringReserveMovementPlan": func() any { return &factoringresolver.FactoringReserveMovementPlanResolver{Deps: factoringDeps} },
+		"FactoringSubmission":          func() any { return &factoringresolver.FactoringSubmissionResolver{Deps: factoringDeps} },
+		"FactoringSubmissionItem":      func() any { return &factoringresolver.FactoringSubmissionItemResolver{Deps: factoringDeps} },
+		"FactoringSubmissionPlan":      func() any { return &factoringresolver.FactoringSubmissionPlanResolver{Deps: factoringDeps} },
+		"FactoringTransport":           func() any { return &factoringresolver.FactoringTransportResolver{Deps: factoringDeps} },
 		"FleetSafetyRank":              func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
 		"FleetSafetyTerminal":          func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
 		"FormulaLibraryImport":         func() any { return &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps} },
@@ -1306,6 +1424,8 @@ func NewSchema(p ResolverParams) Schema {
 		"IFTAReturnLine":               func() any { return &iftaresolver.IFTAReturnLineResolver{Deps: iftaDeps} },
 		"IFTAReturnProblem":            func() any { return &iftaresolver.IFTAReturnProblemResolver{Deps: iftaDeps} },
 		"IFTATaxRate":                  func() any { return &iftaresolver.IFTATaxRateResolver{Deps: iftaDeps} },
+		"InvoiceChargeGroup":           func() any { return &invoiceresolver.InvoiceChargeGroupResolver{Deps: invoiceDeps} },
+		"InvoiceLine":                  func() any { return &invoiceresolver.InvoiceLineResolver{Deps: invoiceDeps} },
 		"JournalCardLine":              func() any { return &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps} },
 		"JournalCardPosting":           func() any { return &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps} },
 		"JournalEntry":                 func() any { return &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps} },
@@ -1376,6 +1496,12 @@ func Operations() []Operation {
 
 type customerBillingProfileResolver struct {
 	*customerCustomerBillingProfile
+	*factoringCustomerBillingProfile
+}
+
+type invoiceResolver struct {
+	*factoringInvoice
+	*invoiceInvoice
 }
 
 type mutationResolver struct {
@@ -1386,10 +1512,13 @@ type mutationResolver struct {
 	*dispatchconsoleMutation
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
+	*factoringMutation
+	*factoringcompanyMutation
 	*fleetsafetyMutation
 	*fuelpurchaseMutation
 	*fuelsurchargeMutation
 	*iftaMutation
+	*invoiceMutation
 	*journalentryMutation
 	*orderMutation
 	*performancereviewMutation
@@ -1424,6 +1553,8 @@ type queryResolver struct {
 	*ediQuery
 	*equipmentmanufacturerQuery
 	*equipmenttypeQuery
+	*factoringQuery
+	*factoringcompanyQuery
 	*fiscalperiodQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
@@ -1434,6 +1565,7 @@ type queryResolver struct {
 	*hazardousmaterialQuery
 	*holdreasonQuery
 	*iftaQuery
+	*invoiceQuery
 	*journalentryQuery
 	*journalreversalQuery
 	*locationQuery
@@ -1466,86 +1598,95 @@ type queryResolver struct {
 }
 
 type (
-	customerCustomerBillingProfile = customerresolver.CustomerBillingProfileResolver
-	accountingsyncMutation         = accountingsyncresolver.MutationResolver
-	carrierintelligenceMutation    = carrierintelligenceresolver.MutationResolver
-	carriersettlementMutation      = carriersettlementresolver.MutationResolver
-	detentionMutation              = detentionresolver.MutationResolver
-	dispatchconsoleMutation        = dispatchconsoleresolver.MutationResolver
-	equipmentmanufacturerMutation  = equipmentmanufacturerresolver.MutationResolver
-	equipmenttypeMutation          = equipmenttyperesolver.MutationResolver
-	fleetsafetyMutation            = fleetsafetyresolver.MutationResolver
-	fuelpurchaseMutation           = fuelpurchaseresolver.MutationResolver
-	fuelsurchargeMutation          = fuelsurchargeresolver.MutationResolver
-	iftaMutation                   = iftaresolver.MutationResolver
-	journalentryMutation           = journalentryresolver.MutationResolver
-	orderMutation                  = orderresolver.MutationResolver
-	performancereviewMutation      = performancereviewresolver.MutationResolver
-	schedulingMutation             = schedulingresolver.MutationResolver
-	shipmentMutation               = shipmentresolver.MutationResolver
-	telematicsMutation             = telematicsresolver.MutationResolver
-	tenantMutation                 = tenantresolver.MutationResolver
-	tractorMutation                = tractorresolver.MutationResolver
-	trailerMutation                = trailerresolver.MutationResolver
-	workerMutation                 = workerresolver.MutationResolver
-	workerchecklistMutation        = workerchecklistresolver.MutationResolver
-	workercredentialMutation       = workercredentialresolver.MutationResolver
-	workerdqfMutation              = workerdqfresolver.MutationResolver
-	workerdrugalcoholMutation      = workerdrugalcoholresolver.MutationResolver
-	workerinjuryMutation           = workerinjuryresolver.MutationResolver
-	workerleaveMutation            = workerleaveresolver.MutationResolver
-	workersafetyMutation           = workersafetyresolver.MutationResolver
-	workertrainingMutation         = workertrainingresolver.MutationResolver
-	accessorialchargeQuery         = accessorialchargeresolver.QueryResolver
-	accountingsyncQuery            = accountingsyncresolver.QueryResolver
-	carrierQuery                   = carrierresolver.QueryResolver
-	carrierintelligenceQuery       = carrierintelligenceresolver.QueryResolver
-	carriersettlementQuery         = carriersettlementresolver.QueryResolver
-	commodityQuery                 = commodityresolver.QueryResolver
-	customerQuery                  = customerresolver.QueryResolver
-	detentionQuery                 = detentionresolver.QueryResolver
-	dispatchconsoleQuery           = dispatchconsoleresolver.QueryResolver
-	documenttypeQuery              = documenttyperesolver.QueryResolver
-	ediQuery                       = ediresolver.QueryResolver
-	equipmentmanufacturerQuery     = equipmentmanufacturerresolver.QueryResolver
-	equipmenttypeQuery             = equipmenttyperesolver.QueryResolver
-	fiscalperiodQuery              = fiscalperiodresolver.QueryResolver
-	fleetcodeQuery                 = fleetcoderesolver.QueryResolver
-	fleetsafetyQuery               = fleetsafetyresolver.QueryResolver
-	formulalibraryQuery            = formulalibraryresolver.QueryResolver
-	formulatemplateQuery           = formulatemplateresolver.QueryResolver
-	fuelpurchaseQuery              = fuelpurchaseresolver.QueryResolver
-	fuelsurchargeQuery             = fuelsurchargeresolver.QueryResolver
-	hazardousmaterialQuery         = hazardousmaterialresolver.QueryResolver
-	holdreasonQuery                = holdreasonresolver.QueryResolver
-	iftaQuery                      = iftaresolver.QueryResolver
-	journalentryQuery              = journalentryresolver.QueryResolver
-	journalreversalQuery           = journalreversalresolver.QueryResolver
-	locationQuery                  = locationresolver.QueryResolver
-	locationcategoryQuery          = locationcategoryresolver.QueryResolver
-	manualjournalQuery             = manualjournalresolver.QueryResolver
-	orderQuery                     = orderresolver.QueryResolver
-	performancereviewQuery         = performancereviewresolver.QueryResolver
-	rateQuery                      = rateresolver.QueryResolver
-	recurringshipmentQuery         = recurringshipmentresolver.QueryResolver
-	schedulingQuery                = schedulingresolver.QueryResolver
-	servicefailureQuery            = servicefailureresolver.QueryResolver
-	servicefailurereasoncodeQuery  = servicefailurereasoncoderesolver.QueryResolver
-	servicetypeQuery               = servicetyperesolver.QueryResolver
-	shipmentQuery                  = shipmentresolver.QueryResolver
-	shipmenttypeQuery              = shipmenttyperesolver.QueryResolver
-	telematicsQuery                = telematicsresolver.QueryResolver
-	tenantQuery                    = tenantresolver.QueryResolver
-	tenderQuery                    = tenderresolver.QueryResolver
-	tractorQuery                   = tractorresolver.QueryResolver
-	trailerQuery                   = trailerresolver.QueryResolver
-	workerQuery                    = workerresolver.QueryResolver
-	workerchecklistQuery           = workerchecklistresolver.QueryResolver
-	workercredentialQuery          = workercredentialresolver.QueryResolver
-	workerdqfQuery                 = workerdqfresolver.QueryResolver
-	workerdrugalcoholQuery         = workerdrugalcoholresolver.QueryResolver
-	workerinjuryQuery              = workerinjuryresolver.QueryResolver
-	workerleaveQuery               = workerleaveresolver.QueryResolver
-	workersafetyQuery              = workersafetyresolver.QueryResolver
-	workertrainingQuery            = workertrainingresolver.QueryResolver
+	customerCustomerBillingProfile  = customerresolver.CustomerBillingProfileResolver
+	factoringCustomerBillingProfile = factoringresolver.CustomerBillingProfileResolver
+	factoringInvoice                = factoringresolver.InvoiceResolver
+	invoiceInvoice                  = invoiceresolver.InvoiceResolver
+	accountingsyncMutation          = accountingsyncresolver.MutationResolver
+	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
+	carriersettlementMutation       = carriersettlementresolver.MutationResolver
+	detentionMutation               = detentionresolver.MutationResolver
+	dispatchconsoleMutation         = dispatchconsoleresolver.MutationResolver
+	equipmentmanufacturerMutation   = equipmentmanufacturerresolver.MutationResolver
+	equipmenttypeMutation           = equipmenttyperesolver.MutationResolver
+	factoringMutation               = factoringresolver.MutationResolver
+	factoringcompanyMutation        = factoringcompanyresolver.MutationResolver
+	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
+	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
+	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
+	iftaMutation                    = iftaresolver.MutationResolver
+	invoiceMutation                 = invoiceresolver.MutationResolver
+	journalentryMutation            = journalentryresolver.MutationResolver
+	orderMutation                   = orderresolver.MutationResolver
+	performancereviewMutation       = performancereviewresolver.MutationResolver
+	schedulingMutation              = schedulingresolver.MutationResolver
+	shipmentMutation                = shipmentresolver.MutationResolver
+	telematicsMutation              = telematicsresolver.MutationResolver
+	tenantMutation                  = tenantresolver.MutationResolver
+	tractorMutation                 = tractorresolver.MutationResolver
+	trailerMutation                 = trailerresolver.MutationResolver
+	workerMutation                  = workerresolver.MutationResolver
+	workerchecklistMutation         = workerchecklistresolver.MutationResolver
+	workercredentialMutation        = workercredentialresolver.MutationResolver
+	workerdqfMutation               = workerdqfresolver.MutationResolver
+	workerdrugalcoholMutation       = workerdrugalcoholresolver.MutationResolver
+	workerinjuryMutation            = workerinjuryresolver.MutationResolver
+	workerleaveMutation             = workerleaveresolver.MutationResolver
+	workersafetyMutation            = workersafetyresolver.MutationResolver
+	workertrainingMutation          = workertrainingresolver.MutationResolver
+	accessorialchargeQuery          = accessorialchargeresolver.QueryResolver
+	accountingsyncQuery             = accountingsyncresolver.QueryResolver
+	carrierQuery                    = carrierresolver.QueryResolver
+	carrierintelligenceQuery        = carrierintelligenceresolver.QueryResolver
+	carriersettlementQuery          = carriersettlementresolver.QueryResolver
+	commodityQuery                  = commodityresolver.QueryResolver
+	customerQuery                   = customerresolver.QueryResolver
+	detentionQuery                  = detentionresolver.QueryResolver
+	dispatchconsoleQuery            = dispatchconsoleresolver.QueryResolver
+	documenttypeQuery               = documenttyperesolver.QueryResolver
+	ediQuery                        = ediresolver.QueryResolver
+	equipmentmanufacturerQuery      = equipmentmanufacturerresolver.QueryResolver
+	equipmenttypeQuery              = equipmenttyperesolver.QueryResolver
+	factoringQuery                  = factoringresolver.QueryResolver
+	factoringcompanyQuery           = factoringcompanyresolver.QueryResolver
+	fiscalperiodQuery               = fiscalperiodresolver.QueryResolver
+	fleetcodeQuery                  = fleetcoderesolver.QueryResolver
+	fleetsafetyQuery                = fleetsafetyresolver.QueryResolver
+	formulalibraryQuery             = formulalibraryresolver.QueryResolver
+	formulatemplateQuery            = formulatemplateresolver.QueryResolver
+	fuelpurchaseQuery               = fuelpurchaseresolver.QueryResolver
+	fuelsurchargeQuery              = fuelsurchargeresolver.QueryResolver
+	hazardousmaterialQuery          = hazardousmaterialresolver.QueryResolver
+	holdreasonQuery                 = holdreasonresolver.QueryResolver
+	iftaQuery                       = iftaresolver.QueryResolver
+	invoiceQuery                    = invoiceresolver.QueryResolver
+	journalentryQuery               = journalentryresolver.QueryResolver
+	journalreversalQuery            = journalreversalresolver.QueryResolver
+	locationQuery                   = locationresolver.QueryResolver
+	locationcategoryQuery           = locationcategoryresolver.QueryResolver
+	manualjournalQuery              = manualjournalresolver.QueryResolver
+	orderQuery                      = orderresolver.QueryResolver
+	performancereviewQuery          = performancereviewresolver.QueryResolver
+	rateQuery                       = rateresolver.QueryResolver
+	recurringshipmentQuery          = recurringshipmentresolver.QueryResolver
+	schedulingQuery                 = schedulingresolver.QueryResolver
+	servicefailureQuery             = servicefailureresolver.QueryResolver
+	servicefailurereasoncodeQuery   = servicefailurereasoncoderesolver.QueryResolver
+	servicetypeQuery                = servicetyperesolver.QueryResolver
+	shipmentQuery                   = shipmentresolver.QueryResolver
+	shipmenttypeQuery               = shipmenttyperesolver.QueryResolver
+	telematicsQuery                 = telematicsresolver.QueryResolver
+	tenantQuery                     = tenantresolver.QueryResolver
+	tenderQuery                     = tenderresolver.QueryResolver
+	tractorQuery                    = tractorresolver.QueryResolver
+	trailerQuery                    = trailerresolver.QueryResolver
+	workerQuery                     = workerresolver.QueryResolver
+	workerchecklistQuery            = workerchecklistresolver.QueryResolver
+	workercredentialQuery           = workercredentialresolver.QueryResolver
+	workerdqfQuery                  = workerdqfresolver.QueryResolver
+	workerdrugalcoholQuery          = workerdrugalcoholresolver.QueryResolver
+	workerinjuryQuery               = workerinjuryresolver.QueryResolver
+	workerleaveQuery                = workerleaveresolver.QueryResolver
+	workersafetyQuery               = workersafetyresolver.QueryResolver
+	workertrainingQuery             = workertrainingresolver.QueryResolver
 )

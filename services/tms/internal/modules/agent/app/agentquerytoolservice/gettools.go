@@ -235,7 +235,7 @@ func graphQLGetSpecs() []getSpec {
 		workerHOSGetSpec(),
 		formulaTemplateGetSpec(),
 		formulaLibraryGetSpec(),
-	}, slices.Concat(accountingGetSpecs(), ediGetSpecs())...)
+	}, slices.Concat(accountingGetSpecs(), ediGetSpecs(), factoringGetSpecs())...)
 }
 
 // graphQLGetProviders registers each spec as its own get tool.

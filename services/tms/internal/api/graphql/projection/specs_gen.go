@@ -15221,6 +15221,12 @@ func init() {
 					Target: &FactoringCompanySpec,
 				},
 			},
+			{
+				Name: "lines",
+				Relation: &RelationSpec{
+					Target: &FactoringRemittanceLineSpec,
+				},
+			},
 		},
 	}
 

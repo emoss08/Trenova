@@ -236,6 +236,10 @@ fragment FactoringCompanyReference on FactoringCompany {
   name
 }
 
+fragment FactoringInvoiceStateReference on FactoringInvoiceState {
+  customerId
+}
+
 fragment FactoringSubmissionReference on FactoringSubmission {
   id
   number
