@@ -308,7 +308,8 @@ pub struct Tables {
 pub struct GivenCell {
     /// The table's code.
     pub code: String,
-    /// One key per axis: an exact axis's key, or a range axis's band floor.
+    /// One key per axis: an exact axis's key, a range axis's band floor, or a zip-range axis's
+    /// postal code (a range of that one code, so it also covers longer codes it starts).
     pub keys: Vec<Value>,
     /// The cell's value, or the whole cell.
     pub value: Value,
@@ -773,6 +774,7 @@ fn given_table(code: &str, axes: &[AxisRule], given: &[&GivenCell]) -> Result<Ta
             .map(|position| match position {
                 Position::Key(key) => Place::Key(key.clone()),
                 Position::Band(bounds) => Place::Floor(bounds.min),
+                Position::Span(range) => Place::Key(range.from.clone()),
             })
             .collect();
         if let Some(slot) = index.get(&key).and_then(|at| placed.get_mut(*at)) {
@@ -837,6 +839,20 @@ fn given_place(
                     return Err(unusable_key(code, key));
                 };
                 Position::Key(one.clone())
+            }
+            AxisRule::ZipRange => {
+                let keys = Table::postal_keys(code, key)?;
+                let [one] = keys.as_slice() else {
+                    return Err(unusable_key(code, key));
+                };
+                if one.is_empty() {
+                    return Err(unusable_key(code, key));
+                }
+                Position::Span(PostalRange {
+                    from: one.clone(),
+                    to: one.clone(),
+                    len: one.chars().count(),
+                })
             }
             AxisRule::Range { bound, .. } => {
                 let floor = Table::range_key(code, bound, key)?;

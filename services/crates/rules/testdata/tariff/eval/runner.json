@@ -797,6 +797,44 @@
     }
   },
   {
+    "name": "a given cell on a zip-range axis covers that code and the codes it starts",
+    "context": {
+      "tables": [
+        {
+          "code": "Lanes",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "ZipRange",
+              "label": "origin"
+            }
+          ]
+        }
+      ]
+    },
+    "tests": "tariff \"t\"\nlet rate = tables.Lanes[lane.origin.zip] ?? fail \"No lane\"\ncharge \"Linehaul\" = rate\ntest \"the code itself\" {\n  given lane.origin.zip = \"30303\"\n  given tables.Lanes[\"30303\"] = $400\n  expect total == $400\n}\ntest \"a shorter code covers the codes it starts\" {\n  given lane.origin.zip = \"30303\"\n  given tables.Lanes[\" 303 \"] = $350\n  expect total == $350\n}\ntest \"another code misses\" {\n  given lane.origin.zip = \"30404\"\n  given tables.Lanes[\"303\"] = $350\n  expect fails \"No lane\"\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "the code itself",
+          "status": "passed",
+          "failures": []
+        },
+        {
+          "name": "a shorter code covers the codes it starts",
+          "status": "passed",
+          "failures": []
+        },
+        {
+          "name": "another code misses",
+          "status": "passed",
+          "failures": []
+        }
+      ]
+    }
+  },
+  {
     "name": "a given whole cell carries its minimum and deficit flag",
     "context": {
       "tables": [
