@@ -11429,7 +11429,7 @@ export type RetryBillingTransferRunMutationVariables = Exact<{
 
 export type RetryBillingTransferRunMutation = { retryBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
 
-export type BriefingFieldsFragment = { id: string, roleKey: BriefingRoleKey, briefingDate: string, status: BriefingStatus, headline: string, narrated: boolean, readAt: number | null, sections: Array<{ key: BriefingSectionKey, title: string, summary: string, body: string | null, read: string, path: string | null, items: Array<{ label: string, value: string, path: string | null }> }> } & { ' $fragmentName'?: 'BriefingFieldsFragment' };
+export type BriefingFieldsFragment = { id: string, roleKey: BriefingRoleKey, briefingDate: string, status: BriefingStatus, headline: string, narrated: boolean, readAt: number | null, withheldSections: Array<{ key: BriefingSectionKey, title: string, partial: boolean }>, sections: Array<{ key: BriefingSectionKey, title: string, summary: string, body: string | null, read: string, path: string | null, items: Array<{ label: string, value: string, path: string | null }> }> } & { ' $fragmentName'?: 'BriefingFieldsFragment' };
 
 export type TodaysBriefingQueryVariables = Exact<{
   input: TodaysBriefingInput;

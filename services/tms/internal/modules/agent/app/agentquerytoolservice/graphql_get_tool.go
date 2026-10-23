@@ -399,7 +399,8 @@ func (t *graphQLGetTool) variables(
 }
 
 // arguments are the operation's variables other than the id, as the call
-// names them.
+// names them. A required input the call names nothing of is sent empty, as
+// the generator proved every field of it optional.
 func (t *graphQLGetTool) arguments(params *agentports.QueryToolParams) (map[string]any, error) {
 	if err := requireArguments(t.required, params.Params); err != nil {
 		return nil, err
@@ -408,7 +409,18 @@ func (t *graphQLGetTool) arguments(params *agentports.QueryToolParams) (map[stri
 		return nil, err
 	}
 
-	return compileArgs(t.params, params.Params, clockFor(params))
+	args, err := compileArgs(t.params, params.Params, clockFor(params))
+	if err != nil {
+		return nil, err
+	}
+	for _, variable := range t.read.Variables {
+		if _, set := args[variable.Name]; !set && variable.NonNull &&
+			variable.Kind == graphQLKindInput {
+			args[variable.Name] = map[string]any{}
+		}
+	}
+
+	return args, nil
 }
 
 // getKey is the variable a get's operation takes the record's id in: $id,

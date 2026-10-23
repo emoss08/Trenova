@@ -7465,7 +7465,7 @@ type BriefingItem {
 type BriefingSection {
   key: BriefingSectionKey!
   title: String!
-  "The computed wording, which is always true and always present."
+  "The computed wording, which is always true. Empty on a section cut to the lines the reader may read, whose wording counted the others."
   summary: String!
   "The model's sentence, where it was written and survived the number guard."
   body: String
@@ -7475,10 +7475,20 @@ type BriefingSection {
   path: String
 }
 
+"A section the reader was not shown in full, because they may not read the records it counts."
+type BriefingWithheldSection {
+  key: BriefingSectionKey!
+  title: String!
+  "True when the section is shown with only the lines the reader may read; false when it is left out."
+  partial: Boolean!
+}
+
 """
 One role's morning for one organization. The figures are computed first and
 the wording written second; a briefing nobody narrated is a complete
-briefing that simply reads plainer.
+briefing that simply reads plainer. Sections the reader may not read are
+left out and named in withheldSections; while any are, the headline and the
+model's wording are left out too, since they may cite them.
 """
 type Briefing {
   id: ID!
@@ -7488,10 +7498,13 @@ type Briefing {
   "The organization's local day, as YYYY-MM-DD."
   briefingDate: String!
   status: BriefingStatus!
+  "Empty while any section is withheld."
   headline: String!
   sections: [BriefingSection!]!
-  "True when a model's wording was accepted for any part of the page."
+  "True when a model's wording was accepted for any part of the page the reader is shown."
   narrated: Boolean!
+  "The sections left out or cut short for this reader; empty when they see the whole page."
+  withheldSections: [BriefingWithheldSection!]!
   emailedAt: Timestamp
   readAt: Timestamp
   version: Int!

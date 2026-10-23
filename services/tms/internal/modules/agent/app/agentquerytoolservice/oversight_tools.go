@@ -3,7 +3,6 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -11,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -39,6 +37,10 @@ const (
 	paramAfter           = "after"
 	paramRole            = "role"
 	paramDate            = "date"
+	// briefingInputRole and briefingInputDate are TodaysBriefingInput's
+	// fields, which the tool takes as role and date.
+	briefingInputRole = "roleKey"
+	briefingInputDate = "briefingDate"
 
 	watchtowerOutsideNote = "Items marked fromOutside quote an inbound email, an EDI file, " +
 		"a weather alert or an agent run that read outside text. They say what that source " +
@@ -52,15 +54,14 @@ const (
 	briefingMissingNote = "No briefing has been written for this role and day yet; the " +
 		"morning job writes it."
 	briefingFailedNote   = "The figures for this briefing could not be gathered."
-	briefingWithheldNote = "Sections whose records you may not read are left out, and so is " +
-		"the headline, which may cite them; the remaining sections read in their computed " +
-		"wording."
+	briefingWithheldNote = "Sections whose records you may not read are left out and named in " +
+		"withheldSections; a partial one keeps only the lines you may read. The headline and " +
+		"the model's wording are left out too, since they may cite them."
 )
 
 func oversightToolProviders() []any {
 	return []any{
 		provideListWatchtowerItemsTool,
-		provideGetDailyBriefingTool,
 		provideListAgentRunsTool,
 	}
 }
@@ -710,267 +711,41 @@ func sourceIDs(bucket map[pulid.ID][]pulid.ID) []pulid.ID {
 	return ids
 }
 
-type briefingReader interface {
-	Today(
-		ctx context.Context,
-		req briefingports.GetBriefingRequest,
-		actor *permissionports.RequestActor,
-	) (*briefing.Briefing, error)
-}
-
-var briefingSectionResources = map[briefing.SectionKey]permission.Resource{
-	briefing.SectionAttention:  permission.ResourceWatchtower,
-	briefing.SectionExceptions: permission.ResourceWatchtower,
-	briefing.SectionToday:      permission.ResourceShipment,
-	briefing.SectionCoverage:   permission.ResourceShipmentMove,
-	briefing.SectionDecisions:  permission.ResourceAgentProposal,
-	briefing.SectionCompliance: permission.ResourceWorkerCredential,
-	briefing.SectionBilling:    permission.ResourceBillingQueue,
-	briefing.SectionCash:       permission.ResourceCustomerPayment,
-}
-
-type getDailyBriefingTool struct {
-	briefings briefingReader
-	access    fieldAccess
-}
-
-func provideGetDailyBriefingTool(
-	briefings briefingports.BriefingService,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetDailyBriefingTool(briefings, permissions)
-}
-
-func newGetDailyBriefingTool(
-	briefings briefingReader,
-	permissions permissionports.PermissionEngine,
-) *getDailyBriefingTool {
-	return &getDailyBriefingTool{briefings: briefings, access: newFieldAccess(permissions)}
-}
-
-func (t *getDailyBriefingTool) Name() string { return "insight_get_daily_briefing" }
-
-func (t *getDailyBriefingTool) Description() string {
-	return "Read the daily briefing for a role: the morning's figures on what needs " +
-		"attention, coverage, decisions waiting, compliance, billing and cash. Every figure " +
-		"was computed, never written by a model. Sections the caller may not read are " +
-		"left out."
-}
-
-func (t *getDailyBriefingTool) ParamSchema() map[string]any {
-	return map[string]any{
-		toolschema.KeyType: toolschema.TypeObject,
-		toolschema.KeyProperties: map[string]any{
-			paramRole: agenttoolschema.Enum(
-				"Whose morning to read. General is everyone's and the default.", briefingRoles,
-			),
-			paramDate: map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "An earlier day as YYYY-MM-DD, in the " +
-					"organization's calendar. Omit it for today.",
-			},
-		},
-		toolschema.KeyAdditionalProperties: false,
-	}
-}
-
-func (t *getDailyBriefingTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{
+// dailyBriefingGetSpec reads the morning's page through the Desk's own
+// operation. The briefing service cuts the page to the sections the caller
+// may read and names the rest, so the tool shows what the screen shows.
+func dailyBriefingGetSpec() getSpec {
+	return getSpec{
+		name:   "insight_get_daily_briefing",
+		entity: "briefing",
+		summary: "Read the daily briefing for a role: the morning's figures on what needs " +
+			"attention, coverage, decisions waiting, compliance, billing and cash. Every figure " +
+			"was computed, never written by a model. Sections the caller may not read are " +
+			"left out.",
 		resource: permission.ResourceBriefing,
+		names:    map[string]string{briefingInputRole: paramRole, briefingInputDate: paramDate},
 		rationale: "Reads the morning's computed figures, and only the sections the caller " +
 			"may read; it changes nothing, not even whether the briefing was read.",
-	})
-}
-
-type briefingItemView struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
-	Path  string `json:"path,omitempty"`
-}
-
-type briefingSectionView struct {
-	Key   string             `json:"key"`
-	Title string             `json:"title"`
-	Text  string             `json:"text,omitempty"`
-	Items []briefingItemView `json:"items"`
-	Path  string             `json:"path,omitempty"`
-}
-
-type keptBriefingSection struct {
-	source  *briefing.Section
-	partial bool
-}
-
-type dailyBriefingView struct {
-	Found    bool                  `json:"found"`
-	ID       string                `json:"id,omitempty"`
-	Role     string                `json:"role"`
-	Date     string                `json:"date,omitempty"`
-	Status   string                `json:"status,omitempty"`
-	Headline string                `json:"headline,omitempty"`
-	Narrated bool                  `json:"narrated"`
-	Sections []briefingSectionView `json:"sections"`
-	Withheld []string              `json:"withheldByAccess,omitempty"`
-	Note     string                `json:"note,omitempty"`
-}
-
-func (t *getDailyBriefingTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	role := briefing.RoleGeneral
-	if raw := optionalString(params.Params, paramRole); raw != "" {
-		role = briefing.RoleKey(raw)
-		if !role.IsValid() {
-			return nil, fmt.Errorf("parameter %q must be one of %s",
-				paramRole, strings.Join(briefingRoleValues(), ", "))
-		}
-	}
-	day := optionalString(params.Params, paramDate)
-	if day != "" && !timeutils.IsCalendarDate(day) {
-		return nil, fmt.Errorf("parameter %q must be a day written as YYYY-MM-DD", paramDate)
-	}
-
-	page, err := t.briefings.Today(ctx, briefingports.GetBriefingRequest{
-		TenantInfo:   tenantOf(params),
-		RoleKey:      role,
-		BriefingDate: day,
-	}, params.Actor)
-	if err != nil {
-		return nil, err
-	}
-	if page == nil {
-		return dailyBriefingView{
-			Role:     role.String(),
-			Date:     day,
-			Sections: []briefingSectionView{},
-			Note:     briefingMissingNote,
-		}, nil
-	}
-
-	return t.readableBriefing(ctx, params, page), nil
-}
-
-func (t *getDailyBriefingTool) readableBriefing(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-	page *briefing.Briefing,
-) dailyBriefingView {
-	readable := make(map[permission.Resource]bool, len(briefingSectionResources)+4)
-	mayRead := func(resource permission.Resource) bool {
-		allowed, seen := readable[resource]
-		if !seen {
-			allowed = t.access.mayRead(ctx, params, resource)
-			readable[resource] = allowed
-		}
-
-		return allowed
-	}
-
-	view := dailyBriefingView{
-		Found:    true,
-		ID:       page.ID.String(),
-		Role:     page.RoleKey.String(),
-		Date:     page.BriefingDate,
-		Status:   page.Status.String(),
-		Sections: make([]briefingSectionView, 0, len(page.Sections)),
-	}
-	withheld := make([]string, 0, len(page.Sections))
-	kept := make([]keptBriefingSection, 0, len(page.Sections))
-	for idx := range page.Sections {
-		section := &page.Sections[idx]
-		title := stringutils.FirstNonEmpty(section.Title, section.Key.String())
-		resource, known := briefingSectionResources[section.Key]
-		if !known || !mayRead(resource) {
-			withheld = append(withheld, title)
-			continue
-		}
-
-		items, partial := readableBriefingItems(section, mayRead)
-		if partial {
-			withheld = append(withheld, title+": the kinds you may not read")
-		}
-		view.Sections = append(view.Sections, briefingSectionView{
-			Key:   section.Key.String(),
-			Title: section.Title,
-			Items: items,
-			Path:  section.Path,
-		})
-		kept = append(kept, keptBriefingSection{source: section, partial: partial})
-	}
-
-	complete := len(withheld) == 0
-	for idx := range kept {
-		switch {
-		case kept[idx].partial:
-		case complete:
-			view.Sections[idx].Text = kept[idx].source.Read()
-		default:
-			view.Sections[idx].Text = kept[idx].source.Summary
-		}
-	}
-
-	if complete {
-		view.Headline = page.Headline
-		view.Narrated = page.Narrated
-	} else {
-		view.Withheld = withheld
-		view.Note = briefingWithheldNote
-	}
-	if page.Status == briefing.StatusFailed {
-		view.Note = strings.TrimSpace(briefingFailedNote + " " + view.Note)
-	}
-
-	return view
-}
-
-func readableBriefingItems(
-	section *briefing.Section,
-	mayRead func(permission.Resource) bool,
-) ([]briefingItemView, bool) {
-	perKind := section.Key == briefing.SectionAttention ||
-		section.Key == briefing.SectionExceptions
-
-	items := make([]briefingItemView, 0, len(section.Items))
-	partial := false
-	for _, item := range section.Items {
-		if perKind {
-			kind, ok := watchtowerKindOf(item.Path)
-			if !ok || !mayRead(kind.ReadResource()) {
-				partial = true
-				continue
+		absent: func(pulid.ID) map[string]any {
+			return map[string]any{
+				"found": false, "sections": []any{}, outcomeNote: briefingMissingNote,
 			}
-		}
-		items = append(items, briefingItemView{
-			Label: item.Label,
-			Value: item.Value,
-			Path:  item.Path,
-		})
+		},
+		shape: noteBriefing,
 	}
-
-	return items, partial
 }
 
-func watchtowerKindOf(path string) (watchtower.SourceKind, bool) {
-	parsed, err := url.Parse(path)
-	if err != nil {
-		return "", false
+// noteBriefing says why a page reads plainer than the screen's usual one:
+// sections were withheld from the caller, or its figures failed.
+func noteBriefing(record map[string]any, _ map[string]struct{}, _ clock) {
+	var notes []string
+	if record["status"] == briefing.StatusFailed.String() {
+		notes = append(notes, briefingFailedNote)
 	}
-	kind := watchtower.SourceKind(parsed.Query().Get(paramKinds))
-
-	return kind, kind.IsValid()
-}
-
-func briefingRoleValues() []string {
-	roles := briefing.AllRoleKeys()
-	values := make([]string, 0, len(roles))
-	for _, role := range roles {
-		values = append(values, role.String())
+	if withheld, _ := record["withheldSections"].([]any); len(withheld) > 0 {
+		notes = append(notes, briefingWithheldNote)
 	}
-
-	return values
+	if len(notes) > 0 {
+		record[outcomeNote] = strings.Join(notes, " ")
+	}
 }

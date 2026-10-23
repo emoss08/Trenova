@@ -4664,6 +4664,34 @@ var graphQLReads = map[string]graphQLRead{
 			{Name: "waiting", Type: "Int", Kind: "scalar", List: false, NonNull: true, Selected: true, Description: "Waiting messages already assigned to them."},
 		},
 	},
+	"insight_get_daily_briefing": {
+		Verb:      "get",
+		Operation: "TodaysBriefing",
+		Reason:    "The tool is named for the insight family it answers in; todaysBriefing reads the morning's page, cut to the sections the caller may read.",
+		RootField: "todaysBriefing",
+		Node:      "Briefing",
+		Resource:  "briefing",
+		Variables: []graphQLVariable{
+			{Name: "input", Type: "TodaysBriefingInput", NonNull: true, List: false, Kind: "input"},
+		},
+		Fields: []graphQLField{
+			{Name: "id", Type: "ID", Kind: "scalar", List: false, NonNull: true, Selected: true},
+			{Name: "businessUnitId", Type: "ID", Kind: "scalar", List: false, NonNull: true},
+			{Name: "organizationId", Type: "ID", Kind: "scalar", List: false, NonNull: true},
+			{Name: "roleKey", Type: "BriefingRoleKey", Kind: "enum", List: false, NonNull: true, Selected: true, Enum: []string{"Dispatch", "Billing", "Compliance", "Leadership", "General"}},
+			{Name: "briefingDate", Type: "String", Kind: "scalar", List: false, NonNull: true, Selected: true, Description: "The organization's local day, as YYYY-MM-DD."},
+			{Name: "status", Type: "BriefingStatus", Kind: "enum", List: false, NonNull: true, Selected: true, Enum: []string{"Pending", "Ready", "Failed"}},
+			{Name: "headline", Type: "String", Kind: "scalar", List: false, NonNull: true, Selected: true, Description: "Empty while any section is withheld."},
+			{Name: "sections", Type: "BriefingSection", Kind: "object", List: true, NonNull: true, Selected: true},
+			{Name: "narrated", Type: "Boolean", Kind: "scalar", List: false, NonNull: true, Selected: true, Description: "True when a model's wording was accepted for any part of the page the reader is shown."},
+			{Name: "withheldSections", Type: "BriefingWithheldSection", Kind: "object", List: true, NonNull: true, Selected: true, Description: "The sections left out or cut short for this reader; empty when they see the whole page."},
+			{Name: "emailedAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: false},
+			{Name: "readAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: false, Selected: true},
+			{Name: "version", Type: "Int", Kind: "scalar", List: false, NonNull: true},
+			{Name: "createdAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: true},
+			{Name: "updatedAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: true},
+		},
+	},
 	"invoice_get": {
 		Verb:      "get",
 		Operation: "DeskInvoiceDetail",
@@ -9649,6 +9677,10 @@ var graphQLInputs = map[string][]graphQLField{
 	"SortFieldInput": {
 		{Name: "field", Type: "String", Kind: "scalar", List: false, NonNull: true},
 		{Name: "direction", Type: "String", Kind: "scalar", List: false, NonNull: true},
+	},
+	"TodaysBriefingInput": {
+		{Name: "roleKey", Type: "BriefingRoleKey", Kind: "enum", List: false, NonNull: false, Enum: []string{"Dispatch", "Billing", "Compliance", "Leadership", "General"}, Description: "Whose morning to read; omitted reads the one written for everybody."},
+		{Name: "briefingDate", Type: "String", Kind: "scalar", List: false, NonNull: false, Description: "An organization-local day, as YYYY-MM-DD; omitted is today."},
 	},
 	"TrainingCoursesInput": {
 		{Name: "first", Type: "Int", Kind: "scalar", List: false, NonNull: false},

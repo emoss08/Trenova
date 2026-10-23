@@ -1489,6 +1489,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: home page and rate matrix | `home_get_layout`, `rate_get_matrix` | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
 | Typed reads through GraphQL: reports | `report_list_runs`, `report_list_schedules`; `report_list_table_change_alerts` and six more stay on the repository path with their reasons | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.83 → 0.83; keyword 0.95 → 0.95 |
 | Typed reads through GraphQL: inbox | `inbox_list_inbound_messages` (without words), `inbox_get_inbound_message`, `inbox_list_email_profiles`, `inbox_list_capture_batches`, `inbox_list_triage_assignees` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.83 → 0.83; keyword 0.95 → 0.95 |
+| Typed reads through GraphQL: daily briefing | `insight_get_daily_briefing`; the briefing screen is cut to the sections the reader may read | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
 
 The carrier row's descriptions are in the embedding fixture re-recorded with the home page and rate matrix row; hybrid held-out ranking on that fixture is recall@5 0.93, top-1 0.83 over 167 cases, and keyword ranking is unchanged (0.99, 0.95 over 147).
 

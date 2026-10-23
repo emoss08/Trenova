@@ -12,6 +12,8 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { briefing as briefingQueries } from "@/lib/queries/briefing";
 import { watchtower } from "@/lib/queries/watchtower";
 import type { AssistantThread } from "@/types/assistant";
+import { formatList } from "@trenova/shared/i18n/format";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   partOfDay,
@@ -20,6 +22,7 @@ import {
   type PartOfDay,
 } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { BriefingSectionKey } from "@trenova/graphql/generated/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -29,6 +32,18 @@ import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 export type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
+
+/** Each briefing section as the page titles it, in the language on screen. */
+const BRIEFING_SECTION_LABELS: Record<BriefingSectionKey, string> = defineLabels({
+  Attention: "Needs attention",
+  Today: "Today",
+  Coverage: "The next day",
+  Exceptions: "Critical",
+  Decisions: "Waiting on you",
+  Compliance: "Credentials",
+  Billing: "Billing queue",
+  Cash: "Cash received yesterday",
+});
 
 export type DeskHomeProps = {
   agents: AgentChoice[];
@@ -50,6 +65,35 @@ function greeting(t: TranslateFn, dayPart: PartOfDay, firstName: string): string
 }
 
 /**
+ * What a briefing cut to the reader's access says about the cut: the sections
+ * it leaves out, and those it shows only the part of they may open.
+ */
+function withheldNote(
+  t: TranslateFn,
+  withheld: readonly { key: BriefingSectionKey; partial: boolean }[],
+): string {
+  const names = (partial: boolean) =>
+    formatList(
+      withheld
+        .filter((section) => section.partial === partial)
+        .map((section) => BRIEFING_SECTION_LABELS[section.key]),
+    );
+  const left = withheld.some((section) => !section.partial);
+  const partial = withheld.some((section) => section.partial);
+  if (left && partial) {
+    return t(
+      "This morning's briefing leaves out {0} and shows only the part of {1} you can open.",
+      names(false),
+      names(true),
+    );
+  }
+  if (partial) {
+    return t("This morning's briefing shows only the part of {0} you can open.", names(true));
+  }
+  return t("This morning's briefing leaves out {0}, whose records you can't open.", names(false));
+}
+
+/**
  * The Desk's front page: the date, a greeting, one line on what the day holds,
  * and the box you talk into, centred in the room and nothing else.
  *
@@ -59,6 +103,9 @@ function greeting(t: TranslateFn, dayPart: PartOfDay, firstName: string): string
  * The line under the greeting is the morning briefing's headline when one was
  * written — every figure in it was checked against the facts it was written
  * from — and otherwise a sentence composed from counts, never from a model.
+ * A briefing cut to the sections the reader may open carries no headline, since
+ * it was written about the whole page; a quiet line under the greeting names
+ * the sections left out instead.
  * The composer's placeholder types out the chosen agent's own starter
  * questions; Tab takes the one on screen and ⌘1–3 asks it outright.
  */
@@ -106,6 +153,7 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
       : noAgents
         ? t("Nothing is running here yet.")
         : t("How can I help today?"));
+  const withheld = briefing?.withheldSections ?? [];
   const headlinePending =
     isLoading ||
     permissionsLoading ||
@@ -123,6 +171,11 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
             line={headline}
             pending={headlinePending}
           />
+          {!headlinePending && withheld.length > 0 && (
+            <p className="dk-headline-note" data-slot="desk-briefing-withheld">
+              {withheldNote(t, withheld)}
+            </p>
+          )}
           <DeskHomeComposer ask={ask} isStarting={isStarting} />
           {canWatch && critical > 0 && (
             <Link

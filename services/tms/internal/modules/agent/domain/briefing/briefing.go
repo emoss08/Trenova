@@ -75,6 +75,15 @@ func (s Section) Read() string {
 	return s.Summary
 }
 
+// WithheldSection is a section a reader was not shown in full because they may
+// not read the records it counts: left out, or, when Partial, shown with only
+// the lines they may read.
+type WithheldSection struct {
+	Key     SectionKey `json:"key"`
+	Title   string     `json:"title"`
+	Partial bool       `json:"partial"`
+}
+
 // Briefing is one role's morning, on one day, for one organization.
 type Briefing struct {
 	bun.BaseModel `bun:"table:assistant_briefings,alias:abrf" json:"-"`
@@ -108,6 +117,10 @@ type Briefing struct {
 	// FailureReason says why the facts could not be gathered, for a failed
 	// briefing.
 	FailureReason string `json:"failureReason" bun:"failure_reason,type:TEXT,nullzero"`
+
+	// WithheldSections is never stored: it is what a read left out for its
+	// reader, set by the service that serves the page.
+	WithheldSections []WithheldSection `json:"withheldSections" bun:"-"`
 
 	EmailedAt *int64 `json:"emailedAt" bun:"emailed_at,type:BIGINT,nullzero"`
 	ReadAt    *int64 `json:"readAt"    bun:"read_at,type:BIGINT,nullzero"`
