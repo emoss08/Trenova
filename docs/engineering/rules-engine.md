@@ -490,7 +490,7 @@ applies to each test. Output:
   {"values": [{"target": "shipment.weight", "display": "999 lb", "value": {"$q": "999", "u": "lb"}}],
    "monotone": {"target": "shipment.weight", "expression": "total", "direction": "nondecreasing",
                 "before": {"at": {"display": "999 lb", "value": …}, "result": {"display": "$310.00", "value": …}},
-                "after": {"at": {"display": "1,000 lb", "value": …}, "result": {"display": "$250.00", "value": …}}} | null,
+                "after": {"at": {"display": "1000 lb", "value": …}, "result": {"display": "$250.00", "value": …}}} | null,
    "refusal": {"message": …, "range": …} | null,
    "test": "test \"heavier never bills less: 999 lb\" {\n  given shipment.weight = 999 lb\n  …\n}\n"}
   ```
@@ -501,6 +501,12 @@ applies to each test. Output:
   reproduces the case (its `given`s, the varied values as `given`s, and the property's
   `expect cond` lines; for a monotone failure two `given` sets cannot share a test, so it pins
   the `before` case's `expression` with `expect`), formatted, for the Studio's "Save as test".
+- **Budgets.** Each test, and each property case, runs under the request's per-test budget, and the
+  whole run shares one step meter of 32 times the per-test step limit. Once it is spent, every
+  test and property not yet finished ends `error` with code `budget` ("The tests used up the
+  file's step budget ({0} steps) before they finished"), with no counterexample. A case that
+  errors on its own keeps its counterexample, unshrunk. Displays are the crate's interpolation
+  text (`1000 lb`, `$250.00`); a listed `vary` item displays as written (`[pickup(), delivery()]`).
 - **Coverage** is the root file's regions with their `hits` across every test and property case
   of the run, in source order. `kind` is `if` (a branch block of an `if` or `else if`), `else`,
   `arm` (a `match` arm), `loop` (a `for` body), `option`, `charge`, `refusal` (a `fail`, the

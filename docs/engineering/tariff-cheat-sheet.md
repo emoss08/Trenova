@@ -112,6 +112,10 @@ hundredweight times a distance, and says what each side is.
 - `input rate: Money/mi = $2.35/mi` is a value the contract sets; the default is used when the
   rate agreement rule and agreement don't set it. An input with no default that nothing sets
   refuses to rate.
+- `input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi` bounds what a contract may set: a
+  range (`lo..hi` excludes `hi`, `lo..=hi` includes it, either end may be left off) or a list
+  (`where [Standard, Guaranteed]`). The default must satisfy it, the rule editor shows the bounds,
+  and a value outside them is refused when the rule or agreement is saved.
 - `const BASE: Money = $3.50` is a compile-time constant (written from literals only).
 - Names are camelCase (`extraDropFee`), types and enum variants PascalCase (`Money`, `Delivery`),
   charge codes UPPERCASE (`FSC`).
@@ -301,6 +305,50 @@ Methods on values:
 - Total clauses come last, in the order `minimum`, `maximum`, `round`, and apply to the whole
   bill.
 
+## Choosing the cheaper method
+
+```tariff
+tariff "Lower of per mile or flat"
+
+/// Paid per loaded mile.
+input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi
+input flatRate: Money = $900
+input volumeRate: Money/lb = $0.12/lb
+
+best "Linehaul" {
+  option "Per mile" {
+    charge "Linehaul" (quantity: shipment.distance, rate: rate)
+  }
+  option "Flat" {
+    charge "Flat rate" = flatRate
+  }
+  option "Volume" {
+    let weight = shipment.weight ?? 0 lb
+    require weight >= 6_000 lb else "Volume rates start at 6,000 lb"
+    charge "Volume" = volumeRate * weight
+  }
+}
+
+test "a long run takes the flat rate" {
+  given shipment.distance = 500 mi
+  expect chosen("Linehaul") == "Flat"
+  expect total == $900
+}
+
+test "a short run bills per mile" {
+  given shipment.distance = 100 mi
+  expect chosen("Linehaul") == "Per mile"
+  expect charge("Linehaul") == $235
+}
+```
+
+- `best` keeps the option whose charges add up to the least, `worst` the most; a tie goes to the
+  option written first. The kept option's lines join the bill; the others show on the trace.
+- An option that refuses (`require`, `fail`, `?? fail`) is out of the running; when every option
+  refuses, the rating refuses with the first one's reason.
+- Each option is its own scope, and may not assign a `var` from outside the choice.
+- `chosen("Linehaul")` in a test is the kept option's label, or `none`.
+
 ## Refusing to rate
 
 A rating that can't be priced says why; it never bills a silent `$0`.
@@ -424,6 +472,51 @@ test "a heavy load rates at the deficit weight when cheaper" {
 - A version with a failing test can't be submitted for review. **Save as test** in the preview
   writes a test from a real shipment.
 
+## Properties
+
+A property checks a rule over a range of shipments instead of one:
+
+```tariff
+tariff "Per hundredweight"
+
+/// Paid per hundred pounds.
+input rate: Money/cwt = $18/cwt where $5/cwt..=$60/cwt
+input minimumCharge: Money = $95
+
+let weight = shipment.weight ?? fail "This rate needs a weight"
+charge "Linehaul" = rate * weight.roundUp(to: 100 lb)
+minimum minimumCharge
+
+property "heavier never bills less" {
+  vary shipment.weight in 1 lb..40_000 lb
+  expect total nondecreasing in shipment.weight
+}
+
+property "never below the minimum" {
+  vary shipment.weight in 1 lb..40_000 lb
+  vary input.rate
+  expect total >= $95
+}
+```
+
+| Write | Does |
+|---|---|
+| `vary shipment.weight in 1 lb..40_000 lb` | tries many weights: both ends, every literal, default and band edge of that kind in the file (and one step either side), and evenly spread values |
+| `vary input.rate` | tries values across the input's `where` constraint |
+| `vary service in [Standard, Expedited]`, `vary shipment.hazmat` | tries each listed value; a `Bool` or enum alone tries all of them |
+| `assume (shipment.weight ?? 0 lb) > 0 lb` | skips the cases where it's false; it can't read the bill |
+| `expect total >= $95` | must hold in every case |
+| `expect total nondecreasing in shipment.weight` | must never fall as the weight grows (`nonincreasing`: never rise) |
+
+- `vary`, `given` and `assume` come first; ranges need both ends.
+- The same file always runs the same cases (at most 256 per property).
+- A failure is shrunk to the simplest case, or for `nondecreasing`, to the two neighbouring
+  values that are out of order ("999 lb bills $310.00, 1000 lb bills $250.00"). **Save as test**
+  writes it as an ordinary `test`, so the bug stays fixed.
+- Properties block review like tests.
+- **Coverage:** the Studio marks the lines no test or property reaches (an unreached `if` branch,
+  `match` arm, option, charge or refusal) and counts them in the tests panel.
+
 ## Values to check in a test
 
 ```tariff
@@ -506,5 +599,9 @@ an existing contract.
 | "… calls itself through …" | remove the cycle; functions can't recurse |
 | "A library's constant is part of its interface, so … needs a type" | `const NAME: Money = …` |
 | "… takes 2 keys (…), but 1 is given" | give one key per matrix dimension |
+| "`rate` must be from $0.50/mi to $15.00/mi; … is outside it" | the default or the contract value is outside the input's `where` bounds |
+| "A choice needs at least two options" | add another `option`, or drop the `best` |
+| "… falls from … at … to … at …: it must not fall as … grows" | a property found the inversion: fix the break, then **Save as test** |
+| "A property can't expect a refusal" | narrow the property with `assume` or its ranges |
 
 Hover a diagnostic in the Studio for its quick fixes; most of these have one.

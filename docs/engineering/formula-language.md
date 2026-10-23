@@ -795,14 +795,18 @@ property "never below the minimum" {
   each axis in turn it searches, by halving, for the smallest value from the range's start that
   still fails, keeping the others fixed (an item list keeps its first failing item). For a
   `nondecreasing` failure it reports the two neighbouring values whose results are out of order,
-  narrowed by halving the gap between them ("999 lb bills $310, 1,000 lb bills $250"). A case
+  narrowed by halving the gap between them ("999 lb bills $310, 1000 lb bills $250"). A case
   that refuses to rate fails the property with the refusal's message.
 - **Results.** A property passes, fails with its counterexample (each varied value, the failed
   expectation's values, the case's bill) or ends in error, like a test. The Studio shows the
   counterexample and can save it as an ordinary `test`, so the bug stays fixed.
 - **Rules.** Properties live at file level in tariffs and libraries. A property needs at least one
-  `vary`; its ranges must be finite, and an input's range must lie inside the input's constraint.
-  At most 256 cases run per property, under the file's budget.
+  `vary`; its ranges must be finite, with compile-time ends, and an input's range must lie inside
+  the input's constraint. Its `vary`s, `given`s and `assume`s come first, before its other
+  statements; a `given` may not read a varied name, and a path is varied at most once and never
+  also given. Its `expect`s follow the test rules (they read the bill, the record and the file's
+  functions and constants), so a saved counterexample always checks. At most 256 cases run per
+  property, under the file's budget.
 
 Properties are tests: the Studio runs them on every change, and a version with a failing property
 cannot be saved for review or submitted.
