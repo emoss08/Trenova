@@ -272,9 +272,14 @@ neither sets is an `input-value` error finding with a `path` and no range (from 
 Other paths read `rule.rat` (with "did you mean `rate`"), `agreement.breaks[2].extra` (a field
 `Break` does not have) and `rule.rate` (`{0} has no default, so the rule or the agreement must
 set it`). A value outside the input's constraint is an `input-value` finding naming the bounds,
-at path `rule.rate`: `{"message": "{0} must be from {1} to {2}; {3} is outside it", "args":
-["`rate`", "$0.50/mi", "$15/mi", "$235/mi"]}` (with `at least {1}` and `below {1}` and `one of
-{1}` forms for open ranges and lists). An `input-value` finding makes `ok` false like any
+at path `rule.rate` (a list input's item at `rule.stops[2]`), with values written the way
+interpolation writes them: `{"message": "{0} must be from {1} to {2}; {3} is outside it", "args":
+["`rate`", "$0.50/mi", "$15.00/mi", "$235.00/mi"]}`. The other forms are `lo..hi` ("{0} must be
+at least {1} and below {2}; {3} is outside it"), `lo..` ("{0} must be at least {1}; {2} is below
+it"), `..hi` ("{0} must be below {1}; {2} isn't"), `..=hi` ("{0} must be at most {1}; {2} is
+above it") and a list ("{0} must be one of {1}; {2} isn't", with {1} written `[Standard,
+Guaranteed]`). The same wording refuses a default outside its constraint (code `constraint`),
+a rating whose stored value falls outside it (an `input` error) and a test's `given input.x`. An `input-value` finding makes `ok` false like any
 error.
 
 **The codes.** The loader's and the parser's:
@@ -308,7 +313,7 @@ checker's types and its declared input types, so the checker's promises hold at 
 
 ```json
 {"status": "error", "error": {"code": "check",
-  "message": {"message": "`expect` can only be used inside a `test` block"}}}
+  "message": {"message": "`expect` can only be used inside a `test` or `property` block"}}}
 ```
 
 ### `tariff.evaluate`

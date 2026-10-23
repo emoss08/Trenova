@@ -607,7 +607,7 @@ input service: Service = Standard where [Standard, Guaranteed]
 - **The default must satisfy it**; the checker refuses one that does not.
 - **Contract values.** `tariff.check`'s `values` validation refuses a rule or agreement value
   outside the constraint with an `input-value` finding that names the bounds: "`rate` must be
-  from $0.50/mi to $15/mi; $235/mi is outside it". `tariff.check` reports each input's
+  from $0.50/mi to $15.00/mi; $235.00/mi is outside it". `tariff.check` reports each input's
   constraint, so the rule editor shows the bounds and validates as the user types.
 - **At rating time** a value outside the constraint (a value saved before the constraint was
   added) stops the rating with an `input` error naming the input, the value and the bounds.
