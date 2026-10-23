@@ -208,9 +208,9 @@ func matchAlongside(
 			return nil, fmt.Errorf("%s reads %s %s, which reads.yml does not list for it",
 				tool, beside.operation, how)
 		}
-		if len(bound[idx].Keys) > 0 && len(beside.inputs) > 0 {
-			return nil, fmt.Errorf("%s reads %s %s by the call's own %s; it takes "+
-				"no table input", tool, beside.operation, how,
+		if bound[idx].Input == "" && len(beside.inputs) > 0 {
+			return nil, fmt.Errorf("%s reads %s %s by the call's own arguments (%s); it "+
+				"takes no table input", tool, beside.operation, how,
 				strings.Join(bound[idx].Keys, ", "))
 		}
 		out = append(out, bound[idx])

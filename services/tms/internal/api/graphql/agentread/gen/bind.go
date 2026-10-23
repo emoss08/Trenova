@@ -278,7 +278,8 @@ func readShape(
 	if field.Type.Elem != nil {
 		return verbList, def.Name, true
 	}
-	if items := def.Fields.ForName(itemsField); items != nil && items.Type.Elem != nil {
+	byID := field.Arguments.ForName(idArgument) != nil
+	if items := def.Fields.ForName(itemsField); items != nil && items.Type.Elem != nil && !byID {
 		if node := schema.Types[items.Type.Name()]; node != nil && node.Kind == ast.Object {
 			return verbList, node.Name, true
 		}
@@ -409,7 +410,9 @@ func provenRead(
 }
 
 // keyedShape reports whether a read's root field returns an unpaged list or
-// one record, either of which a call's own arguments key.
+// one record, either of which a call's own arguments key; a record a root
+// returns with no arguments at all (the factoring queue's totals) is one
+// record of the whole organization.
 func keyedShape(field *ast.FieldDefinition) (object, ok bool) {
 	verb, _, shaped := readShape(boundSchema, field)
 	switch {
@@ -417,6 +420,10 @@ func keyedShape(field *ast.FieldDefinition) (object, ok bool) {
 		return false, true
 	case shaped && verb == verbGet:
 		return true, true
+	case !shaped && len(field.Arguments) == 0 && field.Type.Elem == nil:
+		def := boundSchema.Types[field.Type.Name()]
+		return true, def != nil && def.Kind == ast.Object &&
+			!strings.HasSuffix(def.Name, connection)
 	}
 
 	return false, false
@@ -522,7 +529,9 @@ func bindAlongside(
 // alongsideKeys are the variables a keyed read alongside a tool takes from
 // the tool's own call: each one the tool's operation declares, of the same
 // type, so the read is about the record the call names. It is made only when
-// the call names every one it requires.
+// the call names every one it requires. A read that takes no variable at all
+// is about the whole organization (the factoring queue's totals) and is made
+// on every call.
 func alongsideKeys(list *binding, chosen *operation, name string) (keys []string, problem string) {
 	own := list.Operation.Query.Operations[0].VariableDefinitions
 	for _, variable := range chosen.Query.Operations[0].VariableDefinitions {
@@ -535,11 +544,6 @@ func alongsideKeys(list *binding, chosen *operation, name string) (keys []string
 		}
 		keys = append(keys, variable.Variable)
 	}
-	if len(keys) == 0 {
-		return nil, fmt.Sprintf("%s reads %s alongside, a read keyed by nothing the call "+
-			"names", list.Tool, name)
-	}
-
 	return keys, ""
 }
 

@@ -138,8 +138,9 @@ func TestAlongsideKeys_AKeyedReadTakesOnlyWhatTheListsCallSends(t *testing.T) {
 				workerEvents(workerId: $workerId, openOnly: $openOnly) { id } }`),
 	}
 	cases := map[string]struct {
-		text string
-		keys []string
+		text    string
+		keys    []string
+		refused bool
 	}{
 		"keyed by the worker the call names": {
 			text: `query DeskWorkerRecognitions($workerId: ID!) {
@@ -149,12 +150,14 @@ func TestAlongsideKeys_AKeyedReadTakesOnlyWhatTheListsCallSends(t *testing.T) {
 		"a variable the call does not send": {
 			text: `query DeskWorkerRecognitions($workerId: ID!, $region: String) {
 				workerRecognitions(workerId: $workerId, region: $region) { id } }`,
+			refused: true,
 		},
 		"an input object": {
 			text: `query DeskWorkerRecognitions($workerId: ID!, $filter: CodeFilter) {
 				workerRecognitions(workerId: $workerId, filter: $filter) { id } }`,
+			refused: true,
 		},
-		"keyed by nothing": {
+		"no variable at all, read on every call": {
 			text: `query DeskWorkerRecognitions {
 				workerRecognitions(workerId: "wrk_1") { id } }`,
 		},
@@ -166,8 +169,10 @@ func TestAlongsideKeys_AKeyedReadTakesOnlyWhatTheListsCallSends(t *testing.T) {
 			keys, problem := alongsideKeys(list,
 				supplyOperation(t, schema, "DeskWorkerRecognitions", tc.text),
 				"DeskWorkerRecognitions")
-			assert.Equal(t, tc.keys, keys)
-			assert.Equal(t, tc.keys == nil, problem != "", problem)
+			if !tc.refused {
+				assert.Equal(t, tc.keys, keys)
+			}
+			assert.Equal(t, tc.refused, problem != "", problem)
 		})
 	}
 }
