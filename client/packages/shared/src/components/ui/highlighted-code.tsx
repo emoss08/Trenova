@@ -20,7 +20,7 @@ const ROLE_CLASS: Record<CodeRole, string> = {
   attr: "text-syntax-property",
   "code-inline": "text-syntax-string",
   command: "text-syntax-keyword",
-  comment: "text-foreground-subtle",
+  comment: "text-foreground-subtle italic",
   deleted: "text-danger-foreground",
   function: "text-syntax-function",
   heading: "text-syntax-meta",
@@ -120,7 +120,7 @@ export function HighlightedCode({
   return (
     <pre
       data-language={(spans ? language : codeLanguage(language)) ?? undefined}
-      className={cn("font-mono text-xs leading-relaxed text-foreground", className)}
+      className={cn("font-code text-xs leading-relaxed text-foreground", className)}
     >
       <code onClick={handleClick}>
         {lines.map((line, index) => (

@@ -51,6 +51,7 @@ type sourceChecker interface {
 	) (*rules.TariffContext, error)
 	TableStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
 	TableCells(ctx context.Context, req *tariff.TableCellsRequest) (*tariff.TableCells, error)
+	SetName(ctx context.Context, source, name string) (string, error)
 }
 
 type billingResolver interface {
@@ -217,7 +218,11 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	material := entity.HasMaterialChange(original)
+	material, err := s.materialChange(ctx, original, entity)
+	if err != nil {
+		log.Error("failed to compare the source with the stored one", zap.Error(err))
+		return nil, err
+	}
 
 	auditComment := "Formula template updated"
 	revertsApproval := material &&
@@ -310,6 +315,16 @@ func (s *Service) Duplicate(
 		return nil, err
 	}
 
+	if len(sources) == 0 {
+		return nil, errortypes.NewNotFoundError("Formula templates not found")
+	}
+
+	copies, err := s.namedCopies(ctx, req.TenantInfo, sources)
+	if err != nil {
+		log.Error("failed to name the copies", zap.Error(err))
+		return nil, err
+	}
+
 	sourceNames := make(map[pulid.ID]string, len(sources))
 	for _, source := range sources {
 		sourceNames[source.ID] = source.Name
@@ -317,7 +332,7 @@ func (s *Service) Duplicate(
 
 	var entities []*formulatemplate.FormulaTemplate
 	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		duplicated, txErr := s.repo.BulkDuplicate(txCtx, req)
+		duplicated, txErr := s.repo.BulkCreate(txCtx, copies)
 		if txErr != nil {
 			log.Error("failed to duplicate formula template", zap.Error(txErr))
 			return txErr
@@ -364,6 +379,73 @@ func (s *Service) Duplicate(
 	}
 
 	return entities, nil
+}
+
+func (s *Service) materialChange(
+	ctx context.Context,
+	original, entity *formulatemplate.FormulaTemplate,
+) (bool, error) {
+	if !entity.HasMaterialChange(original) || entity.Name == original.Name {
+		return entity.HasMaterialChange(original), nil
+	}
+
+	renamedOriginal, err := s.renamed(ctx, original.Source, entity.Name)
+	if err != nil {
+		return false, err
+	}
+	return renamedOriginal != entity.Source, nil
+}
+
+func (s *Service) namedCopies(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	sources []*formulatemplate.FormulaTemplate,
+) ([]*formulatemplate.FormulaTemplate, error) {
+	bases := make([]string, len(sources))
+	for i, source := range sources {
+		bases[i] = source.Name + " (Copy)"
+	}
+
+	taken, err := s.repo.TakenNames(ctx, &formulatemplateports.ListTakenNamesRequest{
+		TenantInfo: tenantInfo,
+		Bases:      bases,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	multiErr := errortypes.NewMultiError()
+	copies := make([]*formulatemplate.FormulaTemplate, len(sources))
+	for i, source := range sources {
+		name := nextAvailableName(taken, bases[i])
+		taken[name] = struct{}{}
+
+		seed := formulatemplate.SeedFromTemplate(source)
+		seed.Name = name
+		if seed.Source, err = s.renamed(ctx, source.Source, name); err != nil {
+			return nil, err
+		}
+		copies[i] = seed.Build()
+		copies[i].Validate(multiErr.WithIndex("templateIds", i))
+	}
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	return copies, nil
+}
+
+func nextAvailableName(taken map[string]struct{}, base string) string {
+	if _, exists := taken[base]; !exists {
+		return base
+	}
+
+	for suffix := 2; ; suffix++ {
+		candidate := fmt.Sprintf("%s %d", base, suffix)
+		if _, exists := taken[candidate]; !exists {
+			return candidate
+		}
+	}
 }
 
 func (s *Service) BulkUpdateStatus(

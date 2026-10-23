@@ -158,6 +158,14 @@ build_module() {
     flags+="${sep}--remap-path-prefix=${cargo_home_physical}=/cargo"
   fi
   flags+="${sep}--remap-path-prefix=${target_dir}=/trenova/target"
+  # With the rust-src component installed, rustc records the standard library's panic paths
+  # under the local sysroot instead of /rustc/<commit>; map them back to what a toolchain
+  # without rust-src records.
+  local sysroot commit
+  sysroot="$(rustc --print sysroot)"
+  commit="$(rustc -vV | sed -n 's/^commit-hash: //p')"
+  [ -n "$commit" ] || die "rustc -vV reports no commit-hash"
+  flags+="${sep}--remap-path-prefix=${sysroot}/lib/rustlib/src/rust=/rustc/${commit}"
   flags+="${sep}-Cstrip=symbols"
 
   CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}" \

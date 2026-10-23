@@ -6,6 +6,7 @@ import type { EditorView } from "@codemirror/view";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import type {
+  TariffChange,
   TariffCheckResult,
   TariffContext,
   TariffCoverage,
@@ -84,6 +85,11 @@ export type TariffEditorBinding = {
   applyFix: (fix: Pick<TariffFix, "changes">) => void;
   /** Appends a block to the source, through the editor so it can be undone. */
   appendToSource: (block: string) => void;
+  /**
+   * Applies one edit made outside the editor (the name field writing the header) through it,
+   * without taking focus, so it can be undone; a run of such edits in a row is one undo step.
+   */
+  applyEdit: (change: TariffChange) => void;
 };
 
 /**
@@ -151,8 +157,26 @@ export function useTariffEditorBinding({
     [readSource, writeSource],
   );
 
+  const applyEdit = useCallback(
+    (change: TariffChange) => {
+      const view = editorView.current;
+      if (view) {
+        view.dispatch({
+          changes: { from: change.range.from, to: change.range.to, insert: change.insert },
+          userEvent: "input.type",
+        });
+        return;
+      }
+      const current = readSource();
+      writeSource(
+        current.slice(0, change.range.from) + change.insert + current.slice(change.range.to),
+      );
+    },
+    [readSource, writeSource],
+  );
+
   return useMemo(
-    () => ({ setEditorView, reveal, applyFix, appendToSource }),
-    [setEditorView, reveal, applyFix, appendToSource],
+    () => ({ setEditorView, reveal, applyFix, appendToSource, applyEdit }),
+    [setEditorView, reveal, applyFix, appendToSource, applyEdit],
   );
 }

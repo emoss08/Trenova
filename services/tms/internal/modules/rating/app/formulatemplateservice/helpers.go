@@ -40,7 +40,6 @@ func withContent(
 	original, payload *formulatemplate.FormulaTemplate,
 ) *formulatemplate.FormulaTemplate {
 	next := *original
-	next.Name = payload.Name
 	next.Description = payload.Description
 	next.Source = payload.Source
 	next.Version = payload.Version

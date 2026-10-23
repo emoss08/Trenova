@@ -62,6 +62,13 @@ func (c *contentCheck) testCount() int32 {
 	return intutils.SafeToInt32(len(c.tests.Tests))
 }
 
+func (c *contentCheck) headerName() string {
+	if c.checked == nil || c.checked.Check == nil || c.checked.Check.Header == nil {
+		return ""
+	}
+	return c.checked.Check.Header.Name
+}
+
 func (c *contentCheck) refusal() error {
 	if c.checked == nil {
 		return nil
@@ -105,7 +112,12 @@ func (s *Service) prepareContent(
 	entity *formulatemplate.FormulaTemplate,
 ) error {
 	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
+	formulatemplate.ValidateContentSizes(
+		multiErr,
+		entity.Source,
+		entity.Description,
+		entity.Metadata,
+	)
 	if multiErr.HasErrors() {
 		return multiErr
 	}
@@ -122,8 +134,18 @@ func (s *Service) prepareContent(
 		return refusal
 	}
 
+	entity.Name = content.headerName()
+	entity.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
 	applyContent(entity, content)
 	return nil
+}
+
+func (s *Service) renamed(ctx context.Context, source, name string) (string, error) {
+	return s.checker.SetName(ctx, source, name)
 }
 
 func applyContent(entity *formulatemplate.FormulaTemplate, content *contentCheck) {

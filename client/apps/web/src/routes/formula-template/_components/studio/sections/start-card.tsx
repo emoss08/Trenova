@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { tariffSetName } from "@trenova/shared/rules/tariff";
 import { useStudio } from "../studio-context";
 
 const SKELETON_KEYS = ["a", "b", "c", "d"] as const;
@@ -34,7 +35,7 @@ type Starter = {
  */
 export function StartCard() {
   const t = useT();
-  const { askNova, novaBusy } = useStudio();
+  const { askNova, novaBusy, rules } = useStudio();
   const form = useFormContext<FormulaTemplateFormValues>();
   const [question, setQuestion] = useState("");
   const [library, setLibrary] = useState<"standard" | "org">("standard");
@@ -68,23 +69,30 @@ export function StartCard() {
     });
   };
 
-  const fillIfEmpty = (key: "name" | "description", value: string) => {
+  const fillIfEmpty = (key: "description", value: string) => {
     if (!form.getValues(key)?.trim()) {
       form.setValue(key, value, { shouldDirty: true });
     }
   };
 
+  // The started source keeps the name already typed, or takes `fallback`: the name is its header.
+  const startSource = (source: string, fallback: string) => {
+    const typed = form.getValues("name")?.trim();
+    form.setValue("source", tariffSetName(rules, source, typed || fallback).source, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
   const fromStandard = (standard: StandardTemplate) =>
     startFrom(standard.name, () => {
-      form.setValue("source", standard.source, { shouldDirty: true, shouldValidate: true });
-      fillIfEmpty("name", standard.name);
+      startSource(standard.source, standard.name);
       fillIfEmpty("description", standard.description);
     });
 
   const fromTemplate = (template: FormulaTemplate) =>
     startFrom(template.name, () => {
-      form.setValue("source", template.source, { shouldDirty: true, shouldValidate: true });
-      fillIfEmpty("name", t("Copy of {0}", template.name));
+      startSource(template.source, t("Copy of {0}", template.name));
       fillIfEmpty("description", template.description ?? "");
     });
 

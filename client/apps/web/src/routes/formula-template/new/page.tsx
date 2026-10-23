@@ -35,7 +35,6 @@ export function FormulaStudioCreatePage() {
   const { mutate } = useApiMutation({
     mutationFn: async (values: FormulaTemplateFormValues) =>
       apiService.formulaTemplateService.create({
-        name: values.name,
         description: values.description ?? "",
         source: values.source,
       }),

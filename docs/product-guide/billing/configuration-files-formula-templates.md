@@ -25,7 +25,7 @@ The table shows each template's **Name**, **Status**, **Libraries** it imports, 
 Keywords: new formula, new rating method, write tariff
 1. Open [Formula templates](/billing/configuration-files/formula-templates).
 2. Select **New formula template**, then **New formula template** in the menu. The Formula Studio opens.
-3. Type the name over **Untitled rating method** and add a description under it.
+3. Type the name over **Untitled rating method** and add a description under it. The name is the `tariff "…"` line at the top of the source: typing either one changes the other.
 4. Under **Source**, describe the method and select **Draft it** to have Nova write it, or pick one from **Standard library** or **Your templates**, or write the tariff yourself.
 5. Check what it bills in **Preview** and that its **Tests** pass.
 6. Select **Create template**. The template is saved as a draft.

@@ -135,6 +135,20 @@ func TestFormatTariffCanonicalises(t *testing.T) {
 	assert.Contains(t, *formatted.Formatted, `charge "A" = $1 + $2`)
 }
 
+func TestSetTariffNameRewritesTheHeader(t *testing.T) {
+	t.Parallel()
+
+	named, err := rules.SetTariffName(
+		t.Context(),
+		"tariff \"Old\"\ncharge \"A\" = $1\n",
+		`Say "hi" {now}`,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "tariff \"Say \\\"hi\\\" {{now}}\"\ncharge \"A\" = $1\n", named.Source)
+	assert.Equal(t, rules.TariffRange{From: 7, To: 12}, named.Change.Range)
+	assert.Equal(t, `"Say \"hi\" {{now}}"`, named.Change.Insert)
+}
+
 func TestCheckTariffDeclaresInputsAndValidatesValues(t *testing.T) {
 	t.Parallel()
 
