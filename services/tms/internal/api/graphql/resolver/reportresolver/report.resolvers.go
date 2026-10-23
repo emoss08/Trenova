@@ -203,7 +203,7 @@ func (r *MutationResolver) CreateReportSchedule(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	req, err := saveReportScheduleRequest(authCtx, &input, nil)
+	req, err := saveReportScheduleRequest(authCtx, &input)
 	if err != nil {
 		return nil, err
 	}
@@ -222,16 +222,7 @@ func (r *MutationResolver) UpdateReportSchedule(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	req, err := saveReportScheduleRequest(authCtx, &gqlmodel.CreateReportScheduleInput{
-		DefinitionID:    input.DefinitionID,
-		CronExpression:  input.CronExpression,
-		Timezone:        input.Timezone,
-		Formats:         input.Formats,
-		EmailRecipients: input.EmailRecipients,
-		EmailAttach:     input.EmailAttach,
-		NotifyUserIds:   input.NotifyUserIds,
-		Enabled:         input.Enabled,
-	}, &input)
+	req, err := updateReportScheduleRequest(authCtx, &input)
 	if err != nil {
 		return nil, err
 	}
