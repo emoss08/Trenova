@@ -115,8 +115,7 @@ type TransferChange struct {
 	UpdatedAt             int64                        `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
-func (l *ShipmentLink) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (l *ShipmentLink) BeforeSave(_ context.Context) error {
 	if l.SyncPolicy == "" {
 		l.SyncPolicy = ShipmentSyncPolicyAutoOperational
 	}
@@ -125,6 +124,14 @@ func (l *ShipmentLink) BeforeAppendModel(_ context.Context, query bun.Query) err
 	}
 	if l.FieldOwnership == nil {
 		l.FieldOwnership = DefaultShipmentFieldOwnership()
+	}
+	return nil
+}
+
+func (l *ShipmentLink) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := l.BeforeSave(ctx); err != nil {
+		return err
 	}
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -138,8 +145,7 @@ func (l *ShipmentLink) BeforeAppendModel(_ context.Context, query bun.Query) err
 	return nil
 }
 
-func (c *TransferChange) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (c *TransferChange) BeforeSave(_ context.Context) error {
 	if c.Payload == nil {
 		c.Payload = map[string]any{}
 	}
@@ -151,6 +157,14 @@ func (c *TransferChange) BeforeAppendModel(_ context.Context, query bun.Query) e
 	}
 	if c.ConflictStatus == "" {
 		c.ConflictStatus = TransferChangeConflictNone
+	}
+	return nil
+}
+
+func (c *TransferChange) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := c.BeforeSave(ctx); err != nil {
+		return err
 	}
 	switch query.(type) {
 	case *bun.InsertQuery:

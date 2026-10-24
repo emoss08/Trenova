@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -44,7 +43,7 @@ func (s *Service) ApplyConnectionDraft(
 	}
 
 	applied := &ediports.AppliedConnectionDraft{}
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
 		p, err := s.plan(ctx, req.Draft)
 		if err != nil {
 			return err

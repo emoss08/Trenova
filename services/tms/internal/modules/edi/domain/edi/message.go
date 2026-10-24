@@ -20,9 +20,8 @@ var (
 )
 
 type EDIMessage struct {
-	bun.BaseModel             `json:"-" bun:"table:edi_messages,alias:emsg"`
-	keel.Table                `keel:"edi_messages"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	bun.BaseModel `json:"-" bun:"table:edi_messages,alias:emsg"`
+	keel.Table    `keel:"edi_messages"`
 
 	ID                       pulid.ID                    `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edimsg_"`
 	BusinessUnitID           pulid.ID                    `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
@@ -78,12 +77,18 @@ type EDIMessage struct {
 	ValidationErrors       []*EDIMessageValidationError `json:"validationErrors,omitempty"       bun:"rel:has-many,join:id=message_id" keel:"many:message_id"`
 }
 
-func (m *EDIMessage) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (m *EDIMessage) BeforeSave(_ context.Context) error {
 	if m.GeneratedAt == 0 {
-		m.GeneratedAt = now
+		m.GeneratedAt = timeutils.NowUnix()
 	}
+	return nil
+}
 
+func (m *EDIMessage) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := m.BeforeSave(ctx); err != nil {
+		return err
+	}
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if m.ID.IsNil() {
@@ -95,10 +100,6 @@ func (m *EDIMessage) BeforeAppendModel(_ context.Context, query bun.Query) error
 	}
 
 	return nil
-}
-
-func (m *EDIMessage) BeforeCreate(ctx context.Context) error {
-	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 type EDIMessageValidationError struct {
@@ -130,9 +131,8 @@ func (e *EDIMessageValidationError) BeforeAppendModel(_ context.Context, query b
 }
 
 type EDITestCase struct {
-	bun.BaseModel             `json:"-" bun:"table:edi_test_cases,alias:etc"`
-	keel.Table                `keel:"edi_test_cases"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	bun.BaseModel `json:"-" bun:"table:edi_test_cases,alias:etc"`
+	keel.Table    `keel:"edi_test_cases"`
 
 	ID                       pulid.ID        `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:editc_"`
 	BusinessUnitID           pulid.ID        `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`

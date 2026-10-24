@@ -4,18 +4,20 @@ package edicontrolnumberrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var sequenceErrors = dberror.Mapping{Entity: "EDIControlNumberSequence"}
 
 type Params struct {
 	fx.In
@@ -36,6 +38,21 @@ func New(p Params) ediports.EDIControlNumberRepository {
 	}
 }
 
+type sequenceKey struct {
+	partnerID      pulid.ID
+	documentTypeID pulid.ID
+	kind           edi.ControlNumberKind
+}
+
+func (k sequenceKey) where() []keel.Pred {
+	es := edidb.EDIControlNumberSequences
+	return []keel.Pred{
+		es.EDIPartnerID.Eq(k.partnerID),
+		es.DocumentTypeID.Eq(k.documentTypeID),
+		es.Kind.Eq(k.kind),
+	}
+}
+
 func (r *repository) AllocateControlNumbers(
 	ctx context.Context,
 	req ediports.AllocateEDIControlNumbersRequest,
@@ -44,64 +61,43 @@ func (r *repository) AllocateControlNumbers(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[edi.ControlNumberKind]int64, error) {
+			db := r.db.Keel(ctx)
+			es := edidb.EDIControlNumberSequences
 			allocated := make(map[edi.ControlNumberKind]int64, len(req.Kinds))
-			cols := edicol.EDIControlNumberSequenceColumns
+			for _, kind := range req.Kinds {
+				key := sequenceKey{
+					partnerID:      req.PartnerID,
+					documentTypeID: req.DocumentTypeID,
+					kind:           kind,
+				}
+				if err := createIfMissing(ctx, db, &edi.EDIControlNumberSequence{
+					BusinessUnitID: req.TenantInfo.BuID,
+					OrganizationID: req.TenantInfo.OrgID,
+					EDIPartnerID:   req.PartnerID,
+					DocumentTypeID: req.DocumentTypeID,
+					Kind:           kind,
+				}); err != nil {
+					return nil, err
+				}
 
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, _ bun.Tx) error {
-					for _, kind := range req.Kinds {
-						sequence := &edi.EDIControlNumberSequence{
-							BusinessUnitID: req.TenantInfo.BuID,
-							OrganizationID: req.TenantInfo.OrgID,
-							EDIPartnerID:   req.PartnerID,
-							DocumentTypeID: req.DocumentTypeID,
-							Kind:           kind,
-						}
-						_, err := r.db.DBForContext(c).
-							NewInsert().
-							Model(sequence).
-							On(`CONFLICT ("edi_partner_id", "business_unit_id", "organization_id", "document_type_id", "kind") DO NOTHING`).
-							Exec(c)
-						if err != nil {
-							return err
-						}
+				sequence, err := es.Where(key.where()...).Lock(keel.ForUpdate).One(ctx, db)
+				if err != nil {
+					return nil, sequenceErrors.Map(err, string(kind))
+				}
 
-						if err = r.db.DBForContext(c).
-							NewSelect().
-							Model(sequence).
-							Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-							Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-							Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-							Where(cols.DocumentTypeID.Eq(), req.DocumentTypeID).
-							Where(cols.Kind.Eq(), kind).
-							For("UPDATE").
-							Scan(c); err != nil {
-							return err
-						}
+				value := sequence.NextValue
+				next := value + 1
+				if next > sequence.MaxValue {
+					next = sequence.MinValue
+				}
+				sequence.NextValue = next
+				if err = es.Save(ctx, db, sequence, es.NextValue); err != nil {
+					return nil, sequenceErrors.Map(err, sequence.ID.String())
+				}
+				allocated[kind] = value
+			}
 
-						value := sequence.NextValue
-						next := value + 1
-						if next > sequence.MaxValue {
-							next = sequence.MinValue
-						}
-						sequence.NextValue = next
-						sequence.Version++
-						if _, err = r.db.DBForContext(c).
-							NewUpdate().
-							Model(sequence).
-							WherePK().
-							Column(cols.NextValue.Bare(), cols.Version.Bare(), cols.UpdatedAt.Bare()).
-							Exec(c); err != nil {
-							return err
-						}
-						allocated[kind] = value
-					}
-					return nil
-				},
-			)
-			return allocated, err
+			return allocated, nil
 		},
 	)
 }
@@ -111,24 +107,26 @@ func (r *repository) ResetControlNumber(
 	req *ediports.ResetEDIControlNumberRequest,
 ) (*edi.EDIControlNumberSequence, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIControlNumberSequence, error) {
-		cols := edicol.EDIControlNumberSequenceColumns
-		sequence := new(edi.EDIControlNumberSequence)
-		err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(sequence).
-			Set("next_value = ?", req.NextValue).
-			Set("version = version + 1").
-			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-			Where(cols.DocumentTypeID.Eq(), req.DocumentTypeID).
-			Where(cols.Kind.Eq(), req.Kind).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Returning("*").
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIControlNumberSequence")
+		es := edidb.EDIControlNumberSequences
+		key := sequenceKey{
+			partnerID:      req.PartnerID,
+			documentTypeID: req.DocumentTypeID,
+			kind:           req.Kind,
 		}
-		return sequence, nil
+		rows, err := listquery.UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			es.Where(key.where()...),
+			es.NextValue.To(req.NextValue),
+		)
+		if err != nil {
+			return nil, sequenceErrors.Map(err, string(req.Kind))
+		}
+		if len(rows) == 0 {
+			return nil, sequenceErrors.Map(keel.ErrNotFound, string(req.Kind))
+		}
+
+		return rows[0], nil
 	})
 }
 
@@ -137,39 +135,51 @@ func (r *repository) StartControlNumber(
 	req *ediports.ResetEDIControlNumberRequest,
 ) (*edi.EDIControlNumberSequence, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIControlNumberSequence, error) {
-		cols := edicol.EDIControlNumberSequenceColumns
-		sequence := &edi.EDIControlNumberSequence{
+		db := r.db.Keel(ctx)
+		es := edidb.EDIControlNumberSequences
+		key := sequenceKey{
+			partnerID:      req.PartnerID,
+			documentTypeID: req.DocumentTypeID,
+			kind:           req.Kind,
+		}
+		if err := createIfMissing(ctx, db, &edi.EDIControlNumberSequence{
 			BusinessUnitID: req.TenantInfo.BuID,
 			OrganizationID: req.TenantInfo.OrgID,
 			EDIPartnerID:   req.PartnerID,
 			DocumentTypeID: req.DocumentTypeID,
 			Kind:           req.Kind,
 			NextValue:      req.NextValue,
-		}
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(sequence).
-			On(`CONFLICT ("edi_partner_id", "business_unit_id", "organization_id", "document_type_id", "kind") DO UPDATE`).
-			Set(cols.NextValue.SetExcluded()).
-			Set(cols.Version.IncConflict(1)).
-			Set(cols.UpdatedAt.SetExcluded()).
-			Where(cols.NextValue.Expr("{} < EXCLUDED.next_value")).
-			Exec(ctx)
-		if err != nil {
+		}); err != nil {
 			return nil, err
 		}
 
-		current := new(edi.EDIControlNumberSequence)
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(current).
-			Apply(edicol.EDIControlNumberSequenceApplyTenant(req.TenantInfo)).
-			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-			Where(cols.DocumentTypeID.Eq(), req.DocumentTypeID).
-			Where(cols.Kind.Eq(), req.Kind).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIControlNumberSequence")
+		if _, err := es.Where(key.where()...).
+			Where(es.NextValue.Lt(req.NextValue)).
+			Update(ctx, db, es.NextValue.To(req.NextValue)); err != nil {
+			return nil, sequenceErrors.Map(err, string(req.Kind))
 		}
+
+		current, err := es.Where(key.where()...).One(ctx, db)
+		if err != nil {
+			return nil, sequenceErrors.Map(err, string(req.Kind))
+		}
+
 		return current, nil
 	})
+}
+
+func createIfMissing(ctx context.Context, db *keel.DB, sequence *edi.EDIControlNumberSequence) error {
+	es := edidb.EDIControlNumberSequences
+	_, err := es.CreateOrSkip(
+		ctx,
+		db,
+		[]*edi.EDIControlNumberSequence{sequence},
+		es.EDIPartnerID,
+		es.BusinessUnitID,
+		es.OrganizationID,
+		es.DocumentTypeID,
+		es.Kind,
+	)
+
+	return sequenceErrors.Map(err, string(sequence.Kind))
 }

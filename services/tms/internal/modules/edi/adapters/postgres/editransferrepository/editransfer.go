@@ -4,22 +4,32 @@ package editransferrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const (
+	directionInbound  = "inbound"
+	directionOutbound = "outbound"
+)
+
+var transferErrors = dberror.Mapping{Entity: "EDITenderTransfer"}
+
+var actionableInboundStatuses = []edi.TransferStatus{
+	edi.TransferStatusSubmitted,
+	edi.TransferStatusMappingRequired,
+	edi.TransferStatusPendingApproval,
+}
 
 type Params struct {
 	fx.In
@@ -40,35 +50,36 @@ func New(p Params) ediports.EDILoadTenderTransferRepository {
 	}
 }
 
+type statusCount struct {
+	Status edi.TransferStatus
+	Count  int64
+}
+
 func (r *repository) GetInboundStatusCounts(
 	ctx context.Context,
 	req ediports.GetEDITransferStatusCountsRequest,
 ) (map[edi.TransferStatus]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[edi.TransferStatus]int, error) {
-		cols := edicol.EDITransferColumns
-		var rows []struct {
-			Status edi.TransferStatus `bun:"status"`
-			Count  int                `bun:"count"`
-		}
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDITransfer)(nil)).
-			ColumnExpr(cols.Status.Qualified()).
-			ColumnExpr("COUNT(*) AS count").
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyTransferTenantFilter(sq, req.TenantInfo, "inbound")
-			}).
-			GroupExpr(cols.Status.Qualified())
-		if req.Since > 0 {
-			query = query.Where(cols.SubmittedAt.Gte(), req.Since)
-		}
-		if err := query.Scan(ctx, &rows); err != nil {
+		t := edidb.EDITransfers
+		rows, err := keel.Into[statusCount](
+			ctx,
+			r.db.Keel(ctx),
+			t.Where(
+				tenantFilter(req.TenantInfo, directionInbound),
+				keel.When(req.Since > 0, t.SubmittedAt.Gte(req.Since)),
+			).
+				Group(t.Status).
+				Pick(t.Status, keel.Count()),
+		)
+		if err != nil {
 			return nil, err
 		}
+
 		counts := make(map[edi.TransferStatus]int, len(rows))
 		for _, row := range rows {
-			counts[row.Status] = row.Count
+			counts[row.Status] = int(row.Count)
 		}
+
 		return counts, nil
 	})
 }
@@ -81,34 +92,8 @@ func (r *repository) ListInbound(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
-			entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.EDITransferColumns
-
-			dba := r.db.DBForContext(ctx)
-			query := dba.
-				NewSelect().
-				Model(&entities).
-				Where(cols.TargetOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
-				Where(cols.TargetBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID)
-			if req.InboundFileID.IsNotNil() {
-				query = query.Where(
-					cols.InboundMessageID.In(),
-					inboundFileMessages(dba, req.InboundFileID, req.Filter.TenantInfo),
-				)
-			}
-			total, err := query.
-				Order(newestFirst...).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.EDITransfer]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			q := listedTransfers(req, directionInbound).Order(newestFirst()...)
+			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 		},
 	)
 }
@@ -121,27 +106,50 @@ func (r *repository) ListOutbound(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
-			entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.EDITransferColumns
+			t := edidb.EDITransfers
+			q := t.Where(
+				tenantFilter(req.Filter.TenantInfo, directionOutbound),
+				t.InboundMessageID.IsNull(),
+			).Order(newestFirst()...)
 
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where(cols.SourceOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
-				Where(cols.SourceBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
-				Where("eltt.inbound_message_id IS NULL").
-				Order(newestFirst...).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
+			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
+		},
+	)
+}
 
-			return &pagination.ListResult[*edi.EDITransfer]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+func (r *repository) ListInboundCursor(
+	ctx context.Context,
+	req *ediports.ListEDITransfersRequest,
+) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+	return r.listCursor(ctx, req, directionInbound)
+}
+
+func (r *repository) ListOutboundCursor(
+	ctx context.Context,
+	req *ediports.ListEDITransfersRequest,
+) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+	return r.listCursor(ctx, req, directionOutbound)
+}
+
+func (r *repository) listCursor(
+	ctx context.Context,
+	req *ediports.ListEDITransfersRequest,
+	direction string,
+) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+			return listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				listedTransfers(req, direction),
+				&listquery.Request[edi.EDITransfer]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withPartners,
+				},
+			)
 		},
 	)
 }
@@ -151,20 +159,11 @@ func (r *repository) GetTransferByID(
 	req ediports.GetEDITransferByIDRequest,
 ) (*edi.EDITransfer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
-		entity := new(edi.EDITransfer)
-		cols := edicol.EDITransferColumns
-		rel := edicol.EDITransferRelations
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(rel.SourcePartner).
-			Relation(rel.TargetPartner).
-			Where(cols.ID.Eq(), req.ID)
-
-		query = applyTransferTenantFilter(query, req.TenantInfo, req.Direction)
-
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDITenderTransfer")
+		t := edidb.EDITransfers
+		entity, err := withPartners(t.Where(t.ID.Eq(req.ID), tenantFilter(req.TenantInfo, req.Direction))).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, transferErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -176,25 +175,14 @@ func (r *repository) GetTransfersByIDs(
 	req ediports.GetEDITransfersByIDsRequest,
 ) ([]*edi.EDITransfer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDITransfer, error) {
-		entities := make([]*edi.EDITransfer, 0, len(req.TransferIDs))
-		cols := edicol.EDITransferColumns
-		rel := edicol.EDITransferRelations
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(rel.SourcePartner).
-			Relation(rel.TargetPartner).
-			Where(cols.ID.In(), bun.List(req.TransferIDs)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyTransferTenantFilter(sq, req.TenantInfo, "")
-			}).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDITenderTransfer")
+		if len(req.TransferIDs) == 0 {
+			return []*edi.EDITransfer{}, nil
 		}
 
-		return entities, nil
+		t := edidb.EDITransfers
+		return withPartners(t.Where(t.ID.In(req.TransferIDs...), tenantFilter(req.TenantInfo, ""))).
+			Limit(len(req.TransferIDs)).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -206,37 +194,19 @@ func (r *repository) SelectOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
-			entities := make([]*edi.EDITransfer, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-			rel := edicol.EDITransferRelations
+			t := edidb.EDITransfers
+			q := withPartners(t.Where(tenantFilter(req.SelectQueryRequest.TenantInfo, ""))).
+				Order(newestFirst()...)
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(rel.SourcePartner).
-				Relation(rel.TargetPartner).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return applyTransferTenantFilter(sq, req.SelectQueryRequest.TenantInfo, "")
-				}).
-				Order(newestFirst...).
-				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
-				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset()))
-
-			if req.SelectQueryRequest.Query != "" {
-				query = query.Where(
-					"eltt.tender_payload->>'bol' ILIKE ?",
-					dbhelper.WrapWildcard(req.SelectQueryRequest.Query),
-				)
-			}
-
-			total, err := query.ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.EDITransfer]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return listquery.SelectOptions(
+				ctx,
+				r.db.Keel(ctx),
+				q,
+				req.SelectQueryRequest,
+				func(s string) keel.Pred {
+					return listquery.TextContainsFold(t.TenderPayload.Text("bol"), s)
+				},
+			)
 		},
 	)
 }
@@ -246,79 +216,16 @@ func (r *repository) GetTransferForUpdate(
 	req ediports.GetEDITransferForUpdateRequest,
 ) (*edi.EDITransfer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
-		entity := new(edi.EDITransfer)
-		cols := edicol.EDITransferColumns
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.ID.Eq(), req.ID).
-			For("UPDATE")
-
-		query = applyTransferTenantFilter(query, req.TenantInfo, req.Direction)
-
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDITenderTransfer")
+		t := edidb.EDITransfers
+		entity, err := t.Where(t.ID.Eq(req.ID), tenantFilter(req.TenantInfo, req.Direction)).
+			Lock(keel.ForUpdate).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, transferErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
 	})
-}
-
-func inboundFileMessages(
-	db bun.IDB,
-	fileID pulid.ID,
-	tenantInfo pagination.TenantInfo,
-) *bun.SelectQuery {
-	cols := edicol.EDIMessageColumns
-
-	return db.NewSelect().
-		Model((*edi.EDIMessage)(nil)).
-		ColumnExpr(cols.ID.Qualified()).
-		Where(cols.InboundFileID.Eq(), fileID).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return edicol.EDIMessageScopeTenant(sq, tenantInfo)
-		})
-}
-
-func ScopeTenant(query *bun.SelectQuery, tenantInfo pagination.TenantInfo) *bun.SelectQuery {
-	return applyTransferTenantFilter(query, tenantInfo, "")
-}
-
-var newestFirst = []string{
-	edicol.EDITransferColumns.CreatedAt.OrderDesc(),
-	edicol.EDITransferColumns.ID.OrderDesc(),
-}
-
-func applyTransferTenantFilter(
-	query *bun.SelectQuery,
-	tenantInfo pagination.TenantInfo,
-	direction string,
-) *bun.SelectQuery {
-	cols := edicol.EDITransferColumns
-
-	switch direction {
-	case "inbound":
-		return query.
-			Where(cols.TargetOrganizationID.Eq(), tenantInfo.OrgID).
-			Where(cols.TargetBusinessUnitID.Eq(), tenantInfo.BuID)
-	case "outbound":
-		return query.
-			Where(cols.SourceOrganizationID.Eq(), tenantInfo.OrgID).
-			Where(cols.SourceBusinessUnitID.Eq(), tenantInfo.BuID)
-	default:
-		return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.WhereOr(
-				buncolgen.Expr("({0} = ? AND {1} = ?)", cols.TargetOrganizationID, cols.TargetBusinessUnitID),
-				tenantInfo.OrgID,
-				tenantInfo.BuID,
-			).
-				WhereOr(
-					buncolgen.Expr("({0} = ? AND {1} = ?)", cols.SourceOrganizationID, cols.SourceBusinessUnitID),
-					tenantInfo.OrgID,
-					tenantInfo.BuID,
-				)
-		})
-	}
 }
 
 func (r *repository) GetActionableInboundTransferByExternalReference(
@@ -326,31 +233,20 @@ func (r *repository) GetActionableInboundTransferByExternalReference(
 	req ediports.GetActionableInboundEDITransferByExternalReferenceRequest,
 ) (*edi.EDITransfer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
-		entity := new(edi.EDITransfer)
-		cols := edicol.EDITransferColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.TargetOrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.TargetBusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.TargetPartnerID.Eq(), req.PartnerID).
-			Where("eltt.inbound_message_id IS NOT NULL").
-			Where(
-				"eltt.tender_payload->'ratingDetail'->>'externalShipmentId' = ?",
-				req.ExternalReference,
-			).
-			Where(cols.Status.In(), bun.List([]edi.TransferStatus{
-				edi.TransferStatusSubmitted,
-				edi.TransferStatusMappingRequired,
-				edi.TransferStatusPendingApproval,
-			})).
-			Order(newestFirst...).
-			Limit(1).
-			Scan(ctx)
+		t := edidb.EDITransfers
+		entity, err := t.Where(
+			tenantFilter(req.TenantInfo, directionInbound),
+			t.TargetPartnerID.Eq(req.PartnerID),
+			t.InboundMessageID.IsNotNull(),
+			t.TenderPayload.Text("ratingDetail", "externalShipmentId").Eq(req.ExternalReference),
+			t.Status.In(actionableInboundStatuses...),
+		).
+			Order(newestFirst()...).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDITenderTransfer")
+			return nil, transferErrors.Map(err, req.ExternalReference)
 		}
+
 		return entity, nil
 	})
 }
@@ -360,12 +256,8 @@ func (r *repository) CreateTransfer(
 	entity *edi.EDITransfer,
 ) (*edi.EDITransfer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := edidb.EDITransfers.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, transferErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -377,26 +269,8 @@ func (r *repository) UpdateTransfer(
 	entity *edi.EDITransfer,
 ) (*edi.EDITransfer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
-		ov := entity.Version
-		entity.Version++
-		cols := edicol.EDITransferColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"EDITenderTransfer",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+		if err := edidb.EDITransfers.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, transferErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -408,111 +282,76 @@ func (r *repository) SetApprovalWorkflowRunID(
 	req ediports.SetEDITransferApprovalWorkflowRunIDRequest,
 ) (*edi.EDITransfer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
-		entity := new(edi.EDITransfer)
-		cols := edicol.EDITransferColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set(cols.ApprovalWorkflowRunID.Set(), req.RunID).
-			Set(cols.UpdatedAt.SetExpr(dbhelper.NowEpoch)).
-			Where(cols.ID.Eq(), req.ID).
-			Where(cols.TargetOrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.TargetBusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Returning("*").
-			Exec(ctx)
+		t := edidb.EDITransfers
+		rows, err := listquery.UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			t.Where(t.ID.Eq(req.ID), tenantFilter(req.TenantInfo, directionInbound)),
+			t.ApprovalWorkflowRunID.To(req.RunID),
+			t.Version.ToExpr(t.Version),
+		)
 		if err != nil {
-			return nil, err
+			return nil, transferErrors.Map(err, req.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(
-			results,
+		if err = dberror.CheckAffected(
+			int64(len(rows)),
 			"EDITenderTransfer",
 			req.ID.String(),
 		); err != nil {
 			return nil, err
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
-func (r *repository) ListInboundCursor(
-	ctx context.Context,
-	req *ediports.ListEDITransfersRequest,
-) (*pagination.CursorListResult[*edi.EDITransfer], error) {
-	return r.listCursor(ctx, req, "inbound")
-}
-
-func (r *repository) ListOutboundCursor(
-	ctx context.Context,
-	req *ediports.ListEDITransfersRequest,
-) (*pagination.CursorListResult[*edi.EDITransfer], error) {
-	return r.listCursor(ctx, req, "outbound")
-}
-
-func (r *repository) listCursor(
-	ctx context.Context,
+func listedTransfers(
 	req *ediports.ListEDITransfersRequest,
 	direction string,
-) (*pagination.CursorListResult[*edi.EDITransfer], error) {
-	return dbtx.Write(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITransfer], error) {
-			dba := r.db.DBForContext(ctx)
-			scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = applyTransferTenantFilter(sq, req.Filter.TenantInfo, direction)
-				if direction == "outbound" {
-					sq = sq.Where("eltt.inbound_message_id IS NULL")
-				}
-				if req.InboundFileID.IsNotNil() {
-					sq = sq.Where(
-						edicol.EDITransferColumns.InboundMessageID.In(),
-						inboundFileMessages(dba, req.InboundFileID, req.Filter.TenantInfo),
-					)
-				}
-				return sq
-			}
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*edi.EDITransfer)(nil)).
-					Apply(scope).
-					Count(ctx)
-				if err != nil {
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITransfer]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*edi.EDITransfer) *bun.SelectQuery {
-					rel := edicol.EDITransferRelations
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr(edicol.EDITransferTable.All()).
-						Relation(rel.SourcePartner).
-						Relation(rel.TargetPartner)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFiltersWithoutTenantScope(
-						sq,
-						"eltt",
-						req.Filter,
-						req.Cursor,
-						(*edi.EDITransfer)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return scope(sq), nil
-				},
-			})
-		},
+) *keel.Query[edi.EDITransfer] {
+	t := edidb.EDITransfers
+	return t.Where(
+		tenantFilter(req.Filter.TenantInfo, direction),
+		keel.When(direction == directionOutbound, t.InboundMessageID.IsNull()),
+		keel.When(
+			req.InboundFileID.IsNotNil(),
+			t.InboundMessageID.InQuery(inboundFileMessages(req.InboundFileID)),
+		),
 	)
+}
+
+func inboundFileMessages(fileID pulid.ID) *keel.Query[edi.EDIMessage] {
+	m := edidb.EDIMessages
+	return m.Pick(m.ID).Where(m.InboundFileID.Eq(fileID))
+}
+
+func newestFirst() []keel.Order {
+	t := edidb.EDITransfers
+	return []keel.Order{t.CreatedAt.Desc(), t.ID.Desc()}
+}
+
+func withPartners(q *keel.Query[edi.EDITransfer]) *keel.Query[edi.EDITransfer] {
+	t := edidb.EDITransfers
+	return q.Load(t.SourcePartner(), t.TargetPartner())
+}
+
+func tenantFilter(tenant pagination.TenantInfo, direction string) keel.Pred {
+	t := edidb.EDITransfers
+	inbound := keel.And(
+		t.TargetOrganizationID.Eq(tenant.OrgID),
+		t.TargetBusinessUnitID.Eq(tenant.BuID),
+	)
+	outbound := keel.And(
+		t.SourceOrganizationID.Eq(tenant.OrgID),
+		t.SourceBusinessUnitID.Eq(tenant.BuID),
+	)
+
+	switch direction {
+	case directionInbound:
+		return inbound
+	case directionOutbound:
+		return outbound
+	default:
+		return keel.Or(inbound, outbound)
+	}
 }

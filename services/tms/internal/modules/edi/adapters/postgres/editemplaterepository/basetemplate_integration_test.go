@@ -10,29 +10,19 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
-
-type seededTenant struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
 
 func TestEnsureBaseTemplate_EveryTransactionSetCanBeSentOut(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	var org seededTenant
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org))
-	tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	scope := editest.FirstTenant(t, ctx, db)
+	ctx, tenant := scope.Ctx, scope.Info
 	repo := editemplaterepository.New(editemplaterepository.Params{
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
@@ -64,13 +54,8 @@ func TestEnsureStarterTemplate_GivesAnInboundSetItsOwnTemplate(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	var org seededTenant
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org))
-	tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	scope := editest.FirstTenant(t, ctx, db)
+	ctx, tenant := scope.Ctx, scope.Info
 	repo := editemplaterepository.New(editemplaterepository.Params{
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
@@ -101,15 +86,9 @@ func TestDocumentTypeCatalog_HoldsEverySetInBothDirections(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	defer cleanup()
 
-	var rows []struct {
-		TransactionSet edi.TransactionSet    `bun:"transaction_set"`
-		Direction      edi.DocumentDirection `bun:"direction"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("edi_document_types").
-		Column("transaction_set", "direction").
-		Where("standard = ?", edi.EDIStandardX12).
-		Scan(ctx, &rows))
+	dt := edidb.EDIDocumentTypes
+	rows, err := dt.Where(dt.Standard.Eq(edi.EDIStandardX12)).All(ctx, db)
+	require.NoError(t, err)
 
 	present := make(map[string]bool, len(rows))
 	for _, row := range rows {

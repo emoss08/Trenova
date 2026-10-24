@@ -7,14 +7,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editenderrepairrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderrepairservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/editest"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -42,23 +46,21 @@ type tenderFixture struct {
 	partnerID  pulid.ID
 }
 
-func seedTenders(t *testing.T) (*tenderFixture, *bun.DB, *postgres.Connection) {
+func seedTenders(t *testing.T) (*tenderFixture, *keel.DB, *postgres.Connection) {
 	t.Helper()
 
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var shipments []struct {
-		ID             pulid.ID `bun:"id"`
-		OrganizationID pulid.ID `bun:"organization_id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("shipments").
-		Column("id", "organization_id", "business_unit_id").
-		Order("id").
-		Limit(2).
-		Scan(ctx, &shipments))
+	rows, err := db.Pool().Query(ctx,
+		"SELECT id, organization_id, business_unit_id FROM shipments ORDER BY id LIMIT 2")
+	require.NoError(t, err)
+	shipments, err := pgx.CollectRows(rows, pgx.RowToStructByPos[struct {
+		ID             pulid.ID
+		OrganizationID pulid.ID
+		BusinessUnitID pulid.ID
+	}])
+	require.NoError(t, err)
 	require.Len(t, shipments, 2)
 	fixture := &tenderFixture{
 		orgID:     shipments[0].OrganizationID,
@@ -66,16 +68,11 @@ func seedTenders(t *testing.T) (*tenderFixture, *bun.DB, *postgres.Connection) {
 		shipment:  shipments[0].ID,
 		untouched: shipments[1].ID,
 	}
+	ctx = editest.TenantOf(ctx, pagination.TenantInfo{OrgID: fixture.orgID, BuID: fixture.buID}).Ctx
 
-	var documentType struct {
-		ID pulid.ID `bun:"id"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("edi_document_types").
-		Column("id").
-		Where("transaction_set = ?", edi.TransactionSet204).
-		Limit(1).
-		Scan(ctx, &documentType))
+	dt := edidb.EDIDocumentTypes
+	documentType, err := dt.Where(dt.TransactionSet.Eq(edi.TransactionSet204)).First(ctx, db)
+	require.NoError(t, err)
 	fixture.documentID = documentType.ID
 
 	partner := &edi.EDIPartner{
@@ -85,8 +82,7 @@ func seedTenders(t *testing.T) (*tenderFixture, *bun.DB, *postgres.Connection) {
 		Code:           "ACME-REPAIR",
 		Name:           "Acme Repair Partner",
 	}
-	_, err := db.NewInsert().Model(partner).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, edidb.EDIPartners.Create(ctx, db, partner))
 	fixture.partnerID = partner.ID
 
 	profile := &edi.EDICommunicationProfile{
@@ -96,8 +92,7 @@ func seedTenders(t *testing.T) (*tenderFixture, *bun.DB, *postgres.Connection) {
 		Method:         edi.ConnectionMethodSFTP,
 		Name:           "Acme Repair Mailbox",
 	}
-	_, err = db.NewInsert().Model(profile).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, edidb.EDICommunicationProfiles.Create(ctx, db, profile))
 
 	now := timeutils.NowUnix()
 	file := &edi.EDIInboundFile{
@@ -114,8 +109,7 @@ func seedTenders(t *testing.T) (*tenderFixture, *bun.DB, *postgres.Connection) {
 		Status:                 edi.InboundFileStatusProcessed,
 		ReceivedAt:             now,
 	}
-	_, err = db.NewInsert().Model(file).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, edidb.EDIInboundFiles.Create(ctx, db, file))
 
 	message := func(control, raw string, ratingDetail map[string]any) pulid.ID {
 		row := &edi.EDIMessage{
@@ -140,8 +134,7 @@ func seedTenders(t *testing.T) (*tenderFixture, *bun.DB, *postgres.Connection) {
 			}),
 			GeneratedAt: now,
 		}
-		_, insertErr := db.NewInsert().Model(row).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, edidb.EDIMessages.Create(ctx, db, row))
 		return row.ID
 	}
 	fixture.misread = message("0001", misreadTransaction, map[string]any{
@@ -178,20 +171,14 @@ func seedTenders(t *testing.T) (*tenderFixture, *bun.DB, *postgres.Connection) {
 			},
 			SubmittedAt: now,
 		}
-		_, insertErr := db.NewInsert().Model(row).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, edidb.EDITransfers.Create(ctx, db, row))
 		return row.ID
 	}
 	fixture.transfer = transfer("LT-88240", fixture.shipment, "ACME")
 	fixture.edited = transfer("PP", fixture.untouched, "ACME-FIXED-BY-HAND")
 
 	for _, id := range []pulid.ID{fixture.shipment, fixture.untouched} {
-		_, err = db.NewUpdate().
-			Table("shipments").
-			Set("external_reference = ?", "ACME").
-			Where("id = ?", id).
-			Exec(ctx)
-		require.NoError(t, err)
+		editest.Exec(t, ctx, db, "UPDATE shipments SET external_reference = 'ACME' WHERE id = $1", id.String())
 	}
 
 	return fixture, db, postgres.NewTestConnection(db)
@@ -236,27 +223,23 @@ func repair(t *testing.T, conn *postgres.Connection, orgID pulid.ID, dryRun bool
 	return run
 }
 
-func ratingDetail(t *testing.T, db *bun.DB, table, column, path string, id pulid.ID) string {
+func ratingDetail(t *testing.T, db *keel.DB, table, column, path string, id pulid.ID) string {
 	t.Helper()
 
 	var value string
-	require.NoError(t, db.NewSelect().
-		Table(table).
-		ColumnExpr("("+column+" #> ?)::text", bun.Safe(path)).
-		Where("id = ?", id).
-		Scan(t.Context(), &value))
+	require.NoError(t, db.Pool().QueryRow(t.Context(),
+		"SELECT ("+column+" #> "+path+")::text FROM "+table+" WHERE id = $1", id.String(),
+	).Scan(&value))
 	return value
 }
 
-func externalReference(t *testing.T, db *bun.DB, id pulid.ID) string {
+func externalReference(t *testing.T, db *keel.DB, id pulid.ID) string {
 	t.Helper()
 
 	var value string
-	require.NoError(t, db.NewSelect().
-		Table("shipments").
-		ColumnExpr("COALESCE(external_reference, '')").
-		Where("id = ?", id).
-		Scan(t.Context(), &value))
+	require.NoError(t, db.Pool().QueryRow(t.Context(),
+		"SELECT COALESCE(external_reference, '') FROM shipments WHERE id = $1", id.String(),
+	).Scan(&value))
 	return value
 }
 
@@ -323,13 +306,9 @@ func TestRepairEDITenderReferencesCorrectsATenderReadOneElementEarly(t *testing.
 
 func TestRepairEDITenderReferencesReadsAPurgedFileFromItsTransaction(t *testing.T) {
 	fixture, db, conn := seedTenders(t)
-	_, err := db.NewUpdate().
-		Table("edi_inbound_files").
-		Set("raw_content = ''").
-		Where("organization_id = ?", fixture.orgID).
-		Where("file_name = ?", "ACME_REPAIR.x12").
-		Exec(t.Context())
-	require.NoError(t, err)
+	editest.Exec(t, t.Context(), db,
+		"UPDATE edi_inbound_files SET raw_content = '' WHERE organization_id = $1 AND file_name = $2",
+		fixture.orgID.String(), "ACME_REPAIR.x12")
 
 	report := repair(t, conn, fixture.orgID, false)
 
@@ -345,8 +324,7 @@ func TestRepairEDITenderReferencesLeavesATenderWholeWhenOneWriteFails(t *testing
 		`CREATE TRIGGER refuse_message_update BEFORE UPDATE ON edi_messages
 			FOR EACH ROW EXECUTE FUNCTION refuse_message_update()`,
 	} {
-		_, err := db.ExecContext(t.Context(), statement)
-		require.NoError(t, err)
+		editest.Exec(t, t.Context(), db, statement)
 	}
 
 	_, err := runRepair(t, conn, fixture.orgID, false)

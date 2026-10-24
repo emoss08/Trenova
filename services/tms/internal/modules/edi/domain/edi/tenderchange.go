@@ -79,13 +79,20 @@ type TenderChange struct {
 	Recipient *TenderRecipient `json:"recipient,omitempty" bun:"rel:belongs-to,join:recipient_id=id" keel:"belongs:recipient_id"`
 }
 
-func (r *TenderRecipient) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (r *TenderRecipient) BeforeSave(_ context.Context) error {
 	if r.Status == "" {
 		r.Status = TenderRecipientStatusActive
 	}
 	if r.BaselineRecordedAt == 0 {
-		r.BaselineRecordedAt = now
+		r.BaselineRecordedAt = timeutils.NowUnix()
+	}
+	return nil
+}
+
+func (r *TenderRecipient) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := r.BeforeSave(ctx); err != nil {
+		return err
 	}
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -99,8 +106,7 @@ func (r *TenderRecipient) BeforeAppendModel(_ context.Context, query bun.Query) 
 	return nil
 }
 
-func (c *TenderChange) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (c *TenderChange) BeforeSave(_ context.Context) error {
 	if c.Status == "" {
 		c.Status = TenderChangeStatusPendingReview
 	}
@@ -112,6 +118,14 @@ func (c *TenderChange) BeforeAppendModel(_ context.Context, query bun.Query) err
 	}
 	if c.ConflictMetadata == nil {
 		c.ConflictMetadata = map[string]any{}
+	}
+	return nil
+}
+
+func (c *TenderChange) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := c.BeforeSave(ctx); err != nil {
+		return err
 	}
 	switch query.(type) {
 	case *bun.InsertQuery:

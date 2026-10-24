@@ -197,10 +197,6 @@ func (v *EDITemplateVersion) BeforeAppendModel(_ context.Context, query bun.Quer
 	return nil
 }
 
-func (v *EDITemplateVersion) BeforeCreate(ctx context.Context) error {
-	return v.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}
-
 func (v *EDITemplateVersion) GetID() pulid.ID {
 	return v.ID
 }
@@ -235,10 +231,17 @@ type EDITemplateSegment struct {
 	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
-func (s *EDITemplateSegment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (s *EDITemplateSegment) BeforeSave(_ context.Context) error {
 	if s.Elements == nil {
 		s.Elements = []TemplateElement{}
+	}
+	return nil
+}
+
+func (s *EDITemplateSegment) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := s.BeforeSave(ctx); err != nil {
+		return err
 	}
 	switch query.(type) {
 	case *bun.InsertQuery:

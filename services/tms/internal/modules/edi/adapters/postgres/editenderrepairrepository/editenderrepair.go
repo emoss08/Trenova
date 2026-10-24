@@ -5,18 +5,15 @@ import (
 	"fmt"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -28,6 +25,9 @@ const (
 
 	shipmentIDKey    = "externalShipmentId"
 	paymentMethodKey = "paymentMethod"
+
+	transferReferencesPath = "{ratingDetail}"
+	messageReferencesPath  = "{loadTender,ratingDetail}"
 )
 
 type Params struct {
@@ -47,14 +47,14 @@ func New(p Params) ediports.TenderReferenceRepairRepository {
 }
 
 type candidateRow struct {
-	MessageID      pulid.ID `bun:"message_id"`
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	TransferID     pulid.ID `bun:"transfer_id"`
-	RawX12         string   `bun:"raw_x12"`
-	FileHead       string   `bun:"file_head"`
-	ShipmentID     string   `bun:"shipment_id"`
-	PaymentMethod  string   `bun:"payment_method"`
+	MessageID      pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	TransferID     pulid.ID
+	RawX12         string
+	FileHead       string
+	ShipmentID     string
+	PaymentMethod  string
 }
 
 func limitOf(limit int) int {
@@ -64,68 +64,62 @@ func limitOf(limit int) int {
 	return limit
 }
 
-func inboundTenders(q *bun.SelectQuery, orgID pulid.ID) *bun.SelectQuery {
-	cols := edicol.EDIMessageColumns
-	q = q.
-		Where(cols.Direction.Eq(), edi.DocumentDirectionInbound).
-		Where(cols.TransactionSet.Eq(), edi.TransactionSet204).
-		Where(cols.PayloadSnapshot.Expr("{} -> 'loadTender' IS NOT NULL"))
-	if orgID.IsNotNil() {
-		q = q.Where(cols.OrganizationID.Eq(), orgID)
+func inboundTenders(orgID pulid.ID) []keel.Pred {
+	m := edidb.EDIMessages
+	return []keel.Pred{
+		m.Direction.Eq(edi.DocumentDirectionInbound),
+		m.TransactionSet.Eq(edi.TransactionSet204),
+		m.PayloadSnapshot.HasKey("loadTender"),
+		keel.When(orgID.IsNotNil(), m.OrganizationID.Eq(orgID)),
 	}
-	return q
 }
 
-func ratingDetailText(key string) string {
-	return edicol.EDIMessageColumns.PayloadSnapshot.Expr(
-		"COALESCE({} -> 'loadTender' -> 'ratingDetail' ->> '" + key + "', '')",
-	)
+func ratingDetailText(key string) keel.Expr {
+	m := edidb.EDIMessages
+	return keel.Raw("COALESCE(?, '')", m.PayloadSnapshot.Text("loadTender", "ratingDetail", key))
+}
+
+func candidatesQuery(req *ediports.ListTenderReferenceCandidatesRequest) *keel.Query[edi.EDIMessage] {
+	m := edidb.EDIMessages
+	f := edidb.EDIInboundFiles
+
+	return m.AllTenants().
+		Pick(
+			m.ID,
+			m.OrganizationID,
+			m.BusinessUnitID,
+			m.TransferID.Coalesce(""),
+			m.RawX12,
+			keel.Raw("COALESCE(SUBSTRING(? FROM 1 FOR ?), '')", f.RawContent, fileHeadSize),
+			ratingDetailText(shipmentIDKey),
+			ratingDetailText(paymentMethodKey),
+		).
+		LeftJoin(
+			f,
+			f.ID.EqCol(m.InboundFileID),
+			f.OrganizationID.EqCol(m.OrganizationID),
+			f.BusinessUnitID.EqCol(m.BusinessUnitID),
+		).
+		Where(inboundTenders(req.OrganizationID)...).
+		Where(
+			keel.Raw("NULLIF(BTRIM(?), '') IS NOT NULL", m.RawX12),
+			keel.When(req.AfterID.IsNotNil(), m.ID.Gt(req.AfterID)),
+		).
+		Order(m.ID.Asc()).
+		Limit(limitOf(req.Limit))
 }
 
 func (r *repository) ListTenderReferenceCandidates(
 	ctx context.Context,
 	req *ediports.ListTenderReferenceCandidatesRequest,
 ) ([]*ediports.TenderReferenceCandidate, error) {
+	ctx = dbscope.WithSystem(ctx, "re-read inbound EDI tenders across every organization")
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*ediports.TenderReferenceCandidate, error) {
-			cols := edicol.EDIMessageColumns
-			fileCols := edicol.EDIInboundFileColumns
-			limit := limitOf(req.Limit)
-
-			rows := make([]candidateRow, 0, limit)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*edi.EDIMessage)(nil)).
-				ColumnExpr(cols.ID.As("message_id")).
-				ColumnExpr(cols.OrganizationID.As("organization_id")).
-				ColumnExpr(cols.BusinessUnitID.As("business_unit_id")).
-				ColumnExpr(cols.TransferID.As("transfer_id")).
-				ColumnExpr(cols.RawX12.As("raw_x12")).
-				ColumnExpr(
-					fmt.Sprintf(
-						"COALESCE(SUBSTRING(%s FROM 1 FOR %d), '') AS file_head",
-						fileCols.RawContent.Qualified(),
-						fileHeadSize,
-					),
-				).
-				ColumnExpr(ratingDetailText(shipmentIDKey) + " AS shipment_id").
-				ColumnExpr(ratingDetailText(paymentMethodKey) + " AS payment_method").
-				Join(
-					"LEFT JOIN edi_inbound_files AS eif ON " +
-						fileCols.ID.EqColumn(cols.InboundFileID) +
-						" AND " + fileCols.OrganizationID.EqColumn(cols.OrganizationID) +
-						" AND " + fileCols.BusinessUnitID.EqColumn(cols.BusinessUnitID),
-				).
-				Where(cols.RawX12.Expr("NULLIF(BTRIM({}), '') IS NOT NULL")).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(limit))
-			q = inboundTenders(q, req.OrganizationID)
-			if req.AfterID.IsNotNil() {
-				q = q.Where(cols.ID.Gt(), req.AfterID)
-			}
-			if err := q.Scan(ctx, &rows); err != nil {
+			rows, err := keel.Into[candidateRow](ctx, r.db.Keel(ctx), candidatesQuery(req))
+			if err != nil {
 				return nil, fmt.Errorf("list inbound tenders to re-read: %w", err)
 			}
 
@@ -143,6 +137,7 @@ func (r *repository) ListTenderReferenceCandidates(
 					PaymentMethod:  row.PaymentMethod,
 				})
 			}
+
 			return candidates, nil
 		},
 	)
@@ -152,17 +147,20 @@ func (r *repository) CountUnreadableTenders(
 	ctx context.Context,
 	req *ediports.CountUnreadableTendersRequest,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "count inbound EDI tenders whose X12 was purged")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := edicol.EDIMessageColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIMessage)(nil)).
-			Where(cols.RawX12.Expr("NULLIF(BTRIM({}), '') IS NULL")).
-			Where(ratingDetailText(shipmentIDKey) + " <> ''")
-		count, err := inboundTenders(q, req.OrganizationID).Count(ctx)
+		m := edidb.EDIMessages
+		count, err := m.AllTenants().
+			Where(inboundTenders(req.OrganizationID)...).
+			Where(
+				keel.Raw("NULLIF(BTRIM(?), '') IS NULL", m.RawX12),
+				keel.Raw("? <> ''", ratingDetailText(shipmentIDKey)),
+			).
+			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("count inbound tenders whose X12 is gone: %w", err)
 		}
+
 		return int(count), nil
 	})
 }
@@ -171,6 +169,7 @@ func (r *repository) RepairTenderReference(
 	ctx context.Context,
 	req *ediports.RepairTenderReferenceRequest,
 ) (*ediports.RepairTenderReferenceResult, error) {
+	ctx = dbscope.WithSystem(ctx, "repair the references of a re-read inbound EDI tender")
 	return dbtx.Write(
 		ctx,
 		r.db,
@@ -179,39 +178,24 @@ func (r *repository) RepairTenderReference(
 			if err != nil {
 				return nil, err
 			}
-			now := timeutils.NowUnix()
 
-			result := &ediports.RepairTenderReferenceResult{}
-			err = r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(ctx context.Context, _ bun.Tx) error {
-					dba := r.db.DBForContext(ctx)
-					var txErr error
-					if result.Shipments, txErr = r.repairShipments(
-						ctx,
-						dba,
-						req,
-						now,
-					); txErr != nil {
-						return txErr
-					}
-					if result.Transfers, txErr = r.repairTransfers(
-						ctx,
-						dba,
-						req,
-						references,
-						now,
-					); txErr != nil {
-						return txErr
-					}
-					return r.repairMessage(ctx, dba, req, references, now)
-				},
-			)
+			db := r.db.Keel(ctx)
+			shipments, err := repairShipments(ctx, db, req)
 			if err != nil {
 				return nil, err
 			}
-			return result, nil
+			transfers, err := repairTransfers(ctx, db, req, references)
+			if err != nil {
+				return nil, err
+			}
+			if err = repairMessage(ctx, db, req, references); err != nil {
+				return nil, err
+			}
+
+			return &ediports.RepairTenderReferenceResult{
+				Transfers: transfers,
+				Shipments: shipments,
+			}, nil
 		},
 	)
 }
@@ -231,106 +215,93 @@ func referencesJSON(shipmentID, paymentMethod string) (string, error) {
 	return encoded, nil
 }
 
-func withReferences(column *buncolgen.Column, path string) string {
-	return column.SetExpr(
-		"jsonb_set({}, '" + path + "', (COALESCE({} #> '" + path + "', jsonb_build_object()) - '" +
-			shipmentIDKey + "' - '" + paymentMethodKey + "') || ?::jsonb)",
+func withReferences(column keel.JSONBCol, path, references string) keel.Assignment {
+	return column.ToExpr(keel.Raw(
+		"jsonb_set(?, ?::text[], (COALESCE(? #> ?::text[], jsonb_build_object()) - ? - ?) || ?::jsonb)",
+		column,
+		path,
+		column,
+		path,
+		shipmentIDKey,
+		paymentMethodKey,
+		references,
+	))
+}
+
+func transferMatch(req *ediports.RepairTenderReferenceRequest) keel.Pred {
+	t := edidb.EDITransfers
+	candidate := req.Candidate
+	return keel.And(
+		keel.Or(
+			t.InboundMessageID.Eq(candidate.MessageID),
+			keel.When(candidate.TransferID.IsNotNil(), t.ID.Eq(candidate.TransferID)),
+		),
+		keel.Raw("COALESCE(?, '') = ?", t.TenderPayload.Text("ratingDetail", shipmentIDKey), candidate.ShipmentID),
 	)
 }
 
-func transferMatch(req *ediports.RepairTenderReferenceRequest) (fragment string, args []any) {
-	cols := edicol.EDITransferColumns
-	candidate := req.Candidate
-	fragment = "(" + cols.InboundMessageID.Qualified() + " = ?"
-	args = []any{candidate.MessageID}
-	if candidate.TransferID.IsNotNil() {
-		fragment += " OR " + cols.ID.Qualified() + " = ?"
-		args = append(args, candidate.TransferID)
-	}
-	fragment += ") AND " +
-		cols.TenderPayload.Expr("COALESCE({} -> 'ratingDetail' ->> '"+shipmentIDKey+"', '')") +
-		" = ?"
-	return fragment, append(args, candidate.ShipmentID)
-}
-
-func (r *repository) repairShipments(
+func repairShipments(
 	ctx context.Context,
-	dba bun.IDB,
+	db *keel.DB,
 	req *ediports.RepairTenderReferenceRequest,
-	now int64,
 ) (int, error) {
 	if req.Candidate.ShipmentID == "" {
 		return 0, nil
 	}
-	cols := shipmentcol.ShipmentColumns
-	transferCols := edicol.EDITransferColumns
 
-	match, args := transferMatch(req)
-	targets := dba.NewSelect().
-		Model((*edi.EDITransfer)(nil)).
-		Column(transferCols.TargetShipmentID.Bare()).
-		Where(transferCols.TargetShipmentID.IsNotNull()).
-		Where(transferCols.TargetOrganizationID.EqColumn(cols.OrganizationID)).
-		Where(transferCols.TargetBusinessUnitID.EqColumn(cols.BusinessUnitID)).
-		Where(match, args...)
+	sp := shipmentdb.Shipments
+	t := edidb.EDITransfers
+	targets := t.Pick(t.TargetShipmentID).Where(
+		t.TargetShipmentID.IsNotNull(),
+		t.TargetOrganizationID.EqCol(sp.OrganizationID),
+		t.TargetBusinessUnitID.EqCol(sp.BusinessUnitID),
+		transferMatch(req),
+	)
 
-	result, err := dba.NewUpdate().
-		Model((*shipment.Shipment)(nil)).
-		Set(cols.ExternalReference.Set(), nullIfEmpty(req.ShipmentID)).
-		Set(cols.Version.Inc(1)).
-		Set(cols.UpdatedAt.Set(), now).
-		Where(cols.ID.In(), targets).
-		Where(cols.ExternalReference.Eq(), req.Candidate.ShipmentID).
-		Exec(ctx)
+	n, err := sp.AllTenants().
+		Where(sp.ID.InQuery(targets), sp.ExternalReference.Eq(req.Candidate.ShipmentID)).
+		Update(ctx, db, sp.ExternalReference.To(req.ShipmentID))
 	if err != nil {
 		return 0, fmt.Errorf(
 			"repair the external reference of shipments built from tender: %w",
 			err,
 		)
 	}
-	return affected(result)
+
+	return int(n), nil
 }
 
-func (r *repository) repairTransfers(
+func repairTransfers(
 	ctx context.Context,
-	dba bun.IDB,
+	db *keel.DB,
 	req *ediports.RepairTenderReferenceRequest,
 	references string,
-	now int64,
 ) (int, error) {
-	cols := edicol.EDITransferColumns
-	match, args := transferMatch(req)
-	result, err := dba.NewUpdate().
-		Model((*edi.EDITransfer)(nil)).
-		Set(withReferences(&cols.TenderPayload, "{ratingDetail}"), references).
-		Set(cols.Version.Inc(1)).
-		Set(cols.UpdatedAt.Set(), now).
-		Where(match, args...).
-		Exec(ctx)
+	t := edidb.EDITransfers
+	n, err := t.Where(transferMatch(req)).
+		Update(ctx, db, withReferences(t.TenderPayload, transferReferencesPath, references))
 	if err != nil {
 		return 0, fmt.Errorf("repair the tender references of transfers: %w", err)
 	}
-	return affected(result)
+
+	return int(n), nil
 }
 
-func (r *repository) repairMessage(
+func repairMessage(
 	ctx context.Context,
-	dba bun.IDB,
+	db *keel.DB,
 	req *ediports.RepairTenderReferenceRequest,
 	references string,
-	now int64,
 ) error {
-	cols := edicol.EDIMessageColumns
+	m := edidb.EDIMessages
 	candidate := req.Candidate
-	_, err := dba.NewUpdate().
-		Model((*edi.EDIMessage)(nil)).
-		Set(withReferences(&cols.PayloadSnapshot, "{loadTender,ratingDetail}"), references).
-		Set(cols.Version.Inc(1)).
-		Set(cols.UpdatedAt.Set(), now).
-		Where(cols.ID.Eq(), candidate.MessageID).
-		Where(cols.OrganizationID.Eq(), candidate.OrganizationID).
-		Where(cols.BusinessUnitID.Eq(), candidate.BusinessUnitID).
-		Exec(ctx)
+	_, err := m.AllTenants().
+		Where(
+			m.ID.Eq(candidate.MessageID),
+			m.OrganizationID.Eq(candidate.OrganizationID),
+			m.BusinessUnitID.Eq(candidate.BusinessUnitID),
+		).
+		Update(ctx, db, withReferences(m.PayloadSnapshot, messageReferencesPath, references))
 	if err != nil {
 		return fmt.Errorf(
 			"repair the tender references of message %s: %w",
@@ -338,20 +309,6 @@ func (r *repository) repairMessage(
 			err,
 		)
 	}
+
 	return nil
-}
-
-func nullIfEmpty(value string) any {
-	if value == "" {
-		return nil
-	}
-	return value
-}
-
-func affected(result interface{ RowsAffected() (int64, error) }) (int, error) {
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("count repaired rows: %w", err)
-	}
-	return int(rows), nil
 }

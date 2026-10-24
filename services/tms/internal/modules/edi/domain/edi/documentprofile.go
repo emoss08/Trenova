@@ -47,8 +47,7 @@ type EDIPartnerDocumentProfile struct {
 	TemplateVersion       *EDITemplateVersion      `json:"templateVersion,omitempty"       bun:"rel:belongs-to,join:template_version_id=id" keel:"belongs:template_version_id"`
 }
 
-func (p *EDIPartnerDocumentProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (p *EDIPartnerDocumentProfile) BeforeSave(_ context.Context) error {
 	if p.Envelope.ElementSeparator == "" {
 		p.Envelope = DefaultX12EnvelopeSettings()
 	}
@@ -61,6 +60,14 @@ func (p *EDIPartnerDocumentProfile) BeforeAppendModel(_ context.Context, query b
 	if p.ValidationMode == "" {
 		p.ValidationMode = ValidationModeStrict
 	}
+	return nil
+}
+
+func (p *EDIPartnerDocumentProfile) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := p.BeforeSave(ctx); err != nil {
+		return err
+	}
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if p.ID.IsNil() {
@@ -71,10 +78,6 @@ func (p *EDIPartnerDocumentProfile) BeforeAppendModel(_ context.Context, query b
 		p.UpdatedAt = now
 	}
 	return nil
-}
-
-func (p *EDIPartnerDocumentProfile) BeforeCreate(ctx context.Context) error {
-	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (p *EDIPartnerDocumentProfile) GetID() pulid.ID {
@@ -124,8 +127,7 @@ type EDIControlNumberSequence struct {
 	UpdatedAt      int64             `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
-func (s *EDIControlNumberSequence) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (s *EDIControlNumberSequence) BeforeSave(_ context.Context) error {
 	if s.MinValue == 0 {
 		s.MinValue = 1
 	}
@@ -134,6 +136,14 @@ func (s *EDIControlNumberSequence) BeforeAppendModel(_ context.Context, query bu
 	}
 	if s.MaxValue == 0 {
 		s.MaxValue = 999999999
+	}
+	return nil
+}
+
+func (s *EDIControlNumberSequence) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := s.BeforeSave(ctx); err != nil {
+		return err
 	}
 	switch query.(type) {
 	case *bun.InsertQuery:

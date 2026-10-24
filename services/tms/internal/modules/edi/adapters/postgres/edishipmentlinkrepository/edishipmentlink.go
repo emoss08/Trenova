@@ -3,20 +3,22 @@ package edishipmentlinkrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediscope"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var shipmentLinkErrors = dberror.Mapping{Entity: "EDIShipmentLink"}
 
 type Params struct {
 	fx.In
@@ -45,30 +47,16 @@ func (r *repository) ListShipmentLinks(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.ShipmentLink], error) {
-			entities := make([]*edi.ShipmentLink, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.ShipmentLinkColumns
-
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutTenantScope(query, "esl", req.Filter, (*edi.ShipmentLink)(nil)).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyShipmentLinkTenantScope(sq, req.Filter.TenantInfo)
-						})
-				}).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.ShipmentLink]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			sl := edidb.ShipmentLinks
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				sl.Where(involvesOrganization(req.Filter.TenantInfo.OrgID)),
+				&listquery.Request[edi.ShipmentLink]{
+					Filter: req.Filter,
+					Then:   []keel.Order{sl.CreatedAt.Desc()},
+				},
+			)
 		},
 	)
 }
@@ -78,19 +66,11 @@ func (r *repository) GetShipmentLinkByID(
 	req ediports.GetEDIShipmentLinkByIDRequest,
 ) (*edi.ShipmentLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.ShipmentLink, error) {
-		entity := new(edi.ShipmentLink)
-		cols := edicol.ShipmentLinkColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.ID.Eq(), req.ID).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyShipmentLinkTenantScope(sq, req.TenantInfo)
-			}).
-			Scan(ctx)
+		sl := edidb.ShipmentLinks
+		q := sl.Where(sl.ID.Eq(req.ID), involvesOrganization(req.TenantInfo.OrgID))
+		entity, err := ediscope.Tenant(ctx, q, req.TenantInfo).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIShipmentLink")
+			return nil, shipmentLinkErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -102,31 +82,12 @@ func (r *repository) GetShipmentLinksByShipmentID(
 	req ediports.GetEDIShipmentLinksByShipmentIDRequest,
 ) ([]*edi.ShipmentLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.ShipmentLink, error) {
-		entities := make([]*edi.ShipmentLink, 0)
-		cols := edicol.ShipmentLinkColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.WhereOr(
-					buncolgen.Expr("({0} = ? AND {1} = ?)", cols.SourceOrganizationID, cols.SourceShipmentID),
-					req.TenantInfo.OrgID,
-					req.ShipmentID,
-				).
-					WhereOr(
-						buncolgen.Expr("({0} = ? AND {1} = ?)", cols.TargetOrganizationID, cols.TargetShipmentID),
-						req.TenantInfo.OrgID,
-						req.ShipmentID,
-					)
-			}).
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return entities, nil
+		sl := edidb.ShipmentLinks
+		org := req.TenantInfo.OrgID
+		return sl.Where(keel.Or(
+			keel.And(sl.SourceOrganizationID.Eq(org), sl.SourceShipmentID.Eq(req.ShipmentID)),
+			keel.And(sl.TargetOrganizationID.Eq(org), sl.TargetShipmentID.Eq(req.ShipmentID)),
+		)).All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -135,28 +96,15 @@ func (r *repository) CreateShipmentLink(
 	entity *edi.ShipmentLink,
 ) (*edi.ShipmentLink, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.ShipmentLink, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := edidb.ShipmentLinks.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, shipmentLinkErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
 }
 
-func applyShipmentLinkTenantScope(
-	query *bun.SelectQuery,
-	tenantInfo pagination.TenantInfo,
-) *bun.SelectQuery {
-	cols := edicol.ShipmentLinkColumns
-
-	return query.
-		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.WhereOr(cols.SourceOrganizationID.Eq(), tenantInfo.OrgID).
-				WhereOr(cols.TargetOrganizationID.Eq(), tenantInfo.OrgID)
-		})
+func involvesOrganization(orgID pulid.ID) keel.Pred {
+	sl := edidb.ShipmentLinks
+	return keel.Or(sl.SourceOrganizationID.Eq(orgID), sl.TargetOrganizationID.Eq(orgID))
 }

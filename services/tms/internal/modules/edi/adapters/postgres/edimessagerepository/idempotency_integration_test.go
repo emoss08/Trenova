@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,31 +25,20 @@ func TestEDIMessageIdempotencyKey_Integration(t *testing.T) {
 
 	var err error
 
-	var org seededSummaryOrg
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org))
-	var documentType seededSummaryDocumentType
-	require.NoError(t, db.NewSelect().
-		Table("edi_document_types").
-		Column("id").
-		Where("transaction_set = ?", edi.TransactionSet204).
-		Where("direction = ?", edi.DocumentDirectionOutbound).
-		Limit(1).
-		Scan(ctx, &documentType))
-	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	scope := tenantWithoutPartners(t, ctx, db)
+	ctx = scope.Ctx
+	org := scope.Info
+	documentType := findDocumentType(t, ctx, db, edi.TransactionSet204, edi.DocumentDirectionOutbound)
+	tenantInfo := org
 
 	partner := &edi.EDIPartner{
-		BusinessUnitID: org.BusinessUnitID,
-		OrganizationID: org.ID,
+		BusinessUnitID: org.BuID,
+		OrganizationID: org.OrgID,
 		Kind:           edi.PartnerKindExternal,
 		Code:           "IDEMPOTENCY-TEST",
 		Name:           "Idempotency Test Partner",
 	}
-	_, err = db.NewInsert().Model(partner).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, create(ctx, db, partner))
 
 	repo := edimessagerepository.New(edimessagerepository.Params{
 		DB:     postgres.NewTestConnection(db),
@@ -58,8 +46,8 @@ func TestEDIMessageIdempotencyKey_Integration(t *testing.T) {
 	})
 	newMessage := func(key, control string) *edi.EDIMessage {
 		return &edi.EDIMessage{
-			BusinessUnitID:           org.BusinessUnitID,
-			OrganizationID:           org.ID,
+			BusinessUnitID:           org.BuID,
+			OrganizationID:           org.OrgID,
 			EDIPartnerID:             partner.ID,
 			DocumentTypeID:           documentType.ID,
 			Direction:                edi.DocumentDirectionOutbound,

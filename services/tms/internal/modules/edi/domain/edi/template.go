@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -20,9 +19,8 @@ var (
 )
 
 type EDITemplate struct {
-	bun.BaseModel             `json:"-" bun:"table:edi_templates,alias:et"`
-	keel.Table                `keel:"edi_templates"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	bun.BaseModel `json:"-" bun:"table:edi_templates,alias:et"`
+	keel.Table    `keel:"edi_templates"`
 
 	ID             pulid.ID          `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:editpl_"`
 	BusinessUnitID pulid.ID          `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
@@ -57,10 +55,6 @@ func (t *EDITemplate) BeforeAppendModel(_ context.Context, query bun.Query) erro
 		t.UpdatedAt = now
 	}
 	return nil
-}
-
-func (t *EDITemplate) BeforeCreate(ctx context.Context) error {
-	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (t *EDITemplate) GetID() pulid.ID {

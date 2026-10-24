@@ -5,19 +5,20 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var schemaErrors = dberror.Mapping{Entity: "EDIPartnerSettingSchema"}
 
 type Params struct {
 	fx.In
@@ -46,31 +47,40 @@ func (r *repository) ListPartnerSettingSchemas(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
-			entities := make([]*edi.EDIPartnerSettingSchema, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.EDIPartnerSettingSchemaColumns
-
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-					return filterPartnerSettingSchemasQuery(query, req)
-				}).
-				OrderExpr(
-					cols.OrganizationID.IsNotNull() + " DESC, " +
-						cols.SchemaVersion.OrderDesc() + ", " +
-						cols.CreatedAt.OrderDesc(),
-				).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return &pagination.ListResult[*edi.EDIPartnerSettingSchema]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return listquery.Offset(
+				ctx,
+				r.db.Keel(ctx),
+				schemasQuery(req),
+				req.Filter.Pagination,
+			)
 		},
+	)
+}
+
+func schemasQuery(
+	req *ediports.ListEDIPartnerSettingSchemasRequest,
+) *keel.Query[edi.EDIPartnerSettingSchema] {
+	ps := edidb.EDIPartnerSettingSchemas
+	search := strings.TrimSpace(req.Filter.Query)
+
+	return ps.Where(
+		visibleSchema(req.Filter.TenantInfo),
+		keel.When(req.Standard != "", ps.Standard.Eq(req.Standard)),
+		keel.When(req.TransactionSet != "", ps.TransactionSet.Eq(req.TransactionSet)),
+		keel.When(req.Direction != "", ps.Direction.Eq(req.Direction)),
+		keel.When(req.X12Version != "", ps.X12Version.Eq(req.X12Version)),
+		keel.When(req.DocumentTypeID.IsNotNil(), ps.DocumentTypeID.Eq(req.DocumentTypeID)),
+		keel.When(req.SchemaVersion > 0, ps.SchemaVersion.Eq(req.SchemaVersion)),
+		keel.When(req.Status != "", ps.Status.Eq(req.Status)),
+		keel.When(search != "", keel.Or(
+			ps.Name.ContainsFold(search),
+			ps.Description.ContainsFold(search),
+			ps.X12Version.ContainsFold(search),
+		)),
+	).Order(
+		keel.Desc(ps.OrganizationID.IsNotNull()),
+		ps.SchemaVersion.Desc(),
+		ps.CreatedAt.Desc(),
 	)
 }
 
@@ -79,20 +89,13 @@ func (r *repository) GetPartnerSettingSchema(
 	req ediports.GetEDIPartnerSettingSchemaRequest,
 ) (*edi.EDIPartnerSettingSchema, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerSettingSchema, error) {
-		entity := new(edi.EDIPartnerSettingSchema)
-		cols := edicol.EDIPartnerSettingSchemaColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.ID.Eq(), req.ID).
-			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-				return partnerSettingSchemaTenantScope(query, req.TenantInfo)
-			}).
-			Scan(ctx)
+		ps := edidb.EDIPartnerSettingSchemas
+		entity, err := ps.Where(ps.ID.Eq(req.ID), visibleSchema(req.TenantInfo)).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIPartnerSettingSchema")
+			return nil, schemaErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -102,36 +105,34 @@ func (r *repository) GetActivePartnerSettingSchema(
 	req ediports.GetActiveEDIPartnerSettingSchemaRequest,
 ) (*edi.EDIPartnerSettingSchema, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerSettingSchema, error) {
-		entity := new(edi.EDIPartnerSettingSchema)
-		cols := edicol.EDIPartnerSettingSchemaColumns
+		entity, err := activeSchemaQuery(&req).First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, schemaErrors.Map(err, string(req.TransactionSet))
+		}
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.Standard.Eq(), req.Standard).
-			Where(cols.TransactionSet.Eq(), req.TransactionSet).
-			Where(cols.Direction.Eq(), req.Direction).
-			Where(cols.X12Version.Eq(), req.X12Version).
-			Where(cols.Status.Eq(), edi.PartnerSettingStatusActive).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return partnerSettingSchemaTenantScope(sq, req.TenantInfo)
-			}).
-			OrderExpr(cols.OrganizationID.IsNotNull() + " DESC, " + cols.SchemaVersion.OrderDesc()).
-			Limit(1)
-		if req.DocumentTypeID.IsNotNil() {
-			query = query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.WhereOr(cols.DocumentTypeID.Eq(), req.DocumentTypeID).
-					WhereOr(cols.DocumentTypeID.IsNull())
-			}).OrderExpr(cols.DocumentTypeID.IsNotNull() + " DESC")
-		}
-		if req.SchemaVersion > 0 {
-			query = query.Where(cols.SchemaVersion.Eq(), req.SchemaVersion)
-		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIPartnerSettingSchema")
-		}
 		return entity, nil
 	})
+}
+
+func activeSchemaQuery(
+	req *ediports.GetActiveEDIPartnerSettingSchemaRequest,
+) *keel.Query[edi.EDIPartnerSettingSchema] {
+	ps := edidb.EDIPartnerSettingSchemas
+	q := ps.Where(
+		ps.Standard.Eq(req.Standard),
+		ps.TransactionSet.Eq(req.TransactionSet),
+		ps.Direction.Eq(req.Direction),
+		ps.X12Version.Eq(req.X12Version),
+		ps.Status.Eq(edi.PartnerSettingStatusActive),
+		visibleSchema(req.TenantInfo),
+		keel.When(req.SchemaVersion > 0, ps.SchemaVersion.Eq(req.SchemaVersion)),
+	).Order(keel.Desc(ps.OrganizationID.IsNotNull()), ps.SchemaVersion.Desc())
+	if req.DocumentTypeID.IsNotNil() {
+		q.Where(keel.Or(ps.DocumentTypeID.Eq(req.DocumentTypeID), ps.DocumentTypeID.IsNull())).
+			Order(keel.Desc(ps.DocumentTypeID.IsNotNull()))
+	}
+
+	return q
 }
 
 func (r *repository) ListPartnerSettingFields(
@@ -163,142 +164,50 @@ func (r *repository) searchPartnerSettingFields(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
-			entities := make([]*edi.EDIPartnerSettingField, 0, req.Filter.Pagination.SafeLimit())
-			fieldCols := edicol.EDIPartnerSettingFieldColumns
-
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Join(partnerSettingSchemaJoin()).
-				Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-					return filterPartnerSettingFieldsQuery(query, req)
-				}).
-				Order(fieldCols.DisplayOrder.OrderAsc(), fieldCols.Path.OrderAsc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return &pagination.ListResult[*edi.EDIPartnerSettingField]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return listquery.Offset(ctx, r.db.Keel(ctx), fieldsQuery(req), req.Filter.Pagination)
 		},
 	)
 }
 
-func filterPartnerSettingSchemasQuery(
-	query *bun.SelectQuery,
-	req *ediports.ListEDIPartnerSettingSchemasRequest,
-) *bun.SelectQuery {
-	query = partnerSettingSchemaTenantScope(query, req.Filter.TenantInfo)
-	cols := edicol.EDIPartnerSettingSchemaColumns
-
-	if req.Standard != "" {
-		query = query.Where(cols.Standard.Eq(), req.Standard)
-	}
-	if req.TransactionSet != "" {
-		query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-	}
-	if req.Direction != "" {
-		query = query.Where(cols.Direction.Eq(), req.Direction)
-	}
-	if req.X12Version != "" {
-		query = query.Where(cols.X12Version.Eq(), req.X12Version)
-	}
-	if req.DocumentTypeID.IsNotNil() {
-		query = query.Where(cols.DocumentTypeID.Eq(), req.DocumentTypeID)
-	}
-	if req.SchemaVersion > 0 {
-		query = query.Where(cols.SchemaVersion.Eq(), req.SchemaVersion)
-	}
-	if req.Status != "" {
-		query = query.Where(cols.Status.Eq(), req.Status)
-	}
-	if strings.TrimSpace(req.Filter.Query) == "" {
-		return query
-	}
-
-	term := "%" + strings.TrimSpace(req.Filter.Query) + "%"
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr(cols.Name.ILike(), term).
-			WhereOr(cols.Description.ILike(), term).
-			WhereOr(cols.X12Version.ILike(), term)
-	})
-}
-
-func filterPartnerSettingFieldsQuery(
-	query *bun.SelectQuery,
+func fieldsQuery(
 	req *ediports.ListEDIPartnerSettingFieldsRequest,
-) *bun.SelectQuery {
-	query = partnerSettingSchemaTenantScope(query, req.Filter.TenantInfo)
-	fieldCols := edicol.EDIPartnerSettingFieldColumns
-	schemaCols := edicol.EDIPartnerSettingSchemaColumns
+) *keel.Query[edi.EDIPartnerSettingField] {
+	pf := edidb.EDIPartnerSettingFields
+	schema := pf.Schema()
+	pathPrefix := strings.TrimSpace(req.PathPrefix)
+	groupKey := strings.TrimSpace(req.GroupKey)
+	search := strings.TrimSpace(req.Filter.Query)
 
-	if req.SchemaID.IsNotNil() {
-		query = query.Where(fieldCols.SchemaID.Eq(), req.SchemaID)
-	}
-	if req.Standard != "" {
-		query = query.Where(schemaCols.Standard.Eq(), req.Standard)
-	}
-	if req.TransactionSet != "" {
-		query = query.Where(schemaCols.TransactionSet.Eq(), req.TransactionSet)
-	}
-	if req.Direction != "" {
-		query = query.Where(schemaCols.Direction.Eq(), req.Direction)
-	}
-	if req.Status != "" {
-		query = query.Where(fieldCols.Status.Eq(), req.Status)
-	}
-	if strings.TrimSpace(req.PathPrefix) != "" {
-		query = query.Where(fieldCols.Path.Like(), strings.TrimSpace(req.PathPrefix)+"%")
-	}
-	if strings.TrimSpace(req.GroupKey) != "" {
-		query = query.Where(fieldCols.GroupKey.Eq(), strings.TrimSpace(req.GroupKey))
-	}
-	if req.Required != nil {
-		query = query.Where(fieldCols.Required.Eq(), *req.Required)
-	}
-	if req.Secret != nil {
-		query = query.Where(fieldCols.Secret.Eq(), *req.Secret)
-	}
-	if strings.TrimSpace(req.Filter.Query) == "" {
-		return query
-	}
-
-	term := "%" + strings.TrimSpace(req.Filter.Query) + "%"
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr(fieldCols.Path.ILike(), term).
-			WhereOr(fieldCols.Label.ILike(), term).
-			WhereOr(fieldCols.Description.ILike(), term).
-			WhereOr(fieldCols.GroupKey.ILike(), term)
-	})
+	return pf.Where(
+		visibleSchemaOf(schema, req.Filter.TenantInfo),
+		keel.When(req.SchemaID.IsNotNil(), pf.SchemaID.Eq(req.SchemaID)),
+		keel.When(req.Standard != "", schema.Standard.Eq(req.Standard)),
+		keel.When(req.TransactionSet != "", schema.TransactionSet.Eq(req.TransactionSet)),
+		keel.When(req.Direction != "", schema.Direction.Eq(req.Direction)),
+		keel.When(req.Status != "", pf.Status.Eq(req.Status)),
+		keel.When(pathPrefix != "", pf.Path.HasPrefix(pathPrefix)),
+		keel.When(groupKey != "", pf.GroupKey.Eq(groupKey)),
+		keel.When(req.Required != nil, pf.Required.Eq(req.Required != nil && *req.Required)),
+		keel.When(req.Secret != nil, pf.Secret.Eq(req.Secret != nil && *req.Secret)),
+		keel.When(search != "", keel.Or(
+			pf.Path.ContainsFold(search),
+			pf.Label.ContainsFold(search),
+			pf.Description.ContainsFold(search),
+			pf.GroupKey.ContainsFold(search),
+		)),
+	).Order(pf.DisplayOrder.Asc(), pf.Path.Asc())
 }
 
-func partnerSettingSchemaTenantScope(
-	query *bun.SelectQuery,
-	tenantInfo pagination.TenantInfo,
-) *bun.SelectQuery {
-	cols := edicol.EDIPartnerSettingSchemaColumns
-
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr(
-			buncolgen.Expr("({0} = ? AND {1} = ?)", cols.OrganizationID, cols.BusinessUnitID),
-			tenantInfo.OrgID,
-			tenantInfo.BuID,
-		).WhereOr("(" + cols.OrganizationID.IsNull() + " AND " + cols.BusinessUnitID.IsNull() + ")")
-	})
+func visibleSchema(tenant pagination.TenantInfo) keel.Pred {
+	return visibleSchemaOf(edidb.EDIPartnerSettingSchemas, tenant)
 }
 
-func partnerSettingSchemaJoin() string {
-	schemaCols := edicol.EDIPartnerSettingSchemaColumns
-	fieldCols := edicol.EDIPartnerSettingFieldColumns
-
-	return "JOIN " + edicol.EDIPartnerSettingSchemaTable.As(
-		edicol.EDIPartnerSettingSchemaTable.Alias,
-	) +
-		" ON " + schemaCols.ID.EqColumn(
-		fieldCols.SchemaID,
+func visibleSchemaOf(
+	ps *edidb.EDIPartnerSettingSchemasTable,
+	tenant pagination.TenantInfo,
+) keel.Pred {
+	return keel.Or(
+		keel.And(ps.OrganizationID.Eq(tenant.OrgID), ps.BusinessUnitID.Eq(tenant.BuID)),
+		keel.And(ps.OrganizationID.IsNull(), ps.BusinessUnitID.IsNull()),
 	)
 }

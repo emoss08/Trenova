@@ -22,9 +22,8 @@ var (
 )
 
 type EDIPartner struct {
-	bun.BaseModel             `json:"-" bun:"table:edi_partners,alias:ep"`
-	keel.Table                `keel:"edi_partners"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	bun.BaseModel `json:"-" bun:"table:edi_partners,alias:ep"`
+	keel.Table    `keel:"edi_partners"`
 
 	ID                      pulid.ID           `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edip_"`
 	BusinessUnitID          pulid.ID           `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
@@ -133,12 +132,18 @@ func (p *EDIPartner) GetBusinessUnitID() pulid.ID {
 	return p.BusinessUnitID
 }
 
-func (p *EDIPartner) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (p *EDIPartner) BeforeSave(_ context.Context) error {
 	if p.Settings == nil {
 		p.Settings = map[string]any{}
 	}
+	return nil
+}
 
+func (p *EDIPartner) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := p.BeforeSave(ctx); err != nil {
+		return err
+	}
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if p.ID.IsNil() {
@@ -150,10 +155,6 @@ func (p *EDIPartner) BeforeAppendModel(_ context.Context, query bun.Query) error
 	}
 
 	return nil
-}
-
-func (p *EDIPartner) BeforeCreate(ctx context.Context) error {
-	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (p *EDIPartner) GetCreatedAt() int64 {

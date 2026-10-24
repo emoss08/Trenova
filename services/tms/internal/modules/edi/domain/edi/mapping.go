@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -30,8 +29,6 @@ func MappingSourceID(value string) pulid.ID {
 type EDIMappingProfile struct {
 	bun.BaseModel `json:"-" bun:"table:edi_mapping_profiles,alias:emp"`
 	keel.Table    `keel:"edi_mapping_profiles"`
-
-	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edimp_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`

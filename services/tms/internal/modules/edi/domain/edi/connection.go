@@ -72,8 +72,7 @@ type EDIConnection struct {
 	TargetPartner      *EDIPartner          `json:"targetPartner,omitempty"      bun:"rel:belongs-to,join:target_partner_id=id" keel:"belongs:target_partner_id"`
 }
 
-func (c *EDIConnection) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (c *EDIConnection) BeforeSave(_ context.Context) error {
 	if c.Capabilities == (ConnectionCapabilities{}) {
 		c.Capabilities = ConnectionCapabilities{
 			LoadTenderOutbound: true,
@@ -87,7 +86,21 @@ func (c *EDIConnection) BeforeAppendModel(_ context.Context, query bun.Query) er
 	if c.TargetPartnerConfig.Settings == nil {
 		c.TargetPartnerConfig.Settings = map[string]any{}
 	}
+	return nil
+}
 
+func (c *EDIConnection) BeforeCreate(_ context.Context) error {
+	if c.RequestedAt == 0 {
+		c.RequestedAt = timeutils.NowUnix()
+	}
+	return nil
+}
+
+func (c *EDIConnection) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := c.BeforeSave(ctx); err != nil {
+		return err
+	}
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if c.ID.IsNil() {

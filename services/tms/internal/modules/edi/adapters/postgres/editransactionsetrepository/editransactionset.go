@@ -4,14 +4,14 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -43,79 +43,41 @@ func (r *repository) SelectTransactionSetOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDITransactionSet], error) {
-			entities := make(
-				[]*edi.EDITransactionSet,
-				0,
-				req.SelectQueryRequest.Pagination.SafeLimit(),
+			search := *req.SelectQueryRequest
+			search.Query = strings.TrimSpace(search.Query)
+
+			return listquery.SelectOptions(
+				ctx,
+				r.db.Keel(ctx),
+				transactionSetOptionsQuery(req),
+				&search,
+				transactionSetSearch,
 			)
-			cols := edicol.EDITransactionSetColumns
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Column(
-					cols.ID.Bare(),
-					cols.Standard.Bare(),
-					cols.Code.Bare(),
-					cols.Name.Bare(),
-					cols.Description.Bare(),
-					cols.DefaultVersion.Bare(),
-					cols.Status.Bare(),
-					cols.CreatedAt.Bare(),
-				).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return filterTransactionSetsQuery(sq, req)
-				}).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return applyTransactionSetSearch(sq, req.SelectQueryRequest.Query)
-				})
-
-			total, err := query.
-				Order(cols.Code.OrderAsc()).
-				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
-				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.EDITransactionSet]{
-				Items: entities,
-				Total: int(total),
-			}, nil
 		},
 	)
 }
 
-func filterTransactionSetsQuery(
-	query *bun.SelectQuery,
+func transactionSetOptionsQuery(
 	req *ediports.EDITransactionSetSelectOptionsRequest,
-) *bun.SelectQuery {
-	cols := edicol.EDITransactionSetColumns
-	if len(req.IDs) > 0 {
-		query = query.Where(cols.ID.In(), bun.List(req.IDs))
-	}
-	if req.Standard != "" {
-		query = query.Where(cols.Standard.Eq(), req.Standard)
-	}
-	if req.Status != "" {
-		query = query.Where(cols.Status.Eq(), req.Status)
-	}
-	return query
+) *keel.Query[edi.EDITransactionSet] {
+	ts := edidb.EDITransactionSets
+	return ts.Pick(
+		ts.ID,
+		ts.Standard,
+		ts.Code,
+		ts.Name,
+		ts.Description,
+		ts.DefaultVersion,
+		ts.Status,
+		ts.CreatedAt,
+	).Where(
+		keel.When(len(req.IDs) > 0, ts.ID.In(req.IDs...)),
+		keel.When(req.Standard != "", ts.Standard.Eq(req.Standard)),
+		keel.When(req.Status != "", ts.Status.Eq(req.Status)),
+	).Order(ts.Code.Asc())
 }
 
-func applyTransactionSetSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
-	search = strings.TrimSpace(search)
-	if search == "" {
-		return query
-	}
-
-	term := "%" + strings.ToLower(search) + "%"
-	cols := edicol.EDITransactionSetColumns
-
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr(cols.Code.LowerLike(), term).
-			WhereOr(cols.Name.LowerLike(), term).
-			WhereOr(cols.DefaultVersion.LowerLike(), term)
-	})
+func transactionSetSearch(s string) keel.Pred {
+	ts := edidb.EDITransactionSets
+	return keel.Or(ts.Code.ContainsFold(s), ts.Name.ContainsFold(s), ts.DefaultVersion.ContainsFold(s))
 }

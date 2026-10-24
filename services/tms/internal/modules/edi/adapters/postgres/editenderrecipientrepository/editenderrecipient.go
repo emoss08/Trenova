@@ -1,19 +1,23 @@
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 package editenderrecipientrepository
 
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var recipientErrors = dberror.Mapping{Entity: "EDITenderRecipient"}
 
 type Params struct {
 	fx.In
@@ -39,18 +43,13 @@ func (r *repository) GetTenderRecipientByID(
 	req ediports.GetEDITenderRecipientByIDRequest,
 ) (*edi.TenderRecipient, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
-		entity := new(edi.TenderRecipient)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("etr.id = ?", req.ID).
-			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-				return applyTenderRecipientTenantScope(query, req.TenantInfo)
-			}).
-			Scan(ctx)
+		tr := edidb.TenderRecipients
+		entity, err := tr.Where(tr.ID.Eq(req.ID), visibleTo(tr, req.TenantInfo)).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDITenderRecipient")
+			return nil, recipientErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -60,17 +59,15 @@ func (r *repository) ListActiveTenderRecipientsForSourceShipment(
 	req ediports.ListEDITenderRecipientsForSourceShipmentRequest,
 ) ([]*edi.TenderRecipient, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.TenderRecipient, error) {
-		entities := make([]*edi.TenderRecipient, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where("etr.source_organization_id = ?", req.TenantInfo.OrgID).
-			Where("etr.source_business_unit_id = ?", req.TenantInfo.BuID).
-			Where("etr.source_shipment_id = ?", req.SourceShipmentID).
-			Where("etr.status = ?", edi.TenderRecipientStatusActive).
-			Order("etr.created_at ASC").
-			Scan(ctx)
-		return entities, err
+		tr := edidb.TenderRecipients
+		return tr.Where(
+			tr.SourceOrganizationID.Eq(req.TenantInfo.OrgID),
+			tr.SourceBusinessUnitID.Eq(req.TenantInfo.BuID),
+			tr.SourceShipmentID.Eq(req.SourceShipmentID),
+			tr.Status.Eq(edi.TenderRecipientStatusActive),
+		).
+			Order(tr.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -79,27 +76,25 @@ func (r *repository) GetActiveExternalRecipientByShipmentReference(
 	req ediports.GetActiveExternalEDITenderRecipientByReferenceRequest,
 ) (*edi.TenderRecipient, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
-		entity := new(edi.TenderRecipient)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("etr.source_organization_id = ?", req.TenantInfo.OrgID).
-			Where("etr.source_business_unit_id = ?", req.TenantInfo.BuID).
-			Where("etr.edi_partner_id = ?", req.PartnerID).
-			Where("etr.recipient_kind = ?", edi.TenderRecipientKindExternal).
-			Where("etr.status = ?", edi.TenderRecipientStatusActive).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					WhereOr("etr.source_shipment_id = ?", req.Reference).
-					WhereOr("etr.latest_baseline_payload->>'bol' = ?", req.Reference).
-					WhereOr("etr.latest_baseline_payload->>'shipmentId' = ?", req.Reference)
-			}).
-			Order("etr.created_at DESC").
-			Limit(1).
-			Scan(ctx)
+		tr := edidb.TenderRecipients
+		entity, err := tr.Where(
+			tr.SourceOrganizationID.Eq(req.TenantInfo.OrgID),
+			tr.SourceBusinessUnitID.Eq(req.TenantInfo.BuID),
+			tr.EDIPartnerID.Eq(req.PartnerID),
+			tr.RecipientKind.Eq(edi.TenderRecipientKindExternal),
+			tr.Status.Eq(edi.TenderRecipientStatusActive),
+			keel.Or(
+				tr.SourceShipmentID.Eq(pulid.ID(req.Reference)),
+				tr.LatestBaselinePayload.Text("bol").Eq(req.Reference),
+				tr.LatestBaselinePayload.Text("shipmentId").Eq(req.Reference),
+			),
+		).
+			Order(tr.CreatedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDITenderRecipient")
+			return nil, recipientErrors.Map(err, req.Reference)
 		}
+
 		return entity, nil
 	})
 }
@@ -109,37 +104,56 @@ func (r *repository) UpsertTenderRecipient(
 	req ediports.UpsertEDITenderRecipientRequest,
 ) (*edi.TenderRecipient, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
+		db := r.db.Keel(ctx)
+		tr := edidb.TenderRecipients
 		entity := req.Recipient
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On(`CONFLICT (
-				source_shipment_id,
-				source_business_unit_id,
-				source_organization_id,
-				recipient_kind,
-				COALESCE(recipient_organization_id, ''),
-				COALESCE(recipient_business_unit_id, ''),
-				COALESCE(edi_partner_id, ''),
-				COALESCE(partner_document_profile_id, '')
-			) DO UPDATE`).
-			Set("latest_baseline_payload = EXCLUDED.latest_baseline_payload").
-			Set("latest_baseline_hash = EXCLUDED.latest_baseline_hash").
-			Set("baseline_recorded_at = EXCLUDED.baseline_recorded_at").
-			Set("baseline_status = EXCLUDED.baseline_status").
-			Set("original_transfer_id = COALESCE(NULLIF(EXCLUDED.original_transfer_id, ''), etr.original_transfer_id)").
-			Set("shipment_link_id = COALESCE(NULLIF(EXCLUDED.shipment_link_id, ''), etr.shipment_link_id)").
-			Set("original_message_id = COALESCE(NULLIF(EXCLUDED.original_message_id, ''), etr.original_message_id)").
-			Set("partner_document_profile_id = COALESCE(NULLIF(EXCLUDED.partner_document_profile_id, ''), etr.partner_document_profile_id)").
-			Set("communication_profile_id = COALESCE(NULLIF(EXCLUDED.communication_profile_id, ''), etr.communication_profile_id)").
-			Set("status = ?", edi.TenderRecipientStatusActive).
-			Set("updated_at = " + dbhelper.NowEpoch).
-			Returning("*").
-			Exec(ctx)
+		_, err := tr.Upsert(ctx, db, []*edi.TenderRecipient{entity}, keel.OnConflict(
+			tr.SourceShipmentID,
+			tr.SourceBusinessUnitID,
+			tr.SourceOrganizationID,
+			tr.RecipientKind,
+			keel.Raw("COALESCE(?, '')", tr.RecipientOrganizationID),
+			keel.Raw("COALESCE(?, '')", tr.RecipientBusinessUnitID),
+			keel.Raw("COALESCE(?, '')", tr.EDIPartnerID),
+			keel.Raw("COALESCE(?, '')", tr.PartnerDocumentProfileID),
+		).
+			Update(
+				tr.LatestBaselinePayload,
+				tr.LatestBaselineHash,
+				tr.BaselineRecordedAt,
+				tr.BaselineStatus,
+			).
+			Set(
+				tr.OriginalTransferID.ToExpr(keepStored(tr.OriginalTransferID.Col)),
+				tr.ShipmentLinkID.ToExpr(keepStored(tr.ShipmentLinkID.Col)),
+				tr.OriginalMessageID.ToExpr(keepStored(tr.OriginalMessageID.Col)),
+				tr.PartnerDocumentProfileID.ToExpr(
+					keepStored(tr.PartnerDocumentProfileID.Col),
+				),
+				tr.CommunicationProfileID.ToExpr(
+					keepStored(tr.CommunicationProfileID.Col),
+				),
+				tr.Status.To(edi.TenderRecipientStatusActive),
+			))
 		if err != nil {
-			return nil, err
+			return nil, recipientErrors.Map(err, entity.ID.String())
 		}
-		return entity, nil
+
+		stored, err := tr.Where(
+			tr.SourceShipmentID.Eq(entity.SourceShipmentID),
+			tr.SourceBusinessUnitID.Eq(entity.SourceBusinessUnitID),
+			tr.SourceOrganizationID.Eq(entity.SourceOrganizationID),
+			tr.RecipientKind.Eq(entity.RecipientKind),
+			tr.RecipientOrganizationID.Eq(entity.RecipientOrganizationID),
+			tr.RecipientBusinessUnitID.Eq(entity.RecipientBusinessUnitID),
+			tr.EDIPartnerID.Eq(entity.EDIPartnerID),
+			tr.PartnerDocumentProfileID.Eq(entity.PartnerDocumentProfileID),
+		).One(ctx, db)
+		if err != nil {
+			return nil, recipientErrors.Map(err, entity.ID.String())
+		}
+
+		return stored, nil
 	})
 }
 
@@ -148,48 +162,31 @@ func (r *repository) UpdateTenderRecipient(
 	entity *edi.TenderRecipient,
 ) (*edi.TenderRecipient, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
-		ov := entity.Version
-		entity.Version++
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
+		if err := edidb.TenderRecipients.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, recipientErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"EDITenderRecipient",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+
 		return entity, nil
 	})
 }
 
-func applyTenderRecipientTenantScope(
-	query *bun.SelectQuery,
-	tenantInfo pagination.TenantInfo,
-) *bun.SelectQuery {
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr(
-			"(etr.source_organization_id = ? AND etr.source_business_unit_id = ?)",
-			tenantInfo.OrgID,
-			tenantInfo.BuID,
-		).WhereOr(
-			`(etr.recipient_organization_id = ?
-				AND (
-					etr.recipient_business_unit_id = ?
-					OR etr.recipient_business_unit_id IS NULL
-					OR etr.business_unit_id = ?
-				))`,
-			tenantInfo.OrgID,
-			tenantInfo.BuID,
-			tenantInfo.BuID,
-		)
-	})
+func keepStored(col keel.Col) keel.Expr {
+	return keel.Raw("COALESCE(NULLIF(?, ''), ?)", col.Excluded(), col)
+}
+
+func visibleTo(tr *edidb.TenderRecipientsTable, tenant pagination.TenantInfo) keel.Pred {
+	return keel.Or(
+		keel.And(
+			tr.SourceOrganizationID.Eq(tenant.OrgID),
+			tr.SourceBusinessUnitID.Eq(tenant.BuID),
+		),
+		keel.And(
+			tr.RecipientOrganizationID.Eq(tenant.OrgID),
+			keel.Or(
+				tr.RecipientBusinessUnitID.Eq(tenant.BuID),
+				tr.RecipientBusinessUnitID.IsNull(),
+				tr.BusinessUnitID.Eq(tenant.BuID),
+			),
+		),
+	)
 }

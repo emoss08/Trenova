@@ -62,7 +62,7 @@ type Params struct {
 	DocumentTypes ediports.EDIDocumentTypeRepository
 	Setup         *ediservice.Service
 	Validator     *ediservice.Validator
-	DB            kernelports.DBConnection
+	DB            kernelports.Transactor
 	Logger        *zap.Logger
 }
 
@@ -72,7 +72,7 @@ type Service struct {
 	documentTypes ediports.EDIDocumentTypeRepository
 	setup         setupService
 	validator     *ediservice.Validator
-	db            kernelports.DBConnection
+	db            kernelports.Transactor
 	l             *zap.Logger
 }
 

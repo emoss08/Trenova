@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -18,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
@@ -79,10 +77,10 @@ func (s *Service) ApproveTransfer(
 		ctx,
 		"approve an internal load tender, writing both organizations' shipments in one transaction",
 	)
-	err := s.db.WithTx(
+	err := s.db.Transact(
 		approvalCtx,
 		kernelports.TxOptions{},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			transfer, err := s.transferRepo.GetTransferForUpdate(
 				txCtx,
 				ediports.GetEDITransferForUpdateRequest{
@@ -254,7 +252,7 @@ func (s *Service) ProcessLoadTenderApproval(
 	var processingErr error
 	var approvedTransfer *edi.EDITransfer
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
 			ediports.GetEDITransferForUpdateRequest{
@@ -343,7 +341,7 @@ func (s *Service) ProcessLoadTenderApproval(
 		}
 
 		var createdShipment *shipment.Shipment
-		err = dbtx.Savepoint(txCtx, s.db, func(spCtx context.Context) error {
+		err = s.savepoints.Savepoint(txCtx, func(spCtx context.Context) error {
 			created, createErr := s.shipmentSvc.Create(spCtx, targetShipment, payload.Actor)
 			createdShipment = created
 			return createErr
@@ -495,7 +493,7 @@ func (s *Service) RejectTransfer(
 
 	var original edi.EDITransfer
 	var updated *edi.EDITransfer
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
 			ediports.GetEDITransferForUpdateRequest{
@@ -564,7 +562,7 @@ func (s *Service) CancelTransfer(
 ) (*edi.EDITransfer, error) {
 	var original edi.EDITransfer
 	var updated *edi.EDITransfer
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
 			ediports.GetEDITransferForUpdateRequest{
@@ -626,7 +624,7 @@ func (s *Service) ExpireTransfer(
 ) (*edi.EDITransfer, error) {
 	var original edi.EDITransfer
 	var updated *edi.EDITransfer
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
 			ediports.GetEDITransferForUpdateRequest{

@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -100,9 +99,8 @@ type MappingResolution struct {
 }
 
 type EDITransfer struct {
-	bun.BaseModel             `json:"-" bun:"table:edi_load_tender_transfers,alias:eltt"`
-	keel.Table                `keel:"edi_load_tender_transfers"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	bun.BaseModel `json:"-" bun:"table:edi_load_tender_transfers,alias:eltt"`
+	keel.Table    `keel:"edi_load_tender_transfers"`
 
 	ID                    pulid.ID            `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edilt_"`
 	SourceOrganizationID  pulid.ID            `json:"sourceOrganizationId"  bun:"source_organization_id,type:VARCHAR(100),notnull" keel:"source_organization_id"`
@@ -139,15 +137,21 @@ type EDITransfer struct {
 	TargetPartner *EDIPartner `json:"targetPartner,omitempty" bun:"rel:belongs-to,join:target_partner_id=id" keel:"belongs:target_partner_id"`
 }
 
-func (t *EDITransfer) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (t *EDITransfer) BeforeSave(_ context.Context) error {
 	if t.MappingSnapshot == nil {
 		t.MappingSnapshot = []MappingResolution{}
 	}
 	if t.SubmittedAt == 0 {
-		t.SubmittedAt = now
+		t.SubmittedAt = timeutils.NowUnix()
 	}
+	return nil
+}
 
+func (t *EDITransfer) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if err := t.BeforeSave(ctx); err != nil {
+		return err
+	}
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if t.ID.IsNil() {

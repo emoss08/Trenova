@@ -1,10 +1,12 @@
 package ediservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -135,7 +137,7 @@ func newTenderChangeReviewFixture(t *testing.T) *tenderChangeReviewFixture {
 	}
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
-		db:                  transferChangeApplyDB{},
+		db:                  dbtest.NopConnection{},
 		tenderChangeRepo:    fixture.tenderChangeRepo,
 		tenderRecipientRepo: fixture.tenderRecipientRepo,
 	}

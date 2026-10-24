@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -239,7 +238,7 @@ func (s *Service) reviewTenderChange(
 
 	now := timeutils.NowUnix()
 	var applyErr error
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if status == edi.TenderChangeStatusApplied {
 			if applyErr = s.applyApprovedTenderChange(
 				txCtx,

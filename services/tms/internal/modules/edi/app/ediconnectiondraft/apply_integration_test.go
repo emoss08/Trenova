@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicommunicationprofilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediconnectiondraftrepository"
@@ -20,34 +21,28 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-type seededTenant struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
-func realService(t *testing.T) (context.Context, *bun.DB, *Service, pagination.TenantInfo) {
+func realService(t *testing.T) (context.Context, *keel.DB, *Service, pagination.TenantInfo) {
 	t.Helper()
 
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var org seededTenant
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Where("NOT EXISTS (SELECT 1 FROM edi_partners AS ep WHERE ep.organization_id = organizations.id)").
-		Limit(1).
-		Scan(ctx, &org))
+	var orgID, buID string
+	require.NoError(t, db.Pool().QueryRow(ctx, `SELECT id, business_unit_id FROM organizations
+		WHERE NOT EXISTS (SELECT 1 FROM edi_partners ep WHERE ep.organization_id = organizations.id)
+		ORDER BY id LIMIT 1`).Scan(&orgID, &buID))
+	scope := editest.TenantOf(ctx, pagination.TenantInfo{OrgID: pulid.ID(orgID), BuID: pulid.ID(buID)})
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -66,6 +61,7 @@ func realService(t *testing.T) (context.Context, *bun.DB, *Service, pagination.T
 		DocumentTypeRepo:    documentTypes,
 		Validator:           validator,
 		DB:                  conn,
+		Savepoints:          conn,
 	})
 	service := New(Params{
 		Repo:          ediconnectiondraftrepository.New(ediconnectiondraftrepository.Params{DB: conn, Logger: logger}),
@@ -76,7 +72,7 @@ func realService(t *testing.T) (context.Context, *bun.DB, *Service, pagination.T
 		DB:            conn,
 		Logger:        logger,
 	})
-	return ctx, db, service, pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	return scope.Ctx, db, service, scope.Info
 }
 
 func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *testing.T) {
@@ -98,23 +94,26 @@ func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *t
 	require.NoError(t, err)
 	require.True(t, applied.Created)
 
-	partner := new(edi.EDIPartner)
-	require.NoError(t, db.NewSelect().Model(partner).Where("id = ?", applied.PartnerID).Scan(ctx))
+	ep := edidb.EDIPartners
+	partner, err := ep.Get(ctx, db, applied.PartnerID)
+	require.NoError(t, err)
 	assert.Equal(t, "ACMERETAIL", partner.Code)
 	assert.Equal(t, domaintypes.StatusInactive, partner.Status)
 	assert.True(t, partner.EnabledForInbound)
 	assert.True(t, partner.EnabledForOutbound)
 
-	var transports []*edi.EDICommunicationProfile
-	require.NoError(t, db.NewSelect().Model(&transports).Where("edi_partner_id = ?", partner.ID).Scan(ctx))
+	cp := edidb.EDICommunicationProfiles
+	transports, err := cp.Where(cp.EDIPartnerID.Eq(partner.ID)).All(ctx, db)
+	require.NoError(t, err)
 	require.Len(t, transports, 1)
 	assert.Equal(t, edi.ConnectionMethodAS2, transports[0].Method)
 	assert.Equal(t, domaintypes.StatusInactive, transports[0].Status)
 	assert.Empty(t, transports[0].EncryptedSecrets)
 	assert.Equal(t, "ACMERETAILAS2", transports[0].Config["partnerAS2Id"])
 
-	var profiles []*edi.EDIPartnerDocumentProfile
-	require.NoError(t, db.NewSelect().Model(&profiles).Where("edi_partner_id = ?", partner.ID).Scan(ctx))
+	dp := edidb.EDIPartnerDocumentProfiles
+	profiles, err := dp.Where(dp.EDIPartnerID.Eq(partner.ID)).All(ctx, db)
+	require.NoError(t, err)
 	require.Len(t, profiles, 4)
 	for _, profile := range profiles {
 		assert.Equal(t, edi.DocumentStatusInactive, profile.Status)
@@ -125,8 +124,9 @@ func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *t
 		}
 	}
 
-	var sequences []*edi.EDIControlNumberSequence
-	require.NoError(t, db.NewSelect().Model(&sequences).Where("edi_partner_id = ?", partner.ID).Scan(ctx))
+	cn := edidb.EDIControlNumberSequences
+	sequences, err := cn.Where(cn.EDIPartnerID.Eq(partner.ID)).All(ctx, db)
+	require.NoError(t, err)
 	require.Len(t, sequences, 3)
 	for _, sequence := range sequences {
 		assert.Equal(t, int64(1000), sequence.NextValue)
@@ -157,13 +157,11 @@ func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *t
 	})
 	require.NoError(t, err)
 
-	count, err := db.NewSelect().Model((*edi.EDIPartner)(nil)).
-		Where("organization_id = ?", tenant.OrgID).
-		Where("LOWER(code) = ?", "acmeretail").
-		Count(ctx)
+	count, err := ep.Where(ep.Code.Lower().Eq("acmeretail")).Count(ctx, db)
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, count, "a re-run never creates a second partner")
-	require.NoError(t, db.NewSelect().Model(partner).Where("id = ?", partner.ID).Scan(ctx))
+	partner, err = ep.Get(ctx, db, partner.ID)
+	require.NoError(t, err)
 	assert.Equal(t, "Whitfield", partner.ContactName)
 	assert.Equal(t, domaintypes.StatusInactive, partner.Status)
 
