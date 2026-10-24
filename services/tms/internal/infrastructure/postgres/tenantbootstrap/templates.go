@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
@@ -97,7 +96,7 @@ func createTemplateStarter(
 		BodyText:   version.BodyText,
 		CSSContent: version.CSSContent,
 	}
-	version.ContentHash = documenttemplateservice.ContentHash(&content)
+	version.ContentHash = content.Hash()
 
 	starterHash, err := starters.Hash(kind)
 	if err != nil {

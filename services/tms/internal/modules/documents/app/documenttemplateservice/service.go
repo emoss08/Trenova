@@ -234,14 +234,7 @@ func contentFromVersion(
 // rather than producing the same concatenation, which matters because the hash
 // is what a preview cache and a generated document both key on.
 func ContentHash(content *documenttemplateports.TemplateContent) string {
-	return templateengine.ContentHash(strings.Join([]string{
-		content.Subject,
-		content.BodyHTML,
-		content.BodyText,
-		content.CSSContent,
-		content.HeaderHTML,
-		content.FooterHTML,
-	}, "\x00"))
+	return content.Hash()
 }
 
 func contentHashOr(stored string, content *documenttemplateports.TemplateContent) string {
