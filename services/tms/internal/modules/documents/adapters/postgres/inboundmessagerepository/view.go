@@ -4,21 +4,22 @@ package inboundmessagerepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
+
+var viewErrors = dberror.Mapping{Entity: "View"}
 
 type viewRepository struct {
 	db *postgres.Connection
@@ -37,16 +38,16 @@ func (r *viewRepository) List(
 	req inboundmessageports.ListViewsRequest,
 ) ([]*triage.View, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triage.View, error) {
-		views := make([]*triage.View, 0, triage.MaxViewsPerUser)
-		cols := triagecol.ViewColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&views).
-			Apply(triagecol.ViewApplyTenant(req.TenantInfo)).
-			Where(cols.UserID.Eq(), req.UserID).
-			Order(cols.Position.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx); err != nil {
+		v := triagedb.Views
+		views, err := v.Where(v.UserID.Eq(req.UserID)).
+			Order(v.Position.Asc(), v.CreatedAt.Asc(), v.ID.Asc()).
+			Limit(triage.MaxViewsPerUser).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
+		}
+		if views == nil {
+			views = []*triage.View{}
 		}
 
 		return views, nil
@@ -58,16 +59,10 @@ func (r *viewRepository) Get(
 	req inboundmessageports.GetViewRequest,
 ) (*triage.View, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triage.View, error) {
-		view := new(triage.View)
-		cols := triagecol.ViewColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(view).
-			Apply(triagecol.ViewApplyTenant(req.TenantInfo)).
-			Where(cols.ID.Eq(), req.ID).
-			Where(cols.UserID.Eq(), req.UserID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "View")
+		v := triagedb.Views
+		view, err := v.Where(v.ID.Eq(req.ID), v.UserID.Eq(req.UserID)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, viewErrors.Map(err, req.ID.String())
 		}
 
 		return view, nil
@@ -80,39 +75,35 @@ func (r *viewRepository) Create(
 	limit int,
 ) (*triage.View, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triage.View, error) {
-		dba := r.db.DBForContext(ctx)
-		if _, err := dba.NewRaw(
-			"SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
+		db := r.db.Keel(ctx)
+		if err := keel.LockKey(
+			ctx,
+			db,
 			"triage-views:"+view.OrganizationID.String()+":"+view.UserID.String(),
-		).Exec(ctx); err != nil {
+		); err != nil {
 			return nil, err
 		}
 
-		cols := triagecol.ViewColumns
-		var stats struct {
-			Count        int `bun:"count"`
-			NextPosition int `bun:"next_position"`
+		type viewStats struct {
+			Count        int64
+			NextPosition int64
 		}
-		if err := dba.NewSelect().
-			Model((*triage.View)(nil)).
-			ColumnExpr(buncolgen.Count("count")).
-			ColumnExpr(cols.Position.Expr("COALESCE(MAX({}) + 1, 0) AS next_position")).
-			Apply(triagecol.ViewApplyTenant(pagination.TenantInfo{
-				OrgID: view.OrganizationID,
-				BuID:  view.BusinessUnitID,
-			})).
-			Where(cols.UserID.Eq(), view.UserID).
-			Scan(ctx, &stats); err != nil {
+
+		v := triagedb.Views
+		stats, err := keel.IntoOne[viewStats](ctx, db, v.
+			Pick(keel.Count(), keel.Raw("COALESCE(MAX(?) + 1, 0)", v.Position)).
+			Where(v.UserID.Eq(view.UserID)))
+		if err != nil {
 			return nil, err
 		}
-		if stats.Count >= limit {
+		if stats.Count >= int64(limit) {
 			return nil, errortypes.NewBusinessError(
 				"You can keep at most {0} saved views. Delete one to save another.", limit,
 			)
 		}
 
-		view.Position = stats.NextPosition
-		if _, err := dba.NewInsert().Model(view).Returning("*").Exec(ctx); err != nil {
+		view.Position = int(stats.NextPosition)
+		if err = v.Create(ctx, db, view); err != nil {
 			return nil, err
 		}
 
@@ -122,57 +113,34 @@ func (r *viewRepository) Create(
 
 func (r *viewRepository) Rename(ctx context.Context, view *triage.View) (*triage.View, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triage.View, error) {
-		cols := triagecol.ViewColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(view).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return triagecol.ViewScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: view.OrganizationID,
-					BuID:  view.BusinessUnitID,
-				}).
-					Where(cols.ID.Eq(), view.ID).
-					Where(cols.UserID.Eq(), view.UserID)
-			}).
-			Set(cols.Name.Set(), view.Name).
-			Set(cols.UpdatedAt.Set(), view.UpdatedAt).
-			Returning("*").
-			Exec(ctx)
+		v := triagedb.Views
+		renamed, err := v.Where(v.ID.Eq(view.ID), v.UserID.Eq(view.UserID)).UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			v.Name.To(stringutils.StripNUL(view.Name)),
+			v.UpdatedAt.To(view.UpdatedAt),
+		)
 		if err != nil {
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "View", view.ID.String()); err != nil {
+		if err = dberror.CheckAffected(int64(len(renamed)), "View", view.ID.String()); err != nil {
 			return nil, err
 		}
 
-		return view, nil
+		return renamed[0], nil
 	})
 }
 
 func (r *viewRepository) Delete(ctx context.Context, req inboundmessageports.GetViewRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := triagecol.ViewColumns
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*triage.View)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return triagecol.ViewScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.UserID.Eq(), req.UserID)
-			}).
-			Exec(ctx)
+		v := triagedb.Views
+		n, err := v.Where(v.ID.Eq(req.ID), v.UserID.Eq(req.UserID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return err
 		}
 
-		return dberror.CheckRowsAffected(results, "View", req.ID.String())
+		return dberror.CheckAffected(n, "View", req.ID.String())
 	})
-}
-
-type waitingSearchRequest struct {
-	Tenant pagination.TenantInfo
-	ViewID pulid.ID
-	Query  string
 }
 
 func (r *viewRepository) WaitingCounts(
@@ -185,66 +153,54 @@ func (r *viewRepository) WaitingCounts(
 			return counts, nil
 		}
 
-		dba := r.db.DBForContext(ctx)
-		views := make([]*triage.View, 0, len(req.ViewIDs))
-		cols := triagecol.ViewColumns
-		if err := dba.NewSelect().
-			Model(&views).
-			Column(cols.ID.Bare(), cols.Query.Bare()).
-			Apply(triagecol.ViewApplyTenant(req.TenantInfo)).
-			Where(cols.ID.In(), bun.List(req.ViewIDs)).
-			Scan(ctx); err != nil {
+		db := r.db.Keel(ctx)
+		v := triagedb.Views
+		views, err := v.Pick(v.ID, v.Query).
+			Where(v.ID.In(req.ViewIDs...)).
+			Limit(len(req.ViewIDs)).
+			List(ctx, db)
+		if err != nil {
 			return nil, err
 		}
 		if len(views) == 0 {
 			return counts, nil
 		}
 
-		rows := make([]struct {
-			ViewID pulid.ID `bun:"view_id"`
-			Count  int      `bun:"count"`
-		}, 0, len(views))
-		if err := waitingCountsQuery(dba, req.TenantInfo, views).Scan(ctx, &rows); err != nil {
+		type viewCount struct {
+			ViewID pulid.ID
+			Count  int64
+		}
+
+		rows, err := keel.Into[viewCount](ctx, db, waitingCountsQuery(views))
+		if err != nil {
 			return nil, err
 		}
 		for _, row := range rows {
-			counts[row.ViewID] = row.Count
+			counts[row.ViewID] = int(row.Count)
 		}
 
 		return counts, nil
 	})
 }
 
-func waitingCountsQuery(
-	db bun.IDB,
-	tenantInfo pagination.TenantInfo,
-	views []*triage.View,
-) *bun.SelectQuery {
-	query := waitingSearchCount(db, waitingSearchRequest{
-		Tenant: tenantInfo,
-		ViewID: views[0].ID,
-		Query:  views[0].Query,
-	})
-	for _, view := range views[1:] {
-		query = query.UnionAll(waitingSearchCount(db, waitingSearchRequest{
-			Tenant: tenantInfo,
-			ViewID: view.ID,
-			Query:  view.Query,
-		}))
+func waitingCountsQuery(views []*triage.View) keel.Projection {
+	first := waitingSearchCount(views[0])
+	if len(views) == 1 {
+		return first
 	}
 
-	return query
+	counts := keel.UnionAll(first, waitingSearchCount(views[1]))
+	for _, view := range views[2:] {
+		counts = keel.UnionAll(counts, waitingSearchCount(view))
+	}
+
+	return counts
 }
 
-func waitingSearchCount(db bun.IDB, req waitingSearchRequest) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	query := db.NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		ColumnExpr("?::text AS view_id", req.ViewID.String()).
-		ColumnExpr(buncolgen.Count("count")).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.Tenant)).
-		Where(cols.Status.In(), bun.List(needsReviewStatuses)).
-		Where(cols.Parked.IsNull())
+func waitingSearchCount(view *triage.View) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	q := m.Pick(keel.Raw("?::text", view.ID.String()), keel.Count()).
+		Where(m.Status.In(needsReviewStatuses...), m.Parked.IsNull())
 
-	return searchPredicate(query, inboundmessagecol.InboundMessageTable.Alias, req.Query)
+	return searchPredicate(q, view.Query)
 }

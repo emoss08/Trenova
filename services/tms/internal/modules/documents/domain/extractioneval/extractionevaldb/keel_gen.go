@@ -227,22 +227,23 @@ var extractionCasesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "eec_",
-	New:        newExtractionCase,
-	NewN:       newNExtractionCase,
-	Size:       unsafe.Sizeof(extractioneval.ExtractionCase{}),
-	Ptr:        ptrExtractionCase,
-	Value:      valueExtractionCase,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "eec_",
+	New:          newExtractionCase,
+	NewN:         newNExtractionCase,
+	Size:         unsafe.Sizeof(extractioneval.ExtractionCase{}),
+	Ptr:          ptrExtractionCase,
+	Value:        valueExtractionCase,
+	BeforeCreate: beforeCreateExtractionCase,
 }
 
 var extractionCasesRef = keel.Ref{Table: &extractionCasesTable}
@@ -468,6 +469,10 @@ func valueExtractionCase(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateExtractionCase(ctx context.Context, p unsafe.Pointer) error {
+	return (*extractioneval.ExtractionCase)(p).BeforeCreate(ctx)
+}
+
 // extractionResultsTable is the schema of extractioneval.ExtractionResult.
 var extractionResultsTable = schema.Table{
 	Name:   "extraction_eval_results",
@@ -507,22 +512,23 @@ var extractionResultsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
-	Returning:  nil,
-	Version:    26,
-	AutoID:     0,
-	AutoCreate: 27,
-	AutoUpdate: 28,
-	IDPrefix:   "eeres_",
-	New:        newExtractionResult,
-	NewN:       newNExtractionResult,
-	Size:       unsafe.Sizeof(extractioneval.ExtractionResult{}),
-	Ptr:        ptrExtractionResult,
-	Value:      valueExtractionResult,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
+	Returning:    nil,
+	Version:      26,
+	AutoID:       0,
+	AutoCreate:   27,
+	AutoUpdate:   28,
+	IDPrefix:     "eeres_",
+	New:          newExtractionResult,
+	NewN:         newNExtractionResult,
+	Size:         unsafe.Sizeof(extractioneval.ExtractionResult{}),
+	Ptr:          ptrExtractionResult,
+	Value:        valueExtractionResult,
+	BeforeCreate: beforeCreateExtractionResult,
 }
 
 var extractionResultsRef = keel.Ref{Table: &extractionResultsTable}
@@ -803,6 +809,10 @@ func valueExtractionResult(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateExtractionResult(ctx context.Context, p unsafe.Pointer) error {
+	return (*extractioneval.ExtractionResult)(p).BeforeCreate(ctx)
+}
+
 // extractionRunsTable is the schema of extractioneval.ExtractionRun.
 var extractionRunsTable = schema.Table{
 	Name:   "extraction_eval_runs",
@@ -848,22 +858,23 @@ var extractionRunsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 34},
-	Returning:  nil,
-	Version:    32,
-	AutoID:     0,
-	AutoCreate: 33,
-	AutoUpdate: 34,
-	IDPrefix:   "eer_",
-	New:        newExtractionRun,
-	NewN:       newNExtractionRun,
-	Size:       unsafe.Sizeof(extractioneval.ExtractionRun{}),
-	Ptr:        ptrExtractionRun,
-	Value:      valueExtractionRun,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 34},
+	Returning:    nil,
+	Version:      32,
+	AutoID:       0,
+	AutoCreate:   33,
+	AutoUpdate:   34,
+	IDPrefix:     "eer_",
+	New:          newExtractionRun,
+	NewN:         newNExtractionRun,
+	Size:         unsafe.Sizeof(extractioneval.ExtractionRun{}),
+	Ptr:          ptrExtractionRun,
+	Value:        valueExtractionRun,
+	BeforeCreate: beforeCreateExtractionRun,
 }
 
 var extractionRunsRef = keel.Ref{Table: &extractionRunsTable}
@@ -1185,6 +1196,10 @@ func valueExtractionRun(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateExtractionRun(ctx context.Context, p unsafe.Pointer) error {
+	return (*extractioneval.ExtractionRun)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

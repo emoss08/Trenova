@@ -131,3 +131,7 @@ func (i *CaptureItem) BeforeAppendModel(_ context.Context, query bun.Query) erro
 func (i *CaptureItem) GetID() pulid.ID      { return i.ID }
 func (i *CaptureItem) GetCreatedAt() int64  { return i.CreatedAt }
 func (i *CaptureItem) GetTableName() string { return "capture_items" }
+
+func (i *CaptureItem) BeforeCreate(ctx context.Context) error {
+	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

@@ -42,8 +42,8 @@ type CapturePairing struct {
 	Architecture   Architecture  `json:"architecture"   bun:"architecture,type:VARCHAR(10),notnull" keel:"architecture"`
 	OSVersion      string        `json:"osVersion"      bun:"os_version,type:VARCHAR(100),nullzero" keel:"os_version,nullzero"`
 	ClientIP       string        `json:"clientIp"       bun:"client_ip,type:VARCHAR(64),nullzero" keel:"client_ip,nullzero"`
-	OrganizationID *pulid.ID     `json:"organizationId" bun:"organization_id,type:VARCHAR(100),nullzero" keel:"organization_id,tenant"`
-	BusinessUnitID *pulid.ID     `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),nullzero" keel:"business_unit_id,tenant"`
+	OrganizationID *pulid.ID     `json:"organizationId" bun:"organization_id,type:VARCHAR(100),nullzero" keel:"organization_id"`
+	BusinessUnitID *pulid.ID     `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),nullzero" keel:"business_unit_id"`
 	ApprovedByID   *pulid.ID     `json:"approvedById"   bun:"approved_by_id,type:VARCHAR(100),nullzero" keel:"approved_by_id"`
 	DeviceName     string        `json:"deviceName"     bun:"device_name,type:VARCHAR(100),nullzero" keel:"device_name,nullzero"`
 	DeviceID       *pulid.ID     `json:"deviceId"       bun:"device_id,type:VARCHAR(100),nullzero" keel:"device_id"`
@@ -90,3 +90,7 @@ func (p *CapturePairing) BeforeAppendModel(_ context.Context, query bun.Query) e
 func (p *CapturePairing) GetID() pulid.ID      { return p.ID }
 func (p *CapturePairing) GetCreatedAt() int64  { return p.CreatedAt }
 func (p *CapturePairing) GetTableName() string { return "capture_pairings" }
+
+func (p *CapturePairing) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

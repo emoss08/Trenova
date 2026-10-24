@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -367,10 +366,10 @@ func (s *Service) ExchangePairing(ctx context.Context, deviceCode string) (*Toke
 		ctx,
 		"exchange an approved pairing, which belongs to no organization until now, for its device",
 	)
-	err = s.db.WithTx(
+	err = s.db.Transact(
 		exchangeCtx,
 		kernelports.TxOptions{},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			device, issued, issueErr := newDeviceFromPairing(pairing, now)
 			if issueErr != nil {
 				return issueErr

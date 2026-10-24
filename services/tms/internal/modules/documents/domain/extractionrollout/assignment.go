@@ -123,3 +123,11 @@ func (a *RolloutAssignment) BeforeAppendModel(_ context.Context, query bun.Query
 
 	return nil
 }
+
+func (a *RolloutAssignment) BeforeCreate(_ context.Context) error {
+	if a.Outcome == "" {
+		a.Outcome = OutcomePending
+	}
+
+	return nil
+}

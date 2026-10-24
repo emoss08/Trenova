@@ -115,3 +115,7 @@ func (p *CapturePage) BeforeAppendModel(_ context.Context, query bun.Query) erro
 func (p *CapturePage) GetID() pulid.ID      { return p.ID }
 func (p *CapturePage) GetCreatedAt() int64  { return p.CreatedAt }
 func (p *CapturePage) GetTableName() string { return "capture_pages" }
+
+func (p *CapturePage) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

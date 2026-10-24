@@ -2,114 +2,111 @@ package documenttemplaterepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-// The resolution query reads the version table as its base and reaches the
-// template and the assignment through explicit joins, because the three tiers
-// have to be weighed against each other inside one statement. Resolving in steps
-// would mean a render could observe a template mid-publish.
-var (
-	resolveTemplateJoin = "JOIN " + documenttemplatecol.DocumentTemplateTable.As(
-		documenttemplatecol.DocumentTemplateTable.Alias,
-	) +
-		" ON " + documenttemplatecol.DocumentTemplateColumns.ID.EqColumn(
-		documenttemplatecol.DocumentTemplateVersionColumns.TemplateID,
-	) +
-		" AND " + documenttemplatecol.DocumentTemplateColumns.OrganizationID.EqColumn(
-		documenttemplatecol.DocumentTemplateVersionColumns.OrganizationID,
-	) +
-		" AND " + documenttemplatecol.DocumentTemplateColumns.BusinessUnitID.EqColumn(
-		documenttemplatecol.DocumentTemplateVersionColumns.BusinessUnitID,
-	) +
-		// Only the template's own live version resolves. A draft or an archived
-		// version matching on template_id alone would render something nobody
-		// published.
-		" AND " + documenttemplatecol.DocumentTemplateColumns.ActiveVersionID.EqColumn(
-		documenttemplatecol.DocumentTemplateVersionColumns.ID,
-	)
-
-	resolveAssignmentJoin = "LEFT JOIN " + documenttemplatecol.DocumentTemplateAssignmentTable.As(
-		documenttemplatecol.DocumentTemplateAssignmentTable.Alias,
-	) +
-		" ON " + documenttemplatecol.DocumentTemplateAssignmentColumns.TemplateID.EqColumn(
-		documenttemplatecol.DocumentTemplateColumns.ID,
-	) +
-		" AND " + documenttemplatecol.DocumentTemplateAssignmentColumns.Kind.EqColumn(
-		documenttemplatecol.DocumentTemplateColumns.Kind,
-	) +
-		" AND " + documenttemplatecol.DocumentTemplateAssignmentColumns.OrganizationID.EqColumn(
-		documenttemplatecol.DocumentTemplateColumns.OrganizationID,
-	) +
-		" AND " + documenttemplatecol.DocumentTemplateAssignmentColumns.BusinessUnitID.EqColumn(
-		documenttemplatecol.DocumentTemplateColumns.BusinessUnitID,
-	) +
-		" AND " + documenttemplatecol.DocumentTemplateAssignmentColumns.CustomerID.Eq()
-
-	// An assignment beats the organization default. Ordering rather than two
-	// queries keeps the tie-break in the same statement that found both.
-	resolveOrder = documenttemplatecol.DocumentTemplateAssignmentColumns.ID.Expr(
-		"({} IS NOT NULL) DESC",
-	)
-)
-
-// resolvedScan is the projection of the resolution query.
-//
-// It is a flat row rather than a model scan because the statement returns one
-// column the version entity does not own — whether an assignment matched — and a
-// model scan rejects columns with no field. Every version column the renderer
-// reads is projected explicitly, so a field added to the entity without being
-// added here shows up as a zero value in a preview rather than silently in a
-// customer's invoice; the repository test asserts the two stay in step.
+// resolvedScan is the projection of the resolution query, filled in the order
+// resolveColumns picks. It is a flat row because the statement returns one value
+// the version entity does not own: whether an assignment matched. Every version
+// column the renderer reads is projected explicitly, so a field added to the
+// entity without being added here shows up as a zero value in a preview rather
+// than silently in a customer's invoice; the repository test asserts the two stay
+// in step.
 type resolvedScan struct {
-	VersionID       pulid.ID                       `bun:"version_id"`
-	OrganizationID  pulid.ID                       `bun:"organization_id"`
-	BusinessUnitID  pulid.ID                       `bun:"business_unit_id"`
-	TemplateID      pulid.ID                       `bun:"template_id"`
-	SourceVersionID *pulid.ID                      `bun:"source_version_id"`
-	VersionNumber   int64                          `bun:"version_number"`
-	Status          documenttemplate.VersionStatus `bun:"status"`
-	Subject         string                         `bun:"subject"`
-	BodyHTML        string                         `bun:"body_html"`
-	BodyText        string                         `bun:"body_text"`
-	CSSContent      string                         `bun:"css_content"`
-	HeaderHTML      string                         `bun:"header_html"`
-	FooterHTML      string                         `bun:"footer_html"`
-	PageSize        documenttemplate.PageSize      `bun:"page_size"`
-	Orientation     documenttemplate.Orientation   `bun:"orientation"`
-	MarginTop       *float64                       `bun:"margin_top"`
-	MarginBottom    *float64                       `bun:"margin_bottom"`
-	MarginLeft      *float64                       `bun:"margin_left"`
-	MarginRight     *float64                       `bun:"margin_right"`
-	ContentHash     string                         `bun:"content_hash"`
-	StarterHash     string                         `bun:"starter_hash"`
-	PublishNotes    string                         `bun:"publish_notes"`
-	PublishedByID   *pulid.ID                      `bun:"published_by_id"`
-	PublishedAt     *int64                         `bun:"published_at"`
-	VersionLock     int64                          `bun:"version_lock"`
-	CreatedAt       int64                          `bun:"created_at"`
-	UpdatedAt       int64                          `bun:"updated_at"`
+	VersionID       pulid.ID
+	OrganizationID  pulid.ID
+	BusinessUnitID  pulid.ID
+	TemplateID      pulid.ID
+	SourceVersionID *pulid.ID
+	VersionNumber   int64
+	Status          documenttemplate.VersionStatus
+	Subject         string
+	BodyHTML        string
+	BodyText        string
+	CSSContent      string
+	HeaderHTML      string
+	FooterHTML      string
+	PageSize        documenttemplate.PageSize
+	Orientation     documenttemplate.Orientation
+	MarginTop       *float64
+	MarginBottom    *float64
+	MarginLeft      *float64
+	MarginRight     *float64
+	ContentHash     string
+	StarterHash     string
+	PublishNotes    string
+	PublishedByID   *pulid.ID
+	PublishedAt     *int64
+	VersionLock     int64
+	CreatedAt       int64
+	UpdatedAt       int64
 
-	TemplateCode         string                `bun:"template_code"`
-	TemplateName         string                `bun:"template_name"`
-	TemplateDescription  string                `bun:"template_description"`
-	TemplateKind         documenttemplate.Kind `bun:"template_kind"`
-	TemplateIsOrgDefault bool                  `bun:"template_is_org_default"`
-	TemplateVersionLock  int64                 `bun:"template_version_lock"`
-	TemplateCreatedAt    int64                 `bun:"template_created_at"`
-	TemplateUpdatedAt    int64                 `bun:"template_updated_at"`
+	TemplateCode         string
+	TemplateName         string
+	TemplateDescription  string
+	TemplateKind         documenttemplate.Kind
+	TemplateIsOrgDefault bool
+	TemplateVersionLock  int64
+	TemplateCreatedAt    int64
+	TemplateUpdatedAt    int64
 
-	AssignmentID *pulid.ID `bun:"assignment_id"`
+	AssignmentID *pulid.ID
+}
+
+func text(e keel.Expr) keel.Expr {
+	return keel.Raw("COALESCE(?::text, '')", e)
+}
+
+func resolveColumns(
+	v *documenttemplatedb.DocumentTemplateVersionsTable,
+	t *documenttemplatedb.DocumentTemplatesTable,
+	assignment keel.Expr,
+) []keel.Expr {
+	return []keel.Expr{
+		v.ID,
+		v.OrganizationID,
+		v.BusinessUnitID,
+		v.TemplateID,
+		v.SourceVersionID,
+		v.VersionNumber,
+		v.Status,
+		text(v.Subject),
+		text(v.BodyHTML),
+		text(v.BodyText),
+		text(v.CSSContent),
+		text(v.HeaderHTML),
+		text(v.FooterHTML),
+		text(v.PageSize),
+		text(v.Orientation),
+		v.MarginTop,
+		v.MarginBottom,
+		v.MarginLeft,
+		v.MarginRight,
+		v.ContentHash,
+		text(v.StarterHash),
+		text(v.PublishNotes),
+		v.PublishedByID,
+		v.PublishedAt,
+		v.Version,
+		v.CreatedAt,
+		v.UpdatedAt,
+		t.Code,
+		t.Name,
+		text(t.Description),
+		t.Kind,
+		t.IsOrgDefault,
+		t.Version,
+		t.CreatedAt,
+		t.UpdatedAt,
+		assignment,
+	}
 }
 
 func (s *resolvedScan) toRow() *documenttemplateports.ResolvedTemplateRow {
@@ -176,7 +173,10 @@ func (s *resolvedScan) toRow() *documenttemplateports.ResolvedTemplateRow {
 
 // Resolve walks the chain assigned → organization default in one statement and
 // returns nil when neither tier matched, which is the caller's signal to render
-// the built-in starter.
+// the built-in starter. The version table is the base and the template and the
+// assignment are reached through explicit joins, because the three tiers have to
+// be weighed against each other inside one statement: resolving in steps would
+// mean a render could observe a template mid-publish.
 func (r *templateRepository) Resolve(
 	ctx context.Context,
 	req *documenttemplateports.ResolveDocumentTemplateRequest,
@@ -185,99 +185,58 @@ func (r *templateRepository) Resolve(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documenttemplateports.ResolvedTemplateRow, error) {
-			log := r.l.With(
-				zap.String("operation", "Resolve"),
-				zap.String("kind", string(req.Kind)),
-			)
-
-			vCols := documenttemplatecol.DocumentTemplateVersionColumns
-			tCols := documenttemplatecol.DocumentTemplateColumns
-			aCols := documenttemplatecol.DocumentTemplateAssignmentColumns
-
-			scoped := req.CustomerID != nil && !req.CustomerID.IsNil()
-
-			row := new(resolvedScan)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*documenttemplate.DocumentTemplateVersion)(nil)).
-				ColumnExpr(vCols.ID.As("version_id")).
-				ColumnExpr(vCols.OrganizationID.As("organization_id")).
-				ColumnExpr(vCols.BusinessUnitID.As("business_unit_id")).
-				ColumnExpr(vCols.TemplateID.As("template_id")).
-				ColumnExpr(vCols.SourceVersionID.As("source_version_id")).
-				ColumnExpr(vCols.VersionNumber.As("version_number")).
-				ColumnExpr(vCols.Status.As("status")).
-				ColumnExpr(vCols.Subject.Expr("COALESCE({}, '') AS subject")).
-				ColumnExpr(vCols.BodyHTML.Expr("COALESCE({}, '') AS body_html")).
-				ColumnExpr(vCols.BodyText.Expr("COALESCE({}, '') AS body_text")).
-				ColumnExpr(vCols.CSSContent.Expr("COALESCE({}, '') AS css_content")).
-				ColumnExpr(vCols.HeaderHTML.Expr("COALESCE({}, '') AS header_html")).
-				ColumnExpr(vCols.FooterHTML.Expr("COALESCE({}, '') AS footer_html")).
-				ColumnExpr(vCols.PageSize.As("page_size")).
-				ColumnExpr(vCols.Orientation.As("orientation")).
-				ColumnExpr(vCols.MarginTop.As("margin_top")).
-				ColumnExpr(vCols.MarginBottom.As("margin_bottom")).
-				ColumnExpr(vCols.MarginLeft.As("margin_left")).
-				ColumnExpr(vCols.MarginRight.As("margin_right")).
-				ColumnExpr(vCols.ContentHash.As("content_hash")).
-				ColumnExpr(vCols.StarterHash.Expr("COALESCE({}, '') AS starter_hash")).
-				ColumnExpr(vCols.PublishNotes.Expr("COALESCE({}, '') AS publish_notes")).
-				ColumnExpr(vCols.PublishedByID.As("published_by_id")).
-				ColumnExpr(vCols.PublishedAt.As("published_at")).
-				ColumnExpr(vCols.Version.As("version_lock")).
-				ColumnExpr(vCols.CreatedAt.As("created_at")).
-				ColumnExpr(vCols.UpdatedAt.As("updated_at")).
-				ColumnExpr(tCols.Code.As("template_code")).
-				ColumnExpr(tCols.Name.As("template_name")).
-				ColumnExpr(tCols.Description.Expr("COALESCE({}, '') AS template_description")).
-				ColumnExpr(tCols.Kind.As("template_kind")).
-				ColumnExpr(tCols.IsOrgDefault.As("template_is_org_default")).
-				ColumnExpr(tCols.Version.As("template_version_lock")).
-				ColumnExpr(tCols.CreatedAt.As("template_created_at")).
-				ColumnExpr(tCols.UpdatedAt.As("template_updated_at")).
-				Join(resolveTemplateJoin)
-
-			if scoped {
-				q = q.
-					ColumnExpr(aCols.ID.As("assignment_id")).
-					Join(resolveAssignmentJoin, *req.CustomerID)
-			} else {
-				// No customer in scope: the assignment tier cannot apply, so the join is
-				// left out rather than made harmless. NULL keeps the projection stable.
-				q = q.ColumnExpr("NULL AS assignment_id")
-			}
-
-			q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = documenttemplatecol.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
-					Where(vCols.Status.Eq(), documenttemplate.VersionStatusActive).
-					Where(tCols.Kind.Eq(), req.Kind)
-
-				if scoped {
-					return sq.WhereGroup(" AND ", func(iq *bun.SelectQuery) *bun.SelectQuery {
-						return iq.
-							WhereOr(aCols.ID.IsNotNull()).
-							WhereOr(tCols.IsOrgDefault.IsTrue())
-					})
-				}
-
-				return sq.Where(tCols.IsOrgDefault.IsTrue())
-			})
-
-			if scoped {
-				q = q.OrderExpr(resolveOrder)
-			}
-
-			if err := q.Limit(1).Scan(ctx, row); err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					// Nothing customized: the built-in is the third tier, so no row is a
-					// result, not a failure. The service renders the embedded starter.
-					return nil, nil //nolint:nilnil // no row means "use the built-in"
-				}
-				log.Error("failed to resolve document template", zap.Error(err))
+			rows, err := keel.Into[resolvedScan](ctx, r.db.Keel(ctx), resolveQuery(req))
+			if err != nil {
+				r.l.Error(
+					"failed to resolve document template",
+					zap.String("kind", string(req.Kind)),
+					zap.Error(err),
+				)
 				return nil, err
 			}
+			if len(rows) == 0 {
+				return nil, nil //nolint:nilnil // no row means "use the built-in"
+			}
 
-			return row.toRow(), nil
+			return rows[0].toRow(), nil
 		},
 	)
+}
+
+func resolveQuery(
+	req *documenttemplateports.ResolveDocumentTemplateRequest,
+) *keel.Query[documenttemplate.DocumentTemplateVersion] {
+	v := documenttemplatedb.DocumentTemplateVersions
+	t := documenttemplatedb.DocumentTemplates
+	a := documenttemplatedb.DocumentTemplateAssignments
+
+	// Only the template's own live version resolves. A draft or an archived
+	// version matching on template_id alone would render something nobody
+	// published.
+	q := v.Join(t, t.ID.EqCol(v.TemplateID), t.ActiveVersionID.EqCol(v.ID)).
+		Where(
+			v.Status.Eq(documenttemplate.VersionStatusActive),
+			t.Kind.Eq(req.Kind),
+		)
+
+	if req.CustomerID == nil || req.CustomerID.IsNil() {
+		// No customer in scope: the assignment tier cannot apply, so the join is
+		// left out rather than made harmless. NULL keeps the projection stable.
+		return q.Where(t.IsOrgDefault.IsTrue()).
+			Pick(resolveColumns(v, t, keel.Raw("NULL::varchar"))...).
+			Limit(1)
+	}
+
+	// An assignment beats the organization default. Ordering rather than two
+	// queries keeps the tie-break in the same statement that found both.
+	return q.LeftJoin(
+		a,
+		a.TemplateID.EqCol(t.ID),
+		a.Kind.EqCol(t.Kind),
+		a.CustomerID.Eq(*req.CustomerID),
+	).
+		Where(keel.Or(a.ID.IsNotNull(), t.IsOrgDefault.IsTrue())).
+		Pick(resolveColumns(v, t, a.ID)...).
+		Order(keel.Desc(keel.Raw("(? IS NOT NULL)", a.ID))).
+		Limit(1)
 }

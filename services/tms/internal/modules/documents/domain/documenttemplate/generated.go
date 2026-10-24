@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -111,9 +110,8 @@ var (
 // asked. The foreign key is RESTRICT so a version with output attributed to it
 // cannot be deleted out from under the record.
 type GeneratedDocument struct {
-	bun.BaseModel             `bun:"table:generated_documents,alias:gd" json:"-"`
-	keel.Table                `keel:"generated_documents"`
-	pagination.CursorValueSet `bun:",embed"                             json:"-"`
+	bun.BaseModel `bun:"table:generated_documents,alias:gd" json:"-"`
+	keel.Table    `keel:"generated_documents"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:gd_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -349,6 +347,11 @@ func (g *GeneratedDocument) Normalize() {
 	if g.Status == "" {
 		g.Status = GenerationStatusPending
 	}
+}
+
+func (g *GeneratedDocument) BeforeSave(_ context.Context) error {
+	g.Normalize()
+	return nil
 }
 
 func (g *GeneratedDocument) BeforeAppendModel(_ context.Context, query bun.Query) error {

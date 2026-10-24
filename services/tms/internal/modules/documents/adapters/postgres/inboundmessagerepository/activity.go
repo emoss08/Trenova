@@ -4,15 +4,17 @@ package inboundmessagerepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+const activityRankCTE = "ranked_activities"
 
 type activityRepository struct {
 	db *postgres.Connection
@@ -32,9 +34,7 @@ func (r *activityRepository) Insert(ctx context.Context, activities []*triage.Ac
 			return nil
 		}
 
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(&activities).Exec(ctx)
-
-		return err
+		return triagedb.Activities.CreateMany(ctx, r.db.Keel(ctx), activities)
 	})
 }
 
@@ -48,14 +48,11 @@ func (r *activityRepository) ListByMessageIDs(
 			return grouped, nil
 		}
 
-		entities := make([]*triage.Activity, 0, len(req.MessageIDs)*4)
-		if err := listActivitiesQuery(
-			r.db.DBForContext(ctx),
-			req,
-			&entities,
-		).Scan(ctx); err != nil {
+		entities, err := listActivitiesQuery(req).All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
 		}
+
 		for _, entity := range entities {
 			grouped[entity.MessageID] = append(grouped[entity.MessageID], entity)
 		}
@@ -64,39 +61,25 @@ func (r *activityRepository) ListByMessageIDs(
 	})
 }
 
-const activityRankAlias = "ranked"
-
 func listActivitiesQuery(
-	db bun.IDB,
 	req inboundmessageports.ListActivitiesRequest,
-	entities *[]*triage.Activity,
-) *bun.SelectQuery {
-	cols := triagecol.ActivityColumns
+) *keel.Query[triage.Activity] {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = inboundmessageports.MaxActivitiesPerRead
 	}
 
-	ranked := db.NewSelect().
-		Model((*triage.Activity)(nil)).
-		ColumnExpr(cols.ID.Qualified()).
-		ColumnExpr(
-			"ROW_NUMBER() OVER (PARTITION BY ? ORDER BY ? DESC, ? DESC) AS activity_rank",
-			bun.Safe(cols.MessageID.Qualified()),
-			bun.Safe(cols.CreatedAt.Qualified()),
-			bun.Safe(cols.ID.Qualified()),
-		).
-		Apply(triagecol.ActivityApplyTenant(req.TenantInfo)).
-		Where(cols.MessageID.In(), bun.List(req.MessageIDs))
-	kept := db.NewSelect().
-		TableExpr("(?) AS ?", ranked, bun.Ident(activityRankAlias)).
-		ColumnExpr(cols.ID.WithAlias(activityRankAlias).Qualified()).
-		Where("activity_rank <= ?", limit)
+	a := triagedb.Activities
+	ra := triagedb.Activities.As("ranked_activity")
+	ranked := keel.CTE(activityRankCTE, []string{"id", "activity_rank"}, ra.
+		Pick(ra.ID, keel.RowNumber().Over([]keel.Expr{ra.MessageID}, ra.CreatedAt.Desc(), ra.ID.Desc())).
+		Where(ra.MessageID.In(req.MessageIDs...)))
 
-	return db.NewSelect().
-		Model(entities).
-		Apply(triagecol.ActivityApplyTenant(req.TenantInfo)).
-		Where(cols.MessageID.In(), bun.List(req.MessageIDs)).
-		Where(cols.ID.In(), kept).
-		Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc())
+	return a.Where(
+		a.MessageID.In(req.MessageIDs...),
+		a.ID.InQuery(ranked.Query().
+			With(ranked).
+			Pick(ranked.Col("id")).
+			Where(ranked.Col("activity_rank").Lte(limit))),
+	).Order(a.CreatedAt.Asc(), a.ID.Asc())
 }

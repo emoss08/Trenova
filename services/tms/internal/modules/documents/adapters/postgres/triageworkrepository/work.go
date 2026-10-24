@@ -2,28 +2,24 @@ package triageworkrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction/documentaiextractiondb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentaiextractioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcontentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -45,7 +41,7 @@ func New(p Params) inboundmessageports.TriageWorkRepository {
 
 func (r *repository) ContentsByDocumentIDs(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	documentIDs []pulid.ID,
 ) (map[pulid.ID]*documentcontent.Content, error) {
 	return dbtx.Read(
@@ -57,25 +53,22 @@ func (r *repository) ContentsByDocumentIDs(
 				return byDocument, nil
 			}
 
-			cols := documentcontentcol.ContentColumns
-			entities := make([]*documentcontent.Content, 0, len(documentIDs))
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Column(
-					cols.ID.Bare(),
-					cols.DocumentID.Bare(),
-					cols.OrganizationID.Bare(),
-					cols.BusinessUnitID.Bare(),
-					cols.Status.Bare(),
-					cols.PageCount.Bare(),
-					cols.DetectedDocumentKind.Bare(),
-					cols.ClassificationConfidence.Bare(),
-					cols.StructuredData.Bare(),
-				).
-				Where(cols.DocumentID.In(), bun.List(documentIDs)).
-				Apply(documentcontentcol.ContentApplyTenant(tenantInfo)).
-				Scan(ctx); err != nil {
+			dc := documentcontentdb.Contents
+			entities, err := dc.Pick(
+				dc.ID,
+				dc.DocumentID,
+				dc.OrganizationID,
+				dc.BusinessUnitID,
+				dc.Status,
+				dc.PageCount,
+				dc.DetectedDocumentKind,
+				dc.ClassificationConfidence,
+				dc.StructuredData,
+			).
+				Where(dc.DocumentID.In(documentIDs...)).
+				Limit(len(documentIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, err
 			}
 
@@ -90,12 +83,12 @@ func (r *repository) ContentsByDocumentIDs(
 
 func (r *repository) DocumentTypesOnShipments(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
 ) (map[pulid.ID][]string, error) {
 	type typeRow struct {
-		ResourceID string `bun:"resource_id"`
-		Name       string `bun:"name"`
+		ResourceID string
+		Name       string
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]string, error) {
@@ -109,26 +102,20 @@ func (r *repository) DocumentTypesOnShipments(
 			resourceIDs = append(resourceIDs, id.String())
 		}
 
-		doc := documentcol.DocumentColumns
-		dt := documenttypecol.DocumentTypeColumns
-		rows := make([]typeRow, 0, len(shipmentIDs)*2)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*document.Document)(nil)).
-			ColumnExpr(doc.ResourceID.Qualified()).
-			ColumnExpr(dt.Name.As("name")).
-			Join("JOIN "+documenttypecol.DocumentTypeTable.Name+" AS "+documenttypecol.DocumentTypeTable.Alias+
-				" ON "+dt.ID.EqColumn(doc.DocumentTypeID)+
-				" AND "+dt.OrganizationID.EqColumn(doc.OrganizationID)+
-				" AND "+dt.BusinessUnitID.EqColumn(doc.BusinessUnitID)).
-			Where(doc.ResourceType.Eq(), shipmentResourceType).
-			Where(doc.ResourceID.In(), bun.List(resourceIDs)).
-			Where(doc.IsCurrentVersion.IsTrue()).
-			Where(doc.Status.Eq(), document.StatusActive).
-			Apply(documentcol.DocumentApplyTenant(tenantInfo)).
-			GroupExpr(doc.ResourceID.Qualified()+", "+dt.Name.Qualified()).
-			OrderExpr(doc.ResourceID.Qualified()+", "+dt.Name.Qualified()).
-			Scan(ctx, &rows); err != nil {
+		d := documentdb.Documents
+		dt := d.DocumentType()
+		rows, err := keel.Into[typeRow](ctx, r.db.Keel(ctx), d.
+			Pick(d.ResourceID, dt.Name).
+			Where(
+				dt.ID.IsNotNull(),
+				d.ResourceType.Eq(shipmentResourceType),
+				d.ResourceID.In(resourceIDs...),
+				d.IsCurrentVersion.IsTrue(),
+				d.Status.Eq(document.StatusActive),
+			).
+			Group(d.ResourceID, dt.Name).
+			Order(d.ResourceID.Asc(), dt.Name.Asc()))
+		if err != nil {
 			return nil, err
 		}
 
@@ -146,25 +133,26 @@ func (r *repository) DocumentTypesOnShipments(
 
 func (r *repository) CurrentShipmentDocuments(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	shipmentID pulid.ID,
 	documentTypeID pulid.ID,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		doc := documentcol.DocumentColumns
-		ids := make([]pulid.ID, 0, 2)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*document.Document)(nil)).
-			Column(doc.ID.Bare()).
-			Where(doc.ResourceType.Eq(), shipmentResourceType).
-			Where(doc.ResourceID.Eq(), shipmentID.String()).
-			Where(doc.DocumentTypeID.Eq(), documentTypeID).
-			Where(doc.IsCurrentVersion.IsTrue()).
-			Where(doc.Status.Eq(), document.StatusActive).
-			Apply(documentcol.DocumentApplyTenant(tenantInfo)).
-			Scan(ctx, &ids); err != nil {
+		d := documentdb.Documents
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), d.
+			Pick(d.ID).
+			Where(
+				d.ResourceType.Eq(shipmentResourceType),
+				d.ResourceID.Eq(shipmentID.String()),
+				d.DocumentTypeID.Eq(documentTypeID),
+				d.IsCurrentVersion.IsTrue(),
+				d.Status.Eq(document.StatusActive),
+			))
+		if err != nil {
 			return nil, err
+		}
+		if ids == nil {
+			ids = []pulid.ID{}
 		}
 
 		return ids, nil
@@ -173,30 +161,30 @@ func (r *repository) CurrentShipmentDocuments(
 
 func (r *repository) LatestExtractionID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	documentID pulid.ID,
 ) (pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
-		cols := documentaiextractioncol.ExtractionColumns
-		var id pulid.ID
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*documentaiextraction.Extraction)(nil)).
-			Column(cols.ID.Bare()).
-			Where(cols.DocumentID.Eq(), documentID).
-			Where(cols.Status.In(), bun.List([]documentaiextraction.Status{
-				documentaiextraction.StatusCompleted,
-				documentaiextraction.StatusApplied,
-			})).
-			Apply(documentaiextractioncol.ExtractionApplyTenant(tenantInfo)).
-			Order(cols.ExtractedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx, &id)
-		if errors.Is(err, sql.ErrNoRows) {
+		ex := documentaiextractiondb.Extractions
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), ex.
+			Pick(ex.ID).
+			Where(
+				ex.DocumentID.Eq(documentID),
+				ex.Status.In(
+					documentaiextraction.StatusCompleted,
+					documentaiextraction.StatusApplied,
+				),
+			).
+			Order(ex.ExtractedAt.Desc()).
+			Limit(1))
+		if err != nil {
+			return pulid.Nil, err
+		}
+		if len(ids) == 0 {
 			return pulid.Nil, nil
 		}
 
-		return id, err
+		return ids[0], nil
 	})
 }
 
@@ -212,41 +200,44 @@ func (r *repository) AlternateAddresses(
 			return []string{}, nil
 		}
 
-		db := r.db.DBForContext(ctx)
-		msg := inboundmessagecol.InboundMessageColumns
-		reply := triagecol.ReplyColumns
+		m := inboundmessagedb.InboundMessages
+		rp := triagedb.Replies
 
-		senders := db.NewSelect().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			ColumnExpr(msg.FromAddress.Expr("lower({})")+" AS address").
-			ColumnExpr(buncolgen.Max(msg.ReceivedAt, "seen_at")).
-			Where(msg.SenderDomain.Eq(), domain).
-			Where(msg.ReceivedAt.Gte(), req.Since).
-			Where(msg.FromAddress.Expr("lower({})")+" <> ?", exclude).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			GroupExpr(msg.FromAddress.Expr("lower({})"))
+		senders := m.Pick(m.FromAddress.Lower(), m.ReceivedAt.Max()).
+			Where(
+				m.SenderDomain.Eq(domain),
+				m.ReceivedAt.Gte(req.Since),
+				m.FromAddress.Lower().Ne(exclude),
+			).
+			Group(m.FromAddress.Lower())
 
-		delivered := db.NewSelect().
-			Model((*triage.Reply)(nil)).
-			ColumnExpr(reply.ToAddress.Expr("lower({})")+" AS address").
-			ColumnExpr(buncolgen.Max(reply.SentAt, "seen_at")).
-			Where(reply.Status.Eq(), triage.ReplySent).
-			Where(reply.ToAddress.Expr("lower(split_part({}, '@', 2))")+" = ?", domain).
-			Where(reply.SentAt.Gte(), req.Since).
-			Where(reply.ToAddress.Expr("lower({})")+" <> ?", exclude).
-			Apply(triagecol.ReplyApplyTenant(req.TenantInfo)).
-			GroupExpr(reply.ToAddress.Expr("lower({})"))
+		delivered := rp.Pick(rp.ToAddress.Lower(), rp.SentAt.Max()).
+			Where(
+				rp.Status.Eq(triage.ReplySent),
+				keel.Raw("lower(split_part(?, '@', 2)) = ?", rp.ToAddress, domain),
+				rp.SentAt.Gte(req.Since),
+				rp.ToAddress.Lower().Ne(exclude),
+			).
+			Group(rp.ToAddress.Lower())
 
-		addresses := make([]string, 0, req.Limit)
-		if err := db.NewSelect().
-			With("candidates", senders.UnionAll(delivered)).
-			Table("candidates").
-			Column("address").
-			Group("address").
-			OrderExpr("MAX(seen_at) DESC, address ASC").
-			Limit(int64(req.Limit)).
-			Scan(ctx, &addresses); err != nil {
+		candidates := keel.CTE(
+			"candidates",
+			[]string{"address", "seen_at"},
+			keel.UnionAll(senders, delivered),
+		)
+		address := candidates.Col("address")
+
+		addresses, err := keel.Into[string](ctx, r.db.Keel(ctx), candidates.Query().
+			With(candidates).
+			Pick(address).
+			Group(address).
+			Order(keel.Desc(keel.Max(candidates.Col("seen_at"))), address.Asc()).
+			Limit(req.Limit))
+		if err != nil {
 			return nil, err
+		}
+		if addresses == nil {
+			addresses = []string{}
 		}
 
 		return addresses, nil
@@ -261,40 +252,33 @@ func (r *repository) CustomerTriage(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*inboundmessageports.CustomerTriage, error) {
-			db := r.db.DBForContext(ctx)
-			cols := inboundmessagecol.InboundMessageColumns
+			db := r.db.Keel(ctx)
+			m := inboundmessagedb.InboundMessages
 
-			waiting, err := db.NewSelect().
-				Model((*inboundmessage.InboundMessage)(nil)).
-				Where(cols.MatchedCustomerID.Eq(), req.CustomerID).
-				Where(cols.Status.In(), bun.List([]inboundmessage.Status{
-					inboundmessage.StatusInReview,
-					inboundmessage.StatusQuarantined,
-				})).
-				Where(cols.Parked.IsNull()).
-				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-				Count(ctx)
+			waiting, err := m.Where(
+				m.MatchedCustomerID.Eq(req.CustomerID),
+				m.Status.In(inboundmessage.StatusInReview, inboundmessage.StatusQuarantined),
+				m.Parked.IsNull(),
+			).Count(ctx, db)
 			if err != nil {
 				return nil, err
 			}
 
-			messages := make([]*inboundmessage.InboundMessage, 0, req.Limit)
+			var messages []*inboundmessage.InboundMessage
 			if req.Limit > 0 {
-				if err = db.NewSelect().
-					Model(&messages).
-					Column(
-						cols.ID.Bare(),
-						cols.FromName.Bare(),
-						cols.FromAddress.Bare(),
-						cols.Subject.Bare(),
-						cols.Classification.Bare(),
-						cols.ReceivedAt.Bare(),
-					).
-					Where(cols.MatchedCustomerID.Eq(), req.CustomerID).
-					Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-					Order(cols.ReceivedAt.OrderDesc(), cols.ID.OrderDesc()).
-					Limit(int64(req.Limit)).
-					Scan(ctx); err != nil {
+				messages, err = m.Pick(
+					m.ID,
+					m.FromName,
+					m.FromAddress,
+					m.Subject,
+					m.Classification,
+					m.ReceivedAt,
+				).
+					Where(m.MatchedCustomerID.Eq(req.CustomerID)).
+					Order(m.ReceivedAt.Desc(), m.ID.Desc()).
+					Limit(req.Limit).
+					List(ctx, db)
+				if err != nil {
 					return nil, err
 				}
 			}

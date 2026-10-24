@@ -3,16 +3,16 @@ package capturerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var coverSheetErrors = dberror.Mapping{Entity: "Cover sheet"}
 
 type coverSheetRepository struct {
 	db *postgres.Connection
@@ -35,13 +35,7 @@ func (r *coverSheetRepository) CreateMany(
 			return nil
 		}
 
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&entities).
-			Returning("*").
-			Exec(ctx)
-
-		return err
+		return capturedb.CaptureCoverSheets.CreateMany(ctx, r.db.Keel(ctx), entities)
 	})
 }
 
@@ -50,15 +44,9 @@ func (r *coverSheetRepository) GetByID(
 	req captureports.GetCaptureCoverSheetByIDRequest,
 ) (*capture.CaptureCoverSheet, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureCoverSheet, error) {
-		entity := new(capture.CaptureCoverSheet)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(capturecol.CaptureCoverSheetApplyTenant(req.TenantInfo)).
-			Where(capturecol.CaptureCoverSheetColumns.ID.Eq(), req.ID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Cover sheet")
+		entity, err := capturedb.CaptureCoverSheets.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, coverSheetErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -70,15 +58,10 @@ func (r *coverSheetRepository) GetByTokenHash(
 	req captureports.GetCaptureCoverSheetByTokenRequest,
 ) (*capture.CaptureCoverSheet, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureCoverSheet, error) {
-		entity := new(capture.CaptureCoverSheet)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(capturecol.CaptureCoverSheetApplyTenant(req.TenantInfo)).
-			Where(capturecol.CaptureCoverSheetColumns.TokenHash.Eq(), req.TokenHash).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Cover sheet")
+		c := capturedb.CaptureCoverSheets
+		entity, err := c.Where(c.TokenHash.Eq(req.TokenHash)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, coverSheetErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -90,18 +73,9 @@ func (r *coverSheetRepository) MarkUsed(
 	req captureports.MarkCaptureCoverSheetUsedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := capturecol.CaptureCoverSheetColumns
-
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*capture.CaptureCoverSheet)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return capturecol.CaptureCoverSheetScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Set(cols.LastUsedAt.Set(), req.UsedAt).
-			Set(cols.UseCount.Inc(1)).
-			Exec(ctx)
+		c := capturedb.CaptureCoverSheets
+		_, err := c.Where(c.ID.Eq(req.ID)).
+			Update(ctx, r.db.Keel(ctx), c.LastUsedAt.To(req.UsedAt), c.UseCount.Add(1))
 
 		return err
 	})

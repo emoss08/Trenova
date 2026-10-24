@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -31,9 +30,8 @@ const (
 // the one it replaced is kept: presenting a replaced token means two parties
 // hold the device's credential, and the only safe answer is to revoke it.
 type CaptureDevice struct {
-	bun.BaseModel             `bun:"table:capture_devices,alias:cdev" json:"-"`
-	keel.Table                `keel:"capture_devices"`
-	pagination.CursorValueSet `bun:",embed"                           json:"-"`
+	bun.BaseModel `bun:"table:capture_devices,alias:cdev" json:"-"`
+	keel.Table    `keel:"capture_devices"`
 
 	ID                   pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:cdev_"`
 	BusinessUnitID       pulid.ID     `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -182,3 +180,7 @@ func (d *CaptureDevice) GetPostgresSearchConfig() domaintypes.PostgresSearchConf
 func (d *CaptureDevice) GetID() pulid.ID      { return d.ID }
 func (d *CaptureDevice) GetCreatedAt() int64  { return d.CreatedAt }
 func (d *CaptureDevice) GetTableName() string { return "capture_devices" }
+
+func (d *CaptureDevice) BeforeCreate(ctx context.Context) error {
+	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

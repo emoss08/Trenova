@@ -65,6 +65,7 @@ var documentTemplatesTable = schema.Table{
 	Value:        valueDocumentTemplate,
 	Attach:       attachDocumentTemplate,
 	BeforeCreate: beforeCreateDocumentTemplate,
+	BeforeUpdate: beforeUpdateDocumentTemplate,
 }
 
 var documentTemplatesRef = keel.Ref{Table: &documentTemplatesTable}
@@ -274,6 +275,10 @@ func attachDocumentTemplate(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateDocumentTemplate(ctx context.Context, p unsafe.Pointer) error {
 	return (*documenttemplate.DocumentTemplate)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateDocumentTemplate(ctx context.Context, p unsafe.Pointer) error {
+	return (*documenttemplate.DocumentTemplate)(p).BeforeUpdate(ctx)
 }
 
 // documentTemplateAssignmentsTable is the schema of documenttemplate.DocumentTemplateAssignment.
@@ -943,6 +948,7 @@ var generatedDocumentsTable = schema.Table{
 	Ptr:        ptrGeneratedDocument,
 	Value:      valueGeneratedDocument,
 	Attach:     attachGeneratedDocument,
+	BeforeSave: beforeSaveGeneratedDocument,
 }
 
 var generatedDocumentsRef = keel.Ref{Table: &generatedDocumentsTable}
@@ -1249,6 +1255,10 @@ func attachGeneratedDocument(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	case 1:
 		r.TemplateVersion = (*documenttemplate.DocumentTemplateVersion)(child)
 	}
+}
+
+func beforeSaveGeneratedDocument(ctx context.Context, p unsafe.Pointer) error {
+	return (*documenttemplate.GeneratedDocument)(p).BeforeSave(ctx)
 }
 
 func init() {

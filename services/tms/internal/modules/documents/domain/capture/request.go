@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -33,9 +32,8 @@ const (
 // device learns of it from its stream and fetches it, so the browser never
 // talks to anything on the person's machine.
 type CaptureRequest struct {
-	bun.BaseModel             `bun:"table:capture_requests,alias:creq" json:"-"`
-	keel.Table                `keel:"capture_requests"`
-	pagination.CursorValueSet `bun:",embed"                            json:"-"`
+	bun.BaseModel `bun:"table:capture_requests,alias:creq" json:"-"`
+	keel.Table    `keel:"capture_requests"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:creq_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -168,3 +166,7 @@ func (r *CaptureRequest) BeforeAppendModel(_ context.Context, query bun.Query) e
 func (r *CaptureRequest) GetID() pulid.ID      { return r.ID }
 func (r *CaptureRequest) GetCreatedAt() int64  { return r.CreatedAt }
 func (r *CaptureRequest) GetTableName() string { return "capture_requests" }
+
+func (r *CaptureRequest) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

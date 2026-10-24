@@ -26,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -90,7 +89,7 @@ func (s *Service) makeCurrentDocumentVersion(
 	doc *document.Document,
 	lineageInfo *document.Document,
 ) error {
-	return s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if lineageInfo != nil {
 			doc.IsCurrentVersion = false
 		}

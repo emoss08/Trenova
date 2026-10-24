@@ -23,8 +23,6 @@ type ExtractionResult struct {
 	bun.BaseModel `bun:"table:extraction_eval_results,alias:eeres" json:"-"`
 	keel.Table    `keel:"extraction_eval_results"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
-
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:eeres_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
@@ -108,6 +106,14 @@ func (r *ExtractionResult) BeforeAppendModel(_ context.Context, query bun.Query)
 		r.UpdatedAt = now
 	case *bun.UpdateQuery:
 		r.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (r *ExtractionResult) BeforeCreate(_ context.Context) error {
+	if r.Status == "" {
+		r.Status = ResultStatusPending
 	}
 
 	return nil

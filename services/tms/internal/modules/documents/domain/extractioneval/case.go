@@ -45,8 +45,6 @@ type ExtractionCase struct {
 	bun.BaseModel `bun:"table:extraction_eval_cases,alias:eec" json:"-"`
 	keel.Table    `keel:"extraction_eval_cases"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
-
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:eec_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
@@ -197,6 +195,14 @@ func (c *ExtractionCase) BeforeAppendModel(_ context.Context, query bun.Query) e
 		c.UpdatedAt = now
 	case *bun.UpdateQuery:
 		c.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (c *ExtractionCase) BeforeCreate(_ context.Context) error {
+	if c.Status == "" {
+		c.Status = CaseStatusCandidate
 	}
 
 	return nil

@@ -4,20 +4,18 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 )
 
 func (r *repository) SenderStats(
@@ -25,10 +23,10 @@ func (r *repository) SenderStats(
 	req *triageports.SenderStatsRequest,
 ) (*triageports.SenderStats, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triageports.SenderStats, error) {
-		db := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
 
-		kinds := make([]triageports.SenderKindRow, 0, 8)
-		if err := senderKindsQuery(db, req).Scan(ctx, &kinds); err != nil {
+		kinds, err := keel.Into[senderKindScan](ctx, db, senderKindsQuery(req))
+		if err != nil {
 			return nil, err
 		}
 
@@ -37,88 +35,90 @@ func (r *repository) SenderStats(
 			Recent: []*triageports.MessageRow{},
 		}
 		for _, kind := range kinds {
-			stats.Messages += kind.Count
+			stats.Messages += int(kind.Count)
 			if kind.Classification != "" {
-				stats.Kinds = append(stats.Kinds, kind)
+				stats.Kinds = append(stats.Kinds, triageports.SenderKindRow{
+					Classification: kind.Classification,
+					Count:          int(kind.Count),
+				})
 			}
 		}
 		if stats.Messages == 0 {
 			return stats, nil
 		}
 
-		summary := new(senderSummary)
-		if err := senderSummaryQuery(db, req).Scan(ctx, summary); err != nil {
+		summary, err := keel.IntoOne[senderSummary](ctx, db, senderSummaryQuery(req))
+		if err != nil {
 			return nil, err
 		}
 		stats.UsualSettleSeconds = summary.UsualSettleSeconds
 		stats.CustomerID = summary.CustomerID
 		stats.CarrierID = summary.CarrierID
 
-		recent := make([]*triageports.MessageRow, 0, req.RecentLimit)
-		if err := senderRecentQuery(db, req).Scan(ctx, &recent); err != nil {
-			return nil, err
+		if req.RecentLimit > 0 {
+			recent, err := keel.Into[scannedRow[bool]](ctx, db, senderRecentQuery(req))
+			if err != nil {
+				return nil, err
+			}
+			stats.Recent = messageRows(recent, false)
 		}
-		stats.Recent = recent
 
 		return stats, nil
 	})
 }
 
+type senderKindScan struct {
+	Classification inboundmessage.Classification
+	Count          int64
+}
+
 type senderSummary struct {
-	UsualSettleSeconds *float64 `bun:"usual_settle_seconds"`
-	CustomerID         pulid.ID `bun:"customer_id"`
-	CarrierID          pulid.ID `bun:"carrier_id"`
+	UsualSettleSeconds *float64
+	CustomerID         pulid.ID
+	CarrierID          pulid.ID
 }
 
-func fromSender(req *triageports.SenderStatsRequest) func(*bun.SelectQuery) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func fromSender(req *triageports.SenderStatsRequest) []keel.Pred {
+	m := inboundmessagedb.InboundMessages
 
-	return func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(cols.SenderDomain.Eq(), req.SenderDomain).
-			Where(cols.ReceivedAt.Gte(), req.Since)
-	}
+	return []keel.Pred{m.SenderDomain.Eq(req.SenderDomain), m.ReceivedAt.Gte(req.Since)}
 }
 
-func senderKindsQuery(db bun.IDB, req *triageports.SenderStatsRequest) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func senderKindsQuery(req *triageports.SenderStatsRequest) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	classification := text(m.Classification)
 
-	return messages(db).
-		ColumnExpr(cols.Classification.Expr("COALESCE({}, '') AS classification")).
-		ColumnExpr("COUNT(*) AS count").
-		Apply(fromSender(req)).
-		GroupExpr("1").
-		OrderExpr("2 DESC, 1 ASC")
+	return messages().
+		Pick(classification, keel.Count()).
+		Where(fromSender(req)...).
+		Group(classification).
+		Order(keel.Count().Desc(), keel.Asc(classification))
 }
 
-func senderSummaryQuery(db bun.IDB, req *triageports.SenderStatsRequest) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func senderSummaryQuery(req *triageports.SenderStatsRequest) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
 
-	return messages(db).
-		ColumnExpr(
-			"PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY "+cols.ReviewedAt.Qualified()+" - "+
-				cols.ReceivedAt.Qualified()+") FILTER (WHERE "+settledByPerson()+" AND "+
-				cols.ReviewedAt.Qualified()+" >= "+cols.ReceivedAt.Qualified()+
-				") AS usual_settle_seconds",
-			bun.List(settled),
+	return messages().
+		Pick(
+			keel.Raw(
+				"PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ? - ?) FILTER (WHERE ? AND ? >= ?)",
+				m.ReviewedAt, m.ReceivedAt, settledByPerson(), m.ReviewedAt, m.ReceivedAt,
+			),
+			text(keel.Raw("MODE() WITHIN GROUP (ORDER BY ?)", m.MatchedCustomerID)),
+			text(keel.Raw("MODE() WITHIN GROUP (ORDER BY ?)", m.MatchedCarrierID)),
 		).
-		ColumnExpr(cols.MatchedCustomerID.Expr("MODE() WITHIN GROUP (ORDER BY {}) AS customer_id")).
-		ColumnExpr(cols.MatchedCarrierID.Expr("MODE() WITHIN GROUP (ORDER BY {}) AS carrier_id")).
-		Apply(fromSender(req))
+		Where(fromSender(req)...)
 }
 
-func senderRecentQuery(db bun.IDB, req *triageports.SenderStatsRequest) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func senderRecentQuery(req *triageports.SenderStatsRequest) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
 
-	query := messages(db).Apply(messageRowColumns).Apply(fromSender(req))
-	if req.ExcludeID.IsNotNil() {
-		query = query.Where(cols.ID.NotEq(), req.ExcludeID)
-	}
-
-	return query.
-		Order(cols.ReceivedAt.OrderDesc(), cols.ID.OrderDesc()).
-		Limit(int64(req.RecentLimit))
+	return withReference(messages()).
+		Pick(messageRowColumns(keel.Raw("FALSE"))...).
+		Where(fromSender(req)...).
+		Where(keel.When(req.ExcludeID.IsNotNil(), m.ID.Ne(req.ExcludeID))).
+		Order(m.ReceivedAt.Desc(), m.ID.Desc()).
+		Limit(req.RecentLimit)
 }
 
 func (r *repository) SenderParty(
@@ -126,7 +126,7 @@ func (r *repository) SenderParty(
 	req *triageports.SenderPartyRequest,
 ) (*triageports.SenderParty, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triageports.SenderParty, error) {
-		db := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
 
 		if req.CustomerID.IsNotNil() {
 			party, found, err := customerParty(ctx, db, req)
@@ -147,23 +147,20 @@ func (r *repository) SenderParty(
 
 func customerParty(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	req *triageports.SenderPartyRequest,
 ) (*triageports.SenderParty, bool, error) {
-	cols := customercol.CustomerColumns
-	rows := make([]struct {
-		Broker    bool  `bun:"broker"`
-		CreatedAt int64 `bun:"created_at"`
-	}, 0, 1)
+	type customerRow struct {
+		Broker    bool
+		CreatedAt int64
+	}
 
-	if err := db.NewSelect().
-		Model((*customer.Customer)(nil)).
-		ColumnExpr(cols.BrokerVettingEnabled.As("broker")).
-		ColumnExpr(cols.CreatedAt.Qualified()).
-		Apply(customercol.CustomerApplyTenant(req.TenantInfo)).
-		Where(cols.ID.Eq(), req.CustomerID).
-		Limit(1).
-		Scan(ctx, &rows); err != nil {
+	c := customerdb.Customers
+	rows, err := keel.Into[customerRow](ctx, db, c.
+		Pick(c.BrokerVettingEnabled, c.CreatedAt).
+		Where(c.ID.Eq(req.CustomerID)).
+		Limit(1))
+	if err != nil {
 		return nil, false, err
 	}
 	if len(rows) == 0 {
@@ -180,19 +177,12 @@ func customerParty(
 
 func carrierParty(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	req *triageports.SenderPartyRequest,
 ) (*triageports.SenderParty, bool, error) {
-	cols := carriercol.CarrierColumns
-	since := make([]int64, 0, 1)
-
-	if err := db.NewSelect().
-		Model((*carrier.Carrier)(nil)).
-		ColumnExpr(cols.CreatedAt.Qualified()).
-		Apply(carriercol.CarrierApplyTenant(req.TenantInfo)).
-		Where(cols.ID.Eq(), req.CarrierID).
-		Limit(1).
-		Scan(ctx, &since); err != nil {
+	c := carrierdb.Carriers
+	since, err := keel.Into[int64](ctx, db, c.Pick(c.CreatedAt).Where(c.ID.Eq(req.CarrierID)).Limit(1))
+	if err != nil {
 		return nil, false, err
 	}
 	if len(since) == 0 {
@@ -207,7 +197,7 @@ func carrierParty(
 
 func driverParty(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	req *triageports.SenderPartyRequest,
 ) (*triageports.SenderParty, error) {
 	unknown := &triageports.SenderParty{Role: inboundmessageports.SenderRoleUnknown}
@@ -216,25 +206,22 @@ func driverParty(
 		return unknown, nil
 	}
 
-	cols := workercol.WorkerColumns
-	exists, err := db.NewSelect().
-		Model((*worker.Worker)(nil)).
-		Apply(workercol.WorkerApplyTenant(req.TenantInfo)).
-		Where(cols.Status.Eq(), domaintypes.StatusActive).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			if address != "" {
-				sq = sq.Where(cols.Email.Expr("LOWER(BTRIM({})) = ?"), address)
-			}
-			if req.SenderDomain != "" {
-				sq = sq.WhereOr(
-					cols.Email.Expr("LOWER(BTRIM({})) LIKE ?"),
+	w := workerdb.Workers
+	email := keel.Raw("LOWER(BTRIM(?))", w.Email)
+	exists, err := w.Where(
+		w.Status.Eq(domaintypes.StatusActive),
+		keel.Or(
+			keel.When(address != "", keel.Raw("? = ?", email, address)),
+			keel.When(
+				req.SenderDomain != "",
+				keel.Raw(
+					"? LIKE ?",
+					email,
 					"%@"+stringutils.EscapeLikePattern(strings.ToLower(req.SenderDomain)),
-				)
-			}
-
-			return sq
-		}).
-		Exists(ctx)
+				),
+			),
+		),
+	).Exists(ctx, db)
 	if err != nil {
 		return nil, err
 	}

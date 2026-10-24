@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -29,9 +28,8 @@ const (
 // job. The pages are kept in the order they arrived; how they are divided
 // into documents lives on the items.
 type CaptureBatch struct {
-	bun.BaseModel             `bun:"table:capture_batches,alias:cbat" json:"-"`
-	keel.Table                `keel:"capture_batches"`
-	pagination.CursorValueSet `bun:",embed"                           json:"-"`
+	bun.BaseModel `bun:"table:capture_batches,alias:cbat" json:"-"`
+	keel.Table    `keel:"capture_batches"`
 
 	ID                pulid.ID    `json:"id"                bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:cbat_"`
 	BusinessUnitID    pulid.ID    `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -201,3 +199,7 @@ func (b *CaptureBatch) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 func (b *CaptureBatch) GetID() pulid.ID      { return b.ID }
 func (b *CaptureBatch) GetCreatedAt() int64  { return b.CreatedAt }
 func (b *CaptureBatch) GetTableName() string { return "capture_batches" }
+
+func (b *CaptureBatch) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

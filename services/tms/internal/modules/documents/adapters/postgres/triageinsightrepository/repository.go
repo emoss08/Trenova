@@ -1,12 +1,13 @@
 package triageinsightrepository
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -41,98 +42,166 @@ var (
 	}
 )
 
-func messageRowColumns(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	sp := shipmentcol.ShipmentColumns
-
-	return sq.
-		ColumnExpr(cols.ID.Qualified()).
-		ColumnExpr(cols.OrganizationID.Qualified()).
-		ColumnExpr(cols.BusinessUnitID.Qualified()).
-		ColumnExpr(cols.MailboxID.Qualified()).
-		ColumnExpr(cols.FromAddress.Qualified()).
-		ColumnExpr(cols.FromName.Qualified()).
-		ColumnExpr(cols.Subject.Qualified()).
-		ColumnExpr(cols.SenderDomain.Qualified()).
-		ColumnExpr(cols.Classification.Qualified()).
-		ColumnExpr(cols.Status.Qualified()).
-		ColumnExpr(cols.ReceivedAt.Qualified()).
-		ColumnExpr(cols.DueAt.Qualified()).
-		ColumnExpr(cols.Parked.Qualified()).
-		ColumnExpr(cols.OwnerID.Qualified()).
-		ColumnExpr(cols.MatchedShipmentID.Qualified()).
-		ColumnExpr(cols.MatchedCustomerID.Qualified()).
-		ColumnExpr(cols.MatchedCarrierID.Qualified()).
-		ColumnExpr(cols.HandledByRuleID.Qualified()).
-		ColumnExpr(cols.HandledAction.Qualified()).
-		ColumnExpr(cols.ClassificationCorrected.Qualified()).
-		ColumnExpr(cols.ReviewedBy.Qualified()).
-		ColumnExpr(cols.ReviewedAt.Qualified()).
-		ColumnExpr(sp.ProNumber.Expr("COALESCE({}, '') AS " + referenceColumn)).
-		Join("LEFT JOIN " + shipmentcol.ShipmentTable.Name + " AS " + shipmentcol.ShipmentTable.Alias).
-		JoinOn(sp.ID.EqColumn(cols.MatchedShipmentID)).
-		JoinOn(sp.OrganizationID.EqColumn(cols.OrganizationID)).
-		JoinOn(sp.BusinessUnitID.EqColumn(cols.BusinessUnitID))
+var messageRowNames = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"mailbox_id",
+	"from_address",
+	"from_name",
+	"subject",
+	"sender_domain",
+	"classification",
+	"status",
+	"received_at",
+	"due_at",
+	"parked",
+	"owner_id",
+	"matched_shipment_id",
+	"matched_customer_id",
+	"matched_carrier_id",
+	"handled_by_rule_id",
+	"handled_action",
+	"classification_corrected",
+	"reviewed_by",
+	"reviewed_at",
+	"reference",
 }
 
-var messageRowNames = buildMessageRowNames()
+type scannedRow[X any] struct {
+	ID                      pulid.ID
+	OrganizationID          pulid.ID
+	BusinessUnitID          pulid.ID
+	MailboxID               pulid.ID
+	FromAddress             string
+	FromName                string
+	Subject                 string
+	SenderDomain            string
+	Classification          inboundmessage.Classification
+	Status                  inboundmessage.Status
+	ReceivedAt              int64
+	DueAt                   int64
+	Parked                  inboundmessage.Parking
+	OwnerID                 pulid.ID
+	MatchedShipmentID       pulid.ID
+	MatchedCustomerID       pulid.ID
+	MatchedCarrierID        pulid.ID
+	HandledByRuleID         pulid.ID
+	HandledAction           inboundmessage.NovaAction
+	ClassificationCorrected bool
+	ReviewedBy              pulid.ID
+	ReviewedAt              int64
+	Reference               string
+	Extra                   X
+}
 
-func buildMessageRowNames() []string {
-	cols := inboundmessagecol.InboundMessageColumns
-
-	return []string{
-		cols.ID.Bare(),
-		cols.OrganizationID.Bare(),
-		cols.BusinessUnitID.Bare(),
-		cols.MailboxID.Bare(),
-		cols.FromAddress.Bare(),
-		cols.FromName.Bare(),
-		cols.Subject.Bare(),
-		cols.SenderDomain.Bare(),
-		cols.Classification.Bare(),
-		cols.Status.Bare(),
-		cols.ReceivedAt.Bare(),
-		cols.DueAt.Bare(),
-		cols.Parked.Bare(),
-		cols.OwnerID.Bare(),
-		cols.MatchedShipmentID.Bare(),
-		cols.MatchedCustomerID.Bare(),
-		cols.MatchedCarrierID.Bare(),
-		cols.HandledByRuleID.Bare(),
-		cols.HandledAction.Bare(),
-		cols.ClassificationCorrected.Bare(),
-		cols.ReviewedBy.Bare(),
-		cols.ReviewedAt.Bare(),
-		referenceColumn,
+func (s *scannedRow[X]) row() triageports.MessageRow {
+	return triageports.MessageRow{
+		ID:                      s.ID,
+		OrganizationID:          s.OrganizationID,
+		BusinessUnitID:          s.BusinessUnitID,
+		MailboxID:               s.MailboxID,
+		FromAddress:             s.FromAddress,
+		FromName:                s.FromName,
+		Subject:                 s.Subject,
+		SenderDomain:            s.SenderDomain,
+		Classification:          s.Classification,
+		Status:                  s.Status,
+		ReceivedAt:              s.ReceivedAt,
+		DueAt:                   s.DueAt,
+		Parked:                  s.Parked,
+		OwnerID:                 s.OwnerID,
+		MatchedShipmentID:       s.MatchedShipmentID,
+		MatchedCustomerID:       s.MatchedCustomerID,
+		MatchedCarrierID:        s.MatchedCarrierID,
+		HandledByRuleID:         s.HandledByRuleID,
+		HandledAction:           s.HandledAction,
+		ClassificationCorrected: s.ClassificationCorrected,
+		ReviewedBy:              s.ReviewedBy,
+		ReviewedAt:              s.ReviewedAt,
+		Reference:               s.Reference,
 	}
 }
 
-const referenceColumn = "reference"
+func messageRows(scanned []scannedRow[bool], personFiled bool) []*triageports.MessageRow {
+	rows := make([]*triageports.MessageRow, 0, len(scanned))
+	for i := range scanned {
+		row := scanned[i].row()
+		if personFiled {
+			row.PersonFiled = scanned[i].Extra
+		}
+		rows = append(rows, &row)
+	}
 
-func rankedRowColumns(sq *bun.SelectQuery, alias string, extra ...string) *bun.SelectQuery {
+	return rows
+}
+
+func text(e keel.Expr) keel.Expr {
+	return keel.Raw("COALESCE(?, '')", e)
+}
+
+func number(e keel.Expr) keel.Expr {
+	return keel.Raw("COALESCE(?, 0)", e)
+}
+
+func messages() *keel.Query[inboundmessage.InboundMessage] {
+	return inboundmessagedb.InboundMessages.Query()
+}
+
+func withReference(q *keel.Query[inboundmessage.InboundMessage]) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	sp := shipmentdb.Shipments
+
+	return q.LeftJoin(sp, sp.ID.EqCol(m.MatchedShipmentID))
+}
+
+func messageRowColumns(extra ...keel.Expr) []keel.Expr {
+	m := inboundmessagedb.InboundMessages
+
+	return append([]keel.Expr{
+		m.ID,
+		m.OrganizationID,
+		m.BusinessUnitID,
+		m.MailboxID,
+		m.FromAddress,
+		text(m.FromName),
+		text(m.Subject),
+		m.SenderDomain,
+		text(m.Classification),
+		m.Status,
+		m.ReceivedAt,
+		number(m.DueAt),
+		text(m.Parked),
+		text(m.OwnerID),
+		text(m.MatchedShipmentID),
+		text(m.MatchedCustomerID),
+		text(m.MatchedCarrierID),
+		text(m.HandledByRuleID),
+		text(m.HandledAction),
+		m.ClassificationCorrected,
+		text(m.ReviewedBy),
+		number(m.ReviewedAt),
+		text(shipmentdb.Shipments.ProNumber),
+	}, extra...)
+}
+
+func settledByRule() keel.Pred {
+	m := inboundmessagedb.InboundMessages
+
+	return keel.And(m.HandledByRuleID.IsNotNull(), m.ReviewedBy.IsNull(), m.Status.In(settled...))
+}
+
+func settledByPerson() keel.Pred {
+	m := inboundmessagedb.InboundMessages
+
+	return keel.And(m.ReviewedBy.IsNotNull(), m.Status.In(settled...))
+}
+
+func rankedColumns(cte *keel.CTETable, extra string) []keel.Expr {
+	cols := make([]keel.Expr, 0, len(messageRowNames)+1)
 	for _, name := range messageRowNames {
-		sq = sq.ColumnExpr(alias + "." + name)
-	}
-	for _, name := range extra {
-		sq = sq.ColumnExpr(alias + "." + name)
+		cols = append(cols, cte.Col(name))
 	}
 
-	return sq
-}
-
-func messages(db bun.IDB) *bun.SelectQuery {
-	return db.NewSelect().Model((*inboundmessage.InboundMessage)(nil))
-}
-
-func settledByRule() string {
-	cols := inboundmessagecol.InboundMessageColumns
-
-	return "(" + cols.HandledByRuleID.Qualified() + " IS NOT NULL AND " +
-		cols.ReviewedBy.Qualified() + " IS NULL AND " + cols.Status.In() + ")"
-}
-
-func settledByPerson() string {
-	cols := inboundmessagecol.InboundMessageColumns
-
-	return "(" + cols.ReviewedBy.Qualified() + " IS NOT NULL AND " + cols.Status.In() + ")"
+	return append(cols, cte.Col(extra))
 }

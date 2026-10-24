@@ -405,6 +405,7 @@ var inboundMessagesTable = schema.Table{
 	Value:        valueInboundMessage,
 	Attach:       attachInboundMessage,
 	BeforeCreate: beforeCreateInboundMessage,
+	BeforeUpdate: beforeUpdateInboundMessage,
 }
 
 var inboundMessagesRef = keel.Ref{Table: &inboundMessagesTable}
@@ -988,6 +989,10 @@ func attachInboundMessage(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateInboundMessage(ctx context.Context, p unsafe.Pointer) error {
 	return (*inboundmessage.InboundMessage)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateInboundMessage(ctx context.Context, p unsafe.Pointer) error {
+	return (*inboundmessage.InboundMessage)(p).BeforeUpdate(ctx)
 }
 
 // mailboxesTable is the schema of inboundmessage.Mailbox.

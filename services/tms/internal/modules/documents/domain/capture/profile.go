@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -29,9 +28,8 @@ const (
 // CaptureProfile is a named set of scan settings an organization offers the people
 // who scan, so a billing clerk picks "PODs" rather than a resolution.
 type CaptureProfile struct {
-	bun.BaseModel             `bun:"table:capture_profiles,alias:cprf" json:"-"`
-	keel.Table                `keel:"capture_profiles"`
-	pagination.CursorValueSet `bun:",embed"                            json:"-"`
+	bun.BaseModel `bun:"table:capture_profiles,alias:cprf" json:"-"`
+	keel.Table    `keel:"capture_profiles"`
 
 	ID                  pulid.ID            `json:"id"                  bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:cprf_"`
 	BusinessUnitID      pulid.ID            `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -167,3 +165,7 @@ func (p *CaptureProfile) GetPostgresSearchConfig() domaintypes.PostgresSearchCon
 func (p *CaptureProfile) GetID() pulid.ID      { return p.ID }
 func (p *CaptureProfile) GetCreatedAt() int64  { return p.CreatedAt }
 func (p *CaptureProfile) GetTableName() string { return "capture_profiles" }
+
+func (p *CaptureProfile) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

@@ -217,7 +217,7 @@ func (r *repository) ClearDocumentReference(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		s := documentuploaddb.DocumentUploadSessions
 		_, err := s.Where(s.DocumentID.Eq(documentID)).
-			Update(ctx, r.db.Keel(ctx), s.DocumentID.ToNull())
+			Update(ctx, r.db.Keel(ctx), detachDocument()...)
 
 		return err
 	})
@@ -235,10 +235,19 @@ func (r *repository) ClearDocumentReferences(
 
 		s := documentuploaddb.DocumentUploadSessions
 		_, err := s.Where(s.DocumentID.In(documentIDs...)).
-			Update(ctx, r.db.Keel(ctx), s.DocumentID.ToNull())
+			Update(ctx, r.db.Keel(ctx), detachDocument()...)
 
 		return err
 	})
+}
+
+func detachDocument() []keel.Assignment {
+	s := documentuploaddb.DocumentUploadSessions
+	return []keel.Assignment{
+		s.DocumentID.ToNull(),
+		s.Version.ToExpr(s.Version),
+		s.UpdatedAt.ToExpr(s.UpdatedAt),
+	}
 }
 
 func (r *repository) ListActive(

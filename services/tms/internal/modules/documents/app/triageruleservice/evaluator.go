@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -29,7 +28,7 @@ type EvaluatorParams struct {
 	fx.In
 
 	Logger      *zap.Logger
-	DB          kernelports.DBConnection
+	DB          kernelports.Transactor
 	Rules       triageports.TriageRuleRepository
 	Store       triageports.TriageMessageRepository
 	Messages    inboundmessageports.InboundMessageRepository
@@ -44,7 +43,7 @@ type EvaluatorParams struct {
 
 type Evaluator struct {
 	l           *zap.Logger
-	db          kernelports.DBConnection
+	db          kernelports.Transactor
 	rules       triageports.TriageRuleRepository
 	store       triageports.TriageMessageRepository
 	messages    inboundmessageports.InboundMessageRepository
@@ -404,7 +403,7 @@ func (e *Evaluator) claim(
 	at := e.now()
 
 	var claimed *triageports.ClaimedRule
-	err := e.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+	err := e.db.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
 		var txErr error
 		claimed, txErr = e.store.ClaimRule(ctx, &triageports.ClaimRuleRequest{
 			TenantInfo: tenantInfo,

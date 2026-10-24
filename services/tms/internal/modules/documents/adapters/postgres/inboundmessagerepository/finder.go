@@ -4,21 +4,16 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 )
 
 // maxPartyCandidates bounds the rows a sender lookup reads. Recipient lists are
@@ -42,7 +37,7 @@ func NewRecordFinder(p Params) *RecordFinder {
 
 func (f *RecordFinder) FindByReference(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	reference string,
 ) (pulid.ID, bool, error) {
 	return dbtx.Read2(ctx, f.db, func(ctx context.Context) (pulid.ID, bool, error) {
@@ -51,22 +46,12 @@ func (f *RecordFinder) FindByReference(
 			return pulid.Nil, false, nil
 		}
 
-		cols := shipmentcol.ShipmentColumns
-		forms := bun.In(referenceForms(reference))
-
-		ids := make([]pulid.ID, 0, 2)
-		err := f.db.DBForContext(ctx).
-			NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			ColumnExpr(cols.ID.Qualified()).
-			Apply(shipmentcol.ShipmentApplyTenant(tenantInfo)).
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.
-					Where(cols.ProNumber.In(), forms).
-					WhereOr(cols.BOL.In(), forms)
-			}).
-			Limit(2).
-			Scan(ctx, &ids)
+		sp := shipmentdb.Shipments
+		forms := referenceForms(reference)
+		ids, err := keel.Into[pulid.ID](ctx, f.db.Keel(ctx), sp.
+			Pick(sp.ID).
+			Where(keel.Or(sp.ProNumber.In(forms...), sp.BOL.In(forms...))).
+			Limit(2))
 		if err != nil {
 			return pulid.Nil, false, err
 		}
@@ -88,9 +73,13 @@ func referenceForms(reference string) []string {
 	return []string{reference, upper}
 }
 
+func lowerLike(col keel.Expr, pattern string) keel.Pred {
+	return keel.Raw("LOWER(?) LIKE ?", col, pattern)
+}
+
 func (f *RecordFinder) FindCustomerByEmail(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	address string,
 ) (pulid.ID, bool, error) {
 	return dbtx.Read2(ctx, f.db, func(ctx context.Context) (pulid.ID, bool, error) {
@@ -98,25 +87,22 @@ func (f *RecordFinder) FindCustomerByEmail(
 		if address == "" {
 			return pulid.Nil, false, nil
 		}
+
+		db := f.db.Keel(ctx)
 		pattern := "%" + stringutils.EscapeLikePattern(address) + "%"
 		found := make(map[pulid.ID]struct{}, 2)
 
 		type customerRecipients struct {
-			ID         pulid.ID `bun:"id"`
-			Recipients string   `bun:"recipients"`
+			ID         pulid.ID
+			Recipients string
 		}
 
-		customerCols := customercol.CustomerColumns
-		var customers []customerRecipients
-		if err := f.db.DBForContext(ctx).
-			NewSelect().
-			Model((*customer.Customer)(nil)).
-			ColumnExpr(customerCols.ID.As("id")).
-			ColumnExpr(customerCols.StatusUpdateRecipients.As("recipients")).
-			Apply(customercol.CustomerApplyTenant(tenantInfo)).
-			Where(customerCols.StatusUpdateRecipients.LowerLike(), pattern).
-			Limit(maxPartyCandidates).
-			Scan(ctx, &customers); err != nil {
+		c := customerdb.Customers
+		customers, err := keel.Into[customerRecipients](ctx, db, c.
+			Pick(c.ID, keel.Raw("COALESCE(?, '')", c.StatusUpdateRecipients)).
+			Where(lowerLike(c.StatusUpdateRecipients, pattern)).
+			Limit(maxPartyCandidates))
+		if err != nil {
 			return pulid.Nil, false, err
 		}
 		for _, row := range customers {
@@ -126,27 +112,21 @@ func (f *RecordFinder) FindCustomerByEmail(
 		}
 
 		type profileRecipients struct {
-			CustomerID pulid.ID `bun:"customer_id"`
-			To         string   `bun:"to_recipients"`
-			CC         string   `bun:"cc_recipients"`
+			CustomerID pulid.ID
+			To         string
+			CC         string
 		}
 
-		profileCols := customercol.CustomerEmailProfileColumns
-		var profiles []profileRecipients
-		if err := f.db.DBForContext(ctx).
-			NewSelect().
-			Model((*customer.CustomerEmailProfile)(nil)).
-			ColumnExpr(profileCols.CustomerID.As("customer_id")).
-			ColumnExpr(profileCols.ToRecipients.As("to_recipients")).
-			ColumnExpr(profileCols.CCRecipients.As("cc_recipients")).
-			Apply(customercol.CustomerEmailProfileApplyTenant(tenantInfo)).
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.
-					Where(profileCols.ToRecipients.LowerLike(), pattern).
-					WhereOr(profileCols.CCRecipients.LowerLike(), pattern)
-			}).
-			Limit(maxPartyCandidates).
-			Scan(ctx, &profiles); err != nil {
+		p := customerdb.CustomerEmailProfiles
+		profiles, err := keel.Into[profileRecipients](ctx, db, p.
+			Pick(
+				p.CustomerID,
+				keel.Raw("COALESCE(?, '')", p.ToRecipients),
+				keel.Raw("COALESCE(?, '')", p.CCRecipients),
+			).
+			Where(keel.Or(lowerLike(p.ToRecipients, pattern), lowerLike(p.CCRecipients, pattern))).
+			Limit(maxPartyCandidates))
+		if err != nil {
 			return pulid.Nil, false, err
 		}
 		for _, row := range profiles {
@@ -173,7 +153,7 @@ func listsAddress(list, address string) bool {
 
 func (f *RecordFinder) FindCarrierByEmail(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	address string,
 ) (pulid.ID, bool, error) {
 	return dbtx.Read2(ctx, f.db, func(ctx context.Context) (pulid.ID, bool, error) {
@@ -181,34 +161,29 @@ func (f *RecordFinder) FindCarrierByEmail(
 		if address == "" {
 			return pulid.Nil, false, nil
 		}
+
+		db := f.db.Keel(ctx)
+		pattern := stringutils.EscapeLikePattern(address)
 		found := make(map[pulid.ID]struct{}, 2)
 
-		carrierCols := carriercol.CarrierColumns
-		carriers := make([]pulid.ID, 0, 2)
-		if err := f.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carrier.Carrier)(nil)).
-			ColumnExpr(carrierCols.ID.Qualified()).
-			Apply(carriercol.CarrierApplyTenant(tenantInfo)).
-			Where(carrierCols.Email.LowerLike(), stringutils.EscapeLikePattern(address)).
-			Limit(maxPartyCandidates).
-			Scan(ctx, &carriers); err != nil {
+		c := carrierdb.Carriers
+		carriers, err := keel.Into[pulid.ID](ctx, db, c.
+			Pick(c.ID).
+			Where(lowerLike(c.Email, pattern)).
+			Limit(maxPartyCandidates))
+		if err != nil {
 			return pulid.Nil, false, err
 		}
 		for _, id := range carriers {
 			found[id] = struct{}{}
 		}
 
-		contactCols := carriercol.CarrierContactColumns
-		contacts := make([]pulid.ID, 0, 2)
-		if err := f.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carrier.CarrierContact)(nil)).
-			ColumnExpr(contactCols.CarrierID.Qualified()).
-			Apply(carriercol.CarrierContactApplyTenant(tenantInfo)).
-			Where(contactCols.Email.LowerLike(), stringutils.EscapeLikePattern(address)).
-			Limit(maxPartyCandidates).
-			Scan(ctx, &contacts); err != nil {
+		cc := carrierdb.CarrierContacts
+		contacts, err := keel.Into[pulid.ID](ctx, db, cc.
+			Pick(cc.CarrierID).
+			Where(lowerLike(cc.Email, pattern)).
+			Limit(maxPartyCandidates))
+		if err != nil {
 			return pulid.Nil, false, err
 		}
 		for _, id := range contacts {
@@ -221,46 +196,34 @@ func (f *RecordFinder) FindCarrierByEmail(
 
 func (f *RecordFinder) ShipmentExists(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (bool, error) {
 	return dbtx.Read(ctx, f.db, func(ctx context.Context) (bool, error) {
-		return f.db.DBForContext(ctx).
-			NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			Where(shipmentcol.ShipmentColumns.ID.Eq(), id).
-			Apply(shipmentcol.ShipmentApplyTenant(tenantInfo)).
-			Exists(ctx)
+		sp := shipmentdb.Shipments
+		return sp.Where(sp.ID.Eq(id)).Exists(ctx, f.db.Keel(ctx))
 	})
 }
 
 func (f *RecordFinder) CustomerExists(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (bool, error) {
 	return dbtx.Read(ctx, f.db, func(ctx context.Context) (bool, error) {
-		return f.db.DBForContext(ctx).
-			NewSelect().
-			Model((*customer.Customer)(nil)).
-			Where(customercol.CustomerColumns.ID.Eq(), id).
-			Apply(customercol.CustomerApplyTenant(tenantInfo)).
-			Exists(ctx)
+		c := customerdb.Customers
+		return c.Where(c.ID.Eq(id)).Exists(ctx, f.db.Keel(ctx))
 	})
 }
 
 func (f *RecordFinder) CarrierExists(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (bool, error) {
 	return dbtx.Read(ctx, f.db, func(ctx context.Context) (bool, error) {
-		return f.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carrier.Carrier)(nil)).
-			Where(carriercol.CarrierColumns.ID.Eq(), id).
-			Apply(carriercol.CarrierApplyTenant(tenantInfo)).
-			Exists(ctx)
+		c := carrierdb.Carriers
+		return c.Where(c.ID.Eq(id)).Exists(ctx, f.db.Keel(ctx))
 	})
 }
 
@@ -285,7 +248,7 @@ func onlyOneOf(found map[pulid.ID]struct{}) (pulid.ID, bool, error) {
 
 func (f *RecordFinder) DocumentTypeNames(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	ids []pulid.ID,
 ) (map[pulid.ID]string, error) {
 	return dbtx.Read(ctx, f.db, func(ctx context.Context) (map[pulid.ID]string, error) {
@@ -294,19 +257,17 @@ func (f *RecordFinder) DocumentTypeNames(
 			return names, nil
 		}
 
-		rows := make([]struct {
-			ID   pulid.ID `bun:"id"`
-			Name string   `bun:"name"`
-		}, 0, len(ids))
-		cols := documenttypecol.DocumentTypeColumns
-		if err := f.db.DBForContext(ctx).
-			NewSelect().
-			Model((*documenttype.DocumentType)(nil)).
-			ColumnExpr(cols.ID.Qualified()).
-			ColumnExpr(cols.Name.Qualified()).
-			Apply(documenttypecol.DocumentTypeApplyTenant(tenantInfo)).
-			Where(cols.ID.In(), bun.List(ids)).
-			Scan(ctx, &rows); err != nil {
+		type typeName struct {
+			ID   pulid.ID
+			Name string
+		}
+
+		dt := documenttypedb.DocumentTypes
+		rows, err := keel.Into[typeName](ctx, f.db.Keel(ctx), dt.
+			Pick(dt.ID, dt.Name).
+			Where(dt.ID.In(ids...)).
+			Limit(len(ids)))
+		if err != nil {
 			return nil, err
 		}
 		for _, row := range rows {

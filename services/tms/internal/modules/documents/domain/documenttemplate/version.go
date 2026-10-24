@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -65,9 +64,8 @@ var (
 // copied from an old one rather than editing history, so the bytes a customer
 // received can always be reproduced from the version a generated document names.
 type DocumentTemplateVersion struct {
-	bun.BaseModel             `bun:"table:document_template_versions,alias:dtv" json:"-"`
-	keel.Table                `keel:"document_template_versions"`
-	pagination.CursorValueSet `bun:",embed"                                     json:"-"`
+	bun.BaseModel `bun:"table:document_template_versions,alias:dtv" json:"-"`
+	keel.Table    `keel:"document_template_versions"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dtv_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

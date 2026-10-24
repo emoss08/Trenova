@@ -3,20 +3,34 @@ package documenttemplaterepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var assignmentErrors = dberror.Mapping{
+	Entity: "DocumentTemplateAssignment",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_document_template_assignments_template",
+			Field:   "templateId",
+			Message: "Document template does not exist",
+		},
+		{
+			Name:    "fk_document_template_assignments_customer",
+			Field:   "customerId",
+			Message: "Customer does not exist",
+		},
+	},
+}
 
 type AssignmentParams struct {
 	fx.In
@@ -39,31 +53,6 @@ func NewAssignmentRepository(
 	}
 }
 
-func (r *assignmentRepository) filterQuery(
-	q *bun.SelectQuery,
-	req *documenttemplateports.ListDocumentTemplateAssignmentsRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		documenttemplatecol.DocumentTemplateAssignmentTable.Alias,
-		req.Filter,
-		(*documenttemplate.DocumentTemplateAssignment)(nil),
-	)
-
-	cols := documenttemplatecol.DocumentTemplateAssignmentColumns
-
-	if req.Kind != "" {
-		q = q.Where(cols.Kind.Eq(), req.Kind)
-	}
-
-	if req.CustomerID != nil && !req.CustomerID.IsNil() {
-		q = q.Where(cols.CustomerID.Eq(), *req.CustomerID)
-	}
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
-}
-
 func (r *assignmentRepository) List(
 	ctx context.Context,
 	req *documenttemplateports.ListDocumentTemplateAssignmentsRequest,
@@ -72,33 +61,33 @@ func (r *assignmentRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*documenttemplate.DocumentTemplateAssignment], error) {
-			log := r.l.With(zap.String("operation", "List"))
-
-			rel := documenttemplatecol.DocumentTemplateAssignmentRelations
-			entities := make(
-				[]*documenttemplate.DocumentTemplateAssignment,
-				0,
-				req.Filter.Pagination.SafeLimit(),
+			a := documenttemplatedb.DocumentTemplateAssignments
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				a.Where(
+					keel.When(req.Kind != "", a.Kind.Eq(req.Kind)),
+					keel.When(
+						req.CustomerID != nil && !req.CustomerID.IsNil(),
+						a.CustomerID.Eq(derefID(req.CustomerID)),
+					),
+				),
+				&listquery.Request[documenttemplate.DocumentTemplateAssignment]{
+					Filter: req.Filter,
+					Shape: func(
+						q *keel.Query[documenttemplate.DocumentTemplateAssignment],
+					) *keel.Query[documenttemplate.DocumentTemplateAssignment] {
+						return q.Load(a.Customer(), a.Template())
+					},
+					Then: []keel.Order{a.CreatedAt.Desc()},
+				},
 			)
-
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(rel.Customer).
-				Relation(rel.Template).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).
-				ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count document template assignments", zap.Error(err))
+				r.l.Error("failed to list document template assignments", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*documenttemplate.DocumentTemplateAssignment]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -107,66 +96,22 @@ func (r *assignmentRepository) ListConnection(
 	ctx context.Context,
 	req *documenttemplateports.ListDocumentTemplateAssignmentConnectionRequest,
 ) (*pagination.CursorListResult[*documenttemplate.DocumentTemplateAssignment], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*documenttemplate.DocumentTemplateAssignment], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*documenttemplate.DocumentTemplateAssignment)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							documenttemplatecol.DocumentTemplateAssignmentTable.Alias,
-							req.Filter,
-							(*documenttemplate.DocumentTemplateAssignment)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count document template assignments", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*documenttemplate.DocumentTemplateAssignment]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(
-						entities *[]*documenttemplate.DocumentTemplateAssignment,
-					) *bun.SelectQuery {
-						q := dba.NewSelect().Model(entities)
-						if len(req.DocumentTemplateAssignmentColumns) == 0 {
-							q = q.ColumnExpr(
-								documenttemplatecol.DocumentTemplateAssignmentTable.All(),
-							)
-						} else {
-							q = q.Column(req.DocumentTemplateAssignmentColumns...)
-						}
-						return q
-					},
-					Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							q,
-							documenttemplatecol.DocumentTemplateAssignmentTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*documenttemplate.DocumentTemplateAssignment)(nil),
-						)
-					},
+				r.db.Keel(ctx),
+				documenttemplatedb.DocumentTemplateAssignments.Query(),
+				&listquery.Request[documenttemplate.DocumentTemplateAssignment]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.DocumentTemplateAssignmentColumns,
 				},
 			)
 			if err != nil {
-				log.Error("failed to cursor list document template assignments", zap.Error(err))
+				r.l.Error("failed to list document template assignment connection", zap.Error(err))
 				return nil, err
 			}
 
@@ -185,27 +130,17 @@ func (r *assignmentRepository) GetForCustomer(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*documenttemplate.DocumentTemplateAssignment, error) {
-			log := r.l.With(
-				zap.String("operation", "GetForCustomer"),
-				zap.String("customerId", req.CustomerID.String()),
-			)
-
-			cols := documenttemplatecol.DocumentTemplateAssignmentColumns
-			rel := documenttemplatecol.DocumentTemplateAssignmentRelations
-			entities := make([]*documenttemplate.DocumentTemplateAssignment, 0, 8)
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(rel.Template).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return documenttemplatecol.DocumentTemplateAssignmentScopeTenant(sq, req.TenantInfo).
-						Where(cols.CustomerID.Eq(), req.CustomerID)
-				}).
-				Order(cols.Kind.OrderAsc()).
-				Scan(ctx); err != nil {
-				log.Error("failed to load customer template assignments", zap.Error(err))
+			a := documenttemplatedb.DocumentTemplateAssignments
+			entities, err := a.Where(a.CustomerID.Eq(req.CustomerID)).
+				Load(a.Template()).
+				Order(a.Kind.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to load customer template assignments", zap.Error(err))
 				return nil, err
+			}
+			if entities == nil {
+				entities = []*documenttemplate.DocumentTemplateAssignment{}
 			}
 
 			return entities, nil
@@ -224,29 +159,34 @@ func (r *assignmentRepository) Assign(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documenttemplate.DocumentTemplateAssignment, error) {
-			log := r.l.With(
-				zap.String("operation", "Assign"),
-				zap.String("customerId", entity.CustomerID.String()),
-				zap.String("kind", string(entity.Kind)),
+			db := r.db.Keel(ctx)
+			a := documenttemplatedb.DocumentTemplateAssignments
+			inserted, err := a.Upsert(
+				ctx,
+				db,
+				[]*documenttemplate.DocumentTemplateAssignment{entity},
+				keel.OnConflict(a.OrganizationID, a.BusinessUnitID, a.Kind, a.CustomerID).
+					Update(a.TemplateID, a.AssignedByID),
 			)
-
-			cols := documenttemplatecol.DocumentTemplateAssignmentColumns
-
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				On("CONFLICT (organization_id, business_unit_id, kind, customer_id) DO UPDATE").
-				Set(cols.TemplateID.SetExcluded()).
-				Set(cols.AssignedByID.SetExcluded()).
-				Set(cols.UpdatedAt.SetExcluded()).
-				// Qualified, not Inc: inside DO UPDATE both the target row and EXCLUDED
-				// expose "version", and Postgres refuses the bare name as ambiguous.
-				Set(cols.Version.SetExpr(cols.Version.Qualified() + " + 1")).
-				Returning("*").
-				Exec(ctx); err != nil {
-				log.Error("failed to assign document template", zap.Error(err))
-				return nil, err
+			if err != nil {
+				r.l.Error(
+					"failed to assign document template",
+					zap.String("customerId", entity.CustomerID.String()),
+					zap.String("kind", string(entity.Kind)),
+					zap.Error(err),
+				)
+				return nil, assignmentErrors.Map(err, entity.CustomerID.String())
 			}
+			if len(inserted) == 1 && inserted[0] {
+				return entity, nil
+			}
+
+			stored, err := a.Where(a.Kind.Eq(entity.Kind), a.CustomerID.Eq(entity.CustomerID)).
+				One(ctx, db)
+			if err != nil {
+				return nil, assignmentErrors.Map(err, entity.CustomerID.String())
+			}
+			*entity = *stored
 
 			return entity, nil
 		},
@@ -258,30 +198,19 @@ func (r *assignmentRepository) Unassign(
 	req *documenttemplateports.UnassignDocumentTemplateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Unassign"),
-			zap.String("customerId", req.CustomerID.String()),
-			zap.String("kind", string(req.Kind)),
-		)
-
-		cols := documenttemplatecol.DocumentTemplateAssignmentColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*documenttemplate.DocumentTemplateAssignment)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return documenttemplatecol.DocumentTemplateAssignmentScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.CustomerID.Eq(), req.CustomerID).
-					Where(cols.Kind.Eq(), req.Kind)
-			}).
-			Exec(ctx)
+		a := documenttemplatedb.DocumentTemplateAssignments
+		n, err := a.Where(a.CustomerID.Eq(req.CustomerID), a.Kind.Eq(req.Kind)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to unassign document template", zap.Error(err))
-			return err
+			r.l.Error(
+				"failed to unassign document template",
+				zap.String("customerId", req.CustomerID.String()),
+				zap.String("kind", string(req.Kind)),
+				zap.Error(err),
+			)
+			return assignmentErrors.Map(err, req.CustomerID.String())
 		}
 
-		return dberror.CheckRowsAffected(
-			results, "DocumentTemplateAssignment", req.CustomerID.String(),
-		)
+		return dberror.CheckAffected(n, "DocumentTemplateAssignment", req.CustomerID.String())
 	})
 }

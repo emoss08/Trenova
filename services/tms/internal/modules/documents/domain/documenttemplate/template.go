@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -45,9 +44,8 @@ var (
 // It carries identity only. Content lives on the versions, which is what lets an
 // administrator edit without changing what customers are currently receiving.
 type DocumentTemplate struct {
-	bun.BaseModel             `bun:"table:document_templates,alias:dtpl" json:"-"`
-	keel.Table                `keel:"document_templates"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	bun.BaseModel `bun:"table:document_templates,alias:dtpl" json:"-"`
+	keel.Table    `keel:"document_templates"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dtpl_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -182,6 +180,11 @@ func (t *DocumentTemplate) BeforeAppendModel(_ context.Context, query bun.Query)
 
 func (t *DocumentTemplate) BeforeCreate(ctx context.Context) error {
 	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
+func (t *DocumentTemplate) BeforeUpdate(_ context.Context) error {
+	t.Normalize()
+	return nil
 }
 
 // ErrTemplateKindUnknown is returned when a template names a kind the registry does

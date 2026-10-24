@@ -56,6 +56,7 @@ var activitiesTable = schema.Table{
 	Ptr:          ptrActivity,
 	Value:        valueActivity,
 	BeforeCreate: beforeCreateActivity,
+	BeforeUpdate: beforeUpdateActivity,
 }
 
 var activitiesRef = keel.Ref{Table: &activitiesTable}
@@ -233,6 +234,10 @@ func beforeCreateActivity(ctx context.Context, p unsafe.Pointer) error {
 	return (*triage.Activity)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateActivity(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.Activity)(p).BeforeUpdate(ctx)
+}
+
 // repliesTable is the schema of triage.Reply.
 var repliesTable = schema.Table{
 	Name:   "inbound_replies",
@@ -286,6 +291,7 @@ var repliesTable = schema.Table{
 	Ptr:          ptrReply,
 	Value:        valueReply,
 	BeforeCreate: beforeCreateReply,
+	BeforeUpdate: beforeUpdateReply,
 }
 
 var repliesRef = keel.Ref{Table: &repliesTable}
@@ -557,6 +563,10 @@ func beforeCreateReply(ctx context.Context, p unsafe.Pointer) error {
 	return (*triage.Reply)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateReply(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.Reply)(p).BeforeUpdate(ctx)
+}
+
 // replyTemplatesTable is the schema of triage.ReplyTemplate.
 var replyTemplatesTable = schema.Table{
 	Name:   "triage_reply_templates",
@@ -593,6 +603,7 @@ var replyTemplatesTable = schema.Table{
 	Ptr:          ptrReplyTemplate,
 	Value:        valueReplyTemplate,
 	BeforeCreate: beforeCreateReplyTemplate,
+	BeforeUpdate: beforeUpdateReplyTemplate,
 }
 
 var replyTemplatesRef = keel.Ref{Table: &replyTemplatesTable}
@@ -715,6 +726,10 @@ func valueReplyTemplate(p unsafe.Pointer, c int32) any {
 
 func beforeCreateReplyTemplate(ctx context.Context, p unsafe.Pointer) error {
 	return (*triage.ReplyTemplate)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateReplyTemplate(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.ReplyTemplate)(p).BeforeUpdate(ctx)
 }
 
 // responseTargetsTable is the schema of triage.ResponseTarget.
@@ -900,6 +915,7 @@ var rulesTable = schema.Table{
 	Ptr:          ptrRule,
 	Value:        valueRule,
 	BeforeCreate: beforeCreateRule,
+	BeforeUpdate: beforeUpdateRule,
 }
 
 var rulesRef = keel.Ref{Table: &rulesTable}
@@ -1091,6 +1107,10 @@ func beforeCreateRule(ctx context.Context, p unsafe.Pointer) error {
 	return (*triage.Rule)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.Rule)(p).BeforeUpdate(ctx)
+}
+
 // senderHintsTable is the schema of triage.SenderHint.
 var senderHintsTable = schema.Table{
 	Name:   "inbound_sender_hints",
@@ -1231,22 +1251,23 @@ var settingsesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1},
-	Tenant:     []int32{0, 1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{2, 3, 6},
-	Returning:  nil,
-	Version:    4,
-	AutoID:     -1,
-	AutoCreate: 5,
-	AutoUpdate: 6,
-	IDPrefix:   "",
-	New:        newSettings,
-	NewN:       newNSettings,
-	Size:       unsafe.Sizeof(triage.Settings{}),
-	Ptr:        ptrSettings,
-	Value:      valueSettings,
+	PK:           []int32{0, 1},
+	Tenant:       []int32{0, 1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:       []int32{2, 3, 6},
+	Returning:    nil,
+	Version:      4,
+	AutoID:       -1,
+	AutoCreate:   5,
+	AutoUpdate:   6,
+	IDPrefix:     "",
+	New:          newSettings,
+	NewN:         newNSettings,
+	Size:         unsafe.Sizeof(triage.Settings{}),
+	Ptr:          ptrSettings,
+	Value:        valueSettings,
+	BeforeCreate: beforeCreateSettings,
 }
 
 var settingsesRef = keel.Ref{Table: &settingsesTable}
@@ -1348,6 +1369,10 @@ func valueSettings(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateSettings(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.Settings)(p).BeforeCreate(ctx)
+}
+
 // viewsTable is the schema of triage.View.
 var viewsTable = schema.Table{
 	Name:   "triage_views",
@@ -1384,6 +1409,7 @@ var viewsTable = schema.Table{
 	Ptr:          ptrView,
 	Value:        valueView,
 	BeforeCreate: beforeCreateView,
+	BeforeUpdate: beforeUpdateView,
 }
 
 var viewsRef = keel.Ref{Table: &viewsTable}
@@ -1499,6 +1525,10 @@ func valueView(p unsafe.Pointer, c int32) any {
 
 func beforeCreateView(ctx context.Context, p unsafe.Pointer) error {
 	return (*triage.View)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateView(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.View)(p).BeforeUpdate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

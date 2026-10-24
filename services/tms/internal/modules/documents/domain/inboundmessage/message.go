@@ -252,6 +252,10 @@ func (m *InboundMessage) BeforeCreate(ctx context.Context) error {
 	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
+func (m *InboundMessage) BeforeUpdate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
+}
+
 // GetPostgresSearchConfig covers what a person actually remembers about a
 // message they are hunting for: who sent it and what the subject said. The body
 // is left out on purpose — it is bounded to 32 KB of quoted thread, and

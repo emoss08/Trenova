@@ -64,22 +64,23 @@ var shadowResultsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40},
-	Returning:  nil,
-	Version:    38,
-	AutoID:     0,
-	AutoCreate: 39,
-	AutoUpdate: 40,
-	IDPrefix:   "exsr_",
-	New:        newShadowResult,
-	NewN:       newNShadowResult,
-	Size:       unsafe.Sizeof(extractionshadow.ShadowResult{}),
-	Ptr:        ptrShadowResult,
-	Value:      valueShadowResult,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40},
+	Returning:    nil,
+	Version:      38,
+	AutoID:       0,
+	AutoCreate:   39,
+	AutoUpdate:   40,
+	IDPrefix:     "exsr_",
+	New:          newShadowResult,
+	NewN:         newNShadowResult,
+	Size:         unsafe.Sizeof(extractionshadow.ShadowResult{}),
+	Ptr:          ptrShadowResult,
+	Value:        valueShadowResult,
+	BeforeCreate: beforeCreateShadowResult,
 }
 
 var shadowResultsRef = keel.Ref{Table: &shadowResultsTable}
@@ -466,6 +467,10 @@ func valueShadowResult(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateShadowResult(ctx context.Context, p unsafe.Pointer) error {
+	return (*extractionshadow.ShadowResult)(p).BeforeCreate(ctx)
+}
+
 // shadowSettingsesTable is the schema of extractionshadow.ShadowSettings.
 var shadowSettingsesTable = schema.Table{
 	Name:   "extraction_shadow_settings",
@@ -487,22 +492,23 @@ var shadowSettingsesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:     []int32{3, 4, 5, 6, 7, 10},
-	Returning:  nil,
-	Version:    8,
-	AutoID:     0,
-	AutoCreate: 9,
-	AutoUpdate: 10,
-	IDPrefix:   "exss_",
-	New:        newShadowSettings,
-	NewN:       newNShadowSettings,
-	Size:       unsafe.Sizeof(extractionshadow.ShadowSettings{}),
-	Ptr:        ptrShadowSettings,
-	Value:      valueShadowSettings,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:       []int32{3, 4, 5, 6, 7, 10},
+	Returning:    nil,
+	Version:      8,
+	AutoID:       0,
+	AutoCreate:   9,
+	AutoUpdate:   10,
+	IDPrefix:     "exss_",
+	New:          newShadowSettings,
+	NewN:         newNShadowSettings,
+	Size:         unsafe.Sizeof(extractionshadow.ShadowSettings{}),
+	Ptr:          ptrShadowSettings,
+	Value:        valueShadowSettings,
+	BeforeCreate: beforeCreateShadowSettings,
 }
 
 var shadowSettingsesRef = keel.Ref{Table: &shadowSettingsesTable}
@@ -638,6 +644,10 @@ func valueShadowSettings(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateShadowSettings(ctx context.Context, p unsafe.Pointer) error {
+	return (*extractionshadow.ShadowSettings)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

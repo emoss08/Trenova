@@ -4,21 +4,21 @@ package capturerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var deviceErrors = dberror.Mapping{Entity: "Device"}
 
 type Params struct {
 	fx.In
@@ -44,11 +44,7 @@ func (r *deviceRepository) Create(
 	entity *capture.CaptureDevice,
 ) (*capture.CaptureDevice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureDevice, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := capturedb.CaptureDevices.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, err
 		}
 
@@ -61,25 +57,8 @@ func (r *deviceRepository) Update(
 	entity *capture.CaptureDevice,
 ) (*capture.CaptureDevice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureDevice, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(capturecol.CaptureDeviceColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(results, "Device", entity.ID.String()); err != nil {
-			entity.Version = ov
-
-			return nil, err
+		if err := capturedb.CaptureDevices.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, deviceErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -91,15 +70,9 @@ func (r *deviceRepository) GetByID(
 	req captureports.GetCaptureDeviceByIDRequest,
 ) (*capture.CaptureDevice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureDevice, error) {
-		entity := new(capture.CaptureDevice)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(capturecol.CaptureDeviceColumns.ID.Eq(), req.ID).
-			Apply(capturecol.CaptureDeviceApplyTenant(req.TenantInfo)).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Device")
+		entity, err := capturedb.CaptureDevices.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, deviceErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -114,35 +87,19 @@ func (r *deviceRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*capture.CaptureDevice], error) {
-			entities := make([]*capture.CaptureDevice, 0, req.Filter.Pagination.SafeLimit())
-			cols := capturecol.CaptureDeviceColumns
-
-			query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
-			if req.UserID.IsNotNil() {
-				query = query.Where(cols.UserID.Eq(), req.UserID)
-			}
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-
-			total, err := querybuilder.ApplyFilters(
-				query,
-				capturecol.CaptureDeviceTable.Alias,
-				req.Filter,
-				(*capture.CaptureDevice)(nil),
-			).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*capture.CaptureDevice]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			d := capturedb.CaptureDevices
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				d.Where(
+					keel.When(req.UserID.IsNotNil(), d.UserID.Eq(req.UserID)),
+					keel.When(req.Status != "", d.Status.Eq(req.Status)),
+				),
+				&listquery.Request[capture.CaptureDevice]{
+					Filter: req.Filter,
+					Then:   []keel.Order{d.CreatedAt.Desc()},
+				},
+			)
 		},
 	)
 }
@@ -155,7 +112,7 @@ func (r *deviceRepository) GetByAccessTokenHash(
 		ctx,
 		"resolve a capture device access token before its tenant is known",
 	)
-	return r.getByTokenColumn(ctx, capturecol.CaptureDeviceColumns.AccessTokenHash, hash)
+	return r.getByToken(ctx, capturedb.CaptureDevices.AccessTokenHash.Eq(hash))
 }
 
 func (r *deviceRepository) GetByRefreshTokenHash(
@@ -166,7 +123,7 @@ func (r *deviceRepository) GetByRefreshTokenHash(
 		ctx,
 		"resolve a capture device refresh token before its tenant is known",
 	)
-	return r.getByTokenColumn(ctx, capturecol.CaptureDeviceColumns.RefreshTokenHash, hash)
+	return r.getByToken(ctx, capturedb.CaptureDevices.RefreshTokenHash.Eq(hash))
 }
 
 func (r *deviceRepository) GetByPreviousRefreshHash(
@@ -177,23 +134,17 @@ func (r *deviceRepository) GetByPreviousRefreshHash(
 		ctx,
 		"detect reuse of a rotated capture device refresh token before its tenant is known",
 	)
-	return r.getByTokenColumn(ctx, capturecol.CaptureDeviceColumns.PreviousRefreshHash, hash)
+	return r.getByToken(ctx, capturedb.CaptureDevices.PreviousRefreshHash.Eq(hash))
 }
 
-func (r *deviceRepository) getByTokenColumn(
+func (r *deviceRepository) getByToken(
 	ctx context.Context,
-	column buncolgen.Column,
-	hash string,
+	match keel.Pred,
 ) (*capture.CaptureDevice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureDevice, error) {
-		entity := new(capture.CaptureDevice)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(column.Eq(), hash).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Device")
+		entity, err := capturedb.CaptureDevices.AllTenants().Where(match).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, deviceErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -205,18 +156,15 @@ func (r *deviceRepository) Touch(
 	req captureports.TouchCaptureDeviceRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := capturecol.CaptureDeviceColumns
-
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*capture.CaptureDevice)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return capturecol.CaptureDeviceScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Set(cols.LastSeenAt.Set(), req.SeenAt).
-			Set(cols.LastIP.Set(), req.IP).
-			Exec(ctx)
+		d := capturedb.CaptureDevices
+		_, err := d.Where(d.ID.Eq(req.ID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			d.LastSeenAt.To(req.SeenAt),
+			d.LastIP.To(req.IP),
+			d.Version.ToExpr(d.Version),
+			d.UpdatedAt.ToExpr(d.UpdatedAt),
+		)
 
 		return err
 	})

@@ -9,7 +9,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -22,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -31,7 +29,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           *postgres.Connection
+	DB           kernelports.Transactor
 	Repo         documentparsingruleports.DocumentParsingRuleRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
@@ -39,7 +37,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	db           *postgres.Connection
+	db           kernelports.Transactor
 	repo         documentparsingruleports.DocumentParsingRuleRepository
 	validator    *Validator
 	auditService auditports.AuditService
@@ -319,7 +317,7 @@ func (s *Service) PublishVersion(
 	version.PublishedByID = &userID
 
 	var updated *documentparsingrule.RuleVersion
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if txErr := s.repo.ArchivePublishedVersions(
 			txCtx,
 			set.ID,

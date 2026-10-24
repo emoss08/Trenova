@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -30,9 +29,8 @@ var (
 // inheriting later changes to the organization default, which is why publishing
 // shows how many customers are unaffected.
 type DocumentTemplateAssignment struct {
-	bun.BaseModel             `bun:"table:document_template_assignments,alias:dta" json:"-"`
-	keel.Table                `keel:"document_template_assignments"`
-	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
+	bun.BaseModel `bun:"table:document_template_assignments,alias:dta" json:"-"`
+	keel.Table    `keel:"document_template_assignments"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dta_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

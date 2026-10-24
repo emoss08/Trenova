@@ -3,26 +3,24 @@ package extractionrolloutrepository
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/extractionrolloutcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout/extractionrolloutdb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
 const (
-	assignmentEntity  = "RolloutAssignment"
 	defaultPurgeLimit = 1000
 	maxPurgeLimit     = 10000
 )
+
+var assignmentErrors = dberror.Mapping{Entity: "RolloutAssignment"}
 
 type assignmentRepository struct {
 	db *postgres.Connection
@@ -36,16 +34,6 @@ func NewAssignments(p Params) extractionrolloutports.RolloutAssignmentRepository
 	}
 }
 
-func uniqueExtraction() string {
-	cols := extractionrolloutcol.RolloutAssignmentColumns
-	return "CONFLICT (" + strings.Join([]string{
-		cols.OrganizationID.Bare(),
-		cols.BusinessUnitID.Bare(),
-		cols.DocumentID.Bare(),
-		cols.ExtractedAt.Bare(),
-	}, ", ") + ") DO NOTHING"
-}
-
 func (r *assignmentRepository) Create(
 	ctx context.Context,
 	entity *extractionrollout.RolloutAssignment,
@@ -54,42 +42,32 @@ func (r *assignmentRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*extractionrollout.RolloutAssignment, bool, error) {
-			res, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				On(uniqueExtraction()).
-				Returning("*").
-				Exec(ctx)
+			ra := extractionrolloutdb.RolloutAssignments
+			db := r.db.Keel(ctx)
+
+			inserted, err := ra.CreateOrSkip(
+				ctx,
+				db,
+				[]*extractionrollout.RolloutAssignment{entity},
+				ra.OrganizationID,
+				ra.BusinessUnitID,
+				ra.DocumentID,
+				ra.ExtractedAt,
+			)
 			if err != nil {
 				r.l.Error("failed to create rollout assignment",
 					zap.String("documentId", entity.DocumentID.String()),
 					zap.Error(err),
 				)
-
 				return nil, false, fmt.Errorf("create rollout assignment: %w", err)
-			}
-
-			inserted, err := res.RowsAffected()
-			if err != nil {
-				return nil, false, fmt.Errorf("create rollout assignment rows: %w", err)
 			}
 			if inserted > 0 {
 				return entity, true, nil
 			}
 
-			existing, err := r.GetByExtraction(
-				ctx,
-				extractionrolloutports.GetRolloutAssignmentRequest{
-					TenantInfo: pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					},
-					DocumentID:  entity.DocumentID,
-					ExtractedAt: entity.ExtractedAt,
-				},
-			)
+			existing, err := byExtraction(entity.DocumentID, entity.ExtractedAt).One(ctx, db)
 			if err != nil {
-				return nil, false, err
+				return nil, false, assignmentErrors.Map(err, entity.DocumentID.String())
 			}
 
 			return existing, false, nil
@@ -105,24 +83,23 @@ func (r *assignmentRepository) GetByExtraction(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*extractionrollout.RolloutAssignment, error) {
-			cols := extractionrolloutcol.RolloutAssignmentColumns
-			entity := new(extractionrollout.RolloutAssignment)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return extractionrolloutcol.RolloutAssignmentScopeTenant(sq, req.TenantInfo).
-						Where(cols.DocumentID.Eq(), req.DocumentID).
-						Where(cols.ExtractedAt.Eq(), req.ExtractedAt)
-				}).
-				Scan(ctx)
+			entity, err := byExtraction(req.DocumentID, req.ExtractedAt).One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, assignmentEntity)
+				return nil, assignmentErrors.Map(err, req.DocumentID.String())
 			}
 
 			return entity, nil
 		},
 	)
+}
+
+func byExtraction(
+	documentID pulid.ID,
+	extractedAt int64,
+) *keel.Query[extractionrollout.RolloutAssignment] {
+	ra := extractionrolloutdb.RolloutAssignments
+
+	return ra.Where(ra.DocumentID.Eq(documentID), ra.ExtractedAt.Eq(extractedAt))
 }
 
 func (r *assignmentRepository) Save(
@@ -133,46 +110,19 @@ func (r *assignmentRepository) Save(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*extractionrollout.RolloutAssignment, error) {
-			cols := extractionrolloutcol.RolloutAssignmentColumns
-			previous := entity.Version
-
-			res, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return extractionrolloutcol.RolloutAssignmentScopeTenantUpdate(uq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).
-						Where(cols.ID.Eq(), entity.ID).
-						Where(cols.Version.Eq(), previous)
-				}).
-				ExcludeColumn(
-					cols.ID.Bare(),
-					cols.OrganizationID.Bare(),
-					cols.BusinessUnitID.Bare(),
-					cols.DocumentID.Bare(),
-					cols.ExtractedAt.Bare(),
-					cols.Arm.Bare(),
-					cols.CandidateProviderID.Bare(),
-					cols.CreatedAt.Bare(),
-					cols.Version.Bare(),
-				).
-				Set(cols.Version.Inc(1)).
-				Exec(ctx)
-			if err != nil {
-				r.l.Error("failed to save rollout assignment", zap.Error(err))
-
-				return nil, fmt.Errorf("save rollout assignment: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				res,
-				assignmentEntity,
-				entity.ID.String(),
+			ra := extractionrolloutdb.RolloutAssignments
+			if err := ra.SaveExcept(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+				ra.DocumentID,
+				ra.ExtractedAt,
+				ra.Arm,
+				ra.CandidateProviderID,
 			); err != nil {
-				return nil, err
+				r.l.Error("failed to save rollout assignment", zap.Error(err))
+				return nil, assignmentErrors.Map(err, entity.ID.String())
 			}
-			entity.Version = previous + 1
 
 			return entity, nil
 		},
@@ -187,39 +137,33 @@ func (r *assignmentRepository) Totals(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]extractionrolloutports.RolloutAssignmentTotal, error) {
-			cols := extractionrolloutcol.RolloutAssignmentColumns
-			totals := make(
-				[]extractionrolloutports.RolloutAssignmentTotal,
-				0,
-				len(extractionrollout.AllArms())*len(extractionrollout.AllOutcomes())*3,
+			ra := extractionrolloutdb.RolloutAssignments
+			servedBy := keel.Raw(
+				"CASE WHEN ? IS NULL THEN ? WHEN ? = ? THEN ? ELSE ? END",
+				ra.ServedProviderID,
+				string(extractionrollout.ServedByNone),
+				ra.ServedProviderID,
+				ra.CandidateProviderID,
+				string(extractionrollout.ServedByCandidate),
+				string(extractionrollout.ServedByOther),
 			)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*extractionrollout.RolloutAssignment)(nil)).
-				Column(cols.Arm.Bare(), cols.Outcome.Bare()).
-				ColumnExpr(
-					buncolgen.Expr(
-						"CASE WHEN {0} IS NULL THEN ? WHEN {0} = {1} THEN ? ELSE ? END AS served_by",
-						cols.ServedProviderID,
-						cols.CandidateProviderID,
-					),
-					extractionrollout.ServedByNone,
-					extractionrollout.ServedByCandidate,
-					extractionrollout.ServedByOther,
-				).
-				ColumnExpr(buncolgen.Count("count")).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return extractionrolloutcol.RolloutAssignmentScopeTenant(sq, req.TenantInfo).
-						Where(cols.CandidateProviderID.Eq(), req.CandidateProviderID).
-						Where(cols.CreatedAt.Gte(), req.Since)
-				}).
-				Group(cols.Arm.Bare(), cols.Outcome.Bare()).
-				GroupExpr("served_by").
-				Scan(ctx, &totals)
+
+			totals, err := keel.Into[extractionrolloutports.RolloutAssignmentTotal](
+				ctx,
+				r.db.Keel(ctx),
+				ra.Pick(ra.Arm, servedBy, ra.Outcome, keel.Count()).
+					Where(
+						ra.CandidateProviderID.Eq(req.CandidateProviderID),
+						ra.CreatedAt.Gte(req.Since),
+					).
+					Group(ra.Arm, ra.Outcome, servedBy),
+			)
 			if err != nil {
 				r.l.Error("failed to total rollout assignments", zap.Error(err))
-
 				return nil, fmt.Errorf("total rollout assignments: %w", err)
+			}
+			if totals == nil {
+				totals = []extractionrolloutports.RolloutAssignmentTotal{}
 			}
 
 			return totals, nil
@@ -232,40 +176,23 @@ func (r *assignmentRepository) PurgeBefore(
 	req extractionrolloutports.PurgeRolloutAssignmentsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := extractionrolloutcol.RolloutAssignmentColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultPurgeLimit
 		}
 		limit = min(limit, maxPurgeLimit)
 
-		dba := r.db.DBForContext(ctx)
-		expired := dba.NewSelect().
-			Model((*extractionrollout.RolloutAssignment)(nil)).
-			Column(cols.ID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return extractionrolloutcol.RolloutAssignmentScopeTenant(sq, req.TenantInfo).
-					Where(cols.CreatedAt.Lt(), req.Before)
-			}).
-			OrderExpr(cols.CreatedAt.OrderAsc()).
-			Limit(int64(limit))
-
-		res, err := dba.NewDelete().
-			Model((*extractionrollout.RolloutAssignment)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return extractionrolloutcol.RolloutAssignmentScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.In(), expired)
-			}).
-			Exec(ctx)
+		ra := extractionrolloutdb.RolloutAssignments
+		expired := ra.As("expired")
+		purged, err := ra.Where(ra.ID.InQuery(expired.
+			Pick(expired.ID).
+			Where(expired.CreatedAt.Lt(req.Before)).
+			Order(expired.CreatedAt.Asc()).
+			Limit(limit),
+		)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to purge rollout assignments", zap.Error(err))
-
 			return 0, fmt.Errorf("purge rollout assignments: %w", err)
-		}
-
-		purged, err := res.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("purge rollout assignments rows: %w", err)
 		}
 
 		return purged, nil

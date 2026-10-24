@@ -140,6 +140,14 @@ func (s *Settings) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (s *Settings) BeforeCreate(_ context.Context) error {
+	if s.EndOfDayMinute == 0 {
+		s.EndOfDayMinute = DefaultEndOfDayMinute
+	}
+
+	return nil
+}
+
 func (s *Settings) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	switch query.(type) {
@@ -203,6 +211,10 @@ func (t *ReplyTemplate) BeforeCreate(ctx context.Context) error {
 	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
+func (t *ReplyTemplate) BeforeUpdate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
+}
+
 func (t *ReplyTemplate) GetID() pulid.ID      { return t.ID }
 func (t *ReplyTemplate) GetCreatedAt() int64  { return t.CreatedAt }
 func (t *ReplyTemplate) GetTableName() string { return "triage_reply_templates" }
@@ -255,6 +267,10 @@ func (v *View) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 func (v *View) BeforeCreate(ctx context.Context) error {
 	return v.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
+func (v *View) BeforeUpdate(ctx context.Context) error {
+	return v.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
 }
 
 func (v *View) GetID() pulid.ID      { return v.ID }

@@ -120,3 +120,14 @@ func (s *ShadowSettings) BeforeAppendModel(_ context.Context, query bun.Query) e
 
 	return nil
 }
+
+func (s *ShadowSettings) BeforeCreate(_ context.Context) error {
+	if s.SamplePercent == 0 {
+		s.SamplePercent = DefaultSamplePercent
+	}
+	if s.DailyLimit == 0 {
+		s.DailyLimit = DefaultDailyLimit
+	}
+
+	return nil
+}

@@ -38,8 +38,6 @@ type ShadowResult struct {
 	bun.BaseModel `bun:"table:extraction_shadow_results,alias:exsr" json:"-"`
 	keel.Table    `keel:"extraction_shadow_results"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
-
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:exsr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
@@ -209,6 +207,14 @@ func (r *ShadowResult) BeforeAppendModel(_ context.Context, query bun.Query) err
 		r.UpdatedAt = now
 	case *bun.UpdateQuery:
 		r.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (r *ShadowResult) BeforeCreate(_ context.Context) error {
+	if r.Status == "" {
+		r.Status = ResultStatusPending
 	}
 
 	return nil

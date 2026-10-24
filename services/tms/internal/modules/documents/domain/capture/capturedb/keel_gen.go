@@ -58,23 +58,24 @@ var captureBatchesTable = schema.Table{
 		{Name: "Items", Alias: "i", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Items`, JSON: `items`},
 		{Name: "CaptureDevice", Alias: "cd", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Capture Device`, JSON: `device`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
-	Returning:  nil,
-	Version:    26,
-	AutoID:     0,
-	AutoCreate: 27,
-	AutoUpdate: 28,
-	IDPrefix:   "cbat_",
-	New:        newCaptureBatch,
-	NewN:       newNCaptureBatch,
-	Size:       unsafe.Sizeof(capture.CaptureBatch{}),
-	Ptr:        ptrCaptureBatch,
-	Value:      valueCaptureBatch,
-	Attach:     attachCaptureBatch,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
+	Returning:    nil,
+	Version:      26,
+	AutoID:       0,
+	AutoCreate:   27,
+	AutoUpdate:   28,
+	IDPrefix:     "cbat_",
+	New:          newCaptureBatch,
+	NewN:         newNCaptureBatch,
+	Size:         unsafe.Sizeof(capture.CaptureBatch{}),
+	Ptr:          ptrCaptureBatch,
+	Value:        valueCaptureBatch,
+	Attach:       attachCaptureBatch,
+	BeforeCreate: beforeCreateCaptureBatch,
 }
 
 var captureBatchesRef = keel.Ref{Table: &captureBatchesTable}
@@ -395,6 +396,10 @@ func attachCaptureBatch(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateCaptureBatch(ctx context.Context, p unsafe.Pointer) error {
+	return (*capture.CaptureBatch)(p).BeforeCreate(ctx)
+}
+
 // captureCoverSheetsTable is the schema of capture.CaptureCoverSheet.
 var captureCoverSheetsTable = schema.Table{
 	Name:   "capture_cover_sheets",
@@ -619,22 +624,23 @@ var captureDevicesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
-	Returning:  nil,
-	Version:    21,
-	AutoID:     0,
-	AutoCreate: 22,
-	AutoUpdate: 23,
-	IDPrefix:   "cdev_",
-	New:        newCaptureDevice,
-	NewN:       newNCaptureDevice,
-	Size:       unsafe.Sizeof(capture.CaptureDevice{}),
-	Ptr:        ptrCaptureDevice,
-	Value:      valueCaptureDevice,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
+	Returning:    nil,
+	Version:      21,
+	AutoID:       0,
+	AutoCreate:   22,
+	AutoUpdate:   23,
+	IDPrefix:     "cdev_",
+	New:          newCaptureDevice,
+	NewN:         newNCaptureDevice,
+	Size:         unsafe.Sizeof(capture.CaptureDevice{}),
+	Ptr:          ptrCaptureDevice,
+	Value:        valueCaptureDevice,
+	BeforeCreate: beforeCreateCaptureDevice,
 }
 
 var captureDevicesRef = keel.Ref{Table: &captureDevicesTable}
@@ -884,6 +890,10 @@ func valueCaptureDevice(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCaptureDevice(ctx context.Context, p unsafe.Pointer) error {
+	return (*capture.CaptureDevice)(p).BeforeCreate(ctx)
+}
+
 // captureItemsTable is the schema of capture.CaptureItem.
 var captureItemsTable = schema.Table{
 	Name:   "capture_items",
@@ -921,22 +931,23 @@ var captureItemsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
-	Returning:  nil,
-	Version:    23,
-	AutoID:     0,
-	AutoCreate: 24,
-	AutoUpdate: 25,
-	IDPrefix:   "citm_",
-	New:        newCaptureItem,
-	NewN:       newNCaptureItem,
-	Size:       unsafe.Sizeof(capture.CaptureItem{}),
-	Ptr:        ptrCaptureItem,
-	Value:      valueCaptureItem,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
+	Returning:    nil,
+	Version:      23,
+	AutoID:       0,
+	AutoCreate:   24,
+	AutoUpdate:   25,
+	IDPrefix:     "citm_",
+	New:          newCaptureItem,
+	NewN:         newNCaptureItem,
+	Size:         unsafe.Sizeof(capture.CaptureItem{}),
+	Ptr:          ptrCaptureItem,
+	Value:        valueCaptureItem,
+	BeforeCreate: beforeCreateCaptureItem,
 }
 
 var captureItemsRef = keel.Ref{Table: &captureItemsTable}
@@ -1224,6 +1235,10 @@ func valueCaptureItem(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCaptureItem(ctx context.Context, p unsafe.Pointer) error {
+	return (*capture.CaptureItem)(p).BeforeCreate(ctx)
+}
+
 // capturePagesTable is the schema of capture.CapturePage.
 var capturePagesTable = schema.Table{
 	Name:   "capture_pages",
@@ -1256,22 +1271,23 @@ var capturePagesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "cpg_",
-	New:        newCapturePage,
-	NewN:       newNCapturePage,
-	Size:       unsafe.Sizeof(capture.CapturePage{}),
-	Ptr:        ptrCapturePage,
-	Value:      valueCapturePage,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "cpg_",
+	New:          newCapturePage,
+	NewN:         newNCapturePage,
+	Size:         unsafe.Sizeof(capture.CapturePage{}),
+	Ptr:          ptrCapturePage,
+	Value:        valueCapturePage,
+	BeforeCreate: beforeCreateCapturePage,
 }
 
 var capturePagesRef = keel.Ref{Table: &capturePagesTable}
@@ -1482,6 +1498,10 @@ func valueCapturePage(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCapturePage(ctx context.Context, p unsafe.Pointer) error {
+	return (*capture.CapturePage)(p).BeforeCreate(ctx)
+}
+
 // capturePairingsTable is the schema of capture.CapturePairing.
 var capturePairingsTable = schema.Table{
 	Name:   "capture_pairings",
@@ -1502,8 +1522,8 @@ var capturePairingsTable = schema.Table{
 		{Name: "architecture", Quoted: `"architecture"`, Field: "Architecture", Kind: schema.KindString, Flags: 0, Label: `Architecture`, JSON: `architecture`, Enum: enumArchitecture[:]},
 		{Name: "os_version", Quoted: `"os_version"`, Field: "OSVersion", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `OS Version`, JSON: `osVersion`},
 		{Name: "client_ip", Quoted: `"client_ip"`, Field: "ClientIP", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Client IP`, JSON: `clientIp`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagTenant | schema.FlagNullable, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant | schema.FlagNullable, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "approved_by_id", Quoted: `"approved_by_id"`, Field: "ApprovedByID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Approved By ID`, JSON: `approvedById`},
 		{Name: "device_name", Quoted: `"device_name"`, Field: "DeviceName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Device Name`, JSON: `deviceName`},
 		{Name: "device_id", Quoted: `"device_id"`, Field: "DeviceID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Device ID`, JSON: `deviceId`},
@@ -1514,22 +1534,23 @@ var capturePairingsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{10, 11},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "cpair_",
-	New:        newCapturePairing,
-	NewN:       newNCapturePairing,
-	Size:       unsafe.Sizeof(capture.CapturePairing{}),
-	Ptr:        ptrCapturePairing,
-	Value:      valueCapturePairing,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "cpair_",
+	New:          newCapturePairing,
+	NewN:         newNCapturePairing,
+	Size:         unsafe.Sizeof(capture.CapturePairing{}),
+	Ptr:          ptrCapturePairing,
+	Value:        valueCapturePairing,
+	BeforeCreate: beforeCreateCapturePairing,
 }
 
 var capturePairingsRef = keel.Ref{Table: &capturePairingsTable}
@@ -1761,6 +1782,10 @@ func valueCapturePairing(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCapturePairing(ctx context.Context, p unsafe.Pointer) error {
+	return (*capture.CapturePairing)(p).BeforeCreate(ctx)
+}
+
 // captureProfilesTable is the schema of capture.CaptureProfile.
 var captureProfilesTable = schema.Table{
 	Name:   "capture_profiles",
@@ -1791,22 +1816,23 @@ var captureProfilesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
-	IDPrefix:   "cprf_",
-	New:        newCaptureProfile,
-	NewN:       newNCaptureProfile,
-	Size:       unsafe.Sizeof(capture.CaptureProfile{}),
-	Ptr:        ptrCaptureProfile,
-	Value:      valueCaptureProfile,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       0,
+	AutoCreate:   17,
+	AutoUpdate:   18,
+	IDPrefix:     "cprf_",
+	New:          newCaptureProfile,
+	NewN:         newNCaptureProfile,
+	Size:         unsafe.Sizeof(capture.CaptureProfile{}),
+	Ptr:          ptrCaptureProfile,
+	Value:        valueCaptureProfile,
+	BeforeCreate: beforeCreateCaptureProfile,
 }
 
 var captureProfilesRef = keel.Ref{Table: &captureProfilesTable}
@@ -2000,6 +2026,10 @@ func valueCaptureProfile(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCaptureProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*capture.CaptureProfile)(p).BeforeCreate(ctx)
+}
+
 // captureRequestsTable is the schema of capture.CaptureRequest.
 var captureRequestsTable = schema.Table{
 	Name:   "capture_requests",
@@ -2035,23 +2065,24 @@ var captureRequestsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "CaptureProfile", Alias: "cp", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Capture Profile`, JSON: `profile`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "creq_",
-	New:        newCaptureRequest,
-	NewN:       newNCaptureRequest,
-	Size:       unsafe.Sizeof(capture.CaptureRequest{}),
-	Ptr:        ptrCaptureRequest,
-	Value:      valueCaptureRequest,
-	Attach:     attachCaptureRequest,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "creq_",
+	New:          newCaptureRequest,
+	NewN:         newNCaptureRequest,
+	Size:         unsafe.Sizeof(capture.CaptureRequest{}),
+	Ptr:          ptrCaptureRequest,
+	Value:        valueCaptureRequest,
+	Attach:       attachCaptureRequest,
+	BeforeCreate: beforeCreateCaptureRequest,
 }
 
 var captureRequestsRef = keel.Ref{Table: &captureRequestsTable}
@@ -2288,6 +2319,10 @@ func attachCaptureRequest(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.CaptureProfile = (*capture.CaptureProfile)(child)
 	}
+}
+
+func beforeCreateCaptureRequest(ctx context.Context, p unsafe.Pointer) error {
+	return (*capture.CaptureRequest)(p).BeforeCreate(ctx)
 }
 
 func init() {

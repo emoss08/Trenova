@@ -3,22 +3,47 @@ package documenttemplaterepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var versionErrors = dberror.Mapping{
+	Entity: "DocumentTemplateVersion",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_document_template_versions_one_draft",
+			Field:   "templateId",
+			Message: "This template already has a draft. Edit it or delete it before starting another.",
+		},
+		{
+			Name:    "uq_document_template_versions_one_active",
+			Field:   "status",
+			Message: "This template already has an active version",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_document_template_versions_template",
+			Field:   "templateId",
+			Message: "Document template does not exist",
+		},
+		{
+			Name:    "fk_document_template_versions_source",
+			Field:   "sourceVersionId",
+			Message: "Source version does not exist",
+		},
+	},
+}
 
 type VersionParams struct {
 	fx.In
@@ -47,28 +72,23 @@ func (r *versionRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documenttemplate.DocumentTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByID"),
-				zap.String("id", req.VersionID.String()),
-			)
-
-			entity := new(documenttemplate.DocumentTemplateVersion)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Relation(documenttemplatecol.DocumentTemplateVersionRelations.Template).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return documenttemplatecol.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
-						Where(documenttemplatecol.DocumentTemplateVersionColumns.ID.Eq(), req.VersionID)
-				}).
-				Scan(ctx); err != nil {
-				log.Error("failed to get document template version", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "DocumentTemplateVersion")
-			}
-
-			return entity, nil
+			return getVersion(ctx, r.db.Keel(ctx), req.VersionID)
 		},
 	)
+}
+
+func getVersion(
+	ctx context.Context,
+	db *keel.DB,
+	id pulid.ID,
+) (*documenttemplate.DocumentTemplateVersion, error) {
+	v := documenttemplatedb.DocumentTemplateVersions
+	entity, err := v.Where(v.ID.Eq(id)).Load(v.Template()).One(ctx, db)
+	if err != nil {
+		return nil, versionErrors.Map(err, id.String())
+	}
+
+	return entity, nil
 }
 
 func (r *versionRepository) List(
@@ -79,25 +99,16 @@ func (r *versionRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*documenttemplate.DocumentTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.String("templateId", req.TemplateID.String()),
-			)
-
-			cols := documenttemplatecol.DocumentTemplateVersionColumns
-			entities := make([]*documenttemplate.DocumentTemplateVersion, 0, 16)
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return documenttemplatecol.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
-						Where(cols.TemplateID.Eq(), req.TemplateID)
-				}).
-				Order(cols.VersionNumber.OrderDesc()).
-				Scan(ctx); err != nil {
-				log.Error("failed to list document template versions", zap.Error(err))
+			v := documenttemplatedb.DocumentTemplateVersions
+			entities, err := v.Where(v.TemplateID.Eq(req.TemplateID)).
+				Order(v.VersionNumber.Desc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list document template versions", zap.Error(err))
 				return nil, err
+			}
+			if entities == nil {
+				entities = []*documenttemplate.DocumentTemplateVersion{}
 			}
 
 			return entities, nil
@@ -108,49 +119,33 @@ func (r *versionRepository) List(
 // nextVersionNumber reserves the next number in the template's sequence. It runs
 // inside the caller's transaction so two concurrent creates collide on the unique
 // index rather than both reading the same maximum and one silently overwriting.
-func (r *versionRepository) nextVersionNumber(
-	ctx context.Context,
-	entity *documenttemplate.DocumentTemplateVersion,
-) (int64, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := documenttemplatecol.DocumentTemplateVersionColumns
+func nextVersionNumber(ctx context.Context, db *keel.DB, templateID pulid.ID) (int64, error) {
+	v := documenttemplatedb.DocumentTemplateVersions
+	current, err := keel.IntoOne[*int64](
+		ctx,
+		db,
+		v.Pick(v.VersionNumber.Max()).Where(v.TemplateID.Eq(templateID)),
+	)
+	if err != nil {
+		return 0, err
+	}
+	if current == nil {
+		return 1, nil
+	}
 
-		var current int64
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*documenttemplate.DocumentTemplateVersion)(nil)).
-			ColumnExpr(cols.VersionNumber.Expr("COALESCE(MAX({}), 0)")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return documenttemplatecol.DocumentTemplateVersionScopeTenant(sq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).
-					Where(cols.TemplateID.Eq(), entity.TemplateID)
-			}).
-			Scan(ctx, &current)
-		if err != nil {
-			return 0, err
-		}
-
-		return current + 1, nil
-	})
+	return *current + 1, nil
 }
 
 // copyContentFrom seeds a new draft from an existing version. This is the whole
 // mechanism behind both "edit a copy of what is live" and rollback: history is
 // never mutated, it is copied forward.
-func (r *versionRepository) copyContentFrom(
+func copyContentFrom(
 	ctx context.Context,
+	db *keel.DB,
 	entity *documenttemplate.DocumentTemplateVersion,
 	sourceID pulid.ID,
 ) error {
-	source, err := r.GetByID(ctx, &documenttemplateports.GetDocumentTemplateVersionByIDRequest{
-		VersionID: sourceID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-	})
+	source, err := getVersion(ctx, db, sourceID)
 	if err != nil {
 		return err
 	}
@@ -188,46 +183,32 @@ func (r *versionRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documenttemplate.DocumentTemplateVersion, error) {
-			log := r.l.With(zap.String("operation", "Create"))
-
+			db := r.db.Keel(ctx)
 			entity := req.Version
 
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, _ bun.Tx) error {
-					if req.SourceVersionID != nil && !req.SourceVersionID.IsNil() {
-						if cErr := r.copyContentFrom(c, entity, *req.SourceVersionID); cErr != nil {
-							return cErr
-						}
-					}
+			if req.SourceVersionID != nil && !req.SourceVersionID.IsNil() {
+				if err := copyContentFrom(ctx, db, entity, *req.SourceVersionID); err != nil {
+					return nil, err
+				}
+			}
 
-					next, nErr := r.nextVersionNumber(c, entity)
-					if nErr != nil {
-						return nErr
-					}
-					entity.VersionNumber = next
-
-					// A new version is always a draft. Reaching Active is what Publish is
-					// for, and it has checks a plain insert would skip.
-					entity.Status = documenttemplate.VersionStatusDraft
-					entity.PublishedAt = nil
-					entity.PublishedByID = nil
-					entity.ArchivedAt = nil
-					entity.ArchivedByID = nil
-
-					_, iErr := r.db.DBForContext(c).
-						NewInsert().
-						Model(entity).
-						Returning("*").
-						Exec(c)
-
-					return iErr
-				},
-			)
+			next, err := nextVersionNumber(ctx, db, entity.TemplateID)
 			if err != nil {
-				log.Error("failed to create document template version", zap.Error(err))
 				return nil, err
+			}
+			entity.VersionNumber = next
+
+			// A new version is always a draft. Reaching Active is what Publish is
+			// for, and it has checks a plain insert would skip.
+			entity.Status = documenttemplate.VersionStatusDraft
+			entity.PublishedAt = nil
+			entity.PublishedByID = nil
+			entity.ArchivedAt = nil
+			entity.ArchivedByID = nil
+
+			if err = documenttemplatedb.DocumentTemplateVersions.Create(ctx, db, entity); err != nil {
+				r.l.Error("failed to create document template version", zap.Error(err))
+				return nil, versionErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -235,9 +216,10 @@ func (r *versionRepository) Create(
 	)
 }
 
-// Update refuses anything but a draft in the WHERE clause as well as in the
-// service, so a published version stays byte-identical to what it produced even
-// if a new caller forgets the rule.
+// Update refuses anything but a draft, so a published version stays
+// byte-identical to what it produced even if a new caller forgets the rule.
+// Publishing and archiving bump the version, so the optimistic lock refuses a
+// save of a version that left Draft after the editor loaded it.
 func (r *versionRepository) Update(
 	ctx context.Context,
 	entity *documenttemplate.DocumentTemplateVersion,
@@ -246,46 +228,35 @@ func (r *versionRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documenttemplate.DocumentTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
-			cols := documenttemplatecol.DocumentTemplateVersionColumns
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				Where(cols.Status.Eq(), documenttemplate.VersionStatusDraft).
-				OmitZero().
-				Returning("*").
-				Exec(ctx)
-			if err != nil {
-				log.Error("failed to update document template version", zap.Error(err))
-				return nil, err
+			v := documenttemplatedb.DocumentTemplateVersions
+			err := staleVersionError()
+			if entity.Status == documenttemplate.VersionStatusDraft {
+				err = v.Save(ctx, r.db.Keel(ctx), entity)
 			}
-
-			affected, err := results.RowsAffected()
-			if err != nil {
-				return nil, err
+			if dberror.IsVersionConflict(err) {
+				err = staleVersionError()
 			}
-
-			if affected == 0 {
-				// Either someone else saved first or the version was published between
-				// the editor loading it and saving. Both are the same instruction to the
-				// user: reload before editing again.
-				return nil, errortypes.NewBusinessError(
-					"This version changed since you opened it. Reload it and reapply your edits. " +
-						"A published version cannot be edited — create a new draft instead.",
+			if err != nil {
+				r.l.Error(
+					"failed to update document template version",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
 				)
+				return nil, versionErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
 		},
+	)
+}
+
+// staleVersionError covers both a concurrent save and a version published between
+// the editor loading it and saving. Both are the same instruction to the user:
+// reload before editing again.
+func staleVersionError() error {
+	return errortypes.NewBusinessError(
+		"This version changed since you opened it. Reload it and reapply your edits. " +
+			"A published version cannot be edited — create a new draft instead.",
 	)
 }
 
@@ -303,80 +274,13 @@ func (r *versionRepository) Publish(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documenttemplate.DocumentTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "Publish"),
-				zap.String("id", req.VersionID.String()),
-			)
-
-			vCols := documenttemplatecol.DocumentTemplateVersionColumns
-			entity := new(documenttemplate.DocumentTemplateVersion)
-
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, _ bun.Tx) error {
-					incoming, gErr := r.GetByID(
-						c,
-						&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
-							VersionID:  req.VersionID,
-							TenantInfo: req.TenantInfo,
-						},
-					)
-					if gErr != nil {
-						return gErr
-					}
-
-					if incoming.Status != documenttemplate.VersionStatusDraft {
-						return errortypes.NewBusinessError(
-							"Only a draft can be published. This version is {0}.",
-							incoming.Status.String(),
-						)
-					}
-
-					now := timeutils.NowUnix()
-
-					// Archive first: the partial unique index allows exactly one Active row
-					// per template and is checked per statement, so activating before
-					// archiving would abort the transaction.
-					if aErr := r.archiveActiveVersion(
-						c, req, incoming.TemplateID, now,
-					); aErr != nil {
-						return aErr
-					}
-
-					results, uErr := r.db.DBForContext(c).
-						NewUpdate().
-						Model(entity).
-						WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-							return documenttemplatecol.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
-								Where(vCols.ID.Eq(), req.VersionID).
-								Where(vCols.Version.Eq(), incoming.Version)
-						}).
-						Set(vCols.Status.Set(), documenttemplate.VersionStatusActive).
-						Set(vCols.PublishedAt.Set(), now).
-						Set(vCols.PublishedByID.Set(), req.PublishedByID).
-						Set(vCols.PublishNotes.Set(), req.PublishNotes).
-						Set(vCols.UpdatedAt.Set(), now).
-						Set(vCols.Version.Inc(1)).
-						Returning("*").
-						Exec(c)
-					if uErr != nil {
-						return uErr
-					}
-
-					if uErr = dberror.CheckRowsAffected(
-						results, "DocumentTemplateVersion", req.VersionID.String(),
-					); uErr != nil {
-						return uErr
-					}
-
-					// Repointing last means no window exists in which the template names a
-					// version that is not yet Active.
-					return r.pointTemplateAtVersion(c, req, incoming.TemplateID, now)
-				},
-			)
+			entity, err := r.publish(ctx, req)
 			if err != nil {
-				log.Error("failed to publish document template version", zap.Error(err))
+				r.l.Error(
+					"failed to publish document template version",
+					zap.String("id", req.VersionID.String()),
+					zap.Error(err),
+				)
 				return nil, dberror.MapRetryableTransactionError(
 					err,
 					"This template is being published by someone else. Retry the request.",
@@ -388,53 +292,72 @@ func (r *versionRepository) Publish(
 	)
 }
 
-func (r *versionRepository) archiveActiveVersion(
+func (r *versionRepository) publish(
 	ctx context.Context,
 	req *documenttemplateports.PublishDocumentTemplateVersionRequest,
-	templateID pulid.ID,
-	now int64,
-) error {
-	vCols := documenttemplatecol.DocumentTemplateVersionColumns
+) (*documenttemplate.DocumentTemplateVersion, error) {
+	db := r.db.Keel(ctx)
+	v := documenttemplatedb.DocumentTemplateVersions
 
-	_, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model((*documenttemplate.DocumentTemplateVersion)(nil)).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return documenttemplatecol.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
-				Where(vCols.TemplateID.Eq(), templateID).
-				Where(vCols.Status.Eq(), documenttemplate.VersionStatusActive)
-		}).
-		Set(vCols.Status.Set(), documenttemplate.VersionStatusArchived).
-		Set(vCols.ArchivedAt.Set(), now).
-		Set(vCols.ArchivedByID.Set(), req.PublishedByID).
-		Set(vCols.UpdatedAt.Set(), now).
-		Set(vCols.Version.Inc(1)).
-		Exec(ctx)
+	incoming, err := getVersion(ctx, db, req.VersionID)
+	if err != nil {
+		return nil, err
+	}
 
-	return err
-}
+	if incoming.Status != documenttemplate.VersionStatusDraft {
+		return nil, errortypes.NewBusinessError(
+			"Only a draft can be published. This version is {0}.",
+			incoming.Status.String(),
+		)
+	}
 
-func (r *versionRepository) pointTemplateAtVersion(
-	ctx context.Context,
-	req *documenttemplateports.PublishDocumentTemplateVersionRequest,
-	templateID pulid.ID,
-	now int64,
-) error {
-	tCols := documenttemplatecol.DocumentTemplateColumns
+	now := timeutils.NowUnix()
 
-	_, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model((*documenttemplate.DocumentTemplate)(nil)).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return documenttemplatecol.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
-				Where(tCols.ID.Eq(), templateID)
-		}).
-		Set(tCols.ActiveVersionID.Set(), req.VersionID).
-		Set(tCols.UpdatedAt.Set(), now).
-		Set(tCols.Version.Inc(1)).
-		Exec(ctx)
+	// Archive first: the partial unique index allows exactly one Active row per
+	// template and is checked per statement, so activating before archiving would
+	// abort the transaction.
+	if _, err = v.Where(
+		v.TemplateID.Eq(incoming.TemplateID),
+		v.Status.Eq(documenttemplate.VersionStatusActive),
+	).Update(
+		ctx,
+		db,
+		v.Status.To(documenttemplate.VersionStatusArchived),
+		v.ArchivedAt.To(now),
+		v.ArchivedByID.To(req.PublishedByID),
+	); err != nil {
+		return nil, versionErrors.Map(err, req.VersionID.String())
+	}
 
-	return err
+	published, err := v.Where(v.ID.Eq(req.VersionID), v.Version.Eq(incoming.Version)).
+		UpdateReturning(
+			ctx,
+			db,
+			v.Status.To(documenttemplate.VersionStatusActive),
+			v.PublishedAt.To(now),
+			v.PublishedByID.To(req.PublishedByID),
+			v.PublishNotes.To(req.PublishNotes),
+		)
+	if err != nil {
+		return nil, versionErrors.Map(err, req.VersionID.String())
+	}
+	if err = dberror.CheckAffected(
+		int64(len(published)),
+		"DocumentTemplateVersion",
+		req.VersionID.String(),
+	); err != nil {
+		return nil, err
+	}
+
+	// Repointing last means no window exists in which the template names a version
+	// that is not yet Active.
+	t := documenttemplatedb.DocumentTemplates
+	if _, err = t.Where(t.ID.Eq(incoming.TemplateID)).
+		Update(ctx, db, t.ActiveVersionID.To(req.VersionID)); err != nil {
+		return nil, templateErrors.Map(err, incoming.TemplateID.String())
+	}
+
+	return published[0], nil
 }
 
 // Archive retires a version. Archiving the live one also clears the template's
@@ -448,86 +371,67 @@ func (r *versionRepository) Archive(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documenttemplate.DocumentTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "Archive"),
-				zap.String("id", req.VersionID.String()),
-			)
-
-			vCols := documenttemplatecol.DocumentTemplateVersionColumns
-			tCols := documenttemplatecol.DocumentTemplateColumns
-			entity := new(documenttemplate.DocumentTemplateVersion)
-
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, _ bun.Tx) error {
-					existing, gErr := r.GetByID(
-						c,
-						&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
-							VersionID:  req.VersionID,
-							TenantInfo: req.TenantInfo,
-						},
-					)
-					if gErr != nil {
-						return gErr
-					}
-
-					if existing.Status == documenttemplate.VersionStatusArchived {
-						return errortypes.NewBusinessError("This version is already archived")
-					}
-
-					now := timeutils.NowUnix()
-					wasActive := existing.Status == documenttemplate.VersionStatusActive
-
-					if wasActive {
-						if _, tErr := r.db.DBForContext(c).
-							NewUpdate().
-							Model((*documenttemplate.DocumentTemplate)(nil)).
-							WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-								return documenttemplatecol.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
-									Where(tCols.ID.Eq(), existing.TemplateID).
-									Where(tCols.ActiveVersionID.Eq(), req.VersionID)
-							}).
-							Set(tCols.ActiveVersionID.SetNull()).
-							Set(tCols.UpdatedAt.Set(), now).
-							Set(tCols.Version.Inc(1)).
-							Exec(c); tErr != nil {
-							return tErr
-						}
-					}
-
-					results, uErr := r.db.DBForContext(c).
-						NewUpdate().
-						Model(entity).
-						WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-							return documenttemplatecol.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
-								Where(vCols.ID.Eq(), req.VersionID).
-								Where(vCols.Version.Eq(), existing.Version)
-						}).
-						Set(vCols.Status.Set(), documenttemplate.VersionStatusArchived).
-						Set(vCols.ArchivedAt.Set(), now).
-						Set(vCols.ArchivedByID.Set(), req.ArchivedByID).
-						Set(vCols.UpdatedAt.Set(), now).
-						Set(vCols.Version.Inc(1)).
-						Returning("*").
-						Exec(c)
-					if uErr != nil {
-						return uErr
-					}
-
-					return dberror.CheckRowsAffected(
-						results, "DocumentTemplateVersion", req.VersionID.String(),
-					)
-				},
-			)
+			entity, err := r.archive(ctx, req)
 			if err != nil {
-				log.Error("failed to archive document template version", zap.Error(err))
+				r.l.Error(
+					"failed to archive document template version",
+					zap.String("id", req.VersionID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
 			return entity, nil
 		},
 	)
+}
+
+func (r *versionRepository) archive(
+	ctx context.Context,
+	req *documenttemplateports.ArchiveDocumentTemplateVersionRequest,
+) (*documenttemplate.DocumentTemplateVersion, error) {
+	db := r.db.Keel(ctx)
+	v := documenttemplatedb.DocumentTemplateVersions
+
+	existing, err := getVersion(ctx, db, req.VersionID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existing.Status == documenttemplate.VersionStatusArchived {
+		return nil, errortypes.NewBusinessError("This version is already archived")
+	}
+
+	if existing.Status == documenttemplate.VersionStatusActive {
+		t := documenttemplatedb.DocumentTemplates
+		if _, err = t.Where(
+			t.ID.Eq(existing.TemplateID),
+			t.ActiveVersionID.Eq(req.VersionID),
+		).Update(ctx, db, t.ActiveVersionID.ToNull()); err != nil {
+			return nil, templateErrors.Map(err, existing.TemplateID.String())
+		}
+	}
+
+	archived, err := v.Where(v.ID.Eq(req.VersionID), v.Version.Eq(existing.Version)).
+		UpdateReturning(
+			ctx,
+			db,
+			v.Status.To(documenttemplate.VersionStatusArchived),
+			v.ArchivedAt.To(timeutils.NowUnix()),
+			v.ArchivedByID.To(req.ArchivedByID),
+		)
+	if err != nil {
+		return nil, versionErrors.Map(err, req.VersionID.String())
+	}
+	if err = dberror.CheckAffected(
+		int64(len(archived)),
+		"DocumentTemplateVersion",
+		req.VersionID.String(),
+	); err != nil {
+		return nil, err
+	}
+
+	return archived[0], nil
 }
 
 // Delete only ever removes a draft. A published version is the record of what a
@@ -538,33 +442,21 @@ func (r *versionRepository) Delete(
 	req *documenttemplateports.GetDocumentTemplateVersionByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.VersionID.String()),
-		)
-
-		cols := documenttemplatecol.DocumentTemplateVersionColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*documenttemplate.DocumentTemplateVersion)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return documenttemplatecol.DocumentTemplateVersionScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.VersionID).
-					Where(cols.Status.Eq(), documenttemplate.VersionStatusDraft)
-			}).
-			Exec(ctx)
+		v := documenttemplatedb.DocumentTemplateVersions
+		n, err := v.Where(
+			v.ID.Eq(req.VersionID),
+			v.Status.Eq(documenttemplate.VersionStatusDraft),
+		).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to delete document template version", zap.Error(err))
-			return err
+			r.l.Error(
+				"failed to delete document template version",
+				zap.String("id", req.VersionID.String()),
+				zap.Error(err),
+			)
+			return versionErrors.Map(err, req.VersionID.String())
 		}
 
-		affected, err := results.RowsAffected()
-		if err != nil {
-			return err
-		}
-
-		if affected == 0 {
+		if n == 0 {
 			return errortypes.NewBusinessError(
 				"Only a draft can be deleted. A published version is the record of what " +
 					"was sent — archive it instead.",

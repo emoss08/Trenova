@@ -13,24 +13,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
 
-type noopDBConnection struct{}
+type noopTransactor struct{}
 
-func (noopDBConnection) DB() *bun.DB                          { return nil }
-func (noopDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (noopDBConnection) HealthCheck(context.Context) error    { return nil }
-func (noopDBConnection) IsHealthy(context.Context) bool       { return true }
-func (noopDBConnection) Close() error                         { return nil }
-func (noopDBConnection) WithTx(
+func (noopTransactor) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
 
 func NewTestService(
@@ -47,7 +41,7 @@ func NewTestService(
 ) *Service {
 	return &Service{
 		l:                    logger.Named("service.document"),
-		db:                   noopDBConnection{},
+		db:                   noopTransactor{},
 		repo:                 repo,
 		cacheRepo:            cacheRepo,
 		sessionRepo:          sessionRepo,

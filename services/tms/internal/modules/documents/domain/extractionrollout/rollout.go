@@ -191,3 +191,17 @@ func (r *ExtractionRollout) BeforeAppendModel(_ context.Context, query bun.Query
 
 	return nil
 }
+
+func (r *ExtractionRollout) BeforeCreate(_ context.Context) error {
+	if r.Percent == 0 {
+		r.Percent = DefaultPercent
+	}
+	if r.MaxAccuracyDropPoints == 0 {
+		r.MaxAccuracyDropPoints = DefaultMaxAccuracyDropPoints
+	}
+	if r.MaxRejectionIncreasePoints == 0 {
+		r.MaxRejectionIncreasePoints = DefaultMaxRejectionIncreasePoints
+	}
+
+	return nil
+}

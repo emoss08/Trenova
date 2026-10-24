@@ -51,7 +51,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -62,7 +61,7 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   kernelports.DBConnection
+	DB                   kernelports.Transactor
 	Repo                 documentports.DocumentRepository
 	PacketRuleRepo       documentpacketruleports.DocumentPacketRuleRepository
 	DocumentTypeRepo     documenttypeports.DocumentTypeRepository
@@ -90,7 +89,7 @@ type Params struct {
 
 type Service struct {
 	l                    *zap.Logger
-	db                   kernelports.DBConnection
+	db                   kernelports.Transactor
 	repo                 documentports.DocumentRepository
 	packetRuleRepo       documentpacketruleports.DocumentPacketRuleRepository
 	documentTypeRepo     documenttypeports.DocumentTypeRepository
@@ -908,10 +907,10 @@ func (s *Service) Delete(
 	}
 
 	if doc.LineageID.IsNil() {
-		if err = s.db.WithTx(
+		if err = s.db.Transact(
 			ctx,
 			kernelports.TxOptions{},
-			func(txCtx context.Context, _ bun.Tx) error {
+			func(txCtx context.Context) error {
 				if txErr := s.detachUploadSessionsForDocuments(
 					txCtx,
 					[]pulid.ID{doc.ID},
@@ -950,7 +949,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	if err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		versionIDs := documentIDs(versions)
 		lineageIDs := []pulid.ID{doc.LineageID}
 		if txErr := s.detachUploadSessionsForDocuments(
@@ -1029,10 +1028,10 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 		docs,
 		func(doc *document.Document) bool { return doc.LineageID.IsNil() },
 	) {
-		if err = s.db.WithTx(
+		if err = s.db.Transact(
 			ctx,
 			kernelports.TxOptions{},
-			func(txCtx context.Context, _ bun.Tx) error {
+			func(txCtx context.Context) error {
 				if txErr := s.detachUploadSessionsForDocuments(
 					txCtx,
 					documentIDs(docs),
@@ -1095,7 +1094,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 		lineageIDs = append(lineageIDs, doc.LineageID)
 	}
 
-	if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	if err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if txErr := s.detachUploadSessionsForDocuments(
 			txCtx,
 			docIDs,
@@ -1151,55 +1150,14 @@ func (s *Service) detachUploadSessionsForDocuments(
 	docIDs []pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	return dbtx.WriteErr(ctx, s.db, func(ctx context.Context) error {
-		if len(docIDs) == 0 {
-			return nil
-		}
-
-		db := s.db.DBForContext(ctx)
-		if db == nil {
-			if len(docIDs) == 1 {
-				return s.sessionRepo.ClearDocumentReference(ctx, docIDs[0], tenantInfo)
-			}
-			return s.sessionRepo.ClearDocumentReferences(ctx, docIDs, tenantInfo)
-		}
-
-		documentIDStrings := make([]string, 0, len(docIDs))
-		for _, id := range docIDs {
-			documentIDStrings = append(documentIDStrings, id.String())
-		}
-
-		if _, err := db.
-			NewUpdate().
-			Table("document_upload_sessions").
-			Set("document_id = NULL").
-			Where("document_id IN (?)", bun.List(documentIDStrings)).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Exec(ctx); err != nil {
-			return err
-		}
-
-		remaining, err := db.
-			NewSelect().
-			Table("document_upload_sessions").
-			Where("document_id IN (?)", bun.List(documentIDStrings)).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Count(ctx)
-		if err != nil {
-			return err
-		}
-
-		if remaining > 0 {
-			return fmt.Errorf(
-				"document upload session references remain after detach: %d",
-				remaining,
-			)
-		}
-
+	switch len(docIDs) {
+	case 0:
 		return nil
-	})
+	case 1:
+		return s.sessionRepo.ClearDocumentReference(ctx, docIDs[0], tenantInfo)
+	default:
+		return s.sessionRepo.ClearDocumentReferences(ctx, docIDs, tenantInfo)
+	}
 }
 
 func (s *Service) GetPreviewURL(

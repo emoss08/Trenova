@@ -3,30 +3,28 @@ package extractionshadowrepository
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow/extractionshadowdb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
 const (
-	resultEntity       = "ExtractionShadowResult"
 	defaultScoredLimit = 2000
 	maxScoredLimit     = 10000
 	defaultPurgeLimit  = 1000
 	maxPurgeLimit      = 10000
 )
+
+var resultErrors = dberror.Mapping{Entity: "ExtractionShadowResult"}
 
 type resultRepository struct {
 	db *postgres.Connection
@@ -40,17 +38,6 @@ func NewResults(p Params) extractionshadowports.ExtractionShadowResultRepository
 	}
 }
 
-func uniqueExtraction() string {
-	cols := extractionshadowcol.ShadowResultColumns
-
-	return "CONFLICT (" + strings.Join([]string{
-		cols.OrganizationID.Bare(),
-		cols.BusinessUnitID.Bare(),
-		cols.DocumentID.Bare(),
-		cols.ExtractedAt.Bare(),
-	}, ", ") + ") DO NOTHING"
-}
-
 func (r *resultRepository) Create(
 	ctx context.Context,
 	entity *extractionshadow.ShadowResult,
@@ -59,12 +46,18 @@ func (r *resultRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*extractionshadow.ShadowResult, bool, error) {
-			res, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				On(uniqueExtraction()).
-				Returning("*").
-				Exec(ctx)
+			sr := extractionshadowdb.ShadowResults
+			db := r.db.Keel(ctx)
+
+			inserted, err := sr.CreateOrSkip(
+				ctx,
+				db,
+				[]*extractionshadow.ShadowResult{entity},
+				sr.OrganizationID,
+				sr.BusinessUnitID,
+				sr.DocumentID,
+				sr.ExtractedAt,
+			)
 			if err != nil {
 				r.l.Error("failed to create extraction shadow result",
 					zap.String("documentId", entity.DocumentID.String()),
@@ -73,28 +66,13 @@ func (r *resultRepository) Create(
 
 				return nil, false, fmt.Errorf("create extraction shadow result: %w", err)
 			}
-
-			inserted, err := res.RowsAffected()
-			if err != nil {
-				return nil, false, fmt.Errorf("create extraction shadow result rows: %w", err)
-			}
 			if inserted > 0 {
 				return entity, true, nil
 			}
 
-			existing, err := r.GetByExtraction(
-				ctx,
-				extractionshadowports.GetExtractionShadowResultByExtractionRequest{
-					TenantInfo: pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					},
-					DocumentID:  entity.DocumentID,
-					ExtractedAt: entity.ExtractedAt,
-				},
-			)
+			existing, err := byExtraction(entity.DocumentID, entity.ExtractedAt).One(ctx, db)
 			if err != nil {
-				return nil, false, err
+				return nil, false, resultErrors.Map(err, entity.DocumentID.String())
 			}
 
 			return existing, false, nil
@@ -107,17 +85,9 @@ func (r *resultRepository) GetByID(
 	req extractionshadowports.GetExtractionShadowResultRequest,
 ) (*extractionshadow.ShadowResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractionshadow.ShadowResult, error) {
-		entity := new(extractionshadow.ShadowResult)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return extractionshadowcol.ShadowResultScopeTenant(sq, req.TenantInfo).
-					Where(extractionshadowcol.ShadowResultColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := extractionshadowdb.ShadowResults.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, resultEntity)
+			return nil, resultErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -129,23 +99,19 @@ func (r *resultRepository) GetByExtraction(
 	req extractionshadowports.GetExtractionShadowResultByExtractionRequest,
 ) (*extractionshadow.ShadowResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractionshadow.ShadowResult, error) {
-		cols := extractionshadowcol.ShadowResultColumns
-		entity := new(extractionshadow.ShadowResult)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return extractionshadowcol.ShadowResultScopeTenant(sq, req.TenantInfo).
-					Where(cols.DocumentID.Eq(), req.DocumentID).
-					Where(cols.ExtractedAt.Eq(), req.ExtractedAt)
-			}).
-			Scan(ctx)
+		entity, err := byExtraction(req.DocumentID, req.ExtractedAt).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, resultEntity)
+			return nil, resultErrors.Map(err, req.DocumentID.String())
 		}
 
 		return entity, nil
 	})
+}
+
+func byExtraction(documentID pulid.ID, extractedAt int64) *keel.Query[extractionshadow.ShadowResult] {
+	sr := extractionshadowdb.ShadowResults
+
+	return sr.Where(sr.DocumentID.Eq(documentID), sr.ExtractedAt.Eq(extractedAt))
 }
 
 func (r *resultRepository) Save(
@@ -153,40 +119,12 @@ func (r *resultRepository) Save(
 	entity *extractionshadow.ShadowResult,
 ) (*extractionshadow.ShadowResult, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractionshadow.ShadowResult, error) {
-		cols := extractionshadowcol.ShadowResultColumns
-		previous := entity.Version
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return extractionshadowcol.ShadowResultScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).
-					Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), previous)
-			}).
-			ExcludeColumn(
-				cols.ID.Bare(),
-				cols.OrganizationID.Bare(),
-				cols.BusinessUnitID.Bare(),
-				cols.DocumentID.Bare(),
-				cols.ExtractedAt.Bare(),
-				cols.CreatedAt.Bare(),
-				cols.Version.Bare(),
-			).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
-		if err != nil {
+		sr := extractionshadowdb.ShadowResults
+		if err := sr.SaveExcept(ctx, r.db.Keel(ctx), entity, sr.DocumentID, sr.ExtractedAt); err != nil {
 			r.l.Error("failed to save extraction shadow result", zap.Error(err))
 
-			return nil, fmt.Errorf("save extraction shadow result: %w", err)
+			return nil, resultErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(res, resultEntity, entity.ID.String()); err != nil {
-			return nil, err
-		}
-		entity.Version = previous + 1
 
 		return entity, nil
 	})
@@ -194,18 +132,12 @@ func (r *resultRepository) Save(
 
 func (r *resultRepository) CountCreatedSince(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	since int64,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*extractionshadow.ShadowResult)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return extractionshadowcol.ShadowResultScopeTenant(sq, tenant).
-					Where(extractionshadowcol.ShadowResultColumns.CreatedAt.Gte(), since)
-			}).
-			Count(ctx)
+		sr := extractionshadowdb.ShadowResults
+		count, err := sr.Where(sr.CreatedAt.Gte(since)).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count extraction shadow results", zap.Error(err))
 
@@ -224,52 +156,46 @@ func (r *resultRepository) ListScored(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*extractionshadow.ShadowResult, error) {
-			cols := extractionshadowcol.ShadowResultColumns
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultScoredLimit
 			}
 			limit = min(limit, maxScoredLimit)
 
-			entities := make([]*extractionshadow.ShadowResult, 0, min(limit, defaultScoredLimit))
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Column(
-					cols.ID.Bare(),
-					cols.ProviderID.Bare(),
-					cols.ProviderName.Bare(),
-					cols.ServedModel.Bare(),
-					cols.Verdict.Bare(),
-					cols.FieldResults.Bare(),
-					cols.ScoredCount.Bare(),
-					cols.CorrectCount.Bare(),
-					cols.CorrectedCount.Bare(),
-					cols.MissedCount.Bare(),
-					cols.BaselineFieldResults.Bare(),
-					cols.BaselineScoredCount.Bare(),
-					cols.BaselineCorrectCount.Bare(),
-					cols.BaselineCorrectedCount.Bare(),
-					cols.BaselineMissedCount.Bare(),
-					cols.ScoredAt.Bare(),
+			sr := extractionshadowdb.ShadowResults
+			entities, err := sr.Pick(
+				sr.ID,
+				sr.ProviderID,
+				sr.ProviderName,
+				sr.ServedModel,
+				sr.Verdict,
+				sr.FieldResults,
+				sr.ScoredCount,
+				sr.CorrectCount,
+				sr.CorrectedCount,
+				sr.MissedCount,
+				sr.BaselineFieldResults,
+				sr.BaselineScoredCount,
+				sr.BaselineCorrectCount,
+				sr.BaselineCorrectedCount,
+				sr.BaselineMissedCount,
+				sr.ScoredAt,
+			).
+				Where(
+					sr.Status.Eq(extractionshadow.ResultStatusCompleted),
+					sr.ScoredAt.Gte(req.Since),
+					keel.When(req.ProviderID.IsNotNil(), sr.ProviderID.Eq(req.ProviderID)),
 				).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = extractionshadowcol.ShadowResultScopeTenant(sq, req.TenantInfo).
-						Where(cols.Status.Eq(), extractionshadow.ResultStatusCompleted).
-						Where(cols.ScoredAt.Gte(), req.Since)
-					if req.ProviderID.IsNotNil() {
-						sq = sq.Where(cols.ProviderID.Eq(), req.ProviderID)
-					}
-
-					return sq
-				}).
-				Order(cols.ScoredAt.OrderDesc()).
-				Limit(int64(limit)).
-				Scan(ctx)
+				Order(sr.ScoredAt.Desc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list scored extraction shadow results", zap.Error(err))
 
 				return nil, fmt.Errorf("list scored extraction shadow results: %w", err)
+			}
+			if entities == nil {
+				entities = []*extractionshadow.ShadowResult{}
 			}
 
 			return entities, nil
@@ -285,35 +211,31 @@ func (r *resultRepository) TotalsByStatus(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]extractionshadowports.ExtractionShadowStatusTotal, error) {
-			cols := extractionshadowcol.ShadowResultColumns
-			totals := make(
-				[]extractionshadowports.ExtractionShadowStatusTotal,
-				0,
-				len(extractionshadow.AllResultStatuses()),
+			sr := extractionshadowdb.ShadowResults
+			timed := sr.LatencyMs.Gt(0)
+			totals, err := keel.Into[extractionshadowports.ExtractionShadowStatusTotal](
+				ctx,
+				r.db.Keel(ctx),
+				sr.Pick(
+					sr.Status,
+					keel.Count(),
+					keel.Raw("COALESCE(SUM(?), 0)", sr.CostUSD),
+					keel.Raw("COALESCE(SUM(?) FILTER (WHERE ?), 0)", sr.LatencyMs, timed),
+					keel.Count().Filter(timed),
+				).
+					Where(
+						sr.CreatedAt.Gte(req.Since),
+						keel.When(req.ProviderID.IsNotNil(), sr.ProviderID.Eq(req.ProviderID)),
+					).
+					Group(sr.Status),
 			)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*extractionshadow.ShadowResult)(nil)).
-				Column(cols.Status.Bare()).
-				ColumnExpr(buncolgen.Count("count")).
-				ColumnExpr(cols.CostUSD.Expr("COALESCE(SUM({}), 0) AS cost_usd")).
-				ColumnExpr(cols.LatencyMs.Expr("COALESCE(SUM({}) FILTER (WHERE {} > 0), 0) AS latency_ms_sum")).
-				ColumnExpr(buncolgen.CountFilter("timed", cols.LatencyMs.Expr("{} > 0"))).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = extractionshadowcol.ShadowResultScopeTenant(sq, req.TenantInfo).
-						Where(cols.CreatedAt.Gte(), req.Since)
-					if req.ProviderID.IsNotNil() {
-						sq = sq.Where(cols.ProviderID.Eq(), req.ProviderID)
-					}
-
-					return sq
-				}).
-				Group(cols.Status.Bare()).
-				Scan(ctx, &totals)
 			if err != nil {
 				r.l.Error("failed to total extraction shadow results", zap.Error(err))
 
 				return nil, fmt.Errorf("total extraction shadow results: %w", err)
+			}
+			if totals == nil {
+				totals = []extractionshadowports.ExtractionShadowStatusTotal{}
 			}
 
 			return totals, nil
@@ -325,60 +247,18 @@ func (r *resultRepository) ListConnection(
 	ctx context.Context,
 	req *extractionshadowports.ListExtractionShadowResultConnectionRequest,
 ) (*pagination.CursorListResult[*extractionshadow.ShadowResult], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*extractionshadow.ShadowResult], error) {
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*extractionshadow.ShadowResult)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							extractionshadowcol.ShadowResultTable.Alias,
-							req.Filter,
-							(*extractionshadow.ShadowResult)(nil),
-						)
-
-						return sq.Apply(
-							extractionshadowcol.ShadowResultApplyTenant(req.Filter.TenantInfo),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					r.l.Error("failed to count extraction shadow results", zap.Error(err))
-
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*extractionshadow.ShadowResult]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*extractionshadow.ShadowResult) *bun.SelectQuery {
-						q := dba.NewSelect().Model(entities)
-						if len(req.Columns) > 0 {
-							q = q.Column(req.Columns...)
-						}
-
-						return q
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							extractionshadowcol.ShadowResultTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*extractionshadow.ShadowResult)(nil),
-						)
-					},
+				r.db.Keel(ctx),
+				extractionshadowdb.ShadowResults.Query(),
+				&listquery.Request[extractionshadow.ShadowResult]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.Columns,
 				},
 			)
 			if err != nil {
@@ -397,40 +277,24 @@ func (r *resultRepository) PurgeBefore(
 	req extractionshadowports.PurgeExtractionShadowResultsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := extractionshadowcol.ShadowResultColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultPurgeLimit
 		}
 		limit = min(limit, maxPurgeLimit)
 
-		dba := r.db.DBForContext(ctx)
-		expired := dba.NewSelect().
-			Model((*extractionshadow.ShadowResult)(nil)).
-			Column(cols.ID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return extractionshadowcol.ShadowResultScopeTenant(sq, req.TenantInfo).
-					Where(cols.CreatedAt.Lt(), req.Before)
-			}).
-			OrderExpr(cols.CreatedAt.OrderAsc()).
-			Limit(int64(limit))
-
-		res, err := dba.NewDelete().
-			Model((*extractionshadow.ShadowResult)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return extractionshadowcol.ShadowResultScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.In(), expired)
-			}).
-			Exec(ctx)
+		sr := extractionshadowdb.ShadowResults
+		expired := sr.As("expired")
+		purged, err := sr.Where(sr.ID.InQuery(expired.
+			Pick(expired.ID).
+			Where(expired.CreatedAt.Lt(req.Before)).
+			Order(expired.CreatedAt.Asc()).
+			Limit(limit),
+		)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to purge extraction shadow results", zap.Error(err))
 
 			return 0, fmt.Errorf("purge extraction shadow results: %w", err)
-		}
-
-		purged, err := res.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("purge extraction shadow results rows: %w", err)
 		}
 
 		return purged, nil
