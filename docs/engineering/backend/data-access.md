@@ -4,7 +4,10 @@ Entities, repositories, migrations, locking and caching. The reference vertical 
 `internal/modules/reference/{domain/commodity,adapters/postgres/commodityrepository}`. Paths are
 under `services/tms/`. Read [row-level-security.md](../row-level-security.md) and
 [bun/buncolgen.md](../bun/buncolgen.md) before writing a repository, and
-[keel-migration.md](keel-migration.md) before converting one to keel.
+[keel-migration.md](keel-migration.md) and [keel-conversion.md](keel-conversion.md) before
+converting one to keel. A converted module (equipment) uses the keel form of each rule below:
+generated `<entity>db` tables for columns, `listquery.Connection`/`List`/`SelectOptions` for
+lists, `Save` and `dberror.Mapping` for writes.
 
 ## Entities
 

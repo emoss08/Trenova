@@ -30,6 +30,11 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
   (`formula_template_backfill_integration_test.go`).
 - A repository method, a migration, an RLS policy or a lock gets an integration test: the database
   is what is being tested. Include a second tenant and assert it sees nothing.
+- keel SQL is asserted by rendering, not sqlmock: `keeltest.Render(t, q)`
+  (`internal/testutil/keeltest`) renders a query under a test tenant without a database
+  (`tractorrepository/tractor_test.go`). A module's integration fixtures build on `seedtest` in
+  its `<module>test` package: `equipmenttest.NewDatabase(t)` is two tenants, an RLS-enforcing
+  connection and scoped contexts.
 - The imaging worker runs from its image through `internal/testutil/imagingtest`; unit tests use
   `imaging/imagingfake`.
 

@@ -10,6 +10,7 @@ writing it, then check the subsystem's own doc in the [index](../README.md).
 | [scale.md](scale.md) | the checklist every read, write, job and integration passes |
 | [data-access.md](data-access.md) | entities, repositories, pagination, locking, migrations, caching, seeding |
 | [keel-migration.md](keel-migration.md) | the Bun-to-keel move: shared pools and transactions, `Keel(ctx)`, error mapping, what converted repositories do |
+| [keel-conversion.md](keel-conversion.md) | the playbook for converting a module: every repository pattern in Bun and in keel, `pkg/listquery`, validators, tests, the checklist |
 | [services.md](services.md) | application services, validation, errors, authorization, audit, after-commit work |
 | [api.md](api.md) | GraphQL schema, resolvers, dataloaders, limits, REST handlers |
 | [jobs.md](jobs.md) | Temporal workflows, activities, schedules, sweeps |

@@ -81,7 +81,9 @@ and still break production or the build.
   table with non-null `organization_id` and `business_unit_id`; any other shape calls
   `trenova_rls.apply_policy` or joins `trenova_rls.global_tables` in its migration. Cross-tenant
   code declares `dbscope.WithSystem` and is listed in `rlslint`'s allowlist.
-- **Columns** come from `pkg/buncolgen` helpers, never hand-written names.
+- **Columns** come from the generated keel tables (`<entity>db`) or, in Bun code, `pkg/buncolgen`
+  helpers, never hand-written names. Converting a module follows
+  [keel-conversion.md](docs/engineering/backend/keel-conversion.md).
 - **Authorization.** Every root resolver and route reaches a permission check or is listed with a
   reason in `authzlint`; every new write has an agent tool, exemption or `pending` entry in
   `writecoverage.yml`; access changes are audited through `SecurityAuditor`.
