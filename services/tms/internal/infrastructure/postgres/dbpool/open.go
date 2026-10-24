@@ -77,8 +77,12 @@ func KeelConfig(guard Guard, observers []keel.Observer) keel.Config {
 		System:        systemOf,
 		NewID:         newID,
 		Now:           timeutils.Now,
-		JSON:          &keel.JSONCodec{Marshal: sonic.Marshal, Unmarshal: sonic.Unmarshal},
-		Observers:     observers,
+		JSON: &keel.JSONCodec{
+			Marshal:         sonic.Marshal,
+			Unmarshal:       sonic.Unmarshal,
+			UnmarshalNumber: sonic.Config{UseNumber: true}.Froze().Unmarshal,
+		},
+		Observers: observers,
 	}
 	if guard != nil {
 		cfg.OnBegin = guard.OnBegin

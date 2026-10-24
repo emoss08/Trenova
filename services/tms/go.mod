@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.27
 	github.com/boombuler/barcode v1.1.0
-	github.com/emoss08/keel v0.0.0-20261024053224-8c2d4f9f4ecb
+	github.com/emoss08/keel v0.0.0-20261024064411-d7cf8af14c42
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/ledongthuc/pdf v0.0.0-20260929131644-d0d294e5c96a
 	github.com/pgvector/pgvector-go v0.4.1

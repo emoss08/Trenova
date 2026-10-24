@@ -117,7 +117,7 @@ type AIAuditEvent struct {
 	Reason      string   `json:"reason"      bun:"reason,type:TEXT,nullzero" keel:"reason,nullzero"`
 
 	// Arguments are what the call was made with, redacted when projected.
-	Arguments           map[string]any       `json:"arguments"           bun:"arguments,type:JSONB,nullzero,json_use_number" keel:"arguments,jsonb,nullzero"`
+	Arguments           map[string]any       `json:"arguments"           bun:"arguments,type:JSONB,nullzero,json_use_number" keel:"arguments,jsonb,jsonnumber,nullzero"`
 	ArgumentSensitivity *ArgumentSensitivity `json:"argumentSensitivity" bun:"argument_sensitivity,type:JSONB,nullzero" keel:"argument_sensitivity,jsonb"`
 	RedactedPaths       []string             `json:"redactedPaths"       bun:"redacted_paths,type:TEXT[],array,notnull,default:'{}'" keel:"redacted_paths"`
 	ArgumentsTruncated  bool                 `json:"argumentsTruncated"  bun:"arguments_truncated,type:BOOLEAN,notnull,default:false" keel:"arguments_truncated"`

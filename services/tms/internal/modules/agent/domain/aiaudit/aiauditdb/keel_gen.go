@@ -269,7 +269,7 @@ var aIAuditEventsTable = schema.Table{
 		{Name: "tier_source", Quoted: `"tier_source"`, Field: "TierSource", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Tier Source`},
 		{Name: "held_by", Quoted: `"held_by"`, Field: "HeldBy", Kind: schema.KindStringArray, Flags: schema.FlagNullable, Label: `Held By`},
 		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reason`},
-		{Name: "arguments", Quoted: `"arguments"`, Field: "Arguments", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Arguments`, Doc: `Arguments are what the call was made with, redacted when projected.`},
+		{Name: "arguments", Quoted: `"arguments"`, Field: "Arguments", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero | schema.FlagJSONNumber, Label: `Arguments`, Doc: `Arguments are what the call was made with, redacted when projected.`},
 		{Name: "argument_sensitivity", Quoted: `"argument_sensitivity"`, Field: "ArgumentSensitivity", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Argument Sensitivity`},
 		{Name: "redacted_paths", Quoted: `"redacted_paths"`, Field: "RedactedPaths", Kind: schema.KindStringArray, Flags: schema.FlagNullable, Label: `Redacted Paths`},
 		{Name: "arguments_truncated", Quoted: `"arguments_truncated"`, Field: "ArgumentsTruncated", Kind: schema.KindBool, Flags: 0, Label: `Arguments Truncated`},
