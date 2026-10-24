@@ -20,9 +20,10 @@ var (
 	_ domaintypes.PostgresSearchable     = (*FleetCode)(nil)
 )
 
+// Fleet groupings
 type FleetCode struct {
 	bun.BaseModel `bun:"table:fleet_codes,alias:fc" json:"-"`
-	keel.Table    `                                          keel:"fleet_codes"`
+	keel.Table    `                                          keel:"fleet_codes,report=Equipment"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:fc_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"                                        keel:"business_unit_id,pk,tenant"`
@@ -31,9 +32,9 @@ type FleetCode struct {
 	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"                                     keel:"status"`
 	Code           string             `json:"code"           bun:"code,type:VARCHAR(10),notnull"                                                        keel:"code"`
 	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"                                                       keel:"description,nullzero"`
-	RevenueGoal    *float64           `json:"revenueGoal"    bun:"revenue_goal,type:NUMERIC(10,2),nullzero"                                             keel:"revenue_goal"`
-	DeadheadGoal   *float64           `json:"deadheadGoal"   bun:"deadhead_goal,type:NUMERIC(10,2),nullzero"                                            keel:"deadhead_goal"`
-	MileageGoal    *float64           `json:"mileageGoal"    bun:"mileage_goal,type:NUMERIC(10,2),nullzero"                                             keel:"mileage_goal"`
+	RevenueGoal    *float64           `json:"revenueGoal"    bun:"revenue_goal,type:NUMERIC(10,2),nullzero"                                             keel:"revenue_goal,format=money"`
+	DeadheadGoal   *float64           `json:"deadheadGoal"   bun:"deadhead_goal,type:NUMERIC(10,2),nullzero"                                            keel:"deadhead_goal,format=percent"`
+	MileageGoal    *float64           `json:"mileageGoal"    bun:"mileage_goal,type:NUMERIC(10,2),nullzero"                                             keel:"mileage_goal,format=distance"`
 	Color          string             `json:"color"          bun:"color,type:VARCHAR(10),nullzero"                                                      keel:"color,nullzero"`
 	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
 	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
@@ -41,9 +42,9 @@ type FleetCode struct {
 	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id" keel:"belongs:business_unit_id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"  keel:"belongs:organization_id"`
-	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"       keel:"belongs:manager_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id" keel:"belongs:business_unit_id,noreport"`
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"  keel:"belongs:organization_id,noreport"`
+	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"       keel:"belongs:manager_id,noreport"`
 }
 
 func (fc *FleetCode) Validate(multiErr *errortypes.MultiError) {

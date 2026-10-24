@@ -401,7 +401,7 @@ var billingTransferRunItemsTable = schema.Table{
 		{Name: "run_id", Quoted: `"run_id"`, Field: "RunID", Kind: schema.KindString, Flags: 0, Label: `Run ID`},
 		{Name: "shipment_id", Quoted: `"shipment_id"`, Field: "ShipmentID", Kind: schema.KindString, Flags: 0, Label: `Shipment ID`},
 		{Name: "sequence", Quoted: `"sequence"`, Field: "Sequence", Kind: schema.KindInt64, Flags: 0, Label: `Sequence`},
-		{Name: "pro_number", Quoted: `"pro_number"`, Field: "ProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Pro Number`},
+		{Name: "pro_number", Quoted: `"pro_number"`, Field: "ProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `PRO Number`},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumItemStatus[:]},
 		{Name: "failure_code", Quoted: `"failure_code"`, Field: "FailureCode", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Failure Code`, Enum: enumFailureCode[:]},
 		{Name: "error_message", Quoted: `"error_message"`, Field: "ErrorMessage", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Error Message`},

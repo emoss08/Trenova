@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 )
 
 // ErrTooLarge is returned by a pipe's writer once what was written would pass
@@ -146,39 +145,3 @@ func (h *RowHeartbeat) Tick() {
 func (h *RowHeartbeat) Rows() int64 {
 	return h.rows
 }
-
-// HeartbeatingReader beats as rows are read from a report dataset.
-type HeartbeatingReader struct {
-	inner     reportports.ReportDatasetReader
-	heartbeat *RowHeartbeat
-}
-
-func NewHeartbeatingReader(
-	ctx context.Context,
-	inner reportports.ReportDatasetReader,
-	every int64,
-	beat Heartbeat,
-) *HeartbeatingReader {
-	return &HeartbeatingReader{inner: inner, heartbeat: NewRowHeartbeat(ctx, every, beat)}
-}
-
-func (r *HeartbeatingReader) Schema() []reportports.ReportResultColumn { return r.inner.Schema() }
-
-func (r *HeartbeatingReader) Next(ctx context.Context) (reportports.ReportRow, error) {
-	row, err := r.inner.Next(ctx)
-	if err == nil {
-		r.heartbeat.Tick()
-	}
-
-	return row, err
-}
-
-func (r *HeartbeatingReader) Totals(ctx context.Context) (reportports.ReportRow, error) {
-	return r.inner.Totals(ctx)
-}
-
-func (r *HeartbeatingReader) RowCount() int64 { return r.inner.RowCount() }
-
-func (r *HeartbeatingReader) Truncated() bool { return r.inner.Truncated() }
-
-func (r *HeartbeatingReader) Close() error { return r.inner.Close() }

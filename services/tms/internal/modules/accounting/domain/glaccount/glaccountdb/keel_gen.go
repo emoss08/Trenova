@@ -23,32 +23,34 @@ var gLAccountsTable = schema.Table{
 	Model:  "glaccount.GLAccount",
 	Label:  `GL Account`,
 	Plural: `GL Accounts`,
+	Doc:    `The chart of accounts and its running balances`,
+	Report: &schema.TableReport{Category: `Accounting`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
-		{Name: "account_type_id", Quoted: `"account_type_id"`, Field: "AccountTypeID", Kind: schema.KindString, Flags: 0, Label: `Account Type ID`},
-		{Name: "parent_id", Quoted: `"parent_id"`, Field: "ParentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Parent ID`},
-		{Name: "account_code", Quoted: `"account_code"`, Field: "AccountCode", Kind: schema.KindString, Flags: 0, Label: `Account Code`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`},
-		{Name: "is_system", Quoted: `"is_system"`, Field: "IsSystem", Kind: schema.KindBool, Flags: 0, Label: `Is System`},
-		{Name: "allow_manual_je", Quoted: `"allow_manual_je"`, Field: "AllowManualJE", Kind: schema.KindBool, Flags: 0, Label: `Allow Manual JE`},
-		{Name: "require_project", Quoted: `"require_project"`, Field: "RequireProject", Kind: schema.KindBool, Flags: 0, Label: `Require Project`},
-		{Name: "current_balance", Quoted: `"current_balance"`, Field: "CurrentBalance", Kind: schema.KindInt64, Flags: 0, Label: `Current Balance`},
-		{Name: "debit_balance", Quoted: `"debit_balance"`, Field: "DebitBalance", Kind: schema.KindInt64, Flags: 0, Label: `Debit Balance`},
-		{Name: "credit_balance", Quoted: `"credit_balance"`, Field: "CreditBalance", Kind: schema.KindInt64, Flags: 0, Label: `Credit Balance`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "account_type_id", Quoted: `"account_type_id"`, Field: "AccountTypeID", Kind: schema.KindString, Flags: 0, Label: `Account Type ID`, Report: &reportDimStringHidden},
+		{Name: "parent_id", Quoted: `"parent_id"`, Field: "ParentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Parent ID`, Report: &reportDimStringHidden},
+		{Name: "account_code", Quoted: `"account_code"`, Field: "AccountCode", Kind: schema.KindString, Flags: 0, Label: `Account Code`, Report: &reportDimString},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Account Name`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, Report: &reportDimString},
+		{Name: "is_system", Quoted: `"is_system"`, Field: "IsSystem", Kind: schema.KindBool, Flags: 0, Label: `System Account`, Report: &reportDimBool},
+		{Name: "allow_manual_je", Quoted: `"allow_manual_je"`, Field: "AllowManualJE", Kind: schema.KindBool, Flags: 0, Label: `Allows Manual Journals`, Report: &reportDimBool},
+		{Name: "require_project", Quoted: `"require_project"`, Field: "RequireProject", Kind: schema.KindBool, Flags: 0, Label: `Requires Project`, Report: &reportDimBool},
+		{Name: "current_balance", Quoted: `"current_balance"`, Field: "CurrentBalance", Kind: schema.KindInt64, Flags: 0, Label: `Current Balance (Minor)`, Report: &reportMeasureInteger},
+		{Name: "debit_balance", Quoted: `"debit_balance"`, Field: "DebitBalance", Kind: schema.KindInt64, Flags: 0, Label: `Debit Balance (Minor)`, Report: &reportMeasureInteger},
+		{Name: "credit_balance", Quoted: `"credit_balance"`, Field: "CreditBalance", Kind: schema.KindInt64, Flags: 0, Label: `Credit Balance (Minor)`, Report: &reportMeasureInteger},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
 	},
 	Relations: []schema.Relation{
 		{Name: "AccountType", Alias: "at_", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Account Type`},
-		{Name: "Parent", Alias: "p", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Parent`},
-		{Name: "Children", Alias: "c", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{5}, Label: `Children`},
+		{Name: "Parent", Alias: "p", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Parent Account`},
+		{Name: "Children", Alias: "c", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{5}, Label: `Child Accounts`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -305,3 +307,19 @@ var enumDomaintypesStatus = [...]schema.EnumValue{
 	{Value: `Active`, Label: `Active`},
 	{Value: `Inactive`, Label: `Inactive`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}

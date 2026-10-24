@@ -33,44 +33,46 @@ var customersTable = schema.Table{
 	Model:  "customer.Customer",
 	Label:  `Customer`,
 	Plural: `Customers`,
+	Doc:    `Customers who tender freight`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "state_id", Quoted: `"state_id"`, Field: "StateID", Kind: schema.KindString, Flags: 0, Label: `State ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
-		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Name`},
-		{Name: "address_line_1", Quoted: `"address_line_1"`, Field: "AddressLine1", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 1`},
-		{Name: "address_line_2", Quoted: `"address_line_2"`, Field: "AddressLine2", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 2`},
-		{Name: "city", Quoted: `"city"`, Field: "City", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `City`},
-		{Name: "postal_code", Quoted: `"postal_code"`, Field: "PostalCode", Kind: schema.KindString, Flags: 0, Label: `Postal Code`},
-		{Name: "is_geocoded", Quoted: `"is_geocoded"`, Field: "IsGeocoded", Kind: schema.KindBool, Flags: 0, Label: `Is Geocoded`},
-		{Name: "longitude", Quoted: `"longitude"`, Field: "Longitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Longitude`},
-		{Name: "latitude", Quoted: `"latitude"`, Field: "Latitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Latitude`},
-		{Name: "place_id", Quoted: `"place_id"`, Field: "PlaceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Place ID`},
-		{Name: "external_id", Quoted: `"external_id"`, Field: "ExternalID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `External ID`},
-		{Name: "dot_number", Quoted: `"dot_number"`, Field: "DOTNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `DOT Number`},
-		{Name: "mc_number", Quoted: `"mc_number"`, Field: "MCNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `MC Number`},
-		{Name: "status_update_preference", Quoted: `"status_update_preference"`, Field: "StatusUpdatePreference", Kind: schema.KindString, Flags: 0, Label: `Status Update Preference`, Enum: enumStatusUpdatePreference[:]},
-		{Name: "status_update_recipients", Quoted: `"status_update_recipients"`, Field: "StatusUpdateRecipients", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Status Update Recipients`},
-		{Name: "broker_vetting_enabled", Quoted: `"broker_vetting_enabled"`, Field: "BrokerVettingEnabled", Kind: schema.KindBool, Flags: 0, Label: `Broker Vetting Enabled`},
-		{Name: "check_call_interval_hours", Quoted: `"check_call_interval_hours"`, Field: "CheckCallIntervalHours", Kind: schema.KindInt16, Flags: schema.FlagNullable, Label: `Check Call Interval Hours`},
-		{Name: "eta_risk_threshold_minutes", Quoted: `"eta_risk_threshold_minutes"`, Field: "EtaRiskThresholdMinutes", Kind: schema.KindInt16, Flags: schema.FlagNullable, Label: `Eta Risk Threshold Minutes`},
-		{Name: "geom", Quoted: `"geom"`, Field: "Geom", Kind: schema.KindOther, Flags: schema.FlagReadOnly | schema.FlagNullable, Label: `Geom`},
-		{Name: "allow_consolidation", Quoted: `"allow_consolidation"`, Field: "AllowConsolidation", Kind: schema.KindBool, Flags: 0, Label: `Allow Consolidation`},
-		{Name: "exclusive_consolidation", Quoted: `"exclusive_consolidation"`, Field: "ExclusiveConsolidation", Kind: schema.KindBool, Flags: 0, Label: `Exclusive Consolidation`},
-		{Name: "consolidation_priority", Quoted: `"consolidation_priority"`, Field: "ConsolidationPriority", Kind: schema.KindInt64, Flags: 0, Label: `Consolidation Priority`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "state_id", Quoted: `"state_id"`, Field: "StateID", Kind: schema.KindString, Flags: 0, Label: `State ID`, Report: &reportDimString},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`, Report: &reportDimString},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Name`, Report: &reportDimString},
+		{Name: "address_line_1", Quoted: `"address_line_1"`, Field: "AddressLine1", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 1`, Report: &reportDimString},
+		{Name: "address_line_2", Quoted: `"address_line_2"`, Field: "AddressLine2", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 2`, Report: &reportDimString},
+		{Name: "city", Quoted: `"city"`, Field: "City", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `City`, Report: &reportDimString},
+		{Name: "postal_code", Quoted: `"postal_code"`, Field: "PostalCode", Kind: schema.KindString, Flags: 0, Label: `Postal Code`, Report: &reportDimString},
+		{Name: "is_geocoded", Quoted: `"is_geocoded"`, Field: "IsGeocoded", Kind: schema.KindBool, Flags: 0, Label: `Is Geocoded`, Report: &reportDimBool},
+		{Name: "longitude", Quoted: `"longitude"`, Field: "Longitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Longitude`, Report: &reportDimFloat},
+		{Name: "latitude", Quoted: `"latitude"`, Field: "Latitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Latitude`, Report: &reportDimFloat},
+		{Name: "place_id", Quoted: `"place_id"`, Field: "PlaceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Place ID`, Report: &reportDimString},
+		{Name: "external_id", Quoted: `"external_id"`, Field: "ExternalID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `External ID`, Report: &reportDimString},
+		{Name: "dot_number", Quoted: `"dot_number"`, Field: "DOTNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `DOT Number`, Report: &reportDimString},
+		{Name: "mc_number", Quoted: `"mc_number"`, Field: "MCNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `MC Number`, Report: &reportDimString},
+		{Name: "status_update_preference", Quoted: `"status_update_preference"`, Field: "StatusUpdatePreference", Kind: schema.KindString, Flags: 0, Label: `Status Update Preference`, Enum: enumStatusUpdatePreference[:], Report: &reportDimEnum},
+		{Name: "status_update_recipients", Quoted: `"status_update_recipients"`, Field: "StatusUpdateRecipients", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Status Update Recipients`, Report: &reportDimString},
+		{Name: "broker_vetting_enabled", Quoted: `"broker_vetting_enabled"`, Field: "BrokerVettingEnabled", Kind: schema.KindBool, Flags: 0, Label: `Broker Vetting Enabled`, Report: &reportDimBool},
+		{Name: "check_call_interval_hours", Quoted: `"check_call_interval_hours"`, Field: "CheckCallIntervalHours", Kind: schema.KindInt16, Flags: schema.FlagNullable, Label: `Check Call Interval Hours`, Report: &reportDimInteger},
+		{Name: "eta_risk_threshold_minutes", Quoted: `"eta_risk_threshold_minutes"`, Field: "EtaRiskThresholdMinutes", Kind: schema.KindInt16, Flags: schema.FlagNullable, Label: `ETA Risk Threshold Minutes`, Report: &reportDimInteger},
+		{Name: "geom", Quoted: `"geom"`, Field: "Geom", Kind: schema.KindOther, Flags: schema.FlagReadOnly | schema.FlagNullable, Label: `Geom`, Report: &reportDimOther},
+		{Name: "allow_consolidation", Quoted: `"allow_consolidation"`, Field: "AllowConsolidation", Kind: schema.KindBool, Flags: 0, Label: `Allow Consolidation`, Report: &reportDimBool},
+		{Name: "exclusive_consolidation", Quoted: `"exclusive_consolidation"`, Field: "ExclusiveConsolidation", Kind: schema.KindBool, Flags: 0, Label: `Exclusive Consolidation`, Report: &reportDimBool},
+		{Name: "consolidation_priority", Quoted: `"consolidation_priority"`, Field: "ConsolidationPriority", Kind: schema.KindInt64, Flags: 0, Label: `Consolidation Priority`, Report: &reportDimInteger},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
-		{Name: "BillingProfile", Alias: "bp", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Billing Profile`},
-		{Name: "EmailProfile", Alias: "ep", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Email Profile`},
-		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `State`},
+		{Name: "BillingProfile", Alias: "bp", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Billing Profile`, NoReport: true},
+		{Name: "EmailProfile", Alias: "ep", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Email Profile`, NoReport: true},
+		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `State`, NoReport: true},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -1556,6 +1558,26 @@ var enumStatusUpdatePreference = [...]schema.EnumValue{
 	{Value: `Departures`, Label: `Status Update Departures`},
 	{Value: `ArrivalsAndDepartures`, Label: `Status Update Arrivals And Departures`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimFloat = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueFloat, Aggs: schema.AggsNumeric}
+
+var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportDimOther = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueOther, Aggs: schema.AggsCount}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // BillingCycleCol is a column of customer.BillingCycle values.
 type BillingCycleCol struct{ keel.StringCol }

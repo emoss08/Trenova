@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -27,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
+	"go.uber.org/fx/fxtest"
 	"go.uber.org/zap"
 )
 
@@ -178,17 +180,25 @@ func TestConvertedLists_ReportReadsUnderRowLevelSecurity(t *testing.T) {
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	logger := zap.NewNop()
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	resolvers := agentread.ResolverParams{
-		ReportingService: reporting.New(reporting.Params{
-			Logger: logger,
-			RunRepo: reportrepository.NewRunRepository(
-				reportrepository.RunParams{DB: conn, Logger: logger}),
-			ScheduleRepo: reportrepository.NewScheduleRepository(
-				reportrepository.ScheduleParams{DB: conn, Logger: logger}),
-			PermissionEngine: engine,
-			Config:           &config.Config{},
+	catalog, err := reportengine.NewCatalog()
+	require.NoError(t, err)
+	reportingService, err := reporting.New(reporting.Params{
+		Logger: logger,
+		RunRepo: reportrepository.NewRunRepository(
+			reportrepository.RunParams{DB: conn, Logger: logger}),
+		ScheduleRepo: reportrepository.NewScheduleRepository(
+			reportrepository.ScheduleParams{DB: conn, Logger: logger}),
+		Engine: reportengine.New(reportengine.Params{
+			LC:      fxtest.NewLifecycle(t),
+			Catalog: catalog,
+			Config:  &config.Config{},
+			Logger:  logger,
 		}),
-	}
+		PermissionEngine: engine,
+		Config:           &config.Config{},
+	})
+	require.NoError(t, err)
+	resolvers := agentread.ResolverParams{ReportingService: reportingService}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
 	public := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: &publicRole{}, Resolvers: resolvers,

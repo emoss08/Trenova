@@ -1,0 +1,118 @@
+{
+  "key": "headcount-snapshot",
+  "version": "1.0.0",
+  "name": "Headcount Snapshot",
+  "description": "The active roster counted by terminal, position and department, with the driving half broken out",
+  "category": "Compliance",
+  "tags": [
+    "workforce",
+    "headcount",
+    "roster"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "worker",
+    "columns": [
+      {
+        "id": "fleet_code",
+        "label": "Fleet",
+        "dimension": {
+          "field": "fleetCode.code"
+        }
+      },
+      {
+        "id": "department",
+        "label": "Department",
+        "dimension": {
+          "field": "position.department"
+        }
+      },
+      {
+        "id": "position",
+        "label": "Position",
+        "dimension": {
+          "field": "position.title"
+        }
+      },
+      {
+        "id": "driving",
+        "label": "Driving Position",
+        "dimension": {
+          "field": "position.isDrivingPosition"
+        },
+        "display": {
+          "style": "bool",
+          "boolStyle": "yesNo"
+        }
+      },
+      {
+        "id": "exempt",
+        "label": "Exempt from Overtime",
+        "dimension": {
+          "field": "position.flsaExempt"
+        },
+        "display": {
+          "style": "bool",
+          "boolStyle": "yesNo"
+        }
+      },
+      {
+        "id": "worker_count",
+        "label": "Workers",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "earliest_hire",
+        "label": "Earliest Hire",
+        "measure": {
+          "field": "profile.hireDate",
+          "agg": "min"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "in",
+          "param": "statuses"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "worker_count",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "statuses",
+        "label": "Statuses",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Active"
+        ],
+        "allowed": [
+          "Active",
+          "Inactive"
+        ]
+      }
+    ]
+  }
+}

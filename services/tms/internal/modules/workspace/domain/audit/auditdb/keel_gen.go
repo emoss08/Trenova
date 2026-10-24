@@ -648,7 +648,7 @@ var enumPermissionResource = [...]schema.EnumValue{
 	{Value: `invoice`, Label: `Invoice`, Doc: `Billing`},
 	{Value: `invoice_dispute`, Label: `Invoice Dispute`},
 	{Value: `factoring_agreement`, Label: `Factoring Agreement`},
-	{Value: `factoring_noa`, Label: `Factoring Noa`},
+	{Value: `factoring_noa`, Label: `Factoring NOA`},
 	{Value: `factoring_submission`, Label: `Factoring Submission`},
 	{Value: `factoring_reserve`, Label: `Factoring Reserve`},
 	{Value: `factoring_remittance`, Label: `Factoring Remittance`},

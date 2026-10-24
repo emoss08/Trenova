@@ -2,27 +2,54 @@ package agentquerytoolservice
 
 import (
 	"testing"
+	"time"
 
+	"github.com/emoss08/keel/analytics/export"
+	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/table"
+	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func revenueRows(rows ...[]any) *reportrows.Envelope {
-	return &reportrows.Envelope{
-		Meta: reportrows.Meta{Title: "Revenue by Customer", GeneratedAt: 1784131200},
-		Schema: []reportrows.Column{
-			{ID: "customer", Label: "Customer", Type: reportcatalog.FieldString},
-			{ID: "revenue", Label: "Revenue", Type: reportcatalog.FieldDecimal},
-		},
-		Rows:    rows,
-		Summary: reportrows.Summary{RowCount: int64(len(rows))},
+func testEnvelope(
+	t *testing.T,
+	title string,
+	columns []table.Column,
+	rows ...[]any,
+) *export.Envelope {
+	t.Helper()
+	builder := table.NewBuilder(columns)
+	for _, row := range rows {
+		require.NoError(t, builder.Append(row...))
 	}
+	return &export.Envelope{
+		Meta:     export.Meta{Title: title, GeneratedAt: time.Unix(1784131200, 0)},
+		Location: time.UTC,
+		Table:    builder.Table(),
+		RowCount: int64(len(rows)),
+	}
+}
+
+func testColumn(id, label string, kind value.Type) table.Column {
+	return table.Column{
+		ID:      id,
+		Label:   label,
+		Type:    kind,
+		Display: format.Resolve(kind, format.Hint{}, nil),
+	}
+}
+
+func revenueRows(t *testing.T, rows ...[]any) *export.Envelope {
+	t.Helper()
+	return testEnvelope(t, "Revenue by Customer", []table.Column{
+		testColumn("customer", "Customer", value.String),
+		testColumn("revenue", "Revenue", value.Decimal),
+	}, rows...)
 }
 
 func succeededRun(id pulid.ID, rowsKey string) *report.ReportRun {
@@ -55,9 +82,9 @@ func comparisonTools(t *testing.T) comparisonFixture {
 		succeededRun(later, "reports/later.rows.json"),
 		succeededRun(earlier, "reports/earlier.rows.json"),
 	}
-	service.rows = map[pulid.ID]*reportrows.Envelope{
-		earlier: revenueRows([]any{"ACME", "1000.00"}, []any{"Globex", "500.00"}),
-		later:   revenueRows([]any{"ACME", "1250.50"}, []any{"Umbrella", "80.00"}),
+	service.rows = map[pulid.ID]*export.Envelope{
+		earlier: revenueRows(t, []any{"ACME", "1000.00"}, []any{"Globex", "500.00"}),
+		later:   revenueRows(t, []any{"ACME", "1250.50"}, []any{"Umbrella", "80.00"}),
 	}
 
 	return comparisonFixture{service: service, tools: tools, earlier: earlier, later: later}
@@ -146,10 +173,11 @@ func TestCompareReportRuns_RefusesRunsOfDifferentShapes(t *testing.T) {
 	t.Parallel()
 
 	fixture := comparisonTools(t)
-	widened := revenueRows([]any{"ACME", "1250.50", float64(3)})
-	widened.Schema = append(widened.Schema, reportrows.Column{
-		ID: "shipments", Label: "Shipments", Type: reportcatalog.FieldInt,
-	})
+	widened := testEnvelope(t, "Revenue by Customer", []table.Column{
+		testColumn("customer", "Customer", value.String),
+		testColumn("revenue", "Revenue", value.Decimal),
+		testColumn("shipments", "Shipments", value.Int),
+	}, []any{"ACME", "1250.50", int64(3)})
 	fixture.service.rows[fixture.later] = widened
 
 	_, err := fixture.tools["report_compare_runs"].Query(
@@ -210,7 +238,7 @@ func TestCompareReportRuns_CarriesTruncationIntoTheAnswer(t *testing.T) {
 	t.Parallel()
 
 	fixture := comparisonTools(t)
-	fixture.service.rows[fixture.earlier].Summary.Truncated = true
+	fixture.service.rows[fixture.earlier].Table.Truncated = true
 
 	result, err := fixture.tools["report_compare_runs"].Query(
 		t.Context(),

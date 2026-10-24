@@ -32,37 +32,38 @@ type DriftLine struct {
 	ProviderMinor int64          `json:"providerMinor"`
 }
 
+// Documents Trenova sent to the accounting system that now differ there, with both values and how each was settled
 type AccountingDriftFinding struct {
 	bun.BaseModel             `bun:"table:accounting_drift_findings,alias:acctdf" json:"-"`
-	keel.Table                `keel:"accounting_drift_findings"`
+	keel.Table                `                                                            keel:"accounting_drift_findings,report=Accounting,label=Drift Finding"`
 	pagination.CursorValueSet `bun:",embed"                                       json:"-"`
 
 	ID                 pulid.ID        `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctdf_"`
 	BusinessUnitID     pulid.ID        `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID     pulid.ID        `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	ConnectionID       pulid.ID        `json:"connectionId"       bun:"connection_id,type:VARCHAR(100),notnull" keel:"connection_id"`
-	ObjectType         SyncObjectType  `json:"objectType"         bun:"object_type,type:VARCHAR(30),notnull" keel:"object_type"`
-	ObjectID           pulid.ID        `json:"objectId"           bun:"object_id,type:VARCHAR(100),notnull" keel:"object_id"`
-	ObjectNumber       string          `json:"objectNumber"       bun:"object_number,type:VARCHAR(100),nullzero" keel:"object_number,nullzero"`
+	ObjectType         SyncObjectType  `json:"objectType"         bun:"object_type,type:VARCHAR(30),notnull" keel:"object_type,label=Document Type"`
+	ObjectID           pulid.ID        `json:"objectId"           bun:"object_id,type:VARCHAR(100),notnull" keel:"object_id,label=Document ID"`
+	ObjectNumber       string          `json:"objectNumber"       bun:"object_number,type:VARCHAR(100),nullzero" keel:"object_number,nullzero,label=Document Number"`
 	PartyID            pulid.ID        `json:"partyId"            bun:"party_id,type:VARCHAR(100),nullzero" keel:"party_id,nullzero"`
 	PartyName          string          `json:"partyName"          bun:"party_name,type:VARCHAR(200),nullzero" keel:"party_name,nullzero"`
-	ExternalID         string          `json:"externalId"         bun:"external_id,type:VARCHAR(100),nullzero" keel:"external_id,nullzero"`
-	ExternalURL        string          `json:"externalUrl"        bun:"external_url,type:TEXT,nullzero" keel:"external_url,nullzero"`
-	Kind               DriftKind       `json:"kind"               bun:"kind,type:VARCHAR(30),notnull" keel:"kind"`
-	CurrencyCode       string          `json:"currencyCode"       bun:"currency_code,type:VARCHAR(3),notnull" keel:"currency_code"`
-	TrenovaMinor       *int64          `json:"trenovaMinor"       bun:"trenova_minor,type:BIGINT,nullzero" keel:"trenova_minor"`
-	ProviderMinor      *int64          `json:"providerMinor"      bun:"provider_minor,type:BIGINT,nullzero" keel:"provider_minor"`
-	DifferenceMinor    *int64          `json:"differenceMinor"    bun:"difference_minor,type:BIGINT,nullzero" keel:"difference_minor"`
-	TrenovaState       string          `json:"trenovaState"       bun:"trenova_state,type:VARCHAR(50),nullzero" keel:"trenova_state,nullzero"`
-	ProviderState      string          `json:"providerState"      bun:"provider_state,type:VARCHAR(50),nullzero" keel:"provider_state,nullzero"`
-	Detail             []DriftLine     `json:"detail"             bun:"detail,type:JSONB,notnull" keel:"detail,jsonb"`
-	ProviderModifiedAt *int64          `json:"providerModifiedAt" bun:"provider_modified_at,type:BIGINT,nullzero" keel:"provider_modified_at"`
-	ProviderModifiedBy string          `json:"providerModifiedBy" bun:"provider_modified_by,type:VARCHAR(200),nullzero" keel:"provider_modified_by,nullzero"`
+	ExternalID         string          `json:"externalId"         bun:"external_id,type:VARCHAR(100),nullzero" keel:"external_id,nullzero,label=ID in the Books"`
+	ExternalURL        string          `json:"externalUrl"        bun:"external_url,type:TEXT,nullzero" keel:"external_url,nullzero,label=Link in the Books"`
+	Kind               DriftKind       `json:"kind"               bun:"kind,type:VARCHAR(30),notnull" keel:"kind,label=Difference"`
+	CurrencyCode       string          `json:"currencyCode"       bun:"currency_code,type:VARCHAR(3),notnull" keel:"currency_code,label=Currency"`
+	TrenovaMinor       *int64          `json:"trenovaMinor"       bun:"trenova_minor,type:BIGINT,nullzero" keel:"trenova_minor,label=Trenova Value (Minor)"`
+	ProviderMinor      *int64          `json:"providerMinor"      bun:"provider_minor,type:BIGINT,nullzero" keel:"provider_minor,label=Books Value (Minor)"`
+	DifferenceMinor    *int64          `json:"differenceMinor"    bun:"difference_minor,type:BIGINT,nullzero" keel:"difference_minor,label=Difference (Minor)"`
+	TrenovaState       string          `json:"trenovaState"       bun:"trenova_state,type:VARCHAR(50),nullzero" keel:"trenova_state,nullzero,label=State in Trenova"`
+	ProviderState      string          `json:"providerState"      bun:"provider_state,type:VARCHAR(50),nullzero" keel:"provider_state,nullzero,label=State in the Books"`
+	Detail             []DriftLine     `json:"detail"             bun:"detail,type:JSONB,notnull" keel:"detail,jsonb,noreport"`
+	ProviderModifiedAt *int64          `json:"providerModifiedAt" bun:"provider_modified_at,type:BIGINT,nullzero" keel:"provider_modified_at,label=Changed in the Books At"`
+	ProviderModifiedBy string          `json:"providerModifiedBy" bun:"provider_modified_by,type:VARCHAR(200),nullzero" keel:"provider_modified_by,nullzero,label=Changed in the Books By"`
 	Status             DriftStatus     `json:"status"             bun:"status,type:VARCHAR(20),notnull" keel:"status"`
 	Resolution         DriftResolution `json:"resolution"         bun:"resolution,type:VARCHAR(30),nullzero" keel:"resolution,nullzero"`
-	ResolutionNote     string          `json:"resolutionNote"     bun:"resolution_note,type:TEXT,nullzero" keel:"resolution_note,nullzero"`
-	FixObjectType      DriftFixObject  `json:"fixObjectType"      bun:"fix_object_type,type:VARCHAR(40),nullzero" keel:"fix_object_type,nullzero"`
-	FixObjectID        pulid.ID        `json:"fixObjectId"        bun:"fix_object_id,type:VARCHAR(100),nullzero" keel:"fix_object_id,nullzero"`
+	ResolutionNote     string          `json:"resolutionNote"     bun:"resolution_note,type:TEXT,nullzero" keel:"resolution_note,nullzero,label=Note"`
+	FixObjectType      DriftFixObject  `json:"fixObjectType"      bun:"fix_object_type,type:VARCHAR(40),nullzero" keel:"fix_object_type,nullzero,label=Fixed With"`
+	FixObjectID        pulid.ID        `json:"fixObjectId"        bun:"fix_object_id,type:VARCHAR(100),nullzero" keel:"fix_object_id,nullzero,label=Fix ID"`
 	ResolvedByID       pulid.ID        `json:"resolvedById"       bun:"resolved_by_id,type:VARCHAR(100),nullzero" keel:"resolved_by_id,nullzero"`
 	ResolvedAt         *int64          `json:"resolvedAt"         bun:"resolved_at,type:BIGINT,nullzero" keel:"resolved_at"`
 	DetectedAt         int64           `json:"detectedAt"         bun:"detected_at,type:BIGINT,notnull" keel:"detected_at"`
@@ -73,7 +74,7 @@ type AccountingDriftFinding struct {
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	ResolvedBy   *tenant.User         `json:"resolvedBy,omitempty"   bun:"rel:belongs-to,join:resolved_by_id=id" keel:"belongs:resolved_by_id"`
+	ResolvedBy   *tenant.User         `json:"resolvedBy,omitempty"   bun:"rel:belongs-to,join:resolved_by_id=id"   keel:"belongs:resolved_by_id,noreport"`
 }
 
 type DriftObservation struct {

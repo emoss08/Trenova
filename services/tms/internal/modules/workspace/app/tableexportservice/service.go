@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -131,7 +130,7 @@ func (s *Service) saveDefinition(
 	view *View,
 	format report.Format,
 ) (*report.ReportDefinition, *Built, error) {
-	built, err := Build(&reportcatalog.Default, view)
+	built, err := Build(s.reporting.CatalogAccess(), view)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -23,25 +23,27 @@ var equipmentTypesTable = schema.Table{
 	Model:  "equipmenttype.EquipmentType",
 	Label:  `Equipment Type`,
 	Plural: `Equipment Types`,
+	Doc:    `Equipment classification`,
+	Report: &schema.TableReport{Category: `Equipment`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
-		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`},
-		{Name: "class", Quoted: `"class"`, Field: "Class", Kind: schema.KindString, Flags: 0, Label: `Class`, Enum: enumClass[:]},
-		{Name: "color", Quoted: `"color"`, Field: "Color", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Color`},
-		{Name: "interior_length", Quoted: `"interior_length"`, Field: "InteriorLength", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Interior Length`},
-		{Name: "deck_type", Quoted: `"deck_type"`, Field: "DeckType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Deck Type`, Enum: enumDeckType[:]},
-		{Name: "deck_height_inches", Quoted: `"deck_height_inches"`, Field: "DeckHeightInches", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Deck Height Inches`},
-		{Name: "well_length_feet", Quoted: `"well_length_feet"`, Field: "WellLengthFeet", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Well Length Feet`},
-		{Name: "axle_count", Quoted: `"axle_count"`, Field: "AxleCount", Kind: schema.KindInt16, Flags: schema.FlagNullable, Label: `Axle Count`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, Report: &reportDimString},
+		{Name: "class", Quoted: `"class"`, Field: "Class", Kind: schema.KindString, Flags: 0, Label: `Class`, Enum: enumClass[:], Report: &reportDimEnum},
+		{Name: "color", Quoted: `"color"`, Field: "Color", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Color`, Report: &reportDimString},
+		{Name: "interior_length", Quoted: `"interior_length"`, Field: "InteriorLength", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Interior Length`, Report: &reportMeasureFloat},
+		{Name: "deck_type", Quoted: `"deck_type"`, Field: "DeckType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Deck Type`, Enum: enumDeckType[:], Report: &reportDimEnum},
+		{Name: "deck_height_inches", Quoted: `"deck_height_inches"`, Field: "DeckHeightInches", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Deck Height Inches`, Report: &reportMeasureFloat},
+		{Name: "well_length_feet", Quoted: `"well_length_feet"`, Field: "WellLengthFeet", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Well Length Feet`, Report: &reportMeasureFloat},
+		{Name: "axle_count", Quoted: `"axle_count"`, Field: "AxleCount", Kind: schema.KindInt16, Flags: schema.FlagNullable, Label: `Axle Count`, Report: &reportDimInteger},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`},
@@ -310,6 +312,22 @@ var enumDomaintypesStatus = [...]schema.EnumValue{
 	{Value: `Active`, Label: `Active`},
 	{Value: `Inactive`, Label: `Inactive`},
 }
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureFloat = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueFloat, Aggs: schema.AggsNumeric}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // ClassCol is a column of equipmenttype.Class values.
 type ClassCol struct{ keel.StringCol }

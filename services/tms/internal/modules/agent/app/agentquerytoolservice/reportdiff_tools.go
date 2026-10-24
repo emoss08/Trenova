@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel/analytics/diff"
+	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportdiff"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -114,11 +114,16 @@ func (t *compareReportRunsTool) Query(
 		return nil, err
 	}
 
-	result, err := reportdiff.Compare(before.rows, after.rows, reportdiff.Options{
-		Keys:             optionalStrings(params.Params, "keys"),
-		Measures:         optionalStrings(params.Params, "measures"),
-		IncludeUnchanged: optionalBool(params.Params, "includeUnchanged"),
-	})
+	result, err := diff.Compare(
+		ctx,
+		before.rows.Table.Reader(),
+		after.rows.Table.Reader(),
+		diff.Options{
+			Keys:             optionalStrings(params.Params, "keys"),
+			Measures:         optionalStrings(params.Params, "measures"),
+			IncludeUnchanged: optionalBool(params.Params, "includeUnchanged"),
+		},
+	)
 	if err != nil {
 		return nil, describeCompareRefusal(err)
 	}
@@ -140,15 +145,15 @@ func (t *compareReportRunsTool) Query(
 // renders. The two sides are described as well as diffed: "up 4%" means
 // nothing without knowing which two days it is between.
 type reportRunComparison struct {
-	Before    comparedRun               `json:"before"`
-	After     comparedRun               `json:"after"`
-	Keys      []string                  `json:"keys"`
-	Measures  []string                  `json:"measures"`
-	Summary   reportdiff.Summary        `json:"summary"`
-	Changes   []reportdiff.Change       `json:"changes"`
-	Totals    []reportdiff.MeasureTotal `json:"totals"`
-	Truncated bool                      `json:"truncated,omitempty"`
-	Note      string                    `json:"note"`
+	Before    comparedRun    `json:"before"`
+	After     comparedRun    `json:"after"`
+	Keys      []string       `json:"keys"`
+	Measures  []string       `json:"measures"`
+	Summary   diff.Summary   `json:"summary"`
+	Changes   []diff.Change  `json:"changes"`
+	Totals    []diff.Measure `json:"totals"`
+	Truncated bool           `json:"truncated,omitempty"`
+	Note      string         `json:"note"`
 }
 
 type comparedRun struct {
@@ -160,7 +165,7 @@ type comparedRun struct {
 }
 
 type loadedRun struct {
-	rows    *reportrows.Envelope
+	rows    *export.Envelope
 	summary comparedRun
 }
 
@@ -188,9 +193,9 @@ func (t *compareReportRunsTool) readRun(
 
 	summary := comparedRun{
 		RunID:       run.ID.String(),
-		GeneratedAt: rows.Meta.GeneratedAt,
-		RowCount:    int64(len(rows.Rows)),
-		Truncated:   rows.Summary.Truncated,
+		GeneratedAt: rows.Meta.GeneratedAt.Unix(),
+		RowCount:    rows.RowCount,
+		Truncated:   rows.Truncated != export.NotTruncated,
 	}
 	if run.ReportDefinition != nil {
 		summary.ReportName = run.ReportDefinition.Name
@@ -215,19 +220,19 @@ func prefixRunFailure(field string, err error) error {
 // business error and says what to do instead.
 func describeCompareRefusal(err error) error {
 	switch {
-	case errors.Is(err, reportdiff.ErrUnknownColumn):
+	case errors.Is(err, diff.ErrUnknownColumn):
 		return errortypes.NewValidationError("keys", errortypes.ErrInvalid, err.Error())
-	case errors.Is(err, reportdiff.ErrSchemaMismatch):
+	case errors.Is(err, diff.ErrSchemaMismatch):
 		return errortypes.NewBusinessError(
 			"These two runs do not have the same columns, so they cannot be compared: " +
 				err.Error() + ". Run the report again to get two runs of the same shape.",
 		)
-	case errors.Is(err, reportdiff.ErrNoKeys):
+	case errors.Is(err, diff.ErrNoKeys):
 		return errortypes.NewBusinessError(
 			"This report has no column that identifies a row, so its rows cannot be " +
 				"matched across two runs. Compare a report that groups by something.",
 		)
-	case errors.Is(err, reportdiff.ErrNoMeasures):
+	case errors.Is(err, diff.ErrNoMeasures):
 		return errortypes.NewBusinessError(
 			"This report has no numeric column, so there is nothing to compare " +
 				"between two runs beyond which rows are present.",
@@ -237,7 +242,7 @@ func describeCompareRefusal(err error) error {
 	}
 }
 
-func comparisonNote(result *reportdiff.Result) string {
+func comparisonNote(result *diff.Result) string {
 	parts := make([]string, 0, 4)
 	if result.Summary.Added > 0 {
 		parts = append(parts, fmt.Sprintf("%d added", result.Summary.Added))

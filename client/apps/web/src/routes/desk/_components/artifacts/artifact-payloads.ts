@@ -72,7 +72,7 @@ function previewColumn(value: unknown): ReportPreviewColumn | null {
     label: label || id,
     type: stringOf(value.type) || "string",
     format: stringOf(value.format) || null,
-  } as ReportPreviewColumn;
+  } as unknown as ReportPreviewColumn;
 }
 
 /** Rows arrive keyed by column label; the grid wants them positional. */
@@ -942,12 +942,15 @@ export function runDiffFrom(artifact: AssistantArtifact): RunDiffArtifactPayload
 
   const changes = listOf(payload.changes)
     .filter(isRecord)
-    .map((change) => ({
-      kind: stringOf(change.kind),
-      key: stringOf(change.key),
-      keyValues: listOf(change.keyValues).map(stringOf),
-      measures: diffMeasures(change.measures),
-    }));
+    .map((change) => {
+      const keyValues = listOf(change.key).map(stringOf);
+      return {
+        kind: stringOf(change.kind),
+        key: keyValues.join(" · "),
+        keyValues,
+        measures: diffMeasures(change.measures),
+      };
+    });
 
   return {
     before: diffSide(payload.before),

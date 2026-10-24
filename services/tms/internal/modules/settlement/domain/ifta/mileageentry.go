@@ -32,36 +32,37 @@ var (
 	_ validationframework.TenantedEntity = (*JurisdictionMileageEntry)(nil)
 )
 
+// Miles by state or province recorded outside routed shipment moves
 type JurisdictionMileageEntry struct {
 	bun.BaseModel             `bun:"table:ifta_jurisdiction_mileage_entries,alias:ifme" json:"-"`
-	keel.Table                `keel:"ifta_jurisdiction_mileage_entries"`
+	keel.Table                `                                                                  keel:"ifta_jurisdiction_mileage_entries,report=Equipment"`
 	pagination.CursorValueSet `bun:",embed"                                             json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ifme_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:ifme_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
 
-	TractorID      pulid.ID `json:"tractorId"      bun:"tractor_id,type:VARCHAR(100),notnull" keel:"tractor_id"`
+	TractorID      pulid.ID `json:"tractorId"      bun:"tractor_id,type:VARCHAR(100),notnull"      keel:"tractor_id"`
 	JurisdictionID pulid.ID `json:"jurisdictionId" bun:"jurisdiction_id,type:VARCHAR(100),notnull" keel:"jurisdiction_id"`
 
 	TraveledAt int64 `json:"traveledAt" bun:"traveled_at,type:BIGINT,notnull" keel:"traveled_at"`
-	Year       int   `json:"year"       bun:"year,type:SMALLINT,notnull" keel:"year"`
-	Quarter    int   `json:"quarter"    bun:"quarter,type:SMALLINT,notnull" keel:"quarter"`
+	Year       int   `json:"year"       bun:"year,type:SMALLINT,notnull"      keel:"year,dimension"`
+	Quarter    int   `json:"quarter"    bun:"quarter,type:SMALLINT,notnull"   keel:"quarter,dimension"`
 
-	Miles          decimal.Decimal `json:"miles"          bun:"miles,type:NUMERIC(12,2),notnull" keel:"miles"`
-	Loaded         bool            `json:"loaded"         bun:"loaded,type:BOOLEAN,notnull" keel:"loaded"`
+	Miles          decimal.Decimal `json:"miles"          bun:"miles,type:NUMERIC(12,2),notnull"                              keel:"miles,format=distance"`
+	Loaded         bool            `json:"loaded"         bun:"loaded,type:BOOLEAN,notnull"                                   keel:"loaded"`
 	Source         MileageSource   `json:"source"         bun:"source,type:ifta_mileage_source_enum,notnull,default:'Manual'" keel:"source"`
-	ShipmentMoveID *pulid.ID       `json:"shipmentMoveId" bun:"shipment_move_id,type:VARCHAR(100),nullzero" keel:"shipment_move_id"`
-	Notes          string          `json:"notes"          bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	CreatedByID    pulid.ID        `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
+	ShipmentMoveID *pulid.ID       `json:"shipmentMoveId" bun:"shipment_move_id,type:VARCHAR(100),nullzero"                   keel:"shipment_move_id"`
+	Notes          string          `json:"notes"          bun:"notes,type:TEXT,nullzero"                                      keel:"notes,nullzero"`
+	CreatedByID    pulid.ID        `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero"                      keel:"created_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Tractor      *tractor.Tractor `json:"tractor,omitempty"      bun:"rel:belongs-to,join:tractor_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:tractor_id"`
-	Jurisdiction *Jurisdiction    `json:"jurisdiction,omitempty" bun:"rel:belongs-to,join:jurisdiction_id=id" keel:"belongs:jurisdiction_id"`
-	CreatedBy    *tenant.User     `json:"createdBy,omitempty"    bun:"rel:belongs-to,join:created_by_id=id" keel:"belongs:created_by_id"`
+	Jurisdiction *Jurisdiction    `json:"jurisdiction,omitempty" bun:"rel:belongs-to,join:jurisdiction_id=id"                                                                        keel:"belongs:jurisdiction_id,noreport"`
+	CreatedBy    *tenant.User     `json:"createdBy,omitempty"    bun:"rel:belongs-to,join:created_by_id=id"                                                                          keel:"belongs:created_by_id,noreport"`
 }
 
 func (e *JurisdictionMileageEntry) Normalize() {

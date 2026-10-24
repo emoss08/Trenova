@@ -1,0 +1,137 @@
+{
+  "key": "invoice-revenue-trend",
+  "version": "1.0.0",
+  "name": "Invoiced Revenue Trend (This Year)",
+  "description": "Monthly posted invoice totals, collections, outstanding balance, and collection rate for the current year",
+  "category": "Billing",
+  "tags": [
+    "invoices",
+    "revenue",
+    "trend"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "invoice",
+    "columns": [
+      {
+        "id": "month",
+        "label": "Month",
+        "dimension": {
+          "field": "invoiceDate",
+          "bucket": "month"
+        }
+      },
+      {
+        "id": "invoice_count",
+        "label": "Invoices",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "invoiced_total",
+        "label": "Invoiced",
+        "measure": {
+          "field": "totalAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "collected_total",
+        "label": "Collected",
+        "measure": {
+          "field": "appliedAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "other_total",
+        "label": "Other Charges",
+        "measure": {
+          "field": "otherAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "avg_invoice",
+        "label": "Average Invoice",
+        "measure": {
+          "field": "totalAmount",
+          "agg": "avg"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 2
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "outstanding",
+        "label": "Outstanding",
+        "calc": "[invoiced_total] - [collected_total]",
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "collection_rate",
+        "label": "Collection Rate",
+        "calc": "[collected_total] / [invoiced_total]",
+        "transform": {
+          "op": "round",
+          "precision": 3
+        },
+        "display": {
+          "style": "percent",
+          "decimals": 1
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "Posted"
+        },
+        {
+          "field": "invoiceDate",
+          "op": "this_year"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "month"
+      }
+    ]
+  }
+}

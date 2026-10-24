@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 )
 
 // PreviewedReport is the report a report_preview call ran, read again from
@@ -15,7 +15,7 @@ import (
 // passed them, and its name.
 type PreviewedReport struct {
 	Name       string
-	Definition *report.Definition
+	Definition *ir.Definition
 	Params     map[string]any
 }
 

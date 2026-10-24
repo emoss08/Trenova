@@ -19,73 +19,57 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*RateAgreementVersion)(nil)
 
-// RateAgreementVersion records the negotiated header terms as they stood.
-//
-// It deliberately does not copy the rules. Rules carry their own effective
-// windows, so "the contract as it stood on the third of March" is the header
-// version live on that date plus whichever rules were live on that date — one
-// query, and an amendment to forty lanes writes forty rows instead of copying
-// every rule in the book.
+// What a contract said at each revision, and why it changed
 type RateAgreementVersion struct {
 	bun.BaseModel `bun:"table:rate_agreement_versions,alias:ragv" json:"-"`
-	keel.Table    `keel:"rate_agreement_versions"`
+	keel.Table    `                                                        keel:"rate_agreement_versions,report=Billing,label=Agreement Version"`
 
-	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ragv_"`
+	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:ragv_"`
 	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	RateAgreementID pulid.ID `json:"rateAgreementId" bun:"rate_agreement_id,type:VARCHAR(100),notnull" keel:"rate_agreement_id"`
+	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	RateAgreementID pulid.ID `json:"rateAgreementId" bun:"rate_agreement_id,type:VARCHAR(100),notnull"   keel:"rate_agreement_id"`
 
-	VersionNumber int64  `json:"versionNumber" bun:"version_number,type:BIGINT,notnull" keel:"version_number"`
-	EffectiveFrom int64  `json:"effectiveFrom" bun:"effective_from,type:BIGINT,notnull" keel:"effective_from"`
-	EffectiveTo   *int64 `json:"effectiveTo"   bun:"effective_to,type:BIGINT,nullzero" keel:"effective_to"`
+	VersionNumber int64  `json:"versionNumber" bun:"version_number,type:BIGINT,notnull" keel:"version_number,label=Version,dimension"`
+	EffectiveFrom int64  `json:"effectiveFrom" bun:"effective_from,type:BIGINT,notnull" keel:"effective_from,type=epoch"`
+	EffectiveTo   *int64 `json:"effectiveTo"   bun:"effective_to,type:BIGINT,nullzero"  keel:"effective_to,type=epoch"`
 
 	PartyType  PartyType `json:"partyType"  bun:"party_type,type:rate_agreement_party_type_enum,nullzero" keel:"party_type,nullzero"`
-	CustomerID *pulid.ID `json:"customerId" bun:"customer_id,type:VARCHAR(100),nullzero" keel:"customer_id"`
-	CarrierID  *pulid.ID `json:"carrierId"  bun:"carrier_id,type:VARCHAR(100),nullzero" keel:"carrier_id"`
+	CustomerID *pulid.ID `json:"customerId" bun:"customer_id,type:VARCHAR(100),nullzero"                  keel:"customer_id"`
+	CarrierID  *pulid.ID `json:"carrierId"  bun:"carrier_id,type:VARCHAR(100),nullzero"                   keel:"carrier_id"`
 
-	Code          string        `json:"code"          bun:"code,type:VARCHAR(50),notnull,default:''" keel:"code"`
-	Name          string        `json:"name"          bun:"name,type:VARCHAR(150),notnull" keel:"name"`
-	Description   string        `json:"description"   bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Code          string        `json:"code"          bun:"code,type:VARCHAR(50),notnull,default:''"             keel:"code"`
+	Name          string        `json:"name"          bun:"name,type:VARCHAR(150),notnull"                       keel:"name"`
+	Description   string        `json:"description"   bun:"description,type:TEXT,nullzero"                       keel:"description,nullzero"`
 	AgreementType AgreementType `json:"agreementType" bun:"agreement_type,type:rate_agreement_type_enum,notnull" keel:"agreement_type"`
-	Status        Status        `json:"status"        bun:"status,type:rate_agreement_status_enum,notnull" keel:"status"`
-	ContractRef   string        `json:"contractRef"   bun:"contract_ref,type:VARCHAR(100),nullzero" keel:"contract_ref,nullzero"`
-	DocumentID    *pulid.ID     `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id"`
+	Status        Status        `json:"status"        bun:"status,type:rate_agreement_status_enum,notnull"       keel:"status"`
+	ContractRef   string        `json:"contractRef"   bun:"contract_ref,type:VARCHAR(100),nullzero"              keel:"contract_ref,nullzero"`
+	DocumentID    *pulid.ID     `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero"               keel:"document_id"`
 
-	Priority int16 `json:"priority" bun:"priority,type:SMALLINT,notnull,default:0" keel:"priority"`
-	// The agreement's own window, distinct from EffectiveFrom/EffectiveTo above,
-	// which say when this *version* of the terms governed. Moving the contract's
-	// dates is a renegotiation like any other and diffs under these names.
-	AgreementEffectiveFrom int64     `json:"agreementEffectiveFrom" bun:"agreement_effective_from,type:BIGINT,notnull,default:0" keel:"agreement_effective_from"`
-	AgreementEffectiveTo   *int64    `json:"agreementEffectiveTo"   bun:"agreement_effective_to,type:BIGINT,nullzero" keel:"agreement_effective_to"`
-	AutoRenew              bool      `json:"autoRenew"              bun:"auto_renew,type:BOOLEAN,notnull,default:false" keel:"auto_renew"`
-	RenewalNoticeDays      int16     `json:"renewalNoticeDays"      bun:"renewal_notice_days,type:SMALLINT,notnull,default:30" keel:"renewal_notice_days"`
-	BillToCustomerID       *pulid.ID `json:"billToCustomerId"       bun:"bill_to_customer_id,type:VARCHAR(100),nullzero" keel:"bill_to_customer_id"`
+	Priority               int16     `json:"priority"               bun:"priority,type:SMALLINT,notnull,default:0"               keel:"priority,dimension"`
+	AgreementEffectiveFrom int64     `json:"agreementEffectiveFrom" bun:"agreement_effective_from,type:BIGINT,notnull,default:0" keel:"agreement_effective_from,type=epoch"`
+	AgreementEffectiveTo   *int64    `json:"agreementEffectiveTo"   bun:"agreement_effective_to,type:BIGINT,nullzero"            keel:"agreement_effective_to,type=epoch"`
+	AutoRenew              bool      `json:"autoRenew"              bun:"auto_renew,type:BOOLEAN,notnull,default:false"          keel:"auto_renew"`
+	RenewalNoticeDays      int16     `json:"renewalNoticeDays"      bun:"renewal_notice_days,type:SMALLINT,notnull,default:30"   keel:"renewal_notice_days,dimension"`
+	BillToCustomerID       *pulid.ID `json:"billToCustomerId"       bun:"bill_to_customer_id,type:VARCHAR(100),nullzero"         keel:"bill_to_customer_id"`
 
-	Currency string             `json:"currency" bun:"currency,type:VARCHAR(3),notnull" keel:"currency"`
+	Currency string             `json:"currency" bun:"currency,type:VARCHAR(3),notnull"       keel:"currency"`
 	Inputs   tarifftypes.Inputs `json:"inputs"   bun:"inputs,type:JSONB,notnull,default:'{}'" keel:"inputs,jsonb"`
 
-	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent"  bun:"margin_floor_percent,type:NUMERIC(9,4),nullzero" keel:"margin_floor_percent"`
-	MaxPayPercentOfSell decimal.NullDecimal `json:"maxPayPercentOfSell" bun:"max_pay_percent_of_sell,type:NUMERIC(9,4),nullzero" keel:"max_pay_percent_of_sell"`
+	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent"  bun:"margin_floor_percent,type:NUMERIC(9,4),nullzero"    keel:"margin_floor_percent,label=Margin Floor (%)"`
+	MaxPayPercentOfSell decimal.NullDecimal `json:"maxPayPercentOfSell" bun:"max_pay_percent_of_sell,type:NUMERIC(9,4),nullzero" keel:"max_pay_percent_of_sell,label=Max Pay % of Sell"`
 
-	// The negotiated accessorial schedule keyed by accessorial charge id.
-	// Stored as ids only — names are patched on at read time into
-	// AccessorialNames, so a later rename of the charge cannot rewrite what
-	// the contract said.
 	AccessorialTerms map[string]AccessorialTermSnapshot `json:"accessorialTerms" bun:"accessorial_terms,type:JSONB,nullzero" keel:"accessorial_terms,jsonb,nullzero"`
-	// The fuel binding's negotiated terms as they stood.
-	FuelTerms *FuelTermSnapshot `json:"fuelTerms" bun:"fuel_terms,type:JSONB,nullzero" keel:"fuel_terms,jsonb"`
+	FuelTerms        *FuelTermSnapshot                  `json:"fuelTerms"        bun:"fuel_terms,type:JSONB,nullzero"        keel:"fuel_terms,jsonb"`
 
-	// Read-time only: accessorial charge id → code, resolved by the repository
-	// for every id the snapshot and change summary mention. Never persisted.
 	AccessorialNames map[string]string `json:"accessorialNames,omitempty" bun:"-"`
 
-	ChangeMessage string                           `json:"changeMessage" bun:"change_message,type:TEXT,nullzero" keel:"change_message,nullzero"`
-	ChangeSummary map[string]jsonutils.FieldChange `json:"changeSummary" bun:"change_summary,type:JSONB,nullzero" keel:"change_summary,jsonb,nullzero"`
-	CreatedByID   pulid.ID                         `json:"createdById"   bun:"created_by_id,type:VARCHAR(100),notnull" keel:"created_by_id"`
+	ChangeMessage string                           `json:"changeMessage" bun:"change_message,type:TEXT,nullzero"                                                    keel:"change_message,nullzero"`
+	ChangeSummary map[string]jsonutils.FieldChange `json:"changeSummary" bun:"change_summary,type:JSONB,nullzero"                                                   keel:"change_summary,jsonb,nullzero"`
+	CreatedByID   pulid.ID                         `json:"createdById"   bun:"created_by_id,type:VARCHAR(100),notnull"                                              keel:"created_by_id"`
 	CreatedAt     int64                            `json:"createdAt"     bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
 	Agreement *RateAgreement `json:"-"                   bun:"rel:belongs-to,join:rate_agreement_id=id" keel:"belongs:rate_agreement_id"`
-	CreatedBy *tenant.User   `json:"createdBy,omitempty" bun:"rel:belongs-to,join:created_by_id=id" keel:"belongs:created_by_id"`
+	CreatedBy *tenant.User   `json:"createdBy,omitempty" bun:"rel:belongs-to,join:created_by_id=id"     keel:"belongs:created_by_id,noreport"`
 }
 
 // IsEffectiveAt reports whether this version's terms governed at a moment.

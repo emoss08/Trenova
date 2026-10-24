@@ -1,3 +1,4 @@
+import type { ReportDefinitionInput } from "@/lib/graphql/reports";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
   DataTablePageInfoFieldsFragmentDoc,
@@ -12,7 +13,6 @@ import {
   type ReportDefinitionByIdQuery,
   type ReportDefinitionOptionFieldsFragment,
   type ReportDrillInput,
-  type ReportIrInput,
 } from "@trenova/graphql/generated/graphql";
 import {
   cancelReportRun,
@@ -210,13 +210,13 @@ export function useReportSchedules(definitionId?: string, enabled = true) {
  * leave it off, or each tile cancels the one before it.
  */
 export function useReportPreview(
-  definition: ReportIrInput | null,
+  definition: ReportDefinitionInput | null,
   params?: Record<string, unknown>,
   options?: { supersede?: boolean },
 ) {
   return useQuery({
     ...reports.preview(
-      definition ?? { entity: "", columns: [] },
+      definition ?? { version: 2, entity: "", columns: [] },
       params,
       options?.supersede ?? false,
     ),
@@ -229,7 +229,9 @@ export function useReportPreview(
 
 export function useReportDrillThrough(input: ReportDrillInput | null) {
   return useQuery({
-    ...reports.drillThrough(input ?? { definition: { entity: "", columns: [] }, dimensions: [] }),
+    ...reports.drillThrough(
+      input ?? { definition: { version: 2, entity: "", columns: [] }, dimensions: [] },
+    ),
     enabled: Boolean(input),
     staleTime: 30_000,
     retry: false,

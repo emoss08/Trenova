@@ -23,37 +23,39 @@ var fiscalPeriodsTable = schema.Table{
 	Model:  "fiscalperiod.FiscalPeriod",
 	Label:  `Fiscal Period`,
 	Plural: `Fiscal Periods`,
+	Doc:    `Accounting periods, their status, and their close and reopen history`,
+	Report: &schema.TableReport{Category: `Accounting`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "fiscal_year_id", Quoted: `"fiscal_year_id"`, Field: "FiscalYearID", Kind: schema.KindString, Flags: 0, Label: `Fiscal Year ID`},
-		{Name: "period_number", Quoted: `"period_number"`, Field: "PeriodNumber", Kind: schema.KindInt64, Flags: 0, Label: `Period Number`, Doc: `PeriodNumber is the ordinal position within the fiscal year (1–12 for monthly, 1–4 for quarterly, 1–13 for weekly/4-4-5, 13+ for adjusting). Adjusting periods (Period 13/14) use numbers above the regular count.`},
-		{Name: "period_type", Quoted: `"period_type"`, Field: "PeriodType", Kind: schema.KindString, Flags: 0, Label: `Period Type`, Doc: `PeriodType indicates what kind of period this is. Most carriers use Month. Week is for 4-4-5 calendars. Adjusting is for Period 13 year-end adjustment periods.`, Enum: enumPeriodType[:]},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Doc: `Status tracks the period's position in its lifecycle. Inactive → Open → Locked → Closed → PermanentlyClosed.`, Enum: enumStatus[:]},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, Doc: `Name is the display name (e.g. "January 2026", "P1-2026", "Q1 2026", "Adjusting Period 2026").`},
-		{Name: "start_date", Quoted: `"start_date"`, Field: "StartDate", Kind: schema.KindInt64, Flags: 0, Label: `Start Date`, Doc: `StartDate is the first day of the period as a Unix epoch timestamp. For adjusting periods, this matches the start date of the final operating period — they overlap intentionally.`},
-		{Name: "end_date", Quoted: `"end_date"`, Field: "EndDate", Kind: schema.KindInt64, Flags: 0, Label: `End Date`, Doc: `EndDate is the last day of the period as a Unix epoch timestamp. For adjusting periods, this matches the end date of the final operating period.`},
-		{Name: "is_adjusting", Quoted: `"is_adjusting"`, Field: "IsAdjusting", Kind: schema.KindBool, Flags: 0, Label: `Is Adjusting`, Doc: "IsAdjusting flags this period as an adjusting period (Period 13/14). Adjusting periods overlap the date range of the last operating period. When running reports, you typically want to include or exclude adjusting periods — this flag makes that filter trivial.\n\nOracle's gl_period_statuses table has an adjustment_period_flag column that serves exactly this purpose. D365 identifies Period 13 as a \"Closing\" transaction type."},
-		{Name: "allow_adjusting_entries", Quoted: `"allow_adjusting_entries"`, Field: "AllowAdjustingEntries", Kind: schema.KindBool, Flags: 0, Label: `Allow Adjusting Entries`, Doc: "AllowAdjustingEntries controls whether adjusting journal entries can be posted to this specific period. During year-end close, the controller enables this on Period 12 and/or the adjusting period while keeping it disabled on periods 1–11.\n\nThis field is subordinate to the fiscal year's AllowAdjustingEntries master switch. If the year-level flag is false, this field is ignored and no adjusting entries can be posted regardless.\n\nThe workflow: 1. Controller locks months 1–11 throughout the year as they close 2. At year-end, CFO enables AllowAdjustingEntries on the fiscal year 3. Controller enables AllowAdjustingEntries on Period 12 (and/or Period 13) 4. Auditors post their adjustments to the designated period(s) 5. Once audit is complete, periods are closed and eventually permanently closed"},
-		{Name: "adjustment_deadline", Quoted: `"adjustment_deadline"`, Field: "AdjustmentDeadline", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Adjustment Deadline`, Doc: "AdjustmentDeadline is the cutoff timestamp for posting adjusting entries to this period. After this deadline, adjusting entries are rejected even if the period is still Open or Locked and AllowAdjustingEntries is true.\n\nThis gives the controller fine-grained control: \"you have until February 15th to get your December adjustments in.\" After that, they close the period without having to chase people down."},
-		{Name: "locked_at", Quoted: `"locked_at"`, Field: "LockedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Locked At`, Doc: `LockedAt records when the period was soft-closed (moved to Locked status). This is the timestamp when subledger postings were cut off but manual JEs were still allowed.`},
-		{Name: "locked_by_id", Quoted: `"locked_by_id"`, Field: "LockedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Locked By ID`},
-		{Name: "closed_at", Quoted: `"closed_at"`, Field: "ClosedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Closed At`, Doc: `ClosedAt records when the period was hard-closed (moved to Closed status). This is the timestamp when all posting was blocked.`},
-		{Name: "closed_by_id", Quoted: `"closed_by_id"`, Field: "ClosedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Closed By ID`},
-		{Name: "reopened_at", Quoted: `"reopened_at"`, Field: "ReopenedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Reopened At`},
-		{Name: "reopened_by_id", Quoted: `"reopened_by_id"`, Field: "ReopenedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reopened By ID`},
-		{Name: "reopen_reason", Quoted: `"reopen_reason"`, Field: "ReopenReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reopen Reason`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "fiscal_year_id", Quoted: `"fiscal_year_id"`, Field: "FiscalYearID", Kind: schema.KindString, Flags: 0, Label: `Fiscal Year ID`, Report: &reportDimString},
+		{Name: "period_number", Quoted: `"period_number"`, Field: "PeriodNumber", Kind: schema.KindInt64, Flags: 0, Label: `Period`, Report: &reportDimInteger},
+		{Name: "period_type", Quoted: `"period_type"`, Field: "PeriodType", Kind: schema.KindString, Flags: 0, Label: `Period Type`, Enum: enumPeriodType[:], Report: &reportDimEnum},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumStatus[:], Report: &reportDimEnum},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Period Name`, Report: &reportDimString},
+		{Name: "start_date", Quoted: `"start_date"`, Field: "StartDate", Kind: schema.KindInt64, Flags: 0, Label: `Starts`, Report: &reportDimEpoch},
+		{Name: "end_date", Quoted: `"end_date"`, Field: "EndDate", Kind: schema.KindInt64, Flags: 0, Label: `Ends`, Report: &reportDimEpoch},
+		{Name: "is_adjusting", Quoted: `"is_adjusting"`, Field: "IsAdjusting", Kind: schema.KindBool, Flags: 0, Label: `Adjusting Period`, Report: &reportDimBool},
+		{Name: "allow_adjusting_entries", Quoted: `"allow_adjusting_entries"`, Field: "AllowAdjustingEntries", Kind: schema.KindBool, Flags: 0, Label: `Allows Adjusting Entries`, Report: &reportDimBool},
+		{Name: "adjustment_deadline", Quoted: `"adjustment_deadline"`, Field: "AdjustmentDeadline", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Adjustment Deadline`, Report: &reportDimEpoch},
+		{Name: "locked_at", Quoted: `"locked_at"`, Field: "LockedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Locked At`, Report: &reportDimEpoch},
+		{Name: "locked_by_id", Quoted: `"locked_by_id"`, Field: "LockedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Locked By ID`, Report: &reportDimString},
+		{Name: "closed_at", Quoted: `"closed_at"`, Field: "ClosedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Closed At`, Report: &reportDimEpoch},
+		{Name: "closed_by_id", Quoted: `"closed_by_id"`, Field: "ClosedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Closed By ID`, Report: &reportDimString},
+		{Name: "reopened_at", Quoted: `"reopened_at"`, Field: "ReopenedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Reopened At`, Report: &reportDimEpoch},
+		{Name: "reopened_by_id", Quoted: `"reopened_by_id"`, Field: "ReopenedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reopened By ID`, Report: &reportDimString},
+		{Name: "reopen_reason", Quoted: `"reopen_reason"`, Field: "ReopenReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reopen Reason`, Report: &reportDimString},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
 	},
 	Relations: []schema.Relation{
-		{Name: "ClosedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{16}, Remote: []int32{0}, Label: `Closed By`},
-		{Name: "LockedBy", Alias: "lb", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `Locked By`},
-		{Name: "ReopenedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{18}, Remote: []int32{0}, Label: `Reopened By`},
+		{Name: "ClosedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{16}, Remote: []int32{0}, Label: `Closed By`, NoReport: true},
+		{Name: "LockedBy", Alias: "lb", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `Locked By`, NoReport: true},
+		{Name: "ReopenedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{18}, Remote: []int32{0}, Label: `Reopened By`, NoReport: true},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -362,19 +364,35 @@ func init() {
 const intIs64 = unsafe.Sizeof(int(0)) - 8
 
 var enumPeriodType = [...]schema.EnumValue{
-	{Value: `Month`, Label: `Month`, Doc: `PeriodTypeMonth is the standard monthly accounting period (periods 1–12). This is the most common period type and what most carriers use.`},
-	{Value: `Quarter`, Label: `Quarter`, Doc: `PeriodTypeQuarter represents a quarterly accounting period. Used by carriers that do quarterly accounting instead of (or in addition to) monthly periods. Some smaller carriers only do quarterly hard closes.`},
-	{Value: `Week`, Label: `Week`, Doc: `PeriodTypeWeek represents a weekly accounting period. Used by carriers on a 4-4-5, 4-5-4, or 5-4-4 week-based fiscal calendar. These calendars divide the year into 13 four-week periods (or 12 periods with alternating 4 and 5 week lengths). Some large carriers prefer this because every period has the same number of business days, making revenue comparisons more meaningful than calendar-month periods where February has 28 days and March has 31.`},
-	{Value: `Adjusting`, Label: `Adjusting`, Doc: "PeriodTypeAdjusting represents a special year-end adjustment period (commonly called \"Period 13\" in Oracle, D365, and Caselle). This period shares the same date range as the final operating period but is logically separate. Year-end adjustments, auditor entries, and reclassifications go here so they don't contaminate the operating period's numbers.\n\nThis is critical for reporting: when running a P&L for December, the controller wants to see operating results. The auditor's adjustments should only appear when explicitly included. Without this separation, every time an auditor posts an adjustment to Period 12, the December operating numbers change — which drives controllers crazy.\n\nSome systems also support Period 14 for post-audit entries (Caselle), but Period 13 covers 99% of use cases. If needed, a second Adjusting period can be created."},
+	{Value: `Month`, Label: `Month`, Doc: `A calendar month, periods 1 to 12.`},
+	{Value: `Quarter`, Label: `Quarter`, Doc: `A calendar quarter.`},
+	{Value: `Week`, Label: `Week`, Doc: `A run of weeks on a 4-4-5, 4-5-4 or 5-4-4 fiscal calendar.`},
+	{Value: `Adjusting`, Label: `Adjusting`, Doc: `The year-end adjustment period (period 13 or 14), sharing the final period's dates so auditor entries stay out of operating results.`},
 }
 
 var enumStatus = [...]schema.EnumValue{
-	{Value: `Inactive`, Label: `Inactive`, Doc: "PeriodStatusInactive is the initial state for periods that have been created but are not yet ready for transactions. When you auto-generate 12 periods for a new fiscal year, periods 2–12 start as Inactive while only period 1 gets opened. Without this state, every period is immediately Open the moment the year is created, which means someone could accidentally post to next August.\n\nOracle calls this \"Never Opened\". D365 uses \"Not yet open\"."},
-	{Value: `Open`, Label: `Open`, Doc: `PeriodStatusOpen means the period is accepting all transactions from all sources — subledger postings (AP, AR, billing pipeline), manual journal entries, and system-generated entries. This is the normal operating state for the current period.`},
-	{Value: `Locked`, Label: `Locked`, Doc: "PeriodStatusLocked is the soft close state. This is the single most important state that most TMS platforms get wrong or skip entirely.\n\nWhen a period is Locked: - Subledger postings are BLOCKED (billing pipeline, AP vouchers, AR invoices cannot post new transactions to this period) - Manual journal entries are ALLOWED (the accounting team can still post adjusting JEs, accruals, and corrections)\n\nThis is the state a controller puts a period in when they've finished the monthly close checklist. They need to stop new freight invoices from landing in the period, but the accounting team still needs to post accruals for delivered-but-not-yet-invoiced shipments, accrue for driver settlements, and make other month-end adjustments.\n\nWithout this state, the controller has two bad options: 1. Leave the period Open while making adjustments (risk: new billing transactions keep landing, moving the target) 2. Close the period, make adjustments, reopen, re-close (waste of time, clutters the audit trail)\n\nOracle, D365, Successware, and NetSuite all have this state. Oracle calls it \"Closed\" but still allows JE posting. We use \"Locked\" because it's more intuitive — the period is locked to external sources but open to the accounting team."},
-	{Value: `Closed`, Label: `Closed`, Doc: "PeriodStatusClosed is the hard close state. Nothing gets in — no subledger postings, no manual journal entries, nothing. The period's numbers are final (for now).\n\nCan be reopened with proper authorization. Every major ERP supports this because the real world doesn't cooperate with clean cutoffs. A vendor invoice arrives 3 weeks late, an auditor finds a misclassification, a customer disputes a charge that was posted to the wrong period. Reopening requires a reason and is tracked for audit compliance."},
-	{Value: `PermanentlyClosed`, Label: `Permanently Closed`, Doc: "PeriodStatusPermanentlyClosed is the terminal audit-locked state. Cannot be reopened under any circumstances. This is set after the external audit is complete and the period's financials are certified.\n\nOracle explicitly distinguishes \"Closed\" from \"Permanently Closed\" for exactly this reason. Business Central marks periods as both \"Closed\" and \"Date Locked\" when permanently closed. D365 uses \"On Hold\" for periods that cannot be reopened.\n\nOnce permanently closed, any late transactions that should have gone to this period are automatically redirected to the next open period (or flagged for review, depending on the accounting control settings)."},
+	{Value: `Inactive`, Label: `Inactive`, Doc: `Created but not yet open; nothing can be posted to it.`},
+	{Value: `Open`, Label: `Open`, Doc: `Accepting every posting, from the subledgers and by hand.`},
+	{Value: `Locked`, Label: `Locked`, Doc: `Soft-closed: subledger postings are blocked, manual journal entries are still allowed.`},
+	{Value: `Closed`, Label: `Closed`, Doc: `Hard-closed: nothing can be posted; it can be reopened with authorization and a reason, which is audited.`},
+	{Value: `PermanentlyClosed`, Label: `Permanently Closed`, Doc: `Closed for good once the audit is certified; it can never be reopened.`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // PeriodTypeCol is a column of fiscalperiod.PeriodType values.
 type PeriodTypeCol struct{ keel.StringCol }

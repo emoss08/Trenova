@@ -33,9 +33,10 @@ var (
 	_ pagination.CursorEntity            = (*Worker)(nil)
 )
 
+// Drivers and operational workers
 type Worker struct {
 	bun.BaseModel             `bun:"table:workers,alias:wrk" json:"-"`
-	keel.Table                `                                       keel:"workers"`
+	keel.Table                `                                       keel:"workers,report=Parties"`
 	pagination.CursorValueSet `bun:",embed"                  json:"-"`
 
 	ID                    pulid.ID           `json:"id"                          bun:"id,pk,type:VARCHAR(100)"                                                  keel:"id,pk,autoid:wrk_"`
@@ -53,7 +54,7 @@ type Worker struct {
 	ProfilePicURL         string             `json:"profilePicUrl"               bun:"profile_pic_url,type:VARCHAR(255),nullzero"                               keel:"profile_pic_url,nullzero"`
 	FirstName             string             `json:"firstName"                   bun:"first_name,type:VARCHAR(100),notnull"                                     keel:"first_name"`
 	LastName              string             `json:"lastName"                    bun:"last_name,type:VARCHAR(100),notnull"                                      keel:"last_name"`
-	WholeName             string             `json:"wholeName"                   bun:"whole_name,type:VARCHAR(201),scanonly"                                    keel:"whole_name,readonly"`
+	WholeName             string             `json:"wholeName"                   bun:"whole_name,type:VARCHAR(201),scanonly"                                    keel:"whole_name,readonly,label=Full Name"`
 	AddressLine1          string             `json:"addressLine1"                bun:"address_line1,type:VARCHAR(150),notnull"                                  keel:"address_line1"`
 	AddressLine2          string             `json:"addressLine2"                bun:"address_line2,type:VARCHAR(150),nullzero"                                 keel:"address_line2,nullzero"`
 	City                  string             `json:"city"                        bun:"city,type:VARCHAR(100),notnull"                                           keel:"city"`
@@ -76,13 +77,13 @@ type Worker struct {
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"                                                                        keel:"belongs:business_unit_id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"                                                                         keel:"belongs:organization_id"`
-	State        *usstate.UsState     `json:"state,omitempty"        bun:"rel:belongs-to,join:state_id=id"                                                                                keel:"belongs:state_id"`
+	State        *usstate.UsState     `json:"state,omitempty"        bun:"rel:belongs-to,join:state_id=id"                                                                                keel:"belongs:state_id,noreport"`
 	FleetCode    *fleetcode.FleetCode `json:"fleetCode,omitempty"    bun:"rel:belongs-to,join:fleet_code_id=id"                                                                           keel:"belongs:fleet_code_id"`
-	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"                                                                              keel:"belongs:manager_id"`
+	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"                                                                              keel:"belongs:manager_id,noreport"`
 	Position     *JobPosition         `json:"position,omitempty"     bun:"rel:belongs-to,join:position_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:position_id"`
-	PortalUser   *tenant.User         `json:"portalUser,omitempty"   bun:"rel:belongs-to,join:user_id=id"                                                                                 keel:"belongs:user_id"`
+	PortalUser   *tenant.User         `json:"portalUser,omitempty"   bun:"rel:belongs-to,join:user_id=id"                                                                                 keel:"belongs:user_id,noreport"`
 	Profile      *WorkerProfile       `json:"profile,omitempty"      bun:"rel:has-one,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"      keel:"one:worker_id"`
-	PTO          []*WorkerPTO         `json:"pto,omitempty"          bun:"rel:has-many,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"     keel:"many:worker_id"`
+	PTO          []*WorkerPTO         `json:"pto,omitempty"          bun:"rel:has-many,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"     keel:"many:worker_id,label=Time Off"`
 }
 
 func (w *Worker) Validate(multiErr *errortypes.MultiError) {

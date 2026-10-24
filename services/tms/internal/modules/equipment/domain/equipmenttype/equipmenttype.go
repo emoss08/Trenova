@@ -29,9 +29,10 @@ var (
 	_ pagination.CursorEntity            = (*EquipmentType)(nil)
 )
 
+// Equipment classification
 type EquipmentType struct {
 	bun.BaseModel `bun:"table:equipment_types,alias:et" json:"-"`
-	keel.Table    `                                              keel:"equipment_types"`
+	keel.Table    `                                              keel:"equipment_types,report=Equipment"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"                  keel:"id,pk,autoid:et_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"    keel:"business_unit_id,pk,tenant"`
@@ -46,15 +47,15 @@ type EquipmentType struct {
 	DeckType         DeckType `json:"deckType"         bun:"deck_type,type:equipment_deck_type_enum,nullzero"                                     keel:"deck_type,nullzero"`
 	DeckHeightInches *float64 `json:"deckHeightInches" bun:"deck_height_inches,type:NUMERIC(10,2),nullzero"                                       keel:"deck_height_inches"`
 	WellLengthFeet   *float64 `json:"wellLengthFeet"   bun:"well_length_feet,type:NUMERIC(10,2),nullzero"                                         keel:"well_length_feet"`
-	AxleCount        *int16   `json:"axleCount"        bun:"axle_count,type:SMALLINT,nullzero"                                                    keel:"axle_count"`
+	AxleCount        *int16   `json:"axleCount"        bun:"axle_count,type:SMALLINT,nullzero"                                                    keel:"axle_count,dimension"`
 	SearchVector     string   `json:"-"                bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
 	Rank             string   `json:"-"                bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
 	Version          int64    `json:"version"          bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt        int64    `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt        int64    `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id" keel:"belongs:business_unit_id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"  keel:"belongs:organization_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id" keel:"belongs:business_unit_id,noreport"`
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"  keel:"belongs:organization_id,noreport"`
 }
 
 func (et *EquipmentType) Validate(multiErr *errortypes.MultiError) {

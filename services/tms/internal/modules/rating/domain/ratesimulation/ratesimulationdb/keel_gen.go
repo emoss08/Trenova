@@ -329,7 +329,7 @@ var rateSimulationResultsTable = schema.Table{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
 		{Name: "rate_simulation_id", Quoted: `"rate_simulation_id"`, Field: "RateSimulationID", Kind: schema.KindString, Flags: 0, Label: `Rate Simulation ID`},
 		{Name: "shipment_id", Quoted: `"shipment_id"`, Field: "ShipmentID", Kind: schema.KindString, Flags: 0, Label: `Shipment ID`},
-		{Name: "pro_number", Quoted: `"pro_number"`, Field: "ProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Pro Number`},
+		{Name: "pro_number", Quoted: `"pro_number"`, Field: "ProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `PRO Number`},
 		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Customer ID`, Doc: `CustomerID and LaneKey are copied onto the row so the result grid can be grouped without joining back to shipments that may since have been edited. A simulation is a record of a moment.`},
 		{Name: "lane_key", Quoted: `"lane_key"`, Field: "LaneKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Lane Key`},
 		{Name: "equipment_type_id", Quoted: `"equipment_type_id"`, Field: "EquipmentTypeID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Equipment Type ID`, Doc: `EquipmentTypeID is what the load ran on, which is the third dimension pricing changes are usually judged by.`},

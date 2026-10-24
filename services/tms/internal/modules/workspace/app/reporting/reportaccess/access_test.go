@@ -2,31 +2,39 @@ package reportaccess_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 
+	"github.com/emoss08/keel/analytics"
+	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type groups struct {
+var sharedCatalog = sync.OnceValues(reportengine.NewCatalog)
+
+type groupAccess struct {
 	visible permission.FieldGroupSet
 }
 
-func (g groups) Visible(context.Context, *permissionports.RequestActor) permission.FieldGroupSet {
+func (g groupAccess) Visible(
+	context.Context,
+	*permissionports.RequestActor,
+) permission.FieldGroupSet {
 	return g.visible
 }
 
-// countingEngine counts the engine reads a request makes.
 type countingEngine struct {
 	*permtest.Engine
+
 	batches int
 	singles int
 }
@@ -37,7 +45,7 @@ func (c *countingEngine) GetResourcePermissionsBatch(
 	resources []string,
 ) (map[string]*permissionports.ResourcePermissionDetail, error) {
 	c.batches++
-	return permtest.Batch(ctx, c.Engine, userID, orgID, resources)
+	return c.Engine.GetResourcePermissionsBatch(ctx, userID, orgID, resources)
 }
 
 func (c *countingEngine) GetResourcePermissions(
@@ -49,206 +57,276 @@ func (c *countingEngine) GetResourcePermissions(
 	return c.Engine.GetResourcePermissions(ctx, userID, orgID, resource)
 }
 
-func without(engine *permtest.Engine, resources ...string) *permtest.Engine {
-	for _, resource := range resources {
-		engine.Overrides[resource] = permtest.Grant{
-			DataScope:      permission.DataScopeOrganization,
-			MaxSensitivity: permission.SensitivityInternal,
-		}
-	}
-	return engine
+type fixture struct {
+	catalog  *analytics.Catalog
+	engine   *countingEngine
+	resolver *reportaccess.Resolver
 }
 
-func resolver(
-	engine permissionports.PermissionEngine,
-	visible permission.FieldGroupSet,
-) *reportaccess.Resolver {
+func newFixture(t *testing.T, groups permission.FieldGroupSet) *fixture {
+	t.Helper()
+	catalog, err := sharedCatalog()
+	require.NoError(t, err)
+	engine := &countingEngine{Engine: permtest.AllowAll()}
 	registry := permission.NewRegistry()
-	return reportaccess.New(reportaccess.Params{
+	resolver, err := reportaccess.New(reportaccess.Params{
+		Catalog:  catalog,
 		Engine:   engine,
 		Registry: registry,
 		Views:    refview.NewPort(refview.New(registry), engine),
-		Fields:   groups{visible: visible},
+		Fields:   groupAccess{visible: groups},
 	})
+	require.NoError(t, err)
+	return &fixture{catalog: catalog, engine: engine, resolver: resolver}
 }
 
-func tenant() pagination.TenantInfo {
-	return pagination.TenantInfo{
+func (f *fixture) access(t *testing.T, mode reportaccess.Mode) *reportaccess.Access {
+	t.Helper()
+	access, err := f.resolver.For(t.Context(), pagination.TenantInfo{
 		OrgID:  pulid.MustNew("org_"),
 		BuID:   pulid.MustNew("bu_"),
 		UserID: pulid.MustNew("usr_"),
+	}, mode)
+	require.NoError(t, err)
+	return access
+}
+
+func (f *fixture) field(t *testing.T, entity, path string) *analytics.Field {
+	t.Helper()
+	_, field, ok := f.catalog.Resolve(entity, path)
+	require.Truef(t, ok, "%s has no field %s", entity, path)
+	return field
+}
+
+func (f *fixture) edge(t *testing.T, entity, name string) *analytics.Edge {
+	t.Helper()
+	e, ok := f.catalog.Entity(entity)
+	require.True(t, ok)
+	edge, ok := e.Edge(name)
+	require.Truef(t, ok, "%s has no edge %s", entity, name)
+	return edge
+}
+
+func TestNew_RefusesACatalogEntityWithoutAKind(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, permission.AllFieldGroups())
+	for _, entity := range f.catalog.Entities() {
+		assert.NotEmptyf(t, f.resolver.Resource(entity), "%s has no resource", entity.Key)
 	}
+	_, err := reportaccess.New(reportaccess.Params{})
+	require.Error(t, err)
 }
 
-func entity(t *testing.T, key string) *reportcatalog.Entity {
-	t.Helper()
-	found, ok := reportcatalog.Default.Entity(key)
-	require.Truef(t, ok, "no catalog entity %q", key)
-	return found
-}
+func TestFor_ReadsThePermissionsInOneBatch(t *testing.T) {
+	t.Parallel()
 
-func fieldUse(t *testing.T, access *reportaccess.Access, entityKey, key string) reportaccess.Use {
-	t.Helper()
-	owner := entity(t, entityKey)
-	field, ok := owner.Field(key)
-	require.Truef(t, ok, "no field %s.%s", entityKey, key)
-	use, err := access.Field(t.Context(), owner, field)
-	require.NoError(t, err)
-	return use
-}
+	f := newFixture(t, permission.AllFieldGroups())
+	access := f.access(t, reportaccess.ModeRead)
 
-func edgeUse(t *testing.T, access *reportaccess.Access, entityKey, name string) reportaccess.Use {
-	t.Helper()
-	owner := entity(t, entityKey)
-	edge, ok := owner.Edge(name)
-	require.Truef(t, ok, "no edge %s.%s", entityKey, name)
-	use, err := access.Edge(t.Context(), owner, edge)
-	require.NoError(t, err)
-	return use
+	for _, entity := range f.catalog.Entities() {
+		for _, field := range entity.Fields {
+			access.FieldUse(t.Context(), field)
+		}
+	}
+	assert.Equal(t, 1, f.engine.batches)
+	assert.Zero(t, f.engine.singles, "every kind's grant came from the one batch")
 }
 
 func TestField_AKindTheCallerCannotReadOffersOnlyItsReferenceView(t *testing.T) {
 	t.Parallel()
 
-	access, err := resolver(without(permtest.AllowAll(), "customer"), permission.AllFieldGroups()).
-		ForCatalog(t.Context(), tenant())
-	require.NoError(t, err)
+	f := newFixture(t, permission.AllFieldGroups())
+	f.engine.Overrides[permission.ResourceCustomer.String()] = permtest.Grant{}
+	access := f.access(t, reportaccess.ModeRead)
 
-	name := fieldUse(t, access, "customer", "name")
-	assert.Equal(t, reportaccess.Available, name.Decision)
+	name := access.FieldUse(t.Context(), f.field(t, "customer", "name"))
 	assert.True(t, name.Reference)
+	assert.Equal(
+		t,
+		reportaccess.Available,
+		name.Decision,
+		"a customer's name is in its reference view",
+	)
 
-	dot := fieldUse(t, access, "customer", "dotNumber")
-	assert.Equal(t, reportaccess.NeedsKindRead, dot.Decision)
-	assert.Equal(t, permission.ResourceCustomer, dot.Kind)
-	assert.False(t, dot.Reference)
+	for _, field := range f.field(t, "customer", "name").Entity.Fields {
+		use := access.FieldUse(t.Context(), field)
+		if !use.Reference {
+			assert.Equalf(t, reportaccess.NeedsKindRead, use.Decision, "customer.%s", field.Key)
+			assert.Equal(t, permission.ResourceCustomer, use.Kind)
+		}
+	}
+
+	entity, _ := f.catalog.Entity("customer")
+	assert.Equal(t, reportaccess.NeedsKindRead, access.EntityUse(entity).Decision,
+		"a report never starts from a kind the caller cannot read")
 }
 
-func TestField_TheCeilingAppliesOnAReadableKindAndInsideAView(t *testing.T) {
+func TestField_TheCeilingAppliesOnAReadableKind(t *testing.T) {
 	t.Parallel()
 
-	engine := permtest.AllowAll()
-	engine.DefaultGrant.MaxSensitivity = permission.SensitivityPublic
-	engine.Overrides["customer"] = permtest.Grant{MaxSensitivity: permission.SensitivityPublic}
-	access, err := resolver(engine, permission.AllFieldGroups()).ForCatalog(t.Context(), tenant())
-	require.NoError(t, err)
+	f := newFixture(t, permission.AllFieldGroups())
+	f.engine.Overrides[permission.ResourceShipment.String()] = permtest.Grant{
+		Operations:     []permission.Operation{permission.OpRead},
+		MaxSensitivity: permission.SensitivityPublic,
+	}
+	access := f.access(t, reportaccess.ModeRead)
 
-	assert.Equal(t, reportaccess.WithheldByCeiling,
-		fieldUse(t, access, "shipment", "status").Decision)
-	assert.Equal(t, reportaccess.WithheldByCeiling,
-		fieldUse(t, access, "customer", "name").Decision,
-		"a reference field is still held to the reader's ceiling")
+	withheld := 0
+	entity, _ := f.catalog.Entity("shipment")
+	for _, field := range entity.Fields {
+		use := access.FieldUse(t.Context(), field)
+		if use.Sensitivity != permission.SensitivityPublic {
+			assert.Equalf(t, reportaccess.WithheldByCeiling, use.Decision, "shipment.%s", field.Key)
+			withheld++
+		}
+	}
+	assert.Positive(t, withheld, "a public ceiling withholds the shipment's internal fields")
 }
 
 func TestField_AProtectedFieldNeedsItsGroup(t *testing.T) {
 	t.Parallel()
 
-	withheld, err := resolver(permtest.AllowAll(), 0).ForCatalog(t.Context(), tenant())
-	require.NoError(t, err)
-	granted, err := resolver(permtest.AllowAll(), permission.AllFieldGroups()).
-		ForCatalog(t.Context(), tenant())
-	require.NoError(t, err)
+	without := newFixture(t, 0)
+	with := newFixture(t, permission.AllFieldGroups())
+	denied := without.access(t, reportaccess.ModeRead)
+	granted := with.access(t, reportaccess.ModeRead)
 
-	use := fieldUse(t, withheld, "worker_profile", "licenseNumber")
-	assert.Equal(t, reportaccess.NeedsFieldGroup, use.Decision)
-	assert.Equal(t, permission.FieldGroupPersonal, use.Group)
-	assert.False(t, use.HoldsGroup)
+	checked := 0
+	for _, entity := range without.catalog.Entities() {
+		for _, field := range entity.Fields {
+			group, protected := without.resolver.Protection(field)
+			if !protected {
+				continue
+			}
+			use := denied.FieldUse(t.Context(), field)
+			assert.Equalf(
+				t,
+				reportaccess.NeedsFieldGroup,
+				use.Decision,
+				"%s.%s",
+				entity.Key,
+				field.Key,
+			)
+			assert.Equal(t, group, use.Group)
+			assert.False(t, use.HoldsGroup)
 
-	use = fieldUse(t, granted, "worker_profile", "licenseNumber")
-	assert.Equal(t, reportaccess.Available, use.Decision)
-	assert.True(t, use.HoldsGroup)
+			held := granted.FieldUse(t.Context(), field)
+			assert.Equalf(t, reportaccess.Available, held.Decision, "%s.%s", entity.Key, field.Key)
+			checked++
+		}
+	}
+	assert.Positive(t, checked, "the catalog has no protected field")
 }
 
-func TestEdge_AnEdgeOutsideAnUnreadableKindsViewNeedsItsRead(t *testing.T) {
+func TestExport_NeedsTheKindsExport(t *testing.T) {
 	t.Parallel()
 
-	access, err := resolver(without(permtest.AllowAll(), "worker"), permission.AllFieldGroups()).
-		ForCatalog(t.Context(), tenant())
-	require.NoError(t, err)
+	f := newFixture(t, permission.AllFieldGroups())
+	f.engine.Overrides[permission.ResourceShipment.String()] = permtest.Grant{
+		Operations:     []permission.Operation{permission.OpRead},
+		MaxSensitivity: permission.SensitivityConfidential,
+	}
+	shipment, _ := f.catalog.Entity("shipment")
+	field := f.field(t, "shipment", "weight")
+	reference := f.field(t, "shipment", "proNumber")
 
-	assert.Equal(t, reportaccess.Available, edgeUse(t, access, "worker", "fleetCode").Decision)
-	profile := edgeUse(t, access, "worker", "profile")
-	assert.Equal(t, reportaccess.NeedsKindRead, profile.Decision)
-	assert.Equal(t, permission.ResourceWorker, profile.Kind)
-	assert.Equal(t, reportaccess.Available, edgeUse(t, access, "shipment", "customer").Decision,
-		"an edge out of a kind the caller reads is theirs to follow")
+	read := f.access(t, reportaccess.ModeRead)
+	assert.Equal(t, reportaccess.Available, read.EntityUse(shipment).Decision)
+	assert.Equal(t, reportaccess.Available, read.FieldUse(t.Context(), field).Decision)
+
+	export := f.access(t, reportaccess.ModeExport)
+	assert.Equal(t, reportaccess.ModeExport, export.Mode())
+	assert.Equal(t, reportaccess.NeedsExport, export.EntityUse(shipment).Decision)
+	assert.Equal(t, reportaccess.NeedsExport, export.FieldUse(t.Context(), field).Decision)
+
+	use := export.FieldUse(t.Context(), reference)
+	require.True(t, use.Reference)
+	assert.Equal(t, reportaccess.Available, use.Decision,
+		"a reference field is what any linked record shows, so it needs no export of its own")
 }
 
 func TestEdge_APickEdgeNeedsReadOnTheRowsItPicksFrom(t *testing.T) {
 	t.Parallel()
 
-	access, err := resolver(
-		without(permtest.AllowAll(), "shipment_stop"), permission.AllFieldGroups(),
-	).ForCatalog(t.Context(), tenant())
-	require.NoError(t, err)
+	f := newFixture(t, permission.AllFieldGroups())
+	pick := f.edge(t, "shipment", "originStop")
+	require.True(t, pick.Pick)
+	via := f.resolver.PickVia(pick)
+	require.NotEmpty(t, via)
 
-	use := edgeUse(t, access, "shipment", "destinationStop")
-	assert.Equal(t, reportaccess.NeedsKindRead, use.Decision,
-		"the destination stop is picked from the shipment's stop rows")
-	assert.Equal(t, permission.Resource("shipment_stop"), use.Kind)
+	assert.Equal(
+		t,
+		reportaccess.Available,
+		f.access(t, reportaccess.ModeRead).EdgeUse(t.Context(), pick).Decision,
+	)
+
+	blocked := f.resolver.Resource(via[0])
+	f.engine.Overrides[blocked.String()] = permtest.Grant{}
+	use := f.access(t, reportaccess.ModeRead).EdgeUse(t.Context(), pick)
+	assert.Equal(t, reportaccess.NeedsKindRead, use.Decision)
+	assert.Equal(t, blocked, use.Kind)
 }
 
-func TestCatalog_ReadsThePermissionsInOneBatch(t *testing.T) {
+func TestRows_AnOwnScopeGrantNarrowsToTheCallersRecords(t *testing.T) {
 	t.Parallel()
 
-	engine := &countingEngine{Engine: without(permtest.AllowAll(), "customer", "worker")}
-	access, err := resolver(engine, permission.AllFieldGroups()).ForCatalog(t.Context(), tenant())
-	require.NoError(t, err)
+	f := newFixture(t, permission.AllFieldGroups())
+	f.engine.Overrides[permission.ResourceShipment.String()] = permtest.Grant{
+		Operations:     []permission.Operation{permission.OpRead},
+		DataScope:      permission.DataScopeOwn,
+		MaxSensitivity: permission.SensitivityConfidential,
+	}
+	f.engine.Overrides[permission.ResourceCustomer.String()] = permtest.Grant{
+		Operations:     []permission.Operation{permission.OpRead},
+		DataScope:      permission.DataScopeOwn,
+		MaxSensitivity: permission.SensitivityConfidential,
+	}
+	access := f.access(t, reportaccess.ModeRead)
 
-	entities, err := access.Catalog(t.Context())
-	require.NoError(t, err)
+	shipment, _ := f.catalog.Entity("shipment")
+	assert.True(t, f.resolver.OwnScopeSupported(shipment))
+	assert.Len(t, access.Rows(t.Context(), shipment), 1)
+	assert.Equal(t, reportaccess.Available, access.EntityUse(shipment).Decision)
 
-	assert.Len(t, entities, len(reportcatalog.Default.Entities))
-	assert.Equal(t, 1, engine.batches)
-	assert.Zero(t, engine.singles, "every kind the catalog decides was in the batch")
+	customer, _ := f.catalog.Entity("customer")
+	assert.False(t, f.resolver.OwnScopeSupported(customer))
+	assert.Empty(t, access.Rows(t.Context(), customer))
+	assert.Equal(t, reportaccess.OwnScopeUnsupported, access.EntityUse(customer).Decision,
+		"a kind with no owner column cannot honour an own-scope grant, so it is refused")
 }
 
-func TestCatalog_AnUnreadableKindIsUsableOnlyThroughAView(t *testing.T) {
+func TestRefusal_NamesWhatTheCallerLacks(t *testing.T) {
 	t.Parallel()
 
-	access, err := resolver(without(permtest.AllowAll(), "customer", "worker"), 0).
-		ForCatalog(t.Context(), tenant())
-	require.NoError(t, err)
+	f := newFixture(t, permission.AllFieldGroups())
+	f.engine.Overrides[permission.ResourceCustomer.String()] = permtest.Grant{}
+	access := f.access(t, reportaccess.ModeRead)
 
-	customer, err := access.Entity(t.Context(), entity(t, "customer"))
-	require.NoError(t, err)
-	assert.False(t, customer.Readable)
-	assert.False(t, customer.Exportable)
-	assert.True(t, customer.Usable(), "a customer's name is in its view")
+	entity, _ := f.catalog.Entity("customer")
+	access.Entity(t.Context(), entity)
+	require.NotEmpty(t, access.Denials())
 
-	profile, err := access.Entity(t.Context(), entity(t, "worker_profile"))
-	require.NoError(t, err)
-	assert.False(t, profile.Usable(), "a worker's profile is never in the worker view")
+	err := access.Refusal(
+		t.Context(),
+		&analytics.Error{Code: analytics.CodeDenied, Message: "denied"},
+	)
+	var authz *errortypes.AuthorizationError
+	require.ErrorAs(t, err, &authz)
+	assert.Contains(t, err.Error(), "Customers")
 }
 
-func TestReason_NamesTheMissingReadTierOrGroup(t *testing.T) {
+func TestDecisionsRoundTripThroughTheirReasonCodes(t *testing.T) {
 	t.Parallel()
 
-	r := resolver(permtest.AllowAll(), 0)
-	customer := entity(t, "customer")
-
-	assert.Equal(t,
-		`you do not have read access to Customers, which "DOT Number" on Customer needs; `+
-			"without it a report can use only its reference fields",
-		r.Reason(customer, "DOT Number", reportaccess.Use{
-			Decision: reportaccess.NeedsKindRead,
-			Kind:     permission.ResourceCustomer,
-		}))
-	assert.Equal(t,
-		`field "License Number" on Customer is in the Personal protected field group, `+
-			"which your role does not grant",
-		r.Reason(customer, "License Number", reportaccess.Use{
-			Decision: reportaccess.NeedsFieldGroup,
-			Group:    permission.FieldGroupPersonal,
-		}))
-	assert.Equal(t, `field "Name" on Customer requires internal access`,
-		r.Reason(customer, "Name", reportaccess.Use{
-			Decision:    reportaccess.WithheldByCeiling,
-			Sensitivity: permission.SensitivityInternal,
-		}))
-	assert.Empty(t, r.Reason(customer, "Name", reportaccess.Use{}))
-	assert.Equal(t, "customer read", r.Need(reportaccess.Use{
-		Decision: reportaccess.NeedsKindRead,
-		Kind:     permission.ResourceCustomer,
-	}))
+	for _, decision := range []reportaccess.Decision{
+		reportaccess.Available,
+		reportaccess.NeedsKindRead,
+		reportaccess.WithheldByCeiling,
+		reportaccess.NeedsFieldGroup,
+		reportaccess.NeedsExport,
+		reportaccess.OwnScopeUnsupported,
+	} {
+		assert.Equal(t, decision, reportaccess.DecisionOf(decision.String()))
+	}
 }

@@ -21,42 +21,42 @@ var (
 	_ domaintypes.PostgresSearchable     = (*HazardousMaterial)(nil)
 )
 
+// Hazmat reference data
 type HazardousMaterial struct {
 	bun.BaseModel `bun:"table:hazardous_materials,alias:hm" json:"-"`
-	keel.Table    `keel:"hazardous_materials"`
+	keel.Table    `                                                  keel:"hazardous_materials,report=Freight"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID                          pulid.ID           `json:"id"                          bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:hm_"`
-	BusinessUnitID              pulid.ID           `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID              pulid.ID           `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	Status                      domaintypes.Status `json:"status"                      bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
-	Code                        string             `json:"code"                        bun:"code,type:VARCHAR(10),notnull" keel:"code"`
-	Name                        string             `json:"name"                        bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Description                 string             `json:"description"                 bun:"description,type:TEXT,notnull" keel:"description"`
-	Class                       HazardousClass     `json:"class"                       bun:"class,type:hazardous_class_enum,notnull" keel:"class"`
-	UNNumber                    string             `json:"unNumber"                    bun:"un_number,type:VARCHAR(4)" keel:"un_number,nullzero"`
-	PackingGroup                PackingGroup       `json:"packingGroup"                bun:"packing_group,type:packing_group_enum,notnull" keel:"packing_group"`
-	SubsidiaryHazardClass       string             `json:"subsidiaryHazardClass"       bun:"subsidiary_hazard_class,type:VARCHAR(20)" keel:"subsidiary_hazard_class,nullzero"`
-	ErgGuideNumber              string             `json:"ergGuideNumber"              bun:"erg_guide_number,type:VARCHAR(10)" keel:"erg_guide_number,nullzero"`
-	LabelCodes                  string             `json:"labelCodes"                  bun:"label_codes,type:VARCHAR(50)" keel:"label_codes,nullzero"`
-	SpecialProvisions           string             `json:"specialProvisions"           bun:"special_provisions,type:TEXT" keel:"special_provisions,nullzero"`
-	ProperShippingName          string             `json:"properShippingName"          bun:"proper_shipping_name,type:TEXT" keel:"proper_shipping_name,nullzero"`
-	HandlingInstructions        string             `json:"handlingInstructions"        bun:"handling_instructions,type:TEXT" keel:"handling_instructions,nullzero"`
-	EmergencyContact            string             `json:"emergencyContact"            bun:"emergency_contact,type:TEXT" keel:"emergency_contact,nullzero"`
-	EmergencyContactPhoneNumber string             `json:"emergencyContactPhoneNumber" bun:"emergency_contact_phone_number,type:TEXT" keel:"emergency_contact_phone_number,nullzero"`
-	QuantityThreshold           string             `json:"quantityThreshold"           bun:"quantity_threshold,type:VARCHAR(20)" keel:"quantity_threshold,nullzero"`
+	ID                          pulid.ID           `json:"id"                          bun:"id,type:VARCHAR(100),pk,notnull"                                          keel:"id,pk,autoid:hm_"`
+	BusinessUnitID              pulid.ID           `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                            keel:"business_unit_id,pk,tenant"`
+	OrganizationID              pulid.ID           `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),pk,notnull"                             keel:"organization_id,pk,tenant"`
+	Status                      domaintypes.Status `json:"status"                      bun:"status,type:status_enum,notnull,default:'Active'"                         keel:"status"`
+	Code                        string             `json:"code"                        bun:"code,type:VARCHAR(10),notnull"                                            keel:"code"`
+	Name                        string             `json:"name"                        bun:"name,type:VARCHAR(100),notnull"                                           keel:"name"`
+	Description                 string             `json:"description"                 bun:"description,type:TEXT,notnull"                                            keel:"description"`
+	Class                       HazardousClass     `json:"class"                       bun:"class,type:hazardous_class_enum,notnull"                                  keel:"class"`
+	UNNumber                    string             `json:"unNumber"                    bun:"un_number,type:VARCHAR(4)"                                                keel:"un_number,nullzero"`
+	PackingGroup                PackingGroup       `json:"packingGroup"                bun:"packing_group,type:packing_group_enum,notnull"                            keel:"packing_group"`
+	SubsidiaryHazardClass       string             `json:"subsidiaryHazardClass"       bun:"subsidiary_hazard_class,type:VARCHAR(20)"                                 keel:"subsidiary_hazard_class,nullzero"`
+	ErgGuideNumber              string             `json:"ergGuideNumber"              bun:"erg_guide_number,type:VARCHAR(10)"                                        keel:"erg_guide_number,nullzero"`
+	LabelCodes                  string             `json:"labelCodes"                  bun:"label_codes,type:VARCHAR(50)"                                             keel:"label_codes,nullzero"`
+	SpecialProvisions           string             `json:"specialProvisions"           bun:"special_provisions,type:TEXT"                                             keel:"special_provisions,nullzero"`
+	ProperShippingName          string             `json:"properShippingName"          bun:"proper_shipping_name,type:TEXT"                                           keel:"proper_shipping_name,nullzero"`
+	HandlingInstructions        string             `json:"handlingInstructions"        bun:"handling_instructions,type:TEXT"                                          keel:"handling_instructions,nullzero"`
+	EmergencyContact            string             `json:"emergencyContact"            bun:"emergency_contact,type:TEXT"                                              keel:"emergency_contact,nullzero"`
+	EmergencyContactPhoneNumber string             `json:"emergencyContactPhoneNumber" bun:"emergency_contact_phone_number,type:TEXT"                                 keel:"emergency_contact_phone_number,nullzero"`
+	QuantityThreshold           string             `json:"quantityThreshold"           bun:"quantity_threshold,type:VARCHAR(20)"                                      keel:"quantity_threshold,nullzero"`
 	SearchVector                string             `json:"-"                           bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                        string             `json:"-"                           bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
-	PlacardRequired             bool               `json:"placardRequired"             bun:"placard_required,type:BOOLEAN" keel:"placard_required"`
-	IsReportableQuantity        bool               `json:"isReportableQuantity"        bun:"is_reportable_quantity,type:BOOLEAN" keel:"is_reportable_quantity"`
-	MarinePollutant             bool               `json:"marinePollutant"             bun:"marine_pollutant,type:BOOLEAN" keel:"marine_pollutant"`
-	InhalationHazard            bool               `json:"inhalationHazard"            bun:"inhalation_hazard,type:BOOLEAN" keel:"inhalation_hazard"`
-	Version                     int64              `json:"version"                     bun:"version,type:BIGINT" keel:"version,version"`
+	Rank                        string             `json:"-"                           bun:"rank,type:VARCHAR(100),scanonly"                                          keel:"rank,computed"`
+	PlacardRequired             bool               `json:"placardRequired"             bun:"placard_required,type:BOOLEAN"                                            keel:"placard_required"`
+	IsReportableQuantity        bool               `json:"isReportableQuantity"        bun:"is_reportable_quantity,type:BOOLEAN"                                      keel:"is_reportable_quantity"`
+	MarinePollutant             bool               `json:"marinePollutant"             bun:"marine_pollutant,type:BOOLEAN"                                            keel:"marine_pollutant"`
+	InhalationHazard            bool               `json:"inhalationHazard"            bun:"inhalation_hazard,type:BOOLEAN"                                           keel:"inhalation_hazard"`
+	Version                     int64              `json:"version"                     bun:"version,type:BIGINT"                                                      keel:"version,version"`
 	CreatedAt                   int64              `json:"createdAt"                   bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt                   int64              `json:"updatedAt"                   bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	// Relationships
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }

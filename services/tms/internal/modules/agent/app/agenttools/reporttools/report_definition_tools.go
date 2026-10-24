@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -48,6 +49,9 @@ type reportDefinitionWriter interface {
 		req *reporting.SaveDefinitionRequest,
 	) (*report.ReportDefinition, error)
 	ValidateDefinition(ctx context.Context, req *reporting.SaveDefinitionRequest) error
+	NewDefinition(req *reporting.SaveDefinitionRequest) *report.ReportDefinition
+	ApplyDefinitionSave(existing *report.ReportDefinition, req *reporting.SaveDefinitionRequest)
+	NewCannedFork(entry *canned.Entry, req *reporting.ForkCannedRequest) *report.ReportDefinition
 }
 
 func reportingRequestFrom(params agentports.ToolExecuteParams) reporting.Request {
@@ -189,7 +193,7 @@ func readTags(raw any) ([]string, error) {
 // Only definition is read, so a top-level columns list was dropped without a
 // word while the report saved with whatever definition.columns held.
 var definitionParts = [...]string{
-	"irVersion",
+	"version",
 	"entity",
 	"dataset",
 	"columns",
@@ -199,14 +203,15 @@ var definitionParts = [...]string{
 	"limit",
 	"pivot",
 	"parameters",
-	"totals",
+	"groupings",
+	"top",
 	"charts",
 }
 
 // readDefinition decodes the definition argument. Its shape is checked here
 // and its meaning by the compiler, which knows the catalog and the person's
 // access and reports in its own words what a model got wrong.
-func readDefinition(params map[string]any, required bool) (*report.Definition, error) {
+func readDefinition(params map[string]any, required bool) (*ir.Definition, error) {
 	stray := make([]string, 0, len(definitionParts))
 	for _, part := range definitionParts {
 		if _, ok := params[part]; ok {
@@ -234,7 +239,7 @@ func readDefinition(params map[string]any, required bool) (*report.Definition, e
 		return nil, nil
 	}
 
-	return report.DecodeDefinition(raw)
+	return reporting.DecodeDefinition(raw)
 }
 
 type CreateReportTool struct {
@@ -255,7 +260,7 @@ func (t *CreateReportTool) Description() string {
 		"For \"shipments for customer X\" build a list: dimension columns only, no " +
 		"measures and no bucket, which returns one row per record. Narrow to one " +
 		"related record by its id, from customer_list, on the dataset's own key " +
-		"for it — {\"ref\": {\"field\": \"customerId\"}, \"operator\": \"eq\", " +
+		"for it — {\"field\": \"customer.id\", \"op\": \"eq\", " +
 		"\"value\": \"cus_…\"} — not by its name, which two records can share and a " +
 		"rename changes. Totals by month or customer are the only reason to add a " +
 		"measure or bucket. It saves the report and does not run it; report_run does that."
@@ -301,7 +306,7 @@ func (t *CreateReportTool) SearchTerms() []string {
 func (t *CreateReportTool) ParamSchema() map[string]any {
 	properties := reportMetadataProperties()
 	properties[paramReportName] = map[string]any{"type": "string", "description": reportNameNote}
-	properties["definition"] = report.DefinitionJSONSchema()
+	properties["definition"] = report.DefinitionToolSchema()
 
 	return map[string]any{
 		"type":                 "object",
@@ -423,7 +428,7 @@ func (t *UpdateReportTool) ParamSchema() map[string]any {
 		"The definitionId of the saved report, from report_list or report_get.",
 	)
 	properties[paramReportName] = map[string]any{"type": "string", "description": reportNameNote}
-	properties["definition"] = report.DefinitionJSONSchema()
+	properties["definition"] = report.DefinitionToolSchema()
 	properties["status"] = agenttoolschema.Enum(
 		"Optional: active runs, draft is kept but hidden from runs, archived "+
 			"retires it. Leave it out to keep the current status.",

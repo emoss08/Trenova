@@ -4353,7 +4353,7 @@ var enumSubjectType = [...]schema.EnumValue{
 	{Value: `AccountingDriftFinding`, Label: `Subject Accounting Drift`},
 	{Value: `Invoice`, Label: `Subject Invoice`},
 	{Value: `InvoiceDispute`, Label: `Subject Invoice Dispute`},
-	{Value: `FactoringNoa`, Label: `Subject Factoring Noa`},
+	{Value: `FactoringNoa`, Label: `Subject Factoring NOA`},
 	{Value: `FactoringSubmission`, Label: `Subject Factoring Submission`},
 	{Value: `FactoringRemittance`, Label: `Subject Factoring Remittance`},
 }

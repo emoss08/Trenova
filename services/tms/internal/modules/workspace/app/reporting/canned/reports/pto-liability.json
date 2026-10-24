@@ -1,0 +1,123 @@
+{
+  "key": "pto-liability",
+  "version": "1.0.0",
+  "name": "Time Off Liability",
+  "description": "Accrued time off the organisation is carrying, by type and terminal, with what has been accrued and used this year",
+  "category": "Compliance",
+  "tags": [
+    "workforce",
+    "time-off",
+    "liability"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "worker_pto_balance",
+    "columns": [
+      {
+        "id": "pto_type",
+        "label": "Time Off Type",
+        "dimension": {
+          "field": "ptoType"
+        }
+      },
+      {
+        "id": "fleet_code",
+        "label": "Fleet",
+        "dimension": {
+          "field": "worker.fleetCode.code"
+        }
+      },
+      {
+        "id": "worker_count",
+        "label": "Workers",
+        "measure": {
+          "field": "worker.id",
+          "agg": "count_distinct"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "balance_days",
+        "label": "Accrued Balance",
+        "measure": {
+          "field": "balanceDays",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 2,
+          "grouping": true,
+          "suffix": " d"
+        }
+      },
+      {
+        "id": "accrued_ytd",
+        "label": "Accrued This Year",
+        "measure": {
+          "field": "accruedYTDDays",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 2,
+          "grouping": true,
+          "suffix": " d"
+        }
+      },
+      {
+        "id": "used_ytd",
+        "label": "Used This Year",
+        "measure": {
+          "field": "usedYTDDays",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 2,
+          "grouping": true,
+          "suffix": " d"
+        }
+      },
+      {
+        "id": "carried",
+        "label": "Carried In",
+        "measure": {
+          "field": "carriedDays",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 2,
+          "grouping": true,
+          "suffix": " d"
+        }
+      },
+      {
+        "id": "avg_balance",
+        "label": "Average Balance per Worker",
+        "calc": "[balance_days] / [worker_count]",
+        "transform": {
+          "op": "round",
+          "precision": 2
+        },
+        "display": {
+          "style": "number",
+          "decimals": 2,
+          "grouping": true,
+          "suffix": " d"
+        }
+      }
+    ],
+    "sort": [
+      {
+        "column": "balance_days",
+        "desc": true
+      }
+    ]
+  }
+}

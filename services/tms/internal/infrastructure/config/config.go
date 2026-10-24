@@ -1297,31 +1297,32 @@ func (c *CacheConfig) GetRedisAddr() string {
 }
 
 type ReportingConfig struct {
-	PoolMaxOpenConns        int           `mapstructure:"poolMaxOpenConns"        validate:"min=0,max=64"`
-	PoolMaxIdleConns        int           `mapstructure:"poolMaxIdleConns"        validate:"min=0,max=64"`
-	StatementTimeout        time.Duration `mapstructure:"statementTimeout"`
-	PreviewStatementTimeout time.Duration `mapstructure:"previewStatementTimeout"`
-	MaxRunDuration          time.Duration `mapstructure:"maxRunDuration"`
-	MaxRows                 int64         `mapstructure:"maxRows"                 validate:"min=0"`
-	MaxArtifactBytes        int64         `mapstructure:"maxArtifactBytes"        validate:"min=0"`
-	PreviewRowLimit         int           `mapstructure:"previewRowLimit"         validate:"min=0,max=1000"`
-	PDFMaxRows              int64         `mapstructure:"pdfMaxRows"              validate:"min=0"`
-	MaxToOneJoins           int           `mapstructure:"maxToOneJoins"           validate:"min=0,max=16"`
-	MaxToManySubqueries     int           `mapstructure:"maxToManySubqueries"     validate:"min=0,max=8"`
-	MaxDimensions           int           `mapstructure:"maxDimensions"           validate:"min=0,max=16"`
-	MaxPivotColumns         int           `mapstructure:"maxPivotColumns"         validate:"min=0,max=200"`
-	MaxPathDepth            int           `mapstructure:"maxPathDepth"            validate:"min=0,max=6"`
-	MaxDefinitionLimit      int           `mapstructure:"maxDefinitionLimit"      validate:"min=0"`
-	MaxConcurrentRunsPerOrg int           `mapstructure:"maxConcurrentRunsPerOrg" validate:"min=0,max=32"`
-	MaxQueuedRunsPerOrg     int           `mapstructure:"maxQueuedRunsPerOrg"     validate:"min=0,max=256"`
-	ArtifactRetention       time.Duration `mapstructure:"artifactRetention"`
-	ResultCacheTTL          time.Duration `mapstructure:"resultCacheTtl"`
-	ArtifactPrefix          string        `mapstructure:"artifactPrefix"`
-	CSVIncludeBOM           bool          `mapstructure:"csvIncludeBom"`
-	ExplainCostLimit        float64       `mapstructure:"explainCostLimit"        validate:"min=0"`
-	ExplainRowLimit         float64       `mapstructure:"explainRowLimit"         validate:"min=0"`
-	DeliveryLinkBaseURL     string        `mapstructure:"deliveryLinkBaseUrl"     validate:"omitempty,url"`
-	EmailMaxAttachmentBytes int64         `mapstructure:"emailMaxAttachmentBytes" validate:"min=0"`
+	PoolMaxOpenConns              int           `mapstructure:"poolMaxOpenConns"        validate:"min=0,max=64"`
+	PoolMaxIdleConns              int           `mapstructure:"poolMaxIdleConns"        validate:"min=0,max=64"`
+	StatementTimeout              time.Duration `mapstructure:"statementTimeout"`
+	PreviewStatementTimeout       time.Duration `mapstructure:"previewStatementTimeout"`
+	MaxRunDuration                time.Duration `mapstructure:"maxRunDuration"`
+	MaxRows                       int64         `mapstructure:"maxRows"                 validate:"min=0"`
+	MaxArtifactBytes              int64         `mapstructure:"maxArtifactBytes"        validate:"min=0"`
+	PreviewRowLimit               int           `mapstructure:"previewRowLimit"         validate:"min=0,max=1000"`
+	PDFMaxRows                    int64         `mapstructure:"pdfMaxRows"              validate:"min=0"`
+	MaxToOneJoins                 int           `mapstructure:"maxToOneJoins"           validate:"min=0,max=16"`
+	MaxToManySubqueries           int           `mapstructure:"maxToManySubqueries"     validate:"min=0,max=8"`
+	MaxDimensions                 int           `mapstructure:"maxDimensions"           validate:"min=0,max=16"`
+	MaxPivotColumns               int           `mapstructure:"maxPivotColumns"         validate:"min=0,max=200"`
+	MaxPathDepth                  int           `mapstructure:"maxPathDepth"            validate:"min=0,max=6"`
+	MaxDefinitionLimit            int           `mapstructure:"maxDefinitionLimit"      validate:"min=0"`
+	MaxConcurrentRunsPerOrg       int           `mapstructure:"maxConcurrentRunsPerOrg" validate:"min=0,max=32"`
+	MaxQueuedRunsPerOrg           int           `mapstructure:"maxQueuedRunsPerOrg"     validate:"min=0,max=256"`
+	MaxConcurrentStatementsPerOrg int           `mapstructure:"maxConcurrentStatementsPerOrg" validate:"min=0,max=64"`
+	ArtifactRetention             time.Duration `mapstructure:"artifactRetention"`
+	ResultCacheTTL                time.Duration `mapstructure:"resultCacheTtl"`
+	ArtifactPrefix                string        `mapstructure:"artifactPrefix"`
+	CSVIncludeBOM                 bool          `mapstructure:"csvIncludeBom"`
+	ExplainCostLimit              float64       `mapstructure:"explainCostLimit"        validate:"min=0"`
+	ExplainRowLimit               float64       `mapstructure:"explainRowLimit"         validate:"min=0"`
+	DeliveryLinkBaseURL           string        `mapstructure:"deliveryLinkBaseUrl"     validate:"omitempty,url"`
+	EmailMaxAttachmentBytes       int64         `mapstructure:"emailMaxAttachmentBytes" validate:"min=0"`
 }
 
 func (c *ReportingConfig) GetPoolMaxOpenConns() int {
@@ -1434,6 +1435,13 @@ func (c *ReportingConfig) GetMaxConcurrentRunsPerOrg() int {
 		return 2
 	}
 	return c.MaxConcurrentRunsPerOrg
+}
+
+func (c *ReportingConfig) GetMaxConcurrentStatementsPerOrg() int {
+	if c.MaxConcurrentStatementsPerOrg == 0 {
+		return 4
+	}
+	return c.MaxConcurrentStatementsPerOrg
 }
 
 func (c *ReportingConfig) GetMaxQueuedRunsPerOrg() int {

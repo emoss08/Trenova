@@ -1,0 +1,172 @@
+{
+  "key": "fleet-roster",
+  "version": "1.0.0",
+  "name": "Fleet Roster — Tractors",
+  "description": "Full power-unit roster: identity, specification, registration, fleet assignment, and the drivers currently attached",
+  "category": "Fleet",
+  "tags": [
+    "tractors",
+    "fleet",
+    "roster",
+    "assets"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "tractor",
+    "columns": [
+      {
+        "id": "unit",
+        "label": "Unit Number",
+        "dimension": {
+          "field": "code"
+        }
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "dimension": {
+          "field": "status"
+        }
+      },
+      {
+        "id": "year",
+        "label": "Year",
+        "dimension": {
+          "field": "year"
+        }
+      },
+      {
+        "id": "make",
+        "label": "Make",
+        "dimension": {
+          "field": "make"
+        }
+      },
+      {
+        "id": "model",
+        "label": "Model",
+        "dimension": {
+          "field": "model"
+        }
+      },
+      {
+        "id": "vin",
+        "label": "VIN",
+        "dimension": {
+          "field": "vin"
+        },
+        "display": {
+          "nullText": "—"
+        }
+      },
+      {
+        "id": "license_plate",
+        "label": "License Plate",
+        "dimension": {
+          "field": "licensePlateNumber"
+        },
+        "display": {
+          "nullText": "—"
+        }
+      },
+      {
+        "id": "registration_number",
+        "label": "Registration Number",
+        "dimension": {
+          "field": "registrationNumber"
+        },
+        "display": {
+          "nullText": "—"
+        }
+      },
+      {
+        "id": "registration_expiry",
+        "label": "Registration Expiry",
+        "dimension": {
+          "field": "registrationExpiry"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "equipment_type",
+        "label": "Equipment Type",
+        "dimension": {
+          "field": "equipmentType.code"
+        }
+      },
+      {
+        "id": "manufacturer",
+        "label": "Manufacturer",
+        "dimension": {
+          "field": "equipmentManufacturer.name"
+        }
+      },
+      {
+        "id": "fleet_code",
+        "label": "Fleet",
+        "dimension": {
+          "field": "fleetCode.code"
+        }
+      },
+      {
+        "id": "primary_driver_first",
+        "label": "Primary Driver First Name",
+        "dimension": {
+          "field": "primaryWorker.firstName"
+        }
+      },
+      {
+        "id": "primary_driver_last",
+        "label": "Primary Driver Last Name",
+        "dimension": {
+          "field": "primaryWorker.lastName"
+        }
+      },
+      {
+        "id": "secondary_driver_last",
+        "label": "Co-Driver Last Name",
+        "dimension": {
+          "field": "secondaryWorker.lastName"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "in",
+          "param": "statuses"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "unit"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "statuses",
+        "label": "Statuses",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Available",
+          "OutOfService",
+          "AtMaintenance"
+        ],
+        "allowed": [
+          "Available",
+          "OutOfService",
+          "AtMaintenance",
+          "Sold"
+        ]
+      }
+    ]
+  }
+}

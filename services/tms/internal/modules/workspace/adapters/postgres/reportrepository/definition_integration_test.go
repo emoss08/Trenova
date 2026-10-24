@@ -5,12 +5,12 @@ package reportrepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -57,9 +57,13 @@ func TestListDefinitionsPagesOnlyWhatTheViewerMaySee(t *testing.T) {
 			OwnerID:        owner.UserID,
 			Visibility:     visibility,
 			Status:         report.DefinitionStatusActive,
-			CatalogVersion: reportcatalog.Version,
-			Definition:     &report.Definition{IRVersion: report.CurrentIRVersion},
-			DefaultFormat:  report.FormatCSV,
+			CatalogVersion: "integration-catalog",
+			Definition: &ir.Definition{
+				Version: ir.Version,
+				Entity:  "shipment",
+				Columns: []ir.Column{{ID: "pro", Dimension: &ir.Dimension{Field: "proNumber"}}},
+			},
+			DefaultFormat: report.FormatCSV,
 		}, owner.UserID)
 		require.NoError(t, createErr)
 		return created.ID

@@ -18,24 +18,25 @@ var (
 	_ validationframework.TenantedEntity = (*WorkerPTOBalance)(nil)
 )
 
+// What each worker has accrued, used and carried, per time-off type
 type WorkerPTOBalance struct {
 	bun.BaseModel `bun:"table:worker_pto_balances,alias:wpb" json:"-"`
-	keel.Table    `keel:"worker_pto_balances"`
+	keel.Table    `                                                   keel:"worker_pto_balances,report=Parties,label=PTO Balance"`
 
-	ID                   pulid.ID        `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wpb_"`
-	BusinessUnitID       pulid.ID        `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID        `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	WorkerID             pulid.ID        `json:"workerId"             bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
-	PTOType              PTOType         `json:"ptoType"              bun:"pto_type,type:worker_pto_type_enum,notnull" keel:"pto_type"`
-	BalanceDays          decimal.Decimal `json:"balanceDays"          bun:"balance_days,type:NUMERIC(8,2),notnull,default:0" keel:"balance_days"`
-	AccruedYTDDays       decimal.Decimal `json:"accruedYtdDays"       bun:"accrued_ytd_days,type:NUMERIC(8,2),notnull,default:0" keel:"accrued_ytd_days"`
-	UsedYTDDays          decimal.Decimal `json:"usedYtdDays"          bun:"used_ytd_days,type:NUMERIC(8,2),notnull,default:0" keel:"used_ytd_days"`
-	CarriedDays          decimal.Decimal `json:"carriedDays"          bun:"carried_days,type:NUMERIC(8,2),notnull,default:0" keel:"carried_days"`
-	EntryCount           int64           `json:"entryCount"           bun:"entry_count,type:BIGINT,notnull" keel:"entry_count"`
-	LastAccrualPeriodKey string          `json:"lastAccrualPeriodKey" bun:"last_accrual_period_key,type:VARCHAR(64),nullzero" keel:"last_accrual_period_key,nullzero"`
-	LastRolloverKey      string          `json:"lastRolloverKey"      bun:"last_rollover_key,type:VARCHAR(64),nullzero" keel:"last_rollover_key,nullzero"`
-	YearStartedAt        *int64          `json:"yearStartedAt"        bun:"year_started_at,type:BIGINT,nullzero" keel:"year_started_at"`
-	Version              int64           `json:"version"              bun:"version,type:BIGINT" keel:"version,version"`
+	ID                   pulid.ID        `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:wpb_"`
+	BusinessUnitID       pulid.ID        `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID        `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	WorkerID             pulid.ID        `json:"workerId"             bun:"worker_id,type:VARCHAR(100),notnull"                                                  keel:"worker_id"`
+	PTOType              PTOType         `json:"ptoType"              bun:"pto_type,type:worker_pto_type_enum,notnull"                                           keel:"pto_type,label=Time Off Type"`
+	BalanceDays          decimal.Decimal `json:"balanceDays"          bun:"balance_days,type:NUMERIC(8,2),notnull,default:0"                                     keel:"balance_days,label=Balance (days)"`
+	AccruedYTDDays       decimal.Decimal `json:"accruedYtdDays"       bun:"accrued_ytd_days,type:NUMERIC(8,2),notnull,default:0"                                 keel:"accrued_ytd_days,label=Accrued YTD (days)"`
+	UsedYTDDays          decimal.Decimal `json:"usedYtdDays"          bun:"used_ytd_days,type:NUMERIC(8,2),notnull,default:0"                                    keel:"used_ytd_days,label=Used YTD (days)"`
+	CarriedDays          decimal.Decimal `json:"carriedDays"          bun:"carried_days,type:NUMERIC(8,2),notnull,default:0"                                     keel:"carried_days,label=Carried (days)"`
+	EntryCount           int64           `json:"entryCount"           bun:"entry_count,type:BIGINT,notnull"                                                      keel:"entry_count"`
+	LastAccrualPeriodKey string          `json:"lastAccrualPeriodKey" bun:"last_accrual_period_key,type:VARCHAR(64),nullzero"                                    keel:"last_accrual_period_key,nullzero"`
+	LastRolloverKey      string          `json:"lastRolloverKey"      bun:"last_rollover_key,type:VARCHAR(64),nullzero"                                          keel:"last_rollover_key,nullzero"`
+	YearStartedAt        *int64          `json:"yearStartedAt"        bun:"year_started_at,type:BIGINT,nullzero"                                                 keel:"year_started_at"`
+	Version              int64           `json:"version"              bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt            int64           `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt            int64           `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 

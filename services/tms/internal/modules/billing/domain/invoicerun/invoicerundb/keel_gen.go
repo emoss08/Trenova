@@ -697,7 +697,7 @@ var invoiceRunGroupItemsTable = schema.Table{
 		{Name: "billing_queue_item_id", Quoted: `"billing_queue_item_id"`, Field: "BillingQueueItemID", Kind: schema.KindString, Flags: 0, Label: `Billing Queue Item ID`},
 		{Name: "shipment_id", Quoted: `"shipment_id"`, Field: "ShipmentID", Kind: schema.KindString, Flags: 0, Label: `Shipment ID`},
 		{Name: "order_id", Quoted: `"order_id"`, Field: "OrderID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Order ID`},
-		{Name: "pro_number", Quoted: `"pro_number"`, Field: "ProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Pro Number`},
+		{Name: "pro_number", Quoted: `"pro_number"`, Field: "ProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `PRO Number`},
 		{Name: "bol", Quoted: `"bol"`, Field: "BOL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `BOL`},
 		{Name: "po_number", Quoted: `"po_number"`, Field: "PONumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `PO Number`},
 		{Name: "service_date", Quoted: `"service_date"`, Field: "ServiceDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Service Date`},

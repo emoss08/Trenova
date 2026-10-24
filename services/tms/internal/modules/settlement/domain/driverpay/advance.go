@@ -21,33 +21,34 @@ var (
 	_ validationframework.TenantedEntity = (*PayAdvance)(nil)
 )
 
+// Cash and money-code advances, what has been recovered, and what was written off
 type PayAdvance struct {
 	bun.BaseModel             `bun:"table:pay_advances,alias:padv" json:"-"`
-	keel.Table                `keel:"pay_advances"`
+	keel.Table                `                                             keel:"pay_advances,report=Payroll"`
 	pagination.CursorValueSet `bun:",embed"                        json:"-"`
 
-	ID              pulid.ID      `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:padv_"`
-	BusinessUnitID  pulid.ID      `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID      `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	WorkerID        pulid.ID      `json:"workerId"        bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
-	Status          AdvanceStatus `json:"status"          bun:"status,type:VARCHAR(50),notnull,default:'Outstanding'" keel:"status"`
-	Source          AdvanceSource `json:"source"          bun:"source,type:VARCHAR(50),notnull" keel:"source"`
-	Reference       string        `json:"reference"       bun:"reference,type:VARCHAR(100),nullzero" keel:"reference,nullzero"`
-	IssuedDate      int64         `json:"issuedDate"      bun:"issued_date,type:BIGINT,notnull" keel:"issued_date"`
-	AmountMinor     int64         `json:"amountMinor"     bun:"amount_minor,type:BIGINT,notnull" keel:"amount_minor"`
-	RecoveredMinor  int64         `json:"recoveredMinor"  bun:"recovered_minor,type:BIGINT,notnull" keel:"recovered_minor"`
-	WrittenOffMinor int64         `json:"writtenOffMinor" bun:"written_off_minor,type:BIGINT,notnull" keel:"written_off_minor"`
-	WriteOffReason  string        `json:"writeOffReason"  bun:"write_off_reason,type:TEXT,nullzero" keel:"write_off_reason,nullzero"`
-	Notes           string        `json:"notes"           bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	CurrencyCode    string        `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'" keel:"currency_code"`
-	CreatedByID     pulid.ID      `json:"createdById"     bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
-	WrittenOffByID  pulid.ID      `json:"writtenOffById"  bun:"written_off_by_id,type:VARCHAR(100),nullzero" keel:"written_off_by_id,nullzero"`
-	WrittenOffAt    *int64        `json:"writtenOffAt"    bun:"written_off_at,type:BIGINT,nullzero" keel:"written_off_at"`
-	Version         int64         `json:"version"         bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	ID              pulid.ID      `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:padv_"`
+	BusinessUnitID  pulid.ID      `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID      `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	WorkerID        pulid.ID      `json:"workerId"        bun:"worker_id,type:VARCHAR(100),notnull"                                                  keel:"worker_id"`
+	Status          AdvanceStatus `json:"status"          bun:"status,type:VARCHAR(50),notnull,default:'Outstanding'"                                keel:"status"`
+	Source          AdvanceSource `json:"source"          bun:"source,type:VARCHAR(50),notnull"                                                      keel:"source"`
+	Reference       string        `json:"reference"       bun:"reference,type:VARCHAR(100),nullzero"                                                 keel:"reference,nullzero"`
+	IssuedDate      int64         `json:"issuedDate"      bun:"issued_date,type:BIGINT,notnull"                                                      keel:"issued_date,label=Issued"`
+	AmountMinor     int64         `json:"amountMinor"     bun:"amount_minor,type:BIGINT,notnull"                                                     keel:"amount_minor,label=Amount (Minor)"`
+	RecoveredMinor  int64         `json:"recoveredMinor"  bun:"recovered_minor,type:BIGINT,notnull"                                                  keel:"recovered_minor,label=Recovered (Minor)"`
+	WrittenOffMinor int64         `json:"writtenOffMinor" bun:"written_off_minor,type:BIGINT,notnull"                                                keel:"written_off_minor,label=Written Off (Minor)"`
+	WriteOffReason  string        `json:"writeOffReason"  bun:"write_off_reason,type:TEXT,nullzero"                                                  keel:"write_off_reason,nullzero,label=Write-Off Reason"`
+	Notes           string        `json:"notes"           bun:"notes,type:TEXT,nullzero"                                                             keel:"notes,nullzero"`
+	CurrencyCode    string        `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"                                  keel:"currency_code,label=Currency"`
+	CreatedByID     pulid.ID      `json:"createdById"     bun:"created_by_id,type:VARCHAR(100),nullzero"                                             keel:"created_by_id,nullzero"`
+	WrittenOffByID  pulid.ID      `json:"writtenOffById"  bun:"written_off_by_id,type:VARCHAR(100),nullzero"                                         keel:"written_off_by_id,nullzero"`
+	WrittenOffAt    *int64        `json:"writtenOffAt"    bun:"written_off_at,type:BIGINT,nullzero"                                                  keel:"written_off_at"`
+	Version         int64         `json:"version"         bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
 	CreatedAt       int64         `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt       int64         `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker *worker.Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Worker *worker.Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id,label=Driver"`
 }
 
 func (a *PayAdvance) Validate(multiErr *errortypes.MultiError) {

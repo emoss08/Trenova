@@ -2,5 +2,5 @@
 import type { TypedDocumentString, DrillThroughReportQuery, DrillThroughReportQueryVariables, PreviewReportQuery, PreviewReportQueryVariables, ReportPreviewFieldsFragment } from "../../graphql";
 
 export const ReportPreviewFieldsFragmentDoc = {"__meta__":{"fragmentName":"ReportPreviewFields"}} as unknown as TypedDocumentString<ReportPreviewFieldsFragment, unknown>;
-export const PreviewReportDocument = {"__meta__":{"kind":"query","name":"PreviewReport","hash":"sha256:7574e4d65964921ba521f81ae9f2b9e30c844ba8c19720cff352f24ba34679b7"}} as unknown as TypedDocumentString<PreviewReportQuery, PreviewReportQueryVariables>;
-export const DrillThroughReportDocument = {"__meta__":{"kind":"query","name":"DrillThroughReport","hash":"sha256:57ca08a81423be98f984a79ab6bc16f48080702a02a70e295a703b9c93ac76b9"}} as unknown as TypedDocumentString<DrillThroughReportQuery, DrillThroughReportQueryVariables>;
+export const PreviewReportDocument = {"__meta__":{"kind":"query","name":"PreviewReport","hash":"sha256:8318b24d15bd259c0689d89c46c32057b16218bbbd5213ee137d7244eb1374c8"}} as unknown as TypedDocumentString<PreviewReportQuery, PreviewReportQueryVariables>;
+export const DrillThroughReportDocument = {"__meta__":{"kind":"query","name":"DrillThroughReport","hash":"sha256:ae1f56e2cb6d636bf28fd46e7400aef56bdb1a3768d573c236dbe8c91e71e65e"}} as unknown as TypedDocumentString<DrillThroughReportQuery, DrillThroughReportQueryVariables>;

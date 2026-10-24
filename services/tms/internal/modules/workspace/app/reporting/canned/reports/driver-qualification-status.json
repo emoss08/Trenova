@@ -1,0 +1,199 @@
+{
+  "key": "driver-qualification-status",
+  "version": "1.0.0",
+  "name": "Driver Qualification File Status",
+  "description": "DQ file at a glance — compliance standing, credential dates, MVR and physical due dates, and disqualification reasons",
+  "category": "Compliance",
+  "tags": [
+    "drivers",
+    "compliance",
+    "dq"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "worker",
+    "columns": [
+      {
+        "id": "first_name",
+        "label": "First Name",
+        "dimension": {
+          "field": "firstName"
+        }
+      },
+      {
+        "id": "last_name",
+        "label": "Last Name",
+        "dimension": {
+          "field": "lastName"
+        }
+      },
+      {
+        "id": "driver_type",
+        "label": "Driver Type",
+        "dimension": {
+          "field": "driverType"
+        }
+      },
+      {
+        "id": "fleet_code",
+        "label": "Fleet",
+        "dimension": {
+          "field": "fleetCode.code"
+        }
+      },
+      {
+        "id": "compliance_status",
+        "label": "Compliance Status",
+        "dimension": {
+          "field": "profile.complianceStatus"
+        }
+      },
+      {
+        "id": "qualified",
+        "label": "Qualified",
+        "dimension": {
+          "field": "profile.isQualified"
+        },
+        "display": {
+          "style": "bool",
+          "boolStyle": "yesNo"
+        }
+      },
+      {
+        "id": "disqualification_reason",
+        "label": "Disqualification Reason",
+        "dimension": {
+          "field": "profile.disqualificationReason"
+        },
+        "display": {
+          "nullText": "—"
+        }
+      },
+      {
+        "id": "cdl_class",
+        "label": "CDL Class",
+        "dimension": {
+          "field": "profile.cdlClass"
+        }
+      },
+      {
+        "id": "endorsements",
+        "label": "Endorsements",
+        "dimension": {
+          "field": "profile.endorsement"
+        }
+      },
+      {
+        "id": "cdl_restrictions",
+        "label": "CDL Restrictions",
+        "dimension": {
+          "field": "profile.cdlRestrictions"
+        }
+      },
+      {
+        "id": "license_expiry",
+        "label": "License Expiry",
+        "dimension": {
+          "field": "profile.licenseExpiry"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "medical_card_expiry",
+        "label": "Medical Card Expiry",
+        "dimension": {
+          "field": "profile.medicalCardExpiry"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "mvr_due",
+        "label": "MVR Due",
+        "dimension": {
+          "field": "profile.mvrDueDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "physical_due",
+        "label": "Physical Due",
+        "dimension": {
+          "field": "profile.physicalDueDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "last_compliance_check",
+        "label": "Last Compliance Check",
+        "dimension": {
+          "field": "profile.lastComplianceCheck"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "hire_date",
+        "label": "Hire Date",
+        "dimension": {
+          "field": "profile.hireDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "Active"
+        },
+        {
+          "field": "profile.complianceStatus",
+          "op": "in",
+          "param": "complianceStatuses"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "last_name"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "complianceStatuses",
+        "label": "Compliance Statuses",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "NonCompliant",
+          "Pending"
+        ],
+        "allowed": [
+          "Compliant",
+          "NonCompliant",
+          "Pending"
+        ]
+      }
+    ]
+  }
+}

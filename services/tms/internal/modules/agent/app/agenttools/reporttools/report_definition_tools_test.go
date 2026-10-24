@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -15,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,6 +82,28 @@ func (f *fakeReportWriter) CreateDefinition(
 	return &report.ReportDefinition{ID: pulid.MustNew("rdef_")}, nil
 }
 
+const testCatalogVersion = "test-catalog"
+
+func (f *fakeReportWriter) NewDefinition(
+	req *reporting.SaveDefinitionRequest,
+) *report.ReportDefinition {
+	return reporting.NewDefinition(req, testCatalogVersion)
+}
+
+func (f *fakeReportWriter) ApplyDefinitionSave(
+	existing *report.ReportDefinition,
+	req *reporting.SaveDefinitionRequest,
+) {
+	reporting.ApplyDefinitionSave(existing, req, testCatalogVersion)
+}
+
+func (f *fakeReportWriter) NewCannedFork(
+	entry *canned.Entry,
+	req *reporting.ForkCannedRequest,
+) *report.ReportDefinition {
+	return reporting.NewCannedFork(entry, req, testCatalogVersion)
+}
+
 func (f *fakeReportWriter) UpdateDefinition(
 	_ context.Context,
 	req *reporting.SaveDefinitionRequest,
@@ -96,29 +118,21 @@ func definitionArgument() map[string]any {
 		"entity": "shipment",
 		"columns": []any{
 			map[string]any{
-				"id":   "c1",
-				"ref":  map[string]any{"path": []any{"customer"}, "field": "name"},
-				"kind": "dimension",
+				"id":        "c1",
+				"dimension": map[string]any{"field": "customer.name"},
 			},
 			map[string]any{
-				"id":    "c2",
-				"ref":   map[string]any{"field": "totalChargeAmount"},
-				"kind":  "measure",
-				"agg":   "sum",
-				"label": "Revenue",
+				"id":      "c2",
+				"label":   "Revenue",
+				"measure": map[string]any{"field": "totalChargeAmount", "agg": "sum"},
 			},
 		},
 		"filters": map[string]any{
-			"op": "and",
-			"filters": []any{
-				map[string]any{
-					"ref":      map[string]any{"field": "status"},
-					"operator": "eq",
-					"value":    "Completed",
-				},
+			"and": []any{
+				map[string]any{"field": "status", "op": "eq", "value": "Completed"},
 			},
 		},
-		"sort": []any{map[string]any{"columnId": "c2", "direction": "desc"}},
+		"sort": []any{map[string]any{"column": "c2", "desc": true}},
 	}
 }
 
@@ -134,16 +148,10 @@ func ownedReport(owner pulid.ID) *report.ReportDefinition {
 		Visibility:    report.VisibilityPrivate,
 		Status:        report.DefinitionStatusActive,
 		DefaultFormat: report.FormatXLSX,
-		Definition: &report.Definition{
-			IRVersion: report.CurrentIRVersion,
-			Entity:    "shipment",
-			Columns: []report.ColumnSpec{
-				{
-					ID:   "c1",
-					Ref:  report.FieldRef{Field: "proNumber"},
-					Kind: report.ColumnKindDimension,
-				},
-			},
+		Definition: &ir.Definition{
+			Version: ir.Version,
+			Entity:  "shipment",
+			Columns: []ir.Column{{ID: "c1", Dimension: &ir.Dimension{Field: "proNumber"}}},
 		},
 		Version: 4,
 	}
@@ -184,13 +192,14 @@ func TestCreateReport_SavesTheDefinitionAsAnActiveCustomReport(t *testing.T) {
 
 	definition := writer.created.Definition
 	require.NotNil(t, definition)
-	assert.Equal(t, report.CurrentIRVersion, definition.IRVersion)
+	assert.Equal(t, ir.Version, definition.Version)
 	assert.Equal(t, "shipment", definition.Entity)
 	require.Len(t, definition.Columns, 2)
-	assert.Equal(t, []string{"customer"}, definition.Columns[0].Ref.Path)
-	assert.Equal(t, reportcatalog.AggSum, definition.Columns[1].Agg)
+	assert.Equal(t, "customer.name", definition.Columns[0].Dimension.Field)
+	assert.Equal(t, ir.AggSum, definition.Columns[1].Measure.Agg)
 	require.NotNil(t, definition.Filters)
-	assert.Equal(t, "Completed", definition.Filters.Filters[0].Value)
+	require.Len(t, definition.Filters.And, 1)
+	assert.Equal(t, "Completed", definition.Filters.And[0].Value)
 	require.Len(t, definition.Sort, 1)
 }
 
@@ -220,7 +229,9 @@ func TestCreateReport_PassesAnExplicitVisibilityAndFormat(t *testing.T) {
 	writer := &fakeReportWriter{}
 	require.NoError(
 		t,
-		NewCreateReportTool(writer).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+		NewCreateReportTool(
+			writer,
+		).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"name":          "Revenue by customer",
 			"visibility":    "shared",
 			"defaultFormat": "xlsx",
@@ -238,7 +249,9 @@ func TestCreateReport_RequiresADefinitionWithColumns(t *testing.T) {
 	for name, definition := range map[string]any{
 		"absent":     nil,
 		"no columns": map[string]any{"entity": "shipment"},
-		"no entity":  map[string]any{"columns": []any{map[string]any{"id": "c1", "kind": "dimension"}}},
+		"no entity": map[string]any{"columns": []any{
+			map[string]any{"id": "c1", "dimension": map[string]any{"field": "proNumber"}},
+		}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -249,7 +262,9 @@ func TestCreateReport_RequiresADefinitionWithColumns(t *testing.T) {
 				args["definition"] = definition
 			}
 
-			err := NewCreateReportTool(writer).Execute(t.Context(), agenttoolstest.ExecuteParams(args))
+			err := NewCreateReportTool(
+				writer,
+			).Execute(t.Context(), agenttoolstest.ExecuteParams(args))
 
 			require.Error(t, err)
 			assert.Nil(t, writer.created, "nothing is saved without a whole definition")
@@ -261,7 +276,9 @@ func TestCreateReport_RefusesAnUnknownVisibilityOrFormat(t *testing.T) {
 	t.Parallel()
 
 	writer := &fakeReportWriter{}
-	err := NewCreateReportTool(writer).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+	err := NewCreateReportTool(
+		writer,
+	).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"name":       "Revenue by customer",
 		"visibility": "public",
 		"definition": definitionArgument(),
@@ -269,7 +286,9 @@ func TestCreateReport_RefusesAnUnknownVisibilityOrFormat(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "visibility")
 
-	err = NewCreateReportTool(writer).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+	err = NewCreateReportTool(
+		writer,
+	).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"name":          "Revenue by customer",
 		"defaultFormat": "docx",
 		"definition":    definitionArgument(),
@@ -288,7 +307,9 @@ func TestCreateReport_BoundsTheTags(t *testing.T) {
 	}
 
 	writer := &fakeReportWriter{}
-	err := NewCreateReportTool(writer).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+	err := NewCreateReportTool(
+		writer,
+	).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"name":       "Revenue by customer",
 		"tags":       tags,
 		"definition": definitionArgument(),
@@ -381,7 +402,9 @@ func TestUpdateReport_RefusesSomeoneElsesReport(t *testing.T) {
 	existing.Visibility = report.VisibilityShared
 	writer := &fakeReportWriter{definitions: []*report.ReportDefinition{existing}}
 
-	err := NewUpdateReportTool(writer).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+	err := NewUpdateReportTool(
+		writer,
+	).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"definitionId": existing.ID.String(),
 		"name":         "Mine now",
 	}))
@@ -452,7 +475,9 @@ func TestForkReport_RefusesAnUnknownKey(t *testing.T) {
 	t.Parallel()
 
 	writer := &fakeReportWriter{}
-	err := NewForkReportTool(writer).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+	err := NewForkReportTool(
+		writer,
+	).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"reportKey": "nope",
 	}))
 
@@ -543,7 +568,7 @@ func TestCreateAndUpdateReport_RefuseADefinitionPartSentBesideTheDefinition(t *t
 	t.Parallel()
 
 	topLevel := []any{
-		map[string]any{"id": "c9", "ref": map[string]any{"field": "proNumber"}},
+		map[string]any{"id": "c9", "dimension": map[string]any{"field": "proNumber"}},
 	}
 
 	writer := &fakeReportWriter{}
@@ -559,7 +584,9 @@ func TestCreateAndUpdateReport_RefuseADefinitionPartSentBesideTheDefinition(t *t
 	assert.Contains(t, err.Error(), "inside definition")
 	assert.Nil(t, writer.validated, "nothing is compiled from half a call")
 
-	err = NewCreateReportTool(writer).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+	err = NewCreateReportTool(
+		writer,
+	).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"name":    "Peak Distributing shipments",
 		"entity":  "shipment",
 		"columns": topLevel,
@@ -588,7 +615,7 @@ func TestCreateReport_DescribesSendingTheDefinitionOnceAndFilteringByID(t *testi
 	tool := NewCreateReportTool(&fakeReportWriter{})
 
 	assert.Contains(t, tool.Description(), "Send the report once")
-	assert.Contains(t, tool.Description(), "customerId")
+	assert.Contains(t, tool.Description(), "customer.id")
 	assert.NotContains(t, tool.Description(), "\"customer.name\"")
 	definition, ok := tool.ParamSchema()["properties"].(map[string]any)["definition"].(map[string]any)
 	require.True(t, ok)

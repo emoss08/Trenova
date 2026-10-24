@@ -162,8 +162,10 @@ its value (it is an `ExprStmt`), while an ozzo rule is always built to be passed
 `validation.Field`. See `discardedCalls`.
 
 **Generated files are skipped, except `labelledGeneratedFiles`.** A `*_gen.go` file holds no
-interface text as a rule; `catalog_gen.go` (the report catalog's labels) and `viewwords_gen.go`
-(the role editor's words for each reference view) do, so their `Label:` values are read.
+interface text as a rule; `viewwords_gen.go` (the role editor's words for each reference view)
+does, so its `Label:` values are read. The report catalog's labels, descriptions, categories and
+enum labels are read from `analytics.messages.json`, which
+`go generate ./internal/infrastructure/reportengine/...` writes from the keel catalog.
 
 **Inside package `i18n` a bare `T(...)` is a translator call**, since the package cannot name
 itself: `i18n.List`'s list patterns ("{0} and {1}", "{0}, {1} and {2}") are catalog entries

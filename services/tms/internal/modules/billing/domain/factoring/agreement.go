@@ -35,66 +35,67 @@ var (
 	_ bun.BeforeAppendModelHook = (*FeeTier)(nil)
 )
 
+// The terms each factor buys invoices on, with their advance, reserve and effective dates
 type Agreement struct {
 	bun.BaseModel             `bun:"table:factoring_agreements,alias:facagr" json:"-"`
-	keel.Table                `keel:"factoring_agreements"`
+	keel.Table                `                                                       keel:"factoring_agreements,report=Billing,label=Factoring Agreement"`
 	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
 
-	ID                     pulid.ID            `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:facagr_"`
-	OrganizationID         pulid.ID            `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	BusinessUnitID         pulid.ID            `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	FactoringCompanyID     pulid.ID            `json:"factoringCompanyId"     bun:"factoring_company_id,type:VARCHAR(100),notnull" keel:"factoring_company_id"`
-	Status                 AgreementStatus     `json:"status"                 bun:"status,type:VARCHAR(20),notnull,default:'Draft'" keel:"status"`
-	EffectiveFrom          int64               `json:"effectiveFrom"          bun:"effective_from,type:BIGINT,notnull" keel:"effective_from"`
-	EffectiveTo            *int64              `json:"effectiveTo"            bun:"effective_to,type:BIGINT,nullzero" keel:"effective_to"`
-	AdvanceRateBP          int                 `json:"advanceRateBp"          bun:"advance_rate_bp,type:INTEGER,notnull" keel:"advance_rate_bp"`
-	ReserveRateBP          int                 `json:"reserveRateBp"          bun:"reserve_rate_bp,type:INTEGER,notnull" keel:"reserve_rate_bp"`
-	MinimumFeeMinor        int64               `json:"minimumFeeMinor"        bun:"minimum_fee_minor,type:BIGINT,notnull" keel:"minimum_fee_minor"`
-	ChargebackWindowDays   int                 `json:"chargebackWindowDays"   bun:"chargeback_window_days,type:INTEGER,notnull" keel:"chargeback_window_days"`
-	Recourse               Recourse            `json:"recourse"               bun:"recourse,type:VARCHAR(20),notnull,default:'Recourse'" keel:"recourse"`
+	ID                     pulid.ID            `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"                              keel:"id,pk,autoid:facagr_"`
+	OrganizationID         pulid.ID            `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"                 keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID            `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                keel:"business_unit_id,pk,tenant"`
+	FactoringCompanyID     pulid.ID            `json:"factoringCompanyId"     bun:"factoring_company_id,type:VARCHAR(100),notnull"               keel:"factoring_company_id"`
+	Status                 AgreementStatus     `json:"status"                 bun:"status,type:VARCHAR(20),notnull,default:'Draft'"              keel:"status"`
+	EffectiveFrom          int64               `json:"effectiveFrom"          bun:"effective_from,type:BIGINT,notnull"                           keel:"effective_from,type=epoch"`
+	EffectiveTo            *int64              `json:"effectiveTo"            bun:"effective_to,type:BIGINT,nullzero"                            keel:"effective_to,type=epoch"`
+	AdvanceRateBP          int                 `json:"advanceRateBp"          bun:"advance_rate_bp,type:INTEGER,notnull"                         keel:"advance_rate_bp,label=Advance Rate (bp),dimension"`
+	ReserveRateBP          int                 `json:"reserveRateBp"          bun:"reserve_rate_bp,type:INTEGER,notnull"                         keel:"reserve_rate_bp,label=Reserve Rate (bp),dimension"`
+	MinimumFeeMinor        int64               `json:"minimumFeeMinor"        bun:"minimum_fee_minor,type:BIGINT,notnull"                        keel:"minimum_fee_minor,label=Minimum Fee (Minor)"`
+	ChargebackWindowDays   int                 `json:"chargebackWindowDays"   bun:"chargeback_window_days,type:INTEGER,notnull"                  keel:"chargeback_window_days,label=Chargeback Window (Days),dimension"`
+	Recourse               Recourse            `json:"recourse"               bun:"recourse,type:VARCHAR(20),notnull,default:'Recourse'"         keel:"recourse"`
 	AccountingTreatment    AccountingTreatment `json:"accountingTreatment"    bun:"accounting_treatment,type:VARCHAR(30),notnull,default:'Sale'" keel:"accounting_treatment"`
-	FundingDays            int                 `json:"fundingDays"            bun:"funding_days,type:INTEGER,notnull" keel:"funding_days"`
-	SubmissionTime         int                 `json:"submissionTime"         bun:"submission_time,type:INTEGER,notnull" keel:"submission_time"`
-	Notes                  string              `json:"notes"                  bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	DueFromFactorAccountID pulid.ID            `json:"dueFromFactorAccountId" bun:"due_from_factor_account_id,type:VARCHAR(100),nullzero" keel:"due_from_factor_account_id,nullzero"`
-	FeeExpenseAccountID    pulid.ID            `json:"feeExpenseAccountId"    bun:"fee_expense_account_id,type:VARCHAR(100),nullzero" keel:"fee_expense_account_id,nullzero"`
-	LiabilityAccountID     pulid.ID            `json:"liabilityAccountId"     bun:"factoring_liability_account_id,type:VARCHAR(100),nullzero" keel:"factoring_liability_account_id,nullzero"`
-	CashAccountID          pulid.ID            `json:"cashAccountId"          bun:"cash_account_id,type:VARCHAR(100),nullzero" keel:"cash_account_id,nullzero"`
-	ActivatedAt            *int64              `json:"activatedAt"            bun:"activated_at,type:BIGINT,nullzero" keel:"activated_at"`
-	EndedAt                *int64              `json:"endedAt"                bun:"ended_at,type:BIGINT,nullzero" keel:"ended_at"`
-	Version                int64               `json:"version"                bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
-	CreatedAt              int64               `json:"createdAt"              bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
-	UpdatedAt              int64               `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
+	FundingDays            int                 `json:"fundingDays"            bun:"funding_days,type:INTEGER,notnull"                            keel:"funding_days,dimension"`
+	SubmissionTime         int                 `json:"submissionTime"         bun:"submission_time,type:INTEGER,notnull"                         keel:"submission_time,noreport"`
+	Notes                  string              `json:"notes"                  bun:"notes,type:TEXT,nullzero"                                     keel:"notes,nullzero"`
+	DueFromFactorAccountID pulid.ID            `json:"dueFromFactorAccountId" bun:"due_from_factor_account_id,type:VARCHAR(100),nullzero"        keel:"due_from_factor_account_id,nullzero"`
+	FeeExpenseAccountID    pulid.ID            `json:"feeExpenseAccountId"    bun:"fee_expense_account_id,type:VARCHAR(100),nullzero"            keel:"fee_expense_account_id,nullzero,label=Factoring Fee Account ID"`
+	LiabilityAccountID     pulid.ID            `json:"liabilityAccountId"     bun:"factoring_liability_account_id,type:VARCHAR(100),nullzero"    keel:"factoring_liability_account_id,nullzero,label=Factoring Liability Account ID"`
+	CashAccountID          pulid.ID            `json:"cashAccountId"          bun:"cash_account_id,type:VARCHAR(100),nullzero"                   keel:"cash_account_id,nullzero"`
+	ActivatedAt            *int64              `json:"activatedAt"            bun:"activated_at,type:BIGINT,nullzero"                            keel:"activated_at"`
+	EndedAt                *int64              `json:"endedAt"                bun:"ended_at,type:BIGINT,nullzero"                                keel:"ended_at"`
+	Version                int64               `json:"version"                bun:"version,type:BIGINT,notnull,default:0"                        keel:"version,version"`
+	CreatedAt              int64               `json:"createdAt"              bun:"created_at,type:BIGINT,notnull"                               keel:"created_at,autocreate"`
+	UpdatedAt              int64               `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull"                               keel:"updated_at,autoupdate"`
 
 	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:factoring_company_id"`
-	FeeTiers         []*FeeTier                         `json:"feeTiers"                   bun:"rel:has-many,join:id=agreement_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:agreement_id"`
-	DocumentTypes    []*documenttype.DocumentType       `json:"documentTypes"              bun:"m2m:factoring_agreement_document_types,join:Agreement=DocumentType" keel:"m2m:factoring_agreement_document_types.agreement_id.document_type_id"`
+	FeeTiers         []*FeeTier                         `json:"feeTiers"                   bun:"rel:has-many,join:id=agreement_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"           keel:"many:agreement_id,noreport"`
+	DocumentTypes    []*documenttype.DocumentType       `json:"documentTypes"              bun:"m2m:factoring_agreement_document_types,join:Agreement=DocumentType"                                                      keel:"m2m:factoring_agreement_document_types.agreement_id.document_type_id,noreport"`
 }
 
 type FeeTier struct {
 	bun.BaseModel `bun:"table:factoring_fee_tiers,alias:facfee" json:"-"`
-	keel.Table    `keel:"factoring_fee_tiers"`
+	keel.Table    `                                                      keel:"factoring_fee_tiers"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:facfee_"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:facfee_"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	AgreementID    pulid.ID `json:"agreementId"    bun:"agreement_id,type:VARCHAR(100),notnull" keel:"agreement_id"`
-	DaysFrom       int      `json:"daysFrom"       bun:"days_from,type:INTEGER,notnull" keel:"days_from"`
-	DaysTo         *int     `json:"daysTo"         bun:"days_to,type:INTEGER,nullzero" keel:"days_to"`
-	RateBP         int      `json:"rateBp"         bun:"rate_bp,type:INTEGER,notnull" keel:"rate_bp"`
-	FlatMinor      int64    `json:"flatMinor"      bun:"flat_minor,type:BIGINT,notnull" keel:"flat_minor"`
+	AgreementID    pulid.ID `json:"agreementId"    bun:"agreement_id,type:VARCHAR(100),notnull"        keel:"agreement_id"`
+	DaysFrom       int      `json:"daysFrom"       bun:"days_from,type:INTEGER,notnull"                keel:"days_from"`
+	DaysTo         *int     `json:"daysTo"         bun:"days_to,type:INTEGER,nullzero"                 keel:"days_to"`
+	RateBP         int      `json:"rateBp"         bun:"rate_bp,type:INTEGER,notnull"                  keel:"rate_bp"`
+	FlatMinor      int64    `json:"flatMinor"      bun:"flat_minor,type:BIGINT,notnull"                keel:"flat_minor"`
 }
 
 type AgreementDocumentType struct {
 	bun.BaseModel `bun:"table:factoring_agreement_document_types,alias:facadt" json:"-"`
-	keel.Table    `keel:"factoring_agreement_document_types"`
+	keel.Table    `                                                                     keel:"factoring_agreement_document_types"`
 
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	AgreementID    pulid.ID `json:"agreementId"    bun:"agreement_id,pk,type:VARCHAR(100),notnull" keel:"agreement_id,pk"`
+	AgreementID    pulid.ID `json:"agreementId"    bun:"agreement_id,pk,type:VARCHAR(100),notnull"     keel:"agreement_id,pk"`
 	DocumentTypeID pulid.ID `json:"documentTypeId" bun:"document_type_id,pk,type:VARCHAR(100),notnull" keel:"document_type_id,pk"`
 
-	Agreement    *Agreement                 `json:"-" bun:"rel:belongs-to,join:agreement_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:agreement_id"`
+	Agreement    *Agreement                 `json:"-" bun:"rel:belongs-to,join:agreement_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"     keel:"belongs:agreement_id"`
 	DocumentType *documenttype.DocumentType `json:"-" bun:"rel:belongs-to,join:document_type_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_type_id"`
 }
 

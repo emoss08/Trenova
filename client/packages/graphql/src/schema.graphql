@@ -25344,7 +25344,16 @@ type Query {
   performanceReviewTemplates(input: PerformanceReviewTemplatesInput!): PerformanceReviewTemplateConnection!
   previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
   previewDriverSettlement(periodEnd: Timestamp, periodStart: Timestamp, workerId: ID!): DriverSettlement!
-  previewReport(definition: ReportIRInput!, params: JSON, supersede: Boolean): ReportPreview!
+  previewReport(
+    """The cursor of the page to read, from the previous page's cursor."""
+    cursor: String
+    """A report definition in keel analytics IR version 2."""
+    definition: JSON!
+    """Rows per page; the preview is paged when set."""
+    pageSize: Int
+    params: JSON
+    supersede: Boolean
+  ): ReportPreview!
   previewWorkerPtoAccrual(asOf: Timestamp, workerId: ID!): [PlannedPTOAccrual!]!
   profileChangeRequests(filter: ProfileChangeFilterInput): [WorkerProfileChangeRequest!]!
   ptoBalanceSummary: PTOBalanceSummary!
@@ -26700,11 +26709,6 @@ type ReportBand {
   width: Float!
 }
 
-input ReportBandInput {
-  edges: [Float!]
-  width: Float
-}
-
 """
 The report catalog as the caller may use it: every kind they can read, and
 every kind they cannot read that they can still reach through a join, with
@@ -26712,6 +26716,13 @@ only its reference-view fields available.
 """
 type ReportCatalog {
   entities: [ReportCatalogEntity!]!
+  """
+  The engine's rules a builder offers: operators per value type with their
+  operands, having operators, aggregations, date buckets, transforms, bands,
+  window functions, chart types, the display vocabulary, formula functions and
+  operators, column naming and definition limits.
+  """
+  rules: JSON!
   version: String!
 }
 
@@ -26720,18 +26731,25 @@ type ReportCatalogEdge {
   Whether the caller may follow the edge in a report and, when not, what they lack.
   """
   access: ReportFieldAccess!
-  cardinality: String!
+  description: String
   """Whether the edge is in its source kind's reference view."""
   inReferenceView: Boolean!
   label: String!
+  """The edge's name in a definition path."""
   name: String!
   """
   The kind whose read the caller lacks to follow the edge, when access is
   NeedsKindRead.
   """
   needsReadOf: ReportCatalogKind
+  """
+  Whether the edge picks one record of a list, such as a shipment's first stop.
+  """
+  pick: Boolean!
+  """The key of the entity the edge leads to."""
   target: String!
-  traversable: Boolean!
+  """Whether the edge leads to many records, so its fields are aggregated."""
+  toMany: Boolean!
 }
 
 type ReportCatalogEntity {
@@ -26768,6 +26786,7 @@ type ReportCatalogField {
   description: String
   enumValues: [ReportCatalogEnumValue!]!
   filterable: Boolean!
+  """The display kind the field carries, such as money, weight or percent."""
   format: String
   groupable: Boolean!
   """
@@ -26775,14 +26794,25 @@ type ReportCatalogField {
   through a join from a record the caller reads without the kind's own read.
   """
   inReferenceView: Boolean!
+  """The field's key in a definition path, such as customer.name."""
   key: String!
   label: String!
-  nullable: Boolean!
+  """
+  Whether reports aggregate the field by default rather than group by it.
+  """
+  measure: Boolean!
+  """
+  The filter operators a condition on the field can use, in builder order.
+  """
+  operators: [String!]!
   """
   The protected field group the field belongs to, and whether the caller holds it.
   """
   protection: ReportFieldProtection
   sensitivity: String!
+  """
+  The value type: string, int, decimal, float, bool, date, timestamp, epoch, enum or json.
+  """
   type: String!
 }
 
@@ -26791,30 +26821,6 @@ type ReportCatalogKind {
   """The kind's plural label, such as Customers."""
   label: String!
   resource: String!
-}
-
-input ReportChartGoalInput {
-  columnId: String
-  label: String
-  value: Float
-}
-
-input ReportChartInput {
-  compareId: String
-  curved: Boolean
-  goal: ReportChartGoalInput
-  hideLegend: Boolean
-  id: String!
-  labelColumnId: String
-  latColumnId: String
-  limit: Int
-  lngColumnId: String
-  seriesIds: [String!]
-  showValues: Boolean
-  stacked: Boolean
-  title: String
-  type: String!
-  xColumnId: String
 }
 
 type ReportColumnDisplay {
@@ -26826,6 +26832,8 @@ type ReportColumnDisplay {
   durationStyle: String!
   durationUnit: String!
   grouping: Boolean!
+  """Labels for enum values, by value."""
+  labels: JSON
   negative: String!
   notation: String!
   nullText: String!
@@ -26833,29 +26841,6 @@ type ReportColumnDisplay {
   rules: [ReportDisplayRule!]!
   style: String!
   suffix: String!
-}
-
-input ReportColumnInput {
-  agg: String
-  band: ReportBandInput
-  bucket: String
-  computed: ReportComputedInput
-  display: ReportDisplayInput
-  filter: ReportFilterGroupInput
-  id: String!
-  kind: String!
-  label: String
-  ref: ReportFieldRefInput
-  transform: ReportTransformInput
-}
-
-input ReportComputedInput {
-  format: String
-  leftId: String
-  leftValue: Float
-  op: String!
-  rightId: String
-  rightValue: Float
 }
 
 type ReportDashboard {
@@ -26872,18 +26857,22 @@ type ReportDashboard {
   visibility: String!
 }
 
+"""
+A dashboard filter applied to every tile whose report starts from its entity.
+"""
 input ReportDashboardFilterInput {
   default: Any
   entity: String!
+  """The filtered field's path from the entity."""
+  field: String!
   id: String!
   label: String
-  operator: String!
-  ref: ReportFieldRefInput!
+  op: String!
 }
 
 input ReportDashboardLayoutInput {
   filters: [ReportDashboardFilterInput!]
-  parameters: [ReportParameterDefInput!]
+  parameters: [ReportParameterInput!]
   tiles: [ReportDashboardTileInput!]!
 }
 
@@ -26948,23 +26937,6 @@ type ReportDefinitionRevision {
   revisionNumber: Int!
 }
 
-input ReportDisplayInput {
-  boolStyle: String
-  currency: String
-  dateStyle: String
-  decimals: Int
-  durationStyle: String
-  durationUnit: String
-  grouping: Boolean
-  negative: String
-  notation: String
-  nullText: String
-  prefix: String
-  rules: [ReportDisplayRuleInput!]
-  style: String
-  suffix: String
-}
-
 type ReportDisplayRule {
   op: String!
   tone: String!
@@ -26972,19 +26944,15 @@ type ReportDisplayRule {
   value: Float!
 }
 
-input ReportDisplayRuleInput {
-  op: String!
-  tone: String!
-  upper: Float
-  value: Float!
-}
-
 input ReportDrillInput {
   columnId: String
-  definition: ReportIRInput!
+  """A report definition in keel analytics IR version 2."""
+  definition: JSON!
   dimensions: [ReportDrillValueInput!]!
   limit: Int
   params: JSON
+  """The pivot values of the cell drilled into, when the report pivots."""
+  pivotValues: [String!]
 }
 
 input ReportDrillValueInput {
@@ -26994,7 +26962,7 @@ input ReportDrillValueInput {
 
 """
 Whether a caller may use a catalog field or edge in a report, decided by the
-rule the report compiler applies, so a field marked Available compiles and
+policy the report engine applies, so a field marked Available compiles and
 any other is refused.
 """
 enum ReportFieldAccess {
@@ -27017,71 +26985,56 @@ type ReportFieldProtection {
   held: Boolean!
 }
 
-input ReportFieldRefInput {
-  field: String!
-  path: [String!]
-}
-
-input ReportFilterGroupInput {
-  filters: [ReportFilterInput!]
-  groups: [ReportFilterGroupInput!]
-  op: String!
-}
-
-input ReportFilterInput {
-  agg: String
-  operator: String!
-  param: String
-  ref: ReportFieldRefInput!
-  transform: ReportTransformInput
-  value: Any
-}
-
-input ReportIRInput {
-  charts: [ReportChartInput!]
-  columns: [ReportColumnInput!]!
-  entity: String!
-  filters: ReportFilterGroupInput
-  having: ReportFilterGroupInput
-  limit: Int
-  parameters: [ReportParameterDefInput!]
-  pivot: ReportPivotInput
-  sort: [ReportSortInput!]
-  totals: Boolean
-}
-
-input ReportParameterDefInput {
-  allowedValues: [String!]
+"""
+A parameter a dashboard asks for once and binds to its tiles' report parameters.
+"""
+input ReportParameterInput {
+  """The values the parameter may take, when it is limited to a list."""
+  allowed: [Any!]
   default: Any
+  """The entity whose records the parameter picks, for a record picker."""
+  entity: String
   label: String
   multi: Boolean
   name: String!
-  refEntity: String
   required: Boolean
+  """
+  The value type: string, int, decimal, float, bool, date, timestamp, epoch or enum.
+  """
   type: String!
 }
 
-input ReportPivotInput {
-  includeOther: Boolean
-  labels: [String!]
-  measureIds: [String!]!
-  ref: ReportFieldRefInput!
-  values: [String!]!
-}
-
 type ReportPreview {
+  """Whether the rows came from the result cache."""
+  cached: Boolean!
   columns: [ReportPreviewColumn!]!
+  """
+  The cursor of the next page when the preview was paged and more rows follow.
+  """
+  cursor: String
+  """
+  Each row's grouping level: 0 for a detail row, and n for a subtotal that
+  rolls up the n innermost grouping columns.
+  """
+  levels: [Int!]!
+  """
+  The rollup that answered the report instead of the base tables, when one did.
+  """
+  rollup: String
+  """Detail and subtotal rows, each an array of values in column order."""
   rows: Any!
   timezone: String!
+  """The grand total row, when the report asks for one."""
   totals: Any
   truncated: Boolean!
 }
 
 type ReportPreviewColumn {
   display: ReportColumnDisplay!
-  format: String
   id: String!
   label: String!
+  """The highest sensitivity of the fields the column reads."""
+  sensitivity: String
   type: String!
 }
 
@@ -27176,17 +27129,6 @@ input ReportScheduleAlertInput {
   suppressWhileFiring: Boolean
   threshold: Int!
   value: Float
-}
-
-input ReportSortInput {
-  columnId: String!
-  direction: String!
-}
-
-input ReportTransformInput {
-  factor: Float
-  op: String!
-  precision: Int
 }
 
 type ReportView {
@@ -27846,7 +27788,8 @@ input SaveReportDashboardInput {
 input SaveReportDefinitionInput {
   category: String
   defaultFormat: String
-  definition: ReportIRInput!
+  """A report definition in keel analytics IR version 2."""
+  definition: JSON!
   description: String
   name: String!
   status: String
@@ -33011,7 +32954,8 @@ input UpdateReportDashboardInput {
 input UpdateReportDefinitionInput {
   category: String
   defaultFormat: String
-  definition: ReportIRInput!
+  """A report definition in keel analytics IR version 2."""
+  definition: JSON!
   description: String
   id: ID!
   name: String!

@@ -92,7 +92,8 @@ and still break production or the build.
   and no widely reachable type holds a `sync.Map`; see "Generics and build time" in
   [module-architecture.md](docs/engineering/module-architecture.md).
 - **Go style.** [Uber Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md);
-  no comments; `sonic`, never `encoding/json`; `errortypes` for errors the caller sees; a params
+  no comments, except a reportable keel model's doc comments, which are its catalog
+  descriptions; `sonic`, never `encoding/json`; `errortypes` for errors the caller sees; a params
   struct past three or four parameters; `goimports` and `golines`.
 - **Migrations** are keel files in `services/tms/schema/migrations`, applied by `trenova-db`
   (`cmd/db`); add one with `task db-create-migration` and run `task db-stamp` in the same change.

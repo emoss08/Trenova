@@ -330,14 +330,17 @@ describe("presentProposal", () => {
  */
 describe("presentProposal for report tools", () => {
   const definition = {
+    version: 2,
     entity: "shipment",
     columns: [
-      { id: "c1", ref: { path: ["customer"], field: "name" }, kind: "dimension" },
-      { id: "c2", ref: { field: "totalChargeAmount" }, kind: "measure", agg: "sum" },
+      { id: "c1", dimension: { field: "customer.name" } },
+      { id: "c2", measure: { field: "totalChargeAmount", agg: "sum" } },
     ],
     filters: {
-      op: "and",
-      filters: [{ ref: { field: "status" }, operator: "eq", value: "Completed" }],
+      and: [
+        { field: "status", op: "eq", value: "Completed" },
+        { or: [{ field: "customer.name", op: "is_null" }] },
+      ],
     },
     parameters: [{ name: "windowDays", type: "int", required: true }],
   };
@@ -362,7 +365,7 @@ describe("presentProposal for report tools", () => {
     );
     expect(view.highlights).toEqual([
       { label: "Columns", value: "customer.name, sum of totalChargeAmount" },
-      { label: "Filters", value: "1 filter" },
+      { label: "Filters", value: "2 filters" },
       { label: "Parameters", value: "windowDays" },
       { label: "Category", value: "Accounting" },
       { label: "Description", value: "Completed revenue per customer." },
@@ -387,7 +390,7 @@ describe("presentProposal for report tools", () => {
     expect(view.highlights).toEqual([
       { label: "Name", value: "Revenue by customer, completed" },
       { label: "Columns", value: "customer.name, sum of totalChargeAmount" },
-      { label: "Filters", value: "1 filter" },
+      { label: "Filters", value: "2 filters" },
       { label: "Parameters", value: "windowDays" },
     ]);
     expect(view.reversible).toBe(true);

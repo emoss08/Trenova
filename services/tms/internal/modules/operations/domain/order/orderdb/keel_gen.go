@@ -27,33 +27,35 @@ var ordersTable = schema.Table{
 	Model:  "order.Order",
 	Label:  `Order`,
 	Plural: `Orders`,
+	Doc:    `Commercial orders grouping one or more shipments`,
+	Report: &schema.TableReport{Category: `Operations`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: 0, Label: `Customer ID`},
-		{Name: "owner_id", Quoted: `"owner_id"`, Field: "OwnerID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Owner ID`},
-		{Name: "entered_by_id", Quoted: `"entered_by_id"`, Field: "EnteredByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Entered By ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumStatus[:]},
-		{Name: "order_number", Quoted: `"order_number"`, Field: "OrderNumber", Kind: schema.KindString, Flags: 0, Label: `Order Number`},
-		{Name: "po_number", Quoted: `"po_number"`, Field: "PONumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `PO Number`},
-		{Name: "bol", Quoted: `"bol"`, Field: "BOL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `BOL`},
-		{Name: "currency_code", Quoted: `"currency_code"`, Field: "CurrencyCode", Kind: schema.KindString, Flags: 0, Label: `Currency Code`},
-		{Name: "quoted_amount", Quoted: `"quoted_amount"`, Field: "QuotedAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Quoted Amount`},
-		{Name: "base_amount", Quoted: `"base_amount"`, Field: "BaseAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Base Amount`},
-		{Name: "total_amount", Quoted: `"total_amount"`, Field: "TotalAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Total Amount`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: 0, Label: `Customer ID`, Report: &reportDimStringHidden},
+		{Name: "owner_id", Quoted: `"owner_id"`, Field: "OwnerID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Owner ID`, Report: &reportDimString},
+		{Name: "entered_by_id", Quoted: `"entered_by_id"`, Field: "EnteredByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Entered By ID`, Report: &reportDimString},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumStatus[:], Report: &reportDimEnum},
+		{Name: "order_number", Quoted: `"order_number"`, Field: "OrderNumber", Kind: schema.KindString, Flags: 0, Label: `Order Number`, Report: &reportDimString},
+		{Name: "po_number", Quoted: `"po_number"`, Field: "PONumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `PO Number`, Report: &reportDimString},
+		{Name: "bol", Quoted: `"bol"`, Field: "BOL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `BOL`, Report: &reportDimString},
+		{Name: "currency_code", Quoted: `"currency_code"`, Field: "CurrencyCode", Kind: schema.KindString, Flags: 0, Label: `Currency Code`, Report: &reportDimString},
+		{Name: "quoted_amount", Quoted: `"quoted_amount"`, Field: "QuotedAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Quoted Amount`, Report: &reportMeasureDecimalMoney},
+		{Name: "base_amount", Quoted: `"base_amount"`, Field: "BaseAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Base Amount`, Report: &reportMeasureDecimalMoney},
+		{Name: "total_amount", Quoted: `"total_amount"`, Field: "TotalAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Total Amount`, Report: &reportMeasureDecimalMoney},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Customer`},
-		{Name: "Owner", Alias: "o", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Owner`},
-		{Name: "EnteredBy", Alias: "eb", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Entered By`},
+		{Name: "Owner", Alias: "o", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Owner`, NoReport: true},
+		{Name: "EnteredBy", Alias: "eb", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Entered By`, NoReport: true},
 		{Name: "Shipments", Alias: "s", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{13}, Label: `Shipments`},
-		{Name: "Charges", Alias: "c", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Charges`},
+		{Name: "Charges", Alias: "c", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Charges`, NoReport: true},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -526,6 +528,20 @@ var enumStatus = [...]schema.EnumValue{
 	{Value: `Closed`, Label: `Closed`},
 	{Value: `Canceled`, Label: `Canceled`},
 }
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureDecimalMoney = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueDecimal, Aggs: schema.AggsNumeric, Format: `money`}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // StatusCol is a column of order.Status values.
 type StatusCol struct{ keel.StringCol }

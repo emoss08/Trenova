@@ -16,26 +16,27 @@ import (
 
 var _ validationframework.TenantedEntity = (*ShipmentCommodity)(nil)
 
+// Commodity line items on a shipment
 type ShipmentCommodity struct {
 	bun.BaseModel `bun:"table:shipment_commodities,alias:sc" json:"-"`
-	keel.Table    `keel:"shipment_commodities"`
+	keel.Table    `                                                   keel:"shipment_commodities,report=Operations"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:sc_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,pk,notnull,type:VARCHAR(100)" keel:"shipment_id,pk"`
-	CommodityID    pulid.ID `json:"commodityId"    bun:"commodity_id,pk,notnull,type:VARCHAR(100)" keel:"commodity_id,pk"`
-	Weight         int64    `json:"weight"         bun:"weight,type:INTEGER,notnull" keel:"weight"`
-	Pieces         int64    `json:"pieces"         bun:"pieces,type:INTEGER,notnull" keel:"pieces"`
-	LengthFeet     *float64 `json:"lengthFeet"     bun:"length_feet,type:NUMERIC(10,2),nullzero" keel:"length_feet"`
-	WidthFeet      *float64 `json:"widthFeet"      bun:"width_feet,type:NUMERIC(10,2),nullzero" keel:"width_feet"`
-	HeightFeet     *float64 `json:"heightFeet"     bun:"height_feet,type:NUMERIC(10,2),nullzero" keel:"height_feet"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:sc_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"                                         keel:"organization_id,pk,tenant"`
+	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,pk,notnull,type:VARCHAR(100)"                                             keel:"shipment_id,pk"`
+	CommodityID    pulid.ID `json:"commodityId"    bun:"commodity_id,pk,notnull,type:VARCHAR(100)"                                            keel:"commodity_id,pk"`
+	Weight         int64    `json:"weight"         bun:"weight,type:INTEGER,notnull"                                                          keel:"weight,format=weight"`
+	Pieces         int64    `json:"pieces"         bun:"pieces,type:INTEGER,notnull"                                                          keel:"pieces,format=count"`
+	LengthFeet     *float64 `json:"lengthFeet"     bun:"length_feet,type:NUMERIC(10,2),nullzero"                                              keel:"length_feet"`
+	WidthFeet      *float64 `json:"widthFeet"      bun:"width_feet,type:NUMERIC(10,2),nullzero"                                               keel:"width_feet"`
+	HeightFeet     *float64 `json:"heightFeet"     bun:"height_feet,type:NUMERIC(10,2),nullzero"                                              keel:"height_feet"`
+	Version        int64    `json:"version"        bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Shipment     *Shipment            `json:"shipment,omitempty"     bun:"rel:belongs-to,join:shipment_id=id" keel:"belongs:shipment_id"`
-	Commodity    *commodity.Commodity `json:"commodity,omitempty"    bun:"rel:belongs-to,join:commodity_id=id" keel:"belongs:commodity_id"`
+	Shipment     *Shipment            `json:"shipment,omitempty"     bun:"rel:belongs-to,join:shipment_id=id"      keel:"belongs:shipment_id"`
+	Commodity    *commodity.Commodity `json:"commodity,omitempty"    bun:"rel:belongs-to,join:commodity_id=id"     keel:"belongs:commodity_id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }

@@ -20,9 +20,10 @@ var (
 	_ domaintypes.PostgresSearchable     = (*EquipmentManufacturer)(nil)
 )
 
+// Equipment manufacturers
 type EquipmentManufacturer struct {
 	bun.BaseModel `bun:"table:equipment_manufacturers,alias:em" json:"-"`
-	keel.Table    `                                                      keel:"equipment_manufacturers"`
+	keel.Table    `                                                      keel:"equipment_manufacturers,report=Equipment"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:em_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"                                        keel:"business_unit_id,pk,tenant"`
@@ -37,8 +38,8 @@ type EquipmentManufacturer struct {
 	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	// Relationships
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id" keel:"belongs:business_unit_id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"  keel:"belongs:organization_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id" keel:"belongs:business_unit_id,noreport"`
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"  keel:"belongs:organization_id,noreport"`
 }
 
 func (em *EquipmentManufacturer) Validate(multiErr *errortypes.MultiError) {

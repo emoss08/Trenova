@@ -25,37 +25,39 @@ var fiscalYearsTable = schema.Table{
 	Model:  "fiscalyear.FiscalYear",
 	Label:  `Fiscal Year`,
 	Plural: `Fiscal Years`,
+	Doc:    `Accounting years and their close state`,
+	Report: &schema.TableReport{Category: `Accounting`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Doc: `Status tracks the fiscal year's position in its lifecycle. Draft → Open → Closed → PermanentlyClosed. Only Closed can revert to Open (with proper authorization).`, Enum: enumStatus[:]},
-		{Name: "year", Quoted: `"year"`, Field: "Year", Kind: schema.KindInt64, Flags: 0, Label: `Year`, Doc: `Year is the fiscal year number (e.g. 2026). For fiscal years that span calendar years (Oct 2025 – Sep 2026), this is typically the year the fiscal year ends in, but the carrier can set it to match their convention.`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, Doc: `Name is the display name (e.g. "FY2026", "Fiscal Year 2025-2026").`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, Doc: `Description is optional free-text for notes about this fiscal year.`},
-		{Name: "start_date", Quoted: `"start_date"`, Field: "StartDate", Kind: schema.KindInt64, Flags: 0, Label: `Start Date`, Doc: `StartDate is the first day of the fiscal year as a Unix epoch timestamp.`},
-		{Name: "end_date", Quoted: `"end_date"`, Field: "EndDate", Kind: schema.KindInt64, Flags: 0, Label: `End Date`, Doc: `EndDate is the last day of the fiscal year as a Unix epoch timestamp.`},
-		{Name: "is_current", Quoted: `"is_current"`, Field: "IsCurrent", Kind: schema.KindBool, Flags: 0, Label: `Is Current`, Doc: `IsCurrent indicates this is the active fiscal year for day-to-day operations. Only one fiscal year per organization+business_unit can be current at a time. Enforced at the DB level with a partial unique index where is_current = TRUE.`},
-		{Name: "is_calendar_year", Quoted: `"is_calendar_year"`, Field: "IsCalendarYear", Kind: schema.KindBool, Flags: 0, Label: `Is Calendar Year`, Doc: `IsCalendarYear is a denormalized flag indicating the fiscal year aligns with Jan 1 – Dec 31. Saves a date comparison on every query that needs to know whether this is a standard or offset fiscal year.`},
-		{Name: "allow_adjusting_entries", Quoted: `"allow_adjusting_entries"`, Field: "AllowAdjustingEntries", Kind: schema.KindBool, Flags: 0, Label: `Allow Adjusting Entries`, Doc: `AllowAdjustingEntries is the master switch for whether any period in this fiscal year can accept adjusting journal entries. If false, no period can accept adjusting entries regardless of its own per-period setting. If true, it defers to each period's AllowAdjustingEntries flag. This gives the CFO a single kill-switch to lock down the entire year.`},
-		{Name: "closed_at", Quoted: `"closed_at"`, Field: "ClosedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Closed At`},
-		{Name: "closed_by_id", Quoted: `"closed_by_id"`, Field: "ClosedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Closed By ID`},
-		{Name: "locked_at", Quoted: `"locked_at"`, Field: "LockedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Locked At`},
-		{Name: "locked_by_id", Quoted: `"locked_by_id"`, Field: "LockedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Locked By ID`},
-		{Name: "reopened_at", Quoted: `"reopened_at"`, Field: "ReopenedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Reopened At`},
-		{Name: "reopened_by_id", Quoted: `"reopened_by_id"`, Field: "ReopenedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reopened By ID`},
-		{Name: "reopen_reason", Quoted: `"reopen_reason"`, Field: "ReopenReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reopen Reason`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumStatus[:], Report: &reportDimEnum},
+		{Name: "year", Quoted: `"year"`, Field: "Year", Kind: schema.KindInt64, Flags: 0, Label: `Year`, Report: &reportDimInteger},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Fiscal Year`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, Report: &reportDimString},
+		{Name: "start_date", Quoted: `"start_date"`, Field: "StartDate", Kind: schema.KindInt64, Flags: 0, Label: `Starts`, Report: &reportDimEpoch},
+		{Name: "end_date", Quoted: `"end_date"`, Field: "EndDate", Kind: schema.KindInt64, Flags: 0, Label: `Ends`, Report: &reportDimEpoch},
+		{Name: "is_current", Quoted: `"is_current"`, Field: "IsCurrent", Kind: schema.KindBool, Flags: 0, Label: `Current`, Report: &reportDimBool},
+		{Name: "is_calendar_year", Quoted: `"is_calendar_year"`, Field: "IsCalendarYear", Kind: schema.KindBool, Flags: 0, Label: `Calendar Year`, Report: &reportDimBool},
+		{Name: "allow_adjusting_entries", Quoted: `"allow_adjusting_entries"`, Field: "AllowAdjustingEntries", Kind: schema.KindBool, Flags: 0, Label: `Allows Adjusting Entries`, Report: &reportDimBool},
+		{Name: "closed_at", Quoted: `"closed_at"`, Field: "ClosedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Closed At`, Report: &reportDimEpoch},
+		{Name: "closed_by_id", Quoted: `"closed_by_id"`, Field: "ClosedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Closed By ID`, Report: &reportDimString},
+		{Name: "locked_at", Quoted: `"locked_at"`, Field: "LockedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Locked At`, Report: &reportDimEpoch},
+		{Name: "locked_by_id", Quoted: `"locked_by_id"`, Field: "LockedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Locked By ID`, Report: &reportDimString},
+		{Name: "reopened_at", Quoted: `"reopened_at"`, Field: "ReopenedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Reopened At`, Report: &reportDimEpoch},
+		{Name: "reopened_by_id", Quoted: `"reopened_by_id"`, Field: "ReopenedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reopened By ID`, Report: &reportDimString},
+		{Name: "reopen_reason", Quoted: `"reopen_reason"`, Field: "ReopenReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reopen Reason`, Report: &reportDimString},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
 	},
 	Relations: []schema.Relation{
-		{Name: "ClosedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{13}, Remote: []int32{0}, Label: `Closed By`},
-		{Name: "LockedBy", Alias: "lb", Kind: schema.BelongsTo, Local: []int32{15}, Remote: []int32{0}, Label: `Locked By`},
-		{Name: "ReopenedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{17}, Remote: []int32{0}, Label: `Reopened By`},
-		{Name: "Periods", Alias: "p", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Periods`},
+		{Name: "ClosedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{13}, Remote: []int32{0}, Label: `Closed By`, NoReport: true},
+		{Name: "LockedBy", Alias: "lb", Kind: schema.BelongsTo, Local: []int32{15}, Remote: []int32{0}, Label: `Locked By`, NoReport: true},
+		{Name: "ReopenedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{17}, Remote: []int32{0}, Label: `Reopened By`, NoReport: true},
+		{Name: "Periods", Alias: "p", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Fiscal Periods`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -370,11 +372,27 @@ func init() {
 const intIs64 = unsafe.Sizeof(int(0)) - 8
 
 var enumStatus = [...]schema.EnumValue{
-	{Value: `Draft`, Label: `Draft`, Doc: `FiscalYearStatusDraft is the initial state when a fiscal year is created. The year and its periods are being configured. No transactions can be posted to any period in this year. The accounting team uses this phase to set up period dates, validate the calendar, and configure controls before going live.`},
-	{Value: `Open`, Label: `Open`, Doc: `FiscalYearStatusOpen means the fiscal year is active and accepting transactions. At least one period within the year must be in Open or Locked status. This is the normal operating state for the current fiscal year.`},
-	{Value: `Closed`, Label: `Closed`, Doc: `FiscalYearStatusClosed means year-end close has been completed. Retained earnings have been calculated and income statement accounts have been zeroed. Can be reopened with proper authorization for material corrections — this is standard practice in Oracle GL, D365, NetSuite, and Business Central. Reopening requires a reason and is tracked for audit compliance.`},
-	{Value: `PermanentlyClosed`, Label: `Permanently Closed`, Doc: `FiscalYearStatusPermanentlyClosed is the terminal audit-locked state. Cannot be reopened under any circumstances. This is set after external auditors have signed off and the year's financials are final. Oracle GL explicitly distinguishes this from regular Closed for exactly this reason.`},
+	{Value: `Draft`, Label: `Draft`, Doc: `Being set up; nothing can be posted to any of its periods.`},
+	{Value: `Open`, Label: `Open`, Doc: `Active and accepting transactions.`},
+	{Value: `Closed`, Label: `Closed`, Doc: `Year-end close is done; it can be reopened with authorization and a reason, which is audited.`},
+	{Value: `PermanentlyClosed`, Label: `Permanently Closed`, Doc: `Closed for good once the audit is signed off; it can never be reopened.`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // StatusCol is a column of fiscalyear.Status values.
 type StatusCol struct{ keel.StringCol }

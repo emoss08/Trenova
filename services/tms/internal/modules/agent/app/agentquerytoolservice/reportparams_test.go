@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/stretchr/testify/assert"
 )
@@ -11,8 +11,8 @@ import (
 func unbilledEntry() *canned.Entry {
 	return &canned.Entry{
 		Name: "Delivered, Not Billed",
-		Definition: &report.Definition{
-			Parameters: []report.ParameterDef{
+		Definition: &ir.Definition{
+			Parameters: []ir.Parameter{
 				{Name: "windowDays", Type: "int"},
 				{Name: "statuses", Type: "enum", Multi: true},
 			},
@@ -118,7 +118,7 @@ func TestNormalizeReportParameters_SurvivesAReportWithNoDefinition(t *testing.T)
 	t.Parallel()
 
 	values := map[string]any{"statuses": "Completed"}
-	assert.Equal(t, values, normalizeReportParameters(&report.Definition{}, values))
+	assert.Equal(t, values, normalizeReportParameters(&ir.Definition{}, values))
 	assert.Equal(t, values, normalizeReportParameters(nil, values))
 }
 
@@ -128,8 +128,8 @@ func TestDescribeParameterShape_SaysWhatToSend(t *testing.T) {
 	assert.Equal(
 		t,
 		"a JSON array of enum",
-		describeParameterShape(report.ParameterDef{Type: "enum", Multi: true}),
+		describeParameterShape(ir.Parameter{Type: "enum", Multi: true}),
 	)
-	assert.Equal(t, "a single int", describeParameterShape(report.ParameterDef{Type: "int"}))
-	assert.Equal(t, "a single value", describeParameterShape(report.ParameterDef{}))
+	assert.Equal(t, "a single int", describeParameterShape(ir.Parameter{Type: "int"}))
+	assert.Equal(t, "a single value", describeParameterShape(ir.Parameter{}))
 }

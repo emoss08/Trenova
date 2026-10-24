@@ -181,7 +181,7 @@ function EntityFields({
     return field.label.toLowerCase().includes(search) || field.key.toLowerCase().includes(search);
   });
 
-  const traversableEdges = depth < MAX_PATH_DEPTH ? entity.edges.filter((e) => e.traversable) : [];
+  const traversableEdges = depth < MAX_PATH_DEPTH ? entity.edges : [];
 
   return (
     <div className="flex flex-col">
@@ -212,7 +212,7 @@ function EntityFields({
         const target = index.entities.get(edge.target);
         if (!target) return null;
         const isOpen = expanded.has(edge.name) || search !== "";
-        const edgeCrossesToMany = crossesToMany || edge.cardinality !== "one";
+        const edgeCrossesToMany = crossesToMany || edge.toMany;
         return (
           <div key={edge.name} className="flex flex-col">
             <button
@@ -236,7 +236,7 @@ function EntityFields({
                 <ChevronRightIcon className="size-3.5 shrink-0" />
               )}
               <span className="truncate">{t(edge.label)}</span>
-              {edge.cardinality !== "one" && (
+              {edge.toMany && (
                 <Badge variant="neutral" appearance="outline" className="text-2xs">
                   {t("many")}
                 </Badge>

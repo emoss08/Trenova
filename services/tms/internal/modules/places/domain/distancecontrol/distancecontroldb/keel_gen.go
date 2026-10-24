@@ -34,7 +34,7 @@ var distanceControlsTable = schema.Table{
 		{Name: "pay_distance_profile_id", Quoted: `"pay_distance_profile_id"`, Field: "PayDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Pay Distance Profile ID`},
 		{Name: "billing_distance_profile_id", Quoted: `"billing_distance_profile_id"`, Field: "BillingDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Billing Distance Profile ID`},
 		{Name: "fuel_distance_profile_id", Quoted: `"fuel_distance_profile_id"`, Field: "FuelDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Fuel Distance Profile ID`},
-		{Name: "eta_out_of_route_distance_profile_id", Quoted: `"eta_out_of_route_distance_profile_id"`, Field: "EtaOutOfRouteDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Eta Out Of Route Distance Profile ID`},
+		{Name: "eta_out_of_route_distance_profile_id", Quoted: `"eta_out_of_route_distance_profile_id"`, Field: "EtaOutOfRouteDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `ETA Out Of Route Distance Profile ID`},
 		{Name: "distance_calculator_shortest_distance_profile_id", Quoted: `"distance_calculator_shortest_distance_profile_id"`, Field: "DistanceCalculatorShortestDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Distance Calculator Shortest Distance Profile ID`},
 		{Name: "distance_calculator_practical_distance_profile_id", Quoted: `"distance_calculator_practical_distance_profile_id"`, Field: "DistanceCalculatorPracticalDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Distance Calculator Practical Distance Profile ID`},
 		{Name: "capture_jurisdiction_miles", Quoted: `"capture_jurisdiction_miles"`, Field: "CaptureJurisdictionMiles", Kind: schema.KindBool, Flags: 0, Label: `Capture Jurisdiction Miles`},

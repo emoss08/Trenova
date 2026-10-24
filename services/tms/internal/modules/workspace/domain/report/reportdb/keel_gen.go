@@ -234,34 +234,36 @@ var reportDefinitionsTable = schema.Table{
 	Quoted: `"report_definitions"`,
 	Alias:  "rd",
 	Model:  "report.ReportDefinition",
-	Label:  `Report Definition`,
-	Plural: `Report Definitions`,
+	Label:  `Report`,
+	Plural: `Reports`,
+	Doc:    `Saved report definitions`,
+	Report: &schema.TableReport{Category: `Reporting`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`},
-		{Name: "category", Quoted: `"category"`, Field: "Category", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Category`},
-		{Name: "tags", Quoted: `"tags"`, Field: "Tags", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Tags`},
-		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, Enum: enumDefinitionKind[:]},
-		{Name: "canned_key", Quoted: `"canned_key"`, Field: "CannedKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Canned Key`},
-		{Name: "canned_version", Quoted: `"canned_version"`, Field: "CannedVersion", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Canned Version`},
-		{Name: "owner_id", Quoted: `"owner_id"`, Field: "OwnerID", Kind: schema.KindString, Flags: 0, Label: `Owner ID`},
-		{Name: "visibility", Quoted: `"visibility"`, Field: "Visibility", Kind: schema.KindString, Flags: 0, Label: `Visibility`, Enum: enumVisibility[:]},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDefinitionStatus[:]},
-		{Name: "diagnostics", Quoted: `"diagnostics"`, Field: "Diagnostics", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Diagnostics`},
-		{Name: "catalog_version", Quoted: `"catalog_version"`, Field: "CatalogVersion", Kind: schema.KindString, Flags: 0, Label: `Catalog Version`},
-		{Name: "definition", Quoted: `"definition"`, Field: "Definition", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Definition`},
-		{Name: "default_format", Quoted: `"default_format"`, Field: "DefaultFormat", Kind: schema.KindString, Flags: 0, Label: `Default Format`, Enum: enumFormat[:]},
-		{Name: "current_revision", Quoted: `"current_revision"`, Field: "CurrentRevision", Kind: schema.KindInt64, Flags: 0, Label: `Current Revision`},
-		{Name: "last_run_at", Quoted: `"last_run_at"`, Field: "LastRunAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Last Run At`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, Report: &reportDimString},
+		{Name: "category", Quoted: `"category"`, Field: "Category", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Category`, Report: &reportDimString},
+		{Name: "tags", Quoted: `"tags"`, Field: "Tags", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Tags`, Report: &reportDimArrayHidden},
+		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, Enum: enumDefinitionKind[:], Report: &reportDimEnum},
+		{Name: "canned_key", Quoted: `"canned_key"`, Field: "CannedKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Canned Report Key`, Report: &reportDimString},
+		{Name: "canned_version", Quoted: `"canned_version"`, Field: "CannedVersion", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Canned Version`, Report: &reportDimStringHidden},
+		{Name: "owner_id", Quoted: `"owner_id"`, Field: "OwnerID", Kind: schema.KindString, Flags: 0, Label: `Owner ID`, Report: &reportDimString},
+		{Name: "visibility", Quoted: `"visibility"`, Field: "Visibility", Kind: schema.KindString, Flags: 0, Label: `Visibility`, Enum: enumVisibility[:], Report: &reportDimEnum},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDefinitionStatus[:], Report: &reportDimEnum},
+		{Name: "diagnostics", Quoted: `"diagnostics"`, Field: "Diagnostics", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Diagnostics`, Report: &reportDimArrayHidden},
+		{Name: "catalog_version", Quoted: `"catalog_version"`, Field: "CatalogVersion", Kind: schema.KindString, Flags: 0, Label: `Catalog Version`, Report: &reportDimStringHidden},
+		{Name: "definition", Quoted: `"definition"`, Field: "Definition", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Definition`, Report: &reportDimJsonbHidden},
+		{Name: "default_format", Quoted: `"default_format"`, Field: "DefaultFormat", Kind: schema.KindString, Flags: 0, Label: `Default Format`, Enum: enumFormat[:], Report: &reportDimEnum},
+		{Name: "current_revision", Quoted: `"current_revision"`, Field: "CurrentRevision", Kind: schema.KindInt64, Flags: 0, Label: `Revision`, Report: &reportDimIntegerCount},
+		{Name: "last_run_at", Quoted: `"last_run_at"`, Field: "LastRunAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Last Run At`, Report: &reportDimEpoch},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpochHidden},
 	},
 	Relations: []schema.Relation{
-		{Name: "Owner", Alias: "o", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Owner`},
+		{Name: "Owner", Alias: "o", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Owner`, NoReport: true},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -707,42 +709,44 @@ var reportRunsTable = schema.Table{
 	Model:  "report.ReportRun",
 	Label:  `Report Run`,
 	Plural: `Report Runs`,
+	Doc:    `Execution history for reports, schedules, and exports`,
+	Report: &schema.TableReport{Category: `Reporting`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "definition_id", Quoted: `"definition_id"`, Field: "DefinitionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Definition ID`},
-		{Name: "revision_id", Quoted: `"revision_id"`, Field: "RevisionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Revision ID`},
-		{Name: "canned_key", Quoted: `"canned_key"`, Field: "CannedKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Canned Key`},
-		{Name: "canned_version", Quoted: `"canned_version"`, Field: "CannedVersion", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Canned Version`},
-		{Name: "schedule_id", Quoted: `"schedule_id"`, Field: "ScheduleID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Schedule ID`},
-		{Name: "requested_by_id", Quoted: `"requested_by_id"`, Field: "RequestedByID", Kind: schema.KindString, Flags: 0, Label: `Requested By ID`},
-		{Name: "trigger", Quoted: `"trigger"`, Field: "Trigger", Kind: schema.KindString, Flags: 0, Label: `Trigger`, Enum: enumRunTrigger[:]},
-		{Name: "params", Quoted: `"params"`, Field: "Params", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Params`},
-		{Name: "format", Quoted: `"format"`, Field: "Format", Kind: schema.KindString, Flags: 0, Label: `Format`, Enum: enumFormat[:]},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumRunStatus[:]},
-		{Name: "row_count", Quoted: `"row_count"`, Field: "RowCount", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Row Count`},
-		{Name: "byte_size", Quoted: `"byte_size"`, Field: "ByteSize", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Byte Size`},
-		{Name: "duration_ms", Quoted: `"duration_ms"`, Field: "DurationMs", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Duration Ms`},
-		{Name: "truncated", Quoted: `"truncated"`, Field: "Truncated", Kind: schema.KindBool, Flags: 0, Label: `Truncated`},
-		{Name: "error", Quoted: `"error"`, Field: "Error", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Error`},
-		{Name: "artifact_key", Quoted: `"artifact_key"`, Field: "ArtifactKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Artifact Key`},
-		{Name: "rows_key", Quoted: `"rows_key"`, Field: "RowsKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Rows Key`, Doc: `RowsKey is the JSON rows sidecar written beside the artifact. Empty means the run predates the sidecar, which is how a run that can be compared is told apart from one that cannot.`},
-		{Name: "artifact_expires_at", Quoted: `"artifact_expires_at"`, Field: "ArtifactExpiresAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Artifact Expires At`},
-		{Name: "cache_hit", Quoted: `"cache_hit"`, Field: "CacheHit", Kind: schema.KindBool, Flags: 0, Label: `Cache Hit`},
-		{Name: "temporal_workflow_id", Quoted: `"temporal_workflow_id"`, Field: "TemporalWorkflowID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Temporal Workflow ID`},
-		{Name: "temporal_run_id", Quoted: `"temporal_run_id"`, Field: "TemporalRunID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Temporal Run ID`},
-		{Name: "queued_at", Quoted: `"queued_at"`, Field: "QueuedAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Queued At`},
-		{Name: "started_at", Quoted: `"started_at"`, Field: "StartedAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Started At`},
-		{Name: "completed_at", Quoted: `"completed_at"`, Field: "CompletedAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Completed At`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "definition_id", Quoted: `"definition_id"`, Field: "DefinitionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Definition ID`, Report: &reportDimStringHidden},
+		{Name: "revision_id", Quoted: `"revision_id"`, Field: "RevisionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Revision ID`, Report: &reportDimStringHidden},
+		{Name: "canned_key", Quoted: `"canned_key"`, Field: "CannedKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Canned Report Key`, Report: &reportDimString},
+		{Name: "canned_version", Quoted: `"canned_version"`, Field: "CannedVersion", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Canned Version`, Report: &reportDimStringHidden},
+		{Name: "schedule_id", Quoted: `"schedule_id"`, Field: "ScheduleID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Schedule ID`, Report: &reportDimString},
+		{Name: "requested_by_id", Quoted: `"requested_by_id"`, Field: "RequestedByID", Kind: schema.KindString, Flags: 0, Label: `Requested By ID`, Report: &reportDimString},
+		{Name: "trigger", Quoted: `"trigger"`, Field: "Trigger", Kind: schema.KindString, Flags: 0, Label: `Trigger`, Enum: enumRunTrigger[:], Report: &reportDimEnum},
+		{Name: "params", Quoted: `"params"`, Field: "Params", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Params`, Report: &reportDimJsonbHidden},
+		{Name: "format", Quoted: `"format"`, Field: "Format", Kind: schema.KindString, Flags: 0, Label: `Format`, Enum: enumFormat[:], Report: &reportDimEnum},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumRunStatus[:], Report: &reportDimEnum},
+		{Name: "row_count", Quoted: `"row_count"`, Field: "RowCount", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Rows`, Report: &reportMeasureIntegerCount},
+		{Name: "byte_size", Quoted: `"byte_size"`, Field: "ByteSize", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Size (bytes)`, Report: &reportMeasureIntegerCount},
+		{Name: "duration_ms", Quoted: `"duration_ms"`, Field: "DurationMs", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Duration (ms)`, Report: &reportMeasureIntegerCount},
+		{Name: "truncated", Quoted: `"truncated"`, Field: "Truncated", Kind: schema.KindBool, Flags: 0, Label: `Truncated`, Report: &reportDimBool},
+		{Name: "error", Quoted: `"error"`, Field: "Error", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Error`, Report: &reportDimJsonbHidden},
+		{Name: "artifact_key", Quoted: `"artifact_key"`, Field: "ArtifactKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Artifact Key`, Report: &reportDimStringHidden},
+		{Name: "rows_key", Quoted: `"rows_key"`, Field: "RowsKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Rows Key`, Report: &reportDimString},
+		{Name: "artifact_expires_at", Quoted: `"artifact_expires_at"`, Field: "ArtifactExpiresAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Artifact Expires At`, Report: &reportDimEpochHidden},
+		{Name: "cache_hit", Quoted: `"cache_hit"`, Field: "CacheHit", Kind: schema.KindBool, Flags: 0, Label: `Cache Hit`, Report: &reportDimBool},
+		{Name: "temporal_workflow_id", Quoted: `"temporal_workflow_id"`, Field: "TemporalWorkflowID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Temporal Workflow ID`, Report: &reportDimStringHidden},
+		{Name: "temporal_run_id", Quoted: `"temporal_run_id"`, Field: "TemporalRunID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Temporal Run ID`, Report: &reportDimStringHidden},
+		{Name: "queued_at", Quoted: `"queued_at"`, Field: "QueuedAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Queued At`, Report: &reportDimEpoch},
+		{Name: "started_at", Quoted: `"started_at"`, Field: "StartedAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Started At`, Report: &reportDimEpoch},
+		{Name: "completed_at", Quoted: `"completed_at"`, Field: "CompletedAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Completed At`, Report: &reportDimEpoch},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpochHidden},
 	},
 	Relations: []schema.Relation{
-		{Name: "RequestedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Requested By`},
-		{Name: "ReportDefinition", Alias: "rd", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Report Definition`},
-		{Name: "Revision", Alias: "r", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Revision`},
+		{Name: "RequestedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Requested By`, NoReport: true},
+		{Name: "ReportDefinition", Alias: "rd", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Report`},
+		{Name: "Revision", Alias: "r", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Revision`, NoReport: true},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -1649,7 +1653,6 @@ var enumFormat = [...]schema.EnumValue{
 	{Value: `xlsx`, Label: `XLSX`},
 	{Value: `pdf`, Label: `PDF`},
 	{Value: `json`, Label: `JSON`},
-	{Value: `xlsx`, Label: `Default Schedule Format`, Doc: `DefaultScheduleFormat is the format a new schedule starts on, as the schedule form in the app starts it.`},
 }
 
 var enumRunStatus = [...]schema.EnumValue{
@@ -1671,6 +1674,28 @@ var enumVisibility = [...]schema.EnumValue{
 	{Value: `private`, Label: `Private`},
 	{Value: `shared`, Label: `Shared`},
 }
+
+var reportDimArrayHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueArray, Aggs: schema.AggsCount}
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimEpochHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimIntegerCount = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric, Format: `count`}
+
+var reportDimJsonbHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueJSON, Aggs: schema.AggsCount}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportMeasureIntegerCount = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric, Format: `count`}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // DefinitionKindCol is a column of report.DefinitionKind values.
 type DefinitionKindCol struct{ keel.StringCol }

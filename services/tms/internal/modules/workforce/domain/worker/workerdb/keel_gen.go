@@ -824,23 +824,22 @@ var dOTRandomPoolsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 16},
-	Returning:    nil,
-	Version:      14,
-	AutoID:       0,
-	AutoCreate:   15,
-	AutoUpdate:   16,
-	IDPrefix:     "drpool_",
-	New:          newDOTRandomPool,
-	NewN:         newNDOTRandomPool,
-	Size:         unsafe.Sizeof(worker.DOTRandomPool{}),
-	Ptr:          ptrDOTRandomPool,
-	Value:        valueDOTRandomPool,
-	BeforeCreate: beforeCreateDOTRandomPool,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 16},
+	Returning:  nil,
+	Version:    14,
+	AutoID:     0,
+	AutoCreate: 15,
+	AutoUpdate: 16,
+	IDPrefix:   "drpool_",
+	New:        newDOTRandomPool,
+	NewN:       newNDOTRandomPool,
+	Size:       unsafe.Sizeof(worker.DOTRandomPool{}),
+	Ptr:        ptrDOTRandomPool,
+	Value:      valueDOTRandomPool,
 }
 
 var dOTRandomPoolsRef = keel.Ref{Table: &dOTRandomPoolsTable}
@@ -1020,10 +1019,6 @@ func valueDOTRandomPool(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreateDOTRandomPool(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.DOTRandomPool)(p).BeforeCreate(ctx)
-}
-
 // jobPositionsTable is the schema of worker.JobPosition.
 var jobPositionsTable = schema.Table{
 	Name:   "job_positions",
@@ -1032,22 +1027,23 @@ var jobPositionsTable = schema.Table{
 	Model:  "worker.JobPosition",
 	Label:  `Job Position`,
 	Plural: `Job Positions`,
-	Doc:    `JobPosition is what somebody does, as distinct from where they do it. A fleet code is a terminal; this is the title the headcount is counted by and the org chart is drawn from.`,
+	Doc:    `Job titles the roster is counted by, and the reporting lines between them`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
-		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`},
-		{Name: "title", Quoted: `"title"`, Field: "Title", Kind: schema.KindString, Flags: 0, Label: `Title`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`},
-		{Name: "department", Quoted: `"department"`, Field: "Department", Kind: schema.KindString, Flags: 0, Label: `Department`, Enum: enumJobDepartment[:]},
-		{Name: "flsa_exempt", Quoted: `"flsa_exempt"`, Field: "FLSAExempt", Kind: schema.KindBool, Flags: 0, Label: `FLSA Exempt`, Doc: `FLSAExempt says the position is exempt from overtime. It lives on the position because that is where the duties test is applied — two people doing the same job are exempt or not together.`},
-		{Name: "is_driving_position", Quoted: `"is_driving_position"`, Field: "IsDrivingPosition", Kind: schema.KindBool, Flags: 0, Label: `Is Driving Position`, Doc: `IsDrivingPosition separates the roster that needs a CDL from the one that does not, which is the line most compliance rules are drawn along.`},
-		{Name: "reports_to_position_id", Quoted: `"reports_to_position_id"`, Field: "ReportsToPositionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reports To Position ID`, Doc: `ReportsToPositionID is the shape of the org chart. A person's own manager is on the worker, because two people in the same position can report to different managers.`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`, Report: &reportDimString},
+		{Name: "title", Quoted: `"title"`, Field: "Title", Kind: schema.KindString, Flags: 0, Label: `Title`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, Report: &reportDimString},
+		{Name: "department", Quoted: `"department"`, Field: "Department", Kind: schema.KindString, Flags: 0, Label: `Department`, Enum: enumJobDepartment[:], Report: &reportDimEnum},
+		{Name: "flsa_exempt", Quoted: `"flsa_exempt"`, Field: "FLSAExempt", Kind: schema.KindBool, Flags: 0, Label: `Exempt from Overtime`, Report: &reportDimBool},
+		{Name: "is_driving_position", Quoted: `"is_driving_position"`, Field: "IsDrivingPosition", Kind: schema.KindBool, Flags: 0, Label: `Driving Position`, Report: &reportDimBool},
+		{Name: "reports_to_position_id", Quoted: `"reports_to_position_id"`, Field: "ReportsToPositionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reports To Position ID`, Report: &reportDimStringHidden},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "ReportsTo", Alias: "rt", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Reports To`},
@@ -1746,23 +1742,22 @@ var orgHolidaysTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:       []int32{3, 4, 5, 6, 7, 10},
-	Returning:    nil,
-	Version:      8,
-	AutoID:       0,
-	AutoCreate:   9,
-	AutoUpdate:   10,
-	IDPrefix:     "ohol_",
-	New:          newOrgHoliday,
-	NewN:         newNOrgHoliday,
-	Size:         unsafe.Sizeof(worker.OrgHoliday{}),
-	Ptr:          ptrOrgHoliday,
-	Value:        valueOrgHoliday,
-	BeforeCreate: beforeCreateOrgHoliday,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:     []int32{3, 4, 5, 6, 7, 10},
+	Returning:  nil,
+	Version:    8,
+	AutoID:     0,
+	AutoCreate: 9,
+	AutoUpdate: 10,
+	IDPrefix:   "ohol_",
+	New:        newOrgHoliday,
+	NewN:       newNOrgHoliday,
+	Size:       unsafe.Sizeof(worker.OrgHoliday{}),
+	Ptr:        ptrOrgHoliday,
+	Value:      valueOrgHoliday,
 }
 
 var orgHolidaysRef = keel.Ref{Table: &orgHolidaysTable}
@@ -1897,10 +1892,6 @@ func valueOrgHoliday(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreateOrgHoliday(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.OrgHoliday)(p).BeforeCreate(ctx)
-}
-
 // pTOPoliciesTable is the schema of worker.PTOPolicy.
 var pTOPoliciesTable = schema.Table{
 	Name:   "pto_policies",
@@ -1933,24 +1924,23 @@ var pTOPoliciesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Rules", Alias: "r", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Rules`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:    nil,
-	Version:      15,
-	AutoID:       0,
-	AutoCreate:   16,
-	AutoUpdate:   17,
-	IDPrefix:     "ptop_",
-	New:          newPTOPolicy,
-	NewN:         newNPTOPolicy,
-	Size:         unsafe.Sizeof(worker.PTOPolicy{}),
-	Ptr:          ptrPTOPolicy,
-	Value:        valuePTOPolicy,
-	Attach:       attachPTOPolicy,
-	BeforeCreate: beforeCreatePTOPolicy,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:  nil,
+	Version:    15,
+	AutoID:     0,
+	AutoCreate: 16,
+	AutoUpdate: 17,
+	IDPrefix:   "ptop_",
+	New:        newPTOPolicy,
+	NewN:       newNPTOPolicy,
+	Size:       unsafe.Sizeof(worker.PTOPolicy{}),
+	Ptr:        ptrPTOPolicy,
+	Value:      valuePTOPolicy,
+	Attach:     attachPTOPolicy,
 }
 
 var pTOPoliciesRef = keel.Ref{Table: &pTOPoliciesTable}
@@ -2154,10 +2144,6 @@ func attachPTOPolicy(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreatePTOPolicy(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PTOPolicy)(p).BeforeCreate(ctx)
-}
-
 // pTOPolicyRulesTable is the schema of worker.PTOPolicyRule.
 var pTOPolicyRulesTable = schema.Table{
 	Name:   "pto_policy_rules",
@@ -2183,23 +2169,22 @@ var pTOPolicyRulesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   13,
-	AutoUpdate:   14,
-	IDPrefix:     "ptpr_",
-	New:          newPTOPolicyRule,
-	NewN:         newNPTOPolicyRule,
-	Size:         unsafe.Sizeof(worker.PTOPolicyRule{}),
-	Ptr:          ptrPTOPolicyRule,
-	Value:        valuePTOPolicyRule,
-	BeforeCreate: beforeCreatePTOPolicyRule,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 13,
+	AutoUpdate: 14,
+	IDPrefix:   "ptpr_",
+	New:        newPTOPolicyRule,
+	NewN:       newNPTOPolicyRule,
+	Size:       unsafe.Sizeof(worker.PTOPolicyRule{}),
+	Ptr:        ptrPTOPolicyRule,
+	Value:      valuePTOPolicyRule,
 }
 
 var pTOPolicyRulesRef = keel.Ref{Table: &pTOPolicyRulesTable}
@@ -2360,10 +2345,6 @@ func valuePTOPolicyRule(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
-}
-
-func beforeCreatePTOPolicyRule(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PTOPolicyRule)(p).BeforeCreate(ctx)
 }
 
 // payrollExportsTable is the schema of worker.PayrollExport.
@@ -2646,24 +2627,23 @@ var performanceReviewsTable = schema.Table{
 		{Name: "Template", Alias: "t", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Template`},
 		{Name: "Reviewer", Alias: "r", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Reviewer`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
-	Returning:    nil,
-	Version:      22,
-	AutoID:       0,
-	AutoCreate:   23,
-	AutoUpdate:   24,
-	IDPrefix:     "prev_",
-	New:          newPerformanceReview,
-	NewN:         newNPerformanceReview,
-	Size:         unsafe.Sizeof(worker.PerformanceReview{}),
-	Ptr:          ptrPerformanceReview,
-	Value:        valuePerformanceReview,
-	Attach:       attachPerformanceReview,
-	BeforeCreate: beforeCreatePerformanceReview,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Returning:  nil,
+	Version:    22,
+	AutoID:     0,
+	AutoCreate: 23,
+	AutoUpdate: 24,
+	IDPrefix:   "prev_",
+	New:        newPerformanceReview,
+	NewN:       newNPerformanceReview,
+	Size:       unsafe.Sizeof(worker.PerformanceReview{}),
+	Ptr:        ptrPerformanceReview,
+	Value:      valuePerformanceReview,
+	Attach:     attachPerformanceReview,
 }
 
 var performanceReviewsRef = keel.Ref{Table: &performanceReviewsTable}
@@ -2954,10 +2934,6 @@ func attachPerformanceReview(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	}
 }
 
-func beforeCreatePerformanceReview(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PerformanceReview)(p).BeforeCreate(ctx)
-}
-
 // performanceReviewTemplatesTable is the schema of worker.PerformanceReviewTemplate.
 var performanceReviewTemplatesTable = schema.Table{
 	Name:   "performance_review_templates",
@@ -2982,23 +2958,22 @@ var performanceReviewTemplatesTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:    nil,
-	Version:      10,
-	AutoID:       0,
-	AutoCreate:   11,
-	AutoUpdate:   12,
-	IDPrefix:     "prt_",
-	New:          newPerformanceReviewTemplate,
-	NewN:         newNPerformanceReviewTemplate,
-	Size:         unsafe.Sizeof(worker.PerformanceReviewTemplate{}),
-	Ptr:          ptrPerformanceReviewTemplate,
-	Value:        valuePerformanceReviewTemplate,
-	BeforeCreate: beforeCreatePerformanceReviewTemplate,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:  nil,
+	Version:    10,
+	AutoID:     0,
+	AutoCreate: 11,
+	AutoUpdate: 12,
+	IDPrefix:   "prt_",
+	New:        newPerformanceReviewTemplate,
+	NewN:       newNPerformanceReviewTemplate,
+	Size:       unsafe.Sizeof(worker.PerformanceReviewTemplate{}),
+	Ptr:        ptrPerformanceReviewTemplate,
+	Value:      valuePerformanceReviewTemplate,
 }
 
 var performanceReviewTemplatesRef = keel.Ref{Table: &performanceReviewTemplatesTable}
@@ -3160,10 +3135,6 @@ func valuePerformanceReviewTemplate(p unsafe.Pointer, c int32) any {
 		return r.SearchVector
 	}
 	return nil
-}
-
-func beforeCreatePerformanceReviewTemplate(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PerformanceReviewTemplate)(p).BeforeCreate(ctx)
 }
 
 // portalInvitationsTable is the schema of worker.PortalInvitation.
@@ -4406,23 +4377,22 @@ var trainingCoursesTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:    nil,
-	Version:      19,
-	AutoID:       0,
-	AutoCreate:   20,
-	AutoUpdate:   21,
-	IDPrefix:     "trnc_",
-	New:          newTrainingCourse,
-	NewN:         newNTrainingCourse,
-	Size:         unsafe.Sizeof(worker.TrainingCourse{}),
-	Ptr:          ptrTrainingCourse,
-	Value:        valueTrainingCourse,
-	BeforeCreate: beforeCreateTrainingCourse,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:  nil,
+	Version:    19,
+	AutoID:     0,
+	AutoCreate: 20,
+	AutoUpdate: 21,
+	IDPrefix:   "trnc_",
+	New:        newTrainingCourse,
+	NewN:       newNTrainingCourse,
+	Size:       unsafe.Sizeof(worker.TrainingCourse{}),
+	Ptr:        ptrTrainingCourse,
+	Value:      valueTrainingCourse,
 }
 
 var trainingCoursesRef = keel.Ref{Table: &trainingCoursesTable}
@@ -4650,10 +4620,6 @@ func valueTrainingCourse(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreateTrainingCourse(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.TrainingCourse)(p).BeforeCreate(ctx)
-}
-
 // workersTable is the schema of worker.Worker.
 var workersTable = schema.Table{
 	Name:   "workers",
@@ -4662,71 +4628,70 @@ var workersTable = schema.Table{
 	Model:  "worker.Worker",
 	Label:  `Worker`,
 	Plural: `Workers`,
+	Doc:    `Drivers and operational workers`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "state_id", Quoted: `"state_id"`, Field: "StateID", Kind: schema.KindString, Flags: 0, Label: `State ID`},
-		{Name: "fleet_code_id", Quoted: `"fleet_code_id"`, Field: "FleetCodeID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Fleet Code ID`},
-		{Name: "manager_id", Quoted: `"manager_id"`, Field: "ManagerID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Manager ID`},
-		{Name: "position_id", Quoted: `"position_id"`, Field: "PositionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Position ID`},
-		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `User ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
-		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, Enum: enumWorkerType[:]},
-		{Name: "driver_type", Quoted: `"driver_type"`, Field: "DriverType", Kind: schema.KindString, Flags: 0, Label: `Driver Type`, Enum: enumDriverType[:]},
-		{Name: "leave_type", Quoted: `"leave_type"`, Field: "LeaveType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Leave Type`, Enum: enumLeaveType[:]},
-		{Name: "profile_pic_url", Quoted: `"profile_pic_url"`, Field: "ProfilePicURL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Profile Pic URL`},
-		{Name: "first_name", Quoted: `"first_name"`, Field: "FirstName", Kind: schema.KindString, Flags: 0, Label: `First Name`},
-		{Name: "last_name", Quoted: `"last_name"`, Field: "LastName", Kind: schema.KindString, Flags: 0, Label: `Last Name`},
-		{Name: "whole_name", Quoted: `"whole_name"`, Field: "WholeName", Kind: schema.KindString, Flags: schema.FlagReadOnly, Label: `Whole Name`},
-		{Name: "address_line1", Quoted: `"address_line1"`, Field: "AddressLine1", Kind: schema.KindString, Flags: 0, Label: `Address Line 1`},
-		{Name: "address_line2", Quoted: `"address_line2"`, Field: "AddressLine2", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 2`},
-		{Name: "city", Quoted: `"city"`, Field: "City", Kind: schema.KindString, Flags: 0, Label: `City`},
-		{Name: "postal_code", Quoted: `"postal_code"`, Field: "PostalCode", Kind: schema.KindString, Flags: 0, Label: `Postal Code`},
-		{Name: "email", Quoted: `"email"`, Field: "Email", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Email`},
-		{Name: "phone_number", Quoted: `"phone_number"`, Field: "PhoneNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Phone Number`},
-		{Name: "emergency_contact_name", Quoted: `"emergency_contact_name"`, Field: "EmergencyContactName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Emergency Contact Name`},
-		{Name: "emergency_contact_phone", Quoted: `"emergency_contact_phone"`, Field: "EmergencyContactPhone", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Emergency Contact Phone`},
-		{Name: "external_id", Quoted: `"external_id"`, Field: "ExternalID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `External ID`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
-		{Name: "assignment_blocked", Quoted: `"assignment_blocked"`, Field: "AssignmentBlocked", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Assignment Blocked`},
-		{Name: "gender", Quoted: `"gender"`, Field: "Gender", Kind: schema.KindString, Flags: 0, Label: `Gender`, Enum: enumGender[:]},
-		{Name: "can_be_assigned", Quoted: `"can_be_assigned"`, Field: "CanBeAssigned", Kind: schema.KindBool, Flags: 0, Label: `Can Be Assigned`},
-		{Name: "available_for_dispatch", Quoted: `"available_for_dispatch"`, Field: "AvailableForDispatch", Kind: schema.KindBool, Flags: 0, Label: `Available For Dispatch`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "state_id", Quoted: `"state_id"`, Field: "StateID", Kind: schema.KindString, Flags: 0, Label: `State ID`, Report: &reportDimString},
+		{Name: "fleet_code_id", Quoted: `"fleet_code_id"`, Field: "FleetCodeID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Fleet Code ID`, Report: &reportDimStringHidden},
+		{Name: "manager_id", Quoted: `"manager_id"`, Field: "ManagerID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Manager ID`, Report: &reportDimString},
+		{Name: "position_id", Quoted: `"position_id"`, Field: "PositionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Position ID`, Report: &reportDimStringHidden},
+		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `User ID`, Report: &reportDimString},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, Enum: enumWorkerType[:], Report: &reportDimEnum},
+		{Name: "driver_type", Quoted: `"driver_type"`, Field: "DriverType", Kind: schema.KindString, Flags: 0, Label: `Driver Type`, Enum: enumDriverType[:], Report: &reportDimEnum},
+		{Name: "leave_type", Quoted: `"leave_type"`, Field: "LeaveType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Leave Type`, Enum: enumLeaveType[:], Report: &reportDimEnum},
+		{Name: "profile_pic_url", Quoted: `"profile_pic_url"`, Field: "ProfilePicURL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Profile Pic URL`, Report: &reportDimString},
+		{Name: "first_name", Quoted: `"first_name"`, Field: "FirstName", Kind: schema.KindString, Flags: 0, Label: `First Name`, Report: &reportDimString},
+		{Name: "last_name", Quoted: `"last_name"`, Field: "LastName", Kind: schema.KindString, Flags: 0, Label: `Last Name`, Report: &reportDimString},
+		{Name: "whole_name", Quoted: `"whole_name"`, Field: "WholeName", Kind: schema.KindString, Flags: schema.FlagReadOnly, Label: `Full Name`, Report: &reportDimString},
+		{Name: "address_line1", Quoted: `"address_line1"`, Field: "AddressLine1", Kind: schema.KindString, Flags: 0, Label: `Address Line 1`, Report: &reportDimString},
+		{Name: "address_line2", Quoted: `"address_line2"`, Field: "AddressLine2", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 2`, Report: &reportDimString},
+		{Name: "city", Quoted: `"city"`, Field: "City", Kind: schema.KindString, Flags: 0, Label: `City`, Report: &reportDimString},
+		{Name: "postal_code", Quoted: `"postal_code"`, Field: "PostalCode", Kind: schema.KindString, Flags: 0, Label: `Postal Code`, Report: &reportDimString},
+		{Name: "email", Quoted: `"email"`, Field: "Email", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Email`, Report: &reportDimString},
+		{Name: "phone_number", Quoted: `"phone_number"`, Field: "PhoneNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Phone Number`, Report: &reportDimString},
+		{Name: "emergency_contact_name", Quoted: `"emergency_contact_name"`, Field: "EmergencyContactName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Emergency Contact Name`, Report: &reportDimString},
+		{Name: "emergency_contact_phone", Quoted: `"emergency_contact_phone"`, Field: "EmergencyContactPhone", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Emergency Contact Phone`, Report: &reportDimString},
+		{Name: "external_id", Quoted: `"external_id"`, Field: "ExternalID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `External ID`, Report: &reportDimString},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
+		{Name: "assignment_blocked", Quoted: `"assignment_blocked"`, Field: "AssignmentBlocked", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Assignment Blocked`, Report: &reportDimString},
+		{Name: "gender", Quoted: `"gender"`, Field: "Gender", Kind: schema.KindString, Flags: 0, Label: `Gender`, Enum: enumGender[:], Report: &reportDimEnum},
+		{Name: "can_be_assigned", Quoted: `"can_be_assigned"`, Field: "CanBeAssigned", Kind: schema.KindBool, Flags: 0, Label: `Can Be Assigned`, Report: &reportDimBool},
+		{Name: "available_for_dispatch", Quoted: `"available_for_dispatch"`, Field: "AvailableForDispatch", Kind: schema.KindBool, Flags: 0, Label: `Available For Dispatch`, Report: &reportDimBool},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
-		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`},
-		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`},
-		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `State`},
+		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `State`, NoReport: true},
 		{Name: "FleetCode", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Fleet Code`},
-		{Name: "Manager", Alias: "m", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Manager`},
+		{Name: "Manager", Alias: "m", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Manager`, NoReport: true},
 		{Name: "Position", Alias: "p", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Position`},
-		{Name: "PortalUser", Alias: "pu", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Portal User`},
+		{Name: "PortalUser", Alias: "pu", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Portal User`, NoReport: true},
 		{Name: "Profile", Alias: "p", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{1}, Label: `Profile`},
-		{Name: "PTO", Alias: "p", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{1}, Label: `PTO`},
+		{Name: "PTO", Alias: "p", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{1}, Label: `Time Off`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 33},
-	Returning:    []int32{15},
-	Version:      31,
-	AutoID:       0,
-	AutoCreate:   32,
-	AutoUpdate:   33,
-	IDPrefix:     "wrk_",
-	New:          newWorker,
-	NewN:         newNWorker,
-	Size:         unsafe.Sizeof(worker.Worker{}),
-	Ptr:          ptrWorker,
-	Value:        valueWorker,
-	Attach:       attachWorker,
-	BeforeCreate: beforeCreateWorker,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 33},
+	Returning:  []int32{15},
+	Version:    31,
+	AutoID:     0,
+	AutoCreate: 32,
+	AutoUpdate: 33,
+	IDPrefix:   "wrk_",
+	New:        newWorker,
+	NewN:       newNWorker,
+	Size:       unsafe.Sizeof(worker.Worker{}),
+	Ptr:        ptrWorker,
+	Value:      valueWorker,
+	Attach:     attachWorker,
 }
 
 var workersRef = keel.Ref{Table: &workersTable}
@@ -4856,46 +4821,36 @@ func WorkersSchema() *schema.Table { return &workersTable }
 // As returns a handle that references workers under its own alias.
 func (t *WorkersTable) As(alias string) *WorkersTable { return keel.Alias(t.Ref, alias, BuildWorkers) }
 
-// BusinessUnit is the belongs relation.
-func (t *WorkersTable) BusinessUnit() *tenantdb.BusinessUnitsTable {
-	return keel.Path(t.Ref, 0, tenantdb.BuildBusinessUnits)
-}
-
-// Organization is the belongs relation.
-func (t *WorkersTable) Organization() *tenantdb.OrganizationsTable {
-	return keel.Path(t.Ref, 1, tenantdb.BuildOrganizations)
-}
-
 // State is the belongs relation.
 func (t *WorkersTable) State() *usstatedb.UsStatesTable {
-	return keel.Path(t.Ref, 2, usstatedb.BuildUsStates)
+	return keel.Path(t.Ref, 0, usstatedb.BuildUsStates)
 }
 
 // FleetCode is the belongs relation.
 func (t *WorkersTable) FleetCode() *fleetcodedb.FleetCodesTable {
-	return keel.Path(t.Ref, 3, fleetcodedb.BuildFleetCodes)
+	return keel.Path(t.Ref, 1, fleetcodedb.BuildFleetCodes)
 }
 
 // Manager is the belongs relation.
 func (t *WorkersTable) Manager() *tenantdb.UsersTable {
-	return keel.Path(t.Ref, 4, tenantdb.BuildUsers)
+	return keel.Path(t.Ref, 2, tenantdb.BuildUsers)
 }
 
 // Position is the belongs relation.
-func (t *WorkersTable) Position() *JobPositionsTable { return keel.Path(t.Ref, 5, BuildJobPositions) }
+func (t *WorkersTable) Position() *JobPositionsTable { return keel.Path(t.Ref, 3, BuildJobPositions) }
 
 // PortalUser is the belongs relation.
 func (t *WorkersTable) PortalUser() *tenantdb.UsersTable {
-	return keel.Path(t.Ref, 6, tenantdb.BuildUsers)
+	return keel.Path(t.Ref, 4, tenantdb.BuildUsers)
 }
 
 // Profile is the one relation.
 func (t *WorkersTable) Profile() *WorkerProfilesTable {
-	return keel.Path(t.Ref, 7, BuildWorkerProfiles)
+	return keel.Path(t.Ref, 5, BuildWorkerProfiles)
 }
 
 // PTO is the many relation.
-func (t *WorkersTable) PTO() *WorkerPTOsTable { return keel.Path(t.Ref, 8, BuildWorkerPTOs) }
+func (t *WorkersTable) PTO() *WorkerPTOsTable { return keel.Path(t.Ref, 6, BuildWorkerPTOs) }
 
 // Get returns the workers row with the given key, or keel.ErrNotFound.
 func (t *WorkersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.Worker, error) {
@@ -5101,28 +5056,20 @@ func attachWorker(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	r := (*worker.Worker)(p)
 	switch rel {
 	case 0:
-		r.BusinessUnit = (*tenant.BusinessUnit)(child)
-	case 1:
-		r.Organization = (*tenant.Organization)(child)
-	case 2:
 		r.State = (*usstate.UsState)(child)
-	case 3:
+	case 1:
 		r.FleetCode = (*fleetcode.FleetCode)(child)
-	case 4:
+	case 2:
 		r.Manager = (*tenant.User)(child)
-	case 5:
+	case 3:
 		r.Position = (*worker.JobPosition)(child)
-	case 6:
+	case 4:
 		r.PortalUser = (*tenant.User)(child)
-	case 7:
+	case 5:
 		r.Profile = (*worker.WorkerProfile)(child)
-	case 8:
+	case 6:
 		r.PTO = append(r.PTO, (*worker.WorkerPTO)(child))
 	}
-}
-
-func beforeCreateWorker(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.Worker)(p).BeforeCreate(ctx)
 }
 
 // workerAvailabilityPreferencesTable is the schema of worker.WorkerAvailabilityPreference.
@@ -5945,24 +5892,23 @@ var workerChecklistTemplatesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Items", Alias: "i", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Items`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:    nil,
-	Version:      10,
-	AutoID:       0,
-	AutoCreate:   11,
-	AutoUpdate:   12,
-	IDPrefix:     "wclt_",
-	New:          newWorkerChecklistTemplate,
-	NewN:         newNWorkerChecklistTemplate,
-	Size:         unsafe.Sizeof(worker.WorkerChecklistTemplate{}),
-	Ptr:          ptrWorkerChecklistTemplate,
-	Value:        valueWorkerChecklistTemplate,
-	Attach:       attachWorkerChecklistTemplate,
-	BeforeCreate: beforeCreateWorkerChecklistTemplate,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:  nil,
+	Version:    10,
+	AutoID:     0,
+	AutoCreate: 11,
+	AutoUpdate: 12,
+	IDPrefix:   "wclt_",
+	New:        newWorkerChecklistTemplate,
+	NewN:       newNWorkerChecklistTemplate,
+	Size:       unsafe.Sizeof(worker.WorkerChecklistTemplate{}),
+	Ptr:        ptrWorkerChecklistTemplate,
+	Value:      valueWorkerChecklistTemplate,
+	Attach:     attachWorkerChecklistTemplate,
 }
 
 var workerChecklistTemplatesRef = keel.Ref{Table: &workerChecklistTemplatesTable}
@@ -6133,10 +6079,6 @@ func attachWorkerChecklistTemplate(p unsafe.Pointer, rel int32, child unsafe.Poi
 	}
 }
 
-func beforeCreateWorkerChecklistTemplate(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerChecklistTemplate)(p).BeforeCreate(ctx)
-}
-
 // workerChecklistTemplateItemsTable is the schema of worker.WorkerChecklistTemplateItem.
 var workerChecklistTemplateItemsTable = schema.Table{
 	Name:   "worker_checklist_template_items",
@@ -6166,24 +6108,23 @@ var workerChecklistTemplateItemsTable = schema.Table{
 		{Name: "CredentialType", Alias: "ct", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Credential Type`},
 		{Name: "DocumentType", Alias: "dt", Kind: schema.BelongsTo, Local: []int32{11}, Remote: []int32{0}, Label: `Document Type`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   13,
-	AutoUpdate:   14,
-	IDPrefix:     "wclti_",
-	New:          newWorkerChecklistTemplateItem,
-	NewN:         newNWorkerChecklistTemplateItem,
-	Size:         unsafe.Sizeof(worker.WorkerChecklistTemplateItem{}),
-	Ptr:          ptrWorkerChecklistTemplateItem,
-	Value:        valueWorkerChecklistTemplateItem,
-	Attach:       attachWorkerChecklistTemplateItem,
-	BeforeCreate: beforeCreateWorkerChecklistTemplateItem,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 13,
+	AutoUpdate: 14,
+	IDPrefix:   "wclti_",
+	New:        newWorkerChecklistTemplateItem,
+	NewN:       newNWorkerChecklistTemplateItem,
+	Size:       unsafe.Sizeof(worker.WorkerChecklistTemplateItem{}),
+	Ptr:        ptrWorkerChecklistTemplateItem,
+	Value:      valueWorkerChecklistTemplateItem,
+	Attach:     attachWorkerChecklistTemplateItem,
 }
 
 var workerChecklistTemplateItemsRef = keel.Ref{Table: &workerChecklistTemplateItemsTable}
@@ -6372,10 +6313,6 @@ func attachWorkerChecklistTemplateItem(p unsafe.Pointer, rel int32, child unsafe
 	case 1:
 		r.DocumentType = (*documenttype.DocumentType)(child)
 	}
-}
-
-func beforeCreateWorkerChecklistTemplateItem(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerChecklistTemplateItem)(p).BeforeCreate(ctx)
 }
 
 // workerClearinghouseQueriesTable is the schema of worker.WorkerClearinghouseQuery.
@@ -6666,52 +6603,53 @@ var workerCredentialsTable = schema.Table{
 	Model:  "worker.WorkerCredential",
 	Label:  `Worker Credential`,
 	Plural: `Worker Credentials`,
+	Doc:    `Licences and certificates a worker holds, with their expiry and verification`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: 0, Label: `Worker ID`},
-		{Name: "credential_type_id", Quoted: `"credential_type_id"`, Field: "CredentialTypeID", Kind: schema.KindString, Flags: 0, Label: `Credential Type ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumCredentialStatus[:]},
-		{Name: "number", Quoted: `"number"`, Field: "Number", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Number`},
-		{Name: "issuing_authority", Quoted: `"issuing_authority"`, Field: "IssuingAuthority", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Issuing Authority`},
-		{Name: "issued_at", Quoted: `"issued_at"`, Field: "IssuedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Issued At`},
-		{Name: "expires_at", Quoted: `"expires_at"`, Field: "ExpiresAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Expires At`},
-		{Name: "document_id", Quoted: `"document_id"`, Field: "DocumentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Document ID`},
-		{Name: "notes", Quoted: `"notes"`, Field: "Notes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notes`},
-		{Name: "verified_by_id", Quoted: `"verified_by_id"`, Field: "VerifiedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Verified By ID`},
-		{Name: "verified_at", Quoted: `"verified_at"`, Field: "VerifiedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Verified At`},
-		{Name: "archived_by_id", Quoted: `"archived_by_id"`, Field: "ArchivedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Archived By ID`},
-		{Name: "archived_at", Quoted: `"archived_at"`, Field: "ArchivedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Archived At`},
-		{Name: "archive_reason", Quoted: `"archive_reason"`, Field: "ArchiveReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Archive Reason`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: 0, Label: `Worker ID`, Report: &reportDimStringHidden},
+		{Name: "credential_type_id", Quoted: `"credential_type_id"`, Field: "CredentialTypeID", Kind: schema.KindString, Flags: 0, Label: `Credential Type ID`, Report: &reportDimStringHidden},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumCredentialStatus[:], Report: &reportDimEnum},
+		{Name: "number", Quoted: `"number"`, Field: "Number", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Number`, Report: &reportDimString},
+		{Name: "issuing_authority", Quoted: `"issuing_authority"`, Field: "IssuingAuthority", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Issuing Authority`, Report: &reportDimString},
+		{Name: "issued_at", Quoted: `"issued_at"`, Field: "IssuedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Issued`, Report: &reportDimEpoch},
+		{Name: "expires_at", Quoted: `"expires_at"`, Field: "ExpiresAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Expires`, Report: &reportDimEpoch},
+		{Name: "document_id", Quoted: `"document_id"`, Field: "DocumentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Document ID`, Report: &reportDimString},
+		{Name: "notes", Quoted: `"notes"`, Field: "Notes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notes`, Report: &reportDimString},
+		{Name: "verified_by_id", Quoted: `"verified_by_id"`, Field: "VerifiedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Verified By ID`, Report: &reportDimString},
+		{Name: "verified_at", Quoted: `"verified_at"`, Field: "VerifiedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Verified`, Report: &reportDimEpoch},
+		{Name: "archived_by_id", Quoted: `"archived_by_id"`, Field: "ArchivedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Archived By ID`, Report: &reportDimString},
+		{Name: "archived_at", Quoted: `"archived_at"`, Field: "ArchivedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Archived At`, Report: &reportDimEpoch},
+		{Name: "archive_reason", Quoted: `"archive_reason"`, Field: "ArchiveReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Archive Reason`, Report: &reportDimString},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "CredentialType", Alias: "ct", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Credential Type`},
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`},
-		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Document`},
-		{Name: "VerifiedBy", Alias: "vb", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Verified By`},
+		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Document`, NoReport: true},
+		{Name: "VerifiedBy", Alias: "vb", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Verified By`, NoReport: true},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
-	Returning:    nil,
-	Version:      17,
-	AutoID:       0,
-	AutoCreate:   18,
-	AutoUpdate:   19,
-	IDPrefix:     "wcred_",
-	New:          newWorkerCredential,
-	NewN:         newNWorkerCredential,
-	Size:         unsafe.Sizeof(worker.WorkerCredential{}),
-	Ptr:          ptrWorkerCredential,
-	Value:        valueWorkerCredential,
-	Attach:       attachWorkerCredential,
-	BeforeCreate: beforeCreateWorkerCredential,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
+	Returning:  nil,
+	Version:    17,
+	AutoID:     0,
+	AutoCreate: 18,
+	AutoUpdate: 19,
+	IDPrefix:   "wcred_",
+	New:        newWorkerCredential,
+	NewN:       newNWorkerCredential,
+	Size:       unsafe.Sizeof(worker.WorkerCredential{}),
+	Ptr:        ptrWorkerCredential,
+	Value:      valueWorkerCredential,
+	Attach:     attachWorkerCredential,
 }
 
 var workerCredentialsRef = keel.Ref{Table: &workerCredentialsTable}
@@ -6971,40 +6909,38 @@ func attachWorkerCredential(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreateWorkerCredential(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerCredential)(p).BeforeCreate(ctx)
-}
-
 // workerCredentialTypesTable is the schema of worker.WorkerCredentialType.
 var workerCredentialTypesTable = schema.Table{
 	Name:   "worker_credential_types",
 	Quoted: `"worker_credential_types"`,
 	Alias:  "wct",
 	Model:  "worker.WorkerCredentialType",
-	Label:  `Worker Credential Type`,
-	Plural: `Worker Credential Types`,
+	Label:  `Credential Type`,
+	Plural: `Credential Types`,
+	Doc:    `The catalog of credentials a carrier tracks`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`},
-		{Name: "category", Quoted: `"category"`, Field: "Category", Kind: schema.KindString, Flags: 0, Label: `Category`, Enum: enumCredentialCategory[:]},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
-		{Name: "is_required", Quoted: `"is_required"`, Field: "IsRequired", Kind: schema.KindBool, Flags: 0, Label: `Is Required`},
-		{Name: "required_for_driver_types", Quoted: `"required_for_driver_types"`, Field: "RequiredForDriverTypes", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Required For Driver Types`},
-		{Name: "renewal_window_days", Quoted: `"renewal_window_days"`, Field: "RenewalWindowDays", Kind: schema.KindInt32, Flags: 0, Label: `Renewal Window Days`},
-		{Name: "validity_months", Quoted: `"validity_months"`, Field: "ValidityMonths", Kind: schema.KindInt32, Flags: schema.FlagNullable, Label: `Validity Months`},
-		{Name: "requires_number", Quoted: `"requires_number"`, Field: "RequiresNumber", Kind: schema.KindBool, Flags: 0, Label: `Requires Number`},
-		{Name: "requires_document", Quoted: `"requires_document"`, Field: "RequiresDocument", Kind: schema.KindBool, Flags: 0, Label: `Requires Document`},
-		{Name: "profile_field", Quoted: `"profile_field"`, Field: "ProfileField", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Profile Field`, Enum: enumCredentialProfileField[:]},
-		{Name: "is_system", Quoted: `"is_system"`, Field: "IsSystem", Kind: schema.KindBool, Flags: 0, Label: `Is System`},
-		{Name: "sort_order", Quoted: `"sort_order"`, Field: "SortOrder", Kind: schema.KindInt32, Flags: 0, Label: `Sort Order`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`, Report: &reportDimString},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, Report: &reportDimString},
+		{Name: "category", Quoted: `"category"`, Field: "Category", Kind: schema.KindString, Flags: 0, Label: `Category`, Enum: enumCredentialCategory[:], Report: &reportDimEnum},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "is_required", Quoted: `"is_required"`, Field: "IsRequired", Kind: schema.KindBool, Flags: 0, Label: `Required`, Report: &reportDimBool},
+		{Name: "required_for_driver_types", Quoted: `"required_for_driver_types"`, Field: "RequiredForDriverTypes", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Required For Driver Types`, Report: &reportDimJsonb},
+		{Name: "renewal_window_days", Quoted: `"renewal_window_days"`, Field: "RenewalWindowDays", Kind: schema.KindInt32, Flags: 0, Label: `Renewal Window (days)`, Report: &reportDimIntegerCount},
+		{Name: "validity_months", Quoted: `"validity_months"`, Field: "ValidityMonths", Kind: schema.KindInt32, Flags: schema.FlagNullable, Label: `Valid For (months)`, Report: &reportDimIntegerCount},
+		{Name: "requires_number", Quoted: `"requires_number"`, Field: "RequiresNumber", Kind: schema.KindBool, Flags: 0, Label: `Requires Number`, Report: &reportDimBool},
+		{Name: "requires_document", Quoted: `"requires_document"`, Field: "RequiresDocument", Kind: schema.KindBool, Flags: 0, Label: `Requires Document`, Report: &reportDimBool},
+		{Name: "profile_field", Quoted: `"profile_field"`, Field: "ProfileField", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Profile Field`, Enum: enumCredentialProfileField[:], Report: &reportDimEnum},
+		{Name: "is_system", Quoted: `"is_system"`, Field: "IsSystem", Kind: schema.KindBool, Flags: 0, Label: `Is System`, Report: &reportDimBool},
+		{Name: "sort_order", Quoted: `"sort_order"`, Field: "SortOrder", Kind: schema.KindInt32, Flags: 0, Label: `Sort Order`, Report: &reportDimInteger},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -8041,24 +7977,23 @@ var workerDisciplinaryActionsTable = schema.Table{
 		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{13}, Remote: []int32{0}, Label: `Document`},
 		{Name: "IssuedBy", Alias: "ib", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `Issued By`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
-	Returning:    nil,
-	Version:      20,
-	AutoID:       0,
-	AutoCreate:   21,
-	AutoUpdate:   22,
-	IDPrefix:     "wdac_",
-	New:          newWorkerDisciplinaryAction,
-	NewN:         newNWorkerDisciplinaryAction,
-	Size:         unsafe.Sizeof(worker.WorkerDisciplinaryAction{}),
-	Ptr:          ptrWorkerDisciplinaryAction,
-	Value:        valueWorkerDisciplinaryAction,
-	Attach:       attachWorkerDisciplinaryAction,
-	BeforeCreate: beforeCreateWorkerDisciplinaryAction,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
+	Returning:  nil,
+	Version:    20,
+	AutoID:     0,
+	AutoCreate: 21,
+	AutoUpdate: 22,
+	IDPrefix:   "wdac_",
+	New:        newWorkerDisciplinaryAction,
+	NewN:       newNWorkerDisciplinaryAction,
+	Size:       unsafe.Sizeof(worker.WorkerDisciplinaryAction{}),
+	Ptr:        ptrWorkerDisciplinaryAction,
+	Value:      valueWorkerDisciplinaryAction,
+	Attach:     attachWorkerDisciplinaryAction,
 }
 
 var workerDisciplinaryActionsRef = keel.Ref{Table: &workerDisciplinaryActionsTable}
@@ -8346,62 +8281,59 @@ func attachWorkerDisciplinaryAction(p unsafe.Pointer, rel int32, child unsafe.Po
 	}
 }
 
-func beforeCreateWorkerDisciplinaryAction(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerDisciplinaryAction)(p).BeforeCreate(ctx)
-}
-
 // workerEmploymentEventsTable is the schema of worker.WorkerEmploymentEvent.
 var workerEmploymentEventsTable = schema.Table{
 	Name:   "worker_employment_events",
 	Quoted: `"worker_employment_events"`,
 	Alias:  "wee",
 	Model:  "worker.WorkerEmploymentEvent",
-	Label:  `Worker Employment Event`,
-	Plural: `Worker Employment Events`,
+	Label:  `Employment Event`,
+	Plural: `Employment Events`,
+	Doc:    `Hires, transfers, leave, suspensions and terminations, with who recorded them`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: 0, Label: `Worker ID`},
-		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, Enum: enumEmploymentEventKind[:]},
-		{Name: "effective_at", Quoted: `"effective_at"`, Field: "EffectiveAt", Kind: schema.KindInt64, Flags: 0, Label: `Effective At`},
-		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reason`},
-		{Name: "notes", Quoted: `"notes"`, Field: "Notes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notes`},
-		{Name: "from_values", Quoted: `"from_values"`, Field: "FromValues", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `From Values`},
-		{Name: "to_values", Quoted: `"to_values"`, Field: "ToValues", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `To Values`},
-		{Name: "document_id", Quoted: `"document_id"`, Field: "DocumentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Document ID`},
-		{Name: "recorded_by_id", Quoted: `"recorded_by_id"`, Field: "RecordedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Recorded By ID`},
-		{Name: "amended_by_id", Quoted: `"amended_by_id"`, Field: "AmendedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Amended By ID`},
-		{Name: "amended_at", Quoted: `"amended_at"`, Field: "AmendedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Amended At`},
-		{Name: "amendment_note", Quoted: `"amendment_note"`, Field: "AmendmentNote", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Amendment Note`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: 0, Label: `Worker ID`, Report: &reportDimStringHidden},
+		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Event`, Enum: enumEmploymentEventKind[:], Report: &reportDimEnum},
+		{Name: "effective_at", Quoted: `"effective_at"`, Field: "EffectiveAt", Kind: schema.KindInt64, Flags: 0, Label: `Effective`, Report: &reportDimEpoch},
+		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reason`, Report: &reportDimString},
+		{Name: "notes", Quoted: `"notes"`, Field: "Notes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notes`, Report: &reportDimString},
+		{Name: "from_values", Quoted: `"from_values"`, Field: "FromValues", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `From Values`, Report: &reportDimJsonb},
+		{Name: "to_values", Quoted: `"to_values"`, Field: "ToValues", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `To Values`, Report: &reportDimJsonb},
+		{Name: "document_id", Quoted: `"document_id"`, Field: "DocumentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Document ID`, Report: &reportDimString},
+		{Name: "recorded_by_id", Quoted: `"recorded_by_id"`, Field: "RecordedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Recorded By ID`, Report: &reportDimString},
+		{Name: "amended_by_id", Quoted: `"amended_by_id"`, Field: "AmendedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Amended By ID`, Report: &reportDimString},
+		{Name: "amended_at", Quoted: `"amended_at"`, Field: "AmendedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Amended At`, Report: &reportDimEpoch},
+		{Name: "amendment_note", Quoted: `"amendment_note"`, Field: "AmendmentNote", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Amendment Note`, Report: &reportDimString},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`},
-		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Document`},
-		{Name: "RecordedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{11}, Remote: []int32{0}, Label: `Recorded By`},
-		{Name: "AmendedBy", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Amended By`},
+		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Document`, NoReport: true},
+		{Name: "RecordedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{11}, Remote: []int32{0}, Label: `Recorded By`, NoReport: true},
+		{Name: "AmendedBy", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Amended By`, NoReport: true},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:    nil,
-	Version:      15,
-	AutoID:       0,
-	AutoCreate:   16,
-	AutoUpdate:   17,
-	IDPrefix:     "wee_",
-	New:          newWorkerEmploymentEvent,
-	NewN:         newNWorkerEmploymentEvent,
-	Size:         unsafe.Sizeof(worker.WorkerEmploymentEvent{}),
-	Ptr:          ptrWorkerEmploymentEvent,
-	Value:        valueWorkerEmploymentEvent,
-	Attach:       attachWorkerEmploymentEvent,
-	BeforeCreate: beforeCreateWorkerEmploymentEvent,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:  nil,
+	Version:    15,
+	AutoID:     0,
+	AutoCreate: 16,
+	AutoUpdate: 17,
+	IDPrefix:   "wee_",
+	New:        newWorkerEmploymentEvent,
+	NewN:       newNWorkerEmploymentEvent,
+	Size:       unsafe.Sizeof(worker.WorkerEmploymentEvent{}),
+	Ptr:        ptrWorkerEmploymentEvent,
+	Value:      valueWorkerEmploymentEvent,
+	Attach:     attachWorkerEmploymentEvent,
 }
 
 var workerEmploymentEventsRef = keel.Ref{Table: &workerEmploymentEventsTable}
@@ -8643,10 +8575,6 @@ func attachWorkerEmploymentEvent(p unsafe.Pointer, rel int32, child unsafe.Point
 	case 3:
 		r.AmendedBy = (*tenant.User)(child)
 	}
-}
-
-func beforeCreateWorkerEmploymentEvent(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerEmploymentEvent)(p).BeforeCreate(ctx)
 }
 
 // workerEmploymentVerificationsTable is the schema of worker.WorkerEmploymentVerification.
@@ -10084,55 +10012,56 @@ var workerPTOsTable = schema.Table{
 	Quoted: `"worker_pto"`,
 	Alias:  "wp",
 	Model:  "worker.WorkerPTO",
-	Label:  `Worker PTO`,
-	Plural: `Worker PTOs`,
+	Label:  `Time Off Request`,
+	Plural: `Time Off Requests`,
+	Doc:    `Time-off requests and the days booked against them`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Worker ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "approver_id", Quoted: `"approver_id"`, Field: "ApproverID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Approver ID`},
-		{Name: "rejector_id", Quoted: `"rejector_id"`, Field: "RejectorID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Rejector ID`},
-		{Name: "cancelled_by_id", Quoted: `"cancelled_by_id"`, Field: "CancelledByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Cancelled By ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumPTOStatus[:]},
-		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, Enum: enumPTOType[:]},
-		{Name: "start_date", Quoted: `"start_date"`, Field: "StartDate", Kind: schema.KindInt64, Flags: 0, Label: `Start Date`},
-		{Name: "end_date", Quoted: `"end_date"`, Field: "EndDate", Kind: schema.KindInt64, Flags: 0, Label: `End Date`},
-		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: 0, Label: `Reason`},
-		{Name: "rejection_reason", Quoted: `"rejection_reason"`, Field: "RejectionReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Rejection Reason`},
-		{Name: "cancellation_reason", Quoted: `"cancellation_reason"`, Field: "CancellationReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Cancellation Reason`},
-		{Name: "days", Quoted: `"days"`, Field: "Days", Kind: schema.KindOther, Flags: 0, Label: `Days`},
-		{Name: "balance_after_days", Quoted: `"balance_after_days"`, Field: "BalanceAfterDays", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Balance After Days`},
-		{Name: "auto_approved", Quoted: `"auto_approved"`, Field: "AutoApproved", Kind: schema.KindBool, Flags: 0, Label: `Auto Approved`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Worker ID`, Report: &reportDimStringHidden},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "approver_id", Quoted: `"approver_id"`, Field: "ApproverID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Approver ID`, Report: &reportDimString},
+		{Name: "rejector_id", Quoted: `"rejector_id"`, Field: "RejectorID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Rejector ID`, Report: &reportDimString},
+		{Name: "cancelled_by_id", Quoted: `"cancelled_by_id"`, Field: "CancelledByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Cancelled By ID`, Report: &reportDimString},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumPTOStatus[:], Report: &reportDimEnum},
+		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, Enum: enumPTOType[:], Report: &reportDimEnum},
+		{Name: "start_date", Quoted: `"start_date"`, Field: "StartDate", Kind: schema.KindInt64, Flags: 0, Label: `Starts`, Report: &reportDimEpoch},
+		{Name: "end_date", Quoted: `"end_date"`, Field: "EndDate", Kind: schema.KindInt64, Flags: 0, Label: `Ends`, Report: &reportDimEpoch},
+		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: 0, Label: `Reason`, Report: &reportDimString},
+		{Name: "rejection_reason", Quoted: `"rejection_reason"`, Field: "RejectionReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Rejection Reason`, Report: &reportDimString},
+		{Name: "cancellation_reason", Quoted: `"cancellation_reason"`, Field: "CancellationReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Cancellation Reason`, Report: &reportDimString},
+		{Name: "days", Quoted: `"days"`, Field: "Days", Kind: schema.KindOther, Flags: 0, Label: `Days`, Report: &reportMeasureDecimal},
+		{Name: "balance_after_days", Quoted: `"balance_after_days"`, Field: "BalanceAfterDays", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Balance After Days`, Report: &reportMeasureDecimal},
+		{Name: "auto_approved", Quoted: `"auto_approved"`, Field: "AutoApproved", Kind: schema.KindBool, Flags: 0, Label: `Auto Approved`, Report: &reportDimBool},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Worker`},
-		{Name: "Approver", Alias: "a", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Approver`},
-		{Name: "Rejector", Alias: "r", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Rejector`},
-		{Name: "CancelledBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Cancelled By`},
+		{Name: "Approver", Alias: "a", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Approver`, NoReport: true},
+		{Name: "Rejector", Alias: "r", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Rejector`, NoReport: true},
+		{Name: "CancelledBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Cancelled By`, NoReport: true},
 	},
-	PK:           []int32{0, 1, 2, 3},
-	Tenant:       []int32{2, 3},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
-	Update:       []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20},
-	Returning:    nil,
-	Version:      18,
-	AutoID:       0,
-	AutoCreate:   19,
-	AutoUpdate:   20,
-	IDPrefix:     "wrkpto_",
-	New:          newWorkerPTO,
-	NewN:         newNWorkerPTO,
-	Size:         unsafe.Sizeof(worker.WorkerPTO{}),
-	Ptr:          ptrWorkerPTO,
-	Value:        valueWorkerPTO,
-	Attach:       attachWorkerPTO,
-	BeforeCreate: beforeCreateWorkerPTO,
+	PK:         []int32{0, 1, 2, 3},
+	Tenant:     []int32{2, 3},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
+	Update:     []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20},
+	Returning:  nil,
+	Version:    18,
+	AutoID:     0,
+	AutoCreate: 19,
+	AutoUpdate: 20,
+	IDPrefix:   "wrkpto_",
+	New:        newWorkerPTO,
+	NewN:       newNWorkerPTO,
+	Size:       unsafe.Sizeof(worker.WorkerPTO{}),
+	Ptr:        ptrWorkerPTO,
+	Value:      valueWorkerPTO,
+	Attach:     attachWorkerPTO,
 }
 
 var workerPTOsRef = keel.Ref{Table: &workerPTOsTable}
@@ -10381,57 +10310,54 @@ func attachWorkerPTO(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreateWorkerPTO(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPTO)(p).BeforeCreate(ctx)
-}
-
 // workerPTOBalancesTable is the schema of worker.WorkerPTOBalance.
 var workerPTOBalancesTable = schema.Table{
 	Name:   "worker_pto_balances",
 	Quoted: `"worker_pto_balances"`,
 	Alias:  "wpb",
 	Model:  "worker.WorkerPTOBalance",
-	Label:  `Worker PTO Balance`,
-	Plural: `Worker PTO Balances`,
+	Label:  `PTO Balance`,
+	Plural: `PTO Balances`,
+	Doc:    `What each worker has accrued, used and carried, per time-off type`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: 0, Label: `Worker ID`},
-		{Name: "pto_type", Quoted: `"pto_type"`, Field: "PTOType", Kind: schema.KindString, Flags: 0, Label: `PTO Type`, Enum: enumPTOType[:]},
-		{Name: "balance_days", Quoted: `"balance_days"`, Field: "BalanceDays", Kind: schema.KindOther, Flags: 0, Label: `Balance Days`},
-		{Name: "accrued_ytd_days", Quoted: `"accrued_ytd_days"`, Field: "AccruedYTDDays", Kind: schema.KindOther, Flags: 0, Label: `Accrued YTD Days`},
-		{Name: "used_ytd_days", Quoted: `"used_ytd_days"`, Field: "UsedYTDDays", Kind: schema.KindOther, Flags: 0, Label: `Used YTD Days`},
-		{Name: "carried_days", Quoted: `"carried_days"`, Field: "CarriedDays", Kind: schema.KindOther, Flags: 0, Label: `Carried Days`},
-		{Name: "entry_count", Quoted: `"entry_count"`, Field: "EntryCount", Kind: schema.KindInt64, Flags: 0, Label: `Entry Count`},
-		{Name: "last_accrual_period_key", Quoted: `"last_accrual_period_key"`, Field: "LastAccrualPeriodKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Accrual Period Key`},
-		{Name: "last_rollover_key", Quoted: `"last_rollover_key"`, Field: "LastRolloverKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Rollover Key`},
-		{Name: "year_started_at", Quoted: `"year_started_at"`, Field: "YearStartedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Year Started At`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: 0, Label: `Worker ID`, Report: &reportDimStringHidden},
+		{Name: "pto_type", Quoted: `"pto_type"`, Field: "PTOType", Kind: schema.KindString, Flags: 0, Label: `Time Off Type`, Enum: enumPTOType[:], Report: &reportDimEnum},
+		{Name: "balance_days", Quoted: `"balance_days"`, Field: "BalanceDays", Kind: schema.KindOther, Flags: 0, Label: `Balance (days)`, Report: &reportMeasureDecimal},
+		{Name: "accrued_ytd_days", Quoted: `"accrued_ytd_days"`, Field: "AccruedYTDDays", Kind: schema.KindOther, Flags: 0, Label: `Accrued YTD (days)`, Report: &reportMeasureDecimal},
+		{Name: "used_ytd_days", Quoted: `"used_ytd_days"`, Field: "UsedYTDDays", Kind: schema.KindOther, Flags: 0, Label: `Used YTD (days)`, Report: &reportMeasureDecimal},
+		{Name: "carried_days", Quoted: `"carried_days"`, Field: "CarriedDays", Kind: schema.KindOther, Flags: 0, Label: `Carried (days)`, Report: &reportMeasureDecimal},
+		{Name: "entry_count", Quoted: `"entry_count"`, Field: "EntryCount", Kind: schema.KindInt64, Flags: 0, Label: `Entry Count`, Report: &reportMeasureInteger},
+		{Name: "last_accrual_period_key", Quoted: `"last_accrual_period_key"`, Field: "LastAccrualPeriodKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Accrual Period Key`, Report: &reportDimString},
+		{Name: "last_rollover_key", Quoted: `"last_rollover_key"`, Field: "LastRolloverKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Rollover Key`, Report: &reportDimString},
+		{Name: "year_started_at", Quoted: `"year_started_at"`, Field: "YearStartedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Year Started At`, Report: &reportDimEpoch},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
-	Returning:    nil,
-	Version:      13,
-	AutoID:       0,
-	AutoCreate:   14,
-	AutoUpdate:   15,
-	IDPrefix:     "wpb_",
-	New:          newWorkerPTOBalance,
-	NewN:         newNWorkerPTOBalance,
-	Size:         unsafe.Sizeof(worker.WorkerPTOBalance{}),
-	Ptr:          ptrWorkerPTOBalance,
-	Value:        valueWorkerPTOBalance,
-	Attach:       attachWorkerPTOBalance,
-	BeforeCreate: beforeCreateWorkerPTOBalance,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
+	Returning:  nil,
+	Version:    13,
+	AutoID:     0,
+	AutoCreate: 14,
+	AutoUpdate: 15,
+	IDPrefix:   "wpb_",
+	New:        newWorkerPTOBalance,
+	NewN:       newNWorkerPTOBalance,
+	Size:       unsafe.Sizeof(worker.WorkerPTOBalance{}),
+	Ptr:        ptrWorkerPTOBalance,
+	Value:      valueWorkerPTOBalance,
+	Attach:     attachWorkerPTOBalance,
 }
 
 var workerPTOBalancesRef = keel.Ref{Table: &workerPTOBalancesTable}
@@ -10618,10 +10544,6 @@ func attachWorkerPTOBalance(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreateWorkerPTOBalance(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPTOBalance)(p).BeforeCreate(ctx)
-}
-
 // workerPTOLedgerEntriesTable is the schema of worker.WorkerPTOLedgerEntry.
 var workerPTOLedgerEntriesTable = schema.Table{
 	Name:   "worker_pto_ledger",
@@ -10654,24 +10576,23 @@ var workerPTOLedgerEntriesTable = schema.Table{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`},
 		{Name: "SourcePTO", Alias: "sp", Kind: schema.BelongsTo, Local: []int32{11, 3}, Remote: []int32{0, 1}, Label: `Source PTO`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   17,
-	AutoUpdate:   -1,
-	IDPrefix:     "wpl_",
-	New:          newWorkerPTOLedgerEntry,
-	NewN:         newNWorkerPTOLedgerEntry,
-	Size:         unsafe.Sizeof(worker.WorkerPTOLedgerEntry{}),
-	Ptr:          ptrWorkerPTOLedgerEntry,
-	Value:        valueWorkerPTOLedgerEntry,
-	Attach:       attachWorkerPTOLedgerEntry,
-	BeforeCreate: beforeCreateWorkerPTOLedgerEntry,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 17,
+	AutoUpdate: -1,
+	IDPrefix:   "wpl_",
+	New:        newWorkerPTOLedgerEntry,
+	NewN:       newNWorkerPTOLedgerEntry,
+	Size:       unsafe.Sizeof(worker.WorkerPTOLedgerEntry{}),
+	Ptr:        ptrWorkerPTOLedgerEntry,
+	Value:      valueWorkerPTOLedgerEntry,
+	Attach:     attachWorkerPTOLedgerEntry,
 }
 
 var workerPTOLedgerEntriesRef = keel.Ref{Table: &workerPTOLedgerEntriesTable}
@@ -10892,10 +10813,6 @@ func attachWorkerPTOLedgerEntry(p unsafe.Pointer, rel int32, child unsafe.Pointe
 	}
 }
 
-func beforeCreateWorkerPTOLedgerEntry(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPTOLedgerEntry)(p).BeforeCreate(ctx)
-}
-
 // workerPTOPolicyAssignmentsTable is the schema of worker.WorkerPTOPolicyAssignment.
 var workerPTOPolicyAssignmentsTable = schema.Table{
 	Name:   "worker_pto_policy_assignments",
@@ -10922,24 +10839,23 @@ var workerPTOPolicyAssignmentsTable = schema.Table{
 		{Name: "Policy", Alias: "p", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Policy`},
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 11},
-	Returning:    nil,
-	Version:      9,
-	AutoID:       0,
-	AutoCreate:   10,
-	AutoUpdate:   11,
-	IDPrefix:     "wppa_",
-	New:          newWorkerPTOPolicyAssignment,
-	NewN:         newNWorkerPTOPolicyAssignment,
-	Size:         unsafe.Sizeof(worker.WorkerPTOPolicyAssignment{}),
-	Ptr:          ptrWorkerPTOPolicyAssignment,
-	Value:        valueWorkerPTOPolicyAssignment,
-	Attach:       attachWorkerPTOPolicyAssignment,
-	BeforeCreate: beforeCreateWorkerPTOPolicyAssignment,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 11},
+	Returning:  nil,
+	Version:    9,
+	AutoID:     0,
+	AutoCreate: 10,
+	AutoUpdate: 11,
+	IDPrefix:   "wppa_",
+	New:        newWorkerPTOPolicyAssignment,
+	NewN:       newNWorkerPTOPolicyAssignment,
+	Size:       unsafe.Sizeof(worker.WorkerPTOPolicyAssignment{}),
+	Ptr:        ptrWorkerPTOPolicyAssignment,
+	Value:      valueWorkerPTOPolicyAssignment,
+	Attach:     attachWorkerPTOPolicyAssignment,
 }
 
 var workerPTOPolicyAssignmentsRef = keel.Ref{Table: &workerPTOPolicyAssignmentsTable}
@@ -11107,10 +11023,6 @@ func attachWorkerPTOPolicyAssignment(p unsafe.Pointer, rel int32, child unsafe.P
 	case 1:
 		r.Worker = (*worker.Worker)(child)
 	}
-}
-
-func beforeCreateWorkerPTOPolicyAssignment(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPTOPolicyAssignment)(p).BeforeCreate(ctx)
 }
 
 // workerPoliciesTable is the schema of worker.WorkerPolicy.
@@ -11582,70 +11494,71 @@ var workerProfilesTable = schema.Table{
 	Model:  "worker.WorkerProfile",
 	Label:  `Worker Profile`,
 	Plural: `Worker Profiles`,
+	Doc:    `Licensing, compliance, and qualification details for a worker`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Worker ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "license_state_id", Quoted: `"license_state_id"`, Field: "LicenseStateID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `License State ID`},
-		{Name: "dob", Quoted: `"dob"`, Field: "DOB", Kind: schema.KindInt64, Flags: 0, Label: `DOB`},
-		{Name: "license_number", Quoted: `"license_number"`, Field: "LicenseNumber", Kind: schema.KindString, Flags: 0, Label: `License Number`},
-		{Name: "cdl_class", Quoted: `"cdl_class"`, Field: "CDLClass", Kind: schema.KindString, Flags: 0, Label: `CDL Class`, Enum: enumCDLClass[:]},
-		{Name: "cdl_restrictions", Quoted: `"cdl_restrictions"`, Field: "CDLRestrictions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `CDL Restrictions`},
-		{Name: "endorsement", Quoted: `"endorsement"`, Field: "Endorsement", Kind: schema.KindString, Flags: 0, Label: `Endorsement`, Enum: enumEndorsementType[:]},
-		{Name: "hazmat_expiry", Quoted: `"hazmat_expiry"`, Field: "HazmatExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Hazmat Expiry`},
-		{Name: "license_expiry", Quoted: `"license_expiry"`, Field: "LicenseExpiry", Kind: schema.KindInt64, Flags: 0, Label: `License Expiry`},
-		{Name: "medical_card_expiry", Quoted: `"medical_card_expiry"`, Field: "MedicalCardExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Medical Card Expiry`},
-		{Name: "medical_examiner_name", Quoted: `"medical_examiner_name"`, Field: "MedicalExaminerName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Medical Examiner Name`},
-		{Name: "medical_examiner_npi", Quoted: `"medical_examiner_npi"`, Field: "MedicalExaminerNPI", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Medical Examiner NPI`},
-		{Name: "twic_card_number", Quoted: `"twic_card_number"`, Field: "TWICCardNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `TWIC Card Number`},
-		{Name: "twic_expiry", Quoted: `"twic_expiry"`, Field: "TWICExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `TWIC Expiry`},
-		{Name: "hire_date", Quoted: `"hire_date"`, Field: "HireDate", Kind: schema.KindInt64, Flags: 0, Label: `Hire Date`},
-		{Name: "termination_date", Quoted: `"termination_date"`, Field: "TerminationDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Termination Date`},
-		{Name: "physical_due_date", Quoted: `"physical_due_date"`, Field: "PhysicalDueDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Physical Due Date`},
-		{Name: "mvr_due_date", Quoted: `"mvr_due_date"`, Field: "MVRDueDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `MVR Due Date`},
-		{Name: "compliance_status", Quoted: `"compliance_status"`, Field: "ComplianceStatus", Kind: schema.KindString, Flags: 0, Label: `Compliance Status`, Enum: enumComplianceStatus[:]},
-		{Name: "training_health", Quoted: `"training_health"`, Field: "TrainingHealth", Kind: schema.KindString, Flags: 0, Label: `Training Health`, Enum: enumTrainingHealth[:]},
-		{Name: "safety_rating", Quoted: `"safety_rating"`, Field: "SafetyRating", Kind: schema.KindString, Flags: 0, Label: `Safety Rating`, Enum: enumSafetyRating[:]},
-		{Name: "safety_score", Quoted: `"safety_score"`, Field: "SafetyScore", Kind: schema.KindInt16, Flags: 0, Label: `Safety Score`},
-		{Name: "next_credential_expiry", Quoted: `"next_credential_expiry"`, Field: "NextCredentialExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Next Credential Expiry`},
-		{Name: "next_training_due", Quoted: `"next_training_due"`, Field: "NextTrainingDue", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Next Training Due`},
-		{Name: "is_qualified", Quoted: `"is_qualified"`, Field: "IsQualified", Kind: schema.KindBool, Flags: 0, Label: `Is Qualified`},
-		{Name: "disqualification_reason", Quoted: `"disqualification_reason"`, Field: "DisqualificationReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Disqualification Reason`},
-		{Name: "last_compliance_check", Quoted: `"last_compliance_check"`, Field: "LastComplianceCheck", Kind: schema.KindInt64, Flags: 0, Label: `Last Compliance Check`},
-		{Name: "last_mvr_check", Quoted: `"last_mvr_check"`, Field: "LastMVRCheck", Kind: schema.KindInt64, Flags: 0, Label: `Last MVR Check`},
-		{Name: "last_drug_test", Quoted: `"last_drug_test"`, Field: "LastDrugTest", Kind: schema.KindInt64, Flags: 0, Label: `Last Drug Test`},
-		{Name: "drug_alcohol_status", Quoted: `"drug_alcohol_status"`, Field: "DrugAlcoholStatus", Kind: schema.KindString, Flags: 0, Label: `Drug Alcohol Status`, Enum: enumDrugAlcoholStatus[:]},
-		{Name: "return_to_duty_status", Quoted: `"return_to_duty_status"`, Field: "ReturnToDutyStatus", Kind: schema.KindString, Flags: 0, Label: `Return To Duty Status`, Enum: enumReturnToDutyStatus[:]},
-		{Name: "last_clearinghouse_query_at", Quoted: `"last_clearinghouse_query_at"`, Field: "LastClearinghouseQueryAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Clearinghouse Query At`},
-		{Name: "next_clearinghouse_query_due", Quoted: `"next_clearinghouse_query_due"`, Field: "NextClearinghouseQueryDue", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Next Clearinghouse Query Due`},
-		{Name: "eld_exempt", Quoted: `"eld_exempt"`, Field: "ELDExempt", Kind: schema.KindBool, Flags: 0, Label: `ELD Exempt`},
-		{Name: "short_haul_exempt", Quoted: `"short_haul_exempt"`, Field: "ShortHaulExempt", Kind: schema.KindBool, Flags: 0, Label: `Short Haul Exempt`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Worker ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "license_state_id", Quoted: `"license_state_id"`, Field: "LicenseStateID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `License State ID`, Report: &reportDimString},
+		{Name: "dob", Quoted: `"dob"`, Field: "DOB", Kind: schema.KindInt64, Flags: 0, Label: `Date of Birth`, Report: &reportDimEpoch},
+		{Name: "license_number", Quoted: `"license_number"`, Field: "LicenseNumber", Kind: schema.KindString, Flags: 0, Label: `License Number`, Report: &reportDimString},
+		{Name: "cdl_class", Quoted: `"cdl_class"`, Field: "CDLClass", Kind: schema.KindString, Flags: 0, Label: `CDL Class`, Enum: enumCDLClass[:], Report: &reportDimEnum},
+		{Name: "cdl_restrictions", Quoted: `"cdl_restrictions"`, Field: "CDLRestrictions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `CDL Restrictions`, Report: &reportDimString},
+		{Name: "endorsement", Quoted: `"endorsement"`, Field: "Endorsement", Kind: schema.KindString, Flags: 0, Label: `Endorsement`, Enum: enumEndorsementType[:], Report: &reportDimEnum},
+		{Name: "hazmat_expiry", Quoted: `"hazmat_expiry"`, Field: "HazmatExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Hazmat Expiry`, Report: &reportDimEpoch},
+		{Name: "license_expiry", Quoted: `"license_expiry"`, Field: "LicenseExpiry", Kind: schema.KindInt64, Flags: 0, Label: `License Expiry`, Report: &reportDimEpoch},
+		{Name: "medical_card_expiry", Quoted: `"medical_card_expiry"`, Field: "MedicalCardExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Medical Card Expiry`, Report: &reportDimEpoch},
+		{Name: "medical_examiner_name", Quoted: `"medical_examiner_name"`, Field: "MedicalExaminerName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Medical Examiner Name`, Report: &reportDimString},
+		{Name: "medical_examiner_npi", Quoted: `"medical_examiner_npi"`, Field: "MedicalExaminerNPI", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Medical Examiner NPI`, Report: &reportDimString},
+		{Name: "twic_card_number", Quoted: `"twic_card_number"`, Field: "TWICCardNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `TWIC Card Number`, Report: &reportDimString},
+		{Name: "twic_expiry", Quoted: `"twic_expiry"`, Field: "TWICExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `TWIC Expiry`, Report: &reportDimEpoch},
+		{Name: "hire_date", Quoted: `"hire_date"`, Field: "HireDate", Kind: schema.KindInt64, Flags: 0, Label: `Hire Date`, Report: &reportDimEpoch},
+		{Name: "termination_date", Quoted: `"termination_date"`, Field: "TerminationDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Termination Date`, Report: &reportDimEpoch},
+		{Name: "physical_due_date", Quoted: `"physical_due_date"`, Field: "PhysicalDueDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Physical Due Date`, Report: &reportDimEpoch},
+		{Name: "mvr_due_date", Quoted: `"mvr_due_date"`, Field: "MVRDueDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `MVR Due Date`, Report: &reportDimEpoch},
+		{Name: "compliance_status", Quoted: `"compliance_status"`, Field: "ComplianceStatus", Kind: schema.KindString, Flags: 0, Label: `Compliance Status`, Enum: enumComplianceStatus[:], Report: &reportDimEnum},
+		{Name: "training_health", Quoted: `"training_health"`, Field: "TrainingHealth", Kind: schema.KindString, Flags: 0, Label: `Training Health`, Enum: enumTrainingHealth[:], Report: &reportDimEnum},
+		{Name: "safety_rating", Quoted: `"safety_rating"`, Field: "SafetyRating", Kind: schema.KindString, Flags: 0, Label: `Safety Rating`, Enum: enumSafetyRating[:], Report: &reportDimEnum},
+		{Name: "safety_score", Quoted: `"safety_score"`, Field: "SafetyScore", Kind: schema.KindInt16, Flags: 0, Label: `Safety Score`, Report: &reportDimInteger},
+		{Name: "next_credential_expiry", Quoted: `"next_credential_expiry"`, Field: "NextCredentialExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Next Credential Expiry`, Report: &reportDimEpoch},
+		{Name: "next_training_due", Quoted: `"next_training_due"`, Field: "NextTrainingDue", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Next Training Due`, Report: &reportDimEpoch},
+		{Name: "is_qualified", Quoted: `"is_qualified"`, Field: "IsQualified", Kind: schema.KindBool, Flags: 0, Label: `Qualified`, Report: &reportDimBool},
+		{Name: "disqualification_reason", Quoted: `"disqualification_reason"`, Field: "DisqualificationReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Disqualification Reason`, Report: &reportDimString},
+		{Name: "last_compliance_check", Quoted: `"last_compliance_check"`, Field: "LastComplianceCheck", Kind: schema.KindInt64, Flags: 0, Label: `Last Compliance Check`, Report: &reportDimEpoch},
+		{Name: "last_mvr_check", Quoted: `"last_mvr_check"`, Field: "LastMVRCheck", Kind: schema.KindInt64, Flags: 0, Label: `Last MVR Check`, Report: &reportDimEpoch},
+		{Name: "last_drug_test", Quoted: `"last_drug_test"`, Field: "LastDrugTest", Kind: schema.KindInt64, Flags: 0, Label: `Last Drug Test`, Report: &reportDimEpoch},
+		{Name: "drug_alcohol_status", Quoted: `"drug_alcohol_status"`, Field: "DrugAlcoholStatus", Kind: schema.KindString, Flags: 0, Label: `Drug Alcohol Status`, Enum: enumDrugAlcoholStatus[:], Report: &reportDimEnum},
+		{Name: "return_to_duty_status", Quoted: `"return_to_duty_status"`, Field: "ReturnToDutyStatus", Kind: schema.KindString, Flags: 0, Label: `Return To Duty Status`, Enum: enumReturnToDutyStatus[:], Report: &reportDimEnum},
+		{Name: "last_clearinghouse_query_at", Quoted: `"last_clearinghouse_query_at"`, Field: "LastClearinghouseQueryAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Clearinghouse Query At`, Report: &reportDimEpoch},
+		{Name: "next_clearinghouse_query_due", Quoted: `"next_clearinghouse_query_due"`, Field: "NextClearinghouseQueryDue", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Next Clearinghouse Query Due`, Report: &reportDimEpoch},
+		{Name: "eld_exempt", Quoted: `"eld_exempt"`, Field: "ELDExempt", Kind: schema.KindBool, Flags: 0, Label: `ELD Exempt`, Report: &reportDimBool},
+		{Name: "short_haul_exempt", Quoted: `"short_haul_exempt"`, Field: "ShortHaulExempt", Kind: schema.KindBool, Flags: 0, Label: `Short-Haul Exempt`, Report: &reportDimBool},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
-		{Name: "LicenseState", Alias: "ls", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `License State`},
+		{Name: "LicenseState", Alias: "ls", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `License State`, NoReport: true},
 	},
-	PK:           []int32{0, 1, 2, 3},
-	Tenant:       []int32{2, 3},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-	Update:       []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40},
-	Returning:    nil,
-	Version:      38,
-	AutoID:       0,
-	AutoCreate:   39,
-	AutoUpdate:   40,
-	IDPrefix:     "wrkp_",
-	New:          newWorkerProfile,
-	NewN:         newNWorkerProfile,
-	Size:         unsafe.Sizeof(worker.WorkerProfile{}),
-	Ptr:          ptrWorkerProfile,
-	Value:        valueWorkerProfile,
-	Attach:       attachWorkerProfile,
-	BeforeCreate: beforeCreateWorkerProfile,
+	PK:         []int32{0, 1, 2, 3},
+	Tenant:     []int32{2, 3},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+	Update:     []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40},
+	Returning:  nil,
+	Version:    38,
+	AutoID:     0,
+	AutoCreate: 39,
+	AutoUpdate: 40,
+	IDPrefix:   "wrkp_",
+	New:        newWorkerProfile,
+	NewN:       newNWorkerProfile,
+	Size:       unsafe.Sizeof(worker.WorkerProfile{}),
+	Ptr:        ptrWorkerProfile,
+	Value:      valueWorkerProfile,
+	Attach:     attachWorkerProfile,
 }
 
 var workerProfilesRef = keel.Ref{Table: &workerProfilesTable}
@@ -12048,10 +11961,6 @@ func attachWorkerProfile(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreateWorkerProfile(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerProfile)(p).BeforeCreate(ctx)
-}
-
 // workerProfileChangeRequestsTable is the schema of worker.WorkerProfileChangeRequest.
 var workerProfileChangeRequestsTable = schema.Table{
 	Name:   "worker_profile_change_requests",
@@ -12306,24 +12215,23 @@ var workerRecognitionsTable = schema.Table{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`},
 		{Name: "AwardedBy", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Awarded By`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:    nil,
-	Version:      10,
-	AutoID:       0,
-	AutoCreate:   11,
-	AutoUpdate:   12,
-	IDPrefix:     "wrec_",
-	New:          newWorkerRecognition,
-	NewN:         newNWorkerRecognition,
-	Size:         unsafe.Sizeof(worker.WorkerRecognition{}),
-	Ptr:          ptrWorkerRecognition,
-	Value:        valueWorkerRecognition,
-	Attach:       attachWorkerRecognition,
-	BeforeCreate: beforeCreateWorkerRecognition,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:  nil,
+	Version:    10,
+	AutoID:     0,
+	AutoCreate: 11,
+	AutoUpdate: 12,
+	IDPrefix:   "wrec_",
+	New:        newWorkerRecognition,
+	NewN:       newNWorkerRecognition,
+	Size:       unsafe.Sizeof(worker.WorkerRecognition{}),
+	Ptr:        ptrWorkerRecognition,
+	Value:      valueWorkerRecognition,
+	Attach:     attachWorkerRecognition,
 }
 
 var workerRecognitionsRef = keel.Ref{Table: &workerRecognitionsTable}
@@ -12493,10 +12401,6 @@ func attachWorkerRecognition(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	}
 }
 
-func beforeCreateWorkerRecognition(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerRecognition)(p).BeforeCreate(ctx)
-}
-
 // workerSafetyEventsTable is the schema of worker.WorkerSafetyEvent.
 var workerSafetyEventsTable = schema.Table{
 	Name:   "worker_safety_events",
@@ -12541,24 +12445,23 @@ var workerSafetyEventsTable = schema.Table{
 		{Name: "RecordedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{21}, Remote: []int32{0}, Label: `Recorded By`},
 		{Name: "ClosedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{22}, Remote: []int32{0}, Label: `Closed By`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
-	Returning:    nil,
-	Version:      25,
-	AutoID:       0,
-	AutoCreate:   26,
-	AutoUpdate:   27,
-	IDPrefix:     "wsev_",
-	New:          newWorkerSafetyEvent,
-	NewN:         newNWorkerSafetyEvent,
-	Size:         unsafe.Sizeof(worker.WorkerSafetyEvent{}),
-	Ptr:          ptrWorkerSafetyEvent,
-	Value:        valueWorkerSafetyEvent,
-	Attach:       attachWorkerSafetyEvent,
-	BeforeCreate: beforeCreateWorkerSafetyEvent,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
+	Returning:  nil,
+	Version:    25,
+	AutoID:     0,
+	AutoCreate: 26,
+	AutoUpdate: 27,
+	IDPrefix:   "wsev_",
+	New:        newWorkerSafetyEvent,
+	NewN:       newNWorkerSafetyEvent,
+	Size:       unsafe.Sizeof(worker.WorkerSafetyEvent{}),
+	Ptr:        ptrWorkerSafetyEvent,
+	Value:      valueWorkerSafetyEvent,
+	Attach:     attachWorkerSafetyEvent,
 }
 
 var workerSafetyEventsRef = keel.Ref{Table: &workerSafetyEventsTable}
@@ -12872,10 +12775,6 @@ func attachWorkerSafetyEvent(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	case 3:
 		r.ClosedBy = (*tenant.User)(child)
 	}
-}
-
-func beforeCreateWorkerSafetyEvent(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerSafetyEvent)(p).BeforeCreate(ctx)
 }
 
 // workerSafetyViolationsTable is the schema of worker.WorkerSafetyViolation.
@@ -13498,24 +13397,23 @@ var workerTrainingRecordsTable = schema.Table{
 		{Name: "AssignedBy", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{15}, Remote: []int32{0}, Label: `Assigned By`},
 		{Name: "RecordedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{16}, Remote: []int32{0}, Label: `Recorded By`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:    nil,
-	Version:      19,
-	AutoID:       0,
-	AutoCreate:   20,
-	AutoUpdate:   21,
-	IDPrefix:     "wtrn_",
-	New:          newWorkerTrainingRecord,
-	NewN:         newNWorkerTrainingRecord,
-	Size:         unsafe.Sizeof(worker.WorkerTrainingRecord{}),
-	Ptr:          ptrWorkerTrainingRecord,
-	Value:        valueWorkerTrainingRecord,
-	Attach:       attachWorkerTrainingRecord,
-	BeforeCreate: beforeCreateWorkerTrainingRecord,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:  nil,
+	Version:    19,
+	AutoID:     0,
+	AutoCreate: 20,
+	AutoUpdate: 21,
+	IDPrefix:   "wtrn_",
+	New:        newWorkerTrainingRecord,
+	NewN:       newNWorkerTrainingRecord,
+	Size:       unsafe.Sizeof(worker.WorkerTrainingRecord{}),
+	Ptr:        ptrWorkerTrainingRecord,
+	Value:      valueWorkerTrainingRecord,
+	Attach:     attachWorkerTrainingRecord,
 }
 
 var workerTrainingRecordsRef = keel.Ref{Table: &workerTrainingRecordsTable}
@@ -13798,10 +13696,6 @@ func attachWorkerTrainingRecord(p unsafe.Pointer, rel int32, child unsafe.Pointe
 	}
 }
 
-func beforeCreateWorkerTrainingRecord(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerTrainingRecord)(p).BeforeCreate(ctx)
-}
-
 func init() {
 	approvalDelegationsTable.Relations[0].Target = tenantdb.UsersSchema()
 	approvalDelegationsTable.Relations[1].Target = tenantdb.UsersSchema()
@@ -13822,15 +13716,13 @@ func init() {
 	shiftSwapRequestsTable.Relations[1].Target = WorkersSchema()
 	timeClockEntriesTable.Relations[0].Target = WorkersSchema()
 	timesheetsTable.Relations[0].Target = WorkersSchema()
-	workersTable.Relations[0].Target = tenantdb.BusinessUnitsSchema()
-	workersTable.Relations[1].Target = tenantdb.OrganizationsSchema()
-	workersTable.Relations[2].Target = usstatedb.UsStatesSchema()
-	workersTable.Relations[3].Target = fleetcodedb.FleetCodesSchema()
+	workersTable.Relations[0].Target = usstatedb.UsStatesSchema()
+	workersTable.Relations[1].Target = fleetcodedb.FleetCodesSchema()
+	workersTable.Relations[2].Target = tenantdb.UsersSchema()
+	workersTable.Relations[3].Target = JobPositionsSchema()
 	workersTable.Relations[4].Target = tenantdb.UsersSchema()
-	workersTable.Relations[5].Target = JobPositionsSchema()
-	workersTable.Relations[6].Target = tenantdb.UsersSchema()
-	workersTable.Relations[7].Target = WorkerProfilesSchema()
-	workersTable.Relations[8].Target = WorkerPTOsSchema()
+	workersTable.Relations[5].Target = WorkerProfilesSchema()
+	workersTable.Relations[6].Target = WorkerPTOsSchema()
 	workerChecklistsTable.Relations[0].Target = WorkerChecklistItemsSchema()
 	workerChecklistsTable.Relations[1].Target = WorkersSchema()
 	workerChecklistsTable.Relations[2].Target = WorkerChecklistTemplatesSchema()
@@ -14482,6 +14374,30 @@ var enumWorkersCompClaimStatus = [...]schema.EnumValue{
 	{Value: `Denied`, Label: `Claim Denied`},
 	{Value: `Closed`, Label: `Claim Closed`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportDimIntegerCount = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric, Format: `count`}
+
+var reportDimJsonb = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueJSON, Aggs: schema.AggsCount}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureDecimal = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueDecimal, Aggs: schema.AggsNumeric}
+
+var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // ApprovalScopeCol is a column of worker.ApprovalScope values.
 type ApprovalScopeCol struct{ keel.StringCol }

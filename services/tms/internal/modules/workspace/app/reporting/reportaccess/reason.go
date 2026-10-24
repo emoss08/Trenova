@@ -1,73 +1,104 @@
 package reportaccess
 
 import (
-	"fmt"
+	"context"
+	"errors"
+	"slices"
+	"strings"
 
+	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 )
 
-// Reason says, in a sentence fragment the compiler joins into its refusal,
-// why a field or edge of an entity cannot be used, naming the kind read,
-// the tier or the protected group the caller lacks. It is empty for an
-// available use.
-func (r *Resolver) Reason(entity *reportcatalog.Entity, label string, use Use) string {
-	switch use.Decision {
-	case Available:
+func (r *Resolver) Reason(ctx context.Context, d Denial) string {
+	locale := i18n.FromContext(ctx)
+	entity := r.catalog.Label(ctx, d.Entity.Key, d.Entity.Label)
+	plural := r.catalog.Label(ctx, d.Entity.Key+"@plural", d.Entity.Plural)
+	switch {
+	case d.Use.Decision == Available:
 		return ""
-	case NeedsKindRead:
-		return fmt.Sprintf(
-			"you do not have read access to %s, which %q on %s needs; "+
-				"without it a report can use only its reference fields",
-			r.KindLabel(use.Kind), label, entity.Label,
+	case d.Label == "" && d.Use.Decision == NeedsKindRead:
+		return i18n.Translate(locale, "you do not have read access to {0}", plural)
+	case d.Label == "" && d.Use.Decision == NeedsExport:
+		return i18n.Translate(locale, "you do not have export access to {0}", plural)
+	case d.Use.Decision == OwnScopeUnsupported:
+		kind := r.KindLabel(ctx, d.Use.Kind)
+		return i18n.Translate(
+			locale,
+			"your access to {0} is limited to your own records, but {0} cannot be limited that way in reports",
+			kind,
 		)
-	case WithheldByCeiling:
-		return fmt.Sprintf(
-			"field %q on %s requires %s access",
-			label, entity.Label, use.Sensitivity,
+	case d.Use.Decision == NeedsKindRead:
+		return i18n.Translate(
+			locale,
+			"you do not have read access to {0}, which \"{1}\" on {2} needs; without it a report can use only its reference fields",
+			r.KindLabel(ctx, d.Use.Kind),
+			d.Label,
+			entity,
 		)
-	case NeedsFieldGroup:
-		return fmt.Sprintf(
-			"field %q on %s is in the %s protected field group, which your role does not grant",
-			label, entity.Label, use.Group,
+	case d.Use.Decision == WithheldByCeiling:
+		return i18n.Translate(
+			locale,
+			"field \"{0}\" on {1} requires {2} access",
+			d.Label, entity, d.Use.Sensitivity.String(),
+		)
+	case d.Use.Decision == NeedsFieldGroup:
+		return i18n.Translate(
+			locale,
+			"field \"{0}\" on {1} is in the {2} protected field group, which your role does not grant",
+			d.Label,
+			entity,
+			d.Use.Group.String(),
+		)
+	case d.Use.Decision == NeedsExport:
+		return i18n.Translate(
+			locale,
+			"you do not have export access to {0}, which \"{1}\" on {2} needs",
+			r.KindLabel(ctx, d.Use.Kind), d.Label, entity,
 		)
 	default:
-		return fmt.Sprintf("field %q on %s is not available to you", label, entity.Label)
+		return i18n.Translate(
+			locale,
+			"field \"{0}\" on {1} is not available to you",
+			d.Label,
+			entity,
+		)
 	}
 }
 
-// Need is what a caller lacks for a use, in a few words for a model: "customer
-// read", "the Personal field group", "restricted access". It is empty for an
-// available use.
 func (r *Resolver) Need(use Use) string {
 	switch use.Decision {
 	case Available:
 		return ""
 	case NeedsKindRead:
-		return fmt.Sprintf("%s read", use.Kind)
+		return use.Kind.String() + " read"
 	case WithheldByCeiling:
-		return fmt.Sprintf("%s access", use.Sensitivity)
+		return use.Sensitivity.String() + " access"
 	case NeedsFieldGroup:
-		return fmt.Sprintf("the %s field group", use.Group)
+		return "the " + use.Group.String() + " field group"
+	case NeedsExport:
+		return use.Kind.String() + " export"
+	case OwnScopeUnsupported:
+		return use.Kind.String() + " access beyond your own records"
 	default:
 		return "access"
 	}
 }
 
-// KindLabel is the plural label of the catalog entity that is a resource's
-// own record, such as Customers for customer.
-func (r *Resolver) KindLabel(resource permission.Resource) string {
+func (r *Resolver) KindLabel(ctx context.Context, resource permission.Resource) string {
 	fallback := ""
-	for i := range r.catalog.Entities {
-		entity := &r.catalog.Entities[i]
-		if entity.Resource != resource {
+	for e, k := range r.kinds {
+		if k.resource != resource {
 			continue
 		}
-		if !entity.WithinRecord {
-			return entity.PluralLabel
+		label := r.catalog.Label(ctx, e.Key+"@plural", e.Plural)
+		if !k.withinRecord {
+			return label
 		}
-		if fallback == "" {
-			fallback = entity.PluralLabel
+		if fallback == "" || label < fallback {
+			fallback = label
 		}
 	}
 	if fallback != "" {
@@ -76,19 +107,24 @@ func (r *Resolver) KindLabel(resource permission.Resource) string {
 	return resource.String()
 }
 
-// KindRead is the refusal for a report that reads a kind's own rows, as its
-// root or a relationship it picks a row of, without the kind's read.
-func (r *Resolver) KindRead(entity *reportcatalog.Entity) string {
-	return fmt.Sprintf("you do not have read access to %s", entity.PluralLabel)
-}
-
-// KindExport is the refusal for a run that exports a kind's own fields
-// without the kind's export.
-func (r *Resolver) KindExport(entity *reportcatalog.Entity) string {
-	return fmt.Sprintf("you do not have export access to %s", entity.PluralLabel)
-}
-
-// Need is Resolver.Need, for a surface that holds only the access.
-func (a *Access) Need(use Use) string {
-	return a.resolver.Need(use)
+func (a *Access) Refusal(ctx context.Context, err error) error {
+	if analytics.ErrorCode(err) != analytics.CodeDenied {
+		return err
+	}
+	reasons := make([]string, 0, len(a.denials))
+	for _, d := range a.Denials() {
+		if reason := a.resolver.Reason(ctx, d); reason != "" && !slices.Contains(reasons, reason) {
+			reasons = append(reasons, reason)
+		}
+	}
+	if len(reasons) == 0 {
+		var ae *analytics.Error
+		if errors.As(err, &ae) {
+			reasons = append(reasons, ae.Message)
+		}
+	}
+	return errortypes.NewAuthorizationError(
+		"This report references data you do not have access to: {0}",
+		strings.Join(reasons, "; "),
+	)
 }

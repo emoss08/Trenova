@@ -1,0 +1,104 @@
+{
+  "key": "factoring-fees-by-customer",
+  "version": "1.0.0",
+  "name": "Factoring Fees by Customer",
+  "description": "What factoring cost for each customer's invoices: the fees booked at funding and on release or chargeback, the cash the factors paid and what was paid back, by customer and factor, over the window",
+  "category": "Billing",
+  "tags": [
+    "ar",
+    "factoring",
+    "fees"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "reserve_entry",
+    "columns": [
+      {
+        "id": "customer",
+        "label": "Customer",
+        "dimension": {
+          "field": "customer.name"
+        }
+      },
+      {
+        "id": "factor",
+        "label": "Factor",
+        "dimension": {
+          "field": "factoringCompany.name"
+        }
+      },
+      {
+        "id": "invoices",
+        "label": "Invoices",
+        "measure": {
+          "field": "invoice.id",
+          "agg": "count_distinct"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "fees",
+        "label": "Fees",
+        "measure": {
+          "field": "feeMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "net_cash",
+        "label": "Net Cash From Factor",
+        "measure": {
+          "field": "cashMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "accountingDate",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "fees",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      }
+    ]
+  }
+}
