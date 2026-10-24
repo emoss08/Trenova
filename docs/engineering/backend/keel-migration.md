@@ -24,7 +24,7 @@ a connection Bun parked.
 |---|---|
 | Session timeouts (`statement_timeout`, `lock_timeout`, `idle_in_transaction_session_timeout`) | pgx runtime parameters, from `database.*Timeout` (`connection.go`, `sessionParams`) |
 | `application_name`, `connect_timeout`, `sslmode` | the DSN (`config.Config.GetDSN`) |
-| Pool size and lifetimes | `maxOpenConns`, `connMaxLifetime`, `connMaxIdleTime` (and `database.system.maxOpenConns`); `maxIdleConns` has no effect, since pgxpool has no idle cap |
+| Pool size and lifetimes | `maxOpenConns`, `connMaxLifetime`, `connMaxIdleTime` (and `database.system.maxOpenConns`) |
 | Enum types | keel registers every enum and its array type on each new connection with one catalog query |
 | Slow queries, tracing, query timing | one `slowQueryLog` per pool for both layers; `bunotel` for Bun, `tracingObserver` (same `go.sql.query_timing` histogram) for keel |
 | Pool metrics | `trenova_db_pool_*` from `pgxpool.Stat` (`metrics.Database.RegisterPoolStats`) |

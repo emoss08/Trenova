@@ -124,7 +124,6 @@ func newValidConfig() *Config {
 			User:         "postgres",
 			Password:     "password",
 			SSLMode:      "disable",
-			MaxIdleConns: 10,
 			MaxOpenConns: 100,
 		},
 		Security: SecurityConfig{
@@ -230,20 +229,6 @@ func TestValidateConfig(t *testing.T) {
 		cfg.DocumentConversion.APIKey = "key"
 		assert.True(t, cfg.DocumentConversion.Enabled())
 		assert.False(t, cfg.DocumentConversion.MissingAPIKey())
-	})
-
-	t.Run("MaxIdleConns exceeds MaxOpenConns", func(t *testing.T) {
-		t.Parallel()
-
-		l := NewLoader()
-		cfg := newValidConfig()
-		cfg.Database.MaxIdleConns = 200
-		cfg.Database.MaxOpenConns = 100
-
-		err := l.validateConfig(cfg)
-
-		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrMaxIdleConnsExceedsMaxOpenConns)
 	})
 
 	t.Run("request timeout must be shorter than write timeout", func(t *testing.T) {
@@ -633,7 +618,6 @@ func TestSetDefaults(t *testing.T) {
 		l.configureViper()
 
 		assert.Equal(t, "prefer", l.viper.GetString("database.sslMode"))
-		assert.Equal(t, 10, l.viper.GetInt("database.maxIdleConns"))
 		assert.Equal(t, 100, l.viper.GetInt("database.maxOpenConns"))
 		assert.Equal(t, "1h", l.viper.GetString("database.connMaxLifetime"))
 		assert.Equal(t, "10m", l.viper.GetString("database.connMaxIdleTime"))

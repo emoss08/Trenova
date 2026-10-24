@@ -17,7 +17,6 @@ const (
 	defaultRLSScopeTTL     = 15 * time.Minute
 	maxRLSScopeTTL         = 6 * time.Hour
 	defaultSystemPoolConns = 8
-	defaultSystemIdleConns = 2
 	maxSystemPoolConns     = 100
 )
 
@@ -34,7 +33,6 @@ type DatabaseRole struct {
 	User         string `mapstructure:"user"         validate:"omitempty,min=1,max=63"`
 	Password     string `mapstructure:"password"`
 	MaxOpenConns int    `mapstructure:"maxOpenConns" validate:"omitempty,min=1,max=1000"`
-	MaxIdleConns int    `mapstructure:"maxIdleConns" validate:"omitempty,min=1,max=1000"`
 }
 
 func (r *DatabaseRole) Configured() bool {
@@ -46,13 +44,6 @@ func (r *DatabaseRole) GetMaxOpenConns() int {
 		return defaultSystemPoolConns
 	}
 	return min(r.MaxOpenConns, maxSystemPoolConns)
-}
-
-func (r *DatabaseRole) GetMaxIdleConns() int {
-	if r.MaxIdleConns <= 0 {
-		return min(defaultSystemIdleConns, r.GetMaxOpenConns())
-	}
-	return min(r.MaxIdleConns, r.GetMaxOpenConns())
 }
 
 func (c *RLSConfig) GetMode() string {

@@ -50,7 +50,6 @@ server:
 
 database:
   sslMode: require
-  maxIdleConns: 25
   maxOpenConns: 75
   statementTimeout: 10s
   lockTimeout: 5s

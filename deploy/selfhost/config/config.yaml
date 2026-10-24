@@ -68,7 +68,6 @@ database:
   user: trenova # from .env
   password: change-me # from .env
   sslMode: require
-  maxIdleConns: 20
   maxOpenConns: 60
   statementTimeout: 10s
   lockTimeout: 5s
