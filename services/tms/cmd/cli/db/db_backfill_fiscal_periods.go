@@ -27,13 +27,13 @@ Examples:
 func runBackfillFiscalPeriods(_ *cobra.Command, _ []string) error {
 	ctx := context.Background()
 
-	manager, err := createManager()
+	maint, err := openDB(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
+		return fmt.Errorf("open the database: %w", err)
 	}
-	defer manager.Close()
+	defer maint.Close()
 
-	db := manager.GetDB()
+	db := maint
 
 	years, err := fiscalYearsMissingPeriods(ctx, db)
 	if err != nil {

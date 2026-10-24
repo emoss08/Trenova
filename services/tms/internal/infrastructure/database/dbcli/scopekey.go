@@ -1,4 +1,4 @@
-package reference
+package dbcli
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 )
 
-func ScopeKey(rls func() config.RLSConfig) seed.Seed {
+func scopeKeySeed(rls func() config.RLSConfig) seed.Seed {
 	return seed.Seed{
 		Name:        "rls_scope_key",
 		Kind:        seed.Reference,

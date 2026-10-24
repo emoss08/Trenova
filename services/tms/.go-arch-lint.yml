@@ -439,6 +439,9 @@ components:
   testutil:
     in:
       - internal/testutil/**
+  seeds:
+    in:
+      - internal/seeds/**
   infrastructure:
     in:
       - internal/infrastructure/**
@@ -3532,6 +3535,8 @@ deps:
     anyProjectDeps: true
   testutil:
     anyProjectDeps: true
+  seeds:
+    anyProjectDeps: true
   infrastructure:
     mayDependOn:
       - kernel-domain
@@ -3583,6 +3588,7 @@ deps:
       - agent-ports
       - agent-contracts
       - infrastructure
+      - seeds
       - pkg
       - schema
       - agent-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (4 imports)

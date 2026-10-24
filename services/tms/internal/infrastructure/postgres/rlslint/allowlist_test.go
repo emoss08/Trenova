@@ -112,7 +112,7 @@ var allowed = map[string]string{
 	"internal/modules/workspace/adapters/postgres/emailrepository/email.go:repository.GetEmailWebhookConfig":                                                    "resolve the email provider webhook that was called before its tenant is known",
 	"internal/modules/rating/adapters/postgres/formulalibraryreviewrepository/formulalibraryreview.go:repository.ListStaleSubmissions":                          "list stale formula library submissions across every organization",
 	"internal/modules/rating/adapters/postgres/formulatemplatereviewrepository/formulatemplatereview.go:repository.ListStaleSubmissions":                        "list stale formula template submissions across every organization",
-	"internal/modules/rating/adapters/postgres/ratematrixreviewrepository/review.go:repository.ListStaleSubmissions": "list stale rate matrix submissions across every organization",
+	"internal/modules/rating/adapters/postgres/ratematrixreviewrepository/review.go:repository.ListStaleSubmissions":                                            "list stale rate matrix submissions across every organization",
 	"internal/modules/identity/adapters/postgres/iamrepository/authevent.go:authEventRepository.Create":                                                         "record an authentication attempt that matched no organization, which no tenant scope can name",
 	"internal/modules/identity/adapters/postgres/iamrepository/authevent.go:authEventRepository.DeleteBefore":                                                   "delete authentication events past the retention period for every organization",
 	"internal/modules/identity/adapters/postgres/iamrepository/securitybriefing.go:securityBriefingRepository.MFACoverage":                                      "count an organization's members' two-factor enrolment, which is recorded under the organization each person enrolled from",
@@ -172,6 +172,8 @@ var allowed = map[string]string{
 	"internal/modules/workforce/adapters/postgres/workertrainingrepository/repository.go:repository.ListExpiring":                                               "list expiring training across every organization for the reminder sweep",
 	"internal/modules/identity/adapters/postgres/tenantbootstraprepository/repository.go:repository.Bootstrap":                                                  "create a new tenant's business unit, organization, owner and defaults before the tenant exists",
 	"internal/modules/identity/adapters/postgres/tenantbootstraprepository/repository.go:repository.LockProvisioning":                                           "serialize tenant provisioning so instance-wide signup caps hold under concurrency",
+	"internal/seeds/seedenv/seedenv.go:Env.System":                                                                                                              "apply seeds and keep their bookkeeping across every organization, for trenova-db and trenova-devdb",
+	"internal/seeds/volume/volumeseed.go:Run": "find the development organization a volume data set fills before its tenant is known",
 }
 
 var rawPoolAllowed = map[string]string{}

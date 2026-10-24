@@ -97,7 +97,7 @@ func Seeds(settings *Settings, fixtures *seed.Registry) *seed.Registry {
 	}
 
 	seeds := seed.Merge(registries...)
-	seeds.Add(reference.ScopeKey(settings.RLS))
+	seeds.Add(scopeKeySeed(settings.RLS))
 
 	return seeds
 }
