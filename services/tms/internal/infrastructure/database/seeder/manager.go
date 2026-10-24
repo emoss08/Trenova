@@ -2,7 +2,6 @@ package seeder
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -10,14 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/fatih/color"
 	"github.com/redis/go-redis/v9"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
 	"go.uber.org/fx"
 )
@@ -81,28 +79,27 @@ func NewManagerFromConfig(cfg ManagerConfig) (*Manager, error) {
 	}, nil
 }
 
-// cliStatementBackstop bounds a single statement from seed and reconcile only
-// against a connection that has gone silent. Bulk seed batches legitimately run
-// for minutes; a statement blocked on a lock fails fast on lock_timeout
-// instead, as on the API's connection.
+// cliStatementBackstop bounds a single statement from seed and reconcile. Bulk
+// seed batches legitimately run for minutes; a statement blocked on a lock fails
+// fast on lock_timeout instead, as on the API's connection.
 const cliStatementBackstop = 30 * time.Minute
 
 func createDB(cfg *config.Config) (*bun.DB, error) {
-	db := bun.NewDB(
-		sql.OpenDB(pgdriver.NewConnector(
-			pgdriver.WithDSN(cfg.GetMigrationDSN()),
-			pgdriver.WithReadTimeout(cliStatementBackstop),
-			pgdriver.WithWriteTimeout(cliStatementBackstop),
-			pgdriver.WithConnParams(map[string]any{
-				"lock_timeout": fmt.Sprintf(
-					"%dms",
-					max(cfg.Database.GetLockTimeout().Milliseconds(), 1),
-				),
-			}),
-		)),
-		pgdialect.New(),
-	)
+	pool, err := dbpool.Open(context.Background(), &dbpool.Options{
+		DSN: cfg.GetMigrationDSN(),
+		RuntimeParams: map[string]string{
+			"statement_timeout": fmt.Sprintf("%dms", cliStatementBackstop.Milliseconds()),
+			"lock_timeout": fmt.Sprintf(
+				"%dms",
+				max(cfg.Database.GetLockTimeout().Milliseconds(), 1),
+			),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
 
+	db := pool.Bun
 	if cfg.App.Debug {
 		db.AddQueryHook(bundebug.NewQueryHook(
 			bundebug.FromEnv("BUNDEBUG"),

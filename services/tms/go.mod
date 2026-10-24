@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.27
 	github.com/boombuler/barcode v1.1.0
-	github.com/emoss08/keel v0.0.0-20261024030508-7a53dd9e5572
+	github.com/emoss08/keel v0.0.0-20261024043331-bcba8cbce580
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/ledongthuc/pdf v0.0.0-20260929131644-d0d294e5c96a
 	github.com/pgvector/pgvector-go v0.4.1
@@ -64,7 +64,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.44.0
 	github.com/uptrace/bun v1.3.0
 	github.com/uptrace/bun/dialect/pgdialect v1.3.0
-	github.com/uptrace/bun/driver/pgdriver v1.3.0
+	github.com/uptrace/bun/driver/pgdriver v1.3.0 // indirect
 	github.com/uptrace/bun/extra/bundebug v1.3.0
 	github.com/uptrace/bun/extra/bunotel v1.3.0
 	github.com/vektah/gqlparser/v2 v2.5.62

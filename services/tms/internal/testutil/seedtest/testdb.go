@@ -11,14 +11,13 @@ import (
 	"time"
 
 	"github.com/emoss08/keel/migrate"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 const (
@@ -116,19 +115,17 @@ func chdirToServiceRoot(t *testing.T) {
 }
 
 func openBunDB(dsn string, maxOpen int) (*bun.DB, error) {
-	cfg, err := pgx.ParseConfig(dsn)
+	pool, err := dbpool.Open(context.Background(), &dbpool.Options{
+		DSN:             dsn,
+		MaxConns:        maxOpen,
+		MaxConnIdleTime: 30 * time.Second,
+		MaxConnLifetime: 2 * time.Minute,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("parse test database DSN: %w", err)
+		return nil, fmt.Errorf("open test database: %w", err)
 	}
-	cfg.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
-	sqldb := stdlib.OpenDB(*cfg)
-	sqldb.SetMaxOpenConns(maxOpen)
-	sqldb.SetMaxIdleConns(1)
-	sqldb.SetConnMaxIdleTime(30 * time.Second)
-	sqldb.SetConnMaxLifetime(2 * time.Minute)
-
-	return bun.NewDB(sqldb, pgdialect.New()), nil
+	return pool.Bun, nil
 }
 
 // resolveAdminDSN returns a DSN for a Postgres server to run the suite against.
