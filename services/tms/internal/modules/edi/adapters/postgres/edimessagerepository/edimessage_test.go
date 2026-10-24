@@ -19,8 +19,14 @@ func TestLifecycleMessageQuery_MatchesTheLifecycleIdentity(t *testing.T) {
 		},
 	).Limit(1))
 
-	assert.Equal(t, "", sql)
-	assert.Equal(t, []any{}, args)
+	assert.Contains(t, sql, `FROM "edi_messages" em LEFT JOIN "edi_partners" p ON p."id" = em."edi_partner_id"`)
+	assert.Contains(t, sql, `em."transaction_set" = $3 AND em."direction" = $4`)
+	assert.Contains(t, sql, `AND (em."payload_snapshot" #>> $5) = $6 AND (em."payload_snapshot" #>> $7) = $8`)
+	assert.Contains(t, sql, `ORDER BY em."generated_at" DESC LIMIT 1`)
+	assert.Contains(t, args, []string{"shipmentStatus", "serviceFailureId"})
+	assert.Contains(t, args, []string{"shipmentStatus", "references", "serviceFailure214Trigger"})
+	assert.Contains(t, args, "sf_1")
+	assert.Contains(t, args, "Reviewed")
 }
 
 func TestScorecardQuery_GroupsEveryCountByPartner(t *testing.T) {
@@ -33,8 +39,12 @@ func TestScorecardQuery_GroupsEveryCountByPartner(t *testing.T) {
 		PendingOver24hBefore:   400,
 	}))
 
-	assert.Equal(t, "", sql)
-	assert.Equal(t, []any{}, args)
+	assert.Contains(t, sql, `SELECT em."edi_partner_id", max(p."name"), max(p."code"), count(*) FILTER`)
+	assert.Contains(t, sql, `percentile_cont(0.95) WITHIN GROUP (ORDER BY em."ack_received_at" - em."delivery_sent_at")`)
+	assert.Contains(t, sql, `em."edi_partner_id" IS NOT NULL AND em."generated_at" >= $3`)
+	assert.Contains(t, sql, `GROUP BY em."edi_partner_id" ORDER BY max(p."name") ASC`)
+	assert.Contains(t, args, "Pending")
+	assert.Contains(t, args, []string{"Queued", "Sending", "Failed"})
 }
 
 func TestVolumeQuery_GroupsByTheBucketItSelects(t *testing.T) {
@@ -42,6 +52,9 @@ func TestVolumeQuery_GroupsByTheBucketItSelects(t *testing.T) {
 
 	sql, args := keeltest.Render(t, volumeQuery(&ediports.GetEDIVolumeSeriesRequest{Since: 100}))
 
-	assert.Equal(t, "", sql)
-	assert.Equal(t, []any{}, args)
+	assert.Contains(t, sql, `SELECT (em."generated_at" / $4) * $5, count(*) FILTER (WHERE em."direction" = $6)`)
+	assert.Contains(t, sql, `WHERE em."business_unit_id" = $1 AND em."organization_id" = $2 AND em."generated_at" >= $3`)
+	assert.Contains(t, sql, `GROUP BY (em."generated_at" / $4) * $5 ORDER BY (em."generated_at" / $4) * $5 ASC`)
+	assert.Contains(t, args, []string{"Failed", "DeadLettered"})
+	assert.Contains(t, args, "Inbound")
 }

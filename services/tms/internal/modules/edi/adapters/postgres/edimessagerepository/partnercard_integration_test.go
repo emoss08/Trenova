@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -322,6 +323,7 @@ func TestCarrierEDIChannelsByPartner(t *testing.T) {
 	require.Len(t, carriers, 2, "the seeds give one organization two carriers")
 	org := carriers[0]
 	tenantInfo := pagination.TenantInfo{OrgID: org.OrganizationID, BuID: org.BusinessUnitID}
+	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
 	newPartner := func(code string) *edi.EDIPartner {
 		partner := &edi.EDIPartner{
