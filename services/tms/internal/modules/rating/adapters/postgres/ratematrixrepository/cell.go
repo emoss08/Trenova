@@ -178,7 +178,7 @@ func copyDimensions(
 ) (int64, error) {
 	d := ratematrixdb.RateMatrixDimensions
 	src := d.Where(d.RateMatrixID.Eq(req.RateMatrixID), d.VersionNumber.Eq(req.From)).Pick(
-		copiedID(d.TableRef().Table.IDPrefix), d.RateMatrixID, keel.Val(req.To), d.Position,
+		copiedID(d.TableRef().Table.IDPrefix), d.RateMatrixID, versionNumber(req.To), d.Position,
 		d.Kind, d.MatchMode, d.Label, d.KeyNormalization, d.RangeOverflow,
 		copiedNow(), copiedNow(),
 	)
@@ -197,7 +197,7 @@ func copyCells(
 ) (int64, error) {
 	c := ratematrixdb.RateMatrixCells
 	src := c.Where(c.RateMatrixID.Eq(req.RateMatrixID), c.VersionNumber.Eq(req.From)).Pick(
-		copiedID(c.TableRef().Table.IDPrefix), c.RateMatrixID, keel.Val(req.To),
+		copiedID(c.TableRef().Table.IDPrefix), c.RateMatrixID, versionNumber(req.To),
 		c.D0Key, c.D1Key, c.D2Key, c.D3Key,
 		c.D0KeyTo, c.D1KeyTo, c.D2KeyTo, c.D3KeyTo,
 		c.D0Min, c.D0Max, c.D1Min, c.D1Max, c.D2Min, c.D2Max, c.D3Min, c.D3Max,
@@ -289,4 +289,8 @@ func (r *repository) CountMisfitCells(
 
 		return count, nil
 	})
+}
+
+func versionNumber(n int64) keel.Expr {
+	return keel.Raw("?::bigint", n)
 }

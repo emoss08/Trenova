@@ -14,15 +14,12 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-const geometryFromGeoJSON = "ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)"
 
 var weatherAlertErrors = dberror.Mapping{
 	Entity: "Weather Alert",
@@ -194,12 +191,8 @@ func (r *repository) createAlert(
 	alert *weatheralert.WeatherAlert,
 ) (*weatheralertports.UpsertWeatherAlertResult, error) {
 	prepareNewAlert(alert)
-	geometry := alert.Geometry
 	if err := weatheralertdb.WeatherAlerts.Create(ctx, db, alert); err != nil {
 		return nil, weatherAlertErrors.Map(err, alert.ID.String())
-	}
-	if err := writeGeometry(ctx, db, alert, geometry); err != nil {
-		return nil, err
 	}
 
 	activity := newActivity(alert, weatheralert.ActivityTypeIssued, nil)
@@ -238,12 +231,8 @@ func (r *repository) updateAlert(
 		return &weatheralertports.UpsertWeatherAlertResult{Alert: existing}, nil
 	}
 
-	geometry := alert.Geometry
 	if err = weatheralertdb.WeatherAlerts.Save(ctx, db, alert); err != nil {
 		return nil, weatherAlertErrors.Map(err, alert.ID.String())
-	}
-	if err = writeGeometry(ctx, db, alert, geometry); err != nil {
-		return nil, err
 	}
 
 	activityType := weatheralert.ActivityTypeUpdated
@@ -261,30 +250,6 @@ func (r *repository) updateAlert(
 		Changed:      true,
 		ActivityType: activityType,
 	}, nil
-}
-
-func writeGeometry(
-	ctx context.Context,
-	db *keel.DB,
-	alert *weatheralert.WeatherAlert,
-	geometry *postgis.Geometry,
-) error {
-	alert.Geometry = geometry
-	geometryJSON, err := geometry.GeoJSONString()
-	if err != nil {
-		return err
-	}
-
-	wa := weatheralertdb.WeatherAlerts
-	_, err = wa.Where(wa.ID.Eq(alert.ID)).Update(
-		ctx,
-		db,
-		wa.Geometry.ToExpr(keel.Raw(geometryFromGeoJSON, geometryJSON)),
-		wa.Version.ToExpr(wa.Version),
-		wa.UpdatedAt.ToExpr(wa.UpdatedAt),
-	)
-
-	return err
 }
 
 func prepareNewAlert(alert *weatheralert.WeatherAlert) {

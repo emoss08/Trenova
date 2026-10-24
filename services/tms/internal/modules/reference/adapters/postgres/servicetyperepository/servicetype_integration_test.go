@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -99,7 +100,7 @@ func TestBulkUpdateStatusReturnsVersionMismatchWhenTenantDoesNotMatch(t *testing
 		BuID:  pulid.MustNew("bu_"),
 	}
 	entities, err := repo.BulkUpdateStatus(
-		ctx,
+		dbscope.WithTenant(ctx, otherTenant.DBTenant()),
 		&servicetypeports.BulkUpdateServiceTypeStatusRequest{
 			TenantInfo:     otherTenant,
 			ServiceTypeIDs: []pulid.ID{created.ID},

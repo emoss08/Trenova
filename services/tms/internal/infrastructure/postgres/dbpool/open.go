@@ -85,7 +85,8 @@ func KeelConfig(guard Guard, observers []keel.Observer) keel.Config {
 			Unmarshal:       sonic.Unmarshal,
 			UnmarshalNumber: sonic.Config{UseNumber: true}.Froze().Unmarshal,
 		},
-		Observers: observers,
+		Observers:    observers,
+		AfterConnect: registerPostGIS,
 	}
 	if guard != nil {
 		cfg.OnBegin = guard.OnBegin

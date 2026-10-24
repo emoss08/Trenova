@@ -25,7 +25,7 @@ func TestKeyedRulesQuery_JoinsTheAgreementAndOrdersTheWinnerFirst(t *testing.T) 
 	assert.Contains(t, sql, `"lane_key" = ANY(`)
 	assert.Contains(t, sql, `"priority" DESC`)
 	assert.Contains(t, sql, "LIMIT 11")
-	assert.Contains(t, args, "ST:GA>ST:FL")
+	assert.Contains(t, args, []string{"ST:GA>ST:FL"}, "the lane keys bind as one array")
 	assert.NotContains(t, sql, "ST_DWithin")
 }
 

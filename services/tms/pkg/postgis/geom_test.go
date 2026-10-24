@@ -212,8 +212,9 @@ func TestPoint_Value(t *testing.T) {
 
 		data, ok := v.([]byte)
 		require.True(t, ok)
-		geom, err := wkb.Unmarshal(data)
+		geom, srid, err := ewkb.Unmarshal(data)
 		require.NoError(t, err)
+		assert.Equal(t, SRID, srid)
 		pt, ok := geom.(orb.Point)
 		require.True(t, ok)
 		assert.Equal(t, 0.0, pt.Lon())
@@ -229,8 +230,9 @@ func TestPoint_Value(t *testing.T) {
 
 		data, ok := v.([]byte)
 		require.True(t, ok)
-		geom, err := wkb.Unmarshal(data)
+		geom, srid, err := ewkb.Unmarshal(data)
 		require.NoError(t, err)
+		assert.Equal(t, SRID, srid)
 		pt, ok := geom.(orb.Point)
 		require.True(t, ok)
 		assert.InDelta(t, -73.9857, pt.Lon(), 1e-10)

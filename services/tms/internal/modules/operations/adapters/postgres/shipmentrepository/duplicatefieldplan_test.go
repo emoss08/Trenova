@@ -168,7 +168,17 @@ var shipmentCopyPlan = map[string]fieldPlan{
 	"FormulaTemplate": {intentionallyDropped, "relation, hydrated on read"},
 	"OriginStop":      {intentionallyDropped, "relation, picked from the copy's own stops on read"},
 	"DestinationStop": {intentionallyDropped, "relation, picked from the copy's own stops on read"},
-	"Comments":        {intentionallyDropped, "comments belong to the original shipment"},
+	"FirstPickup":     {intentionallyDropped, "relation, picked from the copy's own stops on read"},
+	"LastDelivery":    {intentionallyDropped, "relation, picked from the copy's own stops on read"},
+	"PickupAppointment": {
+		intentionallyDropped,
+		"relation, picked from the copy's own stops on read",
+	},
+	"DeliveryAppointment": {
+		intentionallyDropped,
+		"relation, picked from the copy's own stops on read",
+	},
+	"Comments": {intentionallyDropped, "comments belong to the original shipment"},
 }
 
 func TestCopyShipmentGraph_EveryFieldIsClassified(t *testing.T) {
@@ -286,6 +296,9 @@ var keelRelationKinds = []string{"belongs:", "one:", "many:", "m2m:", "pick:"}
 
 func isRelationField(field reflect.StructField) bool {
 	keelTag := field.Tag.Get("keel")
+	if keelTag == "" || keelTag == "-" {
+		return true
+	}
 	for _, kind := range keelRelationKinds {
 		if strings.HasPrefix(keelTag, kind) {
 			return true

@@ -7,6 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/encoding/ewkb"
 	"github.com/paulmach/orb/encoding/wkb"
 	"github.com/paulmach/orb/geojson"
 )
@@ -61,7 +62,7 @@ func (g *Geometry) Value() (driver.Value, error) {
 		return nil, nil //nolint:nilnil // valid for driver.Value
 	}
 
-	return wkb.Marshal(g.Geometry)
+	return ewkb.Marshal(g.Geometry, SRID)
 }
 
 func (g *Geometry) GeoJSON() (map[string]any, error) {

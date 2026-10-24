@@ -244,19 +244,30 @@ func (s *Service) grants(
 		if err != nil {
 			return permission.RoleGrants{}, err
 		}
+		found := make(map[pulid.ID]struct{}, len(inherited))
 		for _, parent := range inherited {
 			if parent.OrganizationID.IsNotNil() && parent.OrganizationID != tenant.OrgID {
-				return permission.RoleGrants{}, errortypes.NewValidationError(
-					"parentRoleIds",
-					errortypes.ErrInvalid,
-					"Inherited roles must belong to your organization",
-				)
+				return permission.RoleGrants{}, foreignParentError()
+			}
+			found[parent.ID] = struct{}{}
+		}
+		for _, id := range role.ParentRoleIDs {
+			if _, ok := found[id]; !ok {
+				return permission.RoleGrants{}, foreignParentError()
 			}
 		}
 		roles = append(roles, inherited...)
 	}
 
 	return permission.GrantsOf(roles...), nil
+}
+
+func foreignParentError() error {
+	return errortypes.NewValidationError(
+		"parentRoleIds",
+		errortypes.ErrInvalid,
+		"Inherited roles must belong to your organization",
+	)
 }
 
 func (s *Service) draftRole(draft *RoleDraft) (*permission.Role, error) {

@@ -234,6 +234,10 @@ func TestReversibleSelectOptionsListOnlyPostedEntriesNotYetReversedNewestFirst(t
 			TotalCredit:    100,
 			CreatedByID:    f.db.A.Info.UserID,
 		}
+		if posted {
+			e.PostedAt = &at
+			e.PostedByID = f.db.A.Info.UserID
+		}
 		require.NoError(t, je.Create(ctx, f.db.Admin, e))
 		return e
 	}
@@ -243,6 +247,7 @@ func TestReversibleSelectOptionsListOnlyPostedEntriesNotYetReversedNewestFirst(t
 	entry("JE-REV-520", journalentry.StatusPosted, f.entryAt+day, true)
 	entry("JE-REV-530", journalentry.StatusPending, f.entryAt+2*day, false)
 	reversed := entry("JE-REV-540", journalentry.StatusReversed, f.entryAt+3*day, true)
+	reversalAt := f.entryAt + 4*day
 	reversal := &journalentry.JournalEntry{
 		BatchID:        f.invoice.BatchID,
 		FiscalYearID:   f.invoice.FiscalYearID,
@@ -253,6 +258,8 @@ func TestReversibleSelectOptionsListOnlyPostedEntriesNotYetReversedNewestFirst(t
 		AccountingDate: f.entryAt + 4*day,
 		Status:         journalentry.StatusPosted,
 		IsPosted:       true,
+		PostedAt:       &reversalAt,
+		PostedByID:     f.db.A.Info.UserID,
 		IsReversal:     true,
 		ReversalOfID:   reversed.ID,
 		ReferenceType:  "ManualJournalPosted",

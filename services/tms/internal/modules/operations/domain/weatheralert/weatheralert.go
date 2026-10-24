@@ -35,7 +35,7 @@ type WeatherAlert struct {
 	Response       string            `json:"response" keel:"response,nullzero"`
 	Category       string            `json:"category" keel:"category,nullzero"`
 	AlertCategory  AlertCategory     `json:"alertCategory" keel:"alert_category"`
-	Geometry       *postgis.Geometry `json:"-" keel:"geometry,readonly"`
+	Geometry       *postgis.Geometry `json:"-" keel:"geometry"`
 	FirstSeenAt    int64             `json:"firstSeenAt" keel:"first_seen_at"`
 	LastUpdatedAt  int64             `json:"lastUpdatedAt" keel:"last_updated_at"`
 	ExpiredAt      *int64            `json:"expiredAt" keel:"expired_at"`
