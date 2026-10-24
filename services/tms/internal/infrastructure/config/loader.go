@@ -355,7 +355,6 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 
 	// Database defaults
 	l.viper.SetDefault("database.sslMode", "prefer")
-	l.viper.SetDefault("database.maxIdleConns", 10)
 	l.viper.SetDefault("database.maxOpenConns", 100)
 	l.viper.SetDefault("database.connMaxLifetime", "1h")
 	l.viper.SetDefault("database.connMaxIdleTime", "10m")
@@ -369,7 +368,6 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("database.system.user", "")
 	l.viper.SetDefault("database.system.password", "")
 	l.viper.SetDefault("database.system.maxOpenConns", 8)
-	l.viper.SetDefault("database.system.maxIdleConns", 2)
 	l.viper.SetDefault("database.migrator.user", "")
 	l.viper.SetDefault("database.migrator.password", "")
 
@@ -543,7 +541,6 @@ func (l *Loader) validateConfig(config *Config) error {
 	}
 
 	validators := []func(*Config) error{
-		validateDatabasePool,
 		validateRLSConfig,
 		validateServerTimeouts,
 		validateTrustedProxies,
@@ -594,14 +591,6 @@ func (l *Loader) validatePlatformMode(config *Config) error {
 	}
 
 	return fmt.Errorf("%w: %q", ErrPlatformModeRequiresEdition, mode)
-}
-
-func validateDatabasePool(config *Config) error {
-	if config.Database.MaxIdleConns > config.Database.MaxOpenConns {
-		return ErrMaxIdleConnsExceedsMaxOpenConns
-	}
-
-	return nil
 }
 
 func validateServerTimeouts(config *Config) error {

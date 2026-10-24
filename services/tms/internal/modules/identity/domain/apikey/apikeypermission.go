@@ -3,6 +3,7 @@ package apikey
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -14,16 +15,17 @@ import (
 
 type Permission struct {
 	bun.BaseModel `bun:"table:api_key_permissions,alias:akp" json:"-"`
+	keel.Table    `keel:"api_key_permissions"`
 
-	ID             pulid.ID               `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	APIKeyID       pulid.ID               `json:"apiKeyId"       bun:"api_key_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID               `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID               `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	Resource       string                 `json:"resource"       bun:"resource,type:VARCHAR(100),notnull"`
-	Operations     []permission.Operation `json:"operations"     bun:"operations,type:TEXT[],array,notnull"`
-	DataScope      permission.DataScope   `json:"dataScope"      bun:"data_scope,type:VARCHAR(20),notnull,default:'organization'"`
-	CreatedAt      int64                  `json:"createdAt"      bun:"created_at,notnull"`
-	UpdatedAt      int64                  `json:"updatedAt"      bun:"updated_at,notnull"`
+	ID             pulid.ID               `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:akp_"`
+	APIKeyID       pulid.ID               `json:"apiKeyId"       bun:"api_key_id,type:VARCHAR(100),notnull" keel:"api_key_id"`
+	BusinessUnitID pulid.ID               `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	OrganizationID pulid.ID               `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	Resource       string                 `json:"resource"       bun:"resource,type:VARCHAR(100),notnull" keel:"resource"`
+	Operations     []permission.Operation `json:"operations"     bun:"operations,type:TEXT[],array,notnull" keel:"operations"`
+	DataScope      permission.DataScope   `json:"dataScope"      bun:"data_scope,type:VARCHAR(20),notnull,default:'organization'" keel:"data_scope"`
+	CreatedAt      int64                  `json:"createdAt"      bun:"created_at,notnull" keel:"created_at,autocreate"`
+	UpdatedAt      int64                  `json:"updatedAt"      bun:"updated_at,notnull" keel:"updated_at,autoupdate"`
 }
 
 func (p *Permission) BeforeAppendModel(_ context.Context, query bun.Query) error {

@@ -29,16 +29,8 @@ func (r *CustomerBillingProfileResolver) CreditBalance(ctx context.Context, obj 
 	return obj.CreditBalance.String(), nil
 }
 
-func (r *CustomerBillingProfileResolver) InvoiceCopies(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
-	return int(obj.InvoiceCopies), nil
-}
-
 func (r *CustomerBillingProfileResolver) LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
 	return base.NullDecimalToStringPtr(obj.LateChargeRate), nil
-}
-
-func (r *CustomerBillingProfileResolver) GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
-	return int(obj.GracePeriodDays), nil
 }
 
 func (r *QueryResolver) Customers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerConnection, error) {

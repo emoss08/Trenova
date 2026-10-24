@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,27 +30,28 @@ type RateKey struct {
 
 type TaxRate struct {
 	bun.BaseModel             `bun:"table:ifta_tax_rates,alias:iftr" json:"-"`
+	keel.Table                `keel:"ifta_tax_rates"`
 	pagination.CursorValueSet `bun:",embed"                          json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	JurisdictionID pulid.ID `json:"jurisdictionId" bun:"jurisdiction_id,type:VARCHAR(100),notnull"`
-	Year           int      `json:"year"           bun:"year,type:SMALLINT,notnull"`
-	Quarter        int      `json:"quarter"        bun:"quarter,type:SMALLINT,notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:iftr_"`
+	JurisdictionID pulid.ID `json:"jurisdictionId" bun:"jurisdiction_id,type:VARCHAR(100),notnull" keel:"jurisdiction_id"`
+	Year           int      `json:"year"           bun:"year,type:SMALLINT,notnull" keel:"year"`
+	Quarter        int      `json:"quarter"        bun:"quarter,type:SMALLINT,notnull" keel:"quarter"`
 
-	FuelType               domaintypes.IFTAFuelType `json:"fuelType"               bun:"fuel_type,type:ifta_fuel_type_enum,notnull"`
-	RatePerGallon          decimal.Decimal          `json:"ratePerGallon"          bun:"rate_per_gallon,type:NUMERIC(10,4),notnull"`
-	SurchargeRatePerGallon decimal.NullDecimal      `json:"surchargeRatePerGallon" bun:"surcharge_rate_per_gallon,type:NUMERIC(10,4),nullzero"`
+	FuelType               domaintypes.IFTAFuelType `json:"fuelType"               bun:"fuel_type,type:ifta_fuel_type_enum,notnull" keel:"fuel_type"`
+	RatePerGallon          decimal.Decimal          `json:"ratePerGallon"          bun:"rate_per_gallon,type:NUMERIC(10,4),notnull" keel:"rate_per_gallon"`
+	SurchargeRatePerGallon decimal.NullDecimal      `json:"surchargeRatePerGallon" bun:"surcharge_rate_per_gallon,type:NUMERIC(10,4),nullzero" keel:"surcharge_rate_per_gallon"`
 
-	SourceNote string `json:"sourceNote" bun:"source_note,type:TEXT,nullzero"`
-	SourceURL  string `json:"sourceUrl"  bun:"source_url,type:TEXT,nullzero"`
+	SourceNote string `json:"sourceNote" bun:"source_note,type:TEXT,nullzero" keel:"source_note,nullzero"`
+	SourceURL  string `json:"sourceUrl"  bun:"source_url,type:TEXT,nullzero" keel:"source_url,nullzero"`
 
 	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Jurisdiction *Jurisdiction `json:"jurisdiction,omitempty" bun:"rel:belongs-to,join:jurisdiction_id=id"`
+	Jurisdiction *Jurisdiction `json:"jurisdiction,omitempty" bun:"rel:belongs-to,join:jurisdiction_id=id" keel:"belongs:jurisdiction_id"`
 }
 
 func (r *TaxRate) Normalize() {
@@ -137,6 +139,10 @@ func (r *TaxRate) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (r *TaxRate) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (r *TaxRate) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {

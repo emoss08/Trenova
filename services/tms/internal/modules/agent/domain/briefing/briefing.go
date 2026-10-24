@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -87,47 +88,48 @@ type WithheldSection struct {
 // Briefing is one role's morning, on one day, for one organization.
 type Briefing struct {
 	bun.BaseModel `bun:"table:assistant_briefings,alias:abrf" json:"-"`
+	keel.Table    `keel:"assistant_briefings"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:brf_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	RoleKey RoleKey `json:"roleKey" bun:"role_key,type:VARCHAR(20),notnull"`
+	RoleKey RoleKey `json:"roleKey" bun:"role_key,type:VARCHAR(20),notnull" keel:"role_key"`
 	// UserID is set only where an organization writes a briefing per person
 	// rather than per role. Nil is the role's shared briefing.
-	UserID *pulid.ID `json:"userId" bun:"user_id,type:VARCHAR(100),nullzero"`
+	UserID *pulid.ID `json:"userId" bun:"user_id,type:VARCHAR(100),nullzero" keel:"user_id"`
 	// BriefingDate is the organization's local day, as YYYY-MM-DD. It is a
 	// date rather than an instant because "today's briefing" means the
 	// reader's today, not the server's.
-	BriefingDate string   `json:"briefingDate" bun:"briefing_date,type:VARCHAR(10),notnull"`
-	RunID        pulid.ID `json:"runId"        bun:"run_id,type:VARCHAR(100),nullzero"`
+	BriefingDate string   `json:"briefingDate" bun:"briefing_date,type:VARCHAR(10),notnull" keel:"briefing_date"`
+	RunID        pulid.ID `json:"runId"        bun:"run_id,type:VARCHAR(100),nullzero" keel:"run_id,nullzero"`
 
-	Status   Status `json:"status"   bun:"status,type:VARCHAR(20),notnull"`
-	Headline string `json:"headline" bun:"headline,type:VARCHAR(240),nullzero"`
+	Status   Status `json:"status"   bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	Headline string `json:"headline" bun:"headline,type:VARCHAR(240),nullzero" keel:"headline,nullzero"`
 	// Sections is the page. Facts is what the figures were drawn from, kept
 	// so the guard can be re-run and a reader can be shown the working.
-	Sections []Section      `json:"sections" bun:"sections,type:JSONB,notnull,default:'[]'"`
-	Facts    map[string]any `json:"facts"    bun:"facts,type:JSONB,notnull,default:'{}'"`
+	Sections []Section      `json:"sections" bun:"sections,type:JSONB,notnull,default:'[]'" keel:"sections,jsonb"`
+	Facts    map[string]any `json:"facts"    bun:"facts,type:JSONB,notnull,default:'{}'" keel:"facts,jsonb"`
 	// Narrated says whether the model's wording was accepted. False means
 	// the page is the deterministic one, which is a complete briefing.
-	Narrated bool `json:"narrated" bun:"narrated,type:BOOLEAN,notnull,default:false"`
+	Narrated bool `json:"narrated" bun:"narrated,type:BOOLEAN,notnull,default:false" keel:"narrated"`
 
-	ModelIdentifier string   `json:"modelIdentifier" bun:"model_identifier,type:VARCHAR(255),nullzero"`
-	ProviderID      pulid.ID `json:"providerId"      bun:"provider_id,type:VARCHAR(100),nullzero"`
+	ModelIdentifier string   `json:"modelIdentifier" bun:"model_identifier,type:VARCHAR(255),nullzero" keel:"model_identifier,nullzero"`
+	ProviderID      pulid.ID `json:"providerId"      bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id,nullzero"`
 	// FailureReason says why the facts could not be gathered, for a failed
 	// briefing.
-	FailureReason string `json:"failureReason" bun:"failure_reason,type:TEXT,nullzero"`
+	FailureReason string `json:"failureReason" bun:"failure_reason,type:TEXT,nullzero" keel:"failure_reason,nullzero"`
 
 	// WithheldSections is never stored: it is what a read left out for its
 	// reader, set by the service that serves the page.
 	WithheldSections []WithheldSection `json:"withheldSections" bun:"-"`
 
-	EmailedAt *int64 `json:"emailedAt" bun:"emailed_at,type:BIGINT,nullzero"`
-	ReadAt    *int64 `json:"readAt"    bun:"read_at,type:BIGINT,nullzero"`
+	EmailedAt *int64 `json:"emailedAt" bun:"emailed_at,type:BIGINT,nullzero" keel:"emailed_at"`
+	ReadAt    *int64 `json:"readAt"    bun:"read_at,type:BIGINT,nullzero" keel:"read_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (b *Briefing) GetID() pulid.ID { return b.ID }
@@ -154,6 +156,10 @@ func (b *Briefing) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (b *Briefing) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 // Normalize bounds what a person reads to what the columns hold, and drops

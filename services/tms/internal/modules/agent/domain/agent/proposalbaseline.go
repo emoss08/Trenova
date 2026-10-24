@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,15 +20,16 @@ var _ bun.BeforeAppendModelHook = (*ProposalBaseline)(nil)
 // which values moved since, and is never served as it is.
 type ProposalBaseline struct {
 	bun.BaseModel `bun:"table:agent_proposal_baselines,alias:apb" json:"-"`
+	keel.Table    `keel:"agent_proposal_baselines"`
 
-	ProposalID     pulid.ID `json:"proposalId"     bun:"proposal_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	ProposalID     pulid.ID `json:"proposalId"     bun:"proposal_id,pk,type:VARCHAR(100),notnull" keel:"proposal_id,pk"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 
-	ToolName      string       `json:"toolName"      bun:"tool_name,type:VARCHAR(100),notnull"`
-	Preview       *ToolPreview `json:"preview"       bun:"preview,type:JSONB,notnull"`
-	TargetVersion *int64       `json:"targetVersion" bun:"target_version,type:BIGINT,nullzero"`
-	CreatedAt     int64        `json:"createdAt"     bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ToolName      string       `json:"toolName"      bun:"tool_name,type:VARCHAR(100),notnull" keel:"tool_name"`
+	Preview       *ToolPreview `json:"preview"       bun:"preview,type:JSONB,notnull" keel:"preview,jsonb"`
+	TargetVersion *int64       `json:"targetVersion" bun:"target_version,type:BIGINT,nullzero" keel:"target_version"`
+	CreatedAt     int64        `json:"createdAt"     bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
 func (b *ProposalBaseline) Validate(multiErr *errortypes.MultiError) {

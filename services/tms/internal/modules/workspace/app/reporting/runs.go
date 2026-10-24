@@ -3,6 +3,7 @@ package reporting
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
@@ -10,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -174,12 +174,11 @@ func (s *Service) buildRun(
 		if err != nil {
 			return nil, err
 		}
-		if _, err = s.compiler.ValidateAndAuthorize(ctx, &reportports.ReportCompileRequest{
-			Definition:  entry.Definition,
-			Tenant:      req.TenantInfo,
-			Params:      req.Params,
-			OrgTimezone: s.orgTimezone(ctx, req.TenantInfo),
-			NowUnix:     timeutils.NowUnix(),
+		if err = s.Check(ctx, &PrepareParams{
+			Tenant:     req.TenantInfo,
+			Definition: entry.Definition,
+			Params:     req.Params,
+			Mode:       reportaccess.ModeExport,
 		}); err != nil {
 			if s.metrics != nil {
 				s.metrics.RecordCompileError("validation")

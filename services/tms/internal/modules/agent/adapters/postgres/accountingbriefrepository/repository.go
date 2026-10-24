@@ -2,20 +2,15 @@ package accountingbriefrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
-
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingbriefcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief/accountingbriefdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -46,26 +41,16 @@ func (r *repository) Latest(
 	req *accountingbriefports.GetLatestAccountingBriefRequest,
 ) (*accountingbrief.Brief, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingbrief.Brief, error) {
-		return latest(ctx, r.db.DBForContext(ctx), req)
+		return r.latest(ctx, req.BriefDate)
 	})
 }
 
-func latest(
-	ctx context.Context,
-	db bun.IDB,
-	req *accountingbriefports.GetLatestAccountingBriefRequest,
-) (*accountingbrief.Brief, error) {
-	cols := accountingbriefcol.BriefColumns
-	brief := new(accountingbrief.Brief)
-	err := db.NewSelect().
-		Model(brief).
-		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-		Where(cols.BriefDate.Eq(), req.BriefDate).
-		Order(cols.Generation.OrderDesc()).
-		Limit(1).
-		Scan(ctx)
-	if errors.Is(err, sql.ErrNoRows) {
+func (r *repository) latest(ctx context.Context, briefDate string) (*accountingbrief.Brief, error) {
+	b := accountingbriefdb.Briefs
+	brief, err := b.Where(b.BriefDate.Eq(briefDate)).
+		Order(b.Generation.Desc()).
+		First(ctx, r.db.Keel(ctx))
+	if dberror.IsNotFoundError(err) {
 		return nil, nil //nolint:nilnil // no brief has been written for the day yet
 	}
 	if err != nil {
@@ -80,28 +65,25 @@ func (r *repository) Insert(
 	brief *accountingbrief.Brief,
 ) (*accountingbrief.Brief, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingbrief.Brief, error) {
-		cols := accountingbriefcol.BriefColumns
-		db := r.db.DBForContext(ctx)
-		result, err := db.NewInsert().
-			Model(brief).
-			On("CONFLICT (" + cols.OrganizationID.Bare() + ", " + cols.BusinessUnitID.Bare() +
-				", " + cols.BriefDate.Bare() + ", " + cols.Generation.Bare() + ") DO NOTHING").
-			Exec(ctx)
+		b := accountingbriefdb.Briefs
+		inserted, err := b.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*accountingbrief.Brief{brief},
+			b.OrganizationID,
+			b.BusinessUnitID,
+			b.BriefDate,
+			b.Generation,
+		)
 		if err != nil {
 			r.l.Error("failed to insert accounting brief", zap.Error(err))
 			return nil, fmt.Errorf("insert accounting brief: %w", err)
 		}
-		if affected, _ := result.RowsAffected(); affected > 0 {
+		if inserted > 0 {
 			return brief, nil
 		}
 
-		return latest(ctx, db, &accountingbriefports.GetLatestAccountingBriefRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: brief.OrganizationID,
-				BuID:  brief.BusinessUnitID,
-			},
-			BriefDate: brief.BriefDate,
-		})
+		return r.latest(ctx, brief.BriefDate)
 	})
 }
 
@@ -110,17 +92,9 @@ func (r *repository) MarkVerified(
 	req *accountingbriefports.MarkAccountingBriefVerifiedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := accountingbriefcol.BriefColumns
-		_, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*accountingbrief.Brief)(nil)).
-			Set(cols.VerifiedAt.Set(), req.VerifiedAt).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return accountingbriefcol.BriefScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.VerifiedAt.Lt(), req.VerifiedAt)
-			}).
-			Exec(ctx)
+		b := accountingbriefdb.Briefs
+		_, err := b.Where(b.ID.Eq(req.ID), b.VerifiedAt.Lt(req.VerifiedAt)).
+			Update(ctx, r.db.Keel(ctx), b.VerifiedAt.To(req.VerifiedAt))
 		if err != nil {
 			return fmt.Errorf("mark accounting brief verified: %w", err)
 		}
@@ -143,23 +117,19 @@ func (r *repository) DeleteBefore(
 			limit = maxDeleteBatch
 		}
 
-		cols := accountingbriefcol.BriefColumns
-		res, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*accountingbrief.Brief)(nil)).
-			Where(
-				cols.ID.Qualified()+" IN (SELECT "+cols.ID.Qualified()+" FROM "+
-					accountingbriefcol.BriefTable.Name+" AS "+accountingbriefcol.BriefTable.Alias+
-					" WHERE "+cols.BriefDate.Qualified()+" < ? ORDER BY "+
-					cols.BriefDate.Qualified()+" LIMIT ?)",
-				req.BeforeDate,
-				limit,
-			).
-			Exec(ctx)
+		b := accountingbriefdb.Briefs
+		stale := b.As("stale")
+		n, err := b.AllTenants().
+			Where(b.ID.InQuery(stale.AllTenants().
+				Pick(stale.ID).
+				Where(stale.BriefDate.Lt(req.BeforeDate)).
+				Order(stale.BriefDate.Asc()).
+				Limit(limit))).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("delete accounting briefs: %w", err)
 		}
-		affected, _ := res.RowsAffected()
 
-		return int(affected), nil
+		return int(n), nil
 	})
 }

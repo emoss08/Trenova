@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/shared/intutils"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -27,81 +28,82 @@ var _ bun.BeforeAppendModelHook = (*DetentionOccurrence)(nil)
 // silently rewrite a number a customer has already been shown.
 type DetentionOccurrence struct {
 	bun.BaseModel             `bun:"table:detention_occurrences,alias:dto" json:"-"`
+	keel.Table                `keel:"detention_occurrences"`
 	pagination.CursorValueSet `bun:",embed"                                json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull"`
-	ShipmentMoveID pulid.ID `json:"shipmentMoveId" bun:"shipment_move_id,type:VARCHAR(100),notnull"`
-	StopID         pulid.ID `json:"stopId"         bun:"stop_id,type:VARCHAR(100),notnull"`
-	CustomerID     pulid.ID `json:"customerId"     bun:"customer_id,type:VARCHAR(100),notnull"`
-	LocationID     pulid.ID `json:"locationId"     bun:"location_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dto_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
+	ShipmentMoveID pulid.ID `json:"shipmentMoveId" bun:"shipment_move_id,type:VARCHAR(100),notnull" keel:"shipment_move_id"`
+	StopID         pulid.ID `json:"stopId"         bun:"stop_id,type:VARCHAR(100),notnull" keel:"stop_id"`
+	CustomerID     pulid.ID `json:"customerId"     bun:"customer_id,type:VARCHAR(100),notnull" keel:"customer_id"`
+	LocationID     pulid.ID `json:"locationId"     bun:"location_id,type:VARCHAR(100),notnull" keel:"location_id"`
 
-	DetentionPolicyID *pulid.ID         `json:"detentionPolicyId" bun:"detention_policy_id,type:VARCHAR(100),nullzero"`
-	PolicySnapshot    *PolicySnapshot   `json:"policySnapshot"    bun:"policy_snapshot,type:JSONB,nullzero"`
-	CalculationTrace  *CalculationTrace `json:"calculationTrace"  bun:"calculation_trace,type:JSONB,nullzero"`
+	DetentionPolicyID *pulid.ID         `json:"detentionPolicyId" bun:"detention_policy_id,type:VARCHAR(100),nullzero" keel:"detention_policy_id"`
+	PolicySnapshot    *PolicySnapshot   `json:"policySnapshot"    bun:"policy_snapshot,type:JSONB,nullzero" keel:"policy_snapshot,jsonb"`
+	CalculationTrace  *CalculationTrace `json:"calculationTrace"  bun:"calculation_trace,type:JSONB,nullzero" keel:"calculation_trace,jsonb"`
 
-	StopType           shipment.StopType         `json:"stopType"           bun:"stop_type,type:stop_type_enum,notnull"`
-	ScheduleType       shipment.StopScheduleType `json:"scheduleType"       bun:"schedule_type,type:stop_schedule_type_enum,notnull"`
-	AppointmentStart   *int64                    `json:"appointmentStart"   bun:"appointment_start,type:BIGINT,nullzero"`
-	AppointmentEnd     *int64                    `json:"appointmentEnd"     bun:"appointment_end,type:BIGINT,nullzero"`
-	ArrivedAt          *int64                    `json:"arrivedAt"          bun:"arrived_at,type:BIGINT,nullzero"`
-	DepartedAt         *int64                    `json:"departedAt"         bun:"departed_at,type:BIGINT,nullzero"`
-	ClockStartAt       int64                     `json:"clockStartAt"       bun:"clock_start_at,type:BIGINT,notnull"`
-	ClockStopAt        *int64                    `json:"clockStopAt"        bun:"clock_stop_at,type:BIGINT,nullzero"`
-	FreeTimeExpiresAt  int64                     `json:"freeTimeExpiresAt"  bun:"free_time_expires_at,type:BIGINT,notnull"`
-	NoticeDueAt        *int64                    `json:"noticeDueAt"        bun:"notice_due_at,type:BIGINT,nullzero"`
-	NoticeDeadlineAt   *int64                    `json:"noticeDeadlineAt"   bun:"notice_deadline_at,type:BIGINT,nullzero"`
-	IsOpen             bool                      `json:"isOpen"             bun:"is_open,type:BOOLEAN,notnull"`
-	ArrivedLate        bool                      `json:"arrivedLate"        bun:"arrived_late,type:BOOLEAN,notnull"`
-	LateByMinutes      int32                     `json:"lateByMinutes"      bun:"late_by_minutes,type:INTEGER,notnull"`
-	FreeMinutesGranted int32                     `json:"freeMinutesGranted" bun:"free_minutes_granted,type:INTEGER,notnull"`
-	RawDwellMinutes    int32                     `json:"rawDwellMinutes"    bun:"raw_dwell_minutes,type:INTEGER,notnull"`
-	BillableMinutes    int32                     `json:"billableMinutes"    bun:"billable_minutes,type:INTEGER,notnull"`
-	RoundedMinutes     int32                     `json:"roundedMinutes"     bun:"rounded_minutes,type:INTEGER,notnull"`
-	BillableUnits      decimal.Decimal           `json:"billableUnits"      bun:"billable_units,type:NUMERIC(12,4),notnull,default:0"`
-	GrossAmount        decimal.Decimal           `json:"grossAmount"        bun:"gross_amount,type:NUMERIC(19,4),notnull,default:0"`
-	BillableAmount     decimal.Decimal           `json:"billableAmount"     bun:"billable_amount,type:NUMERIC(19,4),notnull,default:0"`
-	DriverPayMinutes   int32                     `json:"driverPayMinutes"   bun:"driver_pay_minutes,type:INTEGER,notnull"`
-	DriverPayAmount    decimal.NullDecimal       `json:"driverPayAmount"    bun:"driver_pay_amount,type:NUMERIC(19,4),notnull,default:0"`
-	NetMargin          decimal.NullDecimal       `json:"netMargin"          bun:"net_margin,type:NUMERIC(19,4),notnull,default:0"`
-	CapApplied         CapKind                   `json:"capApplied"         bun:"cap_applied,type:detention_cap_kind_enum,notnull,default:'None'"`
-	ConvertedToLayover bool                      `json:"convertedToLayover" bun:"converted_to_layover,type:BOOLEAN,notnull"`
-	Currency           string                    `json:"currency"           bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
+	StopType           shipment.StopType         `json:"stopType"           bun:"stop_type,type:stop_type_enum,notnull" keel:"stop_type"`
+	ScheduleType       shipment.StopScheduleType `json:"scheduleType"       bun:"schedule_type,type:stop_schedule_type_enum,notnull" keel:"schedule_type"`
+	AppointmentStart   *int64                    `json:"appointmentStart"   bun:"appointment_start,type:BIGINT,nullzero" keel:"appointment_start"`
+	AppointmentEnd     *int64                    `json:"appointmentEnd"     bun:"appointment_end,type:BIGINT,nullzero" keel:"appointment_end"`
+	ArrivedAt          *int64                    `json:"arrivedAt"          bun:"arrived_at,type:BIGINT,nullzero" keel:"arrived_at"`
+	DepartedAt         *int64                    `json:"departedAt"         bun:"departed_at,type:BIGINT,nullzero" keel:"departed_at"`
+	ClockStartAt       int64                     `json:"clockStartAt"       bun:"clock_start_at,type:BIGINT,notnull" keel:"clock_start_at"`
+	ClockStopAt        *int64                    `json:"clockStopAt"        bun:"clock_stop_at,type:BIGINT,nullzero" keel:"clock_stop_at"`
+	FreeTimeExpiresAt  int64                     `json:"freeTimeExpiresAt"  bun:"free_time_expires_at,type:BIGINT,notnull" keel:"free_time_expires_at"`
+	NoticeDueAt        *int64                    `json:"noticeDueAt"        bun:"notice_due_at,type:BIGINT,nullzero" keel:"notice_due_at"`
+	NoticeDeadlineAt   *int64                    `json:"noticeDeadlineAt"   bun:"notice_deadline_at,type:BIGINT,nullzero" keel:"notice_deadline_at"`
+	IsOpen             bool                      `json:"isOpen"             bun:"is_open,type:BOOLEAN,notnull" keel:"is_open"`
+	ArrivedLate        bool                      `json:"arrivedLate"        bun:"arrived_late,type:BOOLEAN,notnull" keel:"arrived_late"`
+	LateByMinutes      int32                     `json:"lateByMinutes"      bun:"late_by_minutes,type:INTEGER,notnull" keel:"late_by_minutes"`
+	FreeMinutesGranted int32                     `json:"freeMinutesGranted" bun:"free_minutes_granted,type:INTEGER,notnull" keel:"free_minutes_granted"`
+	RawDwellMinutes    int32                     `json:"rawDwellMinutes"    bun:"raw_dwell_minutes,type:INTEGER,notnull" keel:"raw_dwell_minutes"`
+	BillableMinutes    int32                     `json:"billableMinutes"    bun:"billable_minutes,type:INTEGER,notnull" keel:"billable_minutes"`
+	RoundedMinutes     int32                     `json:"roundedMinutes"     bun:"rounded_minutes,type:INTEGER,notnull" keel:"rounded_minutes"`
+	BillableUnits      decimal.Decimal           `json:"billableUnits"      bun:"billable_units,type:NUMERIC(12,4),notnull,default:0" keel:"billable_units"`
+	GrossAmount        decimal.Decimal           `json:"grossAmount"        bun:"gross_amount,type:NUMERIC(19,4),notnull,default:0" keel:"gross_amount"`
+	BillableAmount     decimal.Decimal           `json:"billableAmount"     bun:"billable_amount,type:NUMERIC(19,4),notnull,default:0" keel:"billable_amount"`
+	DriverPayMinutes   int32                     `json:"driverPayMinutes"   bun:"driver_pay_minutes,type:INTEGER,notnull" keel:"driver_pay_minutes"`
+	DriverPayAmount    decimal.NullDecimal       `json:"driverPayAmount"    bun:"driver_pay_amount,type:NUMERIC(19,4),notnull,default:0" keel:"driver_pay_amount"`
+	NetMargin          decimal.NullDecimal       `json:"netMargin"          bun:"net_margin,type:NUMERIC(19,4),notnull,default:0" keel:"net_margin"`
+	CapApplied         CapKind                   `json:"capApplied"         bun:"cap_applied,type:detention_cap_kind_enum,notnull,default:'None'" keel:"cap_applied"`
+	ConvertedToLayover bool                      `json:"convertedToLayover" bun:"converted_to_layover,type:BOOLEAN,notnull" keel:"converted_to_layover"`
+	Currency           string                    `json:"currency"           bun:"currency,type:VARCHAR(3),notnull,default:'USD'" keel:"currency"`
 
-	Status             OccurrenceStatus   `json:"status"             bun:"status,type:detention_occurrence_status_enum,notnull,default:'Accruing'"`
-	NotificationStatus NotificationStatus `json:"notificationStatus" bun:"notification_status,type:detention_notification_status_enum,notnull,default:'NotRequired'"`
-	NoticeSentAt       *int64             `json:"noticeSentAt"       bun:"notice_sent_at,type:BIGINT,nullzero"`
-	SuppressedByGate   bool               `json:"suppressedByGate"   bun:"suppressed_by_gate,type:BOOLEAN,notnull"`
-	RequiresApproval   bool               `json:"requiresApproval"   bun:"requires_approval,type:BOOLEAN,notnull"`
-	ApprovedByID       *pulid.ID          `json:"approvedById"       bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt         *int64             `json:"approvedAt"         bun:"approved_at,type:BIGINT,nullzero"`
-	WaiverReason       *WaiverReason      `json:"waiverReason"       bun:"waiver_reason,type:detention_waiver_reason_enum,nullzero"`
-	WaiverNote         string             `json:"waiverNote"         bun:"waiver_note,type:TEXT,nullzero"`
-	WaivedByID         *pulid.ID          `json:"waivedById"         bun:"waived_by_id,type:VARCHAR(100),nullzero"`
-	WaivedAt           *int64             `json:"waivedAt"           bun:"waived_at,type:BIGINT,nullzero"`
-	WaivedAmount       decimal.Decimal    `json:"waivedAmount"       bun:"waived_amount,type:NUMERIC(19,4),notnull,default:0"`
-	DisputeNote        string             `json:"disputeNote"        bun:"dispute_note,type:TEXT,nullzero"`
-	DisputedAt         *int64             `json:"disputedAt"         bun:"disputed_at,type:BIGINT,nullzero"`
+	Status             OccurrenceStatus   `json:"status"             bun:"status,type:detention_occurrence_status_enum,notnull,default:'Accruing'" keel:"status"`
+	NotificationStatus NotificationStatus `json:"notificationStatus" bun:"notification_status,type:detention_notification_status_enum,notnull,default:'NotRequired'" keel:"notification_status"`
+	NoticeSentAt       *int64             `json:"noticeSentAt"       bun:"notice_sent_at,type:BIGINT,nullzero" keel:"notice_sent_at"`
+	SuppressedByGate   bool               `json:"suppressedByGate"   bun:"suppressed_by_gate,type:BOOLEAN,notnull" keel:"suppressed_by_gate"`
+	RequiresApproval   bool               `json:"requiresApproval"   bun:"requires_approval,type:BOOLEAN,notnull" keel:"requires_approval"`
+	ApprovedByID       *pulid.ID          `json:"approvedById"       bun:"approved_by_id,type:VARCHAR(100),nullzero" keel:"approved_by_id"`
+	ApprovedAt         *int64             `json:"approvedAt"         bun:"approved_at,type:BIGINT,nullzero" keel:"approved_at"`
+	WaiverReason       *WaiverReason      `json:"waiverReason"       bun:"waiver_reason,type:detention_waiver_reason_enum,nullzero" keel:"waiver_reason"`
+	WaiverNote         string             `json:"waiverNote"         bun:"waiver_note,type:TEXT,nullzero" keel:"waiver_note,nullzero"`
+	WaivedByID         *pulid.ID          `json:"waivedById"         bun:"waived_by_id,type:VARCHAR(100),nullzero" keel:"waived_by_id"`
+	WaivedAt           *int64             `json:"waivedAt"           bun:"waived_at,type:BIGINT,nullzero" keel:"waived_at"`
+	WaivedAmount       decimal.Decimal    `json:"waivedAmount"       bun:"waived_amount,type:NUMERIC(19,4),notnull,default:0" keel:"waived_amount"`
+	DisputeNote        string             `json:"disputeNote"        bun:"dispute_note,type:TEXT,nullzero" keel:"dispute_note,nullzero"`
+	DisputedAt         *int64             `json:"disputedAt"         bun:"disputed_at,type:BIGINT,nullzero" keel:"disputed_at"`
 
-	CollectabilityScore int16     `json:"collectabilityScore" bun:"collectability_score,type:SMALLINT,notnull"`
-	EvidenceHead        string    `json:"evidenceHead"        bun:"evidence_head,type:VARCHAR(64),nullzero"`
-	AdditionalChargeID  *pulid.ID `json:"additionalChargeId"  bun:"additional_charge_id,type:VARCHAR(100),nullzero"`
+	CollectabilityScore int16     `json:"collectabilityScore" bun:"collectability_score,type:SMALLINT,notnull" keel:"collectability_score"`
+	EvidenceHead        string    `json:"evidenceHead"        bun:"evidence_head,type:VARCHAR(64),nullzero" keel:"evidence_head,nullzero"`
+	AdditionalChargeID  *pulid.ID `json:"additionalChargeId"  bun:"additional_charge_id,type:VARCHAR(100),nullzero" keel:"additional_charge_id"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	LocationName      string `json:"locationName,omitempty"      bun:"location_name,scanonly"`
-	CustomerName      string `json:"customerName,omitempty"      bun:"customer_name,scanonly"`
-	ShipmentProNumber string `json:"shipmentProNumber,omitempty" bun:"shipment_pro_number,scanonly"`
+	LocationName      string `json:"locationName,omitempty"      bun:"location_name,scanonly" keel:"location_name,computed"`
+	CustomerName      string `json:"customerName,omitempty"      bun:"customer_name,scanonly" keel:"customer_name,computed"`
+	ShipmentProNumber string `json:"shipmentProNumber,omitempty" bun:"shipment_pro_number,scanonly" keel:"shipment_pro_number,computed"`
 
 	BusinessUnit    *tenant.BusinessUnit `json:"-"                         bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization    *tenant.Organization `json:"-"                         bun:"rel:belongs-to,join:organization_id=id"`
-	DetentionPolicy *DetentionPolicy     `json:"detentionPolicy,omitempty" bun:"rel:belongs-to,join:detention_policy_id=id"`
-	Evidence        []*DetentionEvidence `json:"evidence,omitempty"        bun:"rel:has-many,join:id=detention_occurrence_id"`
-	Notices         []*DetentionNotice   `json:"notices,omitempty"         bun:"rel:has-many,join:id=detention_occurrence_id"`
+	DetentionPolicy *DetentionPolicy     `json:"detentionPolicy,omitempty" bun:"rel:belongs-to,join:detention_policy_id=id" keel:"belongs:detention_policy_id"`
+	Evidence        []*DetentionEvidence `json:"evidence,omitempty"        bun:"rel:has-many,join:id=detention_occurrence_id" keel:"many:detention_occurrence_id"`
+	Notices         []*DetentionNotice   `json:"notices,omitempty"         bun:"rel:has-many,join:id=detention_occurrence_id" keel:"many:detention_occurrence_id"`
 }
 
 func (o *DetentionOccurrence) GetID() pulid.ID { return o.ID }
@@ -421,4 +423,8 @@ func (o *DetentionOccurrence) BeforeAppendModel(_ context.Context, query bun.Que
 	}
 
 	return nil
+}
+
+func (o *DetentionOccurrence) BeforeCreate(ctx context.Context) error {
+	return o.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

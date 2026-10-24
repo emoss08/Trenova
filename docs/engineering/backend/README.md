@@ -9,6 +9,8 @@ writing it, then check the subsystem's own doc in the [index](../README.md).
 |---|---|
 | [scale.md](scale.md) | the checklist every read, write, job and integration passes |
 | [data-access.md](data-access.md) | entities, repositories, pagination, locking, migrations, caching, seeding |
+| [keel-migration.md](keel-migration.md) | the Bun-to-keel move: shared pools and transactions, `Keel(ctx)`, error mapping, what converted repositories do |
+| [keel-conversion.md](keel-conversion.md) | the playbook for converting a module: every repository pattern in Bun and in keel, `pkg/listquery`, validators, tests, the checklist |
 | [services.md](services.md) | application services, validation, errors, authorization, audit, after-commit work |
 | [api.md](api.md) | GraphQL schema, resolvers, dataloaders, limits, REST handlers |
 | [jobs.md](jobs.md) | Temporal workflows, activities, schedules, sweeps |
@@ -39,8 +41,8 @@ need is a port declared low and provided by the higher module.
 
 ## Adding an entity end to end
 
-1. Domain model and enums (`data-access.md#entities`), migration with indexes and
-   `trenova_rls.reconcile()`, then regenerate column helpers (`buncolgen.md`).
+1. Domain model and enums (`data-access.md#entities`), migration with indexes
+   (`data-access.md#migrations`), then regenerate column helpers (`buncolgen.md`).
 2. Ports: repository interface with `GetByID`, `GetByIDs`, `ListConnection`, writes.
 3. Repository (`data-access.md#repositories`) with an integration test that includes a second
    tenant.
@@ -56,4 +58,5 @@ need is a port declared low and provided by the higher module.
 
 `task docker-up` starts `dev/compose.yml`: PostgreSQL with PostGIS (5432), Redis 8 (6379), Redis
 Insight (5540), Meilisearch (7700), MinIO (9000/9001), the imaging worker (gRPC 50051) and GTC.
-`task db-reset` drops, migrates and seeds.
+`task db-reset` recreates the database from `trenova-devdb`'s migrated template, then reconciles
+and seeds it.

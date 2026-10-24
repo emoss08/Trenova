@@ -5,24 +5,21 @@ package accountingsyncrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,17 +30,8 @@ import (
 )
 
 func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	_, err := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var org candidateOrg
 	require.NoError(t, db.NewSelect().Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
@@ -83,7 +71,7 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
+	_, err := db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)
 	posted := dated + 100
 	inv, err := invoices.Create(ctx, &invoice.Invoice{

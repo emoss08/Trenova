@@ -98,3 +98,29 @@ func TestTotalCountPtr_ReturnsStablePointer(t *testing.T) {
 	require.NotNil(t, count)
 	assert.Equal(t, 42, *count)
 }
+
+func TestEntityCursorEdges_UsesTheResultsEdgeCursors(t *testing.T) {
+	t.Parallel()
+
+	items := []resolvertest.TestCursorEntity{
+		{Node: "TRC-1", ID: pulid.MustNew("trac_")},
+		{Node: "TRC-2", ID: pulid.MustNew("trac_")},
+	}
+	result := &pagination.CursorListResult[resolvertest.TestCursorEntity]{
+		Items:       items,
+		EdgeCursors: []string{"edge-1", "edge-2"},
+	}
+
+	edges, err := EntityCursorEdges(
+		items,
+		nil,
+		result,
+		func(node resolvertest.TestCursorEntity, cursor string) resolvertest.TestConnectionEdge {
+			return resolvertest.TestConnectionEdge{Node: node.Node, Cursor: cursor}
+		},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, "edge-1", edges[0].Cursor)
+	assert.Equal(t, "edge-2", edges[1].Cursor)
+}

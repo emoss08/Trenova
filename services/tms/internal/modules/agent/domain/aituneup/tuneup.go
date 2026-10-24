@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -81,29 +82,30 @@ type Evidence struct {
 
 type TuneUp struct {
 	bun.BaseModel `bun:"table:ai_tune_ups,alias:aitu" json:"-"`
+	keel.Table    `keel:"ai_tune_ups"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aitu_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	Kind              Kind            `json:"kind"              bun:"kind,type:VARCHAR(40),notnull"`
-	Fingerprint       string          `json:"fingerprint"       bun:"fingerprint,type:VARCHAR(400),notnull"`
-	AgentDefinitionID pulid.ID        `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
-	ProviderID        pulid.ID        `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero"`
-	OtherProviderID   pulid.ID        `json:"otherProviderId"   bun:"other_provider_id,type:VARCHAR(100),nullzero"`
-	ToolName          string          `json:"toolName"          bun:"tool_name,type:VARCHAR(100),nullzero"`
-	Task              aiprovider.Task `json:"task"              bun:"task,type:VARCHAR(100),nullzero"`
-	Evidence          Evidence        `json:"evidence"          bun:"evidence,type:JSONB,notnull,default:'{}'"`
+	Kind              Kind            `json:"kind"              bun:"kind,type:VARCHAR(40),notnull" keel:"kind"`
+	Fingerprint       string          `json:"fingerprint"       bun:"fingerprint,type:VARCHAR(400),notnull" keel:"fingerprint"`
+	AgentDefinitionID pulid.ID        `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero" keel:"agent_definition_id,nullzero"`
+	ProviderID        pulid.ID        `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id,nullzero"`
+	OtherProviderID   pulid.ID        `json:"otherProviderId"   bun:"other_provider_id,type:VARCHAR(100),nullzero" keel:"other_provider_id,nullzero"`
+	ToolName          string          `json:"toolName"          bun:"tool_name,type:VARCHAR(100),nullzero" keel:"tool_name,nullzero"`
+	Task              aiprovider.Task `json:"task"              bun:"task,type:VARCHAR(100),nullzero" keel:"task,nullzero"`
+	Evidence          Evidence        `json:"evidence"          bun:"evidence,type:JSONB,notnull,default:'{}'" keel:"evidence,jsonb"`
 
-	Status         Status   `json:"status"         bun:"status,type:VARCHAR(20),notnull"`
-	DismissedUntil *int64   `json:"dismissedUntil" bun:"dismissed_until,type:BIGINT,nullzero"`
-	DecidedByID    pulid.ID `json:"decidedById"    bun:"decided_by_id,type:VARCHAR(100),nullzero"`
-	DecidedAt      *int64   `json:"decidedAt"      bun:"decided_at,type:BIGINT,nullzero"`
-	ComputedAt     int64    `json:"computedAt"     bun:"computed_at,type:BIGINT,notnull"`
+	Status         Status   `json:"status"         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	DismissedUntil *int64   `json:"dismissedUntil" bun:"dismissed_until,type:BIGINT,nullzero" keel:"dismissed_until"`
+	DecidedByID    pulid.ID `json:"decidedById"    bun:"decided_by_id,type:VARCHAR(100),nullzero" keel:"decided_by_id,nullzero"`
+	DecidedAt      *int64   `json:"decidedAt"      bun:"decided_at,type:BIGINT,nullzero" keel:"decided_at"`
+	ComputedAt     int64    `json:"computedAt"     bun:"computed_at,type:BIGINT,notnull" keel:"computed_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (t *TuneUp) BeforeAppendModel(_ context.Context, query bun.Query) error {

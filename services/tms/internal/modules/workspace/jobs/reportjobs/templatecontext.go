@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/reportfmt"
 	"github.com/emoss08/trenova/shared/fileutils"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -44,7 +43,13 @@ func (a *Activities) deliveryEmailContext(
 	run, schedule := content.run, content.schedule
 	loc := timezoneOrUTC(schedule.Timezone)
 
-	digest, err := digestContext(ctx, content.digest, loc, run.RowCount)
+	digest, err := digestContext(
+		ctx,
+		content.digest,
+		loc,
+		i18n.FromContext(ctx).String(),
+		run.RowCount,
+	)
 	if err != nil {
 		return documenttemplate.ReportDeliveryEmailContext{}, err
 	}
@@ -101,95 +106,6 @@ func (a *Activities) attachmentNote(content *deliveryEmailContent) string {
 		return "The report file is available from the run history in Trenova."
 	}
 }
-
-// digestContext renders the sampled rows into the template's shape.
-//
-// Every cell goes through its column's own display contract, so a currency, a
-// duration, a banded range, and a conditional-format tone read exactly as they do
-// in the grid and the exports. The tone travels as a name rather than a colour:
-// what a tone *means* is the report definition's decision, and how it looks
-// belongs to whoever is editing the template.
-func digestContext(
-	ctx context.Context,
-	digest *reportports.ReportDigest,
-	loc *time.Location,
-	rowCount int64,
-) (documenttemplate.ReportDigest, error) {
-	if digest.IsEmpty() || len(digest.Rows) == 0 {
-		return documenttemplate.ReportDigest{}, nil
-	}
-
-	columns := make([]reportfmt.Column, len(digest.Columns))
-	for i := range digest.Columns {
-		columns[i] = reportfmt.Column{
-			Display: &digest.Columns[i].Display,
-			Type:    digest.Columns[i].Type,
-		}
-	}
-	batch := reportfmt.NewBatch(columns, loc)
-	for _, row := range digest.Rows {
-		batch.Add(row)
-	}
-	hasTotals := len(digest.Totals) > 0
-	if hasTotals {
-		batch.Add(digest.Totals)
-	}
-	formatted, err := batch.Format(ctx)
-	if err != nil {
-		return documenttemplate.ReportDigest{}, err
-	}
-
-	out := documenttemplate.ReportDigest{
-		Headers: make([]string, 0, len(digest.Columns)),
-		Rows:    make([]documenttemplate.ReportRow, 0, len(digest.Rows)),
-		Note:    digestNote(digest, rowCount),
-	}
-
-	for i := range digest.Columns {
-		out.Headers = append(out.Headers, digest.Columns[i].Label)
-	}
-
-	for i := range digest.Rows {
-		out.Rows = append(out.Rows, documenttemplate.ReportRow{
-			Cells: digestCells(formatted[i].Cells),
-		})
-	}
-
-	if hasTotals {
-		out.Totals = digestTotals(digest, formatted[len(digest.Rows)].Cells)
-	}
-
-	return out, nil
-}
-
-func digestCells(formatted []reportfmt.Cell) []documenttemplate.ReportCell {
-	cells := make([]documenttemplate.ReportCell, 0, len(formatted))
-	for _, cell := range formatted {
-		cells = append(cells, documenttemplate.ReportCell{
-			Text: cell.Text,
-			Tone: string(cell.Tone),
-		})
-	}
-
-	return cells
-}
-
-// digestTotals labels the leading dimension, which has no total of its own. A
-// blank first cell reads as a missing number rather than as a row label.
-func digestTotals(digest *reportports.ReportDigest, formatted []reportfmt.Cell) []string {
-	totals := make([]string, 0, len(formatted))
-	for i, cell := range formatted {
-		text := cell.Text
-		if i == 0 && (len(digest.Totals) == 0 || digest.Totals[0] == nil) {
-			text = digestTotalsLabel
-		}
-		totals = append(totals, text)
-	}
-
-	return totals
-}
-
-const digestTotalsLabel = "Total"
 
 // notificationWording is a rendered notification: a title and a message.
 type notificationWording struct {

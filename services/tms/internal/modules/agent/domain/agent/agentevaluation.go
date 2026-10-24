@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -139,50 +140,51 @@ type ReplayAction struct {
 // improvement, one it drops that a person approved is a regression.
 type Evaluation struct {
 	bun.BaseModel `bun:"table:agent_evaluations,alias:aeval" json:"-"`
+	keel.Table    `keel:"agent_evaluations"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aeval_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull"`
-	SourceRunID       pulid.ID         `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),nullzero"`
-	EvalCaseID        *pulid.ID        `json:"evalCaseId"        bun:"eval_case_id,type:VARCHAR(100),nullzero"`
-	Status            EvaluationStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
-	Trigger           RunTrigger       `json:"trigger"           bun:"trigger,type:VARCHAR(20),notnull"`
-	SubjectType       SubjectType      `json:"subjectType"       bun:"subject_type,type:VARCHAR(50),nullzero"`
-	SubjectID         pulid.ID         `json:"subjectId"         bun:"subject_id,type:VARCHAR(100),nullzero"`
+	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
+	SourceRunID       pulid.ID         `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),nullzero" keel:"source_run_id,nullzero"`
+	EvalCaseID        *pulid.ID        `json:"evalCaseId"        bun:"eval_case_id,type:VARCHAR(100),nullzero" keel:"eval_case_id"`
+	Status            EvaluationStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Pending'" keel:"status"`
+	Trigger           RunTrigger       `json:"trigger"           bun:"trigger,type:VARCHAR(20),notnull" keel:"trigger"`
+	SubjectType       SubjectType      `json:"subjectType"       bun:"subject_type,type:VARCHAR(50),nullzero" keel:"subject_type,nullzero"`
+	SubjectID         pulid.ID         `json:"subjectId"         bun:"subject_id,type:VARCHAR(100),nullzero" keel:"subject_id,nullzero"`
 
-	Input             string   `json:"input"             bun:"input,type:TEXT,nullzero"`
-	DefinitionVersion int64    `json:"definitionVersion" bun:"definition_version,type:BIGINT,notnull"`
-	PromptVersion     string   `json:"promptVersion"     bun:"prompt_version,type:VARCHAR(100),nullzero"`
-	Model             string   `json:"model"             bun:"model,type:VARCHAR(255),nullzero"`
-	ProviderID        pulid.ID `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero"`
-	Reply             string   `json:"reply"             bun:"reply,type:TEXT,nullzero"`
+	Input             string   `json:"input"             bun:"input,type:TEXT,nullzero" keel:"input,nullzero"`
+	DefinitionVersion int64    `json:"definitionVersion" bun:"definition_version,type:BIGINT,notnull" keel:"definition_version"`
+	PromptVersion     string   `json:"promptVersion"     bun:"prompt_version,type:VARCHAR(100),nullzero" keel:"prompt_version,nullzero"`
+	Model             string   `json:"model"             bun:"model,type:VARCHAR(255),nullzero" keel:"model,nullzero"`
+	ProviderID        pulid.ID `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id,nullzero"`
+	Reply             string   `json:"reply"             bun:"reply,type:TEXT,nullzero" keel:"reply,nullzero"`
 
-	Actions           []ReplayAction    `json:"actions"           bun:"actions,type:JSONB,notnull,default:'[]'"`
-	Comparison        *ReplayComparison `json:"comparison"        bun:"comparison,type:JSONB,nullzero"`
-	OriginalProposals int               `json:"originalProposals" bun:"original_proposals,type:INTEGER,notnull"`
-	ToolCallsUsed     int               `json:"toolCallsUsed"     bun:"tool_calls_used,type:INTEGER,notnull"`
+	Actions           []ReplayAction    `json:"actions"           bun:"actions,type:JSONB,notnull,default:'[]'" keel:"actions,jsonb"`
+	Comparison        *ReplayComparison `json:"comparison"        bun:"comparison,type:JSONB,nullzero" keel:"comparison,jsonb"`
+	OriginalProposals int               `json:"originalProposals" bun:"original_proposals,type:INTEGER,notnull" keel:"original_proposals"`
+	ToolCallsUsed     int               `json:"toolCallsUsed"     bun:"tool_calls_used,type:INTEGER,notnull" keel:"tool_calls_used"`
 
-	Checks      *CaseChecks   `json:"checks"      bun:"checks,type:JSONB,nullzero"`
-	Judge       *JudgeVerdict `json:"judge"       bun:"judge,type:JSONB,nullzero"`
-	CaseScore   *float64      `json:"caseScore"   bun:"case_score,type:DOUBLE PRECISION,nullzero"`
-	Fingerprint *Fingerprint  `json:"fingerprint" bun:"fingerprint,type:JSONB,nullzero"`
+	Checks      *CaseChecks   `json:"checks"      bun:"checks,type:JSONB,nullzero" keel:"checks,jsonb"`
+	Judge       *JudgeVerdict `json:"judge"       bun:"judge,type:JSONB,nullzero" keel:"judge,jsonb"`
+	CaseScore   *float64      `json:"caseScore"   bun:"case_score,type:DOUBLE PRECISION,nullzero" keel:"case_score"`
+	Fingerprint *Fingerprint  `json:"fingerprint" bun:"fingerprint,type:JSONB,nullzero" keel:"fingerprint,jsonb"`
 
-	SuiteRunID   *pulid.ID `json:"suiteRunId"   bun:"suite_run_id,type:VARCHAR(100),nullzero"`
-	SuiteOrdinal *int      `json:"suiteOrdinal" bun:"suite_ordinal,type:INTEGER,nullzero"`
+	SuiteRunID   *pulid.ID `json:"suiteRunId"   bun:"suite_run_id,type:VARCHAR(100),nullzero" keel:"suite_run_id"`
+	SuiteOrdinal *int      `json:"suiteOrdinal" bun:"suite_ordinal,type:INTEGER,nullzero" keel:"suite_ordinal"`
 
-	WorkflowID        string    `json:"workflowId"        bun:"workflow_id,type:VARCHAR(255),nullzero"`
-	ErrorMessage      string    `json:"errorMessage"      bun:"error_message,type:TEXT,nullzero"`
-	RequestedByUserID *pulid.ID `json:"requestedByUserId" bun:"requested_by_user_id,type:VARCHAR(100),nullzero"`
-	StartedAt         *int64    `json:"startedAt"         bun:"started_at,type:BIGINT,nullzero"`
-	CompletedAt       *int64    `json:"completedAt"       bun:"completed_at,type:BIGINT,nullzero"`
+	WorkflowID        string    `json:"workflowId"        bun:"workflow_id,type:VARCHAR(255),nullzero" keel:"workflow_id,nullzero"`
+	ErrorMessage      string    `json:"errorMessage"      bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
+	RequestedByUserID *pulid.ID `json:"requestedByUserId" bun:"requested_by_user_id,type:VARCHAR(100),nullzero" keel:"requested_by_user_id"`
+	StartedAt         *int64    `json:"startedAt"         bun:"started_at,type:BIGINT,nullzero" keel:"started_at"`
+	CompletedAt       *int64    `json:"completedAt"       bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

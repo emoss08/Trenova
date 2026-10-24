@@ -15,6 +15,13 @@ inputs:
       -race or with a different build tag produce different object files.
     required: false
     default: default
+  save-build-cache:
+    description: >-
+      Save the build cache when the job ends. actions/cache saves only after a
+      successful job, so a job that can fail with a cold cache (the lint job)
+      passes "false" and saves the cache itself with if: always().
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -52,7 +59,17 @@ runs:
           gomod-${{ runner.os }}-${{ inputs.go-version }}-
 
     - name: Cache Go build output
+      if: inputs.save-build-cache == 'true'
       uses: actions/cache@v4
+      with:
+        path: ${{ steps.paths.outputs.build }}
+        key: gobuild-${{ runner.os }}-${{ inputs.go-version }}-${{ inputs.cache-key }}-${{ github.sha }}
+        restore-keys: |
+          gobuild-${{ runner.os }}-${{ inputs.go-version }}-${{ inputs.cache-key }}-
+
+    - name: Restore Go build output
+      if: inputs.save-build-cache != 'true'
+      uses: actions/cache/restore@v4
       with:
         path: ${{ steps.paths.outputs.build }}
         key: gobuild-${{ runner.os }}-${{ inputs.go-version }}-${{ inputs.cache-key }}-${{ github.sha }}

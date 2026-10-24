@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/keel/analytics/export"
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -17,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/reportrows"
+	"github.com/emoss08/trenova/pkg/reportvalue"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -45,7 +47,8 @@ type reportRunner interface {
 	ReadRunRows(
 		ctx context.Context,
 		req *reporting.GetRunRequest,
-	) (*reportrows.Envelope, error)
+	) (*export.Envelope, error)
+	Catalog(ctx context.Context, req *reporting.Request) (*reporting.Catalog, error)
 }
 
 type reportParameterRow struct {
@@ -282,7 +285,7 @@ func toCatalogRow(entry *canned.Entry) reportCatalogRow {
 
 // parameterNames is what a listing says about parameters: that they exist
 // and what they are called. report_get carries the rest.
-func parameterNames(definition *report.Definition) []string {
+func parameterNames(definition *ir.Definition) []string {
 	rows := parameterRows(definition)
 	names := make([]string, 0, len(rows))
 	for _, row := range rows {
@@ -307,7 +310,7 @@ func toSavedRow(definition *report.ReportDefinition, actor pulid.ID) reportCatal
 	}
 }
 
-func parameterRows(definition *report.Definition) []reportParameterRow {
+func parameterRows(definition *ir.Definition) []reportParameterRow {
 	if definition == nil || len(definition.Parameters) == 0 {
 		return nil
 	}
@@ -319,11 +322,22 @@ func parameterRows(definition *report.Definition) []reportParameterRow {
 			Label:         parameter.Label,
 			Required:      parameter.Required,
 			Shape:         describeParameterShape(parameter),
-			AllowedValues: parameter.AllowedValues,
+			AllowedValues: allowedValueText(parameter.Allowed),
 		})
 	}
 
 	return rows
+}
+
+func allowedValueText(values []any) []string {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		out = append(out, fmt.Sprint(value))
+	}
+	return out
 }
 
 // reportRunStatus is what both report_run and report_get_run answer with, so a
@@ -612,7 +626,7 @@ func (t *runReportTool) authorizeExport(
 // question cannot offer a choice the report would then reject.
 func requireReportParameters(
 	name string,
-	definition *report.Definition,
+	definition *ir.Definition,
 	values map[string]any,
 ) error {
 	if definition == nil {
@@ -647,20 +661,20 @@ func requireReportParameters(
 }
 
 // describeMissingParameter names one parameter and what it will accept.
-func describeMissingParameter(parameter report.ParameterDef) string {
+func describeMissingParameter(parameter ir.Parameter) string {
 	label := parameter.Label
 	if label == "" {
 		label = parameter.Name
 	}
 
 	shape := describeParameterShape(parameter)
-	if len(parameter.AllowedValues) == 0 {
+	if len(parameter.Allowed) == 0 {
 		return fmt.Sprintf("%s (%s), %s", parameter.Name, label, shape)
 	}
 
 	return fmt.Sprintf(
 		"%s (%s), %s drawn from: %s",
-		parameter.Name, label, shape, strings.Join(parameter.AllowedValues, ", "),
+		parameter.Name, label, shape, strings.Join(allowedValueText(parameter.Allowed), ", "),
 	)
 }
 
@@ -767,16 +781,13 @@ func attachRunSample(
 		return
 	}
 
-	shape := newSampleShape(len(envelope.Schema), clockFor(params))
-	status.Columns = make([]previewColumnRow, 0, len(envelope.Schema))
-	for idx := range envelope.Schema {
-		column := &envelope.Schema[idx]
-		status.Columns = append(
-			status.Columns,
-			shape.add(column.ID, column.Label, column.Type, column.Format),
-		)
+	columns := envelope.Table.Columns
+	shape := newSampleShape(len(columns), clockFor(params))
+	status.Columns = make([]previewColumnRow, 0, len(columns))
+	for idx := range columns {
+		status.Columns = append(status.Columns, shape.add(&columns[idx]))
 	}
-	status.Rows = sampleRows(shape, envelope.Rows, maxRunSampleRows)
+	status.Rows = sampleRows(shape, reportvalue.TableRows(envelope.Table).Detail, maxRunSampleRows)
 
 	status.Note += sampleNote(len(status.Rows), run.RowCount)
 	if hasDated(shape.dated) {

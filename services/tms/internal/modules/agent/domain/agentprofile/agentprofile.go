@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -121,33 +122,34 @@ func (f Facts) Normalized() Facts {
 
 type Profile struct {
 	bun.BaseModel `bun:"table:agent_profiles,alias:aprf" json:"-"`
+	keel.Table    `keel:"agent_profiles"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aprf_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	Subject       Subject    `json:"subject"       bun:"subject,type:VARCHAR(20),notnull"`
-	UserID        *pulid.ID  `json:"userId"        bun:"user_id,type:VARCHAR(100),nullzero"`
-	Status        Status     `json:"status"        bun:"status,type:VARCHAR(20),notnull"`
-	Trigger       Trigger    `json:"trigger"       bun:"trigger,type:VARCHAR(20),notnull"`
-	RequestedByID *pulid.ID  `json:"requestedById" bun:"requested_by_id,type:VARCHAR(100),nullzero"`
-	Content       string     `json:"content"       bun:"content,type:TEXT,nullzero"`
-	Facts         Facts      `json:"facts"         bun:"facts,type:JSONB,notnull,default:'[]'"`
-	GuidanceIDs   []pulid.ID `json:"guidanceIds"   bun:"guidance_ids,type:JSONB,notnull,default:'[]'"`
-	Digest        string     `json:"digest"        bun:"digest,type:VARCHAR(64),notnull"`
+	Subject       Subject    `json:"subject"       bun:"subject,type:VARCHAR(20),notnull" keel:"subject"`
+	UserID        *pulid.ID  `json:"userId"        bun:"user_id,type:VARCHAR(100),nullzero" keel:"user_id"`
+	Status        Status     `json:"status"        bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	Trigger       Trigger    `json:"trigger"       bun:"trigger,type:VARCHAR(20),notnull" keel:"trigger"`
+	RequestedByID *pulid.ID  `json:"requestedById" bun:"requested_by_id,type:VARCHAR(100),nullzero" keel:"requested_by_id"`
+	Content       string     `json:"content"       bun:"content,type:TEXT,nullzero" keel:"content,nullzero"`
+	Facts         Facts      `json:"facts"         bun:"facts,type:JSONB,notnull,default:'[]'" keel:"facts,jsonb"`
+	GuidanceIDs   []pulid.ID `json:"guidanceIds"   bun:"guidance_ids,type:JSONB,notnull,default:'[]'" keel:"guidance_ids,jsonb"`
+	Digest        string     `json:"digest"        bun:"digest,type:VARCHAR(64),notnull" keel:"digest"`
 
-	Model        string   `json:"model"        bun:"model,type:VARCHAR(200),nullzero"`
-	ProviderID   pulid.ID `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
-	InputTokens  int      `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
-	OutputTokens int      `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
-	ErrorMessage string   `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
-	CheckedAt    int64    `json:"checkedAt"    bun:"checked_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Model        string   `json:"model"        bun:"model,type:VARCHAR(200),nullzero" keel:"model,nullzero"`
+	ProviderID   pulid.ID `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id,nullzero"`
+	InputTokens  int      `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0" keel:"input_tokens"`
+	OutputTokens int      `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0" keel:"output_tokens"`
+	ErrorMessage string   `json:"errorMessage" bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
+	CheckedAt    int64    `json:"checkedAt"    bun:"checked_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"checked_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

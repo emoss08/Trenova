@@ -1,17 +1,15 @@
 package agentquerytoolservice
 
 import (
-	"os"
-	"path/filepath"
 	"regexp"
 	"slices"
-	"sort"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +27,8 @@ var (
 	searchVectorDefinition = regexp.MustCompile(
 		`(?s)"?search_vector"?\s+tsvector\s+GENERATED\s+ALWAYS\s+AS\s*\(`)
 	migrationTable = regexp.MustCompile(
-		`(?i)(?:ALTER|CREATE)\s+TABLE\s+(?:IF\s+(?:NOT\s+)?EXISTS\s+)?(?:ONLY\s+)?"?([a-z_][a-z0-9_]*)"?`)
+		`(?i)(?:ALTER|CREATE)\s+TABLE\s+(?:IF\s+(?:NOT\s+)?EXISTS\s+)?(?:ONLY\s+)?"?([a-z_][a-z0-9_]*)"?`,
+	)
 	vectorColumn = regexp.MustCompile(
 		`(?i)(?:COALESCE|enum_to_text|array_to_string)\(\s*"?([a-z_][a-z0-9_]*)"?`)
 	vectorFunctions = []string{"coalesce", "enum_to_text", "array_to_string"}
@@ -40,17 +39,13 @@ var (
 func searchVectors(t *testing.T) map[string][]string {
 	t.Helper()
 
-	dir := filepath.Join("..", "..", "..", "..", "infrastructure", "postgres", "migrations")
-	files, err := filepath.Glob(filepath.Join(dir, "*.up.sql"))
+	ms, err := migrations.Set().Migrations()
 	require.NoError(t, err)
-	require.NotEmpty(t, files, "the migrations are read from %s", dir)
-	sort.Strings(files)
+	require.NotEmpty(t, ms, "the migrations are read from schema/migrations")
 
 	vectors := make(map[string][]string)
-	for _, file := range files {
-		raw, readErr := os.ReadFile(file)
-		require.NoError(t, readErr)
-		text := string(raw)
+	for _, m := range ms {
+		text := m.SQL
 		for _, loc := range searchVectorDefinition.FindAllStringIndex(text, -1) {
 			tables := migrationTable.FindAllStringSubmatch(text[:loc[0]], -1)
 			if len(tables) == 0 {

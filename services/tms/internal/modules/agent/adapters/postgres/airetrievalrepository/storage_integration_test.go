@@ -3,6 +3,7 @@
 package airetrievalrepository
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -10,13 +11,14 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/migrations"
+	"github.com/emoss08/trenova/internal/infrastructure/database/dbcli"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/pkg/pgvector"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -369,12 +371,16 @@ func TestEnableVector_InstallsTheSchemaAMigrationSkipped(t *testing.T) {
 	assert.Equal(t, airetrieval.UnavailableReasonSchemaMissing, availability.Reason)
 	assert.True(t, availability.ExtensionInstalled)
 
-	result, err := migrations.EnableVector(h.ctx, h.db)
+	vectorConn, err := pgx.Connect(h.ctx, h.dsn)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = vectorConn.Close(context.WithoutCancel(h.ctx)) })
+
+	result, err := dbcli.EnableVector(h.ctx, vectorConn)
 	require.NoError(t, err)
 	assert.Equal(t, pgvector.VectorSchemaMissing, result.Before.State)
 	assert.Equal(t, pgvector.VectorReady, result.After.State)
 
-	again, err := migrations.EnableVector(h.ctx, h.db)
+	again, err := dbcli.EnableVector(h.ctx, vectorConn)
 	require.NoError(t, err, "enabling twice is harmless")
 	assert.Equal(t, pgvector.VectorReady, again.Before.State)
 

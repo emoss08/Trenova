@@ -11,9 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
@@ -29,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -43,18 +39,6 @@ func productionSeedConfig() *config.Config {
 		App:    config.AppConfig{Env: config.EnvProduction},
 		System: config.SystemConfig{SystemUserPassword: integrationSystemPassword},
 	}
-}
-
-func runProductionSeeds(t *testing.T, ctx context.Context, db *bun.DB) {
-	t.Helper()
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(db, registry, productionSeedConfig())
-
-	report, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvProduction})
-	require.NoError(t, err)
-	require.True(t, report.Success())
 }
 
 func integrationBootstrapDeps(t *testing.T, conn *postgres.Connection, out *bytes.Buffer) bootstrapDeps {
@@ -116,8 +100,6 @@ func unusedPassword(t *testing.T) passwordSource {
 func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	defer cleanup()
-
-	runProductionSeeds(t, ctx, db)
 
 	userCount, err := db.NewSelect().Model((*tenant.User)(nil)).Count(ctx)
 	require.NoError(t, err)
@@ -209,14 +191,12 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), finalUsers)
 
-	runProductionSeeds(t, ctx, db)
 }
 
 func TestBootstrapRefusesADatabaseThatAlreadyHasUsers(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	defer cleanup()
 
-	runProductionSeeds(t, ctx, db)
 	conn := postgres.WrapDB(db)
 	var out bytes.Buffer
 	deps := integrationBootstrapDeps(t, conn, &out)
@@ -241,7 +221,6 @@ func TestBootstrapDryRunChangesNothing(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	defer cleanup()
 
-	runProductionSeeds(t, ctx, db)
 	conn := postgres.WrapDB(db)
 	var out bytes.Buffer
 	deps := integrationBootstrapDeps(t, conn, &out)

@@ -8,11 +8,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
-	"github.com/emoss08/trenova/pkg/seedhelpers"
+	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/require"
 )
+
+var parsingRuleExampleDataDir = filepath.Join("..", "..", "..", "..", "seeds", "fixtures", "data")
 
 type parsingRuleExampleSeedData struct {
 	RuleSet struct {
@@ -78,16 +81,19 @@ func TestSeededDocumentParsingRuleExampleMatchesFixture(t *testing.T) {
 func loadParsingRuleExampleSeedDataForTest(t *testing.T) *parsingRuleExampleSeedData {
 	t.Helper()
 
-	loader := seedhelpers.NewDataLoader("../../../../infrastructure/database/seeds/development/data")
+	raw, err := os.ReadFile(filepath.Join(parsingRuleExampleDataDir, "document_parsing_rule_example.yaml"))
+	require.NoError(t, err)
+	asJSON, err := yaml.YAMLToJSON(raw)
+	require.NoError(t, err)
 	data := new(parsingRuleExampleSeedData)
-	require.NoError(t, loader.LoadYAML("document_parsing_rule_example.yaml", data))
+	require.NoError(t, sonic.Unmarshal(asJSON, data))
 	return data
 }
 
 func loadParsingRuleExamplePagesForTest(t *testing.T) ([]documentparsingruleports.DocumentParsingPage, string) {
 	t.Helper()
 
-	raw, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "infrastructure", "database", "seeds", "development", "data", "document_parsing_rule_example_ch_robinson.txt"))
+	raw, err := os.ReadFile(filepath.Join(parsingRuleExampleDataDir, "document_parsing_rule_example_ch_robinson.txt"))
 	require.NoError(t, err)
 
 	pagePattern := regexp.MustCompile(`(?m)^--- PAGE (\d+) ---\n`)

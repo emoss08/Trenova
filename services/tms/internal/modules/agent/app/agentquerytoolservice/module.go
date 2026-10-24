@@ -155,11 +155,11 @@ func provideDescribeReportTool(reports *reporting.Service) agentports.AgentQuery
 }
 
 func provideListReportDatasetsTool(reports *reporting.Service) agentports.AgentQueryTool {
-	return newListReportDatasetsTool(reports.CatalogAccess())
+	return newListReportDatasetsTool(reports)
 }
 
 func provideDescribeReportDatasetTool(reports *reporting.Service) agentports.AgentQueryTool {
-	return newDescribeReportDatasetTool(reports.CatalogAccess())
+	return newDescribeReportDatasetTool(reports)
 }
 
 func providePreviewReportTool(reports *reporting.Service) agentports.AgentQueryTool {

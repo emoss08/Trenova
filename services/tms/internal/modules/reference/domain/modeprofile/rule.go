@@ -3,6 +3,7 @@ package modeprofile
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,25 +21,26 @@ var (
 
 type CapabilityRule struct {
 	bun.BaseModel `bun:"table:mode_profile_capability_rules,alias:mpr" json:"-"`
+	keel.Table    `keel:"mode_profile_capability_rules"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ModeProfileID  pulid.ID `json:"modeProfileId"  bun:"mode_profile_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:mpr_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ModeProfileID  pulid.ID `json:"modeProfileId"  bun:"mode_profile_id,type:VARCHAR(100),notnull" keel:"mode_profile_id"`
 
-	RuleKey     RuleKey                 `json:"ruleKey"     bun:"rule_key,type:VARCHAR(100),notnull"`
-	Capability  Capability              `json:"capability"  bun:"capability,type:VARCHAR(100),notnull"`
-	Enforcement tenant.EnforcementLevel `json:"enforcement" bun:"enforcement,type:enforcement_level_enum,notnull,default:'Block'"`
-	Enabled     bool                    `json:"enabled"     bun:"enabled,type:BOOLEAN,notnull"`
-	Parameters  map[string]any          `json:"parameters"  bun:"parameters,type:JSONB,nullzero"`
+	RuleKey     RuleKey                 `json:"ruleKey"     bun:"rule_key,type:VARCHAR(100),notnull" keel:"rule_key"`
+	Capability  Capability              `json:"capability"  bun:"capability,type:VARCHAR(100),notnull" keel:"capability"`
+	Enforcement tenant.EnforcementLevel `json:"enforcement" bun:"enforcement,type:enforcement_level_enum,notnull,default:'Block'" keel:"enforcement"`
+	Enabled     bool                    `json:"enabled"     bun:"enabled,type:BOOLEAN,notnull" keel:"enabled"`
+	Parameters  map[string]any          `json:"parameters"  bun:"parameters,type:JSONB,nullzero" keel:"parameters,jsonb,nullzero"`
 
-	OverrideReason string `json:"overrideReason" bun:"override_reason,type:TEXT,nullzero"`
+	OverrideReason string `json:"overrideReason" bun:"override_reason,type:TEXT,nullzero" keel:"override_reason,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Profile *Profile `json:"-" bun:"rel:belongs-to,join:mode_profile_id=id"`
+	Profile *Profile `json:"-" bun:"rel:belongs-to,join:mode_profile_id=id" keel:"belongs:mode_profile_id"`
 }
 
 func (r *CapabilityRule) GetID() pulid.ID { return r.ID }

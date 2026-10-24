@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -38,21 +39,22 @@ func TitleFrom(text string) string {
 // shared reading material.
 type Thread struct {
 	bun.BaseModel `bun:"table:assistant_threads,alias:athr" json:"-"`
+	keel.Table    `keel:"assistant_threads"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:athr_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	UserID            pulid.ID `json:"userId"            bun:"user_id,type:VARCHAR(100),notnull"`
-	AgentDefinitionID pulid.ID `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull"`
+	UserID            pulid.ID `json:"userId"            bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	AgentDefinitionID pulid.ID `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
 
-	Title  string       `json:"title"  bun:"title,type:VARCHAR(200),nullzero"`
-	Status ThreadStatus `json:"status" bun:"status,type:VARCHAR(50),notnull"`
+	Title  string       `json:"title"  bun:"title,type:VARCHAR(200),nullzero" keel:"title,nullzero"`
+	Status ThreadStatus `json:"status" bun:"status,type:VARCHAR(50),notnull" keel:"status"`
 
 	// LastMessageAt orders a user's thread list without a join onto messages.
-	LastMessageAt int64 `json:"lastMessageAt" bun:"last_message_at,notnull,default:0"`
+	LastMessageAt int64 `json:"lastMessageAt" bun:"last_message_at,notnull,default:0" keel:"last_message_at"`
 
-	LastReadAt int64            `json:"lastReadAt"          bun:"last_read_at,notnull,default:0"`
+	LastReadAt int64            `json:"lastReadAt"          bun:"last_read_at,notnull,default:0" keel:"last_read_at"`
 	Attention  *ThreadAttention `json:"attention,omitempty" bun:"-"`
 
 	// PreferredProviderID is the model the person chose for this conversation.
@@ -63,24 +65,24 @@ type Thread struct {
 	// to the rest if it fails, so a rate-limited free endpoint degrades into a
 	// slower answer rather than no answer. Each message records the provider
 	// that actually served it, which is how the reader sees the difference.
-	PreferredProviderID pulid.ID `json:"preferredProviderId" bun:"preferred_provider_id,type:VARCHAR(100),nullzero"`
+	PreferredProviderID pulid.ID `json:"preferredProviderId" bun:"preferred_provider_id,type:VARCHAR(100),nullzero" keel:"preferred_provider_id,nullzero"`
 
 	// Origin is where the conversation began; Pinned keeps it at the top of
 	// the Desk's rail. SubjectType and SubjectID name the record the
 	// conversation is about when it was opened from one, so every turn
 	// carries that record's context without the person restating it.
-	Origin      ThreadOrigin      `json:"origin"      bun:"origin,type:VARCHAR(20),notnull,default:'Panel'"`
-	Pinned      bool              `json:"pinned"      bun:"pinned,type:BOOLEAN,notnull,default:false"`
-	SubjectType agent.SubjectType `json:"subjectType" bun:"subject_type,type:VARCHAR(50),nullzero"`
-	SubjectID   pulid.ID          `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),nullzero"`
+	Origin      ThreadOrigin      `json:"origin"      bun:"origin,type:VARCHAR(20),notnull,default:'Panel'" keel:"origin"`
+	Pinned      bool              `json:"pinned"      bun:"pinned,type:BOOLEAN,notnull,default:false" keel:"pinned"`
+	SubjectType agent.SubjectType `json:"subjectType" bun:"subject_type,type:VARCHAR(50),nullzero" keel:"subject_type,nullzero"`
+	SubjectID   pulid.ID          `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),nullzero" keel:"subject_id,nullzero"`
 
 	// A conversation about a shipment, invoice or dispute is a case. The
 	// person can snooze it until a time, the next appointment or the ETA;
 	// Case is where it stands, worked out when the thread is served and
 	// never stored.
-	SnoozedUntil *int64                `json:"snoozedUntil,omitempty" bun:"snoozed_until,type:BIGINT,nullzero"`
-	SnoozeAnchor deskcase.SnoozeAnchor `json:"snoozeAnchor,omitempty" bun:"snooze_anchor,type:VARCHAR(20),nullzero"`
-	SnoozeStopID pulid.ID              `json:"-"                      bun:"snooze_stop_id,type:VARCHAR(100),nullzero"`
+	SnoozedUntil *int64                `json:"snoozedUntil,omitempty" bun:"snoozed_until,type:BIGINT,nullzero" keel:"snoozed_until"`
+	SnoozeAnchor deskcase.SnoozeAnchor `json:"snoozeAnchor,omitempty" bun:"snooze_anchor,type:VARCHAR(20),nullzero" keel:"snooze_anchor,nullzero"`
+	SnoozeStopID pulid.ID              `json:"-"                      bun:"snooze_stop_id,type:VARCHAR(100),nullzero" keel:"snooze_stop_id,nullzero"`
 	Case         *deskcase.Summary     `json:"case,omitempty"         bun:"-"`
 
 	// CanContinue is whether the person reading the conversation may still
@@ -97,9 +99,9 @@ type Thread struct {
 	// the whole conversation, in the order they pinned them. Every turn
 	// carries them in its system prompt rather than in the history, so
 	// trimming the history for length never drops one.
-	PinnedFacts []string `json:"pinnedFacts" bun:"pinned_facts,type:JSONB,nullzero"`
+	PinnedFacts []string `json:"pinnedFacts" bun:"pinned_facts,type:JSONB,nullzero" keel:"pinned_facts,jsonb,nullzero"`
 
-	WorkingSet []WorkingRecord `json:"workingSet,omitempty" bun:"working_set,type:JSONB,nullzero"`
+	WorkingSet []WorkingRecord `json:"workingSet,omitempty" bun:"working_set,type:JSONB,nullzero" keel:"working_set,jsonb,nullzero"`
 
 	// ContextUsage is how full the model's context window was after the
 	// conversation's last turn or compaction; nil before its first.
@@ -107,22 +109,22 @@ type Thread struct {
 	// crossing AutoCompactShare: the person turned it off, or cancelled a
 	// compaction that started on its own. Stored as the exception so every
 	// conversation, however it was made, starts with it on.
-	ContextUsage   *ContextUsage `json:"contextUsage,omitempty" bun:"context_usage,type:JSONB,nullzero"`
-	AutoCompactOff bool          `json:"autoCompactOff"         bun:"auto_compact_off,type:BOOLEAN,notnull,default:false"`
+	ContextUsage   *ContextUsage `json:"contextUsage,omitempty" bun:"context_usage,type:JSONB,nullzero" keel:"context_usage,jsonb"`
+	AutoCompactOff bool          `json:"autoCompactOff"         bun:"auto_compact_off,type:BOOLEAN,notnull,default:false" keel:"auto_compact_off"`
 	// HandedFromThreadID is the conversation this one was handed off from,
 	// empty for one a person started.
-	HandedFromThreadID pulid.ID `json:"handedFromThreadId,omitempty" bun:"handed_from_thread_id,type:VARCHAR(100),nullzero"`
+	HandedFromThreadID pulid.ID `json:"handedFromThreadId,omitempty" bun:"handed_from_thread_id,type:VARCHAR(100),nullzero" keel:"handed_from_thread_id,nullzero"`
 
-	Taint     *agent.RunTaint `json:"taint,omitempty"     bun:"taint,type:JSONB,nullzero"`
-	TaintedAt *int64          `json:"taintedAt,omitempty" bun:"tainted_at,type:BIGINT,nullzero"`
+	Taint     *agent.RunTaint `json:"taint,omitempty"     bun:"taint,type:JSONB,nullzero" keel:"taint,jsonb"`
+	TaintedAt *int64          `json:"taintedAt,omitempty" bun:"tainted_at,type:BIGINT,nullzero" keel:"tainted_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id"`
+	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
 }
 
 func (t *Thread) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -146,6 +148,10 @@ func (t *Thread) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (t *Thread) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (t *Thread) GetID() pulid.ID { return t.ID }

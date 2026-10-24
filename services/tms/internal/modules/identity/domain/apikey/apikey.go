@@ -3,6 +3,7 @@ package apikey
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,29 +15,30 @@ import (
 
 type Key struct {
 	bun.BaseModel `bun:"table:api_keys,alias:ak" json:"-"`
+	keel.Table    `keel:"api_keys"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID                pulid.ID `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),notnull"`
-	Name              string   `json:"name"              bun:"name,type:VARCHAR(255),notnull"`
-	Description       string   `json:"description"       bun:"description,type:TEXT,nullzero"`
-	KeyPrefix         string   `json:"keyPrefix"         bun:"key_prefix,type:VARCHAR(32),notnull"`
-	SecretHash        string   `json:"-"                 bun:"secret_hash,type:VARCHAR(128),notnull"`
-	SecretSalt        string   `json:"-"                 bun:"secret_salt,type:VARCHAR(64),notnull"`
-	Status            Status   `json:"status"            bun:"status,type:api_key_status_enum,notnull,default:'active'"`
-	ExpiresAt         int64    `json:"expiresAt"         bun:"expires_at,nullzero"`
-	LastUsedAt        int64    `json:"lastUsedAt"        bun:"last_used_at,nullzero"`
-	LastUsedIP        string   `json:"lastUsedIp"        bun:"last_used_ip,type:VARCHAR(45),nullzero"`
-	LastUsedUserAgent string   `json:"lastUsedUserAgent" bun:"last_used_user_agent,type:VARCHAR(255),nullzero"`
-	CreatedByID       pulid.ID `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),notnull"`
-	RevokedByID       pulid.ID `json:"revokedById"       bun:"revoked_by_id,type:VARCHAR(100),nullzero"`
-	RevokedAt         int64    `json:"revokedAt"         bun:"revoked_at,nullzero"`
-	CreatedAt         int64    `json:"createdAt"         bun:"created_at,notnull"`
-	UpdatedAt         int64    `json:"updatedAt"         bun:"updated_at,notnull"`
+	ID                pulid.ID `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ak_"`
+	BusinessUnitID    pulid.ID `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	OrganizationID    pulid.ID `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	Name              string   `json:"name"              bun:"name,type:VARCHAR(255),notnull" keel:"name"`
+	Description       string   `json:"description"       bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	KeyPrefix         string   `json:"keyPrefix"         bun:"key_prefix,type:VARCHAR(32),notnull" keel:"key_prefix"`
+	SecretHash        string   `json:"-"                 bun:"secret_hash,type:VARCHAR(128),notnull" keel:"secret_hash"`
+	SecretSalt        string   `json:"-"                 bun:"secret_salt,type:VARCHAR(64),notnull" keel:"secret_salt"`
+	Status            Status   `json:"status"            bun:"status,type:api_key_status_enum,notnull,default:'active'" keel:"status"`
+	ExpiresAt         int64    `json:"expiresAt"         bun:"expires_at,nullzero" keel:"expires_at,nullzero"`
+	LastUsedAt        int64    `json:"lastUsedAt"        bun:"last_used_at,nullzero" keel:"last_used_at,nullzero"`
+	LastUsedIP        string   `json:"lastUsedIp"        bun:"last_used_ip,type:VARCHAR(45),nullzero" keel:"last_used_ip,nullzero"`
+	LastUsedUserAgent string   `json:"lastUsedUserAgent" bun:"last_used_user_agent,type:VARCHAR(255),nullzero" keel:"last_used_user_agent,nullzero"`
+	CreatedByID       pulid.ID `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),notnull" keel:"created_by_id"`
+	RevokedByID       pulid.ID `json:"revokedById"       bun:"revoked_by_id,type:VARCHAR(100),nullzero" keel:"revoked_by_id,nullzero"`
+	RevokedAt         int64    `json:"revokedAt"         bun:"revoked_at,nullzero" keel:"revoked_at,nullzero"`
+	CreatedAt         int64    `json:"createdAt"         bun:"created_at,notnull" keel:"created_at,autocreate"`
+	UpdatedAt         int64    `json:"updatedAt"         bun:"updated_at,notnull" keel:"updated_at,autoupdate"`
 
-	Permissions []*Permission `json:"permissions" bun:"rel:has-many,join:id=api_key_id"`
+	Permissions []*Permission `json:"permissions" bun:"rel:has-many,join:id=api_key_id" keel:"many:api_key_id"`
 }
 
 func (k *Key) GetID() pulid.ID {

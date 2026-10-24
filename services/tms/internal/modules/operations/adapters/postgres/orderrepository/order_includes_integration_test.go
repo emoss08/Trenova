@@ -5,14 +5,11 @@ package orderrepository_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,16 +18,8 @@ import (
 )
 
 func TestGetByID_LoadsTheCustomerAndChargesWithoutTheShipments(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "integration-system-password"},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment, Force: true})
-	require.NoError(t, err)
 
 	var seeded struct {
 		OrderID        pulid.ID `bun:"-"`
@@ -45,7 +34,7 @@ func TestGetByID_LoadsTheCustomerAndChargesWithoutTheShipments(t *testing.T) {
 		ORDER BY sp.id
 		LIMIT 1`).Scan(ctx, &seeded))
 	seeded.OrderID = pulid.MustNew("ord_")
-	_, err = db.NewRaw(`
+	_, err := db.NewRaw(`
 		INSERT INTO orders (id, organization_id, business_unit_id, customer_id, order_number)
 		VALUES (?, ?, ?, ?, 'ORD-INCLUDES-1')`,
 		seeded.OrderID, seeded.OrganizationID, seeded.BusinessUnitID, seeded.CustomerID,

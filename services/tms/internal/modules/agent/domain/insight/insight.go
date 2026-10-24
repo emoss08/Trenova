@@ -14,6 +14,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -95,64 +96,65 @@ func (l Link) IsSafe() bool {
 
 type Insight struct {
 	bun.BaseModel `bun:"table:insights,alias:ins" json:"-"`
+	keel.Table    `keel:"insights"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:inst_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
 	// DetectorKey names the rule that produced this, and is the join back to the
 	// code that computed the numbers. It is stable across releases so a detector
 	// can be turned off without orphaning what it already found.
-	DetectorKey string   `json:"detectorKey" bun:"detector_key,type:VARCHAR(100),notnull"`
-	Category    Category `json:"category"    bun:"category,type:VARCHAR(50),notnull"`
-	Severity    Severity `json:"severity"    bun:"severity,type:VARCHAR(50),notnull"`
-	Status      Status   `json:"status"      bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
+	DetectorKey string   `json:"detectorKey" bun:"detector_key,type:VARCHAR(100),notnull" keel:"detector_key"`
+	Category    Category `json:"category"    bun:"category,type:VARCHAR(50),notnull" keel:"category"`
+	Severity    Severity `json:"severity"    bun:"severity,type:VARCHAR(50),notnull" keel:"severity"`
+	Status      Status   `json:"status"      bun:"status,type:VARCHAR(50),notnull,default:'Active'" keel:"status"`
 
 	// DedupeKey identifies the same finding across refreshes. Detention at one
 	// location is the same finding this week as last week with different numbers,
 	// and a person who dismissed it should not see it again tomorrow.
-	DedupeKey string `json:"dedupeKey" bun:"dedupe_key,type:VARCHAR(255),notnull"`
+	DedupeKey string `json:"dedupeKey" bun:"dedupe_key,type:VARCHAR(255),notnull" keel:"dedupe_key"`
 	// Subject is what the finding is about in the reader's language — a customer
 	// name, a location, a lane.
-	Subject string `json:"subject" bun:"subject,type:VARCHAR(255),nullzero"`
+	Subject string `json:"subject" bun:"subject,type:VARCHAR(255),nullzero" keel:"subject,nullzero"`
 
 	// Headline, Narrative and Recommendation are generated prose. Narrated says
 	// whether a model actually wrote them: when it is false these hold the
 	// detector's own deterministic wording, which is plainer but never wrong.
-	Headline       string `json:"headline"       bun:"headline,type:TEXT,notnull"`
-	Narrative      string `json:"narrative"      bun:"narrative,type:TEXT,nullzero"`
-	Recommendation string `json:"recommendation" bun:"recommendation,type:TEXT,nullzero"`
-	Narrated       bool   `json:"narrated"       bun:"narrated,type:BOOLEAN,notnull,default:false"`
+	Headline       string `json:"headline"       bun:"headline,type:TEXT,notnull" keel:"headline"`
+	Narrative      string `json:"narrative"      bun:"narrative,type:TEXT,nullzero" keel:"narrative,nullzero"`
+	Recommendation string `json:"recommendation" bun:"recommendation,type:TEXT,nullzero" keel:"recommendation,nullzero"`
+	Narrated       bool   `json:"narrated"       bun:"narrated,type:BOOLEAN,notnull,default:false" keel:"narrated"`
 
 	// Metrics and Links are the detector's output and are authoritative.
-	Metrics []Metric `json:"metrics" bun:"metrics,type:JSONB,notnull,default:'[]'"`
-	Links   []Link   `json:"links"   bun:"links,type:JSONB,notnull,default:'[]'"`
+	Metrics []Metric `json:"metrics" bun:"metrics,type:JSONB,notnull,default:'[]'" keel:"metrics,jsonb"`
+	Links   []Link   `json:"links"   bun:"links,type:JSONB,notnull,default:'[]'" keel:"links,jsonb"`
 
 	// WindowStart and WindowEnd are the period the numbers describe. Showing a
 	// figure without its window invites someone to read a month's total as a day's.
-	WindowStart int64 `json:"windowStart" bun:"window_start,type:BIGINT,notnull,default:0"`
-	WindowEnd   int64 `json:"windowEnd"   bun:"window_end,type:BIGINT,notnull"`
-	DetectedAt  int64 `json:"detectedAt"  bun:"detected_at,type:BIGINT,notnull"`
+	WindowStart int64 `json:"windowStart" bun:"window_start,type:BIGINT,notnull,default:0" keel:"window_start"`
+	WindowEnd   int64 `json:"windowEnd"   bun:"window_end,type:BIGINT,notnull" keel:"window_end"`
+	DetectedAt  int64 `json:"detectedAt"  bun:"detected_at,type:BIGINT,notnull" keel:"detected_at"`
 	// StaleAt is when these numbers stop being worth trusting. The client says so
 	// rather than hiding the insight, because a stale finding is still evidence
 	// that something was wrong.
-	StaleAt int64 `json:"staleAt" bun:"stale_at,type:BIGINT,notnull"`
+	StaleAt int64 `json:"staleAt" bun:"stale_at,type:BIGINT,notnull" keel:"stale_at"`
 
-	DismissedAt   *int64   `json:"dismissedAt"   bun:"dismissed_at,type:BIGINT,nullzero"`
-	DismissedByID pulid.ID `json:"dismissedById" bun:"dismissed_by_id,type:VARCHAR(100),nullzero"`
-	DismissReason string   `json:"dismissReason" bun:"dismiss_reason,type:TEXT,nullzero"`
+	DismissedAt   *int64   `json:"dismissedAt"   bun:"dismissed_at,type:BIGINT,nullzero" keel:"dismissed_at"`
+	DismissedByID pulid.ID `json:"dismissedById" bun:"dismissed_by_id,type:VARCHAR(100),nullzero" keel:"dismissed_by_id,nullzero"`
+	DismissReason string   `json:"dismissReason" bun:"dismiss_reason,type:TEXT,nullzero" keel:"dismiss_reason,nullzero"`
 
 	// ModelIdentifier and ProviderID attribute the prose. They are empty on an
 	// insight that was never narrated, which is exactly the signal that its
 	// wording came from the detector.
-	ModelIdentifier string   `json:"modelIdentifier" bun:"model_identifier,type:VARCHAR(255),nullzero"`
-	ProviderID      pulid.ID `json:"providerId"      bun:"provider_id,type:VARCHAR(100),nullzero"`
+	ModelIdentifier string   `json:"modelIdentifier" bun:"model_identifier,type:VARCHAR(255),nullzero" keel:"model_identifier,nullzero"`
+	ProviderID      pulid.ID `json:"providerId"      bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
@@ -330,4 +332,8 @@ func (i *Insight) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (i *Insight) BeforeCreate(ctx context.Context) error {
+	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

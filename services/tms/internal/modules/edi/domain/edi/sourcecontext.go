@@ -3,6 +3,7 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,23 +14,24 @@ import (
 
 type EDISourceContextSchema struct {
 	bun.BaseModel `json:"-" bun:"table:edi_source_context_schemas,alias:escs"`
+	keel.Table    `keel:"edi_source_context_schemas"`
 
-	ID             pulid.ID                 `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID                 `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),nullzero"`
-	OrganizationID pulid.ID                 `json:"organizationId" bun:"organization_id,type:VARCHAR(100),nullzero"`
-	Standard       EDIStandard              `json:"standard"       bun:"standard,type:edi_standard_enum,notnull"`
-	TransactionSet TransactionSet           `json:"transactionSet" bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
-	Direction      DocumentDirection        `json:"direction"      bun:"direction,type:edi_document_direction_enum,notnull"`
-	X12Version     string                   `json:"x12Version"     bun:"x12_version,type:VARCHAR(20),notnull"`
-	ContextKey     string                   `json:"contextKey"     bun:"context_key,type:VARCHAR(100),notnull"`
-	SchemaVersion  int64                    `json:"schemaVersion"  bun:"schema_version,type:BIGINT,notnull"`
-	Name           string                   `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
-	Description    string                   `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Status         SourceContextFieldStatus `json:"status"         bun:"status,type:edi_source_context_field_status_enum,notnull"`
-	CreatedAt      int64                    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64                    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID                 `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edisc_"`
+	BusinessUnitID pulid.ID                 `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),nullzero" keel:"business_unit_id,nullzero"`
+	OrganizationID pulid.ID                 `json:"organizationId" bun:"organization_id,type:VARCHAR(100),nullzero" keel:"organization_id,nullzero"`
+	Standard       EDIStandard              `json:"standard"       bun:"standard,type:edi_standard_enum,notnull" keel:"standard"`
+	TransactionSet TransactionSet           `json:"transactionSet" bun:"transaction_set,type:edi_transaction_set_enum,notnull" keel:"transaction_set"`
+	Direction      DocumentDirection        `json:"direction"      bun:"direction,type:edi_document_direction_enum,notnull" keel:"direction"`
+	X12Version     string                   `json:"x12Version"     bun:"x12_version,type:VARCHAR(20),notnull" keel:"x12_version"`
+	ContextKey     string                   `json:"contextKey"     bun:"context_key,type:VARCHAR(100),notnull" keel:"context_key"`
+	SchemaVersion  int64                    `json:"schemaVersion"  bun:"schema_version,type:BIGINT,notnull" keel:"schema_version"`
+	Name           string                   `json:"name"           bun:"name,type:VARCHAR(200),notnull" keel:"name"`
+	Description    string                   `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Status         SourceContextFieldStatus `json:"status"         bun:"status,type:edi_source_context_field_status_enum,notnull" keel:"status"`
+	CreatedAt      int64                    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64                    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Fields []*EDISourceContextField `json:"fields,omitempty" bun:"rel:has-many,join:id=schema_id"`
+	Fields []*EDISourceContextField `json:"fields,omitempty" bun:"rel:has-many,join:id=schema_id" keel:"many:schema_id"`
 }
 
 func (s *EDISourceContextSchema) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -48,22 +50,23 @@ func (s *EDISourceContextSchema) BeforeAppendModel(_ context.Context, query bun.
 
 type EDISourceContextField struct {
 	bun.BaseModel `json:"-" bun:"table:edi_source_context_fields,alias:escf"`
+	keel.Table    `keel:"edi_source_context_fields"`
 
-	ID          pulid.ID                 `json:"id"          bun:"id,pk,type:VARCHAR(100),notnull"`
-	SchemaID    pulid.ID                 `json:"schemaId"    bun:"schema_id,type:VARCHAR(100),notnull"`
-	Path        string                   `json:"path"        bun:"path,type:TEXT,notnull"`
-	SourceKind  SourceContextKind        `json:"sourceKind"  bun:"source_kind,type:edi_source_context_kind_enum,notnull"`
-	DataType    SourceContextDataType    `json:"dataType"    bun:"data_type,type:edi_source_context_data_type_enum,notnull"`
-	Repeated    bool                     `json:"repeated"    bun:"repeated,type:BOOLEAN,notnull"`
-	RepeatPath  string                   `json:"repeatPath"  bun:"repeat_path,type:TEXT,nullzero"`
-	ParentPath  string                   `json:"parentPath"  bun:"parent_path,type:TEXT,nullzero"`
-	DisplayName string                   `json:"displayName" bun:"display_name,type:VARCHAR(200),notnull"`
-	Description string                   `json:"description" bun:"description,type:TEXT,nullzero"`
-	Status      SourceContextFieldStatus `json:"status"      bun:"status,type:edi_source_context_field_status_enum,notnull"`
-	CreatedAt   int64                    `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt   int64                    `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID          pulid.ID                 `json:"id"          bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ediscf_"`
+	SchemaID    pulid.ID                 `json:"schemaId"    bun:"schema_id,type:VARCHAR(100),notnull" keel:"schema_id"`
+	Path        string                   `json:"path"        bun:"path,type:TEXT,notnull" keel:"path"`
+	SourceKind  SourceContextKind        `json:"sourceKind"  bun:"source_kind,type:edi_source_context_kind_enum,notnull" keel:"source_kind"`
+	DataType    SourceContextDataType    `json:"dataType"    bun:"data_type,type:edi_source_context_data_type_enum,notnull" keel:"data_type"`
+	Repeated    bool                     `json:"repeated"    bun:"repeated,type:BOOLEAN,notnull" keel:"repeated"`
+	RepeatPath  string                   `json:"repeatPath"  bun:"repeat_path,type:TEXT,nullzero" keel:"repeat_path,nullzero"`
+	ParentPath  string                   `json:"parentPath"  bun:"parent_path,type:TEXT,nullzero" keel:"parent_path,nullzero"`
+	DisplayName string                   `json:"displayName" bun:"display_name,type:VARCHAR(200),notnull" keel:"display_name"`
+	Description string                   `json:"description" bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Status      SourceContextFieldStatus `json:"status"      bun:"status,type:edi_source_context_field_status_enum,notnull" keel:"status"`
+	CreatedAt   int64                    `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt   int64                    `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Schema *EDISourceContextSchema `json:"schema,omitempty" bun:"rel:belongs-to,join:schema_id=id"`
+	Schema *EDISourceContextSchema `json:"schema,omitempty" bun:"rel:belongs-to,join:schema_id=id" keel:"belongs:schema_id"`
 }
 
 func (f *EDISourceContextField) BeforeAppendModel(_ context.Context, query bun.Query) error {

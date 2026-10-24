@@ -3,6 +3,7 @@ package conversation
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -112,37 +113,38 @@ func (s AssistantTurnStatus) Terminal() bool {
 // watching a connection that will never say anything again.
 type AssistantTurn struct {
 	bun.BaseModel `bun:"table:assistant_turns,alias:atrn" json:"-"`
+	keel.Table    `keel:"assistant_turns"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:atrn_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	ThreadID pulid.ID `json:"threadId" bun:"thread_id,type:VARCHAR(100),notnull"`
-	UserID   pulid.ID `json:"userId"   bun:"user_id,type:VARCHAR(100),notnull"`
+	ThreadID pulid.ID `json:"threadId" bun:"thread_id,type:VARCHAR(100),notnull" keel:"thread_id"`
+	UserID   pulid.ID `json:"userId"   bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
 	// RunID points at the agent run opened for this turn, which happens only
 	// when it proposed a change somebody has to decide on.
-	RunID pulid.ID `json:"runId" bun:"run_id,type:VARCHAR(100),nullzero"`
+	RunID pulid.ID `json:"runId" bun:"run_id,type:VARCHAR(100),nullzero" keel:"run_id,nullzero"`
 	// WorkflowID is the durable execution carrying the turn, empty until its
 	// start is recorded. ExecutionID answers for a turn either way.
-	WorkflowID string `json:"workflowId" bun:"workflow_id,type:VARCHAR(255),nullzero"`
+	WorkflowID string `json:"workflowId" bun:"workflow_id,type:VARCHAR(255),nullzero" keel:"workflow_id,nullzero"`
 
 	// Origin and Input say what the turn answers, so a reader who rejoins a
 	// reply already being written can show it under the right heading: the
 	// person's question, or the decision it follows up.
-	Origin AssistantTurnOrigin `json:"origin" bun:"origin,type:VARCHAR(30),notnull,default:'Person'"`
-	Input  string              `json:"input"  bun:"input,type:TEXT,nullzero"`
+	Origin AssistantTurnOrigin `json:"origin" bun:"origin,type:VARCHAR(30),notnull,default:'Person'" keel:"origin"`
+	Input  string              `json:"input"  bun:"input,type:TEXT,nullzero" keel:"input,nullzero"`
 
-	Status       AssistantTurnStatus `json:"status"       bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
-	ErrorMessage string              `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
-	StartedAt    int64               `json:"startedAt"    bun:"started_at,type:BIGINT,nullzero"`
-	CompletedAt  *int64              `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero"`
-	Fingerprint  *agent.Fingerprint  `json:"fingerprint"  bun:"fingerprint,type:JSONB,nullzero"`
+	Status       AssistantTurnStatus `json:"status"       bun:"status,type:VARCHAR(20),notnull,default:'Pending'" keel:"status"`
+	ErrorMessage string              `json:"errorMessage" bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
+	StartedAt    int64               `json:"startedAt"    bun:"started_at,type:BIGINT,nullzero" keel:"started_at,nullzero"`
+	CompletedAt  *int64              `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
+	Fingerprint  *agent.Fingerprint  `json:"fingerprint"  bun:"fingerprint,type:JSONB,nullzero" keel:"fingerprint,jsonb"`
 	// TraceID is the turn's trace.
-	TraceID string `json:"traceId" bun:"trace_id,type:VARCHAR(32),nullzero"`
+	TraceID string `json:"traceId" bun:"trace_id,type:VARCHAR(32),nullzero" keel:"trace_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

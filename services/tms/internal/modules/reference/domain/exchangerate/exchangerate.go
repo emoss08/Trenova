@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -34,22 +35,23 @@ const (
 
 type ExchangeRate struct {
 	bun.BaseModel `bun:"table:exchange_rates,alias:er" json:"-"`
+	keel.Table    `keel:"exchange_rates"`
 
-	ID                 pulid.ID        `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID     pulid.ID        `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID     pulid.ID        `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Provider           Provider        `json:"provider"           bun:"provider,type:VARCHAR(32),notnull"`
-	FromCurrency       string          `json:"fromCurrency"       bun:"from_currency,type:VARCHAR(3),notnull"`
-	ToCurrency         string          `json:"toCurrency"         bun:"to_currency,type:VARCHAR(3),notnull"`
-	RateType           RateType        `json:"rateType"           bun:"rate_type,type:VARCHAR(16),notnull"`
-	Bid                decimal.Decimal `json:"bid"                bun:"bid,type:NUMERIC(24,12),notnull"`
-	Ask                decimal.Decimal `json:"ask"                bun:"ask,type:NUMERIC(24,12),notnull"`
-	Mid                decimal.Decimal `json:"mid"                bun:"mid,type:NUMERIC(24,12),notnull"`
-	SelectedRate       decimal.Decimal `json:"selectedRate"       bun:"selected_rate,type:NUMERIC(24,12),notnull"`
-	Date               string          `json:"date"               bun:"date,type:DATE,notnull"`
-	SourceTimestamp    time.Time       `json:"sourceTimestamp"    bun:"source_timestamp,type:TIMESTAMPTZ,notnull"`
-	FetchedAt          time.Time       `json:"fetchedAt"          bun:"fetched_at,type:TIMESTAMPTZ,notnull,default:current_timestamp"`
-	SettlementEligible bool            `json:"settlementEligible" bun:"settlement_eligible,type:BOOLEAN,notnull"`
+	ID                 pulid.ID        `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:fxr_"`
+	BusinessUnitID     pulid.ID        `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID        `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	Provider           Provider        `json:"provider"           bun:"provider,type:VARCHAR(32),notnull" keel:"provider"`
+	FromCurrency       string          `json:"fromCurrency"       bun:"from_currency,type:VARCHAR(3),notnull" keel:"from_currency"`
+	ToCurrency         string          `json:"toCurrency"         bun:"to_currency,type:VARCHAR(3),notnull" keel:"to_currency"`
+	RateType           RateType        `json:"rateType"           bun:"rate_type,type:VARCHAR(16),notnull" keel:"rate_type"`
+	Bid                decimal.Decimal `json:"bid"                bun:"bid,type:NUMERIC(24,12),notnull" keel:"bid"`
+	Ask                decimal.Decimal `json:"ask"                bun:"ask,type:NUMERIC(24,12),notnull" keel:"ask"`
+	Mid                decimal.Decimal `json:"mid"                bun:"mid,type:NUMERIC(24,12),notnull" keel:"mid"`
+	SelectedRate       decimal.Decimal `json:"selectedRate"       bun:"selected_rate,type:NUMERIC(24,12),notnull" keel:"selected_rate"`
+	Date               string          `json:"date"               bun:"date,type:DATE,notnull" keel:"date"`
+	SourceTimestamp    time.Time       `json:"sourceTimestamp"    bun:"source_timestamp,type:TIMESTAMPTZ,notnull" keel:"source_timestamp"`
+	FetchedAt          time.Time       `json:"fetchedAt"          bun:"fetched_at,type:TIMESTAMPTZ,notnull,default:current_timestamp" keel:"fetched_at"`
+	SettlementEligible bool            `json:"settlementEligible" bun:"settlement_eligible,type:BOOLEAN,notnull" keel:"settlement_eligible"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
@@ -124,20 +126,21 @@ func (e *ExchangeRate) BeforeAppendModel(_ context.Context, query bun.Query) err
 
 type SettlementQuote struct {
 	bun.BaseModel `bun:"table:exchange_rate_settlement_quotes,alias:fxq" json:"-"`
+	keel.Table    `keel:"exchange_rate_settlement_quotes"`
 
-	ID              pulid.ID        `json:"id"              bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID  pulid.ID        `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID  pulid.ID        `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Provider        Provider        `json:"provider"        bun:"provider,type:VARCHAR(32),notnull"`
-	FromCurrency    string          `json:"fromCurrency"    bun:"from_currency,type:VARCHAR(3),notnull"`
-	ToCurrency      string          `json:"toCurrency"      bun:"to_currency,type:VARCHAR(3),notnull"`
-	Amount          decimal.Decimal `json:"amount"          bun:"amount,type:NUMERIC(24,8),notnull"`
-	Rate            decimal.Decimal `json:"rate"            bun:"rate,type:NUMERIC(24,12),notnull"`
-	ConvertedAmount decimal.Decimal `json:"convertedAmount" bun:"converted_amount,type:NUMERIC(24,8),notnull"`
-	RateType        RateType        `json:"rateType"        bun:"rate_type,type:VARCHAR(16),notnull"`
-	SourceTimestamp time.Time       `json:"sourceTimestamp" bun:"source_timestamp,type:TIMESTAMPTZ,notnull"`
-	FetchedAt       time.Time       `json:"fetchedAt"       bun:"fetched_at,type:TIMESTAMPTZ,notnull,default:current_timestamp"`
-	ExpiresAt       time.Time       `json:"expiresAt"       bun:"expires_at,type:TIMESTAMPTZ,notnull"`
+	ID              pulid.ID        `json:"id"              bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:fxq_"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID        `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	Provider        Provider        `json:"provider"        bun:"provider,type:VARCHAR(32),notnull" keel:"provider"`
+	FromCurrency    string          `json:"fromCurrency"    bun:"from_currency,type:VARCHAR(3),notnull" keel:"from_currency"`
+	ToCurrency      string          `json:"toCurrency"      bun:"to_currency,type:VARCHAR(3),notnull" keel:"to_currency"`
+	Amount          decimal.Decimal `json:"amount"          bun:"amount,type:NUMERIC(24,8),notnull" keel:"amount"`
+	Rate            decimal.Decimal `json:"rate"            bun:"rate,type:NUMERIC(24,12),notnull" keel:"rate"`
+	ConvertedAmount decimal.Decimal `json:"convertedAmount" bun:"converted_amount,type:NUMERIC(24,8),notnull" keel:"converted_amount"`
+	RateType        RateType        `json:"rateType"        bun:"rate_type,type:VARCHAR(16),notnull" keel:"rate_type"`
+	SourceTimestamp time.Time       `json:"sourceTimestamp" bun:"source_timestamp,type:TIMESTAMPTZ,notnull" keel:"source_timestamp"`
+	FetchedAt       time.Time       `json:"fetchedAt"       bun:"fetched_at,type:TIMESTAMPTZ,notnull,default:current_timestamp" keel:"fetched_at"`
+	ExpiresAt       time.Time       `json:"expiresAt"       bun:"expires_at,type:TIMESTAMPTZ,notnull" keel:"expires_at"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`

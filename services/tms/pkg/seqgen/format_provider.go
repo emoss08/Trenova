@@ -53,25 +53,5 @@ func (p *formatProvider) GetFormat(
 		return nil, fmt.Errorf("find sequence config: %w", err)
 	}
 
-	format := &tenant.SequenceFormat{
-		Type:                    cfg.SequenceType,
-		Prefix:                  cfg.Prefix,
-		IncludeYear:             cfg.IncludeYear,
-		YearDigits:              int(cfg.YearDigits),
-		IncludeMonth:            cfg.IncludeMonth,
-		IncludeWeekNumber:       cfg.IncludeWeekNumber,
-		IncludeDay:              cfg.IncludeDay,
-		SequenceDigits:          int(cfg.SequenceDigits),
-		IncludeLocationCode:     cfg.IncludeLocationCode,
-		IncludeRandomDigits:     cfg.IncludeRandomDigits,
-		RandomDigitsCount:       int(cfg.RandomDigitsCount),
-		IncludeCheckDigit:       cfg.IncludeCheckDigit,
-		IncludeBusinessUnitCode: cfg.IncludeBusinessUnitCode,
-		UseSeparators:           cfg.UseSeparators,
-		SeparatorChar:           cfg.SeparatorChar,
-		AllowCustomFormat:       cfg.AllowCustomFormat,
-		CustomFormat:            cfg.CustomFormat,
-	}
-
-	return format, nil
+	return cfg.Format(), nil
 }

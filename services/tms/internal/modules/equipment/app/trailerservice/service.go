@@ -30,7 +30,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -39,7 +38,7 @@ type Params struct {
 	fx.In
 
 	Logger                    *zap.Logger
-	DB                        kernelports.DBConnection
+	DB                        kernelports.Transactor
 	Repo                      trailerports.TrailerRepository
 	AssignmentRepo            shipmentports.AssignmentRepository
 	ContinuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
@@ -59,7 +58,7 @@ type Params struct {
 
 type Service struct {
 	l                         *zap.Logger
-	db                        kernelports.DBConnection
+	db                        kernelports.Transactor
 	repo                      trailerports.TrailerRepository
 	assignmentRepo            shipmentports.AssignmentRepository
 	continuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
@@ -428,7 +427,7 @@ func (s *Service) Locate( //nolint:gocognit // legacy workflow
 	}
 
 	var result *equipmentcontinuity.EquipmentContinuity
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		actorUserID := actor.AuditActor().UserID
 
 		plan, err := s.planLocate(txCtx, req, actorUserID)

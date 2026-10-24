@@ -10,15 +10,18 @@ import type {
  * shipments but not customers or workers, and holds the Personal field group
  * but not Margins.
  */
-export function field(overrides: Partial<ReportCatalogField> & { key: string }): ReportCatalogField {
+export function field(
+  overrides: Partial<ReportCatalogField> & { key: string },
+): ReportCatalogField {
   return {
     label: overrides.key,
     description: null,
     type: "string",
     format: null,
-    nullable: true,
+    measure: false,
     enumValues: [],
     aggregations: ["count"],
+    operators: ["eq", "ne", "is_null", "is_not_null"],
     filterable: true,
     groupable: true,
     access: "Available",
@@ -32,8 +35,9 @@ export function field(overrides: Partial<ReportCatalogField> & { key: string }):
 export function edge(overrides: Partial<ReportCatalogEdge> & { name: string; target: string }) {
   return {
     label: overrides.name,
-    cardinality: "one",
-    traversable: true,
+    description: null,
+    toMany: false,
+    pick: false,
     access: "Available",
     inReferenceView: true,
     needsReadOf: null,
@@ -101,4 +105,4 @@ export const customer = entity({
   ],
 });
 
-export const catalog: ReportCatalog = { version: "1", entities: [shipment, customer] };
+export const catalog: ReportCatalog = { version: "1", rules: {}, entities: [shipment, customer] };

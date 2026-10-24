@@ -151,15 +151,19 @@ private build.
 ## Server seams
 
 Cloud Go code is overlaid into `services/tms/internal/cloud/` plus one registration file per
-binary: `cmd/cli/edition_cloud.go`, `cmd/api/edition_cloud.go` and `cmd/worker/edition_cloud.go`,
-each calling `edition.Register(cloud.Edition())`. Each main registers its edition separately, so
+binary: `cmd/cli/edition_cloud.go`, `cmd/api/edition_cloud.go`, `cmd/worker/edition_cloud.go`,
+`cmd/db/edition_cloud.go` and `cmd/devdb/edition_cloud.go`, each calling
+`edition.Register(cloud.Edition())`. Each main registers its edition separately, so
 a binary without its file runs the self-hosted edition. The build must pass with and without the
 overlay, so **public code never imports `internal/cloud`**.
 
 An edition registers through `internal/bootstrap/edition`: fx options for every process
-(`Options`), the API (`APIOptions`) or the worker (`WorkerOptions`), Cobra commands, Postgres
-migration sets (run after the public ones) and configuration sections the loader decodes
-strictly on the edition's behalf. The public graph always provides the self-hosted
+(`Options`), the API (`APIOptions`) or the worker (`WorkerOptions`), Cobra commands, keel
+migration sources (`Migrations []migrate.Source`, each named other than `core`, merged with the
+public migrations into one version line; a version both hold is refused) and configuration
+sections the loader decodes strictly on the edition's behalf. Only `trenova-db` and
+`trenova-devdb` read `Migrations`: register the sources from the db binaries' files and leave them
+out of the server binaries' registration, so the API and worker link no migration. The public graph always provides the self-hosted
 implementation of every platform port (`PlanService`, `QuotaGuard`, `EntitlementProvider`,
 `BillingProvider`, `UsageProvider`, `EditionInfo`, `AITrainingHistoryService`); an edition swaps
 them with root-level `fx.Decorate`. Routes and middleware join through the

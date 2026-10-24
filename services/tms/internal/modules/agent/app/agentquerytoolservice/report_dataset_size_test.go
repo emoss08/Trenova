@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,10 +23,10 @@ had been told was incomplete.
 func TestDescribeReportDataset_EveryDatasetFitsInOneResult(t *testing.T) {
 	t.Parallel()
 
-	_, _, tools := reportingTools(t)
+	service, _, tools := reportingTools(t)
 
-	for i := range reportcatalog.Default.Entities {
-		key := reportcatalog.Default.Entities[i].Key
+	for _, entity := range service.kinds.Catalog().Entities() {
+		key := entity.Key
 		result, err := tools["report_get_dataset"].Query(
 			t.Context(),
 			testParams(map[string]any{

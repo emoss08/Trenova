@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -164,31 +165,32 @@ var (
 
 type TrainingCourse struct {
 	bun.BaseModel             `bun:"table:training_courses,alias:trnc" json:"-"`
+	keel.Table                `keel:"training_courses"`
 	pagination.CursorValueSet `bun:",embed"                            json:"-"`
 
-	ID                      pulid.ID            `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID          pulid.ID            `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID          pulid.ID            `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Code                    string              `json:"code"                    bun:"code,type:VARCHAR(50),notnull"`
-	Name                    string              `json:"name"                    bun:"name,type:VARCHAR(100),notnull"`
-	Description             string              `json:"description"             bun:"description,type:TEXT,nullzero"`
-	Category                TrainingCategory    `json:"category"                bun:"category,type:training_category_enum,notnull,default:'Other'"`
-	Status                  domaintypes.Status  `json:"status"                  bun:"status,type:status_enum,notnull,default:'Active'"`
-	Delivery                TrainingDelivery    `json:"delivery"                bun:"delivery,type:training_delivery_enum,notnull,default:'Online'"`
-	ContentURL              string              `json:"contentUrl"              bun:"content_url,type:VARCHAR(500),nullzero"`
-	DurationMinutes         int32               `json:"durationMinutes"         bun:"duration_minutes,type:INTEGER,notnull"`
-	PassingScore            decimal.NullDecimal `json:"passingScore"            bun:"passing_score,type:NUMERIC(5,2),nullzero"`
-	ValidityMonths          *int32              `json:"validityMonths"          bun:"validity_months,type:INTEGER,nullzero"`
-	RenewalWindowDays       int32               `json:"renewalWindowDays"       bun:"renewal_window_days,type:INTEGER,notnull,default:30"`
-	IsRequired              bool                `json:"isRequired"              bun:"is_required,type:BOOLEAN,notnull"`
-	RequiredForDriverTypes  []DriverType        `json:"requiredForDriverTypes"  bun:"required_for_driver_types,type:JSONB,notnull,default:'[]'"`
-	DueDaysAfterAssignment  int32               `json:"dueDaysAfterAssignment"  bun:"due_days_after_assignment,type:INTEGER,notnull,default:30"`
-	RequiresAcknowledgement bool                `json:"requiresAcknowledgement" bun:"requires_acknowledgement,type:BOOLEAN,notnull"`
-	SortOrder               int32               `json:"sortOrder"               bun:"sort_order,type:INTEGER,notnull"`
-	Version                 int64               `json:"version"                 bun:"version,type:BIGINT"`
-	CreatedAt               int64               `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt               int64               `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector            string              `json:"-"                       bun:"search_vector,type:TSVECTOR,scanonly"`
+	ID                      pulid.ID            `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:trnc_"`
+	BusinessUnitID          pulid.ID            `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID            `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Code                    string              `json:"code"                    bun:"code,type:VARCHAR(50),notnull" keel:"code"`
+	Name                    string              `json:"name"                    bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Description             string              `json:"description"             bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Category                TrainingCategory    `json:"category"                bun:"category,type:training_category_enum,notnull,default:'Other'" keel:"category"`
+	Status                  domaintypes.Status  `json:"status"                  bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
+	Delivery                TrainingDelivery    `json:"delivery"                bun:"delivery,type:training_delivery_enum,notnull,default:'Online'" keel:"delivery"`
+	ContentURL              string              `json:"contentUrl"              bun:"content_url,type:VARCHAR(500),nullzero" keel:"content_url,nullzero"`
+	DurationMinutes         int32               `json:"durationMinutes"         bun:"duration_minutes,type:INTEGER,notnull" keel:"duration_minutes"`
+	PassingScore            decimal.NullDecimal `json:"passingScore"            bun:"passing_score,type:NUMERIC(5,2),nullzero" keel:"passing_score"`
+	ValidityMonths          *int32              `json:"validityMonths"          bun:"validity_months,type:INTEGER,nullzero" keel:"validity_months"`
+	RenewalWindowDays       int32               `json:"renewalWindowDays"       bun:"renewal_window_days,type:INTEGER,notnull,default:30" keel:"renewal_window_days"`
+	IsRequired              bool                `json:"isRequired"              bun:"is_required,type:BOOLEAN,notnull" keel:"is_required"`
+	RequiredForDriverTypes  []DriverType        `json:"requiredForDriverTypes"  bun:"required_for_driver_types,type:JSONB,notnull,default:'[]'" keel:"required_for_driver_types,jsonb"`
+	DueDaysAfterAssignment  int32               `json:"dueDaysAfterAssignment"  bun:"due_days_after_assignment,type:INTEGER,notnull,default:30" keel:"due_days_after_assignment"`
+	RequiresAcknowledgement bool                `json:"requiresAcknowledgement" bun:"requires_acknowledgement,type:BOOLEAN,notnull" keel:"requires_acknowledgement"`
+	SortOrder               int32               `json:"sortOrder"               bun:"sort_order,type:INTEGER,notnull" keel:"sort_order"`
+	Version                 int64               `json:"version"                 bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt               int64               `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt               int64               `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector            string              `json:"-"                       bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
 }
 
 func (c *TrainingCourse) Validate(multiErr *errortypes.MultiError) {
@@ -385,6 +387,10 @@ func (c *TrainingCourse) BeforeAppendModel(_ context.Context, query bun.Query) e
 	return nil
 }
 
+func (c *TrainingCourse) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 var (
 	_ bun.BeforeAppendModelHook          = (*WorkerTrainingRecord)(nil)
 	_ validationframework.TenantedEntity = (*WorkerTrainingRecord)(nil)
@@ -392,35 +398,36 @@ var (
 
 type WorkerTrainingRecord struct {
 	bun.BaseModel `bun:"table:worker_training_records,alias:wtrn" json:"-"`
+	keel.Table    `keel:"worker_training_records"`
 
-	ID             pulid.ID            `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID            `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
-	CourseID       pulid.ID            `json:"courseId"       bun:"course_id,type:VARCHAR(100),notnull"`
-	Status         TrainingStatus      `json:"status"         bun:"status,type:worker_training_status_enum,notnull,default:'Assigned'"`
-	AssignedAt     int64               `json:"assignedAt"     bun:"assigned_at,type:BIGINT,notnull"`
-	DueAt          *int64              `json:"dueAt"          bun:"due_at,type:BIGINT,nullzero"`
-	StartedAt      *int64              `json:"startedAt"      bun:"started_at,type:BIGINT,nullzero"`
-	CompletedAt    *int64              `json:"completedAt"    bun:"completed_at,type:BIGINT,nullzero"`
-	ExpiresAt      *int64              `json:"expiresAt"      bun:"expires_at,type:BIGINT,nullzero"`
-	Score          decimal.NullDecimal `json:"score"          bun:"score,type:NUMERIC(5,2),nullzero"`
-	Passed         *bool               `json:"passed"         bun:"passed,type:BOOLEAN,nullzero"`
-	AcknowledgedAt *int64              `json:"acknowledgedAt" bun:"acknowledged_at,type:BIGINT,nullzero"`
-	DocumentID     pulid.ID            `json:"documentId"     bun:"document_id,type:VARCHAR(100),nullzero"`
-	AssignedByID   pulid.ID            `json:"assignedById"   bun:"assigned_by_id,type:VARCHAR(100),nullzero"`
-	RecordedByID   pulid.ID            `json:"recordedById"   bun:"recorded_by_id,type:VARCHAR(100),nullzero"`
-	Notes          string              `json:"notes"          bun:"notes,type:TEXT,nullzero"`
-	WaivedReason   string              `json:"waivedReason"   bun:"waived_reason,type:VARCHAR(255),nullzero"`
-	Version        int64               `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID            `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wtrn_"`
+	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID            `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	CourseID       pulid.ID            `json:"courseId"       bun:"course_id,type:VARCHAR(100),notnull" keel:"course_id"`
+	Status         TrainingStatus      `json:"status"         bun:"status,type:worker_training_status_enum,notnull,default:'Assigned'" keel:"status"`
+	AssignedAt     int64               `json:"assignedAt"     bun:"assigned_at,type:BIGINT,notnull" keel:"assigned_at"`
+	DueAt          *int64              `json:"dueAt"          bun:"due_at,type:BIGINT,nullzero" keel:"due_at"`
+	StartedAt      *int64              `json:"startedAt"      bun:"started_at,type:BIGINT,nullzero" keel:"started_at"`
+	CompletedAt    *int64              `json:"completedAt"    bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
+	ExpiresAt      *int64              `json:"expiresAt"      bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at"`
+	Score          decimal.NullDecimal `json:"score"          bun:"score,type:NUMERIC(5,2),nullzero" keel:"score"`
+	Passed         *bool               `json:"passed"         bun:"passed,type:BOOLEAN,nullzero" keel:"passed"`
+	AcknowledgedAt *int64              `json:"acknowledgedAt" bun:"acknowledged_at,type:BIGINT,nullzero" keel:"acknowledged_at"`
+	DocumentID     pulid.ID            `json:"documentId"     bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id,nullzero"`
+	AssignedByID   pulid.ID            `json:"assignedById"   bun:"assigned_by_id,type:VARCHAR(100),nullzero" keel:"assigned_by_id,nullzero"`
+	RecordedByID   pulid.ID            `json:"recordedById"   bun:"recorded_by_id,type:VARCHAR(100),nullzero" keel:"recorded_by_id,nullzero"`
+	Notes          string              `json:"notes"          bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	WaivedReason   string              `json:"waivedReason"   bun:"waived_reason,type:VARCHAR(255),nullzero" keel:"waived_reason,nullzero"`
+	Version        int64               `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Course     *TrainingCourse    `json:"course,omitempty"     bun:"rel:belongs-to,join:course_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Worker     *Worker            `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document   *document.Document `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	AssignedBy *tenant.User       `json:"assignedBy,omitempty" bun:"rel:belongs-to,join:assigned_by_id=id"`
-	RecordedBy *tenant.User       `json:"recordedBy,omitempty" bun:"rel:belongs-to,join:recorded_by_id=id"`
+	Course     *TrainingCourse    `json:"course,omitempty"     bun:"rel:belongs-to,join:course_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:course_id"`
+	Worker     *Worker            `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Document   *document.Document `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
+	AssignedBy *tenant.User       `json:"assignedBy,omitempty" bun:"rel:belongs-to,join:assigned_by_id=id" keel:"belongs:assigned_by_id"`
+	RecordedBy *tenant.User       `json:"recordedBy,omitempty" bun:"rel:belongs-to,join:recorded_by_id=id" keel:"belongs:recorded_by_id"`
 }
 
 func (r *WorkerTrainingRecord) Validate(multiErr *errortypes.MultiError) {
@@ -573,4 +580,8 @@ func (r *WorkerTrainingRecord) BeforeAppendModel(_ context.Context, query bun.Qu
 	}
 
 	return nil
+}
+
+func (r *WorkerTrainingRecord) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

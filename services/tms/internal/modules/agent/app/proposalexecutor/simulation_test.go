@@ -11,12 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type fixedDefinition struct{ definition *agentdefinition.Definition }
@@ -160,18 +158,17 @@ func TestExecute_RunsWhenThereIsNoCapAndNoSimulation(t *testing.T) {
 }
 
 type recordingTxConnection struct {
-	dbtest.NopConnection
 	opts []kernelports.TxOptions
 }
 
-func (c *recordingTxConnection) WithTx(
+func (c *recordingTxConnection) Transact(
 	ctx context.Context,
 	opts kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	c.opts = append(c.opts, opts)
 
-	return fn(kernelports.WithReadOnly(ctx), bun.Tx{})
+	return fn(kernelports.WithReadOnly(ctx))
 }
 
 type snapshotPreviewTool struct {

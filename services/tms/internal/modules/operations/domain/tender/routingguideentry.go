@@ -3,6 +3,7 @@ package tender
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -24,31 +25,32 @@ var _ bun.BeforeAppendModelHook = (*RoutingGuideEntry)(nil)
 
 type RoutingGuideEntry struct {
 	bun.BaseModel `bun:"table:routing_guide_entries,alias:rge" json:"-"`
+	keel.Table    `keel:"routing_guide_entries"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	RoutingGuideID pulid.ID `json:"routingGuideId" bun:"routing_guide_id,type:VARCHAR(100),notnull"`
-	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:rge_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	RoutingGuideID pulid.ID `json:"routingGuideId" bun:"routing_guide_id,type:VARCHAR(100),notnull" keel:"routing_guide_id"`
+	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull" keel:"carrier_id"`
 
-	Rank       int16                      `json:"rank"       bun:"rank,type:SMALLINT,notnull"`
-	RateMethod shipment.CarrierRateMethod `json:"rateMethod" bun:"rate_method,type:VARCHAR(50),notnull,default:'Flat'"`
-	Rate       decimal.Decimal            `json:"rate"       bun:"rate,type:NUMERIC(19,4),notnull"`
+	Rank       int16                      `json:"rank"       bun:"rank,type:SMALLINT,notnull" keel:"rank"`
+	RateMethod shipment.CarrierRateMethod `json:"rateMethod" bun:"rate_method,type:VARCHAR(50),notnull,default:'Flat'" keel:"rate_method"`
+	Rate       decimal.Decimal            `json:"rate"       bun:"rate,type:NUMERIC(19,4),notnull" keel:"rate"`
 
 	// UseContractRate offers what the carrier's contract says today rather than
 	// the rate frozen on this entry. A guide written a year ago carries the
 	// number somebody typed a year ago; a contract carries the one that was
 	// negotiated. The rate above stays as the fallback for a lane no contract
 	// covers.
-	UseContractRate bool    `json:"useContractRate" bun:"use_contract_rate,type:BOOLEAN,notnull,default:false"`
-	OfferTTLSeconds int32   `json:"offerTtlSeconds" bun:"offer_ttl_seconds,type:INTEGER,notnull"`
-	Channel         Channel `json:"channel"         bun:"channel,type:VARCHAR(50),notnull,default:'Email'"`
-	Version         int64   `json:"version"         bun:"version,type:BIGINT"`
-	CreatedAt       int64   `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt       int64   `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UseContractRate bool    `json:"useContractRate" bun:"use_contract_rate,type:BOOLEAN,notnull,default:false" keel:"use_contract_rate"`
+	OfferTTLSeconds int32   `json:"offerTtlSeconds" bun:"offer_ttl_seconds,type:INTEGER,notnull" keel:"offer_ttl_seconds"`
+	Channel         Channel `json:"channel"         bun:"channel,type:VARCHAR(50),notnull,default:'Email'" keel:"channel"`
+	Version         int64   `json:"version"         bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt       int64   `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt       int64   `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	RoutingGuide *RoutingGuide    `json:"routingGuide,omitempty" bun:"rel:belongs-to,join:routing_guide_id=id"`
-	Carrier      *carrier.Carrier `json:"carrier,omitempty"      bun:"rel:belongs-to,join:carrier_id=id"`
+	RoutingGuide *RoutingGuide    `json:"routingGuide,omitempty" bun:"rel:belongs-to,join:routing_guide_id=id" keel:"belongs:routing_guide_id"`
+	Carrier      *carrier.Carrier `json:"carrier,omitempty"      bun:"rel:belongs-to,join:carrier_id=id" keel:"belongs:carrier_id"`
 }
 
 func (rge *RoutingGuideEntry) applyDefaults() {
@@ -128,4 +130,8 @@ func (rge *RoutingGuideEntry) BeforeAppendModel(_ context.Context, query bun.Que
 	}
 
 	return nil
+}
+
+func (rge *RoutingGuideEntry) BeforeCreate(ctx context.Context) error {
+	return rge.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

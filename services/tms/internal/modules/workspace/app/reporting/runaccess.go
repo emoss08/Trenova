@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
+
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -24,13 +26,11 @@ func (s *Service) authorizeStoredRun(
 		return err
 	}
 
-	_, err = s.compiler.Compile(ctx, &reportports.ReportCompileRequest{
-		Definition:  definition,
-		Tenant:      req.TenantInfo,
-		Principal:   req.Principal,
-		Params:      run.Params,
-		OrgTimezone: s.orgTimezone(ctx, req.TenantInfo),
-		NowUnix:     timeutils.NowUnix(),
+	err = s.Check(ctx, &PrepareParams{
+		Tenant:     req.TenantInfo,
+		Definition: definition,
+		Params:     run.Params,
+		Mode:       reportaccess.ModeExport,
 	})
 	if err == nil {
 		return nil
@@ -52,7 +52,7 @@ func (s *Service) storedRunDefinition(
 	ctx context.Context,
 	req *GetRunRequest,
 	run *report.ReportRun,
-) (*report.Definition, error) {
+) (*ir.Definition, error) {
 	switch {
 	case !run.RevisionID.IsNil():
 		revision, err := s.defRepo.GetRevision(ctx, &reportports.GetReportRevisionRequest{

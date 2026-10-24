@@ -42,7 +42,7 @@ func (_m *MockShipmentRepository) EXPECT() *MockShipmentRepository_Expecter {
 }
 
 // AutoCancelShipments provides a mock function for the type MockShipmentRepository
-func (_mock *MockShipmentRepository) AutoCancelShipments(ctx context.Context, req *shipmentports.AutoCancelShipmentsRequest, thresholdDays int8) ([]*shipment.Shipment, error) {
+func (_mock *MockShipmentRepository) AutoCancelShipments(ctx context.Context, req *shipmentports.AutoCancelShipmentsRequest, thresholdDays int16) ([]*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req, thresholdDays)
 
 	if len(ret) == 0 {
@@ -51,17 +51,17 @@ func (_mock *MockShipmentRepository) AutoCancelShipments(ctx context.Context, re
 
 	var r0 []*shipment.Shipment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentports.AutoCancelShipmentsRequest, int8) ([]*shipment.Shipment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentports.AutoCancelShipmentsRequest, int16) ([]*shipment.Shipment, error)); ok {
 		return returnFunc(ctx, req, thresholdDays)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentports.AutoCancelShipmentsRequest, int8) []*shipment.Shipment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentports.AutoCancelShipmentsRequest, int16) []*shipment.Shipment); ok {
 		r0 = returnFunc(ctx, req, thresholdDays)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*shipment.Shipment)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentports.AutoCancelShipmentsRequest, int8) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentports.AutoCancelShipmentsRequest, int16) error); ok {
 		r1 = returnFunc(ctx, req, thresholdDays)
 	} else {
 		r1 = ret.Error(1)
@@ -77,12 +77,12 @@ type MockShipmentRepository_AutoCancelShipments_Call struct {
 // AutoCancelShipments is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.AutoCancelShipmentsRequest
-//   - thresholdDays int8
+//   - thresholdDays int16
 func (_e *MockShipmentRepository_Expecter) AutoCancelShipments(ctx any, req any, thresholdDays any) *MockShipmentRepository_AutoCancelShipments_Call {
 	return &MockShipmentRepository_AutoCancelShipments_Call{Call: _e.mock.On("AutoCancelShipments", ctx, req, thresholdDays)}
 }
 
-func (_c *MockShipmentRepository_AutoCancelShipments_Call) Run(run func(ctx context.Context, req *shipmentports.AutoCancelShipmentsRequest, thresholdDays int8)) *MockShipmentRepository_AutoCancelShipments_Call {
+func (_c *MockShipmentRepository_AutoCancelShipments_Call) Run(run func(ctx context.Context, req *shipmentports.AutoCancelShipmentsRequest, thresholdDays int16)) *MockShipmentRepository_AutoCancelShipments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -92,9 +92,9 @@ func (_c *MockShipmentRepository_AutoCancelShipments_Call) Run(run func(ctx cont
 		if args[1] != nil {
 			arg1 = args[1].(*shipmentports.AutoCancelShipmentsRequest)
 		}
-		var arg2 int8
+		var arg2 int16
 		if args[2] != nil {
-			arg2 = args[2].(int8)
+			arg2 = args[2].(int16)
 		}
 		run(
 			arg0,
@@ -110,7 +110,7 @@ func (_c *MockShipmentRepository_AutoCancelShipments_Call) Return(shipments []*s
 	return _c
 }
 
-func (_c *MockShipmentRepository_AutoCancelShipments_Call) RunAndReturn(run func(ctx context.Context, req *shipmentports.AutoCancelShipmentsRequest, thresholdDays int8) ([]*shipment.Shipment, error)) *MockShipmentRepository_AutoCancelShipments_Call {
+func (_c *MockShipmentRepository_AutoCancelShipments_Call) RunAndReturn(run func(ctx context.Context, req *shipmentports.AutoCancelShipmentsRequest, thresholdDays int16) ([]*shipment.Shipment, error)) *MockShipmentRepository_AutoCancelShipments_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -524,7 +524,7 @@ func (_c *MockShipmentRepository_DelayShipments_Call) RunAndReturn(run func(ctx 
 }
 
 // GetAutoCancelableShipments provides a mock function for the type MockShipmentRepository
-func (_mock *MockShipmentRepository) GetAutoCancelableShipments(ctx context.Context, req *shipmentports.GetAutoCancelableShipmentsRequest, thresholdDays int8) ([]*shipment.Shipment, error) {
+func (_mock *MockShipmentRepository) GetAutoCancelableShipments(ctx context.Context, req *shipmentports.GetAutoCancelableShipmentsRequest, thresholdDays int16) ([]*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req, thresholdDays)
 
 	if len(ret) == 0 {
@@ -533,17 +533,17 @@ func (_mock *MockShipmentRepository) GetAutoCancelableShipments(ctx context.Cont
 
 	var r0 []*shipment.Shipment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentports.GetAutoCancelableShipmentsRequest, int8) ([]*shipment.Shipment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentports.GetAutoCancelableShipmentsRequest, int16) ([]*shipment.Shipment, error)); ok {
 		return returnFunc(ctx, req, thresholdDays)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentports.GetAutoCancelableShipmentsRequest, int8) []*shipment.Shipment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentports.GetAutoCancelableShipmentsRequest, int16) []*shipment.Shipment); ok {
 		r0 = returnFunc(ctx, req, thresholdDays)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*shipment.Shipment)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentports.GetAutoCancelableShipmentsRequest, int8) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentports.GetAutoCancelableShipmentsRequest, int16) error); ok {
 		r1 = returnFunc(ctx, req, thresholdDays)
 	} else {
 		r1 = ret.Error(1)
@@ -559,12 +559,12 @@ type MockShipmentRepository_GetAutoCancelableShipments_Call struct {
 // GetAutoCancelableShipments is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetAutoCancelableShipmentsRequest
-//   - thresholdDays int8
+//   - thresholdDays int16
 func (_e *MockShipmentRepository_Expecter) GetAutoCancelableShipments(ctx any, req any, thresholdDays any) *MockShipmentRepository_GetAutoCancelableShipments_Call {
 	return &MockShipmentRepository_GetAutoCancelableShipments_Call{Call: _e.mock.On("GetAutoCancelableShipments", ctx, req, thresholdDays)}
 }
 
-func (_c *MockShipmentRepository_GetAutoCancelableShipments_Call) Run(run func(ctx context.Context, req *shipmentports.GetAutoCancelableShipmentsRequest, thresholdDays int8)) *MockShipmentRepository_GetAutoCancelableShipments_Call {
+func (_c *MockShipmentRepository_GetAutoCancelableShipments_Call) Run(run func(ctx context.Context, req *shipmentports.GetAutoCancelableShipmentsRequest, thresholdDays int16)) *MockShipmentRepository_GetAutoCancelableShipments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -574,9 +574,9 @@ func (_c *MockShipmentRepository_GetAutoCancelableShipments_Call) Run(run func(c
 		if args[1] != nil {
 			arg1 = args[1].(*shipmentports.GetAutoCancelableShipmentsRequest)
 		}
-		var arg2 int8
+		var arg2 int16
 		if args[2] != nil {
-			arg2 = args[2].(int8)
+			arg2 = args[2].(int16)
 		}
 		run(
 			arg0,
@@ -592,7 +592,7 @@ func (_c *MockShipmentRepository_GetAutoCancelableShipments_Call) Return(shipmen
 	return _c
 }
 
-func (_c *MockShipmentRepository_GetAutoCancelableShipments_Call) RunAndReturn(run func(ctx context.Context, req *shipmentports.GetAutoCancelableShipmentsRequest, thresholdDays int8) ([]*shipment.Shipment, error)) *MockShipmentRepository_GetAutoCancelableShipments_Call {
+func (_c *MockShipmentRepository_GetAutoCancelableShipments_Call) RunAndReturn(run func(ctx context.Context, req *shipmentports.GetAutoCancelableShipmentsRequest, thresholdDays int16) ([]*shipment.Shipment, error)) *MockShipmentRepository_GetAutoCancelableShipments_Call {
 	_c.Call.Return(run)
 	return _c
 }

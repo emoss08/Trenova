@@ -1,0 +1,129 @@
+{
+  "key": "expiring-tractor-registrations",
+  "version": "1.0.0",
+  "name": "Expiring Tractor Registrations",
+  "description": "Power units whose plates expire inside the horizon, with the drivers and fleet affected",
+  "category": "Fleet",
+  "tags": [
+    "tractors",
+    "registrations",
+    "compliance"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "tractor",
+    "columns": [
+      {
+        "id": "unit",
+        "label": "Unit Number",
+        "dimension": {
+          "field": "code"
+        }
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "dimension": {
+          "field": "status"
+        }
+      },
+      {
+        "id": "year",
+        "label": "Year",
+        "dimension": {
+          "field": "year"
+        }
+      },
+      {
+        "id": "make",
+        "label": "Make",
+        "dimension": {
+          "field": "make"
+        }
+      },
+      {
+        "id": "model",
+        "label": "Model",
+        "dimension": {
+          "field": "model"
+        }
+      },
+      {
+        "id": "license_plate",
+        "label": "License Plate",
+        "dimension": {
+          "field": "licensePlateNumber"
+        },
+        "display": {
+          "nullText": "—"
+        }
+      },
+      {
+        "id": "registration_number",
+        "label": "Registration Number",
+        "dimension": {
+          "field": "registrationNumber"
+        },
+        "display": {
+          "nullText": "—"
+        }
+      },
+      {
+        "id": "registration_expiry",
+        "label": "Registration Expiry",
+        "dimension": {
+          "field": "registrationExpiry"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "fleet_code",
+        "label": "Fleet",
+        "dimension": {
+          "field": "fleetCode.code"
+        }
+      },
+      {
+        "id": "primary_driver_first",
+        "label": "Primary Driver First Name",
+        "dimension": {
+          "field": "primaryWorker.firstName"
+        }
+      },
+      {
+        "id": "primary_driver_last",
+        "label": "Primary Driver Last Name",
+        "dimension": {
+          "field": "primaryWorker.lastName"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "registrationExpiry",
+          "op": "next_n_days",
+          "param": "horizonDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "registration_expiry"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "horizonDays",
+        "label": "Horizon (days)",
+        "type": "int",
+        "required": true,
+        "default": 60
+      }
+    ]
+  }
+}

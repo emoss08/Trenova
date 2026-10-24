@@ -1,0 +1,175 @@
+{
+  "key": "tractor-utilization",
+  "version": "1.0.0",
+  "name": "Tractor Utilization",
+  "description": "Miles, moves, loaded versus empty split, and last activity per power unit — spot idle and under-worked tractors",
+  "category": "Fleet",
+  "tags": [
+    "tractors",
+    "utilization",
+    "assets",
+    "miles"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "shipment_move",
+    "columns": [
+      {
+        "id": "unit",
+        "label": "Tractor Unit",
+        "dimension": {
+          "field": "assignment.tractor.code"
+        }
+      },
+      {
+        "id": "fleet_code",
+        "label": "Fleet",
+        "dimension": {
+          "field": "assignment.tractor.fleetCode.code"
+        }
+      },
+      {
+        "id": "equipment_type",
+        "label": "Equipment Type",
+        "dimension": {
+          "field": "assignment.tractor.equipmentType.code"
+        }
+      },
+      {
+        "id": "move_count",
+        "label": "Moves",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_miles",
+        "label": "Total Miles",
+        "measure": {
+          "field": "distance",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 0
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " mi"
+        }
+      },
+      {
+        "id": "split_miles",
+        "label": "Miles",
+        "measure": {
+          "field": "distance",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 0
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " mi"
+        }
+      },
+      {
+        "id": "avg_miles",
+        "label": "Average Miles per Move",
+        "measure": {
+          "field": "distance",
+          "agg": "avg"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 1
+        },
+        "display": {
+          "style": "number",
+          "decimals": 1,
+          "suffix": " mi"
+        }
+      },
+      {
+        "id": "driver_count",
+        "label": "Drivers Used",
+        "measure": {
+          "field": "assignment.primaryWorker.id",
+          "agg": "count_distinct"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "last_move",
+        "label": "Last Move",
+        "measure": {
+          "field": "createdAt",
+          "agg": "max"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "createdAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "status",
+          "op": "not_in",
+          "value": [
+            "Canceled"
+          ]
+        }
+      ]
+    },
+    "pivot": {
+      "field": "loaded",
+      "values": [
+        "true",
+        "false"
+      ],
+      "labels": [
+        "Loaded",
+        "Empty"
+      ],
+      "columns": [
+        "split_miles"
+      ]
+    },
+    "sort": [
+      {
+        "column": "total_miles",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 30
+      }
+    ]
+  }
+}

@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,15 +24,16 @@ var (
 // until then they save automatically, which is how agents have always saved.
 type MemoryPreference struct {
 	bun.BaseModel `bun:"table:agent_memory_preferences,alias:amp" json:"-"`
+	keel.Table    `keel:"agent_memory_preferences"`
 
-	ID             pulid.ID         `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	UserID         pulid.ID         `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	SavingMode     MemorySavingMode `json:"savingMode"     bun:"saving_mode,type:VARCHAR(20),notnull,default:'Automatic'"`
-	Version        int64            `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64            `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64            `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID         `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ampf_"`
+	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	UserID         pulid.ID         `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	SavingMode     MemorySavingMode `json:"savingMode"     bun:"saving_mode,type:VARCHAR(20),notnull,default:'Automatic'" keel:"saving_mode"`
+	Version        int64            `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64            `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64            `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

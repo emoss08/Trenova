@@ -3,6 +3,7 @@ package formulatemplate
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -47,29 +48,30 @@ var _ bun.BeforeAppendModelHook = (*FormulaTemplateVersion)(nil)
 
 type FormulaTemplateVersion struct {
 	bun.BaseModel `bun:"table:formula_template_versions,alias:ftv" json:"-"`
+	keel.Table    `keel:"formula_template_versions"`
 
-	ID             pulid.ID                         `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	TemplateID     pulid.ID                         `json:"templateId"     bun:"template_id,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID                         `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID                         `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	VersionNumber  int64                            `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull"`
-	Name           string                           `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	Description    string                           `json:"description"    bun:"description,type:TEXT"`
-	Source         string                           `json:"source"         bun:"source,type:TEXT,notnull"`
-	Inputs         []tarifftypes.InputDecl          `json:"inputs"         bun:"inputs,type:JSONB,notnull,default:'[]'"`
-	Imports        []tarifftypes.Import             `json:"imports"        bun:"imports,type:JSONB,notnull,default:'[]'"`
-	Tables         []tarifftypes.TablePin           `json:"tables"         bun:"tables,type:JSONB,notnull,default:'[]'"`
-	TestCount      int32                            `json:"testCount"      bun:"test_count,type:INTEGER,notnull,default:0"`
-	Status         Status                           `json:"status"         bun:"status,type:formula_template_status_enum,notnull"`
-	EffectiveFrom  *int64                           `json:"effectiveFrom"  bun:"effective_from,type:BIGINT"`
-	Metadata       map[string]any                   `json:"metadata"       bun:"metadata,type:JSONB"`
-	ChangeMessage  string                           `json:"changeMessage"  bun:"change_message,type:TEXT"`
-	ChangeSummary  map[string]jsonutils.FieldChange `json:"changeSummary"  bun:"change_summary,type:JSONB"`
-	Tags           []VersionTag                     `json:"tags"           bun:"tags,type:TEXT[],array"`
-	CreatedByID    pulid.ID                         `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),notnull"`
-	CreatedAt      int64                            `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID                         `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ftv_"`
+	TemplateID     pulid.ID                         `json:"templateId"     bun:"template_id,type:VARCHAR(100),notnull" keel:"template_id"`
+	OrganizationID pulid.ID                         `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	BusinessUnitID pulid.ID                         `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	VersionNumber  int64                            `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull" keel:"version_number"`
+	Name           string                           `json:"name"           bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Description    string                           `json:"description"    bun:"description,type:TEXT" keel:"description,nullzero"`
+	Source         string                           `json:"source"         bun:"source,type:TEXT,notnull" keel:"source"`
+	Inputs         []tarifftypes.InputDecl          `json:"inputs"         bun:"inputs,type:JSONB,notnull,default:'[]'" keel:"inputs,jsonb"`
+	Imports        []tarifftypes.Import             `json:"imports"        bun:"imports,type:JSONB,notnull,default:'[]'" keel:"imports,jsonb"`
+	Tables         []tarifftypes.TablePin           `json:"tables"         bun:"tables,type:JSONB,notnull,default:'[]'" keel:"tables,jsonb"`
+	TestCount      int32                            `json:"testCount"      bun:"test_count,type:INTEGER,notnull,default:0" keel:"test_count"`
+	Status         Status                           `json:"status"         bun:"status,type:formula_template_status_enum,notnull" keel:"status"`
+	EffectiveFrom  *int64                           `json:"effectiveFrom"  bun:"effective_from,type:BIGINT" keel:"effective_from"`
+	Metadata       map[string]any                   `json:"metadata"       bun:"metadata,type:JSONB" keel:"metadata,jsonb"`
+	ChangeMessage  string                           `json:"changeMessage"  bun:"change_message,type:TEXT" keel:"change_message,nullzero"`
+	ChangeSummary  map[string]jsonutils.FieldChange `json:"changeSummary"  bun:"change_summary,type:JSONB" keel:"change_summary,jsonb"`
+	Tags           []VersionTag                     `json:"tags"           bun:"tags,type:TEXT[],array" keel:"tags"`
+	CreatedByID    pulid.ID                         `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),notnull" keel:"created_by_id"`
+	CreatedAt      int64                            `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	CreatedBy *tenant.User `json:"createdBy,omitempty" bun:"rel:belongs-to,join:created_by_id=id"`
+	CreatedBy *tenant.User `json:"createdBy,omitempty" bun:"rel:belongs-to,join:created_by_id=id" keel:"belongs:created_by_id"`
 }
 
 func (ftv *FormulaTemplateVersion) BeforeAppendModel(_ context.Context, query bun.Query) error {

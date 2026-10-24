@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,23 +29,24 @@ func MappingSourceID(value string) pulid.ID {
 
 type EDIMappingProfile struct {
 	bun.BaseModel `json:"-" bun:"table:edi_mapping_profiles,alias:emp"`
+	keel.Table    `keel:"edi_mapping_profiles"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	EDIPartnerID   pulid.ID `json:"ediPartnerId"   bun:"edi_partner_id,type:VARCHAR(100),notnull"`
-	Name           string   `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
-	Description    string   `json:"description"    bun:"description,type:TEXT,nullzero"`
-	SearchVector   string   `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank           string   `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edimp_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	EDIPartnerID   pulid.ID `json:"ediPartnerId"   bun:"edi_partner_id,type:VARCHAR(100),notnull" keel:"edi_partner_id"`
+	Name           string   `json:"name"           bun:"name,type:VARCHAR(200),notnull" keel:"name"`
+	Description    string   `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	SearchVector   string   `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string   `json:"-"              bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	Version        int64    `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Partner *EDIPartner              `json:"partner,omitempty" bun:"rel:belongs-to,join:edi_partner_id=id"`
-	Entries []*EDIMappingProfileItem `json:"entries,omitempty" bun:"rel:has-many,join:id=mapping_profile_id"`
+	Partner *EDIPartner              `json:"partner,omitempty" bun:"rel:belongs-to,join:edi_partner_id=id" keel:"belongs:edi_partner_id"`
+	Entries []*EDIMappingProfileItem `json:"entries,omitempty" bun:"rel:has-many,join:id=mapping_profile_id" keel:"many:mapping_profile_id"`
 }
 
 func (p *EDIMappingProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -88,25 +90,26 @@ func (p *EDIMappingProfile) GetPostgresSearchConfig() domaintypes.PostgresSearch
 
 type EDIMappingProfileItem struct {
 	bun.BaseModel `json:"-" bun:"table:edi_mapping_profile_items,alias:empi"`
+	keel.Table    `keel:"edi_mapping_profile_items"`
 
-	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID          `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID   pulid.ID          `json:"organizationId"   bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	EDIPartnerID     pulid.ID          `json:"ediPartnerId"     bun:"edi_partner_id,type:VARCHAR(100),notnull"`
-	MappingProfileID pulid.ID          `json:"mappingProfileId" bun:"mapping_profile_id,type:VARCHAR(100),notnull"`
-	EntityType       MappingEntityType `json:"entityType"       bun:"entity_type,type:edi_mapping_entity_type_enum,notnull"`
-	SourceID         pulid.ID          `json:"sourceId"         bun:"source_id,type:VARCHAR(100),notnull"`
-	SourceLabel      string            `json:"sourceLabel"      bun:"source_label,type:VARCHAR(255),nullzero"`
-	TargetID         pulid.ID          `json:"targetId"         bun:"target_id,type:VARCHAR(100),notnull"`
-	TargetLabel      string            `json:"targetLabel"      bun:"target_label,type:VARCHAR(255),nullzero"`
-	CreatedByID      pulid.ID          `json:"createdById"      bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	UpdatedByID      pulid.ID          `json:"updatedById"      bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version          int64             `json:"version"          bun:"version,type:BIGINT"`
-	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edimi_"`
+	BusinessUnitID   pulid.ID          `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID          `json:"organizationId"   bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	EDIPartnerID     pulid.ID          `json:"ediPartnerId"     bun:"edi_partner_id,type:VARCHAR(100),notnull" keel:"edi_partner_id"`
+	MappingProfileID pulid.ID          `json:"mappingProfileId" bun:"mapping_profile_id,type:VARCHAR(100),notnull" keel:"mapping_profile_id"`
+	EntityType       MappingEntityType `json:"entityType"       bun:"entity_type,type:edi_mapping_entity_type_enum,notnull" keel:"entity_type"`
+	SourceID         pulid.ID          `json:"sourceId"         bun:"source_id,type:VARCHAR(100),notnull" keel:"source_id"`
+	SourceLabel      string            `json:"sourceLabel"      bun:"source_label,type:VARCHAR(255),nullzero" keel:"source_label,nullzero"`
+	TargetID         pulid.ID          `json:"targetId"         bun:"target_id,type:VARCHAR(100),notnull" keel:"target_id"`
+	TargetLabel      string            `json:"targetLabel"      bun:"target_label,type:VARCHAR(255),nullzero" keel:"target_label,nullzero"`
+	CreatedByID      pulid.ID          `json:"createdById"      bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
+	UpdatedByID      pulid.ID          `json:"updatedById"      bun:"updated_by_id,type:VARCHAR(100),nullzero" keel:"updated_by_id,nullzero"`
+	Version          int64             `json:"version"          bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Partner *EDIPartner        `json:"partner,omitempty" bun:"rel:belongs-to,join:edi_partner_id=id"`
-	Profile *EDIMappingProfile `json:"profile,omitempty" bun:"rel:belongs-to,join:mapping_profile_id=id"`
+	Partner *EDIPartner        `json:"partner,omitempty" bun:"rel:belongs-to,join:edi_partner_id=id" keel:"belongs:edi_partner_id"`
+	Profile *EDIMappingProfile `json:"profile,omitempty" bun:"rel:belongs-to,join:mapping_profile_id=id" keel:"belongs:mapping_profile_id"`
 }
 
 func (i *EDIMappingProfileItem) BeforeAppendModel(_ context.Context, query bun.Query) error {

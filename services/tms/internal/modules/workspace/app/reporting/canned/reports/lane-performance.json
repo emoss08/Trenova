@@ -1,0 +1,121 @@
+{
+  "key": "lane-performance",
+  "version": "1.0.0",
+  "name": "Lane Performance",
+  "description": "Revenue, volume, and miles by origin and destination city — which lanes carry the book and what they earn",
+  "category": "Operations",
+  "tags": [
+    "lanes",
+    "operations",
+    "network",
+    "revenue"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "shipment",
+    "columns": [
+      {
+        "id": "origin_city",
+        "label": "Origin",
+        "dimension": {
+          "field": "originStop.location.city"
+        }
+      },
+      {
+        "id": "dest_city",
+        "label": "Destination",
+        "dimension": {
+          "field": "destinationStop.location.city"
+        }
+      },
+      {
+        "id": "shipment_count",
+        "label": "Shipments",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_revenue",
+        "label": "Total Revenue",
+        "measure": {
+          "field": "totalChargeAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "avg_revenue",
+        "label": "Average Revenue per Shipment",
+        "measure": {
+          "field": "totalChargeAmount",
+          "agg": "avg"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 2
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "total_miles",
+        "label": "Total Miles",
+        "measure": {
+          "field": "moves.distance",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 0
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " mi"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "createdAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "groupings": {
+      "total": true
+    },
+    "sort": [
+      {
+        "column": "total_revenue",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      }
+    ]
+  }
+}

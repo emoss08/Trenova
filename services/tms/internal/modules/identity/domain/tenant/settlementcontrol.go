@@ -3,6 +3,7 @@ package tenant
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,28 +60,29 @@ func (p PayTrigger) IsValid() bool {
 
 type SettlementControl struct {
 	bun.BaseModel `bun:"table:settlement_controls,alias:stlc" json:"-"`
+	keel.Table    `keel:"settlement_controls"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:stlc_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	PayPeriodFrequency            PayPeriodFrequency `json:"payPeriodFrequency"            bun:"pay_period_frequency,type:VARCHAR(50),notnull,default:'Weekly'"`
-	PeriodEndDayOfWeek            int                `json:"periodEndDayOfWeek"            bun:"period_end_day_of_week,type:INTEGER,notnull,default:6"`
-	PayDelayDays                  int                `json:"payDelayDays"                  bun:"pay_delay_days,type:INTEGER,notnull,default:5"`
-	PayTrigger                    PayTrigger         `json:"payTrigger"                    bun:"pay_trigger,type:VARCHAR(50),notnull,default:'ShipmentDelivered'"`
-	AutoGenerateBatches           bool               `json:"autoGenerateBatches"           bun:"auto_generate_batches,type:BOOLEAN,notnull"`
-	AutoApproveClean              bool               `json:"autoApproveClean"              bun:"auto_approve_clean,type:BOOLEAN,notnull"`
-	AutoAttachAccruals            bool               `json:"autoAttachAccruals"            bun:"auto_attach_accruals,type:BOOLEAN,notnull"`
-	AutoPostOnApprove             bool               `json:"autoPostOnApprove"             bun:"auto_post_on_approve,type:BOOLEAN,notnull"`
-	AllowNegativeNet              bool               `json:"allowNegativeNet"              bun:"allow_negative_net,type:BOOLEAN,notnull"`
-	VarianceThresholdPct          decimal.Decimal    `json:"varianceThresholdPct"          bun:"variance_threshold_pct,type:NUMERIC(7,4),notnull,default:25"`
-	VarianceLookbackWeeks         int                `json:"varianceLookbackWeeks"         bun:"variance_lookback_weeks,type:INTEGER,notnull,default:8"`
-	DefaultEscrowInterestRate     decimal.Decimal    `json:"defaultEscrowInterestRate"     bun:"default_escrow_interest_rate,type:NUMERIC(7,4),notnull,default:0"`
-	EscrowInterestFrequencyMonths int                `json:"escrowInterestFrequencyMonths" bun:"escrow_interest_frequency_months,type:INTEGER,notnull,default:3"`
+	PayPeriodFrequency            PayPeriodFrequency `json:"payPeriodFrequency"            bun:"pay_period_frequency,type:VARCHAR(50),notnull,default:'Weekly'" keel:"pay_period_frequency"`
+	PeriodEndDayOfWeek            int                `json:"periodEndDayOfWeek"            bun:"period_end_day_of_week,type:INTEGER,notnull,default:6" keel:"period_end_day_of_week"`
+	PayDelayDays                  int                `json:"payDelayDays"                  bun:"pay_delay_days,type:INTEGER,notnull,default:5" keel:"pay_delay_days"`
+	PayTrigger                    PayTrigger         `json:"payTrigger"                    bun:"pay_trigger,type:VARCHAR(50),notnull,default:'ShipmentDelivered'" keel:"pay_trigger"`
+	AutoGenerateBatches           bool               `json:"autoGenerateBatches"           bun:"auto_generate_batches,type:BOOLEAN,notnull" keel:"auto_generate_batches"`
+	AutoApproveClean              bool               `json:"autoApproveClean"              bun:"auto_approve_clean,type:BOOLEAN,notnull" keel:"auto_approve_clean"`
+	AutoAttachAccruals            bool               `json:"autoAttachAccruals"            bun:"auto_attach_accruals,type:BOOLEAN,notnull" keel:"auto_attach_accruals"`
+	AutoPostOnApprove             bool               `json:"autoPostOnApprove"             bun:"auto_post_on_approve,type:BOOLEAN,notnull" keel:"auto_post_on_approve"`
+	AllowNegativeNet              bool               `json:"allowNegativeNet"              bun:"allow_negative_net,type:BOOLEAN,notnull" keel:"allow_negative_net"`
+	VarianceThresholdPct          decimal.Decimal    `json:"varianceThresholdPct"          bun:"variance_threshold_pct,type:NUMERIC(7,4),notnull,default:25" keel:"variance_threshold_pct"`
+	VarianceLookbackWeeks         int                `json:"varianceLookbackWeeks"         bun:"variance_lookback_weeks,type:INTEGER,notnull,default:8" keel:"variance_lookback_weeks"`
+	DefaultEscrowInterestRate     decimal.Decimal    `json:"defaultEscrowInterestRate"     bun:"default_escrow_interest_rate,type:NUMERIC(7,4),notnull,default:0" keel:"default_escrow_interest_rate"`
+	EscrowInterestFrequencyMonths int                `json:"escrowInterestFrequencyMonths" bun:"escrow_interest_frequency_months,type:INTEGER,notnull,default:3" keel:"escrow_interest_frequency_months"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
@@ -167,4 +169,8 @@ func (sc *SettlementControl) BeforeAppendModel(_ context.Context, query bun.Quer
 		sc.UpdatedAt = now
 	}
 	return nil
+}
+
+func (sc *SettlementControl) BeforeCreate(ctx context.Context) error {
+	return sc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

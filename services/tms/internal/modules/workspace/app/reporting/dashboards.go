@@ -3,12 +3,15 @@ package reporting
 import (
 	"context"
 	"fmt"
+	"slices"
+
+	"github.com/emoss08/keel/analytics"
+	"github.com/emoss08/keel/analytics/ir"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -205,7 +208,7 @@ func (s *Service) validateTileTargets(
 			"This report is not available")
 	}
 
-	validateDashboardFilters(multiErr, layout.Filters)
+	validateDashboardFilters(multiErr, s.engine.Catalog(), layout.Filters)
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -213,44 +216,40 @@ func (s *Service) validateTileTargets(
 	return nil
 }
 
-// validateDashboardFilters resolves each filter against the catalog so a
-// dashboard cannot be saved pointing at a field that does not exist or cannot
-// be filtered — the tiles would silently ignore it otherwise.
 func validateDashboardFilters(
 	multiErr *errortypes.MultiError,
-	filters []report.DashboardFilter,
+	catalog *analytics.Catalog,
+	filters []ir.DashboardFilter,
 ) {
 	for i := range filters {
 		filter := &filters[i]
 		fieldPath := fmt.Sprintf("layout.filters[%d]", i)
 
-		entity, ok := reportcatalog.Default.Entity(filter.Entity)
-		if !ok {
+		if !catalog.HasEntity(filter.Entity) {
 			multiErr.Add(fieldPath+".entity", errortypes.ErrInvalid,
 				"Unknown entity \"{0}\"", filter.Entity)
 			continue
 		}
 
-		_, path, err := reportcatalog.Default.ResolvePath(entity.Key, filter.Ref.Path)
-		if err != nil {
-			multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid, err.Error())
+		via, field, ok := catalog.Resolve(filter.Entity, filter.Field)
+		if !ok {
+			multiErr.Add(fieldPath+".field", errortypes.ErrInvalid,
+				"Unknown field \"{0}\"", filter.Field)
 			continue
 		}
-		if path.CrossesToMany() {
-			multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid,
+		if slices.ContainsFunc(via, func(e *analytics.Edge) bool { return e.ToMany }) {
+			multiErr.Add(fieldPath+".field", errortypes.ErrInvalid,
 				"Dashboard filters cannot cross a to-many relationship")
 			continue
 		}
-
-		field, ok := path.Terminal(entity).Field(filter.Ref.Field)
-		if !ok {
-			multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid,
-				"Unknown field \"{0}\"", filter.Ref.String())
+		if !field.Filterable {
+			multiErr.Add(fieldPath+".field", errortypes.ErrInvalid,
+				"Field \"{0}\" is not filterable", field.Label)
 			continue
 		}
-		if !field.Filterable {
-			multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid,
-				"Field \"{0}\" is not filterable", field.Label)
+		if !slices.Contains(ir.OpsFor(field.Type), filter.Op) {
+			multiErr.Add(fieldPath+".op", errortypes.ErrInvalid,
+				"\"{0}\" cannot compare field \"{1}\"", string(filter.Op), field.Label)
 		}
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -50,117 +51,118 @@ const (
 
 type Definition struct {
 	bun.BaseModel `bun:"table:agent_definitions,alias:agdef" json:"-"`
+	keel.Table    `keel:"agent_definitions"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:agdef_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	Name         string   `json:"name"         bun:"name,type:VARCHAR(100),notnull"`
-	Description  string   `json:"description"  bun:"description,type:TEXT,nullzero"`
-	Template     Template `json:"template"     bun:"template,type:VARCHAR(50),nullzero"`
-	Instructions string   `json:"instructions" bun:"instructions,type:TEXT,nullzero"`
-	Guardrails   []string `json:"guardrails"   bun:"guardrails,type:TEXT[],array,nullzero"`
+	Name         string   `json:"name"         bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Description  string   `json:"description"  bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Template     Template `json:"template"     bun:"template,type:VARCHAR(50),nullzero" keel:"template,nullzero"`
+	Instructions string   `json:"instructions" bun:"instructions,type:TEXT,nullzero" keel:"instructions,nullzero"`
+	Guardrails   []string `json:"guardrails"   bun:"guardrails,type:TEXT[],array,nullzero" keel:"guardrails,nullzero"`
 
-	ToolNames       []string                      `json:"toolNames"       bun:"tool_names,type:TEXT[],array,nullzero"`
-	ToolTiers       map[string]agent.AutonomyTier `json:"toolTiers"       bun:"tool_tiers,type:JSONB,nullzero"`
-	AutonomyCeiling agent.AutonomyTier            `json:"autonomyCeiling" bun:"autonomy_ceiling,type:VARCHAR(50),notnull"`
+	ToolNames       []string                      `json:"toolNames"       bun:"tool_names,type:TEXT[],array,nullzero" keel:"tool_names,nullzero"`
+	ToolTiers       map[string]agent.AutonomyTier `json:"toolTiers"       bun:"tool_tiers,type:JSONB,nullzero" keel:"tool_tiers,jsonb,nullzero"`
+	AutonomyCeiling agent.AutonomyTier            `json:"autonomyCeiling" bun:"autonomy_ceiling,type:VARCHAR(50),notnull" keel:"autonomy_ceiling"`
 
-	DataAccessCeiling DataAccessCeiling `json:"dataAccessCeiling" bun:"data_access_ceiling,type:VARCHAR(20),notnull,default:'Internal'"`
+	DataAccessCeiling DataAccessCeiling `json:"dataAccessCeiling" bun:"data_access_ceiling,type:VARCHAR(20),notnull,default:'Internal'" keel:"data_access_ceiling"`
 
-	UnattendedRoleID pulid.ID `json:"unattendedRoleId" bun:"unattended_role_id,type:VARCHAR(100),nullzero"`
+	UnattendedRoleID pulid.ID `json:"unattendedRoleId" bun:"unattended_role_id,type:VARCHAR(100),nullzero" keel:"unattended_role_id,nullzero"`
 
-	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull"`
+	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull" keel:"enabled"`
 	// DisabledAt and DisabledByID say when the agent was last turned off and
 	// by whom; both are cleared when it is turned back on.
-	DisabledAt             *int64    `json:"disabledAt,omitempty"   bun:"disabled_at,type:BIGINT,nullzero"`
-	DisabledByID           *pulid.ID `json:"disabledById,omitempty" bun:"disabled_by_id,type:VARCHAR(100),nullzero"`
-	ShadowMode             bool      `json:"shadowMode"             bun:"shadow_mode,type:BOOLEAN,notnull"`
-	DecisionTimeoutSeconds int       `json:"decisionTimeoutSeconds" bun:"decision_timeout_seconds,type:INTEGER,notnull"`
+	DisabledAt             *int64    `json:"disabledAt,omitempty"   bun:"disabled_at,type:BIGINT,nullzero" keel:"disabled_at"`
+	DisabledByID           *pulid.ID `json:"disabledById,omitempty" bun:"disabled_by_id,type:VARCHAR(100),nullzero" keel:"disabled_by_id"`
+	ShadowMode             bool      `json:"shadowMode"             bun:"shadow_mode,type:BOOLEAN,notnull" keel:"shadow_mode"`
+	DecisionTimeoutSeconds int       `json:"decisionTimeoutSeconds" bun:"decision_timeout_seconds,type:INTEGER,notnull" keel:"decision_timeout_seconds"`
 
-	TriggerMode       TriggerMode       `json:"triggerMode"       bun:"trigger_mode,type:VARCHAR(20),notnull"`
-	CronExpression    string            `json:"cronExpression"    bun:"cron_expression,type:VARCHAR(100),nullzero"`
-	CronTimezone      string            `json:"cronTimezone"      bun:"cron_timezone,type:VARCHAR(100),nullzero"`
-	EventKinds        []agent.EventKind `json:"eventKinds"        bun:"event_kinds,type:TEXT[],array,nullzero"`
-	IntervalSeconds   int               `json:"intervalSeconds"   bun:"interval_seconds,type:INTEGER,nullzero"`
-	EndsAt            *int64            `json:"endsAt"            bun:"ends_at,type:BIGINT,nullzero"`
-	MaxConcurrentRuns int               `json:"maxConcurrentRuns" bun:"max_concurrent_runs,type:INTEGER,notnull"`
-	RunTimeoutSeconds int               `json:"runTimeoutSeconds" bun:"run_timeout_seconds,type:INTEGER,notnull"`
-	MaxToolCalls      int               `json:"maxToolCalls"      bun:"max_tool_calls,type:INTEGER,notnull"`
+	TriggerMode       TriggerMode       `json:"triggerMode"       bun:"trigger_mode,type:VARCHAR(20),notnull" keel:"trigger_mode"`
+	CronExpression    string            `json:"cronExpression"    bun:"cron_expression,type:VARCHAR(100),nullzero" keel:"cron_expression,nullzero"`
+	CronTimezone      string            `json:"cronTimezone"      bun:"cron_timezone,type:VARCHAR(100),nullzero" keel:"cron_timezone,nullzero"`
+	EventKinds        []agent.EventKind `json:"eventKinds"        bun:"event_kinds,type:TEXT[],array,nullzero" keel:"event_kinds,nullzero"`
+	IntervalSeconds   int               `json:"intervalSeconds"   bun:"interval_seconds,type:INTEGER,nullzero" keel:"interval_seconds,nullzero"`
+	EndsAt            *int64            `json:"endsAt"            bun:"ends_at,type:BIGINT,nullzero" keel:"ends_at"`
+	MaxConcurrentRuns int               `json:"maxConcurrentRuns" bun:"max_concurrent_runs,type:INTEGER,notnull" keel:"max_concurrent_runs"`
+	RunTimeoutSeconds int               `json:"runTimeoutSeconds" bun:"run_timeout_seconds,type:INTEGER,notnull" keel:"run_timeout_seconds"`
+	MaxToolCalls      int               `json:"maxToolCalls"      bun:"max_tool_calls,type:INTEGER,notnull" keel:"max_tool_calls"`
 
 	// MonthlyBudgetUSD caps what the agent's runs may cost in a calendar
 	// month; nil is no cap. DailyRunLimit caps how many runs it may start in
 	// a day and ToolDailyLimits how many times it may execute each tool in a
 	// day; zero is no cap. SimulationMode keeps its writes from happening at
 	// all: each is previewed and recorded as what it would have changed.
-	MonthlyBudgetUSD *decimal.Decimal `json:"monthlyBudgetUsd" bun:"monthly_budget_usd,type:NUMERIC(14,6),nullzero"`
-	DailyRunLimit    int              `json:"dailyRunLimit"    bun:"daily_run_limit,type:INTEGER,notnull"`
+	MonthlyBudgetUSD *decimal.Decimal `json:"monthlyBudgetUsd" bun:"monthly_budget_usd,type:NUMERIC(14,6),nullzero" keel:"monthly_budget_usd"`
+	DailyRunLimit    int              `json:"dailyRunLimit"    bun:"daily_run_limit,type:INTEGER,notnull" keel:"daily_run_limit"`
 	// ToolDailyLimits is notnull because its column is: it was added as
 	// NOT NULL DEFAULT '{}' while its tag said nullzero, and nullzero writes
 	// SQL NULL for a nil map. Every insert of an agent with no per-tool cap —
 	// which is every system agent — was therefore rejected by the constraint.
 	// Its older sibling tool_tiers is nullable, which is why that one worked.
-	ToolDailyLimits map[string]int `json:"toolDailyLimits" bun:"tool_daily_limits,type:JSONB,notnull"`
-	SimulationMode  bool           `json:"simulationMode"  bun:"simulation_mode,type:BOOLEAN,notnull"`
+	ToolDailyLimits map[string]int `json:"toolDailyLimits" bun:"tool_daily_limits,type:JSONB,notnull" keel:"tool_daily_limits,jsonb"`
+	SimulationMode  bool           `json:"simulationMode"  bun:"simulation_mode,type:BOOLEAN,notnull" keel:"simulation_mode"`
 
-	MemoryTokenBudget *int `json:"memoryTokenBudget" bun:"memory_token_budget,type:INTEGER,nullzero"`
-	LearningOff       bool `json:"learningOff"       bun:"learning_off,type:BOOLEAN,notnull,default:false"`
+	MemoryTokenBudget *int `json:"memoryTokenBudget" bun:"memory_token_budget,type:INTEGER,nullzero" keel:"memory_token_budget"`
+	LearningOff       bool `json:"learningOff"       bun:"learning_off,type:BOOLEAN,notnull,default:false" keel:"learning_off"`
 
-	Icon   string `json:"icon"   bun:"icon,type:VARCHAR(40),nullzero"`
-	Accent string `json:"accent" bun:"accent,type:VARCHAR(20),nullzero"`
+	Icon   string `json:"icon"   bun:"icon,type:VARCHAR(40),nullzero" keel:"icon,nullzero"`
+	Accent string `json:"accent" bun:"accent,type:VARCHAR(20),nullzero" keel:"accent,nullzero"`
 
-	ContextProviders    []ContextProvider `json:"contextProviders"    bun:"context_providers,type:TEXT[],array,nullzero"`
-	OutputMode          OutputMode        `json:"outputMode"          bun:"output_mode,type:VARCHAR(20),notnull"`
-	PreferredProviderID pulid.ID          `json:"preferredProviderId" bun:"preferred_provider_id,type:VARCHAR(100),nullzero"`
-	SystemKey           string            `json:"systemKey"           bun:"system_key,type:VARCHAR(50),nullzero"`
+	ContextProviders    []ContextProvider `json:"contextProviders"    bun:"context_providers,type:TEXT[],array,nullzero" keel:"context_providers,nullzero"`
+	OutputMode          OutputMode        `json:"outputMode"          bun:"output_mode,type:VARCHAR(20),notnull" keel:"output_mode"`
+	PreferredProviderID pulid.ID          `json:"preferredProviderId" bun:"preferred_provider_id,type:VARCHAR(100),nullzero" keel:"preferred_provider_id,nullzero"`
+	SystemKey           string            `json:"systemKey"           bun:"system_key,type:VARCHAR(50),nullzero" keel:"system_key,nullzero"`
 
 	// DelegateIDs are the agents this one may hand a task to when a person is
 	// talking to it: the ones it asks when the work needs tools it does not
 	// hold. Each delegate works with its own tools, tiers, ceiling and budget,
 	// as the same person, and never delegates further.
-	DelegateIDs []pulid.ID `json:"delegateIds" bun:"delegate_ids,type:TEXT[],array,nullzero"`
+	DelegateIDs []pulid.ID `json:"delegateIds" bun:"delegate_ids,type:TEXT[],array,nullzero" keel:"delegate_ids,nullzero"`
 	// DelegateTopics names, per delegate id, the questions that go to that
 	// agent ("Pay rates, people records"), so a person reading what an agent
 	// does sees why it hands work on. A delegate without one is described by
 	// its own description.
-	DelegateTopics map[string]string `json:"delegateTopics" bun:"delegate_topics,type:JSONB,nullzero"`
+	DelegateTopics map[string]string `json:"delegateTopics" bun:"delegate_topics,type:JSONB,nullzero" keel:"delegate_topics,jsonb,nullzero"`
 
 	// DisabledToolNames are tools switched off from the agent's capabilities
 	// page. Switching a tool off removes it from ToolNames, which is the
 	// grant; it is listed here only so the page can still offer it back.
-	DisabledToolNames []string `json:"disabledToolNames" bun:"disabled_tool_names,type:TEXT[],array,nullzero"`
+	DisabledToolNames []string `json:"disabledToolNames" bun:"disabled_tool_names,type:TEXT[],array,nullzero" keel:"disabled_tool_names,nullzero"`
 
 	// MaxChangeItems is the most records one change by the agent may touch.
 	// A bigger batch is refused with an instruction to split it, so each part
 	// is proposed and approved on its own.
-	MaxChangeItems int `json:"maxChangeItems" bun:"max_change_items,type:INTEGER,notnull,default:500"`
+	MaxChangeItems int `json:"maxChangeItems" bun:"max_change_items,type:INTEGER,notnull,default:500" keel:"max_change_items"`
 
 	// BusinessHoursOnly keeps the agent from making changes on its own
 	// outside the window BusinessHoursStart to BusinessHoursEnd (minutes
 	// after midnight) in BusinessHoursTimezone, or the organization's zone
 	// when that is empty. Outside the window a change is held as a proposal
 	// for a person instead of running.
-	BusinessHoursOnly     bool   `json:"businessHoursOnly"     bun:"business_hours_only,type:BOOLEAN,notnull,default:false"`
-	BusinessHoursStart    int    `json:"businessHoursStart"    bun:"business_hours_start,type:INTEGER,notnull,default:420"`
-	BusinessHoursEnd      int    `json:"businessHoursEnd"      bun:"business_hours_end,type:INTEGER,notnull,default:1080"`
-	BusinessHoursTimezone string `json:"businessHoursTimezone" bun:"business_hours_timezone,type:VARCHAR(100),nullzero"`
+	BusinessHoursOnly     bool   `json:"businessHoursOnly"     bun:"business_hours_only,type:BOOLEAN,notnull,default:false" keel:"business_hours_only"`
+	BusinessHoursStart    int    `json:"businessHoursStart"    bun:"business_hours_start,type:INTEGER,notnull,default:420" keel:"business_hours_start"`
+	BusinessHoursEnd      int    `json:"businessHoursEnd"      bun:"business_hours_end,type:INTEGER,notnull,default:1080" keel:"business_hours_end"`
+	BusinessHoursTimezone string `json:"businessHoursTimezone" bun:"business_hours_timezone,type:VARCHAR(100),nullzero" keel:"business_hours_timezone,nullzero"`
 
 	// CreatedByID is the person who set the agent up; nil for the agents the
 	// platform provisions and for those made before it was kept.
-	CreatedByID *pulid.ID `json:"createdById,omitempty" bun:"created_by_id,type:VARCHAR(100),nullzero"`
+	CreatedByID *pulid.ID `json:"createdById,omitempty" bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id"`
 
 	// AccessMode is who may use the agent among the people who may use the
 	// assistant: everyone, or only the roles granted it. Only the agent
 	// access service writes it.
-	AccessMode AccessMode `json:"accessMode" bun:"access_mode,type:VARCHAR(20),notnull,default:'Everyone'"`
+	AccessMode AccessMode `json:"accessMode" bun:"access_mode,type:VARCHAR(20),notnull,default:'Everyone'" keel:"access_mode"`
 
-	LastRunAt *int64 `json:"lastRunAt" bun:"last_run_at,type:BIGINT,nullzero"`
-	NextRunAt *int64 `json:"nextRunAt" bun:"next_run_at,type:BIGINT,nullzero"`
+	LastRunAt *int64 `json:"lastRunAt" bun:"last_run_at,type:BIGINT,nullzero" keel:"last_run_at"`
+	NextRunAt *int64 `json:"nextRunAt" bun:"next_run_at,type:BIGINT,nullzero" keel:"next_run_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
@@ -184,6 +186,10 @@ func (d *Definition) BeforeAppendModel(_ context.Context, query bun.Query) error
 	}
 
 	return nil
+}
+
+func (d *Definition) BeforeCreate(ctx context.Context) error {
+	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (d *Definition) GetID() pulid.ID { return d.ID }

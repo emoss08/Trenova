@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -33,39 +34,41 @@ type PayEventComponent struct {
 	AmountMinor int64                   `json:"amountMinor"`
 }
 
+// Pay accrued against a shipment, before and after it settles
 type PayEvent struct {
 	bun.BaseModel             `bun:"table:driver_pay_events,alias:dpe" json:"-"`
+	keel.Table                `                                                 keel:"driver_pay_events,report=Payroll,label=Driver Pay Event"`
 	pagination.CursorValueSet `bun:",embed"                            json:"-"`
 
-	ID               pulid.ID            `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID            `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID            `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID         pulid.ID            `json:"workerId"         bun:"worker_id,type:VARCHAR(100),notnull"`
-	ShipmentID       pulid.ID            `json:"shipmentId"       bun:"shipment_id,type:VARCHAR(100),notnull"`
-	MoveID           *pulid.ID           `json:"moveId"           bun:"move_id,type:VARCHAR(100),nullzero"`
-	AssignmentID     *pulid.ID           `json:"assignmentId"     bun:"assignment_id,type:VARCHAR(100),nullzero"`
-	PayProfileID     *pulid.ID           `json:"payProfileId"     bun:"pay_profile_id,type:VARCHAR(100),nullzero"`
-	SettlementID     *pulid.ID           `json:"settlementId"     bun:"settlement_id,type:VARCHAR(100),nullzero"`
-	SettlementLineID *pulid.ID           `json:"settlementLineId" bun:"settlement_line_id,type:VARCHAR(100),nullzero"`
-	IdempotencyKey   string              `json:"idempotencyKey"   bun:"idempotency_key,type:VARCHAR(255),notnull"`
-	Status           PayEventStatus      `json:"status"           bun:"status,type:VARCHAR(50),notnull,default:'Accrued'"`
-	EventDate        int64               `json:"eventDate"        bun:"event_date,type:BIGINT,notnull"`
-	GrossAmountMinor int64               `json:"grossAmountMinor" bun:"gross_amount_minor,type:BIGINT,notnull"`
-	TotalMiles       decimal.Decimal     `json:"totalMiles"       bun:"total_miles,type:NUMERIC(19,4),notnull,default:0"`
-	CurrencyCode     string              `json:"currencyCode"     bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	Components       []PayEventComponent `json:"components"       bun:"components,type:JSONB,nullzero"`
-	ProNumber        string              `json:"proNumber"        bun:"pro_number,type:VARCHAR(100),nullzero"`
-	OnHold           bool                `json:"onHold"           bun:"on_hold,type:BOOLEAN,notnull"`
-	HoldReason       string              `json:"holdReason"       bun:"hold_reason,type:TEXT,nullzero"`
-	VoidedAt         *int64              `json:"voidedAt"         bun:"voided_at,type:BIGINT,nullzero"`
-	VoidReason       string              `json:"voidReason"       bun:"void_reason,type:TEXT,nullzero"`
-	Version          int64               `json:"version"          bun:"version,type:BIGINT,notnull"`
-	CreatedAt        int64               `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64               `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID            `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:dpe_"`
+	BusinessUnitID   pulid.ID            `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID            `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	WorkerID         pulid.ID            `json:"workerId"         bun:"worker_id,type:VARCHAR(100),notnull"                                                  keel:"worker_id"`
+	ShipmentID       pulid.ID            `json:"shipmentId"       bun:"shipment_id,type:VARCHAR(100),notnull"                                                keel:"shipment_id"`
+	MoveID           *pulid.ID           `json:"moveId"           bun:"move_id,type:VARCHAR(100),nullzero"                                                   keel:"move_id"`
+	AssignmentID     *pulid.ID           `json:"assignmentId"     bun:"assignment_id,type:VARCHAR(100),nullzero"                                             keel:"assignment_id"`
+	PayProfileID     *pulid.ID           `json:"payProfileId"     bun:"pay_profile_id,type:VARCHAR(100),nullzero"                                            keel:"pay_profile_id"`
+	SettlementID     *pulid.ID           `json:"settlementId"     bun:"settlement_id,type:VARCHAR(100),nullzero"                                             keel:"settlement_id"`
+	SettlementLineID *pulid.ID           `json:"settlementLineId" bun:"settlement_line_id,type:VARCHAR(100),nullzero"                                        keel:"settlement_line_id"`
+	IdempotencyKey   string              `json:"idempotencyKey"   bun:"idempotency_key,type:VARCHAR(255),notnull"                                            keel:"idempotency_key,noreport"`
+	Status           PayEventStatus      `json:"status"           bun:"status,type:VARCHAR(50),notnull,default:'Accrued'"                                    keel:"status"`
+	EventDate        int64               `json:"eventDate"        bun:"event_date,type:BIGINT,notnull"                                                       keel:"event_date"`
+	GrossAmountMinor int64               `json:"grossAmountMinor" bun:"gross_amount_minor,type:BIGINT,notnull"                                               keel:"gross_amount_minor,label=Gross Amount (Minor)"`
+	TotalMiles       decimal.Decimal     `json:"totalMiles"       bun:"total_miles,type:NUMERIC(19,4),notnull,default:0"                                     keel:"total_miles,format=distance"`
+	CurrencyCode     string              `json:"currencyCode"     bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"                                  keel:"currency_code,label=Currency"`
+	Components       []PayEventComponent `json:"components"       bun:"components,type:JSONB,nullzero"                                                       keel:"components,jsonb,nullzero,noreport"`
+	ProNumber        string              `json:"proNumber"        bun:"pro_number,type:VARCHAR(100),nullzero"                                                keel:"pro_number,nullzero"`
+	OnHold           bool                `json:"onHold"           bun:"on_hold,type:BOOLEAN,notnull"                                                         keel:"on_hold"`
+	HoldReason       string              `json:"holdReason"       bun:"hold_reason,type:TEXT,nullzero"                                                       keel:"hold_reason,nullzero"`
+	VoidedAt         *int64              `json:"voidedAt"         bun:"voided_at,type:BIGINT,nullzero"                                                       keel:"voided_at"`
+	VoidReason       string              `json:"voidReason"       bun:"void_reason,type:TEXT,nullzero"                                                       keel:"void_reason,nullzero"`
+	Version          int64               `json:"version"          bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
+	CreatedAt        int64               `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64               `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker     *worker.Worker     `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Shipment   *shipment.Shipment `json:"shipment,omitempty"   bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Settlement *Settlement        `json:"settlement,omitempty" bun:"rel:belongs-to,join:settlement_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Worker     *worker.Worker     `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"     keel:"belongs:worker_id,label=Driver"`
+	Shipment   *shipment.Shipment `json:"shipment,omitempty"   bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"   keel:"belongs:shipment_id"`
+	Settlement *Settlement        `json:"settlement,omitempty" bun:"rel:belongs-to,join:settlement_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:settlement_id"`
 }
 
 func (p *PayEvent) Validate(multiErr *errortypes.MultiError) {
@@ -127,4 +130,8 @@ func (p *PayEvent) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		p.UpdatedAt = now
 	}
 	return nil
+}
+
+func (p *PayEvent) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

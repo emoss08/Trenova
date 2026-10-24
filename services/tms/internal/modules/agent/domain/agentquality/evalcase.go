@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -174,46 +175,47 @@ func RestrictedPlaceholder(field string) string {
 
 type EvalCase struct {
 	bun.BaseModel `bun:"table:agent_eval_cases,alias:aec" json:"-"`
+	keel.Table    `keel:"agent_eval_cases"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aec_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull"`
-	Title             string           `json:"title"             bun:"title,type:VARCHAR(200),nullzero"`
-	Source            CaseSource       `json:"source"            bun:"source,type:VARCHAR(30),notnull"`
-	Status            CaseStatus       `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Candidate'"`
-	Trigger           agent.RunTrigger `json:"trigger"           bun:"trigger,type:VARCHAR(20),notnull"`
+	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
+	Title             string           `json:"title"             bun:"title,type:VARCHAR(200),nullzero" keel:"title,nullzero"`
+	Source            CaseSource       `json:"source"            bun:"source,type:VARCHAR(30),notnull" keel:"source"`
+	Status            CaseStatus       `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Candidate'" keel:"status"`
+	Trigger           agent.RunTrigger `json:"trigger"           bun:"trigger,type:VARCHAR(20),notnull" keel:"trigger"`
 
-	SourceRunID      *pulid.ID `json:"sourceRunId"      bun:"source_run_id,type:VARCHAR(100),nullzero"`
-	SourceTurnID     *pulid.ID `json:"sourceTurnId"     bun:"source_turn_id,type:VARCHAR(100),nullzero"`
-	SourceThreadID   *pulid.ID `json:"sourceThreadId"   bun:"source_thread_id,type:VARCHAR(100),nullzero"`
-	SourceMessageID  *pulid.ID `json:"sourceMessageId"  bun:"source_message_id,type:VARCHAR(100),nullzero"`
-	SourceProposalID *pulid.ID `json:"sourceProposalId" bun:"source_proposal_id,type:VARCHAR(100),nullzero"`
-	SourceFeedbackID *pulid.ID `json:"sourceFeedbackId" bun:"source_feedback_id,type:VARCHAR(100),nullzero"`
+	SourceRunID      *pulid.ID `json:"sourceRunId"      bun:"source_run_id,type:VARCHAR(100),nullzero" keel:"source_run_id"`
+	SourceTurnID     *pulid.ID `json:"sourceTurnId"     bun:"source_turn_id,type:VARCHAR(100),nullzero" keel:"source_turn_id"`
+	SourceThreadID   *pulid.ID `json:"sourceThreadId"   bun:"source_thread_id,type:VARCHAR(100),nullzero" keel:"source_thread_id"`
+	SourceMessageID  *pulid.ID `json:"sourceMessageId"  bun:"source_message_id,type:VARCHAR(100),nullzero" keel:"source_message_id"`
+	SourceProposalID *pulid.ID `json:"sourceProposalId" bun:"source_proposal_id,type:VARCHAR(100),nullzero" keel:"source_proposal_id"`
+	SourceFeedbackID *pulid.ID `json:"sourceFeedbackId" bun:"source_feedback_id,type:VARCHAR(100),nullzero" keel:"source_feedback_id"`
 
-	Input        string             `json:"input"        bun:"input,type:TEXT,notnull"`
-	History      []HistoryMessage   `json:"history"      bun:"history,type:JSONB,notnull,default:'[]'"`
-	PageContext  *agent.PageContext `json:"pageContext"  bun:"page_context,type:JSONB,nullzero"`
-	Mentions     []agent.EntityRef  `json:"mentions"     bun:"mentions,type:JSONB,notnull,default:'[]'"`
-	SubjectType  agent.SubjectType  `json:"subjectType"  bun:"subject_type,type:VARCHAR(50),nullzero"`
-	SubjectID    pulid.ID           `json:"subjectId"    bun:"subject_id,type:VARCHAR(100),nullzero"`
-	HeldTools    []string           `json:"heldTools"    bun:"held_tools,type:TEXT[],array,notnull,default:'{}'"`
-	ToolFixtures []ToolFixture      `json:"toolFixtures" bun:"tool_fixtures,type:JSONB,notnull,default:'[]'"`
+	Input        string             `json:"input"        bun:"input,type:TEXT,notnull" keel:"input"`
+	History      []HistoryMessage   `json:"history"      bun:"history,type:JSONB,notnull,default:'[]'" keel:"history,jsonb"`
+	PageContext  *agent.PageContext `json:"pageContext"  bun:"page_context,type:JSONB,nullzero" keel:"page_context,jsonb"`
+	Mentions     []agent.EntityRef  `json:"mentions"     bun:"mentions,type:JSONB,notnull,default:'[]'" keel:"mentions,jsonb"`
+	SubjectType  agent.SubjectType  `json:"subjectType"  bun:"subject_type,type:VARCHAR(50),nullzero" keel:"subject_type,nullzero"`
+	SubjectID    pulid.ID           `json:"subjectId"    bun:"subject_id,type:VARCHAR(100),nullzero" keel:"subject_id,nullzero"`
+	HeldTools    []string           `json:"heldTools"    bun:"held_tools,type:TEXT[],array,notnull,default:'{}'" keel:"held_tools"`
+	ToolFixtures []ToolFixture      `json:"toolFixtures" bun:"tool_fixtures,type:JSONB,notnull,default:'[]'" keel:"tool_fixtures,jsonb"`
 
-	Expected            Expected           `json:"expected"            bun:"expected,type:JSONB,notnull"`
-	Rubric              string             `json:"rubric"              bun:"rubric,type:TEXT,nullzero"`
-	Redaction           *Redaction         `json:"redaction"           bun:"redaction,type:JSONB,nullzero"`
-	ContentHash         string             `json:"contentHash"         bun:"content_hash,type:VARCHAR(64),notnull"`
-	CapturedFingerprint *agent.Fingerprint `json:"capturedFingerprint" bun:"captured_fingerprint,type:JSONB,nullzero"`
-	ExpiresAt           *int64             `json:"expiresAt"           bun:"expires_at,type:BIGINT,nullzero"`
-	CreatedByUserID     *pulid.ID          `json:"createdByUserId"     bun:"created_by_user_id,type:VARCHAR(100),nullzero"`
+	Expected            Expected           `json:"expected"            bun:"expected,type:JSONB,notnull" keel:"expected,jsonb"`
+	Rubric              string             `json:"rubric"              bun:"rubric,type:TEXT,nullzero" keel:"rubric,nullzero"`
+	Redaction           *Redaction         `json:"redaction"           bun:"redaction,type:JSONB,nullzero" keel:"redaction,jsonb"`
+	ContentHash         string             `json:"contentHash"         bun:"content_hash,type:VARCHAR(64),notnull" keel:"content_hash"`
+	CapturedFingerprint *agent.Fingerprint `json:"capturedFingerprint" bun:"captured_fingerprint,type:JSONB,nullzero" keel:"captured_fingerprint,jsonb"`
+	ExpiresAt           *int64             `json:"expiresAt"           bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at"`
+	CreatedByUserID     *pulid.ID          `json:"createdByUserId"     bun:"created_by_user_id,type:VARCHAR(100),nullzero" keel:"created_by_user_id"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

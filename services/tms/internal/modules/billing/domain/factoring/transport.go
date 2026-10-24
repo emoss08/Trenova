@@ -5,6 +5,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,26 +29,27 @@ var _ bun.BeforeAppendModelHook = (*Transport)(nil)
 
 type Transport struct {
 	bun.BaseModel `bun:"table:factoring_transports,alias:factrn" json:"-"`
+	keel.Table    `keel:"factoring_transports"`
 
-	ID                 pulid.ID        `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID        `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID        `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	FactoringCompanyID pulid.ID        `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),notnull"`
-	Method             TransportMethod `json:"method"             bun:"method,type:VARCHAR(20),notnull,default:'Email'"`
-	EmailRecipients    []string        `json:"emailRecipients"    bun:"email_recipients,array,type:text[],nullzero"`
-	AttachPackets      bool            `json:"attachPackets"      bun:"attach_packets,type:BOOLEAN,notnull"`
-	SftpHost           string          `json:"sftpHost"           bun:"sftp_host,type:VARCHAR(255),nullzero"`
-	SftpPort           int             `json:"sftpPort"           bun:"sftp_port,type:INTEGER,nullzero"`
-	SftpUsername       string          `json:"sftpUsername"       bun:"sftp_username,type:VARCHAR(255),nullzero"`
-	SftpAuthMethod     SftpAuthMethod  `json:"sftpAuthMethod"     bun:"sftp_auth_method,type:VARCHAR(20),nullzero"`
-	SftpSecret         string          `json:"-"                  bun:"sftp_secret,type:TEXT,nullzero"`
-	SftpKnownHostKey   string          `json:"sftpKnownHostKey"   bun:"sftp_known_host_key,type:TEXT,nullzero"`
-	SftpDirectory      string          `json:"sftpDirectory"      bun:"sftp_directory,type:VARCHAR(500),nullzero"`
-	LastTestedAt       *int64          `json:"lastTestedAt"       bun:"last_tested_at,type:BIGINT,nullzero"`
-	LastTestError      string          `json:"lastTestError"      bun:"last_test_error,type:TEXT,nullzero"`
-	Version            int64           `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt          int64           `json:"createdAt"          bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt          int64           `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull"`
+	ID                 pulid.ID        `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:factrn_"`
+	OrganizationID     pulid.ID        `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID        `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	FactoringCompanyID pulid.ID        `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),notnull" keel:"factoring_company_id"`
+	Method             TransportMethod `json:"method"             bun:"method,type:VARCHAR(20),notnull,default:'Email'" keel:"method"`
+	EmailRecipients    []string        `json:"emailRecipients"    bun:"email_recipients,array,type:text[],nullzero" keel:"email_recipients,nullzero"`
+	AttachPackets      bool            `json:"attachPackets"      bun:"attach_packets,type:BOOLEAN,notnull" keel:"attach_packets"`
+	SftpHost           string          `json:"sftpHost"           bun:"sftp_host,type:VARCHAR(255),nullzero" keel:"sftp_host,nullzero"`
+	SftpPort           int             `json:"sftpPort"           bun:"sftp_port,type:INTEGER,nullzero" keel:"sftp_port,nullzero"`
+	SftpUsername       string          `json:"sftpUsername"       bun:"sftp_username,type:VARCHAR(255),nullzero" keel:"sftp_username,nullzero"`
+	SftpAuthMethod     SftpAuthMethod  `json:"sftpAuthMethod"     bun:"sftp_auth_method,type:VARCHAR(20),nullzero" keel:"sftp_auth_method,nullzero"`
+	SftpSecret         string          `json:"-"                  bun:"sftp_secret,type:TEXT,nullzero" keel:"sftp_secret,nullzero"`
+	SftpKnownHostKey   string          `json:"sftpKnownHostKey"   bun:"sftp_known_host_key,type:TEXT,nullzero" keel:"sftp_known_host_key,nullzero"`
+	SftpDirectory      string          `json:"sftpDirectory"      bun:"sftp_directory,type:VARCHAR(500),nullzero" keel:"sftp_directory,nullzero"`
+	LastTestedAt       *int64          `json:"lastTestedAt"       bun:"last_tested_at,type:BIGINT,nullzero" keel:"last_tested_at"`
+	LastTestError      string          `json:"lastTestError"      bun:"last_test_error,type:TEXT,nullzero" keel:"last_test_error,nullzero"`
+	Version            int64           `json:"version"            bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt          int64           `json:"createdAt"          bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt          int64           `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 }
 
 func (t *Transport) Validate(multiErr *errortypes.MultiError) {
@@ -237,6 +239,10 @@ func (t *Transport) BeforeAppendModel(_ context.Context, query bun.Query) error 
 		t.UpdatedAt = now
 	}
 	return nil
+}
+
+func (t *Transport) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (t *Transport) GetID() pulid.ID             { return t.ID }

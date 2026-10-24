@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -45,28 +46,29 @@ var (
 
 type ShipmentMoveJurisdictionMile struct {
 	bun.BaseModel `json:"-" bun:"table:shipment_move_jurisdiction_miles,alias:smjm"`
+	keel.Table    `keel:"shipment_move_jurisdiction_miles"`
 
-	ID                pulid.ID               `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID               `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID               `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ShipmentMoveID    pulid.ID               `json:"shipmentMoveId"    bun:"shipment_move_id,type:VARCHAR(100),notnull"`
-	ShipmentID        pulid.ID               `json:"shipmentId"        bun:"shipment_id,type:VARCHAR(100),notnull"`
-	CountryCode       string                 `json:"countryCode"       bun:"country_code,type:VARCHAR(2),notnull"`
-	JurisdictionCode  string                 `json:"jurisdictionCode"  bun:"jurisdiction_code,type:VARCHAR(5),notnull"`
-	Sequence          int                    `json:"sequence"          bun:"sequence,type:INTEGER,notnull"`
-	Distance          float64                `json:"distance"          bun:"distance,type:FLOAT,notnull"`
-	DistanceUnits     string                 `json:"distanceUnits"     bun:"distance_units,type:VARCHAR(50),notnull"`
-	TollDistance      *float64               `json:"tollDistance"      bun:"toll_distance,type:FLOAT,nullzero"`
-	FerryDistance     *float64               `json:"ferryDistance"     bun:"ferry_distance,type:FLOAT,nullzero"`
-	Loaded            bool                   `json:"loaded"            bun:"loaded,type:BOOLEAN,notnull"`
-	Source            JurisdictionMileSource `json:"source"            bun:"source,type:VARCHAR(50),notnull"`
-	Provider          string                 `json:"provider"          bun:"provider,type:VARCHAR(50),nullzero"`
-	DataVersion       string                 `json:"dataVersion"       bun:"data_version,type:VARCHAR(50),nullzero"`
-	DistanceProfileID pulid.ID               `json:"distanceProfileId" bun:"distance_profile_id,type:VARCHAR(100),nullzero"`
-	CalculatedAt      int64                  `json:"calculatedAt"      bun:"calculated_at,type:BIGINT,notnull"`
-	Version           int64                  `json:"version"           bun:"version,type:BIGINT"`
-	CreatedAt         int64                  `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64                  `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID               `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:smjm_"`
+	BusinessUnitID    pulid.ID               `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID               `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ShipmentMoveID    pulid.ID               `json:"shipmentMoveId"    bun:"shipment_move_id,type:VARCHAR(100),notnull" keel:"shipment_move_id"`
+	ShipmentID        pulid.ID               `json:"shipmentId"        bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
+	CountryCode       string                 `json:"countryCode"       bun:"country_code,type:VARCHAR(2),notnull" keel:"country_code"`
+	JurisdictionCode  string                 `json:"jurisdictionCode"  bun:"jurisdiction_code,type:VARCHAR(5),notnull" keel:"jurisdiction_code"`
+	Sequence          int                    `json:"sequence"          bun:"sequence,type:INTEGER,notnull" keel:"sequence"`
+	Distance          float64                `json:"distance"          bun:"distance,type:FLOAT,notnull" keel:"distance"`
+	DistanceUnits     string                 `json:"distanceUnits"     bun:"distance_units,type:VARCHAR(50),notnull" keel:"distance_units"`
+	TollDistance      *float64               `json:"tollDistance"      bun:"toll_distance,type:FLOAT,nullzero" keel:"toll_distance"`
+	FerryDistance     *float64               `json:"ferryDistance"     bun:"ferry_distance,type:FLOAT,nullzero" keel:"ferry_distance"`
+	Loaded            bool                   `json:"loaded"            bun:"loaded,type:BOOLEAN,notnull" keel:"loaded"`
+	Source            JurisdictionMileSource `json:"source"            bun:"source,type:VARCHAR(50),notnull" keel:"source"`
+	Provider          string                 `json:"provider"          bun:"provider,type:VARCHAR(50),nullzero" keel:"provider,nullzero"`
+	DataVersion       string                 `json:"dataVersion"       bun:"data_version,type:VARCHAR(50),nullzero" keel:"data_version,nullzero"`
+	DistanceProfileID pulid.ID               `json:"distanceProfileId" bun:"distance_profile_id,type:VARCHAR(100),nullzero" keel:"distance_profile_id,nullzero"`
+	CalculatedAt      int64                  `json:"calculatedAt"      bun:"calculated_at,type:BIGINT,notnull" keel:"calculated_at"`
+	Version           int64                  `json:"version"           bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt         int64                  `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt         int64                  `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (m *ShipmentMoveJurisdictionMile) Validate(multiErr *errortypes.MultiError) {
@@ -175,4 +177,8 @@ func (m *ShipmentMoveJurisdictionMile) BeforeAppendModel(_ context.Context, quer
 	}
 
 	return nil
+}
+
+func (m *ShipmentMoveJurisdictionMile) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

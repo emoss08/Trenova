@@ -2,12 +2,12 @@ package agent_test
 
 import (
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,10 +21,9 @@ caught here rather than by a run that never wakes.
 */
 
 const (
-	eventsSource   = "events.go"
-	enumsSource    = "enums.go"
-	migrationsPath = "../../../../infrastructure/postgres/migrations"
-	subjectEnum    = "agent_subject_type_enum"
+	eventsSource = "events.go"
+	enumsSource  = "enums.go"
+	subjectEnum  = "agent_subject_type_enum"
 )
 
 func readSource(t *testing.T, name string) string {
@@ -95,18 +94,13 @@ func TestEveryDeclaredSubjectTypeIsListedAndValid(t *testing.T) {
 func TestEverySubjectTypeReachesThePostgresEnum(t *testing.T) {
 	t.Parallel()
 
-	entries, err := os.ReadDir(migrationsPath)
+	ms, err := migrations.Set().Migrations()
 	require.NoError(t, err)
 
 	var corpus strings.Builder
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".up.sql") {
-			continue
-		}
-		contents, readErr := os.ReadFile(filepath.Join(migrationsPath, entry.Name()))
-		require.NoError(t, readErr)
-		if strings.Contains(string(contents), subjectEnum) {
-			corpus.Write(contents)
+	for _, m := range ms {
+		if strings.Contains(m.SQL, subjectEnum) {
+			corpus.WriteString(m.SQL)
 		}
 	}
 	require.NotEmpty(t, corpus.String())

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -20,76 +21,77 @@ var _ bun.BeforeAppendModelHook = (*AccountingConnection)(nil)
 
 type AccountingConnection struct {
 	bun.BaseModel `bun:"table:accounting_connections,alias:acctc" json:"-"`
+	keel.Table    `keel:"accounting_connections"`
 
-	ID                            pulid.ID             `json:"id"                            bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID                pulid.ID             `json:"businessUnitId"                bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID                pulid.ID             `json:"organizationId"                bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	IntegrationType               integration.Type     `json:"integrationType"               bun:"integration_type,type:VARCHAR(50),notnull"`
-	Status                        ConnectionStatus     `json:"status"                        bun:"status,type:VARCHAR(20),notnull"`
-	ExternalRealmID               string               `json:"externalRealmId"               bun:"external_realm_id,type:VARCHAR(100),notnull"`
-	AppSource                     AppSource            `json:"appSource"                     bun:"app_source,type:VARCHAR(20),nullzero,notnull,default:'Instance'"`
-	AppEnvironment                AppEnvironment       `json:"appEnvironment"                bun:"app_environment,type:VARCHAR(20),nullzero"`
-	AppFingerprint                string               `json:"-"                             bun:"app_fingerprint,type:VARCHAR(64),nullzero"`
-	AuthMethod                    AuthMethod           `json:"authMethod"                    bun:"auth_method,type:VARCHAR(30),nullzero,notnull,default:'Authorization'"`
-	ClientKeyCiphertext           string               `json:"-"                             bun:"client_key_ciphertext,type:TEXT,nullzero"`
-	ClientCertificateID           string               `json:"clientCertificateId"           bun:"client_certificate_id,type:VARCHAR(100),nullzero"`
-	ClientCertificateExpiresAt    *int64               `json:"clientCertificateExpiresAt"    bun:"client_certificate_expires_at,type:BIGINT,nullzero"`
-	ExternalCompanyName           string               `json:"externalCompanyName"           bun:"external_company_name,type:VARCHAR(255),nullzero"`
-	ExternalShortCode             string               `json:"externalShortCode"             bun:"external_short_code,type:VARCHAR(20),nullzero"`
-	ExternalLegalName             string               `json:"externalLegalName"             bun:"external_legal_name,type:VARCHAR(255),nullzero"`
-	ExternalCountry               string               `json:"externalCountry"               bun:"external_country,type:VARCHAR(10),nullzero"`
-	ExternalHomeCurrency          string               `json:"externalHomeCurrency"          bun:"external_home_currency,type:VARCHAR(3),nullzero"`
-	ExternalMultiCurrencyEnabled  bool                 `json:"externalMultiCurrencyEnabled"  bun:"external_multi_currency_enabled,type:BOOLEAN,notnull"`
-	ExternalBooksClosedThrough    *int64               `json:"externalBooksClosedThrough"    bun:"external_books_closed_through,type:BIGINT,nullzero"`
-	AccessTokenCiphertext         string               `json:"-"                             bun:"access_token_ciphertext,type:TEXT,nullzero"`
-	AccessTokenExpiresAt          int64                `json:"accessTokenExpiresAt"          bun:"access_token_expires_at,type:BIGINT,notnull"`
-	RefreshTokenCiphertext        string               `json:"-"                             bun:"refresh_token_ciphertext,type:TEXT,nullzero"`
-	RefreshTokenExpiresAt         int64                `json:"refreshTokenExpiresAt"         bun:"refresh_token_expires_at,type:BIGINT,notnull"`
-	RefreshTokenAbsoluteExpiresAt int64                `json:"refreshTokenAbsoluteExpiresAt" bun:"refresh_token_absolute_expires_at,type:BIGINT,notnull"`
-	LastRefreshedAt               *int64               `json:"lastRefreshedAt"               bun:"last_refreshed_at,type:BIGINT,nullzero"`
-	LastCheckedAt                 *int64               `json:"lastCheckedAt"                 bun:"last_checked_at,type:BIGINT,nullzero"`
-	LastSuccessAt                 *int64               `json:"lastSuccessAt"                 bun:"last_success_at,type:BIGINT,nullzero"`
-	LastFailureAt                 *int64               `json:"lastFailureAt"                 bun:"last_failure_at,type:BIGINT,nullzero"`
-	ConsecutiveFailures           int                  `json:"consecutiveFailures"           bun:"consecutive_failures,type:INTEGER,notnull"`
-	LastErrorCategory             ErrorCategory        `json:"lastErrorCategory"             bun:"last_error_category,type:VARCHAR(30),nullzero"`
-	LastErrorMessage              string               `json:"lastErrorMessage"              bun:"last_error_message,type:TEXT,nullzero"`
-	LastWebhookAt                 *int64               `json:"lastWebhookAt"                 bun:"last_webhook_at,type:BIGINT,nullzero"`
-	SetupStep                     SetupStep            `json:"setupStep"                     bun:"setup_step,type:VARCHAR(20),notnull"`
-	ReferenceRefreshStartedAt     *int64               `json:"referenceRefreshStartedAt"     bun:"reference_refresh_started_at,type:BIGINT,nullzero"`
-	ReferenceRefreshedAt          *int64               `json:"referenceRefreshedAt"          bun:"reference_refreshed_at,type:BIGINT,nullzero"`
-	ReferenceRefreshError         string               `json:"referenceRefreshError"         bun:"reference_refresh_error,type:TEXT,nullzero"`
-	SyncStartDate                 *int64               `json:"syncStartDate"                 bun:"sync_start_date,type:BIGINT,nullzero"`
-	SyncEnabledAt                 *int64               `json:"syncEnabledAt"                 bun:"sync_enabled_at,type:BIGINT,nullzero"`
-	AutoSync                      bool                 `json:"autoSync"                      bun:"auto_sync,type:BOOLEAN,notnull"`
-	DriverSettlementsEnabledAt    *int64               `json:"driverSettlementsEnabledAt"    bun:"driver_settlements_enabled_at,type:BIGINT,nullzero"`
-	InboundPaymentPolicy          InboundPaymentPolicy `json:"inboundPaymentPolicy"          bun:"inbound_payment_policy,type:VARCHAR(20),nullzero,notnull,default:'Propose'"`
-	SyncMode                      SyncMode             `json:"syncMode"                      bun:"sync_mode,type:VARCHAR(20),nullzero,notnull,default:'Document'"`
-	LedgerGranularity             LedgerGranularity    `json:"ledgerGranularity"             bun:"ledger_granularity,type:VARCHAR(20),nullzero"`
-	LedgerOpeningBalancesSentAt   *int64               `json:"ledgerOpeningBalancesSentAt"   bun:"ledger_opening_balances_sent_at,type:BIGINT,nullzero"`
-	ExternalFiscalYearStartMonth  int                  `json:"externalFiscalYearStartMonth"  bun:"external_fiscal_year_start_month,type:SMALLINT,nullzero,notnull,default:1"`
-	ChangeCursor                  string               `json:"-"                             bun:"change_cursor,type:TEXT,nullzero"`
-	ChangesReadAt                 *int64               `json:"changesReadAt"                 bun:"changes_read_at,type:BIGINT,nullzero"`
-	ChangesErrorCategory          SyncErrorCategory    `json:"changesErrorCategory"          bun:"changes_error_category,type:VARCHAR(30),nullzero"`
-	ChangesErrorMessage           string               `json:"changesErrorMessage"           bun:"changes_error_message,type:TEXT,nullzero"`
-	DriftCheckedAt                *int64               `json:"driftCheckedAt"                bun:"drift_checked_at,type:BIGINT,nullzero"`
-	DriftErrorCategory            SyncErrorCategory    `json:"driftErrorCategory"            bun:"drift_error_category,type:VARCHAR(30),nullzero"`
-	DriftErrorMessage             string               `json:"driftErrorMessage"             bun:"drift_error_message,type:TEXT,nullzero"`
-	PausedAt                      *int64               `json:"pausedAt"                      bun:"paused_at,type:BIGINT,nullzero"`
-	PausedByID                    pulid.ID             `json:"pausedById"                    bun:"paused_by_id,type:VARCHAR(100),nullzero"`
-	PausedReason                  string               `json:"pausedReason"                  bun:"paused_reason,type:TEXT,nullzero"`
-	ConnectedByID                 pulid.ID             `json:"connectedById"                 bun:"connected_by_id,type:VARCHAR(100),nullzero"`
-	ConnectedAt                   int64                `json:"connectedAt"                   bun:"connected_at,type:BIGINT,notnull"`
-	DisconnectedByID              pulid.ID             `json:"disconnectedById"              bun:"disconnected_by_id,type:VARCHAR(100),nullzero"`
-	DisconnectedAt                *int64               `json:"disconnectedAt"                bun:"disconnected_at,type:BIGINT,nullzero"`
-	Version                       int64                `json:"version"                       bun:"version,type:BIGINT"`
-	CreatedAt                     int64                `json:"createdAt"                     bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                     int64                `json:"updatedAt"                     bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                            pulid.ID             `json:"id"                            bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctc_"`
+	BusinessUnitID                pulid.ID             `json:"businessUnitId"                bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID                pulid.ID             `json:"organizationId"                bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	IntegrationType               integration.Type     `json:"integrationType"               bun:"integration_type,type:VARCHAR(50),notnull" keel:"integration_type"`
+	Status                        ConnectionStatus     `json:"status"                        bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	ExternalRealmID               string               `json:"externalRealmId"               bun:"external_realm_id,type:VARCHAR(100),notnull" keel:"external_realm_id"`
+	AppSource                     AppSource            `json:"appSource"                     bun:"app_source,type:VARCHAR(20),nullzero,notnull,default:'Instance'" keel:"app_source,nullzero"`
+	AppEnvironment                AppEnvironment       `json:"appEnvironment"                bun:"app_environment,type:VARCHAR(20),nullzero" keel:"app_environment,nullzero"`
+	AppFingerprint                string               `json:"-"                             bun:"app_fingerprint,type:VARCHAR(64),nullzero" keel:"app_fingerprint,nullzero"`
+	AuthMethod                    AuthMethod           `json:"authMethod"                    bun:"auth_method,type:VARCHAR(30),nullzero,notnull,default:'Authorization'" keel:"auth_method,nullzero"`
+	ClientKeyCiphertext           string               `json:"-"                             bun:"client_key_ciphertext,type:TEXT,nullzero" keel:"client_key_ciphertext,nullzero"`
+	ClientCertificateID           string               `json:"clientCertificateId"           bun:"client_certificate_id,type:VARCHAR(100),nullzero" keel:"client_certificate_id,nullzero"`
+	ClientCertificateExpiresAt    *int64               `json:"clientCertificateExpiresAt"    bun:"client_certificate_expires_at,type:BIGINT,nullzero" keel:"client_certificate_expires_at"`
+	ExternalCompanyName           string               `json:"externalCompanyName"           bun:"external_company_name,type:VARCHAR(255),nullzero" keel:"external_company_name,nullzero"`
+	ExternalShortCode             string               `json:"externalShortCode"             bun:"external_short_code,type:VARCHAR(20),nullzero" keel:"external_short_code,nullzero"`
+	ExternalLegalName             string               `json:"externalLegalName"             bun:"external_legal_name,type:VARCHAR(255),nullzero" keel:"external_legal_name,nullzero"`
+	ExternalCountry               string               `json:"externalCountry"               bun:"external_country,type:VARCHAR(10),nullzero" keel:"external_country,nullzero"`
+	ExternalHomeCurrency          string               `json:"externalHomeCurrency"          bun:"external_home_currency,type:VARCHAR(3),nullzero" keel:"external_home_currency,nullzero"`
+	ExternalMultiCurrencyEnabled  bool                 `json:"externalMultiCurrencyEnabled"  bun:"external_multi_currency_enabled,type:BOOLEAN,notnull" keel:"external_multi_currency_enabled"`
+	ExternalBooksClosedThrough    *int64               `json:"externalBooksClosedThrough"    bun:"external_books_closed_through,type:BIGINT,nullzero" keel:"external_books_closed_through"`
+	AccessTokenCiphertext         string               `json:"-"                             bun:"access_token_ciphertext,type:TEXT,nullzero" keel:"access_token_ciphertext,nullzero"`
+	AccessTokenExpiresAt          int64                `json:"accessTokenExpiresAt"          bun:"access_token_expires_at,type:BIGINT,notnull" keel:"access_token_expires_at"`
+	RefreshTokenCiphertext        string               `json:"-"                             bun:"refresh_token_ciphertext,type:TEXT,nullzero" keel:"refresh_token_ciphertext,nullzero"`
+	RefreshTokenExpiresAt         int64                `json:"refreshTokenExpiresAt"         bun:"refresh_token_expires_at,type:BIGINT,notnull" keel:"refresh_token_expires_at"`
+	RefreshTokenAbsoluteExpiresAt int64                `json:"refreshTokenAbsoluteExpiresAt" bun:"refresh_token_absolute_expires_at,type:BIGINT,notnull" keel:"refresh_token_absolute_expires_at"`
+	LastRefreshedAt               *int64               `json:"lastRefreshedAt"               bun:"last_refreshed_at,type:BIGINT,nullzero" keel:"last_refreshed_at"`
+	LastCheckedAt                 *int64               `json:"lastCheckedAt"                 bun:"last_checked_at,type:BIGINT,nullzero" keel:"last_checked_at"`
+	LastSuccessAt                 *int64               `json:"lastSuccessAt"                 bun:"last_success_at,type:BIGINT,nullzero" keel:"last_success_at"`
+	LastFailureAt                 *int64               `json:"lastFailureAt"                 bun:"last_failure_at,type:BIGINT,nullzero" keel:"last_failure_at"`
+	ConsecutiveFailures           int                  `json:"consecutiveFailures"           bun:"consecutive_failures,type:INTEGER,notnull" keel:"consecutive_failures"`
+	LastErrorCategory             ErrorCategory        `json:"lastErrorCategory"             bun:"last_error_category,type:VARCHAR(30),nullzero" keel:"last_error_category,nullzero"`
+	LastErrorMessage              string               `json:"lastErrorMessage"              bun:"last_error_message,type:TEXT,nullzero" keel:"last_error_message,nullzero"`
+	LastWebhookAt                 *int64               `json:"lastWebhookAt"                 bun:"last_webhook_at,type:BIGINT,nullzero" keel:"last_webhook_at"`
+	SetupStep                     SetupStep            `json:"setupStep"                     bun:"setup_step,type:VARCHAR(20),notnull" keel:"setup_step"`
+	ReferenceRefreshStartedAt     *int64               `json:"referenceRefreshStartedAt"     bun:"reference_refresh_started_at,type:BIGINT,nullzero" keel:"reference_refresh_started_at"`
+	ReferenceRefreshedAt          *int64               `json:"referenceRefreshedAt"          bun:"reference_refreshed_at,type:BIGINT,nullzero" keel:"reference_refreshed_at"`
+	ReferenceRefreshError         string               `json:"referenceRefreshError"         bun:"reference_refresh_error,type:TEXT,nullzero" keel:"reference_refresh_error,nullzero"`
+	SyncStartDate                 *int64               `json:"syncStartDate"                 bun:"sync_start_date,type:BIGINT,nullzero" keel:"sync_start_date"`
+	SyncEnabledAt                 *int64               `json:"syncEnabledAt"                 bun:"sync_enabled_at,type:BIGINT,nullzero" keel:"sync_enabled_at"`
+	AutoSync                      bool                 `json:"autoSync"                      bun:"auto_sync,type:BOOLEAN,notnull" keel:"auto_sync"`
+	DriverSettlementsEnabledAt    *int64               `json:"driverSettlementsEnabledAt"    bun:"driver_settlements_enabled_at,type:BIGINT,nullzero" keel:"driver_settlements_enabled_at"`
+	InboundPaymentPolicy          InboundPaymentPolicy `json:"inboundPaymentPolicy"          bun:"inbound_payment_policy,type:VARCHAR(20),nullzero,notnull,default:'Propose'" keel:"inbound_payment_policy,nullzero"`
+	SyncMode                      SyncMode             `json:"syncMode"                      bun:"sync_mode,type:VARCHAR(20),nullzero,notnull,default:'Document'" keel:"sync_mode,nullzero"`
+	LedgerGranularity             LedgerGranularity    `json:"ledgerGranularity"             bun:"ledger_granularity,type:VARCHAR(20),nullzero" keel:"ledger_granularity,nullzero"`
+	LedgerOpeningBalancesSentAt   *int64               `json:"ledgerOpeningBalancesSentAt"   bun:"ledger_opening_balances_sent_at,type:BIGINT,nullzero" keel:"ledger_opening_balances_sent_at"`
+	ExternalFiscalYearStartMonth  int                  `json:"externalFiscalYearStartMonth"  bun:"external_fiscal_year_start_month,type:SMALLINT,nullzero,notnull,default:1" keel:"external_fiscal_year_start_month,nullzero"`
+	ChangeCursor                  string               `json:"-"                             bun:"change_cursor,type:TEXT,nullzero" keel:"change_cursor,nullzero"`
+	ChangesReadAt                 *int64               `json:"changesReadAt"                 bun:"changes_read_at,type:BIGINT,nullzero" keel:"changes_read_at"`
+	ChangesErrorCategory          SyncErrorCategory    `json:"changesErrorCategory"          bun:"changes_error_category,type:VARCHAR(30),nullzero" keel:"changes_error_category,nullzero"`
+	ChangesErrorMessage           string               `json:"changesErrorMessage"           bun:"changes_error_message,type:TEXT,nullzero" keel:"changes_error_message,nullzero"`
+	DriftCheckedAt                *int64               `json:"driftCheckedAt"                bun:"drift_checked_at,type:BIGINT,nullzero" keel:"drift_checked_at"`
+	DriftErrorCategory            SyncErrorCategory    `json:"driftErrorCategory"            bun:"drift_error_category,type:VARCHAR(30),nullzero" keel:"drift_error_category,nullzero"`
+	DriftErrorMessage             string               `json:"driftErrorMessage"             bun:"drift_error_message,type:TEXT,nullzero" keel:"drift_error_message,nullzero"`
+	PausedAt                      *int64               `json:"pausedAt"                      bun:"paused_at,type:BIGINT,nullzero" keel:"paused_at"`
+	PausedByID                    pulid.ID             `json:"pausedById"                    bun:"paused_by_id,type:VARCHAR(100),nullzero" keel:"paused_by_id,nullzero"`
+	PausedReason                  string               `json:"pausedReason"                  bun:"paused_reason,type:TEXT,nullzero" keel:"paused_reason,nullzero"`
+	ConnectedByID                 pulid.ID             `json:"connectedById"                 bun:"connected_by_id,type:VARCHAR(100),nullzero" keel:"connected_by_id,nullzero"`
+	ConnectedAt                   int64                `json:"connectedAt"                   bun:"connected_at,type:BIGINT,notnull" keel:"connected_at"`
+	DisconnectedByID              pulid.ID             `json:"disconnectedById"              bun:"disconnected_by_id,type:VARCHAR(100),nullzero" keel:"disconnected_by_id,nullzero"`
+	DisconnectedAt                *int64               `json:"disconnectedAt"                bun:"disconnected_at,type:BIGINT,nullzero" keel:"disconnected_at"`
+	Version                       int64                `json:"version"                       bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt                     int64                `json:"createdAt"                     bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt                     int64                `json:"updatedAt"                     bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization   *tenant.Organization `json:"organization,omitempty"   bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"   bun:"rel:belongs-to,join:business_unit_id=id"`
-	ConnectedBy    *tenant.User         `json:"connectedBy,omitempty"    bun:"rel:belongs-to,join:connected_by_id=id"`
-	DisconnectedBy *tenant.User         `json:"disconnectedBy,omitempty" bun:"rel:belongs-to,join:disconnected_by_id=id"`
-	PausedBy       *tenant.User         `json:"pausedBy,omitempty"       bun:"rel:belongs-to,join:paused_by_id=id"`
+	ConnectedBy    *tenant.User         `json:"connectedBy,omitempty"    bun:"rel:belongs-to,join:connected_by_id=id" keel:"belongs:connected_by_id"`
+	DisconnectedBy *tenant.User         `json:"disconnectedBy,omitempty" bun:"rel:belongs-to,join:disconnected_by_id=id" keel:"belongs:disconnected_by_id"`
+	PausedBy       *tenant.User         `json:"pausedBy,omitempty"       bun:"rel:belongs-to,join:paused_by_id=id" keel:"belongs:paused_by_id"`
 }
 
 type ClientCertificate struct {

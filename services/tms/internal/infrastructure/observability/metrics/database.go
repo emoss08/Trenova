@@ -2,8 +2,8 @@
 package metrics
 
 import (
-	"database/sql"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,7 +21,7 @@ type Database struct {
 	concurrencyTotal *prometheus.CounterVec
 	operatorActions  *prometheus.CounterVec
 	rlsScopeEvents   *prometheus.CounterVec
-	stats            func() sql.DBStats
+	stats            func() PoolStats
 }
 
 func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Database {
@@ -68,7 +68,16 @@ func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 	return m
 }
 
-func (m *Database) RegisterSQLStats(stats func() sql.DBStats) {
+type PoolStats struct {
+	Open         int
+	InUse        int
+	Idle         int
+	MaxOpen      int
+	WaitCount    int64
+	WaitDuration time.Duration
+}
+
+func (m *Database) RegisterPoolStats(stats func() PoolStats) {
 	m.stats = stats
 	m.ifEnabled(func() {
 		m.mustRegister(
@@ -78,7 +87,7 @@ func (m *Database) RegisterSQLStats(stats func() sql.DBStats) {
 				Name:      "open_connections",
 				Help:      "Number of established database connections.",
 			}, func() float64 {
-				return float64(stats().OpenConnections)
+				return float64(stats().Open)
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 				Namespace: Namespace,
@@ -116,11 +125,22 @@ func (m *Database) RegisterSQLStats(stats func() sql.DBStats) {
 	})
 }
 
-func (m *Database) SQLStats() (sql.DBStats, bool) {
+func (m *Database) PoolStats() (PoolStats, bool) {
 	if m == nil || m.stats == nil {
-		return sql.DBStats{}, false
+		return PoolStats{}, false
 	}
 	return m.stats(), true
+}
+
+func PoolStatsFields(stats PoolStats) []zap.Field {
+	return []zap.Field{
+		zap.Int("db_pool_open", stats.Open),
+		zap.Int("db_pool_in_use", stats.InUse),
+		zap.Int("db_pool_idle", stats.Idle),
+		zap.Int64("db_pool_wait_count", stats.WaitCount),
+		zap.Duration("db_pool_wait_duration", stats.WaitDuration),
+		zap.Int("db_pool_max_open", stats.MaxOpen),
+	}
 }
 
 func (m *Database) RecordConcurrencyEvent(event dberror.ConcurrencyEvent) {

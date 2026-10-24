@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type txMarker struct{}
@@ -26,14 +25,14 @@ type stagingTx struct {
 	rolledBack bool
 }
 
-func (s *stagingTx) WithTx(
+func (s *stagingTx) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	s.calls++
 	s.staged = nil
-	if err := fn(context.WithValue(ctx, txMarker{}, s), bun.Tx{}); err != nil {
+	if err := fn(context.WithValue(ctx, txMarker{}, s)); err != nil {
 		s.staged = nil
 		s.rolledBack = true
 

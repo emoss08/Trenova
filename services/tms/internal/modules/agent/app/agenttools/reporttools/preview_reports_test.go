@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -31,7 +32,7 @@ func (f *savingReports) CreateDefinition(
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
-	f.saved = reporting.NewDefinition(req)
+	f.saved = f.NewDefinition(req)
 	f.saved.ID = pulid.MustNew("rdef_")
 
 	return f.saved, nil
@@ -47,7 +48,7 @@ func (f *savingReports) UpdateDefinition(
 	for _, definition := range f.definitions {
 		if definition.ID == req.DefinitionID {
 			updated := *definition
-			reporting.ApplyDefinitionSave(&updated, req)
+			f.ApplyDefinitionSave(&updated, req)
 			f.saved = &updated
 
 			return f.saved, nil
@@ -68,7 +69,7 @@ func (f *savingReports) ForkCanned(
 	if err != nil {
 		return nil, err
 	}
-	f.saved = reporting.NewCannedFork(entry, req)
+	f.saved = f.NewCannedFork(entry, req)
 	f.saved.ID = pulid.MustNew("rdef_")
 
 	return f.saved, nil
@@ -85,9 +86,13 @@ func TestCreateReport_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"definition": definitionArgument(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &reports.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&reports.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
@@ -111,12 +116,16 @@ func TestCreateReport_PreviewWarnsWhenTheDefinitionWouldNotCompile(t *testing.T)
 	}}
 	tool := NewCreateReportTool(reports).(*CreateReportTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &reports.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"name":       "Broken",
-			"definition": definitionArgument(),
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&reports.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"name":       "Broken",
+				"definition": definitionArgument(),
+			}))
+		},
+	)
 
 	require.Len(t, preview.Changes, 1)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -137,21 +146,34 @@ func TestUpdateReport_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"visibility":   "shared",
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &reports.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&reports.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, existing.ID, change.EntityID)
 	require.NotNil(t, change.Version)
 	assert.Equal(t, int64(4), *change.Version)
 	assert.Equal(t, "Revenue by customer", agenttoolstest.FieldByPath(t, change, "name").Before)
-	assert.Equal(t, "Revenue by customer, last 90 days", agenttoolstest.FieldByPath(t, change, "name").After)
+	assert.Equal(
+		t,
+		"Revenue by customer, last 90 days",
+		agenttoolstest.FieldByPath(t, change, "name").After,
+	)
 	assert.Equal(t, "shared", agenttoolstest.FieldByPath(t, change, "visibility").After)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	agenttoolstest.RequireUpdateParity(t, change, reportViewOf(existing), reportViewOf(reports.saved),
-		toolpreview.Labels(reportViewLabels))
+	agenttoolstest.RequireUpdateParity(
+		t,
+		change,
+		reportViewOf(existing),
+		reportViewOf(reports.saved),
+		toolpreview.Labels(reportViewLabels),
+	)
 }
 
 func TestForkReport_PreviewMatchesWhatIsSaved(t *testing.T) {
@@ -163,23 +185,29 @@ func TestForkReport_PreviewMatchesWhatIsSaved(t *testing.T) {
 		Name:          "Revenue by customer",
 		Description:   "Completed revenue per customer.",
 		DefaultFormat: report.FormatCSV,
-		Definition: &report.Definition{
-			Entity: "shipment",
-			Columns: []report.ColumnSpec{{
-				ID:    "c1",
-				Ref:   report.FieldRef{Field: "totalChargeAmount"},
-				Kind:  report.ColumnKindMeasure,
-				Label: "Revenue",
+		Definition: &ir.Definition{
+			Version: ir.Version,
+			Entity:  "shipment",
+			Columns: []ir.Column{{
+				ID:      "c1",
+				Label:   "Revenue",
+				Measure: &ir.Measure{Field: "totalChargeAmount", Agg: ir.AggSum},
 			}},
 		},
 	}
 	reports := &savingReports{fakeReportWriter: fakeReportWriter{entries: []*canned.Entry{entry}}}
 	tool := NewForkReportTool(reports).(*ForkReportTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{"reportKey": "revenue_by_customer", "name": "My revenue"})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{"reportKey": "revenue_by_customer", "name": "My revenue"},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &reports.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&reports.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "My revenue", agenttoolstest.FieldByPath(t, change, "name").After)

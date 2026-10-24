@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"crypto/sha256"
-	"database/sql/driver"
 	"encoding/hex"
 	"strings"
 	"testing"
@@ -98,29 +97,6 @@ func TestNewScopeSigner_RejectsWeakConfiguration(t *testing.T) {
 	require.ErrorIs(t, err, ErrInvalidScopeKey)
 }
 
-func TestBeginCommand(t *testing.T) {
-	t.Parallel()
-
-	cases := map[string]struct {
-		isolation int
-		readOnly  bool
-		want      string
-	}{
-		"default":             {want: "BEGIN"},
-		"read only":           {readOnly: true, want: "BEGIN READ ONLY"},
-		"serializable":        {isolation: 6, want: "BEGIN ISOLATION LEVEL SERIALIZABLE"},
-		"repeatable readonly": {isolation: 4, readOnly: true, want: "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY"},
-	}
-	for name, tc := range cases {
-		got, err := beginCommand(driverTxOptions(tc.isolation, tc.readOnly))
-		require.NoError(t, err, name)
-		assert.Equal(t, tc.want, got, name)
-	}
-
-	_, err := beginCommand(driverTxOptions(7, false))
-	require.Error(t, err)
-}
-
 func TestScramSHA256Verifier_MatchesPostgresFormat(t *testing.T) {
 	t.Parallel()
 
@@ -128,8 +104,4 @@ func TestScramSHA256Verifier_MatchesPostgresFormat(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, strings.HasPrefix(verifier, "SCRAM-SHA-256$4096:MDEyMzQ1Njc4OWFiY2RlZg==$"))
 	assert.Len(t, strings.Split(strings.Split(verifier, "$")[2], ":"), 2)
-}
-
-func driverTxOptions(isolation int, readOnly bool) driver.TxOptions {
-	return driver.TxOptions{Isolation: driver.IsolationLevel(isolation), ReadOnly: readOnly}
 }

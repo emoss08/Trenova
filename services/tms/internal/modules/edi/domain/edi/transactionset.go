@@ -3,6 +3,7 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,16 +14,17 @@ import (
 
 type EDITransactionSet struct {
 	bun.BaseModel `json:"-" bun:"table:edi_transaction_sets,alias:ets"`
+	keel.Table    `keel:"edi_transaction_sets"`
 
-	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	Standard       EDIStandard    `json:"standard"       bun:"standard,type:edi_standard_enum,notnull"`
-	Code           TransactionSet `json:"code"           bun:"code,type:VARCHAR(20),notnull"`
-	Name           string         `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
-	Description    string         `json:"description"    bun:"description,type:TEXT,nullzero"`
-	DefaultVersion string         `json:"defaultVersion" bun:"default_version,type:VARCHAR(20),notnull"`
-	Status         DocumentStatus `json:"status"         bun:"status,type:edi_document_status_enum,notnull"`
-	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edits_"`
+	Standard       EDIStandard    `json:"standard"       bun:"standard,type:edi_standard_enum,notnull" keel:"standard"`
+	Code           TransactionSet `json:"code"           bun:"code,type:VARCHAR(20),notnull" keel:"code"`
+	Name           string         `json:"name"           bun:"name,type:VARCHAR(200),notnull" keel:"name"`
+	Description    string         `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	DefaultVersion string         `json:"defaultVersion" bun:"default_version,type:VARCHAR(20),notnull" keel:"default_version"`
+	Status         DocumentStatus `json:"status"         bun:"status,type:edi_document_status_enum,notnull" keel:"status"`
+	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (s *EDITransactionSet) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -41,19 +43,20 @@ func (s *EDITransactionSet) BeforeAppendModel(_ context.Context, query bun.Query
 
 type EDITransactionLoopDefinition struct {
 	bun.BaseModel `json:"-" bun:"table:edi_transaction_loop_definitions,alias:etld"`
+	keel.Table    `keel:"edi_transaction_loop_definitions"`
 
-	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	TransactionSetID pulid.ID          `json:"transactionSetId" bun:"transaction_set_id,type:VARCHAR(100),notnull"`
-	Direction        DocumentDirection `json:"direction"        bun:"direction,type:edi_document_direction_enum,notnull"`
-	X12Version       string            `json:"x12Version"       bun:"x12_version,type:VARCHAR(20),notnull"`
-	LoopID           string            `json:"loopId"           bun:"loop_id,type:VARCHAR(50),notnull"`
-	Name             string            `json:"name"             bun:"name,type:VARCHAR(200),notnull"`
-	ParentLoopID     string            `json:"parentLoopId"     bun:"parent_loop_id,type:VARCHAR(50),nullzero"`
-	Sequence         int64             `json:"sequence"         bun:"sequence,type:BIGINT,notnull"`
-	RepeatPath       string            `json:"repeatPath"       bun:"repeat_path,type:TEXT,nullzero"`
-	UsageNotes       string            `json:"usageNotes"       bun:"usage_notes,type:TEXT,nullzero"`
-	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ediloop_"`
+	TransactionSetID pulid.ID          `json:"transactionSetId" bun:"transaction_set_id,type:VARCHAR(100),notnull" keel:"transaction_set_id"`
+	Direction        DocumentDirection `json:"direction"        bun:"direction,type:edi_document_direction_enum,notnull" keel:"direction"`
+	X12Version       string            `json:"x12Version"       bun:"x12_version,type:VARCHAR(20),notnull" keel:"x12_version"`
+	LoopID           string            `json:"loopId"           bun:"loop_id,type:VARCHAR(50),notnull" keel:"loop_id"`
+	Name             string            `json:"name"             bun:"name,type:VARCHAR(200),notnull" keel:"name"`
+	ParentLoopID     string            `json:"parentLoopId"     bun:"parent_loop_id,type:VARCHAR(50),nullzero" keel:"parent_loop_id,nullzero"`
+	Sequence         int64             `json:"sequence"         bun:"sequence,type:BIGINT,notnull" keel:"sequence"`
+	RepeatPath       string            `json:"repeatPath"       bun:"repeat_path,type:TEXT,nullzero" keel:"repeat_path,nullzero"`
+	UsageNotes       string            `json:"usageNotes"       bun:"usage_notes,type:TEXT,nullzero" keel:"usage_notes,nullzero"`
+	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (d *EDITransactionLoopDefinition) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -72,21 +75,22 @@ func (d *EDITransactionLoopDefinition) BeforeAppendModel(_ context.Context, quer
 
 type EDITransactionSegmentDefinition struct {
 	bun.BaseModel `json:"-" bun:"table:edi_transaction_segment_definitions,alias:etsd"`
+	keel.Table    `keel:"edi_transaction_segment_definitions"`
 
-	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	TransactionSetID pulid.ID          `json:"transactionSetId" bun:"transaction_set_id,type:VARCHAR(100),notnull"`
-	Direction        DocumentDirection `json:"direction"        bun:"direction,type:edi_document_direction_enum,notnull"`
-	X12Version       string            `json:"x12Version"       bun:"x12_version,type:VARCHAR(20),notnull"`
-	SegmentID        string            `json:"segmentId"        bun:"segment_id,type:VARCHAR(10),notnull"`
-	Name             string            `json:"name"             bun:"name,type:VARCHAR(200),notnull"`
-	LoopID           string            `json:"loopId"           bun:"loop_id,type:VARCHAR(50),nullzero"`
-	Sequence         int64             `json:"sequence"         bun:"sequence,type:BIGINT,notnull"`
-	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull"`
-	MaxUse           int64             `json:"maxUse"           bun:"max_use,type:BIGINT,notnull,default:1"`
-	RepeatPath       string            `json:"repeatPath"       bun:"repeat_path,type:TEXT,nullzero"`
-	UsageNotes       string            `json:"usageNotes"       bun:"usage_notes,type:TEXT,nullzero"`
-	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edisegd_"`
+	TransactionSetID pulid.ID          `json:"transactionSetId" bun:"transaction_set_id,type:VARCHAR(100),notnull" keel:"transaction_set_id"`
+	Direction        DocumentDirection `json:"direction"        bun:"direction,type:edi_document_direction_enum,notnull" keel:"direction"`
+	X12Version       string            `json:"x12Version"       bun:"x12_version,type:VARCHAR(20),notnull" keel:"x12_version"`
+	SegmentID        string            `json:"segmentId"        bun:"segment_id,type:VARCHAR(10),notnull" keel:"segment_id"`
+	Name             string            `json:"name"             bun:"name,type:VARCHAR(200),notnull" keel:"name"`
+	LoopID           string            `json:"loopId"           bun:"loop_id,type:VARCHAR(50),nullzero" keel:"loop_id,nullzero"`
+	Sequence         int64             `json:"sequence"         bun:"sequence,type:BIGINT,notnull" keel:"sequence"`
+	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull" keel:"required"`
+	MaxUse           int64             `json:"maxUse"           bun:"max_use,type:BIGINT,notnull,default:1" keel:"max_use"`
+	RepeatPath       string            `json:"repeatPath"       bun:"repeat_path,type:TEXT,nullzero" keel:"repeat_path,nullzero"`
+	UsageNotes       string            `json:"usageNotes"       bun:"usage_notes,type:TEXT,nullzero" keel:"usage_notes,nullzero"`
+	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (d *EDITransactionSegmentDefinition) BeforeAppendModel(
@@ -108,22 +112,23 @@ func (d *EDITransactionSegmentDefinition) BeforeAppendModel(
 
 type EDITransactionElementDefinition struct {
 	bun.BaseModel `json:"-" bun:"table:edi_transaction_element_definitions,alias:eted"`
+	keel.Table    `keel:"edi_transaction_element_definitions"`
 
-	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	TransactionSetID pulid.ID          `json:"transactionSetId" bun:"transaction_set_id,type:VARCHAR(100),notnull"`
-	Direction        DocumentDirection `json:"direction"        bun:"direction,type:edi_document_direction_enum,notnull"`
-	X12Version       string            `json:"x12Version"       bun:"x12_version,type:VARCHAR(20),notnull"`
-	SegmentID        string            `json:"segmentId"        bun:"segment_id,type:VARCHAR(10),notnull"`
-	Position         int               `json:"position"         bun:"position,type:INTEGER,notnull"`
-	ElementID        string            `json:"elementId"        bun:"element_id,type:VARCHAR(20),nullzero"`
-	Name             string            `json:"name"             bun:"name,type:VARCHAR(200),notnull"`
-	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull"`
-	MinLength        int               `json:"minLength"        bun:"min_length,type:INTEGER,notnull"`
-	MaxLength        int               `json:"maxLength"        bun:"max_length,type:INTEGER,notnull"`
-	CodeListID       pulid.ID          `json:"codeListId"       bun:"code_list_id,type:VARCHAR(100),nullzero"`
-	UsageNotes       string            `json:"usageNotes"       bun:"usage_notes,type:TEXT,nullzero"`
-	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edielemd_"`
+	TransactionSetID pulid.ID          `json:"transactionSetId" bun:"transaction_set_id,type:VARCHAR(100),notnull" keel:"transaction_set_id"`
+	Direction        DocumentDirection `json:"direction"        bun:"direction,type:edi_document_direction_enum,notnull" keel:"direction"`
+	X12Version       string            `json:"x12Version"       bun:"x12_version,type:VARCHAR(20),notnull" keel:"x12_version"`
+	SegmentID        string            `json:"segmentId"        bun:"segment_id,type:VARCHAR(10),notnull" keel:"segment_id"`
+	Position         int               `json:"position"         bun:"position,type:INTEGER,notnull" keel:"position"`
+	ElementID        string            `json:"elementId"        bun:"element_id,type:VARCHAR(20),nullzero" keel:"element_id,nullzero"`
+	Name             string            `json:"name"             bun:"name,type:VARCHAR(200),notnull" keel:"name"`
+	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull" keel:"required"`
+	MinLength        int               `json:"minLength"        bun:"min_length,type:INTEGER,notnull" keel:"min_length"`
+	MaxLength        int               `json:"maxLength"        bun:"max_length,type:INTEGER,notnull" keel:"max_length"`
+	CodeListID       pulid.ID          `json:"codeListId"       bun:"code_list_id,type:VARCHAR(100),nullzero" keel:"code_list_id,nullzero"`
+	UsageNotes       string            `json:"usageNotes"       bun:"usage_notes,type:TEXT,nullzero" keel:"usage_notes,nullzero"`
+	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (d *EDITransactionElementDefinition) BeforeAppendModel(
@@ -145,16 +150,17 @@ func (d *EDITransactionElementDefinition) BeforeAppendModel(
 
 type EDICodeListDefinition struct {
 	bun.BaseModel `json:"-" bun:"table:edi_code_list_definitions,alias:ecld"`
+	keel.Table    `keel:"edi_code_list_definitions"`
 
-	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	TransactionSetID pulid.ID          `json:"transactionSetId" bun:"transaction_set_id,type:VARCHAR(100),notnull"`
-	Direction        DocumentDirection `json:"direction"        bun:"direction,type:edi_document_direction_enum,notnull"`
-	X12Version       string            `json:"x12Version"       bun:"x12_version,type:VARCHAR(20),notnull"`
-	ElementID        string            `json:"elementId"        bun:"element_id,type:VARCHAR(20),notnull"`
-	Code             string            `json:"code"             bun:"code,type:VARCHAR(40),notnull"`
-	Description      string            `json:"description"      bun:"description,type:TEXT,notnull"`
-	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edicodel_"`
+	TransactionSetID pulid.ID          `json:"transactionSetId" bun:"transaction_set_id,type:VARCHAR(100),notnull" keel:"transaction_set_id"`
+	Direction        DocumentDirection `json:"direction"        bun:"direction,type:edi_document_direction_enum,notnull" keel:"direction"`
+	X12Version       string            `json:"x12Version"       bun:"x12_version,type:VARCHAR(20),notnull" keel:"x12_version"`
+	ElementID        string            `json:"elementId"        bun:"element_id,type:VARCHAR(20),notnull" keel:"element_id"`
+	Code             string            `json:"code"             bun:"code,type:VARCHAR(40),notnull" keel:"code"`
+	Description      string            `json:"description"      bun:"description,type:TEXT,notnull" keel:"description"`
+	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (d *EDICodeListDefinition) BeforeAppendModel(_ context.Context, query bun.Query) error {

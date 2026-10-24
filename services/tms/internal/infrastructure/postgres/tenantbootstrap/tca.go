@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tablechangealertcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert/tablechangealertdb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 type tcaAllowlistEntry struct {
@@ -36,13 +35,12 @@ var defaultTCAAllowlist = []tcaAllowlistEntry{
 	{"trailers", "Trailers"},
 }
 
-func CreateTCAAllowlist(ctx context.Context, db bun.IDB, scope Scope) (int, error) {
-	cols := tablechangealertcol.TCAAllowlistedTableColumns
-	exists, err := db.NewSelect().
-		Model((*tablechangealert.TCAAllowlistedTable)(nil)).
-		Where(cols.OrganizationID.Eq(), scope.OrganizationID).
-		Where(cols.BusinessUnitID.Eq(), scope.BusinessUnitID).
-		Exists(ctx)
+func CreateTCAAllowlist(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
+	t := tablechangealertdb.TCAAllowlistedTables
+	exists, err := scoped(ctx, t.Where(
+		t.OrganizationID.Eq(scope.OrganizationID),
+		t.BusinessUnitID.Eq(scope.BusinessUnitID),
+	)).Exists(ctx, db)
 	if err != nil {
 		return 0, fmt.Errorf("check existing allowlisted tables: %w", err)
 	}
@@ -65,13 +63,8 @@ func CreateTCAAllowlist(ctx context.Context, db bun.IDB, scope Scope) (int, erro
 		})
 	}
 
-	if _, err = db.NewInsert().Model(&entities).Exec(ctx); err != nil {
+	if err = t.CreateMany(ctx, db, entities); err != nil {
 		return 0, fmt.Errorf("insert allowlisted tables: %w", err)
-	}
-	for _, entity := range entities {
-		if err = scope.record(ctx, "tca_allowlisted_tables", entity.ID); err != nil {
-			return 0, err
-		}
 	}
 
 	return len(entities), nil

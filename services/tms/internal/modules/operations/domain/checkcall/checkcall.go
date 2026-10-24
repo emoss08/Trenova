@@ -1,6 +1,7 @@
 package checkcall
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -10,31 +11,32 @@ import (
 
 type CheckCall struct {
 	bun.BaseModel `bun:"table:check_calls,alias:chkc" json:"-"`
+	keel.Table    `keel:"check_calls"`
 
-	ID               pulid.ID `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	ShipmentID       pulid.ID `json:"shipmentId"       bun:"shipment_id,type:VARCHAR(100),notnull"`
-	ShipmentMoveID   pulid.ID `json:"shipmentMoveId"   bun:"shipment_move_id,type:VARCHAR(100),notnull"`
-	StopID           pulid.ID `json:"stopId"           bun:"stop_id,type:VARCHAR(100),nullzero"`
-	Source           Source   `json:"source"           bun:"source,type:VARCHAR(20),notnull"`
-	SourceKey        string   `json:"sourceKey"        bun:"source_key,type:VARCHAR(255),notnull"`
-	Kind             Kind     `json:"kind"             bun:"kind,type:VARCHAR(20),notnull"`
-	ReportedAt       int64    `json:"reportedAt"       bun:"reported_at,type:BIGINT,notnull"`
-	ReceivedAt       int64    `json:"receivedAt"       bun:"received_at,type:BIGINT,notnull"`
-	Latitude         *float64 `json:"latitude"         bun:"latitude,type:DOUBLE PRECISION,nullzero"`
-	Longitude        *float64 `json:"longitude"        bun:"longitude,type:DOUBLE PRECISION,nullzero"`
-	City             string   `json:"city"             bun:"city,type:VARCHAR(100),nullzero"`
-	StateCode        string   `json:"stateCode"        bun:"state_code,type:VARCHAR(10),nullzero"`
-	Delayed          bool     `json:"delayed"          bun:"delayed,type:BOOLEAN,notnull,default:false"`
-	DelayReason      string   `json:"delayReason"      bun:"delay_reason,type:VARCHAR(255),nullzero"`
-	EstimatedArrival *int64   `json:"estimatedArrival" bun:"estimated_arrival,type:BIGINT,nullzero"`
-	Note             string   `json:"note"             bun:"note,type:TEXT,nullzero"`
-	ContactName      string   `json:"contactName"      bun:"contact_name,type:VARCHAR(100),nullzero"`
-	ReportedByID     pulid.ID `json:"reportedById"     bun:"reported_by_id,type:VARCHAR(100),nullzero"`
-	TrackingLinkID   pulid.ID `json:"trackingLinkId"   bun:"tracking_link_id,type:VARCHAR(100),nullzero"`
-	TrackingEventID  pulid.ID `json:"trackingEventId"  bun:"tracking_event_id,type:VARCHAR(100),nullzero"`
-	CreatedAt        int64    `json:"createdAt"        bun:"created_at,type:BIGINT,notnull"`
+	ID               pulid.ID `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	OrganizationID   pulid.ID `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID   pulid.ID `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	ShipmentID       pulid.ID `json:"shipmentId"       bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
+	ShipmentMoveID   pulid.ID `json:"shipmentMoveId"   bun:"shipment_move_id,type:VARCHAR(100),notnull" keel:"shipment_move_id"`
+	StopID           pulid.ID `json:"stopId"           bun:"stop_id,type:VARCHAR(100),nullzero" keel:"stop_id,nullzero"`
+	Source           Source   `json:"source"           bun:"source,type:VARCHAR(20),notnull" keel:"source"`
+	SourceKey        string   `json:"sourceKey"        bun:"source_key,type:VARCHAR(255),notnull" keel:"source_key"`
+	Kind             Kind     `json:"kind"             bun:"kind,type:VARCHAR(20),notnull" keel:"kind"`
+	ReportedAt       int64    `json:"reportedAt"       bun:"reported_at,type:BIGINT,notnull" keel:"reported_at"`
+	ReceivedAt       int64    `json:"receivedAt"       bun:"received_at,type:BIGINT,notnull" keel:"received_at"`
+	Latitude         *float64 `json:"latitude"         bun:"latitude,type:DOUBLE PRECISION,nullzero" keel:"latitude"`
+	Longitude        *float64 `json:"longitude"        bun:"longitude,type:DOUBLE PRECISION,nullzero" keel:"longitude"`
+	City             string   `json:"city"             bun:"city,type:VARCHAR(100),nullzero" keel:"city,nullzero"`
+	StateCode        string   `json:"stateCode"        bun:"state_code,type:VARCHAR(10),nullzero" keel:"state_code,nullzero"`
+	Delayed          bool     `json:"delayed"          bun:"delayed,type:BOOLEAN,notnull,default:false" keel:"delayed"`
+	DelayReason      string   `json:"delayReason"      bun:"delay_reason,type:VARCHAR(255),nullzero" keel:"delay_reason,nullzero"`
+	EstimatedArrival *int64   `json:"estimatedArrival" bun:"estimated_arrival,type:BIGINT,nullzero" keel:"estimated_arrival"`
+	Note             string   `json:"note"             bun:"note,type:TEXT,nullzero" keel:"note,nullzero"`
+	ContactName      string   `json:"contactName"      bun:"contact_name,type:VARCHAR(100),nullzero" keel:"contact_name,nullzero"`
+	ReportedByID     pulid.ID `json:"reportedById"     bun:"reported_by_id,type:VARCHAR(100),nullzero" keel:"reported_by_id,nullzero"`
+	TrackingLinkID   pulid.ID `json:"trackingLinkId"   bun:"tracking_link_id,type:VARCHAR(100),nullzero" keel:"tracking_link_id,nullzero"`
+	TrackingEventID  pulid.ID `json:"trackingEventId"  bun:"tracking_event_id,type:VARCHAR(100),nullzero" keel:"tracking_event_id,nullzero"`
+	CreatedAt        int64    `json:"createdAt"        bun:"created_at,type:BIGINT,notnull" keel:"created_at"`
 }
 
 func NewID() pulid.ID {

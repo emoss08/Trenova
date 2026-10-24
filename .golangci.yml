@@ -223,6 +223,10 @@ linters:
           - goconst
     paths:
       - internal/infrastructure/database/*
+      # Development fixtures and volume data: generators of sample rows that
+      # never ship in the production image, held to the same standard as the
+      # seed generators they replace.
+      - internal/seeds/(fixtures|volume)/
       - cmd/*
       - test
       - third_party$

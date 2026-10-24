@@ -3,7 +3,11 @@
 Entities, repositories, migrations, locking and caching. The reference vertical is commodity:
 `internal/modules/reference/{domain/commodity,adapters/postgres/commodityrepository}`. Paths are
 under `services/tms/`. Read [row-level-security.md](../row-level-security.md) and
-[bun/buncolgen.md](../bun/buncolgen.md) before writing a repository.
+[bun/buncolgen.md](../bun/buncolgen.md) before writing a repository, and
+[keel-migration.md](keel-migration.md) and [keel-conversion.md](keel-conversion.md) before
+converting one to keel. A converted module (equipment) uses the keel form of each rule below:
+generated `<entity>db` tables for columns, `listquery.Connection`/`List`/`SelectOptions` for
+lists, `Save` and `dberror.Mapping` for writes.
 
 ## Entities
 
@@ -69,20 +73,53 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
 
 ## Migrations
 
-`internal/infrastructure/postgres/migrations/`, `YYYYMMDDHHMMSS_snake_name.tx.up.sql` and
-`.tx.down.sql`, statements separated by `--bun:split`. A new table
-(`20261231009920_agent_web_watches.tx.up.sql` is the model):
+Migrations are [keel](https://github.com/emoss08/keel) files in `schema/migrations/`, one per
+change, `<version>_<snake_name>.sql`; `task db-create-migration name=add_holds [kind=notx]` writes
+one with the version from the clock (older files number versions within a day as counters, which
+keel accepts). A transactional file runs whole, in one transaction with its row in
+`keel_migrations`, so it needs no separators. There are no down migrations: fix forward with a new
+migration, and rebuild a development database with `task db-reset`. `trenova-db up` (`cmd/db`) is
+the deploy step that applies them, `trenova-devdb up` (`cmd/devdb`, `task db-migrate`) the
+development one; each migration waits at most 5s for a lock and is retried, and after a run that
+applied anything `SELECT trenova_rls.reconcile()` runs once, so a new migration does not call it
+(the files written before keel still do). A new table (`20261231009920_agent_web_watches.sql` is
+the model, less its closing `reconcile()`):
 
 - composite primary key `pk_<table>` on `(id, organization_id, business_unit_id)`, named `fk_`
   and `ck_` constraints, `version BIGINT NOT NULL DEFAULT 0`, Unix-second `BIGINT` timestamps;
 - an index for every query path the repository runs, tenant columns leading, partial where the
   query is (`WHERE status = 'Active'`), named `idx_<table>_<purpose>`;
-- ends with `SELECT trenova_rls.reconcile();`.
+- non-null `organization_id` and `business_unit_id`, which the run's `reconcile()` protects; any
+  other shape calls `trenova_rls.apply_policy` or joins `trenova_rls.global_tables` in the same
+  migration ([row-level-security.md](../row-level-security.md)).
 
-An index on an existing table goes in its own non-transactional `.up.sql` with
-`CREATE INDEX CONCURRENTLY IF NOT EXISTS`, as does `ALTER TYPE … ADD VALUE`. Pre-launch, reshape
-a table freely; write the migration that gets there directly, with no dual-write or backfill
-phase for the old shape.
+An index on an existing table goes in its own file that starts with `--keel:notx`, one
+`CREATE INDEX CONCURRENTLY IF NOT EXISTS` (or `DROP INDEX CONCURRENTLY IF EXISTS`) per
+`--keel:split` part, as does `ALTER TYPE … ADD VALUE`. Pre-launch, reshape a table freely; write
+the migration that gets there directly, with no dual-write or backfill phase for the old shape.
+
+- **Stamp.** `task db-stamp` rewrites `schema/version_gen.go`; commit it with the migration. The API
+  and worker link only that constant and wait at startup (`postgres/schemaversion`, at most 10
+  minutes) until the database has applied it, so a server never runs against a schema behind it.
+  CI and `dbcli.TestTheSchemaStampIsCurrent` fail a stale stamp.
+- **Order and edits.** A migration older than the newest applied one is refused, and so is an
+  applied migration whose file changed; CI's base-branch check (`migrate check -base-dir`) fails
+  both on the pull request. Give the migration a newer version, or write a new one.
+- **Lint.** `task db-lint` runs keel's rules and Trenova's (`schema/migrations/lint.go`:
+  `bun-directive`, `reconcile-automatic`, `notx-idempotent`, `tenant-rls`) over pending migrations;
+  `TestMigrationsSinceTheMoveToKeelPassLint` fails CI on an error finding in a new migration.
+  `--keel:lint_ignore rule` at the top of a file skips a rule, with the reason in the PR.
+- **Tests.** `seedtest` copies every test database from a keel template (`migrate.Template`, key
+  `seedtest.TemplateKey` joined to the migrations' and the seeds' fingerprints), built once per
+  server: `SetupTestDB` from migrations plus reference seeds, `seededtest.SetupTestDB` with the
+  fixtures too. A test of a migration's content reads it with `migrations.File("<version>_<name>")`
+  or the `Set`.
+- **Editions** add migration sources through `edition.Edition.Migrations`, merged into one version
+  line; the db binaries read them, the server binaries never link them
+  ([editions.md](../editions.md)).
+- **Bun-migrated databases** are adopted on `trenova-db`'s first connection
+  (`database/bunadopt`): every version in `bun_migrations` is recorded in `keel_migrations`, and a
+  database Bun left gaps in is refused with the missing migrations named.
 
 ## Caching
 
@@ -98,17 +135,46 @@ phase for the old shape.
 
 ## Seeding
 
-Seeds live in `internal/infrastructure/database/seeds/{base,development}` and are registered in
-the generated `seeds/register_gen.go`; typed `SeedID` constants are generated into
-`pkg/seedhelpers/seed_ids_gen.go`. `task db-create-seed name=MySeed [env=dev]` creates one,
-`task generate-seeds` regenerates the IDs and `task db-seed` runs them.
+Seeds are [keel/seed](https://github.com/emoss08/keel) seeds in two registries, written with keel
+against the generated tables (never Bun or raw SQL):
+
+- **Reference** (`internal/seeds/reference`, `seed.Reference`): data every environment needs.
+  Global rows (`us_states`, `dot_hazmat_references`, `ifta_jurisdictions` from embedded YAML in
+  `reference/data`, upserted on their natural keys; `jurisdiction_rules_baseline`) and per-tenant
+  defaults (`PerTenant`: `chart_of_accounts`, `system_document_types`,
+  `service_failure_reason_codes`, `document_template_starters`, `system_agent_definitions`,
+  `table_change_alert_allowlist`, `administrator_permissions`), plus `rls_scope_key`, which
+  installs the configured row-level security key. `trenova-db up` applies them after the
+  migrations on every deploy; a seed runs only when its fingerprint (name, `Version`, `Inputs`
+  and `Fingerprint` function) changed, so an unchanged deploy does no seed work. A seed that
+  inserts only missing rows bumps `Version` when its rows change; one built from a Go catalog
+  or the permission registry fingerprints that catalog instead. Per-tenant seeds create
+  nothing for an organization made later: `tenantbootstrap.CreateReferenceData` gives every new
+  organization the same rows when it is created.
+- **Fixtures** (`internal/seeds/fixtures`, `seed.Fixture`): the development data set (the admin
+  account `admin` / `admin123!`, the Trenova Logistics and Trenova Transportation
+  organizations, workers, equipment, shipments, ledgers, agent activity). Only `trenova-devdb`
+  links them; each runs once per database, and a database marked production refuses them.
+  `requireDevelopment` refuses publicly known credentials on staging too.
+
+Seed tenancy comes from `seedenv.Env`: the system scope for bookkeeping and global seeds, and an
+RLS tenant scope per organization for `PerTenant` seeds, with the loaded configuration on the
+context (`seedenv.Config`). `task db-migrate` (`trenova-devdb up -env development`) migrates and
+applies every changed seed, `task db-seed [name=x]` applies seeds alone, `task db-seed-plan` says
+which would run and why, and `task db-reset` recreates the database from the migrated template
+(which carries the reference seeds) and applies the fixtures. To add a seed, add it to the right
+registry with `Seeds.Add(seed.Seed{…})`, name its `After` dependencies, and list any data file
+under `Inputs` so editing the file reruns it.
 
 Volume data for load and UI testing is not a seed: `task db-seed-volume [shipments=N months=M
-seed=S]` (`trenova db seed-volume`, package `internal/infrastructure/database/volumeseed`) adds a
-large, consistent data set to the development organization on top of the development seeds.
-It numbers records through `pkg/seqgen` like the application, batches every insert, and
-back-dates rows with `pulid.MustNewAt` and one `unnest` update per table, because model hooks
-stamp the current time on insert. When an entity gains a required relation or a derived row the
+seed=S]` (`trenova-devdb volume`, package `internal/seeds/volume`) adds a large, consistent data
+set to the development organization on top of the fixtures, in a tenant scope, and refuses a
+database not marked development or test. It streams rows with `COPY` (`Handle.Copy`), numbers
+records through `pkg/seqgen` like the application (over keel-backed sequence and format ports),
+and back-dates rows with `pulid.MustNewAt` and one `keel.Unnest` update per table, because keel
+stamps `autocreate` and `autoupdate` columns with the current time on insert. An update that
+must not move a back-dated row's `updated_at` assigns `keepUpdated(h)`. When an entity gains a
+required relation or a derived row the
 application always writes (as every shipment gets an auto-order), generate it there too; write
 an optional relation only in the states where the application would have written it (a
 billing queue item only once a shipment is ready to invoice, a draft invoice only once the

@@ -6,10 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicommunicationprofilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediconnectiondraftrepository"
@@ -23,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,16 +38,8 @@ type seededTenant struct {
 func realService(t *testing.T) (context.Context, *bun.DB, *Service, pagination.TenantInfo) {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	_, err := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var org seededTenant
 	require.NoError(t, db.NewSelect().

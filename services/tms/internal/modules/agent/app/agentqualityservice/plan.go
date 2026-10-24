@@ -23,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -513,7 +512,7 @@ func (s *Service) createSuite(
 	evaluations []*agent.Evaluation,
 ) (*agentquality.SuiteRun, error) {
 	var created *agentquality.SuiteRun
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, err := s.suiteRuns.Create(txCtx, run)
 		if err != nil {
 			return err

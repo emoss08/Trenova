@@ -1,0 +1,165 @@
+{
+  "key": "revenue-per-mile",
+  "version": "1.0.0",
+  "name": "Revenue per Mile by Customer",
+  "description": "Linehaul economics per customer — charges, loaded miles, revenue per mile, and average length of haul",
+  "category": "Billing",
+  "tags": [
+    "revenue",
+    "miles",
+    "rate-analysis"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "shipment",
+    "columns": [
+      {
+        "id": "customer",
+        "label": "Customer",
+        "dimension": {
+          "field": "customer.name"
+        }
+      },
+      {
+        "id": "service_type",
+        "label": "Service Type",
+        "dimension": {
+          "field": "serviceType.code"
+        }
+      },
+      {
+        "id": "shipment_count",
+        "label": "Shipments",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_revenue",
+        "label": "Total Revenue",
+        "measure": {
+          "field": "totalChargeAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "freight_revenue",
+        "label": "Freight Revenue",
+        "measure": {
+          "field": "freightChargeAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "total_miles",
+        "label": "Total Miles",
+        "measure": {
+          "field": "moves.distance",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 0
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " mi"
+        }
+      },
+      {
+        "id": "avg_move_miles",
+        "label": "Average Miles per Move",
+        "measure": {
+          "field": "moves.distance",
+          "agg": "avg"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 1
+        },
+        "display": {
+          "style": "number",
+          "decimals": 1,
+          "suffix": " mi"
+        }
+      },
+      {
+        "id": "revenue_per_mile",
+        "label": "Revenue per Mile",
+        "calc": "[total_revenue] / [total_miles]",
+        "transform": {
+          "op": "round",
+          "precision": 2
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "miles_per_shipment",
+        "label": "Average Length of Haul",
+        "calc": "[total_miles] / [shipment_count]",
+        "transform": {
+          "op": "round",
+          "precision": 1
+        },
+        "display": {
+          "style": "number",
+          "decimals": 1,
+          "suffix": " mi"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "createdAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "status",
+          "op": "not_in",
+          "value": [
+            "Canceled"
+          ]
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "revenue_per_mile",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      }
+    ]
+  }
+}

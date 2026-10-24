@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/minio"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/enveloperepository"
@@ -115,13 +113,11 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("load the encryption keys: %w", err)
 	}
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	manager, err := seeder.NewManagerFromConfig(seeder.ManagerConfig{Config: cfg, Registry: registry})
+	maint, err := postgres.OpenMaintenanceDB(context.Background(), cfg)
 	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
+		return fmt.Errorf("open the database: %w", err)
 	}
-	defer manager.Close()
+	defer maint.Close()
 
 	var storage kernelports.Client
 	if !rewrapSkipObjects {
@@ -133,7 +129,7 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 
 	service := enveloperewrapservice.New(enveloperewrapservice.Deps{
 		Repository: enveloperepository.New(
-			enveloperepository.Params{DB: postgres.WrapDB(manager.GetDB())},
+			enveloperepository.Params{DB: postgres.WrapDB(maint)},
 		),
 		Rewrapper: encryptionservice.NewEnvelopeRewrapper(encryption),
 		Storage:   storage,

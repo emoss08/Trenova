@@ -5,14 +5,11 @@ package agentdefinitionrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -27,18 +24,8 @@ icon or starter template wrote an empty string where the check constraints allow
 or a known value, and every edit failed chk_agent_definitions_accent.
 */
 func TestUpdate_SavesAnAgentWithNoAccentIconOrTemplate(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var row tierDefinitionRow
 	require.NoError(t, db.NewSelect().
@@ -74,18 +61,8 @@ func TestUpdate_SavesAnAgentWithNoAccentIconOrTemplate(t *testing.T) {
 }
 
 func TestUpdate_SavesBudgetsLimitsAndSimulation(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var row tierDefinitionRow
 	require.NoError(t, db.NewSelect().
@@ -128,18 +105,8 @@ func TestUpdate_SavesBudgetsLimitsAndSimulation(t *testing.T) {
 }
 
 func TestUpdate_SavesTheDataAccessCeiling(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var row tierDefinitionRow
 	require.NoError(t, db.NewSelect().

@@ -1,0 +1,169 @@
+{
+  "key": "driver-activity",
+  "version": "1.0.0",
+  "name": "Driver Productivity",
+  "description": "Moves, loaded and empty miles, and last activity per driver — the asset-based view of who is turning miles",
+  "category": "Operations",
+  "tags": [
+    "drivers",
+    "miles",
+    "productivity",
+    "assets"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "shipment_move",
+    "columns": [
+      {
+        "id": "first_name",
+        "label": "First Name",
+        "dimension": {
+          "field": "assignment.primaryWorker.firstName"
+        }
+      },
+      {
+        "id": "last_name",
+        "label": "Last Name",
+        "dimension": {
+          "field": "assignment.primaryWorker.lastName"
+        }
+      },
+      {
+        "id": "driver_type",
+        "label": "Driver Type",
+        "dimension": {
+          "field": "assignment.primaryWorker.driverType"
+        }
+      },
+      {
+        "id": "fleet_code",
+        "label": "Fleet",
+        "dimension": {
+          "field": "assignment.primaryWorker.fleetCode.code"
+        }
+      },
+      {
+        "id": "move_count",
+        "label": "Moves",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_miles",
+        "label": "Total Miles",
+        "measure": {
+          "field": "distance",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 0
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " mi"
+        }
+      },
+      {
+        "id": "split_miles",
+        "label": "Miles",
+        "measure": {
+          "field": "distance",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 0
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " mi"
+        }
+      },
+      {
+        "id": "avg_miles",
+        "label": "Average Miles per Move",
+        "measure": {
+          "field": "distance",
+          "agg": "avg"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 1
+        },
+        "display": {
+          "style": "number",
+          "decimals": 1,
+          "suffix": " mi"
+        }
+      },
+      {
+        "id": "last_move",
+        "label": "Last Move",
+        "measure": {
+          "field": "createdAt",
+          "agg": "max"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "createdAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "status",
+          "op": "not_in",
+          "value": [
+            "Canceled"
+          ]
+        }
+      ]
+    },
+    "pivot": {
+      "field": "loaded",
+      "values": [
+        "true",
+        "false"
+      ],
+      "labels": [
+        "Loaded",
+        "Empty"
+      ],
+      "columns": [
+        "split_miles"
+      ]
+    },
+    "sort": [
+      {
+        "column": "total_miles",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 30
+      }
+    ]
+  }
+}

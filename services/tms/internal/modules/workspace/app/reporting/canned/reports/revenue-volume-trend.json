@@ -1,0 +1,197 @@
+{
+  "key": "revenue-volume-trend",
+  "version": "1.0.0",
+  "name": "Revenue \u0026 Volume Trend",
+  "description": "Month-over-month shipments, revenue mix, tonnage, miles, and revenue per mile",
+  "category": "Billing",
+  "tags": [
+    "revenue",
+    "trend",
+    "volume"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "shipment",
+    "columns": [
+      {
+        "id": "month",
+        "label": "Month",
+        "dimension": {
+          "field": "createdAt",
+          "bucket": "month"
+        }
+      },
+      {
+        "id": "shipment_count",
+        "label": "Shipments",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_revenue",
+        "label": "Total Revenue",
+        "measure": {
+          "field": "totalChargeAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "freight_revenue",
+        "label": "Freight Revenue",
+        "measure": {
+          "field": "freightChargeAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "accessorial_revenue",
+        "label": "Accessorial Revenue",
+        "measure": {
+          "field": "otherChargeAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "avg_revenue",
+        "label": "Average Revenue per Shipment",
+        "measure": {
+          "field": "totalChargeAmount",
+          "agg": "avg"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 2
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "total_weight",
+        "label": "Total Weight",
+        "measure": {
+          "field": "weight",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " lbs"
+        }
+      },
+      {
+        "id": "total_pieces",
+        "label": "Total Pieces",
+        "measure": {
+          "field": "pieces",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_miles",
+        "label": "Total Miles",
+        "measure": {
+          "field": "moves.distance",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 0
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " mi"
+        }
+      },
+      {
+        "id": "revenue_per_mile",
+        "label": "Revenue per Mile",
+        "calc": "[total_revenue] / [total_miles]",
+        "transform": {
+          "op": "round",
+          "precision": 2
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "avg_weight",
+        "label": "Average Weight per Shipment",
+        "calc": "[total_weight] / [shipment_count]",
+        "transform": {
+          "op": "round",
+          "precision": 0
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " lbs"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "createdAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "status",
+          "op": "not_in",
+          "value": [
+            "Canceled"
+          ]
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "month"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 365
+      }
+    ]
+  }
+}

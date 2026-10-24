@@ -3,6 +3,7 @@ package customer
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -15,23 +16,24 @@ import (
 
 type CustomerEmailProfile struct {
 	bun.BaseModel `bun:"table:customer_email_profiles,alias:cem" json:"-"`
+	keel.Table    `keel:"customer_email_profiles"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	CustomerID     pulid.ID `json:"customerId"     bun:"customer_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:cem_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
+	CustomerID     pulid.ID `json:"customerId"     bun:"customer_id,pk,notnull,type:VARCHAR(100)" keel:"customer_id,pk"`
 
-	Subject               string `json:"subject"               bun:"subject,type:VARCHAR(255)"`
-	Comment               string `json:"comment"               bun:"comment,type:TEXT"`
-	ToRecipients          string `json:"toRecipients"          bun:"to_recipients,type:TEXT"`
-	CCRecipients          string `json:"ccRecipients"          bun:"cc_recipients,type:TEXT,nullzero"`
-	BCCRecipients         string `json:"bccRecipients"         bun:"bcc_recipients,type:TEXT,nullzero"`
-	AttachmentName        string `json:"attachmentName"        bun:"attachment_name,type:VARCHAR(255)"`
-	ReadReceipt           bool   `json:"readReceipt"           bun:"read_receipt,type:BOOLEAN,notnull"`
-	IncludeShipmentDetail bool   `json:"includeShipmentDetail" bun:"include_shipment_detail,type:BOOLEAN,notnull"`
-	Version               int64  `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt             int64  `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64  `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Subject               string `json:"subject"               bun:"subject,type:VARCHAR(255)" keel:"subject,nullzero"`
+	Comment               string `json:"comment"               bun:"comment,type:TEXT" keel:"comment,nullzero"`
+	ToRecipients          string `json:"toRecipients"          bun:"to_recipients,type:TEXT" keel:"to_recipients,nullzero"`
+	CCRecipients          string `json:"ccRecipients"          bun:"cc_recipients,type:TEXT,nullzero" keel:"cc_recipients,nullzero"`
+	BCCRecipients         string `json:"bccRecipients"         bun:"bcc_recipients,type:TEXT,nullzero" keel:"bcc_recipients,nullzero"`
+	AttachmentName        string `json:"attachmentName"        bun:"attachment_name,type:VARCHAR(255)" keel:"attachment_name,nullzero"`
+	ReadReceipt           bool   `json:"readReceipt"           bun:"read_receipt,type:BOOLEAN,notnull" keel:"read_receipt"`
+	IncludeShipmentDetail bool   `json:"includeShipmentDetail" bun:"include_shipment_detail,type:BOOLEAN,notnull" keel:"include_shipment_detail"`
+	Version               int64  `json:"version"               bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt             int64  `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt             int64  `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	// Relationships
 	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -68,6 +70,10 @@ func (e *CustomerEmailProfile) BeforeAppendModel(_ context.Context, query bun.Qu
 	}
 
 	return nil
+}
+
+func (e *CustomerEmailProfile) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (p *CustomerEmailProfile) Validate(multiErr *errortypes.MultiError) {

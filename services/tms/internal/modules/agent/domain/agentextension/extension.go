@@ -3,6 +3,7 @@ package agentextension
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,21 +17,22 @@ var _ bun.BeforeAppendModelHook = (*Extension)(nil)
 
 type Extension struct {
 	bun.BaseModel `bun:"table:agent_extensions,alias:agext" json:"-"`
+	keel.Table    `keel:"agent_extensions"`
 
-	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Type           Type           `json:"type"           bun:"type,type:VARCHAR(50),notnull"`
-	Enabled        bool           `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull"`
-	Availability   Availability   `json:"availability"   bun:"availability,type:VARCHAR(20),notnull"`
-	Configuration  map[string]any `json:"configuration"  bun:"configuration,type:JSONB,notnull"`
-	EnabledByID    pulid.ID       `json:"enabledById"    bun:"enabled_by_id,type:VARCHAR(100),nullzero"`
-	EnabledAt      *int64         `json:"enabledAt"      bun:"enabled_at,type:BIGINT,nullzero"`
-	Version        int64          `json:"version"        bun:"version,type:BIGINT,notnull"`
-	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aext_"`
+	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Type           Type           `json:"type"           bun:"type,type:VARCHAR(50),notnull" keel:"type"`
+	Enabled        bool           `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull" keel:"enabled"`
+	Availability   Availability   `json:"availability"   bun:"availability,type:VARCHAR(20),notnull" keel:"availability"`
+	Configuration  map[string]any `json:"configuration"  bun:"configuration,type:JSONB,notnull" keel:"configuration,jsonb"`
+	EnabledByID    pulid.ID       `json:"enabledById"    bun:"enabled_by_id,type:VARCHAR(100),nullzero" keel:"enabled_by_id,nullzero"`
+	EnabledAt      *int64         `json:"enabledAt"      bun:"enabled_at,type:BIGINT,nullzero" keel:"enabled_at"`
+	Version        int64          `json:"version"        bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	EnabledBy *tenant.User `json:"enabledBy,omitempty" bun:"rel:belongs-to,join:enabled_by_id=id"`
+	EnabledBy *tenant.User `json:"enabledBy,omitempty" bun:"rel:belongs-to,join:enabled_by_id=id" keel:"belongs:enabled_by_id"`
 }
 
 func (e *Extension) BeforeAppendModel(_ context.Context, query bun.Query) error {

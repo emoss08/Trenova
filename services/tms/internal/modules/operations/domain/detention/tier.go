@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,19 +22,20 @@ var _ bun.BeforeAppendModelHook = (*DetentionPolicyTier)(nil)
 // time, half-open as [FromMinute, ToMinute).
 type DetentionPolicyTier struct {
 	bun.BaseModel `bun:"table:detention_policy_tiers,alias:dpt" json:"-"`
+	keel.Table    `keel:"detention_policy_tiers"`
 
-	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	DetentionPolicyID pulid.ID        `json:"detentionPolicyId" bun:"detention_policy_id,type:VARCHAR(100),notnull"`
-	FromMinute        int32           `json:"fromMinute"        bun:"from_minute,type:INTEGER,notnull"`
-	ToMinute          *int32          `json:"toMinute"          bun:"to_minute,type:INTEGER,nullzero"`
-	Rate              decimal.Decimal `json:"rate"              bun:"rate,type:NUMERIC(19,4),notnull,default:0"`
-	RateUnit          TierRateUnit    `json:"rateUnit"          bun:"rate_unit,type:detention_tier_rate_unit_enum,notnull,default:'Hour'"`
-	Label             string          `json:"label"             bun:"label,type:VARCHAR(100),nullzero"`
-	SortOrder         int32           `json:"sortOrder"         bun:"sort_order,type:INTEGER,notnull"`
-	CreatedAt         int64           `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64           `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dpt_"`
+	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	DetentionPolicyID pulid.ID        `json:"detentionPolicyId" bun:"detention_policy_id,type:VARCHAR(100),notnull" keel:"detention_policy_id"`
+	FromMinute        int32           `json:"fromMinute"        bun:"from_minute,type:INTEGER,notnull" keel:"from_minute"`
+	ToMinute          *int32          `json:"toMinute"          bun:"to_minute,type:INTEGER,nullzero" keel:"to_minute"`
+	Rate              decimal.Decimal `json:"rate"              bun:"rate,type:NUMERIC(19,4),notnull,default:0" keel:"rate"`
+	RateUnit          TierRateUnit    `json:"rateUnit"          bun:"rate_unit,type:detention_tier_rate_unit_enum,notnull,default:'Hour'" keel:"rate_unit"`
+	Label             string          `json:"label"             bun:"label,type:VARCHAR(100),nullzero" keel:"label,nullzero"`
+	SortOrder         int32           `json:"sortOrder"         bun:"sort_order,type:INTEGER,notnull" keel:"sort_order"`
+	CreatedAt         int64           `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt         int64           `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (t *DetentionPolicyTier) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -55,6 +57,10 @@ func (t *DetentionPolicyTier) BeforeAppendModel(_ context.Context, query bun.Que
 	}
 
 	return nil
+}
+
+func (t *DetentionPolicyTier) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 // Covers reports whether the tier owns the given billable minute.

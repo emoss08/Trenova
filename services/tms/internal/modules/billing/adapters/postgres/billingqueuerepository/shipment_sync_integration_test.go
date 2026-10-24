@@ -6,10 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -19,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -55,18 +52,8 @@ type syncFixture struct {
 func setupSyncFixture(t *testing.T) *syncFixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var org syncTenant
 	require.NoError(t, db.NewSelect().

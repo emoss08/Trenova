@@ -6,14 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -59,17 +56,8 @@ type journalEntryRecord struct {
 }
 
 func TestListJournalEntries(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
@@ -104,7 +92,7 @@ func TestListJournalEntries(t *testing.T) {
 
 	batchID := pulid.MustNew("jb_")
 	entryAt := entryTime.Unix()
-	_, err = db.NewInsert().
+	_, err := db.NewInsert().
 		Model(&journalBatchRecord{ID: batchID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchNumber: "JB-LIST-1", BatchType: "System", Status: "Posted", Description: "Batch", AccountingDate: entryAt, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, CreatedByID: user.ID}).
 		Exec(ctx)
 	require.NoError(t, err)

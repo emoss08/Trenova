@@ -3,6 +3,7 @@ package capture
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -26,28 +27,29 @@ const (
 // CapturePage is one scanned side, or one page of a print job.
 type CapturePage struct {
 	bun.BaseModel `bun:"table:capture_pages,alias:cpg" json:"-"`
+	keel.Table    `keel:"capture_pages"`
 
-	ID             pulid.ID    `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID    `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID    `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BatchID        pulid.ID    `json:"batchId"        bun:"batch_id,type:VARCHAR(100),notnull"`
-	Sequence       int         `json:"sequence"       bun:"sequence,type:INTEGER,notnull"`
-	Status         PageStatus  `json:"status"         bun:"status,type:VARCHAR(20),notnull"`
-	StoragePath    string      `json:"-"              bun:"storage_path,type:VARCHAR(512),notnull"`
-	ChecksumSHA256 string      `json:"checksumSha256" bun:"checksum_sha256,type:VARCHAR(64),notnull"`
-	ByteSize       int64       `json:"byteSize"       bun:"byte_size,type:BIGINT,notnull"`
-	ContentType    string      `json:"contentType"    bun:"content_type,type:VARCHAR(100),notnull"`
-	WidthPx        int         `json:"widthPx"        bun:"width_px,type:INTEGER,notnull,default:0"`
-	HeightPx       int         `json:"heightPx"       bun:"height_px,type:INTEGER,notnull,default:0"`
-	DPI            int         `json:"dpi"            bun:"dpi,type:INTEGER,notnull,default:0"`
-	Rotation       int         `json:"rotation"       bun:"rotation,type:INTEGER,notnull,default:0"`
-	ThumbnailPath  string      `json:"-"              bun:"thumbnail_path,type:VARCHAR(512),nullzero"`
-	BlankScore     *float64    `json:"blankScore"     bun:"blank_score,type:NUMERIC(6,5),nullzero"`
-	IsSeparator    bool        `json:"isSeparator"    bun:"is_separator,type:BOOLEAN,notnull,default:false"`
-	Markers        PageMarkers `json:"markers"        bun:"markers,type:JSONB,notnull,default:'{}'"`
-	FailureMessage string      `json:"failureMessage" bun:"failure_message,type:VARCHAR(500),nullzero"`
-	CreatedAt      int64       `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64       `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID    `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:cpg_"`
+	BusinessUnitID pulid.ID    `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID    `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BatchID        pulid.ID    `json:"batchId"        bun:"batch_id,type:VARCHAR(100),notnull" keel:"batch_id"`
+	Sequence       int         `json:"sequence"       bun:"sequence,type:INTEGER,notnull" keel:"sequence"`
+	Status         PageStatus  `json:"status"         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	StoragePath    string      `json:"-"              bun:"storage_path,type:VARCHAR(512),notnull" keel:"storage_path"`
+	ChecksumSHA256 string      `json:"checksumSha256" bun:"checksum_sha256,type:VARCHAR(64),notnull" keel:"checksum_sha256"`
+	ByteSize       int64       `json:"byteSize"       bun:"byte_size,type:BIGINT,notnull" keel:"byte_size"`
+	ContentType    string      `json:"contentType"    bun:"content_type,type:VARCHAR(100),notnull" keel:"content_type"`
+	WidthPx        int         `json:"widthPx"        bun:"width_px,type:INTEGER,notnull,default:0" keel:"width_px"`
+	HeightPx       int         `json:"heightPx"       bun:"height_px,type:INTEGER,notnull,default:0" keel:"height_px"`
+	DPI            int         `json:"dpi"            bun:"dpi,type:INTEGER,notnull,default:0" keel:"dpi"`
+	Rotation       int         `json:"rotation"       bun:"rotation,type:INTEGER,notnull,default:0" keel:"rotation"`
+	ThumbnailPath  string      `json:"-"              bun:"thumbnail_path,type:VARCHAR(512),nullzero" keel:"thumbnail_path,nullzero"`
+	BlankScore     *float64    `json:"blankScore"     bun:"blank_score,type:NUMERIC(6,5),nullzero" keel:"blank_score"`
+	IsSeparator    bool        `json:"isSeparator"    bun:"is_separator,type:BOOLEAN,notnull,default:false" keel:"is_separator"`
+	Markers        PageMarkers `json:"markers"        bun:"markers,type:JSONB,notnull,default:'{}'" keel:"markers,jsonb"`
+	FailureMessage string      `json:"failureMessage" bun:"failure_message,type:VARCHAR(500),nullzero" keel:"failure_message,nullzero"`
+	CreatedAt      int64       `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64       `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 // PageMarkers are what a page says about where the stack divides.

@@ -3,6 +3,7 @@ package permission
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -14,16 +15,17 @@ var _ bun.BeforeAppendModelHook = (*UserRoleAssignment)(nil)
 
 type UserRoleAssignment struct {
 	bun.BaseModel `bun:"table:user_role_assignments,alias:ura" json:"-"`
+	keel.Table    `keel:"user_role_assignments"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	RoleID         pulid.ID `json:"roleId"         bun:"role_id,type:VARCHAR(100),notnull"`
-	ExpiresAt      *int64   `json:"expiresAt"      bun:"expires_at"`
-	AssignedBy     pulid.ID `json:"assignedBy"     bun:"assigned_by,type:VARCHAR(100)"`
-	AssignedAt     int64    `json:"assignedAt"     bun:"assigned_at,notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ura_"`
+	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	RoleID         pulid.ID `json:"roleId"         bun:"role_id,type:VARCHAR(100),notnull" keel:"role_id"`
+	ExpiresAt      *int64   `json:"expiresAt"      bun:"expires_at" keel:"expires_at"`
+	AssignedBy     pulid.ID `json:"assignedBy"     bun:"assigned_by,type:VARCHAR(100)" keel:"assigned_by,nullzero"`
+	AssignedAt     int64    `json:"assignedAt"     bun:"assigned_at,notnull" keel:"assigned_at"`
 
-	Role *Role `json:"role,omitempty" bun:"rel:belongs-to,join:role_id=id"`
+	Role *Role `json:"role,omitempty" bun:"rel:belongs-to,join:role_id=id" keel:"belongs:role_id"`
 }
 
 func (ura *UserRoleAssignment) BeforeAppendModel(_ context.Context, q bun.Query) error {
@@ -36,6 +38,10 @@ func (ura *UserRoleAssignment) BeforeAppendModel(_ context.Context, q bun.Query)
 	}
 
 	return nil
+}
+
+func (ura *UserRoleAssignment) BeforeCreate(ctx context.Context) error {
+	return ura.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (ura *UserRoleAssignment) GetCreatedAt() int64 {

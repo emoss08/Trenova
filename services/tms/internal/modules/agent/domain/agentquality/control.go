@@ -3,6 +3,7 @@ package agentquality
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,26 +42,27 @@ var (
 
 type Control struct {
 	bun.BaseModel `bun:"table:agent_quality_controls,alias:aqc" json:"-"`
+	keel.Table    `keel:"agent_quality_controls"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aqc_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	Enabled             bool            `json:"enabled"             bun:"enabled,type:BOOLEAN,notnull"`
-	RunHourLocal        int             `json:"runHourLocal"        bun:"run_hour_local,type:SMALLINT,notnull,default:2"`
-	Timezone            string          `json:"timezone"            bun:"timezone,type:VARCHAR(100),nullzero"`
-	MaxCasesPerAgent    int             `json:"maxCasesPerAgent"    bun:"max_cases_per_agent,type:INTEGER,notnull,default:50"`
-	NightlyBudgetUSD    decimal.Decimal `json:"nightlyBudgetUsd"    bun:"nightly_budget_usd,type:NUMERIC(14,2),notnull,default:5.00"`
-	MonthlyBudgetUSD    decimal.Decimal `json:"monthlyBudgetUsd"    bun:"monthly_budget_usd,type:NUMERIC(14,2),notnull,default:50.00"`
-	JudgeEnabled        bool            `json:"judgeEnabled"        bun:"judge_enabled,type:BOOLEAN,notnull,default:false"`
-	JudgeSampleRate     float64         `json:"judgeSampleRate"     bun:"judge_sample_rate,type:DOUBLE PRECISION,notnull,default:0.2"`
-	RegressionThreshold float64         `json:"regressionThreshold" bun:"regression_threshold,type:DOUBLE PRECISION,notnull,default:0.10"`
-	MinCases            int             `json:"minCases"            bun:"min_cases,type:INTEGER,notnull,default:10"`
-	ForceRerunDays      int             `json:"forceRerunDays"      bun:"force_rerun_days,type:INTEGER,notnull,default:7"`
+	Enabled             bool            `json:"enabled"             bun:"enabled,type:BOOLEAN,notnull" keel:"enabled"`
+	RunHourLocal        int             `json:"runHourLocal"        bun:"run_hour_local,type:SMALLINT,notnull,default:2" keel:"run_hour_local"`
+	Timezone            string          `json:"timezone"            bun:"timezone,type:VARCHAR(100),nullzero" keel:"timezone,nullzero"`
+	MaxCasesPerAgent    int             `json:"maxCasesPerAgent"    bun:"max_cases_per_agent,type:INTEGER,notnull,default:50" keel:"max_cases_per_agent"`
+	NightlyBudgetUSD    decimal.Decimal `json:"nightlyBudgetUsd"    bun:"nightly_budget_usd,type:NUMERIC(14,2),notnull,default:5.00" keel:"nightly_budget_usd"`
+	MonthlyBudgetUSD    decimal.Decimal `json:"monthlyBudgetUsd"    bun:"monthly_budget_usd,type:NUMERIC(14,2),notnull,default:50.00" keel:"monthly_budget_usd"`
+	JudgeEnabled        bool            `json:"judgeEnabled"        bun:"judge_enabled,type:BOOLEAN,notnull,default:false" keel:"judge_enabled"`
+	JudgeSampleRate     float64         `json:"judgeSampleRate"     bun:"judge_sample_rate,type:DOUBLE PRECISION,notnull,default:0.2" keel:"judge_sample_rate"`
+	RegressionThreshold float64         `json:"regressionThreshold" bun:"regression_threshold,type:DOUBLE PRECISION,notnull,default:0.10" keel:"regression_threshold"`
+	MinCases            int             `json:"minCases"            bun:"min_cases,type:INTEGER,notnull,default:10" keel:"min_cases"`
+	ForceRerunDays      int             `json:"forceRerunDays"      bun:"force_rerun_days,type:INTEGER,notnull,default:7" keel:"force_rerun_days"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

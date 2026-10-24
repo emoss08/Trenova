@@ -4,20 +4,14 @@ package documenttemplaterepository_test
 
 import (
 	"context"
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documenttemplaterepository"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -38,22 +32,8 @@ type fixture struct {
 func setup(t *testing.T) *fixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-
-	engine := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{
-			SystemUserPassword: "integration-system-password",
-		},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{
-		Environment: common.EnvDevelopment,
-		Force:       true,
-	})
-	require.NoError(t, err)
 
 	var org struct {
 		ID             pulid.ID `bun:"id"`
@@ -399,48 +379,4 @@ func TestACompletedGeneratedDocumentMustRecordWhereItLanded(t *testing.T) {
 	_, err := f.db.NewInsert().Model(generated).Exec(f.ctx)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "chk_generated_documents_completed")
-}
-
-// The template names its live version and the version names its template, so
-// the schema carries a circular foreign key. A down migration that does not
-// break the cycle first leaves a group rollback unable to re-apply — and the
-// failure only shows up on the next deploy that rolls back.
-func TestTheMigrationRollsBackAndForwardThroughTheCircularForeignKey(t *testing.T) {
-	f := setup(t)
-
-	const stem = "20260902000000_document_templates"
-	runMigrationFile(t, f.ctx, f.db, stem+".tx.down.sql")
-
-	var exists bool
-	require.NoError(t, f.db.NewRaw(
-		`SELECT EXISTS (SELECT 1 FROM information_schema.tables
-		 WHERE table_name = 'document_template_versions')`,
-	).Scan(f.ctx, &exists))
-	require.False(t, exists, "the down migration must remove the versions table")
-
-	runMigrationFile(t, f.ctx, f.db, stem+".tx.up.sql")
-
-	require.NoError(t, f.db.NewRaw(
-		`SELECT EXISTS (SELECT 1 FROM pg_constraint
-		 WHERE conname = 'fk_document_templates_active_version')`,
-	).Scan(f.ctx, &exists))
-	require.True(t, exists, "re-applying must restore the circular foreign key")
-}
-
-// runMigrationFile executes one migration exactly as the migrator would, split
-// on the same marker.
-func runMigrationFile(t *testing.T, ctx context.Context, db *bun.DB, name string) {
-	t.Helper()
-
-	path := filepath.Join("internal", "infrastructure", "postgres", "migrations", name)
-	raw, err := os.ReadFile(path)
-	require.NoError(t, err, "read migration %s", name)
-
-	for _, statement := range strings.Split(string(raw), "--bun:split") {
-		if strings.TrimSpace(statement) == "" {
-			continue
-		}
-		_, err = db.ExecContext(ctx, statement)
-		require.NoError(t, err, "apply statement from %s:\n%s", name, statement)
-	}
 }

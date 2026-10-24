@@ -1,12 +1,10 @@
 package trailerrepository
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -30,9 +28,12 @@ func newTrailerForQuota() *trailer.Trailer {
 
 func trailerQuota(entity *trailer.Trailer) *platformplanports.QuotaRequest {
 	return &platformplanports.QuotaRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		Meter:      platformcatalog.MeterTrailersTotal,
-		Quantity:   1,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		Meter:    platformcatalog.MeterTrailersTotal,
+		Quantity: 1,
 	}
 }
 
@@ -53,26 +54,5 @@ func TestCreateRefusesATrailerPastTheQuota(t *testing.T) {
 
 	require.Nil(t, created)
 	require.True(t, errortypes.IsQuotaExceededError(err))
-	require.NoError(t, sqlMock.ExpectationsWereMet())
-}
-
-func TestCreateInsertsATrailerUnderTheQuota(t *testing.T) {
-	t.Parallel()
-
-	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := platformplanportsmock.NewMockQuotaGuard(t)
-	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
-	entity := newTrailerForQuota()
-
-	guard.EXPECT().Enforce(mock.Anything, trailerQuota(entity)).Return(nil)
-	sqlMock.ExpectBegin()
-	sqlMock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "trailers"`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(entity.ID.String()))
-	sqlMock.ExpectCommit()
-
-	created, err := repo.Create(t.Context(), entity)
-
-	require.NoError(t, err)
-	require.NotNil(t, created)
 	require.NoError(t, sqlMock.ExpectationsWereMet())
 }

@@ -11,25 +11,45 @@ covers how to build a resource; this covers what breaks afterwards.
 
 ## Run the whole gate locally
 
-`Codegen Checks` in `.github/workflows/test-tms.yml` is six independent regeneration steps, plus the GraphQL schema-diff step. All paths
-are relative to `services/tms`:
+`Codegen Checks` in `.github/workflows/test-tms.yml` is seven independent regeneration steps, plus the GraphQL schema-diff
+and migration base-branch steps. All paths are relative to `services/tms`:
 
 ```bash
 go run ./internal/api/graphql/gqlexec/gen                           # same as `task gqlgen`; see "GraphQL server code" below
 (cd internal/api/graphql/gqlexec/internal/e2e && go run github.com/emoss08/trenova/internal/api/graphql/gqlexec/gen)
 git status --porcelain -- internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver internal/api/graphql/gqlexec/internal/e2e
 
-go generate ./internal/infrastructure/database/seeder/...          # pkg/seedhelpers/seed_ids_gen.go
+
 go generate ./internal/api/graphql/projection/...                  # internal/api/graphql/projection/specs_gen.go
-go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
+go generate ./internal/infrastructure/reportengine/...             # analytics.messages.json, client/packages/shared/src/generated/keel-analytics.ts
 go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
 go generate ./internal/api/writecoverage/...                       # ../../docs/engineering/agent-write-coverage.md
+go run ./cmd/db migrate stamp -check                               # schema/version_gen.go (task db-stamp)
 ```
 
 The REST API reference (OpenAPI) is no longer generated in this repository; it is produced
 outside it, so there is no spec to regenerate here.
 
-A clean `git status` after all six means the job will pass.
+A clean `git status` after all six, and a passing stamp check, mean the job will pass.
+
+## Schema version stamp
+
+`schema/version_gen.go` holds `schema.Version`, the newest migration, and `schema.Fingerprint`.
+It is the only part of the schema the API and worker link: at startup they wait until the
+database has applied `schema.Version` (`internal/infrastructure/postgres/schemaversion`). So
+**adding a migration means regenerating the stamp in the same commit**:
+
+```bash
+cd services/tms
+task db-stamp            # go run ./cmd/devdb migrate stamp
+```
+
+The `Schema version stamp` step runs `trenova-db migrate stamp -check`, and
+`TestTheSchemaStampIsCurrent` in `internal/infrastructure/database/dbcli` says the same under
+`task test`. Never edit the file by hand. On a pull request, `Migrations against the base branch`
+runs `migrate check -base-dir` against the base branch's `schema/migrations`: it fails on a new
+migration older than the newest one there (renumber it) and on an edited or deleted migration the
+base branch already has (fix forward with a new migration instead).
 
 ## GraphQL projections: the one that fails on correct code
 

@@ -3,6 +3,7 @@ package ratematrix
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -22,40 +23,41 @@ var _ bun.BeforeAppendModelHook = (*RateMatrixCell)(nil)
 // which a row-per-axis design could not do at tariff scale.
 type RateMatrixCell struct {
 	bun.BaseModel `bun:"table:rate_matrix_cells,alias:rmc" json:"-"`
+	keel.Table    `keel:"rate_matrix_cells"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	RateMatrixID   pulid.ID `json:"rateMatrixId"   bun:"rate_matrix_id,type:VARCHAR(100),notnull"`
-	VersionNumber  int64    `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull,default:0"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rmc_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	RateMatrixID   pulid.ID `json:"rateMatrixId"   bun:"rate_matrix_id,type:VARCHAR(100),notnull" keel:"rate_matrix_id"`
+	VersionNumber  int64    `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull,default:0" keel:"version_number"`
 
-	D0Key string `json:"d0Key" bun:"d0_key,type:VARCHAR(120),notnull,default:''"`
-	D1Key string `json:"d1Key" bun:"d1_key,type:VARCHAR(120),notnull,default:''"`
-	D2Key string `json:"d2Key" bun:"d2_key,type:VARCHAR(120),notnull,default:''"`
-	D3Key string `json:"d3Key" bun:"d3_key,type:VARCHAR(120),notnull,default:''"`
+	D0Key string `json:"d0Key" bun:"d0_key,type:VARCHAR(120),notnull,default:''" keel:"d0_key"`
+	D1Key string `json:"d1Key" bun:"d1_key,type:VARCHAR(120),notnull,default:''" keel:"d1_key"`
+	D2Key string `json:"d2Key" bun:"d2_key,type:VARCHAR(120),notnull,default:''" keel:"d2_key"`
+	D3Key string `json:"d3Key" bun:"d3_key,type:VARCHAR(120),notnull,default:''" keel:"d3_key"`
 
-	D0KeyTo string `json:"d0KeyTo" bun:"d0_key_to,type:VARCHAR(120),notnull,default:''"`
-	D1KeyTo string `json:"d1KeyTo" bun:"d1_key_to,type:VARCHAR(120),notnull,default:''"`
-	D2KeyTo string `json:"d2KeyTo" bun:"d2_key_to,type:VARCHAR(120),notnull,default:''"`
-	D3KeyTo string `json:"d3KeyTo" bun:"d3_key_to,type:VARCHAR(120),notnull,default:''"`
+	D0KeyTo string `json:"d0KeyTo" bun:"d0_key_to,type:VARCHAR(120),notnull,default:''" keel:"d0_key_to"`
+	D1KeyTo string `json:"d1KeyTo" bun:"d1_key_to,type:VARCHAR(120),notnull,default:''" keel:"d1_key_to"`
+	D2KeyTo string `json:"d2KeyTo" bun:"d2_key_to,type:VARCHAR(120),notnull,default:''" keel:"d2_key_to"`
+	D3KeyTo string `json:"d3KeyTo" bun:"d3_key_to,type:VARCHAR(120),notnull,default:''" keel:"d3_key_to"`
 
-	D0Min decimal.NullDecimal `json:"d0Min" bun:"d0_min,type:NUMERIC(19,4),nullzero"`
-	D0Max decimal.NullDecimal `json:"d0Max" bun:"d0_max,type:NUMERIC(19,4),nullzero"`
-	D1Min decimal.NullDecimal `json:"d1Min" bun:"d1_min,type:NUMERIC(19,4),nullzero"`
-	D1Max decimal.NullDecimal `json:"d1Max" bun:"d1_max,type:NUMERIC(19,4),nullzero"`
-	D2Min decimal.NullDecimal `json:"d2Min" bun:"d2_min,type:NUMERIC(19,4),nullzero"`
-	D2Max decimal.NullDecimal `json:"d2Max" bun:"d2_max,type:NUMERIC(19,4),nullzero"`
-	D3Min decimal.NullDecimal `json:"d3Min" bun:"d3_min,type:NUMERIC(19,4),nullzero"`
-	D3Max decimal.NullDecimal `json:"d3Max" bun:"d3_max,type:NUMERIC(19,4),nullzero"`
+	D0Min decimal.NullDecimal `json:"d0Min" bun:"d0_min,type:NUMERIC(19,4),nullzero" keel:"d0_min"`
+	D0Max decimal.NullDecimal `json:"d0Max" bun:"d0_max,type:NUMERIC(19,4),nullzero" keel:"d0_max"`
+	D1Min decimal.NullDecimal `json:"d1Min" bun:"d1_min,type:NUMERIC(19,4),nullzero" keel:"d1_min"`
+	D1Max decimal.NullDecimal `json:"d1Max" bun:"d1_max,type:NUMERIC(19,4),nullzero" keel:"d1_max"`
+	D2Min decimal.NullDecimal `json:"d2Min" bun:"d2_min,type:NUMERIC(19,4),nullzero" keel:"d2_min"`
+	D2Max decimal.NullDecimal `json:"d2Max" bun:"d2_max,type:NUMERIC(19,4),nullzero" keel:"d2_max"`
+	D3Min decimal.NullDecimal `json:"d3Min" bun:"d3_min,type:NUMERIC(19,4),nullzero" keel:"d3_min"`
+	D3Max decimal.NullDecimal `json:"d3Max" bun:"d3_max,type:NUMERIC(19,4),nullzero" keel:"d3_max"`
 
-	Value           decimal.Decimal     `json:"value"           bun:"value,type:NUMERIC(19,6),notnull"`
-	MinCharge       decimal.NullDecimal `json:"minCharge"       bun:"min_charge,type:NUMERIC(19,4),nullzero"`
-	DeficitEligible bool                `json:"deficitEligible" bun:"deficit_eligible,type:BOOLEAN,notnull"`
+	Value           decimal.Decimal     `json:"value"           bun:"value,type:NUMERIC(19,6),notnull" keel:"value"`
+	MinCharge       decimal.NullDecimal `json:"minCharge"       bun:"min_charge,type:NUMERIC(19,4),nullzero" keel:"min_charge"`
+	DeficitEligible bool                `json:"deficitEligible" bun:"deficit_eligible,type:BOOLEAN,notnull" keel:"deficit_eligible"`
 
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	RateMatrix *RateMatrix `json:"-" bun:"rel:belongs-to,join:rate_matrix_id=id"`
+	RateMatrix *RateMatrix `json:"-" bun:"rel:belongs-to,join:rate_matrix_id=id" keel:"belongs:rate_matrix_id"`
 }
 
 // KeyAt reads the exact key stored for the given axis.
@@ -338,6 +340,10 @@ func (rmc *RateMatrixCell) BeforeAppendModel(_ context.Context, query bun.Query)
 	}
 
 	return nil
+}
+
+func (rmc *RateMatrixCell) BeforeCreate(ctx context.Context) error {
+	return rmc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (rmc *RateMatrixCell) GetID() pulid.ID {

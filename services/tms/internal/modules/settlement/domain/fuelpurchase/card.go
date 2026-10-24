@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -30,35 +31,37 @@ var (
 	_ validationframework.TenantedEntity = (*FuelCard)(nil)
 )
 
+// Fuel cards issued to drivers and units
 type FuelCard struct {
 	bun.BaseModel             `bun:"table:fuel_cards,alias:fcard" json:"-"`
+	keel.Table                `                                            keel:"fuel_cards,report=Equipment"`
 	pagination.CursorValueSet `bun:",embed"                       json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:fcard_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
 
-	Provider          CardProvider `json:"provider"          bun:"provider,type:fuel_card_provider_enum,notnull"`
-	LastFour          string       `json:"lastFour"          bun:"last_four,type:VARCHAR(4),notnull"`
-	Label             string       `json:"label"             bun:"label,type:VARCHAR(100),notnull"`
-	ExternalCardID    string       `json:"externalCardId"    bun:"external_card_id,type:VARCHAR(100),nullzero"`
-	AssignedWorkerID  *pulid.ID    `json:"assignedWorkerId"  bun:"assigned_worker_id,type:VARCHAR(100),nullzero"`
-	AssignedTractorID *pulid.ID    `json:"assignedTractorId" bun:"assigned_tractor_id,type:VARCHAR(100),nullzero"`
-	Status            CardStatus   `json:"status"            bun:"status,type:fuel_card_status_enum,notnull,default:'Active'"`
-	ExpiresAt         *int64       `json:"expiresAt"         bun:"expires_at,type:BIGINT,nullzero"`
-	CancelledAt       *int64       `json:"cancelledAt"       bun:"cancelled_at,type:BIGINT,nullzero"`
-	CancelReason      string       `json:"cancelReason"      bun:"cancel_reason,type:TEXT,nullzero"`
-	DiscoveredAt      *int64       `json:"discoveredAt"      bun:"discovered_at,type:BIGINT,nullzero"`
-	Notes             string       `json:"notes"             bun:"notes,type:TEXT,nullzero"`
+	Provider          CardProvider `json:"provider"          bun:"provider,type:fuel_card_provider_enum,notnull"              keel:"provider"`
+	LastFour          string       `json:"lastFour"          bun:"last_four,type:VARCHAR(4),notnull"                          keel:"last_four"`
+	Label             string       `json:"label"             bun:"label,type:VARCHAR(100),notnull"                            keel:"label,label=Card Label"`
+	ExternalCardID    string       `json:"externalCardId"    bun:"external_card_id,type:VARCHAR(100),nullzero"                keel:"external_card_id,nullzero"`
+	AssignedWorkerID  *pulid.ID    `json:"assignedWorkerId"  bun:"assigned_worker_id,type:VARCHAR(100),nullzero"              keel:"assigned_worker_id"`
+	AssignedTractorID *pulid.ID    `json:"assignedTractorId" bun:"assigned_tractor_id,type:VARCHAR(100),nullzero"             keel:"assigned_tractor_id"`
+	Status            CardStatus   `json:"status"            bun:"status,type:fuel_card_status_enum,notnull,default:'Active'" keel:"status"`
+	ExpiresAt         *int64       `json:"expiresAt"         bun:"expires_at,type:BIGINT,nullzero"                            keel:"expires_at"`
+	CancelledAt       *int64       `json:"cancelledAt"       bun:"cancelled_at,type:BIGINT,nullzero"                          keel:"cancelled_at"`
+	CancelReason      string       `json:"cancelReason"      bun:"cancel_reason,type:TEXT,nullzero"                           keel:"cancel_reason,nullzero"`
+	DiscoveredAt      *int64       `json:"discoveredAt"      bun:"discovered_at,type:BIGINT,nullzero"                         keel:"discovered_at"`
+	Notes             string       `json:"notes"             bun:"notes,type:TEXT,nullzero"                                   keel:"notes,nullzero"`
 
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	AssignedWorker  *worker.Worker   `json:"assignedWorker,omitempty"  bun:"rel:belongs-to,join:assigned_worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	AssignedTractor *tractor.Tractor `json:"assignedTractor,omitempty" bun:"rel:belongs-to,join:assigned_tractor_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	AssignedWorker  *worker.Worker   `json:"assignedWorker,omitempty"  bun:"rel:belongs-to,join:assigned_worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"  keel:"belongs:assigned_worker_id,label=Assigned Driver"`
+	AssignedTractor *tractor.Tractor `json:"assignedTractor,omitempty" bun:"rel:belongs-to,join:assigned_tractor_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:assigned_tractor_id"`
 }
 
 func (c *FuelCard) Normalize() {
@@ -213,4 +216,8 @@ func (c *FuelCard) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (c *FuelCard) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

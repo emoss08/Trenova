@@ -1,0 +1,142 @@
+{
+  "key": "stop-dwell-and-detention",
+  "version": "1.0.0",
+  "name": "Dwell \u0026 Detention Exposure",
+  "description": "Where drivers are losing hours — average dwell on site and how far arrivals drift from the scheduled window, by facility",
+  "category": "Operations",
+  "tags": [
+    "detention",
+    "dwell",
+    "facilities",
+    "drivers"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "stop",
+    "columns": [
+      {
+        "id": "facility",
+        "label": "Facility",
+        "dimension": {
+          "field": "location.name"
+        }
+      },
+      {
+        "id": "city",
+        "label": "City",
+        "dimension": {
+          "field": "location.city"
+        }
+      },
+      {
+        "id": "stop_type",
+        "label": "Stop Type",
+        "dimension": {
+          "field": "type"
+        }
+      },
+      {
+        "id": "stop_count",
+        "label": "Stops",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "avg_scheduled_end",
+        "label": "Average Window Close",
+        "measure": {
+          "field": "scheduledWindowEnd",
+          "agg": "avg"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      },
+      {
+        "id": "avg_arrival",
+        "label": "Average Arrival",
+        "measure": {
+          "field": "actualArrival",
+          "agg": "avg"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      },
+      {
+        "id": "avg_departure",
+        "label": "Average Departure",
+        "measure": {
+          "field": "actualDeparture",
+          "agg": "avg"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      },
+      {
+        "id": "avg_dwell",
+        "label": "Average Dwell",
+        "calc": "[avg_departure] - [avg_arrival]",
+        "display": {
+          "style": "duration",
+          "durationUnit": "seconds",
+          "durationStyle": "compact"
+        }
+      },
+      {
+        "id": "avg_window_variance",
+        "label": "Average Arrival vs Window Close",
+        "calc": "[avg_arrival] - [avg_scheduled_end]",
+        "display": {
+          "style": "duration",
+          "durationUnit": "seconds",
+          "durationStyle": "compact"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "actualArrival",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "actualDeparture",
+          "op": "is_not_null"
+        },
+        {
+          "field": "scheduledWindowEnd",
+          "op": "is_not_null"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "avg_dwell",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 30
+      }
+    ]
+  }
+}

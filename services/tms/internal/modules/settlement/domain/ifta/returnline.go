@@ -3,6 +3,7 @@ package ifta
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,45 +21,47 @@ var (
 	_ validationframework.TenantedEntity = (*ReturnLine)(nil)
 )
 
+// One return line per jurisdiction and fuel type
 type ReturnLine struct {
 	bun.BaseModel `bun:"table:ifta_return_lines,alias:ifrl" json:"-"`
+	keel.Table    `                                                  keel:"ifta_return_lines,report=Equipment,label=IFTA Return Line"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ReturnID       pulid.ID `json:"returnId"       bun:"return_id,type:VARCHAR(100),notnull"`
-	JurisdictionID pulid.ID `json:"jurisdictionId" bun:"jurisdiction_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:ifrl_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	ReturnID       pulid.ID `json:"returnId"       bun:"return_id,type:VARCHAR(100),notnull"           keel:"return_id"`
+	JurisdictionID pulid.ID `json:"jurisdictionId" bun:"jurisdiction_id,type:VARCHAR(100),notnull"     keel:"jurisdiction_id"`
 
-	FuelType     domaintypes.IFTAFuelType `json:"fuelType"     bun:"fuel_type,type:ifta_fuel_type_enum,notnull"`
-	IsIftaMember bool                     `json:"isIftaMember" bun:"is_ifta_member,type:BOOLEAN,notnull"`
+	FuelType     domaintypes.IFTAFuelType `json:"fuelType"     bun:"fuel_type,type:ifta_fuel_type_enum,notnull" keel:"fuel_type"`
+	IsIftaMember bool                     `json:"isIftaMember" bun:"is_ifta_member,type:BOOLEAN,notnull"        keel:"is_ifta_member,label=IFTA Member"`
 
-	TotalMiles   decimal.Decimal `json:"totalMiles"   bun:"total_miles,type:NUMERIC(12,0),notnull"`
-	TaxableMiles decimal.Decimal `json:"taxableMiles" bun:"taxable_miles,type:NUMERIC(12,0),notnull"`
-	RouteMiles   decimal.Decimal `json:"routeMiles"   bun:"route_miles,type:NUMERIC(12,2),notnull"`
-	ManualMiles  decimal.Decimal `json:"manualMiles"  bun:"manual_miles,type:NUMERIC(12,2),notnull"`
-	LoadedMiles  decimal.Decimal `json:"loadedMiles"  bun:"loaded_miles,type:NUMERIC(12,2),notnull"`
-	EmptyMiles   decimal.Decimal `json:"emptyMiles"   bun:"empty_miles,type:NUMERIC(12,2),notnull"`
+	TotalMiles   decimal.Decimal `json:"totalMiles"   bun:"total_miles,type:NUMERIC(12,0),notnull"   keel:"total_miles,format=distance"`
+	TaxableMiles decimal.Decimal `json:"taxableMiles" bun:"taxable_miles,type:NUMERIC(12,0),notnull" keel:"taxable_miles,format=distance"`
+	RouteMiles   decimal.Decimal `json:"routeMiles"   bun:"route_miles,type:NUMERIC(12,2),notnull"   keel:"route_miles"`
+	ManualMiles  decimal.Decimal `json:"manualMiles"  bun:"manual_miles,type:NUMERIC(12,2),notnull"  keel:"manual_miles"`
+	LoadedMiles  decimal.Decimal `json:"loadedMiles"  bun:"loaded_miles,type:NUMERIC(12,2),notnull"  keel:"loaded_miles"`
+	EmptyMiles   decimal.Decimal `json:"emptyMiles"   bun:"empty_miles,type:NUMERIC(12,2),notnull"   keel:"empty_miles"`
 
-	TaxPaidGallons    decimal.Decimal `json:"taxPaidGallons"    bun:"tax_paid_gallons,type:NUMERIC(12,0),notnull"`
-	TaxPaidGallonsRaw decimal.Decimal `json:"taxPaidGallonsRaw" bun:"tax_paid_gallons_raw,type:NUMERIC(12,3),notnull"`
-	PurchaseCount     int             `json:"purchaseCount"     bun:"purchase_count,type:INTEGER,notnull,default:0"`
-	TaxableGallons    decimal.Decimal `json:"taxableGallons"    bun:"taxable_gallons,type:NUMERIC(12,0),notnull"`
-	NetTaxableGallons decimal.Decimal `json:"netTaxableGallons" bun:"net_taxable_gallons,type:NUMERIC(12,0),notnull"`
+	TaxPaidGallons    decimal.Decimal `json:"taxPaidGallons"    bun:"tax_paid_gallons,type:NUMERIC(12,0),notnull"     keel:"tax_paid_gallons,label=Tax-Paid Gallons"`
+	TaxPaidGallonsRaw decimal.Decimal `json:"taxPaidGallonsRaw" bun:"tax_paid_gallons_raw,type:NUMERIC(12,3),notnull" keel:"tax_paid_gallons_raw"`
+	PurchaseCount     int             `json:"purchaseCount"     bun:"purchase_count,type:INTEGER,notnull,default:0"   keel:"purchase_count"`
+	TaxableGallons    decimal.Decimal `json:"taxableGallons"    bun:"taxable_gallons,type:NUMERIC(12,0),notnull"      keel:"taxable_gallons"`
+	NetTaxableGallons decimal.Decimal `json:"netTaxableGallons" bun:"net_taxable_gallons,type:NUMERIC(12,0),notnull"  keel:"net_taxable_gallons"`
 
-	RatePerGallon          decimal.NullDecimal `json:"ratePerGallon"          bun:"rate_per_gallon,type:NUMERIC(10,4),nullzero"`
-	SurchargeRatePerGallon decimal.NullDecimal `json:"surchargeRatePerGallon" bun:"surcharge_rate_per_gallon,type:NUMERIC(10,4),nullzero"`
-	RateMissing            bool                `json:"rateMissing"            bun:"rate_missing,type:BOOLEAN,notnull"`
+	RatePerGallon          decimal.NullDecimal `json:"ratePerGallon"          bun:"rate_per_gallon,type:NUMERIC(10,4),nullzero"           keel:"rate_per_gallon,label=Rate per Gallon"`
+	SurchargeRatePerGallon decimal.NullDecimal `json:"surchargeRatePerGallon" bun:"surcharge_rate_per_gallon,type:NUMERIC(10,4),nullzero" keel:"surcharge_rate_per_gallon,label=Surcharge Rate per Gallon"`
+	RateMissing            bool                `json:"rateMissing"            bun:"rate_missing,type:BOOLEAN,notnull"                     keel:"rate_missing"`
 
-	TaxDueMinor       int64 `json:"taxDueMinor"       bun:"tax_due_minor,type:BIGINT,notnull"`
-	SurchargeDueMinor int64 `json:"surchargeDueMinor" bun:"surcharge_due_minor,type:BIGINT,notnull"`
-	LineTotalMinor    int64 `json:"lineTotalMinor"    bun:"line_total_minor,type:BIGINT,notnull"`
-	SortOrder         int   `json:"sortOrder"         bun:"sort_order,type:INTEGER,notnull,default:0"`
+	TaxDueMinor       int64 `json:"taxDueMinor"       bun:"tax_due_minor,type:BIGINT,notnull"         keel:"tax_due_minor,label=Tax Due (Minor)"`
+	SurchargeDueMinor int64 `json:"surchargeDueMinor" bun:"surcharge_due_minor,type:BIGINT,notnull"   keel:"surcharge_due_minor,label=Surcharge Due (Minor)"`
+	LineTotalMinor    int64 `json:"lineTotalMinor"    bun:"line_total_minor,type:BIGINT,notnull"      keel:"line_total_minor,label=Line Total (Minor)"`
+	SortOrder         int   `json:"sortOrder"         bun:"sort_order,type:INTEGER,notnull,default:0" keel:"sort_order,dimension"`
 
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Return       *Return       `json:"-"                      bun:"rel:belongs-to,join:return_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Jurisdiction *Jurisdiction `json:"jurisdiction,omitempty" bun:"rel:belongs-to,join:jurisdiction_id=id"`
+	Return       *Return       `json:"-"                      bun:"rel:belongs-to,join:return_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:return_id"`
+	Jurisdiction *Jurisdiction `json:"jurisdiction,omitempty" bun:"rel:belongs-to,join:jurisdiction_id=id"                                                                       keel:"belongs:jurisdiction_id,noreport"`
 }
 
 func (l *ReturnLine) Validate(multiErr *errortypes.MultiError) {
@@ -148,4 +151,8 @@ func (l *ReturnLine) BeforeAppendModel(_ context.Context, query bun.Query) error
 	}
 
 	return nil
+}
+
+func (l *ReturnLine) BeforeCreate(ctx context.Context) error {
+	return l.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

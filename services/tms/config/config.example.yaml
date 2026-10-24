@@ -123,7 +123,6 @@ database:
     user: "" # Login role that is a member of trenova_rls_bypass
     password: ""
     maxOpenConns: 8
-    maxIdleConns: 2
   # Migrations and seeds run as this role when set. It owns the tables, so it
   # must never be the role the application connects as.
   migrator:

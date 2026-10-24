@@ -79,7 +79,7 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	DB          kernelports.DBConnection
+	DB          kernelports.Transactor
 	Tools       agentports.AgentToolRegistry
 	Versions    agentports.RecordVersionReader `optional:"true"`
 	Labeler     agentports.RecordLabeler       `optional:"true"`
@@ -95,7 +95,7 @@ type Params struct {
 
 type Service struct {
 	l           *zap.Logger
-	db          kernelports.DBConnection
+	db          kernelports.Transactor
 	tools       agentports.AgentToolRegistry
 	versions    agentports.RecordVersionReader
 	labeler     agentports.RecordLabeler

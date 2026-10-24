@@ -1,24 +1,21 @@
 package mfaservice
 
 import (
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func EnvelopeColumns() []kernelports.EnvelopeColumn {
-	cols := iamcol.MFAAuthenticatorColumns
+	mfa := iamdb.MFAAuthenticators
+	user := kernelports.EnvelopeColumnName(mfa.UserID)
 	return []kernelports.EnvelopeColumn{{
-		Name:           "MFA authenticator secret",
-		Table:          iamcol.MFAAuthenticatorTable,
-		ID:             cols.ID,
-		OrganizationID: cols.OrganizationID,
-		BusinessUnitID: buncolgen.Column{},
-		Value:          cols.SecretCipher,
-		Extra:          []buncolgen.Column{cols.UserID},
+		Name:  "MFA authenticator secret",
+		Value: mfa.SecretCipher,
+		Extra: []keel.Expr{mfa.UserID},
 		Scopes: func(row *kernelports.EnvelopeRow, _ string) []kernelports.SecretScope {
-			userID := pulid.ID(row.Extra[cols.UserID.Name])
+			userID := pulid.ID(row.Extra[user])
 			return []kernelports.SecretScope{secretAAD(row.Tenant.OrgID, userID).SecretScope()}
 		},
 	}}

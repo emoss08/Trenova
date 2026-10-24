@@ -3,6 +3,7 @@ package airetrieval
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/pgvector/pgvector-go"
@@ -16,18 +17,19 @@ var (
 
 type Embedding struct {
 	bun.BaseModel `bun:"table:ai_embeddings,alias:aiemb" json:"-"`
+	keel.Table    `keel:"ai_embeddings"`
 
-	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	SourceType     SourceType          `json:"sourceType"     bun:"source_type,pk,type:VARCHAR(30),notnull"`
-	SourceID       pulid.ID            `json:"sourceId"       bun:"source_id,pk,type:VARCHAR(100),notnull"`
-	ChunkIndex     int                 `json:"chunkIndex"     bun:"chunk_index,pk,type:INTEGER,notnull"`
-	ModelKey       string              `json:"modelKey"       bun:"model_key,pk,type:VARCHAR(300),notnull"`
-	Dimensions     int                 `json:"dimensions"     bun:"dimensions,type:INTEGER,notnull"`
-	ContentHash    string              `json:"contentHash"    bun:"content_hash,type:VARCHAR(64),notnull"`
-	Embedding      pgvector.HalfVector `json:"-"              bun:"embedding,type:halfvec,notnull"`
-	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	SourceType     SourceType          `json:"sourceType"     bun:"source_type,pk,type:VARCHAR(30),notnull" keel:"source_type,pk"`
+	SourceID       pulid.ID            `json:"sourceId"       bun:"source_id,pk,type:VARCHAR(100),notnull" keel:"source_id,pk"`
+	ChunkIndex     int                 `json:"chunkIndex"     bun:"chunk_index,pk,type:INTEGER,notnull" keel:"chunk_index,pk"`
+	ModelKey       string              `json:"modelKey"       bun:"model_key,pk,type:VARCHAR(300),notnull" keel:"model_key,pk"`
+	Dimensions     int                 `json:"dimensions"     bun:"dimensions,type:INTEGER,notnull" keel:"dimensions"`
+	ContentHash    string              `json:"contentHash"    bun:"content_hash,type:VARCHAR(64),notnull" keel:"content_hash"`
+	Embedding      pgvector.HalfVector `json:"-"              bun:"embedding,type:halfvec,notnull" keel:"embedding"`
+	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (e *Embedding) GetOrganizationID() pulid.ID { return e.OrganizationID }
@@ -54,14 +56,15 @@ func (e *Embedding) BeforeAppendModel(_ context.Context, query bun.Query) error 
 
 type CatalogEmbedding struct {
 	bun.BaseModel `bun:"table:ai_catalog_embeddings,alias:aicat" json:"-"`
+	keel.Table    `keel:"ai_catalog_embeddings"`
 
-	ModelKey    string              `json:"modelKey"    bun:"model_key,pk,type:VARCHAR(300),notnull"`
-	Corpus      CatalogCorpus       `json:"corpus"      bun:"corpus,pk,type:VARCHAR(30),notnull"`
-	ItemKey     string              `json:"itemKey"     bun:"item_key,pk,type:VARCHAR(200),notnull"`
-	ContentHash string              `json:"contentHash" bun:"content_hash,pk,type:VARCHAR(64),notnull"`
-	Dimensions  int                 `json:"dimensions"  bun:"dimensions,type:INTEGER,notnull"`
-	Embedding   pgvector.HalfVector `json:"-"           bun:"embedding,type:halfvec,notnull"`
-	CreatedAt   int64               `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ModelKey    string              `json:"modelKey"    bun:"model_key,pk,type:VARCHAR(300),notnull" keel:"model_key,pk"`
+	Corpus      CatalogCorpus       `json:"corpus"      bun:"corpus,pk,type:VARCHAR(30),notnull" keel:"corpus,pk"`
+	ItemKey     string              `json:"itemKey"     bun:"item_key,pk,type:VARCHAR(200),notnull" keel:"item_key,pk"`
+	ContentHash string              `json:"contentHash" bun:"content_hash,pk,type:VARCHAR(64),notnull" keel:"content_hash,pk"`
+	Dimensions  int                 `json:"dimensions"  bun:"dimensions,type:INTEGER,notnull" keel:"dimensions"`
+	Embedding   pgvector.HalfVector `json:"-"           bun:"embedding,type:halfvec,notnull" keel:"embedding"`
+	CreatedAt   int64               `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
 func (c *CatalogEmbedding) GetTableName() string { return "ai_catalog_embeddings" }

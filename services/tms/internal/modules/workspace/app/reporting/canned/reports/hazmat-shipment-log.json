@@ -1,0 +1,153 @@
+{
+  "key": "hazmat-shipment-log",
+  "version": "1.0.0",
+  "name": "Hazmat Manifest Log",
+  "description": "Line-level record of hazardous freight moved — UN number, class, packing group, and placarding, by shipment",
+  "category": "Compliance",
+  "tags": [
+    "hazmat",
+    "safety",
+    "compliance"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "shipment_commodity",
+    "columns": [
+      {
+        "id": "pro_number",
+        "label": "PRO Number",
+        "dimension": {
+          "field": "shipment.proNumber"
+        }
+      },
+      {
+        "id": "bol",
+        "label": "BOL",
+        "dimension": {
+          "field": "shipment.bol"
+        }
+      },
+      {
+        "id": "customer",
+        "label": "Customer",
+        "dimension": {
+          "field": "shipment.customer.name"
+        }
+      },
+      {
+        "id": "shipment_status",
+        "label": "Shipment Status",
+        "dimension": {
+          "field": "shipment.status"
+        }
+      },
+      {
+        "id": "ship_date",
+        "label": "Ship Date",
+        "dimension": {
+          "field": "shipment.actualShipDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "commodity",
+        "label": "Commodity",
+        "dimension": {
+          "field": "commodity.name"
+        }
+      },
+      {
+        "id": "freight_class",
+        "label": "Freight Class",
+        "dimension": {
+          "field": "commodity.freightClass"
+        }
+      },
+      {
+        "id": "hazmat_class",
+        "label": "Hazard Class",
+        "dimension": {
+          "field": "commodity.hazardousMaterial.class"
+        }
+      },
+      {
+        "id": "un_number",
+        "label": "UN Number",
+        "dimension": {
+          "field": "commodity.hazardousMaterial.unNumber"
+        }
+      },
+      {
+        "id": "packing_group",
+        "label": "Packing Group",
+        "dimension": {
+          "field": "commodity.hazardousMaterial.packingGroup"
+        }
+      },
+      {
+        "id": "shipping_name",
+        "label": "Proper Shipping Name",
+        "dimension": {
+          "field": "commodity.hazardousMaterial.properShippingName"
+        }
+      },
+      {
+        "id": "placard_required",
+        "label": "Placard Required",
+        "dimension": {
+          "field": "commodity.hazardousMaterial.placardRequired"
+        },
+        "display": {
+          "style": "bool",
+          "boolStyle": "yesNo"
+        }
+      },
+      {
+        "id": "weight",
+        "label": "Weight",
+        "dimension": {
+          "field": "weight"
+        }
+      },
+      {
+        "id": "pieces",
+        "label": "Pieces",
+        "dimension": {
+          "field": "pieces"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "shipment.createdAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "commodity.hazardousMaterial.id",
+          "op": "is_not_null"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "ship_date",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      }
+    ]
+  }
+}

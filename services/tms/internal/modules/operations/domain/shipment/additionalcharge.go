@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,38 +19,39 @@ import (
 
 type AdditionalCharge struct {
 	bun.BaseModel `bun:"table:additional_charges,alias:ac" json:"-"`
+	keel.Table    `keel:"additional_charges"`
 
-	ID                     pulid.ID                 `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID                 `json:"businessUnitId"         bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID         pulid.ID                 `json:"organizationId"         bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	ShipmentID             pulid.ID                 `json:"shipmentId"             bun:"shipment_id,type:VARCHAR(100),notnull"`
-	AccessorialChargeID    pulid.ID                 `json:"accessorialChargeId"    bun:"accessorial_charge_id,type:VARCHAR(100),notnull"`
-	IsSystemGenerated      bool                     `json:"isSystemGenerated"      bun:"is_system_generated,type:BOOLEAN,notnull"`
-	Method                 accessorialcharge.Method `json:"method"                 bun:"method,type:accessorial_method_enum,notnull"`
-	Amount                 decimal.Decimal          `json:"amount"                 bun:"amount,type:NUMERIC(19,4),notnull"`
-	Unit                   int16                    `json:"unit"                   bun:"unit,type:INTEGER,notnull"`
-	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId" bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
-	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"    bun:"fuel_surcharge_detail,type:JSONB,nullzero"`
-	IsDetention            bool                     `json:"isDetention"            bun:"is_detention,type:BOOLEAN,notnull"`
-	IsTariff               bool                     `json:"isTariff"               bun:"is_tariff,type:BOOLEAN,notnull,default:false"`
-	Label                  string                   `json:"label"                  bun:"label,type:VARCHAR(255),nullzero"`
-	Quantity               decimal.NullDecimal      `json:"quantity"               bun:"quantity,type:NUMERIC(19,6),nullzero"`
-	Rate                   decimal.NullDecimal      `json:"rate"                   bun:"rate,type:NUMERIC(19,6),nullzero"`
-	RateUnit               string                   `json:"rateUnit"               bun:"rate_unit,type:VARCHAR(32),nullzero"`
+	ID                     pulid.ID                 `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ac_"`
+	BusinessUnitID         pulid.ID                 `json:"businessUnitId"         bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID                 `json:"organizationId"         bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
+	ShipmentID             pulid.ID                 `json:"shipmentId"             bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id,pk"`
+	AccessorialChargeID    pulid.ID                 `json:"accessorialChargeId"    bun:"accessorial_charge_id,type:VARCHAR(100),notnull" keel:"accessorial_charge_id,pk"`
+	IsSystemGenerated      bool                     `json:"isSystemGenerated"      bun:"is_system_generated,type:BOOLEAN,notnull" keel:"is_system_generated"`
+	Method                 accessorialcharge.Method `json:"method"                 bun:"method,type:accessorial_method_enum,notnull" keel:"method"`
+	Amount                 decimal.Decimal          `json:"amount"                 bun:"amount,type:NUMERIC(19,4),notnull" keel:"amount"`
+	Unit                   int16                    `json:"unit"                   bun:"unit,type:INTEGER,notnull" keel:"unit"`
+	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId" bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero" keel:"fuel_surcharge_program_id"`
+	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"    bun:"fuel_surcharge_detail,type:JSONB,nullzero" keel:"fuel_surcharge_detail,jsonb"`
+	IsDetention            bool                     `json:"isDetention"            bun:"is_detention,type:BOOLEAN,notnull" keel:"is_detention"`
+	IsTariff               bool                     `json:"isTariff"               bun:"is_tariff,type:BOOLEAN,notnull,default:false" keel:"is_tariff"`
+	Label                  string                   `json:"label"                  bun:"label,type:VARCHAR(255),nullzero" keel:"label,nullzero"`
+	Quantity               decimal.NullDecimal      `json:"quantity"               bun:"quantity,type:NUMERIC(19,6),nullzero" keel:"quantity"`
+	Rate                   decimal.NullDecimal      `json:"rate"                   bun:"rate,type:NUMERIC(19,6),nullzero" keel:"rate"`
+	RateUnit               string                   `json:"rateUnit"               bun:"rate_unit,type:VARCHAR(32),nullzero" keel:"rate_unit,nullzero"`
 	// RateAgreementAccessorialID marks a charge the contract's own accessorial
 	// schedule produced, and is what its reconciliation pass matches on.
-	RateAgreementAccessorialID *pulid.ID `json:"rateAgreementAccessorialId" bun:"rate_agreement_accessorial_id,type:VARCHAR(100),nullzero"`
-	RateQuoteID                *pulid.ID `json:"rateQuoteId"                bun:"rate_quote_id,type:VARCHAR(100),nullzero"`
-	Version                    int64     `json:"version"                    bun:"version,type:BIGINT"`
-	CreatedAt                  int64     `json:"createdAt"                  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                  int64     `json:"updatedAt"                  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	RateAgreementAccessorialID *pulid.ID `json:"rateAgreementAccessorialId" bun:"rate_agreement_accessorial_id,type:VARCHAR(100),nullzero" keel:"rate_agreement_accessorial_id"`
+	RateQuoteID                *pulid.ID `json:"rateQuoteId"                bun:"rate_quote_id,type:VARCHAR(100),nullzero" keel:"rate_quote_id"`
+	Version                    int64     `json:"version"                    bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt                  int64     `json:"createdAt"                  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt                  int64     `json:"updatedAt"                  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	DetentionOccurrenceIDs []pulid.ID `json:"-" bun:"-"`
 
 	BusinessUnit      *tenant.BusinessUnit                 `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization      *tenant.Organization                 `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`
-	Shipment          *Shipment                            `json:"shipment,omitempty"          bun:"rel:belongs-to,join:shipment_id=id"`
-	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" bun:"rel:belongs-to,join:accessorial_charge_id=id"`
+	Shipment          *Shipment                            `json:"shipment,omitempty"          bun:"rel:belongs-to,join:shipment_id=id" keel:"belongs:shipment_id"`
+	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" bun:"rel:belongs-to,join:accessorial_charge_id=id" keel:"belongs:accessorial_charge_id"`
 }
 
 func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
@@ -99,6 +101,10 @@ func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, q bun.Query) err
 	}
 
 	return nil
+}
+
+func (a *AdditionalCharge) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 type ChargeTotals struct {

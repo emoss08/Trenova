@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -37,24 +38,25 @@ func (s SenderScope) IsValid() bool {
 
 type Rule struct {
 	bun.BaseModel `bun:"table:triage_rules,alias:trule" json:"-"`
+	keel.Table    `keel:"triage_rules"`
 
-	ID             pulid.ID                      `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID                      `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID                      `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Classification inboundmessage.Classification `json:"classification" bun:"classification,type:VARCHAR(30),notnull"`
-	SenderScope    SenderScope                   `json:"senderScope"    bun:"sender_scope,type:VARCHAR(20),notnull"`
-	Sender         string                        `json:"sender"         bun:"sender,type:VARCHAR(255),nullzero"`
-	MailboxID      pulid.ID                      `json:"mailboxId"      bun:"mailbox_id,type:VARCHAR(100),nullzero"`
-	Action         inboundmessage.NovaAction     `json:"action"         bun:"action,type:VARCHAR(30),notnull"`
-	AssigneeID     pulid.ID                      `json:"assigneeId"     bun:"assignee_id,type:VARCHAR(100),nullzero"`
-	Enabled        bool                          `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull"`
-	CreatedByID    pulid.ID                      `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	MatchCount     int64                         `json:"matchCount"     bun:"match_count,type:BIGINT,notnull,default:0"`
-	LastMatchedAt  int64                         `json:"lastMatchedAt"  bun:"last_matched_at,type:BIGINT,nullzero"`
-	LastMessageID  pulid.ID                      `json:"lastMessageId"  bun:"last_message_id,type:VARCHAR(100),nullzero"`
-	Version        int64                         `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64                         `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64                         `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID                      `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:trule_"`
+	BusinessUnitID pulid.ID                      `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID                      `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Classification inboundmessage.Classification `json:"classification" bun:"classification,type:VARCHAR(30),notnull" keel:"classification"`
+	SenderScope    SenderScope                   `json:"senderScope"    bun:"sender_scope,type:VARCHAR(20),notnull" keel:"sender_scope"`
+	Sender         string                        `json:"sender"         bun:"sender,type:VARCHAR(255),nullzero" keel:"sender,nullzero"`
+	MailboxID      pulid.ID                      `json:"mailboxId"      bun:"mailbox_id,type:VARCHAR(100),nullzero" keel:"mailbox_id,nullzero"`
+	Action         inboundmessage.NovaAction     `json:"action"         bun:"action,type:VARCHAR(30),notnull" keel:"action"`
+	AssigneeID     pulid.ID                      `json:"assigneeId"     bun:"assignee_id,type:VARCHAR(100),nullzero" keel:"assignee_id,nullzero"`
+	Enabled        bool                          `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull" keel:"enabled"`
+	CreatedByID    pulid.ID                      `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
+	MatchCount     int64                         `json:"matchCount"     bun:"match_count,type:BIGINT,notnull,default:0" keel:"match_count"`
+	LastMatchedAt  int64                         `json:"lastMatchedAt"  bun:"last_matched_at,type:BIGINT,nullzero" keel:"last_matched_at,nullzero"`
+	LastMessageID  pulid.ID                      `json:"lastMessageId"  bun:"last_message_id,type:VARCHAR(100),nullzero" keel:"last_message_id,nullzero"`
+	Version        int64                         `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64                         `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64                         `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (r *Rule) Validate(multiErr *errortypes.MultiError) {
@@ -188,6 +190,10 @@ func (r *Rule) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (r *Rule) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (r *Rule) GetID() pulid.ID      { return r.ID }

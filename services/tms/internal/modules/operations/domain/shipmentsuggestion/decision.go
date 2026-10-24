@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -94,16 +95,17 @@ var _ bun.BeforeAppendModelHook = (*DecisionRecord)(nil)
 
 type DecisionRecord struct {
 	bun.BaseModel `bun:"table:shipment_suggestion_decisions,alias:ssd" json:"-"`
+	keel.Table    `keel:"shipment_suggestion_decisions"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	SuggestionKey  string   `json:"suggestionKey"  bun:"suggestion_key,type:VARCHAR(200),notnull"`
-	Decision       Decision `json:"decision"       bun:"decision,type:VARCHAR(10),notnull"`
-	DecidedAt      int64    `json:"decidedAt"      bun:"decided_at,type:BIGINT,notnull"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:ssd_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	SuggestionKey  string   `json:"suggestionKey"  bun:"suggestion_key,type:VARCHAR(200),notnull" keel:"suggestion_key"`
+	Decision       Decision `json:"decision"       bun:"decision,type:VARCHAR(10),notnull" keel:"decision"`
+	DecidedAt      int64    `json:"decidedAt"      bun:"decided_at,type:BIGINT,notnull" keel:"decided_at"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 }
 
 func (d *DecisionRecord) BeforeAppendModel(_ context.Context, query bun.Query) error {

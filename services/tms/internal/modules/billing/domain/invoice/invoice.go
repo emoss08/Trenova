@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -40,246 +41,246 @@ var (
 	_ bun.BeforeAppendModelHook          = (*DocumentShareToken)(nil)
 )
 
+// Customer invoices
 type Invoice struct {
 	bun.BaseModel             `bun:"table:invoices,alias:inv" json:"-"`
+	keel.Table                `                                        keel:"invoices,report=Billing"`
 	pagination.CursorValueSet `bun:",embed"                   json:"-"`
 
-	ID                 pulid.ID `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	BillingQueueItemID pulid.ID `json:"billingQueueItemId" bun:"billing_queue_item_id,type:VARCHAR(100),notnull"`
-	ShipmentID         pulid.ID `json:"shipmentId"         bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	OrderID            pulid.ID `json:"orderId"            bun:"order_id,type:VARCHAR(100),nullzero"`
-	CustomerID         pulid.ID `json:"customerId"         bun:"customer_id,type:VARCHAR(100),notnull"`
-	Scope              Scope    `json:"scope"              bun:"scope,type:invoice_scope_enum,notnull,default:'Shipment'"`
-	InvoiceRunID       pulid.ID `json:"invoiceRunId"       bun:"invoice_run_id,type:VARCHAR(100),nullzero"`
-	PeriodStart        *int64   `json:"periodStart"        bun:"period_start,type:BIGINT,nullzero"`
-	PeriodEnd          *int64   `json:"periodEnd"          bun:"period_end,type:BIGINT,nullzero"`
-	ShipmentCount      int      `json:"shipmentCount"      bun:"shipment_count,type:INTEGER,notnull"`
-	// Detail and SectionBy are stamped from the customer's billing profile when
-	// the invoice is created, not read back at render time. A customer who
-	// changes their preference next month must not silently change how an invoice
-	// they were already sent reads.
-	Detail    customer.InvoiceDetail     `json:"detail"    bun:"detail,type:invoice_detail_enum,notnull,default:'Detailed'"`
-	SectionBy customer.InvoiceSectionKey `json:"sectionBy" bun:"section_by,type:invoice_section_key_enum,notnull,default:'Shipment'"`
-	// OffCycleReason is why this invoice was cut for a customer whose freight was
-	// supposed to accumulate onto a statement. Empty on every ordinary invoice.
-	OffCycleReason            string                `json:"offCycleReason"            bun:"off_cycle_reason,type:TEXT,nullzero"`
-	Number                    string                `json:"number"                    bun:"number,type:VARCHAR(100),notnull"`
-	BillType                  billingqueue.BillType `json:"billType"                  bun:"bill_type,type:VARCHAR(50),notnull"`
-	Status                    Status                `json:"status"                    bun:"status,type:VARCHAR(50),notnull,default:'Draft'"`
-	PaymentTerm               PaymentTerm           `json:"paymentTerm"               bun:"payment_term,type:VARCHAR(50),notnull"`
-	CurrencyCode              string                `json:"currencyCode"              bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	InvoiceDate               int64                 `json:"invoiceDate"               bun:"invoice_date,type:BIGINT,notnull"`
-	DueDate                   *int64                `json:"dueDate"                   bun:"due_date,type:BIGINT,nullzero"`
-	PostedAt                  *int64                `json:"postedAt"                  bun:"posted_at,type:BIGINT,nullzero"`
-	ExchangeRate              decimal.NullDecimal   `json:"exchangeRate"              bun:"exchange_rate,type:NUMERIC(24,12),nullzero"`
-	ExchangeRateDate          *int64                `json:"exchangeRateDate"          bun:"exchange_rate_date,type:BIGINT,nullzero"`
-	ShipmentProNumber         string                `json:"shipmentProNumber"         bun:"shipment_pro_number,type:VARCHAR(100),nullzero"`
-	ShipmentBOL               string                `json:"shipmentBol"               bun:"shipment_bol,type:VARCHAR(100),nullzero"`
-	OrderNumber               string                `json:"orderNumber"               bun:"order_number,type:VARCHAR(100),nullzero"`
-	ServiceDate               *int64                `json:"serviceDate"               bun:"service_date,type:BIGINT,nullzero"`
-	BillToName                string                `json:"billToName"                bun:"bill_to_name,type:VARCHAR(255),notnull"`
-	BillToCode                string                `json:"billToCode"                bun:"bill_to_code,type:VARCHAR(50),nullzero"`
-	BillToAddressLine1        string                `json:"billToAddressLine1"        bun:"bill_to_address_line_1,type:VARCHAR(255),nullzero"`
-	BillToAddressLine2        string                `json:"billToAddressLine2"        bun:"bill_to_address_line_2,type:VARCHAR(255),nullzero"`
-	BillToCity                string                `json:"billToCity"                bun:"bill_to_city,type:VARCHAR(100),nullzero"`
-	BillToState               string                `json:"billToState"               bun:"bill_to_state,type:VARCHAR(100),nullzero"`
-	BillToPostalCode          string                `json:"billToPostalCode"          bun:"bill_to_postal_code,type:VARCHAR(20),nullzero"`
-	BillToCountry             string                `json:"billToCountry"             bun:"bill_to_country,type:VARCHAR(100),nullzero"`
-	SubtotalAmount            decimal.Decimal       `json:"subtotalAmount"            bun:"subtotal_amount,type:NUMERIC(19,4),notnull,default:0"`
-	SubtotalAmountMinor       int64                 `json:"subtotalAmountMinor"       bun:"subtotal_amount_minor,type:BIGINT,notnull"`
-	OtherAmount               decimal.Decimal       `json:"otherAmount"               bun:"other_amount,type:NUMERIC(19,4),notnull,default:0"`
-	OtherAmountMinor          int64                 `json:"otherAmountMinor"          bun:"other_amount_minor,type:BIGINT,notnull"`
-	TotalAmount               decimal.Decimal       `json:"totalAmount"               bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"`
-	TotalAmountMinor          int64                 `json:"totalAmountMinor"          bun:"total_amount_minor,type:BIGINT,notnull"`
-	AppliedAmount             decimal.Decimal       `json:"appliedAmount"             bun:"applied_amount,type:NUMERIC(19,4),notnull,default:0"`
-	AppliedAmountMinor        int64                 `json:"appliedAmountMinor"        bun:"applied_amount_minor,type:BIGINT,notnull"`
-	SettlementStatus          SettlementStatus      `json:"settlementStatus"          bun:"settlement_status,type:VARCHAR(50),notnull,default:'Unpaid'"`
-	DisputeStatus             DisputeStatus         `json:"disputeStatus"             bun:"dispute_status,type:VARCHAR(50),notnull,default:'None'"`
-	PDFDocumentID             pulid.ID              `json:"pdfDocumentId"             bun:"pdf_document_id,type:VARCHAR(100),nullzero"`
-	SendStatus                SendStatus            `json:"sendStatus"                bun:"send_status,type:VARCHAR(50),notnull,default:'NotSent'"`
-	SentAt                    *int64                `json:"sentAt"                    bun:"sent_at,type:BIGINT,nullzero"`
-	SentByID                  pulid.ID              `json:"sentById"                  bun:"sent_by_id,type:VARCHAR(100),nullzero"`
-	LastSendError             string                `json:"lastSendError"             bun:"last_send_error,type:TEXT,nullzero"`
-	LastSendWarning           string                `json:"lastSendWarning"           bun:"last_send_warning,type:TEXT,nullzero"`
-	Memo                      string                `json:"memo"                      bun:"memo,type:TEXT,nullzero"`
-	RatingNotes               []string              `json:"ratingNotes"               bun:"rating_notes,array,type:text[],nullzero"`
-	RemittanceInstructions    string                `json:"remittanceInstructions"    bun:"remittance_instructions,type:TEXT,nullzero"`
-	EmailSubjectSnapshot      string                `json:"emailSubjectSnapshot"      bun:"email_subject_snapshot,type:VARCHAR(998),nullzero"`
-	EmailBodySnapshot         string                `json:"emailBodySnapshot"         bun:"email_body_snapshot,type:TEXT,nullzero"`
-	EmailToSnapshot           []string              `json:"emailToSnapshot"           bun:"email_to_snapshot,array,type:text[],nullzero"`
-	EmailCCSnapshot           []string              `json:"emailCcSnapshot"           bun:"email_cc_snapshot,array,type:text[],nullzero"`
-	EmailBCCSnapshot          []string              `json:"emailBccSnapshot"          bun:"email_bcc_snapshot,array,type:text[],nullzero"`
-	CorrectionGroupID         pulid.ID              `json:"correctionGroupId"         bun:"correction_group_id,type:VARCHAR(100),nullzero"`
-	SupersedesInvoiceID       pulid.ID              `json:"supersedesInvoiceId"       bun:"supersedes_invoice_id,type:VARCHAR(100),nullzero"`
-	SupersededByInvoiceID     pulid.ID              `json:"supersededByInvoiceId"     bun:"superseded_by_invoice_id,type:VARCHAR(100),nullzero"`
-	SourceInvoiceAdjustmentID pulid.ID              `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
-	IsAdjustmentArtifact      bool                  `json:"isAdjustmentArtifact"      bun:"is_adjustment_artifact,type:BOOLEAN,notnull"`
-	ShipperCustomerID         pulid.ID              `json:"shipperCustomerId"         bun:"shipper_customer_id,type:VARCHAR(100),nullzero"`
-	// FactoringCompanyID is the factor the invoice was assigned to when it
-	// posted: it is remitted to the factor and carries its notice.
-	FactoringCompanyID      *pulid.ID         `json:"factoringCompanyId"      bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
-	FactoringAgreementID    *pulid.ID         `json:"factoringAgreementId"    bun:"factoring_agreement_id,type:VARCHAR(100),nullzero"`
-	FactoringOverride       FactoringOverride `json:"factoringOverride"       bun:"factoring_override,type:VARCHAR(20),notnull,default:'Default'"`
-	FactoringOverrideReason string            `json:"factoringOverrideReason" bun:"factoring_override_reason,type:VARCHAR(500),nullzero"`
-	IsSplitBill             bool              `json:"isSplitBill"             bun:"is_split_bill,type:BOOLEAN,notnull"`
-	VoidedAt                *int64            `json:"voidedAt"                bun:"voided_at,type:BIGINT,nullzero"`
-	VoidedByID              pulid.ID          `json:"voidedById"              bun:"voided_by_id,type:VARCHAR(100),nullzero"`
-	VoidReason              string            `json:"voidReason"              bun:"void_reason,type:TEXT,nullzero"`
-	VoidDisposition         VoidDisposition   `json:"voidDisposition"         bun:"void_disposition,type:VARCHAR(20),nullzero"`
-	VoidedByAdjustmentID    pulid.ID          `json:"voidedByAdjustmentId"    bun:"voided_by_adjustment_id,type:VARCHAR(100),nullzero"`
-	ReferenceInvoiceID      pulid.ID          `json:"referenceInvoiceId"      bun:"reference_invoice_id,type:VARCHAR(100),nullzero"`
-	MemoReason              string            `json:"memoReason"              bun:"memo_reason,type:TEXT,nullzero"`
-	MemoKind                MemoKind          `json:"memoKind"                bun:"memo_kind,type:VARCHAR(30),nullzero"`
-	EDISendStatus           EDISendStatus     `json:"ediSendStatus"           bun:"edi_send_status,type:VARCHAR(30),notnull,default:'NotSent'"`
-	LastEDIMessageID        pulid.ID          `json:"lastEdiMessageId"        bun:"last_edi_message_id,type:VARCHAR(100),nullzero"`
-	EDISentAt               *int64            `json:"ediSentAt"               bun:"edi_sent_at,type:BIGINT,nullzero"`
-	LastEDIError            string            `json:"lastEdiError"            bun:"last_edi_error,type:TEXT,nullzero"`
-	BalanceDueMinor         int64             `json:"balanceDueMinor"         bun:"balance_due_minor,scanonly"`
-	Version                 int64             `json:"version"                 bun:"version,type:BIGINT,notnull"`
-	CreatedAt               int64             `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt               int64             `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                        pulid.ID                   `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:inv_"`
+	OrganizationID            pulid.ID                   `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	BusinessUnitID            pulid.ID                   `json:"businessUnitId"            bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	BillingQueueItemID        pulid.ID                   `json:"billingQueueItemId"        bun:"billing_queue_item_id,type:VARCHAR(100),notnull"                                      keel:"billing_queue_item_id"`
+	ShipmentID                pulid.ID                   `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),nullzero"                                               keel:"shipment_id,nullzero"`
+	OrderID                   pulid.ID                   `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"                                                  keel:"order_id,nullzero"`
+	CustomerID                pulid.ID                   `json:"customerId"                bun:"customer_id,type:VARCHAR(100),notnull"                                                keel:"customer_id"`
+	Scope                     Scope                      `json:"scope"                     bun:"scope,type:invoice_scope_enum,notnull,default:'Shipment'"                             keel:"scope"`
+	InvoiceRunID              pulid.ID                   `json:"invoiceRunId"              bun:"invoice_run_id,type:VARCHAR(100),nullzero"                                            keel:"invoice_run_id,nullzero"`
+	PeriodStart               *int64                     `json:"periodStart"               bun:"period_start,type:BIGINT,nullzero"                                                    keel:"period_start,type=epoch"`
+	PeriodEnd                 *int64                     `json:"periodEnd"                 bun:"period_end,type:BIGINT,nullzero"                                                      keel:"period_end,type=epoch"`
+	ShipmentCount             int                        `json:"shipmentCount"             bun:"shipment_count,type:INTEGER,notnull"                                                  keel:"shipment_count"`
+	Detail                    customer.InvoiceDetail     `json:"detail"                    bun:"detail,type:invoice_detail_enum,notnull,default:'Detailed'"                           keel:"detail"`
+	SectionBy                 customer.InvoiceSectionKey `json:"sectionBy"                 bun:"section_by,type:invoice_section_key_enum,notnull,default:'Shipment'"                  keel:"section_by"`
+	OffCycleReason            string                     `json:"offCycleReason"            bun:"off_cycle_reason,type:TEXT,nullzero"                                                  keel:"off_cycle_reason,nullzero"`
+	Number                    string                     `json:"number"                    bun:"number,type:VARCHAR(100),notnull"                                                     keel:"number,label=Invoice Number"`
+	BillType                  billingqueue.BillType      `json:"billType"                  bun:"bill_type,type:VARCHAR(50),notnull"                                                   keel:"bill_type"`
+	Status                    Status                     `json:"status"                    bun:"status,type:VARCHAR(50),notnull,default:'Draft'"                                      keel:"status"`
+	PaymentTerm               PaymentTerm                `json:"paymentTerm"               bun:"payment_term,type:VARCHAR(50),notnull"                                                keel:"payment_term"`
+	CurrencyCode              string                     `json:"currencyCode"              bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"                                  keel:"currency_code"`
+	InvoiceDate               int64                      `json:"invoiceDate"               bun:"invoice_date,type:BIGINT,notnull"                                                     keel:"invoice_date"`
+	DueDate                   *int64                     `json:"dueDate"                   bun:"due_date,type:BIGINT,nullzero"                                                        keel:"due_date"`
+	PostedAt                  *int64                     `json:"postedAt"                  bun:"posted_at,type:BIGINT,nullzero"                                                       keel:"posted_at"`
+	ExchangeRate              decimal.NullDecimal        `json:"exchangeRate"              bun:"exchange_rate,type:NUMERIC(24,12),nullzero"                                           keel:"exchange_rate"`
+	ExchangeRateDate          *int64                     `json:"exchangeRateDate"          bun:"exchange_rate_date,type:BIGINT,nullzero"                                              keel:"exchange_rate_date"`
+	ShipmentProNumber         string                     `json:"shipmentProNumber"         bun:"shipment_pro_number,type:VARCHAR(100),nullzero"                                       keel:"shipment_pro_number,nullzero"`
+	ShipmentBOL               string                     `json:"shipmentBol"               bun:"shipment_bol,type:VARCHAR(100),nullzero"                                              keel:"shipment_bol,nullzero"`
+	OrderNumber               string                     `json:"orderNumber"               bun:"order_number,type:VARCHAR(100),nullzero"                                              keel:"order_number,nullzero"`
+	ServiceDate               *int64                     `json:"serviceDate"               bun:"service_date,type:BIGINT,nullzero"                                                    keel:"service_date"`
+	BillToName                string                     `json:"billToName"                bun:"bill_to_name,type:VARCHAR(255),notnull"                                               keel:"bill_to_name"`
+	BillToCode                string                     `json:"billToCode"                bun:"bill_to_code,type:VARCHAR(50),nullzero"                                               keel:"bill_to_code,nullzero"`
+	BillToAddressLine1        string                     `json:"billToAddressLine1"        bun:"bill_to_address_line_1,type:VARCHAR(255),nullzero"                                    keel:"bill_to_address_line_1,nullzero"`
+	BillToAddressLine2        string                     `json:"billToAddressLine2"        bun:"bill_to_address_line_2,type:VARCHAR(255),nullzero"                                    keel:"bill_to_address_line_2,nullzero"`
+	BillToCity                string                     `json:"billToCity"                bun:"bill_to_city,type:VARCHAR(100),nullzero"                                              keel:"bill_to_city,nullzero"`
+	BillToState               string                     `json:"billToState"               bun:"bill_to_state,type:VARCHAR(100),nullzero"                                             keel:"bill_to_state,nullzero"`
+	BillToPostalCode          string                     `json:"billToPostalCode"          bun:"bill_to_postal_code,type:VARCHAR(20),nullzero"                                        keel:"bill_to_postal_code,nullzero"`
+	BillToCountry             string                     `json:"billToCountry"             bun:"bill_to_country,type:VARCHAR(100),nullzero"                                           keel:"bill_to_country,nullzero"`
+	SubtotalAmount            decimal.Decimal            `json:"subtotalAmount"            bun:"subtotal_amount,type:NUMERIC(19,4),notnull,default:0"                                 keel:"subtotal_amount,label=Subtotal,format=money"`
+	SubtotalAmountMinor       int64                      `json:"subtotalAmountMinor"       bun:"subtotal_amount_minor,type:BIGINT,notnull"                                            keel:"subtotal_amount_minor"`
+	OtherAmount               decimal.Decimal            `json:"otherAmount"               bun:"other_amount,type:NUMERIC(19,4),notnull,default:0"                                    keel:"other_amount,format=money"`
+	OtherAmountMinor          int64                      `json:"otherAmountMinor"          bun:"other_amount_minor,type:BIGINT,notnull"                                               keel:"other_amount_minor"`
+	TotalAmount               decimal.Decimal            `json:"totalAmount"               bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"                                    keel:"total_amount,format=money"`
+	TotalAmountMinor          int64                      `json:"totalAmountMinor"          bun:"total_amount_minor,type:BIGINT,notnull"                                               keel:"total_amount_minor"`
+	AppliedAmount             decimal.Decimal            `json:"appliedAmount"             bun:"applied_amount,type:NUMERIC(19,4),notnull,default:0"                                  keel:"applied_amount,format=money"`
+	AppliedAmountMinor        int64                      `json:"appliedAmountMinor"        bun:"applied_amount_minor,type:BIGINT,notnull"                                             keel:"applied_amount_minor"`
+	SettlementStatus          SettlementStatus           `json:"settlementStatus"          bun:"settlement_status,type:VARCHAR(50),notnull,default:'Unpaid'"                          keel:"settlement_status"`
+	DisputeStatus             DisputeStatus              `json:"disputeStatus"             bun:"dispute_status,type:VARCHAR(50),notnull,default:'None'"                               keel:"dispute_status"`
+	PDFDocumentID             pulid.ID                   `json:"pdfDocumentId"             bun:"pdf_document_id,type:VARCHAR(100),nullzero"                                           keel:"pdf_document_id,nullzero"`
+	SendStatus                SendStatus                 `json:"sendStatus"                bun:"send_status,type:VARCHAR(50),notnull,default:'NotSent'"                               keel:"send_status"`
+	SentAt                    *int64                     `json:"sentAt"                    bun:"sent_at,type:BIGINT,nullzero"                                                         keel:"sent_at"`
+	SentByID                  pulid.ID                   `json:"sentById"                  bun:"sent_by_id,type:VARCHAR(100),nullzero"                                                keel:"sent_by_id,nullzero"`
+	LastSendError             string                     `json:"lastSendError"             bun:"last_send_error,type:TEXT,nullzero"                                                   keel:"last_send_error,nullzero"`
+	LastSendWarning           string                     `json:"lastSendWarning"           bun:"last_send_warning,type:TEXT,nullzero"                                                 keel:"last_send_warning,nullzero"`
+	Memo                      string                     `json:"memo"                      bun:"memo,type:TEXT,nullzero"                                                              keel:"memo,nullzero"`
+	RatingNotes               []string                   `json:"ratingNotes"               bun:"rating_notes,array,type:text[],nullzero"                                              keel:"rating_notes,nullzero"`
+	RemittanceInstructions    string                     `json:"remittanceInstructions"    bun:"remittance_instructions,type:TEXT,nullzero"                                           keel:"remittance_instructions,nullzero"`
+	EmailSubjectSnapshot      string                     `json:"emailSubjectSnapshot"      bun:"email_subject_snapshot,type:VARCHAR(998),nullzero"                                    keel:"email_subject_snapshot,nullzero"`
+	EmailBodySnapshot         string                     `json:"emailBodySnapshot"         bun:"email_body_snapshot,type:TEXT,nullzero"                                               keel:"email_body_snapshot,nullzero"`
+	EmailToSnapshot           []string                   `json:"emailToSnapshot"           bun:"email_to_snapshot,array,type:text[],nullzero"                                         keel:"email_to_snapshot,nullzero"`
+	EmailCCSnapshot           []string                   `json:"emailCcSnapshot"           bun:"email_cc_snapshot,array,type:text[],nullzero"                                         keel:"email_cc_snapshot,nullzero"`
+	EmailBCCSnapshot          []string                   `json:"emailBccSnapshot"          bun:"email_bcc_snapshot,array,type:text[],nullzero"                                        keel:"email_bcc_snapshot,nullzero"`
+	CorrectionGroupID         pulid.ID                   `json:"correctionGroupId"         bun:"correction_group_id,type:VARCHAR(100),nullzero"                                       keel:"correction_group_id,nullzero"`
+	SupersedesInvoiceID       pulid.ID                   `json:"supersedesInvoiceId"       bun:"supersedes_invoice_id,type:VARCHAR(100),nullzero"                                     keel:"supersedes_invoice_id,nullzero"`
+	SupersededByInvoiceID     pulid.ID                   `json:"supersededByInvoiceId"     bun:"superseded_by_invoice_id,type:VARCHAR(100),nullzero"                                  keel:"superseded_by_invoice_id,nullzero"`
+	SourceInvoiceAdjustmentID pulid.ID                   `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"                              keel:"source_invoice_adjustment_id,nullzero"`
+	IsAdjustmentArtifact      bool                       `json:"isAdjustmentArtifact"      bun:"is_adjustment_artifact,type:BOOLEAN,notnull"                                          keel:"is_adjustment_artifact"`
+	ShipperCustomerID         pulid.ID                   `json:"shipperCustomerId"         bun:"shipper_customer_id,type:VARCHAR(100),nullzero"                                       keel:"shipper_customer_id,nullzero"`
+	FactoringCompanyID        *pulid.ID                  `json:"factoringCompanyId"        bun:"factoring_company_id,type:VARCHAR(100),nullzero"                                      keel:"factoring_company_id"`
+	FactoringAgreementID      *pulid.ID                  `json:"factoringAgreementId"      bun:"factoring_agreement_id,type:VARCHAR(100),nullzero"                                    keel:"factoring_agreement_id"`
+	FactoringOverride         FactoringOverride          `json:"factoringOverride"         bun:"factoring_override,type:VARCHAR(20),notnull,default:'Default'"                        keel:"factoring_override"`
+	FactoringOverrideReason   string                     `json:"factoringOverrideReason"   bun:"factoring_override_reason,type:VARCHAR(500),nullzero"                                 keel:"factoring_override_reason,nullzero"`
+	IsSplitBill               bool                       `json:"isSplitBill"               bun:"is_split_bill,type:BOOLEAN,notnull"                                                   keel:"is_split_bill"`
+	VoidedAt                  *int64                     `json:"voidedAt"                  bun:"voided_at,type:BIGINT,nullzero"                                                       keel:"voided_at"`
+	VoidedByID                pulid.ID                   `json:"voidedById"                bun:"voided_by_id,type:VARCHAR(100),nullzero"                                              keel:"voided_by_id,nullzero"`
+	VoidReason                string                     `json:"voidReason"                bun:"void_reason,type:TEXT,nullzero"                                                       keel:"void_reason,nullzero"`
+	VoidDisposition           VoidDisposition            `json:"voidDisposition"           bun:"void_disposition,type:VARCHAR(20),nullzero"                                           keel:"void_disposition,nullzero"`
+	VoidedByAdjustmentID      pulid.ID                   `json:"voidedByAdjustmentId"      bun:"voided_by_adjustment_id,type:VARCHAR(100),nullzero"                                   keel:"voided_by_adjustment_id,nullzero"`
+	ReferenceInvoiceID        pulid.ID                   `json:"referenceInvoiceId"        bun:"reference_invoice_id,type:VARCHAR(100),nullzero"                                      keel:"reference_invoice_id,nullzero"`
+	MemoReason                string                     `json:"memoReason"                bun:"memo_reason,type:TEXT,nullzero"                                                       keel:"memo_reason,nullzero"`
+	MemoKind                  MemoKind                   `json:"memoKind"                  bun:"memo_kind,type:VARCHAR(30),nullzero"                                                  keel:"memo_kind,nullzero"`
+	EDISendStatus             EDISendStatus              `json:"ediSendStatus"             bun:"edi_send_status,type:VARCHAR(30),notnull,default:'NotSent'"                           keel:"edi_send_status"`
+	LastEDIMessageID          pulid.ID                   `json:"lastEdiMessageId"          bun:"last_edi_message_id,type:VARCHAR(100),nullzero"                                       keel:"last_edi_message_id,nullzero"`
+	EDISentAt                 *int64                     `json:"ediSentAt"                 bun:"edi_sent_at,type:BIGINT,nullzero"                                                     keel:"edi_sent_at"`
+	LastEDIError              string                     `json:"lastEdiError"              bun:"last_edi_error,type:TEXT,nullzero"                                                    keel:"last_edi_error,nullzero"`
+	BalanceDueMinor           int64                      `json:"balanceDueMinor"           bun:"balance_due_minor,scanonly"                                                           keel:"balance_due_minor,readonly,label=Balance Due (Minor Units)"`
+	Version                   int64                      `json:"version"                   bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
+	CreatedAt                 int64                      `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt                 int64                      `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	BillingQueueItem *billingqueue.BillingQueueItem     `json:"billingQueueItem,omitempty" bun:"rel:belongs-to,join:billing_queue_item_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Shipment         *shipment.Shipment                 `json:"shipment,omitempty"         bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Order            *order.Order                       `json:"order,omitempty"            bun:"rel:belongs-to,join:order_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Customer         *customer.Customer                 `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	ShipperCustomer  *customer.Customer                 `json:"shipperCustomer,omitempty"  bun:"rel:belongs-to,join:shipper_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	ReferenceInvoice *Invoice                           `json:"referenceInvoice,omitempty" bun:"rel:belongs-to,join:reference_invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	PDFDocument      *document.Document                 `json:"pdfDocument,omitempty"      bun:"rel:belongs-to,join:pdf_document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Lines            []*InvoiceLine                     `json:"lines,omitempty"            bun:"rel:has-many,join:id=invoice_id"`
-	Attachments      []*Attachment                      `json:"attachments,omitempty"      bun:"rel:has-many,join:id=invoice_id"`
-	EmailAttempts    []*EmailAttempt                    `json:"emailAttempts,omitempty"    bun:"rel:has-many,join:id=invoice_id"`
+	BillingQueueItem *billingqueue.BillingQueueItem     `json:"billingQueueItem,omitempty" bun:"rel:belongs-to,join:billing_queue_item_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:billing_queue_item_id,noreport"`
+	Shipment         *shipment.Shipment                 `json:"shipment,omitempty"         bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"           keel:"belongs:shipment_id"`
+	Order            *order.Order                       `json:"order,omitempty"            bun:"rel:belongs-to,join:order_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"              keel:"belongs:order_id"`
+	Customer         *customer.Customer                 `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"           keel:"belongs:customer_id"`
+	ShipperCustomer  *customer.Customer                 `json:"shipperCustomer,omitempty"  bun:"rel:belongs-to,join:shipper_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"   keel:"belongs:shipper_customer_id"`
+	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"  keel:"belongs:factoring_company_id"`
+	ReferenceInvoice *Invoice                           `json:"referenceInvoice,omitempty" bun:"rel:belongs-to,join:reference_invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"  keel:"belongs:reference_invoice_id"`
+	PDFDocument      *document.Document                 `json:"pdfDocument,omitempty"      bun:"rel:belongs-to,join:pdf_document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"       keel:"belongs:pdf_document_id,noreport"`
+	Lines            []*InvoiceLine                     `json:"lines,omitempty"            bun:"rel:has-many,join:id=invoice_id"                                                                                          keel:"many:invoice_id,label=Invoice Lines"`
+	Attachments      []*Attachment                      `json:"attachments,omitempty"      bun:"rel:has-many,join:id=invoice_id"                                                                                          keel:"many:invoice_id,noreport"`
+	EmailAttempts    []*EmailAttempt                    `json:"emailAttempts,omitempty"    bun:"rel:has-many,join:id=invoice_id"                                                                                          keel:"many:invoice_id,noreport"`
 }
 
+// Line items on an invoice
 type InvoiceLine struct {
 	bun.BaseModel `bun:"table:invoice_lines,alias:invl" json:"-"`
+	keel.Table    `                                              keel:"invoice_lines,report=Billing"`
 
-	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	InvoiceID         pulid.ID        `json:"invoiceId"         bun:"invoice_id,type:VARCHAR(100),notnull"`
-	ShipmentID        pulid.ID        `json:"shipmentId"        bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	ShipmentProNumber string          `json:"shipmentProNumber" bun:"shipment_pro_number,type:VARCHAR(100),nullzero"`
-	ShipmentBOL       string          `json:"shipmentBol"       bun:"shipment_bol,type:VARCHAR(100),nullzero"`
-	LineNumber        int             `json:"lineNumber"        bun:"line_number,type:INTEGER,notnull"`
-	Type              InvoiceLineType `json:"type"              bun:"type,type:VARCHAR(50),notnull"`
-	Description       string          `json:"description"       bun:"description,type:TEXT,notnull"`
-	Quantity          decimal.Decimal `json:"quantity"          bun:"quantity,type:NUMERIC(19,4),notnull,default:0"`
-	UnitPrice         decimal.Decimal `json:"unitPrice"         bun:"unit_price,type:NUMERIC(19,4),notnull,default:0"`
-	Amount            decimal.Decimal `json:"amount"            bun:"amount,type:NUMERIC(19,4),notnull,default:0"`
-	AmountMinor       int64           `json:"amountMinor"       bun:"amount_minor,type:BIGINT,notnull"`
+	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"                 keel:"id,pk,autoid:invl_"`
+	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"    keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"   keel:"business_unit_id,pk,tenant"`
+	InvoiceID         pulid.ID        `json:"invoiceId"         bun:"invoice_id,type:VARCHAR(100),notnull"            keel:"invoice_id"`
+	ShipmentID        pulid.ID        `json:"shipmentId"        bun:"shipment_id,type:VARCHAR(100),nullzero"          keel:"shipment_id,nullzero"`
+	ShipmentProNumber string          `json:"shipmentProNumber" bun:"shipment_pro_number,type:VARCHAR(100),nullzero"  keel:"shipment_pro_number,nullzero"`
+	ShipmentBOL       string          `json:"shipmentBol"       bun:"shipment_bol,type:VARCHAR(100),nullzero"         keel:"shipment_bol,nullzero"`
+	LineNumber        int             `json:"lineNumber"        bun:"line_number,type:INTEGER,notnull"                keel:"line_number,dimension"`
+	Type              InvoiceLineType `json:"type"              bun:"type,type:VARCHAR(50),notnull"                   keel:"type"`
+	Description       string          `json:"description"       bun:"description,type:TEXT,notnull"                   keel:"description"`
+	Quantity          decimal.Decimal `json:"quantity"          bun:"quantity,type:NUMERIC(19,4),notnull,default:0"   keel:"quantity"`
+	UnitPrice         decimal.Decimal `json:"unitPrice"         bun:"unit_price,type:NUMERIC(19,4),notnull,default:0" keel:"unit_price,format=money"`
+	Amount            decimal.Decimal `json:"amount"            bun:"amount,type:NUMERIC(19,4),notnull,default:0"     keel:"amount,format=money"`
+	AmountMinor       int64           `json:"amountMinor"       bun:"amount_minor,type:BIGINT,notnull"                keel:"amount_minor"`
 
-	AccessorialChargeID pulid.ID                   `json:"accessorialChargeId" bun:"accessorial_charge_id,type:VARCHAR(100),nullzero"`
-	ChargeCode          string                     `json:"chargeCode"          bun:"charge_code,type:VARCHAR(10),nullzero"`
-	ChargeMethod        accessorialcharge.Method   `json:"chargeMethod"        bun:"charge_method,type:VARCHAR(20),nullzero"`
-	RateUnit            string                     `json:"rateUnit"            bun:"rate_unit,type:VARCHAR(32),nullzero"`
-	Rate                decimal.NullDecimal        `json:"rate"                bun:"rate,type:NUMERIC(19,4),nullzero"`
-	RateBasisAmount     decimal.NullDecimal        `json:"rateBasisAmount"     bun:"rate_basis_amount,type:NUMERIC(19,4),nullzero"`
-	FormulaTemplateID   pulid.ID                   `json:"formulaTemplateId"   bun:"formula_template_id,type:VARCHAR(100),nullzero"`
-	FormulaTemplateName string                     `json:"formulaTemplateName" bun:"formula_template_name,type:TEXT,nullzero"`
-	AllocationPercent   decimal.NullDecimal        `json:"allocationPercent"   bun:"allocation_percent,type:NUMERIC(9,6),nullzero"`
-	ChargeAllocationID  pulid.ID                   `json:"chargeAllocationId"  bun:"charge_allocation_id,type:VARCHAR(100),nullzero"`
-	AdditionalChargeID  pulid.ID                   `json:"additionalChargeId"  bun:"additional_charge_id,type:VARCHAR(100),nullzero"`
+	AccessorialChargeID pulid.ID                 `json:"accessorialChargeId" bun:"accessorial_charge_id,type:VARCHAR(100),nullzero" keel:"accessorial_charge_id,nullzero"`
+	ChargeCode          string                   `json:"chargeCode"          bun:"charge_code,type:VARCHAR(10),nullzero"            keel:"charge_code,nullzero"`
+	ChargeMethod        accessorialcharge.Method `json:"chargeMethod"        bun:"charge_method,type:VARCHAR(20),nullzero"          keel:"charge_method,nullzero"`
+	RateUnit            string                   `json:"rateUnit"            bun:"rate_unit,type:VARCHAR(32),nullzero"              keel:"rate_unit,nullzero"`
+	Rate                decimal.NullDecimal      `json:"rate"                bun:"rate,type:NUMERIC(19,4),nullzero"                 keel:"rate"`
+	RateBasisAmount     decimal.NullDecimal      `json:"rateBasisAmount"     bun:"rate_basis_amount,type:NUMERIC(19,4),nullzero"    keel:"rate_basis_amount"`
+	FormulaTemplateID   pulid.ID                 `json:"formulaTemplateId"   bun:"formula_template_id,type:VARCHAR(100),nullzero"   keel:"formula_template_id,nullzero"`
+	FormulaTemplateName string                   `json:"formulaTemplateName" bun:"formula_template_name,type:TEXT,nullzero"         keel:"formula_template_name,nullzero"`
+	AllocationPercent   decimal.NullDecimal      `json:"allocationPercent"   bun:"allocation_percent,type:NUMERIC(9,6),nullzero"    keel:"allocation_percent"`
+	ChargeAllocationID  pulid.ID                 `json:"chargeAllocationId"  bun:"charge_allocation_id,type:VARCHAR(100),nullzero"  keel:"charge_allocation_id,nullzero"`
+	AdditionalChargeID  pulid.ID                 `json:"additionalChargeId"  bun:"additional_charge_id,type:VARCHAR(100),nullzero"  keel:"additional_charge_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Invoice *Invoice `json:"-" bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Invoice *Invoice `json:"-" bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:invoice_id"`
 }
 
 type Attachment struct {
 	bun.BaseModel `bun:"table:invoice_attachments,alias:inva" json:"-"`
+	keel.Table    `                                                    keel:"invoice_attachments"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	InvoiceID      pulid.ID `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull"`
-	DocumentID     pulid.ID `json:"documentId"     bun:"document_id,type:VARCHAR(100),notnull"`
-	Selected       bool     `json:"selected"       bun:"selected,type:BOOLEAN,notnull"`
-	SortOrder      int      `json:"sortOrder"      bun:"sort_order,type:INTEGER,notnull"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:invatt_"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	InvoiceID      pulid.ID `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull"                                                 keel:"invoice_id"`
+	DocumentID     pulid.ID `json:"documentId"     bun:"document_id,type:VARCHAR(100),notnull"                                                keel:"document_id"`
+	Selected       bool     `json:"selected"       bun:"selected,type:BOOLEAN,notnull"                                                        keel:"selected"`
+	SortOrder      int      `json:"sortOrder"      bun:"sort_order,type:INTEGER,notnull"                                                      keel:"sort_order"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Invoice  *Invoice           `json:"-"                  bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document *document.Document `json:"document,omitempty" bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Invoice  *Invoice           `json:"-"                  bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"  keel:"belongs:invoice_id"`
+	Document *document.Document `json:"document,omitempty" bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
 }
 
 type EmailAttempt struct {
 	bun.BaseModel `bun:"table:invoice_email_attempts,alias:inea" json:"-"`
+	keel.Table    `                                                       keel:"invoice_email_attempts"`
 
-	ID                pulid.ID       `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID       `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID       `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	InvoiceID         pulid.ID       `json:"invoiceId"         bun:"invoice_id,type:VARCHAR(100),notnull"`
-	EmailMessageID    pulid.ID       `json:"emailMessageId"    bun:"email_message_id,type:VARCHAR(100),nullzero"`
-	AttemptNumber     int            `json:"attemptNumber"     bun:"attempt_number,type:INTEGER,notnull"`
-	PartNumber        int            `json:"partNumber"        bun:"part_number,type:INTEGER,notnull"`
-	TotalParts        int            `json:"totalParts"        bun:"total_parts,type:INTEGER,notnull"`
-	Status            SendStatus     `json:"status"            bun:"status,type:VARCHAR(50),notnull"`
-	Provider          email.Provider `json:"provider"          bun:"provider,type:VARCHAR(50),nullzero"`
-	ProviderMessageID string         `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(160),nullzero"`
-	ToRecipients      []string       `json:"toRecipients"      bun:"to_recipients,array,type:text[],notnull"`
-	CCRecipients      []string       `json:"ccRecipients"      bun:"cc_recipients,array,type:text[],nullzero"`
-	BCCRecipients     []string       `json:"bccRecipients"     bun:"bcc_recipients,array,type:text[],nullzero"`
-	Subject           string         `json:"subject"           bun:"subject,type:VARCHAR(998),notnull"`
-	Body              string         `json:"body"              bun:"body,type:TEXT,nullzero"`
-	EstimatedSize     int64          `json:"estimatedSize"     bun:"estimated_size,type:BIGINT,notnull"`
-	Warnings          []string       `json:"warnings"          bun:"warnings,array,type:text[],nullzero"`
-	Error             string         `json:"error"             bun:"error,type:TEXT,nullzero"`
-	SentAt            *int64         `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero"`
-	CreatedByID       pulid.ID       `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	CreatedAt         int64          `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64          `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID       `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:invea_"`
+	OrganizationID    pulid.ID       `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID       `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	InvoiceID         pulid.ID       `json:"invoiceId"         bun:"invoice_id,type:VARCHAR(100),notnull"                                                 keel:"invoice_id"`
+	EmailMessageID    pulid.ID       `json:"emailMessageId"    bun:"email_message_id,type:VARCHAR(100),nullzero"                                          keel:"email_message_id,nullzero"`
+	AttemptNumber     int            `json:"attemptNumber"     bun:"attempt_number,type:INTEGER,notnull"                                                  keel:"attempt_number"`
+	PartNumber        int            `json:"partNumber"        bun:"part_number,type:INTEGER,notnull"                                                     keel:"part_number"`
+	TotalParts        int            `json:"totalParts"        bun:"total_parts,type:INTEGER,notnull"                                                     keel:"total_parts"`
+	Status            SendStatus     `json:"status"            bun:"status,type:VARCHAR(50),notnull"                                                      keel:"status"`
+	Provider          email.Provider `json:"provider"          bun:"provider,type:VARCHAR(50),nullzero"                                                   keel:"provider,nullzero"`
+	ProviderMessageID string         `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(160),nullzero"                                       keel:"provider_message_id,nullzero"`
+	ToRecipients      []string       `json:"toRecipients"      bun:"to_recipients,array,type:text[],notnull"                                              keel:"to_recipients"`
+	CCRecipients      []string       `json:"ccRecipients"      bun:"cc_recipients,array,type:text[],nullzero"                                             keel:"cc_recipients,nullzero"`
+	BCCRecipients     []string       `json:"bccRecipients"     bun:"bcc_recipients,array,type:text[],nullzero"                                            keel:"bcc_recipients,nullzero"`
+	Subject           string         `json:"subject"           bun:"subject,type:VARCHAR(998),notnull"                                                    keel:"subject"`
+	Body              string         `json:"body"              bun:"body,type:TEXT,nullzero"                                                              keel:"body,nullzero"`
+	EstimatedSize     int64          `json:"estimatedSize"     bun:"estimated_size,type:BIGINT,notnull"                                                   keel:"estimated_size"`
+	Warnings          []string       `json:"warnings"          bun:"warnings,array,type:text[],nullzero"                                                  keel:"warnings,nullzero"`
+	Error             string         `json:"error"             bun:"error,type:TEXT,nullzero"                                                             keel:"error,nullzero"`
+	SentAt            *int64         `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero"                                                         keel:"sent_at"`
+	CreatedByID       pulid.ID       `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"                                             keel:"created_by_id,nullzero"`
+	CreatedAt         int64          `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt         int64          `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Invoice     *Invoice                  `json:"-"                     bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Email       *email.Message            `json:"email,omitempty"       bun:"rel:belongs-to,join:email_message_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Attachments []*EmailAttemptAttachment `json:"attachments,omitempty" bun:"rel:has-many,join:id=attempt_id"`
+	Invoice     *Invoice                  `json:"-"                     bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"       keel:"belongs:invoice_id"`
+	Email       *email.Message            `json:"email,omitempty"       bun:"rel:belongs-to,join:email_message_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:email_message_id"`
+	Attachments []*EmailAttemptAttachment `json:"attachments,omitempty" bun:"rel:has-many,join:id=attempt_id"                                                                                     keel:"many:attempt_id"`
 }
 
 type EmailAttemptAttachment struct {
 	bun.BaseModel `bun:"table:invoice_email_attempt_attachments,alias:ineaa" json:"-"`
+	keel.Table    `                                                                   keel:"invoice_email_attempt_attachments"`
 
-	ID             pulid.ID                 `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID                 `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID                 `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	AttemptID      pulid.ID                 `json:"attemptId"      bun:"attempt_id,type:VARCHAR(100),notnull"`
-	DocumentID     pulid.ID                 `json:"documentId"     bun:"document_id,type:VARCHAR(100),notnull"`
-	FileName       string                   `json:"fileName"       bun:"file_name,type:VARCHAR(255),notnull"`
-	ContentType    string                   `json:"contentType"    bun:"content_type,type:VARCHAR(120),notnull"`
-	SizeBytes      int64                    `json:"sizeBytes"      bun:"size_bytes,type:BIGINT,notnull"`
-	EncodedBytes   int64                    `json:"encodedBytes"   bun:"encoded_bytes,type:BIGINT,notnull"`
-	Method         AttachmentDeliveryMethod `json:"method"         bun:"method,type:VARCHAR(50),notnull"`
-	ShareTokenID   pulid.ID                 `json:"shareTokenId"   bun:"share_token_id,type:VARCHAR(100),nullzero"`
-	Reason         string                   `json:"reason"         bun:"reason,type:TEXT,nullzero"`
-	CreatedAt      int64                    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID                 `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:inveaa_"`
+	OrganizationID pulid.ID                 `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID                 `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	AttemptID      pulid.ID                 `json:"attemptId"      bun:"attempt_id,type:VARCHAR(100),notnull"                                                 keel:"attempt_id"`
+	DocumentID     pulid.ID                 `json:"documentId"     bun:"document_id,type:VARCHAR(100),notnull"                                                keel:"document_id"`
+	FileName       string                   `json:"fileName"       bun:"file_name,type:VARCHAR(255),notnull"                                                  keel:"file_name"`
+	ContentType    string                   `json:"contentType"    bun:"content_type,type:VARCHAR(120),notnull"                                               keel:"content_type"`
+	SizeBytes      int64                    `json:"sizeBytes"      bun:"size_bytes,type:BIGINT,notnull"                                                       keel:"size_bytes"`
+	EncodedBytes   int64                    `json:"encodedBytes"   bun:"encoded_bytes,type:BIGINT,notnull"                                                    keel:"encoded_bytes"`
+	Method         AttachmentDeliveryMethod `json:"method"         bun:"method,type:VARCHAR(50),notnull"                                                      keel:"method"`
+	ShareTokenID   pulid.ID                 `json:"shareTokenId"   bun:"share_token_id,type:VARCHAR(100),nullzero"                                            keel:"share_token_id,nullzero"`
+	Reason         string                   `json:"reason"         bun:"reason,type:TEXT,nullzero"                                                            keel:"reason,nullzero"`
+	CreatedAt      int64                    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	Attempt    *EmailAttempt       `json:"-"                    bun:"rel:belongs-to,join:attempt_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document   *document.Document  `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	ShareToken *DocumentShareToken `json:"shareToken,omitempty" bun:"rel:belongs-to,join:share_token_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Attempt    *EmailAttempt       `json:"-"                    bun:"rel:belongs-to,join:attempt_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"     keel:"belongs:attempt_id"`
+	Document   *document.Document  `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"    keel:"belongs:document_id"`
+	ShareToken *DocumentShareToken `json:"shareToken,omitempty" bun:"rel:belongs-to,join:share_token_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:share_token_id"`
 }
 
 type DocumentShareToken struct {
 	bun.BaseModel `bun:"table:invoice_document_share_tokens,alias:indst" json:"-"`
+	keel.Table    `                                                               keel:"invoice_document_share_tokens"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	InvoiceID      pulid.ID `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull"`
-	DocumentID     pulid.ID `json:"documentId"     bun:"document_id,type:VARCHAR(100),notnull"`
-	TokenHash      string   `json:"-"              bun:"token_hash,type:VARCHAR(128),notnull"`
-	ExpiresAt      int64    `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull"`
-	DownloadedAt   *int64   `json:"downloadedAt"   bun:"downloaded_at,type:BIGINT,nullzero"`
-	RevokedAt      *int64   `json:"revokedAt"      bun:"revoked_at,type:BIGINT,nullzero"`
-	CreatedByID    pulid.ID `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:invdst_"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	InvoiceID      pulid.ID `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull"                                                 keel:"invoice_id"`
+	DocumentID     pulid.ID `json:"documentId"     bun:"document_id,type:VARCHAR(100),notnull"                                                keel:"document_id"`
+	TokenHash      string   `json:"-"              bun:"token_hash,type:VARCHAR(128),notnull"                                                 keel:"token_hash"`
+	ExpiresAt      int64    `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull"                                                       keel:"expires_at"`
+	DownloadedAt   *int64   `json:"downloadedAt"   bun:"downloaded_at,type:BIGINT,nullzero"                                                   keel:"downloaded_at"`
+	RevokedAt      *int64   `json:"revokedAt"      bun:"revoked_at,type:BIGINT,nullzero"                                                      keel:"revoked_at"`
+	CreatedByID    pulid.ID `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero"                                             keel:"created_by_id,nullzero"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Invoice      *Invoice             `json:"-"                  bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document     *document.Document   `json:"document,omitempty" bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Invoice      *Invoice             `json:"-"                  bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"  keel:"belongs:invoice_id"`
+	Document     *document.Document   `json:"document,omitempty" bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
 	Organization *tenant.Organization `json:"-"                  bun:"rel:belongs-to,join:organization_id=id"`
 }
 
@@ -704,6 +705,10 @@ func (i *Invoice) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (i *Invoice) BeforeCreate(ctx context.Context) error {
+	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (a *Attachment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	switch query.(type) {
@@ -773,6 +778,10 @@ func (l *InvoiceLine) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	}
 
 	return nil
+}
+
+func (l *InvoiceLine) BeforeCreate(ctx context.Context) error {
+	return l.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (i *Invoice) GetID() pulid.ID {

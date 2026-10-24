@@ -7,6 +7,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -34,46 +35,37 @@ var (
 	_ pagination.CursorEntity            = (*FactoringCompany)(nil)
 )
 
-// FactoringCompany is a factor customers' invoices can be assigned to.
+// Factors that buy customer invoices and the remittance details invoices carry to them
 type FactoringCompany struct {
 	bun.BaseModel             `bun:"table:factoring_companies,alias:fac" json:"-"`
+	keel.Table                `                                                   keel:"factoring_companies,report=Parties"`
 	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(10),notnull"`
-	Name           string             `json:"name"           bun:"name,type:VARCHAR(255),notnull"`
-	AddressLine1   string             `json:"addressLine1"   bun:"address_line_1,type:VARCHAR(150),notnull"`
-	AddressLine2   string             `json:"addressLine2"   bun:"address_line_2,type:VARCHAR(150),nullzero"`
-	City           string             `json:"city"           bun:"city,type:VARCHAR(100),notnull"`
-	StateID        pulid.ID           `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull"`
-	PostalCode     string             `json:"postalCode"     bun:"postal_code,type:us_postal_code,notnull"`
-	Email          string             `json:"email"          bun:"email,type:VARCHAR(255),nullzero"`
-	PhoneNumber    string             `json:"phoneNumber"    bun:"phone_number,type:VARCHAR(30),nullzero"`
-	// RemittanceInstructions say how the factor is paid: its bank, lockbox
-	// or ACH details. They print under its address wherever an invoice
-	// assigned to it says where to pay.
-	RemittanceInstructions string `json:"remittanceInstructions" bun:"remittance_instructions,type:TEXT,nullzero"`
-	// NoticeOfAssignment is the notice printed on every invoice assigned to
-	// the factor. Blank prints the standard notice.
-	NoticeOfAssignment string `json:"noticeOfAssignment" bun:"notice_of_assignment,type:TEXT,nullzero"`
-	// NonRecourse is true when the factor buys invoices outright and carries
-	// the credit risk. Its invoices then belong to the factor: they leave the
-	// collections worklist and stop counting toward the customer's credit
-	// exposure. With recourse, the default, an unpaid invoice comes back, so
-	// it is still collected and still counts.
-	NonRecourse  bool   `json:"nonRecourse" bun:"non_recourse,type:BOOLEAN,notnull"`
-	Notes        string `json:"notes"       bun:"notes,type:TEXT,nullzero"`
-	SearchVector string `json:"-"           bun:"search_vector,type:TSVECTOR,scanonly"`
-	Version      int64  `json:"version"     bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID           `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:fac_"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID           `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
+	Status                 domaintypes.Status `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'"                                     keel:"status"`
+	Code                   string             `json:"code"                   bun:"code,type:VARCHAR(10),notnull"                                                        keel:"code"`
+	Name                   string             `json:"name"                   bun:"name,type:VARCHAR(255),notnull"                                                       keel:"name"`
+	AddressLine1           string             `json:"addressLine1"           bun:"address_line_1,type:VARCHAR(150),notnull"                                             keel:"address_line_1"`
+	AddressLine2           string             `json:"addressLine2"           bun:"address_line_2,type:VARCHAR(150),nullzero"                                            keel:"address_line_2,nullzero"`
+	City                   string             `json:"city"                   bun:"city,type:VARCHAR(100),notnull"                                                       keel:"city"`
+	StateID                pulid.ID           `json:"stateId"                bun:"state_id,type:VARCHAR(100),notnull"                                                   keel:"state_id"`
+	PostalCode             string             `json:"postalCode"             bun:"postal_code,type:us_postal_code,notnull"                                              keel:"postal_code"`
+	Email                  string             `json:"email"                  bun:"email,type:VARCHAR(255),nullzero"                                                     keel:"email,nullzero"`
+	PhoneNumber            string             `json:"phoneNumber"            bun:"phone_number,type:VARCHAR(30),nullzero"                                               keel:"phone_number,nullzero"`
+	RemittanceInstructions string             `json:"remittanceInstructions" bun:"remittance_instructions,type:TEXT,nullzero"                                           keel:"remittance_instructions,nullzero,noreport"`
+	NoticeOfAssignment     string             `json:"noticeOfAssignment"     bun:"notice_of_assignment,type:TEXT,nullzero"                                              keel:"notice_of_assignment,nullzero,noreport"`
+	NonRecourse            bool               `json:"nonRecourse"            bun:"non_recourse,type:BOOLEAN,notnull"                                                    keel:"non_recourse,label=Non-Recourse"`
+	Notes                  string             `json:"notes"                  bun:"notes,type:TEXT,nullzero"                                                             keel:"notes,nullzero,noreport"`
+	SearchVector           string             `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	Version                int64              `json:"version"                bun:"version,type:BIGINT"                                                                  keel:"version,version"`
+	CreatedAt              int64              `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt              int64              `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"               bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"               bun:"rel:belongs-to,join:organization_id=id"`
-	State        *usstate.UsState     `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"`
+	State        *usstate.UsState     `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"         keel:"belongs:state_id,noreport"`
 }
 
 func (f *FactoringCompany) Validate(multiErr *errortypes.MultiError) {
@@ -247,4 +239,8 @@ func (f *FactoringCompany) BeforeAppendModel(_ context.Context, query bun.Query)
 	}
 
 	return nil
+}
+
+func (f *FactoringCompany) BeforeCreate(ctx context.Context) error {
+	return f.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

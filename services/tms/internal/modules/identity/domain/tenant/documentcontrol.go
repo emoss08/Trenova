@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,28 +23,29 @@ var (
 
 type DocumentControl struct {
 	bun.BaseModel `bun:"table:document_controls,alias:dc" json:"-"`
+	keel.Table    `keel:"document_controls"`
 
-	ID                              pulid.ID `json:"id"                              bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID                  pulid.ID `json:"businessUnitId"                  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID                  pulid.ID `json:"organizationId"                  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	EnableDocumentIntelligence      bool     `json:"enableDocumentIntelligence"      bun:"enable_document_intelligence,type:BOOLEAN,notnull"`
-	EnableOCR                       bool     `json:"enableOcr"                       bun:"enable_ocr,type:BOOLEAN,notnull"`
-	EnableAutoClassification        bool     `json:"enableAutoClassification"        bun:"enable_auto_classification,type:BOOLEAN,notnull"`
-	EnableAutoDocumentTypeAssociate bool     `json:"enableAutoDocumentTypeAssociate" bun:"enable_auto_document_type_associate,type:BOOLEAN,notnull"`
-	EnableAutoCreateDocumentTypes   bool     `json:"enableAutoCreateDocumentTypes"   bun:"enable_auto_create_document_types,type:BOOLEAN,notnull"`
-	EnableShipmentDraftExtraction   bool     `json:"enableShipmentDraftExtraction"   bun:"enable_shipment_draft_extraction,type:BOOLEAN,notnull"`
-	EnableAIAssistedClassification  bool     `json:"enableAiAssistedClassification"  bun:"enable_ai_assisted_classification,type:BOOLEAN,notnull"`
-	EnableAIAssistedExtraction      bool     `json:"enableAiAssistedExtraction"      bun:"enable_ai_assisted_extraction,type:BOOLEAN,notnull"`
-	ShipmentDraftAllowedResources   []string `json:"shipmentDraftAllowedResources"   bun:"shipment_draft_allowed_resources,type:VARCHAR(100)[],notnull,default:'{}'"`
-	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing"          bun:"enable_full_text_indexing,type:BOOLEAN,notnull"`
-	EnableCapture                   bool     `json:"enableCapture"                   bun:"enable_capture,type:BOOLEAN,notnull"`
-	CaptureAutoFileCoverSheets      bool     `json:"captureAutoFileCoverSheets"      bun:"capture_auto_file_cover_sheets,type:BOOLEAN,notnull"`
-	CaptureRetentionDays            int      `json:"captureRetentionDays"            bun:"capture_retention_days,type:INTEGER,notnull,default:30"`
-	CaptureMinAgentVersion          string   `json:"captureMinAgentVersion"          bun:"capture_min_agent_version,type:VARCHAR(20),nullzero"`
-	CaptureAllowAutoUpdate          bool     `json:"captureAllowAutoUpdate"          bun:"capture_allow_auto_update,type:BOOLEAN,notnull"`
-	Version                         int64    `json:"version"                         bun:"version,type:BIGINT"`
-	CreatedAt                       int64    `json:"createdAt"                       bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                       int64    `json:"updatedAt"                       bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                              pulid.ID `json:"id"                              bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:docc_"`
+	BusinessUnitID                  pulid.ID `json:"businessUnitId"                  bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID                  pulid.ID `json:"organizationId"                  bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	EnableDocumentIntelligence      bool     `json:"enableDocumentIntelligence"      bun:"enable_document_intelligence,type:BOOLEAN,notnull" keel:"enable_document_intelligence"`
+	EnableOCR                       bool     `json:"enableOcr"                       bun:"enable_ocr,type:BOOLEAN,notnull" keel:"enable_ocr"`
+	EnableAutoClassification        bool     `json:"enableAutoClassification"        bun:"enable_auto_classification,type:BOOLEAN,notnull" keel:"enable_auto_classification"`
+	EnableAutoDocumentTypeAssociate bool     `json:"enableAutoDocumentTypeAssociate" bun:"enable_auto_document_type_associate,type:BOOLEAN,notnull" keel:"enable_auto_document_type_associate"`
+	EnableAutoCreateDocumentTypes   bool     `json:"enableAutoCreateDocumentTypes"   bun:"enable_auto_create_document_types,type:BOOLEAN,notnull" keel:"enable_auto_create_document_types"`
+	EnableShipmentDraftExtraction   bool     `json:"enableShipmentDraftExtraction"   bun:"enable_shipment_draft_extraction,type:BOOLEAN,notnull" keel:"enable_shipment_draft_extraction"`
+	EnableAIAssistedClassification  bool     `json:"enableAiAssistedClassification"  bun:"enable_ai_assisted_classification,type:BOOLEAN,notnull" keel:"enable_ai_assisted_classification"`
+	EnableAIAssistedExtraction      bool     `json:"enableAiAssistedExtraction"      bun:"enable_ai_assisted_extraction,type:BOOLEAN,notnull" keel:"enable_ai_assisted_extraction"`
+	ShipmentDraftAllowedResources   []string `json:"shipmentDraftAllowedResources"   bun:"shipment_draft_allowed_resources,type:VARCHAR(100)[],notnull,default:'{}'" keel:"shipment_draft_allowed_resources"`
+	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing"          bun:"enable_full_text_indexing,type:BOOLEAN,notnull" keel:"enable_full_text_indexing"`
+	EnableCapture                   bool     `json:"enableCapture"                   bun:"enable_capture,type:BOOLEAN,notnull" keel:"enable_capture"`
+	CaptureAutoFileCoverSheets      bool     `json:"captureAutoFileCoverSheets"      bun:"capture_auto_file_cover_sheets,type:BOOLEAN,notnull" keel:"capture_auto_file_cover_sheets"`
+	CaptureRetentionDays            int      `json:"captureRetentionDays"            bun:"capture_retention_days,type:INTEGER,notnull,default:30" keel:"capture_retention_days"`
+	CaptureMinAgentVersion          string   `json:"captureMinAgentVersion"          bun:"capture_min_agent_version,type:VARCHAR(20),nullzero" keel:"capture_min_agent_version,nullzero"`
+	CaptureAllowAutoUpdate          bool     `json:"captureAllowAutoUpdate"          bun:"capture_allow_auto_update,type:BOOLEAN,notnull" keel:"capture_allow_auto_update"`
+	Version                         int64    `json:"version"                         bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt                       int64    `json:"createdAt"                       bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt                       int64    `json:"updatedAt"                       bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func NewDefaultDocumentControl(orgID, buID pulid.ID) *DocumentControl {

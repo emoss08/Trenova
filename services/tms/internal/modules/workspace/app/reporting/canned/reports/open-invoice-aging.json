@@ -1,0 +1,142 @@
+{
+  "key": "open-invoice-aging",
+  "version": "1.0.0",
+  "name": "Open Invoice Aging",
+  "description": "Posted invoices carrying a balance, with amount applied and open balance, oldest due dates first",
+  "category": "Billing",
+  "tags": [
+    "invoices",
+    "ar",
+    "aging"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "invoice",
+    "columns": [
+      {
+        "id": "invoice_number",
+        "label": "Invoice Number",
+        "dimension": {
+          "field": "number"
+        }
+      },
+      {
+        "id": "customer",
+        "label": "Customer",
+        "dimension": {
+          "field": "customer.name"
+        }
+      },
+      {
+        "id": "bill_type",
+        "label": "Bill Type",
+        "dimension": {
+          "field": "billType"
+        }
+      },
+      {
+        "id": "settlement_status",
+        "label": "Settlement Status",
+        "dimension": {
+          "field": "settlementStatus"
+        }
+      },
+      {
+        "id": "invoice_date",
+        "label": "Invoice Date",
+        "dimension": {
+          "field": "invoiceDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "due_date",
+        "label": "Due Date",
+        "dimension": {
+          "field": "dueDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "total_amount",
+        "label": "Invoice Total",
+        "measure": {
+          "field": "totalAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "applied_amount",
+        "label": "Amount Applied",
+        "measure": {
+          "field": "appliedAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "open_balance",
+        "label": "Open Balance",
+        "calc": "[total_amount] - [applied_amount]",
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "Posted"
+        },
+        {
+          "field": "settlementStatus",
+          "op": "in",
+          "param": "settlementStatuses"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "due_date"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "settlementStatuses",
+        "label": "Settlement Statuses",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Unpaid",
+          "PartiallyPaid"
+        ],
+        "allowed": [
+          "Unpaid",
+          "PartiallyPaid",
+          "Paid"
+        ]
+      }
+    ]
+  }
+}

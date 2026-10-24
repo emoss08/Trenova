@@ -3,6 +3,7 @@ package documenttemplate
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -30,30 +31,31 @@ var (
 // shows how many customers are unaffected.
 type DocumentTemplateAssignment struct {
 	bun.BaseModel             `bun:"table:document_template_assignments,alias:dta" json:"-"`
+	keel.Table                `keel:"document_template_assignments"`
 	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dta_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
 	// Kind is denormalized from the template so resolution can filter on it without
 	// joining, and so a unique index can enforce one assignment per customer per
 	// kind. BeforeAppendModel keeps it in step with the template.
-	Kind Kind `json:"kind" bun:"kind,type:VARCHAR(100),notnull"`
+	Kind Kind `json:"kind" bun:"kind,type:VARCHAR(100),notnull" keel:"kind"`
 
-	TemplateID pulid.ID `json:"templateId" bun:"template_id,type:VARCHAR(100),notnull"`
-	CustomerID pulid.ID `json:"customerId" bun:"customer_id,type:VARCHAR(100),notnull"`
+	TemplateID pulid.ID `json:"templateId" bun:"template_id,type:VARCHAR(100),notnull" keel:"template_id"`
+	CustomerID pulid.ID `json:"customerId" bun:"customer_id,type:VARCHAR(100),notnull" keel:"customer_id"`
 
-	AssignedByID *pulid.ID `json:"assignedById" bun:"assigned_by_id,type:VARCHAR(100),nullzero"`
+	AssignedByID *pulid.ID `json:"assignedById" bun:"assigned_by_id,type:VARCHAR(100),nullzero" keel:"assigned_by_id"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"                  bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"                  bun:"rel:belongs-to,join:organization_id=id"`
-	Template     *DocumentTemplate    `json:"template,omitempty" bun:"rel:belongs-to,join:template_id=id"`
-	Customer     *customer.Customer   `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id"`
+	Template     *DocumentTemplate    `json:"template,omitempty" bun:"rel:belongs-to,join:template_id=id" keel:"belongs:template_id"`
+	Customer     *customer.Customer   `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id" keel:"belongs:customer_id"`
 }
 
 func (a *DocumentTemplateAssignment) GetID() pulid.ID { return a.ID }

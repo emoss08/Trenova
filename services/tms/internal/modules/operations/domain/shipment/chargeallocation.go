@@ -3,6 +3,7 @@ package shipment
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -60,24 +61,25 @@ var _ bun.BeforeAppendModelHook = (*ChargeAllocation)(nil)
 // where billing departs from that default.
 type ChargeAllocation struct {
 	bun.BaseModel `json:"-" bun:"table:charge_allocations,alias:chal"`
+	keel.Table    `keel:"charge_allocations"`
 
-	ID                 pulid.ID               `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID               `json:"businessUnitId"     bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID     pulid.ID               `json:"organizationId"     bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	ShipmentID         *pulid.ID              `json:"shipmentId"         bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	AdditionalChargeID *pulid.ID              `json:"additionalChargeId" bun:"additional_charge_id,type:VARCHAR(100),nullzero"`
-	OrderChargeID      *pulid.ID              `json:"orderChargeId"      bun:"order_charge_id,type:VARCHAR(100),nullzero"`
-	ChargeKind         ChargeAllocationKind   `json:"chargeKind"         bun:"charge_kind,type:charge_allocation_kind_enum,notnull"`
-	BillToCustomerID   pulid.ID               `json:"billToCustomerId"   bun:"bill_to_customer_id,type:VARCHAR(100),notnull"`
-	Method             ChargeAllocationMethod `json:"method"             bun:"method,type:charge_allocation_method_enum,notnull"`
-	Percent            decimal.NullDecimal    `json:"percent"            bun:"percent,type:NUMERIC(9,6),nullzero"`
-	Amount             decimal.NullDecimal    `json:"amount"             bun:"amount,type:NUMERIC(19,4),nullzero"`
-	Sequence           int16                  `json:"sequence"           bun:"sequence,type:SMALLINT,notnull"`
-	InvoiceID          pulid.ID               `json:"invoiceId"          bun:"invoice_id,type:VARCHAR(100),nullzero"`
-	InvoicedAt         *int64                 `json:"invoicedAt"         bun:"invoiced_at,type:BIGINT,nullzero"`
-	Version            int64                  `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64                  `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64                  `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                 pulid.ID               `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:chal_"`
+	BusinessUnitID     pulid.ID               `json:"businessUnitId"     bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID               `json:"organizationId"     bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
+	ShipmentID         *pulid.ID              `json:"shipmentId"         bun:"shipment_id,type:VARCHAR(100),nullzero" keel:"shipment_id"`
+	AdditionalChargeID *pulid.ID              `json:"additionalChargeId" bun:"additional_charge_id,type:VARCHAR(100),nullzero" keel:"additional_charge_id"`
+	OrderChargeID      *pulid.ID              `json:"orderChargeId"      bun:"order_charge_id,type:VARCHAR(100),nullzero" keel:"order_charge_id"`
+	ChargeKind         ChargeAllocationKind   `json:"chargeKind"         bun:"charge_kind,type:charge_allocation_kind_enum,notnull" keel:"charge_kind"`
+	BillToCustomerID   pulid.ID               `json:"billToCustomerId"   bun:"bill_to_customer_id,type:VARCHAR(100),notnull" keel:"bill_to_customer_id"`
+	Method             ChargeAllocationMethod `json:"method"             bun:"method,type:charge_allocation_method_enum,notnull" keel:"method"`
+	Percent            decimal.NullDecimal    `json:"percent"            bun:"percent,type:NUMERIC(9,6),nullzero" keel:"percent"`
+	Amount             decimal.NullDecimal    `json:"amount"             bun:"amount,type:NUMERIC(19,4),nullzero" keel:"amount"`
+	Sequence           int16                  `json:"sequence"           bun:"sequence,type:SMALLINT,notnull" keel:"sequence"`
+	InvoiceID          pulid.ID               `json:"invoiceId"          bun:"invoice_id,type:VARCHAR(100),nullzero" keel:"invoice_id,nullzero"`
+	InvoicedAt         *int64                 `json:"invoicedAt"         bun:"invoiced_at,type:BIGINT,nullzero" keel:"invoiced_at"`
+	Version            int64                  `json:"version"            bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt          int64                  `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt          int64                  `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	// AdditionalChargeIndex points at a charge in the same payload that has no
 	// id yet, so a new charge and its split can arrive in one save.
@@ -85,8 +87,8 @@ type ChargeAllocation struct {
 
 	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"   bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization   *tenant.Organization `json:"organization,omitempty"   bun:"rel:belongs-to,join:organization_id=id"`
-	Shipment       *Shipment            `json:"-"                        bun:"rel:belongs-to,join:shipment_id=id"`
-	BillToCustomer *customer.Customer   `json:"billToCustomer,omitempty" bun:"rel:belongs-to,join:bill_to_customer_id=id"`
+	Shipment       *Shipment            `json:"-"                        bun:"rel:belongs-to,join:shipment_id=id" keel:"belongs:shipment_id"`
+	BillToCustomer *customer.Customer   `json:"billToCustomer,omitempty" bun:"rel:belongs-to,join:bill_to_customer_id=id" keel:"belongs:bill_to_customer_id"`
 }
 
 func (a *ChargeAllocation) Validate(multiErr *errortypes.MultiError) {

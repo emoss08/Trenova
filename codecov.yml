@@ -10,11 +10,11 @@ coverage:
 
 ignore:
   - "services/tms/cmd/**/*"
-  - "services/tms/internal/infrastructure/postgres/migrations/**/*"
-  - "services/tms/internal/infrastructure/database/seeds/**/*"
+  - "services/tms/internal/seeds/fixtures/**/*"
+  - "services/tms/internal/seeds/volume/**/*"
   - "services/tms/internal/infrastructure/observability/**/*"
   - "services/tms/internal/pkg/domainregistry/**/*"
-  - "services/tms/internal/pkg/seedhelpers/**/*"
+
   - "services/tms/internal/modules/*/domain/**/*"
   - "shared/testutil/**/*"
   - "**/*_gen.go"

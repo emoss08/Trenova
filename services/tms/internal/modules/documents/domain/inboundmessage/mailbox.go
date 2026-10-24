@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -38,40 +39,41 @@ const (
 // endpoint being a probe for which addresses exist.
 type Mailbox struct {
 	bun.BaseModel             `bun:"table:inbound_mailboxes,alias:imbx" json:"-"`
+	keel.Table                `keel:"inbound_mailboxes"`
 	pagination.CursorValueSet `bun:",embed"                             json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Name           string   `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	Address        string   `json:"address"        bun:"address,type:VARCHAR(255),notnull"`
-	Provider       Provider `json:"provider"       bun:"provider,type:VARCHAR(20),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:imbx_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Name           string   `json:"name"           bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Address        string   `json:"address"        bun:"address,type:VARCHAR(255),notnull" keel:"address"`
+	Provider       Provider `json:"provider"       bun:"provider,type:VARCHAR(20),notnull" keel:"provider"`
 	// TokenHash is the webhook token as stored. The token itself is shown once,
 	// when the mailbox is created or rotated, and never again.
-	TokenHash string `json:"-" bun:"token_hash,type:VARCHAR(128),notnull"`
+	TokenHash string `json:"-" bun:"token_hash,type:VARCHAR(128),notnull" keel:"token_hash"`
 	// SigningSecret is the provider endpoint's own secret, encrypted at rest.
 	//
 	// It belongs to the mailbox rather than to the outbound email integration
 	// because they are different endpoints with separately rotated secrets, and
 	// borrowing one for the other would mean rotating outbound mail silently
 	// stopped inbound mail from being verified.
-	SigningSecret string `json:"-" bun:"signing_secret,type:TEXT,nullzero"`
+	SigningSecret string `json:"-" bun:"signing_secret,type:TEXT,nullzero" keel:"signing_secret,nullzero"`
 	// ProviderAPIKey is the key the mailbox reads message content with,
 	// encrypted at rest. Resend posts only a message's metadata to the
 	// webhook, so its body, headers and attachments are fetched afterwards.
-	ProviderAPIKey string        `json:"-"              bun:"provider_api_key,type:TEXT,nullzero"`
-	Purpose        string        `json:"purpose"        bun:"purpose,type:VARCHAR(255),nullzero"`
-	ReviewPolicy   ReviewPolicy  `json:"reviewPolicy"   bun:"review_policy,type:VARCHAR(30),notnull"`
-	MinConfidence  float64       `json:"minConfidence"  bun:"min_confidence,type:NUMERIC(4,3),notnull"`
-	Status         MailboxStatus `json:"status"         bun:"status,type:VARCHAR(20),notnull"`
-	LastReceivedAt int64         `json:"lastReceivedAt" bun:"last_received_at,type:BIGINT,nullzero"`
-	TestToken      string        `json:"-"              bun:"test_token,type:VARCHAR(64),nullzero"`
-	TestSentAt     int64         `json:"testSentAt"     bun:"test_sent_at,type:BIGINT,nullzero"`
-	TestReceivedAt int64         `json:"testReceivedAt" bun:"test_received_at,type:BIGINT,nullzero"`
-	BlockedSenders []string      `json:"blockedSenders" bun:"blocked_senders,type:JSONB,nullzero"`
-	Version        int64         `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64         `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64         `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ProviderAPIKey string        `json:"-"              bun:"provider_api_key,type:TEXT,nullzero" keel:"provider_api_key,nullzero"`
+	Purpose        string        `json:"purpose"        bun:"purpose,type:VARCHAR(255),nullzero" keel:"purpose,nullzero"`
+	ReviewPolicy   ReviewPolicy  `json:"reviewPolicy"   bun:"review_policy,type:VARCHAR(30),notnull" keel:"review_policy"`
+	MinConfidence  float64       `json:"minConfidence"  bun:"min_confidence,type:NUMERIC(4,3),notnull" keel:"min_confidence"`
+	Status         MailboxStatus `json:"status"         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	LastReceivedAt int64         `json:"lastReceivedAt" bun:"last_received_at,type:BIGINT,nullzero" keel:"last_received_at,nullzero"`
+	TestToken      string        `json:"-"              bun:"test_token,type:VARCHAR(64),nullzero" keel:"test_token,nullzero"`
+	TestSentAt     int64         `json:"testSentAt"     bun:"test_sent_at,type:BIGINT,nullzero" keel:"test_sent_at,nullzero"`
+	TestReceivedAt int64         `json:"testReceivedAt" bun:"test_received_at,type:BIGINT,nullzero" keel:"test_received_at,nullzero"`
+	BlockedSenders []string      `json:"blockedSenders" bun:"blocked_senders,type:JSONB,nullzero" keel:"blocked_senders,jsonb,nullzero"`
+	Version        int64         `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64         `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64         `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -171,6 +173,10 @@ func (m *Mailbox) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (m *Mailbox) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 // ApplyDefaults leaves a mailbox reviewing everything, because a mailbox

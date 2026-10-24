@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -26,28 +27,29 @@ var (
 
 type DistanceOverride struct {
 	bun.BaseModel             `bun:"table:distance_overrides,alias:diso" json:"-"`
+	keel.Table                `keel:"distance_overrides"`
 	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
-	ID                    pulid.ID `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID        pulid.ID `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	OriginLocationID      pulid.ID `json:"originLocationId"      bun:"origin_location_id,type:VARCHAR(100),notnull"`
-	DestinationLocationID pulid.ID `json:"destinationLocationId" bun:"destination_location_id,type:VARCHAR(100),notnull"`
-	CustomerID            pulid.ID `json:"customerId"            bun:"customer_id,type:VARCHAR(100),nullzero"`
-	Distance              float64  `json:"distance"              bun:"distance,type:FLOAT,notnull"`
-	RouteSignature        string   `json:"-"                     bun:"route_signature,type:TEXT,notnull"`
-	Version               int64    `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt             int64    `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64    `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector          string   `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`
+	ID                    pulid.ID `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:do_"`
+	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	OriginLocationID      pulid.ID `json:"originLocationId"      bun:"origin_location_id,type:VARCHAR(100),notnull" keel:"origin_location_id"`
+	DestinationLocationID pulid.ID `json:"destinationLocationId" bun:"destination_location_id,type:VARCHAR(100),notnull" keel:"destination_location_id"`
+	CustomerID            pulid.ID `json:"customerId"            bun:"customer_id,type:VARCHAR(100),nullzero" keel:"customer_id,nullzero"`
+	Distance              float64  `json:"distance"              bun:"distance,type:FLOAT,notnull" keel:"distance"`
+	RouteSignature        string   `json:"-"                     bun:"route_signature,type:TEXT,notnull" keel:"route_signature"`
+	Version               int64    `json:"version"               bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt             int64    `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt             int64    `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector          string   `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
 
 	// Relationships
 	BusinessUnit        *tenant.BusinessUnit    `json:"-"                             bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization        *tenant.Organization    `json:"-"                             bun:"rel:belongs-to,join:organization_id=id"`
-	OriginLocation      *location.Location      `json:"originLocation,omitempty"      bun:"rel:belongs-to,join:origin_location_id=id"`
-	DestinationLocation *location.Location      `json:"destinationLocation,omitempty" bun:"rel:belongs-to,join:destination_location_id=id"`
-	Customer            *customer.Customer      `json:"customer,omitempty"            bun:"rel:belongs-to,join:customer_id=id"`
-	IntermediateStops   []*DistanceOverrideStop `json:"intermediateStops,omitempty"   bun:"rel:has-many,join:id=distance_override_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	OriginLocation      *location.Location      `json:"originLocation,omitempty"      bun:"rel:belongs-to,join:origin_location_id=id" keel:"belongs:origin_location_id"`
+	DestinationLocation *location.Location      `json:"destinationLocation,omitempty" bun:"rel:belongs-to,join:destination_location_id=id" keel:"belongs:destination_location_id"`
+	Customer            *customer.Customer      `json:"customer,omitempty"            bun:"rel:belongs-to,join:customer_id=id" keel:"belongs:customer_id"`
+	IntermediateStops   []*DistanceOverrideStop `json:"intermediateStops,omitempty"   bun:"rel:has-many,join:id=distance_override_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:distance_override_id"`
 }
 
 func (d *DistanceOverride) Validate(multiErr *errortypes.MultiError) {
@@ -116,6 +118,10 @@ func (d *DistanceOverride) BeforeAppendModel(_ context.Context, query bun.Query)
 	}
 
 	return nil
+}
+
+func (d *DistanceOverride) BeforeCreate(ctx context.Context) error {
+	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (d *DistanceOverride) BuildRouteSignature() string {

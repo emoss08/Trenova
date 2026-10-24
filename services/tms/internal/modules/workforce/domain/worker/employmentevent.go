@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -124,32 +125,34 @@ var (
 	_ validationframework.TenantedEntity = (*WorkerEmploymentEvent)(nil)
 )
 
+// Hires, transfers, leave, suspensions and terminations, with who recorded them
 type WorkerEmploymentEvent struct {
 	bun.BaseModel `bun:"table:worker_employment_events,alias:wee" json:"-"`
+	keel.Table    `                                                        keel:"worker_employment_events,report=Parties,label=Employment Event"`
 
-	ID             pulid.ID            `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID            `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
-	Kind           EmploymentEventKind `json:"kind"           bun:"kind,type:worker_employment_event_kind_enum,notnull"`
-	EffectiveAt    int64               `json:"effectiveAt"    bun:"effective_at,type:BIGINT,notnull"`
-	Reason         string              `json:"reason"         bun:"reason,type:VARCHAR(255),nullzero"`
-	Notes          string              `json:"notes"          bun:"notes,type:TEXT,nullzero"`
-	FromValues     map[string]string   `json:"fromValues"     bun:"from_values,type:JSONB,notnull,default:'{}'"`
-	ToValues       map[string]string   `json:"toValues"       bun:"to_values,type:JSONB,notnull,default:'{}'"`
-	DocumentID     pulid.ID            `json:"documentId"     bun:"document_id,type:VARCHAR(100),nullzero"`
-	RecordedByID   pulid.ID            `json:"recordedById"   bun:"recorded_by_id,type:VARCHAR(100),nullzero"`
-	AmendedByID    pulid.ID            `json:"amendedById"    bun:"amended_by_id,type:VARCHAR(100),nullzero"`
-	AmendedAt      *int64              `json:"amendedAt"      bun:"amended_at,type:BIGINT,nullzero"`
-	AmendmentNote  string              `json:"amendmentNote"  bun:"amendment_note,type:VARCHAR(255),nullzero"`
-	Version        int64               `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID            `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:wee_"`
+	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID            `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"                                                  keel:"worker_id"`
+	Kind           EmploymentEventKind `json:"kind"           bun:"kind,type:worker_employment_event_kind_enum,notnull"                                  keel:"kind,label=Event"`
+	EffectiveAt    int64               `json:"effectiveAt"    bun:"effective_at,type:BIGINT,notnull"                                                     keel:"effective_at,label=Effective"`
+	Reason         string              `json:"reason"         bun:"reason,type:VARCHAR(255),nullzero"                                                    keel:"reason,nullzero"`
+	Notes          string              `json:"notes"          bun:"notes,type:TEXT,nullzero"                                                             keel:"notes,nullzero"`
+	FromValues     map[string]string   `json:"fromValues"     bun:"from_values,type:JSONB,notnull,default:'{}'"                                          keel:"from_values,jsonb"`
+	ToValues       map[string]string   `json:"toValues"       bun:"to_values,type:JSONB,notnull,default:'{}'"                                            keel:"to_values,jsonb"`
+	DocumentID     pulid.ID            `json:"documentId"     bun:"document_id,type:VARCHAR(100),nullzero"                                               keel:"document_id,nullzero"`
+	RecordedByID   pulid.ID            `json:"recordedById"   bun:"recorded_by_id,type:VARCHAR(100),nullzero"                                            keel:"recorded_by_id,nullzero"`
+	AmendedByID    pulid.ID            `json:"amendedById"    bun:"amended_by_id,type:VARCHAR(100),nullzero"                                             keel:"amended_by_id,nullzero"`
+	AmendedAt      *int64              `json:"amendedAt"      bun:"amended_at,type:BIGINT,nullzero"                                                      keel:"amended_at"`
+	AmendmentNote  string              `json:"amendmentNote"  bun:"amendment_note,type:VARCHAR(255),nullzero"                                            keel:"amendment_note,nullzero"`
+	Version        int64               `json:"version"        bun:"version,type:BIGINT"                                                                  keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker     *Worker            `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document   *document.Document `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	RecordedBy *tenant.User       `json:"recordedBy,omitempty" bun:"rel:belongs-to,join:recorded_by_id=id"`
-	AmendedBy  *tenant.User       `json:"amendedBy,omitempty"  bun:"rel:belongs-to,join:amended_by_id=id"`
+	Worker     *Worker            `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"   keel:"belongs:worker_id"`
+	Document   *document.Document `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id,noreport"`
+	RecordedBy *tenant.User       `json:"recordedBy,omitempty" bun:"rel:belongs-to,join:recorded_by_id=id"                                                                          keel:"belongs:recorded_by_id,noreport"`
+	AmendedBy  *tenant.User       `json:"amendedBy,omitempty"  bun:"rel:belongs-to,join:amended_by_id=id"                                                                           keel:"belongs:amended_by_id,noreport"`
 }
 
 func (e *WorkerEmploymentEvent) Validate(multiErr *errortypes.MultiError) {
@@ -221,6 +224,10 @@ func (e *WorkerEmploymentEvent) BeforeAppendModel(_ context.Context, query bun.Q
 	}
 
 	return nil
+}
+
+func (e *WorkerEmploymentEvent) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 // EmploymentState is the slice of a worker the events act on, kept small so

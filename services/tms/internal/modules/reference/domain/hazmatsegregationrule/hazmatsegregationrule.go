@@ -3,6 +3,7 @@ package hazmatsegregationrule
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -23,36 +24,37 @@ var (
 
 type HazmatSegregationRule struct {
 	bun.BaseModel `bun:"table:hazmat_segregation_rules,alias:hsr" json:"-"`
+	keel.Table    `keel:"hazmat_segregation_rules"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID               pulid.ID                         `json:"id"               bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID   pulid.ID                         `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID   pulid.ID                         `json:"organizationId"   bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Status           domaintypes.Status               `json:"status"           bun:"status,type:status_enum,notnull,default:'Active'"`
-	Name             string                           `json:"name"             bun:"name,type:VARCHAR(100),notnull"`
-	Description      string                           `json:"description"      bun:"description,type:TEXT"`
-	ExceptionNotes   string                           `json:"exceptionNotes"   bun:"exception_notes,type:TEXT"`
-	ReferenceCode    string                           `json:"referenceCode"    bun:"reference_code,type:VARCHAR(100)"`
-	RegulationSource string                           `json:"regulationSource" bun:"regulation_source,type:VARCHAR(100)"`
-	DistanceUnit     string                           `json:"distanceUnit"     bun:"distance_unit,type:VARCHAR(10)"`
-	ClassA           hazardousmaterial.HazardousClass `json:"classA"           bun:"class_a,type:hazardous_class_enum,notnull"`
-	ClassB           hazardousmaterial.HazardousClass `json:"classB"           bun:"class_b,type:hazardous_class_enum,notnull"`
-	SearchVector     string                           `json:"-"                bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank             string                           `json:"-"                bun:"rank,type:VARCHAR(100),scanonly"`
-	SegregationType  SegregationType                  `json:"segregationType"  bun:"segregation_type,type:segregation_type_enum,notnull"`
-	HasExceptions    bool                             `json:"hasExceptions"    bun:"has_exceptions,type:BOOLEAN"`
-	Version          int64                            `json:"version"          bun:"version,type:BIGINT"`
-	CreatedAt        int64                            `json:"createdAt"        bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64                            `json:"updatedAt"        bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	HazmatAID        *pulid.ID                        `json:"hazmatAId"        bun:"hazmat_a_id,type:VARCHAR(100),nullzero"`
-	HazmatBID        *pulid.ID                        `json:"hazmatBId"        bun:"hazmat_b_id,type:VARCHAR(100),nullzero"`
-	MinimumDistance  *float64                         `json:"minimumDistance"  bun:"minimum_distance,type:FLOAT,nullzero"`
+	ID               pulid.ID                         `json:"id"               bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:hsr_"`
+	BusinessUnitID   pulid.ID                         `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID                         `json:"organizationId"   bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	Status           domaintypes.Status               `json:"status"           bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
+	Name             string                           `json:"name"             bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Description      string                           `json:"description"      bun:"description,type:TEXT" keel:"description,nullzero"`
+	ExceptionNotes   string                           `json:"exceptionNotes"   bun:"exception_notes,type:TEXT" keel:"exception_notes,nullzero"`
+	ReferenceCode    string                           `json:"referenceCode"    bun:"reference_code,type:VARCHAR(100)" keel:"reference_code,nullzero"`
+	RegulationSource string                           `json:"regulationSource" bun:"regulation_source,type:VARCHAR(100)" keel:"regulation_source,nullzero"`
+	DistanceUnit     string                           `json:"distanceUnit"     bun:"distance_unit,type:VARCHAR(10)" keel:"distance_unit,nullzero"`
+	ClassA           hazardousmaterial.HazardousClass `json:"classA"           bun:"class_a,type:hazardous_class_enum,notnull" keel:"class_a"`
+	ClassB           hazardousmaterial.HazardousClass `json:"classB"           bun:"class_b,type:hazardous_class_enum,notnull" keel:"class_b"`
+	SearchVector     string                           `json:"-"                bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank             string                           `json:"-"                bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	SegregationType  SegregationType                  `json:"segregationType"  bun:"segregation_type,type:segregation_type_enum,notnull" keel:"segregation_type"`
+	HasExceptions    bool                             `json:"hasExceptions"    bun:"has_exceptions,type:BOOLEAN" keel:"has_exceptions"`
+	Version          int64                            `json:"version"          bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt        int64                            `json:"createdAt"        bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64                            `json:"updatedAt"        bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	HazmatAID        *pulid.ID                        `json:"hazmatAId"        bun:"hazmat_a_id,type:VARCHAR(100),nullzero" keel:"hazmat_a_id"`
+	HazmatBID        *pulid.ID                        `json:"hazmatBId"        bun:"hazmat_b_id,type:VARCHAR(100),nullzero" keel:"hazmat_b_id"`
+	MinimumDistance  *float64                         `json:"minimumDistance"  bun:"minimum_distance,type:FLOAT,nullzero" keel:"minimum_distance"`
 
 	BusinessUnit    *tenant.BusinessUnit                 `json:"businessUnit,omitempty"    bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization    *tenant.Organization                 `json:"organization,omitempty"    bun:"rel:belongs-to,join:organization_id=id"`
-	HazmatAMaterial *hazardousmaterial.HazardousMaterial `json:"hazmatAMaterial,omitempty" bun:"rel:belongs-to,join:hazmat_a_id=id"`
-	HazmatBMaterial *hazardousmaterial.HazardousMaterial `json:"hazmatBMaterial,omitempty" bun:"rel:belongs-to,join:hazmat_b_id=id"`
+	HazmatAMaterial *hazardousmaterial.HazardousMaterial `json:"hazmatAMaterial,omitempty" bun:"rel:belongs-to,join:hazmat_a_id=id" keel:"belongs:hazmat_a_id"`
+	HazmatBMaterial *hazardousmaterial.HazardousMaterial `json:"hazmatBMaterial,omitempty" bun:"rel:belongs-to,join:hazmat_b_id=id" keel:"belongs:hazmat_b_id"`
 }
 
 func (hsr *HazmatSegregationRule) Validate(multiErr *errortypes.MultiError) {

@@ -8,10 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
@@ -28,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -55,17 +52,8 @@ type seededPaymentShipment struct {
 }
 
 func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -305,17 +293,8 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 }
 
 func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -536,17 +515,8 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 }
 
 func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -835,17 +805,8 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 }
 
 func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -1091,17 +1052,8 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 }
 
 func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -1324,17 +1276,8 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 }
 
 func TestListAndGetCustomerPayments(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()

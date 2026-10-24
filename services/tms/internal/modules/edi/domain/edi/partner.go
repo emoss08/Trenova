@@ -3,6 +3,7 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -22,43 +23,44 @@ var (
 
 type EDIPartner struct {
 	bun.BaseModel             `json:"-" bun:"table:edi_partners,alias:ep"`
+	keel.Table                `keel:"edi_partners"`
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID                      pulid.ID           `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID          pulid.ID           `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID          pulid.ID           `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Kind                    PartnerKind        `json:"kind"                    bun:"kind,type:edi_partner_kind_enum,notnull,default:'External'"`
-	Status                  domaintypes.Status `json:"status"                  bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code                    string             `json:"code"                    bun:"code,type:VARCHAR(100),notnull"`
-	Name                    string             `json:"name"                    bun:"name,type:VARCHAR(200),notnull"`
-	Description             string             `json:"description"             bun:"description,type:TEXT,nullzero"`
-	InternalOrganizationID  pulid.ID           `json:"internalOrganizationId"  bun:"internal_organization_id,type:VARCHAR(100),nullzero"`
-	EDIConnectionID         pulid.ID           `json:"ediConnectionId"         bun:"edi_connection_id,type:VARCHAR(100),nullzero"`
-	CustomerID              pulid.ID           `json:"customerId"              bun:"customer_id,type:VARCHAR(100),nullzero"`
-	DefaultTransportID      pulid.ID           `json:"defaultTransportId"      bun:"default_transport_id,type:VARCHAR(100),nullzero"`
-	DefaultMappingProfileID pulid.ID           `json:"defaultMappingProfileId" bun:"default_mapping_profile_id,type:VARCHAR(100),nullzero"`
-	Timezone                string             `json:"timezone"                bun:"timezone,type:VARCHAR(100),nullzero"`
-	Country                 string             `json:"country"                 bun:"country,type:VARCHAR(2),notnull,default:'US'"`
-	ContactName             string             `json:"contactName"             bun:"contact_name,type:VARCHAR(150),nullzero"`
-	ContactEmail            string             `json:"contactEmail"            bun:"contact_email,type:VARCHAR(255),nullzero"`
-	ContactPhone            string             `json:"contactPhone"            bun:"contact_phone,type:VARCHAR(30),nullzero"`
-	EnabledForInbound       bool               `json:"enabledForInbound"       bun:"enabled_for_inbound,type:BOOLEAN,notnull"`
-	EnabledForOutbound      bool               `json:"enabledForOutbound"      bun:"enabled_for_outbound,type:BOOLEAN,notnull"`
-	Settings                map[string]any     `json:"settings"                bun:"settings,type:JSONB,notnull,default:'{}'"`
-	SearchVector            string             `json:"-"                       bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                    string             `json:"-"                       bun:"rank,type:VARCHAR(100),scanonly"`
-	Version                 int64              `json:"version"                 bun:"version,type:BIGINT"`
-	CreatedAt               int64              `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt               int64              `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                      pulid.ID           `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edip_"`
+	BusinessUnitID          pulid.ID           `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID           `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	Kind                    PartnerKind        `json:"kind"                    bun:"kind,type:edi_partner_kind_enum,notnull,default:'External'" keel:"kind"`
+	Status                  domaintypes.Status `json:"status"                  bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
+	Code                    string             `json:"code"                    bun:"code,type:VARCHAR(100),notnull" keel:"code"`
+	Name                    string             `json:"name"                    bun:"name,type:VARCHAR(200),notnull" keel:"name"`
+	Description             string             `json:"description"             bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	InternalOrganizationID  pulid.ID           `json:"internalOrganizationId"  bun:"internal_organization_id,type:VARCHAR(100),nullzero" keel:"internal_organization_id,nullzero"`
+	EDIConnectionID         pulid.ID           `json:"ediConnectionId"         bun:"edi_connection_id,type:VARCHAR(100),nullzero" keel:"edi_connection_id,nullzero"`
+	CustomerID              pulid.ID           `json:"customerId"              bun:"customer_id,type:VARCHAR(100),nullzero" keel:"customer_id,nullzero"`
+	DefaultTransportID      pulid.ID           `json:"defaultTransportId"      bun:"default_transport_id,type:VARCHAR(100),nullzero" keel:"default_transport_id,nullzero"`
+	DefaultMappingProfileID pulid.ID           `json:"defaultMappingProfileId" bun:"default_mapping_profile_id,type:VARCHAR(100),nullzero" keel:"default_mapping_profile_id,nullzero"`
+	Timezone                string             `json:"timezone"                bun:"timezone,type:VARCHAR(100),nullzero" keel:"timezone,nullzero"`
+	Country                 string             `json:"country"                 bun:"country,type:VARCHAR(2),notnull,default:'US'" keel:"country"`
+	ContactName             string             `json:"contactName"             bun:"contact_name,type:VARCHAR(150),nullzero" keel:"contact_name,nullzero"`
+	ContactEmail            string             `json:"contactEmail"            bun:"contact_email,type:VARCHAR(255),nullzero" keel:"contact_email,nullzero"`
+	ContactPhone            string             `json:"contactPhone"            bun:"contact_phone,type:VARCHAR(30),nullzero" keel:"contact_phone,nullzero"`
+	EnabledForInbound       bool               `json:"enabledForInbound"       bun:"enabled_for_inbound,type:BOOLEAN,notnull" keel:"enabled_for_inbound"`
+	EnabledForOutbound      bool               `json:"enabledForOutbound"      bun:"enabled_for_outbound,type:BOOLEAN,notnull" keel:"enabled_for_outbound"`
+	Settings                map[string]any     `json:"settings"                bun:"settings,type:JSONB,notnull,default:'{}'" keel:"settings,jsonb"`
+	SearchVector            string             `json:"-"                       bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                    string             `json:"-"                       bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	Version                 int64              `json:"version"                 bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt               int64              `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt               int64              `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit         *tenant.BusinessUnit     `json:"businessUnit,omitempty"         bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization         *tenant.Organization     `json:"organization,omitempty"         bun:"rel:belongs-to,join:organization_id=id"`
-	InternalOrganization *tenant.Organization     `json:"internalOrganization,omitempty" bun:"rel:belongs-to,join:internal_organization_id=id"`
-	Customer             *customer.Customer       `json:"customer,omitempty"             bun:"rel:belongs-to,join:customer_id=id"`
-	Connection           *EDIConnection           `json:"connection,omitempty"           bun:"rel:belongs-to,join:edi_connection_id=id"`
-	DefaultTransport     *EDICommunicationProfile `json:"defaultTransport,omitempty"     bun:"rel:belongs-to,join:default_transport_id=id"`
-	MappingProfile       *EDIMappingProfile       `json:"mappingProfile,omitempty"       bun:"rel:has-one,join:id=edi_partner_id"`
-	MappingEntries       []*EDIMappingProfileItem `json:"mappingEntries,omitempty"       bun:"rel:has-many,join:id=edi_partner_id"`
+	InternalOrganization *tenant.Organization     `json:"internalOrganization,omitempty" bun:"rel:belongs-to,join:internal_organization_id=id" keel:"belongs:internal_organization_id"`
+	Customer             *customer.Customer       `json:"customer,omitempty"             bun:"rel:belongs-to,join:customer_id=id" keel:"belongs:customer_id"`
+	Connection           *EDIConnection           `json:"connection,omitempty"           bun:"rel:belongs-to,join:edi_connection_id=id" keel:"belongs:edi_connection_id"`
+	DefaultTransport     *EDICommunicationProfile `json:"defaultTransport,omitempty"     bun:"rel:belongs-to,join:default_transport_id=id" keel:"belongs:default_transport_id"`
+	MappingProfile       *EDIMappingProfile       `json:"mappingProfile,omitempty"       bun:"rel:has-one,join:id=edi_partner_id" keel:"one:edi_partner_id"`
+	MappingEntries       []*EDIMappingProfileItem `json:"mappingEntries,omitempty"       bun:"rel:has-many,join:id=edi_partner_id" keel:"many:edi_partner_id"`
 }
 
 type InternalPartnerPair struct {
@@ -148,6 +150,10 @@ func (p *EDIPartner) BeforeAppendModel(_ context.Context, query bun.Query) error
 	}
 
 	return nil
+}
+
+func (p *EDIPartner) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (p *EDIPartner) GetCreatedAt() int64 {

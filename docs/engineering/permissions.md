@@ -56,9 +56,12 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    hides a module in one place. Names, descriptions, categories and operation labels are
    translated by `GET /permissions/resources` and `GET /permissions/bundles` from the
    request's locale; the client renders them as they arrive.
-2. Do not write a migration to grant it to administrators. `trenova db migrate` runs
-   `ReconcileAdminRoles` after the migrations: every system role named
-   "Organization Administrator" is given every registry resource and operation it lacks.
+2. Do not write a migration to grant it to administrators. The `administrator_permissions`
+   reference seed (`internal/seeds/reference`) is fingerprinted by the registry's grants
+   (`Registry.GrantFingerprint`), so the next `trenova-db up` reruns it once per organization
+   (`ReconcileAdminRole`): every system role named "Organization Administrator" is given every
+   registry resource and operation it lacks. The permission cache keys carry the same
+   fingerprint, so no cached grant outlives the change.
    Grants beyond the registry are left alone for a person to review, and other system
    roles (the driver portal role) are never touched.
 3. Check it where the work happens: `RequirePermission` on the route or in the resolver.
@@ -79,7 +82,7 @@ things. The engine lets a grant on the parent satisfy a check on the child
 (`Registry.GetEffectiveResource`, `engine.resolveResourcePermission`), so worker read is
 also read on a worker's credentials and timesheets. And `Registry.PartOf` treats a record
 of the child carried by one of its family as part of it rather than a linked record, so the
-GraphQL field guard, the REST response guard and the report catalog's `withinRecord` show
+GraphQL field guard, the REST response guard and the report policy's `withinRecord` kinds show
 it whole to whoever may read the carrier.
 
 Give a resource a parent only when everyone who may read the parent may read all of it.
@@ -119,12 +122,12 @@ and `hr.team` grants them for a driver manager's team.
 and cover work.
 
 Taking a parent away moves no stored grant: administrators already hold every registry
-resource, and `trenova db migrate` (`ReconcileAdminRoles`) adds any that is missing, and
+resource, and the `administrator_permissions` seed (`ReconcileAdminRole`) adds any that is missing, and
 other roles lose what they reached only through the parent until a bundle or a person
 grants it. `TestJobTemplates_KindsGrantedOnTheirOwn` holds every stock template's effective
 operations and scope on each of these kinds; a new template fails it until it has a row.
 
-`GetResourcePermissions`, which the report compiler, the report catalog, the agent dataset
+`GetResourcePermissions`, which the report policy (`reportaccess`, in one batch), the agent dataset
 tools and `GET /me/permissions/:resource` read, reports a kind's own grant together with the
 operations its parent's grant implies, with the scope the engine applies to a read
 (`resourcedetail.go`). `TestGetResourcePermissions_AgreesWithCheckOnEveryKind` holds it to
@@ -192,7 +195,7 @@ definition's `Scopes`:
 | `shipment`, `order` | own: records whose `owner_id` is the person | database |
 | `invoice` | own: invoices on a shipment or order the person owns (the header's or a line's) | database |
 | `worker` | team: workers the person manages, directly or through a fleet code, or who were delegated to them | database |
-| `capture_batch`, `report` | own | application (`captureservice`, the report compiler) |
+| `capture_batch`, `report` | own | application (`captureservice`, `reportaccess`; see [reporting](reporting.md#access)) |
 | `worker_schedule`, `timesheet`, `profile_change_request`, `worker_leave`, `driver_portal` | team | application (`RequireTeamScope`, `RequireListTeamScope`, `teamscope.Guard`, `teamscope.ListGuard`) |
 
 **Application enforcement.** A team is the workers a person manages directly
@@ -387,7 +390,8 @@ one package, `refview`, which the GraphQL field guard asks for people and agents
 REST response guard (`internal/api/responseguard`) asks for every REST response. Global search,
 shipment analytics and reports ask it through `permissionports.ReferenceViews` (reports through
 `reporting/reportaccess`, which the compiler, the builder's catalog and the agent's dataset tools
-share, so the builder offers exactly what the compiler accepts); an insight names
+share, so the builder offers exactly what the compiler accepts; see
+[reporting.md](reporting.md#access)); an insight names
 records beside figures about them, so its reader needs read on every kind its detector declares. They are
 fixed in the code; an organization decides who sees whole linked records through bundles and job
 templates, and the role's sensitivity ceiling still applies inside a view. Built-in bundles grant
@@ -498,7 +502,7 @@ its carrier assignment's pay) is not gated: each figure is the working number of
 | Dispatch control | `tenderCounterMarginFloorPercent` | `dispatchcontrol.WithholdFields`/`KeepFields` |
 | Rate quotes and shopping (REST) | a quote's `costAmount`, `marginAmount`, `marginPercent` and trace totals; an option's margin verdict; the shop's `sellTotal`; ranking by `BestMargin` (refused) | `ratequote.RateQuote` and `ShopOption`/`ShopResult.WithholdFields`, `ratequoteports.AuthorizeShopStrategy` |
 | Carrier assignment | the margin floor refusal names no figure | `carrierassignmentservice.enforceMarginFloor` |
-| Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `protected: Margins` in `reportcatalog.yml` |
+| Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `permission.ProtectedPaths`, applied by `reportaccess.Resolver.Protection` |
 | Agent tools | `carrier_shop` margins, sell total and `BestMargin`; `rate_explain` margin | `fieldAccess.groups`, held to the agent's data access |
 | Audit trail | every field above in an entry's previous and current state and its changes | `permission.ProtectedPaths`, `audit.Entry.WithholdFields` at read time |
 

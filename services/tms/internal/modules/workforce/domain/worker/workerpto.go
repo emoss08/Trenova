@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -24,36 +25,38 @@ var (
 	_ validationframework.TenantedEntity = (*WorkerPTO)(nil)
 )
 
+// Time-off requests and the days booked against them
 type WorkerPTO struct {
 	bun.BaseModel             `bun:"table:worker_pto,alias:wpto" json:"-"`
+	keel.Table                `                                           keel:"worker_pto,report=Parties,label=Time Off Request"`
 	pagination.CursorValueSet `bun:",embed"                      json:"-"`
 
-	ID                 pulid.ID            `json:"id"                 bun:"id,pk,type:VARCHAR(100)"`
-	WorkerID           pulid.ID            `json:"workerId"           bun:"worker_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID            `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID     pulid.ID            `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	ApproverID         pulid.ID            `json:"approverId"         bun:"approver_id,type:VARCHAR(100),nullzero"`
-	RejectorID         pulid.ID            `json:"rejectorId"         bun:"rejector_id,type:VARCHAR(100),nullzero"`
-	CancelledByID      pulid.ID            `json:"cancelledById"      bun:"cancelled_by_id,type:VARCHAR(100),nullzero"`
-	Status             PTOStatus           `json:"status"             bun:"status,type:worker_pto_status_enum,notnull,default:'Requested'"`
-	Type               PTOType             `json:"type"               bun:"type,type:worker_pto_type_enum,notnull,default:'Vacation'"`
-	StartDate          int64               `json:"startDate"          bun:"start_date,type:BIGINT,notnull"`
-	EndDate            int64               `json:"endDate"            bun:"end_date,type:BIGINT,notnull"`
-	Reason             string              `json:"reason"             bun:"reason,type:VARCHAR(255),notnull"`
-	RejectionReason    string              `json:"rejectionReason"    bun:"rejection_reason,type:VARCHAR(255),nullzero"`
-	CancellationReason string              `json:"cancellationReason" bun:"cancellation_reason,type:VARCHAR(255),nullzero"`
-	Days               decimal.Decimal     `json:"days"               bun:"days,type:NUMERIC(6,2),notnull,default:0"`
-	BalanceAfterDays   decimal.NullDecimal `json:"balanceAfterDays"   bun:"balance_after_days,type:NUMERIC(8,2),nullzero"`
-	AutoApproved       bool                `json:"autoApproved"       bun:"auto_approved,type:BOOLEAN,notnull"`
-	SearchVector       string              `json:"-"                  bun:"search_vector,type:TSVECTOR,scanonly"`
-	Version            int64               `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64               `json:"createdAt"          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64               `json:"updatedAt"          bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                 pulid.ID            `json:"id"                 bun:"id,pk,type:VARCHAR(100)"                                                  keel:"id,pk,autoid:wrkpto_"`
+	WorkerID           pulid.ID            `json:"workerId"           bun:"worker_id,pk,type:VARCHAR(100),notnull"                                   keel:"worker_id,pk"`
+	BusinessUnitID     pulid.ID            `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),notnull,pk"                            keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID            `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),notnull,pk"                             keel:"organization_id,pk,tenant"`
+	ApproverID         pulid.ID            `json:"approverId"         bun:"approver_id,type:VARCHAR(100),nullzero"                                   keel:"approver_id,nullzero"`
+	RejectorID         pulid.ID            `json:"rejectorId"         bun:"rejector_id,type:VARCHAR(100),nullzero"                                   keel:"rejector_id,nullzero"`
+	CancelledByID      pulid.ID            `json:"cancelledById"      bun:"cancelled_by_id,type:VARCHAR(100),nullzero"                               keel:"cancelled_by_id,nullzero"`
+	Status             PTOStatus           `json:"status"             bun:"status,type:worker_pto_status_enum,notnull,default:'Requested'"           keel:"status"`
+	Type               PTOType             `json:"type"               bun:"type,type:worker_pto_type_enum,notnull,default:'Vacation'"                keel:"type"`
+	StartDate          int64               `json:"startDate"          bun:"start_date,type:BIGINT,notnull"                                           keel:"start_date,label=Starts"`
+	EndDate            int64               `json:"endDate"            bun:"end_date,type:BIGINT,notnull"                                             keel:"end_date,label=Ends"`
+	Reason             string              `json:"reason"             bun:"reason,type:VARCHAR(255),notnull"                                         keel:"reason"`
+	RejectionReason    string              `json:"rejectionReason"    bun:"rejection_reason,type:VARCHAR(255),nullzero"                              keel:"rejection_reason,nullzero"`
+	CancellationReason string              `json:"cancellationReason" bun:"cancellation_reason,type:VARCHAR(255),nullzero"                           keel:"cancellation_reason,nullzero"`
+	Days               decimal.Decimal     `json:"days"               bun:"days,type:NUMERIC(6,2),notnull,default:0"                                 keel:"days"`
+	BalanceAfterDays   decimal.NullDecimal `json:"balanceAfterDays"   bun:"balance_after_days,type:NUMERIC(8,2),nullzero"                            keel:"balance_after_days"`
+	AutoApproved       bool                `json:"autoApproved"       bun:"auto_approved,type:BOOLEAN,notnull"                                       keel:"auto_approved"`
+	SearchVector       string              `json:"-"                  bun:"search_vector,type:TSVECTOR,scanonly"                                     keel:"search_vector,tsvector,readonly,noselect"`
+	Version            int64               `json:"version"            bun:"version,type:BIGINT"                                                      keel:"version,version"`
+	CreatedAt          int64               `json:"createdAt"          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt          int64               `json:"updatedAt"          bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker      *Worker      `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id"`
-	Approver    *tenant.User `json:"approver,omitempty"    bun:"rel:belongs-to,join:approver_id=id"`
-	Rejector    *tenant.User `json:"rejector,omitempty"    bun:"rel:belongs-to,join:rejector_id=id"`
-	CancelledBy *tenant.User `json:"cancelledBy,omitempty" bun:"rel:belongs-to,join:cancelled_by_id=id"`
+	Worker      *Worker      `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id"       keel:"belongs:worker_id"`
+	Approver    *tenant.User `json:"approver,omitempty"    bun:"rel:belongs-to,join:approver_id=id"     keel:"belongs:approver_id,noreport"`
+	Rejector    *tenant.User `json:"rejector,omitempty"    bun:"rel:belongs-to,join:rejector_id=id"     keel:"belongs:rejector_id,noreport"`
+	CancelledBy *tenant.User `json:"cancelledBy,omitempty" bun:"rel:belongs-to,join:cancelled_by_id=id" keel:"belongs:cancelled_by_id,noreport"`
 }
 
 func (wpto *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
@@ -126,6 +129,10 @@ func (wpto *WorkerPTO) BeforeAppendModel(_ context.Context, query bun.Query) err
 	}
 
 	return nil
+}
+
+func (wpto *WorkerPTO) BeforeCreate(ctx context.Context) error {
+	return wpto.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (wpto *WorkerPTO) GetID() pulid.ID {

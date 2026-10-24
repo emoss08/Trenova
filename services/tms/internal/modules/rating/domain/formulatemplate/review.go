@@ -4,6 +4,7 @@ import (
 	"context"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -67,22 +68,23 @@ const MaxReviewerNoteLength = 4000
 // round, against which approved version, and what they said about it.
 type Review struct {
 	bun.BaseModel `bun:"table:formula_template_reviews,alias:ftr" json:"-"`
+	keel.Table    `keel:"formula_template_reviews"`
 
-	ID                  pulid.ID       `json:"id"                  bun:"id,pk,type:VARCHAR(100)"`
-	TemplateID          pulid.ID       `json:"templateId"          bun:"template_id,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID       `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID      pulid.ID       `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	Round               int32          `json:"round"               bun:"round,type:SMALLINT,notnull"`
-	Decision            ReviewDecision `json:"decision"            bun:"decision,type:formula_template_review_decision_enum,notnull"`
-	ActorID             *pulid.ID      `json:"actorId"             bun:"actor_id,type:VARCHAR(100),nullzero"`
-	Comment             string         `json:"comment"             bun:"comment,type:TEXT,nullzero"`
-	BaseVersionNumber   int64          `json:"baseVersionNumber"   bun:"base_version_number,type:BIGINT,notnull,default:0"`
-	RequestedReviewerID *pulid.ID      `json:"requestedReviewerId" bun:"requested_reviewer_id,type:VARCHAR(100),nullzero"`
-	ReviewerNote        string         `json:"reviewerNote"        bun:"reviewer_note,type:TEXT,nullzero"`
-	CreatedAt           int64          `json:"createdAt"           bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID       `json:"id"                  bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ftr_"`
+	TemplateID          pulid.ID       `json:"templateId"          bun:"template_id,type:VARCHAR(100),notnull" keel:"template_id"`
+	OrganizationID      pulid.ID       `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	BusinessUnitID      pulid.ID       `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	Round               int32          `json:"round"               bun:"round,type:SMALLINT,notnull" keel:"round"`
+	Decision            ReviewDecision `json:"decision"            bun:"decision,type:formula_template_review_decision_enum,notnull" keel:"decision"`
+	ActorID             *pulid.ID      `json:"actorId"             bun:"actor_id,type:VARCHAR(100),nullzero" keel:"actor_id"`
+	Comment             string         `json:"comment"             bun:"comment,type:TEXT,nullzero" keel:"comment,nullzero"`
+	BaseVersionNumber   int64          `json:"baseVersionNumber"   bun:"base_version_number,type:BIGINT,notnull,default:0" keel:"base_version_number"`
+	RequestedReviewerID *pulid.ID      `json:"requestedReviewerId" bun:"requested_reviewer_id,type:VARCHAR(100),nullzero" keel:"requested_reviewer_id"`
+	ReviewerNote        string         `json:"reviewerNote"        bun:"reviewer_note,type:TEXT,nullzero" keel:"reviewer_note,nullzero"`
+	CreatedAt           int64          `json:"createdAt"           bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	Actor             *tenant.User `json:"actor,omitempty"   bun:"rel:belongs-to,join:actor_id=id"`
-	RequestedReviewer *tenant.User `json:"requestedReviewer" bun:"rel:belongs-to,join:requested_reviewer_id=id"`
+	Actor             *tenant.User `json:"actor,omitempty"   bun:"rel:belongs-to,join:actor_id=id" keel:"belongs:actor_id"`
+	RequestedReviewer *tenant.User `json:"requestedReviewer" bun:"rel:belongs-to,join:requested_reviewer_id=id" keel:"belongs:requested_reviewer_id"`
 }
 
 func (r *Review) Validate(multiErr *errortypes.MultiError) {

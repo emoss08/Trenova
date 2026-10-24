@@ -3,6 +3,7 @@ package detention
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,47 +27,48 @@ const (
 // receipt is what makes the charge collectable.
 type DetentionNotice struct {
 	bun.BaseModel `bun:"table:detention_notices,alias:dtn" json:"-"`
+	keel.Table    `keel:"detention_notices"`
 
-	ID                    pulid.ID             `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID        pulid.ID             `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID        pulid.ID             `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	DetentionOccurrenceID pulid.ID             `json:"detentionOccurrenceId" bun:"detention_occurrence_id,type:VARCHAR(100),notnull"`
-	ThreadKey             string               `json:"threadKey"             bun:"thread_key,type:VARCHAR(120),notnull"`
-	Kind                  NoticeKind           `json:"kind"                  bun:"kind,type:detention_notice_kind_enum,notnull"`
-	Channel               NoticeChannel        `json:"channel"               bun:"channel,type:detention_notice_channel_enum,notnull,default:'Email'"`
-	DeliveryStatus        NoticeDeliveryStatus `json:"deliveryStatus"        bun:"delivery_status,type:detention_notice_delivery_status_enum,notnull,default:'Queued'"`
-	Recipients            []string             `json:"recipients"            bun:"recipients,type:JSONB,nullzero"`
-	Subject               string               `json:"subject"               bun:"subject,type:VARCHAR(255),notnull"`
-	Body                  string               `json:"body"                  bun:"body,type:TEXT,notnull"`
+	ID                    pulid.ID             `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dtn_"`
+	BusinessUnitID        pulid.ID             `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID             `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	DetentionOccurrenceID pulid.ID             `json:"detentionOccurrenceId" bun:"detention_occurrence_id,type:VARCHAR(100),notnull" keel:"detention_occurrence_id"`
+	ThreadKey             string               `json:"threadKey"             bun:"thread_key,type:VARCHAR(120),notnull" keel:"thread_key"`
+	Kind                  NoticeKind           `json:"kind"                  bun:"kind,type:detention_notice_kind_enum,notnull" keel:"kind"`
+	Channel               NoticeChannel        `json:"channel"               bun:"channel,type:detention_notice_channel_enum,notnull,default:'Email'" keel:"channel"`
+	DeliveryStatus        NoticeDeliveryStatus `json:"deliveryStatus"        bun:"delivery_status,type:detention_notice_delivery_status_enum,notnull,default:'Queued'" keel:"delivery_status"`
+	Recipients            []string             `json:"recipients"            bun:"recipients,type:JSONB,nullzero" keel:"recipients,jsonb,nullzero"`
+	Subject               string               `json:"subject"               bun:"subject,type:VARCHAR(255),notnull" keel:"subject"`
+	Body                  string               `json:"body"                  bun:"body,type:TEXT,notnull" keel:"body"`
 	// BodyHTML snapshots the rendered HTML alongside the plain text.
 	//
 	// It exists because the send path used to rebuild HTML by wrapping Body in
 	// <pre> with no escaping, which turned any angle bracket in a facility or
 	// customer name into markup. Storing what was actually rendered means the
 	// sender interpolates nothing.
-	BodyHTML string `json:"bodyHtml" bun:"body_html,type:TEXT,nullzero"`
+	BodyHTML string `json:"bodyHtml" bun:"body_html,type:TEXT,nullzero" keel:"body_html,nullzero"`
 	// TemplateVersionID names the template that produced this notice, so a
 	// disputed charge can be traced back to the exact wording that was sent.
-	TemplateVersionID *pulid.ID `json:"templateVersionId" bun:"template_version_id,type:VARCHAR(100),nullzero"`
+	TemplateVersionID *pulid.ID `json:"templateVersionId" bun:"template_version_id,type:VARCHAR(100),nullzero" keel:"template_version_id"`
 	// PDFDocumentID is the stored notice PDF, when the policy attaches one.
-	PDFDocumentID *pulid.ID `json:"pdfDocumentId" bun:"pdf_document_id,type:VARCHAR(100),nullzero"`
+	PDFDocumentID *pulid.ID `json:"pdfDocumentId" bun:"pdf_document_id,type:VARCHAR(100),nullzero" keel:"pdf_document_id"`
 
-	ScheduledFor         int64               `json:"scheduledFor"         bun:"scheduled_for,type:BIGINT,notnull"`
-	SentAt               *int64              `json:"sentAt"               bun:"sent_at,type:BIGINT,nullzero"`
-	DeliveredAt          *int64              `json:"deliveredAt"          bun:"delivered_at,type:BIGINT,nullzero"`
-	OpenedAt             *int64              `json:"openedAt"             bun:"opened_at,type:BIGINT,nullzero"`
-	FailedAt             *int64              `json:"failedAt"             bun:"failed_at,type:BIGINT,nullzero"`
-	FailureReason        string              `json:"failureReason"        bun:"failure_reason,type:TEXT,nullzero"`
-	ProviderMessageID    string              `json:"providerMessageId"    bun:"provider_message_id,type:VARCHAR(255),nullzero"`
-	SentByID             *pulid.ID           `json:"sentById"             bun:"sent_by_id,type:VARCHAR(100),nullzero"`
-	WasAutomatic         bool                `json:"wasAutomatic"         bun:"was_automatic,type:BOOLEAN,notnull"`
-	SatisfiesRequirement bool                `json:"satisfiesRequirement" bun:"satisfies_requirement,type:BOOLEAN,notnull"`
-	QuotedFreeMinutes    int32               `json:"quotedFreeMinutes"    bun:"quoted_free_minutes,type:INTEGER,notnull"`
-	QuotedRate           decimal.NullDecimal `json:"quotedRate"           bun:"quoted_rate,type:NUMERIC(19,4),nullzero"`
-	QuotedAmount         decimal.NullDecimal `json:"quotedAmount"         bun:"quoted_amount,type:NUMERIC(19,4),nullzero"`
-	Version              int64               `json:"version"              bun:"version,type:BIGINT"`
-	CreatedAt            int64               `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ScheduledFor         int64               `json:"scheduledFor"         bun:"scheduled_for,type:BIGINT,notnull" keel:"scheduled_for"`
+	SentAt               *int64              `json:"sentAt"               bun:"sent_at,type:BIGINT,nullzero" keel:"sent_at"`
+	DeliveredAt          *int64              `json:"deliveredAt"          bun:"delivered_at,type:BIGINT,nullzero" keel:"delivered_at"`
+	OpenedAt             *int64              `json:"openedAt"             bun:"opened_at,type:BIGINT,nullzero" keel:"opened_at"`
+	FailedAt             *int64              `json:"failedAt"             bun:"failed_at,type:BIGINT,nullzero" keel:"failed_at"`
+	FailureReason        string              `json:"failureReason"        bun:"failure_reason,type:TEXT,nullzero" keel:"failure_reason,nullzero"`
+	ProviderMessageID    string              `json:"providerMessageId"    bun:"provider_message_id,type:VARCHAR(255),nullzero" keel:"provider_message_id,nullzero"`
+	SentByID             *pulid.ID           `json:"sentById"             bun:"sent_by_id,type:VARCHAR(100),nullzero" keel:"sent_by_id"`
+	WasAutomatic         bool                `json:"wasAutomatic"         bun:"was_automatic,type:BOOLEAN,notnull" keel:"was_automatic"`
+	SatisfiesRequirement bool                `json:"satisfiesRequirement" bun:"satisfies_requirement,type:BOOLEAN,notnull" keel:"satisfies_requirement"`
+	QuotedFreeMinutes    int32               `json:"quotedFreeMinutes"    bun:"quoted_free_minutes,type:INTEGER,notnull" keel:"quoted_free_minutes"`
+	QuotedRate           decimal.NullDecimal `json:"quotedRate"           bun:"quoted_rate,type:NUMERIC(19,4),nullzero" keel:"quoted_rate"`
+	QuotedAmount         decimal.NullDecimal `json:"quotedAmount"         bun:"quoted_amount,type:NUMERIC(19,4),nullzero" keel:"quoted_amount"`
+	Version              int64               `json:"version"              bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (n *DetentionNotice) GetID() pulid.ID { return n.ID }
@@ -189,4 +191,8 @@ func (n *DetentionNotice) BeforeAppendModel(_ context.Context, query bun.Query) 
 	}
 
 	return nil
+}
+
+func (n *DetentionNotice) BeforeCreate(ctx context.Context) error {
+	return n.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

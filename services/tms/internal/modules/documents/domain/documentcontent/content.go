@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -38,34 +39,34 @@ func (s Status) Settled() bool {
 
 type Content struct {
 	bun.BaseModel `bun:"table:document_contents,alias:dc" json:"-"`
+	keel.Table    `keel:"document_contents"`
 
-	ID                       pulid.ID       `json:"id"                       bun:"id,type:VARCHAR(100),pk,notnull"`
-	DocumentID               pulid.ID       `json:"documentId"               bun:"document_id,type:VARCHAR(100),notnull"`
-	OrganizationID           pulid.ID       `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	BusinessUnitID           pulid.ID       `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	Status                   Status         `json:"status"                   bun:"status,type:document_content_status_enum,notnull,default:'Pending'"`
-	ContentText              string         `json:"contentText"              bun:"content_text,type:TEXT,nullzero"`
-	PageCount                int            `json:"pageCount"                bun:"page_count,type:INTEGER,notnull"`
-	SourceKind               SourceKind     `json:"sourceKind"               bun:"source_kind,type:VARCHAR(20),nullzero"`
-	DetectedLanguage         string         `json:"detectedLanguage"         bun:"detected_language,type:VARCHAR(20),nullzero"`
-	DetectedDocumentKind     string         `json:"detectedDocumentKind"     bun:"detected_document_kind,type:VARCHAR(100),nullzero"`
-	ClassificationConfidence float64        `json:"classificationConfidence" bun:"classification_confidence,type:DOUBLE PRECISION,notnull"`
-	StructuredData           map[string]any `json:"structuredData"           bun:"structured_data,type:JSONB,notnull,default:'{}'"`
-	FailureCode              string         `json:"failureCode"              bun:"failure_code,type:VARCHAR(100),nullzero"`
-	FailureMessage           string         `json:"failureMessage"           bun:"failure_message,type:TEXT,nullzero"`
-	SearchVector             string         `json:"-"                        bun:"search_vector,type:TSVECTOR,scanonly"`
-	Version                  int64          `json:"version"                  bun:"version,type:BIGINT,notnull"`
-	CreatedAt                int64          `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                int64          `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	LastExtractedAt          *int64         `json:"lastExtractedAt"          bun:"last_extracted_at,type:BIGINT,nullzero"`
-	ConverterVersion         string         `json:"converterVersion"         bun:"converter_version,type:VARCHAR(40),nullzero"`
-	RawObjectKey             string         `json:"-"                        bun:"raw_object_key,type:TEXT,nullzero"`
+	ID                       pulid.ID       `json:"id"                       bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dc_"`
+	DocumentID               pulid.ID       `json:"documentId"               bun:"document_id,type:VARCHAR(100),notnull" keel:"document_id"`
+	OrganizationID           pulid.ID       `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),notnull,pk" keel:"organization_id,pk,tenant"`
+	BusinessUnitID           pulid.ID       `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),notnull,pk" keel:"business_unit_id,pk,tenant"`
+	Status                   Status         `json:"status"                   bun:"status,type:document_content_status_enum,notnull,default:'Pending'" keel:"status"`
+	ContentText              string         `json:"contentText"              bun:"content_text,type:TEXT,nullzero" keel:"content_text,nullzero"`
+	PageCount                int            `json:"pageCount"                bun:"page_count,type:INTEGER,notnull" keel:"page_count"`
+	SourceKind               SourceKind     `json:"sourceKind"               bun:"source_kind,type:VARCHAR(20),nullzero" keel:"source_kind,nullzero"`
+	DetectedLanguage         string         `json:"detectedLanguage"         bun:"detected_language,type:VARCHAR(20),nullzero" keel:"detected_language,nullzero"`
+	DetectedDocumentKind     string         `json:"detectedDocumentKind"     bun:"detected_document_kind,type:VARCHAR(100),nullzero" keel:"detected_document_kind,nullzero"`
+	ClassificationConfidence float64        `json:"classificationConfidence" bun:"classification_confidence,type:DOUBLE PRECISION,notnull" keel:"classification_confidence"`
+	StructuredData           map[string]any `json:"structuredData"           bun:"structured_data,type:JSONB,notnull,default:'{}'" keel:"structured_data,jsonb"`
+	FailureCode              string         `json:"failureCode"              bun:"failure_code,type:VARCHAR(100),nullzero" keel:"failure_code,nullzero"`
+	FailureMessage           string         `json:"failureMessage"           bun:"failure_message,type:TEXT,nullzero" keel:"failure_message,nullzero"`
+	SearchVector             string         `json:"-"                        bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Version                  int64          `json:"version"                  bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt                int64          `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt                int64          `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	LastExtractedAt          *int64         `json:"lastExtractedAt"          bun:"last_extracted_at,type:BIGINT,nullzero" keel:"last_extracted_at"`
+	ConverterVersion         string         `json:"converterVersion"         bun:"converter_version,type:VARCHAR(40),nullzero" keel:"converter_version,nullzero"`
+	RawObjectKey             string         `json:"-"                        bun:"raw_object_key,type:TEXT,nullzero" keel:"raw_object_key,nullzero"`
 	Pages                    []*Page        `json:"pages,omitempty"          bun:"-"`
 }
 
 func (c *Content) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	c.ContentText = stringutils.StripNUL(c.ContentText)
-	c.FailureMessage = stringutils.StripNUL(c.FailureMessage)
+	c.stripNUL()
 
 	now := timeutils.NowUnix()
 
@@ -84,6 +85,20 @@ func (c *Content) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (c *Content) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
+func (c *Content) BeforeUpdate(_ context.Context) error {
+	c.stripNUL()
+	return nil
+}
+
+func (c *Content) stripNUL() {
+	c.ContentText = stringutils.StripNUL(c.ContentText)
+	c.FailureMessage = stringutils.StripNUL(c.FailureMessage)
 }
 
 func (c *Content) Validate(multiErr *errortypes.MultiError) {

@@ -3,6 +3,7 @@ package carrier
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,23 +16,24 @@ var _ bun.BeforeAppendModelHook = (*CarrierEDIChannel)(nil)
 
 type CarrierEDIChannel struct {
 	bun.BaseModel `bun:"table:carrier_edi_channels,alias:cec" json:"-"`
+	keel.Table    `keel:"carrier_edi_channels"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull"`
-	EDIPartnerID   pulid.ID `json:"ediPartnerId"   bun:"edi_partner_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:cec_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull" keel:"carrier_id"`
+	EDIPartnerID   pulid.ID `json:"ediPartnerId"   bun:"edi_partner_id,type:VARCHAR(100),notnull" keel:"edi_partner_id"`
 
-	PartnerDocumentProfileID *pulid.ID `json:"partnerDocumentProfileId" bun:"partner_document_profile_id,type:VARCHAR(100),nullzero"`
-	CommunicationProfileID   *pulid.ID `json:"communicationProfileId"   bun:"communication_profile_id,type:VARCHAR(100),nullzero"`
-	SCACOverride             string    `json:"scacOverride"             bun:"scac_override,type:VARCHAR(10),nullzero"`
-	IsDefault                bool      `json:"isDefault"                bun:"is_default,type:BOOLEAN,notnull,default:false"`
-	Version                  int64     `json:"version"                  bun:"version,type:BIGINT"`
-	CreatedAt                int64     `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                int64     `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	PartnerDocumentProfileID *pulid.ID `json:"partnerDocumentProfileId" bun:"partner_document_profile_id,type:VARCHAR(100),nullzero" keel:"partner_document_profile_id"`
+	CommunicationProfileID   *pulid.ID `json:"communicationProfileId"   bun:"communication_profile_id,type:VARCHAR(100),nullzero" keel:"communication_profile_id"`
+	SCACOverride             string    `json:"scacOverride"             bun:"scac_override,type:VARCHAR(10),nullzero" keel:"scac_override,nullzero"`
+	IsDefault                bool      `json:"isDefault"                bun:"is_default,type:BOOLEAN,notnull,default:false" keel:"is_default"`
+	Version                  int64     `json:"version"                  bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt                int64     `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt                int64     `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Carrier    *Carrier        `json:"carrier,omitempty"    bun:"rel:belongs-to,join:carrier_id=id"`
-	EDIPartner *edi.EDIPartner `json:"ediPartner,omitempty" bun:"rel:belongs-to,join:edi_partner_id=id"`
+	Carrier    *Carrier        `json:"carrier,omitempty"    bun:"rel:belongs-to,join:carrier_id=id" keel:"belongs:carrier_id"`
+	EDIPartner *edi.EDIPartner `json:"ediPartner,omitempty" bun:"rel:belongs-to,join:edi_partner_id=id" keel:"belongs:edi_partner_id"`
 }
 
 func (cec *CarrierEDIChannel) Validate(multiErr *errortypes.MultiError) {
@@ -79,4 +81,8 @@ func (cec *CarrierEDIChannel) BeforeAppendModel(_ context.Context, query bun.Que
 	}
 
 	return nil
+}
+
+func (cec *CarrierEDIChannel) BeforeCreate(ctx context.Context) error {
+	return cec.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -83,7 +84,7 @@ func newRLSFixture(t *testing.T, mode string) *rlsFixture {
 		},
 	}
 
-	_, err = ProvisionRLS(t.Context(), admin, cfg)
+	_, err = ProvisionRLS(t.Context(), dbpool.KeelOf(admin.DB), cfg)
 	require.NoError(t, err)
 
 	f := &rlsFixture{

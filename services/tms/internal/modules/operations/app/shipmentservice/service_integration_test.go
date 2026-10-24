@@ -1192,7 +1192,7 @@ func int16PtrForIntegration(v int16) *int16 {
 	return &v
 }
 
-func int8PtrForIntegration(v int8) *int8 {
+func int8PtrForIntegration(v int16) *int16 {
 	return &v
 }
 

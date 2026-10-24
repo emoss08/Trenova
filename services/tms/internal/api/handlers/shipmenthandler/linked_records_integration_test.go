@@ -8,13 +8,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/app/readscopeservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
@@ -27,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,16 +57,8 @@ type dispatchedLoad struct {
 func seedDispatchedLoad(t *testing.T) (context.Context, *postgres.Connection, dispatchedLoad) {
 	t.Helper()
 
-	ctx, db, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
+	ctx, db, dsn, cleanup := seededtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "integration-system-password"},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment, Force: true})
-	require.NoError(t, err)
 
 	var move struct {
 		MoveID         pulid.ID `bun:"move_id"`
@@ -94,7 +84,7 @@ func seedDispatchedLoad(t *testing.T) (context.Context, *postgres.Connection, di
 	).Scan(ctx, &driver))
 	require.False(t, driver.ID.IsNil())
 
-	_, err = db.NewRaw(
+	_, err := db.NewRaw(
 		"UPDATE workers SET address_line1 = ?, emergency_contact_phone = ? WHERE id = ? AND organization_id = ?",
 		driverHomeAddress, driverEmergencyPhone, driver.ID, move.OrganizationID,
 	).Exec(ctx)

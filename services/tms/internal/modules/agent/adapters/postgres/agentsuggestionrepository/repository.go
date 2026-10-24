@@ -7,14 +7,14 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsuggestionports"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentsuggestioncol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var suggestionErrors = dberror.Mapping{Entity: "Agent suggestion"}
 
 type Params struct {
 	fx.In
@@ -40,11 +40,7 @@ func (r *repository) Insert(
 	entity *agentsuggestion.Suggestion,
 ) (*agentsuggestion.Suggestion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentsuggestion.Suggestion, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentsuggestiondb.Suggestions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to record an agent suggestion", zap.Error(err))
 
 			return nil, fmt.Errorf("record agent suggestion: %w", err)
@@ -59,42 +55,22 @@ func (r *repository) Settle(
 	req *agentsuggestionports.SettleAgentSuggestionRow,
 ) (*agentsuggestion.Suggestion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentsuggestion.Suggestion, error) {
-		cols := agentsuggestioncol.SuggestionColumns
-		entity := new(agentsuggestion.Suggestion)
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set(cols.Outcome.Set(), req.Outcome).
-			Set(cols.Version.Inc(1)).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentsuggestioncol.SuggestionScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.UserID.Eq(), req.UserID).
-					Where(cols.Outcome.Eq(), agentsuggestion.OutcomeShown)
-			}).
-			Returning("*").
-			Exec(ctx)
+		s := agentsuggestiondb.Suggestions
+		rows, err := s.Where(
+			s.ID.Eq(req.ID),
+			s.UserID.Eq(req.UserID),
+			s.Outcome.Eq(agentsuggestion.OutcomeShown),
+		).UpdateReturning(ctx, r.db.Keel(ctx), s.Outcome.To(req.Outcome))
 		if err != nil {
 			return nil, fmt.Errorf("settle agent suggestion: %w", err)
 		}
-		if affected, _ := res.RowsAffected(); affected > 0 {
-			return entity, nil
+		if len(rows) > 0 {
+			return rows[0], nil
 		}
 
-		settled := new(agentsuggestion.Suggestion)
-		err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(settled).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentsuggestioncol.SuggestionScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.UserID.Eq(), req.UserID)
-			}).
-			Scan(ctx)
+		settled, err := s.Where(s.ID.Eq(req.ID), s.UserID.Eq(req.UserID)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Agent suggestion")
+			return nil, suggestionErrors.Map(err, req.ID.String())
 		}
 
 		return settled, nil

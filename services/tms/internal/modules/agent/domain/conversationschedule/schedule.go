@@ -8,6 +8,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -47,36 +48,37 @@ const (
 // rather than getting them with access they no longer hold.
 type Schedule struct {
 	bun.BaseModel `bun:"table:conversation_schedules,alias:csch" json:"-"`
+	keel.Table    `keel:"conversation_schedules"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:csch_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	ThreadID pulid.ID `json:"threadId" bun:"thread_id,type:VARCHAR(100),notnull"`
-	UserID   pulid.ID `json:"userId"   bun:"user_id,type:VARCHAR(100),notnull"`
+	ThreadID pulid.ID `json:"threadId" bun:"thread_id,type:VARCHAR(100),notnull" keel:"thread_id"`
+	UserID   pulid.ID `json:"userId"   bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
 
 	// Prompt is what each run asks, and Cadence when, as the person reads
 	// it: "Every weekday · 7:30 AM". CronExpression is the same cadence for
 	// the scheduler, read on Timezone's clock.
-	Prompt         string `json:"prompt"         bun:"prompt,type:TEXT,notnull"`
-	Cadence        string `json:"cadence"        bun:"cadence,type:VARCHAR(100),notnull"`
-	CronExpression string `json:"cronExpression" bun:"cron_expression,type:VARCHAR(100),notnull"`
-	Timezone       string `json:"timezone"       bun:"timezone,type:VARCHAR(100),notnull,default:'UTC'"`
+	Prompt         string `json:"prompt"         bun:"prompt,type:TEXT,notnull" keel:"prompt"`
+	Cadence        string `json:"cadence"        bun:"cadence,type:VARCHAR(100),notnull" keel:"cadence"`
+	CronExpression string `json:"cronExpression" bun:"cron_expression,type:VARCHAR(100),notnull" keel:"cron_expression"`
+	Timezone       string `json:"timezone"       bun:"timezone,type:VARCHAR(100),notnull,default:'UTC'" keel:"timezone"`
 
 	// Enabled is false while the schedule is paused.
-	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull"`
+	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull" keel:"enabled"`
 
 	// LastRunAt is when the latest run started, and LastTurnID the turn it
 	// started. NextRunAt is the next slot, worked out whenever the schedule
 	// is saved or runs; it is kept while paused so resuming need not wait on
 	// a read to show it.
-	LastRunAt  *int64   `json:"lastRunAt"  bun:"last_run_at,type:BIGINT,nullzero"`
-	NextRunAt  *int64   `json:"nextRunAt"  bun:"next_run_at,type:BIGINT,nullzero"`
-	LastTurnID pulid.ID `json:"lastTurnId" bun:"last_turn_id,type:VARCHAR(100),nullzero"`
+	LastRunAt  *int64   `json:"lastRunAt"  bun:"last_run_at,type:BIGINT,nullzero" keel:"last_run_at"`
+	NextRunAt  *int64   `json:"nextRunAt"  bun:"next_run_at,type:BIGINT,nullzero" keel:"next_run_at"`
+	LastTurnID pulid.ID `json:"lastTurnId" bun:"last_turn_id,type:VARCHAR(100),nullzero" keel:"last_turn_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel/analytics/ir"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -17,9 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -35,8 +35,7 @@ type Params struct {
 	ViewRepo         reportports.ReportViewRepository
 	OrganizationRepo tenantports.OrganizationRepository
 	UserRepo         tenantports.UserRepository
-	Compiler         reportports.ReportCompiler
-	Executor         reportports.ReportDatasetExecutor
+	Engine           reportports.ReportEngine
 	PermissionEngine permissionports.PermissionEngine
 	FieldAccess      permissionports.FieldAccess
 	ReferenceViews   permissionports.ReferenceViews
@@ -56,8 +55,7 @@ type Service struct {
 	viewRepo      reportports.ReportViewRepository
 	orgRepo       tenantports.OrganizationRepository
 	userRepo      tenantports.UserRepository
-	compiler      reportports.ReportCompiler
-	executor      reportports.ReportDatasetExecutor
+	engine        reportports.ReportEngine
 	perms         permissionports.PermissionEngine
 	access        *reportaccess.Resolver
 	workflows     kernelports.WorkflowStarter
@@ -65,18 +63,31 @@ type Service struct {
 	audit         auditports.AuditService
 	metrics       *metrics.Report
 	cfg           *config.ReportingConfig
-	previews      *previewLimiter
 	canned        *canned.Registry
 }
 
 //nolint:gocritic // fx.In parameter structs must be passed by value
-func New(p Params) *Service {
+func New(p Params) (*Service, error) {
 	var reportMetrics *metrics.Report
 	if p.Metrics != nil {
 		reportMetrics = p.Metrics.Report
 	}
 
-	registry := permission.NewRegistry()
+	access, err := reportaccess.New(reportaccess.Params{
+		Catalog:  p.Engine.Catalog(),
+		Engine:   p.PermissionEngine,
+		Registry: permission.NewRegistry(),
+		Views:    p.ReferenceViews,
+		Fields:   p.FieldAccess,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	library, err := canned.Default()
+	if err != nil {
+		return nil, err
+	}
 
 	return &Service{
 		l:             p.Logger.Named("service.reporting"),
@@ -87,24 +98,16 @@ func New(p Params) *Service {
 		viewRepo:      p.ViewRepo,
 		orgRepo:       p.OrganizationRepo,
 		userRepo:      p.UserRepo,
-		compiler:      p.Compiler,
-		executor:      p.Executor,
+		engine:        p.Engine,
 		perms:         p.PermissionEngine,
-		access: reportaccess.New(reportaccess.Params{
-			Catalog:  &reportcatalog.Default,
-			Engine:   p.PermissionEngine,
-			Registry: registry,
-			Views:    p.ReferenceViews,
-			Fields:   p.FieldAccess,
-		}),
-		workflows: p.WorkflowStarter,
-		storage:   p.Storage,
-		audit:     p.AuditService,
-		metrics:   reportMetrics,
-		cfg:       p.Config.GetReportingConfig(),
-		previews:  newPreviewLimiter(),
-		canned:    canned.Default(),
-	}
+		access:        access,
+		workflows:     p.WorkflowStarter,
+		storage:       p.Storage,
+		audit:         p.AuditService,
+		metrics:       reportMetrics,
+		cfg:           p.Config.GetReportingConfig(),
+		canned:        library,
+	}, nil
 }
 
 type Request struct {
@@ -123,7 +126,7 @@ type SaveDefinitionRequest struct {
 	Visibility    report.Visibility
 	Status        report.DefinitionStatus
 	DefaultFormat report.Format
-	Definition    *report.Definition
+	Definition    *ir.Definition
 	Version       int64
 }
 
@@ -151,11 +154,10 @@ func (s *Service) validateDefinition(
 	ctx context.Context,
 	req *SaveDefinitionRequest,
 ) error {
-	_, err := s.compiler.ValidateAndAuthorize(ctx, &reportports.ReportCompileRequest{
-		Definition:  req.Definition,
-		Tenant:      req.TenantInfo,
-		OrgTimezone: s.orgTimezone(ctx, req.TenantInfo),
-		NowUnix:     timeutils.NowUnix(),
+	err := s.Check(ctx, &PrepareParams{
+		Tenant:     req.TenantInfo,
+		Definition: req.Definition,
+		Mode:       reportaccess.ModeRead,
 	})
 	if err != nil {
 		if s.metrics != nil {
@@ -176,7 +178,7 @@ func (s *Service) CreateDefinition(
 		return nil, err
 	}
 
-	entity := NewDefinition(req)
+	entity := s.NewDefinition(req)
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -219,7 +221,7 @@ func (s *Service) UpdateDefinition(
 		return nil, err
 	}
 
-	ApplyDefinitionSave(existing, req)
+	s.ApplyDefinitionSave(existing, req)
 
 	multiErr := errortypes.NewMultiError()
 	existing.Validate(multiErr)

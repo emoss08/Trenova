@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 type writeFunc func(ctx context.Context) (*aiprovider.Provider, error)
@@ -25,7 +24,7 @@ func (s *Service) save(
 	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
 	var saved *aiprovider.Provider
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		saved, txErr = write(txCtx)
 		if txErr != nil {

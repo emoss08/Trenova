@@ -3,6 +3,7 @@ package ratematrix
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,23 +24,24 @@ func (v *RateMatrixVersion) Key() VersionKey {
 
 type RateMatrixVersion struct {
 	bun.BaseModel `bun:"table:rate_matrix_versions,alias:rmv" json:"-"`
+	keel.Table    `keel:"rate_matrix_versions"`
 
-	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	RateMatrixID   pulid.ID  `json:"rateMatrixId"   bun:"rate_matrix_id,type:VARCHAR(100),notnull"`
-	VersionNumber  int64     `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull"`
-	Code           string    `json:"code"           bun:"code,type:VARCHAR(64),notnull"`
-	Name           string    `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	Description    string    `json:"description"    bun:"description,type:TEXT,nullzero"`
-	ValueType      string    `json:"valueType"      bun:"value_type,type:VARCHAR(32),notnull"`
-	CellCount      int64     `json:"cellCount"      bun:"cell_count,type:BIGINT,notnull,default:0"`
-	ChangeMessage  string    `json:"changeMessage"  bun:"change_message,type:TEXT,nullzero"`
-	SubmittedByID  *pulid.ID `json:"submittedById"  bun:"submitted_by_id,type:VARCHAR(100)"`
-	PublishedByID  *pulid.ID `json:"publishedById"  bun:"published_by_id,type:VARCHAR(100)"`
-	CreatedAt      int64     `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:rmv_"`
+	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	RateMatrixID   pulid.ID  `json:"rateMatrixId"   bun:"rate_matrix_id,type:VARCHAR(100),notnull" keel:"rate_matrix_id"`
+	VersionNumber  int64     `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull" keel:"version_number"`
+	Code           string    `json:"code"           bun:"code,type:VARCHAR(64),notnull" keel:"code"`
+	Name           string    `json:"name"           bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Description    string    `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	ValueType      string    `json:"valueType"      bun:"value_type,type:VARCHAR(32),notnull" keel:"value_type"`
+	CellCount      int64     `json:"cellCount"      bun:"cell_count,type:BIGINT,notnull,default:0" keel:"cell_count"`
+	ChangeMessage  string    `json:"changeMessage"  bun:"change_message,type:TEXT,nullzero" keel:"change_message,nullzero"`
+	SubmittedByID  *pulid.ID `json:"submittedById"  bun:"submitted_by_id,type:VARCHAR(100)" keel:"submitted_by_id"`
+	PublishedByID  *pulid.ID `json:"publishedById"  bun:"published_by_id,type:VARCHAR(100)" keel:"published_by_id"`
+	CreatedAt      int64     `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	PublishedBy *tenant.User           `json:"publishedBy,omitempty" bun:"rel:belongs-to,join:published_by_id=id"`
+	PublishedBy *tenant.User           `json:"publishedBy,omitempty" bun:"rel:belongs-to,join:published_by_id=id" keel:"belongs:published_by_id"`
 	Dimensions  []*RateMatrixDimension `json:"dimensions,omitempty"  bun:"-"`
 }
 

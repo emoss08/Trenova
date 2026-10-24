@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -53,43 +54,44 @@ func CustomerEmailTools() []string {
 
 type ShipmentComment struct {
 	bun.BaseModel             `bun:"table:shipment_comments,alias:sc" json:"-"`
+	keel.Table                `keel:"shipment_comments"`
 	pagination.CursorValueSet `bun:",embed"                           json:"-"`
 
-	ID                     pulid.ID             `json:"id"                              bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID             `json:"businessUnitId"                  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID         pulid.ID             `json:"organizationId"                  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ShipmentID             pulid.ID             `json:"shipmentId"                      bun:"shipment_id,pk,type:VARCHAR(100),notnull"`
-	UserID                 pulid.ID             `json:"userId"                          bun:"user_id,type:VARCHAR(100),nullzero"`
-	ParentCommentID        *pulid.ID            `json:"parentCommentId"                 bun:"parent_comment_id,type:VARCHAR(100),nullzero"`
-	Comment                string               `json:"comment"                         bun:"comment,type:TEXT,notnull"`
-	Body                   map[string]any       `json:"body,omitempty"                  bun:"body,type:JSONB,nullzero"`
-	Type                   CommentType          `json:"type"                            bun:"type,type:VARCHAR(50),notnull,default:'Internal'"`
-	Visibility             CommentVisibility    `json:"visibility"                      bun:"visibility,type:VARCHAR(50),notnull,default:'Internal'"`
-	Priority               CommentPriority      `json:"priority"                        bun:"priority,type:VARCHAR(20),notnull,default:'Normal'"`
-	Source                 CommentSource        `json:"source"                          bun:"source,type:VARCHAR(20),notnull,default:'User'"`
-	Metadata               map[string]any       `json:"metadata,omitempty"              bun:"metadata,type:JSONB,default:'{}'"`
-	EditedAt               *int64               `json:"editedAt"                        bun:"edited_at,type:BIGINT,nullzero"`
-	PinnedAt               *int64               `json:"pinnedAt"                        bun:"pinned_at,type:BIGINT,nullzero"`
-	PinnedByID             *pulid.ID            `json:"pinnedById"                      bun:"pinned_by_id,type:VARCHAR(100),nullzero"`
-	ResolvedAt             *int64               `json:"resolvedAt"                      bun:"resolved_at,type:BIGINT,nullzero"`
-	ResolvedByID           *pulid.ID            `json:"resolvedById"                    bun:"resolved_by_id,type:VARCHAR(100),nullzero"`
-	RequiresAcknowledgment bool                 `json:"requiresAcknowledgment"          bun:"requires_acknowledgment,type:BOOLEAN,notnull"`
-	DeletedAt              *int64               `json:"deletedAt"                       bun:"deleted_at,type:BIGINT,nullzero"`
-	DeletedByID            *pulid.ID            `json:"deletedById"                     bun:"deleted_by_id,type:VARCHAR(100),nullzero"`
-	SearchVector           string               `json:"-"                               bun:"search_vector,type:TSVECTOR,scanonly"`
-	ReplyCount             int64                `json:"replyCount"                      bun:"reply_count,scanonly"`
-	Version                int64                `json:"version"                         bun:"version,type:BIGINT,notnull"`
-	CreatedAt              int64                `json:"createdAt"                       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64                `json:"updatedAt"                       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID             `json:"id"                              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:shc_"`
+	BusinessUnitID         pulid.ID             `json:"businessUnitId"                  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID             `json:"organizationId"                  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ShipmentID             pulid.ID             `json:"shipmentId"                      bun:"shipment_id,pk,type:VARCHAR(100),notnull" keel:"shipment_id,pk"`
+	UserID                 pulid.ID             `json:"userId"                          bun:"user_id,type:VARCHAR(100),nullzero" keel:"user_id,nullzero"`
+	ParentCommentID        *pulid.ID            `json:"parentCommentId"                 bun:"parent_comment_id,type:VARCHAR(100),nullzero" keel:"parent_comment_id"`
+	Comment                string               `json:"comment"                         bun:"comment,type:TEXT,notnull" keel:"comment"`
+	Body                   map[string]any       `json:"body,omitempty"                  bun:"body,type:JSONB,nullzero" keel:"body,jsonb,nullzero"`
+	Type                   CommentType          `json:"type"                            bun:"type,type:VARCHAR(50),notnull,default:'Internal'" keel:"type"`
+	Visibility             CommentVisibility    `json:"visibility"                      bun:"visibility,type:VARCHAR(50),notnull,default:'Internal'" keel:"visibility"`
+	Priority               CommentPriority      `json:"priority"                        bun:"priority,type:VARCHAR(20),notnull,default:'Normal'" keel:"priority"`
+	Source                 CommentSource        `json:"source"                          bun:"source,type:VARCHAR(20),notnull,default:'User'" keel:"source"`
+	Metadata               map[string]any       `json:"metadata,omitempty"              bun:"metadata,type:JSONB,default:'{}'" keel:"metadata,jsonb"`
+	EditedAt               *int64               `json:"editedAt"                        bun:"edited_at,type:BIGINT,nullzero" keel:"edited_at"`
+	PinnedAt               *int64               `json:"pinnedAt"                        bun:"pinned_at,type:BIGINT,nullzero" keel:"pinned_at"`
+	PinnedByID             *pulid.ID            `json:"pinnedById"                      bun:"pinned_by_id,type:VARCHAR(100),nullzero" keel:"pinned_by_id"`
+	ResolvedAt             *int64               `json:"resolvedAt"                      bun:"resolved_at,type:BIGINT,nullzero" keel:"resolved_at"`
+	ResolvedByID           *pulid.ID            `json:"resolvedById"                    bun:"resolved_by_id,type:VARCHAR(100),nullzero" keel:"resolved_by_id"`
+	RequiresAcknowledgment bool                 `json:"requiresAcknowledgment"          bun:"requires_acknowledgment,type:BOOLEAN,notnull" keel:"requires_acknowledgment"`
+	DeletedAt              *int64               `json:"deletedAt"                       bun:"deleted_at,type:BIGINT,nullzero" keel:"deleted_at"`
+	DeletedByID            *pulid.ID            `json:"deletedById"                     bun:"deleted_by_id,type:VARCHAR(100),nullzero" keel:"deleted_by_id"`
+	SearchVector           string               `json:"-"                               bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	ReplyCount             int64                `json:"replyCount"                      bun:"reply_count,scanonly" keel:"reply_count,computed"`
+	Version                int64                `json:"version"                         bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt              int64                `json:"createdAt"                       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt              int64                `json:"updatedAt"                       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 	MentionedUserIDs       []pulid.ID           `json:"mentionedUserIds,omitempty"      bun:"-"`
 	AttachmentDocumentIDs  []pulid.ID           `json:"attachmentDocumentIds,omitempty" bun:"-"`
 	Attachments            []*CommentAttachment `json:"attachments,omitempty"           bun:"-"`
 
-	User            *tenant.User                     `json:"user,omitempty"            bun:"rel:belongs-to,join:user_id=id"`
-	PinnedBy        *tenant.User                     `json:"pinnedBy,omitempty"        bun:"rel:belongs-to,join:pinned_by_id=id"`
-	ResolvedBy      *tenant.User                     `json:"resolvedBy,omitempty"      bun:"rel:belongs-to,join:resolved_by_id=id"`
-	MentionedUsers  []*ShipmentCommentMention        `json:"mentionedUsers,omitempty"  bun:"rel:has-many,join:id=comment_id"`
-	Acknowledgments []*ShipmentCommentAcknowledgment `json:"acknowledgments,omitempty" bun:"rel:has-many,join:id=comment_id"`
+	User            *tenant.User                     `json:"user,omitempty"            bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
+	PinnedBy        *tenant.User                     `json:"pinnedBy,omitempty"        bun:"rel:belongs-to,join:pinned_by_id=id" keel:"belongs:pinned_by_id"`
+	ResolvedBy      *tenant.User                     `json:"resolvedBy,omitempty"      bun:"rel:belongs-to,join:resolved_by_id=id" keel:"belongs:resolved_by_id"`
+	MentionedUsers  []*ShipmentCommentMention        `json:"mentionedUsers,omitempty"  bun:"rel:has-many,join:id=comment_id" keel:"many:comment_id=id"`
+	Acknowledgments []*ShipmentCommentAcknowledgment `json:"acknowledgments,omitempty" bun:"rel:has-many,join:id=comment_id" keel:"many:comment_id=id"`
 }
 
 type CommentAttachment struct {
@@ -105,30 +107,32 @@ type CommentAttachment struct {
 
 type ShipmentCommentAcknowledgment struct {
 	bun.BaseModel `bun:"table:shipment_comment_acknowledgments,alias:sca" json:"-"`
+	keel.Table    `keel:"shipment_comment_acknowledgments"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	CommentID      pulid.ID `json:"commentId"      bun:"comment_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	AcknowledgedAt int64    `json:"acknowledgedAt" bun:"acknowledged_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:sck_"`
+	CommentID      pulid.ID `json:"commentId"      bun:"comment_id,type:VARCHAR(100),notnull" keel:"comment_id"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
+	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	AcknowledgedAt int64    `json:"acknowledgedAt" bun:"acknowledged_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"acknowledged_at"`
 
-	User *tenant.User `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
+	User *tenant.User `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
 }
 
 type ShipmentCommentMention struct {
 	bun.BaseModel `bun:"table:shipment_comment_mentions,alias:scm" json:"-"`
+	keel.Table    `keel:"shipment_comment_mentions"`
 
-	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	CommentID       pulid.ID `json:"commentId"       bun:"comment_id,type:VARCHAR(100),notnull"`
-	MentionedUserID pulid.ID `json:"mentionedUserId" bun:"mentioned_user_id,type:VARCHAR(100),notnull"`
-	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	ShipmentID      pulid.ID `json:"shipmentId"      bun:"shipment_id,type:VARCHAR(100),notnull"`
-	CreatedAt       int64    `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:scm_"`
+	CommentID       pulid.ID `json:"commentId"       bun:"comment_id,type:VARCHAR(100),notnull" keel:"comment_id"`
+	MentionedUserID pulid.ID `json:"mentionedUserId" bun:"mentioned_user_id,type:VARCHAR(100),notnull" keel:"mentioned_user_id"`
+	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	ShipmentID      pulid.ID `json:"shipmentId"      bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
+	CreatedAt       int64    `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	MentionedUser *tenant.User `json:"mentionedUser,omitempty" bun:"rel:belongs-to,join:mentioned_user_id=id"`
+	MentionedUser *tenant.User `json:"mentionedUser,omitempty" bun:"rel:belongs-to,join:mentioned_user_id=id" keel:"belongs:mentioned_user_id"`
 }
 
 func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
@@ -215,6 +219,10 @@ func (c *ShipmentComment) BeforeAppendModel(_ context.Context, query bun.Query) 
 	return nil
 }
 
+func (c *ShipmentComment) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (m *ShipmentCommentMention) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	if _, ok := query.(*bun.InsertQuery); ok {
 		if m.ID.IsNil() {
@@ -226,6 +234,10 @@ func (m *ShipmentCommentMention) BeforeAppendModel(_ context.Context, query bun.
 	}
 
 	return nil
+}
+
+func (m *ShipmentCommentMention) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (a *ShipmentCommentAcknowledgment) BeforeAppendModel(

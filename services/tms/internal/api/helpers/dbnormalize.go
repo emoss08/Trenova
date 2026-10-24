@@ -13,7 +13,7 @@ func NormalizeDatabaseError(ctx context.Context, classifier *ChainClassifier, er
 		return nil
 	}
 
-	if dberror.IsRowLevelSecurityViolation(err) {
+	if dberror.IsTenantBoundaryViolation(err) {
 		tenantboundary.Report(
 			ctx,
 			tenantboundary.Violation{Source: tenantboundary.SourceDatabasePolicy},

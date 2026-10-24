@@ -3,6 +3,7 @@ package shipmentimportchat
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -38,44 +39,46 @@ const (
 
 type Conversation struct {
 	bun.BaseModel `bun:"table:shipment_import_chat_conversations,alias:sicc" json:"-"`
+	keel.Table    `keel:"shipment_import_chat_conversations"`
 
-	ID                     pulid.ID                 `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID         pulid.ID                 `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID         pulid.ID                 `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	DocumentID             pulid.ID                 `json:"documentId"             bun:"document_id,type:VARCHAR(100),notnull"`
-	UserID                 pulid.ID                 `json:"userId"                 bun:"user_id,type:VARCHAR(100),notnull"`
-	ExternalConversationID string                   `json:"externalConversationId" bun:"external_conversation_id,type:VARCHAR(255),nullzero"`
-	Status                 ConversationStatus       `json:"status"                 bun:"status,type:VARCHAR(32),notnull,default:'Active'"`
-	StatusReason           ConversationStatusReason `json:"statusReason"           bun:"status_reason,type:VARCHAR(64),nullzero"`
-	TurnCount              int                      `json:"turnCount"              bun:"turn_count,type:INTEGER,notnull"`
-	LastMessageAt          *int64                   `json:"lastMessageAt"          bun:"last_message_at,type:BIGINT,nullzero"`
-	Version                int64                    `json:"version"                bun:"version,type:BIGINT,notnull"`
-	CreatedAt              int64                    `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64                    `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID                 `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:sic_"`
+	OrganizationID         pulid.ID                 `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID                 `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	DocumentID             pulid.ID                 `json:"documentId"             bun:"document_id,type:VARCHAR(100),notnull" keel:"document_id"`
+	UserID                 pulid.ID                 `json:"userId"                 bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	ExternalConversationID string                   `json:"externalConversationId" bun:"external_conversation_id,type:VARCHAR(255),nullzero" keel:"external_conversation_id,nullzero"`
+	Status                 ConversationStatus       `json:"status"                 bun:"status,type:VARCHAR(32),notnull,default:'Active'" keel:"status"`
+	StatusReason           ConversationStatusReason `json:"statusReason"           bun:"status_reason,type:VARCHAR(64),nullzero" keel:"status_reason,nullzero"`
+	TurnCount              int                      `json:"turnCount"              bun:"turn_count,type:INTEGER,notnull" keel:"turn_count"`
+	LastMessageAt          *int64                   `json:"lastMessageAt"          bun:"last_message_at,type:BIGINT,nullzero" keel:"last_message_at"`
+	Version                int64                    `json:"version"                bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt              int64                    `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt              int64                    `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 type Turn struct {
 	bun.BaseModel `bun:"table:shipment_import_chat_turns,alias:sict" json:"-"`
+	keel.Table    `keel:"shipment_import_chat_turns"`
 
-	ID                     pulid.ID         `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
-	ConversationID         pulid.ID         `json:"conversationId"         bun:"conversation_id,type:VARCHAR(100),notnull"`
-	OrganizationID         pulid.ID         `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID         pulid.ID         `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	DocumentID             pulid.ID         `json:"documentId"             bun:"document_id,type:VARCHAR(100),notnull"`
-	UserID                 pulid.ID         `json:"userId"                 bun:"user_id,type:VARCHAR(100),notnull"`
-	TurnIndex              int              `json:"turnIndex"              bun:"turn_index,type:INTEGER,notnull"`
-	UserMessage            string           `json:"userMessage"            bun:"user_message,type:TEXT,notnull"`
-	AssistantMessage       string           `json:"assistantMessage"       bun:"assistant_message,type:TEXT,notnull"`
-	RequestConversationID  string           `json:"requestConversationId"  bun:"request_conversation_id,type:VARCHAR(255),nullzero"`
-	ResponseConversationID string           `json:"responseConversationId" bun:"response_conversation_id,type:VARCHAR(255),nullzero"`
-	Model                  string           `json:"model"                  bun:"model,type:VARCHAR(100),nullzero"`
-	ResultStatus           TurnResultStatus `json:"resultStatus"           bun:"result_status,type:VARCHAR(32),notnull,default:'Completed'"`
-	ErrorMessage           string           `json:"errorMessage"           bun:"error_message,type:TEXT,nullzero"`
-	ContextJSON            rawJSON          `json:"contextJson"            bun:"context_json,type:JSONB,notnull,default:'{}'"`
-	SuggestionsJSON        rawJSON          `json:"suggestionsJson"        bun:"suggestions_json,type:JSONB,notnull,default:'[]'"`
-	ToolCallsJSON          rawJSON          `json:"toolCallsJson"          bun:"tool_calls_json,type:JSONB,notnull,default:'[]'"`
-	ActionsJSON            rawJSON          `json:"actionsJson"            bun:"actions_json,type:JSONB,notnull,default:'[]'"`
-	CreatedAt              int64            `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID         `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:sit_"`
+	ConversationID         pulid.ID         `json:"conversationId"         bun:"conversation_id,type:VARCHAR(100),notnull" keel:"conversation_id"`
+	OrganizationID         pulid.ID         `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID         `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	DocumentID             pulid.ID         `json:"documentId"             bun:"document_id,type:VARCHAR(100),notnull" keel:"document_id"`
+	UserID                 pulid.ID         `json:"userId"                 bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	TurnIndex              int              `json:"turnIndex"              bun:"turn_index,type:INTEGER,notnull" keel:"turn_index"`
+	UserMessage            string           `json:"userMessage"            bun:"user_message,type:TEXT,notnull" keel:"user_message"`
+	AssistantMessage       string           `json:"assistantMessage"       bun:"assistant_message,type:TEXT,notnull" keel:"assistant_message"`
+	RequestConversationID  string           `json:"requestConversationId"  bun:"request_conversation_id,type:VARCHAR(255),nullzero" keel:"request_conversation_id,nullzero"`
+	ResponseConversationID string           `json:"responseConversationId" bun:"response_conversation_id,type:VARCHAR(255),nullzero" keel:"response_conversation_id,nullzero"`
+	Model                  string           `json:"model"                  bun:"model,type:VARCHAR(100),nullzero" keel:"model,nullzero"`
+	ResultStatus           TurnResultStatus `json:"resultStatus"           bun:"result_status,type:VARCHAR(32),notnull,default:'Completed'" keel:"result_status"`
+	ErrorMessage           string           `json:"errorMessage"           bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
+	ContextJSON            rawJSON          `json:"contextJson"            bun:"context_json,type:JSONB,notnull,default:'{}'" keel:"context_json,jsonb"`
+	SuggestionsJSON        rawJSON          `json:"suggestionsJson"        bun:"suggestions_json,type:JSONB,notnull,default:'[]'" keel:"suggestions_json,jsonb"`
+	ToolCallsJSON          rawJSON          `json:"toolCallsJson"          bun:"tool_calls_json,type:JSONB,notnull,default:'[]'" keel:"tool_calls_json,jsonb"`
+	ActionsJSON            rawJSON          `json:"actionsJson"            bun:"actions_json,type:JSONB,notnull,default:'[]'" keel:"actions_json,jsonb"`
+	CreatedAt              int64            `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
 type HistorySnapshot struct {

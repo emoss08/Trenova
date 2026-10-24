@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,21 +28,22 @@ var ErrMatchKeyNotApplied = errors.New(
 // graph walk, and the rating path cannot afford that.
 type RateZoneMember struct {
 	bun.BaseModel `bun:"table:rate_zone_members,alias:rzm" json:"-"`
+	keel.Table    `keel:"rate_zone_members"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	RateZoneID     pulid.ID `json:"rateZoneId"     bun:"rate_zone_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rzm_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	RateZoneID     pulid.ID `json:"rateZoneId"     bun:"rate_zone_id,type:VARCHAR(100),notnull" keel:"rate_zone_id"`
 
-	ScopeType  rategeo.ScopeType `json:"scopeType"  bun:"scope_type,type:rate_geo_scope_type_enum,notnull"`
-	ScopeValue string            `json:"scopeValue" bun:"scope_value,type:VARCHAR(120),nullzero"`
-	City       string            `json:"city"       bun:"city,type:VARCHAR(100),nullzero"`
-	MatchKey   string            `json:"matchKey"   bun:"match_key,type:VARCHAR(160),notnull"`
+	ScopeType  rategeo.ScopeType `json:"scopeType"  bun:"scope_type,type:rate_geo_scope_type_enum,notnull" keel:"scope_type"`
+	ScopeValue string            `json:"scopeValue" bun:"scope_value,type:VARCHAR(120),nullzero" keel:"scope_value,nullzero"`
+	City       string            `json:"city"       bun:"city,type:VARCHAR(100),nullzero" keel:"city,nullzero"`
+	MatchKey   string            `json:"matchKey"   bun:"match_key,type:VARCHAR(160),notnull" keel:"match_key"`
 
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	RateZone *RateZone `json:"-" bun:"rel:belongs-to,join:rate_zone_id=id"`
+	RateZone *RateZone `json:"-" bun:"rel:belongs-to,join:rate_zone_id=id" keel:"belongs:rate_zone_id"`
 
 	keyApplied bool
 }
@@ -145,6 +147,10 @@ func (rzm *RateZoneMember) BeforeAppendModel(_ context.Context, query bun.Query)
 	}
 
 	return nil
+}
+
+func (rzm *RateZoneMember) BeforeCreate(ctx context.Context) error {
+	return rzm.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (rzm *RateZoneMember) GetID() pulid.ID {

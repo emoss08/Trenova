@@ -3,6 +3,7 @@ package rateimport
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -18,28 +19,29 @@ var _ bun.BeforeAppendModelHook = (*RateImportRow)(nil)
 // to count lines; "row 47: 'per furlong' is not a rate type" does not.
 type RateImportRow struct {
 	bun.BaseModel `bun:"table:rate_import_rows,alias:rir" json:"-"`
+	keel.Table    `keel:"rate_import_rows"`
 
-	ID                pulid.ID `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	RateImportBatchID pulid.ID `json:"rateImportBatchId" bun:"rate_import_batch_id,type:VARCHAR(100),notnull"`
+	ID                pulid.ID `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rir_"`
+	BusinessUnitID    pulid.ID `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	RateImportBatchID pulid.ID `json:"rateImportBatchId" bun:"rate_import_batch_id,type:VARCHAR(100),notnull" keel:"rate_import_batch_id"`
 
 	// RowNumber is the line in the uploaded file, counting the header as one,
 	// so it matches what somebody sees in their spreadsheet.
-	RowNumber int `json:"rowNumber" bun:"row_number,type:INTEGER,notnull"`
+	RowNumber int `json:"rowNumber" bun:"row_number,type:INTEGER,notnull" keel:"row_number"`
 
-	Cells []string `json:"cells" bun:"cells,type:JSONB,nullzero"`
+	Cells []string `json:"cells" bun:"cells,type:JSONB,nullzero" keel:"cells,jsonb,nullzero"`
 
 	// Rule is what the row parsed to, absent when it could not be read.
-	Rule *rateagreement.RateAgreementRule `json:"rule" bun:"rule,type:JSONB,nullzero"`
+	Rule *rateagreement.RateAgreementRule `json:"rule" bun:"rule,type:JSONB,nullzero" keel:"rule,jsonb"`
 
-	LaneKey string `json:"laneKey" bun:"lane_key,type:VARCHAR(255),nullzero"`
+	LaneKey string `json:"laneKey" bun:"lane_key,type:VARCHAR(255),nullzero" keel:"lane_key,nullzero"`
 
-	Error string `json:"error" bun:"error,type:TEXT,nullzero"`
+	Error string `json:"error" bun:"error,type:TEXT,nullzero" keel:"error,nullzero"`
 
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	Batch *RateImportBatch `json:"-" bun:"rel:belongs-to,join:rate_import_batch_id=id"`
+	Batch *RateImportBatch `json:"-" bun:"rel:belongs-to,join:rate_import_batch_id=id" keel:"belongs:rate_import_batch_id"`
 }
 
 // Failed reports whether this row could be read.

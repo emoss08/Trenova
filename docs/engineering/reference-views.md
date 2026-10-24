@@ -86,20 +86,23 @@ Internal.
   `linkedRecordSchema(kind, schema)` (`@trenova/shared/lib/linked-record`), which makes every field
   outside the view nullable, and a screen draws `WithheldValue` where one it shows is null.
 
-- **Reports and exports.** The report catalog generator classifies every field and edge
-  `reference` or `kind_read` from its resource's reference view (`reportcatalog.Classify`);
-  entities that are part of another record are marked `withinRecord` and are always `kind_read`.
-  One package decides what a caller may use of that catalog:
-  `reporting/reportaccess`. `Access.Field` and `Access.Edge` are the rule: on a kind the caller
+- **Reports and exports** ([reporting.md](reporting.md#access)). The report catalog is keel's,
+  built from the models' `keel` tags;
+  `reporting/reportaccess` is its `analytics.Policy` and maps each catalog entity to its kind
+  (`kinds.go`). A field or edge is in the reference view when its resource's view names its API
+  key (`APIKey` of the column, or the edge name); entities that are part of another record are
+  marked `withinRecord` and never use a view. One package decides what a caller may use of the
+  catalog: `reporting/reportaccess`. `Access.Field` and `Access.Edge` are the rule: on a kind the caller
   reads, a field is held to their ceiling; on a kind they cannot read, only a `reference` field
   is usable, decided by `refview` through `permissionports.ReferenceViews` (ceiling included);
   an edge is a field of its source, and a pick edge needs read on each kind it picks rows from;
   a protected field (`protected: Personal|Margins`) needs its group either way. Every report
   surface asks it, from one `GetResourcePermissionsBatch` read of the caller's permissions per
   request:
-  - the compiler (`compiler/authorize.go`), which also requires read, and export for a run, on
-    the root and on any entity whose own rows the query reads or whose `kind_read` fields it
-    uses; its refusals (`Resolver.Reason`) name the missing kind read, tier or group;
+  - the engine: keel's compiler asks `Access.Entity` about the report's root (read, and export
+    for a run) and `Access.Field` and `Access.Edge` about every path the definition reads; its
+    refusals (`Access.Refusal`, worded by `Resolver.Reason`) name the missing kind read, tier,
+    group or export;
   - the `reportCatalog` query (`reporting.Service.Catalog`), which returns every kind the caller
     reads plus every kind they can reach only through a join, with `readable`, `exportable`
     and, per field and edge, `access` (`Available`, `NeedsKindRead`, `WithheldByCeiling`,
@@ -291,11 +294,10 @@ Each failure says what to add.
 | `access:check` (`test-client.yml`) | a route, an import or a REST call moved what a screen runs and `screens_gen.json` was not regenerated |
 | `TestPageAccessManifestIsGenerated` (pagemanifest) | `manifest_gen.json` differs from what refgen writes from the screens, the operations, the schema, the registry and the routes |
 | `TestViewWordsAreGenerated` (pagemanifest) | a view or a link between kinds changed and `viewwords_gen.go` was not regenerated |
-| `TestEveryFieldAndEdgeIsClassifiedByItsReferenceView` (reportcatalog) | a report catalog field or edge is unclassified, or its class disagrees with the registry's view |
-| `TestCatalogAnnotationsAgreeWithTheCompiler` (reporting compiler) | for one of four roles, a catalog field the builder marks available is refused by the compiler, or one it marks unavailable compiles |
-| `TestReportSurfacesDecideAccessOnlyThroughReportaccess` (reportaccess) | the compiler, the reporting service, the report resolvers or the agent's report tools call an access primitive (`CanAccess`, `Decide`, `Person`, `InReferenceView`, `Classify`, `Visible`) instead of asking reportaccess |
-| `TestTheCompilerAndTheCatalogShareTheDecision` (reportaccess) | the compiler or the catalog stops deciding through `Access.Field` and `Access.Edge` |
-| `TestEveryProtectedFieldIsGatedInTheReportCatalog` (gqlext) | a schema `@protected` field is not marked `protected` in the report catalog, or the reverse |
+| `TestEveryReportableEntityHasAKind` (reportengine) | a reportable model has no row in `reportaccess/kinds.go`, or names an unregistered resource or a missing ownership column |
+| `TestReportSurfacesDecideAccessOnlyThroughReportaccess` (reportaccess) | the reporting service, the report jobs, the engine, the report resolvers or the agent's report tools call an access primitive (`CanAccess`, `Decide`, `Person`, `InReferenceView`, `ProtectedGroupAt`, `Visible`) instead of asking reportaccess |
+| `TestTheEngineAndTheCatalogShareTheDecision` (reportaccess) | the engine's policy or the builder's catalog stops deciding through `FieldUse` and `EdgeUse` |
+| `TestReportsProtectWhatTheSchemaProtects` (gqlext) | a schema `@protected` field of a reportable kind is not gated in reports in its group, or reports gate a field the schema does not protect |
 | `TestEveryMarginFieldIsProtectedByTheMarginsGroup` (gqlext) | a GraphQL field named for a margin or profit is not `@protected(group: Margins)`, is not on a type reached only through such fields, and is not listed in `unprotectedMarginNames` with why |
 | `TestEveryMarginEnumValueSaysWhereItIsRefused` (gqlext) | an enum value named for a margin is not listed in `marginEnumValues` with where it is refused |
 | `TestEveryProtectedTypeSaysWhatStandsBehindIt` (gqlext) | a type with protected fields names neither the entity REST withholds it through nor why only GraphQL serves it |

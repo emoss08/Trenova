@@ -4,16 +4,10 @@ package carriersettlementrepository_test
 
 import (
 	"context"
-	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicarrierinvoicerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -23,9 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -49,15 +43,8 @@ type holdFixture struct {
 func setupHoldFixture(t *testing.T) *holdFixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "test-system-password"},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var tenantRow struct {
 		OrganizationID pulid.ID `bun:"organization_id"`
@@ -97,7 +84,7 @@ func setupHoldFixture(t *testing.T) *holdFixture {
 		Code:           "HOLD-TEST",
 		Name:           "Hold Test Partner",
 	}
-	_, err = db.NewInsert().Model(partner).Exec(ctx)
+	_, err := db.NewInsert().Model(partner).Exec(ctx)
 	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
@@ -348,19 +335,10 @@ func TestCarrierInvoiceDuplicatesMigration_MarksExistingRepeats_Integration(t *t
 	repeatMatch, err := f.match(t, otherLoad, "m-5", carriersettlement.InvoiceMatchStatusMatched)
 	require.NoError(t, err)
 
-	_, thisFile, _, _ := runtime.Caller(0)
-	migration, err := os.ReadFile(filepath.Join(
-		filepath.Dir(thisFile),
-		"../../../../../infrastructure/postgres/migrations/20261231007190_carrier_invoice_duplicates.tx.up.sql",
-	))
+	migration, err := migrations.File("20261231007190_carrier_invoice_duplicates")
 	require.NoError(t, err)
-	for _, statement := range strings.Split(string(migration), "--bun:split") {
-		if strings.TrimSpace(statement) == "" {
-			continue
-		}
-		_, err = f.db.ExecContext(f.ctx, statement)
-		require.NoError(t, err, statement)
-	}
+	_, err = f.db.ExecContext(f.ctx, migration)
+	require.NoError(t, err)
 
 	var duplicateOf pulid.ID
 	require.NoError(t, f.db.NewSelect().

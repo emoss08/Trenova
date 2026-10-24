@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -29,28 +30,29 @@ const (
 
 type ExtractionRollout struct {
 	bun.BaseModel `bun:"table:extraction_rollouts,alias:exro" json:"-"`
+	keel.Table    `keel:"extraction_rollouts"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:exro_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	Enabled    bool      `json:"enabled"    bun:"enabled,type:BOOLEAN,notnull,default:false"`
-	ProviderID *pulid.ID `json:"providerId" bun:"provider_id,type:VARCHAR(100),nullzero"`
-	Percent    int       `json:"percent"    bun:"percent,type:INTEGER,notnull,default:5"`
+	Enabled    bool      `json:"enabled"    bun:"enabled,type:BOOLEAN,notnull,default:false" keel:"enabled"`
+	ProviderID *pulid.ID `json:"providerId" bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id"`
+	Percent    int       `json:"percent"    bun:"percent,type:INTEGER,notnull,default:5" keel:"percent"`
 
-	MaxAccuracyDropPoints      int `json:"maxAccuracyDropPoints"      bun:"max_accuracy_drop_points,type:INTEGER,notnull,default:5"`
-	MaxRejectionIncreasePoints int `json:"maxRejectionIncreasePoints" bun:"max_rejection_increase_points,type:INTEGER,notnull,default:10"`
+	MaxAccuracyDropPoints      int `json:"maxAccuracyDropPoints"      bun:"max_accuracy_drop_points,type:INTEGER,notnull,default:5" keel:"max_accuracy_drop_points"`
+	MaxRejectionIncreasePoints int `json:"maxRejectionIncreasePoints" bun:"max_rejection_increase_points,type:INTEGER,notnull,default:10" keel:"max_rejection_increase_points"`
 
-	StartedAt         *int64     `json:"startedAt"         bun:"started_at,type:BIGINT,nullzero"`
-	HaltedAt          *int64     `json:"haltedAt"          bun:"halted_at,type:BIGINT,nullzero"`
-	HaltReason        HaltReason `json:"haltReason"        bun:"halt_reason,type:VARCHAR(30),nullzero"`
-	HaltCandidateRate float64    `json:"haltCandidateRate" bun:"halt_candidate_rate,type:DOUBLE PRECISION,notnull,default:0"`
-	HaltBaselineRate  float64    `json:"haltBaselineRate"  bun:"halt_baseline_rate,type:DOUBLE PRECISION,notnull,default:0"`
+	StartedAt         *int64     `json:"startedAt"         bun:"started_at,type:BIGINT,nullzero" keel:"started_at"`
+	HaltedAt          *int64     `json:"haltedAt"          bun:"halted_at,type:BIGINT,nullzero" keel:"halted_at"`
+	HaltReason        HaltReason `json:"haltReason"        bun:"halt_reason,type:VARCHAR(30),nullzero" keel:"halt_reason,nullzero"`
+	HaltCandidateRate float64    `json:"haltCandidateRate" bun:"halt_candidate_rate,type:DOUBLE PRECISION,notnull,default:0" keel:"halt_candidate_rate"`
+	HaltBaselineRate  float64    `json:"haltBaselineRate"  bun:"halt_baseline_rate,type:DOUBLE PRECISION,notnull,default:0" keel:"halt_baseline_rate"`
 
-	UpdatedByID *pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt   int64     `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt   int64     `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedByID *pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero" keel:"updated_by_id"`
+	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt   int64     `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt   int64     `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

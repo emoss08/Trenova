@@ -7,17 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,25 +35,15 @@ type seededAccount struct {
 }
 
 func TestCreateManualJournalPostingPersistsPostedRecords(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
 	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupPostingFixture(t, ctx, conn)
 	now := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 
-	err = repo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
+	err := repo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:              pulid.MustNew("jb_"),
 		OrganizationID:       orgID,
 		BusinessUnitID:       buID,
@@ -218,18 +205,10 @@ func TestCreateManualJournalPostingPersistsPostedRecords(t *testing.T) {
 }
 
 func TestCreateManualJournalPostingPersistsPendingRecordsWithoutPostedAudit(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
+	var err error
 
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})

@@ -686,9 +686,8 @@ until Phase 3 splits the hubs.
 - `pkg/domainregistry` -> `core/domain/audit`
 - `pkg/domainregistry` -> `core/domain/report`
 
-## pkg/* -> kernel: pkg imports a module (rule 7), 2
+## pkg/* -> kernel: pkg imports a module (rule 7), 1
 - `pkg/domainregistry` -> `core/domain/usstate`
-- `pkg/seedhelpers` -> `core/domain/usstate`
 
 ## parties -> edi: upward (rule 3), 1
 - `core/domain/carrier` -> `core/domain/edi`

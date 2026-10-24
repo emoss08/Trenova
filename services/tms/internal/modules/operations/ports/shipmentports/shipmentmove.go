@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type GetMoveByIDRequest struct {
@@ -304,7 +303,6 @@ type SplitMoveResponse struct {
 type ShipmentMoveRepository interface {
 	SyncForShipment(
 		ctx context.Context,
-		tx bun.IDB,
 		entity *shipment.Shipment,
 	) error
 	GetByID(

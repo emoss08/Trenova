@@ -29,7 +29,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           kernelports.DBConnection
+	DB           kernelports.Transactor
 	Repo         agentports.AIProviderRepository
 	Keys         agentports.AIProviderKeyRepository `optional:"true"`
 	Versions     settingversionports.SettingVersionRepository
@@ -58,7 +58,7 @@ type EndpointProber interface {
 
 type Service struct {
 	l          *zap.Logger
-	db         kernelports.DBConnection
+	db         kernelports.Transactor
 	repo       agentports.AIProviderRepository
 	keys       agentports.AIProviderKeyRepository
 	versions   settingversionports.SettingVersionRepository

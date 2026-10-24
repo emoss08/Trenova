@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -30,19 +31,20 @@ const (
 // other bearer secret here.
 type CaptureCoverSheet struct {
 	bun.BaseModel `bun:"table:capture_cover_sheets,alias:ccs" json:"-"`
+	keel.Table    `keel:"capture_cover_sheets"`
 
-	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	TokenHash      string    `json:"-"              bun:"token_hash,type:VARCHAR(128),notnull"`
-	TargetType     string    `json:"targetType"     bun:"target_type,type:VARCHAR(50),nullzero"`
-	TargetID       *pulid.ID `json:"targetId"       bun:"target_id,type:VARCHAR(100),nullzero"`
-	DocumentTypeID *pulid.ID `json:"documentTypeId" bun:"document_type_id,type:VARCHAR(100),nullzero"`
-	IssuedByID     pulid.ID  `json:"issuedById"     bun:"issued_by_id,type:VARCHAR(100),notnull"`
-	ExpiresAt      int64     `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull"`
-	LastUsedAt     *int64    `json:"lastUsedAt"     bun:"last_used_at,type:BIGINT,nullzero"`
-	UseCount       int       `json:"useCount"       bun:"use_count,type:INTEGER,notnull,default:0"`
-	CreatedAt      int64     `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ccs_"`
+	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	TokenHash      string    `json:"-"              bun:"token_hash,type:VARCHAR(128),notnull" keel:"token_hash"`
+	TargetType     string    `json:"targetType"     bun:"target_type,type:VARCHAR(50),nullzero" keel:"target_type,nullzero"`
+	TargetID       *pulid.ID `json:"targetId"       bun:"target_id,type:VARCHAR(100),nullzero" keel:"target_id"`
+	DocumentTypeID *pulid.ID `json:"documentTypeId" bun:"document_type_id,type:VARCHAR(100),nullzero" keel:"document_type_id"`
+	IssuedByID     pulid.ID  `json:"issuedById"     bun:"issued_by_id,type:VARCHAR(100),notnull" keel:"issued_by_id"`
+	ExpiresAt      int64     `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull" keel:"expires_at"`
+	LastUsedAt     *int64    `json:"lastUsedAt"     bun:"last_used_at,type:BIGINT,nullzero" keel:"last_used_at"`
+	UseCount       int       `json:"useCount"       bun:"use_count,type:INTEGER,notnull,default:0" keel:"use_count"`
+	CreatedAt      int64     `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
 func (c *CaptureCoverSheet) Validate(multiErr *errortypes.MultiError) {

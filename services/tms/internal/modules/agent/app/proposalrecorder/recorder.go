@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -37,21 +36,11 @@ type ProposalStore interface {
 	Create(ctx context.Context, entity *agent.AgentProposal) (*agent.AgentProposal, error)
 }
 
-// Transactor runs the run, the plan and its proposals as one write, so a
-// failure part way leaves none of them behind.
-type Transactor interface {
-	WithTx(
-		ctx context.Context,
-		opts kernelports.TxOptions,
-		fn func(context.Context, bun.Tx) error,
-	) error
-}
-
 type Params struct {
 	fx.In
 
 	Logger    *zap.Logger
-	DB        kernelports.DBConnection
+	DB        kernelports.Transactor
 	Runs      agentports.AgentRunRepository
 	Proposals agentports.AgentProposalRepository
 	// Trust learns from a tool that ran on its own and failed. Optional, so
@@ -86,7 +75,7 @@ type PlanStore interface {
 
 type Service struct {
 	logger     *zap.Logger
-	tx         Transactor
+	tx         kernelports.Transactor
 	runs       RunOpener
 	proposals  ProposalStore
 	plans      PlanStore
@@ -120,7 +109,7 @@ func (s *Service) WithScriptSteps(steps ScriptStepReader) *Service {
 
 // WithTransactor gives a recorder built with NewWithStores the transaction
 // its writes run in. Without one each write stands on its own.
-func (s *Service) WithTransactor(tx Transactor) *Service {
+func (s *Service) WithTransactor(tx kernelports.Transactor) *Service {
 	s.tx = tx
 
 	return s
@@ -360,9 +349,7 @@ func (s *Service) inTx(ctx context.Context, fn func(context.Context) error) erro
 		return fn(ctx)
 	}
 
-	return s.tx.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		return fn(txCtx)
-	})
+	return s.tx.Transact(ctx, kernelports.TxOptions{}, fn)
 }
 
 // write stores the runs, the plan and the proposals. Nothing here announces

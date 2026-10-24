@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const priorityStep = 10
@@ -46,7 +45,7 @@ func (s *Service) Reorder(
 	}
 
 	changes := make([]change, 0, len(current))
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		for _, provider := range current {
 			next := priorities[provider.ID]
 			if provider.Priority == next {
@@ -224,7 +223,7 @@ func (s *Service) RouteTask(
 	}
 
 	changes := make([]change, 0, len(plan.Unassign)+1)
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if plan.Assign {
 			saved, previous, modifyErr := s.modify(txCtx, &modifyRequest{
 				tenantInfo: req.TenantInfo,

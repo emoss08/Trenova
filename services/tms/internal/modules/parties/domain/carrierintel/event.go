@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -23,42 +24,43 @@ var _ bun.BeforeAppendModelHook = (*CarrierIntelEvent)(nil)
 
 type CarrierIntelEvent struct {
 	bun.BaseModel `bun:"table:carrier_intel_events,alias:cievt" json:"-"`
+	keel.Table    `keel:"carrier_intel_events"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID               pulid.ID         `json:"id"               bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID   pulid.ID         `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID   pulid.ID         `json:"organizationId"   bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	SubjectType      SubjectType      `json:"subjectType"      bun:"subject_type,type:VARCHAR(20),notnull"`
-	SubjectID        string           `json:"subjectId"        bun:"subject_id,type:VARCHAR(100),notnull"`
-	CarrierID        pulid.ID         `json:"carrierId"        bun:"carrier_id,type:VARCHAR(100),nullzero"`
-	DOTNumber        string           `json:"dotNumber"        bun:"dot_number,type:VARCHAR(12),notnull"`
-	SubjectName      string           `json:"subjectName"      bun:"subject_name,type:VARCHAR(255),nullzero"`
-	Provider         integration.Type `json:"provider"         bun:"provider,type:integration_type,notnull"`
-	Source           EventSource      `json:"source"           bun:"source,type:VARCHAR(30),notnull"`
-	Category         Section          `json:"category"         bun:"category,type:VARCHAR(30),notnull"`
-	FieldPath        string           `json:"fieldPath"        bun:"field_path,type:VARCHAR(200),nullzero"`
-	RuleCode         RuleCode         `json:"ruleCode"         bun:"rule_code,type:VARCHAR(100),nullzero"`
-	Severity         Severity         `json:"severity"         bun:"severity,type:VARCHAR(20),notnull"`
-	Action           RuleAction       `json:"action"           bun:"action,type:VARCHAR(10),nullzero"`
-	PriorValue       any              `json:"priorValue"       bun:"prior_value,type:JSONB,nullzero"`
-	CurrentValue     any              `json:"currentValue"     bun:"current_value,type:JSONB,nullzero"`
-	Summary          string           `json:"summary"          bun:"summary,type:TEXT,notnull"`
-	VendorChangedAt  *int64           `json:"vendorChangedAt"  bun:"vendor_changed_at,type:BIGINT,nullzero"`
-	DetectedAt       int64            `json:"detectedAt"       bun:"detected_at,type:BIGINT,notnull"`
-	Fingerprint      string           `json:"fingerprint"      bun:"fingerprint,type:VARCHAR(64),notnull"`
-	Status           EventStatus      `json:"status"           bun:"status,type:VARCHAR(20),notnull"`
-	AcknowledgedByID pulid.ID         `json:"acknowledgedById" bun:"acknowledged_by_id,type:VARCHAR(100),nullzero"`
-	AcknowledgedAt   *int64           `json:"acknowledgedAt"   bun:"acknowledged_at,type:BIGINT,nullzero"`
-	ResolvedByID     pulid.ID         `json:"resolvedById"     bun:"resolved_by_id,type:VARCHAR(100),nullzero"`
-	ResolvedAt       *int64           `json:"resolvedAt"       bun:"resolved_at,type:BIGINT,nullzero"`
-	Resolution       EventResolution  `json:"resolution"       bun:"resolution,type:VARCHAR(30),nullzero"`
-	ResolutionNote   string           `json:"resolutionNote"   bun:"resolution_note,type:TEXT,nullzero"`
-	SnapshotID       pulid.ID         `json:"snapshotId"       bun:"snapshot_id,type:VARCHAR(100),nullzero"`
-	NotifiedAt       *int64           `json:"notifiedAt"       bun:"notified_at,type:BIGINT,nullzero"`
-	Version          int64            `json:"version"          bun:"version,type:BIGINT"`
-	CreatedAt        int64            `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64            `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID         `json:"id"               bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:cievt_"`
+	BusinessUnitID   pulid.ID         `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID         `json:"organizationId"   bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	SubjectType      SubjectType      `json:"subjectType"      bun:"subject_type,type:VARCHAR(20),notnull" keel:"subject_type"`
+	SubjectID        string           `json:"subjectId"        bun:"subject_id,type:VARCHAR(100),notnull" keel:"subject_id"`
+	CarrierID        pulid.ID         `json:"carrierId"        bun:"carrier_id,type:VARCHAR(100),nullzero" keel:"carrier_id,nullzero"`
+	DOTNumber        string           `json:"dotNumber"        bun:"dot_number,type:VARCHAR(12),notnull" keel:"dot_number"`
+	SubjectName      string           `json:"subjectName"      bun:"subject_name,type:VARCHAR(255),nullzero" keel:"subject_name,nullzero"`
+	Provider         integration.Type `json:"provider"         bun:"provider,type:integration_type,notnull" keel:"provider"`
+	Source           EventSource      `json:"source"           bun:"source,type:VARCHAR(30),notnull" keel:"source"`
+	Category         Section          `json:"category"         bun:"category,type:VARCHAR(30),notnull" keel:"category"`
+	FieldPath        string           `json:"fieldPath"        bun:"field_path,type:VARCHAR(200),nullzero" keel:"field_path,nullzero"`
+	RuleCode         RuleCode         `json:"ruleCode"         bun:"rule_code,type:VARCHAR(100),nullzero" keel:"rule_code,nullzero"`
+	Severity         Severity         `json:"severity"         bun:"severity,type:VARCHAR(20),notnull" keel:"severity"`
+	Action           RuleAction       `json:"action"           bun:"action,type:VARCHAR(10),nullzero" keel:"action,nullzero"`
+	PriorValue       any              `json:"priorValue"       bun:"prior_value,type:JSONB,nullzero" keel:"prior_value,jsonb,nullzero"`
+	CurrentValue     any              `json:"currentValue"     bun:"current_value,type:JSONB,nullzero" keel:"current_value,jsonb,nullzero"`
+	Summary          string           `json:"summary"          bun:"summary,type:TEXT,notnull" keel:"summary"`
+	VendorChangedAt  *int64           `json:"vendorChangedAt"  bun:"vendor_changed_at,type:BIGINT,nullzero" keel:"vendor_changed_at"`
+	DetectedAt       int64            `json:"detectedAt"       bun:"detected_at,type:BIGINT,notnull" keel:"detected_at"`
+	Fingerprint      string           `json:"fingerprint"      bun:"fingerprint,type:VARCHAR(64),notnull" keel:"fingerprint"`
+	Status           EventStatus      `json:"status"           bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	AcknowledgedByID pulid.ID         `json:"acknowledgedById" bun:"acknowledged_by_id,type:VARCHAR(100),nullzero" keel:"acknowledged_by_id,nullzero"`
+	AcknowledgedAt   *int64           `json:"acknowledgedAt"   bun:"acknowledged_at,type:BIGINT,nullzero" keel:"acknowledged_at"`
+	ResolvedByID     pulid.ID         `json:"resolvedById"     bun:"resolved_by_id,type:VARCHAR(100),nullzero" keel:"resolved_by_id,nullzero"`
+	ResolvedAt       *int64           `json:"resolvedAt"       bun:"resolved_at,type:BIGINT,nullzero" keel:"resolved_at"`
+	Resolution       EventResolution  `json:"resolution"       bun:"resolution,type:VARCHAR(30),nullzero" keel:"resolution,nullzero"`
+	ResolutionNote   string           `json:"resolutionNote"   bun:"resolution_note,type:TEXT,nullzero" keel:"resolution_note,nullzero"`
+	SnapshotID       pulid.ID         `json:"snapshotId"       bun:"snapshot_id,type:VARCHAR(100),nullzero" keel:"snapshot_id,nullzero"`
+	NotifiedAt       *int64           `json:"notifiedAt"       bun:"notified_at,type:BIGINT,nullzero" keel:"notified_at"`
+	Version          int64            `json:"version"          bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt        int64            `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64            `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (e *CarrierIntelEvent) Validate(multiErr *errortypes.MultiError) {

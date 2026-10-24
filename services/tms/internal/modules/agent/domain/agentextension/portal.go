@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,22 +66,23 @@ var (
 
 type PortalSite struct {
 	bun.BaseModel `bun:"table:agent_portal_sites,alias:apst" json:"-"`
+	keel.Table    `keel:"agent_portal_sites"`
 
-	ID               pulid.ID       `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID       `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID       `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Name             string         `json:"name"             bun:"name,type:VARCHAR(100),notnull"`
-	Purpose          string         `json:"purpose"          bun:"purpose,type:VARCHAR(500),notnull,default:''"`
-	Domains          []string       `json:"domains"          bun:"domains,type:JSONB,notnull,default:'[]'::jsonb"`
-	StartURL         string         `json:"startUrl"         bun:"start_url,type:VARCHAR(2048),notnull"`
-	Credentials      map[string]any `json:"-"                bun:"credentials,type:JSONB,notnull,default:'{}'::jsonb"`
-	BrowserProfileID string         `json:"browserProfileId" bun:"browser_profile_id,type:VARCHAR(100),notnull,default:''"`
-	AllowActions     bool           `json:"allowActions"     bun:"allow_actions,type:BOOLEAN,notnull,default:false"`
-	Enabled          bool           `json:"enabled"          bun:"enabled,type:BOOLEAN,notnull"`
-	CreatedByID      pulid.ID       `json:"createdById"      bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	Version          int64          `json:"version"          bun:"version,type:BIGINT,notnull"`
-	CreatedAt        int64          `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64          `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID       `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:apst_"`
+	BusinessUnitID   pulid.ID       `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID       `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Name             string         `json:"name"             bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Purpose          string         `json:"purpose"          bun:"purpose,type:VARCHAR(500),notnull,default:''" keel:"purpose"`
+	Domains          []string       `json:"domains"          bun:"domains,type:JSONB,notnull,default:'[]'::jsonb" keel:"domains,jsonb"`
+	StartURL         string         `json:"startUrl"         bun:"start_url,type:VARCHAR(2048),notnull" keel:"start_url"`
+	Credentials      map[string]any `json:"-"                bun:"credentials,type:JSONB,notnull,default:'{}'::jsonb" keel:"credentials,jsonb"`
+	BrowserProfileID string         `json:"browserProfileId" bun:"browser_profile_id,type:VARCHAR(100),notnull,default:''" keel:"browser_profile_id"`
+	AllowActions     bool           `json:"allowActions"     bun:"allow_actions,type:BOOLEAN,notnull,default:false" keel:"allow_actions"`
+	Enabled          bool           `json:"enabled"          bun:"enabled,type:BOOLEAN,notnull" keel:"enabled"`
+	CreatedByID      pulid.ID       `json:"createdById"      bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
+	Version          int64          `json:"version"          bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt        int64          `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64          `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (s *PortalSite) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -98,6 +100,10 @@ func (s *PortalSite) BeforeAppendModel(_ context.Context, query bun.Query) error
 	}
 
 	return nil
+}
+
+func (s *PortalSite) BeforeCreate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (s *PortalSite) HasSignIn() bool {
@@ -279,39 +285,40 @@ func (s PortalRunStatus) Finished() bool {
 
 type PortalRun struct {
 	bun.BaseModel `bun:"table:agent_portal_runs,alias:aprn" json:"-"`
+	keel.Table    `keel:"agent_portal_runs"`
 
-	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	SiteID            pulid.ID          `json:"siteId"            bun:"site_id,type:VARCHAR(100),notnull"`
-	ExtensionType     Type              `json:"extensionType"     bun:"extension_type,type:VARCHAR(50),notnull"`
-	Mode              PortalRunMode     `json:"mode"              bun:"mode,type:VARCHAR(10),notnull"`
-	Status            PortalRunStatus   `json:"status"            bun:"status,type:VARCHAR(20),notnull"`
-	Instruction       string            `json:"instruction"       bun:"instruction,type:TEXT,notnull"`
-	Details           map[string]string `json:"details"           bun:"details,type:JSONB,notnull,default:'{}'::jsonb"`
-	UsedSignIn        bool              `json:"usedSignIn"        bun:"used_sign_in,type:BOOLEAN,notnull,default:false"`
-	VendorTaskID      string            `json:"vendorTaskId"      bun:"vendor_task_id,type:VARCHAR(100),notnull,default:''"`
-	VendorSessionID   string            `json:"vendorSessionId"   bun:"vendor_session_id,type:VARCHAR(100),notnull,default:''"`
-	Answer            string            `json:"answer"            bun:"answer,type:TEXT,notnull,default:''"`
-	VisitedURLs       []string          `json:"visitedUrls"       bun:"visited_urls,type:JSONB,notnull,default:'[]'::jsonb"`
-	OffSiteURLs       []string          `json:"offSiteUrls"       bun:"off_site_urls,type:JSONB,notnull,default:'[]'::jsonb"`
-	Steps             int               `json:"steps"             bun:"steps,type:INTEGER,notnull,default:0"`
-	CostUSD           decimal.Decimal   `json:"costUsd"           bun:"cost_usd,type:NUMERIC(19,6),notnull,default:0"`
-	Failure           string            `json:"failure"           bun:"failure,type:TEXT,notnull,default:''"`
-	CodePrompt        string            `json:"codePrompt"        bun:"code_prompt,type:TEXT,notnull,default:''"`
-	CodeRequestedAt   *int64            `json:"codeRequestedAt"   bun:"code_requested_at,type:BIGINT,nullzero"`
-	CodeAttempts      int               `json:"codeAttempts"      bun:"code_attempts,type:INTEGER,notnull,default:0"`
-	IdempotencyKey    string            `json:"-"                 bun:"idempotency_key,type:VARCHAR(200),nullzero"`
-	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
-	AgentRunID        pulid.ID          `json:"agentRunId"        bun:"agent_run_id,type:VARCHAR(100),nullzero"`
-	ThreadID          pulid.ID          `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero"`
-	ProposalID        pulid.ID          `json:"proposalId"        bun:"proposal_id,type:VARCHAR(100),nullzero"`
-	RequestedByID     pulid.ID          `json:"requestedById"     bun:"requested_by_id,type:VARCHAR(100),nullzero"`
-	StartedAt         int64             `json:"startedAt"         bun:"started_at,type:BIGINT,notnull"`
-	FinishedAt        *int64            `json:"finishedAt"        bun:"finished_at,type:BIGINT,nullzero"`
-	Version           int64             `json:"version"           bun:"version,type:BIGINT,notnull"`
-	CreatedAt         int64             `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aprn_"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	SiteID            pulid.ID          `json:"siteId"            bun:"site_id,type:VARCHAR(100),notnull" keel:"site_id"`
+	ExtensionType     Type              `json:"extensionType"     bun:"extension_type,type:VARCHAR(50),notnull" keel:"extension_type"`
+	Mode              PortalRunMode     `json:"mode"              bun:"mode,type:VARCHAR(10),notnull" keel:"mode"`
+	Status            PortalRunStatus   `json:"status"            bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	Instruction       string            `json:"instruction"       bun:"instruction,type:TEXT,notnull" keel:"instruction"`
+	Details           map[string]string `json:"details"           bun:"details,type:JSONB,notnull,default:'{}'::jsonb" keel:"details,jsonb"`
+	UsedSignIn        bool              `json:"usedSignIn"        bun:"used_sign_in,type:BOOLEAN,notnull,default:false" keel:"used_sign_in"`
+	VendorTaskID      string            `json:"vendorTaskId"      bun:"vendor_task_id,type:VARCHAR(100),notnull,default:''" keel:"vendor_task_id"`
+	VendorSessionID   string            `json:"vendorSessionId"   bun:"vendor_session_id,type:VARCHAR(100),notnull,default:''" keel:"vendor_session_id"`
+	Answer            string            `json:"answer"            bun:"answer,type:TEXT,notnull,default:''" keel:"answer"`
+	VisitedURLs       []string          `json:"visitedUrls"       bun:"visited_urls,type:JSONB,notnull,default:'[]'::jsonb" keel:"visited_urls,jsonb"`
+	OffSiteURLs       []string          `json:"offSiteUrls"       bun:"off_site_urls,type:JSONB,notnull,default:'[]'::jsonb" keel:"off_site_urls,jsonb"`
+	Steps             int               `json:"steps"             bun:"steps,type:INTEGER,notnull,default:0" keel:"steps"`
+	CostUSD           decimal.Decimal   `json:"costUsd"           bun:"cost_usd,type:NUMERIC(19,6),notnull,default:0" keel:"cost_usd"`
+	Failure           string            `json:"failure"           bun:"failure,type:TEXT,notnull,default:''" keel:"failure"`
+	CodePrompt        string            `json:"codePrompt"        bun:"code_prompt,type:TEXT,notnull,default:''" keel:"code_prompt"`
+	CodeRequestedAt   *int64            `json:"codeRequestedAt"   bun:"code_requested_at,type:BIGINT,nullzero" keel:"code_requested_at"`
+	CodeAttempts      int               `json:"codeAttempts"      bun:"code_attempts,type:INTEGER,notnull,default:0" keel:"code_attempts"`
+	IdempotencyKey    string            `json:"-"                 bun:"idempotency_key,type:VARCHAR(200),nullzero" keel:"idempotency_key,nullzero"`
+	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero" keel:"agent_definition_id,nullzero"`
+	AgentRunID        pulid.ID          `json:"agentRunId"        bun:"agent_run_id,type:VARCHAR(100),nullzero" keel:"agent_run_id,nullzero"`
+	ThreadID          pulid.ID          `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero" keel:"thread_id,nullzero"`
+	ProposalID        pulid.ID          `json:"proposalId"        bun:"proposal_id,type:VARCHAR(100),nullzero" keel:"proposal_id,nullzero"`
+	RequestedByID     pulid.ID          `json:"requestedById"     bun:"requested_by_id,type:VARCHAR(100),nullzero" keel:"requested_by_id,nullzero"`
+	StartedAt         int64             `json:"startedAt"         bun:"started_at,type:BIGINT,notnull" keel:"started_at"`
+	FinishedAt        *int64            `json:"finishedAt"        bun:"finished_at,type:BIGINT,nullzero" keel:"finished_at"`
+	Version           int64             `json:"version"           bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt         int64             `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (r *PortalRun) BeforeAppendModel(_ context.Context, query bun.Query) error {

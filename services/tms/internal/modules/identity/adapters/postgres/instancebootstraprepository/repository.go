@@ -98,13 +98,9 @@ func (r *repository) Finalize(
 				Now:            req.Now,
 			}
 
-			if _, err := tenantbootstrap.CreateTCAAllowlist(ctx, db, scope); err != nil {
-				return nil, err
-			}
-
 			systemUserID, created, err := tenantbootstrap.EnsureSystemUser(
 				ctx,
-				db,
+				r.db.Keel(ctx),
 				tenantbootstrap.SystemUserParams{Scope: scope, Password: req.SystemUserPassword},
 			)
 			if err != nil {

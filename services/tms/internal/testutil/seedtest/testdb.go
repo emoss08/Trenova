@@ -2,24 +2,22 @@ package seedtest
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/migrations"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/migrate"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
+	"github.com/emoss08/trenova/schema/migrations"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 const (
@@ -32,63 +30,46 @@ const (
 
 	DefaultPostgresImage = "postgis/postgis:18-3.6-alpine"
 
+	TemplateKey = "trenova-seedtest"
+
 	postgresDatabase = "trenova_seed_test"
 	postgresUser     = "test"
 	postgresPassword = "test"
-
-	// templateLockKey serialises template-database construction across the test
-	// processes that run in parallel, so migrations execute exactly once.
-	templateLockKey int64 = 8021990
+	databasePrefix   = "trenova_test_"
 
 	templateBuildTimeout = 10 * time.Minute
-	createFromTemplate   = 90 * time.Second
+	dropAttempts         = 3
 )
 
 var (
-	sharedSeedEnv     *seedEnvironment
-	sharedSeedOnce    sync.Once
-	sharedSeedErr     error
-	sharedSeedCounter atomic.Uint64
+	sharedSeedEnv  *seedEnvironment
+	sharedSeedOnce sync.Once
+	sharedSeedErr  error
 )
 
 type seedEnvironment struct {
-	adminDB      *bun.DB
-	adminDSN     string
-	templateName string
+	adminDSN string
+	set      migrate.Set
+	mu       sync.Mutex
+	keys     map[string]string
 }
 
-type TestDB struct {
-	DB *bun.DB
-	Tx bun.Tx
-	t  *testing.T
-}
-
-func NewTestDB(t *testing.T, db *bun.DB) *TestDB {
-	t.Helper()
-
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err, "failed to begin test transaction")
-
-	return &TestDB{
-		DB: db,
-		Tx: tx,
-		t:  t,
+func (e *seedEnvironment) key(kind Template) (string, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if key, ok := e.keys[kind.Name]; ok {
+		return key, nil
 	}
-}
 
-func (tdb *TestDB) Rollback() {
-	tdb.t.Helper()
-	require.NoError(tdb.t, tdb.Tx.Rollback(), "failed to rollback test transaction")
-}
+	ctx, cancel := context.WithTimeout(context.Background(), templateBuildTimeout)
+	defer cancel()
+	key, err := seedKey(ctx, e.adminDSN, kind)
+	if err != nil {
+		return "", err
+	}
+	e.keys[kind.Name] = key
 
-func (tdb *TestDB) Commit() {
-	tdb.t.Helper()
-	require.NoError(tdb.t, tdb.Tx.Commit(), "failed to commit test transaction")
-}
-
-func (tdb *TestDB) Context() context.Context {
-	return context.Background()
+	return key, nil
 }
 
 func chdirToServiceRoot(t *testing.T) {
@@ -118,14 +99,18 @@ func chdirToServiceRoot(t *testing.T) {
 	t.Fatal("could not find TMS service root directory")
 }
 
-func openBunDB(dsn string, maxOpen int) *bun.DB {
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-	sqldb.SetMaxOpenConns(maxOpen)
-	sqldb.SetMaxIdleConns(1)
-	sqldb.SetConnMaxIdleTime(30 * time.Second)
-	sqldb.SetConnMaxLifetime(2 * time.Minute)
+func openDB(dsn string, maxOpen int) (*keel.DB, error) {
+	pool, err := dbpool.Open(context.Background(), &dbpool.Options{
+		DSN:             dsn,
+		MaxConns:        maxOpen,
+		MaxConnIdleTime: 30 * time.Second,
+		MaxConnLifetime: 2 * time.Minute,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("open test database: %w", err)
+	}
 
-	return bun.NewDB(sqldb, pgdialect.New())
+	return pool.Keel, nil
 }
 
 // resolveAdminDSN returns a DSN for a Postgres server to run the suite against.
@@ -191,14 +176,15 @@ func PostgresImage() string {
 	return DefaultPostgresImage
 }
 
-func waitForDB(ctx context.Context, db *bun.DB) error {
+func waitForServer(ctx context.Context, dsn string) error {
 	deadline := time.Now().Add(time.Minute)
 	for {
-		if err := db.PingContext(ctx); err == nil {
-			return nil
+		conn, err := pgx.Connect(ctx, dsn)
+		if err == nil {
+			return conn.Close(ctx)
 		}
 		if time.Now().After(deadline) {
-			return errors.New("timed out waiting for postgres to accept connections")
+			return fmt.Errorf("timed out waiting for postgres to accept connections: %w", err)
 		}
 		select {
 		case <-ctx.Done():
@@ -208,158 +194,15 @@ func waitForDB(ctx context.Context, db *bun.DB) error {
 	}
 }
 
-func databaseExists(ctx context.Context, adminDB *bun.DB, name string) (bool, error) {
-	var exists bool
-	err := adminDB.QueryRowContext(
-		ctx,
-		"SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = ?)",
-		name,
-	).Scan(&exists)
-	if err != nil {
-		return false, fmt.Errorf("failed to look up database %q: %w", name, err)
+func templateOptions(env *seedEnvironment, kind Template, key string) migrate.TemplateOptions {
+	return migrate.TemplateOptions{
+		Admin:   env.adminDSN,
+		Sources: env.set,
+		Options: migrations.Options(),
+		Key:     key,
+		Prepare: applySeeds(kind),
+		Prefix:  databasePrefix,
 	}
-
-	return exists, nil
-}
-
-// acquireTemplateLock waits for the template lock by polling rather than by
-// blocking inside Postgres. pg_advisory_lock parks the connection until the
-// lock frees, which outlives pgdriver's read timeout whenever the process
-// holding it is still running migrations, and surfaces as an i/o timeout rather
-// than as contention. pg_try_advisory_lock answers immediately, so every read
-// completes well inside that timeout no matter how long the build takes.
-func acquireTemplateLock(ctx context.Context, conn bun.Conn) error {
-	return pollUntilAcquired(ctx, templateBuildTimeout, func() (bool, error) {
-		var acquired bool
-		if err := conn.QueryRowContext(
-			ctx,
-			"SELECT pg_try_advisory_lock(?)",
-			templateLockKey,
-		).Scan(&acquired); err != nil {
-			return false, fmt.Errorf("failed to acquire template advisory lock: %w", err)
-		}
-
-		return acquired, nil
-	})
-}
-
-func pollUntilAcquired(
-	ctx context.Context,
-	within time.Duration,
-	attempt func() (bool, error),
-) error {
-	deadline := time.Now().Add(within)
-
-	for i := 0; ; i++ {
-		acquired, err := attempt()
-		if err != nil {
-			return err
-		}
-		if acquired {
-			return nil
-		}
-		if !time.Now().Before(deadline) {
-			return fmt.Errorf(
-				"timed out after %s waiting for the template advisory lock",
-				within,
-			)
-		}
-
-		backoff := min(time.Duration(i+1)*25*time.Millisecond, 500*time.Millisecond)
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(backoff):
-		}
-	}
-}
-
-// ensureTemplateDatabase builds the migrated template exactly once per server,
-// even when many test binaries race to create it. Migrations run into a staging
-// database that is renamed into place only on success, so the presence of the
-// template is proof that it is fully migrated.
-func ensureTemplateDatabase(
-	ctx context.Context,
-	adminDB *bun.DB,
-	adminDSN string,
-	templateName string,
-) error {
-	conn, err := adminDB.Conn(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to acquire advisory lock connection: %w", err)
-	}
-	defer conn.Close()
-
-	if err = acquireTemplateLock(ctx, conn); err != nil {
-		return err
-	}
-	defer func() {
-		_, _ = conn.ExecContext(
-			context.Background(),
-			"SELECT pg_advisory_unlock(?)",
-			templateLockKey,
-		)
-	}()
-
-	exists, err := databaseExists(ctx, adminDB, templateName)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return nil
-	}
-
-	stagingName := templateName + "_building"
-	if _, err = adminDB.ExecContext(
-		ctx,
-		fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", stagingName),
-	); err != nil {
-		return fmt.Errorf("failed to drop stale staging database: %w", err)
-	}
-	if _, err = adminDB.ExecContext(
-		ctx,
-		fmt.Sprintf("CREATE DATABASE %s", stagingName),
-	); err != nil {
-		return fmt.Errorf("failed to create staging database: %w", err)
-	}
-
-	stagingDB := openBunDB(replaceDatabase(adminDSN, stagingName), 2)
-	if err = stagingDB.PingContext(ctx); err != nil {
-		stagingDB.Close() //nolint:errcheck // best effort on the failure path
-		return fmt.Errorf("failed to connect to staging database: %w", err)
-	}
-	if err = migrations.Run(ctx, stagingDB); err != nil {
-		stagingDB.Close() //nolint:errcheck // best effort on the failure path
-		return fmt.Errorf("failed to run migrations: %w", err)
-	}
-	if err = stagingDB.Close(); err != nil {
-		return fmt.Errorf("failed to close staging database connection: %w", err)
-	}
-
-	if _, err = adminDB.ExecContext(
-		ctx,
-		fmt.Sprintf("ALTER DATABASE %s RENAME TO %s", stagingName, templateName),
-	); err != nil {
-		return fmt.Errorf("failed to publish template database: %w", err)
-	}
-
-	return nil
-}
-
-// replaceDatabase swaps the database segment of a Postgres DSN.
-func replaceDatabase(dsn, database string) string {
-	base, query, hasQuery := strings.Cut(dsn, "?")
-	slash := strings.LastIndex(base, "/")
-	if slash < 0 {
-		return dsn
-	}
-
-	replaced := base[:slash+1] + database
-	if hasQuery {
-		return replaced + "?" + query
-	}
-
-	return replaced
 }
 
 func getSharedSeedEnv() (*seedEnvironment, error) {
@@ -372,71 +215,22 @@ func getSharedSeedEnv() (*seedEnvironment, error) {
 			sharedSeedErr = err
 			return
 		}
-
-		adminDB := openBunDB(adminDSN, 4)
-		if err = waitForDB(ctx, adminDB); err != nil {
-			adminDB.Close() //nolint:errcheck // best effort on the failure path
-			sharedSeedErr = err
-			return
-		}
-
-		fingerprint, err := migrations.Fingerprint()
-		if err != nil {
-			adminDB.Close() //nolint:errcheck // best effort on the failure path
-			sharedSeedErr = err
-			return
-		}
-		templateName := "trenova_tpl_" + fingerprint[:16]
-
-		if err = ensureTemplateDatabase(ctx, adminDB, adminDSN, templateName); err != nil {
-			adminDB.Close() //nolint:errcheck // best effort on the failure path
+		if err = waitForServer(ctx, adminDSN); err != nil {
 			sharedSeedErr = err
 			return
 		}
 
 		sharedSeedEnv = &seedEnvironment{
-			adminDB:      adminDB,
-			adminDSN:     adminDSN,
-			templateName: templateName,
+			adminDSN: adminDSN,
+			set:      migrations.Set(),
+			keys:     make(map[string]string, 2),
 		}
 	})
 
 	return sharedSeedEnv, sharedSeedErr
 }
 
-// createDatabaseFromTemplate retries while other processes hold a session on the
-// template; Postgres refuses CREATE DATABASE ... TEMPLATE in that window.
-func createDatabaseFromTemplate(
-	ctx context.Context,
-	adminDB *bun.DB,
-	dbName, templateName string,
-) error {
-	stmt := fmt.Sprintf("CREATE DATABASE %s TEMPLATE %s", dbName, templateName)
-	deadline := time.Now().Add(createFromTemplate)
-
-	var lastErr error
-	for attempt := 0; ; attempt++ {
-		_, lastErr = adminDB.ExecContext(ctx, stmt)
-		if lastErr == nil {
-			return nil
-		}
-		if !strings.Contains(lastErr.Error(), "being accessed by other users") {
-			return lastErr
-		}
-		if time.Now().After(deadline) {
-			return fmt.Errorf("timed out cloning template database: %w", lastErr)
-		}
-
-		backoff := min(time.Duration(attempt+1)*50*time.Millisecond, time.Second)
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(backoff):
-		}
-	}
-}
-
-func SetupTestDB(t *testing.T) (context.Context, *bun.DB, func()) {
+func SetupTestDB(t *testing.T) (context.Context, *keel.DB, func()) {
 	t.Helper()
 
 	ctx, db, _, cleanup := SetupTestDBWithDSN(t)
@@ -444,71 +238,69 @@ func SetupTestDB(t *testing.T) (context.Context, *bun.DB, func()) {
 	return ctx, db, cleanup
 }
 
-func SetupTestDBWithDSN(t *testing.T) (context.Context, *bun.DB, string, func()) {
+func SetupTestDBWithDSN(t *testing.T) (context.Context, *keel.DB, string, func()) {
+	t.Helper()
+
+	return SetupFromTemplate(t, referenceTemplate)
+}
+
+func SetupFromTemplate(t *testing.T, kind Template) (context.Context, *keel.DB, string, func()) {
 	t.Helper()
 
 	chdirToServiceRoot(t)
 
 	env, err := getSharedSeedEnv()
 	require.NoError(t, err, "failed to get shared seed environment")
+	key, err := env.key(kind)
+	require.NoError(t, err, "failed to fingerprint the %s seeds", kind.Name)
+
+	copyCtx, copyCancel := context.WithTimeout(context.Background(), templateBuildTimeout)
+	dsn, drop, err := migrate.Template(copyCtx, templateOptions(env, kind, key))
+	copyCancel()
+	require.NoError(t, err, "failed to create isolated test database")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
-	dbName := fmt.Sprintf("trenova_test_%d_%d", os.Getpid(), sharedSeedCounter.Add(1))
-	cloneCtx, cloneCancel := context.WithTimeout(context.Background(), createFromTemplate)
-	err = createDatabaseFromTemplate(cloneCtx, env.adminDB, dbName, env.templateName)
-	cloneCancel()
+	db, err := openDB(dsn, 4)
+	if err == nil {
+		err = db.Ping(ctx)
+	}
 	if err != nil {
 		cancel()
-		require.NoError(t, err, "failed to create isolated test database")
-	}
-
-	dsn := replaceDatabase(env.adminDSN, dbName)
-	db := openBunDB(dsn, 2)
-	if pingErr := db.PingContext(ctx); pingErr != nil {
-		cancel()
-		require.NoError(t, pingErr, "failed to ping isolated test database")
+		dropDatabase(t, drop, dsn)
+		require.NoError(t, err, "failed to open isolated test database")
 	}
 
 	cleanup := func() {
-		if closeErr := db.Close(); closeErr != nil {
-			require.NoError(t, closeErr, "failed to close isolated test database")
-		}
-
-		var dropErr error
-		for range 3 {
-			dropCtx, dropCancel := context.WithTimeout(context.Background(), 10*time.Second)
-			_, _ = env.adminDB.ExecContext(
-				dropCtx,
-				fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", dbName),
-			)
-			dropCancel()
-
-			dropCtx, dropCancel = context.WithTimeout(context.Background(), 10*time.Second)
-			_, dropErr = env.adminDB.ExecContext(
-				dropCtx,
-				fmt.Sprintf("DROP DATABASE IF EXISTS %s", dbName),
-			)
-			dropCancel()
-			if dropErr == nil {
-				break
-			}
-			time.Sleep(500 * time.Millisecond)
-		}
-		if dropErr != nil {
-			t.Logf("failed to drop isolated test database %s: %v", dbName, dropErr)
-		}
+		db.Close()
+		dropDatabase(t, drop, dsn)
 		cancel()
 	}
 
 	return ctx, db, dsn, cleanup
 }
 
-func BeginTx(t *testing.T, ctx context.Context, db *bun.DB) (context.Context, bun.Tx) {
+func dropDatabase(t *testing.T, drop func(context.Context) error, dsn string) {
 	t.Helper()
 
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err, "failed to begin transaction")
+	var err error
+	for range dropAttempts {
+		dropCtx, dropCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		err = drop(dropCtx)
+		dropCancel()
+		if err == nil {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	t.Logf("failed to drop isolated test database %s: %v", redactDSN(dsn), err)
+}
 
-	return ctx, tx
+func redactDSN(dsn string) string {
+	cfg, err := pgx.ParseConfig(dsn)
+	if err != nil {
+		return "<unparseable dsn>"
+	}
+
+	return cfg.Database
 }

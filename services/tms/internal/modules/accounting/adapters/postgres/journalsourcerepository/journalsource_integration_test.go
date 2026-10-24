@@ -7,10 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
@@ -24,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,17 +42,8 @@ type seededSourceAccount struct {
 }
 
 func TestGetByObjectReturnsLatestJournalSource(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
@@ -273,17 +261,8 @@ func postInvoiceEntry(
 }
 
 func TestJournalCardReadsAnEntrysSourceReversalsAndAccountTypes(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()

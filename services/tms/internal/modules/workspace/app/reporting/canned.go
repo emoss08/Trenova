@@ -41,7 +41,7 @@ func (s *Service) ForkCanned(
 		return nil, err
 	}
 
-	entity := NewCannedFork(entry, req)
+	entity := s.NewCannedFork(entry, req)
 
 	created, err := s.defRepo.Create(ctx, entity, req.TenantInfo.UserID)
 	if err != nil {

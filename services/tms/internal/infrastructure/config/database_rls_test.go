@@ -82,7 +82,6 @@ func TestRLSConfig_Defaults(t *testing.T) {
 	var role DatabaseRole
 	assert.False(t, role.Configured())
 	assert.Equal(t, 8, role.GetMaxOpenConns())
-	assert.Equal(t, 2, role.GetMaxIdleConns())
 }
 
 func TestGetDSNForRole(t *testing.T) {

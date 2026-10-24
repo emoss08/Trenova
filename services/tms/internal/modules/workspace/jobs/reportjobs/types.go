@@ -18,7 +18,6 @@ type PreparedRun struct {
 	Title          string         `json:"title"`
 	Description    string         `json:"description"`
 	Params         map[string]any `json:"params"`
-	ParamOrder     []string       `json:"paramOrder,omitempty"`
 	OrgTimezone    string         `json:"orgTimezone"`
 	RequestedBy    string         `json:"requestedBy"`
 	Locale         string         `json:"locale,omitempty"`

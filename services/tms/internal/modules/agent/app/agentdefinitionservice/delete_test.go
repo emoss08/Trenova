@@ -11,27 +11,23 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type inTxKey struct{}
 
-type txConnection struct {
-	dbtest.NopConnection
-}
+type txConnection struct{}
 
-func (txConnection) WithTx(
+func (txConnection) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(context.WithValue(ctx, inTxKey{}, true), bun.Tx{})
+	return fn(context.WithValue(ctx, inTxKey{}, true))
 }
 
 func inTx(ctx context.Context) bool {

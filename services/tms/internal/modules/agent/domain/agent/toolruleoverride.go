@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -17,18 +18,19 @@ const (
 
 type ToolRuleOverride struct {
 	bun.BaseModel `bun:"table:agent_tool_rule_overrides,alias:atro" json:"-"`
+	keel.Table    `keel:"agent_tool_rule_overrides"`
 
-	ID             pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID     `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID     `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ToolName       string       `json:"toolName"       bun:"tool_name,type:VARCHAR(100),notnull"`
-	MaxTier        AutonomyTier `json:"maxTier"        bun:"max_tier,type:VARCHAR(30),nullzero"`
-	ReadsExternal  ExternalRead `json:"readsExternal"  bun:"reads_external,type:VARCHAR(20),nullzero"`
-	Reason         string       `json:"reason"         bun:"reason,type:TEXT,notnull"`
-	UpdatedByID    pulid.ID     `json:"updatedById"    bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version        int64        `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt      int64        `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64        `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:atro_"`
+	BusinessUnitID pulid.ID     `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID     `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ToolName       string       `json:"toolName"       bun:"tool_name,type:VARCHAR(100),notnull" keel:"tool_name"`
+	MaxTier        AutonomyTier `json:"maxTier"        bun:"max_tier,type:VARCHAR(30),nullzero" keel:"max_tier,nullzero"`
+	ReadsExternal  ExternalRead `json:"readsExternal"  bun:"reads_external,type:VARCHAR(20),nullzero" keel:"reads_external,nullzero"`
+	Reason         string       `json:"reason"         bun:"reason,type:TEXT,notnull" keel:"reason"`
+	UpdatedByID    pulid.ID     `json:"updatedById"    bun:"updated_by_id,type:VARCHAR(100),nullzero" keel:"updated_by_id,nullzero"`
+	Version        int64        `json:"version"        bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt      int64        `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64        `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (o *ToolRuleOverride) GetID() pulid.ID { return o.ID }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -14,29 +15,29 @@ import (
 
 type Page struct {
 	bun.BaseModel `bun:"table:document_content_pages,alias:dcp" json:"-"`
+	keel.Table    `keel:"document_content_pages"`
 
-	ID                   pulid.ID       `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull"`
-	DocumentContentID    pulid.ID       `json:"documentContentId"    bun:"document_content_id,type:VARCHAR(100),notnull"`
-	DocumentID           pulid.ID       `json:"documentId"           bun:"document_id,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID       `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	BusinessUnitID       pulid.ID       `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	PageNumber           int            `json:"pageNumber"           bun:"page_number,type:INTEGER,notnull"`
-	SourceKind           SourceKind     `json:"sourceKind"           bun:"source_kind,type:VARCHAR(20),notnull"`
-	ExtractedText        string         `json:"extractedText"        bun:"extracted_text,type:TEXT,nullzero"`
-	Markdown             string         `json:"markdown"             bun:"markdown,type:TEXT,nullzero"`
-	OCRConfidence        float64        `json:"ocrConfidence"        bun:"ocr_confidence,type:DOUBLE PRECISION,notnull"`
-	PreprocessingApplied bool           `json:"preprocessingApplied" bun:"preprocessing_applied,type:BOOLEAN,notnull"`
-	Width                int            `json:"width"                bun:"width,type:INTEGER,notnull"`
-	Height               int            `json:"height"               bun:"height,type:INTEGER,notnull"`
-	Metadata             map[string]any `json:"metadata"             bun:"metadata,type:JSONB,notnull,default:'{}'"`
-	Version              int64          `json:"version"              bun:"version,type:BIGINT,notnull"`
-	CreatedAt            int64          `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64          `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID       `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dcp_"`
+	DocumentContentID    pulid.ID       `json:"documentContentId"    bun:"document_content_id,type:VARCHAR(100),notnull" keel:"document_content_id"`
+	DocumentID           pulid.ID       `json:"documentId"           bun:"document_id,type:VARCHAR(100),notnull" keel:"document_id"`
+	OrganizationID       pulid.ID       `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),notnull,pk" keel:"organization_id,tenant"`
+	BusinessUnitID       pulid.ID       `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),notnull,pk" keel:"business_unit_id,tenant"`
+	PageNumber           int            `json:"pageNumber"           bun:"page_number,type:INTEGER,notnull" keel:"page_number"`
+	SourceKind           SourceKind     `json:"sourceKind"           bun:"source_kind,type:VARCHAR(20),notnull" keel:"source_kind"`
+	ExtractedText        string         `json:"extractedText"        bun:"extracted_text,type:TEXT,nullzero" keel:"extracted_text,nullzero"`
+	Markdown             string         `json:"markdown"             bun:"markdown,type:TEXT,nullzero" keel:"markdown,nullzero"`
+	OCRConfidence        float64        `json:"ocrConfidence"        bun:"ocr_confidence,type:DOUBLE PRECISION,notnull" keel:"ocr_confidence"`
+	PreprocessingApplied bool           `json:"preprocessingApplied" bun:"preprocessing_applied,type:BOOLEAN,notnull" keel:"preprocessing_applied"`
+	Width                int            `json:"width"                bun:"width,type:INTEGER,notnull" keel:"width"`
+	Height               int            `json:"height"               bun:"height,type:INTEGER,notnull" keel:"height"`
+	Metadata             map[string]any `json:"metadata"             bun:"metadata,type:JSONB,notnull,default:'{}'" keel:"metadata,jsonb"`
+	Version              int64          `json:"version"              bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt            int64          `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt            int64          `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (p *Page) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	p.ExtractedText = stringutils.StripNUL(p.ExtractedText)
-	p.Markdown = stringutils.StripNUL(p.Markdown)
+	p.stripNUL()
 
 	now := timeutils.NowUnix()
 
@@ -52,6 +53,16 @@ func (p *Page) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (p *Page) BeforeSave(_ context.Context) error {
+	p.stripNUL()
+	return nil
+}
+
+func (p *Page) stripNUL() {
+	p.ExtractedText = stringutils.StripNUL(p.ExtractedText)
+	p.Markdown = stringutils.StripNUL(p.Markdown)
 }
 
 func (p *Page) Validate(multiErr *errortypes.MultiError) {

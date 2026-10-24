@@ -3,6 +3,7 @@ package billingqueue
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -103,30 +104,31 @@ type EffectSnapshot struct {
 // it can be approved.
 type Issue struct {
 	bun.BaseModel `bun:"table:billing_queue_issues,alias:bqis" json:"-"`
+	keel.Table    `keel:"billing_queue_issues"`
 
-	ID              pulid.ID        `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID        `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID  pulid.ID        `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ItemID          pulid.ID        `json:"itemId"          bun:"item_id,type:VARCHAR(100),notnull"`
-	CheckKey        CheckKey        `json:"checkKey"        bun:"check_key,type:VARCHAR(20),notnull"`
-	Code            IssueCode       `json:"code"            bun:"code,type:VARCHAR(50),notnull"`
-	SubjectKey      string          `json:"subjectKey"      bun:"subject_key,type:VARCHAR(100),notnull,default:''"`
-	Summary         string          `json:"summary"         bun:"summary,type:TEXT,notnull"`
-	Reasoning       string          `json:"reasoning"       bun:"reasoning,type:TEXT,nullzero"`
-	Source          IssueSource     `json:"source"          bun:"source,type:VARCHAR(20),notnull,default:'Deterministic'"`
-	AgentRunID      *pulid.ID       `json:"agentRunId"      bun:"agent_run_id,type:VARCHAR(100),nullzero"`
-	FlaggedChargeID *pulid.ID       `json:"flaggedChargeId" bun:"flagged_charge_id,type:VARCHAR(100),nullzero"`
-	Options         []IssueOption   `json:"options"         bun:"options,type:JSONB,notnull,default:'[]'"`
-	ResolutionKey   *string         `json:"resolutionKey"   bun:"resolution_key,type:VARCHAR(30),nullzero"`
-	ResolutionText  string          `json:"resolutionText"  bun:"resolution_text,type:TEXT,nullzero"`
-	EffectSnapshot  *EffectSnapshot `json:"-"               bun:"effect_snapshot,type:JSONB,nullzero"`
-	ResolvedByID    *pulid.ID       `json:"resolvedById"    bun:"resolved_by_id,type:VARCHAR(100),nullzero"`
-	ResolvedAt      *int64          `json:"resolvedAt"      bun:"resolved_at,type:BIGINT,nullzero"`
-	RequestedAt     *int64          `json:"requestedAt"     bun:"requested_at,type:BIGINT,nullzero"`
-	RequestedByID   *pulid.ID       `json:"requestedById"   bun:"requested_by_id,type:VARCHAR(100),nullzero"`
-	Version         int64           `json:"version"         bun:"version,type:BIGINT,notnull"`
-	CreatedAt       int64           `json:"createdAt"       bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt       int64           `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull"`
+	ID              pulid.ID        `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:bqis_"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID        `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ItemID          pulid.ID        `json:"itemId"          bun:"item_id,type:VARCHAR(100),notnull" keel:"item_id"`
+	CheckKey        CheckKey        `json:"checkKey"        bun:"check_key,type:VARCHAR(20),notnull" keel:"check_key"`
+	Code            IssueCode       `json:"code"            bun:"code,type:VARCHAR(50),notnull" keel:"code"`
+	SubjectKey      string          `json:"subjectKey"      bun:"subject_key,type:VARCHAR(100),notnull,default:''" keel:"subject_key"`
+	Summary         string          `json:"summary"         bun:"summary,type:TEXT,notnull" keel:"summary"`
+	Reasoning       string          `json:"reasoning"       bun:"reasoning,type:TEXT,nullzero" keel:"reasoning,nullzero"`
+	Source          IssueSource     `json:"source"          bun:"source,type:VARCHAR(20),notnull,default:'Deterministic'" keel:"source"`
+	AgentRunID      *pulid.ID       `json:"agentRunId"      bun:"agent_run_id,type:VARCHAR(100),nullzero" keel:"agent_run_id"`
+	FlaggedChargeID *pulid.ID       `json:"flaggedChargeId" bun:"flagged_charge_id,type:VARCHAR(100),nullzero" keel:"flagged_charge_id"`
+	Options         []IssueOption   `json:"options"         bun:"options,type:JSONB,notnull,default:'[]'" keel:"options,jsonb"`
+	ResolutionKey   *string         `json:"resolutionKey"   bun:"resolution_key,type:VARCHAR(30),nullzero" keel:"resolution_key"`
+	ResolutionText  string          `json:"resolutionText"  bun:"resolution_text,type:TEXT,nullzero" keel:"resolution_text,nullzero"`
+	EffectSnapshot  *EffectSnapshot `json:"-"               bun:"effect_snapshot,type:JSONB,nullzero" keel:"effect_snapshot,jsonb"`
+	ResolvedByID    *pulid.ID       `json:"resolvedById"    bun:"resolved_by_id,type:VARCHAR(100),nullzero" keel:"resolved_by_id"`
+	ResolvedAt      *int64          `json:"resolvedAt"      bun:"resolved_at,type:BIGINT,nullzero" keel:"resolved_at"`
+	RequestedAt     *int64          `json:"requestedAt"     bun:"requested_at,type:BIGINT,nullzero" keel:"requested_at"`
+	RequestedByID   *pulid.ID       `json:"requestedById"   bun:"requested_by_id,type:VARCHAR(100),nullzero" keel:"requested_by_id"`
+	Version         int64           `json:"version"         bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt       int64           `json:"createdAt"       bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt       int64           `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 
 	// Undoable is whether the person can take the settlement back from the
 	// item. It is decided when the item is read.

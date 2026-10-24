@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicommunicationprofilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediinboundfilerepository"
@@ -21,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -40,17 +37,10 @@ type partnerCardMessage struct {
 }
 
 func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
+
+	var err error
 
 	conn := postgres.NewTestConnection(db)
 
@@ -340,17 +330,8 @@ type seededCarrier struct {
 }
 
 func TestCarrierEDIChannelsByPartner(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 

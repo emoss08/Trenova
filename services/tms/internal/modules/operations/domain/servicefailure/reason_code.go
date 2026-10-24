@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -25,36 +26,37 @@ var (
 
 type ReasonCode struct {
 	bun.BaseModel             `bun:"table:service_failure_reason_codes,alias:sfrc" json:"-"`
+	keel.Table                `keel:"service_failure_reason_codes"`
 	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
 
-	ID                   pulid.ID            `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID       pulid.ID            `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Code                 string              `json:"code"                  bun:"code,type:VARCHAR(64),notnull"`
-	Label                string              `json:"label"                 bun:"label,type:VARCHAR(120),notnull"`
-	Description          string              `json:"description"           bun:"description,type:TEXT,nullzero"`
-	Category             ReasonCategory      `json:"category"              bun:"category,type:service_failure_reason_category_enum,notnull,default:'Carrier'"`
-	AppliesTo            ReasonCodeAppliesTo `json:"appliesTo"             bun:"applies_to,type:service_failure_reason_applies_to_enum,notnull,default:'Both'"`
-	DefaultStatusCode    string              `json:"defaultStatusCode"     bun:"default_status_code,type:VARCHAR(3),nullzero"`
-	DefaultReasonCode    string              `json:"defaultReasonCode"     bun:"default_reason_code,type:VARCHAR(3),nullzero"`
-	DefaultExceptionCode string              `json:"defaultExceptionCode"  bun:"default_exception_code,type:VARCHAR(3),nullzero"`
-	DefaultNote          string              `json:"defaultNote"           bun:"default_note,type:TEXT,nullzero"`
-	Active               bool                `json:"active"                bun:"active,type:BOOLEAN,notnull"`
-	SortOrder            int32               `json:"sortOrder"             bun:"sort_order,type:INTEGER,notnull,default:100"`
-	ExternalMap          map[string]any      `json:"externalMap,omitempty" bun:"external_map,type:JSONB,nullzero"`
-	ArchivedAt           *int64              `json:"archivedAt"            bun:"archived_at,type:BIGINT,nullzero"`
-	ArchivedByID         *pulid.ID           `json:"archivedById"          bun:"archived_by_id,type:VARCHAR(100),nullzero"`
-	ActivatedAt          *int64              `json:"activatedAt"           bun:"activated_at,type:BIGINT,nullzero"`
-	ActivatedByID        *pulid.ID           `json:"activatedById"         bun:"activated_by_id,type:VARCHAR(100),nullzero"`
-	Version              int64               `json:"version"               bun:"version,type:BIGINT,notnull"`
-	CreatedAt            int64               `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector         string              `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`
+	ID                   pulid.ID            `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:sfrc_"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID            `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	Code                 string              `json:"code"                  bun:"code,type:VARCHAR(64),notnull" keel:"code"`
+	Label                string              `json:"label"                 bun:"label,type:VARCHAR(120),notnull" keel:"label"`
+	Description          string              `json:"description"           bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Category             ReasonCategory      `json:"category"              bun:"category,type:service_failure_reason_category_enum,notnull,default:'Carrier'" keel:"category"`
+	AppliesTo            ReasonCodeAppliesTo `json:"appliesTo"             bun:"applies_to,type:service_failure_reason_applies_to_enum,notnull,default:'Both'" keel:"applies_to"`
+	DefaultStatusCode    string              `json:"defaultStatusCode"     bun:"default_status_code,type:VARCHAR(3),nullzero" keel:"default_status_code,nullzero"`
+	DefaultReasonCode    string              `json:"defaultReasonCode"     bun:"default_reason_code,type:VARCHAR(3),nullzero" keel:"default_reason_code,nullzero"`
+	DefaultExceptionCode string              `json:"defaultExceptionCode"  bun:"default_exception_code,type:VARCHAR(3),nullzero" keel:"default_exception_code,nullzero"`
+	DefaultNote          string              `json:"defaultNote"           bun:"default_note,type:TEXT,nullzero" keel:"default_note,nullzero"`
+	Active               bool                `json:"active"                bun:"active,type:BOOLEAN,notnull" keel:"active"`
+	SortOrder            int32               `json:"sortOrder"             bun:"sort_order,type:INTEGER,notnull,default:100" keel:"sort_order"`
+	ExternalMap          map[string]any      `json:"externalMap,omitempty" bun:"external_map,type:JSONB,nullzero" keel:"external_map,jsonb,nullzero"`
+	ArchivedAt           *int64              `json:"archivedAt"            bun:"archived_at,type:BIGINT,nullzero" keel:"archived_at"`
+	ArchivedByID         *pulid.ID           `json:"archivedById"          bun:"archived_by_id,type:VARCHAR(100),nullzero" keel:"archived_by_id"`
+	ActivatedAt          *int64              `json:"activatedAt"           bun:"activated_at,type:BIGINT,nullzero" keel:"activated_at"`
+	ActivatedByID        *pulid.ID           `json:"activatedById"         bun:"activated_by_id,type:VARCHAR(100),nullzero" keel:"activated_by_id"`
+	Version              int64               `json:"version"               bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector         string              `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"                     bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"                     bun:"rel:belongs-to,join:organization_id=id"`
-	ArchivedBy   *tenant.User         `json:"archivedBy,omitempty"  bun:"rel:belongs-to,join:archived_by_id=id"`
-	ActivatedBy  *tenant.User         `json:"activatedBy,omitempty" bun:"rel:belongs-to,join:activated_by_id=id"`
+	ArchivedBy   *tenant.User         `json:"archivedBy,omitempty"  bun:"rel:belongs-to,join:archived_by_id=id" keel:"belongs:archived_by_id"`
+	ActivatedBy  *tenant.User         `json:"activatedBy,omitempty" bun:"rel:belongs-to,join:activated_by_id=id" keel:"belongs:activated_by_id"`
 }
 
 func (rc *ReasonCode) Normalize() {
@@ -177,4 +179,8 @@ func (rc *ReasonCode) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	}
 
 	return nil
+}
+
+func (rc *ReasonCode) BeforeCreate(ctx context.Context) error {
+	return rc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

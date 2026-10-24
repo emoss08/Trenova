@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine AS builder
+FROM golang:1.26-alpine AS source
 
 WORKDIR /build
 
@@ -15,20 +15,40 @@ COPY services/tms/ ./services/tms/
 
 WORKDIR /build/services/tms
 ENV CGO_ENABLED=0
+
+FROM source AS build-tms
 RUN go build -tags nomsgpack -ldflags="-s -w" -o /build/trenova ./cmd/cli
 
-FROM alpine:3.21
+# trenova-db links the migrations; the server binary above links only the
+# schema version it requires (schema/version_gen.go).
+FROM source AS build-db
+RUN go build -tags nomsgpack -ldflags="-s -w" -o /build/trenova-db ./cmd/db
+
+FROM alpine:3.21 AS runtime
 
 # The same uid as the imaging worker, which issues the client certificate in
 # deploy/selfhost/compose.yml: its key is readable by its owner only.
 RUN apk add --no-cache ca-certificates tzdata && \
     addgroup -S -g 65532 trenova && adduser -S -u 65532 -G trenova trenova
 
-COPY --from=builder /build/trenova /usr/local/bin/trenova
-COPY --from=builder /build/services/tms/internal/infrastructure/database/seeds/base/data/ /app/internal/infrastructure/database/seeds/base/data/
-COPY --from=builder /build/services/tms/internal/infrastructure/database/seeds/development/data/ /app/internal/infrastructure/database/seeds/development/data/
+WORKDIR /app
+
+# The deploy step: applies migrations and reference seeds before the API and
+# worker start (`docker build --target trenova-db`). Seed data is embedded.
+FROM runtime AS trenova-db
+
+COPY --from=build-db /build/trenova-db /usr/local/bin/trenova-db
 
 USER trenova
-WORKDIR /app
+
+ENTRYPOINT ["trenova-db"]
+CMD ["up", "-env", "production"]
+
+FROM runtime AS tms
+
+COPY --from=build-tms /build/trenova /usr/local/bin/trenova
+
+
+USER trenova
 
 ENTRYPOINT ["trenova"]

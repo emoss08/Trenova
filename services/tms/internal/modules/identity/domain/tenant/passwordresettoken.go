@@ -3,6 +3,7 @@ package tenant
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -33,19 +34,20 @@ func (p PasswordResetPurpose) IsInvite() bool {
 // nothing that can be redeemed.
 type PasswordResetToken struct {
 	bun.BaseModel `bun:"table:password_reset_tokens,alias:prt" json:"-"`
+	keel.Table    `keel:"password_reset_tokens"`
 
-	ID             pulid.ID             `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	UserID         pulid.ID             `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID             `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID             `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	TokenHash      string               `json:"-"              bun:"token_hash,type:VARCHAR(64),notnull"`
-	Purpose        PasswordResetPurpose `json:"purpose"        bun:"purpose,type:VARCHAR(20),notnull,default:'reset'"`
-	ExpiresAt      int64                `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull"`
-	UsedAt         *int64               `json:"usedAt"         bun:"used_at,type:BIGINT,nullzero"`
-	InvalidatedAt  *int64               `json:"invalidatedAt"  bun:"invalidated_at,type:BIGINT,nullzero"`
-	CreatedAt      int64                `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID             `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:prt_"`
+	UserID         pulid.ID             `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	BusinessUnitID pulid.ID             `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	OrganizationID pulid.ID             `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	TokenHash      string               `json:"-"              bun:"token_hash,type:VARCHAR(64),notnull" keel:"token_hash"`
+	Purpose        PasswordResetPurpose `json:"purpose"        bun:"purpose,type:VARCHAR(20),notnull,default:'reset'" keel:"purpose"`
+	ExpiresAt      int64                `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull" keel:"expires_at"`
+	UsedAt         *int64               `json:"usedAt"         bun:"used_at,type:BIGINT,nullzero" keel:"used_at"`
+	InvalidatedAt  *int64               `json:"invalidatedAt"  bun:"invalidated_at,type:BIGINT,nullzero" keel:"invalidated_at"`
+	CreatedAt      int64                `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	User *User `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
+	User *User `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
 }
 
 // IsRedeemable reports whether the link still works. A token is good exactly once,

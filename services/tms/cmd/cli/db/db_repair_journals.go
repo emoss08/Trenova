@@ -66,13 +66,13 @@ func runRepairJournals(_ *cobra.Command, _ []string) error {
 		orgID = parsed
 	}
 
-	manager, err := createManager()
+	maint, err := openDB(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
+		return fmt.Errorf("open the database: %w", err)
 	}
-	defer manager.Close()
+	defer maint.Close()
 
-	report, err := repairJournals(ctx, postgres.WrapDB(manager.GetDB()), orgID, dryRun)
+	report, err := repairJournals(ctx, postgres.WrapDB(maint), orgID, dryRun)
 	if err != nil {
 		return err
 	}

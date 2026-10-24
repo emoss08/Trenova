@@ -3,6 +3,7 @@ package distancecalculation
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,21 +20,22 @@ const (
 
 type Run struct {
 	bun.BaseModel `bun:"table:distance_calculation_runs,alias:dcr" json:"-"`
+	keel.Table    `keel:"distance_calculation_runs"`
 
-	ID              pulid.ID       `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID       `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID  pulid.ID       `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ShipmentID      pulid.ID       `json:"shipmentId"      bun:"shipment_id,type:VARCHAR(100),notnull"`
-	ShipmentMoveID  pulid.ID       `json:"shipmentMoveId"  bun:"shipment_move_id,type:VARCHAR(100),notnull"`
-	Provider        string         `json:"provider"        bun:"provider,type:VARCHAR(50),nullzero"`
-	Source          string         `json:"source"          bun:"source,type:VARCHAR(50),notnull"`
-	RequestSummary  map[string]any `json:"requestSummary"  bun:"request_summary,type:JSONB,nullzero"`
-	ResponseSummary map[string]any `json:"responseSummary" bun:"response_summary,type:JSONB,nullzero"`
-	Status          string         `json:"status"          bun:"status,type:VARCHAR(50),notnull"`
-	ErrorCode       string         `json:"errorCode"       bun:"error_code,type:VARCHAR(100),nullzero"`
-	ErrorMessage    string         `json:"errorMessage"    bun:"error_message,type:TEXT,nullzero"`
-	LatencyMillis   int64          `json:"latencyMillis"   bun:"latency_millis,type:BIGINT,notnull"`
-	CreatedAt       int64          `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID              pulid.ID       `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dcr_"`
+	BusinessUnitID  pulid.ID       `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID       `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	ShipmentID      pulid.ID       `json:"shipmentId"      bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
+	ShipmentMoveID  pulid.ID       `json:"shipmentMoveId"  bun:"shipment_move_id,type:VARCHAR(100),notnull" keel:"shipment_move_id"`
+	Provider        string         `json:"provider"        bun:"provider,type:VARCHAR(50),nullzero" keel:"provider,nullzero"`
+	Source          string         `json:"source"          bun:"source,type:VARCHAR(50),notnull" keel:"source"`
+	RequestSummary  map[string]any `json:"requestSummary"  bun:"request_summary,type:JSONB,nullzero" keel:"request_summary,jsonb,nullzero"`
+	ResponseSummary map[string]any `json:"responseSummary" bun:"response_summary,type:JSONB,nullzero" keel:"response_summary,jsonb,nullzero"`
+	Status          string         `json:"status"          bun:"status,type:VARCHAR(50),notnull" keel:"status"`
+	ErrorCode       string         `json:"errorCode"       bun:"error_code,type:VARCHAR(100),nullzero" keel:"error_code,nullzero"`
+	ErrorMessage    string         `json:"errorMessage"    bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
+	LatencyMillis   int64          `json:"latencyMillis"   bun:"latency_millis,type:BIGINT,notnull" keel:"latency_millis"`
+	CreatedAt       int64          `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
 func (r *Run) BeforeAppendModel(_ context.Context, query bun.Query) error {

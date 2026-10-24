@@ -5,10 +5,8 @@ package driversettlementrepository_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driverpayrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driversettlementrepository"
@@ -16,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -25,14 +22,8 @@ import (
 )
 
 func TestSettlementCardBatchReads_Integration(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	_, err := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "test-system-password"},
-	}).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var workerRow struct {
 		ID             pulid.ID `bun:"id"`
@@ -60,7 +51,7 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 		RecoveredMinor: 20000,
 		CurrencyCode:   "USD",
 	}
-	_, err = db.NewInsert().Model(advance).Exec(ctx)
+	_, err := db.NewInsert().Model(advance).Exec(ctx)
 	require.NoError(t, err)
 	escrow := &driverpay.EscrowAccount{
 		ID:                pulid.MustNew("escr_"),

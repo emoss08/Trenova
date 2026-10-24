@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 type serviceFailureReasonCodeSeedDefinition struct {
@@ -294,8 +295,8 @@ var defaultServiceFailureReasonCodes = []serviceFailureReasonCodeSeedDefinition{
 	},
 }
 
-func CreateServiceFailureReasonCodes(ctx context.Context, tx bun.IDB, scope Scope) (int, error) {
-	existingCodes, err := existingReasonCodes(ctx, tx, scope.OrganizationID, scope.BusinessUnitID)
+func CreateServiceFailureReasonCodes(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
+	existingCodes, err := existingReasonCodes(ctx, db, scope)
 	if err != nil {
 		return 0, err
 	}
@@ -324,48 +325,32 @@ func CreateServiceFailureReasonCodes(ctx context.Context, tx bun.IDB, scope Scop
 		})
 	}
 
-	if len(entities) == 0 {
-		return 0, nil
-	}
-
-	if _, err = tx.NewInsert().Model(&entities).Exec(ctx); err != nil {
+	if err = servicefailuredb.ReasonCodes.CreateMany(ctx, db, entities); err != nil {
 		return 0, fmt.Errorf("insert default service failure reason codes: %w", err)
-	}
-
-	for _, entity := range entities {
-		if err = scope.record(ctx, "service_failure_reason_codes", entity.ID); err != nil {
-			return 0, fmt.Errorf("track service failure reason code: %w", err)
-		}
 	}
 
 	return len(entities), nil
 }
 
-func existingReasonCodes(
-	ctx context.Context,
-	tx bun.IDB,
-	orgID pulid.ID,
-	buID pulid.ID,
-) (map[string]bool, error) {
+func existingReasonCodes(ctx context.Context, db *keel.DB, scope Scope) (map[string]bool, error) {
 	codes := make([]string, 0, len(defaultServiceFailureReasonCodes))
 	for _, def := range defaultServiceFailureReasonCodes {
 		codes = append(codes, def.code)
 	}
 
-	existingRows := make([]string, 0, len(defaultServiceFailureReasonCodes))
-	if err := tx.NewSelect().
-		Model((*servicefailure.ReasonCode)(nil)).
-		Column("code").
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Where("code IN (?)", bun.List(codes)).
-		Scan(ctx, &existingRows); err != nil {
+	r := servicefailuredb.ReasonCodes
+	rows, err := scoped(ctx, r.Pick(r.Code).Where(
+		r.OrganizationID.Eq(scope.OrganizationID),
+		r.BusinessUnitID.Eq(scope.BusinessUnitID),
+		r.Code.In(codes...),
+	)).All(ctx, db)
+	if err != nil {
 		return nil, fmt.Errorf("get existing service failure reason codes: %w", err)
 	}
 
-	existing := make(map[string]bool, len(existingRows))
-	for _, code := range existingRows {
-		existing[strings.ToUpper(code)] = true
+	existing := make(map[string]bool, len(rows))
+	for _, row := range rows {
+		existing[strings.ToUpper(row.Code)] = true
 	}
 
 	return existing, nil
