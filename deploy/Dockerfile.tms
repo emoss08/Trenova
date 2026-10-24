@@ -33,8 +33,8 @@ RUN apk add --no-cache ca-certificates tzdata && \
 
 WORKDIR /app
 
-# The deploy step: applies migrations before the API and worker start
-# (`docker build --target trenova-db`).
+# The deploy step: applies migrations and reference seeds before the API and
+# worker start (`docker build --target trenova-db`). Seed data is embedded.
 FROM runtime AS trenova-db
 
 COPY --from=build-db /build/trenova-db /usr/local/bin/trenova-db
@@ -42,13 +42,12 @@ COPY --from=build-db /build/trenova-db /usr/local/bin/trenova-db
 USER trenova
 
 ENTRYPOINT ["trenova-db"]
-CMD ["up"]
+CMD ["up", "-env", "production"]
 
 FROM runtime AS tms
 
 COPY --from=build-tms /build/trenova /usr/local/bin/trenova
-COPY --from=build-tms /build/services/tms/internal/infrastructure/database/seeds/base/data/ /app/internal/infrastructure/database/seeds/base/data/
-COPY --from=build-tms /build/services/tms/internal/infrastructure/database/seeds/development/data/ /app/internal/infrastructure/database/seeds/development/data/
+
 
 USER trenova
 

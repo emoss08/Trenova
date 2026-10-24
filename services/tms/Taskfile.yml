@@ -86,7 +86,7 @@ tasks:
       - go build -buildvcs=false {{.GO_TAG_FLAG}} -o {{.CLI_PATH}} ./cmd/cli
 
   build-devdb:
-    desc: Build trenova-devdb, the development database tool (migrations, templates, reset)
+    desc: Build trenova-devdb, the development database tool (migrations, seeds, templates, volume data, reset)
     cmds:
       - mkdir -p {{.BUILD_DIR}}
       - go build -buildvcs=false {{.GO_TAG_FLAG}} -o {{.DEVDB_PATH}} ./cmd/devdb
@@ -415,23 +415,6 @@ tasks:
     cmds:
       - go run -tags nomsgpack ./gen -check -output=../../../../../docs/engineering/agent-write-coverage.md
 
-  generate-seeds:
-    desc: Regenerate seed IDs from seed files
-    cmds:
-      - go generate ./internal/infrastructure/database/seeder/...
-
-  generate-seeds-check:
-    desc: Check if seed IDs need regeneration
-    cmds:
-      - |
-        go generate ./internal/infrastructure/database/seeder/...
-        if git diff --quiet pkg/seedhelpers/seed_ids_gen.go; then
-          echo "Seed IDs are up to date"
-        else
-          echo "Seed IDs are out of date - run 'task generate-seeds' and commit"
-          git diff --stat pkg/seedhelpers/seed_ids_gen.go
-          exit 1
-        fi
 
   docker-up:
     desc: Start all services with docker compose, docling-serve included (only the minimal set when LOW_RESOURCE=true)
@@ -470,44 +453,41 @@ tasks:
       - "{{.DOCKER_COMPOSE_LOCAL}} build"
 
   db-migrate:
-    desc: Apply pending migrations (trenova-devdb up), then reconcile what migrations cannot
-    deps: [build-devdb, build-cli]
+    desc: Apply pending migrations, then every seed that changed (reference data, and fixtures in development)
+    deps: [build-devdb]
     cmds:
       - "{{.DEVDB_PATH}} up -env {{.DB_ENV}}"
-      - "{{.CLI_PATH}} db reconcile{{if .env}} --env {{.env}}{{end}}"
 
   db-seed:
-    desc: Seed the database
-    deps: [generate-seeds, build-cli]
+    desc: Apply the seeds that changed or never ran (name=<seed> applies only that one)
+    deps: [build-devdb]
     cmds:
-      - "{{.CLI_PATH}} db seed{{if .env}} --env {{.env}}{{end}}"
+      - "{{.DEVDB_PATH}} seed apply{{if .name}} {{.name}}{{end}}"
 
   db-seed-volume:
     desc: "Fill the development organization with volume data (shipments=10000 months=12 seed=0)"
-    deps: [build-cli]
+    deps: [build-devdb]
     cmds:
-      - "{{.CLI_PATH}} db seed-volume --shipments {{.shipments | default 10000}} --months {{.months | default 12}} --seed {{.seed | default 0}}"
+      - "{{.DEVDB_PATH}} volume -shipments {{.shipments | default 10000}} -months {{.months | default 12}} -seed {{.seed | default 0}}"
 
   db-reset:
-    desc: Recreate the database from the migrated template, then reconcile and seed it
-    deps: [generate-seeds, build-devdb, build-cli]
+    desc: Recreate the database from the migrated template, then apply the fixtures
+    deps: [build-devdb]
     cmds:
       - "{{.DEVDB_PATH}} reset -yes"
-      - "{{.CLI_PATH}} db reconcile{{if .env}} --env {{.env}}{{end}}"
-      - "{{.CLI_PATH}} db seed{{if .env}} --env {{.env}}{{end}}"
+      - "{{.DEVDB_PATH}} up -env {{.DB_ENV}}"
 
   db-setup:
-    desc: Set up a new database (migrate, reconcile, seed)
+    desc: Set up a new database (migrate and seed)
     cmds:
       - task: db-migrate
-      - task: db-seed
 
   db-status:
     desc: Show migration and seed status
-    deps: [build-devdb, build-cli]
+    deps: [build-devdb]
     cmds:
       - "{{.DEVDB_PATH}} migrate status"
-      - "{{.CLI_PATH}} db seed status"
+      - "{{.DEVDB_PATH}} seed status"
 
   db-create-migration:
     desc: "Create a migration in schema/migrations (name=add_holds [kind=tx|notx|repeatable])"
@@ -536,50 +516,17 @@ tasks:
     cmds:
       - go run {{.GO_TAG_FLAG}} ./cmd/devdb migrate stamp -check
 
-  db-create-seed:
-    desc: Create a new seed file
-    deps: [build-cli]
+  db-seed-plan:
+    desc: Show which seeds would run and why
+    deps: [build-devdb]
     cmds:
-      - |
-        if [ -z "{{.name}}" ]; then
-          echo "Error: Please provide a seed name"
-          echo "Usage: task db-create-seed name=my_seed_name [env=dev|test]"
-          exit 1
-        fi
+      - "{{.DEVDB_PATH}} seed plan"
 
-        if [ "{{.env}}" = "dev" ]; then
-          {{.CLI_PATH}} db create-seed {{.name}} --dev
-        elif [ "{{.env}}" = "test" ]; then
-          {{.CLI_PATH}} db create-seed {{.name}} --test
-        else
-          {{.CLI_PATH}} db create-seed {{.name}}
-        fi
-
-        go generate ./internal/infrastructure/database/seeder/...
-
-  db-seed-sync:
-    desc: Synchronize seed registry
-    deps: [build-cli]
+  db-seed-prune:
+    desc: Delete the records of seeds that are no longer registered
+    deps: [build-devdb]
     cmds:
-      - "{{.CLI_PATH}} db seed-sync"
-
-  db-seed-check:
-    desc: Check for orphaned seeds
-    deps: [build-cli]
-    cmds:
-      - "{{.CLI_PATH}} db seed-check"
-
-  db-seed-clean:
-    desc: Clean orphaned seed history
-    deps: [build-cli]
-    cmds:
-      - "{{.CLI_PATH}} db seed-clean --force"
-
-  db-seed-watch:
-    desc: Watch seed directories for changes
-    deps: [build-cli]
-    cmds:
-      - "{{.CLI_PATH}} db seed-watch"
+      - "{{.DEVDB_PATH}} seed prune"
 
   redis-flush:
     desc: Flush Redis cache
@@ -684,7 +631,7 @@ tasks:
       - go install github.com/sonatype-nexus-community/nancy@latest
 
   reset-all:
-    desc: Reset the database (drop, create, migrate, seed) and flush Redis
+    desc: Reset the database (recreate from the template, apply fixtures) and flush Redis
     cmds:
       - task: db-reset
       - task: redis-flush

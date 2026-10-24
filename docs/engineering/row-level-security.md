@@ -33,7 +33,7 @@ PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
 | Per-method transaction helpers | `internal/infrastructure/postgres/dbtx` |
 | Signing, the scope guard both layers use, system pool, startup checks | `internal/infrastructure/postgres/{rlsscope,scopeguard,connection_rls}.go` |
 | pgx pools, the `database/sql` driver wrapper Bun runs on, keel's configuration | `internal/infrastructure/postgres/dbpool` |
-| Key install, policy reconcile, role provisioning | `internal/infrastructure/postgres/rlsprovision.go`, `trenova db rls`, `trenova db reconcile` |
+| Key install, policy reconcile, role provisioning | `internal/infrastructure/postgres/rlsprovision.go`, `trenova db rls`, the `rls_scope_key` reference seed (`internal/infrastructure/database/dbcli/scopekey.go`) |
 | Policy reconcile after every migration run | `migrations.Options` (`schema/migrations`): `trenova-db` runs `SELECT trenova_rls.reconcile()` once a run applied anything |
 | Roles, scope schema and every policy | migration `20261231007040_row_level_security` |
 | HTTP binding | `pkg/authctx` (`SetSessionAuthContext`, `SetAPIKeyContext`, `SetCaptureDeviceContext`) |
@@ -63,8 +63,9 @@ The scope is not a plain organization id. It is
 `database.rls.scopeKey` and checked by `trenova_rls.claims()`, a
 `SECURITY DEFINER` function that alone can read `trenova_rls.scope_keys`. A SQL
 injection that runs `SET trenova.scope = …` cannot name another tenant without
-the key. The key is installed as HMAC pads, never in the clear, by
-`trenova db reconcile`; rotate it by configuring a new `scopeKeyId`, deploying, and
+the key. The key is installed as HMAC pads, never in the clear, by the `rls_scope_key`
+reference seed that `trenova-db up` applies whenever the configured key changes (its
+fingerprint hashes the key id and key); rotate it by configuring a new `scopeKeyId`, deploying, and
 `trenova db rls retire-key <old>` once nothing signs with the old one.
 
 `SET LOCAL` (and keel's `set_config(…, true)`, which is the same thing) keeps the
@@ -246,7 +247,7 @@ mode, so switch roles and enforcement together.
 1. `trenova db rls generate-key`; store the key; set `database.rls.scopeKeyId`,
    `database.rls.scopeKey` and `mode: observe`, and set `database.migrator` to
    the role that owns the tables. Leave `database.user` as it is.
-2. `trenova-db up` reconciles policies and grants, and `trenova db reconcile` installs the key.
+2. `trenova-db up` reconciles policies and grants, and its `rls_scope_key` seed installs the key.
    Every role that already held table privileges, the current application role
    included, becomes a member of `trenova_rls_bypass`, so nothing is refused yet.
 3. Create the login roles. `provision-roles` reads the application role from
