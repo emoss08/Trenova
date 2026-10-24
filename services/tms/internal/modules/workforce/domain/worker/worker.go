@@ -255,10 +255,6 @@ func (w *Worker) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
-func (w *Worker) BeforeCreate(ctx context.Context) error {
-	return w.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}
-
 func (w *Worker) SamePartyDetails(other *Worker) bool {
 	if w == nil || other == nil {
 		return w == other
@@ -270,4 +266,8 @@ func (w *Worker) SamePartyDetails(other *Worker) bool {
 		w.City == other.City &&
 		w.StateID == other.StateID &&
 		w.PostalCode == other.PostalCode
+}
+
+func (w *Worker) AfterLoad(ctx context.Context) error {
+	return w.AfterScanRow(ctx)
 }

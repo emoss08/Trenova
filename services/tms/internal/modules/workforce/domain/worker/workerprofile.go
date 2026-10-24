@@ -127,7 +127,3 @@ func (wp *WorkerProfile) BeforeAppendModel(_ context.Context, query bun.Query) e
 
 	return nil
 }
-
-func (wp *WorkerProfile) BeforeCreate(ctx context.Context) error {
-	return wp.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}

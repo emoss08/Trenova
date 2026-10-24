@@ -61,6 +61,7 @@ var permitsTable = schema.Table{
 	Ptr:        ptrPermit,
 	Value:      valuePermit,
 	Attach:     attachPermit,
+	BeforeSave: beforeSavePermit,
 }
 
 var permitsRef = keel.Ref{Table: &permitsTable}
@@ -247,6 +248,10 @@ func attachPermit(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeSavePermit(ctx context.Context, p unsafe.Pointer) error {
+	return (*permit.Permit)(p).BeforeSave(ctx)
+}
+
 // requirementsTable is the schema of permit.Requirement.
 var requirementsTable = schema.Table{
 	Name:   "permit_requirements",
@@ -300,6 +305,7 @@ var requirementsTable = schema.Table{
 	Ptr:        ptrRequirement,
 	Value:      valueRequirement,
 	Attach:     attachRequirement,
+	BeforeSave: beforeSaveRequirement,
 }
 
 var requirementsRef = keel.Ref{Table: &requirementsTable}
@@ -547,6 +553,10 @@ func attachRequirement(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.SatisfiedByPermit = (*permit.Permit)(child)
 	}
+}
+
+func beforeSaveRequirement(ctx context.Context, p unsafe.Pointer) error {
+	return (*permit.Requirement)(p).BeforeSave(ctx)
 }
 
 func init() {

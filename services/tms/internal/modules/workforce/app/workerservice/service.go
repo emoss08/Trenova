@@ -25,7 +25,6 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -45,7 +44,7 @@ type Params struct {
 	CustomFieldsValuesService *customfieldservice.ValuesService
 	PTOPolicyService          *ptopolicyservice.Service                  `optional:"true"`
 	CredentialService         *workercredentialservice.Service           `optional:"true"`
-	DB                        kernelports.DBConnection                   `optional:"true"`
+	DB                        kernelports.Transactor                     `optional:"true"`
 	Sync                      accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 	Fields                    permissionports.FieldAccess                `optional:"true"`
 }
@@ -63,7 +62,7 @@ type Service struct {
 	ptoPolicyService          *ptopolicyservice.Service
 	credentialService         *workercredentialservice.Service
 	employmentRecorder        workerports.EmploymentEventRecorder
-	db                        kernelports.DBConnection
+	db                        kernelports.Transactor
 	sync                      accountingsyncports.AccountingSyncEnqueuer
 	fields                    permissionports.FieldAccess
 }
@@ -98,7 +97,7 @@ func (s *Service) updateAndQueueSync(
 	}
 
 	var updated *worker.Worker
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		if updated, txErr = s.repo.Update(txCtx, entity); txErr != nil {
 			return txErr

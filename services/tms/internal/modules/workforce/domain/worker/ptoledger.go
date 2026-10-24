@@ -92,28 +92,28 @@ var (
 
 type WorkerPTOLedgerEntry struct {
 	bun.BaseModel `bun:"table:worker_pto_ledger,alias:wpl" json:"-"`
-	keel.Table    `keel:"worker_pto_ledger"`
+	keel.Table    `                                                 keel:"worker_pto_ledger"`
 
-	ID               pulid.ID           `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wpl_"`
-	BusinessUnitID   pulid.ID           `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID           `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	WorkerID         pulid.ID           `json:"workerId"         bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
-	PTOType          PTOType            `json:"ptoType"          bun:"pto_type,type:worker_pto_type_enum,notnull" keel:"pto_type"`
-	EntryType        PTOLedgerEntryType `json:"entryType"        bun:"entry_type,type:pto_ledger_entry_type_enum,notnull" keel:"entry_type"`
-	AmountDays       decimal.Decimal    `json:"amountDays"       bun:"amount_days,type:NUMERIC(8,2),notnull" keel:"amount_days"`
-	BalanceAfterDays decimal.Decimal    `json:"balanceAfterDays" bun:"balance_after_days,type:NUMERIC(8,2),notnull" keel:"balance_after_days"`
-	Sequence         int64              `json:"sequence"         bun:"sequence,type:BIGINT,notnull" keel:"sequence"`
-	EffectiveAt      int64              `json:"effectiveAt"      bun:"effective_at,type:BIGINT,notnull" keel:"effective_at"`
-	PeriodKey        string             `json:"periodKey"        bun:"period_key,type:VARCHAR(64),nullzero" keel:"period_key,nullzero"`
-	SourcePTOID      pulid.ID           `json:"sourcePtoId"      bun:"source_pto_id,type:VARCHAR(100),nullzero" keel:"source_pto_id,nullzero"`
-	AssignmentID     pulid.ID           `json:"assignmentId"     bun:"assignment_id,type:VARCHAR(100),nullzero" keel:"assignment_id,nullzero"`
-	PTOPolicyID      pulid.ID           `json:"ptoPolicyId"      bun:"pto_policy_id,type:VARCHAR(100),nullzero" keel:"pto_policy_id,nullzero"`
-	ActorType        PTOLedgerActorType `json:"actorType"        bun:"actor_type,type:pto_ledger_actor_type_enum,notnull,default:'User'" keel:"actor_type"`
-	CreatedByID      pulid.ID           `json:"createdById"      bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
-	Note             string             `json:"note"             bun:"note,type:VARCHAR(255),nullzero" keel:"note,nullzero"`
+	ID               pulid.ID           `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:wpl_"`
+	BusinessUnitID   pulid.ID           `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID           `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	WorkerID         pulid.ID           `json:"workerId"         bun:"worker_id,type:VARCHAR(100),notnull"                                                  keel:"worker_id"`
+	PTOType          PTOType            `json:"ptoType"          bun:"pto_type,type:worker_pto_type_enum,notnull"                                           keel:"pto_type"`
+	EntryType        PTOLedgerEntryType `json:"entryType"        bun:"entry_type,type:pto_ledger_entry_type_enum,notnull"                                   keel:"entry_type"`
+	AmountDays       decimal.Decimal    `json:"amountDays"       bun:"amount_days,type:NUMERIC(8,2),notnull"                                                keel:"amount_days"`
+	BalanceAfterDays decimal.Decimal    `json:"balanceAfterDays" bun:"balance_after_days,type:NUMERIC(8,2),notnull"                                         keel:"balance_after_days"`
+	Sequence         int64              `json:"sequence"         bun:"sequence,type:BIGINT,notnull"                                                         keel:"sequence"`
+	EffectiveAt      int64              `json:"effectiveAt"      bun:"effective_at,type:BIGINT,notnull"                                                     keel:"effective_at"`
+	PeriodKey        string             `json:"periodKey"        bun:"period_key,type:VARCHAR(64),nullzero"                                                 keel:"period_key,nullzero"`
+	SourcePTOID      pulid.ID           `json:"sourcePtoId"      bun:"source_pto_id,type:VARCHAR(100),nullzero"                                             keel:"source_pto_id,nullzero"`
+	AssignmentID     pulid.ID           `json:"assignmentId"     bun:"assignment_id,type:VARCHAR(100),nullzero"                                             keel:"assignment_id,nullzero"`
+	PTOPolicyID      pulid.ID           `json:"ptoPolicyId"      bun:"pto_policy_id,type:VARCHAR(100),nullzero"                                             keel:"pto_policy_id,nullzero"`
+	ActorType        PTOLedgerActorType `json:"actorType"        bun:"actor_type,type:pto_ledger_actor_type_enum,notnull,default:'User'"                    keel:"actor_type"`
+	CreatedByID      pulid.ID           `json:"createdById"      bun:"created_by_id,type:VARCHAR(100),nullzero"                                             keel:"created_by_id,nullzero"`
+	Note             string             `json:"note"             bun:"note,type:VARCHAR(255),nullzero"                                                      keel:"note,nullzero"`
 	CreatedAt        int64              `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	Worker    *Worker    `json:"worker,omitempty"    bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Worker    *Worker    `json:"worker,omitempty"    bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"                              keel:"belongs:worker_id"`
 	SourcePTO *WorkerPTO `json:"sourcePto,omitempty" bun:"rel:belongs-to,join:source_pto_id=id,join:worker_id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:source_pto_id|worker_id"`
 }
 
@@ -204,8 +204,4 @@ func (e *WorkerPTOLedgerEntry) BeforeAppendModel(_ context.Context, query bun.Qu
 	}
 
 	return nil
-}
-
-func (e *WorkerPTOLedgerEntry) BeforeCreate(ctx context.Context) error {
-	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

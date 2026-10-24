@@ -1,51 +1,33 @@
 package workerteam
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
-type Scope struct {
-	WorkerID       buncolgen.Column
-	OrganizationID buncolgen.Column
-	BusinessUnitID buncolgen.Column
-	ManagerIDs     []pulid.ID
-}
-
-func Where(db bun.IDB, scope *Scope) func(*bun.SelectQuery) *bun.SelectQuery {
-	return func(sq *bun.SelectQuery) *bun.SelectQuery {
-		if len(scope.ManagerIDs) == 0 {
-			return sq
-		}
-		return sq.Where(scope.WorkerID.Qualified()+" IN (?)", Members(db, scope))
+func Where(workerID keel.Col, managerIDs []pulid.ID) keel.Pred {
+	if len(managerIDs) == 0 {
+		return nil
 	}
+
+	return workerID.InQuery(Members(managerIDs))
 }
 
-func Members(db bun.IDB, scope *Scope) *bun.SelectQuery {
-	wrk := workercol.WorkerColumns
-	fleet := fleetcodecol.FleetCodeColumns
+func Members(managerIDs []pulid.ID) *keel.Query[worker.Worker] {
+	w := workerdb.Workers.As("team_workers")
 
-	return db.NewSelect().
-		Model((*worker.Worker)(nil)).
-		Column(wrk.ID.Bare()).
-		Where(wrk.OrganizationID.EqColumn(scope.OrganizationID)).
-		Where(wrk.BusinessUnitID.EqColumn(scope.BusinessUnitID)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(wrk.ManagerID.In(), bun.List(scope.ManagerIDs)).
-				WhereOr(
-					wrk.FleetCodeID.Qualified()+" IN (?)",
-					db.NewSelect().
-						Model((*fleetcode.FleetCode)(nil)).
-						Column(fleet.ID.Bare()).
-						Where(fleet.OrganizationID.EqColumn(wrk.OrganizationID)).
-						Where(fleet.BusinessUnitID.EqColumn(wrk.BusinessUnitID)).
-						Where(fleet.ManagerID.In(), bun.List(scope.ManagerIDs)),
-				)
-		})
+	return w.Pick(w.ID).Where(keel.Or(
+		w.ManagerID.In(managerIDs...),
+		w.FleetCodeID.InQuery(managedFleets(managerIDs)),
+	))
+}
+
+func managedFleets(managerIDs []pulid.ID) *keel.Query[fleetcode.FleetCode] {
+	fc := fleetcodedb.FleetCodes.As("team_fleets")
+
+	return fc.Pick(fc.ID).Where(fc.ManagerID.In(managerIDs...))
 }

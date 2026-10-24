@@ -162,35 +162,35 @@ var (
 // nothing until days are recorded against it.
 type WorkerLeaveCase struct {
 	bun.BaseModel `bun:"table:worker_leave_cases,alias:wlc" json:"-"`
-	keel.Table    `keel:"worker_leave_cases"`
+	keel.Table    `                                                  keel:"worker_leave_cases"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wlc_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:wlc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"           keel:"worker_id"`
 
-	LeaveType LeaveType       `json:"leaveType" bun:"leave_type,type:worker_leave_type_enum,notnull,default:'FMLA'" keel:"leave_type"`
-	Status    LeaveCaseStatus `json:"status"    bun:"status,type:leave_case_status_enum,notnull,default:'Pending'" keel:"status"`
+	LeaveType LeaveType       `json:"leaveType" bun:"leave_type,type:worker_leave_type_enum,notnull,default:'FMLA'"    keel:"leave_type"`
+	Status    LeaveCaseStatus `json:"status"    bun:"status,type:leave_case_status_enum,notnull,default:'Pending'"     keel:"status"`
 	Frequency LeaveFrequency  `json:"frequency" bun:"frequency,type:leave_frequency_enum,notnull,default:'Continuous'" keel:"frequency"`
-	Reason    string          `json:"reason"    bun:"reason,type:VARCHAR(255),nullzero" keel:"reason,nullzero"`
+	Reason    string          `json:"reason"    bun:"reason,type:VARCHAR(255),nullzero"                                keel:"reason,nullzero"`
 
 	// FMLADesignated is the employer's decision that this leave counts against
 	// the entitlement (29 CFR 825.301). Leave can qualify and still not be
 	// designated, which is why it is its own flag rather than a leave type.
-	FMLADesignated    bool `json:"fmlaDesignated"    bun:"fmla_designated,type:BOOLEAN,notnull" keel:"fmla_designated"`
+	FMLADesignated    bool `json:"fmlaDesignated"    bun:"fmla_designated,type:BOOLEAN,notnull"    keel:"fmla_designated"`
 	MilitaryCaregiver bool `json:"militaryCaregiver" bun:"military_caregiver,type:BOOLEAN,notnull" keel:"military_caregiver"`
 
 	RequestedAt int64  `json:"requestedAt" bun:"requested_at,type:BIGINT,notnull" keel:"requested_at"`
-	StartsAt    int64  `json:"startsAt"    bun:"starts_at,type:BIGINT,notnull" keel:"starts_at"`
-	EndsAt      *int64 `json:"endsAt"      bun:"ends_at,type:BIGINT,nullzero" keel:"ends_at"`
-	DecidedAt   *int64 `json:"decidedAt"   bun:"decided_at,type:BIGINT,nullzero" keel:"decided_at"`
-	ClosedAt    *int64 `json:"closedAt"    bun:"closed_at,type:BIGINT,nullzero" keel:"closed_at"`
+	StartsAt    int64  `json:"startsAt"    bun:"starts_at,type:BIGINT,notnull"    keel:"starts_at"`
+	EndsAt      *int64 `json:"endsAt"      bun:"ends_at,type:BIGINT,nullzero"     keel:"ends_at"`
+	DecidedAt   *int64 `json:"decidedAt"   bun:"decided_at,type:BIGINT,nullzero"  keel:"decided_at"`
+	ClosedAt    *int64 `json:"closedAt"    bun:"closed_at,type:BIGINT,nullzero"   keel:"closed_at"`
 
 	CertificationStatus      LeaveCertificationStatus `json:"certificationStatus"      bun:"certification_status,type:leave_certification_status_enum,notnull,default:'NotRequired'" keel:"certification_status"`
-	CertificationRequestedAt *int64                   `json:"certificationRequestedAt" bun:"certification_requested_at,type:BIGINT,nullzero" keel:"certification_requested_at"`
-	CertificationDueAt       *int64                   `json:"certificationDueAt"       bun:"certification_due_at,type:BIGINT,nullzero" keel:"certification_due_at"`
-	CertificationReceivedAt  *int64                   `json:"certificationReceivedAt"  bun:"certification_received_at,type:BIGINT,nullzero" keel:"certification_received_at"`
-	RecertificationDueAt     *int64                   `json:"recertificationDueAt"     bun:"recertification_due_at,type:BIGINT,nullzero" keel:"recertification_due_at"`
+	CertificationRequestedAt *int64                   `json:"certificationRequestedAt" bun:"certification_requested_at,type:BIGINT,nullzero"                                         keel:"certification_requested_at"`
+	CertificationDueAt       *int64                   `json:"certificationDueAt"       bun:"certification_due_at,type:BIGINT,nullzero"                                               keel:"certification_due_at"`
+	CertificationReceivedAt  *int64                   `json:"certificationReceivedAt"  bun:"certification_received_at,type:BIGINT,nullzero"                                          keel:"certification_received_at"`
+	RecertificationDueAt     *int64                   `json:"recertificationDueAt"     bun:"recertification_due_at,type:BIGINT,nullzero"                                             keel:"recertification_due_at"`
 
 	// EligibilityHoursWorked is the hours in the twelve months before the leave
 	// began. The system has no timeclock, so the office records it; it is
@@ -198,18 +198,18 @@ type WorkerLeaveCase struct {
 	EligibilityHoursWorked *int32 `json:"eligibilityHoursWorked" bun:"eligibility_hours_worked,type:INTEGER,nullzero" keel:"eligibility_hours_worked"`
 
 	EmploymentEventID pulid.ID `json:"employmentEventId" bun:"employment_event_id,type:VARCHAR(100),nullzero" keel:"employment_event_id,nullzero"`
-	DocumentID        pulid.ID `json:"documentId"        bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id,nullzero"`
-	Notes             string   `json:"notes"             bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	DecidedByID       pulid.ID `json:"decidedById"       bun:"decided_by_id,type:VARCHAR(100),nullzero" keel:"decided_by_id,nullzero"`
-	RecordedByID      pulid.ID `json:"recordedById"      bun:"recorded_by_id,type:VARCHAR(100),nullzero" keel:"recorded_by_id,nullzero"`
+	DocumentID        pulid.ID `json:"documentId"        bun:"document_id,type:VARCHAR(100),nullzero"         keel:"document_id,nullzero"`
+	Notes             string   `json:"notes"             bun:"notes,type:TEXT,nullzero"                       keel:"notes,nullzero"`
+	DecidedByID       pulid.ID `json:"decidedById"       bun:"decided_by_id,type:VARCHAR(100),nullzero"       keel:"decided_by_id,nullzero"`
+	RecordedByID      pulid.ID `json:"recordedById"      bun:"recorded_by_id,type:VARCHAR(100),nullzero"      keel:"recorded_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker    *Worker             `json:"worker,omitempty"    bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Worker    *Worker             `json:"worker,omitempty"    bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"   keel:"belongs:worker_id"`
 	Document  *document.Document  `json:"document,omitempty"  bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
-	DecidedBy *tenant.User        `json:"decidedBy,omitempty" bun:"rel:belongs-to,join:decided_by_id=id" keel:"belongs:decided_by_id"`
+	DecidedBy *tenant.User        `json:"decidedBy,omitempty" bun:"rel:belongs-to,join:decided_by_id=id"                                                                           keel:"belongs:decided_by_id"`
 	Entries   []*WorkerLeaveEntry `json:"entries,omitempty"   bun:"rel:has-many,join:id=leave_case_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:leave_case_id"`
 }
 
@@ -363,6 +363,27 @@ func (c *WorkerLeaveCase) BeforeAppendModel(_ context.Context, query bun.Query) 
 	return nil
 }
 
+func (c *WorkerLeaveCase) BeforeCreate(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if c.Status == "" {
+		c.Status = LeaveCasePending
+	}
+	if c.LeaveType == "" {
+		c.LeaveType = LeaveTypeFMLA
+	}
+	if c.Frequency == "" {
+		c.Frequency = LeaveContinuous
+	}
+	if c.CertificationStatus == "" {
+		c.CertificationStatus = CertificationNotRequired
+	}
+	if c.RequestedAt == 0 {
+		c.RequestedAt = now
+	}
+
+	return nil
+}
+
 var (
 	_ bun.BeforeAppendModelHook          = (*WorkerLeaveEntry)(nil)
 	_ validationframework.TenantedEntity = (*WorkerLeaveEntry)(nil)
@@ -374,16 +395,16 @@ var (
 // employer uses for any other absence.
 type WorkerLeaveEntry struct {
 	bun.BaseModel `bun:"table:worker_leave_entries,alias:wle" json:"-"`
-	keel.Table    `keel:"worker_leave_entries"`
+	keel.Table    `                                                    keel:"worker_leave_entries"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wle_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:wle_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
-	LeaveCaseID    pulid.ID `json:"leaveCaseId"    bun:"leave_case_id,type:VARCHAR(100),notnull" keel:"leave_case_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"           keel:"worker_id"`
+	LeaveCaseID    pulid.ID `json:"leaveCaseId"    bun:"leave_case_id,type:VARCHAR(100),notnull"       keel:"leave_case_id"`
 
-	UsedOn int64           `json:"usedOn" bun:"used_on,type:BIGINT,notnull" keel:"used_on"`
-	Hours  decimal.Decimal `json:"hours"  bun:"hours,type:NUMERIC(6,2),notnull" keel:"hours"`
+	UsedOn int64           `json:"usedOn"                   bun:"used_on,type:BIGINT,notnull"                     keel:"used_on"`
+	Hours  decimal.Decimal `json:"hours"                    bun:"hours,type:NUMERIC(6,2),notnull"                 keel:"hours"`
 	// CountsAgainstEntitlement is copied from the case when the day is
 	// recorded. It lives on the entry so that undesignating a case later does
 	// not silently rewrite what was already counted.
@@ -391,11 +412,11 @@ type WorkerLeaveEntry struct {
 
 	// PTOID is the paid time off this day was also taken as. FMLA runs
 	// concurrently with paid leave, so a day is very often both.
-	PTOID        pulid.ID `json:"ptoId"        bun:"pto_id,type:VARCHAR(100),nullzero" keel:"pto_id,nullzero"`
-	Notes        string   `json:"notes"        bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	PTOID        pulid.ID `json:"ptoId"        bun:"pto_id,type:VARCHAR(100),nullzero"         keel:"pto_id,nullzero"`
+	Notes        string   `json:"notes"        bun:"notes,type:TEXT,nullzero"                  keel:"notes,nullzero"`
 	RecordedByID pulid.ID `json:"recordedById" bun:"recorded_by_id,type:VARCHAR(100),nullzero" keel:"recorded_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/internal/testutil/workerteamtest"
@@ -23,6 +24,7 @@ func TestCasesNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	team := workerteamtest.Seed(t, ctx, db, data)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	ctx = data.Ctx(ctx)
 	tenant := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,
 		BuID:   data.BusinessUnit.ID,
@@ -31,7 +33,7 @@ func TestCasesNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 
 	requestedAt := int64(1_700_000_000)
 	for _, wrk := range []*worker.Worker{team.Direct, team.ViaFleet, team.Outsider} {
-		_, err := db.NewInsert().Model(&worker.WorkerLeaveCase{
+		err := workerdb.WorkerLeaveCases.Create(ctx, db, &worker.WorkerLeaveCase{
 			ID:                       pulid.MustNew("wlc_"),
 			OrganizationID:           data.Organization.ID,
 			BusinessUnitID:           data.BusinessUnit.ID,
@@ -43,7 +45,7 @@ func TestCasesNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 			StartsAt:                 1_700_000_000,
 			CertificationStatus:      worker.CertificationRequested,
 			CertificationRequestedAt: &requestedAt,
-		}).Exec(ctx)
+		})
 		require.NoError(t, err)
 	}
 

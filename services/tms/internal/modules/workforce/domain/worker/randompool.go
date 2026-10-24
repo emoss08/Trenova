@@ -145,27 +145,27 @@ var (
 
 type DOTRandomPool struct {
 	bun.BaseModel             `bun:"table:dot_random_pools,alias:drpool" json:"-"`
-	keel.Table                `keel:"dot_random_pools"`
+	keel.Table                `                                                   keel:"dot_random_pools"`
 	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:drpool_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:drpool_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
 
-	Code        string             `json:"code"        bun:"code,type:VARCHAR(50),notnull" keel:"code"`
-	Name        string             `json:"name"        bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Description string             `json:"description" bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Code        string             `json:"code"        bun:"code,type:VARCHAR(50),notnull"                    keel:"code"`
+	Name        string             `json:"name"        bun:"name,type:VARCHAR(100),notnull"                   keel:"name"`
+	Description string             `json:"description" bun:"description,type:TEXT,nullzero"                   keel:"description,nullzero"`
 	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
 
 	Period              RandomPeriod `json:"period"              bun:"period,type:dot_random_period_enum,notnull,default:'Quarterly'" keel:"period"`
-	DrugRatePercent     int16        `json:"drugRatePercent"     bun:"drug_rate_percent,type:SMALLINT,notnull" keel:"drug_rate_percent"`
-	AlcoholRatePercent  int16        `json:"alcoholRatePercent"  bun:"alcohol_rate_percent,type:SMALLINT,notnull" keel:"alcohol_rate_percent"`
-	IncludedDriverTypes []string     `json:"includedDriverTypes" bun:"included_driver_types,type:JSONB,notnull,default:'[]'" keel:"included_driver_types,jsonb"`
-	IsDefault           bool         `json:"isDefault"           bun:"is_default,type:BOOLEAN,notnull" keel:"is_default"`
+	DrugRatePercent     int16        `json:"drugRatePercent"     bun:"drug_rate_percent,type:SMALLINT,notnull"                        keel:"drug_rate_percent"`
+	AlcoholRatePercent  int16        `json:"alcoholRatePercent"  bun:"alcohol_rate_percent,type:SMALLINT,notnull"                     keel:"alcohol_rate_percent"`
+	IncludedDriverTypes []string     `json:"includedDriverTypes" bun:"included_driver_types,type:JSONB,notnull,default:'[]'"          keel:"included_driver_types,jsonb"`
+	IsDefault           bool         `json:"isDefault"           bun:"is_default,type:BOOLEAN,notnull"                                keel:"is_default"`
 
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
-	Version      int64  `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
@@ -316,8 +316,26 @@ func (p *DOTRandomPool) BeforeAppendModel(_ context.Context, query bun.Query) er
 	return nil
 }
 
-func (p *DOTRandomPool) BeforeCreate(ctx context.Context) error {
-	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (p *DOTRandomPool) BeforeCreate(_ context.Context) error {
+	if p.Status == "" {
+		p.Status = domaintypes.StatusActive
+	}
+	if p.Period == "" {
+		p.Period = RandomPeriodQuarterly
+	}
+	if p.IncludedDriverTypes == nil {
+		p.IncludedDriverTypes = []string{}
+	}
+
+	return nil
+}
+
+func (p *DOTRandomPool) BeforeUpdate(_ context.Context) error {
+	if p.IncludedDriverTypes == nil {
+		p.IncludedDriverTypes = []string{}
+	}
+
+	return nil
 }
 
 var (
@@ -327,38 +345,38 @@ var (
 
 type DOTRandomDraw struct {
 	bun.BaseModel `bun:"table:dot_random_draws,alias:drdraw" json:"-"`
-	keel.Table    `keel:"dot_random_draws"`
+	keel.Table    `                                                   keel:"dot_random_draws"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:drdraw_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:drdraw_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	PoolID         pulid.ID `json:"poolId"         bun:"pool_id,type:VARCHAR(100),notnull" keel:"pool_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	PoolID         pulid.ID `json:"poolId"         bun:"pool_id,type:VARCHAR(100),notnull"             keel:"pool_id"`
 
-	PeriodKey   string           `json:"periodKey"   bun:"period_key,type:VARCHAR(20),notnull" keel:"period_key"`
-	PeriodStart int64            `json:"periodStart" bun:"period_start,type:BIGINT,notnull" keel:"period_start"`
-	PeriodEnd   int64            `json:"periodEnd"   bun:"period_end,type:BIGINT,notnull" keel:"period_end"`
+	PeriodKey   string           `json:"periodKey"   bun:"period_key,type:VARCHAR(20),notnull"                             keel:"period_key"`
+	PeriodStart int64            `json:"periodStart" bun:"period_start,type:BIGINT,notnull"                                keel:"period_start"`
+	PeriodEnd   int64            `json:"periodEnd"   bun:"period_end,type:BIGINT,notnull"                                  keel:"period_end"`
 	Status      RandomDrawStatus `json:"status"      bun:"status,type:dot_random_draw_status_enum,notnull,default:'Draft'" keel:"status"`
 
-	PoolSize        int32 `json:"poolSize"        bun:"pool_size,type:INTEGER,notnull" keel:"pool_size"`
-	DrugTarget      int32 `json:"drugTarget"      bun:"drug_target,type:INTEGER,notnull" keel:"drug_target"`
-	AlcoholTarget   int32 `json:"alcoholTarget"   bun:"alcohol_target,type:INTEGER,notnull" keel:"alcohol_target"`
-	DrugSelected    int32 `json:"drugSelected"    bun:"drug_selected,type:INTEGER,notnull" keel:"drug_selected"`
+	PoolSize        int32 `json:"poolSize"        bun:"pool_size,type:INTEGER,notnull"        keel:"pool_size"`
+	DrugTarget      int32 `json:"drugTarget"      bun:"drug_target,type:INTEGER,notnull"      keel:"drug_target"`
+	AlcoholTarget   int32 `json:"alcoholTarget"   bun:"alcohol_target,type:INTEGER,notnull"   keel:"alcohol_target"`
+	DrugSelected    int32 `json:"drugSelected"    bun:"drug_selected,type:INTEGER,notnull"    keel:"drug_selected"`
 	AlcoholSelected int32 `json:"alcoholSelected" bun:"alcohol_selected,type:INTEGER,notnull" keel:"alcohol_selected"`
 
-	Seed        string   `json:"seed"        bun:"seed,type:VARCHAR(64),notnull" keel:"seed"`
-	Method      string   `json:"method"      bun:"method,type:VARCHAR(60),notnull" keel:"method"`
-	Notes       string   `json:"notes"       bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	DrawnAt     int64    `json:"drawnAt"     bun:"drawn_at,type:BIGINT,notnull" keel:"drawn_at"`
+	Seed        string   `json:"seed"        bun:"seed,type:VARCHAR(64),notnull"          keel:"seed"`
+	Method      string   `json:"method"      bun:"method,type:VARCHAR(60),notnull"        keel:"method"`
+	Notes       string   `json:"notes"       bun:"notes,type:TEXT,nullzero"               keel:"notes,nullzero"`
+	DrawnAt     int64    `json:"drawnAt"     bun:"drawn_at,type:BIGINT,notnull"           keel:"drawn_at"`
 	DrawnByID   pulid.ID `json:"drawnById"   bun:"drawn_by_id,type:VARCHAR(100),nullzero" keel:"drawn_by_id,nullzero"`
-	FinalizedAt *int64   `json:"finalizedAt" bun:"finalized_at,type:BIGINT,nullzero" keel:"finalized_at"`
+	FinalizedAt *int64   `json:"finalizedAt" bun:"finalized_at,type:BIGINT,nullzero"      keel:"finalized_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Pool    *DOTRandomPool        `json:"pool,omitempty"    bun:"rel:belongs-to,join:pool_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:pool_id"`
-	DrawnBy *tenant.User          `json:"drawnBy,omitempty" bun:"rel:belongs-to,join:drawn_by_id=id" keel:"belongs:drawn_by_id"`
-	Entries []*DOTRandomDrawEntry `json:"entries,omitempty" bun:"rel:has-many,join:id=draw_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:draw_id"`
+	DrawnBy *tenant.User          `json:"drawnBy,omitempty" bun:"rel:belongs-to,join:drawn_by_id=id"                                                                         keel:"belongs:drawn_by_id"`
+	Entries []*DOTRandomDrawEntry `json:"entries,omitempty" bun:"rel:has-many,join:id=draw_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"   keel:"many:draw_id"`
 }
 
 func (d *DOTRandomDraw) Validate(multiErr *errortypes.MultiError) {
@@ -440,6 +458,21 @@ func (d *DOTRandomDraw) BeforeAppendModel(_ context.Context, query bun.Query) er
 	return nil
 }
 
+func (d *DOTRandomDraw) BeforeCreate(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if d.Status == "" {
+		d.Status = RandomDrawStatusDraft
+	}
+	if d.Method == "" {
+		d.Method = RandomSelectionMethod
+	}
+	if d.DrawnAt == 0 {
+		d.DrawnAt = now
+	}
+
+	return nil
+}
+
 var (
 	_ bun.BeforeAppendModelHook          = (*DOTRandomDrawEntry)(nil)
 	_ validationframework.TenantedEntity = (*DOTRandomDrawEntry)(nil)
@@ -447,27 +480,27 @@ var (
 
 type DOTRandomDrawEntry struct {
 	bun.BaseModel `bun:"table:dot_random_draw_entries,alias:drde" json:"-"`
-	keel.Table    `keel:"dot_random_draw_entries"`
+	keel.Table    `                                                        keel:"dot_random_draw_entries"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:drde_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:drde_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	DrawID         pulid.ID `json:"drawId"         bun:"draw_id,type:VARCHAR(100),notnull" keel:"draw_id"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	DrawID         pulid.ID `json:"drawId"         bun:"draw_id,type:VARCHAR(100),notnull"             keel:"draw_id"`
+	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"           keel:"worker_id"`
 
-	Substance    DOTTestSubstance  `json:"substance"    bun:"substance,type:dot_test_substance_enum,notnull" keel:"substance"`
-	Rank         int32             `json:"rank"         bun:"rank,type:INTEGER,notnull" keel:"rank"`
+	Substance    DOTTestSubstance  `json:"substance"    bun:"substance,type:dot_test_substance_enum,notnull"                      keel:"substance"`
+	Rank         int32             `json:"rank"         bun:"rank,type:INTEGER,notnull"                                           keel:"rank"`
 	Status       RandomEntryStatus `json:"status"       bun:"status,type:dot_random_entry_status_enum,notnull,default:'Selected'" keel:"status"`
-	NotifiedAt   *int64            `json:"notifiedAt"   bun:"notified_at,type:BIGINT,nullzero" keel:"notified_at"`
-	CompletedAt  *int64            `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
-	TestID       pulid.ID          `json:"testId"       bun:"test_id,type:VARCHAR(100),nullzero" keel:"test_id,nullzero"`
-	ExcuseReason string            `json:"excuseReason" bun:"excuse_reason,type:VARCHAR(255),nullzero" keel:"excuse_reason,nullzero"`
+	NotifiedAt   *int64            `json:"notifiedAt"   bun:"notified_at,type:BIGINT,nullzero"                                    keel:"notified_at"`
+	CompletedAt  *int64            `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero"                                   keel:"completed_at"`
+	TestID       pulid.ID          `json:"testId"       bun:"test_id,type:VARCHAR(100),nullzero"                                  keel:"test_id,nullzero"`
+	ExcuseReason string            `json:"excuseReason" bun:"excuse_reason,type:VARCHAR(255),nullzero"                            keel:"excuse_reason,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Draw   *DOTRandomDraw `json:"draw,omitempty"   bun:"rel:belongs-to,join:draw_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:draw_id"`
+	Draw   *DOTRandomDraw `json:"draw,omitempty"   bun:"rel:belongs-to,join:draw_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"   keel:"belongs:draw_id"`
 	Worker *Worker        `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
 }
 
@@ -530,6 +563,14 @@ func (e *DOTRandomDrawEntry) BeforeAppendModel(_ context.Context, query bun.Quer
 		e.UpdatedAt = now
 	case *bun.UpdateQuery:
 		e.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (e *DOTRandomDrawEntry) BeforeCreate(_ context.Context) error {
+	if e.Status == "" {
+		e.Status = RandomEntrySelected
 	}
 
 	return nil

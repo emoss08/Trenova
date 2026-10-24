@@ -798,6 +798,7 @@ var telematicsEventsTable = schema.Table{
 		{Name: "shipment_move_id", Quoted: `"shipment_move_id"`, Field: "ShipmentMoveID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment Move ID`, JSON: `shipmentMoveId`},
 		{Name: "stop_id", Quoted: `"stop_id"`, Field: "StopID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Stop ID`, JSON: `stopId`},
 		{Name: "stop_outcome_reason", Quoted: `"stop_outcome_reason"`, Field: "StopOutcomeReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Stop Outcome Reason`, JSON: `stopOutcomeReason`},
+		{Name: "move_shipment_id", Quoted: `"move_shipment_id"`, Field: "MoveShipmentID", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Move Shipment ID`},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -840,6 +841,7 @@ type TelematicsEventsTable struct {
 	ShipmentMoveID    keelkinds.PulidIDCol
 	StopID            keelkinds.PulidIDCol
 	StopOutcomeReason keel.StringCol
+	MoveShipmentID    keelkinds.PulidIDCol
 }
 
 // TelematicsEvents references the telematics_events table.
@@ -863,6 +865,7 @@ var TelematicsEvents = &TelematicsEventsTable{
 	ShipmentMoveID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 15}}},
 	StopID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 16}}},
 	StopOutcomeReason: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 17}},
+	MoveShipmentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 18}}},
 }
 
 // BuildTelematicsEvents builds the handle of telematics_events for ref. Generated relation and alias methods call it.
@@ -887,6 +890,7 @@ func BuildTelematicsEvents(r *keel.Ref) *TelematicsEventsTable {
 		ShipmentMoveID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		StopID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		StopOutcomeReason: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
+		MoveShipmentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
 	}
 }
 
@@ -948,6 +952,8 @@ func ptrTelematicsEvent(p unsafe.Pointer, c int32) any {
 		return (*string)(unsafe.Pointer(&r.StopID))
 	case 17:
 		return &r.StopOutcomeReason
+	case 18:
+		return (*string)(unsafe.Pointer(&r.MoveShipmentID))
 	}
 	return nil
 }
@@ -1021,6 +1027,11 @@ func valueTelematicsEvent(p unsafe.Pointer, c int32) any {
 			return nil
 		}
 		return r.StopOutcomeReason
+	case 18:
+		if r.MoveShipmentID == "" {
+			return nil
+		}
+		return string(r.MoveShipmentID)
 	}
 	return nil
 }

@@ -49,41 +49,41 @@ func (p *RuleProvenance) IsTrusted() bool {
 
 type Requirement struct {
 	bun.BaseModel             `bun:"table:permit_requirements,alias:pmr" json:"-"`
-	keel.Table                `keel:"permit_requirements"`
+	keel.Table                `                                                   keel:"permit_requirements"`
 	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:pmr_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:pmr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
-	StateID        pulid.ID `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull" keel:"state_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull"         keel:"shipment_id"`
+	StateID        pulid.ID `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull"            keel:"state_id"`
 
 	Status        RequirementStatus `json:"status"        bun:"status,type:permit_requirement_status_enum,notnull,default:'Open'" keel:"status"`
-	RouteSequence int16             `json:"routeSequence" bun:"route_sequence,type:SMALLINT,notnull,default:0" keel:"route_sequence"`
+	RouteSequence int16             `json:"routeSequence" bun:"route_sequence,type:SMALLINT,notnull,default:0"                    keel:"route_sequence"`
 
-	Exceedances  []jurisdictionrule.Exceedance        `json:"exceedances"  bun:"exceedances,type:JSONB,nullzero" keel:"exceedances,jsonb,nullzero"`
-	Escorts      []jurisdictionrule.EscortRequirement `json:"escorts"      bun:"escorts,type:JSONB,nullzero" keel:"escorts,jsonb,nullzero"`
+	Exceedances  []jurisdictionrule.Exceedance        `json:"exceedances"  bun:"exceedances,type:JSONB,nullzero"  keel:"exceedances,jsonb,nullzero"`
+	Escorts      []jurisdictionrule.EscortRequirement `json:"escorts"      bun:"escorts,type:JSONB,nullzero"      keel:"escorts,jsonb,nullzero"`
 	Restrictions []jurisdictionrule.RestrictionKind   `json:"restrictions" bun:"restrictions,type:JSONB,nullzero" keel:"restrictions,jsonb,nullzero"`
 
-	LeadTimeDays int16               `json:"leadTimeDays" bun:"lead_time_days,type:SMALLINT,notnull,default:0" keel:"lead_time_days"`
-	ValidityDays int16               `json:"validityDays" bun:"validity_days,type:SMALLINT,notnull,default:0" keel:"validity_days"`
-	EstimatedFee decimal.NullDecimal `json:"estimatedFee" bun:"estimated_fee,type:NUMERIC(19,4),nullzero" keel:"estimated_fee"`
+	LeadTimeDays int16               `json:"leadTimeDays" bun:"lead_time_days,type:SMALLINT,notnull,default:0"  keel:"lead_time_days"`
+	ValidityDays int16               `json:"validityDays" bun:"validity_days,type:SMALLINT,notnull,default:0"   keel:"validity_days"`
+	EstimatedFee decimal.NullDecimal `json:"estimatedFee" bun:"estimated_fee,type:NUMERIC(19,4),nullzero"       keel:"estimated_fee"`
 	IsSuperload  bool                `json:"isSuperload"  bun:"is_superload,type:BOOLEAN,notnull,default:false" keel:"is_superload"`
 
 	SatisfiedByPermitID *pulid.ID `json:"satisfiedByPermitId" bun:"satisfied_by_permit_id,type:VARCHAR(100),nullzero" keel:"satisfied_by_permit_id"`
-	WaivedByID          *pulid.ID `json:"waivedById"          bun:"waived_by_id,type:VARCHAR(100),nullzero" keel:"waived_by_id"`
-	WaiverReason        string    `json:"waiverReason"        bun:"waiver_reason,type:TEXT,nullzero" keel:"waiver_reason,nullzero"`
+	WaivedByID          *pulid.ID `json:"waivedById"          bun:"waived_by_id,type:VARCHAR(100),nullzero"           keel:"waived_by_id"`
+	WaiverReason        string    `json:"waiverReason"        bun:"waiver_reason,type:TEXT,nullzero"                  keel:"waiver_reason,nullzero"`
 
 	Provenance *RuleProvenance `json:"provenance" bun:"provenance,type:JSONB,nullzero" keel:"provenance,jsonb"`
 
-	DerivedAt int64 `json:"derivedAt" bun:"derived_at,type:BIGINT,notnull" keel:"derived_at"`
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	DerivedAt int64 `json:"derivedAt" bun:"derived_at,type:BIGINT,notnull"                                                       keel:"derived_at"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit      *tenant.BusinessUnit `json:"-"                           bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization      *tenant.Organization `json:"-"                           bun:"rel:belongs-to,join:organization_id=id"`
-	State             *usstate.UsState     `json:"state,omitempty"             bun:"rel:belongs-to,join:state_id=id" keel:"belongs:state_id"`
+	State             *usstate.UsState     `json:"state,omitempty"             bun:"rel:belongs-to,join:state_id=id"               keel:"belongs:state_id"`
 	SatisfiedByPermit *Permit              `json:"satisfiedByPermit,omitempty" bun:"rel:belongs-to,join:satisfied_by_permit_id=id" keel:"belongs:satisfied_by_permit_id"`
 }
 
@@ -185,6 +185,18 @@ func (r *Requirement) BeforeAppendModel(_ context.Context, query bun.Query) erro
 		r.UpdatedAt = now
 	case *bun.UpdateQuery:
 		r.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (r *Requirement) BeforeSave(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if r.Status == "" {
+		r.Status = RequirementOpen
+	}
+	if r.DerivedAt == 0 {
+		r.DerivedAt = now
 	}
 
 	return nil

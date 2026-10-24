@@ -26,33 +26,33 @@ var (
 
 type Permit struct {
 	bun.BaseModel             `bun:"table:permits,alias:pmt" json:"-"`
-	keel.Table                `keel:"permits"`
+	keel.Table                `                                       keel:"permits"`
 	pagination.CursorValueSet `bun:",embed"                  json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:pmt_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:pmt_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
-	StateID        pulid.ID `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull" keel:"state_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull"         keel:"shipment_id"`
+	StateID        pulid.ID `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull"            keel:"state_id"`
 
-	PermitNumber string `json:"permitNumber" bun:"permit_number,type:VARCHAR(100),notnull" keel:"permit_number"`
+	PermitNumber string `json:"permitNumber" bun:"permit_number,type:VARCHAR(100),notnull"                  keel:"permit_number"`
 	Status       Status `json:"status"       bun:"status,type:permit_status_enum,notnull,default:'Pending'" keel:"status"`
 
-	IssuedAt  *int64 `json:"issuedAt"  bun:"issued_at,type:BIGINT,nullzero" keel:"issued_at"`
+	IssuedAt  *int64 `json:"issuedAt"  bun:"issued_at,type:BIGINT,nullzero"  keel:"issued_at"`
 	ExpiresAt *int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at"`
 
 	Cost  decimal.NullDecimal `json:"cost"  bun:"cost,type:NUMERIC(19,4),nullzero" keel:"cost"`
-	Notes string              `json:"notes" bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	Notes string              `json:"notes" bun:"notes,type:TEXT,nullzero"         keel:"notes,nullzero"`
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"               bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"               bun:"rel:belongs-to,join:organization_id=id"`
-	State        *usstate.UsState     `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id" keel:"belongs:state_id"`
+	State        *usstate.UsState     `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"         keel:"belongs:state_id"`
 }
 
 func (p *Permit) GetID() pulid.ID { return p.ID }
@@ -153,6 +153,18 @@ func (p *Permit) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		p.UpdatedAt = now
 	case *bun.UpdateQuery:
 		p.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (p *Permit) BeforeSave(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if p.Status == "" {
+		p.Status = StatusPending
+	}
+	if p.Status == StatusActive && p.IsExpiredAt(now) {
+		p.Status = StatusExpired
 	}
 
 	return nil

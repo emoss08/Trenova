@@ -3,21 +3,31 @@ package ptoledgerrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var balanceErrors = dberror.Mapping{
+	Entity: "WorkerPTOBalance",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_worker_pto_balances_worker",
+			Field:   "workerId",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -38,32 +48,28 @@ func New(p Params) workerports.PTOLedgerRepository {
 	}
 }
 
-func balanceScope(
-	sq *bun.SelectQuery,
-	key *workerports.PTOBalanceKey,
-) *bun.SelectQuery {
-	cols := workercol.WorkerPTOBalanceColumns
-	return workercol.WorkerPTOBalanceScopeTenant(sq, key.TenantInfo).
-		Where(cols.WorkerID.Eq(), key.WorkerID).
-		Where(cols.PTOType.Eq(), key.PTOType)
+func sumOrZero(e keel.Expr) keel.Expr {
+	return keel.Raw("COALESCE(?, 0)", e)
+}
+
+func balanceQuery(key *workerports.PTOBalanceKey) *keel.Query[worker.WorkerPTOBalance] {
+	b := workerdb.WorkerPTOBalances
+
+	return b.Where(b.WorkerID.Eq(key.WorkerID), b.PTOType.Eq(key.PTOType))
 }
 
 func (r *repository) EnsureBalance(ctx context.Context, key *workerports.PTOBalanceKey) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		entity := &worker.WorkerPTOBalance{
+		b := workerdb.WorkerPTOBalances
+		_, err := b.CreateOrSkip(ctx, r.db.Keel(ctx), []*worker.WorkerPTOBalance{{
 			OrganizationID: key.TenantInfo.OrgID,
 			BusinessUnitID: key.TenantInfo.BuID,
 			WorkerID:       key.WorkerID,
 			PTOType:        key.PTOType,
-		}
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT (organization_id, business_unit_id, worker_id, pto_type) DO NOTHING").
-			Exec(ctx); err != nil {
+		}}, b.OrganizationID, b.BusinessUnitID, b.WorkerID, b.PTOType)
+		if err != nil {
 			r.l.Error("failed to ensure PTO balance row", zap.Error(err))
-			return err
+			return balanceErrors.Map(err, "")
 		}
 
 		return nil
@@ -75,17 +81,9 @@ func (r *repository) LockBalance(
 	key *workerports.PTOBalanceKey,
 ) (*worker.WorkerPTOBalance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTOBalance, error) {
-		entity := new(worker.WorkerPTOBalance)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return balanceScope(sq, key)
-			}).
-			For("UPDATE").
-			Scan(ctx)
+		entity, err := balanceQuery(key).Lock(keel.ForUpdate).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerPTOBalance")
+			return nil, balanceErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -97,16 +95,9 @@ func (r *repository) GetBalance(
 	key *workerports.PTOBalanceKey,
 ) (*worker.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTOBalance, error) {
-		entity := new(worker.WorkerPTOBalance)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return balanceScope(sq, key)
-			}).
-			Scan(ctx)
+		entity, err := balanceQuery(key).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerPTOBalance")
+			return nil, balanceErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -118,17 +109,10 @@ func (r *repository) ListBalances(
 	req *workerports.ListPTOBalancesRequest,
 ) ([]*worker.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTOBalance, error) {
-		cols := workercol.WorkerPTOBalanceColumns
-		entities := make([]*worker.WorkerPTOBalance, 0, 4)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOBalanceScopeTenant(sq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID)
-			}).
-			Order(cols.PTOType.OrderAsc()).
-			Scan(ctx)
+		b := workerdb.WorkerPTOBalances
+		entities, err := b.Where(b.WorkerID.Eq(req.WorkerID)).
+			Order(b.PTOType.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list PTO balances", zap.Error(err))
 			return nil, err
@@ -140,21 +124,14 @@ func (r *repository) ListBalances(
 
 func (r *repository) ListOrgBalances(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*worker.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTOBalance, error) {
-		cols := workercol.WorkerPTOBalanceColumns
-		entities := make([]*worker.WorkerPTOBalance, 0, 64)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(workercol.WorkerPTOBalanceRelations.Worker).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOBalanceScopeTenant(sq, tenantInfo)
-			}).
-			Order(cols.WorkerID.OrderAsc()).
-			Order(cols.PTOType.OrderAsc()).
-			Scan(ctx)
+		b := workerdb.WorkerPTOBalances
+		entities, err := b.Query().
+			Load(b.Worker()).
+			Order(b.WorkerID.Asc(), b.PTOType.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list organisation PTO balances", zap.Error(err))
 			return nil, err
@@ -169,26 +146,9 @@ func (r *repository) UpdateBalance(
 	entity *worker.WorkerPTOBalance,
 ) (*worker.WorkerPTOBalance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTOBalance, error) {
-		ov := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.WorkerPTOBalanceColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := workerdb.WorkerPTOBalances.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update PTO balance", zap.Error(err))
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"WorkerPTOBalance",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, balanceErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -200,11 +160,7 @@ func (r *repository) InsertEntry(
 	entry *worker.WorkerPTOLedgerEntry,
 ) (*worker.WorkerPTOLedgerEntry, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTOLedgerEntry, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entry).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := workerdb.WorkerPTOLedgerEntries.Create(ctx, r.db.Keel(ctx), entry); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, workerports.ErrDuplicatePTOLedgerEntry
 			}
@@ -216,93 +172,42 @@ func (r *repository) InsertEntry(
 	})
 }
 
-func (r *repository) applyEntryFilters(
-	q *bun.SelectQuery,
-	req *workerports.ListPTOLedgerRequest,
-) *bun.SelectQuery {
-	cols := workercol.WorkerPTOLedgerEntryColumns
-	if !req.WorkerID.IsNil() {
-		q = q.Where(cols.WorkerID.Eq(), req.WorkerID)
+func entryFilter(req *workerports.ListPTOLedgerRequest) []keel.Pred {
+	e := workerdb.WorkerPTOLedgerEntries
+
+	return []keel.Pred{
+		keel.When(req.WorkerID.IsNotNil(), e.WorkerID.Eq(req.WorkerID)),
+		keel.When(req.PTOType != "", e.PTOType.Eq(worker.PTOType(req.PTOType))),
+		keel.When(
+			req.EntryType != "",
+			e.EntryType.Eq(worker.PTOLedgerEntryType(req.EntryType)),
+		),
+		keel.When(req.EffectiveFrom > 0, e.EffectiveAt.Gte(req.EffectiveFrom)),
+		keel.When(req.EffectiveTo > 0, e.EffectiveAt.Lte(req.EffectiveTo)),
 	}
-	if req.PTOType != "" {
-		q = q.Where(cols.PTOType.Eq(), req.PTOType)
-	}
-	if req.EntryType != "" {
-		q = q.Where(cols.EntryType.Eq(), req.EntryType)
-	}
-	if req.EffectiveFrom > 0 {
-		q = q.Where(cols.EffectiveAt.Gte(), req.EffectiveFrom)
-	}
-	if req.EffectiveTo > 0 {
-		q = q.Where(cols.EffectiveAt.Lte(), req.EffectiveTo)
-	}
-	return q
 }
 
 func (r *repository) ListEntries(
 	ctx context.Context,
 	req *workerports.ListPTOLedgerRequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTOLedgerEntry], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTOLedgerEntry], error) {
-			log := r.l.With(zap.String("operation", "ListEntries"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*worker.WorkerPTOLedgerEntry)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							workercol.WorkerPTOLedgerEntryTable.Alias,
-							req.Filter,
-							(*worker.WorkerPTOLedgerEntry)(nil),
-						)
-						return r.applyEntryFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count PTO ledger entries", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
-				ctx,
-				dbhelper.CursorListParams[*worker.WorkerPTOLedgerEntry]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(items *[]*worker.WorkerPTOLedgerEntry) *bun.SelectQuery {
-						q := dba.NewSelect().Model(items).
-							ColumnExpr(workercol.WorkerPTOLedgerEntryTable.All())
-						if req.IncludeWorker {
-							q = q.Relation(workercol.WorkerPTOLedgerEntryRelations.Worker)
-						}
-						return q
+			e := workerdb.WorkerPTOLedgerEntries
+			result, err := listquery.Connection(ctx, r.db.Keel(ctx), e.Where(entryFilter(req)...),
+				&listquery.Request[worker.WorkerPTOLedgerEntry]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[worker.WorkerPTOLedgerEntry],
+					) *keel.Query[worker.WorkerPTOLedgerEntry] {
+						return q.Load(listquery.When(req.IncludeWorker, e.Worker())...)
 					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							workercol.WorkerPTOLedgerEntryTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*worker.WorkerPTOLedgerEntry)(nil),
-						)
-						if applyErr != nil {
-							return sq, applyErr
-						}
-						return r.applyEntryFilters(sq, req), nil
-					},
-				},
-			)
+				})
 			if err != nil {
-				log.Error("failed to list PTO ledger entries", zap.Error(err))
+				r.l.Error("failed to list PTO ledger entries", zap.Error(err))
 				return nil, err
 			}
 
@@ -312,8 +217,8 @@ func (r *repository) ListEntries(
 }
 
 type sumRow struct {
-	Total decimal.Decimal `bun:"total"`
-	Count int64           `bun:"entry_count"`
+	Total decimal.Decimal
+	Count int64
 }
 
 func (r *repository) SumEntries(
@@ -321,19 +226,10 @@ func (r *repository) SumEntries(
 	key *workerports.PTOBalanceKey,
 ) (decimal.Decimal, int64, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (decimal.Decimal, int64, error) {
-		cols := workercol.WorkerPTOLedgerEntryColumns
-		row := new(sumRow)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerPTOLedgerEntry)(nil)).
-			ColumnExpr("COALESCE(SUM("+cols.AmountDays.String()+"), 0) AS total").
-			ColumnExpr("COUNT(*) AS entry_count").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOLedgerEntryScopeTenant(sq, key.TenantInfo).
-					Where(cols.WorkerID.Eq(), key.WorkerID).
-					Where(cols.PTOType.Eq(), key.PTOType)
-			}).
-			Scan(ctx, row)
+		e := workerdb.WorkerPTOLedgerEntries
+		row, err := keel.IntoOne[sumRow](ctx, r.db.Keel(ctx), e.
+			Pick(sumOrZero(e.AmountDays.Sum()), keel.Count()).
+			Where(e.WorkerID.Eq(key.WorkerID), e.PTOType.Eq(key.PTOType)))
 		if err != nil {
 			r.l.Error("failed to sum PTO ledger entries", zap.Error(err))
 			return decimal.Zero, 0, err
@@ -343,37 +239,26 @@ func (r *repository) SumEntries(
 	})
 }
 
-type pendingRow struct {
-	Total decimal.Decimal `bun:"total"`
-}
-
 func (r *repository) PendingDays(
 	ctx context.Context,
 	req *workerports.PendingPTODaysRequest,
 ) (decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (decimal.Decimal, error) {
-		cols := workercol.WorkerPTOColumns
-		row := new(pendingRow)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerPTO)(nil)).
-			ColumnExpr("COALESCE(SUM("+cols.Days.String()+"), 0) AS total").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOScopeTenant(sq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID).
-					Where(cols.Type.Eq(), req.PTOType).
-					Where(cols.Status.Eq(), worker.PTOStatusRequested)
-			})
-		if !req.ExcludeID.IsNil() {
-			q = q.Where(cols.ID.Ne(), req.ExcludeID)
-		}
-
-		if err := q.Scan(ctx, row); err != nil {
+		p := workerdb.WorkerPTOs
+		total, err := keel.IntoOne[decimal.Decimal](ctx, r.db.Keel(ctx), p.
+			Pick(sumOrZero(p.Days.Sum())).
+			Where(
+				p.WorkerID.Eq(req.WorkerID),
+				p.Type.Eq(req.PTOType),
+				p.Status.Eq(worker.PTOStatusRequested),
+				keel.When(req.ExcludeID.IsNotNil(), p.ID.Ne(req.ExcludeID)),
+			))
+		if err != nil {
 			r.l.Error("failed to sum pending PTO days", zap.Error(err))
 			return decimal.Zero, err
 		}
 
-		return row.Total, nil
+		return total, nil
 	})
 }
 
@@ -382,16 +267,9 @@ func (r *repository) HasEntry(
 	req *workerports.HasPTOLedgerEntryRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := workercol.WorkerPTOLedgerEntryColumns
-		exists, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerPTOLedgerEntry)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOLedgerEntryScopeTenant(sq, req.TenantInfo).
-					Where(cols.SourcePTOID.Eq(), req.SourcePTOID).
-					Where(cols.EntryType.Eq(), req.EntryType)
-			}).
-			Exists(ctx)
+		e := workerdb.WorkerPTOLedgerEntries
+		exists, err := e.Where(e.SourcePTOID.Eq(req.SourcePTOID), e.EntryType.Eq(req.EntryType)).
+			Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to check PTO ledger entry", zap.Error(err))
 			return false, err
@@ -402,79 +280,55 @@ func (r *repository) HasEntry(
 }
 
 type summaryRow struct {
-	WorkersTracked int64           `bun:"workers_tracked"`
-	TotalBalance   decimal.Decimal `bun:"total_balance"`
-	AccruedYTD     decimal.Decimal `bun:"accrued_ytd"`
-	UsedYTD        decimal.Decimal `bun:"used_ytd"`
-}
-
-type countRow struct {
-	Count int64 `bun:"count"`
+	WorkersTracked int64
+	TotalBalance   decimal.Decimal
+	AccruedYTD     decimal.Decimal
+	UsedYTD        decimal.Decimal
 }
 
 func (r *repository) Summary(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*workerports.PTOBalanceSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.PTOBalanceSummary, error) {
-		dba := r.db.DBForContext(ctx)
-		bal := workercol.WorkerPTOBalanceColumns
-
-		balances := new(summaryRow)
-		if err := dba.NewSelect().
-			Model((*worker.WorkerPTOBalance)(nil)).
-			ColumnExpr("COUNT(DISTINCT "+bal.WorkerID.String()+") AS workers_tracked").
-			ColumnExpr("COALESCE(SUM("+bal.BalanceDays.String()+"), 0) AS total_balance").
-			ColumnExpr("COALESCE(SUM("+bal.AccruedYTDDays.String()+"), 0) AS accrued_ytd").
-			ColumnExpr("COALESCE(SUM("+bal.UsedYTDDays.String()+"), 0) AS used_ytd").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOBalanceScopeTenant(sq, tenantInfo)
-			}).
-			Scan(ctx, balances); err != nil {
+		db := r.db.Keel(ctx)
+		b := workerdb.WorkerPTOBalances
+		balances, err := keel.IntoOne[summaryRow](ctx, db, b.Pick(
+			b.WorkerID.CountDistinct(),
+			sumOrZero(b.BalanceDays.Sum()),
+			sumOrZero(b.AccruedYTDDays.Sum()),
+			sumOrZero(b.UsedYTDDays.Sum()),
+		))
+		if err != nil {
 			r.l.Error("failed to summarise PTO balances", zap.Error(err))
 			return nil, err
 		}
 
-		pto := workercol.WorkerPTOColumns
-		pending := new(pendingRow)
-		if err := dba.NewSelect().
-			Model((*worker.WorkerPTO)(nil)).
-			ColumnExpr("COALESCE(SUM("+pto.Days.String()+"), 0) AS total").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOScopeTenant(sq, tenantInfo).
-					Where(pto.Status.Eq(), worker.PTOStatusRequested)
-			}).
-			Scan(ctx, pending); err != nil {
+		p := workerdb.WorkerPTOs
+		pending, err := keel.IntoOne[decimal.Decimal](ctx, db, p.
+			Pick(sumOrZero(p.Days.Sum())).
+			Where(p.Status.Eq(worker.PTOStatusRequested)))
+		if err != nil {
 			r.l.Error("failed to summarise pending PTO", zap.Error(err))
 			return nil, err
 		}
 
-		wrk := workercol.WorkerColumns
-		asg := workercol.WorkerPTOPolicyAssignmentColumns
-		unassigned := new(countRow)
-		if err := dba.NewSelect().
-			Model((*worker.Worker)(nil)).
-			ColumnExpr("COUNT(*) AS count").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerScopeTenant(sq, tenantInfo).
-					Where(wrk.Status.Eq(), "Active").
-					Where("NOT EXISTS (SELECT 1 FROM " + workercol.WorkerPTOPolicyAssignmentTable.Name +
-						" AS " + workercol.WorkerPTOPolicyAssignmentTable.Alias +
-						" WHERE " + asg.WorkerID.String() + " = " + wrk.ID.String() +
-						" AND " + asg.OrganizationID.String() + " = " + wrk.OrganizationID.String() +
-						" AND " + asg.BusinessUnitID.String() + " = " + wrk.BusinessUnitID.String() +
-						" AND " + asg.EffectiveTo.String() + " IS NULL)")
-			}).
-			Scan(ctx, unassigned); err != nil {
+		w := workerdb.Workers
+		a := workerdb.WorkerPTOPolicyAssignments
+		unassigned, err := w.Where(
+			w.Status.Eq(domaintypes.StatusActive),
+			keel.NotExists(a.Where(a.WorkerID.EqCol(w.ID), a.EffectiveTo.IsNull())),
+		).Count(ctx, db)
+		if err != nil {
 			r.l.Error("failed to count unassigned workers", zap.Error(err))
 			return nil, err
 		}
 
 		return &workerports.PTOBalanceSummary{
 			WorkersTracked:    int(balances.WorkersTracked),
-			WorkersUnassigned: int(unassigned.Count),
+			WorkersUnassigned: int(unassigned),
 			TotalBalanceDays:  balances.TotalBalance,
-			TotalPendingDays:  pending.Total,
+			TotalPendingDays:  pending,
 			AccruedYTDDays:    balances.AccruedYTD,
 			UsedYTDDays:       balances.UsedYTD,
 		}, nil

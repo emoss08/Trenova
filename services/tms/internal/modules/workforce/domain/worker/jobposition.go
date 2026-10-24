@@ -168,3 +168,14 @@ func (p *JobPosition) BeforeAppendModel(_ context.Context, query bun.Query) erro
 
 	return nil
 }
+
+func (p *JobPosition) BeforeCreate(_ context.Context) error {
+	if p.Status == "" {
+		p.Status = domaintypes.StatusActive
+	}
+	if p.Department == "" {
+		p.Department = DepartmentOperations
+	}
+
+	return nil
+}

@@ -105,28 +105,28 @@ var (
 // ShiftTemplate is a repeating pattern of working days.
 type ShiftTemplate struct {
 	bun.BaseModel `bun:"table:shift_templates,alias:shft" json:"-"`
-	keel.Table    `keel:"shift_templates"`
+	keel.Table    `                                                keel:"shift_templates"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:shft_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:shft_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
 
-	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
-	Code        string             `json:"code"        bun:"code,type:VARCHAR(20),notnull" keel:"code"`
-	Name        string             `json:"name"        bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Description string             `json:"description" bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Color       string             `json:"color"       bun:"color,type:VARCHAR(10),nullzero" keel:"color,nullzero"`
+	Status      domaintypes.Status `json:"status"          bun:"status,type:status_enum,notnull,default:'Active'"       keel:"status"`
+	Code        string             `json:"code"            bun:"code,type:VARCHAR(20),notnull"                          keel:"code"`
+	Name        string             `json:"name"            bun:"name,type:VARCHAR(100),notnull"                         keel:"name"`
+	Description string             `json:"description"     bun:"description,type:TEXT,nullzero"                         keel:"description,nullzero"`
+	Color       string             `json:"color"           bun:"color,type:VARCHAR(10),nullzero"                        keel:"color,nullzero"`
 	// DaysOfWeek is seven characters indexed from Sunday: 0111110 is Monday to
 	// Friday. A mask rather than an array so a pattern reads at a glance and
 	// compares without unpacking.
 	DaysOfWeek      string `json:"daysOfWeek"      bun:"days_of_week,type:VARCHAR(7),notnull,default:'0111110'" keel:"days_of_week"`
-	StartMinute     int16  `json:"startMinute"     bun:"start_minute,type:SMALLINT,notnull,default:360" keel:"start_minute"`
-	DurationMinutes int16  `json:"durationMinutes" bun:"duration_minutes,type:SMALLINT,notnull,default:600" keel:"duration_minutes"`
+	StartMinute     int16  `json:"startMinute"     bun:"start_minute,type:SMALLINT,notnull,default:360"         keel:"start_minute"`
+	DurationMinutes int16  `json:"durationMinutes" bun:"duration_minutes,type:SMALLINT,notnull,default:600"     keel:"duration_minutes"`
 	// CycleWeeks lets an A/B rotation be one template: the assignment carries
 	// which week of the cycle a worker starts on.
-	CycleWeeks int16 `json:"cycleWeeks" bun:"cycle_weeks,type:SMALLINT,notnull,default:1" keel:"cycle_weeks"`
+	CycleWeeks int16 `json:"cycleWeeks"      bun:"cycle_weeks,type:SMALLINT,notnull,default:1"            keel:"cycle_weeks"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
@@ -259,6 +259,23 @@ func (t *ShiftTemplate) BeforeAppendModel(_ context.Context, query bun.Query) er
 	return nil
 }
 
+func (t *ShiftTemplate) BeforeCreate(_ context.Context) error {
+	if t.Status == "" {
+		t.Status = domaintypes.StatusActive
+	}
+	if t.DaysOfWeek == "" {
+		t.DaysOfWeek = "0111110"
+	}
+	if t.CycleWeeks <= 0 {
+		t.CycleWeeks = 1
+	}
+	if t.StartMinute <= 0 {
+		t.StartMinute = defaultShiftStartMinute
+	}
+
+	return nil
+}
+
 var (
 	_ bun.BeforeAppendModelHook          = (*WorkerShiftAssignment)(nil)
 	_ validationframework.TenantedEntity = (*WorkerShiftAssignment)(nil)
@@ -267,28 +284,28 @@ var (
 // WorkerShiftAssignment puts a worker on a pattern for a period.
 type WorkerShiftAssignment struct {
 	bun.BaseModel `bun:"table:worker_shift_assignments,alias:wsa" json:"-"`
-	keel.Table    `keel:"worker_shift_assignments"`
+	keel.Table    `                                                        keel:"worker_shift_assignments"`
 
-	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wsa_"`
+	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:wsa_"`
 	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	WorkerID        pulid.ID `json:"workerId"        bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
-	ShiftTemplateID pulid.ID `json:"shiftTemplateId" bun:"shift_template_id,type:VARCHAR(100),notnull" keel:"shift_template_id"`
+	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	WorkerID        pulid.ID `json:"workerId"        bun:"worker_id,type:VARCHAR(100),notnull"           keel:"worker_id"`
+	ShiftTemplateID pulid.ID `json:"shiftTemplateId" bun:"shift_template_id,type:VARCHAR(100),notnull"   keel:"shift_template_id"`
 
-	EffectiveFrom int64  `json:"effectiveFrom" bun:"effective_from,type:BIGINT,notnull" keel:"effective_from"`
-	EffectiveTo   *int64 `json:"effectiveTo"   bun:"effective_to,type:BIGINT,nullzero" keel:"effective_to"`
+	EffectiveFrom int64  `json:"effectiveFrom"    bun:"effective_from,type:BIGINT,notnull"        keel:"effective_from"`
+	EffectiveTo   *int64 `json:"effectiveTo"      bun:"effective_to,type:BIGINT,nullzero"         keel:"effective_to"`
 	// CycleOffsetWeeks is which week of the template's cycle this worker starts
 	// on, so an A/B rotation is one template and two offsets.
-	CycleOffsetWeeks int16    `json:"cycleOffsetWeeks" bun:"cycle_offset_weeks,type:SMALLINT,notnull" keel:"cycle_offset_weeks"`
-	Notes            string   `json:"notes"            bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	CycleOffsetWeeks int16    `json:"cycleOffsetWeeks" bun:"cycle_offset_weeks,type:SMALLINT,notnull"  keel:"cycle_offset_weeks"`
+	Notes            string   `json:"notes"            bun:"notes,type:TEXT,nullzero"                  keel:"notes,nullzero"`
 	AssignedByID     pulid.ID `json:"assignedById"     bun:"assigned_by_id,type:VARCHAR(100),nullzero" keel:"assigned_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	ShiftTemplate *ShiftTemplate `json:"shiftTemplate,omitempty" bun:"rel:belongs-to,join:shift_template_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:shift_template_id"`
-	Worker        *Worker        `json:"worker,omitempty"        bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Worker        *Worker        `json:"worker,omitempty"        bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"         keel:"belongs:worker_id"`
 }
 
 func (a *WorkerShiftAssignment) Validate(multiErr *errortypes.MultiError) {
@@ -352,18 +369,18 @@ var (
 // weekday.
 type WorkerAvailabilityPreference struct {
 	bun.BaseModel `bun:"table:worker_availability_preferences,alias:wapf" json:"-"`
-	keel.Table    `keel:"worker_availability_preferences"`
+	keel.Table    `                                                                keel:"worker_availability_preferences"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wapf_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:wapf_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"           keel:"worker_id"`
 
-	DayOfWeek  int16                  `json:"dayOfWeek"  bun:"day_of_week,type:SMALLINT,notnull" keel:"day_of_week"`
+	DayOfWeek  int16                  `json:"dayOfWeek"  bun:"day_of_week,type:SMALLINT,notnull"                                        keel:"day_of_week"`
 	Preference AvailabilityPreference `json:"preference" bun:"preference,type:availability_preference_enum,notnull,default:'Available'" keel:"preference"`
-	Note       string                 `json:"note"       bun:"note,type:VARCHAR(255),nullzero" keel:"note,nullzero"`
+	Note       string                 `json:"note"       bun:"note,type:VARCHAR(255),nullzero"                                          keel:"note,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
@@ -426,6 +443,14 @@ func (p *WorkerAvailabilityPreference) BeforeAppendModel(
 	return nil
 }
 
+func (p *WorkerAvailabilityPreference) BeforeCreate(_ context.Context) error {
+	if p.Preference == "" {
+		p.Preference = AvailabilityAvailable
+	}
+
+	return nil
+}
+
 var (
 	_ bun.BeforeAppendModelHook          = (*ShiftSwapRequest)(nil)
 	_ validationframework.TenantedEntity = (*ShiftSwapRequest)(nil)
@@ -434,31 +459,31 @@ var (
 // ShiftSwapRequest is one driver asking another to take a day.
 type ShiftSwapRequest struct {
 	bun.BaseModel `bun:"table:shift_swap_requests,alias:sswp" json:"-"`
-	keel.Table    `keel:"shift_swap_requests"`
+	keel.Table    `                                                    keel:"shift_swap_requests"`
 
-	ID                   pulid.ID `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:sswp_"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	RequestingWorkerID   pulid.ID `json:"requestingWorkerId"   bun:"requesting_worker_id,type:VARCHAR(100),notnull" keel:"requesting_worker_id"`
+	ID                   pulid.ID `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"                   keel:"id,pk,autoid:sswp_"`
+	BusinessUnitID       pulid.ID `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"      keel:"organization_id,pk,tenant"`
+	RequestingWorkerID   pulid.ID `json:"requestingWorkerId"   bun:"requesting_worker_id,type:VARCHAR(100),notnull"    keel:"requesting_worker_id"`
 	CounterpartyWorkerID pulid.ID `json:"counterpartyWorkerId" bun:"counterparty_worker_id,type:VARCHAR(100),nullzero" keel:"counterparty_worker_id,nullzero"`
 
-	Status ShiftSwapStatus `json:"status" bun:"status,type:shift_swap_status_enum,notnull,default:'Proposed'" keel:"status"`
+	Status ShiftSwapStatus `json:"status"                bun:"status,type:shift_swap_status_enum,notnull,default:'Proposed'" keel:"status"`
 	// ShiftDate is the day being given up; CounterpartyShiftDate is the day
 	// offered back, when the swap is a trade rather than a hand-off.
-	ShiftDate             int64  `json:"shiftDate"             bun:"shift_date,type:BIGINT,notnull" keel:"shift_date"`
-	CounterpartyShiftDate *int64 `json:"counterpartyShiftDate" bun:"counterparty_shift_date,type:BIGINT,nullzero" keel:"counterparty_shift_date"`
+	ShiftDate             int64  `json:"shiftDate"             bun:"shift_date,type:BIGINT,notnull"                                keel:"shift_date"`
+	CounterpartyShiftDate *int64 `json:"counterpartyShiftDate" bun:"counterparty_shift_date,type:BIGINT,nullzero"                  keel:"counterparty_shift_date"`
 
-	Reason       string   `json:"reason"       bun:"reason,type:VARCHAR(255),nullzero" keel:"reason,nullzero"`
+	Reason       string   `json:"reason"       bun:"reason,type:VARCHAR(255),nullzero"        keel:"reason,nullzero"`
 	ResponseNote string   `json:"responseNote" bun:"response_note,type:VARCHAR(255),nullzero" keel:"response_note,nullzero"`
-	RespondedAt  *int64   `json:"respondedAt"  bun:"responded_at,type:BIGINT,nullzero" keel:"responded_at"`
-	DecidedAt    *int64   `json:"decidedAt"    bun:"decided_at,type:BIGINT,nullzero" keel:"decided_at"`
+	RespondedAt  *int64   `json:"respondedAt"  bun:"responded_at,type:BIGINT,nullzero"        keel:"responded_at"`
+	DecidedAt    *int64   `json:"decidedAt"    bun:"decided_at,type:BIGINT,nullzero"          keel:"decided_at"`
 	DecidedByID  pulid.ID `json:"decidedById"  bun:"decided_by_id,type:VARCHAR(100),nullzero" keel:"decided_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	RequestingWorker   *Worker `json:"requestingWorker,omitempty"   bun:"rel:belongs-to,join:requesting_worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:requesting_worker_id"`
+	RequestingWorker   *Worker `json:"requestingWorker,omitempty"   bun:"rel:belongs-to,join:requesting_worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"   keel:"belongs:requesting_worker_id"`
 	CounterpartyWorker *Worker `json:"counterpartyWorker,omitempty" bun:"rel:belongs-to,join:counterparty_worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:counterparty_worker_id"`
 }
 
@@ -523,6 +548,14 @@ func (r *ShiftSwapRequest) BeforeAppendModel(_ context.Context, query bun.Query)
 		r.UpdatedAt = now
 	case *bun.UpdateQuery:
 		r.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (r *ShiftSwapRequest) BeforeCreate(_ context.Context) error {
+	if r.Status == "" {
+		r.Status = SwapProposed
 	}
 
 	return nil

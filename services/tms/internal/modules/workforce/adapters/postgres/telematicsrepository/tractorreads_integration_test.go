@@ -5,6 +5,10 @@ package telematicsrepository_test
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics/telematicsdb"
+
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,15 +19,9 @@ import (
 func (f *stopReviewFixture) seededTractors(t *testing.T, count int) []pulid.ID {
 	t.Helper()
 
-	ids := make([]pulid.ID, 0, count)
-	require.NoError(t, f.db.NewSelect().
-		TableExpr("tractors").
-		Column("id").
-		Where("organization_id = ?", f.tenantInfo.OrgID).
-		Where("business_unit_id = ?", f.tenantInfo.BuID).
-		OrderExpr("id").
-		Limit(int64(count)).
-		Scan(f.ctx, &ids))
+	tr := tractordb.Tractors
+	ids, err := keel.Into[pulid.ID](f.ctx, f.db, tr.Pick(tr.ID).Order(tr.ID.Asc()).Limit(count))
+	require.NoError(t, err)
 	require.Len(t, ids, count)
 	return ids
 }
@@ -36,7 +34,7 @@ func (f *stopReviewFixture) insertInspection(
 ) {
 	t.Helper()
 
-	_, err := f.db.NewInsert().Model(&telematics.VehicleInspection{
+	err := telematicsdb.VehicleInspections.Create(f.ctx, f.db, &telematics.VehicleInspection{
 		ID:             id,
 		OrganizationID: f.tenantInfo.OrgID,
 		BusinessUnitID: f.tenantInfo.BuID,
@@ -49,7 +47,7 @@ func (f *stopReviewFixture) insertInspection(
 		EndedAt:        startedAt + 600,
 		Signed:         true,
 		CreatedAt:      startedAt + 600,
-	}).Exec(f.ctx)
+	})
 	require.NoError(t, err)
 }
 
@@ -104,11 +102,14 @@ func TestListVehicleInspections_BeforeWithoutIDKeepsStrictlyOlder(t *testing.T) 
 	f.insertInspection(t, older, tractorID, 1_800_000_000)
 	f.insertInspection(t, same, tractorID, 1_800_003_600)
 
-	page, err := f.repo.ListVehicleInspections(f.ctx, &telematicsports.ListVehicleInspectionsRequest{
-		TenantInfo: f.tenantInfo,
-		TractorID:  tractorID,
-		Before:     1_800_003_600,
-	})
+	page, err := f.repo.ListVehicleInspections(
+		f.ctx,
+		&telematicsports.ListVehicleInspectionsRequest{
+			TenantInfo: f.tenantInfo,
+			TractorID:  tractorID,
+			Before:     1_800_003_600,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, page, 1)
 	assert.Equal(t, older, page[0].ID)

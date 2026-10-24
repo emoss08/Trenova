@@ -4,31 +4,41 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/integrationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics/telematicsdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration/integrationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var (
+	hosStateErrors  = dberror.Mapping{Entity: "WorkerHOSState"}
+	feedStateErrors = dberror.Mapping{Entity: "FeedState"}
+	webhookErrors   = dberror.Mapping{Entity: "TelematicsWebhook"}
+	eventErrors     = dberror.Mapping{Entity: "Telematics event"}
+)
+
+type webhookRow struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	WebhookSecret  string
+}
 
 type Params struct {
 	fx.In
@@ -49,6 +59,41 @@ func New(p Params) telematicsports.TelematicsRepository {
 	}
 }
 
+func newerPosition(col keel.Col, excluded keel.Expr) keel.Expr {
+	vp := telematicsdb.VehiclePositions
+
+	return keel.Raw(
+		"CASE WHEN ? <= ? THEN ? ELSE ? END",
+		vp.RecordedAt,
+		vp.RecordedAt.Excluded(),
+		excluded,
+		col,
+	)
+}
+
+func positionConflict() keel.Conflict {
+	vp := telematicsdb.VehiclePositions
+
+	return keel.OnConflict(vp.OrganizationID, vp.BusinessUnitID, vp.TractorID).Set(
+		vp.Provider.ToExpr(newerPosition(vp.Provider.Col, vp.Provider.Excluded())),
+		vp.ProviderVehicleID.ToExpr(
+			newerPosition(vp.ProviderVehicleID.Col, vp.ProviderVehicleID.Excluded()),
+		),
+		vp.Latitude.ToExpr(newerPosition(vp.Latitude.Col, vp.Latitude.Excluded())),
+		vp.Longitude.ToExpr(newerPosition(vp.Longitude.Col, vp.Longitude.Excluded())),
+		vp.HeadingDegrees.ToExpr(newerPosition(vp.HeadingDegrees.Col, vp.HeadingDegrees.Excluded())),
+		vp.SpeedMph.ToExpr(newerPosition(vp.SpeedMph.Col, vp.SpeedMph.Excluded())),
+		vp.EngineState.ToExpr(newerPosition(vp.EngineState.Col, vp.EngineState.Excluded())),
+		vp.FuelPercent.ToExpr(newerPosition(vp.FuelPercent.Col, vp.FuelPercent.Excluded())),
+		vp.OdometerMeters.ToExpr(newerPosition(vp.OdometerMeters.Col, vp.OdometerMeters.Excluded())),
+		vp.FormattedLocation.ToExpr(
+			newerPosition(vp.FormattedLocation.Col, vp.FormattedLocation.Excluded()),
+		),
+		vp.ReceivedAt.ToExpr(newerPosition(vp.ReceivedAt.Col, vp.ReceivedAt.Excluded())),
+		vp.RecordedAt.ToExpr(keel.Raw("GREATEST(?, ?)", vp.RecordedAt, vp.RecordedAt.Excluded())),
+	)
+}
+
 func (r *repository) UpsertVehiclePositions(
 	ctx context.Context,
 	positions []*telematics.VehiclePosition,
@@ -58,29 +103,43 @@ func (r *repository) UpsertVehiclePositions(
 			return nil
 		}
 
-		cols := telematicscol.VehiclePositionColumns
-		_, err := r.db.DBForContext(ctx).NewInsert().
-			Model(&positions).
-			On("CONFLICT (organization_id, business_unit_id, tractor_id) DO UPDATE").
-			Set(cols.Provider.SetExcluded()).
-			Set(cols.ProviderVehicleID.SetExcluded()).
-			Set(cols.Latitude.SetExcluded()).
-			Set(cols.Longitude.SetExcluded()).
-			Set(cols.HeadingDegrees.SetExcluded()).
-			Set(cols.SpeedMph.SetExcluded()).
-			Set(cols.EngineState.SetExcluded()).
-			Set(cols.FuelPercent.SetExcluded()).
-			Set(cols.OdometerMeters.SetExcluded()).
-			Set(cols.FormattedLocation.SetExcluded()).
-			Set(cols.RecordedAt.SetExcluded()).
-			Set(cols.ReceivedAt.SetExcluded()).
-			Where(cols.RecordedAt.Qualified() + " <= EXCLUDED.recorded_at").
-			Exec(ctx)
+		_, err := telematicsdb.VehiclePositions.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			positions,
+			positionConflict(),
+		)
 		if err != nil {
 			return fmt.Errorf("upsert vehicle positions: %w", err)
 		}
+
 		return nil
 	})
+}
+
+func vehiclePositionsQuery(
+	req *telematicsports.ListVehiclePositionsRequest,
+) *keel.Query[telematics.VehiclePosition] {
+	vp := telematicsdb.VehiclePositions
+	tr := vp.Tractor()
+
+	var loads []keel.Loader
+	switch {
+	case req.IncludeWorker:
+		loads = append(loads, tr.PrimaryWorker())
+	case req.IncludeTractor:
+		loads = append(loads, tr)
+	}
+
+	return vp.Where(
+		keel.When(len(req.TractorIDs) > 0, vp.TractorID.In(req.TractorIDs...)),
+		keel.When(
+			req.MaxAgeSeconds > 0,
+			vp.RecordedAt.Gte(timeutils.NowUnix()-req.MaxAgeSeconds),
+		),
+	).
+		Load(loads...).
+		Order(vp.RecordedAt.Desc())
 }
 
 func (r *repository) ListVehiclePositions(
@@ -88,34 +147,11 @@ func (r *repository) ListVehiclePositions(
 	req *telematicsports.ListVehiclePositionsRequest,
 ) ([]*telematics.VehiclePosition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.VehiclePosition, error) {
-		cols := telematicscol.VehiclePositionColumns
-		rel := telematicscol.VehiclePositionRelations
-
-		entities := make([]*telematics.VehiclePosition, 0)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = telematicscol.VehiclePositionScopeTenant(sq, req.TenantInfo)
-				if len(req.TractorIDs) > 0 {
-					sq = sq.Where(cols.TractorID.In(), bun.List(req.TractorIDs))
-				}
-				if req.MaxAgeSeconds > 0 {
-					sq = sq.Where(cols.RecordedAt.Gte(), timeutils.NowUnix()-req.MaxAgeSeconds)
-				}
-				return sq
-			}).
-			Order(cols.RecordedAt.OrderDesc())
-
-		if req.IncludeTractor {
-			q = q.Relation(rel.Tractor)
-		}
-		if req.IncludeWorker {
-			q = q.Relation(buncolgen.Rel(rel.Tractor, tractorcol.TractorRelations.PrimaryWorker))
-		}
-
-		if err := q.Scan(ctx); err != nil {
+		entities, err := vehiclePositionsQuery(req).All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list vehicle positions: %w", err)
 		}
+
 		return entities, nil
 	})
 }
@@ -129,29 +165,29 @@ func (r *repository) UpsertWorkerHOSStates(
 			return nil
 		}
 
-		cols := telematicscol.WorkerHOSStateColumns
-		_, err := r.db.DBForContext(ctx).NewInsert().
-			Model(&states).
-			On("CONFLICT (organization_id, business_unit_id, worker_id) DO UPDATE").
-			Set(cols.Provider.SetExcluded()).
-			Set(cols.ProviderDriverID.SetExcluded()).
-			Set(cols.DutyStatus.SetExcluded()).
-			Set(cols.DriveRemainingMs.SetExcluded()).
-			Set(cols.ShiftRemainingMs.SetExcluded()).
-			Set(cols.CycleRemainingMs.SetExcluded()).
-			Set(cols.CycleTomorrowMs.SetExcluded()).
-			Set(cols.BreakRemainingMs.SetExcluded()).
-			Set(cols.CycleStartedAt.SetExcluded()).
-			Set(cols.ShiftDrivingViolationMs.SetExcluded()).
-			Set(cols.CycleViolationMs.SetExcluded()).
-			Set(cols.CurrentVehicleID.SetExcluded()).
-			Set(cols.CurrentTractorID.SetExcluded()).
-			Set(cols.RecordedAt.SetExcluded()).
-			Set(cols.ReceivedAt.SetExcluded()).
-			Exec(ctx)
+		s := telematicsdb.WorkerHOSStates
+		_, err := s.Upsert(ctx, r.db.Keel(ctx), states,
+			keel.OnConflict(s.OrganizationID, s.BusinessUnitID, s.WorkerID).Update(
+				s.Provider,
+				s.ProviderDriverID,
+				s.DutyStatus,
+				s.DriveRemainingMs,
+				s.ShiftRemainingMs,
+				s.CycleRemainingMs,
+				s.CycleTomorrowMs,
+				s.BreakRemainingMs,
+				s.CycleStartedAt,
+				s.ShiftDrivingViolationMs,
+				s.CycleViolationMs,
+				s.CurrentVehicleID,
+				s.CurrentTractorID,
+				s.RecordedAt,
+				s.ReceivedAt,
+			))
 		if err != nil {
 			return fmt.Errorf("upsert worker hos states: %w", err)
 		}
+
 		return nil
 	})
 }
@@ -161,30 +197,19 @@ func (r *repository) ListWorkerHOSStates(
 	req *telematicsports.ListWorkerHOSStatesRequest,
 ) ([]*telematics.WorkerHOSState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.WorkerHOSState, error) {
-		cols := telematicscol.WorkerHOSStateColumns
-
-		entities := make([]*telematics.WorkerHOSState, 0)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = telematicscol.WorkerHOSStateScopeTenant(sq, req.TenantInfo)
-				if len(req.WorkerIDs) > 0 {
-					sq = sq.Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
-				}
-				return sq
-			}).
-			Order(cols.DriveRemainingMs.OrderAsc())
-
-		if req.IncludeWorker {
-			q = q.Relation(telematicscol.WorkerHOSStateRelations.Worker)
-		}
+		s := telematicsdb.WorkerHOSStates
+		q := s.Where(keel.When(len(req.WorkerIDs) > 0, s.WorkerID.In(req.WorkerIDs...))).
+			Load(listquery.When(req.IncludeWorker, s.Worker())...).
+			Order(s.DriveRemainingMs.Asc())
 		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
+			q = q.Limit(req.Limit)
 		}
 
-		if err := q.Scan(ctx); err != nil {
+		entities, err := q.All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list worker hos states: %w", err)
 		}
+
 		return entities, nil
 	})
 }
@@ -194,17 +219,12 @@ func (r *repository) GetWorkerHOSState(
 	req telematicsports.GetWorkerHOSStateRequest,
 ) (*telematics.WorkerHOSState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*telematics.WorkerHOSState, error) {
-		entity := new(telematics.WorkerHOSState)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return telematicscol.WorkerHOSStateScopeTenant(sq, req.TenantInfo).
-					Where(telematicscol.WorkerHOSStateColumns.WorkerID.Eq(), req.WorkerID)
-			}).
-			Scan(ctx)
+		s := telematicsdb.WorkerHOSStates
+		entity, err := s.Where(s.WorkerID.Eq(req.WorkerID)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerHOSState")
+			return nil, hosStateErrors.Map(err, req.WorkerID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -218,19 +238,19 @@ func (r *repository) UpsertWorkerHOSViolations(
 			return nil
 		}
 
-		cols := telematicscol.WorkerHOSViolationColumns
-		_, err := r.db.DBForContext(ctx).NewInsert().
-			Model(&violations).
-			On("CONFLICT (organization_id, business_unit_id, worker_id, violation_type, violation_start_at) DO UPDATE").
-			Set(cols.Description.SetExcluded()).
-			Set(cols.DurationMs.SetExcluded()).
-			Set(cols.DayStartAt.SetExcluded()).
-			Set(cols.DayEndAt.SetExcluded()).
-			Set(cols.DetectedAt.SetExcluded()).
-			Exec(ctx)
+		v := telematicsdb.WorkerHOSViolations
+		_, err := v.Upsert(ctx, r.db.Keel(ctx), violations,
+			keel.OnConflict(
+				v.OrganizationID,
+				v.BusinessUnitID,
+				v.WorkerID,
+				v.ViolationType,
+				v.ViolationStartAt,
+			).Update(v.Description, v.DurationMs, v.DayStartAt, v.DayEndAt, v.DetectedAt))
 		if err != nil {
 			return fmt.Errorf("upsert worker hos violations: %w", err)
 		}
+
 		return nil
 	})
 }
@@ -243,30 +263,20 @@ func (r *repository) ListWorkerHOSViolations(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*telematics.WorkerHOSViolation, error) {
-			cols := telematicscol.WorkerHOSViolationColumns
-
-			entities := make([]*telematics.WorkerHOSViolation, 0)
-			q := r.db.DBForContext(ctx).NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = telematicscol.WorkerHOSViolationScopeTenant(sq, req.TenantInfo)
-					if !req.WorkerID.IsNil() {
-						sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-					}
-					if req.Since > 0 {
-						sq = sq.Where(cols.ViolationStartAt.Gte(), req.Since)
-					}
-					return sq
-				}).
-				Order(cols.ViolationStartAt.OrderDesc())
-
+			v := telematicsdb.WorkerHOSViolations
+			q := v.Where(
+				keel.When(req.WorkerID.IsNotNil(), v.WorkerID.Eq(req.WorkerID)),
+				keel.When(req.Since > 0, v.ViolationStartAt.Gte(req.Since)),
+			).Order(v.ViolationStartAt.Desc())
 			if req.Limit > 0 {
-				q = q.Limit(int64(req.Limit))
+				q = q.Limit(req.Limit)
 			}
 
-			if err := q.Scan(ctx); err != nil {
+			entities, err := q.All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, fmt.Errorf("list worker hos violations: %w", err)
 			}
+
 			return entities, nil
 		},
 	)
@@ -280,32 +290,24 @@ func (r *repository) ListWorkerHOSViolationStats(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*telematicsports.WorkerHOSViolationStats, error) {
-			cols := telematicscol.WorkerHOSViolationColumns
-
-			rows := make([]*telematicsports.WorkerHOSViolationStats, 0, len(req.WorkerIDs))
-			err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr(telematicscol.WorkerHOSViolationTable.Name+" AS "+telematicscol.WorkerHOSViolationTable.Alias).
-				ColumnExpr(cols.WorkerID.As("worker_id")).
-				ColumnExpr(buncolgen.Count("violation_count")).
-				ColumnExpr(buncolgen.Max(cols.ViolationStartAt, "last_violation_at")).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = sq.
-						Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-						Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID)
-					if len(req.WorkerIDs) > 0 {
-						sq = sq.Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
-					}
-					if req.Since > 0 {
-						sq = sq.Where(cols.ViolationStartAt.Gte(), req.Since)
-					}
-					return sq
-				}).
-				GroupExpr(cols.WorkerID.Qualified()).
-				Scan(ctx, &rows)
+			v := telematicsdb.WorkerHOSViolations
+			rows, err := keel.Into[telematicsports.WorkerHOSViolationStats](ctx, r.db.Keel(ctx), v.
+				Group(v.WorkerID).
+				Pick(v.WorkerID, keel.Count(), v.ViolationStartAt.Max()).
+				Where(
+					keel.When(len(req.WorkerIDs) > 0, v.WorkerID.In(req.WorkerIDs...)),
+					keel.When(req.Since > 0, v.ViolationStartAt.Gte(req.Since)),
+				))
 			if err != nil {
 				return nil, fmt.Errorf("list worker hos violation stats: %w", err)
 			}
-			return rows, nil
+
+			stats := make([]*telematicsports.WorkerHOSViolationStats, 0, len(rows))
+			for i := range rows {
+				stats = append(stats, &rows[i])
+			}
+
+			return stats, nil
 		},
 	)
 }
@@ -319,47 +321,37 @@ func (r *repository) SyncWorkerHOSLogs(
 			return 0, nil
 		}
 
-		cols := telematicscol.WorkerHOSLogColumns
-		synced := 0
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			_, execErr := tx.NewDelete().
-				Model((*telematics.WorkerHOSLog)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return telematicscol.WorkerHOSLogScopeTenantDelete(dq, req.TenantInfo).
-						Where(cols.WorkerID.In(), bun.List(req.WorkerIDs)).
-						Where(cols.LogStartAt.Gte(), req.WindowStart)
-				}).
-				Exec(ctx)
-			if execErr != nil {
-				return execErr
-			}
-
-			if len(req.Logs) == 0 {
-				return nil
-			}
-
-			result, execErr := tx.NewInsert().
-				Model(&req.Logs).
-				On("CONFLICT (organization_id, business_unit_id, worker_id, log_start_at) DO UPDATE").
-				Set(cols.DutyStatus.SetExcluded()).
-				Set(cols.LogEndAt.SetExcluded()).
-				Set(cols.Remark.SetExcluded()).
-				Set(cols.Provider.SetExcluded()).
-				Set(cols.ProviderVehicleID.SetExcluded()).
-				Set(cols.ReceivedAt.SetExcluded()).
-				Exec(ctx)
-			if execErr != nil {
-				return execErr
-			}
-			if rows, raErr := result.RowsAffected(); raErr == nil {
-				synced = int(rows)
-			}
-			return nil
-		})
+		db := r.db.Keel(ctx)
+		hl := telematicsdb.WorkerHOSLogs
+		_, err := hl.Where(hl.WorkerID.In(req.WorkerIDs...), hl.LogStartAt.Gte(req.WindowStart)).
+			Delete(ctx, db)
 		if err != nil {
 			return 0, fmt.Errorf("sync worker hos logs: %w", err)
 		}
-		return synced, nil
+
+		if len(req.Logs) == 0 {
+			return 0, nil
+		}
+
+		inserted, err := hl.Upsert(
+			ctx,
+			db,
+			req.Logs,
+			keel.OnConflict(hl.OrganizationID, hl.BusinessUnitID, hl.WorkerID, hl.LogStartAt).
+				Update(
+					hl.DutyStatus,
+					hl.LogEndAt,
+					hl.Remark,
+					hl.Provider,
+					hl.ProviderVehicleID,
+					hl.ReceivedAt,
+				),
+		)
+		if err != nil {
+			return 0, fmt.Errorf("sync worker hos logs: %w", err)
+		}
+
+		return len(inserted), nil
 	})
 }
 
@@ -368,26 +360,17 @@ func (r *repository) ListWorkerHOSLogs(
 	req *telematicsports.ListWorkerHOSLogsRequest,
 ) ([]*telematics.WorkerHOSLog, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.WorkerHOSLog, error) {
-		cols := telematicscol.WorkerHOSLogColumns
-
-		entities := make([]*telematics.WorkerHOSLog, 0)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = telematicscol.WorkerHOSLogScopeTenant(sq, req.TenantInfo)
-				if len(req.WorkerIDs) > 0 {
-					sq = sq.Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
-				}
-				if req.Since > 0 {
-					sq = sq.Where(cols.LogStartAt.Gte(), req.Since)
-				}
-				return sq
-			}).
-			Order(cols.WorkerID.OrderAsc(), cols.LogStartAt.OrderAsc())
-
-		if err := q.Scan(ctx); err != nil {
+		hl := telematicsdb.WorkerHOSLogs
+		entities, err := hl.Where(
+			keel.When(len(req.WorkerIDs) > 0, hl.WorkerID.In(req.WorkerIDs...)),
+			keel.When(req.Since > 0, hl.LogStartAt.Gte(req.Since)),
+		).
+			Order(hl.WorkerID.Asc(), hl.LogStartAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list worker hos logs: %w", err)
 		}
+
 		return entities, nil
 	})
 }
@@ -401,28 +384,62 @@ func (r *repository) UpsertVehicleInspections(
 			return nil
 		}
 
-		cols := telematicscol.VehicleInspectionColumns
-		_, err := r.db.DBForContext(ctx).NewInsert().
-			Model(&inspections).
-			On("CONFLICT (organization_id, business_unit_id, provider, provider_dvir_id) DO UPDATE").
-			Set(cols.TractorID.SetExcluded()).
-			Set(cols.WorkerID.SetExcluded()).
-			Set(cols.InspectionType.SetExcluded()).
-			Set(cols.SafetyStatus.SetExcluded()).
-			Set(cols.StartedAt.SetExcluded()).
-			Set(cols.EndedAt.SetExcluded()).
-			Set(cols.OdometerMeters.SetExcluded()).
-			Set(cols.Location.SetExcluded()).
-			Set(cols.Signed.SetExcluded()).
-			Set(cols.DefectCount.SetExcluded()).
-			Set(cols.UnresolvedDefectCount.SetExcluded()).
-			Set(cols.Defects.SetExcluded()).
-			Exec(ctx)
+		vi := telematicsdb.VehicleInspections
+		_, err := vi.Upsert(ctx, r.db.Keel(ctx), inspections,
+			keel.OnConflict(vi.OrganizationID, vi.BusinessUnitID, vi.Provider, vi.ProviderDVIRID).
+				Update(
+					vi.TractorID,
+					vi.WorkerID,
+					vi.InspectionType,
+					vi.SafetyStatus,
+					vi.StartedAt,
+					vi.EndedAt,
+					vi.OdometerMeters,
+					vi.Location,
+					vi.Signed,
+					vi.DefectCount,
+					vi.UnresolvedDefectCount,
+					vi.Defects,
+				))
 		if err != nil {
 			return fmt.Errorf("upsert vehicle inspections: %w", err)
 		}
+
 		return nil
 	})
+}
+
+func inspectionsBefore(req *telematicsports.ListVehicleInspectionsRequest) keel.Pred {
+	if req.Before <= 0 {
+		return nil
+	}
+
+	vi := telematicsdb.VehicleInspections
+	if req.BeforeID.IsNil() {
+		return vi.StartedAt.Lt(req.Before)
+	}
+
+	return keel.Or(
+		vi.StartedAt.Lt(req.Before),
+		keel.And(vi.StartedAt.Eq(req.Before), vi.ID.Lt(req.BeforeID)),
+	)
+}
+
+func vehicleInspectionsQuery(
+	req *telematicsports.ListVehicleInspectionsRequest,
+) *keel.Query[telematics.VehicleInspection] {
+	vi := telematicsdb.VehicleInspections
+	q := vi.Where(
+		keel.When(req.TractorID.IsNotNil(), vi.TractorID.Eq(req.TractorID)),
+		keel.When(req.WorkerID.IsNotNil(), vi.WorkerID.Eq(req.WorkerID)),
+		keel.When(req.Since > 0, vi.StartedAt.Gte(req.Since)),
+		inspectionsBefore(req),
+	).Order(vi.StartedAt.Desc(), vi.ID.Desc())
+	if req.Limit > 0 {
+		q = q.Limit(req.Limit)
+	}
+
+	return q
 }
 
 func (r *repository) ListVehicleInspections(
@@ -430,56 +447,12 @@ func (r *repository) ListVehicleInspections(
 	req *telematicsports.ListVehicleInspectionsRequest,
 ) ([]*telematics.VehicleInspection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.VehicleInspection, error) {
-		cols := telematicscol.VehicleInspectionColumns
-
-		entities := make([]*telematics.VehicleInspection, 0)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = telematicscol.VehicleInspectionScopeTenant(sq, req.TenantInfo)
-				if !req.TractorID.IsNil() {
-					sq = sq.Where(cols.TractorID.Eq(), req.TractorID)
-				}
-				if !req.WorkerID.IsNil() {
-					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-				}
-				if req.Since > 0 {
-					sq = sq.Where(cols.StartedAt.Gte(), req.Since)
-				}
-				if req.Before > 0 {
-					sq = sq.WhereGroup(" AND ", func(page *bun.SelectQuery) *bun.SelectQuery {
-						return inspectionsBefore(page, req)
-					})
-				}
-				return sq
-			}).
-			Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc())
-
-		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
-		}
-
-		if err := q.Scan(ctx); err != nil {
+		entities, err := vehicleInspectionsQuery(req).All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list vehicle inspections: %w", err)
 		}
+
 		return entities, nil
-	})
-}
-
-func inspectionsBefore(
-	q *bun.SelectQuery,
-	req *telematicsports.ListVehicleInspectionsRequest,
-) *bun.SelectQuery {
-	cols := telematicscol.VehicleInspectionColumns
-
-	q = q.Where(cols.StartedAt.Lt(), req.Before)
-	if req.BeforeID.IsNil() {
-		return q
-	}
-	return q.WhereGroup(" OR ", func(tie *bun.SelectQuery) *bun.SelectQuery {
-		return tie.
-			Where(cols.StartedAt.Eq(), req.Before).
-			Where(cols.ID.Lt(), req.BeforeID)
 	})
 }
 
@@ -488,18 +461,21 @@ func (r *repository) InsertEvent(
 	event *telematics.TelematicsEvent,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		result, err := r.db.DBForContext(ctx).NewInsert().
-			Model(event).
-			On("CONFLICT (organization_id, business_unit_id, provider, event_id) DO NOTHING").
-			Exec(ctx)
+		e := telematicsdb.TelematicsEvents
+		inserted, err := e.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*telematics.TelematicsEvent{event},
+			e.OrganizationID,
+			e.BusinessUnitID,
+			e.Provider,
+			e.EventID,
+		)
 		if err != nil {
 			return false, fmt.Errorf("insert telematics event: %w", err)
 		}
-		rows, err := result.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("insert telematics event rows affected: %w", err)
-		}
-		return rows > 0, nil
+
+		return inserted > 0, nil
 	})
 }
 
@@ -508,23 +484,58 @@ func (r *repository) RecordStopOutcome(
 	event *telematics.TelematicsEvent,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := telematicscol.TelematicsEventColumns
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(event).
-			Column(
-				cols.StopOutcome.Bare(),
-				cols.StopVisit.Bare(),
-				cols.ShipmentMoveID.Bare(),
-				cols.StopID.Bare(),
-				cols.StopOutcomeReason.Bare(),
-			).
-			WherePK().
-			Exec(ctx)
+		e := telematicsdb.TelematicsEvents
+		err := e.Save(
+			ctx,
+			r.db.Keel(ctx),
+			event,
+			e.StopOutcome,
+			e.StopVisit,
+			e.ShipmentMoveID,
+			e.StopID,
+			e.StopOutcomeReason,
+		)
 		if err != nil {
-			return fmt.Errorf("record telematics stop outcome: %w", err)
+			return fmt.Errorf(
+				"record telematics stop outcome: %w",
+				eventErrors.Map(err, event.ID.String()),
+			)
 		}
-		return dberror.CheckRowsAffected(result, "Telematics event", event.ID.String())
+
+		return nil
 	})
+}
+
+func openStopReviewsQuery(
+	req *telematicsports.ListOpenStopReviewsRequest,
+) *keel.Query[telematics.TelematicsEvent] {
+	e := telematicsdb.TelematicsEvents
+	m := shipmentdb.ShipmentMoves
+	st := shipmentdb.Stops
+
+	missingStamp := keel.Or(
+		keel.And(e.StopVisit.Eq(shipment.VisitArrival), st.ActualArrival.IsNull()),
+		keel.And(e.StopVisit.Eq(shipment.VisitDeparture), st.ActualDeparture.IsNull()),
+	)
+
+	q := e.Join(m, m.ID.EqCol(e.ShipmentMoveID)).
+		LeftJoin(st, st.ID.EqCol(e.StopID)).
+		Compute(e.MoveShipmentID, m.ShipmentID).
+		Where(
+			e.StopOutcome.In(telematics.StopOutcomeUnmatched, telematics.StopOutcomeRefused),
+			m.Status.NotIn(shipment.MoveStatusCompleted, shipment.MoveStatusCanceled),
+			keel.When(req.Since > 0, e.OccurredAt.Gt(req.Since)),
+			keel.Or(
+				e.StopID.IsNull(),
+				keel.And(st.Status.Ne(shipment.StopStatusCanceled), missingStamp),
+			),
+		).
+		Order(e.OccurredAt.Desc())
+	if req.Limit > 0 {
+		q = q.Limit(req.Limit)
+	}
+
+	return q
 }
 
 func (r *repository) ListOpenStopReviews(
@@ -532,108 +543,37 @@ func (r *repository) ListOpenStopReviews(
 	req *telematicsports.ListOpenStopReviewsRequest,
 ) ([]*telematicsports.StopReview, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematicsports.StopReview, error) {
-		cols := telematicscol.TelematicsEventColumns
-		moveCols := shipmentcol.ShipmentMoveColumns
-		stopCols := shipmentcol.StopColumns
-
-		rows := make([]struct {
-			telematics.TelematicsEvent `bun:",extend"`
-
-			ShipmentID pulid.ID `bun:"move_shipment_id"`
-		}, 0)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			ColumnExpr(telematicscol.TelematicsEventTable.All()).
-			ColumnExpr(moveCols.ShipmentID.As("move_shipment_id")).
-			Join(
-				"JOIN "+shipmentcol.ShipmentMoveTable.As(shipmentcol.ShipmentMoveTable.Alias)+
-					" ON "+
-					moveCols.ID.EqColumn(cols.ShipmentMoveID)+
-					" AND "+
-					moveCols.OrganizationID.EqColumn(cols.OrganizationID)+
-					" AND "+
-					moveCols.BusinessUnitID.EqColumn(cols.BusinessUnitID),
-			).
-			Join(
-				"LEFT JOIN "+shipmentcol.StopTable.As(shipmentcol.StopTable.Alias)+" ON "+
-					stopCols.ID.EqColumn(cols.StopID)+" AND "+
-					stopCols.OrganizationID.EqColumn(cols.OrganizationID)+" AND "+
-					stopCols.BusinessUnitID.EqColumn(cols.BusinessUnitID),
-			).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = telematicscol.TelematicsEventScopeTenant(sq, req.TenantInfo).
-					Where(cols.StopOutcome.In(), bun.List([]telematics.StopOutcome{
-						telematics.StopOutcomeUnmatched,
-						telematics.StopOutcomeRefused,
-					})).
-					Where(moveCols.Status.NotIn(), bun.List([]shipment.MoveStatus{
-						shipment.MoveStatusCompleted,
-						shipment.MoveStatusCanceled,
-					}))
-				if req.Since > 0 {
-					sq = sq.Where(cols.OccurredAt.Gt(), req.Since)
-				}
-				return sq.WhereGroup(" AND ", func(open *bun.SelectQuery) *bun.SelectQuery {
-					return open.
-						Where(cols.StopID.IsNull()).
-						WhereGroup(" OR ", func(pending *bun.SelectQuery) *bun.SelectQuery {
-							return pending.
-								Where(stopCols.Status.Ne(), shipment.StopStatusCanceled).
-								WhereGroup(" AND ", func(missing *bun.SelectQuery) *bun.SelectQuery {
-									return missing.
-										WhereGroup(" AND ", func(arrival *bun.SelectQuery) *bun.SelectQuery {
-											return arrival.
-												Where(cols.StopVisit.Eq(), shipment.VisitArrival).
-												Where(stopCols.ActualArrival.IsNull())
-										}).
-										WhereGroup(" OR ", func(departure *bun.SelectQuery) *bun.SelectQuery {
-											return departure.
-												Where(cols.StopVisit.Eq(), shipment.VisitDeparture).
-												Where(stopCols.ActualDeparture.IsNull())
-										})
-								})
-						})
-				})
-			}).
-			Order(cols.OccurredAt.OrderDesc())
-		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
-		}
-		if err := q.Scan(ctx); err != nil {
+		events, err := openStopReviewsQuery(req).All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list open telematics stop reviews: %w", err)
 		}
 
-		reviews := make([]*telematicsports.StopReview, 0, len(rows))
-		for i := range rows {
-			event := rows[i].TelematicsEvent
+		reviews := make([]*telematicsports.StopReview, 0, len(events))
+		for _, event := range events {
 			reviews = append(reviews, &telematicsports.StopReview{
-				Event:      &event,
-				ShipmentID: rows[i].ShipmentID,
+				Event:      event,
+				ShipmentID: event.MoveShipmentID,
 			})
 		}
+
 		return reviews, nil
 	})
 }
 
 func (r *repository) GetFeedState(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	provider string,
 	feedType telematics.FeedType,
 ) (*telematics.FeedState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*telematics.FeedState, error) {
-		entity := new(telematics.FeedState)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return telematicscol.FeedStateScopeTenant(sq, tenantInfo).
-					Where(telematicscol.FeedStateColumns.Provider.Eq(), provider).
-					Where(telematicscol.FeedStateColumns.FeedType.Eq(), feedType)
-			}).
-			Scan(ctx)
+		fs := telematicsdb.FeedStates
+		entity, err := fs.Where(fs.Provider.Eq(provider), fs.FeedType.Eq(feedType)).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "FeedState")
+			return nil, feedStateErrors.Map(err, provider)
 		}
+
 		return entity, nil
 	})
 }
@@ -643,50 +583,39 @@ func (r *repository) UpsertFeedState(
 	state *telematics.FeedState,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := telematicscol.FeedStateColumns
-		_, err := r.db.DBForContext(ctx).NewInsert().
-			Model(state).
-			On("CONFLICT (organization_id, business_unit_id, provider, feed_type) DO UPDATE").
-			Set(cols.Cursor.SetExcluded()).
-			Set(cols.LastPolledAt.SetExcluded()).
-			Set(cols.LastSuccessAt.SetExcluded()).
-			Set(cols.FailureCount.SetExcluded()).
-			Set(cols.LastError.SetExcluded()).
-			Exec(ctx)
+		fs := telematicsdb.FeedStates
+		_, err := fs.Upsert(ctx, r.db.Keel(ctx), []*telematics.FeedState{state},
+			keel.OnConflict(fs.OrganizationID, fs.BusinessUnitID, fs.Provider, fs.FeedType).Update(
+				fs.Cursor,
+				fs.LastPolledAt,
+				fs.LastSuccessAt,
+				fs.FailureCount,
+				fs.LastError,
+			))
 		if err != nil {
 			return fmt.Errorf("upsert feed state: %w", err)
 		}
+
 		return nil
 	})
 }
 
 func (r *repository) ListWorkerMappings(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]telematicsports.WorkerTelematicsMapping, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]telematicsports.WorkerTelematicsMapping, error) {
-			cols := workercol.WorkerColumns
-
-			rows := make([]telematicsports.WorkerTelematicsMapping, 0)
-			err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr(workercol.WorkerTable.Name+" AS "+workercol.WorkerTable.Alias).
-				ColumnExpr(cols.ID.As("worker_id")).
-				ColumnExpr(cols.ExternalID.As("external_id")).
-				ColumnExpr(cols.FirstName.As("first_name")).
-				ColumnExpr(cols.LastName.As("last_name")).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-						Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
-						Where(cols.ExternalID.Expr("NULLIF(BTRIM({}), '') IS NOT NULL"))
-				}).
-				Scan(ctx, &rows)
+			w := workerdb.Workers
+			rows, err := keel.Into[telematicsports.WorkerTelematicsMapping](ctx, r.db.Keel(ctx), w.
+				Pick(w.ID, w.ExternalID, w.FirstName, w.LastName).
+				Where(keel.Raw("NULLIF(BTRIM(?), '') IS NOT NULL", w.ExternalID)))
 			if err != nil {
 				return nil, fmt.Errorf("list worker telematics mappings: %w", err)
 			}
+
 			return rows, nil
 		},
 	)
@@ -694,30 +623,19 @@ func (r *repository) ListWorkerMappings(
 
 func (r *repository) ListTractorMappings(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]telematicsports.TractorTelematicsMapping, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]telematicsports.TractorTelematicsMapping, error) {
-			cols := tractorcol.TractorColumns
-
-			rows := make([]telematicsports.TractorTelematicsMapping, 0)
-			err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr(tractorcol.TractorTable.Name+" AS "+tractorcol.TractorTable.Alias).
-				ColumnExpr(cols.ID.As("tractor_id")).
-				ColumnExpr(buncolgen.Coalesce(cols.ExternalID, "''", "external_id")).
-				ColumnExpr(buncolgen.Coalesce(cols.Vin, "''", "vin")).
-				ColumnExpr(cols.Code.As("code")).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-						Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
-				}).
-				Scan(ctx, &rows)
+			t := tractordb.Tractors
+			rows, err := keel.Into[telematicsports.TractorTelematicsMapping](ctx, r.db.Keel(ctx), t.
+				Pick(t.ID, t.ExternalID.Coalesce(""), t.Vin.Coalesce(""), t.Code))
 			if err != nil {
 				return nil, fmt.Errorf("list tractor telematics mappings: %w", err)
 			}
+
 			return rows, nil
 		},
 	)
@@ -732,64 +650,42 @@ func (r *repository) AssignTractorExternalIDs(
 			return 0, nil
 		}
 
-		cols := tractorcol.TractorColumns
-		assigned := 0
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			for _, assignment := range req.Assignments {
-				result, execErr := tx.NewUpdate().
-					Model((*tractor.Tractor)(nil)).
-					Set(cols.ExternalID.Set(), assignment.ExternalID).
-					WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return uq.
-							Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-							Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-							Where(cols.ID.Eq(), assignment.TractorID)
-					}).
-					Exec(ctx)
-				if execErr != nil {
-					return execErr
-				}
-				rows, raErr := result.RowsAffected()
-				if raErr != nil {
-					return raErr
-				}
-				assigned += int(rows)
-			}
-			return nil
-		})
+		ids := make([]string, 0, len(req.Assignments))
+		externalIDs := make([]string, 0, len(req.Assignments))
+		for _, assignment := range req.Assignments {
+			ids = append(ids, assignment.TractorID.String())
+			externalIDs = append(externalIDs, assignment.ExternalID)
+		}
+
+		t := tractordb.Tractors
+		data := keel.Unnest("assignment", []string{"id", "external_id"}, ids, externalIDs)
+		n, err := t.With(data).
+			Join(data, data.Col("id").EqCol(t.ID)).
+			Where(keel.True()).
+			Update(ctx, r.db.Keel(ctx), t.ExternalID.ToExpr(data.Col("external_id")), t.Version.Add(0))
 		if err != nil {
 			return 0, fmt.Errorf("assign tractor external ids: %w", err)
 		}
-		return assigned, nil
+
+		return int(n), nil
 	})
 }
 
 func (r *repository) ListTrailerMappings(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]telematicsports.TrailerTelematicsMapping, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]telematicsports.TrailerTelematicsMapping, error) {
-			cols := trailercol.TrailerColumns
-
-			rows := make([]telematicsports.TrailerTelematicsMapping, 0)
-			err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr(trailercol.TrailerTable.Name+" AS "+trailercol.TrailerTable.Alias).
-				ColumnExpr(cols.ID.As("trailer_id")).
-				ColumnExpr(buncolgen.Coalesce(cols.ExternalID, "''", "external_id")).
-				ColumnExpr(buncolgen.Coalesce(cols.Vin, "''", "vin")).
-				ColumnExpr(cols.Code.As("code")).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-						Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
-				}).
-				Scan(ctx, &rows)
+			t := trailerdb.Trailers
+			rows, err := keel.Into[telematicsports.TrailerTelematicsMapping](ctx, r.db.Keel(ctx), t.
+				Pick(t.ID, t.ExternalID.Coalesce(""), t.Vin.Coalesce(""), t.Code))
 			if err != nil {
 				return nil, fmt.Errorf("list trailer telematics mappings: %w", err)
 			}
+
 			return rows, nil
 		},
 	)
@@ -804,35 +700,24 @@ func (r *repository) AssignTrailerExternalIDs(
 			return 0, nil
 		}
 
-		cols := trailercol.TrailerColumns
-		assigned := 0
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			for _, assignment := range req.Assignments {
-				result, execErr := tx.NewUpdate().
-					Model((*trailer.Trailer)(nil)).
-					Set(cols.ExternalID.Set(), assignment.ExternalID).
-					WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return uq.
-							Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-							Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-							Where(cols.ID.Eq(), assignment.TrailerID)
-					}).
-					Exec(ctx)
-				if execErr != nil {
-					return execErr
-				}
-				rows, raErr := result.RowsAffected()
-				if raErr != nil {
-					return raErr
-				}
-				assigned += int(rows)
-			}
-			return nil
-		})
+		ids := make([]string, 0, len(req.Assignments))
+		externalIDs := make([]string, 0, len(req.Assignments))
+		for _, assignment := range req.Assignments {
+			ids = append(ids, assignment.TrailerID.String())
+			externalIDs = append(externalIDs, assignment.ExternalID)
+		}
+
+		t := trailerdb.Trailers
+		data := keel.Unnest("assignment", []string{"id", "external_id"}, ids, externalIDs)
+		n, err := t.With(data).
+			Join(data, data.Col("id").EqCol(t.ID)).
+			Where(keel.True()).
+			Update(ctx, r.db.Keel(ctx), t.ExternalID.ToExpr(data.Col("external_id")), t.Version.Add(0))
 		if err != nil {
 			return 0, fmt.Errorf("assign trailer external ids: %w", err)
 		}
-		return assigned, nil
+
+		return int(n), nil
 	})
 }
 
@@ -845,37 +730,45 @@ func (r *repository) UpdateWorkerRulesets(
 			return 0, nil
 		}
 
-		cols := telematicscol.WorkerHOSStateColumns
-		updated := 0
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			for _, assignment := range req.Assignments {
-				result, execErr := tx.NewUpdate().
-					Model((*telematics.WorkerHOSState)(nil)).
-					Set(cols.RulesetCycle.Set(), assignment.Cycle).
-					Set(cols.RulesetShift.Set(), assignment.Shift).
-					Set(cols.RulesetRestart.Set(), assignment.Restart).
-					Set(cols.RulesetBreak.Set(), assignment.Break).
-					Set(cols.RulesetJurisdiction.Set(), assignment.Jurisdiction).
-					WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return telematicscol.WorkerHOSStateScopeTenantUpdate(uq, req.TenantInfo).
-							Where(cols.WorkerID.Eq(), assignment.WorkerID)
-					}).
-					Exec(ctx)
-				if execErr != nil {
-					return execErr
-				}
-				rows, raErr := result.RowsAffected()
-				if raErr != nil {
-					return raErr
-				}
-				updated += int(rows)
-			}
-			return nil
-		})
+		size := len(req.Assignments)
+		workerIDs := make([]string, 0, size)
+		cycles := make([]string, 0, size)
+		shifts := make([]string, 0, size)
+		restarts := make([]string, 0, size)
+		breaks := make([]string, 0, size)
+		jurisdictions := make([]string, 0, size)
+		for _, assignment := range req.Assignments {
+			workerIDs = append(workerIDs, assignment.WorkerID.String())
+			cycles = append(cycles, assignment.Cycle)
+			shifts = append(shifts, assignment.Shift)
+			restarts = append(restarts, assignment.Restart)
+			breaks = append(breaks, assignment.Break)
+			jurisdictions = append(jurisdictions, assignment.Jurisdiction)
+		}
+
+		s := telematicsdb.WorkerHOSStates
+		data := keel.Unnest(
+			"ruleset",
+			[]string{"worker_id", "cycle", "shift", "restart", "break", "jurisdiction"},
+			workerIDs, cycles, shifts, restarts, breaks, jurisdictions,
+		)
+		n, err := s.With(data).
+			Join(data, data.Col("worker_id").EqCol(s.WorkerID)).
+			Where(keel.True()).
+			Update(
+				ctx,
+				r.db.Keel(ctx),
+				s.RulesetCycle.ToExpr(data.Col("cycle")),
+				s.RulesetShift.ToExpr(data.Col("shift")),
+				s.RulesetRestart.ToExpr(data.Col("restart")),
+				s.RulesetBreak.ToExpr(data.Col("break")),
+				s.RulesetJurisdiction.ToExpr(data.Col("jurisdiction")),
+			)
 		if err != nil {
 			return 0, fmt.Errorf("update worker rulesets: %w", err)
 		}
-		return updated, nil
+
+		return int(n), nil
 	})
 }
 
@@ -892,42 +785,24 @@ func (r *repository) GetWebhookConfigByToken(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*telematicsports.TelematicsWebhookConfig, error) {
-			var row struct {
-				OrganizationID string `bun:"organization_id"`
-				BusinessUnitID string `bun:"business_unit_id"`
-				WebhookSecret  string `bun:"webhook_secret"`
-			}
-
-			cols := integrationcol.IntegrationColumns
-			err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr(integrationcol.IntegrationTable.Name+" AS "+integrationcol.IntegrationTable.Alias).
-				ColumnExpr(cols.OrganizationID.String()).
-				ColumnExpr(cols.BusinessUnitID.String()).
-				ColumnExpr(cols.Configuration.Expr("{} ->> 'webhookSecret'")+" AS webhook_secret").
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(cols.Type.Eq(), typ).
-						Where(cols.Configuration.Expr("{} ->> 'webhookToken'")+" = ?", token).
-						Where(cols.Enabled.IsTrue())
-				}).
-				Scan(ctx, &row)
+			in := integrationdb.Integrations
+			row, err := keel.IntoOne[webhookRow](ctx, r.db.Keel(ctx), in.
+				AllTenants().
+				Pick(in.OrganizationID, in.BusinessUnitID, in.Configuration.Text("webhookSecret")).
+				Where(
+					in.Type.Eq(typ),
+					in.Configuration.Text("webhookToken").Eq(token),
+					in.Enabled.IsTrue(),
+				).
+				Limit(1))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "TelematicsWebhook")
-			}
-
-			orgID, err := pulid.Parse(row.OrganizationID)
-			if err != nil {
-				return nil, fmt.Errorf("parse webhook organization id: %w", err)
-			}
-			buID, err := pulid.Parse(row.BusinessUnitID)
-			if err != nil {
-				return nil, fmt.Errorf("parse webhook business unit id: %w", err)
+				return nil, webhookErrors.Map(err, "")
 			}
 
 			return &telematicsports.TelematicsWebhookConfig{
 				TenantInfo: pagination.TenantInfo{
-					OrgID: orgID,
-					BuID:  buID,
+					OrgID: row.OrganizationID,
+					BuID:  row.BusinessUnitID,
 				},
 				WebhookSecret: row.WebhookSecret,
 			}, nil
@@ -943,41 +818,28 @@ func (r *repository) CleanupExpired(
 ) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "clean up expired telematics data across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		total := int64(0)
+		db := r.db.Keel(ctx)
 
-		eventsResult, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*telematics.TelematicsEvent)(nil)).
-			Where(telematicscol.TelematicsEventColumns.OccurredAt.Lt(), eventsOlderThan).
-			Exec(ctx)
+		e := telematicsdb.TelematicsEvents
+		events, err := e.AllTenants().Where(e.OccurredAt.Lt(eventsOlderThan)).Delete(ctx, db)
 		if err != nil {
 			return 0, fmt.Errorf("cleanup telematics events: %w", err)
 		}
-		if rows, raErr := eventsResult.RowsAffected(); raErr == nil {
-			total += rows
-		}
 
-		violationsResult, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*telematics.WorkerHOSViolation)(nil)).
-			Where(telematicscol.WorkerHOSViolationColumns.ViolationStartAt.Lt(), violationsOlderThan).
-			Exec(ctx)
+		v := telematicsdb.WorkerHOSViolations
+		violations, err := v.AllTenants().
+			Where(v.ViolationStartAt.Lt(violationsOlderThan)).
+			Delete(ctx, db)
 		if err != nil {
 			return 0, fmt.Errorf("cleanup hos violations: %w", err)
 		}
-		if rows, raErr := violationsResult.RowsAffected(); raErr == nil {
-			total += rows
-		}
 
-		logsResult, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*telematics.WorkerHOSLog)(nil)).
-			Where(telematicscol.WorkerHOSLogColumns.LogStartAt.Lt(), hosLogsOlderThan).
-			Exec(ctx)
+		hl := telematicsdb.WorkerHOSLogs
+		logs, err := hl.AllTenants().Where(hl.LogStartAt.Lt(hosLogsOlderThan)).Delete(ctx, db)
 		if err != nil {
 			return 0, fmt.Errorf("cleanup hos logs: %w", err)
 		}
-		if rows, raErr := logsResult.RowsAffected(); raErr == nil {
-			total += rows
-		}
 
-		return total, nil
+		return events + violations + logs, nil
 	})
 }

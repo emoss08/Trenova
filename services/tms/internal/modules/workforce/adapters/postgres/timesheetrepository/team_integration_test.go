@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/internal/testutil/workerteamtest"
@@ -23,6 +24,7 @@ func TestListsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	team := workerteamtest.Seed(t, ctx, db, data)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	ctx = data.Ctx(ctx)
 	tenant := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,
 		BuID:   data.BusinessUnit.ID,
@@ -30,7 +32,7 @@ func TestListsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 	}
 
 	for _, wrk := range []*worker.Worker{team.Direct, team.ViaFleet, team.Outsider} {
-		_, err := db.NewInsert().Model(&worker.Timesheet{
+		err := workerdb.Timesheets.Create(ctx, db, &worker.Timesheet{
 			ID:             pulid.MustNew("tsh_"),
 			OrganizationID: data.Organization.ID,
 			BusinessUnitID: data.BusinessUnit.ID,
@@ -38,15 +40,15 @@ func TestListsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 			Status:         worker.TimesheetOpen,
 			PeriodStart:    1_700_000_000,
 			PeriodEnd:      1_700_604_800,
-		}).Exec(ctx)
+		})
 		require.NoError(t, err)
-		_, err = db.NewInsert().Model(&worker.TimeClockEntry{
+		err = workerdb.TimeClockEntries.Create(ctx, db, &worker.TimeClockEntry{
 			ID:             pulid.MustNew("tce_"),
 			OrganizationID: data.Organization.ID,
 			BusinessUnitID: data.BusinessUnit.ID,
 			WorkerID:       wrk.ID,
 			ClockedInAt:    1_700_000_100,
-		}).Exec(ctx)
+		})
 		require.NoError(t, err)
 	}
 
@@ -76,9 +78,17 @@ func TestListsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 		return out
 	}
 
-	assert.ElementsMatch(t, []pulid.ID{team.Direct.ID, team.ViaFleet.ID}, sheetWorkers(team.ManagerIDs()),
-		"the team is the workers the manager manages directly or through the fleet code they run")
-	assert.ElementsMatch(t, []pulid.ID{team.Direct.ID, team.ViaFleet.ID}, entryWorkers(team.ManagerIDs()))
+	assert.ElementsMatch(
+		t,
+		[]pulid.ID{team.Direct.ID, team.ViaFleet.ID},
+		sheetWorkers(team.ManagerIDs()),
+		"the team is the workers the manager manages directly or through the fleet code they run",
+	)
+	assert.ElementsMatch(
+		t,
+		[]pulid.ID{team.Direct.ID, team.ViaFleet.ID},
+		entryWorkers(team.ManagerIDs()),
+	)
 	assert.Len(t, sheetWorkers(nil), 3, "no managers is the organization's list")
 	assert.Len(t, entryWorkers(nil), 3)
 }

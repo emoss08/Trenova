@@ -252,6 +252,10 @@ func (c *WorkerCredential) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
-func (c *WorkerCredential) BeforeCreate(ctx context.Context) error {
-	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (c *WorkerCredential) BeforeCreate(_ context.Context) error {
+	if c.Status == "" {
+		c.Status = CredentialStatusActive
+	}
+
+	return nil
 }

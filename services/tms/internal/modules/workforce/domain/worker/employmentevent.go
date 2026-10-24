@@ -226,8 +226,15 @@ func (e *WorkerEmploymentEvent) BeforeAppendModel(_ context.Context, query bun.Q
 	return nil
 }
 
-func (e *WorkerEmploymentEvent) BeforeCreate(ctx context.Context) error {
-	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (e *WorkerEmploymentEvent) BeforeSave(_ context.Context) error {
+	if e.FromValues == nil {
+		e.FromValues = map[string]string{}
+	}
+	if e.ToValues == nil {
+		e.ToValues = map[string]string{}
+	}
+
+	return nil
 }
 
 // EmploymentState is the slice of a worker the events act on, kept small so

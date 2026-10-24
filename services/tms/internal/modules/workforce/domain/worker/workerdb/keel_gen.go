@@ -53,23 +53,24 @@ var approvalDelegationsTable = schema.Table{
 		{Name: "Delegator", Alias: "d", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Delegator`, JSON: `delegator`},
 		{Name: "Delegate", Alias: "d", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Delegate`, JSON: `delegate`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
-	Returning:  nil,
-	Version:    12,
-	AutoID:     0,
-	AutoCreate: 13,
-	AutoUpdate: 14,
-	IDPrefix:   "apdl_",
-	New:        newApprovalDelegation,
-	NewN:       newNApprovalDelegation,
-	Size:       unsafe.Sizeof(worker.ApprovalDelegation{}),
-	Ptr:        ptrApprovalDelegation,
-	Value:      valueApprovalDelegation,
-	Attach:     attachApprovalDelegation,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:    nil,
+	Version:      12,
+	AutoID:       0,
+	AutoCreate:   13,
+	AutoUpdate:   14,
+	IDPrefix:     "apdl_",
+	New:          newApprovalDelegation,
+	NewN:         newNApprovalDelegation,
+	Size:         unsafe.Sizeof(worker.ApprovalDelegation{}),
+	Ptr:          ptrApprovalDelegation,
+	Value:        valueApprovalDelegation,
+	Attach:       attachApprovalDelegation,
+	BeforeCreate: beforeCreateApprovalDelegation,
 }
 
 var approvalDelegationsRef = keel.Ref{Table: &approvalDelegationsTable}
@@ -264,6 +265,10 @@ func attachApprovalDelegation(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 	}
 }
 
+func beforeCreateApprovalDelegation(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.ApprovalDelegation)(p).BeforeCreate(ctx)
+}
+
 // dOTRandomDrawsTable is the schema of worker.DOTRandomDraw.
 var dOTRandomDrawsTable = schema.Table{
 	Name:   "dot_random_draws",
@@ -301,23 +306,24 @@ var dOTRandomDrawsTable = schema.Table{
 		{Name: "DrawnBy", Alias: "db", Kind: schema.BelongsTo, Local: []int32{17}, Remote: []int32{0}, Label: `Drawn By`, JSON: `drawnBy`},
 		{Name: "Entries", Alias: "e", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Entries`, JSON: `entries`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "drdraw_",
-	New:        newDOTRandomDraw,
-	NewN:       newNDOTRandomDraw,
-	Size:       unsafe.Sizeof(worker.DOTRandomDraw{}),
-	Ptr:        ptrDOTRandomDraw,
-	Value:      valueDOTRandomDraw,
-	Attach:     attachDOTRandomDraw,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "drdraw_",
+	New:          newDOTRandomDraw,
+	NewN:         newNDOTRandomDraw,
+	Size:         unsafe.Sizeof(worker.DOTRandomDraw{}),
+	Ptr:          ptrDOTRandomDraw,
+	Value:        valueDOTRandomDraw,
+	Attach:       attachDOTRandomDraw,
+	BeforeCreate: beforeCreateDOTRandomDraw,
 }
 
 var dOTRandomDrawsRef = keel.Ref{Table: &dOTRandomDrawsTable}
@@ -562,6 +568,10 @@ func attachDOTRandomDraw(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateDOTRandomDraw(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.DOTRandomDraw)(p).BeforeCreate(ctx)
+}
+
 // dOTRandomDrawEntriesTable is the schema of worker.DOTRandomDrawEntry.
 var dOTRandomDrawEntriesTable = schema.Table{
 	Name:   "dot_random_draw_entries",
@@ -591,23 +601,24 @@ var dOTRandomDrawEntriesTable = schema.Table{
 		{Name: "Draw", Alias: "d", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Draw`, JSON: `draw`},
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Worker`, JSON: `worker`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
-	Returning:  nil,
-	Version:    12,
-	AutoID:     0,
-	AutoCreate: 13,
-	AutoUpdate: 14,
-	IDPrefix:   "drde_",
-	New:        newDOTRandomDrawEntry,
-	NewN:       newNDOTRandomDrawEntry,
-	Size:       unsafe.Sizeof(worker.DOTRandomDrawEntry{}),
-	Ptr:        ptrDOTRandomDrawEntry,
-	Value:      valueDOTRandomDrawEntry,
-	Attach:     attachDOTRandomDrawEntry,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:    nil,
+	Version:      12,
+	AutoID:       0,
+	AutoCreate:   13,
+	AutoUpdate:   14,
+	IDPrefix:     "drde_",
+	New:          newDOTRandomDrawEntry,
+	NewN:         newNDOTRandomDrawEntry,
+	Size:         unsafe.Sizeof(worker.DOTRandomDrawEntry{}),
+	Ptr:          ptrDOTRandomDrawEntry,
+	Value:        valueDOTRandomDrawEntry,
+	Attach:       attachDOTRandomDrawEntry,
+	BeforeCreate: beforeCreateDOTRandomDrawEntry,
 }
 
 var dOTRandomDrawEntriesRef = keel.Ref{Table: &dOTRandomDrawEntriesTable}
@@ -797,6 +808,10 @@ func attachDOTRandomDrawEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 	}
 }
 
+func beforeCreateDOTRandomDrawEntry(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.DOTRandomDrawEntry)(p).BeforeCreate(ctx)
+}
+
 // dOTRandomPoolsTable is the schema of worker.DOTRandomPool.
 var dOTRandomPoolsTable = schema.Table{
 	Name:   "dot_random_pools",
@@ -841,6 +856,7 @@ var dOTRandomPoolsTable = schema.Table{
 	Ptr:          ptrDOTRandomPool,
 	Value:        valueDOTRandomPool,
 	BeforeCreate: beforeCreateDOTRandomPool,
+	BeforeUpdate: beforeUpdateDOTRandomPool,
 }
 
 var dOTRandomPoolsRef = keel.Ref{Table: &dOTRandomPoolsTable}
@@ -1024,6 +1040,10 @@ func beforeCreateDOTRandomPool(ctx context.Context, p unsafe.Pointer) error {
 	return (*worker.DOTRandomPool)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateDOTRandomPool(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.DOTRandomPool)(p).BeforeUpdate(ctx)
+}
+
 // jobPositionsTable is the schema of worker.JobPosition.
 var jobPositionsTable = schema.Table{
 	Name:   "job_positions",
@@ -1053,23 +1073,24 @@ var jobPositionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "ReportsTo", Alias: "rt", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Reports To`, JSON: `reportsTo`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "jpos_",
-	New:        newJobPosition,
-	NewN:       newNJobPosition,
-	Size:       unsafe.Sizeof(worker.JobPosition{}),
-	Ptr:        ptrJobPosition,
-	Value:      valueJobPosition,
-	Attach:     attachJobPosition,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "jpos_",
+	New:          newJobPosition,
+	NewN:         newNJobPosition,
+	Size:         unsafe.Sizeof(worker.JobPosition{}),
+	Ptr:          ptrJobPosition,
+	Value:        valueJobPosition,
+	Attach:       attachJobPosition,
+	BeforeCreate: beforeCreateJobPosition,
 }
 
 var jobPositionsRef = keel.Ref{Table: &jobPositionsTable}
@@ -1241,6 +1262,10 @@ func attachJobPosition(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateJobPosition(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.JobPosition)(p).BeforeCreate(ctx)
+}
+
 // leaveControlsTable is the schema of worker.LeaveControl.
 var leaveControlsTable = schema.Table{
 	Name:   "leave_controls",
@@ -1265,22 +1290,23 @@ var leaveControlsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:  nil,
-	Version:    10,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "lctl_",
-	New:        newLeaveControl,
-	NewN:       newNLeaveControl,
-	Size:       unsafe.Sizeof(worker.LeaveControl{}),
-	Ptr:        ptrLeaveControl,
-	Value:      valueLeaveControl,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:    nil,
+	Version:      10,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   12,
+	IDPrefix:     "lctl_",
+	New:          newLeaveControl,
+	NewN:         newNLeaveControl,
+	Size:         unsafe.Sizeof(worker.LeaveControl{}),
+	Ptr:          ptrLeaveControl,
+	Value:        valueLeaveControl,
+	BeforeCreate: beforeCreateLeaveControl,
 }
 
 var leaveControlsRef = keel.Ref{Table: &leaveControlsTable}
@@ -1426,6 +1452,10 @@ func valueLeaveControl(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateLeaveControl(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.LeaveControl)(p).BeforeCreate(ctx)
+}
+
 // oSHAAnnualSummariesTable is the schema of worker.OSHAAnnualSummary.
 var oSHAAnnualSummariesTable = schema.Table{
 	Name:   "osha_annual_summaries",
@@ -1461,23 +1491,24 @@ var oSHAAnnualSummariesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "CertifiedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Certified By`, JSON: `certifiedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "osum_",
-	New:        newOSHAAnnualSummary,
-	NewN:       newNOSHAAnnualSummary,
-	Size:       unsafe.Sizeof(worker.OSHAAnnualSummary{}),
-	Ptr:        ptrOSHAAnnualSummary,
-	Value:      valueOSHAAnnualSummary,
-	Attach:     attachOSHAAnnualSummary,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "osum_",
+	New:          newOSHAAnnualSummary,
+	NewN:         newNOSHAAnnualSummary,
+	Size:         unsafe.Sizeof(worker.OSHAAnnualSummary{}),
+	Ptr:          ptrOSHAAnnualSummary,
+	Value:        valueOSHAAnnualSummary,
+	Attach:       attachOSHAAnnualSummary,
+	BeforeCreate: beforeCreateOSHAAnnualSummary,
 }
 
 var oSHAAnnualSummariesRef = keel.Ref{Table: &oSHAAnnualSummariesTable}
@@ -1725,6 +1756,10 @@ func attachOSHAAnnualSummary(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	}
 }
 
+func beforeCreateOSHAAnnualSummary(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.OSHAAnnualSummary)(p).BeforeCreate(ctx)
+}
+
 // orgHolidaysTable is the schema of worker.OrgHoliday.
 var orgHolidaysTable = schema.Table{
 	Name:   "org_holidays",
@@ -1747,23 +1782,22 @@ var orgHolidaysTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:       []int32{3, 4, 5, 6, 7, 10},
-	Returning:    nil,
-	Version:      8,
-	AutoID:       0,
-	AutoCreate:   9,
-	AutoUpdate:   10,
-	IDPrefix:     "ohol_",
-	New:          newOrgHoliday,
-	NewN:         newNOrgHoliday,
-	Size:         unsafe.Sizeof(worker.OrgHoliday{}),
-	Ptr:          ptrOrgHoliday,
-	Value:        valueOrgHoliday,
-	BeforeCreate: beforeCreateOrgHoliday,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:     []int32{3, 4, 5, 6, 7, 10},
+	Returning:  nil,
+	Version:    8,
+	AutoID:     0,
+	AutoCreate: 9,
+	AutoUpdate: 10,
+	IDPrefix:   "ohol_",
+	New:        newOrgHoliday,
+	NewN:       newNOrgHoliday,
+	Size:       unsafe.Sizeof(worker.OrgHoliday{}),
+	Ptr:        ptrOrgHoliday,
+	Value:      valueOrgHoliday,
 }
 
 var orgHolidaysRef = keel.Ref{Table: &orgHolidaysTable}
@@ -1898,10 +1932,6 @@ func valueOrgHoliday(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreateOrgHoliday(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.OrgHoliday)(p).BeforeCreate(ctx)
-}
-
 // pTOPoliciesTable is the schema of worker.PTOPolicy.
 var pTOPoliciesTable = schema.Table{
 	Name:   "pto_policies",
@@ -1934,24 +1964,23 @@ var pTOPoliciesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Rules", Alias: "r", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Rules`, JSON: `rules`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:    nil,
-	Version:      15,
-	AutoID:       0,
-	AutoCreate:   16,
-	AutoUpdate:   17,
-	IDPrefix:     "ptop_",
-	New:          newPTOPolicy,
-	NewN:         newNPTOPolicy,
-	Size:         unsafe.Sizeof(worker.PTOPolicy{}),
-	Ptr:          ptrPTOPolicy,
-	Value:        valuePTOPolicy,
-	Attach:       attachPTOPolicy,
-	BeforeCreate: beforeCreatePTOPolicy,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:  nil,
+	Version:    15,
+	AutoID:     0,
+	AutoCreate: 16,
+	AutoUpdate: 17,
+	IDPrefix:   "ptop_",
+	New:        newPTOPolicy,
+	NewN:       newNPTOPolicy,
+	Size:       unsafe.Sizeof(worker.PTOPolicy{}),
+	Ptr:        ptrPTOPolicy,
+	Value:      valuePTOPolicy,
+	Attach:     attachPTOPolicy,
 }
 
 var pTOPoliciesRef = keel.Ref{Table: &pTOPoliciesTable}
@@ -2155,10 +2184,6 @@ func attachPTOPolicy(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreatePTOPolicy(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PTOPolicy)(p).BeforeCreate(ctx)
-}
-
 // pTOPolicyRulesTable is the schema of worker.PTOPolicyRule.
 var pTOPolicyRulesTable = schema.Table{
 	Name:   "pto_policy_rules",
@@ -2201,6 +2226,7 @@ var pTOPolicyRulesTable = schema.Table{
 	Ptr:          ptrPTOPolicyRule,
 	Value:        valuePTOPolicyRule,
 	BeforeCreate: beforeCreatePTOPolicyRule,
+	BeforeUpdate: beforeUpdatePTOPolicyRule,
 }
 
 var pTOPolicyRulesRef = keel.Ref{Table: &pTOPolicyRulesTable}
@@ -2367,6 +2393,10 @@ func beforeCreatePTOPolicyRule(ctx context.Context, p unsafe.Pointer) error {
 	return (*worker.PTOPolicyRule)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdatePTOPolicyRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.PTOPolicyRule)(p).BeforeUpdate(ctx)
+}
+
 // payrollExportsTable is the schema of worker.PayrollExport.
 var payrollExportsTable = schema.Table{
 	Name:   "payroll_exports",
@@ -2396,22 +2426,23 @@ var payrollExportsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "pxb_",
-	New:        newPayrollExport,
-	NewN:       newNPayrollExport,
-	Size:       unsafe.Sizeof(worker.PayrollExport{}),
-	Ptr:        ptrPayrollExport,
-	Value:      valuePayrollExport,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "pxb_",
+	New:          newPayrollExport,
+	NewN:         newNPayrollExport,
+	Size:         unsafe.Sizeof(worker.PayrollExport{}),
+	Ptr:          ptrPayrollExport,
+	Value:        valuePayrollExport,
+	BeforeCreate: beforeCreatePayrollExport,
 }
 
 var payrollExportsRef = keel.Ref{Table: &payrollExportsTable}
@@ -2607,6 +2638,10 @@ func valuePayrollExport(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreatePayrollExport(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.PayrollExport)(p).BeforeCreate(ctx)
+}
+
 // performanceReviewsTable is the schema of worker.PerformanceReview.
 var performanceReviewsTable = schema.Table{
 	Name:   "performance_reviews",
@@ -2665,6 +2700,7 @@ var performanceReviewsTable = schema.Table{
 	Value:        valuePerformanceReview,
 	Attach:       attachPerformanceReview,
 	BeforeCreate: beforeCreatePerformanceReview,
+	BeforeUpdate: beforeUpdatePerformanceReview,
 }
 
 var performanceReviewsRef = keel.Ref{Table: &performanceReviewsTable}
@@ -2959,6 +2995,10 @@ func beforeCreatePerformanceReview(ctx context.Context, p unsafe.Pointer) error 
 	return (*worker.PerformanceReview)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdatePerformanceReview(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.PerformanceReview)(p).BeforeUpdate(ctx)
+}
+
 // performanceReviewTemplatesTable is the schema of worker.PerformanceReviewTemplate.
 var performanceReviewTemplatesTable = schema.Table{
 	Name:   "performance_review_templates",
@@ -2983,23 +3023,23 @@ var performanceReviewTemplatesTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:    nil,
-	Version:      10,
-	AutoID:       0,
-	AutoCreate:   11,
-	AutoUpdate:   12,
-	IDPrefix:     "prt_",
-	New:          newPerformanceReviewTemplate,
-	NewN:         newNPerformanceReviewTemplate,
-	Size:         unsafe.Sizeof(worker.PerformanceReviewTemplate{}),
-	Ptr:          ptrPerformanceReviewTemplate,
-	Value:        valuePerformanceReviewTemplate,
-	BeforeCreate: beforeCreatePerformanceReviewTemplate,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:  nil,
+	Version:    10,
+	AutoID:     0,
+	AutoCreate: 11,
+	AutoUpdate: 12,
+	IDPrefix:   "prt_",
+	New:        newPerformanceReviewTemplate,
+	NewN:       newNPerformanceReviewTemplate,
+	Size:       unsafe.Sizeof(worker.PerformanceReviewTemplate{}),
+	Ptr:        ptrPerformanceReviewTemplate,
+	Value:      valuePerformanceReviewTemplate,
+	BeforeSave: beforeSavePerformanceReviewTemplate,
 }
 
 var performanceReviewTemplatesRef = keel.Ref{Table: &performanceReviewTemplatesTable}
@@ -3163,8 +3203,8 @@ func valuePerformanceReviewTemplate(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreatePerformanceReviewTemplate(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.PerformanceReviewTemplate)(p).BeforeCreate(ctx)
+func beforeSavePerformanceReviewTemplate(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.PerformanceReviewTemplate)(p).BeforeSave(ctx)
 }
 
 // portalInvitationsTable is the schema of worker.PortalInvitation.
@@ -3419,23 +3459,24 @@ var shiftSwapRequestsTable = schema.Table{
 		{Name: "RequestingWorker", Alias: "rw", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Requesting Worker`, JSON: `requestingWorker`},
 		{Name: "CounterpartyWorker", Alias: "cw", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Counterparty Worker`, JSON: `counterpartyWorker`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
-	Returning:  nil,
-	Version:    13,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
-	IDPrefix:   "sswp_",
-	New:        newShiftSwapRequest,
-	NewN:       newNShiftSwapRequest,
-	Size:       unsafe.Sizeof(worker.ShiftSwapRequest{}),
-	Ptr:        ptrShiftSwapRequest,
-	Value:      valueShiftSwapRequest,
-	Attach:     attachShiftSwapRequest,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
+	Returning:    nil,
+	Version:      13,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   15,
+	IDPrefix:     "sswp_",
+	New:          newShiftSwapRequest,
+	NewN:         newNShiftSwapRequest,
+	Size:         unsafe.Sizeof(worker.ShiftSwapRequest{}),
+	Ptr:          ptrShiftSwapRequest,
+	Value:        valueShiftSwapRequest,
+	Attach:       attachShiftSwapRequest,
+	BeforeCreate: beforeCreateShiftSwapRequest,
 }
 
 var shiftSwapRequestsRef = keel.Ref{Table: &shiftSwapRequestsTable}
@@ -3643,6 +3684,10 @@ func attachShiftSwapRequest(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateShiftSwapRequest(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.ShiftSwapRequest)(p).BeforeCreate(ctx)
+}
+
 // shiftTemplatesTable is the schema of worker.ShiftTemplate.
 var shiftTemplatesTable = schema.Table{
 	Name:   "shift_templates",
@@ -3669,22 +3714,23 @@ var shiftTemplatesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
-	Returning:  nil,
-	Version:    12,
-	AutoID:     0,
-	AutoCreate: 13,
-	AutoUpdate: 14,
-	IDPrefix:   "shft_",
-	New:        newShiftTemplate,
-	NewN:       newNShiftTemplate,
-	Size:       unsafe.Sizeof(worker.ShiftTemplate{}),
-	Ptr:        ptrShiftTemplate,
-	Value:      valueShiftTemplate,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:    nil,
+	Version:      12,
+	AutoID:       0,
+	AutoCreate:   13,
+	AutoUpdate:   14,
+	IDPrefix:     "shft_",
+	New:          newShiftTemplate,
+	NewN:         newNShiftTemplate,
+	Size:         unsafe.Sizeof(worker.ShiftTemplate{}),
+	Ptr:          ptrShiftTemplate,
+	Value:        valueShiftTemplate,
+	BeforeCreate: beforeCreateShiftTemplate,
 }
 
 var shiftTemplatesRef = keel.Ref{Table: &shiftTemplatesTable}
@@ -3850,6 +3896,10 @@ func valueShiftTemplate(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateShiftTemplate(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.ShiftTemplate)(p).BeforeCreate(ctx)
+}
+
 // timeClockEntriesTable is the schema of worker.TimeClockEntry.
 var timeClockEntriesTable = schema.Table{
 	Name:   "time_clock_entries",
@@ -3880,23 +3930,24 @@ var timeClockEntriesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`, JSON: `worker`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
-	Returning:  nil,
-	Version:    13,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
-	IDPrefix:   "tce_",
-	New:        newTimeClockEntry,
-	NewN:       newNTimeClockEntry,
-	Size:       unsafe.Sizeof(worker.TimeClockEntry{}),
-	Ptr:        ptrTimeClockEntry,
-	Value:      valueTimeClockEntry,
-	Attach:     attachTimeClockEntry,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
+	Returning:    nil,
+	Version:      13,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   15,
+	IDPrefix:     "tce_",
+	New:          newTimeClockEntry,
+	NewN:         newNTimeClockEntry,
+	Size:         unsafe.Sizeof(worker.TimeClockEntry{}),
+	Ptr:          ptrTimeClockEntry,
+	Value:        valueTimeClockEntry,
+	Attach:       attachTimeClockEntry,
+	BeforeCreate: beforeCreateTimeClockEntry,
 }
 
 var timeClockEntriesRef = keel.Ref{Table: &timeClockEntriesTable}
@@ -4092,6 +4143,10 @@ func attachTimeClockEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateTimeClockEntry(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.TimeClockEntry)(p).BeforeCreate(ctx)
+}
+
 // timesheetsTable is the schema of worker.Timesheet.
 var timesheetsTable = schema.Table{
 	Name:   "timesheets",
@@ -4127,23 +4182,24 @@ var timesheetsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`, JSON: `worker`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "tsh_",
-	New:        newTimesheet,
-	NewN:       newNTimesheet,
-	Size:       unsafe.Sizeof(worker.Timesheet{}),
-	Ptr:        ptrTimesheet,
-	Value:      valueTimesheet,
-	Attach:     attachTimesheet,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "tsh_",
+	New:          newTimesheet,
+	NewN:         newNTimesheet,
+	Size:         unsafe.Sizeof(worker.Timesheet{}),
+	Ptr:          ptrTimesheet,
+	Value:        valueTimesheet,
+	Attach:       attachTimesheet,
+	BeforeCreate: beforeCreateTimesheet,
 }
 
 var timesheetsRef = keel.Ref{Table: &timesheetsTable}
@@ -4374,6 +4430,10 @@ func attachTimesheet(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateTimesheet(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.Timesheet)(p).BeforeCreate(ctx)
+}
+
 // trainingCoursesTable is the schema of worker.TrainingCourse.
 var trainingCoursesTable = schema.Table{
 	Name:   "training_courses",
@@ -4407,23 +4467,23 @@ var trainingCoursesTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:    nil,
-	Version:      19,
-	AutoID:       0,
-	AutoCreate:   20,
-	AutoUpdate:   21,
-	IDPrefix:     "trnc_",
-	New:          newTrainingCourse,
-	NewN:         newNTrainingCourse,
-	Size:         unsafe.Sizeof(worker.TrainingCourse{}),
-	Ptr:          ptrTrainingCourse,
-	Value:        valueTrainingCourse,
-	BeforeCreate: beforeCreateTrainingCourse,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:  nil,
+	Version:    19,
+	AutoID:     0,
+	AutoCreate: 20,
+	AutoUpdate: 21,
+	IDPrefix:   "trnc_",
+	New:        newTrainingCourse,
+	NewN:       newNTrainingCourse,
+	Size:       unsafe.Sizeof(worker.TrainingCourse{}),
+	Ptr:        ptrTrainingCourse,
+	Value:      valueTrainingCourse,
+	BeforeSave: beforeSaveTrainingCourse,
 }
 
 var trainingCoursesRef = keel.Ref{Table: &trainingCoursesTable}
@@ -4651,8 +4711,8 @@ func valueTrainingCourse(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreateTrainingCourse(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.TrainingCourse)(p).BeforeCreate(ctx)
+func beforeSaveTrainingCourse(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.TrainingCourse)(p).BeforeSave(ctx)
 }
 
 // workersTable is the schema of worker.Worker.
@@ -4702,8 +4762,8 @@ var workersTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
-		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`, JSON: `businessUnit`},
-		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`, JSON: `organization`},
+		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`, JSON: `businessUnit`, NoReport: true},
+		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`, JSON: `organization`, NoReport: true},
 		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `State`, JSON: `state`, NoReport: true},
 		{Name: "FleetCode", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Fleet Code`, JSON: `fleetCode`},
 		{Name: "Manager", Alias: "m", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Manager`, JSON: `manager`, NoReport: true},
@@ -4712,24 +4772,24 @@ var workersTable = schema.Table{
 		{Name: "Profile", Alias: "p", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{1}, Label: `Profile`, JSON: `profile`},
 		{Name: "PTO", Alias: "p", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{1}, Label: `Time Off`, JSON: `pto`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 33},
-	Returning:    []int32{15},
-	Version:      31,
-	AutoID:       0,
-	AutoCreate:   32,
-	AutoUpdate:   33,
-	IDPrefix:     "wrk_",
-	New:          newWorker,
-	NewN:         newNWorker,
-	Size:         unsafe.Sizeof(worker.Worker{}),
-	Ptr:          ptrWorker,
-	Value:        valueWorker,
-	Attach:       attachWorker,
-	BeforeCreate: beforeCreateWorker,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 33},
+	Returning:  []int32{15},
+	Version:    31,
+	AutoID:     0,
+	AutoCreate: 32,
+	AutoUpdate: 33,
+	IDPrefix:   "wrk_",
+	New:        newWorker,
+	NewN:       newNWorker,
+	Size:       unsafe.Sizeof(worker.Worker{}),
+	Ptr:        ptrWorker,
+	Value:      valueWorker,
+	Attach:     attachWorker,
+	AfterLoad:  afterLoadWorker,
 }
 
 var workersRef = keel.Ref{Table: &workersTable}
@@ -5124,8 +5184,8 @@ func attachWorker(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreateWorker(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.Worker)(p).BeforeCreate(ctx)
+func afterLoadWorker(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.Worker)(p).AfterLoad(ctx)
 }
 
 // workerAvailabilityPreferencesTable is the schema of worker.WorkerAvailabilityPreference.
@@ -5149,22 +5209,23 @@ var workerAvailabilityPreferencesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Update:     []int32{3, 4, 5, 6, 9},
-	Returning:  nil,
-	Version:    7,
-	AutoID:     0,
-	AutoCreate: 8,
-	AutoUpdate: 9,
-	IDPrefix:   "wapf_",
-	New:        newWorkerAvailabilityPreference,
-	NewN:       newNWorkerAvailabilityPreference,
-	Size:       unsafe.Sizeof(worker.WorkerAvailabilityPreference{}),
-	Ptr:        ptrWorkerAvailabilityPreference,
-	Value:      valueWorkerAvailabilityPreference,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:       []int32{3, 4, 5, 6, 9},
+	Returning:    nil,
+	Version:      7,
+	AutoID:       0,
+	AutoCreate:   8,
+	AutoUpdate:   9,
+	IDPrefix:     "wapf_",
+	New:          newWorkerAvailabilityPreference,
+	NewN:         newNWorkerAvailabilityPreference,
+	Size:         unsafe.Sizeof(worker.WorkerAvailabilityPreference{}),
+	Ptr:          ptrWorkerAvailabilityPreference,
+	Value:        valueWorkerAvailabilityPreference,
+	BeforeCreate: beforeCreateWorkerAvailabilityPreference,
 }
 
 var workerAvailabilityPreferencesRef = keel.Ref{Table: &workerAvailabilityPreferencesTable}
@@ -5294,6 +5355,10 @@ func valueWorkerAvailabilityPreference(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateWorkerAvailabilityPreference(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerAvailabilityPreference)(p).BeforeCreate(ctx)
+}
+
 // workerChecklistsTable is the schema of worker.WorkerChecklist.
 var workerChecklistsTable = schema.Table{
 	Name:   "worker_checklists",
@@ -5328,23 +5393,24 @@ var workerChecklistsTable = schema.Table{
 		{Name: "Template", Alias: "t", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Template`, JSON: `template`},
 		{Name: "StartedBy", Alias: "sb", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `Started By`, JSON: `startedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "wcl_",
-	New:        newWorkerChecklist,
-	NewN:       newNWorkerChecklist,
-	Size:       unsafe.Sizeof(worker.WorkerChecklist{}),
-	Ptr:        ptrWorkerChecklist,
-	Value:      valueWorkerChecklist,
-	Attach:     attachWorkerChecklist,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "wcl_",
+	New:          newWorkerChecklist,
+	NewN:         newNWorkerChecklist,
+	Size:         unsafe.Sizeof(worker.WorkerChecklist{}),
+	Ptr:          ptrWorkerChecklist,
+	Value:        valueWorkerChecklist,
+	Attach:       attachWorkerChecklist,
+	BeforeCreate: beforeCreateWorkerChecklist,
 }
 
 var workerChecklistsRef = keel.Ref{Table: &workerChecklistsTable}
@@ -5578,6 +5644,10 @@ func attachWorkerChecklist(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateWorkerChecklist(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerChecklist)(p).BeforeCreate(ctx)
+}
+
 // workerChecklistItemsTable is the schema of worker.WorkerChecklistItem.
 var workerChecklistItemsTable = schema.Table{
 	Name:   "worker_checklist_items",
@@ -5618,23 +5688,24 @@ var workerChecklistItemsTable = schema.Table{
 		{Name: "EvidenceCredential", Alias: "ec", Kind: schema.BelongsTo, Local: []int32{19}, Remote: []int32{0}, Label: `Evidence Credential`, JSON: `evidenceCredential`},
 		{Name: "CredentialType", Alias: "ct", Kind: schema.BelongsTo, Local: []int32{11}, Remote: []int32{0}, Label: `Credential Type`, JSON: `credentialType`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
-	Returning:  nil,
-	Version:    21,
-	AutoID:     0,
-	AutoCreate: 22,
-	AutoUpdate: 23,
-	IDPrefix:   "wcli_",
-	New:        newWorkerChecklistItem,
-	NewN:       newNWorkerChecklistItem,
-	Size:       unsafe.Sizeof(worker.WorkerChecklistItem{}),
-	Ptr:        ptrWorkerChecklistItem,
-	Value:      valueWorkerChecklistItem,
-	Attach:     attachWorkerChecklistItem,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
+	Returning:    nil,
+	Version:      21,
+	AutoID:       0,
+	AutoCreate:   22,
+	AutoUpdate:   23,
+	IDPrefix:     "wcli_",
+	New:          newWorkerChecklistItem,
+	NewN:         newNWorkerChecklistItem,
+	Size:         unsafe.Sizeof(worker.WorkerChecklistItem{}),
+	Ptr:          ptrWorkerChecklistItem,
+	Value:        valueWorkerChecklistItem,
+	Attach:       attachWorkerChecklistItem,
+	BeforeCreate: beforeCreateWorkerChecklistItem,
 }
 
 var workerChecklistItemsRef = keel.Ref{Table: &workerChecklistItemsTable}
@@ -5921,6 +5992,10 @@ func attachWorkerChecklistItem(p unsafe.Pointer, rel int32, child unsafe.Pointer
 	}
 }
 
+func beforeCreateWorkerChecklistItem(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerChecklistItem)(p).BeforeCreate(ctx)
+}
+
 // workerChecklistTemplatesTable is the schema of worker.WorkerChecklistTemplate.
 var workerChecklistTemplatesTable = schema.Table{
 	Name:   "worker_checklist_templates",
@@ -5948,24 +6023,23 @@ var workerChecklistTemplatesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Items", Alias: "i", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Items`, JSON: `items`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:    nil,
-	Version:      10,
-	AutoID:       0,
-	AutoCreate:   11,
-	AutoUpdate:   12,
-	IDPrefix:     "wclt_",
-	New:          newWorkerChecklistTemplate,
-	NewN:         newNWorkerChecklistTemplate,
-	Size:         unsafe.Sizeof(worker.WorkerChecklistTemplate{}),
-	Ptr:          ptrWorkerChecklistTemplate,
-	Value:        valueWorkerChecklistTemplate,
-	Attach:       attachWorkerChecklistTemplate,
-	BeforeCreate: beforeCreateWorkerChecklistTemplate,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:  nil,
+	Version:    10,
+	AutoID:     0,
+	AutoCreate: 11,
+	AutoUpdate: 12,
+	IDPrefix:   "wclt_",
+	New:        newWorkerChecklistTemplate,
+	NewN:       newNWorkerChecklistTemplate,
+	Size:       unsafe.Sizeof(worker.WorkerChecklistTemplate{}),
+	Ptr:        ptrWorkerChecklistTemplate,
+	Value:      valueWorkerChecklistTemplate,
+	Attach:     attachWorkerChecklistTemplate,
 }
 
 var workerChecklistTemplatesRef = keel.Ref{Table: &workerChecklistTemplatesTable}
@@ -6136,10 +6210,6 @@ func attachWorkerChecklistTemplate(p unsafe.Pointer, rel int32, child unsafe.Poi
 	}
 }
 
-func beforeCreateWorkerChecklistTemplate(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerChecklistTemplate)(p).BeforeCreate(ctx)
-}
-
 // workerChecklistTemplateItemsTable is the schema of worker.WorkerChecklistTemplateItem.
 var workerChecklistTemplateItemsTable = schema.Table{
 	Name:   "worker_checklist_template_items",
@@ -6169,24 +6239,23 @@ var workerChecklistTemplateItemsTable = schema.Table{
 		{Name: "CredentialType", Alias: "ct", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Credential Type`, JSON: `credentialType`},
 		{Name: "DocumentType", Alias: "dt", Kind: schema.BelongsTo, Local: []int32{11}, Remote: []int32{0}, Label: `Document Type`, JSON: `documentType`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   13,
-	AutoUpdate:   14,
-	IDPrefix:     "wclti_",
-	New:          newWorkerChecklistTemplateItem,
-	NewN:         newNWorkerChecklistTemplateItem,
-	Size:         unsafe.Sizeof(worker.WorkerChecklistTemplateItem{}),
-	Ptr:          ptrWorkerChecklistTemplateItem,
-	Value:        valueWorkerChecklistTemplateItem,
-	Attach:       attachWorkerChecklistTemplateItem,
-	BeforeCreate: beforeCreateWorkerChecklistTemplateItem,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 13,
+	AutoUpdate: 14,
+	IDPrefix:   "wclti_",
+	New:        newWorkerChecklistTemplateItem,
+	NewN:       newNWorkerChecklistTemplateItem,
+	Size:       unsafe.Sizeof(worker.WorkerChecklistTemplateItem{}),
+	Ptr:        ptrWorkerChecklistTemplateItem,
+	Value:      valueWorkerChecklistTemplateItem,
+	Attach:     attachWorkerChecklistTemplateItem,
 }
 
 var workerChecklistTemplateItemsRef = keel.Ref{Table: &workerChecklistTemplateItemsTable}
@@ -6377,10 +6446,6 @@ func attachWorkerChecklistTemplateItem(p unsafe.Pointer, rel int32, child unsafe
 	}
 }
 
-func beforeCreateWorkerChecklistTemplateItem(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerChecklistTemplateItem)(p).BeforeCreate(ctx)
-}
-
 // workerClearinghouseQueriesTable is the schema of worker.WorkerClearinghouseQuery.
 var workerClearinghouseQueriesTable = schema.Table{
 	Name:   "worker_clearinghouse_queries",
@@ -6414,23 +6479,24 @@ var workerClearinghouseQueriesTable = schema.Table{
 		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Document`, JSON: `document`},
 		{Name: "PerformedBy", Alias: "pb", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `Performed By`, JSON: `performedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "wchq_",
-	New:        newWorkerClearinghouseQuery,
-	NewN:       newNWorkerClearinghouseQuery,
-	Size:       unsafe.Sizeof(worker.WorkerClearinghouseQuery{}),
-	Ptr:        ptrWorkerClearinghouseQuery,
-	Value:      valueWorkerClearinghouseQuery,
-	Attach:     attachWorkerClearinghouseQuery,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "wchq_",
+	New:          newWorkerClearinghouseQuery,
+	NewN:         newNWorkerClearinghouseQuery,
+	Size:         unsafe.Sizeof(worker.WorkerClearinghouseQuery{}),
+	Ptr:          ptrWorkerClearinghouseQuery,
+	Value:        valueWorkerClearinghouseQuery,
+	Attach:       attachWorkerClearinghouseQuery,
+	BeforeCreate: beforeCreateWorkerClearinghouseQuery,
 }
 
 var workerClearinghouseQueriesRef = keel.Ref{Table: &workerClearinghouseQueriesTable}
@@ -6659,6 +6725,10 @@ func attachWorkerClearinghouseQuery(p unsafe.Pointer, rel int32, child unsafe.Po
 	case 2:
 		r.PerformedBy = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateWorkerClearinghouseQuery(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerClearinghouseQuery)(p).BeforeCreate(ctx)
 }
 
 // workerCredentialsTable is the schema of worker.WorkerCredential.
@@ -7029,6 +7099,7 @@ var workerCredentialTypesTable = schema.Table{
 	Size:       unsafe.Sizeof(worker.WorkerCredentialType{}),
 	Ptr:        ptrWorkerCredentialType,
 	Value:      valueWorkerCredentialType,
+	BeforeSave: beforeSaveWorkerCredentialType,
 }
 
 var workerCredentialTypesRef = keel.Ref{Table: &workerCredentialTypesTable}
@@ -7244,6 +7315,10 @@ func valueWorkerCredentialType(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeSaveWorkerCredentialType(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerCredentialType)(p).BeforeSave(ctx)
+}
+
 // workerDOTTestsTable is the schema of worker.WorkerDOTTest.
 var workerDOTTestsTable = schema.Table{
 	Name:   "worker_dot_tests",
@@ -7290,23 +7365,24 @@ var workerDOTTestsTable = schema.Table{
 		{Name: "OrderedBy", Alias: "ob", Kind: schema.BelongsTo, Local: []int32{24}, Remote: []int32{0}, Label: `Ordered By`, JSON: `orderedBy`},
 		{Name: "RecordedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{25}, Remote: []int32{0}, Label: `Recorded By`, JSON: `recordedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
-	Returning:  nil,
-	Version:    26,
-	AutoID:     0,
-	AutoCreate: 27,
-	AutoUpdate: 28,
-	IDPrefix:   "wdot_",
-	New:        newWorkerDOTTest,
-	NewN:       newNWorkerDOTTest,
-	Size:       unsafe.Sizeof(worker.WorkerDOTTest{}),
-	Ptr:        ptrWorkerDOTTest,
-	Value:      valueWorkerDOTTest,
-	Attach:     attachWorkerDOTTest,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
+	Returning:    nil,
+	Version:      26,
+	AutoID:       0,
+	AutoCreate:   27,
+	AutoUpdate:   28,
+	IDPrefix:     "wdot_",
+	New:          newWorkerDOTTest,
+	NewN:         newNWorkerDOTTest,
+	Size:         unsafe.Sizeof(worker.WorkerDOTTest{}),
+	Ptr:          ptrWorkerDOTTest,
+	Value:        valueWorkerDOTTest,
+	Attach:       attachWorkerDOTTest,
+	BeforeCreate: beforeCreateWorkerDOTTest,
 }
 
 var workerDOTTestsRef = keel.Ref{Table: &workerDOTTestsTable}
@@ -7654,6 +7730,10 @@ func attachWorkerDOTTest(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateWorkerDOTTest(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerDOTTest)(p).BeforeCreate(ctx)
+}
+
 // workerDOTViolationsTable is the schema of worker.WorkerDOTViolation.
 var workerDOTViolationsTable = schema.Table{
 	Name:   "worker_dot_violations",
@@ -7695,23 +7775,24 @@ var workerDOTViolationsTable = schema.Table{
 		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{18}, Remote: []int32{0}, Label: `Document`, JSON: `document`},
 		{Name: "RecordedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{20}, Remote: []int32{0}, Label: `Recorded By`, JSON: `recordedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
-	Returning:  nil,
-	Version:    21,
-	AutoID:     0,
-	AutoCreate: 22,
-	AutoUpdate: 23,
-	IDPrefix:   "wdotv_",
-	New:        newWorkerDOTViolation,
-	NewN:       newNWorkerDOTViolation,
-	Size:       unsafe.Sizeof(worker.WorkerDOTViolation{}),
-	Ptr:        ptrWorkerDOTViolation,
-	Value:      valueWorkerDOTViolation,
-	Attach:     attachWorkerDOTViolation,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
+	Returning:    nil,
+	Version:      21,
+	AutoID:       0,
+	AutoCreate:   22,
+	AutoUpdate:   23,
+	IDPrefix:     "wdotv_",
+	New:          newWorkerDOTViolation,
+	NewN:         newNWorkerDOTViolation,
+	Size:         unsafe.Sizeof(worker.WorkerDOTViolation{}),
+	Ptr:          ptrWorkerDOTViolation,
+	Value:        valueWorkerDOTViolation,
+	Attach:       attachWorkerDOTViolation,
+	BeforeCreate: beforeCreateWorkerDOTViolation,
 }
 
 var workerDOTViolationsRef = keel.Ref{Table: &workerDOTViolationsTable}
@@ -8007,6 +8088,10 @@ func attachWorkerDOTViolation(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 	case 4:
 		r.RecordedBy = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateWorkerDOTViolation(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerDOTViolation)(p).BeforeCreate(ctx)
 }
 
 // workerDisciplinaryActionsTable is the schema of worker.WorkerDisciplinaryAction.
@@ -8393,24 +8478,24 @@ var workerEmploymentEventsTable = schema.Table{
 		{Name: "RecordedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{11}, Remote: []int32{0}, Label: `Recorded By`, JSON: `recordedBy`, NoReport: true},
 		{Name: "AmendedBy", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Amended By`, JSON: `amendedBy`, NoReport: true},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:    nil,
-	Version:      15,
-	AutoID:       0,
-	AutoCreate:   16,
-	AutoUpdate:   17,
-	IDPrefix:     "wee_",
-	New:          newWorkerEmploymentEvent,
-	NewN:         newNWorkerEmploymentEvent,
-	Size:         unsafe.Sizeof(worker.WorkerEmploymentEvent{}),
-	Ptr:          ptrWorkerEmploymentEvent,
-	Value:        valueWorkerEmploymentEvent,
-	Attach:       attachWorkerEmploymentEvent,
-	BeforeCreate: beforeCreateWorkerEmploymentEvent,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:  nil,
+	Version:    15,
+	AutoID:     0,
+	AutoCreate: 16,
+	AutoUpdate: 17,
+	IDPrefix:   "wee_",
+	New:        newWorkerEmploymentEvent,
+	NewN:       newNWorkerEmploymentEvent,
+	Size:       unsafe.Sizeof(worker.WorkerEmploymentEvent{}),
+	Ptr:        ptrWorkerEmploymentEvent,
+	Value:      valueWorkerEmploymentEvent,
+	Attach:     attachWorkerEmploymentEvent,
+	BeforeSave: beforeSaveWorkerEmploymentEvent,
 }
 
 var workerEmploymentEventsRef = keel.Ref{Table: &workerEmploymentEventsTable}
@@ -8654,8 +8739,8 @@ func attachWorkerEmploymentEvent(p unsafe.Pointer, rel int32, child unsafe.Point
 	}
 }
 
-func beforeCreateWorkerEmploymentEvent(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerEmploymentEvent)(p).BeforeCreate(ctx)
+func beforeSaveWorkerEmploymentEvent(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerEmploymentEvent)(p).BeforeSave(ctx)
 }
 
 // workerEmploymentVerificationsTable is the schema of worker.WorkerEmploymentVerification.
@@ -8704,23 +8789,24 @@ var workerEmploymentVerificationsTable = schema.Table{
 		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{25}, Remote: []int32{0}, Label: `Document`, JSON: `document`},
 		{Name: "RequestedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{26}, Remote: []int32{0}, Label: `Requested By`, JSON: `requestedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
-	Returning:  nil,
-	Version:    27,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "wemv_",
-	New:        newWorkerEmploymentVerification,
-	NewN:       newNWorkerEmploymentVerification,
-	Size:       unsafe.Sizeof(worker.WorkerEmploymentVerification{}),
-	Ptr:        ptrWorkerEmploymentVerification,
-	Value:      valueWorkerEmploymentVerification,
-	Attach:     attachWorkerEmploymentVerification,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Returning:    nil,
+	Version:      27,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "wemv_",
+	New:          newWorkerEmploymentVerification,
+	NewN:         newNWorkerEmploymentVerification,
+	Size:         unsafe.Sizeof(worker.WorkerEmploymentVerification{}),
+	Ptr:          ptrWorkerEmploymentVerification,
+	Value:        valueWorkerEmploymentVerification,
+	Attach:       attachWorkerEmploymentVerification,
+	BeforeCreate: beforeCreateWorkerEmploymentVerification,
 }
 
 var workerEmploymentVerificationsRef = keel.Ref{Table: &workerEmploymentVerificationsTable}
@@ -9059,6 +9145,10 @@ func attachWorkerEmploymentVerification(p unsafe.Pointer, rel int32, child unsaf
 	}
 }
 
+func beforeCreateWorkerEmploymentVerification(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerEmploymentVerification)(p).BeforeCreate(ctx)
+}
+
 // workerInjuriesTable is the schema of worker.WorkerInjury.
 var workerInjuriesTable = schema.Table{
 	Name:   "worker_injuries",
@@ -9108,23 +9198,24 @@ var workerInjuriesTable = schema.Table{
 		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{26}, Remote: []int32{0}, Label: `Document`, JSON: `document`},
 		{Name: "RecordedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{28}, Remote: []int32{0}, Label: `Recorded By`, JSON: `recordedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
-	Returning:  nil,
-	Version:    29,
-	AutoID:     0,
-	AutoCreate: 30,
-	AutoUpdate: 31,
-	IDPrefix:   "winj_",
-	New:        newWorkerInjury,
-	NewN:       newNWorkerInjury,
-	Size:       unsafe.Sizeof(worker.WorkerInjury{}),
-	Ptr:        ptrWorkerInjury,
-	Value:      valueWorkerInjury,
-	Attach:     attachWorkerInjury,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
+	Returning:    nil,
+	Version:      29,
+	AutoID:       0,
+	AutoCreate:   30,
+	AutoUpdate:   31,
+	IDPrefix:     "winj_",
+	New:          newWorkerInjury,
+	NewN:         newNWorkerInjury,
+	Size:         unsafe.Sizeof(worker.WorkerInjury{}),
+	Ptr:          ptrWorkerInjury,
+	Value:        valueWorkerInjury,
+	Attach:       attachWorkerInjury,
+	BeforeCreate: beforeCreateWorkerInjury,
 }
 
 var workerInjuriesRef = keel.Ref{Table: &workerInjuriesTable}
@@ -9474,6 +9565,10 @@ func attachWorkerInjury(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateWorkerInjury(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerInjury)(p).BeforeCreate(ctx)
+}
+
 // workerLeaveCasesTable is the schema of worker.WorkerLeaveCase.
 var workerLeaveCasesTable = schema.Table{
 	Name:   "worker_leave_cases",
@@ -9520,23 +9615,24 @@ var workerLeaveCasesTable = schema.Table{
 		{Name: "DecidedBy", Alias: "db", Kind: schema.BelongsTo, Local: []int32{24}, Remote: []int32{0}, Label: `Decided By`, JSON: `decidedBy`},
 		{Name: "Entries", Alias: "e", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{4}, Label: `Entries`, JSON: `entries`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
-	Returning:  nil,
-	Version:    26,
-	AutoID:     0,
-	AutoCreate: 27,
-	AutoUpdate: 28,
-	IDPrefix:   "wlc_",
-	New:        newWorkerLeaveCase,
-	NewN:       newNWorkerLeaveCase,
-	Size:       unsafe.Sizeof(worker.WorkerLeaveCase{}),
-	Ptr:        ptrWorkerLeaveCase,
-	Value:      valueWorkerLeaveCase,
-	Attach:     attachWorkerLeaveCase,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
+	Returning:    nil,
+	Version:      26,
+	AutoID:       0,
+	AutoCreate:   27,
+	AutoUpdate:   28,
+	IDPrefix:     "wlc_",
+	New:          newWorkerLeaveCase,
+	NewN:         newNWorkerLeaveCase,
+	Size:         unsafe.Sizeof(worker.WorkerLeaveCase{}),
+	Ptr:          ptrWorkerLeaveCase,
+	Value:        valueWorkerLeaveCase,
+	Attach:       attachWorkerLeaveCase,
+	BeforeCreate: beforeCreateWorkerLeaveCase,
 }
 
 var workerLeaveCasesRef = keel.Ref{Table: &workerLeaveCasesTable}
@@ -9868,6 +9964,10 @@ func attachWorkerLeaveCase(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateWorkerLeaveCase(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerLeaveCase)(p).BeforeCreate(ctx)
+}
+
 // workerLeaveEntriesTable is the schema of worker.WorkerLeaveEntry.
 var workerLeaveEntriesTable = schema.Table{
 	Name:   "worker_leave_entries",
@@ -10126,24 +10226,23 @@ var workerPTOsTable = schema.Table{
 		{Name: "Rejector", Alias: "r", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Rejector`, JSON: `rejector`, NoReport: true},
 		{Name: "CancelledBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Cancelled By`, JSON: `cancelledBy`, NoReport: true},
 	},
-	PK:           []int32{0, 1, 2, 3},
-	Tenant:       []int32{2, 3},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
-	Update:       []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20},
-	Returning:    nil,
-	Version:      18,
-	AutoID:       0,
-	AutoCreate:   19,
-	AutoUpdate:   20,
-	IDPrefix:     "wrkpto_",
-	New:          newWorkerPTO,
-	NewN:         newNWorkerPTO,
-	Size:         unsafe.Sizeof(worker.WorkerPTO{}),
-	Ptr:          ptrWorkerPTO,
-	Value:        valueWorkerPTO,
-	Attach:       attachWorkerPTO,
-	BeforeCreate: beforeCreateWorkerPTO,
+	PK:         []int32{0, 1, 2, 3},
+	Tenant:     []int32{2, 3},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
+	Update:     []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20},
+	Returning:  nil,
+	Version:    18,
+	AutoID:     0,
+	AutoCreate: 19,
+	AutoUpdate: 20,
+	IDPrefix:   "wrkpto_",
+	New:        newWorkerPTO,
+	NewN:       newNWorkerPTO,
+	Size:       unsafe.Sizeof(worker.WorkerPTO{}),
+	Ptr:        ptrWorkerPTO,
+	Value:      valueWorkerPTO,
+	Attach:     attachWorkerPTO,
 }
 
 var workerPTOsRef = keel.Ref{Table: &workerPTOsTable}
@@ -10392,10 +10491,6 @@ func attachWorkerPTO(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreateWorkerPTO(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPTO)(p).BeforeCreate(ctx)
-}
-
 // workerPTOBalancesTable is the schema of worker.WorkerPTOBalance.
 var workerPTOBalancesTable = schema.Table{
 	Name:   "worker_pto_balances",
@@ -10427,24 +10522,23 @@ var workerPTOBalancesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`, JSON: `worker`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
-	Returning:    nil,
-	Version:      13,
-	AutoID:       0,
-	AutoCreate:   14,
-	AutoUpdate:   15,
-	IDPrefix:     "wpb_",
-	New:          newWorkerPTOBalance,
-	NewN:         newNWorkerPTOBalance,
-	Size:         unsafe.Sizeof(worker.WorkerPTOBalance{}),
-	Ptr:          ptrWorkerPTOBalance,
-	Value:        valueWorkerPTOBalance,
-	Attach:       attachWorkerPTOBalance,
-	BeforeCreate: beforeCreateWorkerPTOBalance,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
+	Returning:  nil,
+	Version:    13,
+	AutoID:     0,
+	AutoCreate: 14,
+	AutoUpdate: 15,
+	IDPrefix:   "wpb_",
+	New:        newWorkerPTOBalance,
+	NewN:       newNWorkerPTOBalance,
+	Size:       unsafe.Sizeof(worker.WorkerPTOBalance{}),
+	Ptr:        ptrWorkerPTOBalance,
+	Value:      valueWorkerPTOBalance,
+	Attach:     attachWorkerPTOBalance,
 }
 
 var workerPTOBalancesRef = keel.Ref{Table: &workerPTOBalancesTable}
@@ -10631,10 +10725,6 @@ func attachWorkerPTOBalance(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreateWorkerPTOBalance(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPTOBalance)(p).BeforeCreate(ctx)
-}
-
 // workerPTOLedgerEntriesTable is the schema of worker.WorkerPTOLedgerEntry.
 var workerPTOLedgerEntriesTable = schema.Table{
 	Name:   "worker_pto_ledger",
@@ -10667,24 +10757,23 @@ var workerPTOLedgerEntriesTable = schema.Table{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`, JSON: `worker`},
 		{Name: "SourcePTO", Alias: "sp", Kind: schema.BelongsTo, Local: []int32{11, 3}, Remote: []int32{0, 1}, Label: `Source PTO`, JSON: `sourcePto`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   17,
-	AutoUpdate:   -1,
-	IDPrefix:     "wpl_",
-	New:          newWorkerPTOLedgerEntry,
-	NewN:         newNWorkerPTOLedgerEntry,
-	Size:         unsafe.Sizeof(worker.WorkerPTOLedgerEntry{}),
-	Ptr:          ptrWorkerPTOLedgerEntry,
-	Value:        valueWorkerPTOLedgerEntry,
-	Attach:       attachWorkerPTOLedgerEntry,
-	BeforeCreate: beforeCreateWorkerPTOLedgerEntry,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 17,
+	AutoUpdate: -1,
+	IDPrefix:   "wpl_",
+	New:        newWorkerPTOLedgerEntry,
+	NewN:       newNWorkerPTOLedgerEntry,
+	Size:       unsafe.Sizeof(worker.WorkerPTOLedgerEntry{}),
+	Ptr:        ptrWorkerPTOLedgerEntry,
+	Value:      valueWorkerPTOLedgerEntry,
+	Attach:     attachWorkerPTOLedgerEntry,
 }
 
 var workerPTOLedgerEntriesRef = keel.Ref{Table: &workerPTOLedgerEntriesTable}
@@ -10905,10 +10994,6 @@ func attachWorkerPTOLedgerEntry(p unsafe.Pointer, rel int32, child unsafe.Pointe
 	}
 }
 
-func beforeCreateWorkerPTOLedgerEntry(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPTOLedgerEntry)(p).BeforeCreate(ctx)
-}
-
 // workerPTOPolicyAssignmentsTable is the schema of worker.WorkerPTOPolicyAssignment.
 var workerPTOPolicyAssignmentsTable = schema.Table{
 	Name:   "worker_pto_policy_assignments",
@@ -10935,24 +11020,23 @@ var workerPTOPolicyAssignmentsTable = schema.Table{
 		{Name: "Policy", Alias: "p", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Policy`, JSON: `policy`},
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`, JSON: `worker`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 11},
-	Returning:    nil,
-	Version:      9,
-	AutoID:       0,
-	AutoCreate:   10,
-	AutoUpdate:   11,
-	IDPrefix:     "wppa_",
-	New:          newWorkerPTOPolicyAssignment,
-	NewN:         newNWorkerPTOPolicyAssignment,
-	Size:         unsafe.Sizeof(worker.WorkerPTOPolicyAssignment{}),
-	Ptr:          ptrWorkerPTOPolicyAssignment,
-	Value:        valueWorkerPTOPolicyAssignment,
-	Attach:       attachWorkerPTOPolicyAssignment,
-	BeforeCreate: beforeCreateWorkerPTOPolicyAssignment,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 11},
+	Returning:  nil,
+	Version:    9,
+	AutoID:     0,
+	AutoCreate: 10,
+	AutoUpdate: 11,
+	IDPrefix:   "wppa_",
+	New:        newWorkerPTOPolicyAssignment,
+	NewN:       newNWorkerPTOPolicyAssignment,
+	Size:       unsafe.Sizeof(worker.WorkerPTOPolicyAssignment{}),
+	Ptr:        ptrWorkerPTOPolicyAssignment,
+	Value:      valueWorkerPTOPolicyAssignment,
+	Attach:     attachWorkerPTOPolicyAssignment,
 }
 
 var workerPTOPolicyAssignmentsRef = keel.Ref{Table: &workerPTOPolicyAssignmentsTable}
@@ -11122,10 +11206,6 @@ func attachWorkerPTOPolicyAssignment(p unsafe.Pointer, rel int32, child unsafe.P
 	}
 }
 
-func beforeCreateWorkerPTOPolicyAssignment(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerPTOPolicyAssignment)(p).BeforeCreate(ctx)
-}
-
 // workerPoliciesTable is the schema of worker.WorkerPolicy.
 var workerPoliciesTable = schema.Table{
 	Name:   "worker_policies",
@@ -11154,22 +11234,23 @@ var workerPoliciesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
-	Returning:  nil,
-	Version:    14,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "wpol_",
-	New:        newWorkerPolicy,
-	NewN:       newNWorkerPolicy,
-	Size:       unsafe.Sizeof(worker.WorkerPolicy{}),
-	Ptr:        ptrWorkerPolicy,
-	Value:      valueWorkerPolicy,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
+	Returning:    nil,
+	Version:      14,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "wpol_",
+	New:          newWorkerPolicy,
+	NewN:         newNWorkerPolicy,
+	Size:         unsafe.Sizeof(worker.WorkerPolicy{}),
+	Ptr:          ptrWorkerPolicy,
+	Value:        valueWorkerPolicy,
+	BeforeCreate: beforeCreateWorkerPolicy,
 }
 
 var workerPoliciesRef = keel.Ref{Table: &workerPoliciesTable}
@@ -11355,6 +11436,10 @@ func valueWorkerPolicy(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateWorkerPolicy(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerPolicy)(p).BeforeCreate(ctx)
+}
+
 // workerPolicyAcknowledgementsTable is the schema of worker.WorkerPolicyAcknowledgement.
 var workerPolicyAcknowledgementsTable = schema.Table{
 	Name:   "worker_policy_acknowledgements",
@@ -11384,23 +11469,24 @@ var workerPolicyAcknowledgementsTable = schema.Table{
 		{Name: "Policy", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Policy`, JSON: `policy`},
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Worker`, JSON: `worker`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "wpak_",
-	New:        newWorkerPolicyAcknowledgement,
-	NewN:       newNWorkerPolicyAcknowledgement,
-	Size:       unsafe.Sizeof(worker.WorkerPolicyAcknowledgement{}),
-	Ptr:        ptrWorkerPolicyAcknowledgement,
-	Value:      valueWorkerPolicyAcknowledgement,
-	Attach:     attachWorkerPolicyAcknowledgement,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "wpak_",
+	New:          newWorkerPolicyAcknowledgement,
+	NewN:         newNWorkerPolicyAcknowledgement,
+	Size:         unsafe.Sizeof(worker.WorkerPolicyAcknowledgement{}),
+	Ptr:          ptrWorkerPolicyAcknowledgement,
+	Value:        valueWorkerPolicyAcknowledgement,
+	Attach:       attachWorkerPolicyAcknowledgement,
+	BeforeCreate: beforeCreateWorkerPolicyAcknowledgement,
 }
 
 var workerPolicyAcknowledgementsRef = keel.Ref{Table: &workerPolicyAcknowledgementsTable}
@@ -11587,6 +11673,10 @@ func attachWorkerPolicyAcknowledgement(p unsafe.Pointer, rel int32, child unsafe
 	}
 }
 
+func beforeCreateWorkerPolicyAcknowledgement(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerPolicyAcknowledgement)(p).BeforeCreate(ctx)
+}
+
 // workerProfilesTable is the schema of worker.WorkerProfile.
 var workerProfilesTable = schema.Table{
 	Name:   "worker_profiles",
@@ -11643,24 +11733,23 @@ var workerProfilesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "LicenseState", Alias: "ls", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `License State`, JSON: `licenseState`, NoReport: true},
 	},
-	PK:           []int32{0, 1, 2, 3},
-	Tenant:       []int32{2, 3},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-	Update:       []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40},
-	Returning:    nil,
-	Version:      38,
-	AutoID:       0,
-	AutoCreate:   39,
-	AutoUpdate:   40,
-	IDPrefix:     "wrkp_",
-	New:          newWorkerProfile,
-	NewN:         newNWorkerProfile,
-	Size:         unsafe.Sizeof(worker.WorkerProfile{}),
-	Ptr:          ptrWorkerProfile,
-	Value:        valueWorkerProfile,
-	Attach:       attachWorkerProfile,
-	BeforeCreate: beforeCreateWorkerProfile,
+	PK:         []int32{0, 1, 2, 3},
+	Tenant:     []int32{2, 3},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+	Update:     []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40},
+	Returning:  nil,
+	Version:    38,
+	AutoID:     0,
+	AutoCreate: 39,
+	AutoUpdate: 40,
+	IDPrefix:   "wrkp_",
+	New:        newWorkerProfile,
+	NewN:       newNWorkerProfile,
+	Size:       unsafe.Sizeof(worker.WorkerProfile{}),
+	Ptr:        ptrWorkerProfile,
+	Value:      valueWorkerProfile,
+	Attach:     attachWorkerProfile,
 }
 
 var workerProfilesRef = keel.Ref{Table: &workerProfilesTable}
@@ -12063,10 +12152,6 @@ func attachWorkerProfile(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreateWorkerProfile(ctx context.Context, p unsafe.Pointer) error {
-	return (*worker.WorkerProfile)(p).BeforeCreate(ctx)
-}
-
 // workerProfileChangeRequestsTable is the schema of worker.WorkerProfileChangeRequest.
 var workerProfileChangeRequestsTable = schema.Table{
 	Name:   "worker_profile_change_requests",
@@ -12095,23 +12180,24 @@ var workerProfileChangeRequestsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`, JSON: `worker`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "wpcr_",
-	New:        newWorkerProfileChangeRequest,
-	NewN:       newNWorkerProfileChangeRequest,
-	Size:       unsafe.Sizeof(worker.WorkerProfileChangeRequest{}),
-	Ptr:        ptrWorkerProfileChangeRequest,
-	Value:      valueWorkerProfileChangeRequest,
-	Attach:     attachWorkerProfileChangeRequest,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "wpcr_",
+	New:          newWorkerProfileChangeRequest,
+	NewN:         newNWorkerProfileChangeRequest,
+	Size:         unsafe.Sizeof(worker.WorkerProfileChangeRequest{}),
+	Ptr:          ptrWorkerProfileChangeRequest,
+	Value:        valueWorkerProfileChangeRequest,
+	Attach:       attachWorkerProfileChangeRequest,
+	BeforeCreate: beforeCreateWorkerProfileChangeRequest,
 }
 
 var workerProfileChangeRequestsRef = keel.Ref{Table: &workerProfileChangeRequestsTable}
@@ -12292,6 +12378,10 @@ func attachWorkerProfileChangeRequest(p unsafe.Pointer, rel int32, child unsafe.
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	}
+}
+
+func beforeCreateWorkerProfileChangeRequest(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerProfileChangeRequest)(p).BeforeCreate(ctx)
 }
 
 // workerRecognitionsTable is the schema of worker.WorkerRecognition.
@@ -12920,23 +13010,24 @@ var workerSafetyViolationsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "SafetyEvent", Alias: "se", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Safety Event`, JSON: `safetyEvent`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:  nil,
-	Version:    10,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "wsvi_",
-	New:        newWorkerSafetyViolation,
-	NewN:       newNWorkerSafetyViolation,
-	Size:       unsafe.Sizeof(worker.WorkerSafetyViolation{}),
-	Ptr:        ptrWorkerSafetyViolation,
-	Value:      valueWorkerSafetyViolation,
-	Attach:     attachWorkerSafetyViolation,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:    nil,
+	Version:      10,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   12,
+	IDPrefix:     "wsvi_",
+	New:          newWorkerSafetyViolation,
+	NewN:         newNWorkerSafetyViolation,
+	Size:         unsafe.Sizeof(worker.WorkerSafetyViolation{}),
+	Ptr:          ptrWorkerSafetyViolation,
+	Value:        valueWorkerSafetyViolation,
+	Attach:       attachWorkerSafetyViolation,
+	BeforeCreate: beforeCreateWorkerSafetyViolation,
 }
 
 var workerSafetyViolationsRef = keel.Ref{Table: &workerSafetyViolationsTable}
@@ -13098,6 +13189,10 @@ func attachWorkerSafetyViolation(p unsafe.Pointer, rel int32, child unsafe.Point
 	case 0:
 		r.SafetyEvent = (*worker.WorkerSafetyEvent)(child)
 	}
+}
+
+func beforeCreateWorkerSafetyViolation(ctx context.Context, p unsafe.Pointer) error {
+	return (*worker.WorkerSafetyViolation)(p).BeforeCreate(ctx)
 }
 
 // workerShiftAssignmentsTable is the schema of worker.WorkerShiftAssignment.

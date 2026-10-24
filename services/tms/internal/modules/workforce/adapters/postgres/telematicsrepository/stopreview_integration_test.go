@@ -6,24 +6,27 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/telematicsrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type stopReviewFixture struct {
 	ctx        context.Context
-	db         *bun.DB
+	db         *keel.DB
 	repo       telematicsports.TelematicsRepository
 	tenantInfo pagination.TenantInfo
 	shipmentID pulid.ID
@@ -36,24 +39,36 @@ func setupStopReview(t *testing.T) *stopReviewFixture {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var seeded struct {
-		OrganizationID pulid.ID `bun:"organization_id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-		ShipmentID     pulid.ID `bun:"shipment_id"`
-		LocationID     pulid.ID `bun:"location_id"`
+	type seededStop struct {
+		OrganizationID pulid.ID
+		BusinessUnitID pulid.ID
+		ShipmentID     pulid.ID
+		LocationID     pulid.ID
 	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("stops AS st").
-		ColumnExpr("st.organization_id, st.business_unit_id, sm.shipment_id, st.location_id").
-		Join("JOIN shipment_moves AS sm ON sm.id = st.shipment_move_id").
-		Limit(1).
-		Scan(ctx, &seeded))
+	st := shipmentdb.Stops
+	sm := shipmentdb.ShipmentMoves
+	seeded, err := keel.IntoOne[seededStop](
+		dbscope.WithSystem(ctx, "test"),
+		db,
+		st.AllTenants().
+			Join(sm, keel.And(
+				sm.ID.EqCol(st.ShipmentMoveID),
+				sm.OrganizationID.EqCol(st.OrganizationID),
+				sm.BusinessUnitID.EqCol(st.BusinessUnitID),
+			)).
+			Pick(st.OrganizationID, st.BusinessUnitID, sm.ShipmentID, st.LocationID).
+			Limit(1),
+	)
+	require.NoError(t, err)
+	tenantInfo := pagination.TenantInfo{OrgID: seeded.OrganizationID, BuID: seeded.BusinessUnitID}
 
 	return &stopReviewFixture{
-		ctx:        ctx,
-		db:         db,
-		repo:       telematicsrepository.New(telematicsrepository.Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}),
-		tenantInfo: pagination.TenantInfo{OrgID: seeded.OrganizationID, BuID: seeded.BusinessUnitID},
+		ctx: dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
+		db:  db,
+		repo: telematicsrepository.New(
+			telematicsrepository.Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()},
+		),
+		tenantInfo: tenantInfo,
 		shipmentID: seeded.ShipmentID,
 		locationID: seeded.LocationID,
 	}
@@ -75,8 +90,7 @@ func (f *stopReviewFixture) insertMove(
 		Loaded:         true,
 		Sequence:       90,
 	}
-	_, err := f.db.NewInsert().Model(move).Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, shipmentdb.ShipmentMoves.Create(f.ctx, f.db, move))
 
 	stops := make([]*shipment.Stop, 0, len(arrivals))
 	for i, arrived := range arrivals {
@@ -99,8 +113,7 @@ func (f *stopReviewFixture) insertMove(
 		stops = append(stops, stop)
 	}
 	if len(stops) > 0 {
-		_, err = f.db.NewInsert().Model(&stops).Exec(f.ctx)
-		require.NoError(t, err)
+		require.NoError(t, shipmentdb.Stops.CreateMany(f.ctx, f.db, stops))
 	}
 
 	return move, stops
@@ -186,7 +199,11 @@ func TestListOpenStopReviews_Integration(t *testing.T) {
 	assert.Equal(t, telematics.StopOutcomeRefused, reviews[0].Event.StopOutcome)
 	assert.Equal(t, shipment.VisitArrival, reviews[0].Event.StopVisit)
 	assert.Equal(t, unarrived.ID, reviews[0].Event.StopID)
-	assert.Equal(t, "Complete the earlier stops on this load first", reviews[0].Event.StopOutcomeReason)
+	assert.Equal(
+		t,
+		"Complete the earlier stops on this load first",
+		reviews[0].Event.StopOutcomeReason,
+	)
 }
 
 func TestStopOutcomeCheck_RefusesAReviewWithoutAReason_Integration(t *testing.T) {

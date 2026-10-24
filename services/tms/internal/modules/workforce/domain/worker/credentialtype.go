@@ -330,6 +330,14 @@ func (t *WorkerCredentialType) BeforeAppendModel(_ context.Context, query bun.Qu
 	return nil
 }
 
+func (t *WorkerCredentialType) BeforeSave(_ context.Context) error {
+	if t.RequiredForDriverTypes == nil {
+		t.RequiredForDriverTypes = []DriverType{}
+	}
+
+	return nil
+}
+
 // SystemCredentialTypes is the catalog every organisation starts with. Codes are
 // stable identifiers; the migration that introduced the registry seeds the same
 // rows so an organisation created before or after it looks identical.

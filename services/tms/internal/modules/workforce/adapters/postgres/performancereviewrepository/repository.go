@@ -5,24 +5,69 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var templateErrors = dberror.Mapping{
+	Entity: "PerformanceReviewTemplate",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_performance_review_templates_code",
+			Field:   "code",
+			Message: "A review template with this code already exists",
+		},
+		{
+			Name:    "uq_performance_review_templates_default",
+			Field:   "isDefault",
+			Message: "Another review template is already the default",
+		},
+	},
+}
+
+var reviewErrors = dberror.Mapping{
+	Entity: "PerformanceReview",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_performance_reviews_open",
+			Field:   "templateId",
+			Message: "This worker already has an open review on this template",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_performance_reviews_worker",
+			Field:   "workerId",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_performance_reviews_template",
+			Field:   "templateId",
+			Message: "Review template does not exist or belongs to a different organization",
+		},
+	},
+}
+
+var openReviewStatuses = []worker.ReviewStatus{
+	worker.ReviewStatusDraft,
+	worker.ReviewStatusSubmitted,
+}
+
+type templateCount struct {
+	TemplateID pulid.ID
+	Count      int64
+}
 
 type Params struct {
 	fx.In
@@ -43,93 +88,23 @@ func New(p Params) workerports.PerformanceReviewRepository {
 	}
 }
 
-func duplicateCode() error {
-	return errortypes.NewValidationError(
-		"code",
-		errortypes.ErrDuplicate,
-		"A review template with this code already exists",
-	)
-}
-
-func duplicateOpenReview() error {
-	return errortypes.NewValidationError(
-		"templateId",
-		errortypes.ErrDuplicate,
-		"This worker already has an open review on this template",
-	)
-}
-
-func (r *repository) applyTemplateFilters(
-	q *bun.SelectQuery,
-	req *workerports.ListReviewTemplatesRequest,
-) *bun.SelectQuery {
-	if req.Status != "" {
-		q = q.Where(workercol.PerformanceReviewTemplateColumns.Status.Eq(), req.Status)
-	}
-	return q
-}
-
 func (r *repository) ListTemplates(
 	ctx context.Context,
 	req *workerports.ListReviewTemplatesRequest,
 ) (*pagination.CursorListResult[*worker.PerformanceReviewTemplate], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*worker.PerformanceReviewTemplate], error) {
-			log := r.l.With(zap.String("operation", "ListTemplates"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*worker.PerformanceReviewTemplate)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							workercol.PerformanceReviewTemplateTable.Alias,
-							req.Filter,
-							(*worker.PerformanceReviewTemplate)(nil),
-						)
-						return r.applyTemplateFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count review templates", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
-				ctx,
-				dbhelper.CursorListParams[*worker.PerformanceReviewTemplate]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(items *[]*worker.PerformanceReviewTemplate) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(items).
-							ColumnExpr(workercol.PerformanceReviewTemplateTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							workercol.PerformanceReviewTemplateTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*worker.PerformanceReviewTemplate)(nil),
-						)
-						if applyErr != nil {
-							return sq, applyErr
-						}
-						return r.applyTemplateFilters(sq, req), nil
-					},
-				},
-			)
+			t := workerdb.PerformanceReviewTemplates
+			q := t.Where(keel.When(req.Status != "", t.Status.Eq(domaintypes.Status(req.Status))))
+			result, err := listquery.Connection(ctx, r.db.Keel(ctx), q,
+				&listquery.Request[worker.PerformanceReviewTemplate]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+				})
 			if err != nil {
-				log.Error("failed to list review templates", zap.Error(err))
+				r.l.Error("failed to list review templates", zap.Error(err))
 				return nil, err
 			}
 
@@ -140,24 +115,16 @@ func (r *repository) ListTemplates(
 
 func (r *repository) ListActiveTemplates(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*worker.PerformanceReviewTemplate, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*worker.PerformanceReviewTemplate, error) {
-			cols := workercol.PerformanceReviewTemplateColumns
-			entities := make([]*worker.PerformanceReviewTemplate, 0, 8)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return workercol.PerformanceReviewTemplateScopeTenant(sq, tenantInfo).
-						Where(cols.Status.Eq(), domaintypes.StatusActive)
-				}).
-				Order(cols.IsDefault.OrderDesc()).
-				Order(cols.Name.OrderAsc()).
-				Scan(ctx)
+			t := workerdb.PerformanceReviewTemplates
+			entities, err := t.Where(t.Status.Eq(domaintypes.StatusActive)).
+				Order(t.IsDefault.Desc(), t.Name.Asc()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list active review templates", zap.Error(err))
 				return nil, err
@@ -172,39 +139,35 @@ func (r *repository) TemplateSelectOptions(
 	ctx context.Context,
 	req *workerports.ReviewTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
-			cols := workercol.PerformanceReviewTemplateColumns
-			return dbhelper.SelectOptions[*worker.PerformanceReviewTemplate](
+			t := workerdb.PerformanceReviewTemplates
+			q := t.Pick(
+				t.ID,
+				t.Code,
+				t.Name,
+				t.Description,
+				t.IsDefault,
+				t.CadenceMonths,
+				t.Items,
+				t.CreatedAt,
+			).
+				Where(t.Status.Eq(domaintypes.StatusActive)).
+				Order(t.IsDefault.Desc(), t.Name.Asc())
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Code,
-						cols.Name,
-						cols.Description,
-						cols.IsDefault,
-						cols.CadenceMonths,
-						cols.Items,
-						cols.CreatedAt,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), domaintypes.StatusActive).
-							Order(cols.IsDefault.OrderDesc()).
-							Order(cols.Name.OrderAsc())
-					},
-					EntityName: "PerformanceReviewTemplate",
-					SearchColumnRefs: []buncolgen.Column{
-						cols.Code,
-						cols.Name,
-						cols.Description,
-					},
+				func(s string) keel.Pred {
+					return keel.Or(
+						t.Code.ContainsFold(s),
+						t.Name.ContainsFold(s),
+						t.Description.ContainsFold(s),
+					)
 				},
 			)
 		},
@@ -219,17 +182,9 @@ func (r *repository) GetTemplateByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.PerformanceReviewTemplate, error) {
-			entity := new(worker.PerformanceReviewTemplate)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return workercol.PerformanceReviewTemplateScopeTenant(sq, req.TenantInfo).
-						Where(workercol.PerformanceReviewTemplateColumns.ID.Eq(), req.ID)
-				}).
-				Scan(ctx)
+			entity, err := workerdb.PerformanceReviewTemplates.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "PerformanceReviewTemplate")
+				return nil, templateErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -242,19 +197,11 @@ func (r *repository) TemplateCodeExists(
 	req *workerports.ReviewTemplateCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := workercol.PerformanceReviewTemplateColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.PerformanceReviewTemplate)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PerformanceReviewTemplateScopeTenant(sq, req.TenantInfo).
-					Where("LOWER("+cols.Code.String()+") = ?", strings.ToLower(req.Code))
-			})
-		if !req.ExcludeID.IsNil() {
-			q = q.Where(cols.ID.Ne(), req.ExcludeID)
-		}
-
-		exists, err := q.Exists(ctx)
+		t := workerdb.PerformanceReviewTemplates
+		exists, err := t.Where(
+			t.Code.Lower().Eq(strings.ToLower(req.Code)),
+			keel.When(req.ExcludeID.IsNotNil(), t.ID.Ne(req.ExcludeID)),
+		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to check review template code", zap.Error(err))
 			return false, err
@@ -272,16 +219,10 @@ func (r *repository) CreateTemplate(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.PerformanceReviewTemplate, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				if dberror.IsUniqueConstraintViolation(err) {
-					return nil, duplicateCode()
-				}
+			err := workerdb.PerformanceReviewTemplates.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
 				r.l.Error("failed to create review template", zap.Error(err))
-				return nil, err
+				return nil, templateErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -297,29 +238,10 @@ func (r *repository) UpdateTemplate(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.PerformanceReviewTemplate, error) {
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(workercol.PerformanceReviewTemplateColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(ctx)
+			err := workerdb.PerformanceReviewTemplates.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				if dberror.IsUniqueConstraintViolation(err) {
-					return nil, duplicateCode()
-				}
 				r.l.Error("failed to update review template", zap.Error(err))
-				return nil, err
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				"PerformanceReviewTemplate",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				return nil, templateErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -329,26 +251,20 @@ func (r *repository) UpdateTemplate(
 
 func (r *repository) ClearDefaultTemplate(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	exceptID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := workercol.PerformanceReviewTemplateColumns
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*worker.PerformanceReviewTemplate)(nil)).
-			Set(cols.IsDefault.Set(), false).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return workercol.PerformanceReviewTemplateScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.IsDefault.Eq(), true)
-			})
-		if !exceptID.IsNil() {
-			q = q.Where(cols.ID.Ne(), exceptID)
-		}
-		if _, err := q.Exec(ctx); err != nil {
+		t := workerdb.PerformanceReviewTemplates
+		_, err := t.Where(
+			t.IsDefault.IsTrue(),
+			keel.When(exceptID.IsNotNil(), t.ID.Ne(exceptID)),
+		).Update(ctx, r.db.Keel(ctx), t.IsDefault.To(false))
+		if err != nil {
 			r.l.Error("failed to clear default review template", zap.Error(err))
 			return err
 		}
+
 		return nil
 	})
 }
@@ -358,22 +274,11 @@ func (r *repository) CountReviewsByTemplate(
 	req *workerports.CountReviewsByTemplateRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := workercol.PerformanceReviewColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.PerformanceReview)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PerformanceReviewScopeTenant(sq, req.TenantInfo).
-					Where(cols.TemplateID.Eq(), req.TemplateID)
-			})
-		if req.OpenOnly {
-			q = q.Where(cols.Status.In(), bun.In([]worker.ReviewStatus{
-				worker.ReviewStatusDraft,
-				worker.ReviewStatusSubmitted,
-			}))
-		}
-
-		count, err := q.Count(ctx)
+		rv := workerdb.PerformanceReviews
+		count, err := rv.Where(
+			rv.TemplateID.Eq(req.TemplateID),
+			keel.When(req.OpenOnly, rv.Status.In(openReviewStatuses...)),
+		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count reviews by template", zap.Error(err))
 			return 0, err
@@ -387,30 +292,27 @@ func (r *repository) CountReviewsByTemplateIDs(
 	ctx context.Context,
 	req *workerports.CountReviewsByTemplateIDsRequest,
 ) (map[pulid.ID]int, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.TemplateIDs) == 0 {
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := workercol.PerformanceReviewColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.PerformanceReview)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PerformanceReviewScopeTenant(sq, req.TenantInfo).
-					Where(cols.TemplateID.In(), bun.In(req.TemplateIDs))
-			})
-		if req.OpenOnly {
-			q = q.Where(cols.Status.In(), bun.In([]worker.ReviewStatus{
-				worker.ReviewStatusDraft,
-				worker.ReviewStatusSubmitted,
-			}))
-		}
-
-		counts, err := dbhelper.CountByID(ctx, q, cols.TemplateID, len(req.TemplateIDs))
+		rv := workerdb.PerformanceReviews
+		rows, err := keel.Into[templateCount](ctx, r.db.Keel(ctx), rv.
+			Group(rv.TemplateID).
+			Pick(rv.TemplateID, keel.Count()).
+			Where(
+				rv.TemplateID.In(req.TemplateIDs...),
+				keel.When(req.OpenOnly, rv.Status.In(openReviewStatuses...)),
+			))
 		if err != nil {
 			r.l.Error("failed to count reviews by template ids", zap.Error(err))
 			return nil, err
+		}
+
+		counts := make(map[pulid.ID]int, len(rows))
+		for _, row := range rows {
+			counts[row.TemplateID] = int(row.Count)
 		}
 
 		return counts, nil
@@ -424,22 +326,14 @@ func (r *repository) CountReviews(
 	req *workerports.CountPerformanceReviewsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := workercol.PerformanceReviewColumns
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.PerformanceReview)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.PerformanceReviewScopeTenant(sq, req.TenantInfo)
-				if len(req.Statuses) > 0 {
-					sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
-				}
-				return sq
-			}).
-			Count(ctx)
+		rv := workerdb.PerformanceReviews
+		count, err := rv.Where(keel.When(len(req.Statuses) > 0, rv.Status.In(req.Statuses...))).
+			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count performance reviews", zap.Error(err))
 			return 0, fmt.Errorf("count performance reviews: %w", err)
 		}
+
 		return int(count), nil
 	})
 }
@@ -449,29 +343,20 @@ func (r *repository) ListReviews(
 	req *workerports.ListPerformanceReviewsRequest,
 ) ([]*worker.PerformanceReview, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PerformanceReview, error) {
-		cols := workercol.PerformanceReviewColumns
-		entities := make([]*worker.PerformanceReview, 0, 8)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.PerformanceReviewScopeTenant(sq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID)
-				if len(req.Statuses) > 0 {
-					sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
-				}
-				return sq
-			}).
-			Order(cols.PeriodEnd.OrderDesc()).
-			Order(cols.CreatedAt.OrderDesc())
-		if req.IncludeTemplate {
-			q = q.Relation(workercol.PerformanceReviewRelations.Template)
-		}
-		if req.IncludeReviewer {
-			q = q.Relation(workercol.PerformanceReviewRelations.Reviewer)
-		}
+		rv := workerdb.PerformanceReviews
+		loads := append(
+			listquery.When(req.IncludeTemplate, rv.Template()),
+			listquery.When(req.IncludeReviewer, rv.Reviewer())...,
+		)
 
-		if err := q.Scan(ctx); err != nil {
+		entities, err := rv.Where(
+			rv.WorkerID.Eq(req.WorkerID),
+			keel.When(len(req.Statuses) > 0, rv.Status.In(req.Statuses...)),
+		).
+			Load(loads...).
+			Order(rv.PeriodEnd.Desc(), rv.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list performance reviews", zap.Error(err))
 			return nil, err
 		}
@@ -485,26 +370,15 @@ func (r *repository) GetReviewByID(
 	req *workerports.GetPerformanceReviewByIDRequest,
 ) (*worker.PerformanceReview, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PerformanceReview, error) {
-		entity := new(worker.PerformanceReview)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PerformanceReviewScopeTenant(sq, req.TenantInfo).
-					Where(workercol.PerformanceReviewColumns.ID.Eq(), req.ID)
-			})
-		if req.IncludeTemplate {
-			q = q.Relation(workercol.PerformanceReviewRelations.Template)
-		}
-		if req.IncludeWorker {
-			q = q.Relation(workercol.PerformanceReviewRelations.Worker)
-		}
-		if req.IncludeReviewer {
-			q = q.Relation(workercol.PerformanceReviewRelations.Reviewer)
-		}
+		rv := workerdb.PerformanceReviews
+		loads := make([]keel.Loader, 0, 3)
+		loads = append(loads, listquery.When(req.IncludeTemplate, rv.Template())...)
+		loads = append(loads, listquery.When(req.IncludeWorker, rv.Worker())...)
+		loads = append(loads, listquery.When(req.IncludeReviewer, rv.Reviewer())...)
 
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "PerformanceReview")
+		entity, err := rv.Where(rv.ID.Eq(req.ID)).Load(loads...).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, reviewErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -516,16 +390,9 @@ func (r *repository) CreateReview(
 	entity *worker.PerformanceReview,
 ) (*worker.PerformanceReview, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PerformanceReview, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateOpenReview()
-			}
+		if err := workerdb.PerformanceReviews.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create performance review", zap.Error(err))
-			return nil, err
+			return nil, reviewErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -537,29 +404,9 @@ func (r *repository) UpdateReview(
 	entity *worker.PerformanceReview,
 ) (*worker.PerformanceReview, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PerformanceReview, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.PerformanceReviewColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateOpenReview()
-			}
+		if err := workerdb.PerformanceReviews.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update performance review", zap.Error(err))
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"PerformanceReview",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, reviewErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -571,18 +418,16 @@ func (r *repository) DeleteReview(
 	req *workerports.GetPerformanceReviewByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*worker.PerformanceReview)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return workercol.PerformanceReviewScopeTenantDelete(dq, req.TenantInfo).
-					Where(workercol.PerformanceReviewColumns.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		err := workerdb.PerformanceReviews.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&worker.PerformanceReview{ID: req.ID},
+		)
 		if err != nil {
 			r.l.Error("failed to delete performance review", zap.Error(err))
-			return err
+			return reviewErrors.Map(err, req.ID.String())
 		}
-		return dberror.CheckRowsAffected(results, "PerformanceReview", req.ID.String())
+
+		return nil
 	})
 }

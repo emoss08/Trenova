@@ -7,6 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,23 +28,25 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	checker := validationframework.NewKeelChecker(p.DB, workerdb.WorkersSchema())
+
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*worker.Worker]().
 			WithModelName("Worker").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
-			WithCustomReferenceCheck(
+			WithUniquenessChecker(checker).
+			WithReferenceChecker(checker).
+			WithReferenceCheck(
 				"stateId",
+				"us_states",
 				"State does not exist",
 				func(w *worker.Worker) pulid.ID { return w.StateID },
-				validationframework.NewUSStateReferenceCheck(p.DB),
 			).
-			WithOptionalCustomReferenceCheck(
+			WithOptionalReferenceCheck(
 				"fleetCodeId",
+				"fleet_codes",
 				"Fleet code does not exist in your organization",
 				func(w *worker.Worker) pulid.ID { return w.FleetCodeID },
-				createFleetCodeCheck(p.DB),
 			).
 			// A worker holds a driving title. Front-office titles are held by
 			// users through their membership, so offering one here would put a
@@ -61,48 +66,22 @@ func createDrivingPositionCheck(
 	db *postgres.Connection,
 ) validationframework.CustomReferenceCheckFunc {
 	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
+		if refID.IsNil() {
+			return true, nil
+		}
+
 		return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
-			if refID.IsNil() {
-				return true, nil
+			jp := workerdb.JobPositions
+			q := jp.Where(
+				jp.ID.Eq(refID),
+				jp.Status.Eq(domaintypes.StatusActive),
+				jp.IsDrivingPosition.IsTrue(),
+			)
+			if dbscope.IsSystem(ctx) {
+				q = q.AllTenants().Where(jp.OrganizationID.Eq(orgID), jp.BusinessUnitID.Eq(buID))
 			}
 
-			exists, err := db.DBForContext(ctx).NewSelect().
-				TableExpr("job_positions").
-				ColumnExpr("1").
-				Where("id = ?", refID).
-				Where("organization_id = ?", orgID).
-				Where("business_unit_id = ?", buID).
-				Where("status = 'Active'").
-				Where("is_driving_position").
-				Exists(ctx)
-			if err != nil {
-				return false, err
-			}
-			return exists, nil
-		})
-	}
-}
-
-func createFleetCodeCheck(
-	db *postgres.Connection,
-) validationframework.CustomReferenceCheckFunc {
-	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
-		return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
-			if refID.IsNil() {
-				return true, nil
-			}
-
-			exists, err := db.DBForContext(ctx).NewSelect().
-				TableExpr("fleet_codes").
-				ColumnExpr("1").
-				Where("id = ?", refID).
-				Where("organization_id = ?", orgID).
-				Where("business_unit_id = ?", buID).
-				Exists(ctx)
-			if err != nil {
-				return false, err
-			}
-			return exists, nil
+			return q.Exists(ctx, db.Keel(ctx))
 		})
 	}
 }

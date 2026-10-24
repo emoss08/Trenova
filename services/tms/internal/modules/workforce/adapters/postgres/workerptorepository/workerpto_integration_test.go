@@ -7,9 +7,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -19,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -28,6 +30,8 @@ var errRollbackSentinel = errors.New("rollback")
 type ptoFixture struct {
 	repo   *repository
 	data   *seedtest.TestData
+	db     *keel.DB
+	seed   context.Context
 	worker *worker.Worker
 	tenant pagination.TenantInfo
 }
@@ -53,8 +57,7 @@ func setupPTOFixture(t *testing.T) *ptoFixture {
 		PostalCode:     "62701",
 		Gender:         worker.GenderFemale,
 	}
-	_, err := db.NewInsert().Model(wrk).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, workerdb.Workers.Create(data.Ctx(ctx), db, wrk))
 
 	repo := New(Params{
 		DB:     postgres.NewTestConnection(db),
@@ -64,6 +67,8 @@ func setupPTOFixture(t *testing.T) *ptoFixture {
 	return &ptoFixture{
 		repo:   repo,
 		data:   data,
+		db:     db,
+		seed:   ctx,
 		worker: wrk,
 		tenant: pagination.TenantInfo{
 			OrgID:  data.Organization.ID,
@@ -76,7 +81,7 @@ func setupPTOFixture(t *testing.T) *ptoFixture {
 func (f *ptoFixture) newPTO(t *testing.T, start, end int64) *worker.WorkerPTO {
 	t.Helper()
 
-	created, err := f.repo.Create(t.Context(), &worker.WorkerPTO{
+	created, err := f.repo.Create(f.data.Ctx(t.Context()), &worker.WorkerPTO{
 		OrganizationID: f.data.Organization.ID,
 		BusinessUnitID: f.data.BusinessUnit.ID,
 		WorkerID:       f.worker.ID,
@@ -92,7 +97,7 @@ func (f *ptoFixture) newPTO(t *testing.T, start, end int64) *worker.WorkerPTO {
 
 func TestUpdateStatusApprovesRequestedAndBumpsVersion(t *testing.T) {
 	f := setupPTOFixture(t)
-	ctx := t.Context()
+	ctx := f.data.Ctx(t.Context())
 	now := timeutils.NowUnix()
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
@@ -112,7 +117,7 @@ func TestUpdateStatusApprovesRequestedAndBumpsVersion(t *testing.T) {
 
 func TestUpdateStatusRefusesTerminalSource(t *testing.T) {
 	f := setupPTOFixture(t)
-	ctx := t.Context()
+	ctx := f.data.Ctx(t.Context())
 	now := timeutils.NowUnix()
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
@@ -150,7 +155,7 @@ func TestUpdateStatusRefusesTerminalSource(t *testing.T) {
 
 func TestUpdateStatusRefusesStaleVersion(t *testing.T) {
 	f := setupPTOFixture(t)
-	ctx := t.Context()
+	ctx := f.data.Ctx(t.Context())
 	now := timeutils.NowUnix()
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
@@ -170,7 +175,7 @@ func TestUpdateStatusRefusesStaleVersion(t *testing.T) {
 
 func TestUpdateStatusCancelsApprovedWithReason(t *testing.T) {
 	f := setupPTOFixture(t)
-	ctx := t.Context()
+	ctx := f.data.Ctx(t.Context())
 	now := timeutils.NowUnix()
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
@@ -199,18 +204,16 @@ func TestUpdateStatusCancelsApprovedWithReason(t *testing.T) {
 
 func TestUpdateStatusIsTenantScoped(t *testing.T) {
 	f := setupPTOFixture(t)
-	ctx := t.Context()
+	ctx := f.data.Ctx(t.Context())
 	now := timeutils.NowUnix()
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
-	_, err := f.repo.UpdateStatus(ctx, &workerports.UpdatePTOStatusRequest{
-		ID: pto.ID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: pulid.MustNew("org_"),
-			BuID:  pulid.MustNew("bu_"),
-		},
-		Status: worker.PTOStatusApproved,
-		UserID: f.data.User.ID,
+	other := seedtest.SeedAdditionalTenant(t, f.seed, f.db, "PT")
+	_, err := f.repo.UpdateStatus(other.Ctx(ctx), &workerports.UpdatePTOStatusRequest{
+		ID:         pto.ID,
+		TenantInfo: other.Info(),
+		Status:     worker.PTOStatusApproved,
+		UserID:     f.data.User.ID,
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err), "foreign tenant sees not found, got %v", err)
@@ -218,7 +221,7 @@ func TestUpdateStatusIsTenantScoped(t *testing.T) {
 
 func TestHasOverlapAndGetByIDs(t *testing.T) {
 	f := setupPTOFixture(t)
-	ctx := t.Context()
+	ctx := f.data.Ctx(t.Context())
 	now := timeutils.NowUnix()
 	first := f.newPTO(t, now+86400*10, now+86400*14)
 	second := f.newPTO(t, now+86400*30, now+86400*32)
@@ -286,11 +289,11 @@ func TestHasOverlapAndGetByIDs(t *testing.T) {
 
 func TestRepositoryParticipatesInOuterTransaction(t *testing.T) {
 	f := setupPTOFixture(t)
-	ctx := t.Context()
+	ctx := f.data.Ctx(t.Context())
 	now := timeutils.NowUnix()
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
-	err := f.repo.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := f.repo.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, txErr := f.repo.UpdateStatus(txCtx, &workerports.UpdatePTOStatusRequest{
 			ID:         pto.ID,
 			TenantInfo: f.tenant,
@@ -318,7 +321,7 @@ func TestRepositoryParticipatesInOuterTransaction(t *testing.T) {
 
 func TestListOverlappingIncludesLeaveThatBeganBeforeTheWindow(t *testing.T) {
 	f := setupPTOFixture(t)
-	ctx := t.Context()
+	ctx := f.data.Ctx(t.Context())
 	now := timeutils.NowUnix()
 	running := f.newPTO(t, now-86400*5, now+86400*3)
 	upcoming := f.newPTO(t, now+86400*5, now+86400*7)

@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -200,8 +199,8 @@ func (s *Service) assignWorker(
 	}
 
 	var created *worker.WorkerPTOPolicyAssignment
-	err := s.ledger.DB().
-		WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.
+		Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 			open, err := s.repo.GetActiveAssignment(txCtx, &workerports.GetPTOAssignmentRequest{
 				TenantInfo: req.TenantInfo,
 				WorkerID:   workerID,

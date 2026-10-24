@@ -3,23 +3,56 @@ package ptopolicyrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const defaultOpenAssignmentPageSize = 100
 
-func policyWithRules(sq *bun.SelectQuery) *bun.SelectQuery {
-	return sq.Relation(workercol.PTOPolicyRelations.Rules, orderRules)
+var assignmentErrors = dberror.Mapping{
+	Entity: "WorkerPTOPolicyAssignment",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_worker_pto_policy_assignments_open",
+			Field:   "workerId",
+			Message: "Worker already has an open PTO policy assignment",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_worker_pto_policy_assignments_worker",
+			Field:   "workerId",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_pto_policy_assignments_policy",
+			Field:   "ptoPolicyId",
+			Message: "PTO policy does not exist or belongs to a different organization",
+		},
+	},
+}
+
+type tenantRow struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+}
+
+func policyWithRules() keel.Loader {
+	rl := workerdb.WorkerPTOPolicyAssignments.Policy().Rules()
+	return rl.Order(rl.SortOrder.Asc(), rl.PTOType.Asc())
+}
+
+func policyLoads(include bool) []keel.Loader {
+	return listquery.When(include, policyWithRules())
 }
 
 func (r *repository) ListAssignments(
@@ -30,21 +63,12 @@ func (r *repository) ListAssignments(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*worker.WorkerPTOPolicyAssignment, error) {
-			cols := workercol.WorkerPTOPolicyAssignmentColumns
-			entities := make([]*worker.WorkerPTOPolicyAssignment, 0, 4)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
-						Where(cols.WorkerID.Eq(), req.WorkerID)
-				}).
-				Order(cols.EffectiveFrom.OrderDesc())
-			if req.IncludePolicy {
-				q = q.Relation(workercol.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules)
-			}
-
-			if err := q.Scan(ctx); err != nil {
+			a := workerdb.WorkerPTOPolicyAssignments
+			entities, err := a.Where(a.WorkerID.Eq(req.WorkerID)).
+				Load(policyLoads(req.IncludePolicy)...).
+				Order(a.EffectiveFrom.Desc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to list PTO assignments", zap.Error(err))
 				return nil, err
 			}
@@ -62,23 +86,34 @@ func (r *repository) GetAssignmentByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
-			entity := new(worker.WorkerPTOPolicyAssignment)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Relation(workercol.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
-						Where(workercol.WorkerPTOPolicyAssignmentColumns.ID.Eq(), req.ID)
-				}).
-				Scan(ctx)
+			a := workerdb.WorkerPTOPolicyAssignments
+			entity, err := a.Where(a.ID.Eq(req.ID)).
+				Load(policyWithRules()).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "WorkerPTOPolicyAssignment")
+				return nil, assignmentErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
 		},
 	)
+}
+
+func activeAssignmentQuery(
+	req *workerports.GetPTOAssignmentRequest,
+) *keel.Query[worker.WorkerPTOPolicyAssignment] {
+	a := workerdb.WorkerPTOPolicyAssignments
+	active := a.EffectiveTo.IsNull()
+	if req.AsOf > 0 {
+		active = keel.And(
+			a.EffectiveFrom.Lte(req.AsOf),
+			keel.Or(a.EffectiveTo.IsNull(), a.EffectiveTo.Gt(req.AsOf)),
+		)
+	}
+
+	return a.Where(a.WorkerID.Eq(req.WorkerID), active).
+		Load(policyLoads(req.IncludePolicy)...).
+		Order(a.EffectiveFrom.Desc())
 }
 
 func (r *repository) GetActiveAssignment(
@@ -89,33 +124,9 @@ func (r *repository) GetActiveAssignment(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
-			cols := workercol.WorkerPTOPolicyAssignmentColumns
-			entity := new(worker.WorkerPTOPolicyAssignment)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
-						Where(cols.WorkerID.Eq(), req.WorkerID)
-					if req.AsOf > 0 {
-						sq = sq.Where(cols.EffectiveFrom.Lte(), req.AsOf).
-							WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-								return inner.Where(cols.EffectiveTo.IsNull()).
-									WhereOr(cols.EffectiveTo.Gt(), req.AsOf)
-							})
-					} else {
-						sq = sq.Where(cols.EffectiveTo.IsNull())
-					}
-					return sq
-				}).
-				Order(cols.EffectiveFrom.OrderDesc()).
-				Limit(1)
-			if req.IncludePolicy {
-				q = q.Relation(workercol.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules)
-			}
-
-			if err := q.Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "WorkerPTOPolicyAssignment")
+			entity, err := activeAssignmentQuery(req).First(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, assignmentErrors.Map(err, "")
 			}
 
 			return entity, nil
@@ -131,13 +142,10 @@ func (r *repository) CreateAssignment(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
+			err := workerdb.WorkerPTOPolicyAssignments.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
 				r.l.Error("failed to create PTO assignment", zap.Error(err))
-				return nil, err
+				return nil, assignmentErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -153,26 +161,10 @@ func (r *repository) UpdateAssignment(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
-			ov := entity.Version
-			entity.Version++
-
-			res, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(workercol.WorkerPTOPolicyAssignmentColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(ctx)
+			err := workerdb.WorkerPTOPolicyAssignments.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update PTO assignment", zap.Error(err))
-				return nil, err
-			}
-			if err = dberror.CheckRowsAffected(
-				res,
-				"WorkerPTOPolicyAssignment",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				return nil, assignmentErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -193,32 +185,18 @@ func (r *repository) ListOpenAssignments(
 				limit = defaultOpenAssignmentPageSize
 			}
 
-			cols := workercol.WorkerPTOPolicyAssignmentColumns
-			entities := make([]*worker.WorkerPTOPolicyAssignment, 0, limit)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
-						Where(cols.EffectiveTo.IsNull())
-					if !req.PolicyID.IsNil() {
-						sq = sq.Where(cols.PTOPolicyID.Eq(), req.PolicyID)
-					}
-					if !req.WorkerID.IsNil() {
-						sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-					}
-					if !req.AfterID.IsNil() {
-						sq = sq.Where(cols.ID.Gt(), req.AfterID)
-					}
-					return sq
-				}).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(limit))
-			if req.IncludePolicy {
-				q = q.Relation(workercol.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules)
-			}
-
-			if err := q.Scan(ctx); err != nil {
+			a := workerdb.WorkerPTOPolicyAssignments
+			entities, err := a.Where(
+				a.EffectiveTo.IsNull(),
+				keel.When(req.PolicyID.IsNotNil(), a.PTOPolicyID.Eq(req.PolicyID)),
+				keel.When(req.WorkerID.IsNotNil(), a.WorkerID.Eq(req.WorkerID)),
+				keel.When(req.AfterID.IsNotNil(), a.ID.Gt(req.AfterID)),
+			).
+				Load(policyLoads(req.IncludePolicy)...).
+				Order(a.ID.Asc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to list open PTO assignments", zap.Error(err))
 				return nil, err
 			}
@@ -228,26 +206,17 @@ func (r *repository) ListOpenAssignments(
 	)
 }
 
-type tenantRow struct {
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
 func (r *repository) ListTenantsWithOpenAssignments(
 	ctx context.Context,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with open PTO assignments to accrue")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		cols := workercol.WorkerPTOPolicyAssignmentColumns
-		rows := make([]tenantRow, 0, 16)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerPTOPolicyAssignment)(nil)).
-			ColumnExpr(cols.OrganizationID.String()).
-			ColumnExpr(cols.BusinessUnitID.String()).
-			Where(cols.EffectiveTo.IsNull()).
-			GroupExpr(cols.OrganizationID.String()+", "+cols.BusinessUnitID.String()).
-			Scan(ctx, &rows)
+		a := workerdb.WorkerPTOPolicyAssignments
+		rows, err := keel.Into[tenantRow](ctx, r.db.Keel(ctx), a.
+			AllTenants().
+			Group(a.OrganizationID, a.BusinessUnitID).
+			Pick(a.OrganizationID, a.BusinessUnitID).
+			Where(a.EffectiveTo.IsNull()))
 		if err != nil {
 			r.l.Error("failed to list tenants with open PTO assignments", zap.Error(err))
 			return nil, err
