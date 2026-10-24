@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
@@ -15,8 +16,9 @@ import (
 )
 
 const (
-	permissionCachePrefix = "perms:v5"
-	permissionEpochPrefix = "perms:epoch"
+	permissionCachePrefix  = "perms:v5"
+	permissionEpochPrefix  = "perms:epoch"
+	grantFingerprintPrefix = 16
 )
 
 type PermissionCacheRepositoryParams struct {
@@ -29,14 +31,18 @@ type PermissionCacheRepositoryParams struct {
 type permissionCacheRepository struct {
 	client *redis.Client
 	l      *zap.Logger
+	prefix string
 }
 
 func NewPermissionCacheRepository(
 	p PermissionCacheRepositoryParams,
 ) permissionports.PermissionCacheRepository {
+	grants := permission.NewRegistry().GrantFingerprint()[:grantFingerprintPrefix]
+
 	return &permissionCacheRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.permission-cache-repository"),
+		prefix: permissionCachePrefix + ":" + grants,
 	}
 }
 
@@ -174,7 +180,7 @@ func (r *permissionCacheRepository) InvalidateOrganization(
 }
 
 func (r *permissionCacheRepository) getPermissionKey(userID, orgID pulid.ID) string {
-	return fmt.Sprintf("%s:%s:%s", permissionCachePrefix, userID.String(), orgID.String())
+	return fmt.Sprintf("%s:%s:%s", r.prefix, userID.String(), orgID.String())
 }
 
 func (r *permissionCacheRepository) getEpochKey(orgID pulid.ID) string {

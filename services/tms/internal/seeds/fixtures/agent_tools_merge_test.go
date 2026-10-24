@@ -1,0 +1,115 @@
+package fixtures
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/stretchr/testify/assert"
+)
+
+/*
+The merge behind the re-seed.
+
+An agent seeded before a tool existed keeps the list it was created with, and
+the seed short-circuits once anything is there, so `task db-seed` used to leave
+it stale forever — only a db-reset, which drops the developer's data, would
+refresh it. The compliance agent shipped holding worker_get and worker_list
+and could not answer the question it exists for.
+*/
+func TestMergeToolNames_AddsWhatTheTemplateGained(t *testing.T) {
+	t.Parallel()
+
+	merged, changed := mergeToolNames(
+		[]string{"worker_get", "worker_list"},
+		[]string{"worker_get", "worker_list", "worker_list_credentials", "worker_list_time_off"},
+	)
+
+	assert.True(t, changed)
+	assert.Equal(t,
+		[]string{"worker_get", "worker_list", "worker_list_credentials", "worker_list_time_off"},
+		merged)
+}
+
+// Additive only. A tool somebody picked by hand is not in any template and must
+// survive the reconcile.
+func TestMergeToolNames_NeverRemoves(t *testing.T) {
+	t.Parallel()
+
+	merged, changed := mergeToolNames(
+		[]string{"shipment_cancel", "worker_get"},
+		[]string{"worker_get", "worker_list_time_off"},
+	)
+
+	assert.True(t, changed)
+	assert.Contains(t, merged, "shipment_cancel", "a hand-picked tool is not the seeder's to drop")
+	assert.Contains(t, merged, "worker_list_time_off")
+}
+
+// The existing order is kept, so re-seeding does not reshuffle a list somebody
+// arranged, and the new entries land at the end where they can be seen.
+func TestMergeToolNames_PreservesTheExistingOrder(t *testing.T) {
+	t.Parallel()
+
+	merged, _ := mergeToolNames(
+		[]string{"worker_list", "worker_get"},
+		[]string{"worker_get", "worker_list", "worker_list_time_off"},
+	)
+
+	assert.Equal(t, []string{"worker_list", "worker_get", "worker_list_time_off"}, merged)
+}
+
+// Nothing to add means no UPDATE is issued at all, which is what makes
+// re-running the seed free rather than a write per agent per run.
+func TestMergeToolNames_ReportsNoChangeWhenAlreadyCurrent(t *testing.T) {
+	t.Parallel()
+
+	_, changed := mergeToolNames(
+		[]string{"worker_get", "worker_list_time_off"},
+		[]string{"worker_list_time_off", "worker_get"},
+	)
+
+	assert.False(t, changed)
+}
+
+// A template with no starters (the general assistant) must not be read as
+// "remove everything".
+func TestMergeToolNames_HandlesATemplateWithNoStarters(t *testing.T) {
+	t.Parallel()
+
+	merged, changed := mergeToolNames([]string{"worker_get"}, nil)
+
+	assert.False(t, changed)
+	assert.Equal(t, []string{"worker_get"}, merged)
+}
+
+/*
+The merge never grows an agent past the tool cap.
+
+The seeded billing agent held its template's 63 tools when collections moved to
+the receivables assistant. Its old tools stay, because the merge never removes,
+and the two the template gained would have taken it to 65: an agent that no
+longer validates, so nobody could save it again from AI control.
+*/
+func TestMergeToolNames_StopsAtTheToolCap(t *testing.T) {
+	t.Parallel()
+
+	current := make([]string, 0, agentdefinition.MaxTools)
+	for idx := range agentdefinition.MaxTools - 1 {
+		current = append(current, fmt.Sprintf("tool_%d", idx))
+	}
+
+	merged, changed := mergeToolNames(
+		current,
+		[]string{"invoice_share", "invoice_list_share_candidates"},
+	)
+
+	assert.True(t, changed)
+	assert.Len(t, merged, agentdefinition.MaxTools)
+	assert.Equal(t, "invoice_share", merged[len(merged)-1])
+
+	full, changed := mergeToolNames(merged, []string{"invoice_list_share_candidates"})
+
+	assert.False(t, changed, "a full list gains nothing")
+	assert.Len(t, full, agentdefinition.MaxTools)
+}

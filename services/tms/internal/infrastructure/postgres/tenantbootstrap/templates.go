@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
-func CreateDocumentTemplateStarters(ctx context.Context, tx bun.IDB, scope Scope) (int, error) {
+func CreateDocumentTemplateStarters(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
 	registry := documenttemplate.NewRegistry()
-	existing, err := existingTemplateKinds(ctx, tx, scope)
+	existing, err := existingTemplateKinds(ctx, db, scope)
 	if err != nil {
 		return 0, err
 	}
@@ -26,7 +27,7 @@ func CreateDocumentTemplateStarters(ctx context.Context, tx bun.IDB, scope Scope
 			continue
 		}
 
-		if err = createTemplateStarter(ctx, tx, scope, registry, kind); err != nil {
+		if err = createTemplateStarter(ctx, db, scope, registry, kind); err != nil {
 			return 0, fmt.Errorf("seed %s: %w", kind, err)
 		}
 		created++
@@ -37,7 +38,7 @@ func CreateDocumentTemplateStarters(ctx context.Context, tx bun.IDB, scope Scope
 
 func createTemplateStarter(
 	ctx context.Context,
-	tx bun.IDB,
+	db *keel.DB,
 	scope Scope,
 	registry *documenttemplate.Registry,
 	kind documenttemplate.Kind,
@@ -64,12 +65,8 @@ func createTemplateStarter(
 		ActiveVersionID: nil,
 	}
 
-	if _, err = tx.NewInsert().Model(template).Exec(ctx); err != nil {
+	if err = documenttemplatedb.DocumentTemplates.Create(ctx, db, template); err != nil {
 		return fmt.Errorf("insert template: %w", err)
-	}
-
-	if err = scope.record(ctx, "document_templates", template.ID); err != nil {
-		return fmt.Errorf("track template: %w", err)
 	}
 
 	version := &documenttemplate.DocumentTemplateVersion{
@@ -108,31 +105,30 @@ func createTemplateStarter(
 	}
 	version.StarterHash = starterHash
 
-	if _, err = tx.NewInsert().Model(version).Exec(ctx); err != nil {
+	if err = documenttemplatedb.DocumentTemplateVersions.Create(ctx, db, version); err != nil {
 		return fmt.Errorf("insert version: %w", err)
 	}
 
-	return scope.record(ctx, "document_template_versions", version.ID)
+	return nil
 }
 
 func existingTemplateKinds(
 	ctx context.Context,
-	tx bun.IDB,
+	db *keel.DB,
 	scope Scope,
 ) (map[documenttemplate.Kind]bool, error) {
-	rows := make([]string, 0, len(documenttemplate.AllKinds()))
-	if err := tx.NewSelect().
-		Model((*documenttemplate.DocumentTemplate)(nil)).
-		Column("kind").
-		Where("organization_id = ?", scope.OrganizationID).
-		Where("business_unit_id = ?", scope.BusinessUnitID).
-		Scan(ctx, &rows); err != nil {
+	t := documenttemplatedb.DocumentTemplates
+	rows, err := scoped(ctx, t.Pick(t.Kind).Where(
+		t.OrganizationID.Eq(scope.OrganizationID),
+		t.BusinessUnitID.Eq(scope.BusinessUnitID),
+	)).All(ctx, db)
+	if err != nil {
 		return nil, fmt.Errorf("get existing template kinds: %w", err)
 	}
 
 	existing := make(map[documenttemplate.Kind]bool, len(rows))
 	for _, row := range rows {
-		existing[documenttemplate.Kind(row)] = true
+		existing[row.Kind] = true
 	}
 
 	return existing, nil

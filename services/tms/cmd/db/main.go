@@ -10,7 +10,7 @@ func main() {
 	e := edition.Current()
 	keelcli.Main(dbcli.App(dbcli.Options{
 		Name:          "trenova-db",
-		Description:   "Applies Trenova's migrations: the deploy step before the API and worker start.",
+		Description:   "Applies Trenova's migrations and reference data: the deploy step before the API and worker start.",
 		Editions:      e.Migrations,
 		ConfigOptions: e.LoaderOptions(),
 	}))

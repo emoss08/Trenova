@@ -12,6 +12,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -66,7 +67,7 @@ func NewRLSConnection(t *testing.T, admin *bun.DB, dsn string) *postgres.Connect
 		},
 	}
 
-	_, err = postgres.ProvisionRLS(ctx, admin, cfg)
+	_, err = postgres.ProvisionRLS(ctx, dbpool.KeelOf(admin.DB), cfg)
 	require.NoError(t, err)
 
 	lifecycle := fxtest.NewLifecycle(t)

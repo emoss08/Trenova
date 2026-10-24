@@ -5,18 +5,16 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 type AdminReconcileResult struct {
-	RolesChecked         int
-	GrantsAdded          int
-	GrantsExtended       int
-	ChangedOrganizations []pulid.ID
+	RolesChecked   int
+	GrantsAdded    int
+	GrantsExtended int
 }
 
 type adminGrantPlan struct {
@@ -24,27 +22,28 @@ type adminGrantPlan struct {
 	extend []*permission.ResourcePermission
 }
 
-func ReconcileAdminRoles(
+func ReconcileAdminRole(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
+	scope Scope,
 	registry *permission.Registry,
-) (*AdminReconcileResult, error) {
+) (AdminReconcileResult, error) {
 	if registry == nil {
 		registry = permission.NewRegistry()
 	}
 
-	roleCols := permissioncol.RoleColumns
-	roles := make([]*permission.Role, 0)
-	if err := db.NewSelect().
-		Model(&roles).
-		Column(roleCols.ID.Bare(), roleCols.OrganizationID.Bare()).
-		Where(roleCols.IsSystem.IsTrue()).
-		Where(roleCols.Name.Eq(), AdministratorRoleName).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("list administrator roles: %w", err)
+	r := permissiondb.Roles
+	roles, err := scoped(ctx, r.Pick(r.ID).Where(
+		r.OrganizationID.Eq(scope.OrganizationID),
+		r.BusinessUnitID.Eq(scope.BusinessUnitID),
+		r.IsSystem.IsTrue(),
+		r.Name.Eq(AdministratorRoleName),
+	)).All(ctx, db)
+	if err != nil {
+		return AdminReconcileResult{}, fmt.Errorf("list administrator roles: %w", err)
 	}
 
-	result := &AdminReconcileResult{RolesChecked: len(roles)}
+	result := AdminReconcileResult{RolesChecked: len(roles)}
 	if len(roles) == 0 {
 		return result, nil
 	}
@@ -54,48 +53,30 @@ func ReconcileAdminRoles(
 		roleIDs = append(roleIDs, role.ID)
 	}
 
-	existing := make([]*permission.ResourcePermission, 0)
-	if err := db.NewSelect().
-		Model(&existing).
-		Where(permissioncol.ResourcePermissionColumns.RoleID.In(), bun.List(roleIDs)).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("list administrator grants: %w", err)
+	rp := permissiondb.ResourcePermissions
+	existing, err := rp.Where(rp.RoleID.In(roleIDs...)).All(ctx, db)
+	if err != nil {
+		return result, fmt.Errorf("list administrator grants: %w", err)
 	}
 
 	byRole := make(map[pulid.ID][]*permission.ResourcePermission, len(roleIDs))
-	for _, rp := range existing {
-		byRole[rp.RoleID] = append(byRole[rp.RoleID], rp)
+	for _, held := range existing {
+		byRole[held.RoleID] = append(byRole[held.RoleID], held)
 	}
 
-	now := timeutils.NowUnix()
-	for _, role := range roles {
-		roleID := role.ID
+	now := scope.now()
+	for _, roleID := range roleIDs {
 		plan := planAdminGrants(registry, roleID, byRole[roleID], now)
-		if len(plan.add) == 0 && len(plan.extend) == 0 {
-			continue
+		if err = rp.CreateMany(ctx, db, plan.add); err != nil {
+			return result, fmt.Errorf("grant new resources to role %s: %w", roleID, err)
 		}
-		if len(plan.add) > 0 {
-			if _, err := db.NewInsert().Model(&plan.add).Exec(ctx); err != nil {
-				return nil, fmt.Errorf("grant new resources to role %s: %w", roleID, err)
-			}
-		}
-		for _, rp := range plan.extend {
-			if _, err := db.NewUpdate().
-				Model(rp).
-				Column(
-					permissioncol.ResourcePermissionColumns.Operations.Bare(),
-					permissioncol.ResourcePermissionColumns.UpdatedAt.Bare(),
-				).
-				WherePK().
-				Exec(ctx); err != nil {
-				return nil, fmt.Errorf("grant new operations to role %s: %w", roleID, err)
+		for _, held := range plan.extend {
+			if err = rp.Save(ctx, db, held, rp.Operations); err != nil {
+				return result, fmt.Errorf("grant new operations to role %s: %w", roleID, err)
 			}
 		}
 		result.GrantsAdded += len(plan.add)
 		result.GrantsExtended += len(plan.extend)
-		if !slices.Contains(result.ChangedOrganizations, role.OrganizationID) {
-			result.ChangedOrganizations = append(result.ChangedOrganizations, role.OrganizationID)
-		}
 	}
 
 	return result, nil
