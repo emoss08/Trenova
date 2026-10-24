@@ -18,6 +18,7 @@ type TxLockHandle struct {
 
 func HoldTxLock(
 	t *testing.T,
+	ctx context.Context,
 	conn *postgres.Connection,
 	opts kernelports.TxOptions,
 	fn func(context.Context) error,
@@ -31,7 +32,7 @@ func HoldTxLock(
 	}
 
 	go func() {
-		err := conn.Transact(context.Background(), opts, func(ctx context.Context) error {
+		err := conn.Transact(context.WithoutCancel(ctx), opts, func(ctx context.Context) error {
 			if err := fn(ctx); err != nil {
 				return err
 			}
