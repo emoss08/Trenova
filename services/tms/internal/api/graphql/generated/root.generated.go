@@ -1174,9 +1174,7 @@ type CustomerBillingProfileResolver interface {
 	MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (string, error)
-	InvoiceCopies(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
-	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	FactoringCompany(ctx context.Context, obj *customer.CustomerBillingProfile) (*factoringcompany.FactoringCompany, error)
 }
 

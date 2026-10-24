@@ -626,16 +626,14 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:       "invoiceCopies",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild5,
+				Name:     "invoiceCopies",
+				NonNull:  true,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").InvoiceCopies(ctx, obj)
+					return obj.InvoiceCopies, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalNInt2int16),
 			},
 			{
 				Name:     "revenueAccountId",
@@ -677,16 +675,14 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
-				Name:       "gracePeriodDays",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild5,
+				Name:     "gracePeriodDays",
+				NonNull:  true,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").GracePeriodDays(ctx, obj)
+					return obj.GracePeriodDays, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalNInt2int16),
 			},
 			{
 				Name:     "taxExempt",
@@ -1164,9 +1160,7 @@ type resolverCustomerBillingProfile interface {
 	MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (string, error)
-	InvoiceCopies(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
-	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 }
 
 type resolverQuery interface {
