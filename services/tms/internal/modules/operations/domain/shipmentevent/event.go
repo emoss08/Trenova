@@ -60,6 +60,10 @@ func (e *Event) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (e *Event) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (e *Event) GetID() pulid.ID {
 	return e.ID
 }

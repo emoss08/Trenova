@@ -297,6 +297,7 @@ var detentionNoticesTable = schema.Table{
 	Ptr:          ptrDetentionNotice,
 	Value:        valueDetentionNotice,
 	BeforeCreate: beforeCreateDetentionNotice,
+	BeforeUpdate: beforeUpdateDetentionNotice,
 }
 
 var detentionNoticesRef = keel.Ref{Table: &detentionNoticesTable}
@@ -598,6 +599,10 @@ func beforeCreateDetentionNotice(ctx context.Context, p unsafe.Pointer) error {
 	return (*detention.DetentionNotice)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateDetentionNotice(ctx context.Context, p unsafe.Pointer) error {
+	return (*detention.DetentionNotice)(p).BeforeUpdate(ctx)
+}
+
 // detentionOccurrencesTable is the schema of detention.DetentionOccurrence.
 var detentionOccurrencesTable = schema.Table{
 	Name:   "detention_occurrences",
@@ -693,6 +698,7 @@ var detentionOccurrencesTable = schema.Table{
 	Value:        valueDetentionOccurrence,
 	Attach:       attachDetentionOccurrence,
 	BeforeCreate: beforeCreateDetentionOccurrence,
+	BeforeUpdate: beforeUpdateDetentionOccurrence,
 }
 
 var detentionOccurrencesRef = keel.Ref{Table: &detentionOccurrencesTable}
@@ -1270,6 +1276,10 @@ func beforeCreateDetentionOccurrence(ctx context.Context, p unsafe.Pointer) erro
 	return (*detention.DetentionOccurrence)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateDetentionOccurrence(ctx context.Context, p unsafe.Pointer) error {
+	return (*detention.DetentionOccurrence)(p).BeforeUpdate(ctx)
+}
+
 // detentionPoliciesTable is the schema of detention.DetentionPolicy.
 var detentionPoliciesTable = schema.Table{
 	Name:   "detention_policies",
@@ -1356,6 +1366,7 @@ var detentionPoliciesTable = schema.Table{
 	Value:        valueDetentionPolicy,
 	Attach:       attachDetentionPolicy,
 	BeforeCreate: beforeCreateDetentionPolicy,
+	BeforeUpdate: beforeUpdateDetentionPolicy,
 }
 
 var detentionPoliciesRef = keel.Ref{Table: &detentionPoliciesTable}
@@ -1858,6 +1869,10 @@ func attachDetentionPolicy(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateDetentionPolicy(ctx context.Context, p unsafe.Pointer) error {
 	return (*detention.DetentionPolicy)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateDetentionPolicy(ctx context.Context, p unsafe.Pointer) error {
+	return (*detention.DetentionPolicy)(p).BeforeUpdate(ctx)
 }
 
 // detentionPolicyTiersTable is the schema of detention.DetentionPolicyTier.

@@ -27,9 +27,8 @@ var (
 
 // Commercial orders grouping one or more shipments
 type Order struct {
-	bun.BaseModel             `json:"-" bun:"table:orders,alias:ord"`
-	keel.Table                `                                      keel:"orders,report=Operations"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	bun.BaseModel `json:"-" bun:"table:orders,alias:ord"`
+	keel.Table    `                                      keel:"orders,report=Operations"`
 
 	ID             pulid.ID            `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:ord_"`
 	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
@@ -147,5 +146,15 @@ func (o *Order) BeforeAppendModel(_ context.Context, query bun.Query) error {
 }
 
 func (o *Order) BeforeCreate(ctx context.Context) error {
+	if o.Status == "" {
+		o.Status = StatusDraft
+	}
+	if o.CurrencyCode == "" {
+		o.CurrencyCode = "USD"
+	}
+	if !o.TotalAmount.Valid {
+		o.TotalAmount = decimal.NewNullDecimal(decimal.Zero)
+	}
+
 	return o.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

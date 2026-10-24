@@ -530,23 +530,24 @@ var tendersTable = schema.Table{
 		{Name: "RoutingGuide", Alias: "rg", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Routing Guide`, JSON: `routingGuide`},
 		{Name: "Offers", Alias: "o", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Offers`, JSON: `offers`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
-	Returning:  nil,
-	Version:    21,
-	AutoID:     0,
-	AutoCreate: 22,
-	AutoUpdate: 23,
-	IDPrefix:   "tnd_",
-	New:        newTender,
-	NewN:       newNTender,
-	Size:       unsafe.Sizeof(tender.Tender{}),
-	Ptr:        ptrTender,
-	Value:      valueTender,
-	Attach:     attachTender,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
+	Returning:    nil,
+	Version:      21,
+	AutoID:       0,
+	AutoCreate:   22,
+	AutoUpdate:   23,
+	IDPrefix:     "tnd_",
+	New:          newTender,
+	NewN:         newNTender,
+	Size:         unsafe.Sizeof(tender.Tender{}),
+	Ptr:          ptrTender,
+	Value:        valueTender,
+	Attach:       attachTender,
+	BeforeCreate: beforeCreateTender,
 }
 
 var tendersRef = keel.Ref{Table: &tendersTable}
@@ -832,6 +833,10 @@ func attachTender(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateTender(ctx context.Context, p unsafe.Pointer) error {
+	return (*tender.Tender)(p).BeforeCreate(ctx)
+}
+
 // tenderOffersTable is the schema of tender.TenderOffer.
 var tenderOffersTable = schema.Table{
 	Name:   "tender_offers",
@@ -882,23 +887,24 @@ var tenderOffersTable = schema.Table{
 		{Name: "Tender", Alias: "t", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Tender`, JSON: `tender`},
 		{Name: "Carrier", Alias: "c", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Carrier`, JSON: `carrier`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 35},
-	Returning:  nil,
-	Version:    33,
-	AutoID:     0,
-	AutoCreate: 34,
-	AutoUpdate: 35,
-	IDPrefix:   "tof_",
-	New:        newTenderOffer,
-	NewN:       newNTenderOffer,
-	Size:       unsafe.Sizeof(tender.TenderOffer{}),
-	Ptr:        ptrTenderOffer,
-	Value:      valueTenderOffer,
-	Attach:     attachTenderOffer,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 35},
+	Returning:    nil,
+	Version:      33,
+	AutoID:       0,
+	AutoCreate:   34,
+	AutoUpdate:   35,
+	IDPrefix:     "tof_",
+	New:          newTenderOffer,
+	NewN:         newNTenderOffer,
+	Size:         unsafe.Sizeof(tender.TenderOffer{}),
+	Ptr:          ptrTenderOffer,
+	Value:        valueTenderOffer,
+	Attach:       attachTenderOffer,
+	BeforeCreate: beforeCreateTenderOffer,
 }
 
 var tenderOffersRef = keel.Ref{Table: &tenderOffersTable}
@@ -1278,6 +1284,10 @@ func attachTenderOffer(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Carrier = (*carrier.Carrier)(child)
 	}
+}
+
+func beforeCreateTenderOffer(ctx context.Context, p unsafe.Pointer) error {
+	return (*tender.TenderOffer)(p).BeforeCreate(ctx)
 }
 
 // tenderOfferTokensTable is the schema of tender.TenderOfferToken.

@@ -545,5 +545,31 @@ func (p *DetentionPolicy) BeforeAppendModel(_ context.Context, query bun.Query) 
 }
 
 func (p *DetentionPolicy) BeforeCreate(ctx context.Context) error {
+	if p.Status == "" {
+		p.Status = PolicyStatusDraft
+	}
+	if p.ClockStartBasis == "" {
+		p.ClockStartBasis = ClockStartBasisLaterOfArrivalOrAppointment
+	}
+	if p.LateArrivalRule == "" {
+		p.LateArrivalRule = LateArrivalRuleNoEffect
+	}
+	if p.RoundingMode == "" {
+		p.RoundingMode = RoundingModeUp
+	}
+	if p.RateSource == "" {
+		p.RateSource = RateSourceAccessorial
+	}
+	if p.NotificationRequirement == "" {
+		p.NotificationRequirement = NotificationRequirementNone
+	}
+	if p.UnnotifiedBehavior == "" {
+		p.UnnotifiedBehavior = UnnotifiedBehaviorBill
+	}
+
 	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
+func (p *DetentionPolicy) BeforeUpdate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
 }

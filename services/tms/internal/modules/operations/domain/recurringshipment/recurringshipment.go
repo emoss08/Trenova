@@ -35,9 +35,8 @@ const (
 )
 
 type RecurringShipment struct {
-	bun.BaseModel             `json:"-" bun:"table:recurring_shipments,alias:rsh"`
-	keel.Table                `keel:"recurring_shipments"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	bun.BaseModel `json:"-" bun:"table:recurring_shipments,alias:rsh"`
+	keel.Table    `keel:"recurring_shipments"`
 
 	ID                      pulid.ID        `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rsh_"`
 	BusinessUnitID          pulid.ID        `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -256,6 +255,17 @@ func (rs *RecurringShipment) BeforeAppendModel(_ context.Context, query bun.Quer
 		rs.CreatedAt = now
 	case *bun.UpdateQuery:
 		rs.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (rs *RecurringShipment) BeforeCreate(_ context.Context) error {
+	if rs.Status == "" {
+		rs.Status = StatusActive
+	}
+	if rs.ExceptionPolicy == "" {
+		rs.ExceptionPolicy = ExceptionPolicySkip
 	}
 
 	return nil

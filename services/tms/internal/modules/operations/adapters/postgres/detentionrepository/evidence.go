@@ -3,17 +3,14 @@ package detentionrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -51,44 +48,36 @@ func (r *evidenceRepository) Append(
 			zap.String("occurrenceId", entry.DetentionOccurrenceID.String()),
 		)
 
-		tenantInfo := pagination.TenantInfo{
-			OrgID: entry.OrganizationID,
-			BuID:  entry.BusinessUnitID,
+		db := r.db.Keel(ctx)
+		head, sequence, err := latestLink(
+			ctx,
+			db,
+			entry.DetentionOccurrenceID,
+			keel.ForUpdate,
+		)
+		if err != nil {
+			log.Error("failed to read detention evidence head", zap.Error(err))
+			return nil, err
 		}
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			head, sequence, hErr := r.headForUpdate(c, entry.DetentionOccurrenceID, tenantInfo)
-			if hErr != nil {
-				return hErr
-			}
+		entry.PrevHash = head
+		entry.Sequence = sequence
+		entry.Seal()
 
-			entry.PrevHash = head
-			entry.Sequence = sequence
-			entry.Seal()
-
-			if _, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entry).
-				Returning("*").
-				Exec(c); iErr != nil {
-				return iErr
-			}
-
-			occCols := detentioncol.DetentionOccurrenceColumns
-			_, uErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model((*detention.DetentionOccurrence)(nil)).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return detentioncol.DetentionOccurrenceScopeTenantUpdate(uq, tenantInfo).
-						Where(occCols.ID.Eq(), entry.DetentionOccurrenceID)
-				}).
-				Set(occCols.EvidenceHead.Set(), entry.Hash).
-				Exec(c)
-
-			return uErr
-		})
-		if err != nil {
+		if err = detentiondb.DetentionEvidences.Create(ctx, db, entry); err != nil {
 			log.Error("failed to append detention evidence", zap.Error(err))
+			return nil, evidenceErrors.Map(err, entry.ID.String())
+		}
+
+		o := detentiondb.DetentionOccurrences
+		if _, err = o.Where(o.ID.Eq(entry.DetentionOccurrenceID)).Update(
+			ctx,
+			db,
+			o.EvidenceHead.To(entry.Hash),
+			o.Version.ToExpr(o.Version),
+			o.UpdatedAt.ToExpr(o.UpdatedAt),
+		); err != nil {
+			log.Error("failed to advance detention evidence head", zap.Error(err))
 			return nil, err
 		}
 
@@ -96,35 +85,29 @@ func (r *evidenceRepository) Append(
 	})
 }
 
-func (r *evidenceRepository) headForUpdate(
+func latestLink(
 	ctx context.Context,
+	db *keel.DB,
 	occurrenceID pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	lock ...keel.LockStrength,
 ) (string, int32, error) {
-	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (string, int32, error) {
-		cols := detentioncol.DetentionEvidenceColumns
-		latest := new(detention.DetentionEvidence)
+	e := detentiondb.DetentionEvidences
+	q := e.Pick(e.Hash, e.Sequence).
+		Where(e.DetentionOccurrenceID.Eq(occurrenceID)).
+		Order(e.Sequence.Desc())
+	if len(lock) > 0 {
+		q = q.Lock(lock[0])
+	}
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(latest).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return detentioncol.DetentionEvidenceScopeTenant(sq, tenantInfo).
-					Where(cols.DetentionOccurrenceID.Eq(), occurrenceID)
-			}).
-			Order(cols.Sequence.OrderDesc()).
-			Limit(1).
-			For("UPDATE").
-			Scan(ctx)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return detention.GenesisHash, 0, nil
-			}
-			return "", 0, err
+	latest, err := q.First(ctx, db)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return detention.GenesisHash, 0, nil
 		}
+		return "", 0, err
+	}
 
-		return latest.Hash, latest.Sequence + 1, nil
-	})
+	return latest.Hash, latest.Sequence + 1, nil
 }
 
 func (r *evidenceRepository) List(
@@ -132,18 +115,10 @@ func (r *evidenceRepository) List(
 	req *detentionports.ListEvidenceRequest,
 ) ([]*detention.DetentionEvidence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionEvidence, error) {
-		cols := detentioncol.DetentionEvidenceColumns
-		entities := make([]*detention.DetentionEvidence, 0, 16)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return detentioncol.DetentionEvidenceScopeTenant(sq, req.TenantInfo).
-					Where(cols.DetentionOccurrenceID.Eq(), req.OccurrenceID)
-			}).
-			Order(cols.Sequence.OrderAsc()).
-			Scan(ctx)
+		e := detentiondb.DetentionEvidences
+		entities, err := e.Where(e.DetentionOccurrenceID.Eq(req.OccurrenceID)).
+			Order(e.Sequence.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list detention evidence", zap.Error(err))
 			return nil, err
@@ -158,26 +133,6 @@ func (r *evidenceRepository) Head(
 	req *detentionports.ListEvidenceRequest,
 ) (string, int32, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (string, int32, error) {
-		cols := detentioncol.DetentionEvidenceColumns
-		latest := new(detention.DetentionEvidence)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(latest).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return detentioncol.DetentionEvidenceScopeTenant(sq, req.TenantInfo).
-					Where(cols.DetentionOccurrenceID.Eq(), req.OccurrenceID)
-			}).
-			Order(cols.Sequence.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return detention.GenesisHash, 0, nil
-			}
-			return "", 0, err
-		}
-
-		return latest.Hash, latest.Sequence + 1, nil
+		return latestLink(ctx, r.db.Keel(ctx), req.OccurrenceID)
 	})
 }

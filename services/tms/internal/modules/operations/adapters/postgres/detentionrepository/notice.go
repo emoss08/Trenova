@@ -3,15 +3,13 @@ package detentionrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -40,13 +38,9 @@ func (r *noticeRepository) Create(
 	entity *detention.DetentionNotice,
 ) (*detention.DetentionNotice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionNotice, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := detentiondb.DetentionNotices.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create detention notice", zap.Error(err))
-			return nil, err
+			return nil, noticeErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -58,25 +52,9 @@ func (r *noticeRepository) Update(
 	entity *detention.DetentionNotice,
 ) (*detention.DetentionNotice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionNotice, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := detentiondb.DetentionNotices.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update detention notice", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			results, "DetentionNotice", entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, noticeErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -94,24 +72,20 @@ func (r *noticeRepository) AttachPDFDocument(
 	req *detentionports.AttachNoticePDFDocumentRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := detentioncol.DetentionNoticeColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*detention.DetentionNotice)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return detentioncol.DetentionNoticeScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.NoticeID)
-			}).
-			Set(cols.PDFDocumentID.Set(), req.DocumentID).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Exec(ctx)
+		n := detentiondb.DetentionNotices
+		rows, err := n.Where(n.ID.Eq(req.NoticeID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			n.PDFDocumentID.To(req.DocumentID),
+			n.UpdatedAt.To(timeutils.NowUnix()),
+			n.Version.ToExpr(n.Version),
+		)
 		if err != nil {
 			r.l.Error("failed to attach detention notice PDF document", zap.Error(err))
-			return err
+			return noticeErrors.Map(err, req.NoticeID.String())
 		}
 
-		return dberror.CheckRowsAffected(results, "DetentionNotice", req.NoticeID.String())
+		return dberror.CheckAffected(rows, "DetentionNotice", req.NoticeID.String())
 	})
 }
 
@@ -120,18 +94,10 @@ func (r *noticeRepository) List(
 	req *detentionports.ListDetentionNoticesRequest,
 ) ([]*detention.DetentionNotice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionNotice, error) {
-		cols := detentioncol.DetentionNoticeColumns
-		entities := make([]*detention.DetentionNotice, 0, 8)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return detentioncol.DetentionNoticeScopeTenant(sq, req.TenantInfo).
-					Where(cols.DetentionOccurrenceID.Eq(), req.OccurrenceID)
-			}).
-			Order(cols.CreatedAt.OrderAsc()).
-			Scan(ctx)
+		n := detentiondb.DetentionNotices
+		entities, err := n.Where(n.DetentionOccurrenceID.Eq(req.OccurrenceID)).
+			Order(n.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list detention notices", zap.Error(err))
 			return nil, err
@@ -148,19 +114,13 @@ func (r *noticeRepository) ListQueued(
 	req *detentionports.ListNoticesDueRequest,
 ) ([]*detention.DetentionNotice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionNotice, error) {
-		cols := detentioncol.DetentionNoticeColumns
-		entities := make([]*detention.DetentionNotice, 0, 32)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return detentioncol.DetentionNoticeScopeTenant(sq, req.TenantInfo).
-					Where(cols.DeliveryStatus.Eq(), detention.NoticeDeliveryStatusQueued).
-					Where(cols.ScheduledFor.Lte(), req.Before)
-			}).
-			Order(cols.ScheduledFor.OrderAsc()).
-			Scan(ctx)
+		n := detentiondb.DetentionNotices
+		entities, err := n.Where(
+			n.DeliveryStatus.Eq(detention.NoticeDeliveryStatusQueued),
+			n.ScheduledFor.Lte(req.Before),
+		).
+			Order(n.ScheduledFor.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list queued detention notices", zap.Error(err))
 			return nil, err

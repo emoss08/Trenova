@@ -158,3 +158,11 @@ func (t *Tender) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (t *Tender) BeforeCreate(_ context.Context) error {
+	if t.Status == "" {
+		t.Status = StatusActive
+	}
+
+	return nil
+}

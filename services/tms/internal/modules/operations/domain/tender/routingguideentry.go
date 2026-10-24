@@ -132,6 +132,13 @@ func (rge *RoutingGuideEntry) BeforeAppendModel(_ context.Context, query bun.Que
 	return nil
 }
 
-func (rge *RoutingGuideEntry) BeforeCreate(ctx context.Context) error {
-	return rge.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (rge *RoutingGuideEntry) BeforeCreate(_ context.Context) error {
+	if rge.RateMethod == "" {
+		rge.RateMethod = shipment.CarrierRateMethodFlat
+	}
+	if rge.Channel == "" {
+		rge.Channel = ChannelEmail
+	}
+
+	return nil
 }

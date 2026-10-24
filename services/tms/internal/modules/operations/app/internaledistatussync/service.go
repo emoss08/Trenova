@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -30,7 +29,7 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	DB                 kernelports.DBConnection
+	DB                 kernelports.Transactor
 	ShipmentRepo       shipmentports.ShipmentRepository
 	ShipmentEventRepo  shipmenteventports.ShipmentEventRepository
 	ShipmentLinkRepo   ediports.EDIShipmentLinkRepository
@@ -43,7 +42,7 @@ type Params struct {
 
 type Observer struct {
 	l                  *zap.Logger
-	db                 kernelports.DBConnection
+	db                 kernelports.Transactor
 	shipmentRepo       shipmentRepository
 	shipmentEventRepo  shipmentEventRepository
 	shipmentLinkRepo   shipmentLinkRepository
@@ -177,7 +176,7 @@ func (o *Observer) handleLink(
 	}
 
 	var result syncContext
-	err := o.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := o.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		result, txErr = o.buildSyncContext(txCtx, event, link)
 		if txErr != nil || result.link == nil {

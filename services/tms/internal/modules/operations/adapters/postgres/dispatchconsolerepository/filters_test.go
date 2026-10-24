@@ -1,38 +1,31 @@
 package dispatchconsolerepository
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 const testWindowStart = int64(1_700_000_000)
 
 const testWindowEnd = int64(1_700_172_800)
 
-func renderMoveFilters(t *testing.T, filter *shipmentports.DispatchBoardFilter) string {
+func renderMoveFilters(
+	t *testing.T,
+	filter *shipmentports.DispatchBoardFilter,
+) (sql, args string) {
 	t.Helper()
 
-	db, _, err := sqlmock.New()
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = db.Close() })
+	q := boardMoves().Pick(shipmentdb.ShipmentMoves.ID).Where(moveFilters(filter)...)
+	text, values := keeltest.Render(t, q)
 
-	bunDB := bun.NewDB(db, pgdialect.New())
-
-	q := bunDB.NewSelect().
-		Model((*shipment.ShipmentMove)(nil)).
-		ColumnExpr("sm.id").
-		Join(shipmentJoin).
-		Join(customerJoin)
-	q = joinMoveStopEdges(q)
-	q = applyMoveFilters(q, filter)
-
-	return q.String()
+	return text, fmt.Sprint(values)
 }
 
 // TestMoveFiltersKeepPastDueOpenMoves pins the invariant the console exists for: an
@@ -42,29 +35,26 @@ func renderMoveFilters(t *testing.T, filter *shipmentports.DispatchBoardFilter) 
 func TestMoveFiltersKeepPastDueOpenMoves(t *testing.T) {
 	t.Parallel()
 
-	sql := renderMoveFilters(t, &shipmentports.DispatchBoardFilter{
+	sql, args := renderMoveFilters(t, &shipmentports.DispatchBoardFilter{
 		WindowStart: testWindowStart,
 		WindowEnd:   testWindowEnd,
 	})
 
-	require.Contains(
-		t,
-		sql,
-		"COALESCE(dest.window_end, dest.window_start, orig.window_start) >= 1700000000",
-		"window lower bound must still be applied",
-	)
 	require.Regexp(
 		t,
-		`window_start\) >= 1700000000\) OR \(.*'New', 'Assigned', 'InTransit'`,
+		`\(coalesce\([a-z_]+\."scheduled_window_end", [a-z_]+\."scheduled_window_start", [a-z_]+\."scheduled_window_start"\) >= \$\d+ OR [a-z_]+\."status" = ANY\(\$\d+\)\)`,
 		sql,
 		"open moves must be exempt from the window lower bound",
 	)
-	require.Contains(
+	require.Regexp(
 		t,
+		`coalesce\([a-z_]+\."scheduled_window_start", 0\) <= \$\d+`,
 		sql,
-		"COALESCE(orig.window_start, 0) <= 1700172800",
 		"window upper bound must still bound the planning horizon",
 	)
+	require.Contains(t, args, fmt.Sprint(testWindowStart))
+	require.Contains(t, args, fmt.Sprint(testWindowEnd))
+	require.Contains(t, args, "New Assigned InTransit")
 }
 
 // TestMoveFiltersDefaultToOpenStatuses guards the board against defaulting to every move
@@ -72,11 +62,11 @@ func TestMoveFiltersKeepPastDueOpenMoves(t *testing.T) {
 func TestMoveFiltersDefaultToOpenStatuses(t *testing.T) {
 	t.Parallel()
 
-	sql := renderMoveFilters(t, &shipmentports.DispatchBoardFilter{})
+	sql, args := renderMoveFilters(t, &shipmentports.DispatchBoardFilter{})
 
-	require.Contains(t, sql, "'New', 'Assigned', 'InTransit'")
-	require.NotContains(t, sql, "COALESCE(dest.window_end")
-	require.NotContains(t, sql, "COALESCE(orig.window_start, 0) <=")
+	require.Contains(t, args, "New Assigned InTransit")
+	require.NotContains(t, sql, "coalesce(")
+	require.Equal(t, 1, strings.Count(sql, `"status" = ANY(`))
 }
 
 // TestMoveFiltersHonorExplicitStatuses keeps an explicit status request authoritative;
@@ -84,11 +74,11 @@ func TestMoveFiltersDefaultToOpenStatuses(t *testing.T) {
 func TestMoveFiltersHonorExplicitStatuses(t *testing.T) {
 	t.Parallel()
 
-	sql := renderMoveFilters(t, &shipmentports.DispatchBoardFilter{
+	sql, args := renderMoveFilters(t, &shipmentports.DispatchBoardFilter{
 		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusCompleted},
 		WindowStart:  testWindowStart,
 	})
 
-	require.Regexp(t, `sm"?\."?status"? IN \('Completed'\)`, sql)
-	require.Contains(t, sql, "COALESCE(dest.window_end, dest.window_start, orig.window_start) >=")
+	require.Contains(t, args, "[Completed]")
+	require.Contains(t, sql, ") >= $")
 }

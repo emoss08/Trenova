@@ -25,9 +25,8 @@ var (
 )
 
 type ReasonCode struct {
-	bun.BaseModel             `bun:"table:service_failure_reason_codes,alias:sfrc" json:"-"`
-	keel.Table                `keel:"service_failure_reason_codes"`
-	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
+	bun.BaseModel `bun:"table:service_failure_reason_codes,alias:sfrc" json:"-"`
+	keel.Table    `keel:"service_failure_reason_codes"`
 
 	ID                   pulid.ID            `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:sfrc_"`
 	BusinessUnitID       pulid.ID            `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`

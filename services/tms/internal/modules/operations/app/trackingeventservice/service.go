@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -28,7 +27,7 @@ const (
 type Params struct {
 	fx.In
 
-	DB           kernelports.DBConnection
+	DB           kernelports.Transactor
 	Logger       *zap.Logger
 	Repo         trackingeventports.TrackingEventRepository
 	MoveRepo     shipmentports.ShipmentMoveRepository
@@ -37,7 +36,7 @@ type Params struct {
 }
 
 type Service struct {
-	db           kernelports.DBConnection
+	db           kernelports.Transactor
 	l            *zap.Logger
 	repo         trackingeventports.TrackingEventRepository
 	moveRepo     shipmentports.ShipmentMoveRepository
@@ -164,7 +163,7 @@ func (s *Service) RecordReported(
 	}
 
 	var result *trackingeventports.StopEventResult
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		move, err := s.loadMove(txCtx, params.TenantInfo, params.MoveID, params.StopID)
 		if err != nil {
 			return err
@@ -366,7 +365,7 @@ func (s *Service) reconcile(
 	moveID pulid.ID,
 ) (reconciliation, error) {
 	var out reconciliation
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var events []*trackingevent.TrackingEvent
 		var opts trackingevent.Options
 		loaded := false

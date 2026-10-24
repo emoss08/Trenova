@@ -2,37 +2,90 @@ package shipmentrepository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const (
+	shipmentEntity          = "Shipment"
+	shipmentBusyMessage     = "Shipment is busy. Retry the request."
+	previousRatesLimit      = 50
+	maxDuplicateBOLResults  = 100
+	defaultRatedByTemplates = 100
+)
+
+var shipmentErrors = dberror.Mapping{
+	Entity: shipmentEntity,
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_shipments_external_reference",
+			Field:   "externalReference",
+			Message: "Another shipment for this customer already uses this customer reference",
+		},
+		{
+			Name:    "uq_shipments_idempotency_key",
+			Field:   "idempotencyKey",
+			Message: "A shipment was already created with this idempotency key",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_shipments_customer",
+			Field:   "customerId",
+			Message: "Customer does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipments_service_type",
+			Field:   "serviceTypeId",
+			Message: "Service type does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipments_shipment_type",
+			Field:   "shipmentTypeId",
+			Message: "Shipment type does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipments_tractor_type",
+			Field:   "tractorTypeId",
+			Message: "Tractor type does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipments_trailer_type",
+			Field:   "trailerTypeId",
+			Message: "Trailer type does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipments_formula_template",
+			Field:   "formulaTemplateId",
+			Message: "Formula template does not exist in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -75,64 +128,46 @@ func New(p Params) shipmentports.ShipmentRepository {
 	}
 }
 
+func busy(err error, id pulid.ID) error {
+	if err == nil {
+		return nil
+	}
+
+	return dberror.MapRetryableTransactionError(
+		shipmentErrors.Map(err, id.String()),
+		shipmentBusyMessage,
+	)
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *shipmentports.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*shipment.Shipment], error) {
-			dba := r.db.DBForContext(ctx)
-
-			quick, err := QuickFilterConditions(dba, &req.ShipmentOptions)
+			quick, err := QuickFilterConditions(&req.ShipmentOptions)
 			if err != nil {
 				return nil, err
 			}
 
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, cErr := dba.
-					NewSelect().
-					Model((*shipment.Shipment)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return countShipmentListQuery(sq, dba, req).Apply(whereAll(quick))
-					}).
-					Count(ctx)
-				if cErr != nil {
-					return nil, cErr
-				}
-				totalCount = new(int(total))
-			}
+			loads := shipmentLoads(&req.ShipmentOptions)
 
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.Shipment]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*shipment.Shipment) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(items).
-						ColumnExpr(shipmentcol.ShipmentTable.All())
+			return listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				shipmentdb.Shipments.
+					Where(shipmentOptionPredicates(&req.ShipmentOptions)...).
+					Where(quick...),
+				&listquery.Request[shipment.Shipment]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(q *keel.Query[shipment.Shipment]) *keel.Query[shipment.Shipment] {
+						return q.Load(loads...)
+					},
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, aErr := cursorFilterQuery(sq, dba, req)
-					if aErr != nil {
-						return sq, aErr
-					}
-					return sq.Apply(whereAll(quick)), nil
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			if req.ShipmentOptions.ExpandShipmentDetails {
-				if err = r.hydrateMoves(ctx, result.Items); err != nil {
-					return nil, err
-				}
-			}
-
-			return result, nil
+			)
 		},
 	)
 }
@@ -141,28 +176,13 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		entity := new(shipment.Shipment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-					Where(sp.ID.Eq(), req.ID)
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return standardShipmentFilter(sq, req.ShipmentOptions)
-			}).
-			Scan(ctx)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		sp := shipmentdb.Shipments
+		entity, err := sp.Where(sp.ID.Eq(req.ID)).
+			Load(shipmentLoads(&req.ShipmentOptions)...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Shipment")
-		}
-
-		if req.ExpandShipmentDetails {
-			if err = r.hydrateMoves(ctx, []*shipment.Shipment{entity}); err != nil {
-				return nil, err
-			}
+			return nil, shipmentErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -174,27 +194,23 @@ func (r *repository) GetByIDs(
 	req *shipmentports.GetShipmentsByIDsRequest,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		entities := make([]*shipment.Shipment, 0, len(req.ShipmentIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-					Where(sp.ID.In(), bun.List(req.ShipmentIDs))
-			}).
-			Relation(shipmentcol.ShipmentRelations.Customer).
-			Relation(shipmentcol.ShipmentRelations.ServiceType).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				if !req.IncludeCharges {
-					return sq
-				}
+		if len(req.ShipmentIDs) == 0 {
+			return []*shipment.Shipment{}, nil
+		}
 
-				return withCharges(sq.Relation(shipmentcol.ShipmentRelations.BillToCustomer))
-			}).
-			Scan(ctx)
+		sp := shipmentdb.Shipments
+		loads := []keel.Loader{sp.Customer(), sp.ServiceType()}
+		if req.IncludeCharges {
+			loads = append(loads, sp.BillToCustomer())
+			loads = append(loads, chargeLoads()...)
+		}
+
+		entities, err := sp.Where(sp.ID.In(req.ShipmentIDs...)).
+			Load(loads...).
+			Limit(len(req.ShipmentIDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Shipment")
+			return nil, shipmentErrors.Map(err, "")
 		}
 
 		return entities, nil
@@ -206,64 +222,29 @@ func (r *repository) ListRatedByFormulaTemplate(
 	req *shipmentports.ListRatedByFormulaTemplateRequest,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		sm := shipmentcol.ShipmentMoveColumns
-		stp := shipmentcol.StopColumns
-		stops := buncolgen.Rel(
-			shipmentcol.ShipmentRelations.Moves,
-			shipmentcol.ShipmentMoveRelations.Stops,
-		)
-
-		entities := make([]*shipment.Shipment, 0, req.Limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-					Where(sp.FormulaTemplateID.Eq(), req.TemplateID)
-			}).
-			Relation(shipmentcol.ShipmentRelations.Customer).
-			Relation(shipmentcol.ShipmentRelations.ServiceType).
-			Relation(shipmentcol.ShipmentRelations.ShipmentType).
-			Relation(shipmentcol.ShipmentRelations.TractorType).
-			Relation(shipmentcol.ShipmentRelations.TrailerType).
-			RelationWithOpts(shipmentcol.ShipmentRelations.Moves, bun.RelationOpts{
-				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(sm.Sequence.OrderAsc())
-				},
-			}).
-			RelationWithOpts(stops, bun.RelationOpts{
-				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(stp.Sequence.OrderAsc())
-				},
-			}).
-			Relation(buncolgen.Rel(stops, shipmentcol.StopRelations.Location)).
-			Relation(buncolgen.Rel(
-				stops,
-				shipmentcol.StopRelations.Location,
-				locationcol.LocationRelations.State,
-			)).
-			RelationWithOpts(shipmentcol.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
-				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Relation(shipmentcol.AdditionalChargeRelations.AccessorialCharge)
-				},
-			}).
-			RelationWithOpts(shipmentcol.ShipmentRelations.Commodities, bun.RelationOpts{
-				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Relation(shipmentcol.ShipmentCommodityRelations.Commodity).
-						Relation(buncolgen.Rel(
-							shipmentcol.ShipmentCommodityRelations.Commodity,
-							commoditycol.CommodityRelations.HazardousMaterial))
-				},
-			}).
-			Order(sp.CreatedAt.OrderDesc()).
-			Limit(int64(req.Limit)).
-			Scan(ctx)
-		if err != nil {
-			return nil, err
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultRatedByTemplates
 		}
 
-		return entities, nil
+		sp := shipmentdb.Shipments
+		m := sp.Moves()
+		ac := sp.AdditionalCharges()
+
+		return sp.Where(sp.FormulaTemplateID.Eq(req.TemplateID)).
+			Load(
+				sp.Customer(),
+				sp.ServiceType(),
+				sp.ShipmentType(),
+				sp.TractorType(),
+				sp.TrailerType(),
+				m.Order(m.Sequence.Asc()).Load(orderedStopsWithLocation(m.Stops())),
+				ac.Load(ac.AccessorialCharge()),
+				commoditiesWithHazmat(),
+			).
+			Order(sp.CreatedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -271,46 +252,30 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *shipmentports.ShipmentSelectOptionsRequest,
 ) (*pagination.ListResult[*shipment.Shipment], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*shipment.Shipment], error) {
-			sp := shipmentcol.ShipmentColumns
+			sp := shipmentdb.Shipments
+			q := sp.Pick(sp.ID, sp.CreatedAt, sp.Status, sp.ProNumber, sp.BOL).
+				Order(sp.CreatedAt.Desc())
+			if !req.CustomerID.IsNil() {
+				q = q.Where(sp.CustomerID.Eq(req.CustomerID))
+			}
+			if req.AttachableOnly {
+				q = q.Where(sp.Status.NotIn(shipment.StatusCanceled, shipment.StatusInvoiced))
+			}
+			if !req.ExcludeOrderID.IsNil() {
+				q = q.Where(sp.OrderID.Ne(req.ExcludeOrderID))
+			}
 
-			return dbhelper.SelectOptions[*shipment.Shipment](
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						sp.ID,
-						sp.CreatedAt,
-						sp.Status,
-						sp.ProNumber,
-						sp.BOL,
-					},
-					OrgColumnRef:     &sp.OrganizationID,
-					BuColumnRef:      &sp.BusinessUnitID,
-					SearchColumnRefs: []buncolgen.Column{sp.ProNumber, sp.BOL},
-					EntityName:       "Shipment",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						if !req.CustomerID.IsNil() {
-							q = q.Where(sp.CustomerID.Eq(), req.CustomerID)
-						}
-						if req.AttachableOnly {
-							q = q.Where(sp.Status.Ne(), shipment.StatusCanceled).
-								Where(sp.Status.Ne(), shipment.StatusInvoiced)
-						}
-						if !req.ExcludeOrderID.IsNil() {
-							q = q.Where(
-								"(? IS NULL OR ? != ?)",
-								bun.Ident(sp.OrderID.Qualified()),
-								bun.Ident(sp.OrderID.Qualified()),
-								req.ExcludeOrderID,
-							)
-						}
-						return q.Order(sp.CreatedAt.OrderDesc())
-					},
+				func(s string) keel.Pred {
+					return keel.Or(sp.ProNumber.ContainsFold(s), sp.BOL.ContainsFold(s))
 				},
 			)
 		},
@@ -321,58 +286,28 @@ func (r *repository) GetUnassigned(
 	ctx context.Context,
 	req *shipmentports.GetUnassignedShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*shipment.Shipment], error) {
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*shipment.Shipment)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						countReq := shipmentports.ListShipmentsRequest{
-							Filter: req.Filter,
-							ShipmentOptions: shipmentports.ShipmentOptions{
-								Status: string(shipment.StatusNew),
-							},
-						}
-						return countShipmentListQuery(sq, dba, &countReq).
-							Where("NOT EXISTS (?)", unassignedShipmentPredicate(dba))
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.Shipment]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*shipment.Shipment) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(items).
-						ColumnExpr(shipmentcol.ShipmentTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return unassignedShipmentListQuery(sq, dba, req)
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
-
+			sp := shipmentdb.Shipments
+			loads := []keel.Loader{sp.Customer()}
 			if req.ShipmentOptions.ExpandShipmentDetails {
-				if err = r.hydrateMoves(ctx, result.Items); err != nil {
-					return nil, err
-				}
+				loads = append(loads, movesWithDetails())
 			}
 
-			return result, nil
+			return listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				sp.Where(sp.Status.Eq(shipment.StatusNew), unassignedShipmentPredicate()),
+				&listquery.Request[shipment.Shipment]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(q *keel.Query[shipment.Shipment]) *keel.Query[shipment.Shipment] {
+						return q.Load(loads...)
+					},
+				},
+			)
 		},
 	)
 }
@@ -385,71 +320,58 @@ func (r *repository) GetPreviousRates(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*shipmentports.PreviousRateSummary], error) {
-			sp := shipmentcol.ShipmentColumns
-			entities := make([]*shipmentports.PreviousRateSummary, 0, 50)
-
-			baseQuery := func(dba bun.IDB) *bun.SelectQuery {
-				originCTE, destinationCTE := buildPreviousRatesCTEs(
-					dba,
-					req.OriginLocationID,
-					req.DestinationLocationID,
-				)
-
-				query := dba.NewSelect().
-					With("origin_shipments", originCTE).
-					With("destination_shipments", destinationCTE).
-					TableExpr(shipmentcol.ShipmentTable.Name+" AS "+shipmentcol.ShipmentTable.Alias).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-							Where(sp.ShipmentTypeID.Eq(), req.ShipmentTypeID).
-							Where(sp.ServiceTypeID.Eq(), req.ServiceTypeID).
-							Where(sp.Status.Eq(), shipment.StatusInvoiced).
-							Where("sp.id IN (SELECT shipment_id FROM origin_shipments)").
-							Where("sp.id IN (SELECT shipment_id FROM destination_shipments)")
-					})
-
-				if req.CustomerID != nil {
-					query = query.Where(sp.CustomerID.Eq(), pulid.ConvertFromPtr(req.CustomerID))
-				}
-
-				if req.ExcludeShipmentID != nil {
-					query = query.Where(sp.ID.Ne(), pulid.ConvertFromPtr(req.ExcludeShipmentID))
-				}
-
-				return query
+			sp := shipmentdb.Shipments
+			q := sp.Where(
+				sp.ShipmentTypeID.Eq(req.ShipmentTypeID),
+				sp.ServiceTypeID.Eq(req.ServiceTypeID),
+				sp.Status.Eq(shipment.StatusInvoiced),
+				sp.ID.InQuery(previousRateOrigins(req.OriginLocationID)),
+				sp.ID.InQuery(previousRateDestinations(req.DestinationLocationID)),
+			)
+			if req.CustomerID != nil {
+				q = q.Where(sp.CustomerID.Eq(pulid.ConvertFromPtr(req.CustomerID)))
+			}
+			if req.ExcludeShipmentID != nil {
+				q = q.Where(sp.ID.Ne(pulid.ConvertFromPtr(req.ExcludeShipmentID)))
 			}
 
-			countQuery := baseQuery(r.db.DBForContext(ctx)).
-				ColumnExpr("COUNT(*)")
+			items := q.Clone().
+				Pick(
+					sp.ID,
+					sp.ProNumber,
+					sp.CustomerID,
+					sp.ServiceTypeID,
+					sp.ShipmentTypeID,
+					sp.FormulaTemplateID,
+					sp.FreightChargeAmount,
+					sp.OtherChargeAmount,
+					sp.TotalChargeAmount,
+					sp.Pieces,
+					sp.Weight,
+					sp.CreatedAt,
+				).
+				Order(sp.CreatedAt.Desc()).
+				Limit(previousRatesLimit)
 
-			total := 0
-			if err := countQuery.Scan(ctx, &total); err != nil {
+			var rows []shipmentports.PreviousRateSummary
+			var total int64
+			if err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				keel.IntoSlice(items, &rows),
+				keel.CountInto(q, &total),
+			); err != nil {
 				return nil, err
 			}
 
-			itemsQuery := baseQuery(r.db.DBForContext(ctx)).
-				ColumnExpr(sp.ID.As("shipment_id")).
-				ColumnExpr(sp.ProNumber.Qualified()).
-				ColumnExpr(sp.CustomerID.Qualified()).
-				ColumnExpr(sp.ServiceTypeID.Qualified()).
-				ColumnExpr(sp.ShipmentTypeID.Qualified()).
-				ColumnExpr(sp.FormulaTemplateID.Qualified()).
-				ColumnExpr(sp.FreightChargeAmount.Qualified()).
-				ColumnExpr(sp.OtherChargeAmount.Qualified()).
-				ColumnExpr(sp.TotalChargeAmount.Qualified()).
-				ColumnExpr(sp.Pieces.Qualified()).
-				ColumnExpr(sp.Weight.Qualified()).
-				ColumnExpr(sp.CreatedAt.Qualified()).
-				Order(sp.CreatedAt.OrderDesc()).
-				Limit(50)
-
-			if err := itemsQuery.Scan(ctx, &entities); err != nil {
-				return nil, err
+			entities := make([]*shipmentports.PreviousRateSummary, len(rows))
+			for i := range rows {
+				entities[i] = &rows[i]
 			}
 
 			return &pagination.ListResult[*shipmentports.PreviousRateSummary]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -465,7 +387,7 @@ func (r *repository) Create(
 			return nil, err
 		}
 
-		locationCode, businessUnitCode, err := r.resolveSequenceCodes(ctx, entity)
+		locationCode, businessUnitCode, err := ResolveSequenceCodes(ctx, r.db.Keel(ctx), entity)
 		if err != nil {
 			return nil, err
 		}
@@ -482,57 +404,53 @@ func (r *repository) Create(
 		}
 		entity.ProNumber = proNumber
 
-		// A shipment created outside a commercial order gets its own single-leg order so
-		// everything has a commercial parent. The order number is minted before the tx,
-		// consistent with the pro-number lifecycle (a rolled-back tx burns a number).
 		newOrder, err := r.buildAutoOrder(ctx, entity, locationCode, businessUnitCode)
 		if err != nil {
 			return nil, err
 		}
 
-		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			if err = quotaservice.EnforceAll(c, r.quota, quotaReq); err != nil {
-				return err
-			}
-
-			if newOrder != nil {
-				if err = r.orderRepository.CreateInTx(c, tx, newOrder); err != nil {
-					return err
-				}
-				entity.OrderID = newOrder.ID
-			}
-
-			if _, err = r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); err != nil {
-				return err
-			}
-
-			if err = r.moveRepository.SyncForShipment(c, tx, entity); err != nil {
-				return err
-			}
-
-			if err = r.additionalChargeRepository.SyncForShipment(c, tx, entity); err != nil {
-				return err
-			}
-
-			if err = r.chargeAllocationRepository.SyncForShipment(c, tx, entity); err != nil {
-				return err
-			}
-
-			return r.commodityRepository.SyncForShipment(c, tx, entity)
-		})
-		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Shipment is busy. Retry the request.",
-			)
+		if err = r.insertShipment(ctx, entity, newOrder, quotaReq); err != nil {
+			return nil, busy(err, entity.ID)
 		}
 
 		return entity, nil
 	})
+}
+
+func (r *repository) insertShipment(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	newOrder *order.Order,
+	quotaReq platformplanports.QuotaRequest,
+) error {
+	if err := quotaservice.EnforceAll(ctx, r.quota, quotaReq); err != nil {
+		return err
+	}
+
+	if newOrder != nil {
+		if _, err := r.orderRepository.Create(ctx, newOrder); err != nil {
+			return err
+		}
+		entity.OrderID = newOrder.ID
+	}
+
+	if err := shipmentdb.Shipments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		return err
+	}
+
+	if err := r.moveRepository.SyncForShipment(ctx, entity); err != nil {
+		return err
+	}
+
+	if err := r.additionalChargeRepository.SyncForShipment(ctx, entity); err != nil {
+		return err
+	}
+
+	if err := r.chargeAllocationRepository.SyncForShipment(ctx, entity); err != nil {
+		return err
+	}
+
+	return r.commodityRepository.SyncForShipment(ctx, entity)
 }
 
 func (r *repository) buildAutoOrder(
@@ -573,60 +491,35 @@ func (r *repository) Update(
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(c).NewUpdate().
-				Model(entity).
-				ExcludeColumn(
-					sp.CreatedAt.Bare(),
-					sp.BillingTransferStatus.Bare(),
-					sp.TransferredToBillingAt.Bare(),
-					sp.IdempotencyKey.Bare(),
-				).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).
-						Where(sp.ID.Eq(), entity.ID).
-						Where(sp.Version.Eq(), ov)
-				}).
-				Returning("*").
-				Exec(c)
-			if err != nil {
-				return err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"Shipment",
-				entity.ID.String(),
+		err := func() error {
+			sp := shipmentdb.Shipments
+			if err := sp.SaveExcept(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+				sp.BillingTransferStatus,
+				sp.TransferredToBillingAt,
+				sp.IdempotencyKey,
 			); err != nil {
 				return err
 			}
 
-			if err = r.moveRepository.SyncForShipment(c, tx, entity); err != nil {
+			if err := r.moveRepository.SyncForShipment(ctx, entity); err != nil {
 				return err
 			}
 
-			if err = r.additionalChargeRepository.SyncForShipment(c, tx, entity); err != nil {
+			if err := r.additionalChargeRepository.SyncForShipment(ctx, entity); err != nil {
 				return err
 			}
 
-			if err = r.chargeAllocationRepository.SyncForShipment(c, tx, entity); err != nil {
+			if err := r.chargeAllocationRepository.SyncForShipment(ctx, entity); err != nil {
 				return err
 			}
 
-			return r.commodityRepository.SyncForShipment(c, tx, entity)
-		})
+			return r.commodityRepository.SyncForShipment(ctx, entity)
+		}()
 		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Shipment is busy. Retry the request.",
-			)
+			return nil, busy(err, entity.ID)
 		}
 
 		return entity, nil
@@ -638,49 +531,20 @@ func (r *repository) UpdateOperationalLifecycle(
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(c).NewUpdate().
-				Model(entity).
-				Column(
-					sp.Status.Bare(),
-					sp.ActualShipDate.Bare(),
-					sp.ActualDeliveryDate.Bare(),
-					sp.Version.Bare(),
-					sp.UpdatedAt.Bare(),
-				).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).
-						Where(sp.ID.Eq(), entity.ID).
-						Where(sp.Version.Eq(), ov)
-				}).
-				Returning("*").
-				Exec(c)
-			if err != nil {
-				return err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"Shipment",
-				entity.ID.String(),
-			); err != nil {
-				return err
-			}
-
-			return r.moveRepository.SyncForShipment(c, tx, entity)
-		})
+		sp := shipmentdb.Shipments
+		err := sp.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			sp.Status,
+			sp.ActualShipDate,
+			sp.ActualDeliveryDate,
+		)
+		if err == nil {
+			err = r.moveRepository.SyncForShipment(ctx, entity)
+		}
 		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Shipment is busy. Retry the request.",
-			)
+			return nil, busy(err, entity.ID)
 		}
 
 		return entity, nil
@@ -692,39 +556,15 @@ func (r *repository) MarkReadyToInvoice(
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			Column(
-				sp.Status.Bare(),
-				sp.MarkedReadyToBillAt.Bare(),
-				sp.Version.Bare(),
-				sp.UpdatedAt.Bare(),
-			).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).
-					Where(sp.ID.Eq(), entity.ID).
-					Where(sp.Version.Eq(), ov)
-			}).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Shipment is busy. Retry the request.",
-			)
-		}
-
-		if err = dberror.CheckRowsAffected(results, "Shipment", entity.ID.String()); err != nil {
-			entity.Version = ov
-			return nil, err
+		sp := shipmentdb.Shipments
+		if err := sp.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			sp.Status,
+			sp.MarkedReadyToBillAt,
+		); err != nil {
+			return nil, busy(err, entity.ID)
 		}
 
 		return entity, nil
@@ -736,67 +576,54 @@ func (r *repository) UpdateDerivedState(
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(c).NewUpdate().
-				Model(entity).
-				Column(
-					sp.Status.Bare(),
-					sp.ActualShipDate.Bare(),
-					sp.ActualDeliveryDate.Bare(),
-					sp.FormulaTemplateID.Bare(),
-					sp.FreightChargeAmount.Bare(),
-					sp.TariffInputs.Bare(),
-					sp.FreightLines.Bare(),
-					sp.OtherChargeAmount.Bare(),
-					sp.TotalChargeAmount.Bare(),
-					sp.RatingDetail.Bare(),
-					sp.MarkedReadyToBillAt.Bare(),
-					sp.BilledAt.Bare(),
-					sp.RateLocked.Bare(),
-					sp.Version.Bare(),
-					sp.UpdatedAt.Bare(),
-				).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).
-						Where(sp.ID.Eq(), entity.ID).
-						Where(sp.Version.Eq(), ov)
-				}).
-				Returning("*").
-				Exec(c)
-			if err != nil {
-				return err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"Shipment",
-				entity.ID.String(),
-			); err != nil {
-				return err
-			}
-
-			if err = r.additionalChargeRepository.SyncForShipment(c, tx, entity); err != nil {
-				return err
-			}
-
-			return r.chargeAllocationRepository.SyncForShipment(c, tx, entity)
-		})
+		sp := shipmentdb.Shipments
+		err := sp.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			sp.Status,
+			sp.ActualShipDate,
+			sp.ActualDeliveryDate,
+			sp.FormulaTemplateID,
+			sp.FreightChargeAmount,
+			sp.TariffInputs,
+			sp.FreightLines,
+			sp.OtherChargeAmount,
+			sp.TotalChargeAmount,
+			sp.RatingDetail,
+			sp.MarkedReadyToBillAt,
+			sp.BilledAt,
+			sp.RateLocked,
+		)
+		if err == nil {
+			err = r.additionalChargeRepository.SyncForShipment(ctx, entity)
+		}
+		if err == nil {
+			err = r.chargeAllocationRepository.SyncForShipment(ctx, entity)
+		}
 		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Shipment is busy. Retry the request.",
-			)
+			return nil, busy(err, entity.ID)
 		}
 
 		return entity, nil
 	})
+}
+
+func (r *repository) updateOne(
+	ctx context.Context,
+	id pulid.ID,
+	q *keel.Query[shipment.Shipment],
+	sets ...keel.Assignment,
+) (*shipment.Shipment, error) {
+	rows, err := q.UpdateReturning(ctx, r.db.Keel(ctx), sets...)
+	if err != nil {
+		return nil, shipmentErrors.Map(err, id.String())
+	}
+	if err = dberror.CheckAffected(int64(len(rows)), shipmentEntity, id.String()); err != nil {
+		return nil, err
+	}
+
+	return rows[0], nil
 }
 
 func (r *repository) UpdateStatus(
@@ -804,33 +631,13 @@ func (r *repository) UpdateStatus(
 	req *shipmentports.UpdateShipmentStatusRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		entity := new(shipment.Shipment)
-
-		results, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			Set(sp.Status.Set(), req.Status).
-			Set(sp.Version.Inc(1)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
-					Where(sp.ID.Eq(), req.ShipmentID).
-					Where(sp.Version.Eq(), req.Version)
-			}).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			results,
-			"Shipment",
-			req.ShipmentID.String(),
-		); err != nil {
-			return nil, err
-		}
-
-		return entity, nil
+		sp := shipmentdb.Shipments
+		return r.updateOne(
+			ctx,
+			req.ShipmentID,
+			sp.Where(sp.ID.Eq(req.ShipmentID), sp.Version.Eq(req.Version)),
+			sp.Status.To(req.Status),
+		)
 	})
 }
 
@@ -839,46 +646,25 @@ func (r *repository) Cancel(
 	req *shipmentports.CancelShipmentRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		entity := new(shipment.Shipment)
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			results, err := tx.NewUpdate().
-				Model(entity).
-				Set(sp.Status.Set(), shipment.StatusCanceled).
-				Set(sp.CanceledAt.Set(), req.CanceledAt).
-				Set(sp.CanceledByID.Set(), req.CanceledByID).
-				Set(sp.CancelReason.Set(), req.CancelReason).
-				Set(sp.Version.Inc(1)).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
-						Where(sp.ID.Eq(), req.ShipmentID).
-						Where(sp.Version.Eq(), req.ExpectedVersion).
-						Where(sp.Status.NotIn(), bun.List([]shipment.Status{
-							shipment.StatusCanceled,
-							shipment.StatusInvoiced,
-						}))
-				}).
-				Returning("*").
-				Exec(c)
-			if err != nil {
-				return err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results, "Shipment",
-				req.ShipmentID.String(),
-			); err != nil {
-				return err
-			}
-
-			return r.cancelShipmentComponents(c, tx, req.ShipmentID)
-		})
+		sp := shipmentdb.Shipments
+		entity, err := r.updateOne(
+			ctx,
+			req.ShipmentID,
+			sp.Where(
+				sp.ID.Eq(req.ShipmentID),
+				sp.Version.Eq(req.ExpectedVersion),
+				sp.Status.NotIn(shipment.StatusCanceled, shipment.StatusInvoiced),
+			),
+			sp.Status.To(shipment.StatusCanceled),
+			sp.CanceledAt.To(req.CanceledAt),
+			sp.CanceledByID.To(req.CanceledByID),
+			sp.CancelReason.To(req.CancelReason),
+		)
+		if err == nil {
+			err = r.cancelShipmentComponents(ctx, []pulid.ID{req.ShipmentID}, scopedTenant)
+		}
 		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Shipment is busy. Retry the request.",
-			)
+			return nil, busy(err, req.ShipmentID)
 		}
 
 		return entity, nil
@@ -890,44 +676,25 @@ func (r *repository) Uncancel(
 	req *shipmentports.UncancelShipmentRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		entity := new(shipment.Shipment)
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			results, err := tx.NewUpdate().
-				Model(entity).
-				Set(sp.Status.Set(), restoredShipmentStatus(req)).
-				Set(sp.CanceledAt.Set(), nil).
-				Set(sp.CanceledByID.Set(), pulid.Nil).
-				Set(sp.CancelReason.Set(), "").
-				Set(sp.Version.Inc(1)).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
-						Where(sp.ID.Eq(), req.ShipmentID).
-						Where(sp.Version.Eq(), req.ExpectedVersion).
-						Where(sp.Status.Eq(), shipment.StatusCanceled)
-				}).
-				Returning("*").
-				Exec(c)
-			if err != nil {
-				return err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"Shipment",
-				req.ShipmentID.String(),
-			); err != nil {
-				return err
-			}
-
-			return r.uncancelShipmentComponents(c, tx, req)
-		})
+		sp := shipmentdb.Shipments
+		entity, err := r.updateOne(
+			ctx,
+			req.ShipmentID,
+			sp.Where(
+				sp.ID.Eq(req.ShipmentID),
+				sp.Version.Eq(req.ExpectedVersion),
+				sp.Status.Eq(shipment.StatusCanceled),
+			),
+			sp.Status.To(restoredShipmentStatus(req)),
+			sp.CanceledAt.ToNull(),
+			sp.CanceledByID.ToNull(),
+			sp.CancelReason.ToNull(),
+		)
+		if err == nil {
+			err = r.uncancelShipmentComponents(ctx, req)
+		}
 		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Shipment is busy. Retry the request.",
-			)
+			return nil, busy(err, req.ShipmentID)
 		}
 
 		return entity, nil
@@ -939,32 +706,13 @@ func (r *repository) TransferOwnership(
 	req *shipmentports.TransferOwnershipRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		entity := new(shipment.Shipment)
-
-		results, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			Set(sp.OwnerID.Set(), req.OwnerID).
-			Set(sp.Version.Inc(1)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
-					Where(sp.ID.Eq(), req.ShipmentID)
-			}).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			results,
-			"Shipment",
-			req.ShipmentID.String(),
-		); err != nil {
-			return nil, err
-		}
-
-		return entity, nil
+		sp := shipmentdb.Shipments
+		return r.updateOne(
+			ctx,
+			req.ShipmentID,
+			sp.Where(sp.ID.Eq(req.ShipmentID)),
+			sp.OwnerID.To(req.OwnerID),
+		)
 	})
 }
 
@@ -980,30 +728,29 @@ func (r *repository) FindByExternalReference(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentports.DuplicateBOLResult, error) {
-			sp := shipmentcol.ShipmentColumns
-			found := new(shipmentports.DuplicateBOLResult)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Column(sp.ID.Bare(), sp.ProNumber.Bare()).
-				Model((*shipment.Shipment)(nil)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-						Where(sp.CustomerID.Eq(), req.CustomerID).
-						Where(sp.ExternalReference.Expr("lower({})")+" = lower(?)", reference).
-						Where(sp.Status.Ne(), shipment.StatusCanceled)
-					if req.ShipmentID.IsNotNil() {
-						sq = sq.Where(sp.ID.Ne(), req.ShipmentID)
-					}
-					return sq
-				}).
-				Limit(1)
-			if err := query.Scan(ctx, found); err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return nil, nil
-				}
+			sp := shipmentdb.Shipments
+			q := sp.Pick(sp.ID, sp.ProNumber).Where(
+				sp.CustomerID.Eq(req.CustomerID),
+				sp.ExternalReference.Lower().Eq(strings.ToLower(reference)),
+				sp.Status.Ne(shipment.StatusCanceled),
+			)
+			if req.ShipmentID.IsNotNil() {
+				q = q.Where(sp.ID.Ne(req.ShipmentID))
+			}
+
+			found, err := keel.Into[shipmentports.DuplicateBOLResult](
+				ctx,
+				r.db.Keel(ctx),
+				q.Limit(1),
+			)
+			if err != nil {
 				return nil, err
 			}
-			return found, nil
+			if len(found) == 0 {
+				return nil, nil //nolint:nilnil // no other shipment uses the reference
+			}
+
+			return &found[0], nil
 		},
 	)
 }
@@ -1016,25 +763,20 @@ func (r *repository) FindIDByIdempotencyKey(
 		return pulid.Nil, nil
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
-		sp := shipmentcol.ShipmentColumns
-		var id pulid.ID
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			Column(sp.ID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-					Where(sp.IdempotencyKey.Eq(), req.IdempotencyKey)
-			}).
-			Limit(1).
-			Scan(ctx, &id)
-		if errors.Is(err, sql.ErrNoRows) {
-			return pulid.Nil, nil
-		}
+		sp := shipmentdb.Shipments
+		ids, err := keel.Into[pulid.ID](
+			ctx,
+			r.db.Keel(ctx),
+			sp.Pick(sp.ID).Where(sp.IdempotencyKey.Eq(req.IdempotencyKey)).Limit(1),
+		)
 		if err != nil {
 			return pulid.Nil, err
 		}
-		return id, nil
+		if len(ids) == 0 {
+			return pulid.Nil, nil
+		}
+
+		return ids[0], nil
 	})
 }
 
@@ -1046,25 +788,27 @@ func (r *repository) CheckForDuplicateBOLs(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentports.DuplicateBOLResult, error) {
-			sp := shipmentcol.ShipmentColumns
-			duplicates := make([]*shipmentports.DuplicateBOLResult, 0)
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Column(sp.ID.Bare(), sp.ProNumber.Bare()).
-				Model((*shipment.Shipment)(nil)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-						Where(sp.BOL.Eq(), req.BOL).
-						Where(sp.Status.Ne(), shipment.StatusCanceled)
-				})
-
+			sp := shipmentdb.Shipments
+			q := sp.Pick(sp.ID, sp.ProNumber).Where(
+				sp.BOL.Eq(req.BOL),
+				sp.Status.Ne(shipment.StatusCanceled),
+			)
 			if req.ShipmentID != nil {
-				query = query.Where(sp.ID.Ne(), pulid.ConvertFromPtr(req.ShipmentID))
+				q = q.Where(sp.ID.Ne(pulid.ConvertFromPtr(req.ShipmentID)))
 			}
 
-			if err := query.Scan(ctx, &duplicates); err != nil {
+			rows, err := keel.Into[shipmentports.DuplicateBOLResult](
+				ctx,
+				r.db.Keel(ctx),
+				q.Order(sp.CreatedAt.Desc()).Limit(maxDuplicateBOLResults),
+			)
+			if err != nil {
 				return nil, err
+			}
+
+			duplicates := make([]*shipmentports.DuplicateBOLResult, len(rows))
+			for i := range rows {
+				duplicates[i] = &rows[i]
 			}
 
 			return duplicates, nil
@@ -1086,12 +830,12 @@ func (r *repository) BulkDuplicate(
 			return nil, err
 		}
 
-		source, err := r.getDuplicateSource(ctx, req)
+		source, err := LoadShipmentGraphSource(ctx, r.db.Keel(ctx), req.TenantInfo, req.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
 
-		locationCode, businessUnitCode, err := r.resolveSequenceCodes(ctx, source)
+		locationCode, businessUnitCode, err := ResolveSequenceCodes(ctx, r.db.Keel(ctx), source)
 		if err != nil {
 			return nil, err
 		}
@@ -1115,9 +859,6 @@ func (r *repository) BulkDuplicate(
 			req.TenantInfo.UserID,
 		)
 
-		// Every duplicated shipment keeps the "everything has a commercial parent"
-		// invariant: each one gets its own single-leg auto-order, numbered from the same
-		// pre-tx batch pattern as pro numbers.
 		orderNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
 			Type:             tenant.SequenceTypeOrder,
 			OrgID:            req.TenantInfo.OrgID,
@@ -1140,99 +881,54 @@ func (r *repository) BulkDuplicate(
 		}
 
 		quotaReq.Quantity = int64(len(graph.shipments))
-		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			if quotaErr := quotaservice.EnforceAll(c, r.quota, quotaReq); quotaErr != nil {
-				return quotaErr
-			}
-
-			if len(autoOrders) > 0 {
-				if _, insertErr := tx.
-					NewInsert().
-					Model(&autoOrders).
-					Returning("NULL").
-					Exec(c); insertErr != nil {
-					return insertErr
-				}
-			}
-
-			if len(graph.shipments) > 0 {
-				if _, insertErr := tx.
-					NewInsert().
-					Model(&graph.shipments).
-					Returning("NULL").
-					Exec(c); insertErr != nil {
-					return insertErr
-				}
-			}
-
-			if len(graph.moves) > 0 {
-				if _, insertErr := tx.
-					NewInsert().
-					Model(&graph.moves).
-					Returning("NULL").
-					Exec(c); insertErr != nil {
-					return insertErr
-				}
-			}
-
-			if len(graph.stops) > 0 {
-				if _, insertErr := tx.
-					NewInsert().
-					Model(&graph.stops).
-					Returning("NULL").
-					Exec(c); insertErr != nil {
-					return insertErr
-				}
-			}
-
-			if len(graph.additionalCharges) > 0 {
-				if _, insertErr := tx.
-					NewInsert().
-					Model(&graph.additionalCharges).
-					Returning("NULL").
-					Exec(c); insertErr != nil {
-					return insertErr
-				}
-			}
-
-			if len(graph.chargeAllocations) > 0 {
-				if _, insertErr := tx.
-					NewInsert().
-					Model(&graph.chargeAllocations).
-					Returning("NULL").
-					Exec(c); insertErr != nil {
-					return insertErr
-				}
-			}
-
-			if len(graph.commodities) > 0 {
-				if _, insertErr := tx.
-					NewInsert().
-					Model(&graph.commodities).
-					Returning("NULL").
-					Exec(c); insertErr != nil {
-					return insertErr
-				}
-			}
-
-			return nil
-		})
-		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Shipment is busy. Retry the request.",
-			)
+		if err = r.insertGraph(ctx, graph, autoOrders, quotaReq); err != nil {
+			return nil, busy(err, req.ShipmentID)
 		}
 
 		return graph.shipments, nil
 	})
 }
 
+func (r *repository) insertGraph(
+	ctx context.Context,
+	graph *duplicatedShipmentGraph,
+	autoOrders []*order.Order,
+	quotaReq platformplanports.QuotaRequest,
+) error {
+	if err := quotaservice.EnforceAll(ctx, r.quota, quotaReq); err != nil {
+		return err
+	}
+
+	db := r.db.Keel(ctx)
+	if err := orderdb.Orders.CreateMany(ctx, db, autoOrders); err != nil {
+		return err
+	}
+	if err := shipmentdb.Shipments.CreateMany(ctx, db, graph.shipments); err != nil {
+		return err
+	}
+	if err := shipmentdb.ShipmentMoves.CreateMany(ctx, db, graph.moves); err != nil {
+		return err
+	}
+	if err := shipmentdb.Stops.CreateMany(ctx, db, graph.stops); err != nil {
+		return err
+	}
+	if err := shipmentdb.AdditionalCharges.CreateMany(ctx, db, graph.additionalCharges); err != nil {
+		return err
+	}
+	if err := shipmentdb.ChargeAllocations.CreateMany(ctx, db, graph.chargeAllocations); err != nil {
+		return err
+	}
+
+	return shipmentdb.ShipmentCommodities.CreateMany(ctx, db, graph.commodities)
+}
+
 func (r *repository) PlanDuplicate(
 	ctx context.Context,
 	req *shipmentports.BulkDuplicateShipmentRequest,
 ) (*shipmentports.ShipmentDuplicatePlan, error) {
-	source, err := r.getDuplicateSource(ctx, req)
+	source, err := dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		return LoadShipmentGraphSource(ctx, r.db.Keel(ctx), req.TenantInfo, req.ShipmentID)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -1247,64 +943,39 @@ func (r *repository) PlanDuplicate(
 	return &shipmentports.ShipmentDuplicatePlan{Source: source, Copies: graph.shipments}, nil
 }
 
-func (r *repository) getDuplicateSource(
-	ctx context.Context,
-	req *shipmentports.BulkDuplicateShipmentRequest,
-) (*shipment.Shipment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		return LoadShipmentGraphSource(
-			ctx,
-			r.db.DBForContext(ctx),
-			req.TenantInfo,
-			req.ShipmentID,
-		)
-	})
-}
-
-func (r *repository) resolveSequenceCodes(
-	ctx context.Context,
-	entity *shipment.Shipment,
-) (locationCode, businessUnitCode string, err error) {
-	return dbtx.Write2(
-		ctx,
-		r.db,
-		func(ctx context.Context) (locationCode, businessUnitCode string, err error) {
-			return ResolveSequenceCodes(ctx, r.db.DBForContext(ctx), entity)
-		},
-	)
-}
-
 // ResolveSequenceCodes resolves the location and business-unit codes feeding
 // pro-number/order-number sequence generation for copies of the given shipment.
 func ResolveSequenceCodes(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	entity *shipment.Shipment,
 ) (locationCode, businessUnitCode string, err error) {
-	bu := new(tenant.BusinessUnit)
-	err = db.NewSelect().
-		Model(bu).
-		Column(tenantcol.BusinessUnitColumns.Code.Bare()).
-		Where(tenantcol.BusinessUnitColumns.ID.Eq(), entity.BusinessUnitID).
-		Scan(ctx)
+	bu := tenantdb.BusinessUnits
+	businessUnitCode, err = keel.IntoOne[string](
+		ctx,
+		db,
+		bu.Pick(bu.Code).Where(bu.ID.Eq(entity.BusinessUnitID)),
+	)
 	if err != nil {
 		return "", "", dberror.HandleNotFoundError(err, "Sequence")
 	}
 
-	businessUnitCode = bu.Code
+	if len(entity.Moves) == 0 || len(entity.Moves[0].Stops) == 0 {
+		return "", businessUnitCode, nil
+	}
 
-	if len(entity.Moves) > 0 && len(entity.Moves[0].Stops) > 0 {
-		var code string
-		err = db.NewSelect().
-			TableExpr("locations").
-			Column("code").
-			Where("id = ?", entity.Moves[0].Stops[0].LocationID).
-			Scan(ctx, &code)
-		if err != nil {
-			return "", "", dberror.HandleNotFoundError(err, "Sequence")
-		}
+	loc := locationdb.Locations
+	q := loc.Pick(loc.Code).Where(loc.ID.Eq(entity.Moves[0].Stops[0].LocationID))
+	if dbscope.IsSystem(ctx) {
+		q = q.AllTenants().Where(
+			loc.OrganizationID.Eq(entity.OrganizationID),
+			loc.BusinessUnitID.Eq(entity.BusinessUnitID),
+		)
+	}
 
-		locationCode = code
+	locationCode, err = keel.IntoOne[string](ctx, db, q)
+	if err != nil {
+		return "", "", dberror.HandleNotFoundError(err, "Sequence")
 	}
 
 	return locationCode, businessUnitCode, nil
@@ -1316,4 +987,24 @@ func shipmentQuotaRequest(orgID, buID pulid.ID, quantity int64) platformplanport
 		Meter:      platformcatalog.MeterShipmentsTotal,
 		Quantity:   quantity,
 	}
+}
+
+var errNoShipmentScope = errors.New("shipment graph source needs a tenant")
+
+func tenantShipments(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*keel.Query[shipment.Shipment], error) {
+	sp := shipmentdb.Shipments
+	if !dbscope.IsSystem(ctx) {
+		return sp.Query(), nil
+	}
+	if tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
+		return nil, errNoShipmentScope
+	}
+
+	return sp.AllTenants().Where(
+		sp.OrganizationID.Eq(tenantInfo.OrgID),
+		sp.BusinessUnitID.Eq(tenantInfo.BuID),
+	), nil
 }

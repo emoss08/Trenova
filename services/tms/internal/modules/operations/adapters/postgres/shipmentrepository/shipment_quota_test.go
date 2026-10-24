@@ -1,15 +1,17 @@
 package shipmentrepository
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +34,7 @@ func refusedDecision(quantity int64) *platformplanports.QuotaDecision {
 func TestCreateRefusesBeforeMintingAProNumber(t *testing.T) {
 	t.Parallel()
 
-	conn, sqlMock := dbtest.NewSQLMock(t)
+	conn := postgres.WrapDB(keeltest.RenderDB(t))
 	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
 	entity := &shipment.Shipment{
@@ -51,13 +53,12 @@ func TestCreateRefusesBeforeMintingAProNumber(t *testing.T) {
 	require.Nil(t, created)
 	require.True(t, errortypes.IsQuotaExceededError(err))
 	require.Empty(t, entity.ProNumber)
-	require.NoError(t, sqlMock.ExpectationsWereMet())
 }
 
 func TestBulkDuplicateRefusesEveryCopyThePlanCannotHold(t *testing.T) {
 	t.Parallel()
 
-	conn, sqlMock := dbtest.NewSQLMock(t)
+	conn := postgres.WrapDB(keeltest.RenderDB(t))
 	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
@@ -76,5 +77,4 @@ func TestBulkDuplicateRefusesEveryCopyThePlanCannotHold(t *testing.T) {
 
 	require.Nil(t, duplicated)
 	require.True(t, errortypes.IsQuotaExceededError(err))
-	require.NoError(t, sqlMock.ExpectationsWereMet())
 }

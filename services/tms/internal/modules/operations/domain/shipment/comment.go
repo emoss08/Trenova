@@ -53,9 +53,8 @@ func CustomerEmailTools() []string {
 }
 
 type ShipmentComment struct {
-	bun.BaseModel             `bun:"table:shipment_comments,alias:sc" json:"-"`
-	keel.Table                `keel:"shipment_comments"`
-	pagination.CursorValueSet `bun:",embed"                           json:"-"`
+	bun.BaseModel `bun:"table:shipment_comments,alias:sc" json:"-"`
+	keel.Table    `keel:"shipment_comments"`
 
 	ID                     pulid.ID             `json:"id"                              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:shc_"`
 	BusinessUnitID         pulid.ID             `json:"businessUnitId"                  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -220,6 +219,17 @@ func (c *ShipmentComment) BeforeAppendModel(_ context.Context, query bun.Query) 
 }
 
 func (c *ShipmentComment) BeforeCreate(ctx context.Context) error {
+	c.applyDefaults()
+	if c.Type == "" {
+		c.Type = CommentTypeInternal
+	}
+	if c.Visibility == "" {
+		c.Visibility = CommentVisibilityInternal
+	}
+	if c.Priority == "" {
+		c.Priority = CommentPriorityNormal
+	}
+
 	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 

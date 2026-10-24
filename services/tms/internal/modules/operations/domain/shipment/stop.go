@@ -62,7 +62,18 @@ func (s *Stop) BeforeAppendModel(_ context.Context, query bun.Query) error {
 }
 
 func (s *Stop) BeforeCreate(ctx context.Context) error {
+	if s.Status == "" {
+		s.Status = StopStatusNew
+	}
+	if s.Type == "" {
+		s.Type = StopTypePickup
+	}
+
 	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
+func (s *Stop) BeforeUpdate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
 }
 
 func (s *Stop) IsOriginStop() bool {

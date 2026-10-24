@@ -4,43 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/uptrace/bun"
-)
-
-var (
-	stopFromMoveJoin = "JOIN " + shipmentcol.StopTable.As(shipmentcol.StopTable.Alias) +
-		" ON " + shipmentcol.StopColumns.ShipmentMoveID.EqColumn(
-		shipmentcol.ShipmentMoveColumns.ID) +
-		" AND " + shipmentcol.StopColumns.OrganizationID.EqColumn(
-		shipmentcol.ShipmentMoveColumns.OrganizationID) +
-		" AND " + shipmentcol.StopColumns.BusinessUnitID.EqColumn(
-		shipmentcol.ShipmentMoveColumns.BusinessUnitID)
-
-	assignmentFromFailureJoin = "JOIN " + shipmentcol.AssignmentTable.As(
-		shipmentcol.AssignmentTable.Alias) +
-		" ON " + shipmentcol.AssignmentColumns.ShipmentMoveID.EqColumn(
-		servicefailurecol.ServiceFailureColumns.ShipmentMoveID) +
-		" AND " + shipmentcol.AssignmentColumns.OrganizationID.EqColumn(
-		servicefailurecol.ServiceFailureColumns.OrganizationID) +
-		" AND " + shipmentcol.AssignmentColumns.BusinessUnitID.EqColumn(
-		servicefailurecol.ServiceFailureColumns.BusinessUnitID)
-
-	reasonCodeFromFailureJoin = "JOIN " + servicefailurecol.ReasonCodeTable.As(
-		servicefailurecol.ReasonCodeTable.Alias) +
-		" ON " + servicefailurecol.ReasonCodeColumns.ID.EqColumn(
-		servicefailurecol.ServiceFailureColumns.ReasonCodeID) +
-		" AND " + servicefailurecol.ReasonCodeColumns.OrganizationID.EqColumn(
-		servicefailurecol.ServiceFailureColumns.OrganizationID) +
-		" AND " + servicefailurecol.ReasonCodeColumns.BusinessUnitID.EqColumn(
-		servicefailurecol.ServiceFailureColumns.BusinessUnitID)
 )
 
 func (r *repository) ListWorkerOnTimeStats(
@@ -55,86 +25,73 @@ func (r *repository) ListWorkerOnTimeStats(
 				return []*shipmentports.WorkerOnTimeStats{}, nil
 			}
 
-			asnCols := shipmentcol.AssignmentColumns
-			stopCols := shipmentcol.StopColumns
+			asn := shipmentdb.Assignments
+			sm := shipmentdb.ShipmentMoves
+			st := shipmentdb.Stops
+			arrivals := asn.
+				Join(sm, sm.ID.EqCol(asn.ShipmentMoveID)).
+				Join(st, st.ShipmentMoveID.EqCol(sm.ID)).
+				Group(asn.PrimaryWorkerID).
+				Pick(
+					asn.PrimaryWorkerID,
+					keel.Raw("count(*)::int"),
+					countIf(keel.Raw(
+						"? <= coalesce(?, ?)",
+						st.ActualArrival,
+						st.ScheduledWindowEnd,
+						st.ScheduledWindowStart,
+					)),
+					keel.Raw("0"),
+				).
+				Where(
+					asn.PrimaryWorkerID.In(req.WorkerIDs...),
+					st.Status.Eq(shipment.StopStatusCompleted),
+					st.Type.In(shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery),
+					st.ActualArrival.IsNotNull(),
+					st.ScheduledWindowStart.Gt(0),
+					keel.When(req.Since > 0, st.ActualArrival.Gte(req.Since)),
+				)
 
-			arrivals := make([]*shipmentports.WorkerOnTimeStats, 0, len(req.WorkerIDs))
-			arrivalsQuery := r.db.DBForContext(ctx).NewSelect().
-				Model((*shipment.Assignment)(nil)).
-				ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
-				ColumnExpr("COUNT(*)::int AS completed_stops").
-				ColumnExpr(buncolgen.Expr(
-					"COUNT(*) FILTER (WHERE {0} <= COALESCE({1}, {2}))::int AS on_time_stops",
-					stopCols.ActualArrival,
-					stopCols.ScheduledWindowEnd,
-					stopCols.ScheduledWindowStart,
-				)).
-				Join(moveFromAssignmentJoin).
-				Join(stopFromMoveJoin).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
-						Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
-						Where(stopCols.Status.Eq(), shipment.StopStatusCompleted).
-						Where(stopCols.Type.In(),
-							bun.List([]shipment.StopType{
-								shipment.StopTypeDelivery,
-								shipment.StopTypeSplitDelivery,
-							})).
-						Where(stopCols.ActualArrival.IsNotNull()).
-						Where(stopCols.ScheduledWindowStart.Gt(), 0)
-					if req.Since > 0 {
-						sq = sq.Where(stopCols.ActualArrival.Gte(), req.Since)
-					}
-					return sq
-				}).
-				GroupExpr(asnCols.PrimaryWorkerID.Qualified())
+			sf := servicefailuredb.ServiceFailures
+			rc := servicefailuredb.ReasonCodes
+			fa := shipmentdb.Assignments.As("sf_asn")
+			failures := sf.
+				Join(fa, fa.ShipmentMoveID.EqCol(sf.ShipmentMoveID)).
+				Join(rc, rc.ID.EqCol(sf.ReasonCodeID)).
+				Group(fa.PrimaryWorkerID).
+				Pick(fa.PrimaryWorkerID, keel.Raw("0"), keel.Raw("0"), keel.Raw("count(*)::int")).
+				Where(
+					fa.PrimaryWorkerID.In(req.WorkerIDs...),
+					sf.Status.Ne(servicefailure.StatusVoided),
+					rc.Category.Eq(servicefailure.ReasonCategoryDriver),
+					keel.When(req.Since > 0, sf.DetectedAt.Gte(req.Since)),
+				)
 
-			if err := arrivalsQuery.Scan(ctx, &arrivals); err != nil {
-				return nil, fmt.Errorf("list worker on-time arrivals: %w", err)
+			var onTime, faults []shipmentports.WorkerOnTimeStats
+			if err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.IntoSlice(arrivals, &onTime),
+				keel.IntoSlice(failures, &faults),
+			); err != nil {
+				return nil, fmt.Errorf("list worker on-time stats: %w", err)
 			}
 
-			sfCols := servicefailurecol.ServiceFailureColumns
-
-			failures := make([]*shipmentports.WorkerOnTimeStats, 0, len(req.WorkerIDs))
-			failuresQuery := r.db.DBForContext(ctx).NewSelect().
-				Model((*servicefailure.ServiceFailure)(nil)).
-				ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
-				ColumnExpr("COUNT(*)::int AS driver_fault_failures").
-				Join(assignmentFromFailureJoin).
-				Join(reasonCodeFromFailureJoin).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = servicefailurecol.ServiceFailureScopeTenant(sq, req.TenantInfo).
-						Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
-						Where(sfCols.Status.NotEq(), servicefailure.StatusVoided).
-						Where(servicefailurecol.ReasonCodeColumns.Category.Eq(),
-							servicefailure.ReasonCategoryDriver)
-					if req.Since > 0 {
-						sq = sq.Where(sfCols.DetectedAt.Gte(), req.Since)
-					}
-					return sq
-				}).
-				GroupExpr(asnCols.PrimaryWorkerID.Qualified())
-
-			if err := failuresQuery.Scan(ctx, &failures); err != nil {
-				return nil, fmt.Errorf("list worker driver-fault failures: %w", err)
-			}
-
-			merged := make(map[string]*shipmentports.WorkerOnTimeStats, len(arrivals))
-			for _, row := range arrivals {
+			merged := make(map[string]*shipmentports.WorkerOnTimeStats, len(onTime))
+			entities := make([]*shipmentports.WorkerOnTimeStats, 0, len(onTime)+len(faults))
+			for i := range onTime {
+				row := &onTime[i]
 				merged[row.WorkerID.String()] = row
+				entities = append(entities, row)
 			}
-			for _, row := range failures {
+			for i := range faults {
+				row := &faults[i]
 				if existing, ok := merged[row.WorkerID.String()]; ok {
 					existing.DriverFaultFailures = row.DriverFaultFailures
 					continue
 				}
 				merged[row.WorkerID.String()] = row
-			}
-
-			entities := make([]*shipmentports.WorkerOnTimeStats, 0, len(merged))
-			for _, row := range merged {
 				entities = append(entities, row)
 			}
+
 			return entities, nil
 		},
 	)
@@ -152,36 +109,36 @@ func (r *repository) ListWorkerAcceptanceStats(
 				return []*shipmentports.WorkerAcceptanceStats{}, nil
 			}
 
-			cols := shipmentcol.AssignmentColumns
-
-			entities := make([]*shipmentports.WorkerAcceptanceStats, 0, len(req.WorkerIDs))
-			q := r.db.DBForContext(ctx).NewSelect().
-				Model((*shipment.Assignment)(nil)).
-				ColumnExpr(cols.PrimaryWorkerID.As("worker_id")).
-				ColumnExpr(buncolgen.CountFilter("accepted", cols.AckStatus.Eq()),
-					shipment.AssignmentAckAccepted).
-				ColumnExpr(buncolgen.CountFilter("declined", cols.AckStatus.Eq()),
-					shipment.AssignmentAckDeclined).
-				ColumnExpr(buncolgen.Expr(
-					"COALESCE(AVG({0} - {1}) FILTER (WHERE {2} IN (?, ?) AND {0} IS NOT NULL AND {0} >= {1}), 0)::float8 AS avg_ack_latency_seconds",
-					cols.AckAt,
-					cols.CreatedAt,
-					cols.AckStatus,
-				), shipment.AssignmentAckAccepted, shipment.AssignmentAckDeclined).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
-						Where(cols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs))
-					if req.Since > 0 {
-						sq = sq.Where(cols.CreatedAt.Gte(), req.Since)
-					}
-					return sq
-				}).
-				GroupExpr(cols.PrimaryWorkerID.Qualified())
-
-			if err := q.Scan(ctx, &entities); err != nil {
+			asn := shipmentdb.Assignments
+			answered := asn.AckStatus.In(
+				shipment.AssignmentAckAccepted,
+				shipment.AssignmentAckDeclined,
+			)
+			rows, err := keel.Into[shipmentports.WorkerAcceptanceStats](ctx, r.db.Keel(ctx), asn.
+				Group(asn.PrimaryWorkerID).
+				Pick(
+					asn.PrimaryWorkerID,
+					countIf(asn.AckStatus.Eq(shipment.AssignmentAckAccepted)),
+					countIf(asn.AckStatus.Eq(shipment.AssignmentAckDeclined)),
+					keel.Raw(
+						"coalesce(avg(? - ?) FILTER (WHERE ? AND ? IS NOT NULL AND ? >= ?), 0)::float8",
+						asn.AckAt,
+						asn.CreatedAt,
+						answered,
+						asn.AckAt,
+						asn.AckAt,
+						asn.CreatedAt,
+					),
+				).
+				Where(
+					asn.PrimaryWorkerID.In(req.WorkerIDs...),
+					keel.When(req.Since > 0, asn.CreatedAt.Gte(req.Since)),
+				))
+			if err != nil {
 				return nil, fmt.Errorf("list worker acceptance stats: %w", err)
 			}
-			return entities, nil
+
+			return pointers(rows), nil
 		},
 	)
 }

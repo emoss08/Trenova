@@ -69,23 +69,24 @@ var recurringShipmentsTable = schema.Table{
 		{Name: "DestinationLocation", Alias: "dl", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Destination Location`, JSON: `destinationLocation`},
 		{Name: "EnteredBy", Alias: "eb", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Entered By`, JSON: `enteredBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30},
-	Returning:  nil,
-	Version:    28,
-	AutoID:     0,
-	AutoCreate: 29,
-	AutoUpdate: 30,
-	IDPrefix:   "rsh_",
-	New:        newRecurringShipment,
-	NewN:       newNRecurringShipment,
-	Size:       unsafe.Sizeof(recurringshipment.RecurringShipment{}),
-	Ptr:        ptrRecurringShipment,
-	Value:      valueRecurringShipment,
-	Attach:     attachRecurringShipment,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30},
+	Returning:    nil,
+	Version:      28,
+	AutoID:       0,
+	AutoCreate:   29,
+	AutoUpdate:   30,
+	IDPrefix:     "rsh_",
+	New:          newRecurringShipment,
+	NewN:         newNRecurringShipment,
+	Size:         unsafe.Sizeof(recurringshipment.RecurringShipment{}),
+	Ptr:          ptrRecurringShipment,
+	Value:        valueRecurringShipment,
+	Attach:       attachRecurringShipment,
+	BeforeCreate: beforeCreateRecurringShipment,
 }
 
 var recurringShipmentsRef = keel.Ref{Table: &recurringShipmentsTable}
@@ -440,6 +441,10 @@ func attachRecurringShipment(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	case 4:
 		r.EnteredBy = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateRecurringShipment(ctx context.Context, p unsafe.Pointer) error {
+	return (*recurringshipment.RecurringShipment)(p).BeforeCreate(ctx)
 }
 
 // recurringShipmentRunsTable is the schema of recurringshipment.RecurringShipmentRun.

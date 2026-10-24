@@ -3,20 +3,52 @@ package carrierassignmentrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var carrierAssignmentErrors = dberror.Mapping{
+	Entity: "Carrier assignment",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "idx_carrier_assignments_active_move",
+			Field:   "shipmentMoveId",
+			Message: "Move already has an active carrier assignment",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_carrier_assignments_shipment_move",
+			Field:   "shipmentMoveId",
+			Message: "Move does not exist in your organization",
+		},
+		{
+			Name:    "fk_carrier_assignments_carrier",
+			Field:   "carrierId",
+			Message: "Carrier does not exist in your organization",
+		},
+	},
+}
+
+var accessorialErrors = dberror.Mapping{
+	Entity: "Carrier assignment accessorial",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_carrier_assignment_accessorials_charge",
+			Field:   "accessorials.accessorialChargeId",
+			Message: "Accessorial charge does not exist in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -42,22 +74,13 @@ func (r *repository) GetByID(
 	req *shipmentports.GetCarrierAssignmentByIDRequest,
 ) (*shipment.CarrierAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.CarrierAssignment, error) {
-		cols := shipmentcol.CarrierAssignmentColumns
-		entity := new(shipment.CarrierAssignment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("Carrier").
-			Relation("Accessorials").
-			Relation("ShipmentMove").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.CarrierAssignmentScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.CarrierAssignmentID)
-			}).
-			Scan(ctx)
+		ca := shipmentdb.CarrierAssignments
+		entity, err := ca.Where(ca.ID.Eq(req.CarrierAssignmentID)).
+			Load(ca.Carrier(), ca.Accessorials(), ca.ShipmentMove()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get carrier assignment", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Carrier assignment")
+			return nil, carrierAssignmentErrors.Map(err, req.CarrierAssignmentID.String())
 		}
 
 		return entity, nil
@@ -66,23 +89,17 @@ func (r *repository) GetByID(
 
 func (r *repository) GetActiveByMoveID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	moveID pulid.ID,
 ) (*shipment.CarrierAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.CarrierAssignment, error) {
-		cols := shipmentcol.CarrierAssignmentColumns
-		entity := new(shipment.CarrierAssignment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("Carrier").
-			Relation("Accessorials").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.CarrierAssignmentScopeTenant(sq, tenantInfo).
-					Where(cols.ShipmentMoveID.Eq(), moveID).
-					Where(cols.Status.Ne(), shipment.CarrierAssignmentStatusCanceled)
-			}).
-			Scan(ctx)
+		ca := shipmentdb.CarrierAssignments
+		entity, err := ca.Where(
+			ca.ShipmentMoveID.Eq(moveID),
+			ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+		).
+			Load(ca.Carrier(), ca.Accessorials()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
@@ -104,36 +121,21 @@ func (r *repository) FindForMatching(
 			return nil, nil //nolint:nilnil // nothing to match without a reference
 		}
 
-		cols := shipmentcol.CarrierAssignmentColumns
-		entity := new(shipment.CarrierAssignment)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("Carrier").
-			Relation("Accessorials").
-			Relation("ShipmentMove").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = shipmentcol.CarrierAssignmentScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Ne(), shipment.CarrierAssignmentStatusCanceled)
-				if !req.CarrierID.IsNil() {
-					sq = sq.Where(cols.CarrierID.Eq(), req.CarrierID)
-				}
-				if req.ProNumber != "" {
-					sq = sq.Where(cols.ProNumber.Eq(), req.ProNumber)
-				} else {
-					sq = sq.Where(
-						"EXISTS (SELECT 1 FROM shipment_moves move WHERE move.id = casn.shipment_move_id "+
-							"AND move.organization_id = casn.organization_id "+
-							"AND move.business_unit_id = casn.business_unit_id "+
-							"AND move.shipment_id = ?)",
-						req.ShipmentID,
-					)
-				}
-				return sq
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(1)
-		if err := query.Scan(ctx); err != nil {
+		ca := shipmentdb.CarrierAssignments
+		reference := ca.ShipmentMove().ShipmentID.Eq(req.ShipmentID)
+		if req.ProNumber != "" {
+			reference = ca.ProNumber.Eq(req.ProNumber)
+		}
+
+		entity, err := ca.Where(
+			ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+			keel.When(!req.CarrierID.IsNil(), ca.CarrierID.Eq(req.CarrierID)),
+			reference,
+		).
+			Load(ca.Carrier(), ca.Accessorials(), ca.ShipmentMove()).
+			Order(ca.CreatedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
+		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, nil //nolint:nilnil // nil assignment represents an optional absence
 			}
@@ -142,97 +144,6 @@ func (r *repository) FindForMatching(
 		}
 
 		return entity, nil
-	})
-}
-
-// stampAccessorials pins accessorials to the assignment and tenant. IDs are
-// left alone: kept rows retain their identity (and created_at for audit
-// diffs); BeforeAppendModel mints IDs for the new, ID-less rows only.
-func (r *repository) stampAccessorials(entity *shipment.CarrierAssignment) {
-	for _, acc := range entity.Accessorials {
-		acc.CarrierAssignmentID = entity.ID
-		acc.OrganizationID = entity.OrganizationID
-		acc.BusinessUnitID = entity.BusinessUnitID
-	}
-}
-
-func (r *repository) insertAccessorials(
-	ctx context.Context,
-	entity *shipment.CarrierAssignment,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if len(entity.Accessorials) == 0 {
-			return nil
-		}
-
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&entity.Accessorials).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
-}
-
-// deleteMissingAccessorials removes only the accessorial rows the payload no
-// longer carries.
-func (r *repository) deleteMissingAccessorials(
-	ctx context.Context,
-	entity *shipment.CarrierAssignment,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		kept := make([]pulid.ID, 0, len(entity.Accessorials))
-		for _, acc := range entity.Accessorials {
-			if acc != nil && !acc.ID.IsNil() {
-				kept = append(kept, acc.ID)
-			}
-		}
-
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*shipment.CarrierAssignmentAccessorial)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = shipmentcol.CarrierAssignmentAccessorialScopeTenantDelete(dq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).
-					Where(shipmentcol.CarrierAssignmentAccessorialColumns.CarrierAssignmentID.Eq(), entity.ID)
-				if len(kept) > 0 {
-					dq = dq.Where(
-						shipmentcol.CarrierAssignmentAccessorialColumns.ID.NotIn(),
-						bun.List(kept),
-					)
-				}
-				return dq
-			}).
-			Exec(ctx)
-		return err
-	})
-}
-
-// upsertAccessorials inserts new (ID-less) rows and updates the kept ones in
-// place, preserving row identity across assignment edits.
-func (r *repository) upsertAccessorials(
-	ctx context.Context,
-	entity *shipment.CarrierAssignment,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if len(entity.Accessorials) == 0 {
-			return nil
-		}
-
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&entity.Accessorials).
-			On("CONFLICT (id, business_unit_id, organization_id) DO UPDATE").
-			Set("accessorial_charge_id = EXCLUDED.accessorial_charge_id").
-			Set("description = EXCLUDED.description").
-			Set("amount = EXCLUDED.amount").
-			Set("version = casna.version + 1").
-			Set("updated_at = ?", timeutils.NowUnix()).
-			Returning("*").
-			Exec(ctx)
-		return err
 	})
 }
 
@@ -246,19 +157,20 @@ func (r *repository) Create(
 			zap.String("shipmentMoveId", entity.ShipmentMoveID.String()),
 		)
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		db := r.db.Keel(ctx)
+		if err := shipmentdb.CarrierAssignments.Create(ctx, db, entity); err != nil {
 			log.Error("failed to create carrier assignment", zap.Error(err))
-			return nil, err
+			return nil, carrierAssignmentErrors.Map(err, entity.ID.String())
 		}
 
-		r.stampAccessorials(entity)
-		if err := r.insertAccessorials(ctx, entity); err != nil {
+		stampAccessorials(entity)
+		if err := shipmentdb.CarrierAssignmentAccessorials.CreateMany(
+			ctx,
+			db,
+			liveAccessorials(entity),
+		); err != nil {
 			log.Error("failed to insert carrier assignment accessorials", zap.Error(err))
-			return nil, err
+			return nil, accessorialErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -275,40 +187,102 @@ func (r *repository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		db := r.db.Keel(ctx)
+		if err := shipmentdb.CarrierAssignments.Save(ctx, db, entity); err != nil {
 			log.Error("failed to update carrier assignment", zap.Error(err))
-			return nil, err
+			return nil, carrierAssignmentErrors.Map(err, entity.ID.String())
 		}
 
-		if err = dberror.CheckRowsAffected(
-			results,
-			"Carrier assignment",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
-
-		if err = r.deleteMissingAccessorials(ctx, entity); err != nil {
+		if err := deleteMissingAccessorials(ctx, db, entity); err != nil {
 			log.Error("failed to delete carrier assignment accessorials", zap.Error(err))
 			return nil, err
 		}
 
-		r.stampAccessorials(entity)
-		if err = r.upsertAccessorials(ctx, entity); err != nil {
+		stampAccessorials(entity)
+		if err := upsertAccessorials(ctx, db, entity); err != nil {
 			log.Error("failed to upsert carrier assignment accessorials", zap.Error(err))
-			return nil, err
+			return nil, accessorialErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
+}
+
+func stampAccessorials(entity *shipment.CarrierAssignment) {
+	for _, acc := range entity.Accessorials {
+		if acc == nil {
+			continue
+		}
+		acc.CarrierAssignmentID = entity.ID
+		acc.OrganizationID = entity.OrganizationID
+		acc.BusinessUnitID = entity.BusinessUnitID
+	}
+}
+
+func liveAccessorials(entity *shipment.CarrierAssignment) []*shipment.CarrierAssignmentAccessorial {
+	rows := make([]*shipment.CarrierAssignmentAccessorial, 0, len(entity.Accessorials))
+	for _, acc := range entity.Accessorials {
+		if acc != nil {
+			rows = append(rows, acc)
+		}
+	}
+
+	return rows
+}
+
+func deleteMissingAccessorials(
+	ctx context.Context,
+	db *keel.DB,
+	entity *shipment.CarrierAssignment,
+) error {
+	kept := make([]pulid.ID, 0, len(entity.Accessorials))
+	for _, acc := range entity.Accessorials {
+		if acc != nil && !acc.ID.IsNil() {
+			kept = append(kept, acc.ID)
+		}
+	}
+
+	a := shipmentdb.CarrierAssignmentAccessorials
+	_, err := a.Where(
+		a.CarrierAssignmentID.Eq(entity.ID),
+		keel.When(len(kept) > 0, a.ID.NotIn(kept...)),
+	).Delete(ctx, db)
+
+	return err
+}
+
+func upsertAccessorials(
+	ctx context.Context,
+	db *keel.DB,
+	entity *shipment.CarrierAssignment,
+) error {
+	rows := liveAccessorials(entity)
+	if len(rows) == 0 {
+		return nil
+	}
+
+	created := make([]int64, len(rows))
+	for i, row := range rows {
+		created[i] = row.CreatedAt
+	}
+
+	a := shipmentdb.CarrierAssignmentAccessorials
+	inserted, err := a.Upsert(
+		ctx,
+		db,
+		rows,
+		keel.OnConflict(a.ID, a.BusinessUnitID, a.OrganizationID).
+			Update(a.AccessorialChargeID, a.Description, a.Amount),
+	)
+	if err != nil {
+		return err
+	}
+
+	for i, row := range rows {
+		if !inserted[i] && created[i] != 0 {
+			row.CreatedAt = created[i]
+		}
+	}
+
+	return nil
 }

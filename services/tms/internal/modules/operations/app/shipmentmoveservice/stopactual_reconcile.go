@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 func (s *service) ReconcileStopActuals(
@@ -22,7 +21,7 @@ func (s *service) ReconcileStopActuals(
 
 	result := &shipmentports.ReconcileStopActualsResult{}
 	var previousStatus shipment.MoveStatus
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		move, err := s.repo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,

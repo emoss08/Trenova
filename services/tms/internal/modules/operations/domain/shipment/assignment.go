@@ -130,8 +130,10 @@ func (a *Assignment) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
-func (a *Assignment) BeforeCreate(ctx context.Context) error {
-	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (a *Assignment) BeforeCreate(_ context.Context) error {
+	a.applyDefaults()
+
+	return nil
 }
 
 func (a *Assignment) GetID() pulid.ID {

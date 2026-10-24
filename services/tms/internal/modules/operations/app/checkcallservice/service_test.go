@@ -6,12 +6,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -31,23 +32,10 @@ import (
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const testNow = int64(1_800_000_000)
-
-type fakeDB struct {
-	kernelports.DBConnection
-}
-
-func (fakeDB) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
 
 type memoryCheckCalls struct {
 	checkcallports.CheckCallRepository
@@ -403,7 +391,7 @@ func newHarness(t *testing.T) *harness {
 		carrierID: carrierID,
 	}
 	h.svc = New(Params{
-		DB:     fakeDB{},
+		DB:     dbtest.NopConnection{},
 		Logger: zap.NewNop(),
 		Config: &config.Config{Tendering: config.TenderingConfig{
 			PublicBaseURL: "https://app.example.com/",

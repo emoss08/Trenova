@@ -6,10 +6,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/tenderrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -20,13 +22,12 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type harness struct {
 	ctx    context.Context
-	db     *bun.DB
+	db     *keel.DB
 	tenant pagination.TenantInfo
 	repo   tenderports.TenderRepository
 	graph  *testutil.ShipmentGraph
@@ -65,10 +66,16 @@ func newHarness(t *testing.T) *harness {
 func (h *harness) carrier(t *testing.T, code string) pulid.ID {
 	t.Helper()
 	id := pulid.MustNew("car_")
-	_, err := h.db.NewRaw(
-		`INSERT INTO carriers (id, business_unit_id, organization_id, code, name) VALUES (?, ?, ?, ?, ?)`,
-		id, h.tenant.BuID, h.tenant.OrgID, code, "Carrier "+code,
-	).Exec(h.ctx)
+	_, err := keel.Exec(
+		h.ctx,
+		h.db,
+		`INSERT INTO carriers (id, business_unit_id, organization_id, code, name) VALUES ($1, $2, $3, $4, $5)`,
+		id.String(),
+		h.tenant.BuID.String(),
+		h.tenant.OrgID.String(),
+		code,
+		"Carrier "+code,
+	)
 	require.NoError(t, err)
 	return id
 }
@@ -109,10 +116,9 @@ func (h *harness) acceptedTender(t *testing.T) *tender.Tender {
 	created, err := h.repo.Create(h.ctx, entity)
 	require.NoError(t, err)
 	accepted := created.Offers[1].ID
-	_, err = h.db.NewRaw(
-		`UPDATE tenders SET accepted_offer_id = ?, accepted_at = ? WHERE id = ?`,
-		accepted, sentAt, created.ID,
-	).Exec(h.ctx)
+	tn := tenderdb.Tenders
+	_, err = tn.Where(tn.ID.Eq(created.ID)).
+		Update(h.ctx, h.db, tn.AcceptedOfferID.To(accepted), tn.AcceptedAt.To(sentAt))
 	require.NoError(t, err)
 	created.AcceptedOfferID = &accepted
 	return created
@@ -178,9 +184,9 @@ func TestReopenLeavesNothingBehindWhenTheOfferMovedFirst(t *testing.T) {
 	h := newHarness(t)
 	entity := h.acceptedTender(t)
 	revoked := entity.Offers[1]
-	_, err := h.db.NewRaw(
-		`UPDATE tender_offers SET status = 'Superseded' WHERE id = ?`, revoked.ID,
-	).Exec(h.ctx)
+	of := tenderdb.TenderOffers
+	_, err := of.Where(of.ID.Eq(revoked.ID)).
+		Update(h.ctx, h.db, of.Status.To(tender.OfferStatusSuperseded))
 	require.NoError(t, err)
 
 	reopened, err := h.repo.Reopen(h.ctx, &tenderports.ReopenTenderRequest{
@@ -208,13 +214,18 @@ func TestReopenLeavesNothingBehindWhenTheOfferMovedFirst(t *testing.T) {
 func TestACounterIsStoredOnTheOffer(t *testing.T) {
 	h := newHarness(t)
 	entity := h.acceptedTender(t)
-	_, err := h.db.NewRaw(
-		`UPDATE tenders SET status = 'Active', accepted_offer_id = NULL, accepted_at = NULL WHERE id = ?`,
-		entity.ID,
-	).Exec(h.ctx)
+	tn := tenderdb.Tenders
+	_, err := tn.Where(tn.ID.Eq(entity.ID)).Update(
+		h.ctx,
+		h.db,
+		tn.Status.To(tender.StatusActive),
+		tn.AcceptedOfferID.ToNull(),
+		tn.AcceptedAt.ToNull(),
+	)
 	require.NoError(t, err)
 	offer := entity.Offers[1]
-	_, err = h.db.NewRaw(`UPDATE tender_offers SET status = 'Sent' WHERE id = ?`, offer.ID).Exec(h.ctx)
+	of := tenderdb.TenderOffers
+	_, err = of.Where(of.ID.Eq(offer.ID)).Update(h.ctx, h.db, of.Status.To(tender.OfferStatusSent))
 	require.NoError(t, err)
 
 	deadline := h.now + 3600
@@ -269,9 +280,9 @@ func TestTheDatabaseRefusesACounterWithoutARate(t *testing.T) {
 	h := newHarness(t)
 	entity := h.acceptedTender(t)
 
-	_, err := h.db.NewRaw(
-		`UPDATE tender_offers SET status = 'Countered' WHERE id = ?`, entity.Offers[0].ID,
-	).Exec(h.ctx)
+	of := tenderdb.TenderOffers
+	_, err := of.Where(of.ID.Eq(entity.Offers[0].ID)).
+		Update(h.ctx, h.db, of.Status.To(tender.OfferStatusCountered))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "ck_tender_offers_countered")
 }
@@ -279,9 +290,8 @@ func TestTheDatabaseRefusesACounterWithoutARate(t *testing.T) {
 func TestASweepWaitsOutTheGraceAfterABounce(t *testing.T) {
 	h := newHarness(t)
 	entity := h.acceptedTender(t)
-	_, err := h.db.NewRaw(
-		`UPDATE tenders SET created_at = ? WHERE id = ?`, h.now-86400, entity.ID,
-	).Exec(h.ctx)
+	tn := tenderdb.Tenders
+	_, err := tn.Where(tn.ID.Eq(entity.ID)).Update(h.ctx, h.db, tn.CreatedAt.To(h.now-86400))
 	require.NoError(t, err)
 	reopened, err := h.repo.Reopen(h.ctx, &tenderports.ReopenTenderRequest{
 		TenantInfo:     h.tenant,

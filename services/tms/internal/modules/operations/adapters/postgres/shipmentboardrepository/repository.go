@@ -3,29 +3,22 @@ package shipmentboardrepository
 import (
 	"context"
 	"errors"
-	"strconv"
+	"fmt"
+	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/uptrace/bun"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 var ErrScopeMissing = errors.New("shipment board scope is required")
-
-const (
-	countAlias         = "count"
-	stageRankAlias     = "stage_rank"
-	stageRevenueAlias  = "revenue"
-	quickCountAliasPfx = "qf_"
-)
 
 type Params struct {
 	fx.In
@@ -47,20 +40,16 @@ func NewBoardRepository(r *Repository) shipmentports.ShipmentBoardRepository { r
 
 func NewWatchlistRepository(r *Repository) shipmentports.ShipmentWatchlistRepository { return r }
 
-func (r *Repository) scoped(
-	dba bun.IDB,
-	scope *shipmentports.ShipmentBoardScope,
-) (*bun.SelectQuery, error) {
+func scoped(scope *shipmentports.ShipmentBoardScope) (*keel.Query[shipment.Shipment], error) {
 	if scope == nil {
 		return nil, ErrScopeMissing
 	}
 
-	return shipmentrepository.ApplyAggregateScope(
-		dba.NewSelect().Model((*shipment.Shipment)(nil)),
-		dba,
-		scope.Filter,
-		&scope.Options,
-	)
+	return shipmentrepository.AggregateScope(scope.Filter, &scope.Options)
+}
+
+func revenueSum() keel.Expr {
+	return keel.Raw("COALESCE(SUM(?), 0)", shipmentdb.Shipments.TotalChargeAmount)
 }
 
 func (r *Repository) StageSummary(
@@ -71,28 +60,32 @@ func (r *Repository) StageSummary(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentports.ShipmentStageSummaryRow, error) {
-			sp := shipmentcol.ShipmentColumns
-
-			q, err := r.scoped(r.db.DBForContext(ctx), scope)
+			q, err := scoped(scope)
 			if err != nil {
 				return nil, err
 			}
 
-			rows := make([]*shipmentports.ShipmentStageSummaryRow, 0, len(shipment.Stages()))
-			if err = q.
-				ColumnExpr(sp.StageRank.As(stageRankAlias)).
-				ColumnExpr(buncolgen.Count(countAlias)).
-				ColumnExpr(sp.TotalChargeAmount.Expr("COALESCE(SUM({}), 0) AS "+stageRevenueAlias)).
-				GroupExpr(sp.StageRank.Qualified()).
-				OrderExpr(sp.StageRank.OrderAsc()).
-				Scan(ctx, &rows); err != nil {
+			sp := shipmentdb.Shipments
+			rows, err := keel.Into[shipmentports.ShipmentStageSummaryRow](
+				ctx,
+				r.db.Keel(ctx),
+				q.Group(sp.StageRank).
+					Pick(sp.StageRank, keel.Count(), revenueSum()).
+					Order(sp.StageRank.Asc()),
+			)
+			if err != nil {
 				r.l.Error("failed to summarize shipment stages", zap.Error(err))
 				return nil, err
 			}
 
-			return rows, nil
+			return pointers(rows), nil
 		},
 	)
+}
+
+type quickFilterTotalsRow struct {
+	Counts   []int64
+	Revenues []string
 }
 
 func (r *Repository) QuickFilterTotals(
@@ -111,40 +104,87 @@ func (r *Repository) QuickFilterTotals(
 				return nil, ErrScopeMissing
 			}
 
-			dba := r.db.DBForContext(ctx)
-			q, err := r.scoped(dba, req.Scope)
+			q, err := scoped(req.Scope)
 			if err != nil {
 				return nil, err
 			}
 
-			revenue := shipmentcol.ShipmentColumns.TotalChargeAmount.Qualified()
-			dest := make([]any, 0, len(req.Filters)*2)
-			for i, spec := range req.Filters {
-				cond, cErr := shipmentrepository.QuickFilterCondition(
-					dba,
-					req.Scope.Options.QuickFilterBasis,
-					spec,
-				)
-				if cErr != nil {
-					return nil, cErr
-				}
-				alias := quickCountAliasPfx + strconv.Itoa(i)
-				q = q.
-					ColumnExpr("COUNT(*) FILTER (WHERE ?) AS ?", cond, bun.Ident(alias+"_count")).
-					ColumnExpr(
-						"COALESCE(SUM("+revenue+") FILTER (WHERE ?), 0) AS ?",
-						cond,
-						bun.Ident(alias+"_revenue"),
-					)
-				dest = append(dest, &totals[i].Count, &totals[i].Revenue)
+			totalsQuery, err := quickFilterTotalsQuery(q, req.Scope.Options.QuickFilterBasis, req.Filters)
+			if err != nil {
+				return nil, err
 			}
 
-			if err = q.Scan(ctx, dest...); err != nil {
+			row, err := keel.IntoOne[quickFilterTotalsRow](ctx, r.db.Keel(ctx), totalsQuery)
+			if err != nil {
 				r.l.Error("failed to total shipment quick filters", zap.Error(err))
 				return nil, err
+			}
+
+			for i := range totals {
+				if i < len(row.Counts) {
+					totals[i].Count = int(row.Counts[i])
+				}
+				if i < len(row.Revenues) {
+					amount, pErr := decimal.NewFromString(row.Revenues[i])
+					if pErr != nil {
+						return nil, fmt.Errorf("parse quick filter revenue: %w", pErr)
+					}
+					totals[i].Revenue = amount
+				}
 			}
 
 			return totals, nil
 		},
 	)
+}
+
+func quickFilterTotalsQuery(
+	q *keel.Query[shipment.Shipment],
+	basis *shipmentports.ShipmentQuickFilterBasis,
+	filters []shipment.QuickFilterSpec,
+) (*keel.Query[shipment.Shipment], error) {
+	counts := make([]any, 0, len(filters))
+	revenues := make([]any, 0, len(filters)*2)
+	revenue := shipmentdb.Shipments.TotalChargeAmount
+	for _, spec := range filters {
+		cond, err := shipmentrepository.QuickFilterCondition(basis, spec)
+		if err != nil {
+			return nil, err
+		}
+		counts = append(counts, cond)
+		revenues = append(revenues, revenue, cond)
+	}
+
+	return q.Pick(
+		keel.Raw(arraySQL("COUNT(*) FILTER (WHERE ?)", len(filters), "bigint"), counts...),
+		keel.Raw(
+			arraySQL("COALESCE(SUM(?) FILTER (WHERE ?), 0)::text", len(filters), "text"),
+			revenues...,
+		),
+	), nil
+}
+
+func arraySQL(element string, n int, elementType string) string {
+	var b strings.Builder
+	b.WriteString("ARRAY[")
+	for i := range n {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(element)
+	}
+	b.WriteString("]::")
+	b.WriteString(elementType)
+	b.WriteString("[]")
+
+	return b.String()
+}
+
+func pointers[T any](rows []T) []*T {
+	out := make([]*T, len(rows))
+	for i := range rows {
+		out[i] = &rows[i]
+	}
+
+	return out
 }

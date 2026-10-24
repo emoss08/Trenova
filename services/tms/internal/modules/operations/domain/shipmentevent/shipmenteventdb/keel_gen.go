@@ -49,23 +49,24 @@ var eventsTable = schema.Table{
 		{Name: "Actor", Alias: "a", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Actor`, JSON: `actor`},
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Shipment`, JSON: `shipment`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "se_",
-	New:        newEvent,
-	NewN:       newNEvent,
-	Size:       unsafe.Sizeof(shipmentevent.Event{}),
-	Ptr:        ptrEvent,
-	Value:      valueEvent,
-	Attach:     attachEvent,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "se_",
+	New:          newEvent,
+	NewN:         newNEvent,
+	Size:         unsafe.Sizeof(shipmentevent.Event{}),
+	Ptr:          ptrEvent,
+	Value:        valueEvent,
+	Attach:       attachEvent,
+	BeforeCreate: beforeCreateEvent,
 }
 
 var eventsRef = keel.Ref{Table: &eventsTable}
@@ -287,6 +288,10 @@ func attachEvent(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Shipment = (*shipment.Shipment)(child)
 	}
+}
+
+func beforeCreateEvent(ctx context.Context, p unsafe.Pointer) error {
+	return (*shipmentevent.Event)(p).BeforeCreate(ctx)
 }
 
 func init() {

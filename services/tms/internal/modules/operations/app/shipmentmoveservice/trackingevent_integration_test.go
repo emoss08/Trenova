@@ -39,7 +39,7 @@ func newTrackingHarness(t *testing.T, bol string) (context.Context, *trackingHar
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, shipmentRepo, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(
+	ctx, svc, shipmentRepo, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(
 		t,
 		ctx,
 		db,

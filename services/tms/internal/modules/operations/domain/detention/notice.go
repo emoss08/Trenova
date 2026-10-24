@@ -196,3 +196,7 @@ func (n *DetentionNotice) BeforeAppendModel(_ context.Context, query bun.Query) 
 func (n *DetentionNotice) BeforeCreate(ctx context.Context) error {
 	return n.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
+
+func (n *DetentionNotice) BeforeUpdate(ctx context.Context) error {
+	return n.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
+}

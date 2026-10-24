@@ -1,39 +1,44 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
-func buildPreviousRatesCTEs(
-	dba bun.IDB,
-	originLocationID pulid.ID,
-	destinationLocationID pulid.ID,
-) (originCTE, destinationCTE *bun.SelectQuery) {
-	originCTE = dba.NewSelect().
-		Column("first_move.shipment_id").
-		TableExpr("shipment_moves AS first_move").
-		Join("JOIN stops AS origin_stop ON origin_stop.shipment_move_id = first_move.id").
-		Where("first_move.sequence = 0").
-		Where("origin_stop.sequence = 0").
-		Where("origin_stop.type IN (?)", bun.List([]shipment.StopType{
-			shipment.StopTypePickup,
-			shipment.StopTypeSplitPickup,
-		})).
-		Where("origin_stop.location_id = ?", originLocationID)
+func previousRateOrigins(originLocationID pulid.ID) *keel.Query[shipment.ShipmentMove] {
+	firstMove := shipmentdb.ShipmentMoves.As("first_move")
+	originStop := shipmentdb.Stops.As("origin_stop")
 
-	destinationCTE = dba.NewSelect().
-		Column("last_move.shipment_id").
-		TableExpr("shipment_moves AS last_move").
-		Join("JOIN stops AS delivery_stop ON delivery_stop.shipment_move_id = last_move.id").
-		Where("last_move.sequence = (SELECT MAX(sm3.sequence) FROM shipment_moves AS sm3 WHERE sm3.shipment_id = last_move.shipment_id)").
-		Where("delivery_stop.sequence = (SELECT MAX(stp3.sequence) FROM stops AS stp3 WHERE stp3.shipment_move_id = last_move.id)").
-		Where("delivery_stop.type IN (?)", bun.List([]shipment.StopType{
-			shipment.StopTypeDelivery,
-			shipment.StopTypeSplitDelivery,
-		})).
-		Where("delivery_stop.location_id = ?", destinationLocationID)
+	return firstMove.Pick(firstMove.ShipmentID).
+		Join(originStop, originStop.ShipmentMoveID.EqCol(firstMove.ID)).
+		Where(
+			firstMove.Sequence.Eq(0),
+			originStop.Sequence.Eq(0),
+			originStop.Type.In(shipment.StopTypePickup, shipment.StopTypeSplitPickup),
+			originStop.LocationID.Eq(originLocationID),
+		)
+}
 
-	return originCTE, destinationCTE
+func previousRateDestinations(destinationLocationID pulid.ID) *keel.Query[shipment.ShipmentMove] {
+	lastMove := shipmentdb.ShipmentMoves.As("last_move")
+	deliveryStop := shipmentdb.Stops.As("delivery_stop")
+	otherMove := shipmentdb.ShipmentMoves.As("sm3")
+	otherStop := shipmentdb.Stops.As("stp3")
+
+	return lastMove.Pick(lastMove.ShipmentID).
+		Join(deliveryStop, deliveryStop.ShipmentMoveID.EqCol(lastMove.ID)).
+		Where(
+			lastMove.Sequence.EqCol(keel.Scalar(
+				otherMove.Pick(otherMove.Sequence.Max()).
+					Where(otherMove.ShipmentID.EqCol(lastMove.ShipmentID)),
+			)),
+			deliveryStop.Sequence.EqCol(keel.Scalar(
+				otherStop.Pick(otherStop.Sequence.Max()).
+					Where(otherStop.ShipmentMoveID.EqCol(lastMove.ID)),
+			)),
+			deliveryStop.Type.In(shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery),
+			deliveryStop.LocationID.Eq(destinationLocationID),
+		)
 }

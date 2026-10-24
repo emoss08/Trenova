@@ -8,32 +8,19 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentratingreviewservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
-
-type transactor struct {
-	kernelports.DBConnection
-}
-
-func (transactor) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
 
 type store struct {
 	mu     sync.Mutex
@@ -105,7 +92,7 @@ func heldShipment(tenant pagination.TenantInfo, reviews ...string) *shipment.Shi
 func newService(repo *store, audit *auditLog) *shipmentratingreviewservice.Service {
 	return shipmentratingreviewservice.New(shipmentratingreviewservice.Params{
 		Logger:       zap.NewNop(),
-		DB:           transactor{},
+		DB:           dbtest.NopConnection{},
 		Repo:         repo,
 		AuditService: audit,
 	})

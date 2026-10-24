@@ -395,23 +395,24 @@ var serviceFailuresTable = schema.Table{
 		{Name: "ResolvedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{25}, Remote: []int32{0}, Label: `Resolved By`, JSON: `resolvedBy`},
 		{Name: "VoidedBy", Alias: "vb", Kind: schema.BelongsTo, Local: []int32{27}, Remote: []int32{0}, Label: `Voided By`, JSON: `voidedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32},
-	Returning:  nil,
-	Version:    30,
-	AutoID:     -1,
-	AutoCreate: 31,
-	AutoUpdate: 32,
-	IDPrefix:   "",
-	New:        newServiceFailure,
-	NewN:       newNServiceFailure,
-	Size:       unsafe.Sizeof(servicefailure.ServiceFailure{}),
-	Ptr:        ptrServiceFailure,
-	Value:      valueServiceFailure,
-	Attach:     attachServiceFailure,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32},
+	Returning:    nil,
+	Version:      30,
+	AutoID:       -1,
+	AutoCreate:   31,
+	AutoUpdate:   32,
+	IDPrefix:     "",
+	New:          newServiceFailure,
+	NewN:         newNServiceFailure,
+	Size:         unsafe.Sizeof(servicefailure.ServiceFailure{}),
+	Ptr:          ptrServiceFailure,
+	Value:        valueServiceFailure,
+	Attach:       attachServiceFailure,
+	BeforeCreate: beforeCreateServiceFailure,
 }
 
 var serviceFailuresRef = keel.Ref{Table: &serviceFailuresTable}
@@ -806,6 +807,10 @@ func attachServiceFailure(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 7:
 		r.VoidedBy = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateServiceFailure(ctx context.Context, p unsafe.Pointer) error {
+	return (*servicefailure.ServiceFailure)(p).BeforeCreate(ctx)
 }
 
 func init() {

@@ -8,15 +8,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmovejurisdictionmilerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -24,11 +27,21 @@ const completedAt = int64(1_800_000_000)
 
 type fixture struct {
 	ctx        context.Context
-	db         *bun.DB
+	db         *keel.DB
 	repo       shipmentports.ShipmentMoveJurisdictionMileRepository
 	tenantInfo pagination.TenantInfo
 	shipmentID pulid.ID
 	locationID pulid.ID
+}
+
+type seededOrganization struct {
+	ID             pulid.ID
+	BusinessUnitID pulid.ID
+}
+
+type seededStop struct {
+	ShipmentID pulid.ID
+	LocationID pulid.ID
 }
 
 func setup(t *testing.T) *fixture {
@@ -37,34 +50,27 @@ func setup(t *testing.T) *fixture {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("organizations").
-		Column("id", "business_unit_id").
-		Order("created_at ASC").
-		Limit(1).
-		Scan(ctx, &org))
-	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	orgs, err := keel.QueryAll(
+		dbscope.WithSystem(ctx, "test"),
+		db,
+		pgx.RowToStructByPos[seededOrganization],
+		"SELECT id, business_unit_id FROM organizations ORDER BY created_at ASC LIMIT 1",
+	)
+	require.NoError(t, err)
+	require.Len(t, orgs, 1)
+	tenantInfo := pagination.TenantInfo{OrgID: orgs[0].ID, BuID: orgs[0].BusinessUnitID}
+	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
-	var seeded struct {
-		ShipmentID pulid.ID `bun:"shipment_id"`
-		LocationID pulid.ID `bun:"location_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("stops AS st").
-		ColumnExpr("sm.shipment_id").
-		ColumnExpr("st.location_id").
-		Join("JOIN shipment_moves AS sm ON sm.id = st.shipment_move_id").
-		Where("st.organization_id = ?", tenantInfo.OrgID).
-		Where("st.business_unit_id = ?", tenantInfo.BuID).
-		Limit(1).
-		Scan(ctx, &seeded))
+	st := shipmentdb.Stops
+	sm := shipmentdb.ShipmentMoves
+	seeded, err := keel.IntoOne[seededStop](tenantCtx, db, st.
+		Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
+		Pick(sm.ShipmentID, st.LocationID).
+		Limit(1))
+	require.NoError(t, err)
 
 	return &fixture{
-		ctx: ctx,
+		ctx: tenantCtx,
 		db:  db,
 		repo: shipmentmovejurisdictionmilerepository.New(
 			shipmentmovejurisdictionmilerepository.Params{
@@ -96,8 +102,7 @@ func (f *fixture) insertCompletedMove(
 		Distance:       &distance,
 		DistanceUnits:  shipment.JurisdictionDistanceUnitsMiles,
 	}
-	_, err := f.db.NewInsert().Model(move).Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, shipmentdb.ShipmentMoves.Create(f.ctx, f.db, move))
 
 	arrivedAt := departedAt - 3600
 	stops := []*shipment.Stop{
@@ -127,8 +132,7 @@ func (f *fixture) insertCompletedMove(
 			ActualArrival:        &departedAt,
 		},
 	}
-	_, err = f.db.NewInsert().Model(&stops).Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, shipmentdb.Stops.CreateMany(f.ctx, f.db, stops))
 
 	return move
 }
@@ -257,8 +261,10 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, after.MoveIDs, move.ID)
 
-	otherTenant, err := f.repo.ListUnattributedMoves(f.ctx, shipmentports.UnattributedMovesRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	otherCtx := dbscope.WithTenant(f.ctx, other.DBTenant())
+	otherTenant, err := f.repo.ListUnattributedMoves(otherCtx, shipmentports.UnattributedMovesRequest{
+		TenantInfo: other,
 		Start:      completedAt - 100,
 		End:        completedAt + 100,
 	})

@@ -1,27 +1,50 @@
-//nolint:gocognit // existing legacy workflow/API shape is intentionally kept stable
 package weatheralertrepository
 
 import (
 	"context"
 	"maps"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/weatheralertcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert/weatheralertdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const geometryFromGeoJSON = "ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)"
+
+var weatherAlertErrors = dberror.Mapping{
+	Entity: "Weather Alert",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "idx_weather_alerts_tenant_nws_id",
+			Field:   "nwsId",
+			Message: "Weather alert with this NWS ID already exists in your organization",
+		},
+	},
+}
+
+var activityErrors = dberror.Mapping{
+	Entity: "Weather Alert Activity",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_weather_alert_activities_alert",
+			Field:   "weatherAlertId",
+			Message: "Weather alert does not exist in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -36,41 +59,8 @@ type repository struct {
 }
 
 type tenantRow struct {
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
-type weatherAlertWriteModel struct {
-	bun.BaseModel `bun:"table:weather_alerts"`
-
-	ID             pulid.ID                   `bun:"id,pk"`
-	OrganizationID pulid.ID                   `bun:"organization_id,pk"`
-	BusinessUnitID pulid.ID                   `bun:"business_unit_id,pk"`
-	NWSID          string                     `bun:"nws_id"`
-	Event          string                     `bun:"event"`
-	Severity       string                     `bun:"severity,nullzero"`
-	Urgency        string                     `bun:"urgency,nullzero"`
-	Certainty      string                     `bun:"certainty,nullzero"`
-	Headline       string                     `bun:"headline,nullzero"`
-	Description    string                     `bun:"description,nullzero"`
-	Instruction    string                     `bun:"instruction,nullzero"`
-	AreaDesc       string                     `bun:"area_desc,nullzero"`
-	Effective      *int64                     `bun:"effective,nullzero"`
-	Expires        *int64                     `bun:"expires,nullzero"`
-	Onset          *int64                     `bun:"onset,nullzero"`
-	Ends           *int64                     `bun:"ends,nullzero"`
-	Status         string                     `bun:"status,nullzero"`
-	MessageType    string                     `bun:"message_type,nullzero"`
-	SenderName     string                     `bun:"sender_name,nullzero"`
-	Response       string                     `bun:"response,nullzero"`
-	Category       string                     `bun:"category,nullzero"`
-	AlertCategory  weatheralert.AlertCategory `bun:"alert_category"`
-	FirstSeenAt    int64                      `bun:"first_seen_at"`
-	LastUpdatedAt  int64                      `bun:"last_updated_at"`
-	ExpiredAt      *int64                     `bun:"expired_at,nullzero"`
-	Version        int64                      `bun:"version"`
-	CreatedAt      int64                      `bun:"created_at"`
-	UpdatedAt      int64                      `bun:"updated_at"`
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 func New(p Params) weatheralertports.WeatherAlertRepository {
@@ -83,14 +73,13 @@ func New(p Params) weatheralertports.WeatherAlertRepository {
 func (r *repository) ListTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations for weather alert polling")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		rows := make([]tenantRow, 0)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			TableExpr("organizations AS org").
-			ColumnExpr("org.id AS organization_id").
-			ColumnExpr("org.business_unit_id AS business_unit_id").
-			OrderExpr("org.id ASC").
-			Scan(ctx, &rows); err != nil {
+		o := tenantdb.Organizations
+		rows, err := keel.Into[tenantRow](
+			ctx,
+			r.db.Keel(ctx),
+			o.AllTenants().Pick(o.ID, o.BusinessUnitID).Order(o.ID.Asc()),
+		)
+		if err != nil {
 			return nil, err
 		}
 
@@ -108,29 +97,18 @@ func (r *repository) ListTenants(ctx context.Context) ([]pagination.TenantInfo, 
 
 func (r *repository) GetActiveAlerts(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*weatheralert.WeatherAlert, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*weatheralert.WeatherAlert, error) {
-		alerts := make([]*weatheralert.WeatherAlert, 0)
+		wa := weatheralertdb.WeatherAlerts
 		now := timeutils.NowUnix()
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&alerts).
-			ColumnExpr("wa.*").
-			ColumnExpr("wa.geometry").
-			Where("wa.organization_id = ?", tenantInfo.OrgID).
-			Where("wa.business_unit_id = ?", tenantInfo.BuID).
-			Where("wa.expired_at IS NULL").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("wa.expires IS NULL").WhereOr("wa.expires > ?", now)
-			}).
-			OrderExpr("COALESCE(wa.expires, 9223372036854775807) ASC").
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		return alerts, nil
+		return wa.Where(
+			wa.ExpiredAt.IsNull(),
+			keel.Or(wa.Expires.IsNull(), wa.Expires.Gt(now)),
+		).
+			Order(wa.Expires.Asc().NullsLast()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -139,18 +117,9 @@ func (r *repository) GetByID(
 	req weatheralertports.GetWeatherAlertByIDRequest,
 ) (*weatheralert.WeatherAlert, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*weatheralert.WeatherAlert, error) {
-		alert := new(weatheralert.WeatherAlert)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(alert).
-			ColumnExpr("wa.*").
-			ColumnExpr("wa.geometry").
-			Where("wa.id = ?", req.ID).
-			Where("wa.organization_id = ?", req.TenantInfo.OrgID).
-			Where("wa.business_unit_id = ?", req.TenantInfo.BuID).
-			Scan(ctx)
+		alert, err := weatheralertdb.WeatherAlerts.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Weather Alert")
+			return nil, weatherAlertErrors.Map(err, req.ID.String())
 		}
 
 		return alert, nil
@@ -162,19 +131,11 @@ func (r *repository) GetActivities(
 	req weatheralertports.GetWeatherAlertByIDRequest,
 ) ([]*weatheralert.Activity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*weatheralert.Activity, error) {
-		activities := make([]*weatheralert.Activity, 0)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&activities).
-			Where("waa.weather_alert_id = ?", req.ID).
-			Where("waa.organization_id = ?", req.TenantInfo.OrgID).
-			Where("waa.business_unit_id = ?", req.TenantInfo.BuID).
-			OrderExpr("waa.timestamp DESC").
-			Scan(ctx); err != nil {
-			return nil, err
-		}
+		a := weatheralertdb.Activities
 
-		return activities, nil
+		return a.Where(a.WeatherAlertID.Eq(req.ID)).
+			Order(a.Timestamp.Desc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -187,27 +148,19 @@ func (r *repository) ListByNWSIDs(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*weatheralert.WeatherAlert, error) {
-		cols := weatheralertcol.WeatherAlertColumns
-		alerts := make([]*weatheralert.WeatherAlert, 0, len(req.NWSIDs))
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&alerts).
-			Column(
-				cols.NWSID.String(),
-				cols.MessageType.String(),
-				cols.AlertCategory.String(),
-				cols.Effective.String(),
-				cols.Onset.String(),
-				cols.Expires.String(),
-				cols.Ends.String(),
-			).
-			Apply(weatheralertcol.WeatherAlertApplyTenant(req.TenantInfo)).
-			Where(cols.NWSID.In(), bun.List(req.NWSIDs)).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
+		wa := weatheralertdb.WeatherAlerts
 
-		return alerts, nil
+		return wa.Pick(
+			wa.NWSID,
+			wa.MessageType,
+			wa.AlertCategory,
+			wa.Effective,
+			wa.Onset,
+			wa.Expires,
+			wa.Ends,
+		).
+			Where(wa.NWSID.In(req.NWSIDs...)).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -219,89 +172,119 @@ func (r *repository) UpsertAlert(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*weatheralertports.UpsertWeatherAlertResult, error) {
-			result := new(weatheralertports.UpsertWeatherAlertResult)
-
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, tx bun.Tx) error {
-					existing, err := r.getByNWSID(
-						c,
-						tx,
-						alert.OrganizationID.String(),
-						alert.BusinessUnitID.String(),
-						alert.NWSID,
-					)
-					if err != nil && !dberror.IsNotFoundError(err) {
-						return err
-					}
-
-					if dberror.IsNotFoundError(err) {
-						prepareNewAlert(alert)
-						if err = r.insertAlert(c, tx, alert); err != nil {
-							return err
-						}
-
-						activity := newActivity(alert, weatheralert.ActivityTypeIssued, nil)
-						if err = r.insertActivity(c, tx, activity); err != nil {
-							return err
-						}
-
-						result.Alert = alert
-						result.Activity = activity
-						result.Created = true
-						result.Changed = true
-						result.ActivityType = weatheralert.ActivityTypeIssued
-						return nil
-					}
-
-					diff, err := buildDiff(existing, alert)
-					if err != nil {
-						return err
-					}
-
-					alert.ID = existing.ID
-					alert.CreatedAt = existing.CreatedAt
-					alert.FirstSeenAt = existing.FirstSeenAt
-					alert.Version = existing.Version + 1
-					if alert.LastUpdatedAt == 0 {
-						alert.LastUpdatedAt = timeutils.NowUnix()
-					}
-					alert.UpdatedAt = alert.LastUpdatedAt
-
-					changed := len(diff) > 0 || stateTransition(existing, alert)
-					if !changed {
-						result.Alert = existing
-						return nil
-					}
-
-					if err = r.updateAlert(c, tx, alert, existing.Version); err != nil {
-						return err
-					}
-
-					activityType := weatheralert.ActivityTypeUpdated
-					if isCancelled(alert) {
-						activityType = weatheralert.ActivityTypeCancelled
-					}
-					activity := newActivity(alert, activityType, map[string]any{"changes": diff})
-					if err = r.insertActivity(c, tx, activity); err != nil {
-						return err
-					}
-
-					result.Alert = alert
-					result.Activity = activity
-					result.Changed = true
-					result.ActivityType = activityType
-					return nil
-				},
-			)
-			if err != nil {
+			db := r.db.Keel(ctx)
+			wa := weatheralertdb.WeatherAlerts
+			existing, err := wa.Where(wa.NWSID.Eq(alert.NWSID)).One(ctx, db)
+			if err != nil && !dberror.IsNotFoundError(err) {
 				return nil, err
 			}
 
-			return result, nil
+			if existing == nil {
+				return r.createAlert(ctx, db, alert)
+			}
+
+			return r.updateAlert(ctx, db, existing, alert)
 		},
 	)
+}
+
+func (r *repository) createAlert(
+	ctx context.Context,
+	db *keel.DB,
+	alert *weatheralert.WeatherAlert,
+) (*weatheralertports.UpsertWeatherAlertResult, error) {
+	prepareNewAlert(alert)
+	geometry := alert.Geometry
+	if err := weatheralertdb.WeatherAlerts.Create(ctx, db, alert); err != nil {
+		return nil, weatherAlertErrors.Map(err, alert.ID.String())
+	}
+	if err := writeGeometry(ctx, db, alert, geometry); err != nil {
+		return nil, err
+	}
+
+	activity := newActivity(alert, weatheralert.ActivityTypeIssued, nil)
+	if err := weatheralertdb.Activities.Create(ctx, db, activity); err != nil {
+		return nil, activityErrors.Map(err, activity.ID.String())
+	}
+
+	return &weatheralertports.UpsertWeatherAlertResult{
+		Alert:        alert,
+		Activity:     activity,
+		Created:      true,
+		Changed:      true,
+		ActivityType: weatheralert.ActivityTypeIssued,
+	}, nil
+}
+
+func (r *repository) updateAlert(
+	ctx context.Context,
+	db *keel.DB,
+	existing, alert *weatheralert.WeatherAlert,
+) (*weatheralertports.UpsertWeatherAlertResult, error) {
+	diff, err := buildDiff(existing, alert)
+	if err != nil {
+		return nil, err
+	}
+
+	alert.ID = existing.ID
+	alert.CreatedAt = existing.CreatedAt
+	alert.FirstSeenAt = existing.FirstSeenAt
+	alert.Version = existing.Version
+	if alert.LastUpdatedAt == 0 {
+		alert.LastUpdatedAt = timeutils.NowUnix()
+	}
+
+	if len(diff) == 0 && !stateTransition(existing, alert) {
+		return &weatheralertports.UpsertWeatherAlertResult{Alert: existing}, nil
+	}
+
+	geometry := alert.Geometry
+	if err = weatheralertdb.WeatherAlerts.Save(ctx, db, alert); err != nil {
+		return nil, weatherAlertErrors.Map(err, alert.ID.String())
+	}
+	if err = writeGeometry(ctx, db, alert, geometry); err != nil {
+		return nil, err
+	}
+
+	activityType := weatheralert.ActivityTypeUpdated
+	if isCancelled(alert) {
+		activityType = weatheralert.ActivityTypeCancelled
+	}
+	activity := newActivity(alert, activityType, map[string]any{"changes": diff})
+	if err = weatheralertdb.Activities.Create(ctx, db, activity); err != nil {
+		return nil, activityErrors.Map(err, activity.ID.String())
+	}
+
+	return &weatheralertports.UpsertWeatherAlertResult{
+		Alert:        alert,
+		Activity:     activity,
+		Changed:      true,
+		ActivityType: activityType,
+	}, nil
+}
+
+func writeGeometry(
+	ctx context.Context,
+	db *keel.DB,
+	alert *weatheralert.WeatherAlert,
+	geometry *postgis.Geometry,
+) error {
+	alert.Geometry = geometry
+	geometryJSON, err := geometry.GeoJSONString()
+	if err != nil {
+		return err
+	}
+
+	wa := weatheralertdb.WeatherAlerts
+	_, err = wa.Where(wa.ID.Eq(alert.ID)).Update(
+		ctx,
+		db,
+		wa.Geometry.ToExpr(keel.Raw(geometryFromGeoJSON, geometryJSON)),
+		wa.Version.ToExpr(wa.Version),
+		wa.UpdatedAt.ToExpr(wa.UpdatedAt),
+	)
+
+	return err
 }
 
 func prepareNewAlert(alert *weatheralert.WeatherAlert) {
@@ -331,165 +314,34 @@ func (r *repository) ExpireStaleAlerts(
 		r.db,
 		func(ctx context.Context) (*weatheralertports.ExpireWeatherAlertsResult, error) {
 			now := timeutils.NowUnix()
-			result := &weatheralertports.ExpireWeatherAlertsResult{}
-
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, tx bun.Tx) error {
-					alerts := make([]*weatheralert.WeatherAlert, 0)
-					if err := tx.NewSelect().
-						Model(&alerts).
-						ColumnExpr("wa.*").
-						ColumnExpr("wa.geometry").
-						Where("wa.expired_at IS NULL").
-						Where("wa.expires IS NOT NULL").
-						Where("wa.expires <= ?", now).
-						Scan(c); err != nil {
-						return err
-					}
-
-					for _, alert := range alerts {
-						alert.ExpiredAt = &now
-						alert.LastUpdatedAt = now
-						alert.Version++
-
-						if _, err := tx.NewUpdate().
-							Model(alert).
-							Column("expired_at", "last_updated_at", "version", "updated_at").
-							WherePK().
-							Where("version = ?", alert.Version-1).
-							Exec(c); err != nil {
-							return err
-						}
-
-						if err := r.insertActivity(
-							c,
-							tx,
-							newActivity(alert, weatheralert.ActivityTypeExpired, nil),
-						); err != nil {
-							return err
-						}
-					}
-
-					result.ExpiredCount = len(alerts)
-					return nil
-				},
-			)
+			db := r.db.Keel(ctx)
+			wa := weatheralertdb.WeatherAlerts
+			expired, err := wa.AllTenants().
+				Pick(wa.ID, wa.LastUpdatedAt).
+				Where(
+					wa.ExpiredAt.IsNull(),
+					wa.Expires.IsNotNull(),
+					wa.Expires.Lte(now),
+				).
+				UpdateReturning(ctx, db, wa.ExpiredAt.To(now), wa.LastUpdatedAt.To(now))
 			if err != nil {
 				return nil, err
 			}
 
-			return result, nil
+			activities := make([]*weatheralert.Activity, 0, len(expired))
+			for _, alert := range expired {
+				activities = append(
+					activities,
+					newActivity(alert, weatheralert.ActivityTypeExpired, nil),
+				)
+			}
+			if err = weatheralertdb.Activities.CreateMany(ctx, db, activities); err != nil {
+				return nil, activityErrors.Map(err, "")
+			}
+
+			return &weatheralertports.ExpireWeatherAlertsResult{ExpiredCount: len(expired)}, nil
 		},
 	)
-}
-
-func (r *repository) getByNWSID(
-	ctx context.Context,
-	db bun.IDB,
-	orgID, buID, nwsID string,
-) (*weatheralert.WeatherAlert, error) {
-	alert := new(weatheralert.WeatherAlert)
-	err := db.NewSelect().
-		Model(alert).
-		ColumnExpr("wa.*").
-		ColumnExpr("wa.geometry").
-		Where("wa.organization_id = ?", orgID).
-		Where("wa.business_unit_id = ?", buID).
-		Where("wa.nws_id = ?", nwsID).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return alert, nil
-}
-
-func (r *repository) insertAlert(
-	ctx context.Context,
-	db bun.IDB,
-	alert *weatheralert.WeatherAlert,
-) error {
-	geometryJSON, err := alert.Geometry.GeoJSONString()
-	if err != nil {
-		return err
-	}
-
-	writeModel := toWriteModel(alert)
-	_, err = db.NewInsert().
-		Model(writeModel).
-		Value("geometry", "ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)", geometryJSON).
-		Exec(ctx)
-	return err
-}
-
-func (r *repository) updateAlert(
-	ctx context.Context,
-	db bun.IDB,
-	alert *weatheralert.WeatherAlert,
-	previousVersion int64,
-) error {
-	geometryJSON, err := alert.Geometry.GeoJSONString()
-	if err != nil {
-		return err
-	}
-
-	writeModel := toWriteModel(alert)
-	result, err := db.NewUpdate().
-		Model(writeModel).
-		WherePK().
-		ExcludeColumn("created_at").
-		Set("geometry = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)", geometryJSON).
-		Where("version = ?", previousVersion).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	return dberror.CheckRowsAffected(result, "Weather Alert", alert.ID.String())
-}
-
-func toWriteModel(alert *weatheralert.WeatherAlert) *weatherAlertWriteModel {
-	return &weatherAlertWriteModel{
-		ID:             alert.ID,
-		OrganizationID: alert.OrganizationID,
-		BusinessUnitID: alert.BusinessUnitID,
-		NWSID:          alert.NWSID,
-		Event:          alert.Event,
-		Severity:       alert.Severity,
-		Urgency:        alert.Urgency,
-		Certainty:      alert.Certainty,
-		Headline:       alert.Headline,
-		Description:    alert.Description,
-		Instruction:    alert.Instruction,
-		AreaDesc:       alert.AreaDesc,
-		Effective:      alert.Effective,
-		Expires:        alert.Expires,
-		Onset:          alert.Onset,
-		Ends:           alert.Ends,
-		Status:         alert.Status,
-		MessageType:    alert.MessageType,
-		SenderName:     alert.SenderName,
-		Response:       alert.Response,
-		Category:       alert.Category,
-		AlertCategory:  alert.AlertCategory,
-		FirstSeenAt:    alert.FirstSeenAt,
-		LastUpdatedAt:  alert.LastUpdatedAt,
-		ExpiredAt:      alert.ExpiredAt,
-		Version:        alert.Version,
-		CreatedAt:      alert.CreatedAt,
-		UpdatedAt:      alert.UpdatedAt,
-	}
-}
-
-func (r *repository) insertActivity(
-	ctx context.Context,
-	db bun.IDB,
-	activity *weatheralert.Activity,
-) error {
-	_, err := db.NewInsert().Model(activity).Exec(ctx)
-	return err
 }
 
 func newActivity(

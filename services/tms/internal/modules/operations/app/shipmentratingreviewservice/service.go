@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -25,7 +24,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           kernelports.DBConnection
+	DB           kernelports.Transactor
 	Repo         shipmentports.RatingReviewRepository
 	AuditService auditports.AuditService
 	Realtime     agentports.RealtimeService `optional:"true"`
@@ -33,7 +32,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	db           kernelports.DBConnection
+	db           kernelports.Transactor
 	repo         shipmentports.RatingReviewRepository
 	auditService auditports.AuditService
 	realtime     agentports.RealtimeService
@@ -76,7 +75,7 @@ func (s *Service) Approve(
 		original *shipment.Shipment
 		saved    *shipment.Shipment
 	)
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, err := s.repo.GetForRatingReview(txCtx, req)
 		if err != nil {
 			return err

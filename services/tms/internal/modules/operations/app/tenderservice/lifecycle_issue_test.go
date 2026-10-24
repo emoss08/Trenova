@@ -2,8 +2,9 @@ package tenderservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"

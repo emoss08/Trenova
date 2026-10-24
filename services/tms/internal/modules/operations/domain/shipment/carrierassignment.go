@@ -227,8 +227,10 @@ func (ca *CarrierAssignment) BeforeAppendModel(_ context.Context, query bun.Quer
 	return nil
 }
 
-func (ca *CarrierAssignment) BeforeCreate(ctx context.Context) error {
-	return ca.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (ca *CarrierAssignment) BeforeCreate(_ context.Context) error {
+	ca.applyDefaults()
+
+	return nil
 }
 
 var _ bun.BeforeAppendModelHook = (*CarrierAssignmentAccessorial)(nil)

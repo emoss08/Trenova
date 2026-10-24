@@ -4,24 +4,34 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelkinds"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const reasonCodeEntity = "Service failure reason code"
+
+var reasonCodeErrors = dberror.Mapping{
+	Entity: reasonCodeEntity,
+	Unique: []dberror.Constraint{
+		{
+			Name:    "ux_sfrc_tenant_code",
+			Field:   "code",
+			Message: "Service failure reason code already exists in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -50,119 +60,49 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-			if req.Filter.Pagination.Limit <= 0 {
+			if req.Filter != nil && req.Filter.Pagination.Limit <= 0 {
 				req.Filter.Pagination.Limit = 50
 			}
 
-			entities := make([]*servicefailure.ReasonCode, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFilters(q, "sfrc", req.Filter, (*servicefailure.ReasonCode)(nil)).
-						Limit(int64(req.Filter.Pagination.SafeLimit())).
-						Offset(int64(req.Filter.Pagination.SafeOffset()))
-				}).
-				Order("sfrc.sort_order ASC", "sfrc.code ASC").
-				ScanAndCount(ctx)
+			rc := servicefailuredb.ReasonCodes
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				rc.Query(),
+				&listquery.Request[servicefailure.ReasonCode]{
+					Filter: req.Filter,
+					Then:   []keel.Order{rc.SortOrder.Asc(), rc.Code.Asc()},
+				},
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list service failure reason codes: %w", err)
 			}
 
-			return &pagination.ListResult[*servicefailure.ReasonCode]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *servicefailureports.ListServiceFailureReasonCodeConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		servicefailurecol.ReasonCodeTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*servicefailure.ReasonCode)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *servicefailureports.ListServiceFailureReasonCodeConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		servicefailurecol.ReasonCodeTable.Alias,
-		req.Filter,
-		(*servicefailure.ReasonCode)(nil),
-	)
-}
-
-func applyServiceFailureReasonCodeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(servicefailurecol.ReasonCodeTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *servicefailureports.ListServiceFailureReasonCodeConnectionRequest,
 ) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*servicefailure.ReasonCode)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count service failure reason codes", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*servicefailure.ReasonCode]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*servicefailure.ReasonCode) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyServiceFailureReasonCodeColumns(
-									sq,
-									req.ServiceFailureReasonCodeColumns,
-								)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				servicefailuredb.ReasonCodes.Query(),
+				&listquery.Request[servicefailure.ReasonCode]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.ServiceFailureReasonCodeColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan service failure reason codes", zap.Error(err))
+				r.l.Error("failed to list service failure reason codes", zap.Error(err))
 				return nil, err
 			}
 
@@ -176,49 +116,45 @@ func (r *repository) GetByID(
 	req servicefailureports.GetServiceFailureReasonCodeByIDRequest,
 ) (*servicefailure.ReasonCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicefailure.ReasonCode, error) {
-		entity := new(servicefailure.ReasonCode)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("sfrc.id = ?", req.ID).
-			Where("sfrc.organization_id = ?", req.TenantInfo.OrgID).
-			Where("sfrc.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("ArchivedBy").
-			Relation("ActivatedBy").
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Service failure reason code")
-		}
-
-		return entity, nil
+		return r.get(ctx, req.ID)
 	})
+}
+
+func (r *repository) get(ctx context.Context, id pulid.ID) (*servicefailure.ReasonCode, error) {
+	rc := servicefailuredb.ReasonCodes
+	entity, err := rc.Where(rc.ID.Eq(id)).
+		Load(rc.ArchivedBy(), rc.ActivatedBy()).
+		One(ctx, r.db.Keel(ctx))
+	if err != nil {
+		return nil, reasonCodeErrors.Map(err, id.String())
+	}
+
+	return entity, nil
 }
 
 func (r *repository) FindDefault(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	appliesTo servicefailure.ReasonCodeAppliesTo,
 ) (*servicefailure.ReasonCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicefailure.ReasonCode, error) {
-		entity := new(servicefailure.ReasonCode)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("sfrc.organization_id = ?", tenantInfo.OrgID).
-			Where("sfrc.business_unit_id = ?", tenantInfo.BuID).
-			Where("sfrc.active = TRUE").
-			Where("sfrc.applies_to IN (?)", bun.List([]servicefailure.ReasonCodeAppliesTo{
+		rc := servicefailuredb.ReasonCodes
+		entity, err := rc.Where(
+			rc.Active.IsTrue(),
+			rc.AppliesTo.In(
 				appliesTo,
 				servicefailure.ReasonCodeAppliesToBoth,
 				servicefailure.ReasonCodeAppliesToAll,
-			})).
-			OrderExpr("CASE WHEN sfrc.applies_to = ? THEN 0 ELSE 1 END", appliesTo).
-			Order("sfrc.sort_order ASC").
-			Order("sfrc.code ASC").
-			Limit(1).
-			Scan(ctx)
+			),
+		).
+			Order(
+				keel.Asc(keel.Raw("CASE WHEN ? = ? THEN 0 ELSE 1 END", rc.AppliesTo, string(appliesTo))),
+				rc.SortOrder.Asc(),
+				rc.Code.Asc(),
+			).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Service failure reason code")
+			return nil, reasonCodeErrors.Map(err, string(appliesTo))
 		}
 
 		return entity, nil
@@ -230,14 +166,11 @@ func (r *repository) Create(
 	entity *servicefailure.ReasonCode,
 ) (*servicefailure.ReasonCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*servicefailure.ReasonCode, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, mapReasonCodeConstraint(err)
+		if err := servicefailuredb.ReasonCodes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, reasonCodeErrors.Map(err, entity.ID.String())
 		}
 
-		return r.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
-			ID:         entity.ID,
-			TenantInfo: tenantInfo(entity),
-		})
+		return r.get(ctx, entity.ID)
 	})
 }
 
@@ -246,121 +179,82 @@ func (r *repository) Update(
 	entity *servicefailure.ReasonCode,
 ) (*servicefailure.ReasonCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*servicefailure.ReasonCode, error) {
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*servicefailure.ReasonCode)(nil)).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("code = ?", entity.Code).
-			Set("label = ?", entity.Label).
-			Set("description = ?", entity.Description).
-			Set("category = ?", entity.Category).
-			Set("applies_to = ?", entity.AppliesTo).
-			Set("default_status_code = ?", entity.DefaultStatusCode).
-			Set("default_reason_code = ?", entity.DefaultReasonCode).
-			Set("default_exception_code = ?", entity.DefaultExceptionCode).
-			Set("default_note = ?", entity.DefaultNote).
-			Set("active = ?", entity.Active).
-			Set("sort_order = ?", entity.SortOrder).
-			Set("external_map = ?", entity.ExternalMap).
-			Set("version = version + 1").
-			Set("updated_at = ?", timeutils.NowUnix()).
-			Exec(ctx)
-		if err != nil {
-			return nil, mapReasonCodeConstraint(err)
-		}
-		if err = dberror.CheckRowsAffected(
-			result,
-			"Service failure reason code",
-			entity.ID.String(),
+		rc := servicefailuredb.ReasonCodes
+		if err := rc.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			rc.Code,
+			rc.Label,
+			rc.Description,
+			rc.Category,
+			rc.AppliesTo,
+			rc.DefaultStatusCode,
+			rc.DefaultReasonCode,
+			rc.DefaultExceptionCode,
+			rc.DefaultNote,
+			rc.Active,
+			rc.SortOrder,
+			rc.ExternalMap,
 		); err != nil {
-			return nil, err
+			return nil, reasonCodeErrors.Map(err, entity.ID.String())
 		}
 
-		return r.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
-			ID:         entity.ID,
-			TenantInfo: tenantInfo(entity),
-		})
+		return r.get(ctx, entity.ID)
 	})
 }
 
 func (r *repository) Archive(
 	ctx context.Context,
 	id pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	actorID pulid.ID,
 ) (*servicefailure.ReasonCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*servicefailure.ReasonCode, error) {
-		now := timeutils.NowUnix()
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*servicefailure.ReasonCode)(nil)).
-			Where("id = ?", id).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Set("active = FALSE").
-			Set("archived_at = ?", now).
-			Set("archived_by_id = ?", nullableID(actorID)).
-			Set("activated_at = NULL").
-			Set("activated_by_id = NULL").
-			Set("version = version + 1").
-			Set("updated_at = ?", now).
-			Exec(ctx)
+		rc := servicefailuredb.ReasonCodes
+		n, err := rc.Where(rc.ID.Eq(id)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			rc.Active.To(false),
+			rc.ArchivedAt.To(timeutils.NowUnix()),
+			actorAssignment(rc.ArchivedByID, actorID),
+			rc.ActivatedAt.ToNull(),
+			rc.ActivatedByID.ToNull(),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("archive service failure reason code: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(
-			result,
-			"Service failure reason code",
-			id.String(),
-		); err != nil {
+		if err = dberror.CheckAffected(n, reasonCodeEntity, id.String()); err != nil {
 			return nil, err
 		}
 
-		return r.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
-			ID:         id,
-			TenantInfo: tenantInfo,
-		})
+		return r.get(ctx, id)
 	})
 }
 
 func (r *repository) Activate(
 	ctx context.Context,
 	id pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	actorID pulid.ID,
 ) (*servicefailure.ReasonCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*servicefailure.ReasonCode, error) {
-		now := timeutils.NowUnix()
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*servicefailure.ReasonCode)(nil)).
-			Where("id = ?", id).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Set("active = TRUE").
-			Set("activated_at = ?", now).
-			Set("activated_by_id = ?", nullableID(actorID)).
-			Set("version = version + 1").
-			Set("updated_at = ?", now).
-			Exec(ctx)
+		rc := servicefailuredb.ReasonCodes
+		n, err := rc.Where(rc.ID.Eq(id)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			rc.Active.To(true),
+			rc.ActivatedAt.To(timeutils.NowUnix()),
+			actorAssignment(rc.ActivatedByID, actorID),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("activate service failure reason code: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(
-			result,
-			"Service failure reason code",
-			id.String(),
-		); err != nil {
+		if err = dberror.CheckAffected(n, reasonCodeEntity, id.String()); err != nil {
 			return nil, err
 		}
 
-		return r.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
-			ID:         id,
-			TenantInfo: tenantInfo,
-		})
+		return r.get(ctx, id)
 	})
 }
 
@@ -369,40 +263,30 @@ func (r *repository) Reorder(
 	req *servicefailureports.ReorderServiceFailureReasonCodesRequest,
 ) ([]*servicefailure.ReasonCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ReasonCode, error) {
-		if err := r.db.WithTx(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context, _ bun.Tx) error {
-				for idx, id := range req.ReasonIDs {
-					_, err := r.db.DBForContext(txCtx).
-						NewUpdate().
-						Model((*servicefailure.ReasonCode)(nil)).
-						Where("id = ?", id).
-						Where("organization_id = ?", req.TenantInfo.OrgID).
-						Where("business_unit_id = ?", req.TenantInfo.BuID).
-						Set("sort_order = ?", int32((idx+1)*10)).
-						Set("version = version + 1").
-						Set("updated_at = ?", timeutils.NowUnix()).
-						Exec(txCtx)
-					if err != nil {
-						return fmt.Errorf("reorder service failure reason code: %w", err)
-					}
-				}
-				return nil
-			},
-		); err != nil {
-			return nil, err
+		if len(req.ReasonIDs) == 0 {
+			return []*servicefailure.ReasonCode{}, nil
 		}
 
-		entities := make([]*servicefailure.ReasonCode, 0, len(req.ReasonIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where("sfrc.organization_id = ?", req.TenantInfo.OrgID).
-			Where("sfrc.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("sfrc.id IN (?)", bun.List(req.ReasonIDs)).
-			Order("sfrc.sort_order ASC").
-			Scan(ctx)
+		ids := make([]string, len(req.ReasonIDs))
+		orders := make([]int32, len(req.ReasonIDs))
+		for idx, id := range req.ReasonIDs {
+			ids[idx] = id.String()
+			orders[idx] = int32((idx + 1) * 10)
+		}
+
+		rc := servicefailuredb.ReasonCodes
+		db := r.db.Keel(ctx)
+		positions := keel.Unnest("positions", []string{"id", "sort_order"}, ids, orders)
+		if _, err := rc.With(positions).
+			Join(positions, positions.Col("id").EqCol(rc.ID)).
+			Where(keel.True()).
+			Update(ctx, db, rc.SortOrder.ToExpr(positions.Col("sort_order"))); err != nil {
+			return nil, fmt.Errorf("reorder service failure reason codes: %w", err)
+		}
+
+		entities, err := rc.Where(rc.ID.In(req.ReasonIDs...)).
+			Order(rc.SortOrder.Asc()).
+			All(ctx, db)
 		if err != nil {
 			return nil, fmt.Errorf("list reordered service failure reason codes: %w", err)
 		}
@@ -415,74 +299,51 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-			return dbhelper.SelectOptions[*servicefailure.ReasonCode](
+			rc := servicefailuredb.ReasonCodes
+			q := rc.Pick(
+				rc.ID,
+				rc.Code,
+				rc.Label,
+				rc.Category,
+				rc.AppliesTo,
+				rc.DefaultStatusCode,
+				rc.DefaultReasonCode,
+			).
+				Where(
+					rc.Active.IsTrue(),
+					keel.When(req.AppliesTo.IsValid(), rc.AppliesTo.In(
+						req.AppliesTo,
+						servicefailure.ReasonCodeAppliesToBoth,
+						servicefailure.ReasonCodeAppliesToAll,
+					)),
+				).
+				Order(rc.SortOrder.Asc(), rc.Code.Asc())
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					Columns: []string{
-						"id",
-						"code",
-						"label",
-						"category",
-						"applies_to",
-						"default_status_code",
-						"default_reason_code",
-					},
-					OrgColumn: "sfrc.organization_id",
-					BuColumn:  "sfrc.business_unit_id",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						q = q.Where("sfrc.active = TRUE")
-						if req.AppliesTo.IsValid() {
-							q = q.Where(
-								"sfrc.applies_to IN (?)",
-								bun.List([]servicefailure.ReasonCodeAppliesTo{
-									req.AppliesTo,
-									servicefailure.ReasonCodeAppliesToBoth,
-									servicefailure.ReasonCodeAppliesToAll,
-								}),
-							)
-						}
-						return q.Order("sfrc.sort_order ASC", "sfrc.code ASC")
-					},
-					EntityName: "ServiceFailureReasonCode",
-					SearchColumns: []string{
-						"sfrc.code",
-						"sfrc.label",
-						"sfrc.description",
-					},
+				func(s string) keel.Pred {
+					return keel.Or(
+						rc.Code.ContainsFold(s),
+						rc.Label.ContainsFold(s),
+						rc.Description.ContainsFold(s),
+					)
 				},
 			)
 		},
 	)
 }
 
-func mapReasonCodeConstraint(err error) error {
-	if dberror.IsUniqueConstraintViolation(err) &&
-		dberror.ExtractConstraintName(err) == "ux_sfrc_tenant_code" {
-		return errortypes.NewValidationError(
-			"code",
-			errortypes.ErrDuplicate,
-			"Service failure reason code already exists in your organization",
-		)
+func actorAssignment(col keelkinds.PulidIDCol, actorID pulid.ID) keel.Assignment {
+	if actorID.IsNil() {
+		return col.ToNull()
 	}
-	return err
-}
 
-func tenantInfo(entity *servicefailure.ReasonCode) pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	}
-}
-
-func nullableID(id pulid.ID) any {
-	if id.IsNil() {
-		return nil
-	}
-	return id
+	return col.To(actorID)
 }

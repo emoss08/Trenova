@@ -7,9 +7,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol/dispatchcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	inttestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -17,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -26,6 +27,7 @@ func TestGetOrCreateParticipatesInOuterTransaction(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{
 		DB:     conn,
@@ -34,9 +36,10 @@ func TestGetOrCreateParticipatesInOuterTransaction(t *testing.T) {
 
 	lock := inttestutil.HoldTxLock(
 		t,
+		ctx,
 		conn,
 		kernelports.TxOptions{},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			created, err := repo.GetOrCreate(txCtx, data.Organization.ID, data.BusinessUnit.ID)
 			if err != nil {
 				return err
@@ -84,6 +87,7 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{
 		DB:     conn,
@@ -119,11 +123,7 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 		assert.Equal(t, results[0], id)
 	}
 
-	count, err := db.NewSelect().
-		TableExpr("dispatch_controls").
-		Where("organization_id = ?", data.Organization.ID).
-		Where("business_unit_id = ?", data.BusinessUnit.ID).
-		Count(ctx)
+	count, err := dispatchcontroldb.DispatchControls.Query().Count(ctx, db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), count)
 }
@@ -133,6 +133,7 @@ func TestListHorizonPlanningTenantsReturnsHorizonTenants(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{
 		DB:     conn,
@@ -169,29 +170,29 @@ func TestGetOrCreateInAReadOnlyTransactionWritesNothing(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
 
-	_, err := db.NewDelete().
-		TableExpr("dispatch_controls").
-		Where("organization_id = ?", data.Organization.ID).
-		Exec(ctx)
+	dc := dispatchcontroldb.DispatchControls
+	_, err := dc.Where(keel.True()).Delete(ctx, db)
 	require.NoError(t, err)
 
-	err = conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(txCtx context.Context, tx bun.Tx) error {
-		entity, getErr := repo.GetOrCreate(txCtx, data.Organization.ID, data.BusinessUnit.ID)
-		require.NoError(t, getErr)
-		require.NotNil(t, entity)
+	err = conn.Transact(
+		ctx,
+		kernelports.TxOptions{ReadOnly: true},
+		func(txCtx context.Context) error {
+			entity, getErr := repo.GetOrCreate(txCtx, data.Organization.ID, data.BusinessUnit.ID)
+			require.NoError(t, getErr)
+			require.NotNil(t, entity)
 
-		var one int
-		return tx.NewSelect().ColumnExpr("1").Scan(txCtx, &one)
-	})
+			_, err := keel.QueryValue[int](txCtx, conn.Keel(txCtx), "SELECT 1")
+			return err
+		},
+	)
 	require.NoError(t, err, "the transaction is still usable after the read")
 
-	count, err := db.NewSelect().
-		TableExpr("dispatch_controls").
-		Where("organization_id = ?", data.Organization.ID).
-		Count(ctx)
+	count, err := dc.Query().Count(ctx, db)
 	require.NoError(t, err)
 	assert.Zero(t, count, "nothing is written from a read-only transaction")
 }

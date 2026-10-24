@@ -428,3 +428,7 @@ func (o *DetentionOccurrence) BeforeAppendModel(_ context.Context, query bun.Que
 func (o *DetentionOccurrence) BeforeCreate(ctx context.Context) error {
 	return o.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
+
+func (o *DetentionOccurrence) BeforeUpdate(ctx context.Context) error {
+	return o.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
+}

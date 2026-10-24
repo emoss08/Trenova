@@ -4,19 +4,15 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/modeprofilecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile/modeprofiledb"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/schema"
 )
 
 var (
@@ -31,6 +27,14 @@ var (
 const (
 	secondsPerMinute = int64(60)
 	secondsPerHour   = int64(3600)
+
+	quickStopAlias   = "qf_stp"
+	quickMoveAlias   = "qf_sm"
+	quickDwellAlias  = "qf_dw"
+	quickDwellMove   = "qf_dwm"
+	quickMilesAlias  = "qf_mi"
+	quickDetention   = "qf_do"
+	quickModeProfile = "qf_mpf"
 )
 
 type stopPick int
@@ -40,64 +44,59 @@ const (
 	pickLastDelivery
 )
 
-func DeliveryAtExpr() string {
-	stp := shipmentcol.StopColumns
-	return buncolgen.Expr("COALESCE({0}, {1})", stp.ActualArrival, stp.ScheduledWindowStart)
+func DeliveryAt(st *shipmentdb.StopsTable) keel.Expr {
+	return keel.Raw("COALESCE(?, ?)", st.ActualArrival, st.ScheduledWindowStart)
 }
 
-func FirstPickupStopQuery(dba bun.IDB) *bun.SelectQuery {
-	return shipmentStopQuery(dba, pickFirstPickup)
+func FirstPickupStop(
+	st *shipmentdb.StopsTable,
+	sm *shipmentdb.ShipmentMovesTable,
+) *keel.Query[shipment.Stop] {
+	return shipmentStop(st, sm, pickFirstPickup)
 }
 
-func LastDeliveryStopQuery(dba bun.IDB) *bun.SelectQuery {
-	return shipmentStopQuery(dba, pickLastDelivery)
+func LastDeliveryStop(
+	st *shipmentdb.StopsTable,
+	sm *shipmentdb.ShipmentMovesTable,
+) *keel.Query[shipment.Stop] {
+	return shipmentStop(st, sm, pickLastDelivery)
 }
 
-func shipmentStopQuery(dba bun.IDB, pick stopPick) *bun.SelectQuery {
-	sp := shipmentcol.ShipmentColumns
-	sm := shipmentcol.ShipmentMoveColumns
-	stp := shipmentcol.StopColumns
-
-	q := dba.NewSelect().
-		Model((*shipment.Stop)(nil)).
-		Join("JOIN "+shipmentcol.ShipmentMoveTable.As(shipmentcol.ShipmentMoveTable.Alias)).
-		JoinOn(sm.ID.EqColumn(stp.ShipmentMoveID)).
-		JoinOn(sm.OrganizationID.EqColumn(stp.OrganizationID)).
-		JoinOn(sm.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
-		Where(sm.ShipmentID.EqColumn(sp.ID)).
-		Where(sm.OrganizationID.EqColumn(sp.OrganizationID)).
-		Where(sm.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
-		Where(sm.Status.Ne(), shipment.MoveStatusCanceled).
-		Where(stp.Status.Ne(), shipment.StopStatusCanceled)
+func shipmentStop(
+	st *shipmentdb.StopsTable,
+	sm *shipmentdb.ShipmentMovesTable,
+	pick stopPick,
+) *keel.Query[shipment.Stop] {
+	sp := shipmentdb.Shipments
+	q := st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
+		Where(
+			sm.ShipmentID.EqCol(sp.ID),
+			sm.Status.Ne(shipment.MoveStatusCanceled),
+			st.Status.Ne(shipment.StopStatusCanceled),
+		)
 
 	if pick == pickFirstPickup {
-		return q.
-			Where(stp.Type.In(), bun.List(shipment.PickupStopTypes())).
-			Order(sm.Sequence.OrderAsc(), stp.Sequence.OrderAsc()).
+		return q.Where(st.Type.In(shipment.PickupStopTypes()...)).
+			Order(sm.Sequence.Asc(), st.Sequence.Asc()).
 			Limit(1)
 	}
 
-	return q.
-		Where(stp.Type.In(), bun.List(shipment.DeliveryStopTypes())).
-		Order(sm.Sequence.OrderDesc(), stp.Sequence.OrderDesc()).
+	return q.Where(st.Type.In(shipment.DeliveryStopTypes()...)).
+		Order(sm.Sequence.Desc(), st.Sequence.Desc()).
 		Limit(1)
 }
 
-func BillingTransferCandidateCondition() schema.QueryAppender {
-	sp := shipmentcol.ShipmentColumns
+func BillingTransferCandidateCondition() keel.Pred {
+	sp := shipmentdb.Shipments
 
-	return bun.SafeQuery(
-		"("+sp.Status.In()+" AND "+sp.BillingTransferStatus.Expr("COALESCE({}, '') IN (?)")+")",
-		bun.List(shipment.BillingTransferCandidateStatuses()),
-		bun.List([]shipment.BillingTransferStatus{
-			shipment.BillingTransferNone,
-			shipment.BillingTransferSentBackToOps,
-		}),
+	return keel.And(
+		sp.Status.In(shipment.BillingTransferCandidateStatuses()...),
+		sp.BillingTransferStatus.In(shipment.BillingTransferNone, shipment.BillingTransferSentBackToOps),
 	)
 }
 
-func StageCondition(stage shipment.Stage) schema.QueryAppender {
-	return bun.SafeQuery(shipmentcol.ShipmentColumns.StageRank.Eq(), stage.Rank())
+func StageCondition(stage shipment.Stage) keel.Pred {
+	return shipmentdb.Shipments.StageRank.Eq(stage.Rank())
 }
 
 type LocalDay struct {
@@ -116,17 +115,14 @@ func LocalHourStart(now time.Time, loc *time.Location, hour int) int64 {
 	return time.Date(local.Year(), local.Month(), local.Day(), hour, 0, 0, 0, loc).Unix()
 }
 
-func QuickFilterConditions(
-	dba bun.IDB,
-	opts *shipmentports.ShipmentOptions,
-) ([]schema.QueryAppender, error) {
+func QuickFilterConditions(opts *shipmentports.ShipmentOptions) ([]keel.Pred, error) {
 	if opts == nil || !opts.HasQuickFilters() {
 		return nil, nil
 	}
 
-	conds := make([]schema.QueryAppender, 0, len(opts.QuickFilters))
+	conds := make([]keel.Pred, 0, len(opts.QuickFilters))
 	for _, spec := range opts.QuickFilters {
-		cond, err := QuickFilterCondition(dba, opts.QuickFilterBasis, spec)
+		cond, err := QuickFilterCondition(opts.QuickFilterBasis, spec)
 		if err != nil {
 			return nil, err
 		}
@@ -137,10 +133,9 @@ func QuickFilterConditions(
 }
 
 func QuickFilterCondition(
-	dba bun.IDB,
 	basis *shipmentports.ShipmentQuickFilterBasis,
 	spec shipment.QuickFilterSpec,
-) (schema.QueryAppender, error) {
+) (keel.Pred, error) {
 	if basis == nil || basis.Location == nil {
 		return nil, ErrQuickFilterBasisMissing
 	}
@@ -154,30 +149,30 @@ func QuickFilterCondition(
 		return StageCondition(shipment.StageMoving), nil
 	case shipment.QuickFilterDeliveringToday:
 		day := LocalDayOf(basis.Now, basis.Location)
-		return deliveryWithin(dba, day.Start, day.End), nil
+		return deliveryWithin(day.Start, day.End), nil
 	case shipment.QuickFilterDeliveryHour:
 		if spec.Hour == nil {
 			return nil, ErrQuickFilterParameterMissing
 		}
 		start := LocalHourStart(basis.Now, basis.Location, *spec.Hour)
-		return deliveryWithin(dba, start, start+secondsPerHour), nil
+		return deliveryWithin(start, start+secondsPerHour), nil
 	case shipment.QuickFilterPickupWindow:
 		if spec.WindowStartMinutes == nil {
 			return nil, ErrQuickFilterParameterMissing
 		}
-		return pickupWindowCondition(dba, basis.Now.Unix(), spec), nil
+		return pickupWindowCondition(basis.Now.Unix(), spec), nil
 	case shipment.QuickFilterReefer:
-		return reeferCondition(dba), nil
+		return reeferCondition(), nil
 	case shipment.QuickFilterLowMargin:
 		if basis.Margin == nil {
 			return nil, ErrQuickFilterMarginMissing
 		}
-		return lowMarginCondition(dba, basis.Margin), nil
+		return lowMarginCondition(basis.Margin), nil
 	case shipment.QuickFilterDetention:
 		if basis.Detention == nil {
 			return nil, ErrQuickFilterDetentionMissing
 		}
-		return DetentionCondition(dba, basis.Now.Unix(), basis.Detention), nil
+		return DetentionCondition(basis.Now.Unix(), basis.Detention), nil
 	case shipment.QuickFilterReadyToBill:
 		return BillingTransferCandidateCondition(), nil
 	default:
@@ -185,26 +180,21 @@ func QuickFilterCondition(
 	}
 }
 
-func deliveryWithin(dba bun.IDB, start, end int64) schema.QueryAppender {
-	sp := shipmentcol.ShipmentColumns
-	delivery := LastDeliveryStopQuery(dba).ColumnExpr(DeliveryAtExpr())
+func deliveryWithin(start, end int64) keel.Pred {
+	sp := shipmentdb.Shipments
+	st := shipmentdb.Stops.As(quickStopAlias)
+	delivery := LastDeliveryStop(st, shipmentdb.ShipmentMoves.As(quickMoveAlias)).Pick(DeliveryAt(st))
 
-	return bun.SafeQuery(
-		"("+sp.Status.Ne()+" AND int8range(?, ?) @> (?))",
-		shipment.StatusCanceled,
-		start,
-		end,
-		delivery,
+	return keel.And(
+		sp.Status.Ne(shipment.StatusCanceled),
+		keel.Raw("int8range(?, ?) @> (?)", start, end, keel.Scalar(delivery)),
 	)
 }
 
-func pickupWindowCondition(
-	dba bun.IDB,
-	now int64,
-	spec shipment.QuickFilterSpec,
-) schema.QueryAppender {
-	pickup := FirstPickupStopQuery(dba).
-		ColumnExpr(shipmentcol.StopColumns.ScheduledWindowStart.Qualified())
+func pickupWindowCondition(now int64, spec shipment.QuickFilterSpec) keel.Pred {
+	st := shipmentdb.Stops.As(quickStopAlias)
+	pickup := FirstPickupStop(st, shipmentdb.ShipmentMoves.As(quickMoveAlias)).
+		Pick(st.ScheduledWindowStart)
 
 	var lower, upper *int64
 	if start := int64(*spec.WindowStartMinutes); start > 0 {
@@ -216,159 +206,111 @@ func pickupWindowCondition(
 		upper = &value
 	}
 
-	return bun.SafeQuery(
-		"(? AND int8range(?::bigint, ?::bigint) @> (?))",
+	return keel.And(
 		StageCondition(shipment.StageNeedsCoverage),
-		lower,
-		upper,
-		pickup,
+		keel.Raw("int8range(?::bigint, ?::bigint) @> (?)", lower, upper, keel.Scalar(pickup)),
 	)
 }
 
-func reeferCondition(dba bun.IDB) schema.QueryAppender {
-	sp := shipmentcol.ShipmentColumns
-	mpf := modeprofilecol.ProfileColumns
+func reeferCondition() keel.Pred {
+	sp := shipmentdb.Shipments
+	mpf := modeprofiledb.Profiles.As(quickModeProfile)
 
-	profiles := dba.NewSelect().
-		Model((*modeprofile.Profile)(nil)).
-		ColumnExpr("1").
-		Where(mpf.OrganizationID.EqColumn(sp.OrganizationID)).
-		Where(mpf.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
-		Where(mpf.Status.Eq(), modeprofile.ProfileStatusActive).
-		Where(mpf.EquipmentClass.Eq(), modeprofile.EquipmentClassRefrigerated).
-		Where(buncolgen.Expr(
-			"{0} @> jsonb_build_array({1})",
-			mpf.EquipmentTypeIDs,
-			sp.TrailerTypeID,
-		))
+	profiles := mpf.Where(
+		mpf.Status.Eq(modeprofile.ProfileStatusActive),
+		mpf.EquipmentClass.Eq(modeprofile.EquipmentClassRefrigerated),
+		keel.Raw("? @> jsonb_build_array(?)", mpf.EquipmentTypeIDs, sp.TrailerTypeID),
+	)
 
-	return bun.SafeQuery(
-		"("+sp.TemperatureMin.IsNotNull()+" OR "+sp.TemperatureMax.IsNotNull()+
-			" OR ("+sp.TrailerTypeID.IsNotNull()+" AND EXISTS (?)))",
-		profiles,
+	return keel.Or(
+		sp.TemperatureMin.IsNotNull(),
+		sp.TemperatureMax.IsNotNull(),
+		keel.And(sp.TrailerTypeID.IsNotNull(), keel.Exists(profiles)),
 	)
 }
 
-func shipmentMilesQuery(dba bun.IDB) *bun.SelectQuery {
-	sp := shipmentcol.ShipmentColumns
-	sm := shipmentcol.ShipmentMoveColumns
-
-	return dba.NewSelect().
-		Model((*shipment.ShipmentMove)(nil)).
-		Where(sm.ShipmentID.EqColumn(sp.ID)).
-		Where(sm.OrganizationID.EqColumn(sp.OrganizationID)).
-		Where(sm.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
-		Where(sm.Status.Ne(), shipment.MoveStatusCanceled)
-}
-
-func costMilesExpr(includeDeadhead bool) string {
-	sm := shipmentcol.ShipmentMoveColumns
+func costMiles(sm *shipmentdb.ShipmentMovesTable, includeDeadhead bool) keel.Expr {
 	if includeDeadhead {
-		return sm.Distance.Expr("COALESCE(SUM({}), 0)")
+		return keel.Raw("COALESCE(SUM(?), 0)", sm.Distance)
 	}
-	return buncolgen.Expr("COALESCE(SUM({0}) FILTER (WHERE {1}), 0)", sm.Distance, sm.Loaded)
+
+	return keel.Raw("COALESCE(SUM(?) FILTER (WHERE ?), 0)", sm.Distance, sm.Loaded)
 }
 
-func lowMarginCondition(
-	dba bun.IDB,
-	margin *shipmentports.ShipmentMarginBasis,
-) schema.QueryAppender {
-	sp := shipmentcol.ShipmentColumns
-	sm := shipmentcol.ShipmentMoveColumns
-	revenue := sp.TotalChargeAmount.Qualified()
+func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
+	sp := shipmentdb.Shipments
+	sm := shipmentdb.ShipmentMoves.As(quickMilesAlias)
+	revenue := sp.TotalChargeAmount
 
-	miles := shipmentMilesQuery(dba).
-		ColumnExpr("1").
-		Having(sm.Distance.Expr("COALESCE(SUM({}), 0) > 0")).
+	miles := sm.Pick(keel.Raw("1")).
+		Where(sm.ShipmentID.EqCol(sp.ID), sm.Status.Ne(shipment.MoveStatusCanceled)).
 		Having(
-			"("+revenue+" <= 0 OR ROUND(("+revenue+" - ROUND(?::numeric * ("+
-				costMilesExpr(margin.IncludeDeadheadMiles)+")::numeric, 2)) * 100 / "+
-				revenue+", 2) < ?)",
-			margin.CostPerMile,
-			margin.TargetMarginPercent,
+			keel.Raw("COALESCE(SUM(?), 0) > 0", sm.Distance),
+			keel.Raw(
+				"(? <= 0 OR ROUND((? - ROUND(?::numeric * (?)::numeric, 2)) * 100 / ?, 2) < ?)",
+				revenue,
+				revenue,
+				margin.CostPerMile,
+				costMiles(sm, margin.IncludeDeadheadMiles),
+				revenue,
+				margin.TargetMarginPercent,
+			),
 		)
 
-	return bun.SafeQuery("EXISTS (?)", miles)
+	return keel.Exists(miles)
 }
 
-func DetentionCondition(
-	dba bun.IDB,
-	now int64,
-	basis *shipmentports.ShipmentDetentionBasis,
-) schema.QueryAppender {
-	sp := shipmentcol.ShipmentColumns
+func DetentionCondition(now int64, basis *shipmentports.ShipmentDetentionBasis) keel.Pred {
+	sp := shipmentdb.Shipments
 
 	if basis.UsePolicyEngine {
-		dto := detentioncol.DetentionOccurrenceColumns
-		occurrences := dba.NewSelect().
-			Model((*detention.DetentionOccurrence)(nil)).
-			ColumnExpr("1").
-			Where(dto.ShipmentID.EqColumn(sp.ID)).
-			Where(dto.OrganizationID.EqColumn(sp.OrganizationID)).
-			Where(dto.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
-			Where(dto.IsOpen.IsTrue()).
-			Where(dto.Status.Ne(), detention.OccurrenceStatusBilled).
-			Where(dto.FreeTimeExpiresAt.Lte(), now)
-
-		return bun.SafeQuery("EXISTS (?)", occurrences)
+		dto := detentiondb.DetentionOccurrences.As(quickDetention)
+		return keel.Exists(dto.Where(
+			dto.ShipmentID.EqCol(sp.ID),
+			dto.IsOpen.IsTrue(),
+			dto.Status.Ne(detention.OccurrenceStatusBilled),
+			dto.FreeTimeExpiresAt.Lte(now),
+		))
 	}
 
-	return bun.SafeQuery("EXISTS (?)", DwellingStopsQuery(dba, now, basis.ThresholdMinutes).
-		ColumnExpr("1"))
+	return keel.Exists(DwellingStops(
+		shipmentdb.Stops.As(quickDwellAlias),
+		shipmentdb.ShipmentMoves.As(quickDwellMove),
+		now,
+		basis.ThresholdMinutes,
+	))
 }
 
-func DwellingStopsQuery(dba bun.IDB, now, thresholdMinutes int64) *bun.SelectQuery {
-	sp := shipmentcol.ShipmentColumns
-	sm := shipmentcol.ShipmentMoveColumns
-	stp := shipmentcol.StopColumns
+func DwellingStops(
+	st *shipmentdb.StopsTable,
+	sm *shipmentdb.ShipmentMovesTable,
+	now, thresholdMinutes int64,
+) *keel.Query[shipment.Stop] {
+	sp := shipmentdb.Shipments
 
-	return dba.NewSelect().
-		Model((*shipment.Stop)(nil)).
-		Join("JOIN "+shipmentcol.ShipmentMoveTable.As(shipmentcol.ShipmentMoveTable.Alias)).
-		JoinOn(sm.ID.EqColumn(stp.ShipmentMoveID)).
-		JoinOn(sm.OrganizationID.EqColumn(stp.OrganizationID)).
-		JoinOn(sm.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
-		Where(sm.ShipmentID.EqColumn(sp.ID)).
-		Where(sm.OrganizationID.EqColumn(sp.OrganizationID)).
-		Where(sm.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
-		Where(sm.Status.Ne(), shipment.MoveStatusCanceled).
-		Where(stp.Status.Ne(), shipment.StopStatusCanceled).
-		Where(stp.ActualArrival.Expr("COALESCE({}, 0) > 0")).
-		Where(stp.ActualDeparture.Expr("COALESCE({}, 0) = 0")).
-		Where(stp.CountDetentionOverride.Expr("COALESCE({}, TRUE)")).
-		Where(stp.ActualArrival.Lte(), now-thresholdMinutes*secondsPerMinute)
+	return st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).Where(
+		sm.ShipmentID.EqCol(sp.ID),
+		sm.Status.Ne(shipment.MoveStatusCanceled),
+		st.Status.Ne(shipment.StopStatusCanceled),
+		keel.Raw("COALESCE(?, 0) > 0", st.ActualArrival),
+		keel.Raw("COALESCE(?, 0) = 0", st.ActualDeparture),
+		keel.Raw("COALESCE(?, TRUE)", st.CountDetentionOverride),
+		st.ActualArrival.Lte(now-thresholdMinutes*secondsPerMinute),
+	)
 }
 
-func whereAll(conds []schema.QueryAppender) func(*bun.SelectQuery) *bun.SelectQuery {
-	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		for _, cond := range conds {
-			q = q.Where("?", cond)
-		}
-		return q
-	}
-}
-
-func ApplyAggregateScope(
-	q *bun.SelectQuery,
-	dba bun.IDB,
+func AggregateScope(
 	filter *pagination.QueryOptions,
 	opts *shipmentports.ShipmentOptions,
-) (*bun.SelectQuery, error) {
+) (*keel.Query[shipment.Shipment], error) {
 	if filter == nil {
 		return nil, ErrShipmentScopeFilterMissing
 	}
 
-	quick, err := QuickFilterConditions(dba, opts)
+	quick, err := QuickFilterConditions(opts)
 	if err != nil {
 		return nil, err
 	}
 
-	q = querybuilder.ApplyFilterPredicates(
-		q,
-		shipmentcol.ShipmentTable.Alias,
-		filter,
-		(*shipment.Shipment)(nil),
-	)
-
-	return applyShipmentOptionFilters(q, dba, *opts).Apply(whereAll(quick)), nil
+	return shipmentScope(filter, opts, quick), nil
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
@@ -20,7 +19,6 @@ import (
 type Params struct {
 	fx.In
 
-	DB            kernelports.DBConnection
 	Logger        *zap.Logger
 	Config        *config.Config
 	Profiles      customertrackingports.ProfileRepository
@@ -38,7 +36,6 @@ type Params struct {
 }
 
 type Service struct {
-	db            kernelports.DBConnection
 	l             *zap.Logger
 	cfg           *config.Config
 	profiles      customertrackingports.ProfileRepository
@@ -58,7 +55,6 @@ type Service struct {
 
 func New(p Params) *Service { //nolint:gocritic // dependency injection
 	return &Service{
-		db:            p.DB,
 		l:             p.Logger.Named("service.customer-tracking"),
 		cfg:           p.Config,
 		profiles:      p.Profiles,

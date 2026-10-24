@@ -72,9 +72,8 @@ type FreightLine struct {
 
 // Freight shipments and their lifecycle state
 type Shipment struct {
-	bun.BaseModel             `json:"-" bun:"table:shipments,alias:sp"`
-	keel.Table                `                                        keel:"shipments,report=Operations"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	bun.BaseModel `json:"-" bun:"table:shipments,alias:sp"`
+	keel.Table    `                                        keel:"shipments,report=Operations"`
 
 	ID                        pulid.ID              `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"                                          keel:"id,pk,autoid:shp_"`
 	BusinessUnitID            pulid.ID              `json:"businessUnitId"             bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                            keel:"business_unit_id,pk,tenant"`
@@ -735,7 +734,26 @@ func (s *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 }
 
 func (s *Shipment) BeforeCreate(ctx context.Context) error {
+	if s.Status == "" {
+		s.Status = StatusNew
+	}
+	s.OtherChargeAmount = zeroWhenUnset(s.OtherChargeAmount)
+	s.FreightChargeAmount = zeroWhenUnset(s.FreightChargeAmount)
+	s.TotalChargeAmount = zeroWhenUnset(s.TotalChargeAmount)
+
 	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
+func zeroWhenUnset(amount decimal.NullDecimal) decimal.NullDecimal {
+	if amount.Valid {
+		return amount
+	}
+
+	return decimal.NewNullDecimal(decimal.Zero)
+}
+
+func (s *Shipment) BeforeUpdate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
 }
 
 const MaxExternalReferenceLength = 100

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -225,7 +227,7 @@ func setupBounce(t *testing.T) *bounceDeps {
 	}
 	deps.svc = &Service{
 		l:                     zap.NewNop(),
-		db:                    testDBConnection{},
+		db:                    dbtest.NopConnection{},
 		repo:                  deps.repo,
 		carrierAssignmentRepo: deps.assignments,
 		assigner:              deps.assigner,

@@ -3,19 +3,29 @@ package documentshipmentdraftrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/documentshipmentdraftcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft/documentshipmentdraftdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var draftErrors = dberror.Mapping{
+	Entity: "Document shipment draft",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_document_shipment_drafts_document",
+			Field:   "documentId",
+			Message: "Document does not exist in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -39,24 +49,16 @@ func New(p Params) documentshipmentdraftports.DocumentShipmentDraftRepository {
 func (r *repository) GetByDocumentID(
 	ctx context.Context,
 	documentID pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documentshipmentdraft.DocumentShipmentDraft, error) {
-			entity := new(documentshipmentdraft.DocumentShipmentDraft)
-			cols := documentshipmentdraftcol.DocumentShipmentDraftColumns
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return documentshipmentdraftcol.DocumentShipmentDraftScopeTenant(sq, tenantInfo).
-						Where(cols.DocumentID.Eq(), documentID)
-				}).
-				Scan(ctx)
+			d := documentshipmentdraftdb.DocumentShipmentDrafts
+			entity, err := d.Where(d.DocumentID.Eq(documentID)).One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "Document shipment draft")
+				return nil, draftErrors.Map(err, documentID.String())
 			}
 
 			return entity, nil
@@ -72,27 +74,51 @@ func (r *repository) Upsert(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documentshipmentdraft.DocumentShipmentDraft, error) {
-			cols := documentshipmentdraftcol.DocumentShipmentDraftColumns
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				On(`CONFLICT ("document_id", "organization_id", "business_unit_id") DO UPDATE`).
-				Set(cols.Status.SetExcluded()).
-				Set(cols.DocumentKind.SetExcluded()).
-				Set(cols.Confidence.SetExcluded()).
-				Set(cols.DraftData.SetExcluded()).
-				Set(cols.FailureCode.SetExcluded()).
-				Set(cols.FailureMessage.SetExcluded()).
-				Set(cols.AttachedShipmentID.SetExpr("COALESCE(EXCLUDED.attached_shipment_id, dsd.attached_shipment_id)")).
-				Set(cols.AttachedAt.SetExpr("COALESCE(EXCLUDED.attached_at, dsd.attached_at)")).
-				Set(cols.AttachedByID.SetExpr("COALESCE(EXCLUDED.attached_by_id, dsd.attached_by_id)")).
-				Set(cols.UpdatedAt.SetExcluded()).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "Document shipment draft")
+			d := documentshipmentdraftdb.DocumentShipmentDrafts
+			db := r.db.Keel(ctx)
+			inserted, err := d.Upsert(
+				ctx,
+				db,
+				[]*documentshipmentdraft.DocumentShipmentDraft{entity},
+				keel.OnConflict(d.DocumentID, d.OrganizationID, d.BusinessUnitID).
+					Update(
+						d.Status,
+						d.DocumentKind,
+						d.Confidence,
+						d.DraftData,
+						d.FailureCode,
+						d.FailureMessage,
+					).
+					Set(
+						d.AttachedShipmentID.ToExpr(
+							keel.Raw(
+								"coalesce(?, ?)",
+								d.AttachedShipmentID.Excluded(),
+								d.AttachedShipmentID,
+							),
+						),
+						d.AttachedAt.ToExpr(
+							keel.Raw("coalesce(?, ?)", d.AttachedAt.Excluded(), d.AttachedAt),
+						),
+						d.AttachedByID.ToExpr(
+							keel.Raw("coalesce(?, ?)", d.AttachedByID.Excluded(), d.AttachedByID),
+						),
+					),
+			)
+			if err != nil {
+				r.l.Error("failed to upsert document shipment draft", zap.Error(err))
+				return nil, draftErrors.Map(err, entity.ID.String())
+			}
+			if len(inserted) == 1 && inserted[0] {
+				return entity, nil
 			}
 
-			return entity, nil
+			stored, err := d.Where(d.DocumentID.Eq(entity.DocumentID)).One(ctx, db)
+			if err != nil {
+				return nil, draftErrors.Map(err, entity.DocumentID.String())
+			}
+
+			return stored, nil
 		},
 	)
 }

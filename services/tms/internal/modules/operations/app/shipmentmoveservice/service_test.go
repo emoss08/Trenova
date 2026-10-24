@@ -13,12 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -103,7 +102,7 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 
 	svc := &service{
 		l:              zap.NewNop(),
-		db:             testDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           moveRepo,
 		assignmentRepo: assignmentRepo,
 		shipmentRepo:   shipmentRepo,
@@ -151,7 +150,7 @@ func TestBulkUpdateStatus_RejectsInvalidTransition(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         moveRepo,
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     shipmentportsmock.NewMockShipmentHoldRepository(t),
@@ -214,7 +213,7 @@ func TestSplitMove_RejectsNonSimpleMove(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         moveRepo,
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     shipmentportsmock.NewMockShipmentHoldRepository(t),
@@ -347,7 +346,7 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         moveRepo,
 		shipmentRepo: shipmentRepo,
 		holdRepo:     holdRepo,
@@ -465,7 +464,7 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 
 	svc := &service{
 		l:              zap.NewNop(),
-		db:             testDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           moveRepo,
 		assignmentRepo: assignmentRepo,
 		shipmentRepo:   shipmentRepo,
@@ -576,7 +575,7 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 
 	svc := &service{
 		l:              zap.NewNop(),
-		db:             testDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           moveRepo,
 		assignmentRepo: assignmentRepo,
 		shipmentRepo:   shipmentRepo,
@@ -651,7 +650,7 @@ func TestUpdateStatus_RejectsTrailerAlreadyInProgressOnAnotherMove(t *testing.T)
 
 	svc := &service{
 		l:              zap.NewNop(),
-		db:             testDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           moveRepo,
 		assignmentRepo: assignmentRepo,
 		shipmentRepo:   shipmentportsmock.NewMockShipmentRepository(t),
@@ -723,7 +722,7 @@ func TestUpdateStatus_RejectsTractorAlreadyInProgressOnAnotherMove(t *testing.T)
 
 	svc := &service{
 		l:              zap.NewNop(),
-		db:             testDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           moveRepo,
 		assignmentRepo: assignmentRepo,
 		shipmentRepo:   shipmentportsmock.NewMockShipmentRepository(t),
@@ -864,7 +863,7 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 
 	svc := &service{
 		l:              zap.NewNop(),
-		db:             testDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           moveRepo,
 		assignmentRepo: shipmentportsmock.NewMockAssignmentRepository(t),
 		shipmentRepo:   shipmentRepo,
@@ -923,7 +922,7 @@ func TestUpdateStatus_RejectsDeliveryBlockingHold(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         moveRepo,
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     holdRepo,
@@ -961,19 +960,4 @@ func ptrInt16(v int16) *int16 {
 //go:fix inline
 func int64Ptr(v int64) *int64 {
 	return new(v)
-}
-
-type testDBConnection struct{}
-
-func (testDBConnection) DB() *bun.DB                          { return nil }
-func (testDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (testDBConnection) HealthCheck(context.Context) error    { return nil }
-func (testDBConnection) IsHealthy(context.Context) bool       { return true }
-func (testDBConnection) Close() error                         { return nil }
-func (testDBConnection) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
 }

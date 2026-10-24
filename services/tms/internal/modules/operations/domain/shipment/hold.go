@@ -136,6 +136,13 @@ func (h *ShipmentHold) BeforeAppendModel(_ context.Context, query bun.Query) err
 }
 
 func (h *ShipmentHold) BeforeCreate(ctx context.Context) error {
+	if h.Severity == "" {
+		h.Severity = holdreason.HoldSeverityAdvisory
+	}
+	if h.Source == "" {
+		h.Source = HoldSourceUser
+	}
+
 	return h.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 

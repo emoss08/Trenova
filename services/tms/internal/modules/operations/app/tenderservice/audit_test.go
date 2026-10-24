@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -181,7 +183,7 @@ func TestAcceptOfferLogsTenderAudit(t *testing.T) {
 	assigner := &stubMoveAssigner{}
 	svc := &Service{
 		l:                     zap.NewNop(),
-		db:                    testDBConnection{},
+		db:                    dbtest.NopConnection{},
 		repo:                  &acceptingTenderRepo{offer: offer},
 		carrierAssignmentRepo: &stubCarrierAssignmentRepo{active: assignment},
 		assigner:              assigner,
@@ -219,7 +221,7 @@ func TestMarkNeedsReviewLogsSystemTenderAudit(t *testing.T) {
 	audit := &recordingAuditService{}
 	svc := &Service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         &needsReviewTenderRepo{offer: offer},
 		eventService: &recordingEventService{},
 		auditService: audit,

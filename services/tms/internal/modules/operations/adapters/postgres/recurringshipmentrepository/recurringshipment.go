@@ -3,8 +3,7 @@ package recurringshipmentrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
@@ -12,18 +11,57 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/pkg/seqgen"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var seriesErrors = dberror.Mapping{
+	Entity: "RecurringShipment",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_recurring_shipments_source_shipment",
+			Field:   "sourceShipmentId",
+			Message: "Source shipment does not exist in your organization",
+		},
+		{
+			Name:    "fk_recurring_shipments_customer",
+			Field:   "customerId",
+			Message: "Customer does not exist in your organization",
+		},
+		{
+			Name:    "fk_recurring_shipments_origin_location",
+			Field:   "originLocationId",
+			Message: "Origin location does not exist in your organization",
+		},
+		{
+			Name:    "fk_recurring_shipments_destination_location",
+			Field:   "destinationLocationId",
+			Message: "Destination location does not exist in your organization",
+		},
+	},
+}
+
+var runErrors = dberror.Mapping{
+	Entity: "RecurringShipmentRun",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_recurring_shipment_runs_series",
+			Field:   "recurringShipmentId",
+			Message: "Recurring shipment does not exist in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -50,19 +88,11 @@ func New(p Params) recurringshipmentports.RecurringShipmentRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *recurringshipmentports.ListRecurringShipmentsRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		recurringshipmentcol.RecurringShipmentTable.Alias,
-		req.Filter,
-		(*recurringshipment.RecurringShipment)(nil),
-	)
+type seriesQuery = keel.Query[recurringshipment.RecurringShipment]
 
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
+func withLane(q *seriesQuery) *seriesQuery {
+	rsh := recurringshipmentdb.RecurringShipments
+	return q.Load(rsh.Customer(), rsh.OriginLocation(), rsh.DestinationLocation())
 }
 
 func (r *repository) List(
@@ -73,121 +103,46 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
-			log := r.l.With(zap.String("operation", "List"))
-
-			entities := make(
-				[]*recurringshipment.RecurringShipment,
-				0,
-				req.Filter.Pagination.SafeLimit(),
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				recurringshipmentdb.RecurringShipments.Query(),
+				&listquery.Request[recurringshipment.RecurringShipment]{
+					Filter: req.Filter,
+					Shape:  withLane,
+				},
 			)
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(recurringshipmentcol.RecurringShipmentRelations.Customer).
-				Relation(recurringshipmentcol.RecurringShipmentRelations.OriginLocation).
-				Relation(recurringshipmentcol.RecurringShipmentRelations.DestinationLocation).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count recurring shipments", zap.Error(err))
+				r.l.Error("failed to list recurring shipments", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*recurringshipment.RecurringShipment]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *recurringshipmentports.ListRecurringShipmentConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		recurringshipmentcol.RecurringShipmentTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*recurringshipment.RecurringShipment)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *recurringshipmentports.ListRecurringShipmentConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		recurringshipmentcol.RecurringShipmentTable.Alias,
-		req.Filter,
-		(*recurringshipment.RecurringShipment)(nil),
-	)
-}
-
-func applyRecurringShipmentColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(recurringshipmentcol.RecurringShipmentTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *recurringshipmentports.ListRecurringShipmentConnectionRequest,
 ) (*pagination.CursorListResult[*recurringshipment.RecurringShipment], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*recurringshipment.RecurringShipment], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*recurringshipment.RecurringShipment)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count recurring shipments", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*recurringshipment.RecurringShipment]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*recurringshipment.RecurringShipment) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Relation(recurringshipmentcol.RecurringShipmentRelations.Customer).
-							Relation(recurringshipmentcol.RecurringShipmentRelations.OriginLocation).
-							Relation(recurringshipmentcol.RecurringShipmentRelations.DestinationLocation).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyRecurringShipmentColumns(
-									sq,
-									req.RecurringShipmentColumns,
-								)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				recurringshipmentdb.RecurringShipments.Query(),
+				&listquery.Request[recurringshipment.RecurringShipment]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.RecurringShipmentColumns,
+					Shape:   withLane,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan recurring shipments", zap.Error(err))
+				r.l.Error("failed to list recurring shipment connection", zap.Error(err))
 				return nil, err
 			}
 
@@ -204,32 +159,20 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*recurringshipment.RecurringShipment, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByID"),
-				zap.String("id", req.ID.String()),
-			)
-
-			rsh := recurringshipmentcol.RecurringShipmentColumns
-			entity := new(recurringshipment.RecurringShipment)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return recurringshipmentcol.RecurringShipmentScopeTenant(sq, req.TenantInfo).
-						Where(rsh.ID.Eq(), req.ID)
-				}).
-				Relation(recurringshipmentcol.RecurringShipmentRelations.Customer).
-				Relation(recurringshipmentcol.RecurringShipmentRelations.OriginLocation).
-				Relation(recurringshipmentcol.RecurringShipmentRelations.DestinationLocation).
-				Relation(recurringshipmentcol.RecurringShipmentRelations.EnteredBy)
-
+			rsh := recurringshipmentdb.RecurringShipments
+			q := withLane(rsh.Where(rsh.ID.Eq(req.ID))).Load(rsh.EnteredBy())
 			if req.ExpandDetails {
-				q = q.Relation(recurringshipmentcol.RecurringShipmentRelations.SourceShipment)
+				q = q.Load(rsh.SourceShipment())
 			}
 
-			if err := q.Scan(ctx); err != nil {
-				log.Error("failed to get recurring shipment", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "RecurringShipment")
+			entity, err := q.One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error(
+					"failed to get recurring shipment",
+					zap.String("id", req.ID.String()),
+					zap.Error(err),
+				)
+				return nil, seriesErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -245,15 +188,13 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*recurringshipment.RecurringShipment, error) {
-			log := r.l.With(zap.String("operation", "Create"))
-
 			if err := r.applyDerivedFields(ctx, entity); err != nil {
 				return nil, err
 			}
 
 			if err := r.insertSeries(ctx, entity); err != nil {
-				log.Error("failed to create recurring shipment", zap.Error(err))
-				return nil, err
+				r.l.Error("failed to create recurring shipment", zap.Error(err))
+				return nil, seriesErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -266,12 +207,7 @@ func (r *repository) insertSeries(
 	entity *recurringshipment.RecurringShipment,
 ) error {
 	return quotatx.Run(ctx, r.db, r.quota, func(c context.Context) error {
-		_, err := r.db.DBForContext(c).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(c)
-		return err
+		return recurringshipmentdb.RecurringShipments.Create(c, r.db.Keel(c), entity)
 	}, platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -290,36 +226,18 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*recurringshipment.RecurringShipment, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
 			if err := r.applyDerivedFields(ctx, entity); err != nil {
 				return nil, err
 			}
 
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("version = ?", ov).
-				Returning("*").
-				Exec(ctx)
+			err := recurringshipmentdb.RecurringShipments.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				log.Error("failed to update recurring shipment", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"RecurringShipment",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				r.l.Error(
+					"failed to update recurring shipment",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
+				)
+				return nil, seriesErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -355,35 +273,17 @@ func (r *repository) UpdateStatus(
 				return nil, err
 			}
 
-			rsh := recurringshipmentcol.RecurringShipmentColumns
-			ov := req.Version
-			entity.Version = ov + 1
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				Column(
-					rsh.Status.Bare(),
-					rsh.NextOccurrenceAt.Bare(),
-					rsh.ConsecutiveFailures.Bare(),
-					rsh.Version.Bare(),
-					rsh.UpdatedAt.Bare(),
-				).
-				WherePK().
-				Where("version = ?", ov).
-				Returning("*").
-				Exec(ctx)
-			if err != nil {
-				log.Error("failed to update recurring shipment status", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"RecurringShipment",
-				req.RecurringShipmentID.String(),
+			rsh := recurringshipmentdb.RecurringShipments
+			if err = rsh.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+				rsh.Status,
+				rsh.NextOccurrenceAt,
+				rsh.ConsecutiveFailures,
 			); err != nil {
-				return nil, err
+				log.Error("failed to update recurring shipment status", zap.Error(err))
+				return nil, seriesErrors.Map(err, req.RecurringShipmentID.String())
 			}
 
 			return entity, nil
@@ -395,28 +295,17 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *recurringshipmentports.RecurringShipmentSelectOptionsRequest,
 ) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
-			return dbhelper.SelectOptions[*recurringshipment.RecurringShipment](
+			rsh := recurringshipmentdb.RecurringShipments
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				rsh.Pick(rsh.ID, rsh.Name, rsh.Status, rsh.CronExpression),
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					Columns: []string{
-						"id",
-						"name",
-						"status",
-						"cron_expression",
-					},
-					OrgColumn:  "rsh.organization_id",
-					BuColumn:   "rsh.business_unit_id",
-					EntityName: "RecurringShipment",
-					SearchColumns: []string{
-						"rsh.name",
-					},
-				},
+				func(s string) keel.Pred { return rsh.Name.ContainsFold(s) },
 			)
 		},
 	)
@@ -430,33 +319,42 @@ func (r *repository) Match(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*recurringshipment.RecurringShipment, error) {
-			log := r.l.With(zap.String("operation", "Match"))
-
-			rsh := recurringshipmentcol.RecurringShipmentColumns
-			entities := make([]*recurringshipment.RecurringShipment, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return recurringshipmentcol.RecurringShipmentScopeTenant(sq, req.TenantInfo).
-						Where(rsh.Status.Eq(), recurringshipment.StatusActive).
-						Where(rsh.CustomerID.Eq(), req.CustomerID).
-						Where(rsh.OriginLocationID.Eq(), req.OriginLocationID).
-						Where(rsh.DestinationLocationID.Eq(), req.DestinationLocationID)
-				}).
-				Relation(recurringshipmentcol.RecurringShipmentRelations.Customer).
-				Relation(recurringshipmentcol.RecurringShipmentRelations.OriginLocation).
-				Relation(recurringshipmentcol.RecurringShipmentRelations.DestinationLocation).
-				Order(rsh.CreatedAt.OrderAsc()).
-				Scan(ctx)
+			rsh := recurringshipmentdb.RecurringShipments
+			entities, err := withLane(rsh.Where(
+				rsh.Status.Eq(recurringshipment.StatusActive),
+				rsh.CustomerID.Eq(req.CustomerID),
+				rsh.OriginLocationID.Eq(req.OriginLocationID),
+				rsh.DestinationLocationID.Eq(req.DestinationLocationID),
+			)).
+				Order(rsh.CreatedAt.Asc()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to match recurring shipments", zap.Error(err))
+				r.l.Error("failed to match recurring shipments", zap.Error(err))
 				return nil, err
 			}
 
 			return entities, nil
 		},
 	)
+}
+
+func laneStop(
+	sp *shipmentdb.ShipmentsTable,
+	alias string,
+	locationID pulid.ID,
+	types ...shipment.StopType,
+) keel.Pred {
+	sm := shipmentdb.ShipmentMoves.As(alias + "_sm")
+	st := shipmentdb.Stops.As(alias + "_stp")
+
+	return keel.Exists(sm.
+		Join(st, st.ShipmentMoveID.EqCol(sm.ID)).
+		Pick(keel.Raw("1")).
+		Where(
+			sm.ShipmentID.EqCol(sp.ID),
+			st.Type.In(types...),
+			st.LocationID.Eq(locationID),
+		))
 }
 
 func (r *repository) DetectLanePattern(
@@ -467,44 +365,31 @@ func (r *repository) DetectLanePattern(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*recurringshipmentports.LanePatternSummary, error) {
-			log := r.l.With(zap.String("operation", "DetectLanePattern"))
-
 			lookbackDays := req.LookbackDays
 			if lookbackDays <= 0 {
 				lookbackDays = 90
 			}
 
-			cutoff := timeutils.DaysAgoUnix(lookbackDays)
-
-			summary := new(recurringshipmentports.LanePatternSummary)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr("shipments AS sp").
-				ColumnExpr("COUNT(*) AS shipment_count").
-				ColumnExpr("COALESCE(MIN(sp.created_at), 0) AS first_shipment_at").
-				ColumnExpr("COALESCE(MAX(sp.created_at), 0) AS last_shipment_at").
-				Where("sp.organization_id = ?", req.TenantInfo.OrgID).
-				Where("sp.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("sp.customer_id = ?", req.CustomerID).
-				Where("sp.status != ?", "Canceled").
-				Where("sp.created_at >= ?", cutoff).
-				Where(`EXISTS (
-			SELECT 1 FROM shipment_moves sm
-			JOIN stops stp ON stp.shipment_move_id = sm.id
-			WHERE sm.shipment_id = sp.id
-			AND stp.type IN ('Pickup', 'SplitPickup')
-			AND stp.location_id = ?
-		)`, req.OriginLocationID).
-				Where(`EXISTS (
-			SELECT 1 FROM shipment_moves sm
-			JOIN stops stp ON stp.shipment_move_id = sm.id
-			WHERE sm.shipment_id = sp.id
-			AND stp.type IN ('Delivery', 'SplitDelivery')
-			AND stp.location_id = ?
-		)`, req.DestinationLocationID).
-				Scan(ctx, summary)
+			sp := shipmentdb.Shipments
+			summary, err := keel.IntoOne[recurringshipmentports.LanePatternSummary](
+				ctx,
+				r.db.Keel(ctx),
+				sp.Pick(
+					keel.Raw("count(*)::int"),
+					keel.Raw("coalesce(min(?), 0)", sp.CreatedAt),
+					keel.Raw("coalesce(max(?), 0)", sp.CreatedAt),
+				).Where(
+					sp.CustomerID.Eq(req.CustomerID),
+					sp.Status.Ne(shipment.StatusCanceled),
+					sp.CreatedAt.Gte(timeutils.DaysAgoUnix(lookbackDays)),
+					laneStop(sp, "pick", req.OriginLocationID,
+						shipment.StopTypePickup, shipment.StopTypeSplitPickup),
+					laneStop(sp, "drop", req.DestinationLocationID,
+						shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery),
+				),
+			)
 			if err != nil {
-				log.Error("failed to detect lane pattern", zap.Error(err))
+				r.l.Error("failed to detect lane pattern", zap.Error(err))
 				return nil, err
 			}
 
@@ -517,7 +402,7 @@ func (r *repository) DetectLanePattern(
 				return nil, nil //nolint:nilnil // no pattern is a valid non-error outcome
 			}
 
-			return summary, nil
+			return &summary, nil
 		},
 	)
 }
@@ -531,23 +416,26 @@ func (r *repository) ListDue(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*recurringshipment.RecurringShipment, error) {
-			rsh := recurringshipmentcol.RecurringShipmentColumns
-
-			entities := make([]*recurringshipment.RecurringShipment, 0)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where(rsh.Status.Eq(), recurringshipment.StatusActive).
-				Where(rsh.AutoGenerate.IsTrue()).
-				Where(rsh.NextOccurrenceAt.IsNotNull()).
-				Where("rsh.next_occurrence_at - (rsh.lead_time_days::bigint * 86400) <= ?", req.Now).
-				Order(rsh.NextOccurrenceAt.OrderAsc())
-
+			rsh := recurringshipmentdb.RecurringShipments
+			q := rsh.AllTenants().
+				Where(
+					rsh.Status.Eq(recurringshipment.StatusActive),
+					rsh.AutoGenerate.IsTrue(),
+					rsh.NextOccurrenceAt.IsNotNull(),
+					keel.Raw(
+						"? - (?::bigint * 86400) <= ?",
+						rsh.NextOccurrenceAt,
+						rsh.LeadTimeDays,
+						req.Now,
+					),
+				).
+				Order(rsh.NextOccurrenceAt.Asc())
 			if req.Limit > 0 {
-				q = q.Limit(int64(req.Limit))
+				q = q.Limit(req.Limit)
 			}
 
-			if err := q.Scan(ctx); err != nil {
+			entities, err := q.All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to list due recurring shipments", zap.Error(err))
 				return nil, err
 			}
@@ -565,33 +453,34 @@ func (r *repository) ListRuns(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*recurringshipment.RecurringShipmentRun], error) {
-			log := r.l.With(
-				zap.String("operation", "ListRuns"),
-				zap.String("recurringShipmentId", req.RecurringShipmentID.String()),
-			)
+			rsr := recurringshipmentdb.RecurringShipmentRuns
+			info := pagination.Info{}
+			if req.Filter != nil {
+				info = req.Filter.Pagination
+			}
 
-			rsr := recurringshipmentcol.RecurringShipmentRunColumns
-			entities := make([]*recurringshipment.RecurringShipmentRun, 0)
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return recurringshipmentcol.RecurringShipmentRunScopeTenant(sq, req.TenantInfo).
-						Where(rsr.RecurringShipmentID.Eq(), req.RecurringShipmentID)
-				}).
-				Relation(recurringshipmentcol.RecurringShipmentRunRelations.GeneratedShipment).
-				Relation(recurringshipmentcol.RecurringShipmentRunRelations.TriggeredBy).
-				Order(rsr.OccurrenceAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
+			runs := rsr.Where(rsr.RecurringShipmentID.Eq(req.RecurringShipmentID))
+			var items []*recurringshipment.RecurringShipmentRun
+			var total int64
+			err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.ListInto(runs.Clone().
+					Load(rsr.GeneratedShipment(), rsr.TriggeredBy()).
+					Order(rsr.OccurrenceAt.Desc()).
+					Limit(info.SafeLimit()).
+					Offset(info.SafeOffset()), &items),
+				keel.CountInto(runs, &total),
+			)
 			if err != nil {
-				log.Error("failed to list recurring shipment runs", zap.Error(err))
+				r.l.Error(
+					"failed to list recurring shipment runs",
+					zap.String("recurringShipmentId", req.RecurringShipmentID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
 			return &pagination.ListResult[*recurringshipment.RecurringShipmentRun]{
-				Items: entities,
+				Items: items,
 				Total: int(total),
 			}, nil
 		},

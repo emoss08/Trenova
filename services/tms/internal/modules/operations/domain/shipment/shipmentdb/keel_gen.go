@@ -1544,6 +1544,7 @@ var shipmentsTable = schema.Table{
 	Value:        valueShipment,
 	Attach:       attachShipment,
 	BeforeCreate: beforeCreateShipment,
+	BeforeUpdate: beforeUpdateShipment,
 }
 
 var shipmentsRef = keel.Ref{Table: &shipmentsTable}
@@ -2273,6 +2274,10 @@ func attachShipment(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateShipment(ctx context.Context, p unsafe.Pointer) error {
 	return (*shipment.Shipment)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateShipment(ctx context.Context, p unsafe.Pointer) error {
+	return (*shipment.Shipment)(p).BeforeUpdate(ctx)
 }
 
 // shipmentCommentsTable is the schema of shipment.ShipmentComment.
@@ -3559,6 +3564,7 @@ var shipmentMovesTable = schema.Table{
 	Value:        valueShipmentMove,
 	Attach:       attachShipmentMove,
 	BeforeCreate: beforeCreateShipmentMove,
+	BeforeUpdate: beforeUpdateShipmentMove,
 }
 
 var shipmentMovesRef = keel.Ref{Table: &shipmentMovesTable}
@@ -3819,6 +3825,10 @@ func attachShipmentMove(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateShipmentMove(ctx context.Context, p unsafe.Pointer) error {
 	return (*shipment.ShipmentMove)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateShipmentMove(ctx context.Context, p unsafe.Pointer) error {
+	return (*shipment.ShipmentMove)(p).BeforeUpdate(ctx)
 }
 
 // shipmentMoveJurisdictionMilesTable is the schema of shipment.ShipmentMoveJurisdictionMile.
@@ -4145,6 +4155,7 @@ var stopsTable = schema.Table{
 	Value:        valueStop,
 	Attach:       attachStop,
 	BeforeCreate: beforeCreateStop,
+	BeforeUpdate: beforeUpdateStop,
 }
 
 var stopsRef = keel.Ref{Table: &stopsTable}
@@ -4383,6 +4394,10 @@ func attachStop(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateStop(ctx context.Context, p unsafe.Pointer) error {
 	return (*shipment.Stop)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateStop(ctx context.Context, p unsafe.Pointer) error {
+	return (*shipment.Stop)(p).BeforeUpdate(ctx)
 }
 
 func init() {

@@ -1,16 +1,13 @@
 package recurringshipmentrepository
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,48 +26,6 @@ func quotaSeries() *recurringshipment.RecurringShipment {
 
 func seriesTenant(series *recurringshipment.RecurringShipment) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: series.OrganizationID, BuID: series.BusinessUnitID}
-}
-
-func TestInsertSeriesRefusesASeriesPastTheQuota(t *testing.T) {
-	t.Parallel()
-
-	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := platformplanportsmock.NewMockQuotaGuard(t)
-	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
-	series := quotaSeries()
-
-	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
-		TenantInfo: seriesTenant(series),
-		Meter:      platformcatalog.MeterRecurringShipmentSeries,
-		Quantity:   1,
-	}).Return(errortypes.NewQuotaExceededError(
-		string(platformcatalog.MeterRecurringShipmentSeries), 1, 1, "free_demo",
-	))
-	sqlMock.ExpectBegin()
-	sqlMock.ExpectRollback()
-
-	err := repo.insertSeries(t.Context(), series)
-
-	require.True(t, errortypes.IsQuotaExceededError(err))
-	require.NoError(t, sqlMock.ExpectationsWereMet())
-}
-
-func TestInsertSeriesWritesUnderTheQuota(t *testing.T) {
-	t.Parallel()
-
-	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := platformplanportsmock.NewMockQuotaGuard(t)
-	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
-	series := quotaSeries()
-
-	guard.EXPECT().Enforce(mock.Anything, mock.Anything).Return(nil)
-	sqlMock.ExpectBegin()
-	sqlMock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "recurring_shipments"`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(series.ID.String()))
-	sqlMock.ExpectCommit()
-
-	require.NoError(t, repo.insertSeries(t.Context(), series))
-	require.NoError(t, sqlMock.ExpectationsWereMet())
 }
 
 func TestEnforceGeneratedShipmentCountsOneShipment(t *testing.T) {

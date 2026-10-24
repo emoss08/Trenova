@@ -175,3 +175,14 @@ func (to *TenderOffer) BeforeAppendModel(_ context.Context, query bun.Query) err
 
 	return nil
 }
+
+func (to *TenderOffer) BeforeCreate(_ context.Context) error {
+	if to.RateMethod == "" {
+		to.RateMethod = shipment.CarrierRateMethodFlat
+	}
+	if to.Status == "" {
+		to.Status = OfferStatusPending
+	}
+
+	return nil
+}

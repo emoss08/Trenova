@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -25,9 +24,8 @@ var (
 )
 
 type ServiceFailure struct {
-	bun.BaseModel             `bun:"table:service_failures,alias:sf" json:"-"`
-	keel.Table                `keel:"service_failures"`
-	pagination.CursorValueSet `bun:",embed"                          json:"-"`
+	bun.BaseModel `bun:"table:service_failures,alias:sf" json:"-"`
+	keel.Table    `keel:"service_failures"`
 
 	ID                    pulid.ID          `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk"`
 	BusinessUnitID        pulid.ID          `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
@@ -211,22 +209,33 @@ func (sf *ServiceFailure) BeforeAppendModel(_ context.Context, query bun.Query) 
 
 	switch query.(type) {
 	case *bun.InsertQuery:
-		sf.ensureIdentity()
-		if sf.Source == "" {
-			sf.Source = SourceDetected
-		}
-		if sf.Status == "" {
-			sf.Status = StatusOpen
-		}
-		if sf.DetectedAt == 0 {
-			sf.DetectedAt = now
-		}
+		sf.applyCreateDefaults(now)
 		sf.CreatedAt = now
 	case *bun.UpdateQuery:
 		sf.UpdatedAt = now
 	}
 
 	return nil
+}
+
+func (sf *ServiceFailure) BeforeCreate(_ context.Context) error {
+	sf.Normalize()
+	sf.applyCreateDefaults(timeutils.NowUnix())
+
+	return nil
+}
+
+func (sf *ServiceFailure) applyCreateDefaults(now int64) {
+	sf.ensureIdentity()
+	if sf.Source == "" {
+		sf.Source = SourceDetected
+	}
+	if sf.Status == "" {
+		sf.Status = StatusOpen
+	}
+	if sf.DetectedAt == 0 {
+		sf.DetectedAt = now
+	}
 }
 
 func (sf *ServiceFailure) ensureIdentity() {

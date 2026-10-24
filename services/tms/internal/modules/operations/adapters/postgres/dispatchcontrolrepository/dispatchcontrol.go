@@ -3,12 +3,11 @@ package dispatchcontrolrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/dispatchcontrolcol"
-	"github.com/uptrace/bun"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol/dispatchcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -17,6 +16,8 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var dispatchControlErrors = dberror.Mapping{Entity: "DispatchControl"}
 
 type Params struct {
 	fx.In
@@ -37,6 +38,10 @@ func New(p Params) dispatchcontrolports.DispatchControlRepository {
 	}
 }
 
+func (r *repository) find(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
+	return dispatchcontroldb.DispatchControls.Query().One(ctx, r.db.Keel(ctx))
+}
+
 func (r *repository) GetByOrgID(
 	ctx context.Context,
 	req dispatchcontrolports.GetDispatchControlRequest,
@@ -45,21 +50,14 @@ func (r *repository) GetByOrgID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByOrgID"),
-				zap.String("orgId", req.TenantInfo.OrgID.String()),
-			)
-
-			entity := new(dispatchcontrol.DispatchControl)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where("dc.organization_id = ?", req.TenantInfo.OrgID).
-				Where("dc.business_unit_id = ?", req.TenantInfo.BuID).
-				Scan(ctx)
+			entity, err := r.find(ctx)
 			if err != nil {
-				log.Error("failed to get dispatch control", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "DispatchControl")
+				r.l.Error(
+					"failed to get dispatch control",
+					zap.String("orgId", req.TenantInfo.OrgID.String()),
+					zap.Error(err),
+				)
+				return nil, dispatchControlErrors.Map(err, req.TenantInfo.OrgID.String())
 			}
 
 			return entity, nil
@@ -75,18 +73,14 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
-			log := r.l.With(
-				zap.String("operation", "Create"),
-				zap.String("orgId", entity.OrganizationID.String()),
-			)
-
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				log.Error("failed to create dispatch control", zap.Error(err))
-				return nil, err
+			err := dispatchcontroldb.DispatchControls.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
+				r.l.Error(
+					"failed to create dispatch control",
+					zap.String("orgId", entity.OrganizationID.String()),
+					zap.Error(err),
+				)
+				return nil, dispatchControlErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -102,33 +96,14 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("version = ?", ov).
-				OmitZero().
-				Returning("*").
-				Exec(ctx)
+			err := dispatchcontroldb.DispatchControls.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				log.Error("failed to update dispatch control", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"DispatchControl",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				r.l.Error(
+					"failed to update dispatch control",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
+				)
+				return nil, dispatchControlErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -145,30 +120,23 @@ func (r *repository) GetOrCreate(
 		zap.String("orgId", orgID.String()),
 	)
 
+	dc := dispatchcontroldb.DispatchControls
 	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*dispatchcontrol.DispatchControl]{
-		Find: func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
-			found := new(dispatchcontrol.DispatchControl)
-			if scanErr := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(found).
-				Where("dc.organization_id = ?", orgID).
-				Where("dc.business_unit_id = ?", buID).
-				Scan(ctx); scanErr != nil {
-				return nil, scanErr
-			}
-
-			return found, nil
-		},
+		Find: r.find,
 		Create: func(ctx context.Context) error {
-			_, insertErr := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(dispatchcontrol.NewDefaultDispatchControl(orgID, buID)).
-				On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
-				Exec(ctx)
-			if insertErr != nil {
-				log.Error("failed to create default dispatch control", zap.Error(insertErr))
+			_, err := dc.CreateOrSkip(
+				ctx,
+				r.db.Keel(ctx),
+				[]*dispatchcontrol.DispatchControl{
+					dispatchcontrol.NewDefaultDispatchControl(orgID, buID),
+				},
+				dc.OrganizationID,
+				dc.BusinessUnitID,
+			)
+			if err != nil {
+				log.Error("failed to create default dispatch control", zap.Error(err))
 				return dberror.MapRetryableTransactionError(
-					insertErr,
+					err,
 					"Dispatch control is busy. Retry the request.",
 				)
 			}
@@ -180,52 +148,49 @@ func (r *repository) GetOrCreate(
 		},
 		MapError: func(err error) error {
 			log.Error("failed to get dispatch control", zap.Error(err))
-			return dberror.HandleNotFoundError(err, "DispatchControl")
+			return dispatchControlErrors.Map(err, orgID.String())
 		},
 	})
 }
 
-type horizonTenantRow struct {
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+type tenantRow struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 func (r *repository) ListHorizonPlanningTenants(
 	ctx context.Context,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with horizon planning on")
-	cols := dispatchcontrolcol.DispatchControlColumns
-	return r.listTenantsWhere(ctx, func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.Where(cols.EnableAutoAssignment.Eq(), true).
-			Where(cols.PlanningMode.Eq(), dispatchcontrol.PlanningModeHorizon)
-	})
+	dc := dispatchcontroldb.DispatchControls
+	return r.listTenantsWhere(
+		ctx,
+		dc.EnableAutoAssignment.IsTrue(),
+		dc.PlanningMode.Eq(dispatchcontrol.PlanningModeHorizon),
+	)
 }
 
 func (r *repository) ListCheckCallMonitoringTenants(
 	ctx context.Context,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that watch brokered loads for check calls")
-	cols := dispatchcontrolcol.DispatchControlColumns
-	return r.listTenantsWhere(ctx, func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.Where(cols.EnableCheckCallMonitoring.Eq(), true)
-	})
+	return r.listTenantsWhere(
+		ctx,
+		dispatchcontroldb.DispatchControls.EnableCheckCallMonitoring.IsTrue(),
+	)
 }
 
 func (r *repository) listTenantsWhere(
 	ctx context.Context,
-	filter func(*bun.SelectQuery) *bun.SelectQuery,
+	preds ...keel.Pred,
 ) ([]pagination.TenantInfo, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		cols := dispatchcontrolcol.DispatchControlColumns
-
-		rows := make([]horizonTenantRow, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*dispatchcontrol.DispatchControl)(nil)).
-			Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare())
-		if err := filter(q).
-			Order(cols.OrganizationID.OrderAsc()).
-			Scan(ctx, &rows); err != nil {
+		dc := dispatchcontroldb.DispatchControls
+		rows, err := keel.Into[tenantRow](ctx, r.db.Keel(ctx), dc.AllTenants().
+			Pick(dc.OrganizationID, dc.BusinessUnitID).
+			Where(preds...).
+			Order(dc.OrganizationID.Asc()))
+		if err != nil {
 			r.l.Error("failed to list dispatch control tenants", zap.Error(err))
 			return nil, err
 		}
