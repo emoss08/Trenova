@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -163,7 +164,7 @@ func TestSubmissionLifecycleAndLiveInvoices(t *testing.T) {
 	assert.Equal(t, 2, *page.TotalCount)
 
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	_, err = submissions.GetByID(e.ctx, factoringports.GetSubmissionRequest{ID: created.ID, TenantInfo: other})
+	_, err = submissions.GetByID(dbscope.WithTenant(e.ctx, other.DBTenant()), factoringports.GetSubmissionRequest{ID: created.ID, TenantInfo: other})
 	require.Error(t, err)
 }
 

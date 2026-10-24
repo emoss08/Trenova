@@ -30,13 +30,10 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err)
 	jordanUser := seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
 		WithUsername("jordan").
 		WithEmail("jordan@example.com").
-		Build(t, ctx, tx)
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, db)
 	avery, jordan := data.User.ID, jordanUser.ID
 	billing, dispatch := pulid.MustNew("rol_"), pulid.MustNew("rol_")
 	now := timeutils.NowUnix()

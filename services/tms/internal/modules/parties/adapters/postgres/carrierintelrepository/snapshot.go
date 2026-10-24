@@ -57,7 +57,7 @@ func (r *snapshotRepository) GetCurrent(
 				s.IsCurrent.IsTrue(),
 			).One(ctx, r.db.Keel(ctx))
 			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil snapshot represents a subject that was never looked up
+				return nil, nil
 			}
 			if err != nil {
 				r.l.Error("failed to get current carrier intel snapshot", zap.Error(err))
@@ -150,7 +150,7 @@ func (r *snapshotRepository) GetLatestFullByDOT(
 				Order(s.DepthFetchedAt.Desc()).
 				First(ctx, r.db.Keel(ctx))
 			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil snapshot means no fresh full profile exists
+				return nil, nil
 			}
 			if err != nil {
 				r.l.Error("failed to get latest full carrier intel snapshot", zap.Error(err))

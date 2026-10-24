@@ -144,7 +144,7 @@ func (r *batchRepository) GetForPeriod(
 				b.Status.Ne(driversettlement.BatchStatusCanceled),
 			).Order(b.CreatedAt.Desc()).First(ctx, r.db.Keel(ctx))
 			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil batch means no batch exists for the period
+				return nil, nil
 			}
 			if err != nil {
 				return nil, fmt.Errorf("get settlement batch for period: %w", err)

@@ -46,7 +46,7 @@ func newHarness(t *testing.T) *harness {
 		ShipmentID:   pulid.MustNew("shp_"),
 		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
 	})
-	other := seedtest.SeedAdditionalTenant(t, ctx, db, "other")
+	other := seedtest.SeedAdditionalTenant(t, ctx, db, "OT")
 
 	return &harness{
 		ctx: data.Ctx(ctx),

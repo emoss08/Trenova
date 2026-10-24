@@ -144,10 +144,7 @@ func serveExpandedShipment(
 		Get(mock.Anything, mock.Anything).
 		RunAndReturn(func(requestCtx context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
 			require.True(t, req.ExpandShipmentDetails)
-			if scopes != nil {
-				return repo.GetByID(requestCtx, req)
-			}
-			return repo.GetByID(ctx, req)
+			return repo.GetByID(requestCtx, req)
 		})
 
 	handler := buildShipmentHandler(t, handlerDeps{
@@ -157,13 +154,6 @@ func serveExpandedShipment(
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		authctx.SetAuthContext(c, load.userID, load.businessUnitID, load.organizationID)
-		if scopes != nil {
-			c.Request = c.Request.WithContext(dbscope.WithTenant(c.Request.Context(), dbscope.Tenant{
-				OrganizationID: load.organizationID,
-				BusinessUnitID: load.businessUnitID,
-				UserID:         load.userID,
-			}))
-		}
 		c.Next()
 	})
 	if scopes != nil {

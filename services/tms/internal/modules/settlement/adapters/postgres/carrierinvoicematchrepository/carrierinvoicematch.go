@@ -105,7 +105,7 @@ func (r *repository) GetLiveByCarrierInvoiceNumber(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
 		key := edi.InvoiceNumberKey(req.InvoiceNumber)
 		if key == "" {
-			return nil, nil //nolint:nilnil // a match without a number never collides
+			return nil, nil
 		}
 
 		im := carriersettlementdb.InvoiceMatches

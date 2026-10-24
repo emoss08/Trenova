@@ -76,7 +76,7 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 	require.NoError(t, err)
 	require.Len(t, accounts, 2)
 
-	control, err = accountingRepo.GetByOrgID(ctx, orgID)
+	control, err := accountingRepo.GetByOrgID(ctx, orgID)
 	require.NoError(t, err)
 	control.JournalReversalPolicy = tenant.JournalReversalPolicyNextOpenPeriod
 	control.RequireManualJEApproval = false

@@ -49,5 +49,6 @@ func TestStartControlNumber_CreatesASequenceAndNeverMovesItBack(t *testing.T) {
 
 	cn := edidb.EDIControlNumberSequences
 	count, err := cn.Where(cn.EDIPartnerID.Eq(partner.ID)).Count(ctx, db)
+	require.NoError(t, err)
 	assert.EqualValues(t, 1, count)
 }

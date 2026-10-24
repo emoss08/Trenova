@@ -185,7 +185,7 @@ func (r *repository) FindByIdentity(
 			Order(c.CreatedAt.Asc()).
 			First(ctx, r.db.Keel(ctx))
 		if dberror.IsNotFoundError(err) {
-			return nil, nil //nolint:nilnil // nil carrier represents an optional absence
+			return nil, nil
 		}
 		if err != nil {
 			return nil, fmt.Errorf("find carrier by identity: %w", err)
@@ -568,7 +568,7 @@ func (r *repository) GetDefaultEDIChannel(
 			Load(cec.EDIPartner()).
 			One(ctx, r.db.Keel(ctx))
 		if dberror.IsNotFoundError(err) {
-			return nil, nil //nolint:nilnil // nil channel represents an optional absence
+			return nil, nil
 		}
 		if err != nil {
 			r.l.Error("failed to get default carrier EDI channel", zap.Error(err))

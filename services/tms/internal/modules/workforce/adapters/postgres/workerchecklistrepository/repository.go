@@ -531,7 +531,7 @@ func (r *repository) create(ctx context.Context, entity *worker.WorkerChecklist)
 		item.ChecklistID = entity.ID
 		item.OrganizationID = entity.OrganizationID
 		item.BusinessUnitID = entity.BusinessUnitID
-		item.SortOrder = int32(i) //nolint:gosec // item counts are tiny
+		item.SortOrder = int32(i)
 	}
 
 	return workerdb.WorkerChecklistItems.CreateMany(ctx, db, entity.Items)

@@ -54,7 +54,7 @@ func newHarness(t *testing.T) *harness {
 		}),
 		tenant:   tenant,
 		entity:   graph.Shipment,
-		otherCtx: seedtest.SeedAdditionalTenant(t, ctx, db, "other").Ctx(ctx),
+		otherCtx: seedtest.SeedAdditionalTenant(t, ctx, db, "OT").Ctx(ctx),
 	}
 }
 

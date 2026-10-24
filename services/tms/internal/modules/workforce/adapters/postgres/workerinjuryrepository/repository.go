@@ -228,7 +228,7 @@ func (r *repository) GetSummary(
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // a year with no summary yet is not an error
+				return nil, nil
 			}
 			r.l.Error("failed to read the osha summary", zap.Error(err))
 			return nil, fmt.Errorf("read osha summary: %w", err)

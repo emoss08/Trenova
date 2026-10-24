@@ -18,8 +18,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const defaultTaskCandidates = 4
-
 var providerErrors = dberror.Mapping{Entity: "AIProvider"}
 
 type Params struct {

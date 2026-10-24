@@ -150,7 +150,7 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	assert.Equal(t, firstTenant.OrgID, holders[0].OrganizationID)
 	assert.Empty(t, holders[0].AccessTokenCiphertext)
 
-	_, err = repo.Create(ctx, newConnection(secondTenant, second.User.ID, realm, now))
+	_, err = repo.Create(second.Ctx(ctx), newConnection(secondTenant, second.User.ID, realm, now))
 	require.Error(t, err)
 	assert.True(t, dberror.IsUniqueConstraintViolation(err))
 
@@ -158,10 +158,10 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	_, err = repo.Update(ctx, held)
 	require.NoError(t, err)
 
-	_, err = repo.Create(ctx, newConnection(secondTenant, second.User.ID, realm, now+6))
+	_, err = repo.Create(second.Ctx(ctx), newConnection(secondTenant, second.User.ID, realm, now+6))
 	require.NoError(t, err, "a disconnected connection releases its company")
 
-	_, err = repo.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
+	_, err = repo.GetByID(second.Ctx(ctx), accountingsyncports.GetAccountingConnectionByIDRequest{
 		TenantInfo: secondTenant,
 		ID:         held.ID,
 	})

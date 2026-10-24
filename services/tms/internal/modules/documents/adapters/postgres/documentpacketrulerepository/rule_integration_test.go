@@ -23,6 +23,7 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{
 		DB:     conn,

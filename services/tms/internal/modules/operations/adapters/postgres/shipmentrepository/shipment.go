@@ -747,7 +747,7 @@ func (r *repository) FindByExternalReference(
 				return nil, err
 			}
 			if len(found) == 0 {
-				return nil, nil //nolint:nilnil // no other shipment uses the reference
+				return nil, nil
 			}
 
 			return &found[0], nil

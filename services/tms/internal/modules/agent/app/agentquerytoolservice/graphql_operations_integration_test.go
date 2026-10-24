@@ -313,6 +313,10 @@ func (w *operationsWorld) writeOccurrence(
 
 // writeTender writes a live tender on the move with a declined offer and one
 // awaiting the carrier's answer.
+func (w *operationsWorld) insert(ctx context.Context, move *shipment.ShipmentMove) error {
+	return shipmentdb.ShipmentMoves.Create(ctx, w.admin, move)
+}
+
 func (w *operationsWorld) writeTender(
 	ctx context.Context,
 	tenant *agentreadtest.Tenant,

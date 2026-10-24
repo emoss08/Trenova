@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -473,13 +474,13 @@ func TestSyncRecordRepository_IsTenantScoped(t *testing.T) {
 	f.enqueue(t, record)
 	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: f.tenant.BuID}
 
-	_, err := f.records.GetByID(f.ctx, accountingsyncports.GetAccountingSyncRecordRequest{
+	_, err := f.records.GetByID(dbscope.WithTenant(f.ctx, stranger.DBTenant()), accountingsyncports.GetAccountingSyncRecordRequest{
 		TenantInfo: stranger,
 		ID:         record.ID,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	claimed, err := f.records.Claim(f.ctx, &accountingsyncports.ClaimAccountingSyncRecordsRequest{
+	claimed, err := f.records.Claim(dbscope.WithTenant(f.ctx, stranger.DBTenant()), &accountingsyncports.ClaimAccountingSyncRecordsRequest{
 		TenantInfo:   stranger,
 		ConnectionID: f.connection.ID,
 		Now:          f.now,
@@ -487,7 +488,7 @@ func TestSyncRecordRepository_IsTenantScoped(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, claimed)
 
-	requeued, err := f.records.Requeue(f.ctx, &accountingsyncports.RequeueAccountingSyncRecordsRequest{
+	requeued, err := f.records.Requeue(dbscope.WithTenant(f.ctx, stranger.DBTenant()), &accountingsyncports.RequeueAccountingSyncRecordsRequest{
 		TenantInfo:   stranger,
 		ConnectionID: f.connection.ID,
 		IDs:          []pulid.ID{record.ID},

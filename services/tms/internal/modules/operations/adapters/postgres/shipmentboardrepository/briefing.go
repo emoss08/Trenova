@@ -46,7 +46,7 @@ func (r *Repository) LeadingLateReason(
 				return nil, err
 			}
 			if len(rows) == 0 {
-				return nil, nil //nolint:nilnil // no unresolved late failures
+				return nil, nil
 			}
 
 			return &rows[0], nil

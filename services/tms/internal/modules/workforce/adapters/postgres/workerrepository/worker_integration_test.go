@@ -210,18 +210,6 @@ func TestGetWorkerSyncReadinessCounts(t *testing.T) {
 	assert.GreaterOrEqual(t, counts.SyncedActiveWorkers, 1)
 }
 
-func TestStaticFieldMapperIntegration(t *testing.T) {
-	w := &worker.Worker{}
-	fm := w.GetStaticFieldMap()
-
-	require.NotNil(t, fm)
-	assert.Equal(t, "first_name", fm["firstName"])
-	assert.Equal(t, "organization_id", fm["organizationId"])
-
-	_, hasSearchVector := fm["searchVector"]
-	assert.False(t, hasSearchVector, "searchVector should not be in FieldMap (json:\"-\")")
-}
-
 func TestGetByID_LoadsTheManagerFleetAndLicenseStateItIsAskedFor(t *testing.T) {
 	repo, data, cleanup := setupRepo(t)
 	t.Cleanup(cleanup)

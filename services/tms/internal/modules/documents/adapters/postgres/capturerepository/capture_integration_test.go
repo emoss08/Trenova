@@ -168,7 +168,7 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 	require.NoError(t, err)
 	cursor.IncludeTotalCount = true
 	bl, err := batches.ListCursor(ctx, &captureports.ListCaptureBatchesRequest{
-		Filter:   &pagination.QueryOptions{TenantInfo: ti, Cursor: cursor, UseCursor: true},
+		Filter:   &pagination.QueryOptions{TenantInfo: ti},
 		Cursor:   cursor,
 		Statuses: []capture.BatchStatus{capture.BatchReady},
 		UserID:   userID,
@@ -182,7 +182,7 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 	search := func(term string) []pulid.ID {
 		t.Helper()
 		found, searchErr := batches.ListCursor(ctx, &captureports.ListCaptureBatchesRequest{
-			Filter: &pagination.QueryOptions{TenantInfo: ti, Cursor: cursor, UseCursor: true},
+			Filter: &pagination.QueryOptions{TenantInfo: ti},
 			Cursor: cursor,
 			Search: term,
 		})
@@ -198,7 +198,7 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 	assert.Contains(t, search(dev.MachineName), b.ID, "the computer that sent it finds a stack")
 	assert.NotContains(t, search("7_120"), b.ID, "search terms are matched literally")
 	outside, err := batches.ListCursor(ctx, &captureports.ListCaptureBatchesRequest{
-		Filter:      &pagination.QueryOptions{TenantInfo: ti, Cursor: cursor, UseCursor: true},
+		Filter:      &pagination.QueryOptions{TenantInfo: ti},
 		Cursor:      cursor,
 		CreatedFrom: b.CreatedAt + 1_000_000,
 	})

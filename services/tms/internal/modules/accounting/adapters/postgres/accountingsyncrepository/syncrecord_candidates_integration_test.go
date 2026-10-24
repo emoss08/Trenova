@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -226,7 +227,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	assert.Error(t, err, "customers are dependencies, never swept")
 
 	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: org.BusinessUnitID}
-	none, err := records.ListCandidates(ctx, &accountingsyncports.ListAccountingSyncCandidatesRequest{
+	none, err := records.ListCandidates(dbscope.WithTenant(ctx, stranger.DBTenant()), &accountingsyncports.ListAccountingSyncCandidatesRequest{
 		TenantInfo:   stranger,
 		ConnectionID: connection.ID,
 		ObjectType:   accountingsync.SyncObjectInvoice,

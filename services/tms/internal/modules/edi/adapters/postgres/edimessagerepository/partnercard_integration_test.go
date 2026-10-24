@@ -58,7 +58,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 
 	newPartner := func(code string) *edi.EDIPartner {
 		partner := &edi.EDIPartner{
-			BusinessUnitID: org.BuID,
+			BusinessUnitID: org.BusinessUnitID,
 			OrganizationID: org.OrgID,
 			Kind:           edi.PartnerKindExternal,
 			Code:           code,
@@ -72,7 +72,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 
 	newProfile := func(partner *edi.EDIPartner, name string, status string) *edi.EDICommunicationProfile {
 		profile := &edi.EDICommunicationProfile{
-			BusinessUnitID: org.BuID,
+			BusinessUnitID: org.BusinessUnitID,
 			OrganizationID: org.OrgID,
 			EDIPartnerID:   partner.ID,
 			Method:         edi.ConnectionMethodSFTP,
@@ -104,7 +104,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 	}
 	for index, entry := range messages {
 		message := &edi.EDIMessage{
-			BusinessUnitID:           org.BuID,
+			BusinessUnitID:           org.BusinessUnitID,
 			OrganizationID:           org.OrgID,
 			EDIPartnerID:             entry.partner,
 			DocumentTypeID:           entry.docType,
@@ -209,7 +209,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		{other, otherMailbox, 60},
 	} {
 		file := &edi.EDIInboundFile{
-			BusinessUnitID:         org.BuID,
+			BusinessUnitID:         org.BusinessUnitID,
 			OrganizationID:         org.OrgID,
 			CommunicationProfileID: entry.profile.ID,
 			EDIPartnerID:           entry.partner.ID,
@@ -321,11 +321,11 @@ func TestCarrierEDIChannelsByPartner(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, carriers, 2, "the seeds give one organization two carriers")
 	org := carriers[0]
-	tenantInfo := pagination.TenantInfo{OrgID: org.OrganizationID, BuID: org.BuID}
+	tenantInfo := pagination.TenantInfo{OrgID: org.OrganizationID, BuID: org.BusinessUnitID}
 
 	newPartner := func(code string) *edi.EDIPartner {
 		partner := &edi.EDIPartner{
-			BusinessUnitID: org.BuID,
+			BusinessUnitID: org.BusinessUnitID,
 			OrganizationID: org.OrganizationID,
 			Kind:           edi.PartnerKindExternal,
 			Code:           code,
@@ -347,7 +347,7 @@ func TestCarrierEDIChannelsByPartner(t *testing.T) {
 		{carriers[0], elsewhere, true},
 	} {
 		channel := &carrier.CarrierEDIChannel{
-			BusinessUnitID: org.BuID,
+			BusinessUnitID: org.BusinessUnitID,
 			OrganizationID: org.OrganizationID,
 			CarrierID:      entry.carrier.ID,
 			EDIPartnerID:   entry.partner.ID,

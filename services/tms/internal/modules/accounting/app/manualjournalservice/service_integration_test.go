@@ -75,7 +75,7 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, accounts, 2)
 
-	control, err = accountingRepo.GetByOrgID(ctx, orgID)
+	control, err := accountingRepo.GetByOrgID(ctx, orgID)
 	require.NoError(t, err)
 	control.ManualJournalEntryPolicy = tenant.ManualJournalEntryPolicyAllowAll
 	control.RequireManualJEApproval = false

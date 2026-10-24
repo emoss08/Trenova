@@ -286,7 +286,7 @@ func (r *repository) GetLatestByStatus(
 				First(ctx, r.db.Keel(ctx))
 			if err != nil {
 				if dberror.IsNotFoundError(err) {
-					return nil, nil //nolint:nilnil // nil version means the library never held that status
+					return nil, nil
 				}
 				r.l.Error("failed to read the latest formula library version", zap.Error(err))
 				return nil, err

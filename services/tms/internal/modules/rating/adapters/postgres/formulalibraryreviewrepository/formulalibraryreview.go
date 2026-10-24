@@ -109,7 +109,7 @@ func (r *repository) Latest(
 				First(ctx, r.db.Keel(ctx))
 			if err != nil {
 				if dberror.IsNotFoundError(err) {
-					return nil, nil //nolint:nilnil // no history yet is an answer, not a failure
+					return nil, nil
 				}
 				r.l.Error("failed to read the latest formula library review", zap.Error(err))
 				return nil, err

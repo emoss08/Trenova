@@ -25,8 +25,8 @@ func TestLanes_CountsShipmentsBetweenTheirFirstPickupAndLastDeliveryState(t *tes
 	t.Log(sql)
 
 	assert.Contains(t, sql, `WITH "lane_endpoints" ("origin_location_id", "destination_location_id") AS (`)
-	assert.Contains(t, sql, `(array_agg(st."location_id" ORDER BY sm."sequence", st."sequence") FILTER (WHERE st."type" = ANY(`)
-	assert.Contains(t, sql, `(array_agg(st."location_id" ORDER BY sm."sequence" DESC, st."sequence" DESC) FILTER (WHERE st."type" = ANY(`)
+	assert.Contains(t, sql, `(array_agg(s2."location_id" ORDER BY sm."sequence", s2."sequence") FILTER (WHERE s2."type" = ANY(`)
+	assert.Contains(t, sql, `(array_agg(s2."location_id" ORDER BY sm."sequence" DESC, s2."sequence" DESC) FILTER (WHERE s2."type" = ANY(`)
 	assert.Contains(t, sql, `GROUP BY s."id"`)
 	assert.Contains(t, sql, `JOIN "locations" loc_orig ON`)
 	assert.Contains(t, sql, `JOIN "us_states" ust_orig ON ust_orig."id" = loc_orig."state_id"`)

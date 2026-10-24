@@ -30,8 +30,6 @@ func (w openAsOfWindow) start() int64 {
 	return w.asOf - int64(w.points-1)*w.step
 }
 
-const openAsOfArgs = 7
-
 func (w openAsOfWindow) args() []any {
 	org, bu := tenantArgs(w.tenantInfo)
 	return []any{

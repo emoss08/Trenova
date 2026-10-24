@@ -58,7 +58,7 @@ func newHarness(t *testing.T) *harness {
 		entity:   graph.Shipment,
 		steel:    testutil.MustCreateCommodity(t, ctx, db, tenant, "Steel", pulid.Nil),
 		lumber:   testutil.MustCreateCommodity(t, ctx, db, tenant, "Lumber", pulid.Nil),
-		otherCtx: seedtest.SeedAdditionalTenant(t, ctx, db, "other").Ctx(ctx),
+		otherCtx: seedtest.SeedAdditionalTenant(t, ctx, db, "OT").Ctx(ctx),
 	}
 }
 

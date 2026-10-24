@@ -284,7 +284,7 @@ func (r *repository) RecordItemOutcomes(
 			}
 
 			progress := new(billingtransferports.BillingTransferRunProgress)
-			if _, err := r.refreshRunCounters(ctx, req.RunID, progress); err != nil {
+			if err := r.refreshRunCounters(ctx, req.RunID, progress); err != nil {
 				r.l.Error("failed to record billing transfer outcomes", zap.Error(err))
 				return nil, err
 			}
@@ -317,7 +317,7 @@ func (r *repository) Finalize(
 				return nil, itemErrors.Map(err, req.RunID.String())
 			}
 
-			if _, err := r.refreshRunCounters(ctx, req.RunID, nil); err != nil {
+			if err := r.refreshRunCounters(ctx, req.RunID, nil); err != nil {
 				r.l.Error("failed to finalize billing transfer run", zap.Error(err))
 				return nil, err
 			}
@@ -373,11 +373,11 @@ func (r *repository) refreshRunCounters(
 	ctx context.Context,
 	runID pulid.ID,
 	out *billingtransferports.BillingTransferRunProgress,
-) (*billingtransfer.BillingTransferRun, error) {
+) error {
 	db := r.db.Keel(ctx)
 	counts, err := keel.IntoOne[itemCounts](ctx, db, runItemCounts(runID))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	run := billingtransferdb.BillingTransferRuns
@@ -390,10 +390,10 @@ func (r *repository) refreshRunCounters(
 		run.RetryableCount.To(int64(counts.Retryable)),
 	)
 	if err != nil {
-		return nil, runErrors.Map(err, runID.String())
+		return runErrors.Map(err, runID.String())
 	}
 	if err = dberror.CheckAffected(int64(len(rows)), "BillingTransferRun", runID.String()); err != nil {
-		return nil, err
+		return err
 	}
 
 	updated := rows[0]
@@ -409,5 +409,5 @@ func (r *repository) refreshRunCounters(
 		out.CancelRequested = updated.IsCancelRequested()
 	}
 
-	return updated, nil
+	return nil
 }

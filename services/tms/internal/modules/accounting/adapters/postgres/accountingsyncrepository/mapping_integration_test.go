@@ -386,10 +386,10 @@ func TestMappingRepository_OneTenantCannotReadOrWriteAnothersMappings(t *testing
 	require.NoError(t, err)
 	require.Len(t, rows, 1)
 
-	_, err = f.mappings.GetByID(f.ctx, accountingsyncports.GetAccountingMappingRequest{TenantInfo: secondTenant, ID: rows[0].ID})
+	_, err = f.mappings.GetByID(second.Ctx(f.ctx), accountingsyncports.GetAccountingMappingRequest{TenantInfo: secondTenant, ID: rows[0].ID})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	foreign, err := f.mappings.ListByConnection(f.ctx, &accountingsyncports.ListAccountingMappingsQuery{
+	foreign, err := f.mappings.ListByConnection(second.Ctx(f.ctx), &accountingsyncports.ListAccountingMappingsQuery{
 		TenantInfo:   secondTenant,
 		ConnectionID: f.connection.ID,
 	})
@@ -403,7 +403,7 @@ func TestMappingRepository_OneTenantCannotReadOrWriteAnothersMappings(t *testing
 	_, err = f.mappings.Update(f.ctx, &hijack)
 	require.Error(t, err, "an update scoped to another tenant touches nothing")
 
-	refs, err := f.references.ListByKind(f.ctx, &accountingsyncports.ListAccountingReferenceObjectsRequest{
+	refs, err := f.references.ListByKind(second.Ctx(f.ctx), &accountingsyncports.ListAccountingReferenceObjectsRequest{
 		TenantInfo:   secondTenant,
 		ConnectionID: f.connection.ID,
 		Kind:         accountingsync.ReferenceKindAccount,

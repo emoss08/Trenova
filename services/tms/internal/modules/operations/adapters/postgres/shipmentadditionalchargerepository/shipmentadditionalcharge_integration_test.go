@@ -64,7 +64,7 @@ func newHarness(t *testing.T) *harness {
 		other: testutil.MustCreateAccessorialCharge(
 			t, ctx, db, tenant, "DET", accessorialcharge.MethodFlat, "", "40",
 		),
-		otherCtx: seedtest.SeedAdditionalTenant(t, ctx, db, "other").Ctx(ctx),
+		otherCtx: seedtest.SeedAdditionalTenant(t, ctx, db, "OT").Ctx(ctx),
 	}
 }
 

@@ -136,7 +136,7 @@ func (r *payEventRepository) ListAccruedForWorker(
 ) ([]*driversettlement.PayEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driversettlement.PayEvent, error) {
 		pe := driversettlementdb.PayEvents
-		status := keel.Pred(pe.Status.Eq(driversettlement.PayEventStatusAccrued))
+		status := pe.Status.Eq(driversettlement.PayEventStatusAccrued)
 		if !req.ReleasedFrom.IsNil() {
 			status = keel.Or(status, keel.And(
 				pe.Status.Eq(driversettlement.PayEventStatusSettled),

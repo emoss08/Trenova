@@ -122,7 +122,7 @@ func (r *Repository) NextUncoveredPickup(
 				return nil, err
 			}
 			if len(rows) == 0 {
-				return nil, nil //nolint:nilnil // no uncovered pickup ahead
+				return nil, nil
 			}
 
 			return &rows[0], nil

@@ -745,7 +745,7 @@ func saveReportDefinitionRequest(
 	authCtx *authctx.AuthContext,
 	input *gqlmodel.SaveReportDefinitionInput,
 ) (*reportingservice.SaveDefinitionRequest, error) {
-	definition, err := reportingservice.DecodeDefinition(map[string]any(input.Definition))
+	definition, err := reportingservice.DecodeDefinition(input.Definition)
 	if err != nil {
 		return nil, err
 	}

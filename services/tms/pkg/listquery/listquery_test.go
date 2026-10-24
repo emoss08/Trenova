@@ -497,7 +497,8 @@ func TestSearch_AModelWithoutConfigurationSearchesItsTextColumns(t *testing.T) {
 	sql, _ := render(t, q)
 
 	assert.Contains(t, sql, `AND ((bt."id" ILIKE $3) OR (bt."organization_id" ILIKE $4) OR `+
-		`(bt."business_unit_id" ILIKE $5) OR (bt."owner_id" ILIKE $6) OR (bt."code" ILIKE $7)) LIMIT 10`)
+		`(bt."business_unit_id" ILIKE $5) OR (bt."owner_id" ILIKE $6) OR (bt."code" ILIKE $7) OR `+
+		`(bt."description" ILIKE $8)) LIMIT 10`)
 }
 
 func TestOrders_RequestSortsInOrder(t *testing.T) {

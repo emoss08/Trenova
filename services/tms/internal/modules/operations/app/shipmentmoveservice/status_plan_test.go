@@ -3,6 +3,7 @@ package shipmentmoveservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 
@@ -65,7 +66,7 @@ func TestPreviewUpdateStatus_ProjectsTheMovesAndTheirShipment(t *testing.T) {
 
 	svc := &service{
 		l:              zap.NewNop(),
-		db:             testDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           moveRepo,
 		assignmentRepo: assignmentRepo,
 		shipmentRepo:   shipmentRepo,
@@ -109,7 +110,7 @@ func TestPreviewUpdateStatus_RefusesWhatTheWriteRefuses(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         moveRepo,
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     shipmentportsmock.NewMockShipmentHoldRepository(t),

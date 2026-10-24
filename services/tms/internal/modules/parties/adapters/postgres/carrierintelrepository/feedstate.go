@@ -38,7 +38,7 @@ func (r *feedStateRepository) Get(
 			entity, err := fs.Where(fs.Provider.Eq(key.Provider), fs.FeedType.Eq(key.FeedType)).
 				One(ctx, r.db.Keel(ctx))
 			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil feed state means the feed has never been polled
+				return nil, nil
 			}
 			if err != nil {
 				r.l.Error("failed to get carrier intel feed state", zap.Error(err))
