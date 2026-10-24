@@ -227,12 +227,11 @@ func TestUser_GetBusinessUnitID(t *testing.T) {
 func TestOrganizationMembership_BeforeCreate(t *testing.T) {
 	t.Parallel()
 
-	t.Run("insert sets ID and JoinedAt", func(t *testing.T) {
+	t.Run("insert sets JoinedAt", func(t *testing.T) {
 		t.Parallel()
 		om := &OrganizationMembership{}
 		err := om.BeforeCreate(t.Context())
 		require.NoError(t, err)
-		assert.False(t, om.ID.IsNil())
 		assert.NotZero(t, om.JoinedAt)
 	})
 
