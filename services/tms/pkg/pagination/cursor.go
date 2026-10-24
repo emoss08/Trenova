@@ -107,7 +107,10 @@ func DecodeCursor(encoded string) (Cursor, error) {
 		return Cursor{}, fmt.Errorf("unmarshal cursor: %w", err)
 	}
 	if cursor.IsKeyset() {
-		return cursor, validateKeysetCursor(&cursor)
+		if err = validateKeysetCursor(&cursor); err != nil {
+			return Cursor{}, err
+		}
+		return cursor, nil
 	}
 	if cursor.ID.IsNil() {
 		return Cursor{}, errors.New("cursor id is required")
