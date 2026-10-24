@@ -143,7 +143,7 @@ func (r *repository) settle(
 		}
 
 		d := agentdb.AgentDecisions
-		sets := []keel.Assignment{d.UpdatedAt.To(req.At)}
+		sets := []keel.Assignment{d.UpdatedAt.To(req.At), d.Version.ToExpr(d.Version)}
 		switch {
 		case !undo:
 			sets = append(sets, d.CommittedAt.To(req.At))

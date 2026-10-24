@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentwaitcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait/agentwaitdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -25,6 +23,8 @@ const (
 	maxListLimit     = 100
 	maxOpenScan      = 500
 )
+
+var waitErrors = dberror.Mapping{Entity: entityName}
 
 type Params struct {
 	fx.In
@@ -42,37 +42,26 @@ func New(p Params) agentwaitports.AgentWaitRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.agent-wait-repository")}
 }
 
-func tenantOf(entity *agentwait.Wait) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-}
-
 func (r *repository) Insert(
 	ctx context.Context,
 	entity *agentwait.Wait,
 ) (*agentwait.Wait, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentwait.Wait, error) {
-		db := r.db.DBForContext(ctx)
-		cols := agentwaitcol.WaitColumns
-		owner := ownerKey(entity)
-		if _, err := db.NewRaw(
-			"SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", "agent-wait:"+owner,
-		).Exec(ctx); err != nil {
+		db := r.db.Keel(ctx)
+		if err := keel.LockKey(ctx, db, "agent-wait:"+ownerKey(entity)); err != nil {
 			return nil, fmt.Errorf("hold the agent's waits: %w", err)
 		}
 
-		open, err := db.NewSelect().
-			Model((*agentwait.Wait)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = agentwaitcol.WaitScopeTenant(sq, tenantOf(entity)).
-					Where(cols.Status.Eq(), agentwait.StatusWaiting)
-				if entity.Conversational() {
-					return sq.Where(cols.ThreadID.Eq(), entity.ThreadID)
-				}
-				return sq.
-					Where(cols.AgentDefinitionID.Eq(), entity.AgentDefinitionID).
-					Where(cols.SubjectID.Eq(), entity.SubjectID)
-			}).
-			Count(ctx)
+		w := agentwaitdb.Waits
+		owner := keel.And(
+			w.AgentDefinitionID.Eq(entity.AgentDefinitionID),
+			w.SubjectID.Eq(entity.SubjectID),
+		)
+		if entity.Conversational() {
+			owner = w.ThreadID.Eq(entity.ThreadID)
+		}
+
+		open, err := w.Where(w.Status.Eq(agentwait.StatusWaiting), owner).Count(ctx, db)
 		if err != nil {
 			return nil, fmt.Errorf("count the agent's open waits: %w", err)
 		}
@@ -80,7 +69,7 @@ func (r *repository) Insert(
 			return nil, agentwaitports.ErrTooManyWaits
 		}
 
-		if _, err = db.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if err = w.Create(ctx, db, entity); err != nil {
 			r.l.Error(
 				"failed to record a wait",
 				zap.String("kind", string(entity.Kind)),
@@ -106,25 +95,14 @@ func (r *repository) Get(
 	req *agentwaitports.GetAgentWaitRequest,
 ) (*agentwait.Wait, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentwait.Wait, error) {
-		cols := agentwaitcol.WaitColumns
-		entity := new(agentwait.Wait)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = agentwaitcol.WaitScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-				if req.ThreadID.IsNotNil() {
-					sq = sq.Where(cols.ThreadID.Eq(), req.ThreadID)
-				}
-				if req.UserID.IsNotNil() {
-					sq = sq.Where(cols.UserID.Eq(), req.UserID)
-				}
-				return sq
-			}).
-			Scan(ctx)
+		w := agentwaitdb.Waits
+		entity, err := w.Where(
+			w.ID.Eq(req.ID),
+			keel.When(req.ThreadID.IsNotNil(), w.ThreadID.Eq(req.ThreadID)),
+			keel.When(req.UserID.IsNotNil(), w.UserID.Eq(req.UserID)),
+		).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, entityName)
+			return nil, waitErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -136,23 +114,16 @@ func (r *repository) ListByThread(
 	req *agentwaitports.ListThreadWaitsRequest,
 ) ([]*agentwait.Wait, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentwait.Wait, error) {
-		cols := agentwaitcol.WaitColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxListLimit {
 			limit = defaultListLimit
 		}
-		items := make([]*agentwait.Wait, 0, limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentwaitcol.WaitScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), req.ThreadID).
-					Where(cols.UserID.Eq(), req.UserID)
-			}).
-			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+
+		w := agentwaitdb.Waits
+		items, err := w.Where(w.ThreadID.Eq(req.ThreadID), w.UserID.Eq(req.UserID)).
+			Order(w.CreatedAt.Desc(), w.ID.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list a conversation's waits",
 				zap.String("thread", req.ThreadID.String()), zap.Error(err))
@@ -172,18 +143,12 @@ func (r *repository) ListOpenWatching(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentwait.Wait, error) {
-		cols := agentwaitcol.WaitColumns
-		items := make([]*agentwait.Wait, 0, len(req.WatchIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentwaitcol.WaitScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), agentwait.StatusWaiting).
-					Where(cols.Kind.In(), bun.List(req.Kinds)).
-					Where(cols.WatchID.In(), bun.List(req.WatchIDs))
-			}).
-			Scan(ctx)
+		w := agentwaitdb.Waits
+		items, err := w.Where(
+			w.Status.Eq(agentwait.StatusWaiting),
+			w.Kind.In(req.Kinds...),
+			w.WatchID.In(req.WatchIDs...),
+		).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read the waits watching these records: %w", err)
 		}
@@ -201,23 +166,16 @@ func (r *repository) ListOpenOfKinds(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentwait.Wait, error) {
-		cols := agentwaitcol.WaitColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxOpenScan {
 			limit = maxOpenScan
 		}
-		items := make([]*agentwait.Wait, 0, min(limit, defaultListLimit))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentwaitcol.WaitScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), agentwait.StatusWaiting).
-					Where(cols.Kind.In(), bun.List(req.Kinds))
-			}).
-			Order(cols.CreatedAt.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+
+		w := agentwaitdb.Waits
+		items, err := w.Where(w.Status.Eq(agentwait.StatusWaiting), w.Kind.In(req.Kinds...)).
+			Order(w.CreatedAt.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read the open waits of these kinds: %w", err)
 		}
@@ -236,27 +194,16 @@ func (r *repository) ListOpenByThreads(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*agentwait.Wait, error) {
-		cols := agentwaitcol.WaitColumns
-		items := make([]*agentwait.Wait, 0, len(req.ThreadIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Column(
-				cols.ID.Bare(),
-				cols.Kind.Bare(),
-				cols.Condition.Bare(),
-				cols.ThreadID.Bare(),
-				cols.DueAt.Bare(),
+		w := agentwaitdb.Waits
+		items, err := w.Pick(w.ID, w.Kind, w.Condition, w.ThreadID, w.DueAt).
+			Where(
+				w.Status.Eq(agentwait.StatusWaiting),
+				w.UserID.Eq(req.UserID),
+				w.ThreadID.In(req.ThreadIDs...),
 			).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentwaitcol.WaitScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), agentwait.StatusWaiting).
-					Where(cols.UserID.Eq(), req.UserID).
-					Where(cols.ThreadID.In(), bun.List(req.ThreadIDs))
-			}).
-			Order(cols.CreatedAt.OrderAsc()).
-			Limit(int64(len(req.ThreadIDs) * agentwait.MaxOpenPerOwner)).
-			Scan(ctx)
+			Order(w.CreatedAt.Asc()).
+			Limit(len(req.ThreadIDs) * agentwait.MaxOpenPerOwner).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read the conversations' open waits: %w", err)
 		}
@@ -276,20 +223,17 @@ func (r *repository) ListOverdueAcrossTenants(
 	ctx = dbscope.WithSystem(ctx, "list open agent waits past their expiry in every organization")
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentwait.Wait, error) {
-		cols := agentwaitcol.WaitColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxOpenScan {
 			limit = maxOpenScan
 		}
-		items := make([]*agentwait.Wait, 0, min(limit, defaultListLimit))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where(cols.Status.Eq(), agentwait.StatusWaiting).
-			Where(cols.ExpiresAt.Lt(), req.ExpiredBefore).
-			Order(cols.ExpiresAt.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+
+		w := agentwaitdb.Waits
+		items, err := w.AllTenants().
+			Where(w.Status.Eq(agentwait.StatusWaiting), w.ExpiresAt.Lt(req.ExpiredBefore)).
+			Order(w.ExpiresAt.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read the overdue waits: %w", err)
 		}
@@ -303,18 +247,9 @@ func (r *repository) UpdateCondition(
 	req *agentwaitports.UpdateAgentWaitConditionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := agentwaitcol.WaitColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agentwait.Wait)(nil)).
-			Set(cols.Condition.Set(), req.Condition).
-			Set(cols.Version.Inc(1)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentwaitcol.WaitScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Status.Eq(), agentwait.StatusWaiting)
-			}).
-			Exec(ctx)
+		w := agentwaitdb.Waits
+		_, err := w.Where(w.ID.Eq(req.ID), w.Status.Eq(agentwait.StatusWaiting)).
+			Update(ctx, r.db.Keel(ctx), w.Condition.To(req.Condition))
 
 		return err
 	})
@@ -322,21 +257,16 @@ func (r *repository) UpdateCondition(
 
 func (r *repository) SetDue(ctx context.Context, req *agentwaitports.SetAgentWaitDueRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := agentwaitcol.WaitColumns
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agentwait.Wait)(nil)).
-			Set(cols.DueAt.Set(), req.DueAt).
-			Set(cols.Version.Inc(1))
-		if req.WorkflowID != "" {
-			q = q.Set(cols.WorkflowID.Set(), req.WorkflowID)
+		w := agentwaitdb.Waits
+		sets := []keel.Assignment{w.DueAt.ToNull()}
+		if req.DueAt != nil {
+			sets[0] = w.DueAt.To(*req.DueAt)
 		}
-		_, err := q.
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentwaitcol.WaitScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		if req.WorkflowID != "" {
+			sets = append(sets, w.WorkflowID.To(req.WorkflowID))
+		}
+
+		_, err := w.Where(w.ID.Eq(req.ID)).Update(ctx, r.db.Keel(ctx), sets...)
 
 		return err
 	})
@@ -347,32 +277,21 @@ func (r *repository) Resolve(
 	req *agentwaitports.ResolveAgentWaitRequest,
 ) (*agentwait.Wait, bool, error) {
 	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*agentwait.Wait, bool, error) {
-		cols := agentwaitcol.WaitColumns
-		entity := new(agentwait.Wait)
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set(cols.Status.Set(), req.Status).
-			Set(cols.Outcome.Set(), req.Outcome).
-			Set(cols.ResolvedAt.Set(), req.ResolvedAt).
-			Set(cols.DueAt.SetNull()).
-			Set(cols.Version.Inc(1)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentwaitcol.WaitScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Status.Eq(), agentwait.StatusWaiting)
-			}).
-			Returning("*").
-			Exec(ctx)
+		w := agentwaitdb.Waits
+		rows, err := w.Where(w.ID.Eq(req.ID), w.Status.Eq(agentwait.StatusWaiting)).
+			UpdateReturning(
+				ctx,
+				r.db.Keel(ctx),
+				w.Status.To(req.Status),
+				w.Outcome.To(req.Outcome),
+				w.ResolvedAt.To(req.ResolvedAt),
+				w.DueAt.ToNull(),
+			)
 		if err != nil {
 			return nil, false, err
 		}
-		changed, err := result.RowsAffected()
-		if err != nil {
-			return nil, false, err
-		}
-		if changed > 0 {
-			return entity, true, nil
+		if len(rows) > 0 {
+			return rows[0], true, nil
 		}
 
 		current, err := r.Get(ctx, &agentwaitports.GetAgentWaitRequest{
@@ -389,18 +308,13 @@ func (r *repository) MarkResumed(
 	req *agentwaitports.MarkAgentWaitResumedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := agentwaitcol.WaitColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agentwait.Wait)(nil)).
-			Set(cols.ResumedTurnID.Set(), req.TurnID).
-			Set(cols.ResumedRunID.Set(), req.RunID).
-			Set(cols.Version.Inc(1)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentwaitcol.WaitScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		w := agentwaitdb.Waits
+		_, err := w.Where(w.ID.Eq(req.ID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			w.ResumedTurnID.To(req.TurnID),
+			w.ResumedRunID.To(req.RunID),
+		)
 
 		return err
 	})

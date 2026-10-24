@@ -419,6 +419,9 @@ type Memory struct {
 	// was refreshed rather than a duplicate recorded beside it.
 	Refreshed bool `json:"-" bun:"-"`
 
+	SourceTitle string `json:"-" bun:"-" keel:"source_title,computed,nullzero"`
+	RoleName    string `json:"-" bun:"-" keel:"role_name,computed,nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`

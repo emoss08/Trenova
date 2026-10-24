@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -70,6 +71,18 @@ func fallbackTerms(terms []string) []string {
 	}
 
 	return kept
+}
+
+func (m *textMatch) matches(vector keel.TSVectorCol) keel.Pred {
+	if m == nil {
+		return nil
+	}
+
+	return keel.Raw("? @@ "+m.tsquery, append([]any{vector}, m.args...)...)
+}
+
+func (m *textMatch) rank(vector keel.TSVectorCol) keel.Expr {
+	return keel.Raw("ts_rank_cd(?, "+m.tsquery+")", append([]any{vector}, m.args...)...)
 }
 
 func (q textQuery) empty() bool { return q.raw == "" }

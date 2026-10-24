@@ -4,18 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentextensioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-const usageConflict = "CONFLICT (organization_id, business_unit_id, extension_type, day) DO UPDATE"
+const reserveSQL = "INSERT INTO agent_extension_usage_daily " +
+	"(organization_id, business_unit_id, extension_type, day, requests, failures, cost_usd, updated_at) " +
+	"VALUES ($1, $2, $3, $4, 1, 0, 0, $5) " +
+	"ON CONFLICT (organization_id, business_unit_id, extension_type, day) DO UPDATE SET " +
+	"requests = agent_extension_usage_daily.requests + 1, updated_at = EXCLUDED.updated_at " +
+	"WHERE agent_extension_usage_daily.requests < $6"
 
 type usageRepository struct {
 	db *postgres.Connection
@@ -29,26 +33,15 @@ func NewUsageRepository(p Params) agentextensionports.AgentExtensionUsageReposit
 	}
 }
 
-func buildReserve(
-	db bun.IDB,
-	params agentextensionports.ReserveExtensionRequestParams,
-) *bun.InsertQuery {
-	cols := agentextensioncol.ExtensionUsageDailyColumns
-
-	return db.NewInsert().
-		Model(&agentextension.ExtensionUsageDaily{
-			OrganizationID: params.TenantInfo.OrgID,
-			BusinessUnitID: params.TenantInfo.BuID,
-			ExtensionType:  params.Type,
-			Day:            params.Day,
-			Requests:       1,
-			CostUSD:        decimal.Zero,
-			UpdatedAt:      params.Now,
-		}).
-		On(usageConflict).
-		Set(cols.Requests.IncConflict(1)).
-		Set(cols.UpdatedAt.SetExcluded()).
-		Where(cols.Requests.Lt(), params.Limit)
+func reserveArgs(params agentextensionports.ReserveExtensionRequestParams) []any {
+	return []any{
+		params.TenantInfo.OrgID.String(),
+		params.TenantInfo.BuID.String(),
+		string(params.Type),
+		params.Day,
+		params.Now,
+		params.Limit,
+	}
 }
 
 func (r *usageRepository) Reserve(
@@ -56,27 +49,21 @@ func (r *usageRepository) Reserve(
 	params agentextensionports.ReserveExtensionRequestParams,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		result, err := buildReserve(r.db.DBForContext(ctx), params).Exec(ctx)
+		affected, err := keel.Exec(ctx, r.db.Keel(ctx), reserveSQL, reserveArgs(params)...)
 		if err != nil {
 			r.l.Error("failed to reserve agent extension request", zap.Error(err))
 			return false, fmt.Errorf("reserve agent extension request: %w", err)
-		}
-
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("reserve agent extension request rows affected: %w", err)
 		}
 
 		return affected == 1, nil
 	})
 }
 
-func buildRecordOutcome(
-	db bun.IDB,
+func recordOutcome(
 	params agentextensionports.RecordExtensionOutcomeParams,
-) *bun.UpdateQuery {
-	cols := agentextensioncol.ExtensionUsageDailyColumns
-	failures := 0
+) (*keel.Query[agentextension.ExtensionUsageDaily], []keel.Assignment) {
+	u := agentextensiondb.ExtensionUsageDailies
+	var failures int64
 	if params.Failed {
 		failures = 1
 	}
@@ -85,16 +72,12 @@ func buildRecordOutcome(
 		cost = decimal.Zero
 	}
 
-	return db.NewUpdate().
-		Model((*agentextension.ExtensionUsageDaily)(nil)).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return agentextensioncol.ExtensionUsageDailyScopeTenantUpdate(uq, params.TenantInfo).
-				Where(cols.ExtensionType.Eq(), params.Type).
-				Where(cols.Day.Eq(), params.Day)
-		}).
-		Set(cols.Failures.SetExpr("{} + ?"), failures).
-		Set(cols.CostUSD.SetExpr("{} + ?"), cost).
-		Set(cols.UpdatedAt.Set(), params.Now)
+	return u.Where(u.ExtensionType.Eq(params.Type), u.Day.Eq(int64(params.Day))),
+		[]keel.Assignment{
+			u.Failures.Add(failures),
+			u.CostUSD.Add(cost),
+			u.UpdatedAt.To(params.Now),
+		}
 }
 
 func (r *usageRepository) RecordOutcome(
@@ -102,7 +85,8 @@ func (r *usageRepository) RecordOutcome(
 	params agentextensionports.RecordExtensionOutcomeParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := buildRecordOutcome(r.db.DBForContext(ctx), params).Exec(ctx); err != nil {
+		q, sets := recordOutcome(params)
+		if _, err := q.Update(ctx, r.db.Keel(ctx), sets...); err != nil {
 			r.l.Error("failed to record agent extension outcome", zap.Error(err))
 			return fmt.Errorf("record agent extension outcome: %w", err)
 		}
@@ -112,36 +96,27 @@ func (r *usageRepository) RecordOutcome(
 }
 
 type usageTotals struct {
-	ExtensionType     agentextension.Type `bun:"extension_type"`
-	RequestsToday     int                 `bun:"requests_today"`
-	RequestsThisMonth int                 `bun:"requests_month"`
-	FailuresThisMonth int                 `bun:"failures_month"`
-	CostThisMonth     decimal.Decimal     `bun:"cost_month"`
+	ExtensionType     agentextension.Type
+	RequestsToday     int
+	RequestsThisMonth int
+	FailuresThisMonth int
+	CostThisMonth     decimal.Decimal
 }
 
-func buildSummarize(
-	db bun.IDB,
+func summarize(
 	params agentextensionports.SummarizeExtensionUsageParams,
-) *bun.SelectQuery {
-	cols := agentextensioncol.ExtensionUsageDailyColumns
+) *keel.Query[agentextension.ExtensionUsageDaily] {
+	u := agentextensiondb.ExtensionUsageDailies
 
-	return db.NewSelect().
-		Model((*agentextension.ExtensionUsageDaily)(nil)).
-		ColumnExpr(cols.ExtensionType.Qualified()+" AS extension_type").
-		ColumnExpr(
-			cols.Requests.Expr("COALESCE(SUM({}) FILTER (WHERE "+cols.Day.Qualified()+" = ?), 0)")+
-				" AS requests_today",
-			params.Today,
+	return u.Group(u.ExtensionType).
+		Pick(
+			u.ExtensionType,
+			keel.Raw("COALESCE(?, 0)", u.Requests.Sum().Filter(u.Day.Eq(int64(params.Today)))),
+			keel.Raw("COALESCE(?, 0)", u.Requests.Sum()),
+			keel.Raw("COALESCE(?, 0)", u.Failures.Sum()),
+			keel.Raw("COALESCE(?, 0)", u.CostUSD.Sum()),
 		).
-		ColumnExpr(cols.Requests.Expr("COALESCE(SUM({}), 0)")+" AS requests_month").
-		ColumnExpr(cols.Failures.Expr("COALESCE(SUM({}), 0)")+" AS failures_month").
-		ColumnExpr(cols.CostUSD.Expr("COALESCE(SUM({}), 0)")+" AS cost_month").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return agentextensioncol.ExtensionUsageDailyScopeTenant(sq, params.TenantInfo).
-				Where(cols.Day.Gte(), params.FromDay).
-				Where(cols.Day.Lte(), params.Today)
-		}).
-		Group(cols.ExtensionType.Qualified())
+		Where(u.Day.Gte(int64(params.FromDay)), u.Day.Lte(int64(params.Today)))
 }
 
 func (r *usageRepository) Summarize(
@@ -152,8 +127,8 @@ func (r *usageRepository) Summarize(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[agentextension.Type]agentextension.UsageSummary, error) {
-			rows := make([]usageTotals, 0, len(agentextension.AllTypes()))
-			if err := buildSummarize(r.db.DBForContext(ctx), params).Scan(ctx, &rows); err != nil {
+			rows, err := keel.Into[usageTotals](ctx, r.db.Keel(ctx), summarize(params))
+			if err != nil {
 				r.l.Error("failed to summarize agent extension usage", zap.Error(err))
 				return nil, fmt.Errorf("summarize agent extension usage: %w", err)
 			}

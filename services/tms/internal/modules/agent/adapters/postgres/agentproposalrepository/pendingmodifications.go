@@ -3,14 +3,10 @@ package agentproposalrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -25,36 +21,19 @@ func (r *repository) SetPendingModifications(
 	req agentports.SetPendingModificationsRequest,
 ) (*agent.AgentProposal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
-		log := r.l.With(
-			zap.String("operation", "SetPendingModifications"),
-			zap.String("id", req.ID.String()),
-		)
-
-		entity := new(agent.AgentProposal)
-		cols := agentcol.AgentProposalColumns
-
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Status.Eq(), agent.ProposalStatusPending)
-			}).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix())
-		if len(req.Modifications) == 0 {
-			query = query.Set(cols.PendingModifications.SetNull())
-		} else {
-			query = query.Set(cols.PendingModifications.Set(), req.Modifications)
+		p := agentdb.AgentProposals
+		modifications := p.PendingModifications.ToNull()
+		if len(req.Modifications) > 0 {
+			modifications = p.PendingModifications.To(req.Modifications)
 		}
 
-		results, err := query.Returning("*").Exec(ctx)
+		entity, err := r.updateOne(ctx, req.ID, p.Where(
+			p.ID.Eq(req.ID),
+			p.Status.Eq(agent.ProposalStatusPending),
+		), modifications)
 		if err != nil {
-			log.Error("failed to save pending proposal modifications", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(results, "AgentProposal", req.ID.String()); err != nil {
+			r.l.Error("failed to save pending proposal modifications",
+				zap.String("id", req.ID.String()), zap.Error(err))
 			return nil, err
 		}
 

@@ -2,41 +2,35 @@ package agentqualityrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentqualitycol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality/agentqualitydb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	suiteRunEntity          = "AgentSuiteRun"
-	defaultPageLimit        = 25
-	maxPageLimit            = 101
-	defaultHistoryPerAgent  = 30
-	maxHistoryPerAgent      = 100
-	maxLatestAgents         = 1000
-	constraintOneRunning    = "uq_agent_suite_runs_one_running"
-	constraintSweepKey      = "uq_agent_suite_runs_sweep_key"
-	historyRankColumnAlias  = "history_rank"
-	historyDerivedTableName = "asr"
+	suiteRunEntity         = "AgentSuiteRun"
+	defaultPageLimit       = 25
+	maxPageLimit           = 101
+	defaultHistoryPerAgent = 30
+	maxHistoryPerAgent     = 100
+	maxLatestAgents        = 1000
+	constraintOneRunning   = "uq_agent_suite_runs_one_running"
+	constraintSweepKey     = "uq_agent_suite_runs_sweep_key"
+	historyCTE             = "suite_history"
 )
+
+var suiteRunErrors = dberror.Mapping{Entity: suiteRunEntity}
 
 type SuiteRunParams struct {
 	fx.In
@@ -70,11 +64,7 @@ func (r *suiteRunRepository) Create(
 	entity *agentquality.SuiteRun,
 ) (*agentquality.SuiteRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentqualitydb.SuiteRuns.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			switch dberror.ExtractConstraintName(err) {
 			case constraintOneRunning:
 				return nil, agentqualityports.ErrSuiteRunAlreadyRunning
@@ -95,54 +85,37 @@ func (r *suiteRunRepository) Update(
 	entity *agentquality.SuiteRun,
 ) (*agentquality.SuiteRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
-		cols := agentqualitycol.SuiteRunColumns
-		ov := entity.Version
-		entity.Version++
-		entity.UpdatedAt = timeutils.NowUnix()
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentqualitycol.SuiteRunScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).
-					Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), ov)
-			}).
-			Set(cols.Status.Set(), entity.Status).
-			Set(cols.Fingerprint.Set(), entity.Fingerprint).
-			Set(cols.FingerprintHash.Set(), entity.FingerprintHash).
-			Set(cols.FingerprintChanges.Set(), entity.FingerprintChanges).
-			Set(cols.CasesTotal.Set(), entity.CasesTotal).
-			Set(cols.CasesPassed.Set(), entity.CasesPassed).
-			Set(cols.CasesFailed.Set(), entity.CasesFailed).
-			Set(cols.CasesSkipped.Set(), entity.CasesSkipped).
-			Set(cols.HardFailures.Set(), entity.HardFailures).
-			Set(cols.DeterministicScore.Set(), entity.DeterministicScore).
-			Set(cols.JudgeScore.Set(), entity.JudgeScore).
-			Set(cols.QualityScore.Set(), entity.QualityScore).
-			Set(cols.BaselineScore.Set(), entity.BaselineScore).
-			Set(cols.BaselineRunID.Set(), entity.BaselineRunID).
-			Set(cols.Regression.Set(), entity.Regression).
-			Set(cols.CostUSD.Set(), entity.CostUSD).
-			Set(cols.FinishedAt.Set(), entity.FinishedAt).
-			Set(cols.Comments.Set(), bun.NullZero(entity.Comments)).
-			Set(cols.WorkflowID.Set(), bun.NullZero(entity.WorkflowID)).
-			Set(cols.UpdatedAt.Set(), entity.UpdatedAt).
-			Set(cols.Version.Set(), entity.Version).
-			Exec(ctx)
+		s := agentqualitydb.SuiteRuns
+		err := s.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			s.Status,
+			s.Fingerprint,
+			s.FingerprintHash,
+			s.FingerprintChanges,
+			s.CasesTotal,
+			s.CasesPassed,
+			s.CasesFailed,
+			s.CasesSkipped,
+			s.HardFailures,
+			s.DeterministicScore,
+			s.JudgeScore,
+			s.QualityScore,
+			s.BaselineScore,
+			s.BaselineRunID,
+			s.Regression,
+			s.CostUSD,
+			s.FinishedAt,
+			s.Comments,
+			s.WorkflowID,
+		)
 		if err != nil {
+			if dberror.IsVersionConflict(err) {
+				return nil, suiteRunErrors.Map(err, entity.ID.String())
+			}
+
 			return nil, fmt.Errorf("update agent suite run: %w", err)
-		}
-
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return nil, fmt.Errorf("update agent suite run rows: %w", err)
-		}
-		if rows == 0 {
-			return nil, dberror.CreateVersionMismatchError(suiteRunEntity, entity.ID.String())
 		}
 
 		return entity, nil
@@ -154,18 +127,9 @@ func (r *suiteRunRepository) GetByID(
 	req agentqualityports.GetAgentSuiteRunRequest,
 ) (*agentquality.SuiteRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
-		cols := agentqualitycol.SuiteRunColumns
-		entity := new(agentquality.SuiteRun)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, suiteRunEntity)
+		entity, err := agentqualitydb.SuiteRuns.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, suiteRunErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -177,18 +141,10 @@ func (r *suiteRunRepository) GetBySweepKey(
 	req agentqualityports.GetAgentSuiteRunBySweepKeyRequest,
 ) (*agentquality.SuiteRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
-		cols := agentqualitycol.SuiteRunColumns
-		entity := new(agentquality.SuiteRun)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo).
-					Where(cols.SweepKey.Eq(), req.SweepKey)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, suiteRunEntity)
+		s := agentqualitydb.SuiteRuns
+		entity, err := s.Where(s.SweepKey.Eq(req.SweepKey)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, suiteRunErrors.Map(err, req.SweepKey)
 		}
 
 		return entity, nil
@@ -200,31 +156,16 @@ func (r *suiteRunRepository) Last(
 	req agentqualityports.LastAgentSuiteRunRequest,
 ) (*agentquality.SuiteRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
-		cols := agentqualitycol.SuiteRunColumns
-		entity := new(agentquality.SuiteRun)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo).
-					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
-				if len(req.Statuses) > 0 {
-					sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
-				}
-				if req.Before > 0 {
-					sq = sq.Where(cols.StartedAt.Lte(), req.Before)
-				}
-				if req.ExcludeID.IsNotNil() {
-					sq = sq.Where(cols.ID.NotEq(), req.ExcludeID)
-				}
-
-				return sq
-			}).
-			Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
-		if errors.Is(err, sql.ErrNoRows) {
+		s := agentqualitydb.SuiteRuns
+		entity, err := s.Where(
+			s.AgentDefinitionID.Eq(req.AgentDefinitionID),
+			keel.When(len(req.Statuses) > 0, s.Status.In(req.Statuses...)),
+			keel.When(req.Before > 0, s.StartedAt.Lte(req.Before)),
+			keel.When(req.ExcludeID.IsNotNil(), s.ID.Ne(req.ExcludeID)),
+		).
+			Order(s.StartedAt.Desc(), s.ID.Desc()).
+			First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
 			return nil, nil
 		}
 		if err != nil {
@@ -239,59 +180,25 @@ func (r *suiteRunRepository) ListConnection(
 	ctx context.Context,
 	req *agentqualityports.ListAgentSuiteRunConnectionRequest,
 ) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*agentquality.SuiteRun)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							agentqualitycol.SuiteRunTable.Alias,
-							req.Filter,
-							(*agentquality.SuiteRun)(nil),
-						)
-
-						return suiteRunScope(sq, req).
-							Apply(agentqualitycol.SuiteRunApplyTenant(req.Filter.TenantInfo))
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count agent suite runs", zap.Error(err))
-
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			s := agentqualitydb.SuiteRuns
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*agentquality.SuiteRun]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*agentquality.SuiteRun) *bun.SelectQuery {
-						return dba.NewSelect().Model(entities)
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							suiteRunScope(sq, req),
-							agentqualitycol.SuiteRunTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*agentquality.SuiteRun)(nil),
-						)
-					},
-				})
+				r.db.Keel(ctx),
+				s.Where(keel.When(
+					req.AgentDefinitionID.IsNotNil(),
+					s.AgentDefinitionID.Eq(req.AgentDefinitionID),
+				)),
+				&listquery.Request[agentquality.SuiteRun]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+				},
+			)
 			if err != nil {
-				log.Error("failed to list agent suite runs", zap.Error(err))
+				r.l.Error("failed to list agent suite runs", zap.Error(err))
 
 				return nil, err
 			}
@@ -301,15 +208,32 @@ func (r *suiteRunRepository) ListConnection(
 	)
 }
 
-func suiteRunScope(
-	sq *bun.SelectQuery,
-	req *agentqualityports.ListAgentSuiteRunConnectionRequest,
-) *bun.SelectQuery {
-	if req.AgentDefinitionID.IsNil() {
-		return sq
-	}
+func historyQuery(
+	req *agentqualityports.AgentSuiteRunHistoryRequest,
+	perAgent int,
+) *keel.Query[agentquality.SuiteRun] {
+	s := agentqualitydb.SuiteRuns
+	ranked := agentqualitydb.SuiteRuns.As("ranked")
+	history := keel.CTE(historyCTE, []string{"id", "history_rank"}, ranked.
+		Pick(
+			ranked.ID,
+			keel.RowNumber().Over(
+				[]keel.Expr{ranked.AgentDefinitionID},
+				ranked.StartedAt.Desc(),
+				ranked.ID.Desc(),
+			),
+		).
+		Where(
+			ranked.AgentDefinitionID.In(req.AgentDefinitionIDs...),
+			ranked.Status.In(scoredStatuses()...),
+			ranked.QualityScore.IsNotNull(),
+			ranked.StartedAt.Gte(req.Since),
+		))
 
-	return sq.Where(agentqualitycol.SuiteRunColumns.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+	return s.With(history).
+		Join(history, history.Col("id").EqCol(s.ID)).
+		Where(history.Col("history_rank").Lte(perAgent)).
+		Order(s.AgentDefinitionID.Asc(), s.StartedAt.Asc(), s.ID.Asc())
 }
 
 func (r *suiteRunRepository) History(
@@ -321,36 +245,11 @@ func (r *suiteRunRepository) History(
 			return []*agentquality.SuiteRun{}, nil
 		}
 
-		cols := agentqualitycol.SuiteRunColumns
 		perAgent := clampLimit(req.PerAgent, defaultHistoryPerAgent, maxHistoryPerAgent)
-		dba := r.db.DBForContext(ctx)
-
-		ranked := dba.NewSelect().
-			Model((*agentquality.SuiteRun)(nil)).
-			ColumnExpr(agentqualitycol.SuiteRunTable.All()).
-			ColumnExpr(buncolgen.Expr(
-				"row_number() OVER (PARTITION BY {0} ORDER BY {1} DESC, {2} DESC) AS "+
-					historyRankColumnAlias,
-				cols.AgentDefinitionID,
-				cols.StartedAt,
-				cols.ID,
-			)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo).
-					Where(cols.AgentDefinitionID.In(), bun.List(req.AgentDefinitionIDs)).
-					Where(cols.Status.In(), bun.List(scoredStatuses())).
-					Where(cols.QualityScore.IsNotNull()).
-					Where(cols.StartedAt.Gte(), req.Since)
-			})
-
-		runs := make([]*agentquality.SuiteRun, 0, len(req.AgentDefinitionIDs)*perAgent)
-		if err := dba.NewSelect().
-			Model(&runs).
-			ModelTableExpr("(?) AS ?", ranked, bun.Ident(historyDerivedTableName)).
-			Column(agentqualitycol.SuiteRunInsertableColumns...).
-			Where("? <= ?", bun.Ident(historyRankColumnAlias), perAgent).
-			Order(cols.AgentDefinitionID.OrderAsc(), cols.StartedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx); err != nil {
+		runs, err := historyQuery(&req, perAgent).
+			Limit(len(req.AgentDefinitionIDs)*perAgent).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("read agent quality history: %w", err)
 		}
 
@@ -370,28 +269,19 @@ func (r *suiteRunRepository) Latest(
 	req agentqualityports.LatestAgentSuiteRunsRequest,
 ) ([]*agentquality.SuiteRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentquality.SuiteRun, error) {
-		cols := agentqualitycol.SuiteRunColumns
-		limit := clampLimit(req.Limit, maxLatestAgents, maxLatestAgents)
-
-		runs := make([]*agentquality.SuiteRun, 0, min(limit, len(req.AgentDefinitionIDs)+1))
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&runs).
-			DistinctOn(cols.AgentDefinitionID.Qualified()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo)
-				if len(req.AgentDefinitionIDs) > 0 {
-					sq = sq.Where(cols.AgentDefinitionID.In(), bun.List(req.AgentDefinitionIDs))
-				}
-				if len(req.Statuses) > 0 {
-					sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
-				}
-
-				return sq
-			}).
-			Order(cols.AgentDefinitionID.OrderAsc(), cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
+		s := agentqualitydb.SuiteRuns
+		runs, err := s.DistinctOn(s.AgentDefinitionID).
+			Where(
+				keel.When(
+					len(req.AgentDefinitionIDs) > 0,
+					s.AgentDefinitionID.In(req.AgentDefinitionIDs...),
+				),
+				keel.When(len(req.Statuses) > 0, s.Status.In(req.Statuses...)),
+			).
+			Order(s.AgentDefinitionID.Asc(), s.StartedAt.Desc(), s.ID.Desc()).
+			Limit(clampLimit(req.Limit, maxLatestAgents, maxLatestAgents)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("read each agent's latest suite run: %w", err)
 		}
 
@@ -407,23 +297,20 @@ func (r *suiteRunRepository) Overview(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentqualityports.AgentSuiteRunOverview, error) {
-			cols := agentqualitycol.SuiteRunColumns
-			overview := new(agentqualityports.AgentSuiteRunOverview)
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*agentquality.SuiteRun)(nil)).
-				ColumnExpr(buncolgen.CountFilter("runs", cols.Status.In()), bun.List(scoredStatuses())).
-				ColumnExpr(buncolgen.CountFilter("regressions", cols.Regression.IsTrue())).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo).
-						Where(cols.StartedAt.Gte(), req.Since)
-				}).
-				Scan(ctx, overview); err != nil {
+			s := agentqualitydb.SuiteRuns
+			overview, err := keel.IntoOne[agentqualityports.AgentSuiteRunOverview](
+				ctx,
+				r.db.Keel(ctx),
+				s.Pick(
+					keel.Count().Filter(s.Status.In(scoredStatuses()...)),
+					keel.Count().Filter(s.Regression.IsTrue()),
+				).Where(s.StartedAt.Gte(req.Since)),
+			)
+			if err != nil {
 				return nil, fmt.Errorf("summarize agent suite runs: %w", err)
 			}
 
-			return overview, nil
+			return &overview, nil
 		},
 	)
 }
@@ -436,46 +323,39 @@ func (r *suiteRunRepository) ListAgents(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentqualityports.AgentQualityAgentRows, error) {
-			cols := agentdefinitioncol.DefinitionColumns
+			d := agentdefinitiondb.Definitions
 			limit := clampLimit(req.Limit, defaultPageLimit, maxPageLimit-1)
-			dba := r.db.DBForContext(ctx)
 
-			scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo)
+			var (
+				rows  []agentqualityports.AgentQualityAgentRow
+				total int64
+			)
+			items := []keel.BatchItem{
+				keel.IntoSlice(d.
+					Pick(d.ID, d.Name, d.Enabled).
+					Order(d.Name.Asc(), d.ID.Asc()).
+					Limit(limit+1).
+					Offset(max(req.Offset, 0)), &rows),
+			}
+			if req.IncludeTotalCount {
+				items = append(items, keel.CountInto(d.Query(), &total))
+			}
+			if err := keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
+				return nil, fmt.Errorf("list agents for quality: %w", err)
 			}
 
 			result := &agentqualityports.AgentQualityAgentRows{}
 			if req.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*agentdefinition.Definition)(nil)).
-					WhereGroup(" AND ", scope).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count agents: %w", err)
-				}
 				result.TotalCount = new(int(total))
 			}
-
-			rows := make([]*agentqualityports.AgentQualityAgentRow, 0, limit+1)
-			if err := dba.NewSelect().
-				Model((*agentdefinition.Definition)(nil)).
-				ColumnExpr(cols.ID.As("id")).
-				ColumnExpr(cols.Name.As("name")).
-				ColumnExpr(cols.Enabled.As("enabled")).
-				WhereGroup(" AND ", scope).
-				OrderExpr(cols.Name.OrderAsc()).
-				OrderExpr(cols.ID.OrderAsc()).
-				Limit(int64(limit+1)).
-				Offset(int64(max(req.Offset, 0))).
-				Scan(ctx, &rows); err != nil {
-				return nil, fmt.Errorf("list agents for quality: %w", err)
-			}
-
 			if len(rows) > limit {
 				result.HasNextPage = true
 				rows = rows[:limit]
 			}
-			result.Items = rows
+			result.Items = make([]*agentqualityports.AgentQualityAgentRow, 0, len(rows))
+			for i := range rows {
+				result.Items = append(result.Items, &rows[i])
+			}
 
 			return result, nil
 		},

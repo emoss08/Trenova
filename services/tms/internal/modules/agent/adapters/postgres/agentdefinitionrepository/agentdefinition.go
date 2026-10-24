@@ -5,31 +5,28 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const defaultDueLimit = 100
+
+var definitionErrors = dberror.Mapping{Entity: "AgentDefinition"}
 
 type Params struct {
 	fx.In
@@ -50,6 +47,35 @@ func New(p Params) agentdefinitionports.AgentDefinitionRepository {
 	}
 }
 
+type usability struct {
+	enabledOnly bool
+	chatOnly    bool
+	audience    *kernelports.AgentAudience
+}
+
+func (u usability) where() []keel.Pred {
+	d := agentdefinitiondb.Definitions
+	preds := []keel.Pred{keel.When(u.enabledOnly, d.Enabled.IsTrue())}
+	if u.chatOnly {
+		preds = append(preds,
+			d.TriggerMode.Eq(agentdefinition.TriggerChat),
+			keel.Or(d.SystemKey.IsNull(), d.SystemKey.NotIn(agentdefinition.PageAgentKeys()...)),
+		)
+	}
+	if u.audience != nil {
+		preds = append(preds, keel.Or(
+			d.AccessMode.Eq(agentdefinition.AccessEveryone),
+			d.SystemKey.IsNotNull(),
+			keel.When(
+				len(u.audience.GrantedAgentIDs) > 0,
+				d.ID.In(u.audience.GrantedAgentIDs...),
+			),
+		))
+	}
+
+	return preds
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *agentdefinitionports.ListAgentDefinitionRequest,
@@ -58,110 +84,24 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*agentdefinition.Definition], error) {
-			cols := agentdefinitioncol.DefinitionColumns
+			d := agentdefinitiondb.Definitions
+			u := usability{
+				enabledOnly: req.EnabledOnly,
+				chatOnly:    req.ChatOnly,
+				audience:    req.Audience,
+			}
 
-			entities := make([]*agentdefinition.Definition, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFilters(
-						sq,
-						agentdefinitioncol.DefinitionTable.Alias,
-						req.Filter,
-						(*agentdefinition.Definition)(nil),
-					)
-					sq = applyUsability(
-						sq.Apply(agentdefinitioncol.DefinitionApplyTenant(req.Filter.TenantInfo)),
-						usability{
-							enabledOnly: req.EnabledOnly,
-							chatOnly:    req.ChatOnly,
-							audience:    req.Audience,
-						},
-					)
-
-					return sq.
-						Limit(int64(req.Filter.Pagination.SafeLimit())).
-						Offset(int64(req.Filter.Pagination.SafeOffset())).
-						Order(cols.Name.OrderAsc(), cols.ID.OrderAsc())
-				}).ScanAndCount(ctx)
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				d.Where(u.where()...),
+				&listquery.Request[agentdefinition.Definition]{
+					Filter: req.Filter,
+					Then:   []keel.Order{d.Name.Asc(), d.ID.Asc()},
+				},
+			)
 			if err != nil {
 				r.l.Error("failed to list agent definitions", zap.Error(err))
-				return nil, err
-			}
-
-			return &pagination.ListResult[*agentdefinition.Definition]{
-				Items: entities,
-				Total: int(total),
-			}, nil
-		},
-	)
-}
-
-func (r *repository) ListConnection(
-	ctx context.Context,
-	req *agentdefinitionports.ListAgentDefinitionConnectionRequest,
-) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
-	return dbtx.Write(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*agentdefinition.Definition)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							agentdefinitioncol.DefinitionTable.Alias,
-							req.Filter,
-							(*agentdefinition.Definition)(nil),
-						)
-
-						return applyUsability(
-							sq.Apply(
-								agentdefinitioncol.DefinitionApplyTenant(req.Filter.TenantInfo),
-							),
-							connectionUsability(req),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					r.l.Error("failed to count agent definitions", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
-				ctx,
-				dbhelper.CursorListParams[*agentdefinition.Definition]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*agentdefinition.Definition) *bun.SelectQuery {
-						sq := dba.NewSelect().Model(entities)
-						if len(req.Columns) == 0 {
-							return sq.ColumnExpr(agentdefinitioncol.DefinitionTable.All())
-						}
-
-						return sq.Column(req.Columns...)
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							applyUsability(sq, connectionUsability(req)),
-							agentdefinitioncol.DefinitionTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*agentdefinition.Definition)(nil),
-						)
-					},
-				})
-			if err != nil {
-				r.l.Error("failed to scan agent definitions", zap.Error(err))
 				return nil, err
 			}
 
@@ -170,45 +110,38 @@ func (r *repository) ListConnection(
 	)
 }
 
-type usability struct {
-	enabledOnly bool
-	chatOnly    bool
-	audience    *kernelports.AgentAudience
-}
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *agentdefinitionports.ListAgentDefinitionConnectionRequest,
+) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
+			u := usability{
+				enabledOnly: req.EnabledOnly,
+				chatOnly:    req.ChatOnly,
+				audience:    req.Audience,
+			}
 
-func connectionUsability(req *agentdefinitionports.ListAgentDefinitionConnectionRequest) usability {
-	return usability{
-		enabledOnly: req.EnabledOnly,
-		chatOnly:    req.ChatOnly,
-		audience:    req.Audience,
-	}
-}
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				agentdefinitiondb.Definitions.Where(u.where()...),
+				&listquery.Request[agentdefinition.Definition]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.Columns,
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to list agent definitions", zap.Error(err))
+				return nil, err
+			}
 
-func applyUsability(sq *bun.SelectQuery, u usability) *bun.SelectQuery {
-	cols := agentdefinitioncol.DefinitionColumns
-	if u.enabledOnly {
-		sq = sq.Where(cols.Enabled.IsTrue())
-	}
-	if u.chatOnly {
-		sq = sq.Where(cols.TriggerMode.Eq(), agentdefinition.TriggerChat).
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where(cols.SystemKey.IsNull()).
-					WhereOr(cols.SystemKey.NotIn(), bun.List(agentdefinition.PageAgentKeys()))
-			})
-	}
-	if u.audience == nil {
-		return sq
-	}
-
-	return sq.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-		q = q.Where(cols.AccessMode.Eq(), agentdefinition.AccessEveryone).
-			WhereOr(cols.SystemKey.IsNotNull())
-		if len(u.audience.GrantedAgentIDs) > 0 {
-			q = q.WhereOr(cols.ID.In(), bun.List(u.audience.GrantedAgentIDs))
-		}
-
-		return q
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) ListByIDs(
@@ -220,15 +153,10 @@ func (r *repository) ListByIDs(
 			return []*agentdefinition.Definition{}, nil
 		}
 
-		definitions := make([]*agentdefinition.Definition, 0, len(req.IDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&definitions).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
-					Where(agentdefinitioncol.DefinitionColumns.ID.In(), bun.In(req.IDs))
-			}).
-			Scan(ctx)
+		d := agentdefinitiondb.Definitions
+		definitions, err := d.Where(d.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list agent definitions by ids: %w", err)
 		}
@@ -242,18 +170,9 @@ func (r *repository) GetByID(
 	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdefinition.Definition, error) {
-		entity := new(agentdefinition.Definition)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
-					Where(agentdefinitioncol.DefinitionColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := agentdefinitiondb.Definitions.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AgentDefinition")
+			return nil, definitionErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -265,18 +184,10 @@ func (r *repository) GetBySystemKey(
 	req agentdefinitionports.GetAgentDefinitionBySystemKeyRequest,
 ) (*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdefinition.Definition, error) {
-		entity := new(agentdefinition.Definition)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
-					Where(agentdefinitioncol.DefinitionColumns.SystemKey.Eq(), req.SystemKey)
-			}).
-			Scan(ctx)
+		d := agentdefinitiondb.Definitions
+		entity, err := d.Where(d.SystemKey.Eq(req.SystemKey)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AgentDefinition")
+			return nil, definitionErrors.Map(err, req.SystemKey)
 		}
 
 		return entity, nil
@@ -288,24 +199,14 @@ func (r *repository) ListEnabledByTrigger(
 	req agentdefinitionports.ListAgentDefinitionsByTriggerRequest,
 ) ([]*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
-		cols := agentdefinitioncol.DefinitionColumns
-		entities := make([]*agentdefinition.Definition, 0, 8)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
-					Where(cols.Enabled.IsTrue()).
-					Where(cols.TriggerMode.Eq(), req.Mode)
-				if req.EventKind != "" {
-					sq = sq.Where("? = ANY("+cols.EventKinds.Qualified()+")", string(req.EventKind))
-				}
-
-				return sq
-			}).
-			Order(cols.Name.OrderAsc()).
-			Scan(ctx)
+		d := agentdefinitiondb.Definitions
+		entities, err := d.Where(
+			d.Enabled.IsTrue(),
+			d.TriggerMode.Eq(req.Mode),
+			keel.When(req.EventKind != "", d.EventKinds.Has(string(req.EventKind))),
+		).
+			Order(d.Name.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list agent definitions by trigger: %w", err)
 		}
@@ -326,20 +227,14 @@ func (r *repository) ListEnabledForEvents(
 		kinds = append(kinds, string(kind))
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
-		cols := agentdefinitioncol.DefinitionColumns
-		entities := make([]*agentdefinition.Definition, 0, len(kinds))
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
-					Where(cols.Enabled.IsTrue()).
-					Where(cols.TriggerMode.Eq(), agentdefinition.TriggerEvent).
-					Where(cols.EventKinds.Qualified()+" && ?::text[]", pgdialect.Array(kinds))
-			}).
-			Order(cols.Name.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx)
+		d := agentdefinitiondb.Definitions
+		entities, err := d.Where(
+			d.Enabled.IsTrue(),
+			d.TriggerMode.Eq(agentdefinition.TriggerEvent),
+			d.EventKinds.Overlaps(kinds...),
+		).
+			Order(d.Name.Asc(), d.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list agent definitions for events: %w", err)
 		}
@@ -348,31 +243,34 @@ func (r *repository) ListEnabledForEvents(
 	})
 }
 
+func scheduledModes() []agentdefinition.TriggerMode {
+	return []agentdefinition.TriggerMode{
+		agentdefinition.TriggerScheduled,
+		agentdefinition.TriggerContinuous,
+	}
+}
+
 func (r *repository) ListScheduledAcrossTenants(
 	ctx context.Context,
 	req agentdefinitionports.ListScheduledAcrossTenantsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	ctx = dbscope.WithSystem(ctx, "list scheduled agent definitions across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
-		cols := agentdefinitioncol.DefinitionColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultDueLimit
 		}
-		entities := make([]*agentdefinition.Definition, 0, limit)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.TriggerMode.In(), bun.In([]agentdefinition.TriggerMode{
-				agentdefinition.TriggerScheduled,
-				agentdefinition.TriggerContinuous,
-			}))
-		if req.AfterID.IsNotNil() {
-			query = query.Where(cols.ID.Gt(), req.AfterID)
-		}
-
-		if err := query.Order(cols.ID.OrderAsc()).Limit(int64(limit)).Scan(ctx); err != nil {
+		d := agentdefinitiondb.Definitions
+		entities, err := d.AllTenants().
+			Where(
+				d.TriggerMode.In(scheduledModes()...),
+				keel.When(req.AfterID.IsNotNil(), d.ID.Gt(req.AfterID)),
+			).
+			Order(d.ID.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list scheduled agent definitions across tenants: %w", err)
 		}
 
@@ -385,33 +283,22 @@ func (r *repository) ListDue(
 	req agentdefinitionports.ListDueAgentDefinitionsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
-		cols := agentdefinitioncol.DefinitionColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultDueLimit
 		}
-		entities := make([]*agentdefinition.Definition, 0, limit)
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
-					Where(cols.Enabled.IsTrue()).
-					Where(cols.TriggerMode.In(), bun.In([]agentdefinition.TriggerMode{
-						agentdefinition.TriggerScheduled,
-						agentdefinition.TriggerContinuous,
-					})).
-					Where(cols.NextRunAt.IsNotNull()).
-					Where(cols.NextRunAt.Lte(), req.Now).
-					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-						return inner.Where(cols.EndsAt.IsNull()).
-							WhereOr(cols.EndsAt.Gt(), req.Now)
-					})
-			}).
-			Order(cols.NextRunAt.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		d := agentdefinitiondb.Definitions
+		entities, err := d.Where(
+			d.Enabled.IsTrue(),
+			d.TriggerMode.In(scheduledModes()...),
+			d.NextRunAt.IsNotNull(),
+			d.NextRunAt.Lte(req.Now),
+			keel.Or(d.EndsAt.IsNull(), d.EndsAt.Gt(req.Now)),
+		).
+			Order(d.NextRunAt.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list due agent definitions: %w", err)
 		}
@@ -425,17 +312,13 @@ func (r *repository) Create(
 	entity *agentdefinition.Definition,
 ) (*agentdefinition.Definition, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentdefinition.Definition, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentdefinitiondb.Definitions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, duplicateName(entity.Name)
 			}
 			r.l.Error("failed to create agent definition", zap.Error(err))
 
-			return nil, err
+			return nil, definitionErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -451,11 +334,11 @@ func (r *repository) CreateSystem(
 			return false, errors.New("only a system agent is created on first use")
 		}
 
-		res, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT DO NOTHING").
-			Exec(ctx)
+		inserted, err := agentdefinitiondb.Definitions.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*agentdefinition.Definition{entity},
+		)
 		if err != nil {
 			r.l.Error("failed to create system agent definition",
 				zap.String("systemKey", entity.SystemKey),
@@ -465,83 +348,35 @@ func (r *repository) CreateSystem(
 			return false, fmt.Errorf("create system agent %s: %w", entity.SystemKey, err)
 		}
 
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("count the system agent created: %w", err)
-		}
-
-		return affected > 0, nil
+		return inserted > 0, nil
 	})
 }
 
+// Update saves the definition a person edited. The columns other writers own
+// are left alone: who may use the agent, its unattended role, its system key,
+// who made it and when it last ran.
 func (r *repository) Update(
 	ctx context.Context,
 	entity *agentdefinition.Definition,
 ) (*agentdefinition.Definition, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentdefinition.Definition, error) {
-		cols := agentdefinitioncol.DefinitionColumns
-		ov := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentdefinitioncol.DefinitionScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), ov)
-			}).
-			Set(cols.Name.Set(), entity.Name).
-			Set(cols.Description.Set(), entity.Description).
-			Set(cols.Template.Set(), stringutils.NilIfEmpty(entity.Template)).
-			Set(cols.Instructions.Set(), entity.Instructions).
-			Set(cols.Guardrails.Set(), dbhelper.TextArray(entity.Guardrails)).
-			Set(cols.ToolNames.Set(), dbhelper.TextArray(entity.ToolNames)).
-			Set(cols.ToolTiers.Set(), entity.ToolTiers).
-			Set(cols.AutonomyCeiling.Set(), entity.AutonomyCeiling).
-			Set(cols.DataAccessCeiling.Set(), entity.DataAccessCeiling).
-			Set(cols.Enabled.Set(), entity.Enabled).
-			Set(cols.DisabledAt.Set(), entity.DisabledAt).
-			Set(cols.DisabledByID.Set(), entity.DisabledByID).
-			Set(cols.ShadowMode.Set(), entity.ShadowMode).
-			Set(cols.DecisionTimeoutSeconds.Set(), entity.DecisionTimeoutSeconds).
-			Set(cols.TriggerMode.Set(), entity.TriggerMode).
-			Set(cols.CronExpression.Set(), entity.CronExpression).
-			Set(cols.CronTimezone.Set(), entity.CronTimezone).
-			Set(cols.EventKinds.Set(), dbhelper.TextArray(entity.EventKinds)).
-			Set(cols.IntervalSeconds.Set(), entity.IntervalSeconds).
-			Set(cols.EndsAt.Set(), entity.EndsAt).
-			Set(cols.MaxConcurrentRuns.Set(), entity.MaxConcurrentRuns).
-			Set(cols.RunTimeoutSeconds.Set(), entity.RunTimeoutSeconds).
-			Set(cols.MaxToolCalls.Set(), entity.MaxToolCalls).
-			Set(cols.MonthlyBudgetUSD.Set(), entity.MonthlyBudgetUSD).
-			Set(cols.DailyRunLimit.Set(), entity.DailyRunLimit).
-			Set(cols.ToolDailyLimits.Set(), entity.ToolDailyLimits).
-			Set(cols.SimulationMode.Set(), entity.SimulationMode).
-			Set(cols.MemoryTokenBudget.Set(), entity.MemoryTokenBudget).
-			Set(cols.LearningOff.Set(), entity.LearningOff).
-			Set(cols.Icon.Set(), stringutils.NilIfEmpty(entity.Icon)).
-			Set(cols.Accent.Set(), stringutils.NilIfEmpty(entity.Accent)).
-			Set(cols.ContextProviders.Set(), dbhelper.TextArray(entity.ContextProviders)).
-			Set(cols.OutputMode.Set(), entity.OutputMode).
-			Set(cols.PreferredProviderID.Set(), entity.PreferredProviderID).
-			Set(cols.DelegateIDs.Set(), dbhelper.TextArray(entity.DelegateIDs)).
-			Set(cols.NextRunAt.Set(), entity.NextRunAt).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Set(), entity.Version).
-			Exec(ctx)
+		d := agentdefinitiondb.Definitions
+		err := d.SaveExcept(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			d.AccessMode,
+			d.UnattendedRoleID,
+			d.SystemKey,
+			d.CreatedByID,
+			d.LastRunAt,
+		)
 		if err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, duplicateName(entity.Name)
 			}
 
-			return nil, fmt.Errorf("update agent definition: %w", err)
-		}
-
-		if err = dberror.CheckRowsAffected(res, "AgentDefinition", entity.ID.String()); err != nil {
-			return nil, err
+			return nil, definitionErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -553,34 +388,28 @@ func (r *repository) MarkRun(
 	req agentdefinitionports.MarkAgentDefinitionRunRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := agentdefinitioncol.DefinitionColumns
+		d := agentdefinitiondb.Definitions
+		expected := d.NextRunAt.IsNull()
+		if req.ExpectedNextRunAt != nil {
+			expected = d.NextRunAt.Eq(*req.ExpectedNextRunAt)
+		}
+		next := d.NextRunAt.ToNull()
+		if req.NextRunAt != nil {
+			next = d.NextRunAt.To(*req.NextRunAt)
+		}
 
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agentdefinition.Definition)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				uq = agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-				if req.ExpectedNextRunAt == nil {
-					return uq.Where(cols.NextRunAt.IsNull())
-				}
-
-				return uq.Where(cols.NextRunAt.Eq(), *req.ExpectedNextRunAt)
-			}).
-			Set(cols.LastRunAt.Set(), req.LastRunAt).
-			Set(cols.NextRunAt.Set(), req.NextRunAt).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Exec(ctx)
+		n, err := d.Where(d.ID.Eq(req.ID), expected).Update(
+			ctx,
+			r.db.Keel(ctx),
+			d.LastRunAt.To(req.LastRunAt),
+			next,
+			d.Version.ToExpr(d.Version),
+		)
 		if err != nil {
 			return false, fmt.Errorf("mark agent definition run: %w", err)
 		}
 
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("mark agent definition run: %w", err)
-		}
-
-		return affected > 0, nil
+		return n > 0, nil
 	})
 }
 
@@ -597,34 +426,27 @@ func (r *repository) SetToolTier(
 	req agentdefinitionports.SetAgentDefinitionToolTierRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := agentdefinitioncol.DefinitionColumns
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agentdefinition.Definition)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				uq = agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-				if agentdefinition.IsCoreTool(req.ToolName) {
-					return uq
-				}
-
-				return uq.Where("? = ANY("+cols.ToolNames.Qualified()+")", req.ToolName)
-			}).
-			Set(
-				cols.ToolTiers.SetExpr("(CASE WHEN jsonb_typeof({}) = 'object' THEN {} "+
-					"ELSE jsonb_build_object() END) || jsonb_build_object(?::text, ?::text)"),
+		d := agentdefinitiondb.Definitions
+		n, err := d.Where(
+			d.ID.Eq(req.ID),
+			keel.When(!agentdefinition.IsCoreTool(req.ToolName), d.ToolNames.Has(req.ToolName)),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			d.ToolTiers.ToExpr(keel.Raw(
+				"(CASE WHEN jsonb_typeof(?) = 'object' THEN ? ELSE jsonb_build_object() END) "+
+					"|| jsonb_build_object(?::text, ?::text)",
+				d.ToolTiers,
+				d.ToolTiers,
 				req.ToolName,
 				string(req.Tier),
-			).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+			)),
+		)
 		if err != nil {
 			return fmt.Errorf("set agent definition tool tier: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+		return dberror.CheckAffected(n, "AgentDefinition", req.ID.String())
 	})
 }
 
@@ -636,23 +458,18 @@ func (r *repository) SetAccessMode(
 	req agentdefinitionports.SetAgentDefinitionAccessModeRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := agentdefinitioncol.DefinitionColumns
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agentdefinition.Definition)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Set(cols.AccessMode.Set(), req.Mode).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Exec(ctx)
+		d := agentdefinitiondb.Definitions
+		n, err := d.Where(d.ID.Eq(req.ID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			d.AccessMode.To(req.Mode),
+			d.Version.ToExpr(d.Version),
+		)
 		if err != nil {
 			return fmt.Errorf("set agent definition access mode: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+		return dberror.CheckAffected(n, "AgentDefinition", req.ID.String())
 	})
 }
 
@@ -661,53 +478,37 @@ func (r *repository) SetUnattendedRole(
 	req agentdefinitionports.SetAgentDefinitionUnattendedRoleRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := agentdefinitioncol.DefinitionColumns
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agentdefinition.Definition)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Set(cols.UnattendedRoleID.Set(), stringutils.NilIfEmpty(req.RoleID.String())).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Exec(ctx)
+		d := agentdefinitiondb.Definitions
+		n, err := d.Where(d.ID.Eq(req.ID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			d.UnattendedRoleID.To(req.RoleID),
+			d.Version.ToExpr(d.Version),
+		)
 		if err != nil {
 			return fmt.Errorf("set agent definition unattended role: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+		return dberror.CheckAffected(n, "AgentDefinition", req.ID.String())
 	})
 }
 
 func (r *repository) UnattendedRoleID(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
-		cols := agentdefinitioncol.DefinitionColumns
-
-		var roleID *string
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*agentdefinition.Definition)(nil)).
-			ColumnExpr(cols.UnattendedRoleID.Qualified()).
-			Apply(agentdefinitioncol.DefinitionApplyTenant(tenant)).
-			Where(cols.ID.Eq(), id).
-			Scan(ctx, &roleID)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return pulid.Nil, nil
-			}
-			return pulid.Nil, fmt.Errorf("read agent definition unattended role: %w", err)
-		}
-		if roleID == nil {
+		d := agentdefinitiondb.Definitions
+		entity, err := d.Pick(d.UnattendedRoleID).Where(d.ID.Eq(id)).One(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
 			return pulid.Nil, nil
 		}
+		if err != nil {
+			return pulid.Nil, fmt.Errorf("read agent definition unattended role: %w", err)
+		}
 
-		return pulid.ID(*roleID), nil
+		return entity.UnattendedRoleID, nil
 	})
 }
 
@@ -719,24 +520,18 @@ func (r *repository) Delete(
 	ctx context.Context,
 	req agentdefinitionports.DeleteAgentDefinitionRequest,
 ) error {
-	return r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if err := r.removeDelegate(txCtx, req); err != nil {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if err := r.removeDelegate(ctx, req.ID); err != nil {
 			return err
 		}
 
-		res, err := r.db.DBForContext(txCtx).
-			NewDelete().
-			Model((*agentdefinition.Definition)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return agentdefinitioncol.DefinitionScopeTenantDelete(dq, req.TenantInfo).
-					Where(agentdefinitioncol.DefinitionColumns.ID.Eq(), req.ID)
-			}).
-			Exec(txCtx)
+		d := agentdefinitiondb.Definitions
+		n, err := d.Where(d.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return fmt.Errorf("delete agent definition: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+		return dberror.CheckAffected(n, "AgentDefinition", req.ID.String())
 	})
 }
 
@@ -744,38 +539,41 @@ func (r *repository) Delete(
 // tenant that may hand it work. Each one changed is a new version, so a save
 // made from a copy loaded before the delete is refused rather than putting
 // the deleted agent back.
-func (r *repository) removeDelegate(
-	ctx context.Context,
-	req agentdefinitionports.DeleteAgentDefinitionRequest,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := agentdefinitioncol.DefinitionColumns
+func (r *repository) removeDelegate(ctx context.Context, id pulid.ID) error {
+	d := agentdefinitiondb.Definitions
+	_, err := d.Where(d.DelegateIDs.Has(id.String())).Update(
+		ctx,
+		r.db.Keel(ctx),
+		d.DelegateIDs.ToExpr(keel.Raw(
+			"NULLIF(array_remove(?, ?::text), ARRAY[]::text[])",
+			d.DelegateIDs,
+			id.String(),
+		)),
+	)
+	if err != nil {
+		return fmt.Errorf("remove a deleted agent from the agents that delegate to it: %w", err)
+	}
 
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agentdefinition.Definition)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
-					Where("?::text = ANY("+cols.DelegateIDs.Qualified()+")", req.ID.String())
-			}).
-			Set(
-				cols.DelegateIDs.SetExpr("NULLIF(array_remove({}, ?::text), ARRAY[]::text[])"),
-				req.ID.String(),
-			).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("remove a deleted agent from the agents that delegate to it: %w", err)
-		}
+	return nil
+}
 
-		return nil
-	})
+type proposalStat struct {
+	DefinitionID     pulid.ID
+	PendingProposals int
+}
+
+func openRunStatuses() []agent.RunStatus {
+	return []agent.RunStatus{
+		agent.RunStatusPending,
+		agent.RunStatusGatheringContext,
+		agent.RunStatusDiagnosing,
+		agent.RunStatusAwaitingDecision,
+	}
 }
 
 func (r *repository) StatsByIDs(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	ids []pulid.ID,
 ) (map[pulid.ID]agentdefinitionports.AgentDefinitionStats, error) {
 	return dbtx.Read(
@@ -787,55 +585,39 @@ func (r *repository) StatsByIDs(
 				return stats, nil
 			}
 
-			runCols := agentcol.AgentRunColumns
-			var runRows []agentdefinitionports.AgentDefinitionStats
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*agent.AgentRun)(nil)).
-				ColumnExpr(runCols.AgentDefinitionID.Qualified()+" AS definition_id").
-				ColumnExpr("SUM(CASE WHEN "+runCols.Status.Qualified()+" IN (?) THEN 1 ELSE 0 END) AS open_runs",
-					bun.In([]agent.RunStatus{
-						agent.RunStatusPending,
-						agent.RunStatusGatheringContext,
-						agent.RunStatusDiagnosing,
-						agent.RunStatusAwaitingDecision,
-					})).
-				ColumnExpr("MAX("+runCols.StartedAt.Qualified()+") AS last_run_at").
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return agentcol.AgentRunScopeTenant(sq, tenant).
-						Where(runCols.AgentDefinitionID.In(), bun.In(ids))
-				}).
-				GroupExpr(runCols.AgentDefinitionID.Qualified()).
-				Scan(ctx, &runRows)
+			run := agentdb.AgentRuns
+			p := agentdb.AgentProposals
+			pRun := agentdb.AgentRuns.As("prun")
+
+			var (
+				runRows      []agentdefinitionports.AgentDefinitionStats
+				proposalRows []proposalStat
+			)
+			err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.IntoSlice(run.
+					Group(run.AgentDefinitionID).
+					Pick(
+						run.AgentDefinitionID,
+						keel.Raw("0"),
+						keel.Count().Filter(run.Status.In(openRunStatuses()...)),
+						run.StartedAt.Max(),
+					).
+					Where(run.AgentDefinitionID.In(ids...)), &runRows),
+				keel.IntoSlice(p.
+					Join(pRun, pRun.ID.EqCol(p.RunID)).
+					Group(pRun.AgentDefinitionID).
+					Pick(pRun.AgentDefinitionID, keel.Count()).
+					Where(
+						p.Status.Eq(agent.ProposalStatusPending),
+						pRun.AgentDefinitionID.In(ids...),
+					), &proposalRows),
+			)
 			if err != nil {
-				return nil, fmt.Errorf("agent definition run stats: %w", err)
-			}
-			for _, row := range runRows {
-				stats[row.DefinitionID] = row
+				return nil, fmt.Errorf("agent definition stats: %w", err)
 			}
 
-			proposalCols := agentcol.AgentProposalColumns
-			var proposalRows []struct {
-				DefinitionID     pulid.ID `bun:"definition_id"`
-				PendingProposals int      `bun:"pending_proposals"`
-			}
-			err = r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*agent.AgentProposal)(nil)).
-				Join("JOIN agent_runs AS ar ON ar.id = "+proposalCols.RunID.Qualified()+
-					" AND ar.organization_id = "+proposalCols.OrganizationID.Qualified()+
-					" AND ar.business_unit_id = "+proposalCols.BusinessUnitID.Qualified()).
-				ColumnExpr("ar.agent_definition_id AS definition_id").
-				ColumnExpr("COUNT(*) AS pending_proposals").
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return agentcol.AgentProposalScopeTenant(sq, tenant).
-						Where(proposalCols.Status.Eq(), agent.ProposalStatusPending).
-						Where("ar.agent_definition_id IN (?)", bun.In(ids))
-				}).
-				GroupExpr("ar.agent_definition_id").
-				Scan(ctx, &proposalRows)
-			if err != nil {
-				return nil, fmt.Errorf("agent definition proposal stats: %w", err)
+			for _, row := range runRows {
+				stats[row.DefinitionID] = row
 			}
 			for _, row := range proposalRows {
 				entry := stats[row.DefinitionID]

@@ -43,23 +43,24 @@ var guidancesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "CreatedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Created By`, JSON: `createdBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
-	Returning:  nil,
-	Version:    12,
-	AutoID:     0,
-	AutoCreate: 13,
-	AutoUpdate: 14,
-	IDPrefix:   "aprg_",
-	New:        newGuidance,
-	NewN:       newNGuidance,
-	Size:       unsafe.Sizeof(agentprofile.Guidance{}),
-	Ptr:        ptrGuidance,
-	Value:      valueGuidance,
-	Attach:     attachGuidance,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:    nil,
+	Version:      12,
+	AutoID:       0,
+	AutoCreate:   13,
+	AutoUpdate:   14,
+	IDPrefix:     "aprg_",
+	New:          newGuidance,
+	NewN:         newNGuidance,
+	Size:         unsafe.Sizeof(agentprofile.Guidance{}),
+	Ptr:          ptrGuidance,
+	Value:        valueGuidance,
+	Attach:       attachGuidance,
+	BeforeCreate: beforeCreateGuidance,
 }
 
 var guidancesRef = keel.Ref{Table: &guidancesTable}
@@ -244,6 +245,10 @@ func attachGuidance(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateGuidance(ctx context.Context, p unsafe.Pointer) error {
+	return (*agentprofile.Guidance)(p).BeforeCreate(ctx)
+}
+
 // profilesTable is the schema of agentprofile.Profile.
 var profilesTable = schema.Table{
 	Name:   "agent_profiles",
@@ -275,22 +280,23 @@ var profilesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "aprf_",
-	New:        newProfile,
-	NewN:       newNProfile,
-	Size:       unsafe.Sizeof(agentprofile.Profile{}),
-	Ptr:        ptrProfile,
-	Value:      valueProfile,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "aprf_",
+	New:          newProfile,
+	NewN:         newNProfile,
+	Size:         unsafe.Sizeof(agentprofile.Profile{}),
+	Ptr:          ptrProfile,
+	Value:        valueProfile,
+	BeforeCreate: beforeCreateProfile,
 }
 
 var profilesRef = keel.Ref{Table: &profilesTable}
@@ -514,6 +520,10 @@ func valueProfile(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*agentprofile.Profile)(p).BeforeCreate(ctx)
 }
 
 func init() {

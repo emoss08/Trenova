@@ -214,3 +214,11 @@ func (g *Guidance) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (g *Guidance) BeforeCreate(_ context.Context) error {
+	if g.Status == "" {
+		g.Status = GuidanceStatusActive
+	}
+
+	return nil
+}

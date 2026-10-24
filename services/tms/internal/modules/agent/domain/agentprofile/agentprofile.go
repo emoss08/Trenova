@@ -255,3 +255,17 @@ func (p *Profile) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (p *Profile) BeforeCreate(_ context.Context) error {
+	if p.Facts == nil {
+		p.Facts = Facts{}
+	}
+	if p.GuidanceIDs == nil {
+		p.GuidanceIDs = []pulid.ID{}
+	}
+	if p.CheckedAt == 0 {
+		p.CheckedAt = timeutils.NowUnix()
+	}
+
+	return nil
+}
