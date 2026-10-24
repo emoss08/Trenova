@@ -210,8 +210,9 @@ func TestListByMoveIDsIsTenantIsolated(t *testing.T) {
 	move.JurisdictionMiles = []*shipment.ShipmentMoveJurisdictionMile{row("US", "TX", 0, 150)}
 	require.NoError(t, f.repo.ReplaceForMove(f.ctx, move))
 
-	rows, err := f.repo.ListByMoveIDs(f.ctx, shipmentports.ListJurisdictionMilesByMoveIDsRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	rows, err := f.repo.ListByMoveIDs(dbscope.WithTenant(f.ctx, stranger.DBTenant()), shipmentports.ListJurisdictionMilesByMoveIDsRequest{
+		TenantInfo: stranger,
 		MoveIDs:    []pulid.ID{move.ID},
 	})
 	require.NoError(t, err)
