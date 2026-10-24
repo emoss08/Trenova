@@ -4,18 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var decisionErrors = dberror.Mapping{Entity: "AgentDecision"}
 
 type Params struct {
 	fx.In
@@ -41,21 +42,14 @@ func (r *repository) GetByID(
 	req agentports.GetAgentDecisionByIDRequest,
 ) (*agent.AgentDecision, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentDecision, error) {
-		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
-
-		entity := new(agent.AgentDecision)
-		cols := agentcol.AgentDecisionColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentDecisionScopeTenant(sq, *req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := agentdb.AgentDecisions.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			log.Error("failed to get agent decision", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "AgentDecision")
+			r.l.Error(
+				"failed to get agent decision",
+				zap.String("id", req.ID.String()),
+				zap.Error(err),
+			)
+			return nil, decisionErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -67,15 +61,9 @@ func (r *repository) Create(
 	entity *agent.AgentDecision,
 ) (*agent.AgentDecision, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentDecision, error) {
-		log := r.l.With(zap.String("operation", "Create"))
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create agent decision", zap.Error(err))
-			return nil, err
+		if err := agentdb.AgentDecisions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error("failed to create agent decision", zap.Error(err))
+			return nil, decisionErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -91,19 +79,11 @@ func (r *repository) ListByProposals(
 			return []*agent.AgentDecision{}, nil
 		}
 
-		cols := agentcol.AgentDecisionColumns
-		rows := make([]*agent.AgentDecision, 0, len(req.ProposalIDs))
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentDecisionScopeTenant(sq, req.TenantInfo).
-					Where(cols.ProposalID.In(), bun.In(req.ProposalIDs)).
-					Where(cols.UndoneAt.IsNull())
-			}).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			Scan(ctx); err != nil {
+		d := agentdb.AgentDecisions
+		rows, err := d.Where(d.ProposalID.In(req.ProposalIDs...), d.UndoneAt.IsNull()).
+			Order(d.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list decisions by proposals", zap.Error(err))
 
 			return nil, fmt.Errorf("list decisions by proposals: %w", err)
@@ -122,18 +102,11 @@ func (r *repository) ListByCommitWorkflow(
 			return []*agent.AgentDecision{}, nil
 		}
 
-		cols := agentcol.AgentDecisionColumns
-		rows := make([]*agent.AgentDecision, 0, 1)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentDecisionScopeTenant(sq, req.TenantInfo).
-					Where(cols.CommitWorkflowID.Eq(), req.WorkflowID)
-			}).
-			OrderExpr(cols.CreatedAt.OrderAsc()).
-			OrderExpr(cols.ID.OrderAsc()).
-			Scan(ctx); err != nil {
+		d := agentdb.AgentDecisions
+		rows, err := d.Where(d.CommitWorkflowID.Eq(req.WorkflowID)).
+			Order(d.CreatedAt.Asc(), d.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list decisions by commit workflow", zap.Error(err))
 
 			return nil, fmt.Errorf("list decisions by commit workflow: %w", err)
@@ -169,31 +142,34 @@ func (r *repository) settle(
 			return []pulid.ID{}, nil
 		}
 
-		cols := agentcol.AgentDecisionColumns
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agent.AgentDecision)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.AgentDecisionScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.In(), bun.In(req.IDs)).
-					Where(cols.CommitsAt.IsNotNull()).
-					Where(cols.CommittedAt.IsNull()).
-					Where(cols.UndoneAt.IsNull())
-			}).
-			Set(cols.UpdatedAt.Set(), req.At)
-		if undo {
-			query = query.
-				Set(cols.UndoneAt.Set(), req.At).
-				Set(cols.UndoneByUserID.Set(), req.UndoneByUserID)
-		} else {
-			query = query.Set(cols.CommittedAt.Set(), req.At)
+		d := agentdb.AgentDecisions
+		sets := []keel.Assignment{d.UpdatedAt.To(req.At)}
+		switch {
+		case !undo:
+			sets = append(sets, d.CommittedAt.To(req.At))
+		case req.UndoneByUserID.IsNil():
+			sets = append(sets, d.UndoneAt.To(req.At), d.UndoneByUserID.ToNull())
+		default:
+			sets = append(sets, d.UndoneAt.To(req.At), d.UndoneByUserID.To(req.UndoneByUserID))
 		}
 
-		settled := make([]pulid.ID, 0, len(req.IDs))
-		if _, err := query.Returning(cols.ID.Bare()).Exec(ctx, &settled); err != nil {
+		rows, err := d.Pick(d.ID).
+			Where(
+				d.ID.In(req.IDs...),
+				d.CommitsAt.IsNotNull(),
+				d.CommittedAt.IsNull(),
+				d.UndoneAt.IsNull(),
+			).
+			UpdateReturning(ctx, r.db.Keel(ctx), sets...)
+		if err != nil {
 			r.l.Error("failed to settle agent decisions", zap.Bool("undo", undo), zap.Error(err))
 
 			return nil, fmt.Errorf("settle agent decisions: %w", err)
+		}
+
+		settled := make([]pulid.ID, 0, len(rows))
+		for _, row := range rows {
+			settled = append(settled, row.ID)
 		}
 
 		return settled, nil
