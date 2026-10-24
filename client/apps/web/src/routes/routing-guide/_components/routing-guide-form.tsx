@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { LocationAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -6,6 +5,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { statusChoices, usStateAbbreviationChoices } from "@/lib/choices";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   deriveLaneMatchMode,
   type LaneMatchMode,
@@ -33,11 +33,6 @@ const LANE_MODE_ITEMS: { value: LaneMatchMode; label: string; caption: string }[
   },
 ];
 
-/**
- * The guide builder. The lane predicate is tiered exactly like the server's
- * matcher: exact locations beat city+state, which beats state-only, and both
- * ends of the lane must be described at the same tier.
- */
 export function RoutingGuideForm() {
   const t = useT();
 
