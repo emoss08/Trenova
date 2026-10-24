@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/reflectutils"
@@ -268,7 +269,11 @@ type leakCheck struct {
 func assertNoLeak(t *testing.T, check leakCheck) {
 	t.Helper()
 
-	result, err := check.tool.Query(t.Context(), check.params)
+	ctx := dbscope.WithTenant(t.Context(), dbscope.Tenant{
+		OrganizationID: check.params.OrganizationID,
+		BusinessUnitID: check.params.BusinessUnitID,
+	})
+	result, err := check.tool.Query(ctx, check.params)
 	require.NoError(t, err)
 
 	carrier, ok := result.(agent.TaintCarrier)
