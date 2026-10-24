@@ -50,12 +50,13 @@ func NewRLSConnection(t *testing.T, admin *bun.DB, dsn string) *postgres.Connect
 	cfg := &config.Config{
 		App: config.AppConfig{Name: "trenova-rls-test"},
 		Database: config.DatabaseConfig{
-			Host:     parsed.Hostname(),
-			Port:     port,
-			Name:     strings.TrimPrefix(parsed.Path, "/"),
-			User:     appRole,
-			Password: password,
-			SSLMode:  "disable",
+			Host:         parsed.Hostname(),
+			Port:         port,
+			Name:         strings.TrimPrefix(parsed.Path, "/"),
+			User:         appRole,
+			Password:     password,
+			SSLMode:      "disable",
+			MaxOpenConns: 16,
 			RLS: config.RLSConfig{
 				Mode:       "enforce",
 				ScopeKeyID: rlsTestScopeKeyID,
