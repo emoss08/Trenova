@@ -11,22 +11,17 @@ import (
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-func definitionVisibilityScope(
-	q *bun.SelectQuery,
-	req *reportports.ListReportDefinitionConnectionRequest,
-) *bun.SelectQuery {
-	if req.ViewerID.IsNil() {
-		return q
-	}
+func definitionVisibilityScope(q *bun.SelectQuery, viewerID pulid.ID) *bun.SelectQuery {
 	cols := reportcol.ReportDefinitionColumns
 	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.
 			Where(cols.Visibility.Eq(), report.VisibilityShared).
-			WhereOr(cols.OwnerID.Eq(), req.ViewerID)
+			WhereOr(cols.OwnerID.Eq(), viewerID)
 	})
 }
 
@@ -53,7 +48,7 @@ func (r *definitionRepository) ListConnection(
 							req.Filter,
 							(*report.ReportDefinition)(nil),
 						)
-						return definitionVisibilityScope(sq, req)
+						return definitionVisibilityScope(sq, req.ViewerID)
 					}).
 					Count(ctx)
 				if err != nil {
@@ -86,7 +81,7 @@ func (r *definitionRepository) ListConnection(
 						if applyErr != nil {
 							return nil, applyErr
 						}
-						return definitionVisibilityScope(sq, req), nil
+						return definitionVisibilityScope(sq, req.ViewerID), nil
 					},
 				})
 			if err != nil {

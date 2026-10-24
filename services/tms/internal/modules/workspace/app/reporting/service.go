@@ -97,13 +97,13 @@ func New(p Params) *Service {
 			Views:    p.ReferenceViews,
 			Fields:   p.FieldAccess,
 		}),
-		workflows:     p.WorkflowStarter,
-		storage:       p.Storage,
-		audit:         p.AuditService,
-		metrics:       reportMetrics,
-		cfg:           p.Config.GetReportingConfig(),
-		previews:      newPreviewLimiter(),
-		canned:        canned.Default(),
+		workflows: p.WorkflowStarter,
+		storage:   p.Storage,
+		audit:     p.AuditService,
+		metrics:   reportMetrics,
+		cfg:       p.Config.GetReportingConfig(),
+		previews:  newPreviewLimiter(),
+		canned:    canned.Default(),
 	}
 }
 
@@ -283,24 +283,13 @@ func (s *Service) ListDefinitions(
 	ctx context.Context,
 	req *ListDefinitionsRequest,
 ) ([]*report.ReportDefinition, error) {
-	entities, err := s.defRepo.List(ctx, &reportports.ListReportDefinitionsRequest{
+	return s.defRepo.List(ctx, &reportports.ListReportDefinitionsRequest{
 		TenantInfo: req.TenantInfo,
+		ViewerID:   req.TenantInfo.UserID,
 		Statuses:   req.Statuses,
 		Limit:      req.Limit,
 		Offset:     req.Offset,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	visible := make([]*report.ReportDefinition, 0, len(entities))
-	for _, entity := range entities {
-		if s.checkDefinitionVisibility(entity, req.TenantInfo) == nil {
-			visible = append(visible, entity)
-		}
-	}
-
-	return visible, nil
 }
 
 func (s *Service) DeleteDefinition(ctx context.Context, req *GetDefinitionRequest) error {
