@@ -58,7 +58,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 
 	newPartner := func(code string) *edi.EDIPartner {
 		partner := &edi.EDIPartner{
-			BusinessUnitID: org.BusinessUnitID,
+			BusinessUnitID: org.BuID,
 			OrganizationID: org.OrgID,
 			Kind:           edi.PartnerKindExternal,
 			Code:           code,
@@ -72,7 +72,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 
 	newProfile := func(partner *edi.EDIPartner, name string, status string) *edi.EDICommunicationProfile {
 		profile := &edi.EDICommunicationProfile{
-			BusinessUnitID: org.BusinessUnitID,
+			BusinessUnitID: org.BuID,
 			OrganizationID: org.OrgID,
 			EDIPartnerID:   partner.ID,
 			Method:         edi.ConnectionMethodSFTP,
@@ -104,7 +104,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 	}
 	for index, entry := range messages {
 		message := &edi.EDIMessage{
-			BusinessUnitID:           org.BusinessUnitID,
+			BusinessUnitID:           org.BuID,
 			OrganizationID:           org.OrgID,
 			EDIPartnerID:             entry.partner,
 			DocumentTypeID:           entry.docType,
@@ -209,7 +209,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		{other, otherMailbox, 60},
 	} {
 		file := &edi.EDIInboundFile{
-			BusinessUnitID:         org.BusinessUnitID,
+			BusinessUnitID:         org.BuID,
 			OrganizationID:         org.OrgID,
 			CommunicationProfileID: entry.profile.ID,
 			EDIPartnerID:           entry.partner.ID,
