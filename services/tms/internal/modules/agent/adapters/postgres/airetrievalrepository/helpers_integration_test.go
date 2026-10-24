@@ -27,6 +27,7 @@ const expectVectorEnv = "TRENOVA_TEST_EXPECT_VECTOR"
 type harness struct {
 	ctx    context.Context
 	db     *bun.DB
+	dsn    string
 	conn   *postgres.Connection
 	repo   agentports.AIRetrievalRepository
 	data   *seedtest.TestData
@@ -36,7 +37,7 @@ type harness struct {
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
@@ -45,6 +46,7 @@ func newHarness(t *testing.T) *harness {
 	return &harness{
 		ctx:    ctx,
 		db:     db,
+		dsn:    dsn,
 		conn:   conn,
 		repo:   newRepository(conn),
 		data:   data,

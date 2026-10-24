@@ -4,10 +4,6 @@ package carriersettlementrepository_test
 
 import (
 	"context"
-	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -26,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -348,19 +345,10 @@ func TestCarrierInvoiceDuplicatesMigration_MarksExistingRepeats_Integration(t *t
 	repeatMatch, err := f.match(t, otherLoad, "m-5", carriersettlement.InvoiceMatchStatusMatched)
 	require.NoError(t, err)
 
-	_, thisFile, _, _ := runtime.Caller(0)
-	migration, err := os.ReadFile(filepath.Join(
-		filepath.Dir(thisFile),
-		"../../../../../infrastructure/postgres/migrations/20261231007190_carrier_invoice_duplicates.tx.up.sql",
-	))
+	migration, err := migrations.File("20261231007190_carrier_invoice_duplicates")
 	require.NoError(t, err)
-	for _, statement := range strings.Split(string(migration), "--bun:split") {
-		if strings.TrimSpace(statement) == "" {
-			continue
-		}
-		_, err = f.db.ExecContext(f.ctx, statement)
-		require.NoError(t, err, statement)
-	}
+	_, err = f.db.ExecContext(f.ctx, migration)
+	require.NoError(t, err)
 
 	var duplicateOf pulid.ID
 	require.NoError(t, f.db.NewSelect().
