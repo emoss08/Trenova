@@ -47,6 +47,10 @@ func (rp *ResourcePermission) BeforeAppendModel(_ context.Context, q bun.Query) 
 	return nil
 }
 
+func (rp *ResourcePermission) BeforeCreate(ctx context.Context) error {
+	return rp.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (rp *ResourcePermission) HasOperation(op Operation) bool {
 	return slices.Contains(Implied(rp.Operations), op)
 }

@@ -174,6 +174,10 @@ func (t *PerformanceReviewTemplate) BeforeAppendModel(_ context.Context, query b
 	return nil
 }
 
+func (t *PerformanceReviewTemplate) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 type ReviewStatus string
 
 const (
@@ -446,4 +450,8 @@ func (r *PerformanceReview) BeforeAppendModel(_ context.Context, query bun.Query
 	}
 
 	return nil
+}
+
+func (r *PerformanceReview) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

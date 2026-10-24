@@ -7,6 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel/seed"
+	"github.com/emoss08/trenova/internal/seeds/fixtures"
+
 	"github.com/emoss08/trenova/schema"
 	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/stretchr/testify/assert"
@@ -70,4 +73,35 @@ func TestTheSchemaStampIsCurrent(t *testing.T) {
 	assert.Zerof(t, code,
 		"schema/version_gen.go is stale: run go run ./cmd/devdb migrate stamp\n%s%s",
 		stdout.String(), stderr.String())
+}
+
+func TestDeployAppCarriesOnlyReferenceSeeds(t *testing.T) {
+	t.Parallel()
+
+	app := App(Options{Name: "trenova-db"})
+
+	require.NoError(t, app.Seeds.Validate())
+	names := make([]string, 0)
+	for _, s := range app.Seeds.Seeds() {
+		assert.Equalf(t, seed.Reference, s.Kind, "%s is not reference data", s.Name)
+		names = append(names, s.Name)
+	}
+	assert.Contains(t, names, "rls_scope_key")
+	assert.Contains(t, names, "administrator_permissions")
+	assert.NotNil(t, app.Tenants)
+	assert.NotNil(t, app.System)
+}
+
+func TestDevelopmentAppAddsTheFixtures(t *testing.T) {
+	t.Parallel()
+
+	app := App(Options{Name: "trenova-devdb", Development: true, Fixtures: fixtures.Seeds})
+
+	require.NoError(t, app.Seeds.Validate())
+	kinds := map[seed.Kind]int{}
+	for _, s := range app.Seeds.Seeds() {
+		kinds[s.Kind]++
+	}
+	assert.Positive(t, kinds[seed.Reference])
+	assert.Positive(t, kinds[seed.Fixture])
 }

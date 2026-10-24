@@ -241,6 +241,10 @@ func (rq *RateQuote) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+func (rq *RateQuote) BeforeCreate(ctx context.Context) error {
+	return rq.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (rq *RateQuote) GetID() pulid.ID {
 	return rq.ID
 }

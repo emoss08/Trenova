@@ -442,6 +442,10 @@ func (rar *RateAgreementRule) BeforeAppendModel(_ context.Context, query bun.Que
 	return nil
 }
 
+func (rar *RateAgreementRule) BeforeCreate(ctx context.Context) error {
+	return rar.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (rar *RateAgreementRule) GetID() pulid.ID {
 	return rar.ID
 }

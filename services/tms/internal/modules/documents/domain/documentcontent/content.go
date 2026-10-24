@@ -88,6 +88,10 @@ func (c *Content) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (c *Content) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (c *Content) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(c,
 		validation.Field(&c.OrganizationID,

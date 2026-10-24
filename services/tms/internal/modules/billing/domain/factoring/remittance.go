@@ -463,6 +463,10 @@ func (r *Remittance) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+func (r *Remittance) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (r *Remittance) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "facrem",
@@ -654,6 +658,10 @@ func (p *RemittanceProfile) BeforeAppendModel(_ context.Context, query bun.Query
 		p.UpdatedAt = now
 	}
 	return nil
+}
+
+func (p *RemittanceProfile) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func trimSuggestions(suggestions []*RemittanceSuggestion) []*RemittanceSuggestion {

@@ -21,9 +21,16 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
 
 - `//go:build integration`, an external `_test` package, `seedtest.SetupTestDB(t)`
   (testcontainers, or `TRENOVA_TEST_POSTGRES_DSN`), then `seedtest.SeedFullTestData` and the
-  fixtures in `internal/testutil` (`stopeta_integration_test.go` is the model). Each test gets a
-  fresh database copied from a keel template of the migrations (`migrate.Template`), which the
-  first test on a server builds and every later one reuses until a migration changes; its
+  fixtures in `internal/testutil` (`stopeta_integration_test.go` is the model). A test that needs
+  the development fixtures (the admin account, the Trenova Logistics organization, its workers,
+  shipments and ledgers) uses `seededtest.SetupTestDB(t)` instead of running seeds itself; it
+  is its own package because the fixtures import application code that a package under test
+  may sit below.
+  Each test gets a fresh database copied from a keel template (`migrate.Template`): the
+  migrations plus the reference seeds for `SetupTestDB`, and the fixtures on top for
+  `seededtest`. A template is keyed by the seeds' fingerprints, so editing a seed or its
+  data builds a new one. The first test on a server builds each template and every later one
+  reuses it until a migration or a seed changes; its
   `*bun.DB` runs on pgx's `database/sql` driver.
 - A migration that rewrites data gets a test that runs its file against rows it must change and
   rows it must leave: `migrations.File("<version>_<name>")` returns the SQL

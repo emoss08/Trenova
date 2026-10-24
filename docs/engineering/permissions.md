@@ -56,9 +56,12 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    hides a module in one place. Names, descriptions, categories and operation labels are
    translated by `GET /permissions/resources` and `GET /permissions/bundles` from the
    request's locale; the client renders them as they arrive.
-2. Do not write a migration to grant it to administrators. `trenova db reconcile` runs
-   `ReconcileAdminRoles` after the migrations: every system role named
-   "Organization Administrator" is given every registry resource and operation it lacks.
+2. Do not write a migration to grant it to administrators. The `administrator_permissions`
+   reference seed (`internal/seeds/reference`) is fingerprinted by the registry's grants
+   (`Registry.GrantFingerprint`), so the next `trenova-db up` reruns it once per organization
+   (`ReconcileAdminRole`): every system role named "Organization Administrator" is given every
+   registry resource and operation it lacks. The permission cache keys carry the same
+   fingerprint, so no cached grant outlives the change.
    Grants beyond the registry are left alone for a person to review, and other system
    roles (the driver portal role) are never touched.
 3. Check it where the work happens: `RequirePermission` on the route or in the resolver.
@@ -119,7 +122,7 @@ and `hr.team` grants them for a driver manager's team.
 and cover work.
 
 Taking a parent away moves no stored grant: administrators already hold every registry
-resource, and `trenova db reconcile` (`ReconcileAdminRoles`) adds any that is missing, and
+resource, and the `administrator_permissions` seed (`ReconcileAdminRole`) adds any that is missing, and
 other roles lose what they reached only through the parent until a bundle or a person
 grants it. `TestJobTemplates_KindsGrantedOnTheirOwn` holds every stock template's effective
 operations and scope on each of these kinds; a new template fails it until it has a row.

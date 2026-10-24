@@ -7,12 +7,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -58,7 +56,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -313,18 +310,8 @@ func (f *fakeWorkflowStarter) StartWorkflow(
 func (f *fakeWorkflowStarter) Enabled() bool { return f.enabled }
 
 func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(db, seedRegistry, &config.Config{
-		System: config.SystemConfig{
-			SystemUserPassword: "test-system-password",
-		},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	h := newIntegrationHarness(
 		t,
@@ -1530,18 +1517,8 @@ func (h *integrationHarness) createDocument(
 }
 
 func TestInvoiceAdjustmentSchemaAndSeeds(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(db, seedRegistry, &config.Config{
-		System: config.SystemConfig{
-			SystemUserPassword: "test-system-password",
-		},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	type tableCheck struct {
 		Name string `bun:"to_regclass"`

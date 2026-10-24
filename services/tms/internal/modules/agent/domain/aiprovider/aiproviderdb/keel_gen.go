@@ -23,7 +23,7 @@ var failureDismissalsTable = schema.Table{
 	Plural: `Failure Dismissals`,
 	Doc:    `FailureDismissal is one person putting away the notice that a provider is failing. It holds only up to the failure they saw: a newer failure brings the notice back.`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
 		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: 0, Label: `User ID`},
@@ -38,10 +38,10 @@ var failureDismissalsTable = schema.Table{
 	Update:     []int32{3, 4, 5},
 	Returning:  nil,
 	Version:    -1,
-	AutoID:     -1,
+	AutoID:     0,
 	AutoCreate: 6,
 	AutoUpdate: -1,
-	IDPrefix:   "",
+	IDPrefix:   "aipfd_",
 	New:        newFailureDismissal,
 	NewN:       newNFailureDismissal,
 	Size:       unsafe.Sizeof(aiprovider.FailureDismissal{}),
@@ -209,22 +209,23 @@ var providersTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47},
-	Returning:  nil,
-	Version:    45,
-	AutoID:     0,
-	AutoCreate: 46,
-	AutoUpdate: 47,
-	IDPrefix:   "aiprv_",
-	New:        newProvider,
-	NewN:       newNProvider,
-	Size:       unsafe.Sizeof(aiprovider.Provider{}),
-	Ptr:        ptrProvider,
-	Value:      valueProvider,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47},
+	Returning:    nil,
+	Version:      45,
+	AutoID:       0,
+	AutoCreate:   46,
+	AutoUpdate:   47,
+	IDPrefix:     "aiprv_",
+	New:          newProvider,
+	NewN:         newNProvider,
+	Size:         unsafe.Sizeof(aiprovider.Provider{}),
+	Ptr:          ptrProvider,
+	Value:        valueProvider,
+	BeforeCreate: beforeCreateProvider,
 }
 
 var providersRef = keel.Ref{Table: &providersTable}
@@ -700,6 +701,10 @@ func valueProvider(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateProvider(ctx context.Context, p unsafe.Pointer) error {
+	return (*aiprovider.Provider)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

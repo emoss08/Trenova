@@ -152,6 +152,10 @@ func (p *EDIPartner) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+func (p *EDIPartner) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (p *EDIPartner) GetCreatedAt() int64 {
 	return p.CreatedAt
 }

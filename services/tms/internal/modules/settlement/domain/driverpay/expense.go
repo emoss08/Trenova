@@ -147,3 +147,7 @@ func (e *Expense) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 	return nil
 }
+
+func (e *Expense) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

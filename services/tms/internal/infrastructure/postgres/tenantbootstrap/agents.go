@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -17,23 +16,21 @@ const (
 	SystemAgentKeyDispatchAssignment = "dispatch_assignment"
 )
 
-func CreateSystemAgentDefinitions(ctx context.Context, tx bun.IDB, scope Scope) (int, error) {
+func CreateSystemAgentDefinitions(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
-	cols := agentdefinitioncol.DefinitionColumns
-	var existing []string
-	if err := tx.NewSelect().
-		Model((*agentdefinition.Definition)(nil)).
-		Column(cols.SystemKey.Name).
-		Where(cols.OrganizationID.Eq(), orgID).
-		Where(cols.BusinessUnitID.Eq(), buID).
-		Where(cols.SystemKey.IsNotNull()).
-		Scan(ctx, &existing); err != nil {
+	d := agentdefinitiondb.Definitions
+	existing, err := scoped(ctx, d.Pick(d.SystemKey).Where(
+		d.OrganizationID.Eq(orgID),
+		d.BusinessUnitID.Eq(buID),
+		d.SystemKey.IsNotNull(),
+	)).All(ctx, db)
+	if err != nil {
 		return 0, fmt.Errorf("list system agents for organization %s: %w", orgID, err)
 	}
 
 	present := make(map[string]struct{}, len(existing))
-	for _, key := range existing {
-		present[key] = struct{}{}
+	for _, row := range existing {
+		present[row.SystemKey] = struct{}{}
 	}
 
 	created := 0
@@ -56,11 +53,8 @@ func CreateSystemAgentDefinitions(ctx context.Context, tx bun.IDB, scope Scope) 
 			definition.NextRunAt = &next
 		}
 
-		if _, err := tx.NewInsert().Model(definition).Exec(ctx); err != nil {
+		if err := d.Create(ctx, db, definition); err != nil {
 			return created, fmt.Errorf("insert system agent %s: %w", definition.SystemKey, err)
-		}
-		if err := scope.record(ctx, "agent_definitions", definition.ID); err != nil {
-			return created, err
 		}
 		created++
 	}

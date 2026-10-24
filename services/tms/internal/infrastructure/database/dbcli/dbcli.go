@@ -7,14 +7,19 @@ import (
 	"io"
 	"os"
 	"runtime/debug"
+	"sync"
 	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/keelcli"
 	"github.com/emoss08/keel/migrate"
+	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/bunadopt"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/pgxdsn"
+	"github.com/emoss08/trenova/internal/seeds/reference"
+	"github.com/emoss08/trenova/internal/seeds/seedenv"
 	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -46,28 +51,34 @@ type Options struct {
 	ConfigOptions []config.LoaderOption
 	Development   bool
 	Dump          []string
+	Fixtures      *seed.Registry
 	Commands      []keelcli.Command
 }
 
 func App(o Options) keelcli.App {
 	set := migrations.Set(o.Editions...)
 	opts := migrations.Options()
+	settings := NewSettings(o.Name, o.ConfigOptions)
+	env := seedenv.Env{Config: settings.MustConfig}
 
 	app := keelcli.App{
 		Name:        o.Name,
 		Description: o.Description,
 		Version:     buildVersion(),
 		Config: DatabaseConfig(ConfigParams{
-			Name:          o.Name,
-			ConfigOptions: o.ConfigOptions,
-			Migrations:    set,
-			Options:       opts,
-			Log:           os.Stderr,
+			Name:       o.Name,
+			Settings:   settings,
+			Migrations: set,
+			Options:    opts,
+			Log:        os.Stderr,
 		}),
 		Migrations: set,
 		Migrate:    opts,
 		Stamp:      StampPath,
 		Lint:       migrations.LintRules(),
+		Seeds:      Seeds(settings, o.Fixtures),
+		Tenants:    env.Tenants,
+		System:     env.System,
 		Extensions: extensions,
 		Commands:   append([]keelcli.Command{EnableVectorCommand}, o.Commands...),
 	}
@@ -79,26 +90,70 @@ func App(o Options) keelcli.App {
 	return app
 }
 
+func Seeds(settings *Settings, fixtures *seed.Registry) *seed.Registry {
+	registries := []*seed.Registry{reference.Seeds}
+	if fixtures != nil {
+		registries = append(registries, fixtures)
+	}
+
+	seeds := seed.Merge(registries...)
+	seeds.Add(scopeKeySeed(settings.RLS))
+
+	return seeds
+}
+
+type Settings struct {
+	name string
+	load func() (*config.Config, error)
+}
+
+func NewSettings(name string, options []config.LoaderOption) *Settings {
+	return &Settings{
+		name: name,
+		load: sync.OnceValues(func() (*config.Config, error) {
+			return config.NewLoader(append(
+				[]config.LoaderOption{config.WithConfigPath(configPath)},
+				options...,
+			)...).Load()
+		}),
+	}
+}
+
+func (s *Settings) Config() (*config.Config, error) {
+	cfg, err := s.load()
+	if err != nil {
+		return nil, fmt.Errorf("%w: load the Trenova configuration: %w", keelcli.ErrNoDatabase, err)
+	}
+
+	return cfg, nil
+}
+
+func (s *Settings) MustConfig() *config.Config {
+	cfg, err := s.load()
+	if err != nil {
+		return &config.Config{}
+	}
+
+	return cfg
+}
+
+func (s *Settings) RLS() config.RLSConfig {
+	return s.MustConfig().Database.RLS
+}
+
 type ConfigParams struct {
-	Name          string
-	ConfigOptions []config.LoaderOption
-	Migrations    migrate.Set
-	Options       migrate.Options
-	Log           io.Writer
+	Name       string
+	Settings   *Settings
+	Migrations migrate.Set
+	Options    migrate.Options
+	Log        io.Writer
 }
 
 func DatabaseConfig(p ConfigParams) func() (keel.Config, error) {
 	return func() (keel.Config, error) {
-		cfg, err := config.NewLoader(append(
-			[]config.LoaderOption{config.WithConfigPath(configPath)},
-			p.ConfigOptions...,
-		)...).Load()
+		cfg, err := p.Settings.Config()
 		if err != nil {
-			return keel.Config{}, fmt.Errorf(
-				"%w: load the Trenova configuration: %w",
-				keelcli.ErrNoDatabase,
-				err,
-			)
+			return keel.Config{}, err
 		}
 
 		dsn, err := pgxdsn.Normalize(
@@ -115,7 +170,10 @@ func DatabaseConfig(p ConfigParams) func() (keel.Config, error) {
 			return keel.Config{}, err
 		}
 
-		return keel.Config{DSN: dsn}, nil
+		kc := dbpool.KeelConfig(nil, nil)
+		kc.DSN = dsn
+
+		return kc, nil
 	}
 }
 

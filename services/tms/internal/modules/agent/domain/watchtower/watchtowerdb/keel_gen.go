@@ -356,22 +356,23 @@ var itemsTable = schema.Table{
 		{Name: "inserted", Quoted: `"inserted"`, Field: "Inserted", Kind: schema.KindBool, Flags: schema.FlagComputed, Label: `Inserted`, Doc: `Inserted is set by an upsert that reports whether the row was created rather than replaced; it is never selected on its own.`},
 		{Name: "reopened", Quoted: `"reopened"`, Field: "Reopened", Kind: schema.KindBool, Flags: schema.FlagComputed, Label: `Reopened`, Doc: `Reopened is set by an upsert that brought a resolved item back.`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 38},
-	Returning:  nil,
-	Version:    36,
-	AutoID:     0,
-	AutoCreate: 37,
-	AutoUpdate: 38,
-	IDPrefix:   "wt_",
-	New:        newItem,
-	NewN:       newNItem,
-	Size:       unsafe.Sizeof(watchtower.Item{}),
-	Ptr:        ptrItem,
-	Value:      valueItem,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 38},
+	Returning:    nil,
+	Version:      36,
+	AutoID:       0,
+	AutoCreate:   37,
+	AutoUpdate:   38,
+	IDPrefix:     "wt_",
+	New:          newItem,
+	NewN:         newNItem,
+	Size:         unsafe.Sizeof(watchtower.Item{}),
+	Ptr:          ptrItem,
+	Value:        valueItem,
+	BeforeCreate: beforeCreateItem,
 }
 
 var itemsRef = keel.Ref{Table: &itemsTable}
@@ -787,6 +788,10 @@ func valueItem(p unsafe.Pointer, c int32) any {
 		return r.Reopened
 	}
 	return nil
+}
+
+func beforeCreateItem(ctx context.Context, p unsafe.Pointer) error {
+	return (*watchtower.Item)(p).BeforeCreate(ctx)
 }
 
 // readsTable is the schema of watchtower.Read.

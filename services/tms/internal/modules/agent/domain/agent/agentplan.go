@@ -185,6 +185,10 @@ func (p *AgentPlan) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	return nil
 }
 
+func (p *AgentPlan) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (*AgentPlan) IsPendingDecision() {}
 
 // ScriptOrigin is the script a batch came from, as the model asked for it.

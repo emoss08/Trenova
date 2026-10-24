@@ -285,6 +285,10 @@ func (p *PTOPolicy) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	return nil
 }
 
+func (p *PTOPolicy) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 type PTOPolicyRule struct {
 	bun.BaseModel `bun:"table:pto_policy_rules,alias:ptpr" json:"-"`
 	keel.Table    `keel:"pto_policy_rules"`
@@ -494,4 +498,8 @@ func (r *PTOPolicyRule) BeforeAppendModel(_ context.Context, query bun.Query) er
 	}
 
 	return nil
+}
+
+func (r *PTOPolicyRule) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

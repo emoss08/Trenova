@@ -41,23 +41,24 @@ var applicationsTable = schema.Table{
 		{Name: "Payment", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Payment`},
 		{Name: "Invoice", Alias: "i", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Invoice`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Update:     []int32{3, 4, 5, 6, 7, 9},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 8,
-	AutoUpdate: 9,
-	IDPrefix:   "cpapp_",
-	New:        newApplication,
-	NewN:       newNApplication,
-	Size:       unsafe.Sizeof(customerpayment.Application{}),
-	Ptr:        ptrApplication,
-	Value:      valueApplication,
-	Attach:     attachApplication,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:       []int32{3, 4, 5, 6, 7, 9},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   8,
+	AutoUpdate:   9,
+	IDPrefix:     "cpapp_",
+	New:          newApplication,
+	NewN:         newNApplication,
+	Size:         unsafe.Sizeof(customerpayment.Application{}),
+	Ptr:          ptrApplication,
+	Value:        valueApplication,
+	Attach:       attachApplication,
+	BeforeCreate: beforeCreateApplication,
 }
 
 var applicationsRef = keel.Ref{Table: &applicationsTable}
@@ -200,6 +201,10 @@ func attachApplication(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateApplication(ctx context.Context, p unsafe.Pointer) error {
+	return (*customerpayment.Application)(p).BeforeCreate(ctx)
+}
+
 // creditMemoApplicationsTable is the schema of customerpayment.CreditMemoApplication.
 var creditMemoApplicationsTable = schema.Table{
 	Name:   "credit_memo_applications",
@@ -230,23 +235,24 @@ var creditMemoApplicationsTable = schema.Table{
 		{Name: "CreditMemo", Alias: "cm", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Credit Memo`},
 		{Name: "Invoice", Alias: "i", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Invoice`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 13,
-	AutoUpdate: 14,
-	IDPrefix:   "cma_",
-	New:        newCreditMemoApplication,
-	NewN:       newNCreditMemoApplication,
-	Size:       unsafe.Sizeof(customerpayment.CreditMemoApplication{}),
-	Ptr:        ptrCreditMemoApplication,
-	Value:      valueCreditMemoApplication,
-	Attach:     attachCreditMemoApplication,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   13,
+	AutoUpdate:   14,
+	IDPrefix:     "cma_",
+	New:          newCreditMemoApplication,
+	NewN:         newNCreditMemoApplication,
+	Size:         unsafe.Sizeof(customerpayment.CreditMemoApplication{}),
+	Ptr:          ptrCreditMemoApplication,
+	Value:        valueCreditMemoApplication,
+	Attach:       attachCreditMemoApplication,
+	BeforeCreate: beforeCreateCreditMemoApplication,
 }
 
 var creditMemoApplicationsRef = keel.Ref{Table: &creditMemoApplicationsTable}
@@ -437,6 +443,10 @@ func attachCreditMemoApplication(p unsafe.Pointer, rel int32, child unsafe.Point
 	}
 }
 
+func beforeCreateCreditMemoApplication(ctx context.Context, p unsafe.Pointer) error {
+	return (*customerpayment.CreditMemoApplication)(p).BeforeCreate(ctx)
+}
+
 // paymentsTable is the schema of customerpayment.Payment.
 var paymentsTable = schema.Table{
 	Name:   "customer_payments",
@@ -477,23 +487,24 @@ var paymentsTable = schema.Table{
 		{Name: "Applications", Alias: "a", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Applications`},
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Customer`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
-	Returning:  nil,
-	Version:    23,
-	AutoID:     0,
-	AutoCreate: 24,
-	AutoUpdate: 25,
-	IDPrefix:   "cpay_",
-	New:        newPayment,
-	NewN:       newNPayment,
-	Size:       unsafe.Sizeof(customerpayment.Payment{}),
-	Ptr:        ptrPayment,
-	Value:      valuePayment,
-	Attach:     attachPayment,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
+	Returning:    nil,
+	Version:      23,
+	AutoID:       0,
+	AutoCreate:   24,
+	AutoUpdate:   25,
+	IDPrefix:     "cpay_",
+	New:          newPayment,
+	NewN:         newNPayment,
+	Size:         unsafe.Sizeof(customerpayment.Payment{}),
+	Ptr:          ptrPayment,
+	Value:        valuePayment,
+	Attach:       attachPayment,
+	BeforeCreate: beforeCreatePayment,
 }
 
 var paymentsRef = keel.Ref{Table: &paymentsTable}
@@ -775,6 +786,10 @@ func attachPayment(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Customer = (*customer.Customer)(child)
 	}
+}
+
+func beforeCreatePayment(ctx context.Context, p unsafe.Pointer) error {
+	return (*customerpayment.Payment)(p).BeforeCreate(ctx)
 }
 
 func init() {

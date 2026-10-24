@@ -108,6 +108,10 @@ func (a *CreditMemoApplication) BeforeAppendModel(_ context.Context, query bun.Q
 	return nil
 }
 
+func (a *CreditMemoApplication) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (a *CreditMemoApplication) GetID() pulid.ID {
 	return a.ID
 }

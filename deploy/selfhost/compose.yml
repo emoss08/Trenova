@@ -423,9 +423,13 @@ services:
     logging: *logging
     networks: [data, egress]
 
-  # One-shot: applies the migrations (trenova-db up) before anything else
-  # touches the database. A database Bun migrated is adopted on its first run.
-  # The API and worker refuse to serve until the schema reaches their version.
+  # One-shot: applies the migrations, then every reference seed whose data or
+  # code changed (trenova-db up): states, hazmat and IFTA reference data, each
+  # organization's chart of accounts, document types and administrator
+  # permissions, and the row-level security scope key. Unchanged seeds are
+  # skipped by fingerprint, so a restart does no seed work. A database Bun
+  # migrated is adopted on its first run. The API and worker refuse to serve
+  # until the schema reaches their version.
   trenova-db:
     image: ghcr.io/emoss08/trenova/tms-db:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
     command: ["up", "-env", "production"]
@@ -441,28 +445,6 @@ services:
     logging: *logging
     networks: [data]
 
-  # One-shot: what migrations cannot do (the row-level security scope key,
-  # new administrator permissions, repeatable seeds), then the base seeds.
-  tms-seed:
-    <<: *tms-service
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        set -eu
-        trenova db reconcile
-        if [ "$${TRENOVA_RUN_SEEDS}" = "true" ]; then
-          trenova db seed --ignore-errors
-        else
-          echo "Skipping seeds: TRENOVA_RUN_SEEDS is not true"
-        fi
-    environment:
-      <<: *tms-environment
-      TRENOVA_RUN_SEEDS: ${TRENOVA_RUN_SEEDS:-true}
-    depends_on:
-      trenova-db:
-        condition: service_completed_successfully
-    restart: "no"
-    networks: [data]
 
   # One-shot: creates the first organization and its administrator from the
   # TRENOVA_BOOTSTRAP_* values in .env (trenova db bootstrap). It runs on every
@@ -495,7 +477,7 @@ services:
       TRENOVA_BOOTSTRAP_SCAC: ${TRENOVA_BOOTSTRAP_SCAC:-}
       TRENOVA_BOOTSTRAP_DOT_NUMBER: ${TRENOVA_BOOTSTRAP_DOT_NUMBER:-}
     depends_on:
-      tms-seed:
+      trenova-db:
         condition: service_completed_successfully
       redis:
         condition: service_healthy

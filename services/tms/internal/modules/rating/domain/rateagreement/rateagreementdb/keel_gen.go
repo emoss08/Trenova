@@ -75,23 +75,24 @@ var rateAgreementsTable = schema.Table{
 		{Name: "Versions", Alias: "v", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Versions`},
 		{Name: "FuelBinding", Alias: "fb", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Fuel Binding`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
-	Returning:  nil,
-	Version:    29,
-	AutoID:     0,
-	AutoCreate: 30,
-	AutoUpdate: 31,
-	IDPrefix:   "rag_",
-	New:        newRateAgreement,
-	NewN:       newNRateAgreement,
-	Size:       unsafe.Sizeof(rateagreement.RateAgreement{}),
-	Ptr:        ptrRateAgreement,
-	Value:      valueRateAgreement,
-	Attach:     attachRateAgreement,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
+	Returning:    nil,
+	Version:      29,
+	AutoID:       0,
+	AutoCreate:   30,
+	AutoUpdate:   31,
+	IDPrefix:     "rag_",
+	New:          newRateAgreement,
+	NewN:         newNRateAgreement,
+	Size:         unsafe.Sizeof(rateagreement.RateAgreement{}),
+	Ptr:          ptrRateAgreement,
+	Value:        valueRateAgreement,
+	Attach:       attachRateAgreement,
+	BeforeCreate: beforeCreateRateAgreement,
 }
 
 var rateAgreementsRef = keel.Ref{Table: &rateAgreementsTable}
@@ -469,6 +470,10 @@ func attachRateAgreement(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 5:
 		r.FuelBinding = (*rateagreement.RateAgreementFuelBinding)(child)
 	}
+}
+
+func beforeCreateRateAgreement(ctx context.Context, p unsafe.Pointer) error {
+	return (*rateagreement.RateAgreement)(p).BeforeCreate(ctx)
 }
 
 // rateAgreementAccessorialsTable is the schema of rateagreement.RateAgreementAccessorial.
@@ -1031,23 +1036,24 @@ var rateAgreementRulesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Agreement", Alias: "a", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Agreement`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 52},
-	Returning:  []int32{22, 23},
-	Version:    50,
-	AutoID:     0,
-	AutoCreate: 51,
-	AutoUpdate: 52,
-	IDPrefix:   "ragr_",
-	New:        newRateAgreementRule,
-	NewN:       newNRateAgreementRule,
-	Size:       unsafe.Sizeof(rateagreement.RateAgreementRule{}),
-	Ptr:        ptrRateAgreementRule,
-	Value:      valueRateAgreementRule,
-	Attach:     attachRateAgreementRule,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 52},
+	Returning:    []int32{22, 23},
+	Version:      50,
+	AutoID:       0,
+	AutoCreate:   51,
+	AutoUpdate:   52,
+	IDPrefix:     "ragr_",
+	New:          newRateAgreementRule,
+	NewN:         newNRateAgreementRule,
+	Size:         unsafe.Sizeof(rateagreement.RateAgreementRule{}),
+	Ptr:          ptrRateAgreementRule,
+	Value:        valueRateAgreementRule,
+	Attach:       attachRateAgreementRule,
+	BeforeCreate: beforeCreateRateAgreementRule,
 }
 
 var rateAgreementRulesRef = keel.Ref{Table: &rateAgreementRulesTable}
@@ -1570,6 +1576,10 @@ func attachRateAgreementRule(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	case 0:
 		r.Agreement = (*rateagreement.RateAgreement)(child)
 	}
+}
+
+func beforeCreateRateAgreementRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*rateagreement.RateAgreementRule)(p).BeforeCreate(ctx)
 }
 
 // rateAgreementVersionsTable is the schema of rateagreement.RateAgreementVersion.

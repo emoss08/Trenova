@@ -101,6 +101,10 @@ func (dec *DataEntryControl) BeforeAppendModel(_ context.Context, query bun.Quer
 	return nil
 }
 
+func (dec *DataEntryControl) BeforeCreate(ctx context.Context) error {
+	return dec.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func NewDefaultDataEntryControl(orgID, buID pulid.ID) *DataEntryControl {
 	return &DataEntryControl{
 		OrganizationID: orgID,

@@ -5,10 +5,8 @@ package editemplaterepository_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -25,16 +23,8 @@ type seededTenant struct {
 }
 
 func TestEnsureBaseTemplate_EveryTransactionSetCanBeSentOut(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	_, err := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var org seededTenant
 	require.NoError(t, db.NewSelect().
@@ -71,16 +61,8 @@ func TestEnsureBaseTemplate_EveryTransactionSetCanBeSentOut(t *testing.T) {
 }
 
 func TestEnsureStarterTemplate_GivesAnInboundSetItsOwnTemplate(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	_, err := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var org seededTenant
 	require.NoError(t, db.NewSelect().

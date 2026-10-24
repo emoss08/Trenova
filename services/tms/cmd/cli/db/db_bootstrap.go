@@ -196,14 +196,14 @@ func runBootstrap(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	manager, err := createManager()
+	maint, err := openDB(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
+		return fmt.Errorf("open the database: %w", err)
 	}
-	defer manager.Close()
+	defer maint.Close()
 
 	deps := bootstrapDeps{
-		conn:    postgres.WrapDB(manager.GetDB()),
+		conn:    postgres.WrapDB(maint),
 		auditor: redisSecurityAuditor,
 		cfg:     cfg,
 		logger:  logger,

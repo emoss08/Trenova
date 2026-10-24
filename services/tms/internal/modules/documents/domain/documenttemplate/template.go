@@ -180,6 +180,10 @@ func (t *DocumentTemplate) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
+func (t *DocumentTemplate) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // ErrTemplateKindUnknown is returned when a template names a kind the registry does
 // not publish, which would leave it unrenderable.
 var ErrTemplateKindUnknown = errors.New("template kind is not registered")

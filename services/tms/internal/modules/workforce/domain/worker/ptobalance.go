@@ -101,3 +101,7 @@ func (b *WorkerPTOBalance) BeforeAppendModel(_ context.Context, query bun.Query)
 
 	return nil
 }
+
+func (b *WorkerPTOBalance) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

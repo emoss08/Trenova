@@ -190,6 +190,10 @@ func (r *Request) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (r *Request) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (l *Line) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
@@ -204,4 +208,8 @@ func (l *Line) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (l *Line) BeforeCreate(ctx context.Context) error {
+	return l.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

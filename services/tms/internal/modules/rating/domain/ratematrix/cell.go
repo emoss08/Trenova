@@ -342,6 +342,10 @@ func (rmc *RateMatrixCell) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
+func (rmc *RateMatrixCell) BeforeCreate(ctx context.Context) error {
+	return rmc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (rmc *RateMatrixCell) GetID() pulid.ID {
 	return rmc.ID
 }

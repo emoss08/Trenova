@@ -735,6 +735,10 @@ func (dc *DispatchControl) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
+func (dc *DispatchControl) BeforeCreate(ctx context.Context) error {
+	return dc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func NewDefaultDispatchControl(orgID, buID pulid.ID) *DispatchControl {
 	return &DispatchControl{
 		OrganizationID:                       orgID,

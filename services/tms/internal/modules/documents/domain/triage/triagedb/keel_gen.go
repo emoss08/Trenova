@@ -39,22 +39,23 @@ var activitiesTable = schema.Table{
 		{Name: "record_id", Quoted: `"record_id"`, Field: "RecordID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Record ID`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 13,
-	AutoUpdate: -1,
-	IDPrefix:   "iact_",
-	New:        newActivity,
-	NewN:       newNActivity,
-	Size:       unsafe.Sizeof(triage.Activity{}),
-	Ptr:        ptrActivity,
-	Value:      valueActivity,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   13,
+	AutoUpdate:   -1,
+	IDPrefix:     "iact_",
+	New:          newActivity,
+	NewN:         newNActivity,
+	Size:         unsafe.Sizeof(triage.Activity{}),
+	Ptr:          ptrActivity,
+	Value:        valueActivity,
+	BeforeCreate: beforeCreateActivity,
 }
 
 var activitiesRef = keel.Ref{Table: &activitiesTable}
@@ -228,6 +229,10 @@ func valueActivity(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateActivity(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.Activity)(p).BeforeCreate(ctx)
+}
+
 // repliesTable is the schema of triage.Reply.
 var repliesTable = schema.Table{
 	Name:   "inbound_replies",
@@ -264,22 +269,23 @@ var repliesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
-	Returning:  nil,
-	Version:    23,
-	AutoID:     0,
-	AutoCreate: 24,
-	AutoUpdate: 25,
-	IDPrefix:   "irpl_",
-	New:        newReply,
-	NewN:       newNReply,
-	Size:       unsafe.Sizeof(triage.Reply{}),
-	Ptr:        ptrReply,
-	Value:      valueReply,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
+	Returning:    nil,
+	Version:      23,
+	AutoID:       0,
+	AutoCreate:   24,
+	AutoUpdate:   25,
+	IDPrefix:     "irpl_",
+	New:          newReply,
+	NewN:         newNReply,
+	Size:         unsafe.Sizeof(triage.Reply{}),
+	Ptr:          ptrReply,
+	Value:        valueReply,
+	BeforeCreate: beforeCreateReply,
 }
 
 var repliesRef = keel.Ref{Table: &repliesTable}
@@ -547,6 +553,10 @@ func valueReply(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateReply(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.Reply)(p).BeforeCreate(ctx)
+}
+
 // replyTemplatesTable is the schema of triage.ReplyTemplate.
 var replyTemplatesTable = schema.Table{
 	Name:   "triage_reply_templates",
@@ -566,22 +576,23 @@ var replyTemplatesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{3, 4, 5, 8},
-	Returning:  nil,
-	Version:    6,
-	AutoID:     0,
-	AutoCreate: 7,
-	AutoUpdate: 8,
-	IDPrefix:   "ttpl_",
-	New:        newReplyTemplate,
-	NewN:       newNReplyTemplate,
-	Size:       unsafe.Sizeof(triage.ReplyTemplate{}),
-	Ptr:        ptrReplyTemplate,
-	Value:      valueReplyTemplate,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Update:       []int32{3, 4, 5, 8},
+	Returning:    nil,
+	Version:      6,
+	AutoID:       0,
+	AutoCreate:   7,
+	AutoUpdate:   8,
+	IDPrefix:     "ttpl_",
+	New:          newReplyTemplate,
+	NewN:         newNReplyTemplate,
+	Size:         unsafe.Sizeof(triage.ReplyTemplate{}),
+	Ptr:          ptrReplyTemplate,
+	Value:        valueReplyTemplate,
+	BeforeCreate: beforeCreateReplyTemplate,
 }
 
 var replyTemplatesRef = keel.Ref{Table: &replyTemplatesTable}
@@ -700,6 +711,10 @@ func valueReplyTemplate(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateReplyTemplate(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.ReplyTemplate)(p).BeforeCreate(ctx)
 }
 
 // responseTargetsTable is the schema of triage.ResponseTarget.
@@ -868,22 +883,23 @@ var rulesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
-	Returning:  nil,
-	Version:    14,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "trule_",
-	New:        newRule,
-	NewN:       newNRule,
-	Size:       unsafe.Sizeof(triage.Rule{}),
-	Ptr:        ptrRule,
-	Value:      valueRule,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
+	Returning:    nil,
+	Version:      14,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "trule_",
+	New:          newRule,
+	NewN:         newNRule,
+	Size:         unsafe.Sizeof(triage.Rule{}),
+	Ptr:          ptrRule,
+	Value:        valueRule,
+	BeforeCreate: beforeCreateRule,
 }
 
 var rulesRef = keel.Ref{Table: &rulesTable}
@@ -1069,6 +1085,10 @@ func valueRule(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.Rule)(p).BeforeCreate(ctx)
 }
 
 // senderHintsTable is the schema of triage.SenderHint.
@@ -1347,22 +1367,23 @@ var viewsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{3, 4, 5, 6, 8},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 7,
-	AutoUpdate: 8,
-	IDPrefix:   "tview_",
-	New:        newView,
-	NewN:       newNView,
-	Size:       unsafe.Sizeof(triage.View{}),
-	Ptr:        ptrView,
-	Value:      valueView,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Update:       []int32{3, 4, 5, 6, 8},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   7,
+	AutoUpdate:   8,
+	IDPrefix:     "tview_",
+	New:          newView,
+	NewN:         newNView,
+	Size:         unsafe.Sizeof(triage.View{}),
+	Ptr:          ptrView,
+	Value:        valueView,
+	BeforeCreate: beforeCreateView,
 }
 
 var viewsRef = keel.Ref{Table: &viewsTable}
@@ -1474,6 +1495,10 @@ func valueView(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateView(ctx context.Context, p unsafe.Pointer) error {
+	return (*triage.View)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

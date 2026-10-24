@@ -170,3 +170,7 @@ func (sc *SettlementControl) BeforeAppendModel(_ context.Context, query bun.Quer
 	}
 	return nil
 }
+
+func (sc *SettlementControl) BeforeCreate(ctx context.Context) error {
+	return sc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

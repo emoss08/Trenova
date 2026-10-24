@@ -144,3 +144,7 @@ func (o *Order) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (o *Order) BeforeCreate(ctx context.Context) error {
+	return o.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

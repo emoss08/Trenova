@@ -149,3 +149,7 @@ func (a *AccessorialCharge) BeforeAppendModel(_ context.Context, query bun.Query
 
 	return nil
 }
+
+func (a *AccessorialCharge) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

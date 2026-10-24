@@ -320,6 +320,10 @@ func (p *PayProfile) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+func (p *PayProfile) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (c *PayProfileComponent) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	switch query.(type) {
@@ -332,4 +336,8 @@ func (c *PayProfileComponent) BeforeAppendModel(_ context.Context, query bun.Que
 		c.UpdatedAt = now
 	}
 	return nil
+}
+
+func (c *PayProfileComponent) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

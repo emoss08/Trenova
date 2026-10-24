@@ -288,6 +288,28 @@ type Sequence struct {
 	UpdatedAt       int64        `bun:"updated_at,notnull" keel:"updated_at"`
 }
 
+func (c *SequenceConfig) Format() *SequenceFormat {
+	return &SequenceFormat{
+		Type:                    c.SequenceType,
+		Prefix:                  c.Prefix,
+		IncludeYear:             c.IncludeYear,
+		YearDigits:              int(c.YearDigits),
+		IncludeMonth:            c.IncludeMonth,
+		IncludeWeekNumber:       c.IncludeWeekNumber,
+		IncludeDay:              c.IncludeDay,
+		SequenceDigits:          int(c.SequenceDigits),
+		IncludeLocationCode:     c.IncludeLocationCode,
+		IncludeRandomDigits:     c.IncludeRandomDigits,
+		RandomDigitsCount:       int(c.RandomDigitsCount),
+		IncludeCheckDigit:       c.IncludeCheckDigit,
+		IncludeBusinessUnitCode: c.IncludeBusinessUnitCode,
+		UseSeparators:           c.UseSeparators,
+		SeparatorChar:           c.SeparatorChar,
+		AllowCustomFormat:       c.AllowCustomFormat,
+		CustomFormat:            c.CustomFormat,
+	}
+}
+
 func (c *SequenceConfig) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(c,
 		validation.Field(&c.OrganizationID,

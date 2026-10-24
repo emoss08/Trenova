@@ -304,6 +304,10 @@ func (m *Message) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (m *Message) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func StampUnstamped(messages []Message, now int64) {
 	next := now
 	for idx := len(messages) - 1; idx >= 0; idx-- {

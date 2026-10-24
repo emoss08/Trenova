@@ -602,6 +602,7 @@ func All() []*schema.Table {
 		shipmenttypedb.ShipmentTypesSchema(),
 		shipmentdb.ShipmentsSchema(),
 		sidebarpreferencedb.SidebarPreferencesSchema(),
+		journalsourcedb.SourceJournalLinksSchema(),
 		tenantdb.SSOConfigsSchema(),
 		tenantdb.SSOIdentityLinksSchema(),
 		stopetadb.StopETAsSchema(),

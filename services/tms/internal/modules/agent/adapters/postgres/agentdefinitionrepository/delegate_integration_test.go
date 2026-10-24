@@ -5,13 +5,10 @@ package agentdefinitionrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -26,18 +23,8 @@ array as '{}', and the column helper replaced that "{}" with the column name,
 so Postgres was handed the array literal "delegate_ids".
 */
 func TestDelete_RemovesTheAgentFromEveryAllowlist(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var rows []tierDefinitionRow
 	require.NoError(t, db.NewSelect().
@@ -51,7 +38,7 @@ func TestDelete_RemovesTheAgentFromEveryAllowlist(t *testing.T) {
 	asker, asked := rows[0], rows[1]
 	require.Equal(t, asker.OrganizationID, asked.OrganizationID)
 
-	_, err = db.NewUpdate().
+	_, err := db.NewUpdate().
 		Table("agent_definitions").
 		Set("delegate_ids = ARRAY[?]::text[]", asked.ID.String()).
 		Where("id = ?", asker.ID).

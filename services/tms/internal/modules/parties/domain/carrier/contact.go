@@ -95,3 +95,7 @@ func (cc *CarrierContact) BeforeAppendModel(_ context.Context, query bun.Query) 
 
 	return nil
 }
+
+func (cc *CarrierContact) BeforeCreate(ctx context.Context) error {
+	return cc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

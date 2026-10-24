@@ -225,6 +225,10 @@ func (e *WorkerEmploymentEvent) BeforeAppendModel(_ context.Context, query bun.Q
 	return nil
 }
 
+func (e *WorkerEmploymentEvent) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // EmploymentState is the slice of a worker the events act on, kept small so
 // the transition rules are testable without a database.
 type EmploymentState struct {

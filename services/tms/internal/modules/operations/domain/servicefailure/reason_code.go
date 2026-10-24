@@ -180,3 +180,7 @@ func (rc *ReasonCode) BeforeAppendModel(_ context.Context, query bun.Query) erro
 
 	return nil
 }
+
+func (rc *ReasonCode) BeforeCreate(ctx context.Context) error {
+	return rc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

@@ -72,6 +72,10 @@ func (e *CustomerEmailProfile) BeforeAppendModel(_ context.Context, query bun.Qu
 	return nil
 }
 
+func (e *CustomerEmailProfile) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (p *CustomerEmailProfile) Validate(multiErr *errortypes.MultiError) {
 	p.ValidateForDelivery(multiErr, true)
 }

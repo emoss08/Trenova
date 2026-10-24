@@ -373,6 +373,10 @@ func (ra *RateAgreement) BeforeAppendModel(_ context.Context, query bun.Query) e
 	return nil
 }
 
+func (ra *RateAgreement) BeforeCreate(ctx context.Context) error {
+	return ra.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (ra *RateAgreement) GetID() pulid.ID {
 	return ra.ID
 }

@@ -176,3 +176,7 @@ func (d *AgentDecision) BeforeAppendModel(_ context.Context, query bun.Query) er
 
 	return nil
 }
+
+func (d *AgentDecision) BeforeCreate(ctx context.Context) error {
+	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

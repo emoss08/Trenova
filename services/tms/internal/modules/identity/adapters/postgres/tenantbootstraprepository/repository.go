@@ -82,7 +82,7 @@ func (r *repository) Bootstrap(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tenantports.BootstrapTenantResult, error) {
-			db := r.db.DBForContext(ctx)
+			db := r.db.Keel(ctx)
 
 			if req.Organization.StateID.IsNil() {
 				stateID, err := r.resolveState(ctx, req.StateAbbreviation)

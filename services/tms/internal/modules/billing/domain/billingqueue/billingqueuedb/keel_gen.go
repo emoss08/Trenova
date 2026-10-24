@@ -569,23 +569,24 @@ var billingQueueItemsTable = schema.Table{
 		{Name: "AssignedBiller", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Assigned Biller`},
 		{Name: "CanceledBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{17}, Remote: []int32{0}, Label: `Canceled By`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 36},
-	Returning:  nil,
-	Version:    34,
-	AutoID:     0,
-	AutoCreate: 35,
-	AutoUpdate: 36,
-	IDPrefix:   "bqi_",
-	New:        newBillingQueueItem,
-	NewN:       newNBillingQueueItem,
-	Size:       unsafe.Sizeof(billingqueue.BillingQueueItem{}),
-	Ptr:        ptrBillingQueueItem,
-	Value:      valueBillingQueueItem,
-	Attach:     attachBillingQueueItem,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 36},
+	Returning:    nil,
+	Version:      34,
+	AutoID:       0,
+	AutoCreate:   35,
+	AutoUpdate:   36,
+	IDPrefix:     "bqi_",
+	New:          newBillingQueueItem,
+	NewN:         newNBillingQueueItem,
+	Size:         unsafe.Sizeof(billingqueue.BillingQueueItem{}),
+	Ptr:          ptrBillingQueueItem,
+	Value:        valueBillingQueueItem,
+	Attach:       attachBillingQueueItem,
+	BeforeCreate: beforeCreateBillingQueueItem,
 }
 
 var billingQueueItemsRef = keel.Ref{Table: &billingQueueItemsTable}
@@ -1016,6 +1017,10 @@ func attachBillingQueueItem(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateBillingQueueItem(ctx context.Context, p unsafe.Pointer) error {
+	return (*billingqueue.BillingQueueItem)(p).BeforeCreate(ctx)
+}
+
 // issuesTable is the schema of billingqueue.Issue.
 var issuesTable = schema.Table{
 	Name:   "billing_queue_issues",
@@ -1335,22 +1340,23 @@ var itemEventsTable = schema.Table{
 		{Name: "at", Quoted: `"at"`, Field: "At", Kind: schema.KindInt64, Flags: 0, Label: `At`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: -1,
-	IDPrefix:   "bqe_",
-	New:        newItemEvent,
-	NewN:       newNItemEvent,
-	Size:       unsafe.Sizeof(billingqueue.ItemEvent{}),
-	Ptr:        ptrItemEvent,
-	Value:      valueItemEvent,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   -1,
+	IDPrefix:     "bqe_",
+	New:          newItemEvent,
+	NewN:         newNItemEvent,
+	Size:         unsafe.Sizeof(billingqueue.ItemEvent{}),
+	Ptr:          ptrItemEvent,
+	Value:        valueItemEvent,
+	BeforeCreate: beforeCreateItemEvent,
 }
 
 var itemEventsRef = keel.Ref{Table: &itemEventsTable}
@@ -1496,6 +1502,10 @@ func valueItemEvent(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	}
 	return nil
+}
+
+func beforeCreateItemEvent(ctx context.Context, p unsafe.Pointer) error {
+	return (*billingqueue.ItemEvent)(p).BeforeCreate(ctx)
 }
 
 func init() {

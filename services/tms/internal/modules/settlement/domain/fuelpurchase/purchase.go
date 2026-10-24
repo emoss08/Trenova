@@ -292,3 +292,7 @@ func (p *FuelPurchase) BeforeAppendModel(_ context.Context, query bun.Query) err
 
 	return nil
 }
+
+func (p *FuelPurchase) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

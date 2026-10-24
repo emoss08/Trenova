@@ -106,3 +106,7 @@ func (sc *CarrierSettlementControl) BeforeAppendModel(_ context.Context, query b
 	}
 	return nil
 }
+
+func (sc *CarrierSettlementControl) BeforeCreate(ctx context.Context) error {
+	return sc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

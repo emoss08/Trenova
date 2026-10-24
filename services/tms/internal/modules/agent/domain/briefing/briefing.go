@@ -158,6 +158,10 @@ func (b *Briefing) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (b *Briefing) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // Normalize bounds what a person reads to what the columns hold, and drops
 // a line whose path could leave the application. A briefing that runs long
 // is cut rather than refused: the morning is not worth failing over.

@@ -97,6 +97,10 @@ func (m *EDIMessage) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+func (m *EDIMessage) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 type EDIMessageValidationError struct {
 	bun.BaseModel `json:"-" bun:"table:edi_message_validation_errors,alias:emve"`
 	keel.Table    `keel:"edi_message_validation_errors"`

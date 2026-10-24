@@ -45,23 +45,24 @@ var distanceOverridesTable = schema.Table{
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Customer`},
 		{Name: "IntermediateStops", Alias: "is_", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{0}, Label: `Intermediate Stops`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:     []int32{3, 4, 5, 6, 7, 10},
-	Returning:  nil,
-	Version:    8,
-	AutoID:     0,
-	AutoCreate: 9,
-	AutoUpdate: 10,
-	IDPrefix:   "do_",
-	New:        newDistanceOverride,
-	NewN:       newNDistanceOverride,
-	Size:       unsafe.Sizeof(distanceoverride.DistanceOverride{}),
-	Ptr:        ptrDistanceOverride,
-	Value:      valueDistanceOverride,
-	Attach:     attachDistanceOverride,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:       []int32{3, 4, 5, 6, 7, 10},
+	Returning:    nil,
+	Version:      8,
+	AutoID:       0,
+	AutoCreate:   9,
+	AutoUpdate:   10,
+	IDPrefix:     "do_",
+	New:          newDistanceOverride,
+	NewN:         newNDistanceOverride,
+	Size:         unsafe.Sizeof(distanceoverride.DistanceOverride{}),
+	Ptr:          ptrDistanceOverride,
+	Value:        valueDistanceOverride,
+	Attach:       attachDistanceOverride,
+	BeforeCreate: beforeCreateDistanceOverride,
 }
 
 var distanceOverridesRef = keel.Ref{Table: &distanceOverridesTable}
@@ -237,6 +238,10 @@ func attachDistanceOverride(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 3:
 		r.IntermediateStops = append(r.IntermediateStops, (*distanceoverride.DistanceOverrideStop)(child))
 	}
+}
+
+func beforeCreateDistanceOverride(ctx context.Context, p unsafe.Pointer) error {
+	return (*distanceoverride.DistanceOverride)(p).BeforeCreate(ctx)
 }
 
 // distanceOverrideStopsTable is the schema of distanceoverride.DistanceOverrideStop.

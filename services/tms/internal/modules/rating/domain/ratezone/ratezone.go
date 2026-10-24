@@ -190,6 +190,10 @@ func (rz *RateZone) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	return nil
 }
 
+func (rz *RateZone) BeforeCreate(ctx context.Context) error {
+	return rz.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (rz *RateZone) GetID() pulid.ID {
 	return rz.ID
 }

@@ -60,6 +60,10 @@ func (s *Stop) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (s *Stop) BeforeCreate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (s *Stop) IsOriginStop() bool {
 	return s.Type == StopTypePickup || s.Type == StopTypeSplitPickup
 }

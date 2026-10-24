@@ -51,23 +51,24 @@ var agentDecisionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "DecidedBy", Alias: "db", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Decided By`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
-	Returning:  nil,
-	Version:    20,
-	AutoID:     0,
-	AutoCreate: 21,
-	AutoUpdate: 22,
-	IDPrefix:   "ad_",
-	New:        newAgentDecision,
-	NewN:       newNAgentDecision,
-	Size:       unsafe.Sizeof(agent.AgentDecision{}),
-	Ptr:        ptrAgentDecision,
-	Value:      valueAgentDecision,
-	Attach:     attachAgentDecision,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
+	Returning:    nil,
+	Version:      20,
+	AutoID:       0,
+	AutoCreate:   21,
+	AutoUpdate:   22,
+	IDPrefix:     "ad_",
+	New:          newAgentDecision,
+	NewN:         newNAgentDecision,
+	Size:         unsafe.Sizeof(agent.AgentDecision{}),
+	Ptr:          ptrAgentDecision,
+	Value:        valueAgentDecision,
+	Attach:       attachAgentDecision,
+	BeforeCreate: beforeCreateAgentDecision,
 }
 
 var agentDecisionsRef = keel.Ref{Table: &agentDecisionsTable}
@@ -335,6 +336,10 @@ func attachAgentDecision(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateAgentDecision(ctx context.Context, p unsafe.Pointer) error {
+	return (*agent.AgentDecision)(p).BeforeCreate(ctx)
+}
+
 // agentExceptionsTable is the schema of agent.AgentException.
 var agentExceptionsTable = schema.Table{
 	Name:   "agent_exceptions",
@@ -364,23 +369,24 @@ var agentExceptionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Run", Alias: "r", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Run`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
-	Returning:  nil,
-	Version:    13,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
-	IDPrefix:   "ax_",
-	New:        newAgentException,
-	NewN:       newNAgentException,
-	Size:       unsafe.Sizeof(agent.AgentException{}),
-	Ptr:        ptrAgentException,
-	Value:      valueAgentException,
-	Attach:     attachAgentException,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
+	Returning:    nil,
+	Version:      13,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   15,
+	IDPrefix:     "ax_",
+	New:          newAgentException,
+	NewN:         newNAgentException,
+	Size:         unsafe.Sizeof(agent.AgentException{}),
+	Ptr:          ptrAgentException,
+	Value:        valueAgentException,
+	Attach:       attachAgentException,
+	BeforeCreate: beforeCreateAgentException,
 }
 
 var agentExceptionsRef = keel.Ref{Table: &agentExceptionsTable}
@@ -564,6 +570,10 @@ func attachAgentException(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateAgentException(ctx context.Context, p unsafe.Pointer) error {
+	return (*agent.AgentException)(p).BeforeCreate(ctx)
+}
+
 // agentPlansTable is the schema of agent.AgentPlan.
 var agentPlansTable = schema.Table{
 	Name:   "agent_plans",
@@ -603,23 +613,24 @@ var agentPlansTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Run", Alias: "r", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Run`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
-	Returning:  nil,
-	Version:    22,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "apl_",
-	New:        newAgentPlan,
-	NewN:       newNAgentPlan,
-	Size:       unsafe.Sizeof(agent.AgentPlan{}),
-	Ptr:        ptrAgentPlan,
-	Value:      valueAgentPlan,
-	Attach:     attachAgentPlan,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Returning:    nil,
+	Version:      22,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "apl_",
+	New:          newAgentPlan,
+	NewN:         newNAgentPlan,
+	Size:         unsafe.Sizeof(agent.AgentPlan{}),
+	Ptr:          ptrAgentPlan,
+	Value:        valueAgentPlan,
+	Attach:       attachAgentPlan,
+	BeforeCreate: beforeCreateAgentPlan,
 }
 
 var agentPlansRef = keel.Ref{Table: &agentPlansTable}
@@ -902,6 +913,10 @@ func attachAgentPlan(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateAgentPlan(ctx context.Context, p unsafe.Pointer) error {
+	return (*agent.AgentPlan)(p).BeforeCreate(ctx)
+}
+
 // agentProposalsTable is the schema of agent.AgentProposal.
 var agentProposalsTable = schema.Table{
 	Name:   "agent_proposals",
@@ -955,23 +970,24 @@ var agentProposalsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Run", Alias: "r", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Run`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39},
-	Returning:  nil,
-	Version:    37,
-	AutoID:     0,
-	AutoCreate: 38,
-	AutoUpdate: 39,
-	IDPrefix:   "ap_",
-	New:        newAgentProposal,
-	NewN:       newNAgentProposal,
-	Size:       unsafe.Sizeof(agent.AgentProposal{}),
-	Ptr:        ptrAgentProposal,
-	Value:      valueAgentProposal,
-	Attach:     attachAgentProposal,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39},
+	Returning:    nil,
+	Version:      37,
+	AutoID:       0,
+	AutoCreate:   38,
+	AutoUpdate:   39,
+	IDPrefix:     "ap_",
+	New:          newAgentProposal,
+	NewN:         newNAgentProposal,
+	Size:         unsafe.Sizeof(agent.AgentProposal{}),
+	Ptr:          ptrAgentProposal,
+	Value:        valueAgentProposal,
+	Attach:       attachAgentProposal,
+	BeforeCreate: beforeCreateAgentProposal,
 }
 
 var agentProposalsRef = keel.Ref{Table: &agentProposalsTable}
@@ -1395,6 +1411,10 @@ func attachAgentProposal(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateAgentProposal(ctx context.Context, p unsafe.Pointer) error {
+	return (*agent.AgentProposal)(p).BeforeCreate(ctx)
+}
+
 // agentRunsTable is the schema of agent.AgentRun.
 var agentRunsTable = schema.Table{
 	Name:   "agent_runs",
@@ -1435,22 +1455,23 @@ var agentRunsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
-	Returning:  nil,
-	Version:    27,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "ar_",
-	New:        newAgentRun,
-	NewN:       newNAgentRun,
-	Size:       unsafe.Sizeof(agent.AgentRun{}),
-	Ptr:        ptrAgentRun,
-	Value:      valueAgentRun,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Returning:    nil,
+	Version:      27,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "ar_",
+	New:          newAgentRun,
+	NewN:         newNAgentRun,
+	Size:         unsafe.Sizeof(agent.AgentRun{}),
+	Ptr:          ptrAgentRun,
+	Value:        valueAgentRun,
+	BeforeCreate: beforeCreateAgentRun,
 }
 
 var agentRunsRef = keel.Ref{Table: &agentRunsTable}
@@ -1761,6 +1782,10 @@ func valueAgentRun(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateAgentRun(ctx context.Context, p unsafe.Pointer) error {
+	return (*agent.AgentRun)(p).BeforeCreate(ctx)
 }
 
 // agentRunEventsTable is the schema of agent.AgentRunEvent.
@@ -2269,7 +2294,7 @@ var evaluationsTable = schema.Table{
 	Plural: `Evaluations`,
 	Doc:    "Evaluation is one recorded run replayed against its agent as it is now.\n\nThe replay runs with every write simulated, so nothing it does reaches a record, and the original's proposals are matched against what the replay would have proposed. The decisions people made on the original are the yardstick: a change the replay drops that a person rejected is an improvement, one it drops that a person approved is a regression.",
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
 		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: 0, Label: `Agent Definition ID`},
@@ -2311,10 +2336,10 @@ var evaluationsTable = schema.Table{
 	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33},
 	Returning:  nil,
 	Version:    31,
-	AutoID:     -1,
+	AutoID:     0,
 	AutoCreate: 32,
 	AutoUpdate: 33,
-	IDPrefix:   "",
+	IDPrefix:   "aeval_",
 	New:        newEvaluation,
 	NewN:       newNEvaluation,
 	Size:       unsafe.Sizeof(agent.Evaluation{}),
@@ -3712,7 +3737,7 @@ var toolRuleOverridesTable = schema.Table{
 	Label:  `Tool Rule Override`,
 	Plural: `Tool Rule Overrides`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
 		{Name: "tool_name", Quoted: `"tool_name"`, Field: "ToolName", Kind: schema.KindString, Flags: 0, Label: `Tool Name`},
@@ -3731,10 +3756,10 @@ var toolRuleOverridesTable = schema.Table{
 	Update:     []int32{3, 4, 5, 6, 7, 10},
 	Returning:  nil,
 	Version:    8,
-	AutoID:     -1,
+	AutoID:     0,
 	AutoCreate: 9,
 	AutoUpdate: 10,
-	IDPrefix:   "",
+	IDPrefix:   "atro_",
 	New:        newToolRuleOverride,
 	NewN:       newNToolRuleOverride,
 	Size:       unsafe.Sizeof(agent.ToolRuleOverride{}),
@@ -3908,22 +3933,23 @@ var toolTrustsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
-	Returning:  nil,
-	Version:    14,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "att_",
-	New:        newToolTrust,
-	NewN:       newNToolTrust,
-	Size:       unsafe.Sizeof(agent.ToolTrust{}),
-	Ptr:        ptrToolTrust,
-	Value:      valueToolTrust,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
+	Returning:    nil,
+	Version:      14,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "att_",
+	New:          newToolTrust,
+	NewN:         newNToolTrust,
+	Size:         unsafe.Sizeof(agent.ToolTrust{}),
+	Ptr:          ptrToolTrust,
+	Value:        valueToolTrust,
+	BeforeCreate: beforeCreateToolTrust,
 }
 
 var toolTrustsRef = keel.Ref{Table: &toolTrustsTable}
@@ -4107,6 +4133,10 @@ func valueToolTrust(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateToolTrust(ctx context.Context, p unsafe.Pointer) error {
+	return (*agent.ToolTrust)(p).BeforeCreate(ctx)
 }
 
 func init() {

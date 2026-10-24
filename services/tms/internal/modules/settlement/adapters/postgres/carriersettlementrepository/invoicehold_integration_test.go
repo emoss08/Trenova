@@ -6,10 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicarrierinvoicerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -19,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/schema/migrations"
@@ -46,15 +43,8 @@ type holdFixture struct {
 func setupHoldFixture(t *testing.T) *holdFixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "test-system-password"},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var tenantRow struct {
 		OrganizationID pulid.ID `bun:"organization_id"`
@@ -94,7 +84,7 @@ func setupHoldFixture(t *testing.T) *holdFixture {
 		Code:           "HOLD-TEST",
 		Name:           "Hold Test Partner",
 	}
-	_, err = db.NewInsert().Model(partner).Exec(ctx)
+	_, err := db.NewInsert().Model(partner).Exec(ctx)
 	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)

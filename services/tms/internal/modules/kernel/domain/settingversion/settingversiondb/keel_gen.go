@@ -25,7 +25,7 @@ var settingVersionsTable = schema.Table{
 	Plural: `Setting Versions`,
 	Doc:    `SettingVersion is one setting as it stood after a save. The snapshot is the setting's own JSON, never a secret: a provider's key is not part of it.`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
 		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, Enum: enumKind[:]},
@@ -38,23 +38,24 @@ var settingVersionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Author", Alias: "a", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Author`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{3, 4, 6, 7},
-	Returning:  nil,
-	Version:    5,
-	AutoID:     -1,
-	AutoCreate: 8,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newSettingVersion,
-	NewN:       newNSettingVersion,
-	Size:       unsafe.Sizeof(settingversion.SettingVersion{}),
-	Ptr:        ptrSettingVersion,
-	Value:      valueSettingVersion,
-	Attach:     attachSettingVersion,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Update:       []int32{3, 4, 6, 7},
+	Returning:    nil,
+	Version:      5,
+	AutoID:       0,
+	AutoCreate:   8,
+	AutoUpdate:   -1,
+	IDPrefix:     "aisv_",
+	New:          newSettingVersion,
+	NewN:         newNSettingVersion,
+	Size:         unsafe.Sizeof(settingversion.SettingVersion{}),
+	Ptr:          ptrSettingVersion,
+	Value:        valueSettingVersion,
+	Attach:       attachSettingVersion,
+	BeforeCreate: beforeCreateSettingVersion,
 }
 
 var settingVersionsRef = keel.Ref{Table: &settingVersionsTable}
@@ -189,6 +190,10 @@ func attachSettingVersion(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Author = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateSettingVersion(ctx context.Context, p unsafe.Pointer) error {
+	return (*settingversion.SettingVersion)(p).BeforeCreate(ctx)
 }
 
 func init() {

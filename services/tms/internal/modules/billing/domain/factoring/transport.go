@@ -241,6 +241,10 @@ func (t *Transport) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	return nil
 }
 
+func (t *Transport) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (t *Transport) GetID() pulid.ID             { return t.ID }
 func (t *Transport) GetOrganizationID() pulid.ID { return t.OrganizationID }
 func (t *Transport) GetBusinessUnitID() pulid.ID { return t.BusinessUnitID }

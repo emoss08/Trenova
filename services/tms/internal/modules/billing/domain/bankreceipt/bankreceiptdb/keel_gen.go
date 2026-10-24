@@ -46,23 +46,24 @@ var bankReceiptsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "MatchedCustomerPayment", Alias: "mcp", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `Matched Customer Payment`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "brcpt_",
-	New:        newBankReceipt,
-	NewN:       newNBankReceipt,
-	Size:       unsafe.Sizeof(bankreceipt.BankReceipt{}),
-	Ptr:        ptrBankReceipt,
-	Value:      valueBankReceipt,
-	Attach:     attachBankReceipt,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "brcpt_",
+	New:          newBankReceipt,
+	NewN:         newNBankReceipt,
+	Size:         unsafe.Sizeof(bankreceipt.BankReceipt{}),
+	Ptr:          ptrBankReceipt,
+	Value:        valueBankReceipt,
+	Attach:       attachBankReceipt,
+	BeforeCreate: beforeCreateBankReceipt,
 }
 
 var bankReceiptsRef = keel.Ref{Table: &bankReceiptsTable}
@@ -278,6 +279,10 @@ func attachBankReceipt(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.MatchedCustomerPayment = (*customerpayment.Payment)(child)
 	}
+}
+
+func beforeCreateBankReceipt(ctx context.Context, p unsafe.Pointer) error {
+	return (*bankreceipt.BankReceipt)(p).BeforeCreate(ctx)
 }
 
 func init() {

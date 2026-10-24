@@ -144,6 +144,10 @@ func (b *BillingQueueItem) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
+func (b *BillingQueueItem) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (b *BillingQueueItem) GetID() pulid.ID {
 	return b.ID
 }

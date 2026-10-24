@@ -6,15 +6,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmovejurisdictionmilerepository"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -37,22 +34,8 @@ type fixture struct {
 func setup(t *testing.T) *fixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-
-	engine := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{
-			SystemUserPassword: "integration-system-password",
-		},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{
-		Environment: common.EnvDevelopment,
-		Force:       true,
-	})
-	require.NoError(t, err)
 
 	var org struct {
 		ID             pulid.ID `bun:"id"`

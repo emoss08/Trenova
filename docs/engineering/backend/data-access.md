@@ -110,8 +110,10 @@ the migration that gets there directly, with no dual-write or backfill phase for
   `TestMigrationsSinceTheMoveToKeelPassLint` fails CI on an error finding in a new migration.
   `--keel:lint_ignore rule` at the top of a file skips a rule, with the reason in the PR.
 - **Tests.** `seedtest` copies every test database from a keel template (`migrate.Template`, key
-  `seedtest.TemplateKey` joined to the migrations' fingerprint), built once per server. A test of
-  a migration's content reads it with `migrations.File("<version>_<name>")` or the `Set`.
+  `seedtest.TemplateKey` joined to the migrations' and the seeds' fingerprints), built once per
+  server: `SetupTestDB` from migrations plus reference seeds, `seededtest.SetupTestDB` with the
+  fixtures too. A test of a migration's content reads it with `migrations.File("<version>_<name>")`
+  or the `Set`.
 - **Editions** add migration sources through `edition.Edition.Migrations`, merged into one version
   line; the db binaries read them, the server binaries never link them
   ([editions.md](../editions.md)).
@@ -133,17 +135,46 @@ the migration that gets there directly, with no dual-write or backfill phase for
 
 ## Seeding
 
-Seeds live in `internal/infrastructure/database/seeds/{base,development}` and are registered in
-the generated `seeds/register_gen.go`; typed `SeedID` constants are generated into
-`pkg/seedhelpers/seed_ids_gen.go`. `task db-create-seed name=MySeed [env=dev]` creates one,
-`task generate-seeds` regenerates the IDs and `task db-seed` runs them.
+Seeds are [keel/seed](https://github.com/emoss08/keel) seeds in two registries, written with keel
+against the generated tables (never Bun or raw SQL):
+
+- **Reference** (`internal/seeds/reference`, `seed.Reference`): data every environment needs.
+  Global rows (`us_states`, `dot_hazmat_references`, `ifta_jurisdictions` from embedded YAML in
+  `reference/data`, upserted on their natural keys; `jurisdiction_rules_baseline`) and per-tenant
+  defaults (`PerTenant`: `chart_of_accounts`, `system_document_types`,
+  `service_failure_reason_codes`, `document_template_starters`, `system_agent_definitions`,
+  `table_change_alert_allowlist`, `administrator_permissions`), plus `rls_scope_key`, which
+  installs the configured row-level security key. `trenova-db up` applies them after the
+  migrations on every deploy; a seed runs only when its fingerprint (name, `Version`, `Inputs`
+  and `Fingerprint` function) changed, so an unchanged deploy does no seed work. A seed that
+  inserts only missing rows bumps `Version` when its rows change; one built from a Go catalog
+  or the permission registry fingerprints that catalog instead. Per-tenant seeds create
+  nothing for an organization made later: `tenantbootstrap.CreateReferenceData` gives every new
+  organization the same rows when it is created.
+- **Fixtures** (`internal/seeds/fixtures`, `seed.Fixture`): the development data set (the admin
+  account `admin` / `admin123!`, the Trenova Logistics and Trenova Transportation
+  organizations, workers, equipment, shipments, ledgers, agent activity). Only `trenova-devdb`
+  links them; each runs once per database, and a database marked production refuses them.
+  `requireDevelopment` refuses publicly known credentials on staging too.
+
+Seed tenancy comes from `seedenv.Env`: the system scope for bookkeeping and global seeds, and an
+RLS tenant scope per organization for `PerTenant` seeds, with the loaded configuration on the
+context (`seedenv.Config`). `task db-migrate` (`trenova-devdb up -env development`) migrates and
+applies every changed seed, `task db-seed [name=x]` applies seeds alone, `task db-seed-plan` says
+which would run and why, and `task db-reset` recreates the database from the migrated template
+(which carries the reference seeds) and applies the fixtures. To add a seed, add it to the right
+registry with `Seeds.Add(seed.Seed{…})`, name its `After` dependencies, and list any data file
+under `Inputs` so editing the file reruns it.
 
 Volume data for load and UI testing is not a seed: `task db-seed-volume [shipments=N months=M
-seed=S]` (`trenova db seed-volume`, package `internal/infrastructure/database/volumeseed`) adds a
-large, consistent data set to the development organization on top of the development seeds.
-It numbers records through `pkg/seqgen` like the application, batches every insert, and
-back-dates rows with `pulid.MustNewAt` and one `unnest` update per table, because model hooks
-stamp the current time on insert. When an entity gains a required relation or a derived row the
+seed=S]` (`trenova-devdb volume`, package `internal/seeds/volume`) adds a large, consistent data
+set to the development organization on top of the fixtures, in a tenant scope, and refuses a
+database not marked development or test. It streams rows with `COPY` (`Handle.Copy`), numbers
+records through `pkg/seqgen` like the application (over keel-backed sequence and format ports),
+and back-dates rows with `pulid.MustNewAt` and one `keel.Unnest` update per table, because keel
+stamps `autocreate` and `autoupdate` columns with the current time on insert. An update that
+must not move a back-dated row's `updated_at` assigns `keepUpdated(h)`. When an entity gains a
+required relation or a derived row the
 application always writes (as every shipment gets an auto-order), generate it there too; write
 an optional relation only in the states where the application would have written it (a
 billing queue item only once a shipment is ready to invoice, a draft invoice only once the

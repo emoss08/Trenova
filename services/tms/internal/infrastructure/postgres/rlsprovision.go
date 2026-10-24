@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/uptrace/bun"
@@ -25,7 +26,7 @@ type RLSProvisionResult struct {
 
 func ProvisionRLS(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	cfg *config.Config,
 ) (*RLSProvisionResult, error) {
 	result := new(RLSProvisionResult)
@@ -33,70 +34,67 @@ func ProvisionRLS(
 		return result, nil
 	}
 
-	added, err := ReconcileRLS(ctx, db)
+	added, err := keel.QueryValue[int](ctx, db, reconcileRLSSQL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reconcile row-level security policies and grants: %w", err)
 	}
 	result.PoliciesAdded = added
 
-	if !cfg.Database.RLS.Enabled() {
-		return result, nil
-	}
-
-	key, err := cfg.Database.RLS.DecodeScopeKey()
+	installed, err := InstallConfiguredRLSScopeKey(ctx, db, cfg.Database.RLS)
 	if err != nil {
 		return nil, err
 	}
-
-	if err = InstallRLSScopeKey(
-		ctx,
-		db,
-		strings.TrimSpace(cfg.Database.RLS.ScopeKeyID),
-		key,
-	); err != nil {
-		return nil, err
-	}
-	result.KeyInstalled = true
+	result.KeyInstalled = installed
 
 	return result, nil
 }
 
-func ReconcileRLS(ctx context.Context, db bun.IDB) (int, error) {
-	var added int
-	if err := db.NewRaw("SELECT trenova_rls.reconcile()").Scan(ctx, &added); err != nil {
-		return 0, fmt.Errorf("reconcile row-level security policies and grants: %w", err)
+const reconcileRLSSQL = "SELECT trenova_rls.reconcile()"
+
+func InstallConfiguredRLSScopeKey(
+	ctx context.Context,
+	db *keel.DB,
+	rls config.RLSConfig,
+) (bool, error) {
+	if !rls.Enabled() {
+		return false, nil
 	}
 
-	return added, nil
+	key, err := rls.DecodeScopeKey()
+	if err != nil {
+		return false, err
+	}
+
+	if err = InstallRLSScopeKey(ctx, db, strings.TrimSpace(rls.ScopeKeyID), key); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
-func InstallRLSScopeKey(ctx context.Context, db bun.IDB, keyID string, key []byte) error {
+func InstallRLSScopeKey(ctx context.Context, db *keel.DB, keyID string, key []byte) error {
 	if !scopeKeyIDPattern.MatchString(keyID) || len(key) < minScopeKeyBytes {
 		return ErrInvalidScopeKey
 	}
 
 	pads := deriveScopePads(key)
 
-	_, err := db.NewRaw(
-		`INSERT INTO trenova_rls.scope_keys (key_id, inner_pad, outer_pad)
-		VALUES (?, ?, ?)
-		ON CONFLICT (key_id) DO UPDATE
-		SET inner_pad = EXCLUDED.inner_pad,
-			outer_pad = EXCLUDED.outer_pad,
-			retired_at = NULL
-		WHERE trenova_rls.scope_keys.inner_pad IS DISTINCT FROM EXCLUDED.inner_pad
-			OR trenova_rls.scope_keys.outer_pad IS DISTINCT FROM EXCLUDED.outer_pad
-			OR trenova_rls.scope_keys.retired_at IS NOT NULL`,
-		keyID,
-		pads.Inner,
-		pads.Outer,
-	).Exec(ctx)
-	if err != nil {
+	if _, err := keel.Exec(ctx, db, installScopeKeySQL, keyID, pads.Inner, pads.Outer); err != nil {
 		return fmt.Errorf("install row-level security scope key %q: %w", keyID, err)
 	}
 
 	return nil
 }
+
+const installScopeKeySQL = `INSERT INTO trenova_rls.scope_keys (key_id, inner_pad, outer_pad)
+VALUES ($1, $2, $3)
+ON CONFLICT (key_id) DO UPDATE
+SET inner_pad = EXCLUDED.inner_pad,
+	outer_pad = EXCLUDED.outer_pad,
+	retired_at = NULL
+WHERE trenova_rls.scope_keys.inner_pad IS DISTINCT FROM EXCLUDED.inner_pad
+	OR trenova_rls.scope_keys.outer_pad IS DISTINCT FROM EXCLUDED.outer_pad
+	OR trenova_rls.scope_keys.retired_at IS NOT NULL`
 
 func RetireRLSScopeKey(ctx context.Context, db bun.IDB, keyID string) (bool, error) {
 	if !scopeKeyIDPattern.MatchString(keyID) {

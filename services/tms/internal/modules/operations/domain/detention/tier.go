@@ -59,6 +59,10 @@ func (t *DetentionPolicyTier) BeforeAppendModel(_ context.Context, query bun.Que
 	return nil
 }
 
+func (t *DetentionPolicyTier) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // Covers reports whether the tier owns the given billable minute.
 func (t *DetentionPolicyTier) Covers(minute int32) bool {
 	if minute < t.FromMinute {

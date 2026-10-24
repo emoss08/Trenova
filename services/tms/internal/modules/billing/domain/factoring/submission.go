@@ -328,6 +328,10 @@ func (s *Submission) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+func (s *Submission) BeforeCreate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (s *Submission) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "facsub",
@@ -482,4 +486,8 @@ func (i *SubmissionItem) BeforeAppendModel(_ context.Context, query bun.Query) e
 		i.UpdatedAt = now
 	}
 	return nil
+}
+
+func (i *SubmissionItem) BeforeCreate(ctx context.Context) error {
+	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

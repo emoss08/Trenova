@@ -310,6 +310,10 @@ func (c *Customer) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (c *Customer) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (c *Customer) SamePartyDetails(other *Customer) bool {
 	if c == nil || other == nil {
 		return c == other

@@ -387,6 +387,10 @@ func (c *TrainingCourse) BeforeAppendModel(_ context.Context, query bun.Query) e
 	return nil
 }
 
+func (c *TrainingCourse) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 var (
 	_ bun.BeforeAppendModelHook          = (*WorkerTrainingRecord)(nil)
 	_ validationframework.TenantedEntity = (*WorkerTrainingRecord)(nil)
@@ -576,4 +580,8 @@ func (r *WorkerTrainingRecord) BeforeAppendModel(_ context.Context, query bun.Qu
 	}
 
 	return nil
+}
+
+func (r *WorkerTrainingRecord) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

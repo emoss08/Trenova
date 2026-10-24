@@ -250,3 +250,7 @@ func (f *FactoringCompany) BeforeAppendModel(_ context.Context, query bun.Query)
 
 	return nil
 }
+
+func (f *FactoringCompany) BeforeCreate(ctx context.Context) error {
+	return f.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

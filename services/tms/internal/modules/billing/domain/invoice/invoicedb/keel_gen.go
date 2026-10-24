@@ -1079,23 +1079,24 @@ var invoicesTable = schema.Table{
 		{Name: "Attachments", Alias: "a", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Attachments`},
 		{Name: "EmailAttempts", Alias: "ea", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Email Attempts`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 85, 86, 87},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 87},
-	Returning:  []int32{84},
-	Version:    85,
-	AutoID:     0,
-	AutoCreate: 86,
-	AutoUpdate: 87,
-	IDPrefix:   "inv_",
-	New:        newInvoice,
-	NewN:       newNInvoice,
-	Size:       unsafe.Sizeof(invoice.Invoice{}),
-	Ptr:        ptrInvoice,
-	Value:      valueInvoice,
-	Attach:     attachInvoice,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 85, 86, 87},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 87},
+	Returning:    []int32{84},
+	Version:      85,
+	AutoID:       0,
+	AutoCreate:   86,
+	AutoUpdate:   87,
+	IDPrefix:     "inv_",
+	New:          newInvoice,
+	NewN:         newNInvoice,
+	Size:         unsafe.Sizeof(invoice.Invoice{}),
+	Ptr:          ptrInvoice,
+	Value:        valueInvoice,
+	Attach:       attachInvoice,
+	BeforeCreate: beforeCreateInvoice,
 }
 
 var invoicesRef = keel.Ref{Table: &invoicesTable}
@@ -1997,6 +1998,10 @@ func attachInvoice(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateInvoice(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoice.Invoice)(p).BeforeCreate(ctx)
+}
+
 // invoiceDisputesTable is the schema of invoice.InvoiceDispute.
 var invoiceDisputesTable = schema.Table{
 	Name:   "invoice_disputes",
@@ -2320,23 +2325,24 @@ var invoiceLinesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Invoice", Alias: "i", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Invoice`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
-	Returning:  nil,
-	Version:    25,
-	AutoID:     0,
-	AutoCreate: 26,
-	AutoUpdate: 27,
-	IDPrefix:   "invl_",
-	New:        newInvoiceLine,
-	NewN:       newNInvoiceLine,
-	Size:       unsafe.Sizeof(invoice.InvoiceLine{}),
-	Ptr:        ptrInvoiceLine,
-	Value:      valueInvoiceLine,
-	Attach:     attachInvoiceLine,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
+	Returning:    nil,
+	Version:      25,
+	AutoID:       0,
+	AutoCreate:   26,
+	AutoUpdate:   27,
+	IDPrefix:     "invl_",
+	New:          newInvoiceLine,
+	NewN:         newNInvoiceLine,
+	Size:         unsafe.Sizeof(invoice.InvoiceLine{}),
+	Ptr:          ptrInvoiceLine,
+	Value:        valueInvoiceLine,
+	Attach:       attachInvoiceLine,
+	BeforeCreate: beforeCreateInvoiceLine,
 }
 
 var invoiceLinesRef = keel.Ref{Table: &invoiceLinesTable}
@@ -2629,6 +2635,10 @@ func attachInvoiceLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Invoice = (*invoice.Invoice)(child)
 	}
+}
+
+func beforeCreateInvoiceLine(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoice.InvoiceLine)(p).BeforeCreate(ctx)
 }
 
 // invoiceSharesTable is the schema of invoice.InvoiceShare.

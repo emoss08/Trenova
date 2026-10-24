@@ -52,6 +52,10 @@ func (s *Statement) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	return nil
 }
 
+func (s *Statement) BeforeCreate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // Period is the span a statement covers, both ends inclusive, in Unix
 // seconds. A zero Start runs from the account's first transaction.
 type Period struct {

@@ -205,3 +205,7 @@ func (e *WorkerPTOLedgerEntry) BeforeAppendModel(_ context.Context, query bun.Qu
 
 	return nil
 }
+
+func (e *WorkerPTOLedgerEntry) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

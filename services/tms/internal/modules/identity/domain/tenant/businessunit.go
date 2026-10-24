@@ -20,7 +20,7 @@ type BusinessUnit struct {
 	bun.BaseModel `bun:"table:business_units,alias:bu" json:"-"`
 	keel.Table    `keel:"business_units"`
 
-	ID        pulid.ID       `json:"id"        bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID        pulid.ID       `json:"id"        bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:bu_"`
 	Name      string         `json:"name"      bun:"name,type:VARCHAR(100),notnull" keel:"name"`
 	Code      string         `json:"code"      bun:"code,type:VARCHAR(10),notnull" keel:"code"`
 	Metadata  map[string]any `json:"-"         bun:"metadata,type:JSONB,default:'{}'" keel:"metadata,jsonb"`
@@ -64,4 +64,8 @@ func (bu *BusinessUnit) BeforeAppendModel(_ context.Context, q bun.Query) error 
 	}
 
 	return nil
+}
+
+func (bu *BusinessUnit) BeforeCreate(ctx context.Context) error {
+	return bu.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

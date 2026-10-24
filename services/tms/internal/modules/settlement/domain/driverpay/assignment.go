@@ -141,3 +141,7 @@ func (a *WorkerPayAssignment) BeforeAppendModel(_ context.Context, query bun.Que
 	}
 	return nil
 }
+
+func (a *WorkerPayAssignment) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

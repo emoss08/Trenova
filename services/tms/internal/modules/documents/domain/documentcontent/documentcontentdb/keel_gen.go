@@ -44,22 +44,23 @@ var contentsTable = schema.Table{
 		{Name: "converter_version", Quoted: `"converter_version"`, Field: "ConverterVersion", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Converter Version`},
 		{Name: "raw_object_key", Quoted: `"raw_object_key"`, Field: "RawObjectKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Raw Object Key`},
 	},
-	PK:         []int32{0, 2, 3},
-	Tenant:     []int32{2, 3},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 17, 18, 19, 20},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "dc_",
-	New:        newContent,
-	NewN:       newNContent,
-	Size:       unsafe.Sizeof(documentcontent.Content{}),
-	Ptr:        ptrContent,
-	Value:      valueContent,
+	PK:           []int32{0, 2, 3},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 17, 18, 19, 20},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "dc_",
+	New:          newContent,
+	NewN:         newNContent,
+	Size:         unsafe.Sizeof(documentcontent.Content{}),
+	Ptr:          ptrContent,
+	Value:        valueContent,
+	BeforeCreate: beforeCreateContent,
 }
 
 var contentsRef = keel.Ref{Table: &contentsTable}
@@ -289,6 +290,10 @@ func valueContent(p unsafe.Pointer, c int32) any {
 		return r.RawObjectKey
 	}
 	return nil
+}
+
+func beforeCreateContent(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentcontent.Content)(p).BeforeCreate(ctx)
 }
 
 // pagesTable is the schema of documentcontent.Page.

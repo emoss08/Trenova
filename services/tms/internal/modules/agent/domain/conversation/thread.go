@@ -150,6 +150,10 @@ func (t *Thread) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (t *Thread) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (t *Thread) GetID() pulid.ID { return t.ID }
 
 func (t *Thread) GetTableName() string { return "assistant_threads" }

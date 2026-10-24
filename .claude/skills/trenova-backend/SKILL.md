@@ -50,6 +50,5 @@ changed, and the exact checks the change needs, for example:
 - `go test -tags=nomsgpack ./<changed packages>/...` (add `integration` for repositories)
 - `task lint` (golangci-lint, archlint)
 - `task gqlgen`, `task gqlschema-diff`, `pnpm --filter @trenova/graphql codegen` (schema changed)
-- `task db-migrate`, `task db-stamp` and `task db-lint` (migration changed), `task generate-seeds`
-  (seed changed)
+- `task db-migrate`, `task db-stamp` and `task db-lint` (migration or seed changed)
 - the generators in `generated-artifacts.md` that the change touches

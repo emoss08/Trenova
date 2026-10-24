@@ -176,3 +176,7 @@ func (d *Dispute) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 	return nil
 }
+
+func (d *Dispute) BeforeCreate(ctx context.Context) error {
+	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

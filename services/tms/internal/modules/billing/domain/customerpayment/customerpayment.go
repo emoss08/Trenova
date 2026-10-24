@@ -207,6 +207,10 @@ func (p *Payment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (p *Payment) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (a *Application) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	switch query.(type) {
@@ -219,6 +223,10 @@ func (a *Application) BeforeAppendModel(_ context.Context, query bun.Query) erro
 		a.UpdatedAt = now
 	}
 	return nil
+}
+
+func (a *Application) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 // SettledAmountMinor is how much of its invoice an application closes: the

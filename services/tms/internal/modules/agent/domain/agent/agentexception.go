@@ -130,3 +130,7 @@ func (e *AgentException) BeforeAppendModel(_ context.Context, query bun.Query) e
 
 	return nil
 }
+
+func (e *AgentException) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

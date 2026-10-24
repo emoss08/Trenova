@@ -130,3 +130,7 @@ func (j *Jurisdiction) BeforeAppendModel(_ context.Context, query bun.Query) err
 
 	return nil
 }
+
+func (j *Jurisdiction) BeforeCreate(ctx context.Context) error {
+	return j.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

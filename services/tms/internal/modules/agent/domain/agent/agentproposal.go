@@ -226,4 +226,8 @@ func (p *AgentProposal) BeforeAppendModel(_ context.Context, query bun.Query) er
 	return nil
 }
 
+func (p *AgentProposal) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (*AgentProposal) IsPendingDecision() {}

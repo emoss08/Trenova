@@ -36,8 +36,7 @@ itself are yours.
 | `client` | `ghcr.io/emoss08/trenova/client` | Caddy: HTTPS, the web app at `/`, the driver portal at `/dash/`, the API and object storage behind them |
 | `tms-api` | `ghcr.io/emoss08/trenova/tms` | REST and GraphQL API, live updates (server-sent events) |
 | `tms-worker` | `ghcr.io/emoss08/trenova/tms` | Background jobs and every AI feature, on Temporal |
-| `trenova-db` | `ghcr.io/emoss08/trenova/tms-db` | One-shot: database migrations (`trenova-db up -env production`), on every start; the API and worker wait for it |
-| `tms-seed` | `ghcr.io/emoss08/trenova/tms` | One-shot: what migrations cannot do (the row-level security key, new administrator permissions) and the base seeds, on every start |
+| `trenova-db` | `ghcr.io/emoss08/trenova/tms-db` | One-shot: database migrations, then the reference seeds that changed (reference data, each organization's defaults and administrator permissions, the row-level security key), on every start (`trenova-db up -env production`); the API and worker wait for it |
 | `tms-bootstrap` | `ghcr.io/emoss08/trenova/tms` | One-shot: creates the first organization and administrator once (`trenova db bootstrap`); a no-op afterwards |
 | `db-bootstrap` | `ghcr.io/emoss08/trenova/postgres` | One-shot: change-data-capture publication |
 | `postgres` | `ghcr.io/emoss08/trenova/postgres` | PostgreSQL 18 with PostGIS, pg_cron and pgvector |
@@ -52,9 +51,9 @@ itself are yours.
 | `gtc` | `ghcr.io/emoss08/gtc` | Change data capture: PostgreSQL to Meilisearch and Redis |
 | `clamav` (optional, `--profile clamav`) | `clamav/clamav` | Malware scanning of every file before it is opened; see [Malware scanning](#malware-scanning) |
 
-The `tms-api`, `tms-worker`, `tms-seed` and `tms-bootstrap` services are one image with
-different commands; `trenova-db` is its own small image, so the server image carries no
-migrations.
+The `tms-api`, `tms-worker` and `tms-bootstrap` services are one image with different
+commands; `trenova-db` is its own small image, so the server image carries no migrations or
+seed data.
 Only Caddy publishes ports (80 and 443, TCP and UDP). The databases, queues, search, Temporal,
 Gotenberg, docling-serve, the imaging worker and GTC sit on an internal Docker network with no route off the host; the API and
 worker get a separate network for outbound calls (AI providers, email, accounting
@@ -124,9 +123,9 @@ integrations, release checks).
    ```
 
    The first start takes a few minutes: PostgreSQL initializes, Temporal creates its schema,
-   `trenova-db` runs every migration, `tms-seed` applies the base seeds, `tms-bootstrap`
+   `trenova-db` runs every migration and applies the reference seeds, `tms-bootstrap`
    creates your organization and administrator, and Caddy obtains certificates. `trenova-db`,
-   `tms-seed`, `tms-bootstrap` and `db-bootstrap` show as `exited (0)` when they have finished;
+   `tms-bootstrap` and `db-bootstrap` show as `exited (0)` when they have finished;
    every other service should become `healthy` or `running`.
 
 5. **Sign in** at `https://trenova.example.com` (see [First sign-in](#first-sign-in)).
@@ -171,9 +170,10 @@ TLS there and forward to Caddy on 443 with the original `Host` header; the sessi
 
 ## First sign-in
 
-An install starts with no account at all. The base seeds that `tms-seed` applies create
-only the reference data every install needs (US states, DOT hazardous materials, IFTA
-jurisdictions, jurisdiction rules, roles and permissions); they never create a user.
+An install starts with no account at all. The reference seeds that `trenova-db` applies
+create only the data every install needs (US states, DOT hazardous materials, IFTA
+jurisdictions, jurisdiction rules, each organization's defaults and administrator
+permissions); they never create a user.
 
 On the first start, `tms-bootstrap` runs `trenova db bootstrap` with the `TRENOVA_BOOTSTRAP_*`
 values `init-env.sh` wrote to `.env`, and creates:
@@ -299,8 +299,9 @@ A Trenova release is a set of images tagged with its version. To upgrade:
    docker compose up -d
    ```
 
-   `trenova-db` runs the new migrations and `tms-seed` any new base seeds before the API and
-   worker start on the new version. If a migration fails, the API and worker are not started;
+   `trenova-db` runs the new migrations and every reference seed whose data or code changed
+   (unchanged seeds are skipped by fingerprint) before the API and worker start on the new
+   version. If a migration or a seed fails, the API and worker are not started;
    read `docker compose logs trenova-db`. An install last updated before migrations moved to
    `trenova-db` is adopted on its first run: the migrations the old release applied are recorded
    as applied, and only newer ones run.
@@ -441,7 +442,7 @@ docker compose ps                          # state and health of every service
 docker compose logs -f tms-api tms-worker  # application logs (JSON)
 docker compose logs trenova-db             # what the last migration run did
 docker compose run --rm trenova-db migrate status   # applied and pending migrations
-docker compose exec tms-api trenova db seed status  # applied seeds
+docker compose run --rm trenova-db seed status      # applied seeds and their fingerprints
 docker compose restart tms-api tms-worker  # after a configuration change
 ```
 
@@ -614,8 +615,7 @@ TLS, and nothing published except Caddy. Beyond that:
 
 ## Troubleshooting
 
-**`trenova-db` or `tms-seed` exited with an error.** `docker compose logs trenova-db` (or
-`tms-seed`). A configuration
+**`trenova-db` exited with an error.** `docker compose logs trenova-db`. A configuration
 error names the key at fault (an unknown key, a missing secret, a placeholder value). A
 database error usually means PostgreSQL was not ready or the database password in `.env`
 changed after the volume was created; PostgreSQL keeps the password it was initialized with.

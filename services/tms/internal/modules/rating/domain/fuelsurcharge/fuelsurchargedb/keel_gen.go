@@ -42,22 +42,23 @@ var fuelIndexesTable = schema.Table{
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
-	Returning:  nil,
-	Version:    12,
-	AutoID:     0,
-	AutoCreate: 13,
-	AutoUpdate: 14,
-	IDPrefix:   "fidx_",
-	New:        newFuelIndex,
-	NewN:       newNFuelIndex,
-	Size:       unsafe.Sizeof(fuelsurcharge.FuelIndex{}),
-	Ptr:        ptrFuelIndex,
-	Value:      valueFuelIndex,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:    nil,
+	Version:      12,
+	AutoID:       0,
+	AutoCreate:   13,
+	AutoUpdate:   14,
+	IDPrefix:     "fidx_",
+	New:          newFuelIndex,
+	NewN:         newNFuelIndex,
+	Size:         unsafe.Sizeof(fuelsurcharge.FuelIndex{}),
+	Ptr:          ptrFuelIndex,
+	Value:        valueFuelIndex,
+	BeforeCreate: beforeCreateFuelIndex,
 }
 
 var fuelIndexesRef = keel.Ref{Table: &fuelIndexesTable}
@@ -240,6 +241,10 @@ func valueFuelIndex(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateFuelIndex(ctx context.Context, p unsafe.Pointer) error {
+	return (*fuelsurcharge.FuelIndex)(p).BeforeCreate(ctx)
+}
+
 // fuelIndexPricesTable is the schema of fuelsurcharge.FuelIndexPrice.
 var fuelIndexPricesTable = schema.Table{
 	Name:   "fuel_index_prices",
@@ -264,23 +269,24 @@ var fuelIndexPricesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "FuelIndex", Alias: "fi", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Fuel Index`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "fip_",
-	New:        newFuelIndexPrice,
-	NewN:       newNFuelIndexPrice,
-	Size:       unsafe.Sizeof(fuelsurcharge.FuelIndexPrice{}),
-	Ptr:        ptrFuelIndexPrice,
-	Value:      valueFuelIndexPrice,
-	Attach:     attachFuelIndexPrice,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "fip_",
+	New:          newFuelIndexPrice,
+	NewN:         newNFuelIndexPrice,
+	Size:         unsafe.Sizeof(fuelsurcharge.FuelIndexPrice{}),
+	Ptr:          ptrFuelIndexPrice,
+	Value:        valueFuelIndexPrice,
+	Attach:       attachFuelIndexPrice,
+	BeforeCreate: beforeCreateFuelIndexPrice,
 }
 
 var fuelIndexPricesRef = keel.Ref{Table: &fuelIndexPricesTable}
@@ -431,6 +437,10 @@ func attachFuelIndexPrice(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateFuelIndexPrice(ctx context.Context, p unsafe.Pointer) error {
+	return (*fuelsurcharge.FuelIndexPrice)(p).BeforeCreate(ctx)
+}
+
 // fuelSurchargeProgramsTable is the schema of fuelsurcharge.FuelSurchargeProgram.
 var fuelSurchargeProgramsTable = schema.Table{
 	Name:   "fuel_surcharge_programs",
@@ -480,23 +490,24 @@ var fuelSurchargeProgramsTable = schema.Table{
 		{Name: "AccessorialCharge", Alias: "ac", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Accessorial Charge`},
 		{Name: "TableRows", Alias: "tr", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Table Rows`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
-	Returning:  nil,
-	Version:    29,
-	AutoID:     0,
-	AutoCreate: 30,
-	AutoUpdate: 31,
-	IDPrefix:   "fsp_",
-	New:        newFuelSurchargeProgram,
-	NewN:       newNFuelSurchargeProgram,
-	Size:       unsafe.Sizeof(fuelsurcharge.FuelSurchargeProgram{}),
-	Ptr:        ptrFuelSurchargeProgram,
-	Value:      valueFuelSurchargeProgram,
-	Attach:     attachFuelSurchargeProgram,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
+	Returning:    nil,
+	Version:      29,
+	AutoID:       0,
+	AutoCreate:   30,
+	AutoUpdate:   31,
+	IDPrefix:     "fsp_",
+	New:          newFuelSurchargeProgram,
+	NewN:         newNFuelSurchargeProgram,
+	Size:         unsafe.Sizeof(fuelsurcharge.FuelSurchargeProgram{}),
+	Ptr:          ptrFuelSurchargeProgram,
+	Value:        valueFuelSurchargeProgram,
+	Attach:       attachFuelSurchargeProgram,
+	BeforeCreate: beforeCreateFuelSurchargeProgram,
 }
 
 var fuelSurchargeProgramsRef = keel.Ref{Table: &fuelSurchargeProgramsTable}
@@ -837,6 +848,10 @@ func attachFuelSurchargeProgram(p unsafe.Pointer, rel int32, child unsafe.Pointe
 	case 2:
 		r.TableRows = append(r.TableRows, (*fuelsurcharge.FuelSurchargeTableRow)(child))
 	}
+}
+
+func beforeCreateFuelSurchargeProgram(ctx context.Context, p unsafe.Pointer) error {
+	return (*fuelsurcharge.FuelSurchargeProgram)(p).BeforeCreate(ctx)
 }
 
 // fuelSurchargeTableRowsTable is the schema of fuelsurcharge.FuelSurchargeTableRow.

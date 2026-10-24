@@ -34,22 +34,23 @@ var accountsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Update:     []int32{3, 4, 5, 6, 9},
-	Returning:  nil,
-	Version:    7,
-	AutoID:     0,
-	AutoCreate: 8,
-	AutoUpdate: 9,
-	IDPrefix:   "cacc_",
-	New:        newAccount,
-	NewN:       newNAccount,
-	Size:       unsafe.Sizeof(collection.Account{}),
-	Ptr:        ptrAccount,
-	Value:      valueAccount,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:       []int32{3, 4, 5, 6, 9},
+	Returning:    nil,
+	Version:      7,
+	AutoID:       0,
+	AutoCreate:   8,
+	AutoUpdate:   9,
+	IDPrefix:     "cacc_",
+	New:          newAccount,
+	NewN:         newNAccount,
+	Size:         unsafe.Sizeof(collection.Account{}),
+	Ptr:          ptrAccount,
+	Value:        valueAccount,
+	BeforeCreate: beforeCreateAccount,
 }
 
 var accountsRef = keel.Ref{Table: &accountsTable}
@@ -183,6 +184,10 @@ func valueAccount(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateAccount(ctx context.Context, p unsafe.Pointer) error {
+	return (*collection.Account)(p).BeforeCreate(ctx)
+}
+
 // activitiesTable is the schema of collection.Activity.
 var activitiesTable = schema.Table{
 	Name:   "collection_activities",
@@ -209,22 +214,23 @@ var activitiesTable = schema.Table{
 		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: 0, Label: `Created By ID`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: -1,
-	IDPrefix:   "cact_",
-	New:        newActivity,
-	NewN:       newNActivity,
-	Size:       unsafe.Sizeof(collection.Activity{}),
-	Ptr:        ptrActivity,
-	Value:      valueActivity,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   -1,
+	IDPrefix:     "cact_",
+	New:          newActivity,
+	NewN:         newNActivity,
+	Size:         unsafe.Sizeof(collection.Activity{}),
+	Ptr:          ptrActivity,
+	Value:        valueActivity,
+	BeforeCreate: beforeCreateActivity,
 }
 
 var activitiesRef = keel.Ref{Table: &activitiesTable}
@@ -403,6 +409,10 @@ func valueActivity(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	}
 	return nil
+}
+
+func beforeCreateActivity(ctx context.Context, p unsafe.Pointer) error {
+	return (*collection.Activity)(p).BeforeCreate(ctx)
 }
 
 var enumActivityKind = [...]schema.EnumValue{

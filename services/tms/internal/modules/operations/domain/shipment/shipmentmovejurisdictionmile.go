@@ -178,3 +178,7 @@ func (m *ShipmentMoveJurisdictionMile) BeforeAppendModel(_ context.Context, quer
 
 	return nil
 }
+
+func (m *ShipmentMoveJurisdictionMile) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

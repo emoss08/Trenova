@@ -192,7 +192,12 @@ func (b *StateBuilder) WithAbbreviation(abbr string) *StateBuilder {
 func (b *StateBuilder) Build(t *testing.T, ctx context.Context, tx bun.Tx) *usstate.UsState {
 	t.Helper()
 
-	_, err := tx.NewInsert().Model(b.state).Exec(ctx)
+	_, err := tx.NewInsert().
+		Model(b.state).
+		On("CONFLICT (abbreviation) DO UPDATE").
+		Set("name = EXCLUDED.name").
+		Returning("*").
+		Exec(ctx)
 	require.NoError(t, err, "failed to insert test state")
 
 	return b.state

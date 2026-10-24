@@ -28,7 +28,7 @@ type Organization struct {
 	bun.BaseModel `bun:"table:organizations,alias:org" json:"-"`
 	keel.Table    `keel:"organizations"`
 
-	ID                     pulid.ID  `json:"id"                     bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID                     pulid.ID  `json:"id"                     bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:org_"`
 	StateID                pulid.ID  `json:"stateId"                bun:"state_id,type:VARCHAR(100),notnull" keel:"state_id"`
 	BusinessUnitID         pulid.ID  `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
 	Name                   string    `json:"name"                   bun:"name,type:VARCHAR(100),notnull" keel:"name"`
@@ -133,4 +133,8 @@ func (o *Organization) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	}
 
 	return nil
+}
+
+func (o *Organization) BeforeCreate(ctx context.Context) error {
+	return o.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

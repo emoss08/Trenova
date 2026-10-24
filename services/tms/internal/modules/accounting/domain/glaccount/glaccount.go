@@ -135,3 +135,7 @@ func (g *GLAccount) BeforeAppendModel(_ context.Context, query bun.Query) error 
 
 	return nil
 }
+
+func (g *GLAccount) BeforeCreate(ctx context.Context) error {
+	return g.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

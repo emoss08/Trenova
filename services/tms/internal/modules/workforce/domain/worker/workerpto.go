@@ -130,6 +130,10 @@ func (wpto *WorkerPTO) BeforeAppendModel(_ context.Context, query bun.Query) err
 	return nil
 }
 
+func (wpto *WorkerPTO) BeforeCreate(ctx context.Context) error {
+	return wpto.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (wpto *WorkerPTO) GetID() pulid.ID {
 	return wpto.ID
 }

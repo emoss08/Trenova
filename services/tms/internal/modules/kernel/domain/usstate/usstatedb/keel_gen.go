@@ -30,22 +30,23 @@ var usStatesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{1, 2, 3, 4, 6},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 5,
-	AutoUpdate: 6,
-	IDPrefix:   "us_",
-	New:        newUsState,
-	NewN:       newNUsState,
-	Size:       unsafe.Sizeof(usstate.UsState{}),
-	Ptr:        ptrUsState,
-	Value:      valueUsState,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:       []int32{1, 2, 3, 4, 6},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   5,
+	AutoUpdate:   6,
+	IDPrefix:     "us_",
+	New:          newUsState,
+	NewN:         newNUsState,
+	Size:         unsafe.Sizeof(usstate.UsState{}),
+	Ptr:          ptrUsState,
+	Value:        valueUsState,
+	BeforeCreate: beforeCreateUsState,
 }
 
 var usStatesRef = keel.Ref{Table: &usStatesTable}
@@ -147,4 +148,8 @@ func valueUsState(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateUsState(ctx context.Context, p unsafe.Pointer) error {
+	return (*usstate.UsState)(p).BeforeCreate(ctx)
 }

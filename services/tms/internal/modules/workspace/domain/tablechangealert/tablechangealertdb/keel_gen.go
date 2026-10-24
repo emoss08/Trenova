@@ -33,22 +33,23 @@ var tCAAllowlistedTablesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Update:     []int32{3, 4, 5, 7},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 6,
-	AutoUpdate: 7,
-	IDPrefix:   "tcaw_",
-	New:        newTCAAllowlistedTable,
-	NewN:       newNTCAAllowlistedTable,
-	Size:       unsafe.Sizeof(tablechangealert.TCAAllowlistedTable{}),
-	Ptr:        ptrTCAAllowlistedTable,
-	Value:      valueTCAAllowlistedTable,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:       []int32{3, 4, 5, 7},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   6,
+	AutoUpdate:   7,
+	IDPrefix:     "tcaw_",
+	New:          newTCAAllowlistedTable,
+	NewN:         newNTCAAllowlistedTable,
+	Size:         unsafe.Sizeof(tablechangealert.TCAAllowlistedTable{}),
+	Ptr:          ptrTCAAllowlistedTable,
+	Value:        valueTCAAllowlistedTable,
+	BeforeCreate: beforeCreateTCAAllowlistedTable,
 }
 
 var tCAAllowlistedTablesRef = keel.Ref{Table: &tCAAllowlistedTablesTable}
@@ -159,6 +160,10 @@ func valueTCAAllowlistedTable(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateTCAAllowlistedTable(ctx context.Context, p unsafe.Pointer) error {
+	return (*tablechangealert.TCAAllowlistedTable)(p).BeforeCreate(ctx)
 }
 
 // tCASubscriptionsTable is the schema of tablechangealert.TCASubscription.

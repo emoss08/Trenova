@@ -78,23 +78,24 @@ var carriersTable = schema.Table{
 		{Name: "InsurancePolicies", Alias: "ip", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Insurance Policies`},
 		{Name: "EDIChannels", Alias: "ec", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `EDI Channels`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 41, 42, 43},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 41, 42, 43},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 43},
-	Returning:  nil,
-	Version:    41,
-	AutoID:     0,
-	AutoCreate: 42,
-	AutoUpdate: 43,
-	IDPrefix:   "car_",
-	New:        newCarrier,
-	NewN:       newNCarrier,
-	Size:       unsafe.Sizeof(carrier.Carrier{}),
-	Ptr:        ptrCarrier,
-	Value:      valueCarrier,
-	Attach:     attachCarrier,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 41, 42, 43},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 41, 42, 43},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 43},
+	Returning:    nil,
+	Version:      41,
+	AutoID:       0,
+	AutoCreate:   42,
+	AutoUpdate:   43,
+	IDPrefix:     "car_",
+	New:          newCarrier,
+	NewN:         newNCarrier,
+	Size:         unsafe.Sizeof(carrier.Carrier{}),
+	Ptr:          ptrCarrier,
+	Value:        valueCarrier,
+	Attach:       attachCarrier,
+	BeforeCreate: beforeCreateCarrier,
 }
 
 var carriersRef = keel.Ref{Table: &carriersTable}
@@ -570,6 +571,10 @@ func attachCarrier(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateCarrier(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrier.Carrier)(p).BeforeCreate(ctx)
+}
+
 // carrierContactsTable is the schema of carrier.CarrierContact.
 var carrierContactsTable = schema.Table{
 	Name:   "carrier_contacts",
@@ -596,23 +601,24 @@ var carrierContactsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Carrier", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Carrier`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:  nil,
-	Version:    10,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "carc_",
-	New:        newCarrierContact,
-	NewN:       newNCarrierContact,
-	Size:       unsafe.Sizeof(carrier.CarrierContact{}),
-	Ptr:        ptrCarrierContact,
-	Value:      valueCarrierContact,
-	Attach:     attachCarrierContact,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:    nil,
+	Version:      10,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   12,
+	IDPrefix:     "carc_",
+	New:          newCarrierContact,
+	NewN:         newNCarrierContact,
+	Size:         unsafe.Sizeof(carrier.CarrierContact{}),
+	Ptr:          ptrCarrierContact,
+	Value:        valueCarrierContact,
+	Attach:       attachCarrierContact,
+	BeforeCreate: beforeCreateCarrierContact,
 }
 
 var carrierContactsRef = keel.Ref{Table: &carrierContactsTable}
@@ -778,6 +784,10 @@ func attachCarrierContact(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateCarrierContact(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrier.CarrierContact)(p).BeforeCreate(ctx)
+}
+
 // carrierEDIChannelsTable is the schema of carrier.CarrierEDIChannel.
 var carrierEDIChannelsTable = schema.Table{
 	Name:   "carrier_edi_channels",
@@ -804,23 +814,24 @@ var carrierEDIChannelsTable = schema.Table{
 		{Name: "Carrier", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Carrier`},
 		{Name: "EDIPartner", Alias: "ep", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `EDI Partner`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 11},
-	Returning:  nil,
-	Version:    9,
-	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
-	IDPrefix:   "cec_",
-	New:        newCarrierEDIChannel,
-	NewN:       newNCarrierEDIChannel,
-	Size:       unsafe.Sizeof(carrier.CarrierEDIChannel{}),
-	Ptr:        ptrCarrierEDIChannel,
-	Value:      valueCarrierEDIChannel,
-	Attach:     attachCarrierEDIChannel,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 11},
+	Returning:    nil,
+	Version:      9,
+	AutoID:       0,
+	AutoCreate:   10,
+	AutoUpdate:   11,
+	IDPrefix:     "cec_",
+	New:          newCarrierEDIChannel,
+	NewN:         newNCarrierEDIChannel,
+	Size:         unsafe.Sizeof(carrier.CarrierEDIChannel{}),
+	Ptr:          ptrCarrierEDIChannel,
+	Value:        valueCarrierEDIChannel,
+	Attach:       attachCarrierEDIChannel,
+	BeforeCreate: beforeCreateCarrierEDIChannel,
 }
 
 var carrierEDIChannelsRef = keel.Ref{Table: &carrierEDIChannelsTable}
@@ -986,6 +997,10 @@ func attachCarrierEDIChannel(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	}
 }
 
+func beforeCreateCarrierEDIChannel(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrier.CarrierEDIChannel)(p).BeforeCreate(ctx)
+}
+
 // carrierInsurancePoliciesTable is the schema of carrier.CarrierInsurancePolicy.
 var carrierInsurancePoliciesTable = schema.Table{
 	Name:   "carrier_insurance_policies",
@@ -1013,23 +1028,24 @@ var carrierInsurancePoliciesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Carrier", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Carrier`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "carins_",
-	New:        newCarrierInsurancePolicy,
-	NewN:       newNCarrierInsurancePolicy,
-	Size:       unsafe.Sizeof(carrier.CarrierInsurancePolicy{}),
-	Ptr:        ptrCarrierInsurancePolicy,
-	Value:      valueCarrierInsurancePolicy,
-	Attach:     attachCarrierInsurancePolicy,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "carins_",
+	New:          newCarrierInsurancePolicy,
+	NewN:         newNCarrierInsurancePolicy,
+	Size:         unsafe.Sizeof(carrier.CarrierInsurancePolicy{}),
+	Ptr:          ptrCarrierInsurancePolicy,
+	Value:        valueCarrierInsurancePolicy,
+	Attach:       attachCarrierInsurancePolicy,
+	BeforeCreate: beforeCreateCarrierInsurancePolicy,
 }
 
 var carrierInsurancePoliciesRef = keel.Ref{Table: &carrierInsurancePoliciesTable}
@@ -1195,6 +1211,10 @@ func attachCarrierInsurancePolicy(p unsafe.Pointer, rel int32, child unsafe.Poin
 	case 0:
 		r.Carrier = (*carrier.Carrier)(child)
 	}
+}
+
+func beforeCreateCarrierInsurancePolicy(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrier.CarrierInsurancePolicy)(p).BeforeCreate(ctx)
 }
 
 func init() {

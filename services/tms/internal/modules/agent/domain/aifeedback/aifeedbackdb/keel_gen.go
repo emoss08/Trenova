@@ -51,22 +51,23 @@ var feedbacksTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
-	Returning:  nil,
-	Version:    25,
-	AutoID:     0,
-	AutoCreate: 26,
-	AutoUpdate: 27,
-	IDPrefix:   "aifb_",
-	New:        newFeedback,
-	NewN:       newNFeedback,
-	Size:       unsafe.Sizeof(aifeedback.Feedback{}),
-	Ptr:        ptrFeedback,
-	Value:      valueFeedback,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
+	Returning:    nil,
+	Version:      25,
+	AutoID:       0,
+	AutoCreate:   26,
+	AutoUpdate:   27,
+	IDPrefix:     "aifb_",
+	New:          newFeedback,
+	NewN:         newNFeedback,
+	Size:         unsafe.Sizeof(aifeedback.Feedback{}),
+	Ptr:          ptrFeedback,
+	Value:        valueFeedback,
+	BeforeCreate: beforeCreateFeedback,
 }
 
 var feedbacksRef = keel.Ref{Table: &feedbacksTable}
@@ -360,6 +361,10 @@ func valueFeedback(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateFeedback(ctx context.Context, p unsafe.Pointer) error {
+	return (*aifeedback.Feedback)(p).BeforeCreate(ctx)
 }
 
 var enumFingerprintSource = [...]schema.EnumValue{

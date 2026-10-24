@@ -142,6 +142,10 @@ func (i *CarrierInvoice) BeforeAppendModel(_ context.Context, query bun.Query) e
 	return nil
 }
 
+func (i *CarrierInvoice) BeforeCreate(ctx context.Context) error {
+	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (i *CarrierInvoice) GetCreatedAt() int64 {
 	return i.CreatedAt
 }

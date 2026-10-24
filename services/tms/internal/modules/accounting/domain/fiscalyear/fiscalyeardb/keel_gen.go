@@ -57,23 +57,24 @@ var fiscalYearsTable = schema.Table{
 		{Name: "ReopenedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{17}, Remote: []int32{0}, Label: `Reopened By`},
 		{Name: "Periods", Alias: "p", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Periods`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "fyr_",
-	New:        newFiscalYear,
-	NewN:       newNFiscalYear,
-	Size:       unsafe.Sizeof(fiscalyear.FiscalYear{}),
-	Ptr:        ptrFiscalYear,
-	Value:      valueFiscalYear,
-	Attach:     attachFiscalYear,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "fyr_",
+	New:          newFiscalYear,
+	NewN:         newNFiscalYear,
+	Size:         unsafe.Sizeof(fiscalyear.FiscalYear{}),
+	Ptr:          ptrFiscalYear,
+	Value:        valueFiscalYear,
+	Attach:       attachFiscalYear,
+	BeforeCreate: beforeCreateFiscalYear,
 }
 
 var fiscalYearsRef = keel.Ref{Table: &fiscalYearsTable}
@@ -352,6 +353,10 @@ func attachFiscalYear(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 3:
 		r.Periods = append(r.Periods, (*fiscalperiod.FiscalPeriod)(child))
 	}
+}
+
+func beforeCreateFiscalYear(ctx context.Context, p unsafe.Pointer) error {
+	return (*fiscalyear.FiscalYear)(p).BeforeCreate(ctx)
 }
 
 func init() {

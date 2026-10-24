@@ -165,7 +165,7 @@ type Wait struct {
 	bun.BaseModel `bun:"table:agent_waits,alias:awt" json:"-"`
 	keel.Table    `keel:"agent_waits"`
 
-	ID                pulid.ID          `json:"id"                    bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID                pulid.ID          `json:"id"                    bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:awt_"`
 	OrganizationID    pulid.ID          `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	BusinessUnitID    pulid.ID          `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	Kind              Kind              `json:"kind"                  bun:"kind,type:VARCHAR(50),notnull" keel:"kind"`

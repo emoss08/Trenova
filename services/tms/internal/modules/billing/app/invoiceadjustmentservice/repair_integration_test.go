@@ -5,10 +5,8 @@ package invoiceadjustmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalrepairservice"
@@ -20,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -30,16 +27,8 @@ import (
 )
 
 func TestJournalRepairRestoresAdjustmentCreditMemoJournals(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(db, seedRegistry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "test-system-password"},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	h := newIntegrationHarness(
 		t,
@@ -322,16 +311,8 @@ func (h *integrationHarness) repairService() *journalrepairservice.Service {
 }
 
 func TestWriteOffJournalIsStampedWhenItIsWrittenNotOnItsAccountingDate(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(db, seedRegistry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "test-system-password"},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	h := newIntegrationHarness(
 		t,
@@ -351,7 +332,7 @@ func TestWriteOffJournalIsStampedWhenItIsWrittenNotOnItsAccountingDate(t *testin
 		makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Open balance", 1, 80),
 	}, invoice.SettlementStatusUnpaid, decimal.Zero)
 	accountingDate := timeutils.NowUnix() - 3_600
-	_, err = db.NewUpdate().
+	_, err := db.NewUpdate().
 		Table("invoices").
 		Set("invoice_date = ?", accountingDate).
 		Where("id = ?", entity.ID).

@@ -250,3 +250,7 @@ func (c *WorkerCredential) BeforeAppendModel(_ context.Context, query bun.Query)
 
 	return nil
 }
+
+func (c *WorkerCredential) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

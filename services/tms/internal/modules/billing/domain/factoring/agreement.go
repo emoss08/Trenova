@@ -368,6 +368,10 @@ func (a *Agreement) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	return nil
 }
 
+func (a *Agreement) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (a *Agreement) GetID() pulid.ID             { return a.ID }
 func (a *Agreement) GetOrganizationID() pulid.ID { return a.OrganizationID }
 func (a *Agreement) GetBusinessUnitID() pulid.ID { return a.BusinessUnitID }
@@ -378,4 +382,8 @@ func (t *FeeTier) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		t.ID = pulid.MustNew("facfee_")
 	}
 	return nil
+}
+
+func (t *FeeTier) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

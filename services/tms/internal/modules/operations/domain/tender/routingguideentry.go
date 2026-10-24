@@ -131,3 +131,7 @@ func (rge *RoutingGuideEntry) BeforeAppendModel(_ context.Context, query bun.Que
 
 	return nil
 }
+
+func (rge *RoutingGuideEntry) BeforeCreate(ctx context.Context) error {
+	return rge.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

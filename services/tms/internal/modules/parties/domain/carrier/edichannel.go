@@ -82,3 +82,7 @@ func (cec *CarrierEDIChannel) BeforeAppendModel(_ context.Context, query bun.Que
 
 	return nil
 }
+
+func (cec *CarrierEDIChannel) BeforeCreate(ctx context.Context) error {
+	return cec.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

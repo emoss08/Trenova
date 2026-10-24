@@ -19,7 +19,7 @@ go run ./internal/api/graphql/gqlexec/gen                           # same as `t
 (cd internal/api/graphql/gqlexec/internal/e2e && go run github.com/emoss08/trenova/internal/api/graphql/gqlexec/gen)
 git status --porcelain -- internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver internal/api/graphql/gqlexec/internal/e2e
 
-go generate ./internal/infrastructure/database/seeder/...          # pkg/seedhelpers/seed_ids_gen.go
+
 go generate ./internal/api/graphql/projection/...                  # internal/api/graphql/projection/specs_gen.go
 go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
 go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md

@@ -304,6 +304,11 @@ func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBilling
 		SplitBy:                     InvoiceSplitKeyCustomer,
 		SectionBy:                   InvoiceSectionKeyShipment,
 		InvoiceDetail:               InvoiceDetailDetailed,
+		PaymentTerm:                 PaymentTermNet30,
+		CreditStatus:                CreditStatusActive,
+		InvoiceNumberFormat:         InvoiceNumberFormatDefault,
+		InvoiceCopies:               1,
+		BillingCurrency:             "USD",
 	}
 }
 

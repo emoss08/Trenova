@@ -71,23 +71,24 @@ var invoiceAdjustmentsTable = schema.Table{
 		{Name: "ReconciliationExceptions", Alias: "re", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Reconciliation Exceptions`},
 		{Name: "DocumentReferences", Alias: "dr", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Document References`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39},
-	Returning:  nil,
-	Version:    37,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newInvoiceAdjustment,
-	NewN:       newNInvoiceAdjustment,
-	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustment{}),
-	Ptr:        ptrInvoiceAdjustment,
-	Value:      valueInvoiceAdjustment,
-	Attach:     attachInvoiceAdjustment,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39},
+	Returning:    nil,
+	Version:      37,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newInvoiceAdjustment,
+	NewN:         newNInvoiceAdjustment,
+	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustment{}),
+	Ptr:          ptrInvoiceAdjustment,
+	Value:        valueInvoiceAdjustment,
+	Attach:       attachInvoiceAdjustment,
+	BeforeCreate: beforeCreateInvoiceAdjustment,
 }
 
 var invoiceAdjustmentsRef = keel.Ref{Table: &invoiceAdjustmentsTable}
@@ -506,6 +507,10 @@ func attachInvoiceAdjustment(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	}
 }
 
+func beforeCreateInvoiceAdjustment(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoiceadjustment.InvoiceAdjustment)(p).BeforeCreate(ctx)
+}
+
 // invoiceAdjustmentBatchesTable is the schema of invoiceadjustment.InvoiceAdjustmentBatch.
 var invoiceAdjustmentBatchesTable = schema.Table{
 	Name:   "invoice_adjustment_batches",
@@ -538,23 +543,24 @@ var invoiceAdjustmentBatchesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Items", Alias: "i", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Items`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 15, 17, 18},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newInvoiceAdjustmentBatch,
-	NewN:       newNInvoiceAdjustmentBatch,
-	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentBatch{}),
-	Ptr:        ptrInvoiceAdjustmentBatch,
-	Value:      valueInvoiceAdjustmentBatch,
-	Attach:     attachInvoiceAdjustmentBatch,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 15, 17, 18},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newInvoiceAdjustmentBatch,
+	NewN:         newNInvoiceAdjustmentBatch,
+	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentBatch{}),
+	Ptr:          ptrInvoiceAdjustmentBatch,
+	Value:        valueInvoiceAdjustmentBatch,
+	Attach:       attachInvoiceAdjustmentBatch,
+	BeforeCreate: beforeCreateInvoiceAdjustmentBatch,
 }
 
 var invoiceAdjustmentBatchesRef = keel.Ref{Table: &invoiceAdjustmentBatchesTable}
@@ -766,6 +772,10 @@ func attachInvoiceAdjustmentBatch(p unsafe.Pointer, rel int32, child unsafe.Poin
 	}
 }
 
+func beforeCreateInvoiceAdjustmentBatch(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoiceadjustment.InvoiceAdjustmentBatch)(p).BeforeCreate(ctx)
+}
+
 // invoiceAdjustmentBatchItemsTable is the schema of invoiceadjustment.InvoiceAdjustmentBatchItem.
 var invoiceAdjustmentBatchItemsTable = schema.Table{
 	Name:   "invoice_adjustment_batch_items",
@@ -789,22 +799,23 @@ var invoiceAdjustmentBatchItemsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newInvoiceAdjustmentBatchItem,
-	NewN:       newNInvoiceAdjustmentBatchItem,
-	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentBatchItem{}),
-	Ptr:        ptrInvoiceAdjustmentBatchItem,
-	Value:      valueInvoiceAdjustmentBatchItem,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newInvoiceAdjustmentBatchItem,
+	NewN:         newNInvoiceAdjustmentBatchItem,
+	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentBatchItem{}),
+	Ptr:          ptrInvoiceAdjustmentBatchItem,
+	Value:        valueInvoiceAdjustmentBatchItem,
+	BeforeCreate: beforeCreateInvoiceAdjustmentBatchItem,
 }
 
 var invoiceAdjustmentBatchItemsRef = keel.Ref{Table: &invoiceAdjustmentBatchItemsTable}
@@ -962,6 +973,10 @@ func valueInvoiceAdjustmentBatchItem(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateInvoiceAdjustmentBatchItem(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoiceadjustment.InvoiceAdjustmentBatchItem)(p).BeforeCreate(ctx)
 }
 
 // invoiceAdjustmentCorrectionGroupsTable is the schema of invoiceadjustment.InvoiceAdjustmentCorrectionGroup.
@@ -1375,22 +1390,23 @@ var invoiceAdjustmentLinesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newInvoiceAdjustmentLine,
-	NewN:       newNInvoiceAdjustmentLine,
-	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentLine{}),
-	Ptr:        ptrInvoiceAdjustmentLine,
-	Value:      valueInvoiceAdjustmentLine,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newInvoiceAdjustmentLine,
+	NewN:         newNInvoiceAdjustmentLine,
+	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentLine{}),
+	Ptr:          ptrInvoiceAdjustmentLine,
+	Value:        valueInvoiceAdjustmentLine,
+	BeforeCreate: beforeCreateInvoiceAdjustmentLine,
 }
 
 var invoiceAdjustmentLinesRef = keel.Ref{Table: &invoiceAdjustmentLinesTable}
@@ -1594,6 +1610,10 @@ func valueInvoiceAdjustmentLine(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateInvoiceAdjustmentLine(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoiceadjustment.InvoiceAdjustmentLine)(p).BeforeCreate(ctx)
 }
 
 // invoiceAdjustmentReconciliationExceptionsTable is the schema of invoiceadjustment.InvoiceAdjustmentReconciliationException.
@@ -1801,22 +1821,23 @@ var invoiceAdjustmentSnapshotsTable = schema.Table{
 		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Created By ID`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{3, 4, 5, 6, 7, 8},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newInvoiceAdjustmentSnapshot,
-	NewN:       newNInvoiceAdjustmentSnapshot,
-	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentSnapshot{}),
-	Ptr:        ptrInvoiceAdjustmentSnapshot,
-	Value:      valueInvoiceAdjustmentSnapshot,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Update:       []int32{3, 4, 5, 6, 7, 8},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newInvoiceAdjustmentSnapshot,
+	NewN:         newNInvoiceAdjustmentSnapshot,
+	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentSnapshot{}),
+	Ptr:          ptrInvoiceAdjustmentSnapshot,
+	Value:        valueInvoiceAdjustmentSnapshot,
+	BeforeCreate: beforeCreateInvoiceAdjustmentSnapshot,
 }
 
 var invoiceAdjustmentSnapshotsRef = keel.Ref{Table: &invoiceAdjustmentSnapshotsTable}
@@ -1940,6 +1961,10 @@ func valueInvoiceAdjustmentSnapshot(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	}
 	return nil
+}
+
+func beforeCreateInvoiceAdjustmentSnapshot(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoiceadjustment.InvoiceAdjustmentSnapshot)(p).BeforeCreate(ctx)
 }
 
 func init() {

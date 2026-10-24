@@ -143,6 +143,10 @@ func (a *Activity) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (a *Activity) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 var _ bun.BeforeAppendModelHook = (*Account)(nil)
 
 // Account is a customer as collections works it: its collector, its next
@@ -176,4 +180,8 @@ func (a *Account) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		a.UpdatedAt = now
 	}
 	return nil
+}
+
+func (a *Account) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

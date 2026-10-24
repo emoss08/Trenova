@@ -42,7 +42,7 @@ type CarrierAssignment struct {
 	bun.BaseModel `bun:"table:carrier_assignments,alias:casn" json:"-"`
 	keel.Table    `keel:"carrier_assignments"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk"`
+	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:casn_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
 	ShipmentMoveID pulid.ID `json:"shipmentMoveId" bun:"shipment_move_id,type:VARCHAR(100),notnull" keel:"shipment_move_id"`
@@ -225,6 +225,10 @@ func (ca *CarrierAssignment) BeforeAppendModel(_ context.Context, query bun.Quer
 	}
 
 	return nil
+}
+
+func (ca *CarrierAssignment) BeforeCreate(ctx context.Context) error {
+	return ca.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 var _ bun.BeforeAppendModelHook = (*CarrierAssignmentAccessorial)(nil)

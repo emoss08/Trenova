@@ -365,16 +365,6 @@ jobs:
           fi
           exit 1
 
-      - name: Seed IDs
-        working-directory: ./services/tms
-        run: |
-          set -euo pipefail
-          go generate ./internal/infrastructure/database/seeder/...
-          if ! git diff --quiet pkg/seedhelpers/seed_ids_gen.go; then
-            echo "::error::Seed IDs are stale - run 'task generate-seeds' and commit"
-            git diff --stat pkg/seedhelpers/seed_ids_gen.go
-            exit 1
-          fi
 
       - name: Schema version stamp
         working-directory: ./services/tms

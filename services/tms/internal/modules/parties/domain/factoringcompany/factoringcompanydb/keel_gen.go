@@ -50,23 +50,24 @@ var factoringCompaniesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `State`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "fac_",
-	New:        newFactoringCompany,
-	NewN:       newNFactoringCompany,
-	Size:       unsafe.Sizeof(factoringcompany.FactoringCompany{}),
-	Ptr:        ptrFactoringCompany,
-	Value:      valueFactoringCompany,
-	Attach:     attachFactoringCompany,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "fac_",
+	New:          newFactoringCompany,
+	NewN:         newNFactoringCompany,
+	Size:         unsafe.Sizeof(factoringcompany.FactoringCompany{}),
+	Ptr:          ptrFactoringCompany,
+	Value:        valueFactoringCompany,
+	Attach:       attachFactoringCompany,
+	BeforeCreate: beforeCreateFactoringCompany,
 }
 
 var factoringCompaniesRef = keel.Ref{Table: &factoringCompaniesTable}
@@ -299,6 +300,10 @@ func attachFactoringCompany(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.State = (*usstate.UsState)(child)
 	}
+}
+
+func beforeCreateFactoringCompany(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoringcompany.FactoringCompany)(p).BeforeCreate(ctx)
 }
 
 func init() {

@@ -37,22 +37,23 @@ var remindersTable = schema.Table{
 		{Name: "sent_by_id", Quoted: `"sent_by_id"`, Field: "SentByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Sent By ID`},
 		{Name: "sent_at", Quoted: `"sent_at"`, Field: "SentAt", Kind: schema.KindInt64, Flags: 0, Label: `Sent At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "ipr_",
-	New:        newReminder,
-	NewN:       newNReminder,
-	Size:       unsafe.Sizeof(paymentreminder.Reminder{}),
-	Ptr:        ptrReminder,
-	Value:      valueReminder,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "ipr_",
+	New:          newReminder,
+	NewN:         newNReminder,
+	Size:         unsafe.Sizeof(paymentreminder.Reminder{}),
+	Ptr:          ptrReminder,
+	Value:        valueReminder,
+	BeforeCreate: beforeCreateReminder,
 }
 
 var remindersRef = keel.Ref{Table: &remindersTable}
@@ -199,6 +200,10 @@ func valueReminder(p unsafe.Pointer, c int32) any {
 		return r.SentAt
 	}
 	return nil
+}
+
+func beforeCreateReminder(ctx context.Context, p unsafe.Pointer) error {
+	return (*paymentreminder.Reminder)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

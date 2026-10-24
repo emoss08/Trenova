@@ -37,7 +37,7 @@ type AccountingDriftFinding struct {
 	keel.Table                `keel:"accounting_drift_findings"`
 	pagination.CursorValueSet `bun:",embed"                                       json:"-"`
 
-	ID                 pulid.ID        `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID                 pulid.ID        `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctdf_"`
 	BusinessUnitID     pulid.ID        `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID     pulid.ID        `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	ConnectionID       pulid.ID        `json:"connectionId"       bun:"connection_id,type:VARCHAR(100),notnull" keel:"connection_id"`

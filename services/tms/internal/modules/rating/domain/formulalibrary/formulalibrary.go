@@ -153,6 +153,10 @@ func (fl *FormulaLibrary) BeforeAppendModel(_ context.Context, query bun.Query) 
 	return nil
 }
 
+func (fl *FormulaLibrary) BeforeCreate(ctx context.Context) error {
+	return fl.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (fl *FormulaLibrary) GetID() pulid.ID {
 	return fl.ID
 }

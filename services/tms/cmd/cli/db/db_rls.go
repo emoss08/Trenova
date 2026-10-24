@@ -38,8 +38,8 @@ var dbRLSGenerateKeyCmd = &cobra.Command{
 	Use:   "generate-key",
 	Short: "Generate a scope signing key for database.rls",
 	Long: `Print a new random key id and key for database.rls.scopeKeyId and
-database.rls.scopeKey. Store the key as a secret; the next "trenova db reconcile"
-installs it.`,
+database.rls.scopeKey. Store the key as a secret; the next "trenova-db up" installs
+it.`,
 	RunE: runRLSGenerateKey,
 }
 
@@ -91,14 +91,14 @@ func runRLSProvisionRoles(_ *cobra.Command, _ []string) error {
 		return errRLSMigratorRole
 	}
 
-	manager, err := createManager()
+	maint, err := openDB(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
+		return fmt.Errorf("open the database: %w", err)
 	}
-	defer manager.Close()
+	defer maint.Close()
 
 	ctx := context.Background()
-	roles, err := postgres.ProvisionRLSRoles(ctx, manager.GetDB(), postgres.ProvisionRLSRolesParams{
+	roles, err := postgres.ProvisionRLSRoles(ctx, maint, postgres.ProvisionRLSRolesParams{
 		App: postgres.RLSLoginRole{
 			User:     cfg.Database.User,
 			Password: cfg.Database.Password,
@@ -127,13 +127,13 @@ func runRLSRetireKey(_ *cobra.Command, args []string) error {
 		)
 	}
 
-	manager, err := createManager()
+	maint, err := openDB(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
+		return fmt.Errorf("open the database: %w", err)
 	}
-	defer manager.Close()
+	defer maint.Close()
 
-	retired, err := postgres.RetireRLSScopeKey(context.Background(), manager.GetDB(), keyID)
+	retired, err := postgres.RetireRLSScopeKey(context.Background(), maint, keyID)
 	if err != nil {
 		return err
 	}
@@ -148,13 +148,13 @@ func runRLSRetireKey(_ *cobra.Command, args []string) error {
 }
 
 func runRLSStatus(_ *cobra.Command, _ []string) error {
-	manager, err := createManager()
+	maint, err := openDB(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
+		return fmt.Errorf("open the database: %w", err)
 	}
-	defer manager.Close()
+	defer maint.Close()
 
-	status, err := postgres.ReadRLSStatus(context.Background(), manager.GetDB())
+	status, err := postgres.ReadRLSStatus(context.Background(), maint)
 	if err != nil {
 		return err
 	}

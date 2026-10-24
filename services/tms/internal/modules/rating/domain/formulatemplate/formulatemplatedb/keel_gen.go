@@ -54,23 +54,24 @@ var formulaTemplatesTable = schema.Table{
 		{Name: "SourceTemplate", Alias: "st", Kind: schema.BelongsTo, Local: []int32{20}, Remote: []int32{0}, Label: `Source Template`},
 		{Name: "Versions", Alias: "v", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{1}, Label: `Versions`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 20, 21, 22, 24},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "ft_",
-	New:        newFormulaTemplate,
-	NewN:       newNFormulaTemplate,
-	Size:       unsafe.Sizeof(formulatemplate.FormulaTemplate{}),
-	Ptr:        ptrFormulaTemplate,
-	Value:      valueFormulaTemplate,
-	Attach:     attachFormulaTemplate,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 20, 21, 22, 24},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "ft_",
+	New:          newFormulaTemplate,
+	NewN:         newNFormulaTemplate,
+	Size:         unsafe.Sizeof(formulatemplate.FormulaTemplate{}),
+	Ptr:          ptrFormulaTemplate,
+	Value:        valueFormulaTemplate,
+	Attach:       attachFormulaTemplate,
+	BeforeCreate: beforeCreateFormulaTemplate,
 }
 
 var formulaTemplatesRef = keel.Ref{Table: &formulaTemplatesTable}
@@ -354,6 +355,10 @@ func attachFormulaTemplate(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Versions = append(r.Versions, (*formulatemplate.FormulaTemplateVersion)(child))
 	}
+}
+
+func beforeCreateFormulaTemplate(ctx context.Context, p unsafe.Pointer) error {
+	return (*formulatemplate.FormulaTemplate)(p).BeforeCreate(ctx)
 }
 
 // formulaTemplateVersionsTable is the schema of formulatemplate.FormulaTemplateVersion.

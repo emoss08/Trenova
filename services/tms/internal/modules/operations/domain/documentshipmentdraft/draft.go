@@ -62,6 +62,10 @@ func (d *DocumentShipmentDraft) BeforeAppendModel(_ context.Context, query bun.Q
 	return nil
 }
 
+func (d *DocumentShipmentDraft) BeforeCreate(ctx context.Context) error {
+	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (d *DocumentShipmentDraft) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(d,
 		validation.Field(&d.OrganizationID,

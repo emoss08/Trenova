@@ -257,3 +257,7 @@ func (p *FuelSurchargeProgram) BeforeAppendModel(_ context.Context, query bun.Qu
 
 	return nil
 }
+
+func (p *FuelSurchargeProgram) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

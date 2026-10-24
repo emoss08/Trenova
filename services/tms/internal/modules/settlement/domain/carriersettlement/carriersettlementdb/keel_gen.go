@@ -73,23 +73,24 @@ var carrierSettlementsTable = schema.Table{
 		{Name: "Batch", Alias: "b", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Batch`},
 		{Name: "Lines", Alias: "l", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Lines`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40},
-	Returning:  nil,
-	Version:    38,
-	AutoID:     0,
-	AutoCreate: 39,
-	AutoUpdate: 40,
-	IDPrefix:   "carstl_",
-	New:        newCarrierSettlement,
-	NewN:       newNCarrierSettlement,
-	Size:       unsafe.Sizeof(carriersettlement.CarrierSettlement{}),
-	Ptr:        ptrCarrierSettlement,
-	Value:      valueCarrierSettlement,
-	Attach:     attachCarrierSettlement,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40},
+	Returning:    nil,
+	Version:      38,
+	AutoID:       0,
+	AutoCreate:   39,
+	AutoUpdate:   40,
+	IDPrefix:     "carstl_",
+	New:          newCarrierSettlement,
+	NewN:         newNCarrierSettlement,
+	Size:         unsafe.Sizeof(carriersettlement.CarrierSettlement{}),
+	Ptr:          ptrCarrierSettlement,
+	Value:        valueCarrierSettlement,
+	Attach:       attachCarrierSettlement,
+	BeforeCreate: beforeCreateCarrierSettlement,
 }
 
 var carrierSettlementsRef = keel.Ref{Table: &carrierSettlementsTable}
@@ -526,6 +527,10 @@ func attachCarrierSettlement(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	}
 }
 
+func beforeCreateCarrierSettlement(ctx context.Context, p unsafe.Pointer) error {
+	return (*carriersettlement.CarrierSettlement)(p).BeforeCreate(ctx)
+}
+
 // carrierSettlementBatchesTable is the schema of carriersettlement.CarrierSettlementBatch.
 var carrierSettlementBatchesTable = schema.Table{
 	Name:   "carrier_settlement_batches",
@@ -560,23 +565,24 @@ var carrierSettlementBatchesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Settlements", Alias: "s", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{4}, Label: `Settlements`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "carstlb_",
-	New:        newCarrierSettlementBatch,
-	NewN:       newNCarrierSettlementBatch,
-	Size:       unsafe.Sizeof(carriersettlement.CarrierSettlementBatch{}),
-	Ptr:        ptrCarrierSettlementBatch,
-	Value:      valueCarrierSettlementBatch,
-	Attach:     attachCarrierSettlementBatch,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "carstlb_",
+	New:          newCarrierSettlementBatch,
+	NewN:         newNCarrierSettlementBatch,
+	Size:         unsafe.Sizeof(carriersettlement.CarrierSettlementBatch{}),
+	Ptr:          ptrCarrierSettlementBatch,
+	Value:        valueCarrierSettlementBatch,
+	Attach:       attachCarrierSettlementBatch,
+	BeforeCreate: beforeCreateCarrierSettlementBatch,
 }
 
 var carrierSettlementBatchesRef = keel.Ref{Table: &carrierSettlementBatchesTable}
@@ -811,6 +817,10 @@ func attachCarrierSettlementBatch(p unsafe.Pointer, rel int32, child unsafe.Poin
 	}
 }
 
+func beforeCreateCarrierSettlementBatch(ctx context.Context, p unsafe.Pointer) error {
+	return (*carriersettlement.CarrierSettlementBatch)(p).BeforeCreate(ctx)
+}
+
 // carrierSettlementLinesTable is the schema of carriersettlement.CarrierSettlementLine.
 var carrierSettlementLinesTable = schema.Table{
 	Name:   "carrier_settlement_lines",
@@ -837,22 +847,23 @@ var carrierSettlementLinesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
-	IDPrefix:   "carstll_",
-	New:        newCarrierSettlementLine,
-	NewN:       newNCarrierSettlementLine,
-	Size:       unsafe.Sizeof(carriersettlement.CarrierSettlementLine{}),
-	Ptr:        ptrCarrierSettlementLine,
-	Value:      valueCarrierSettlementLine,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   15,
+	IDPrefix:     "carstll_",
+	New:          newCarrierSettlementLine,
+	NewN:         newNCarrierSettlementLine,
+	Size:         unsafe.Sizeof(carriersettlement.CarrierSettlementLine{}),
+	Ptr:          ptrCarrierSettlementLine,
+	Value:        valueCarrierSettlementLine,
+	BeforeCreate: beforeCreateCarrierSettlementLine,
 }
 
 var carrierSettlementLinesRef = keel.Ref{Table: &carrierSettlementLinesTable}
@@ -1036,6 +1047,10 @@ func valueCarrierSettlementLine(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCarrierSettlementLine(ctx context.Context, p unsafe.Pointer) error {
+	return (*carriersettlement.CarrierSettlementLine)(p).BeforeCreate(ctx)
+}
+
 // costEventsTable is the schema of carriersettlement.CostEvent.
 var costEventsTable = schema.Table{
 	Name:   "carrier_cost_events",
@@ -1071,23 +1086,24 @@ var costEventsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Carrier", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Carrier`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "cacc_",
-	New:        newCostEvent,
-	NewN:       newNCostEvent,
-	Size:       unsafe.Sizeof(carriersettlement.CostEvent{}),
-	Ptr:        ptrCostEvent,
-	Value:      valueCostEvent,
-	Attach:     attachCostEvent,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "cacc_",
+	New:          newCostEvent,
+	NewN:         newNCostEvent,
+	Size:         unsafe.Sizeof(carriersettlement.CostEvent{}),
+	Ptr:          ptrCostEvent,
+	Value:        valueCostEvent,
+	Attach:       attachCostEvent,
+	BeforeCreate: beforeCreateCostEvent,
 }
 
 var costEventsRef = keel.Ref{Table: &costEventsTable}
@@ -1333,6 +1349,10 @@ func attachCostEvent(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateCostEvent(ctx context.Context, p unsafe.Pointer) error {
+	return (*carriersettlement.CostEvent)(p).BeforeCreate(ctx)
+}
+
 // invoiceMatchesTable is the schema of carriersettlement.InvoiceMatch.
 var invoiceMatchesTable = schema.Table{
 	Name:   "carrier_invoice_matches",
@@ -1372,23 +1392,24 @@ var invoiceMatchesTable = schema.Table{
 		{Name: "Carrier", Alias: "c", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Carrier`},
 		{Name: "CarrierAssignment", Alias: "ca", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Carrier Assignment`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
-	Returning:  nil,
-	Version:    22,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "cim_",
-	New:        newInvoiceMatch,
-	NewN:       newNInvoiceMatch,
-	Size:       unsafe.Sizeof(carriersettlement.InvoiceMatch{}),
-	Ptr:        ptrInvoiceMatch,
-	Value:      valueInvoiceMatch,
-	Attach:     attachInvoiceMatch,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Returning:    nil,
+	Version:      22,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "cim_",
+	New:          newInvoiceMatch,
+	NewN:         newNInvoiceMatch,
+	Size:         unsafe.Sizeof(carriersettlement.InvoiceMatch{}),
+	Ptr:          ptrInvoiceMatch,
+	Value:        valueInvoiceMatch,
+	Attach:       attachInvoiceMatch,
+	BeforeCreate: beforeCreateInvoiceMatch,
 }
 
 var invoiceMatchesRef = keel.Ref{Table: &invoiceMatchesTable}
@@ -1671,6 +1692,10 @@ func attachInvoiceMatch(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateInvoiceMatch(ctx context.Context, p unsafe.Pointer) error {
+	return (*carriersettlement.InvoiceMatch)(p).BeforeCreate(ctx)
+}
+
 // ledgerEntriesTable is the schema of carriersettlement.LedgerEntry.
 var ledgerEntriesTable = schema.Table{
 	Name:   "carrier_ledger_entries",
@@ -1700,23 +1725,24 @@ var ledgerEntriesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Carrier", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Carrier`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: -1,
-	IDPrefix:   "carldg_",
-	New:        newLedgerEntry,
-	NewN:       newNLedgerEntry,
-	Size:       unsafe.Sizeof(carriersettlement.LedgerEntry{}),
-	Ptr:        ptrLedgerEntry,
-	Value:      valueLedgerEntry,
-	Attach:     attachLedgerEntry,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   -1,
+	IDPrefix:     "carldg_",
+	New:          newLedgerEntry,
+	NewN:         newNLedgerEntry,
+	Size:         unsafe.Sizeof(carriersettlement.LedgerEntry{}),
+	Ptr:          ptrLedgerEntry,
+	Value:        valueLedgerEntry,
+	Attach:       attachLedgerEntry,
+	BeforeCreate: beforeCreateLedgerEntry,
 }
 
 var ledgerEntriesRef = keel.Ref{Table: &ledgerEntriesTable}
@@ -1903,6 +1929,10 @@ func attachLedgerEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Carrier = (*carrier.Carrier)(child)
 	}
+}
+
+func beforeCreateLedgerEntry(ctx context.Context, p unsafe.Pointer) error {
+	return (*carriersettlement.LedgerEntry)(p).BeforeCreate(ctx)
 }
 
 func init() {

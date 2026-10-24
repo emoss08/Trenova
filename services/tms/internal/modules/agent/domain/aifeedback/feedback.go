@@ -189,3 +189,7 @@ func (f *Feedback) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (f *Feedback) BeforeCreate(ctx context.Context) error {
+	return f.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

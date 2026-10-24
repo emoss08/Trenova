@@ -42,23 +42,24 @@ var sourcesTable = schema.Table{
 		{Name: "JournalBatch", Alias: "jb", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `Journal Batch`},
 		{Name: "JournalEntry", Alias: "je", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Journal Entry`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: -1,
-	IDPrefix:   "jsrc_",
-	New:        newSource,
-	NewN:       newNSource,
-	Size:       unsafe.Sizeof(journalsource.Source{}),
-	Ptr:        ptrSource,
-	Value:      valueSource,
-	Attach:     attachSource,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   -1,
+	IDPrefix:     "jsrc_",
+	New:          newSource,
+	NewN:         newNSource,
+	Size:         unsafe.Sizeof(journalsource.Source{}),
+	Ptr:          ptrSource,
+	Value:        valueSource,
+	Attach:       attachSource,
+	BeforeCreate: beforeCreateSource,
 }
 
 var sourcesRef = keel.Ref{Table: &sourcesTable}
@@ -219,6 +220,156 @@ func attachSource(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.JournalEntry = (*journalentry.JournalEntry)(child)
 	}
+}
+
+func beforeCreateSource(ctx context.Context, p unsafe.Pointer) error {
+	return (*journalsource.Source)(p).BeforeCreate(ctx)
+}
+
+// sourceJournalLinksTable is the schema of journalsource.SourceJournalLink.
+var sourceJournalLinksTable = schema.Table{
+	Name:   "source_journal_links",
+	Quoted: `"source_journal_links"`,
+	Alias:  "sjl",
+	Model:  "journalsource.SourceJournalLink",
+	Label:  `Source Journal Link`,
+	Plural: `Source Journal Links`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
+		{Name: "journal_source_id", Quoted: `"journal_source_id"`, Field: "JournalSourceID", Kind: schema.KindString, Flags: 0, Label: `Journal Source ID`},
+		{Name: "journal_batch_id", Quoted: `"journal_batch_id"`, Field: "JournalBatchID", Kind: schema.KindString, Flags: 0, Label: `Journal Batch ID`},
+		{Name: "journal_entry_id", Quoted: `"journal_entry_id"`, Field: "JournalEntryID", Kind: schema.KindString, Flags: 0, Label: `Journal Entry ID`},
+		{Name: "link_role", Quoted: `"link_role"`, Field: "LinkRole", Kind: schema.KindString, Flags: 0, Label: `Link Role`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:     []int32{3, 4, 5, 6},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 7,
+	AutoUpdate: -1,
+	IDPrefix:   "sjl_",
+	New:        newSourceJournalLink,
+	NewN:       newNSourceJournalLink,
+	Size:       unsafe.Sizeof(journalsource.SourceJournalLink{}),
+	Ptr:        ptrSourceJournalLink,
+	Value:      valueSourceJournalLink,
+}
+
+var sourceJournalLinksRef = keel.Ref{Table: &sourceJournalLinksTable}
+
+// SourceJournalLinksTable is the table of journalsource.SourceJournalLink.
+type SourceJournalLinksTable struct {
+	keel.Handle[journalsource.SourceJournalLink]
+	ID              keelkinds.PulidIDCol
+	BusinessUnitID  keelkinds.PulidIDCol
+	OrganizationID  keelkinds.PulidIDCol
+	JournalSourceID keelkinds.PulidIDCol
+	JournalBatchID  keelkinds.PulidIDCol
+	JournalEntryID  keelkinds.PulidIDCol
+	LinkRole        keel.StringCol
+	CreatedAt       keel.Int64Col
+}
+
+// SourceJournalLinks references the source_journal_links table.
+var SourceJournalLinks = &SourceJournalLinksTable{
+	Handle:          keel.Handle[journalsource.SourceJournalLink]{Ref: &sourceJournalLinksRef},
+	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 2}}},
+	JournalSourceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 3}}},
+	JournalBatchID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 4}}},
+	JournalEntryID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 5}}},
+	LinkRole:        keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 6}},
+	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 7}},
+}
+
+// BuildSourceJournalLinks builds the handle of source_journal_links for ref. Generated relation and alias methods call it.
+func BuildSourceJournalLinks(r *keel.Ref) *SourceJournalLinksTable {
+	return &SourceJournalLinksTable{
+		Handle:          keel.Handle[journalsource.SourceJournalLink]{Ref: r},
+		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		JournalSourceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		JournalBatchID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		JournalEntryID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		LinkRole:        keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
+		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+	}
+}
+
+// SourceJournalLinksSchema returns the schema of source_journal_links.
+func SourceJournalLinksSchema() *schema.Table { return &sourceJournalLinksTable }
+
+// As returns a handle that references source_journal_links under its own alias.
+func (t *SourceJournalLinksTable) As(alias string) *SourceJournalLinksTable {
+	return keel.Alias(t.Ref, alias, BuildSourceJournalLinks)
+}
+
+// Get returns the source_journal_links row with the given key, or keel.ErrNotFound.
+func (t *SourceJournalLinksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*journalsource.SourceJournalLink, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+func newSourceJournalLink() unsafe.Pointer {
+	return unsafe.Pointer(new(journalsource.SourceJournalLink))
+}
+
+func newNSourceJournalLink(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]journalsource.SourceJournalLink, n)))
+}
+
+func ptrSourceJournalLink(p unsafe.Pointer, c int32) any {
+	r := (*journalsource.SourceJournalLink)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.JournalSourceID))
+	case 4:
+		return (*string)(unsafe.Pointer(&r.JournalBatchID))
+	case 5:
+		return (*string)(unsafe.Pointer(&r.JournalEntryID))
+	case 6:
+		return &r.LinkRole
+	case 7:
+		return &r.CreatedAt
+	}
+	return nil
+}
+
+func valueSourceJournalLink(p unsafe.Pointer, c int32) any {
+	r := (*journalsource.SourceJournalLink)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.JournalSourceID)
+	case 4:
+		return string(r.JournalBatchID)
+	case 5:
+		return string(r.JournalEntryID)
+	case 6:
+		return r.LinkRole
+	case 7:
+		return r.CreatedAt
+	}
+	return nil
 }
 
 func init() {

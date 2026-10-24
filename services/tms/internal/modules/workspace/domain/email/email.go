@@ -152,6 +152,10 @@ func (p *Profile) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (p *Profile) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 type ProfileAssignment struct {
 	bun.BaseModel `bun:"table:email_profile_assignments,alias:epa" json:"-"`
 	keel.Table    `keel:"email_profile_assignments"`

@@ -48,22 +48,23 @@ var formulaLibrariesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 17, 18, 19, 21},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "fl_",
-	New:        newFormulaLibrary,
-	NewN:       newNFormulaLibrary,
-	Size:       unsafe.Sizeof(formulalibrary.FormulaLibrary{}),
-	Ptr:        ptrFormulaLibrary,
-	Value:      valueFormulaLibrary,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 17, 18, 19, 21},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "fl_",
+	New:          newFormulaLibrary,
+	NewN:         newNFormulaLibrary,
+	Size:         unsafe.Sizeof(formulalibrary.FormulaLibrary{}),
+	Ptr:          ptrFormulaLibrary,
+	Value:        valueFormulaLibrary,
+	BeforeCreate: beforeCreateFormulaLibrary,
 }
 
 var formulaLibrariesRef = keel.Ref{Table: &formulaLibrariesTable}
@@ -297,6 +298,10 @@ func valueFormulaLibrary(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateFormulaLibrary(ctx context.Context, p unsafe.Pointer) error {
+	return (*formulalibrary.FormulaLibrary)(p).BeforeCreate(ctx)
 }
 
 // formulaLibraryReviewsTable is the schema of formulalibrary.FormulaLibraryReview.

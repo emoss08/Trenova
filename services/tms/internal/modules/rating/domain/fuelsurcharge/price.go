@@ -111,3 +111,7 @@ func (fp *FuelIndexPrice) BeforeAppendModel(_ context.Context, query bun.Query) 
 
 	return nil
 }
+
+func (fp *FuelIndexPrice) BeforeCreate(ctx context.Context) error {
+	return fp.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

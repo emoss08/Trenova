@@ -333,3 +333,7 @@ func (i *Insight) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (i *Insight) BeforeCreate(ctx context.Context) error {
+	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

@@ -103,6 +103,10 @@ func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, q bun.Query) err
 	return nil
 }
 
+func (a *AdditionalCharge) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 type ChargeTotals struct {
 	Each []decimal.Decimal
 	Sum  decimal.Decimal

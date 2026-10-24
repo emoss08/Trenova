@@ -7,13 +7,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,19 +51,8 @@ func NewDatabase(t *testing.T) *Database {
 func NewDevelopmentDatabase(t *testing.T) *Database {
 	t.Helper()
 
-	ctx, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
+	ctx, admin, dsn, cleanup := seededtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(admin, registry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "integration-system-password"},
-	})
-	_, err := engine.Execute(
-		ctx,
-		seeder.ExecuteOptions{Environment: common.EnvDevelopment, Force: true},
-	)
-	require.NoError(t, err)
 
 	db := &Database{
 		Conn:  dbtest.NewRLSConnection(t, admin, dsn),

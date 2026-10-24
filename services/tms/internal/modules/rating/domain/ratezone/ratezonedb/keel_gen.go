@@ -39,23 +39,24 @@ var rateZonesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Members", Alias: "m", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Members`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:     []int32{3, 4, 5, 6, 7, 10},
-	Returning:  nil,
-	Version:    8,
-	AutoID:     0,
-	AutoCreate: 9,
-	AutoUpdate: 10,
-	IDPrefix:   "rzn_",
-	New:        newRateZone,
-	NewN:       newNRateZone,
-	Size:       unsafe.Sizeof(ratezone.RateZone{}),
-	Ptr:        ptrRateZone,
-	Value:      valueRateZone,
-	Attach:     attachRateZone,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:       []int32{3, 4, 5, 6, 7, 10},
+	Returning:    nil,
+	Version:      8,
+	AutoID:       0,
+	AutoCreate:   9,
+	AutoUpdate:   10,
+	IDPrefix:     "rzn_",
+	New:          newRateZone,
+	NewN:         newNRateZone,
+	Size:         unsafe.Sizeof(ratezone.RateZone{}),
+	Ptr:          ptrRateZone,
+	Value:        valueRateZone,
+	Attach:       attachRateZone,
+	BeforeCreate: beforeCreateRateZone,
 }
 
 var rateZonesRef = keel.Ref{Table: &rateZonesTable}
@@ -217,6 +218,10 @@ func attachRateZone(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateRateZone(ctx context.Context, p unsafe.Pointer) error {
+	return (*ratezone.RateZone)(p).BeforeCreate(ctx)
+}
+
 // rateZoneMembersTable is the schema of ratezone.RateZoneMember.
 var rateZoneMembersTable = schema.Table{
 	Name:   "rate_zone_members",
@@ -241,23 +246,24 @@ var rateZoneMembersTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "RateZone", Alias: "rz", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Rate Zone`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Update:     []int32{3, 4, 5, 6, 7, 9},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 8,
-	AutoUpdate: 9,
-	IDPrefix:   "rzm_",
-	New:        newRateZoneMember,
-	NewN:       newNRateZoneMember,
-	Size:       unsafe.Sizeof(ratezone.RateZoneMember{}),
-	Ptr:        ptrRateZoneMember,
-	Value:      valueRateZoneMember,
-	Attach:     attachRateZoneMember,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:       []int32{3, 4, 5, 6, 7, 9},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   8,
+	AutoUpdate:   9,
+	IDPrefix:     "rzm_",
+	New:          newRateZoneMember,
+	NewN:         newNRateZoneMember,
+	Size:         unsafe.Sizeof(ratezone.RateZoneMember{}),
+	Ptr:          ptrRateZoneMember,
+	Value:        valueRateZoneMember,
+	Attach:       attachRateZoneMember,
+	BeforeCreate: beforeCreateRateZoneMember,
 }
 
 var rateZoneMembersRef = keel.Ref{Table: &rateZoneMembersTable}
@@ -397,6 +403,10 @@ func attachRateZoneMember(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.RateZone = (*ratezone.RateZone)(child)
 	}
+}
+
+func beforeCreateRateZoneMember(ctx context.Context, p unsafe.Pointer) error {
+	return (*ratezone.RateZoneMember)(p).BeforeCreate(ctx)
 }
 
 func init() {

@@ -543,3 +543,7 @@ func (p *DetentionPolicy) BeforeAppendModel(_ context.Context, query bun.Query) 
 
 	return nil
 }
+
+func (p *DetentionPolicy) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

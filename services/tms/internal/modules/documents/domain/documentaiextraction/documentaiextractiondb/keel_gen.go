@@ -45,22 +45,23 @@ var extractionsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 2, 3},
-	Tenant:     []int32{2, 3},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "dax_",
-	New:        newExtraction,
-	NewN:       newNExtraction,
-	Size:       unsafe.Sizeof(documentaiextraction.Extraction{}),
-	Ptr:        ptrExtraction,
-	Value:      valueExtraction,
+	PK:           []int32{0, 2, 3},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "dax_",
+	New:          newExtraction,
+	NewN:         newNExtraction,
+	Size:         unsafe.Sizeof(documentaiextraction.Extraction{}),
+	Ptr:          ptrExtraction,
+	Value:        valueExtraction,
+	BeforeCreate: beforeCreateExtraction,
 }
 
 var extractionsRef = keel.Ref{Table: &extractionsTable}
@@ -291,6 +292,10 @@ func valueExtraction(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateExtraction(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentaiextraction.Extraction)(p).BeforeCreate(ctx)
 }
 
 var enumStatus = [...]schema.EnumValue{

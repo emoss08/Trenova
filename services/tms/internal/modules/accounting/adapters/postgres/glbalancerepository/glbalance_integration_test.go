@@ -7,19 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -41,18 +38,8 @@ type seededBalanceAccount struct {
 }
 
 func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	postingRepo := journalpostingrepository.New(
@@ -62,7 +49,7 @@ func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
 	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupGLBalanceFixture(t, ctx, conn)
 	now := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 
-	err = postingRepo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
+	err := postingRepo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:          pulid.MustNew("jb_"),
 		OrganizationID:   orgID,
 		BusinessUnitID:   buID,
@@ -133,18 +120,8 @@ func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
 // for. The adjusting period shares the final operating period's dates, so the
 // ordering has to come from the period number rather than from a date.
 func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	postingRepo := journalpostingrepository.New(

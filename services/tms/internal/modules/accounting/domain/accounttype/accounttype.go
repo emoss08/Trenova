@@ -143,3 +143,7 @@ func (a *AccountType) BeforeAppendModel(_ context.Context, query bun.Query) erro
 
 	return nil
 }
+
+func (a *AccountType) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

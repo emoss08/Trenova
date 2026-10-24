@@ -27,7 +27,7 @@ type DefinitionVersion struct {
 	bun.BaseModel `bun:"table:agent_definition_versions,alias:agdv" json:"-"`
 	keel.Table    `keel:"agent_definition_versions"`
 
-	ID                pulid.ID    `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	ID                pulid.ID    `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:agdv_"`
 	BusinessUnitID    pulid.ID    `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID    pulid.ID    `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	AgentDefinitionID pulid.ID    `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`

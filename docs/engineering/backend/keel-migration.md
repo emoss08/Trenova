@@ -125,6 +125,12 @@ module as the converted reference.
   pattern, a second tenant included. `go generate -tags integration ./internal/testutil/keeltest/`
   regenerates that model's handles; its files build only with the `integration` tag, so the
   application's `keel gen` run never sees it.
+- Gives keel what Bun did on insert. Keel runs neither `BeforeAppendModel` nor `bun:"default:…"`
+  tags: an ID a hook generated needs `autoid:<prefix>` on the keel tag, and a database default
+  the code relied on needs an explicit value (a `NewDefault…` constructor) or a `BeforeCreate`
+  hook. Models the seeds write carry a one-line `BeforeCreate` that calls their Bun hook with
+  `(*bun.InsertQuery)(nil)`; converting the module moves that logic into `BeforeCreate` itself and
+  deletes the Bun hook.
 
 ## When Bun is gone
 

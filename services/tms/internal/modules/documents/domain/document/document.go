@@ -320,6 +320,10 @@ func (d *Document) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (d *Document) BeforeCreate(ctx context.Context) error {
+	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (d *Document) GetID() pulid.ID {
 	return d.ID
 }

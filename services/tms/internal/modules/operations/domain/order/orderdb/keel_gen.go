@@ -55,23 +55,24 @@ var ordersTable = schema.Table{
 		{Name: "Shipments", Alias: "s", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{13}, Label: `Shipments`},
 		{Name: "Charges", Alias: "c", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Charges`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
-	IDPrefix:   "ord_",
-	New:        newOrder,
-	NewN:       newNOrder,
-	Size:       unsafe.Sizeof(order.Order{}),
-	Ptr:        ptrOrder,
-	Value:      valueOrder,
-	Attach:     attachOrder,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       0,
+	AutoCreate:   17,
+	AutoUpdate:   18,
+	IDPrefix:     "ord_",
+	New:          newOrder,
+	NewN:         newNOrder,
+	Size:         unsafe.Sizeof(order.Order{}),
+	Ptr:          ptrOrder,
+	Value:        valueOrder,
+	Attach:       attachOrder,
+	BeforeCreate: beforeCreateOrder,
 }
 
 var ordersRef = keel.Ref{Table: &ordersTable}
@@ -302,6 +303,10 @@ func attachOrder(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 4:
 		r.Charges = append(r.Charges, (*order.OrderCharge)(child))
 	}
+}
+
+func beforeCreateOrder(ctx context.Context, p unsafe.Pointer) error {
+	return (*order.Order)(p).BeforeCreate(ctx)
 }
 
 // orderChargesTable is the schema of order.OrderCharge.

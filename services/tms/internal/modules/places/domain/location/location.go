@@ -197,3 +197,7 @@ func (l *Location) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (l *Location) BeforeCreate(ctx context.Context) error {
+	return l.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

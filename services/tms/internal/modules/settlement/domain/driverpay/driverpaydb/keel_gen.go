@@ -305,23 +305,24 @@ var escrowAccountsTable = schema.Table{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`},
 		{Name: "Transactions", Alias: "t", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Transactions`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
-	Returning:  nil,
-	Version:    12,
-	AutoID:     0,
-	AutoCreate: 13,
-	AutoUpdate: 14,
-	IDPrefix:   "escr_",
-	New:        newEscrowAccount,
-	NewN:       newNEscrowAccount,
-	Size:       unsafe.Sizeof(driverpay.EscrowAccount{}),
-	Ptr:        ptrEscrowAccount,
-	Value:      valueEscrowAccount,
-	Attach:     attachEscrowAccount,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:    nil,
+	Version:      12,
+	AutoID:       0,
+	AutoCreate:   13,
+	AutoUpdate:   14,
+	IDPrefix:     "escr_",
+	New:          newEscrowAccount,
+	NewN:         newNEscrowAccount,
+	Size:         unsafe.Sizeof(driverpay.EscrowAccount{}),
+	Ptr:          ptrEscrowAccount,
+	Value:        valueEscrowAccount,
+	Attach:       attachEscrowAccount,
+	BeforeCreate: beforeCreateEscrowAccount,
 }
 
 var escrowAccountsRef = keel.Ref{Table: &escrowAccountsTable}
@@ -507,6 +508,10 @@ func attachEscrowAccount(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateEscrowAccount(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.EscrowAccount)(p).BeforeCreate(ctx)
+}
+
 // escrowTransactionsTable is the schema of driverpay.EscrowTransaction.
 var escrowTransactionsTable = schema.Table{
 	Name:   "escrow_transactions",
@@ -532,23 +537,24 @@ var escrowTransactionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "EscrowAccount", Alias: "ea", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Escrow Account`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: -1,
-	IDPrefix:   "esctx_",
-	New:        newEscrowTransaction,
-	NewN:       newNEscrowTransaction,
-	Size:       unsafe.Sizeof(driverpay.EscrowTransaction{}),
-	Ptr:        ptrEscrowTransaction,
-	Value:      valueEscrowTransaction,
-	Attach:     attachEscrowTransaction,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   -1,
+	IDPrefix:     "esctx_",
+	New:          newEscrowTransaction,
+	NewN:         newNEscrowTransaction,
+	Size:         unsafe.Sizeof(driverpay.EscrowTransaction{}),
+	Ptr:          ptrEscrowTransaction,
+	Value:        valueEscrowTransaction,
+	Attach:       attachEscrowTransaction,
+	BeforeCreate: beforeCreateEscrowTransaction,
 }
 
 var escrowTransactionsRef = keel.Ref{Table: &escrowTransactionsTable}
@@ -709,6 +715,10 @@ func attachEscrowTransaction(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	}
 }
 
+func beforeCreateEscrowTransaction(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.EscrowTransaction)(p).BeforeCreate(ctx)
+}
+
 // expensesTable is the schema of driverpay.Expense.
 var expensesTable = schema.Table{
 	Name:   "driver_expenses",
@@ -744,23 +754,24 @@ var expensesTable = schema.Table{
 		{Name: "PayCode", Alias: "pc", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Pay Code`},
 		{Name: "ReviewedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `Reviewed By`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
-	Returning:  nil,
-	Version:    17,
-	AutoID:     0,
-	AutoCreate: 18,
-	AutoUpdate: 19,
-	IDPrefix:   "dexp_",
-	New:        newExpense,
-	NewN:       newNExpense,
-	Size:       unsafe.Sizeof(driverpay.Expense{}),
-	Ptr:        ptrExpense,
-	Value:      valueExpense,
-	Attach:     attachExpense,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
+	Returning:    nil,
+	Version:      17,
+	AutoID:       0,
+	AutoCreate:   18,
+	AutoUpdate:   19,
+	IDPrefix:     "dexp_",
+	New:          newExpense,
+	NewN:         newNExpense,
+	Size:         unsafe.Sizeof(driverpay.Expense{}),
+	Ptr:          ptrExpense,
+	Value:        valueExpense,
+	Attach:       attachExpense,
+	BeforeCreate: beforeCreateExpense,
 }
 
 var expensesRef = keel.Ref{Table: &expensesTable}
@@ -1001,6 +1012,10 @@ func attachExpense(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateExpense(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.Expense)(p).BeforeCreate(ctx)
+}
+
 // payAdvancesTable is the schema of driverpay.PayAdvance.
 var payAdvancesTable = schema.Table{
 	Name:   "pay_advances",
@@ -1034,23 +1049,24 @@ var payAdvancesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
-	Returning:  nil,
-	Version:    17,
-	AutoID:     0,
-	AutoCreate: 18,
-	AutoUpdate: 19,
-	IDPrefix:   "padv_",
-	New:        newPayAdvance,
-	NewN:       newNPayAdvance,
-	Size:       unsafe.Sizeof(driverpay.PayAdvance{}),
-	Ptr:        ptrPayAdvance,
-	Value:      valuePayAdvance,
-	Attach:     attachPayAdvance,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
+	Returning:    nil,
+	Version:      17,
+	AutoID:       0,
+	AutoCreate:   18,
+	AutoUpdate:   19,
+	IDPrefix:     "padv_",
+	New:          newPayAdvance,
+	NewN:         newNPayAdvance,
+	Size:         unsafe.Sizeof(driverpay.PayAdvance{}),
+	Ptr:          ptrPayAdvance,
+	Value:        valuePayAdvance,
+	Attach:       attachPayAdvance,
+	BeforeCreate: beforeCreatePayAdvance,
 }
 
 var payAdvancesRef = keel.Ref{Table: &payAdvancesTable}
@@ -1276,6 +1292,10 @@ func attachPayAdvance(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreatePayAdvance(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.PayAdvance)(p).BeforeCreate(ctx)
+}
+
 // payCodesTable is the schema of driverpay.PayCode.
 var payCodesTable = schema.Table{
 	Name:   "pay_codes",
@@ -1305,23 +1325,24 @@ var payCodesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "GLAccount", Alias: "ga", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `GL Account`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
-	Returning:  nil,
-	Version:    13,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
-	IDPrefix:   "payc_",
-	New:        newPayCode,
-	NewN:       newNPayCode,
-	Size:       unsafe.Sizeof(driverpay.PayCode{}),
-	Ptr:        ptrPayCode,
-	Value:      valuePayCode,
-	Attach:     attachPayCode,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
+	Returning:    nil,
+	Version:      13,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   15,
+	IDPrefix:     "payc_",
+	New:          newPayCode,
+	NewN:         newNPayCode,
+	Size:         unsafe.Sizeof(driverpay.PayCode{}),
+	Ptr:          ptrPayCode,
+	Value:        valuePayCode,
+	Attach:       attachPayCode,
+	BeforeCreate: beforeCreatePayCode,
 }
 
 var payCodesRef = keel.Ref{Table: &payCodesTable}
@@ -1510,6 +1531,10 @@ func attachPayCode(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreatePayCode(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.PayCode)(p).BeforeCreate(ctx)
+}
+
 // payProfilesTable is the schema of driverpay.PayProfile.
 var payProfilesTable = schema.Table{
 	Name:   "driver_pay_profiles",
@@ -1537,23 +1562,24 @@ var payProfilesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Components", Alias: "c", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Components`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "dpp_",
-	New:        newPayProfile,
-	NewN:       newNPayProfile,
-	Size:       unsafe.Sizeof(driverpay.PayProfile{}),
-	Ptr:        ptrPayProfile,
-	Value:      valuePayProfile,
-	Attach:     attachPayProfile,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "dpp_",
+	New:          newPayProfile,
+	NewN:         newNPayProfile,
+	Size:         unsafe.Sizeof(driverpay.PayProfile{}),
+	Ptr:          ptrPayProfile,
+	Value:        valuePayProfile,
+	Attach:       attachPayProfile,
+	BeforeCreate: beforeCreatePayProfile,
 }
 
 var payProfilesRef = keel.Ref{Table: &payProfilesTable}
@@ -1722,6 +1748,10 @@ func attachPayProfile(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreatePayProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.PayProfile)(p).BeforeCreate(ctx)
+}
+
 // payProfileComponentsTable is the schema of driverpay.PayProfileComponent.
 var payProfileComponentsTable = schema.Table{
 	Name:   "driver_pay_profile_components",
@@ -1749,22 +1779,23 @@ var payProfileComponentsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "dppc_",
-	New:        newPayProfileComponent,
-	NewN:       newNPayProfileComponent,
-	Size:       unsafe.Sizeof(driverpay.PayProfileComponent{}),
-	Ptr:        ptrPayProfileComponent,
-	Value:      valuePayProfileComponent,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "dppc_",
+	New:          newPayProfileComponent,
+	NewN:         newNPayProfileComponent,
+	Size:         unsafe.Sizeof(driverpay.PayProfileComponent{}),
+	Ptr:          ptrPayProfileComponent,
+	Value:        valuePayProfileComponent,
+	BeforeCreate: beforeCreatePayProfileComponent,
 }
 
 var payProfileComponentsRef = keel.Ref{Table: &payProfileComponentsTable}
@@ -1955,6 +1986,10 @@ func valuePayProfileComponent(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreatePayProfileComponent(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.PayProfileComponent)(p).BeforeCreate(ctx)
+}
+
 // recurringDeductionsTable is the schema of driverpay.RecurringDeduction.
 var recurringDeductionsTable = schema.Table{
 	Name:   "recurring_deductions",
@@ -1994,23 +2029,24 @@ var recurringDeductionsTable = schema.Table{
 		{Name: "PayCode", Alias: "pc", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Pay Code`},
 		{Name: "EscrowAccount", Alias: "ea", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Escrow Account`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
-	Returning:  nil,
-	Version:    21,
-	AutoID:     0,
-	AutoCreate: 22,
-	AutoUpdate: 23,
-	IDPrefix:   "rded_",
-	New:        newRecurringDeduction,
-	NewN:       newNRecurringDeduction,
-	Size:       unsafe.Sizeof(driverpay.RecurringDeduction{}),
-	Ptr:        ptrRecurringDeduction,
-	Value:      valueRecurringDeduction,
-	Attach:     attachRecurringDeduction,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
+	Returning:    nil,
+	Version:      21,
+	AutoID:       0,
+	AutoCreate:   22,
+	AutoUpdate:   23,
+	IDPrefix:     "rded_",
+	New:          newRecurringDeduction,
+	NewN:         newNRecurringDeduction,
+	Size:         unsafe.Sizeof(driverpay.RecurringDeduction{}),
+	Ptr:          ptrRecurringDeduction,
+	Value:        valueRecurringDeduction,
+	Attach:       attachRecurringDeduction,
+	BeforeCreate: beforeCreateRecurringDeduction,
 }
 
 var recurringDeductionsRef = keel.Ref{Table: &recurringDeductionsTable}
@@ -2281,6 +2317,10 @@ func attachRecurringDeduction(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 	}
 }
 
+func beforeCreateRecurringDeduction(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.RecurringDeduction)(p).BeforeCreate(ctx)
+}
+
 // recurringEarningsTable is the schema of driverpay.RecurringEarning.
 var recurringEarningsTable = schema.Table{
 	Name:   "recurring_earnings",
@@ -2314,23 +2354,24 @@ var recurringEarningsTable = schema.Table{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`},
 		{Name: "PayCode", Alias: "pc", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Pay Code`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
-	IDPrefix:   "rern_",
-	New:        newRecurringEarning,
-	NewN:       newNRecurringEarning,
-	Size:       unsafe.Sizeof(driverpay.RecurringEarning{}),
-	Ptr:        ptrRecurringEarning,
-	Value:      valueRecurringEarning,
-	Attach:     attachRecurringEarning,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       0,
+	AutoCreate:   17,
+	AutoUpdate:   18,
+	IDPrefix:     "rern_",
+	New:          newRecurringEarning,
+	NewN:         newNRecurringEarning,
+	Size:         unsafe.Sizeof(driverpay.RecurringEarning{}),
+	Ptr:          ptrRecurringEarning,
+	Value:        valueRecurringEarning,
+	Attach:       attachRecurringEarning,
+	BeforeCreate: beforeCreateRecurringEarning,
 }
 
 var recurringEarningsRef = keel.Ref{Table: &recurringEarningsTable}
@@ -2543,6 +2584,10 @@ func attachRecurringEarning(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.PayCode = (*driverpay.PayCode)(child)
 	}
+}
+
+func beforeCreateRecurringEarning(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.RecurringEarning)(p).BeforeCreate(ctx)
 }
 
 // workerBenefitEnrollmentsTable is the schema of driverpay.WorkerBenefitEnrollment.
@@ -2848,23 +2893,24 @@ var workerPayAssignmentsTable = schema.Table{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Worker`},
 		{Name: "PayProfile", Alias: "pp", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Pay Profile`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "wpa_",
-	New:        newWorkerPayAssignment,
-	NewN:       newNWorkerPayAssignment,
-	Size:       unsafe.Sizeof(driverpay.WorkerPayAssignment{}),
-	Ptr:        ptrWorkerPayAssignment,
-	Value:      valueWorkerPayAssignment,
-	Attach:     attachWorkerPayAssignment,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "wpa_",
+	New:          newWorkerPayAssignment,
+	NewN:         newNWorkerPayAssignment,
+	Size:         unsafe.Sizeof(driverpay.WorkerPayAssignment{}),
+	Ptr:          ptrWorkerPayAssignment,
+	Value:        valueWorkerPayAssignment,
+	Attach:       attachWorkerPayAssignment,
+	BeforeCreate: beforeCreateWorkerPayAssignment,
 }
 
 var workerPayAssignmentsRef = keel.Ref{Table: &workerPayAssignmentsTable}
@@ -3049,6 +3095,10 @@ func attachWorkerPayAssignment(p unsafe.Pointer, rel int32, child unsafe.Pointer
 	case 1:
 		r.PayProfile = (*driverpay.PayProfile)(child)
 	}
+}
+
+func beforeCreateWorkerPayAssignment(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.WorkerPayAssignment)(p).BeforeCreate(ctx)
 }
 
 func init() {

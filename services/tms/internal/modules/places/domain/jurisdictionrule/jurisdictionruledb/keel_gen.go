@@ -231,23 +231,24 @@ var jurisdictionRulesTable = schema.Table{
 		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `State`},
 		{Name: "EscortThresholds", Alias: "et", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{1}, Label: `Escort Thresholds`},
 	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
-	Returning:  nil,
-	Version:    23,
-	AutoID:     0,
-	AutoCreate: 24,
-	AutoUpdate: 25,
-	IDPrefix:   "jr_",
-	New:        newJurisdictionRule,
-	NewN:       newNJurisdictionRule,
-	Size:       unsafe.Sizeof(jurisdictionrule.JurisdictionRule{}),
-	Ptr:        ptrJurisdictionRule,
-	Value:      valueJurisdictionRule,
-	Attach:     attachJurisdictionRule,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
+	Returning:    nil,
+	Version:      23,
+	AutoID:       0,
+	AutoCreate:   24,
+	AutoUpdate:   25,
+	IDPrefix:     "jr_",
+	New:          newJurisdictionRule,
+	NewN:         newNJurisdictionRule,
+	Size:         unsafe.Sizeof(jurisdictionrule.JurisdictionRule{}),
+	Ptr:          ptrJurisdictionRule,
+	Value:        valueJurisdictionRule,
+	Attach:       attachJurisdictionRule,
+	BeforeCreate: beforeCreateJurisdictionRule,
 }
 
 var jurisdictionRulesRef = keel.Ref{Table: &jurisdictionRulesTable}
@@ -525,6 +526,10 @@ func attachJurisdictionRule(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.EscortThresholds = append(r.EscortThresholds, (*jurisdictionrule.EscortThreshold)(child))
 	}
+}
+
+func beforeCreateJurisdictionRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*jurisdictionrule.JurisdictionRule)(p).BeforeCreate(ctx)
 }
 
 // overridesTable is the schema of jurisdictionrule.Override.

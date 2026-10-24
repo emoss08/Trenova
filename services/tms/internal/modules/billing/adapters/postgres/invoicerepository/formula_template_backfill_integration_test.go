@@ -5,13 +5,10 @@ package invoicerepository_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -39,18 +36,8 @@ type backfillShipment struct {
 }
 
 func TestFormulaTemplateBackfillNamesTheTemplateEachFreightLineWasRatedWith(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var shp backfillShipment
 	require.NoError(t, db.NewSelect().
@@ -63,14 +50,14 @@ func TestFormulaTemplateBackfillNamesTheTemplateEachFreightLineWasRatedWith(t *t
 	rated := backfillTemplate{ID: pulid.MustNew("ft_"), Name: "Per mile – backfill rated"}
 	assigned := backfillTemplate{ID: pulid.MustNew("ft_"), Name: "Per CWT – backfill assigned"}
 	for _, tmpl := range []backfillTemplate{rated, assigned} {
-		_, err = db.ExecContext(ctx,
+		_, err := db.ExecContext(ctx,
 			`INSERT INTO "formula_templates" ("id", "organization_id", "business_unit_id", "name", "source")
 			VALUES (?, ?, ?, ?, '')`,
 			tmpl.ID, org.ID, org.BusinessUnitID, tmpl.Name)
 		require.NoError(t, err)
 	}
 
-	_, err = db.NewUpdate().
+	_, err := db.NewUpdate().
 		Table("shipments").
 		Set("formula_template_id = ?", assigned.ID).
 		Set("rating_detail = jsonb_build_object('formulaTemplateId', ?::text, 'formulaTemplateName', ?::text)",

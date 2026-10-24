@@ -168,6 +168,10 @@ func (ft *FormulaTemplate) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
+func (ft *FormulaTemplate) BeforeCreate(ctx context.Context) error {
+	return ft.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (ft *FormulaTemplate) normalizeCollections() {
 	if ft.Inputs == nil {
 		ft.Inputs = []tarifftypes.InputDecl{}

@@ -439,14 +439,12 @@ func startServices(version string) error {
 }
 
 func runMigrations(version string) error {
-	for _, service := range []string{"trenova-db", "tms-seed"} {
-		cmd := exec.Command("docker", "compose", "-f", composeFile, "run", "--rm", service)
-		cmd.Env = append(os.Environ(), fmt.Sprintf("TRENOVA_VERSION=%s", version))
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("run %s: %w", service, err)
-		}
+	cmd := exec.Command("docker", "compose", "-f", composeFile, "run", "--rm", "trenova-db")
+	cmd.Env = append(os.Environ(), fmt.Sprintf("TRENOVA_VERSION=%s", version))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("run trenova-db: %w", err)
 	}
 
 	return nil

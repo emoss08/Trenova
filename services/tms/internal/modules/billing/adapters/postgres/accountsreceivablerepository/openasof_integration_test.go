@@ -6,10 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -30,17 +28,8 @@ import (
 const asOfTestWeeks = 13
 
 func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -243,7 +232,7 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 		Status:              customerpayment.CreditApplicationStatusApplied,
 		CreatedByID:         user.ID,
 	}
-	_, err = db.NewInsert().Model(credit).Exec(ctx)
+	_, err := db.NewInsert().Model(credit).Exec(ctx)
 	require.NoError(t, err)
 	backdate("credit_memo_applications", credit.ID, before(6))
 	factoring := &customerledger.CustomerLedgerEntry{

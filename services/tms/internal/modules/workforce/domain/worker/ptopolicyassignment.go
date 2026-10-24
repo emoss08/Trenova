@@ -98,3 +98,7 @@ func (a *WorkerPTOPolicyAssignment) BeforeAppendModel(_ context.Context, query b
 
 	return nil
 }
+
+func (a *WorkerPTOPolicyAssignment) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

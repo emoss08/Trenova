@@ -41,23 +41,24 @@ var linesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "GLAccount", Alias: "ga", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `GL Account`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 12},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "mjrl_",
-	New:        newLine,
-	NewN:       newNLine,
-	Size:       unsafe.Sizeof(manualjournal.Line{}),
-	Ptr:        ptrLine,
-	Value:      valueLine,
-	Attach:     attachLine,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 12},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   12,
+	IDPrefix:     "mjrl_",
+	New:          newLine,
+	NewN:         newNLine,
+	Size:         unsafe.Sizeof(manualjournal.Line{}),
+	Ptr:          ptrLine,
+	Value:        valueLine,
+	Attach:       attachLine,
+	BeforeCreate: beforeCreateLine,
 }
 
 var linesRef = keel.Ref{Table: &linesTable}
@@ -220,6 +221,10 @@ func attachLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateLine(ctx context.Context, p unsafe.Pointer) error {
+	return (*manualjournal.Line)(p).BeforeCreate(ctx)
+}
+
 // requestsTable is the schema of manualjournal.Request.
 var requestsTable = schema.Table{
 	Name:   "manual_journal_requests",
@@ -261,23 +266,24 @@ var requestsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Lines", Alias: "l", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Lines`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 27},
-	Returning:  nil,
-	Version:    25,
-	AutoID:     0,
-	AutoCreate: 26,
-	AutoUpdate: 27,
-	IDPrefix:   "mjr_",
-	New:        newRequest,
-	NewN:       newNRequest,
-	Size:       unsafe.Sizeof(manualjournal.Request{}),
-	Ptr:        ptrRequest,
-	Value:      valueRequest,
-	Attach:     attachRequest,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 27},
+	Returning:    nil,
+	Version:      25,
+	AutoID:       0,
+	AutoCreate:   26,
+	AutoUpdate:   27,
+	IDPrefix:     "mjr_",
+	New:          newRequest,
+	NewN:         newNRequest,
+	Size:         unsafe.Sizeof(manualjournal.Request{}),
+	Ptr:          ptrRequest,
+	Value:        valueRequest,
+	Attach:       attachRequest,
+	BeforeCreate: beforeCreateRequest,
 }
 
 var requestsRef = keel.Ref{Table: &requestsTable}
@@ -570,6 +576,10 @@ func attachRequest(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Lines = append(r.Lines, (*manualjournal.Line)(child))
 	}
+}
+
+func beforeCreateRequest(ctx context.Context, p unsafe.Pointer) error {
+	return (*manualjournal.Request)(p).BeforeCreate(ctx)
 }
 
 func init() {

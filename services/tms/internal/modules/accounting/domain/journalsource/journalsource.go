@@ -71,3 +71,7 @@ func (s *Source) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 	return nil
 }
+
+func (s *Source) BeforeCreate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
