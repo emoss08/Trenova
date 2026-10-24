@@ -3,7 +3,6 @@ package collectionrepository
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -229,7 +228,7 @@ func (r *repository) ListActivities(
 	})
 }
 
-const worklistSQL = `
+var worklistSQL = `
 	WITH open_invoices AS (
 		SELECT inv.customer_id,
 			SUM(inv.total_amount_minor - inv.applied_amount_minor) AS open_minor,
@@ -317,9 +316,18 @@ const worklistSQL = `
 	WHERE cus.organization_id = $2
 		AND cus.business_unit_id = $3`
 
-const worklistOrderSQL = `
+const worklistFilterSQL = `
+		AND ($5::text IS NOT NULL
+			OR COALESCE(oi.overdue_minor, 0) > 0
+			OR (acc.id IS NOT NULL AND COALESCE(oi.open_minor, 0) > 0))
+		AND ($5::text IS NULL OR cus.id = $5)
+		AND ($6::text IS NULL OR acc.collector_id = $6)
+		AND (NOT $7::boolean OR acc.collector_id IS NULL)
+		AND ($8::text IS NULL OR cus.name ILIKE $8 OR cus.code ILIKE $8)
 	ORDER BY COALESCE(oi.overdue_minor, 0) DESC, cus.id
 	LIMIT $4`
+
+var worklistQuerySQL = worklistSQL + worklistFilterSQL
 
 type worklistRecord struct {
 	CustomerID          pulid.ID
@@ -347,44 +355,34 @@ type worklistRecord struct {
 	PaidSincePromise    int64
 }
 
-const worklistFixedArgs = 4
-
 type worklistQuery struct {
-	asOf       int64
-	tenantOrg  pulid.ID
-	tenantBU   pulid.ID
-	conditions []string
-	args       []any
-	limit      int
-}
-
-func (q *worklistQuery) bind(v any) string {
-	q.args = append(q.args, v)
-	return "$" + strconv.Itoa(worklistFixedArgs+len(q.args))
+	asOf        int64
+	tenantOrg   pulid.ID
+	tenantBU    pulid.ID
+	customerID  *string
+	collectorID *string
+	unassigned  bool
+	pattern     *string
+	limit       int
 }
 
 func (r *repository) readWorklist(
 	ctx context.Context,
 	q *worklistQuery,
 ) ([]*worklistRecord, error) {
-	args := make([]any, 0, worklistFixedArgs+len(q.args))
-	args = append(args, q.asOf, q.tenantOrg.String(), q.tenantBU.String(), q.limit)
-	args = append(args, q.args...)
-
-	var sql strings.Builder
-	sql.WriteString(worklistSQL)
-	for _, condition := range q.conditions {
-		sql.WriteString("\n\t\tAND ")
-		sql.WriteString(condition)
-	}
-	sql.WriteString(worklistOrderSQL)
-
 	records, err := keel.QueryAll(
 		ctx,
 		r.db.Keel(ctx),
 		pgx.RowToAddrOfStructByName[worklistRecord],
-		sql.String(),
-		args...,
+		worklistQuerySQL,
+		q.asOf,
+		q.tenantOrg.String(),
+		q.tenantBU.String(),
+		q.limit,
+		q.customerID,
+		q.collectorID,
+		q.unassigned,
+		q.pattern,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("read collections worklist: %w", err)
@@ -401,21 +399,19 @@ func (r *repository) ListWorklist(
 			asOf:      req.AsOf,
 			tenantOrg: req.TenantInfo.OrgID,
 			tenantBU:  req.TenantInfo.BuID,
-			conditions: []string{
-				"(COALESCE(oi.overdue_minor, 0) > 0 OR (acc.id IS NOT NULL AND COALESCE(oi.open_minor, 0) > 0))",
-			},
-			limit: MaxWorklistAccounts,
+			limit:     MaxWorklistAccounts,
 		}
 		switch req.Scope {
 		case collectionports.CollectorScopeMine:
-			q.conditions = append(q.conditions, "acc.collector_id = "+q.bind(req.TenantInfo.UserID.String()))
+			collector := req.TenantInfo.UserID.String()
+			q.collectorID = &collector
 		case collectionports.CollectorScopeUnassigned:
-			q.conditions = append(q.conditions, "acc.collector_id IS NULL")
+			q.unassigned = true
 		case collectionports.CollectorScopeAll:
 		}
 		if search := strings.TrimSpace(req.Search); search != "" {
-			pattern := q.bind("%" + escapeLike(search) + "%")
-			q.conditions = append(q.conditions, "(cus.name ILIKE "+pattern+" OR cus.code ILIKE "+pattern+")")
+			pattern := "%" + escapeLike(search) + "%"
+			q.pattern = &pattern
 		}
 
 		records, err := r.readWorklist(ctx, &q)
@@ -442,7 +438,8 @@ func (r *repository) GetWorklistRow(
 			tenantBU:  req.TenantInfo.BuID,
 			limit:     1,
 		}
-		q.conditions = []string{"cus.id = " + q.bind(req.CustomerID.String())}
+		customerID := req.CustomerID.String()
+		q.customerID = &customerID
 		records, err := r.readWorklist(ctx, &q)
 		if err != nil {
 			return nil, err
