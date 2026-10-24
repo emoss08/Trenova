@@ -28851,6 +28851,15 @@
       "routes/service-failure-reason-code"
     ]
   },
+  "Applies Trenova's migrations: the deploy step before the API and worker start.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Applies once the library is in review": {
     "sites": 2,
     "scope": [
@@ -292538,6 +292547,15 @@
       "routes/desk"
     ]
   },
+  "Trenova's development database: migrations, templates and reset.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Trenova's value sent": {
     "sites": 1,
     "scope": [
@@ -326276,6 +326294,15 @@
       "routes/agent-control"
     ]
   },
+  "install pgvector 0.8+ and the semantic retrieval tables a migration skipped without it; safe to run again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "instructions": {
     "sites": 1,
     "scope": [
@@ -326485,6 +326512,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "keel does not read Bun directives: split a --keel:notx migration with --keel:split and leave a transactional one unsplit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "keep holding": {
@@ -330641,6 +330677,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "trenova-db runs SELECT trenova_rls.reconcile() after every run that applies a migration; drop this call": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "trigger": {
