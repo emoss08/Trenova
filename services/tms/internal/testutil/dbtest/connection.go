@@ -30,3 +30,7 @@ func (NopConnection) Transact(
 ) error {
 	return fn(ctx)
 }
+
+func (NopConnection) Savepoint(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}

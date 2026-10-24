@@ -14,6 +14,10 @@ func asTransactor(conn *postgres.Connection) kernelports.Transactor {
 	return conn
 }
 
+func asSavepointer(conn *postgres.Connection) kernelports.Savepointer {
+	return conn
+}
+
 var DatabaseModule = fx.Module(
 	"database",
 	fx.Provide(
@@ -21,6 +25,7 @@ var DatabaseModule = fx.Module(
 		postgres.NewReportingConnection,
 		asDBConnection,
 		asTransactor,
+		asSavepointer,
 		postgres.NewCapabilityProbe,
 	),
 	fx.Invoke(func(*postgres.CapabilityProbe) {}),

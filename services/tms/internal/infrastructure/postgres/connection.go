@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domainregistry"
@@ -24,6 +25,7 @@ import (
 var (
 	_ kernelports.DBConnection = (*Connection)(nil)
 	_ kernelports.Transactor   = (*Connection)(nil)
+	_ kernelports.Savepointer  = (*Connection)(nil)
 )
 
 type ConnectionParams struct {
@@ -451,6 +453,10 @@ func (c *Connection) Transact(
 	return c.WithTx(ctx, opts, func(ctx context.Context, _ bun.Tx) error {
 		return fn(ctx)
 	})
+}
+
+func (c *Connection) Savepoint(ctx context.Context, fn func(context.Context) error) error {
+	return dbtx.Savepoint(ctx, c, fn)
 }
 
 func applyLockTimeout(ctx context.Context, tx bun.Tx, timeout time.Duration) error {

@@ -18,6 +18,10 @@ type Transactor interface {
 	Transact(ctx context.Context, opts TxOptions, fn func(context.Context) error) error
 }
 
+type Savepointer interface {
+	Savepoint(ctx context.Context, fn func(context.Context) error) error
+}
+
 type DBConnection interface {
 	DB() *bun.DB
 	DBForContext(ctx context.Context) bun.IDB
