@@ -40,6 +40,14 @@ var catalogs = struct {
 }{m: make(map[*schema.Table]*catalog)}
 
 func catalogFor[T any](table *schema.Table) *catalog {
+	return catalogOf(reflect.TypeFor[T](), table, searchConfigOf[T])
+}
+
+func catalogOf(
+	model reflect.Type,
+	table *schema.Table,
+	config func() *domaintypes.PostgresSearchConfig,
+) *catalog {
 	catalogs.RLock()
 	c, ok := catalogs.m[table]
 	catalogs.RUnlock()
@@ -47,7 +55,7 @@ func catalogFor[T any](table *schema.Table) *catalog {
 		return c
 	}
 
-	c = buildCatalog(reflect.TypeFor[T](), table, searchConfigOf[T]())
+	c = buildCatalog(model, table, config())
 
 	catalogs.Lock()
 	defer catalogs.Unlock()
