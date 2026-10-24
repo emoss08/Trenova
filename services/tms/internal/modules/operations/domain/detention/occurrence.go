@@ -400,6 +400,12 @@ func (o *DetentionOccurrence) BeforeCreate(ctx context.Context) error {
 	if o.NotificationStatus == "" {
 		o.NotificationStatus = NotificationStatusNotRequired
 	}
+	if !o.DriverPayAmount.Valid {
+		o.DriverPayAmount = decimal.NewNullDecimal(decimal.Zero)
+	}
+	if !o.NetMargin.Valid {
+		o.NetMargin = decimal.NewNullDecimal(o.BillableAmount.Sub(o.DriverPayAmount.Decimal))
+	}
 
 	return nil
 }

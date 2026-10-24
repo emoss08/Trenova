@@ -783,6 +783,7 @@ func (dc *DispatchControl) BeforeCreate(ctx context.Context) error {
 		defaultServiceFailureGracePeriod := int(30)
 		dc.ServiceFailureGracePeriod = &defaultServiceFailureGracePeriod
 	}
+	dc.NormalizeTenderSettings()
 
 	return nil
 }

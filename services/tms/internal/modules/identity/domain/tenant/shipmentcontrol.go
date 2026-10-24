@@ -48,6 +48,12 @@ func (sc *ShipmentControl) BeforeCreate(_ context.Context) error {
 	if sc.MaxShipmentWeightLimit == 0 {
 		sc.MaxShipmentWeightLimit = 80000
 	}
+	if sc.DetentionThreshold == nil {
+		sc.DetentionThreshold = new(int16(30))
+	}
+	if sc.AutoCancelShipmentsThreshold == nil {
+		sc.AutoCancelShipmentsThreshold = new(int16(30))
+	}
 
 	return nil
 }
