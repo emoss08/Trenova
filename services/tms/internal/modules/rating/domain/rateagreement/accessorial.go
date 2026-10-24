@@ -249,6 +249,11 @@ func (raga *RateAgreementAccessorial) BeforeAppendModel(
 	return nil
 }
 
+func (raga *RateAgreementAccessorial) BeforeCreate(_ context.Context) error {
+	raga.applyDefaults()
+	return nil
+}
+
 func (raga *RateAgreementAccessorial) GetID() pulid.ID {
 	return raga.ID
 }

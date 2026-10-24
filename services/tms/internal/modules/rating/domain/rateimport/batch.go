@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,9 +32,8 @@ const maxFileNameLength = 255
 
 // RateImportBatch is one uploaded rate sheet.
 type RateImportBatch struct {
-	bun.BaseModel             `bun:"table:rate_import_batches,alias:rib" json:"-"`
-	keel.Table                `keel:"rate_import_batches"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	bun.BaseModel `bun:"table:rate_import_batches,alias:rib" json:"-"`
+	keel.Table    `keel:"rate_import_batches"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rib_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

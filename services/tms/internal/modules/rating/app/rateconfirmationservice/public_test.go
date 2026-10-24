@@ -1,12 +1,14 @@
 package rateconfirmationservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -33,7 +35,7 @@ func setupPublicTest(t *testing.T) *publicTestDeps {
 	}
 	deps.svc = &Service{
 		l:                     zap.NewNop(),
-		db:                    testDBConnection{},
+		db:                    dbtest.NopConnection{},
 		repo:                  deps.repo,
 		carrierAssignmentRepo: deps.carrierAssignmentRepo,
 	}

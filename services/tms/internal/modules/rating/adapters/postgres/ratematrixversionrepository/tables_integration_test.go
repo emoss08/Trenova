@@ -3,22 +3,22 @@
 package ratematrixversionrepository_test
 
 import (
+	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratematrixrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratematrixversionrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/ratingdb"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -28,7 +28,8 @@ type gridCell struct {
 
 func publishGrid(
 	t *testing.T,
-	db *bun.DB,
+	ctx context.Context,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 	code string,
 	status formulatemplate.Status,
@@ -71,42 +72,33 @@ func publishGrid(
 		})
 	}
 
-	_, err := db.NewInsert().Model(matrix).Exec(t.Context())
-	require.NoError(t, err)
-	_, err = db.NewInsert().Model(&matrix.Dimensions).Exec(t.Context())
-	require.NoError(t, err)
+	require.NoError(t, ratematrixdb.RateMatrixes.Create(ctx, db, matrix))
+	require.NoError(t, ratematrixdb.RateMatrixDimensions.CreateMany(ctx, db, matrix.Dimensions))
 	if len(draftCells) > 0 {
-		_, err = db.NewInsert().Model(&draftCells).Exec(t.Context())
-		require.NoError(t, err)
+		require.NoError(t, ratematrixdb.RateMatrixCells.CreateMany(ctx, db, draftCells))
 	}
 
 	published := ratematrix.CopyPublished(matrix, draftCells, 1, pulid.Nil)
-	_, err = db.NewInsert().Model(published.Version).Exec(t.Context())
-	require.NoError(t, err)
-	_, err = db.NewInsert().Model(&published.Dimensions).Exec(t.Context())
-	require.NoError(t, err)
+	require.NoError(t, ratematrixdb.RateMatrixVersions.Create(ctx, db, published.Version))
+	require.NoError(t, ratematrixdb.RateMatrixDimensions.CreateMany(ctx, db, published.Dimensions))
 	if len(published.Cells) > 0 {
-		_, err = db.NewInsert().Model(&published.Cells).Exec(t.Context())
-		require.NoError(t, err)
+		require.NoError(t, ratematrixdb.RateMatrixCells.CreateMany(ctx, db, published.Cells))
 	}
 
 	return matrix
 }
 
 func TestTableReadsServeTheTariffHostByVersion(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, tenantInfo := rdb.A.Ctx, rdb.Admin, rdb.A.Info
+	connection := rdb.Conn
 
-	data := seedtest.SeedFullTestData(t, ctx, db)
-	tenantInfo := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
-	connection := postgres.NewTestConnection(db)
-
-	grid := publishGrid(t, db, tenantInfo, "ZONES", formulatemplate.StatusActive,
+	grid := publishGrid(t, ctx, db, tenantInfo, "ZONES", formulatemplate.StatusActive,
 		gridCell{"SE", "MW", "2.35"},
 		gridCell{"SE", "NE", "2.60"},
 		gridCell{"SW", "MW", "2.15"},
 	)
-	retired := publishGrid(t, db, tenantInfo, "RETIRED", formulatemplate.StatusInactive,
+	retired := publishGrid(t, ctx, db, tenantInfo, "RETIRED", formulatemplate.StatusInactive,
 		gridCell{"SE", "MW", "9"})
 
 	versions := ratematrixversionrepository.New(ratematrixversionrepository.Params{
@@ -131,12 +123,9 @@ func TestTableReadsServeTheTariffHostByVersion(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, stamp)
 
-	_, err = db.NewUpdate().
-		Model((*ratematrix.RateMatrixCell)(nil)).
-		Set(ratematrixcol.RateMatrixCellColumns.Value.Set(), decimal.RequireFromString("7.77")).
-		Where(ratematrixcol.RateMatrixCellColumns.RateMatrixID.Eq(), grid.ID).
-		Where(ratematrixcol.RateMatrixCellColumns.VersionNumber.Eq(), ratematrix.DraftVersion).
-		Exec(ctx)
+	rc := ratematrixdb.RateMatrixCells
+	_, err = rc.Where(rc.RateMatrixID.Eq(grid.ID), rc.VersionNumber.Eq(ratematrix.DraftVersion)).
+		Update(ctx, db, rc.Value.To(decimal.RequireFromString("7.77")))
 	require.NoError(t, err)
 
 	v1 := ratematrix.VersionKey{RateMatrixID: grid.ID, VersionNumber: 1}
@@ -195,26 +184,23 @@ func TestTableReadsServeTheTariffHostByVersion(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, misfits)
 
-	foreign := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	other, err := versions.LoadTableCells(ctx, &ratematrixports.LoadTableCellsRequest{
+	foreign := rdb.B.Info
+	other, err := versions.LoadTableCells(rdb.B.Ctx, &ratematrixports.LoadTableCellsRequest{
 		TenantInfo: foreign,
 		Key:        v1,
 		Keys:       map[int16][]string{0: {"SE"}},
 	})
 	require.NoError(t, err)
 	assert.Empty(t, other, "another tenant reads none of the cells")
-	otherServed, err := versions.ListServed(ctx, foreign)
+	otherServed, err := versions.ListServed(rdb.B.Ctx, foreign)
 	require.NoError(t, err)
 	assert.Empty(t, otherServed)
 }
 
 func TestPostalRangesListOncePerAxis(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
-	tenantInfo := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
-	grid := publishGrid(t, db, tenantInfo, "LANES", formulatemplate.StatusActive)
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, tenantInfo := rdb.A.Ctx, rdb.Admin, rdb.A.Info
+	grid := publishGrid(t, ctx, db, tenantInfo, "LANES", formulatemplate.StatusActive)
 
 	cells := []*ratematrix.RateMatrixCell{
 		{D0Key: "30000", D0KeyTo: "31999", D1Key: "A"},
@@ -229,11 +215,10 @@ func TestPostalRangesListOncePerAxis(t *testing.T) {
 		cell.VersionNumber = 1
 		cell.Value = decimal.NewFromInt(1)
 	}
-	_, err := db.NewInsert().Model(&cells).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, ratematrixdb.RateMatrixCells.CreateMany(ctx, db, cells))
 
 	versions := ratematrixversionrepository.New(ratematrixversionrepository.Params{
-		DB:     postgres.NewTestConnection(db),
+		DB:     rdb.Conn,
 		Logger: zap.NewNop(),
 	})
 	ranges, err := versions.ListAxisRanges(ctx, &ratematrixports.ListAxisKeysRequest{

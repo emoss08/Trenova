@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -161,7 +160,7 @@ func (s *Service) rescheduleBilledContent(
 	changeMessage := fmt.Sprintf("Version %d scheduled to bill again", version.VersionNumber)
 
 	var scheduled *formulatemplate.FormulaTemplateVersion
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		updated, txErr := s.repo.Update(txCtx, resolved)
 		if txErr != nil {
 			return txErr

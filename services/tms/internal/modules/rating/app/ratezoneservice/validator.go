@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone/ratezonedb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -37,7 +38,7 @@ func newBuilder(
 
 	return builder.
 		WithUniquenessChecker(
-			validationframework.NewBunUniquenessCheckerScoped(db),
+			validationframework.NewKeelChecker(db, ratezonedb.RateZonesSchema()),
 		).
 		WithUniqueField(
 			"code",

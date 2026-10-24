@@ -65,6 +65,7 @@ var formulaLibrariesTable = schema.Table{
 	Ptr:          ptrFormulaLibrary,
 	Value:        valueFormulaLibrary,
 	BeforeCreate: beforeCreateFormulaLibrary,
+	BeforeSave:   beforeSaveFormulaLibrary,
 }
 
 var formulaLibrariesRef = keel.Ref{Table: &formulaLibrariesTable}
@@ -302,6 +303,10 @@ func valueFormulaLibrary(p unsafe.Pointer, c int32) any {
 
 func beforeCreateFormulaLibrary(ctx context.Context, p unsafe.Pointer) error {
 	return (*formulalibrary.FormulaLibrary)(p).BeforeCreate(ctx)
+}
+
+func beforeSaveFormulaLibrary(ctx context.Context, p unsafe.Pointer) error {
+	return (*formulalibrary.FormulaLibrary)(p).BeforeSave(ctx)
 }
 
 // formulaLibraryReviewsTable is the schema of formulalibrary.FormulaLibraryReview.
@@ -547,23 +552,24 @@ var formulaLibraryVersionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "CreatedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{13}, Remote: []int32{0}, Label: `Created By`, JSON: `createdBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: -1,
-	IDPrefix:   "flv_",
-	New:        newFormulaLibraryVersion,
-	NewN:       newNFormulaLibraryVersion,
-	Size:       unsafe.Sizeof(formulalibrary.FormulaLibraryVersion{}),
-	Ptr:        ptrFormulaLibraryVersion,
-	Value:      valueFormulaLibraryVersion,
-	Attach:     attachFormulaLibraryVersion,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   -1,
+	IDPrefix:     "flv_",
+	New:          newFormulaLibraryVersion,
+	NewN:         newNFormulaLibraryVersion,
+	Size:         unsafe.Sizeof(formulalibrary.FormulaLibraryVersion{}),
+	Ptr:          ptrFormulaLibraryVersion,
+	Value:        valueFormulaLibraryVersion,
+	Attach:       attachFormulaLibraryVersion,
+	BeforeCreate: beforeCreateFormulaLibraryVersion,
 }
 
 var formulaLibraryVersionsRef = keel.Ref{Table: &formulaLibraryVersionsTable}
@@ -748,6 +754,10 @@ func attachFormulaLibraryVersion(p unsafe.Pointer, rel int32, child unsafe.Point
 	case 0:
 		r.CreatedBy = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateFormulaLibraryVersion(ctx context.Context, p unsafe.Pointer) error {
+	return (*formulalibrary.FormulaLibraryVersion)(p).BeforeCreate(ctx)
 }
 
 func init() {

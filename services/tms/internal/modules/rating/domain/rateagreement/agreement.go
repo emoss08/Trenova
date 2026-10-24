@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/money"
@@ -47,9 +46,8 @@ const (
 
 // Negotiated customer and carrier contracts
 type RateAgreement struct {
-	bun.BaseModel             `bun:"table:rate_agreements,alias:rag" json:"-"`
-	keel.Table                `                                               keel:"rate_agreements,report=Billing"`
-	pagination.CursorValueSet `bun:",embed"                          json:"-"`
+	bun.BaseModel `bun:"table:rate_agreements,alias:rag" json:"-"`
+	keel.Table    `                                               keel:"rate_agreements,report=Billing"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:rag_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -373,6 +371,11 @@ func (ra *RateAgreement) BeforeAppendModel(_ context.Context, query bun.Query) e
 
 func (ra *RateAgreement) BeforeCreate(ctx context.Context) error {
 	return ra.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
+func (ra *RateAgreement) BeforeSave(_ context.Context) error {
+	ra.applyDefaults()
+	return nil
 }
 
 func (ra *RateAgreement) GetID() pulid.ID {

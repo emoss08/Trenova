@@ -72,6 +72,7 @@ var formulaTemplatesTable = schema.Table{
 	Value:        valueFormulaTemplate,
 	Attach:       attachFormulaTemplate,
 	BeforeCreate: beforeCreateFormulaTemplate,
+	BeforeSave:   beforeSaveFormulaTemplate,
 }
 
 var formulaTemplatesRef = keel.Ref{Table: &formulaTemplatesTable}
@@ -361,6 +362,10 @@ func beforeCreateFormulaTemplate(ctx context.Context, p unsafe.Pointer) error {
 	return (*formulatemplate.FormulaTemplate)(p).BeforeCreate(ctx)
 }
 
+func beforeSaveFormulaTemplate(ctx context.Context, p unsafe.Pointer) error {
+	return (*formulatemplate.FormulaTemplate)(p).BeforeSave(ctx)
+}
+
 // formulaTemplateVersionsTable is the schema of formulatemplate.FormulaTemplateVersion.
 var formulaTemplateVersionsTable = schema.Table{
 	Name:   "formula_template_versions",
@@ -394,23 +399,24 @@ var formulaTemplateVersionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "CreatedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{18}, Remote: []int32{0}, Label: `Created By`, JSON: `createdBy`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{2, 3},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:     []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: -1,
-	IDPrefix:   "ftv_",
-	New:        newFormulaTemplateVersion,
-	NewN:       newNFormulaTemplateVersion,
-	Size:       unsafe.Sizeof(formulatemplate.FormulaTemplateVersion{}),
-	Ptr:        ptrFormulaTemplateVersion,
-	Value:      valueFormulaTemplateVersion,
-	Attach:     attachFormulaTemplateVersion,
+	PK:           []int32{0},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:       []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   -1,
+	IDPrefix:     "ftv_",
+	New:          newFormulaTemplateVersion,
+	NewN:         newNFormulaTemplateVersion,
+	Size:         unsafe.Sizeof(formulatemplate.FormulaTemplateVersion{}),
+	Ptr:          ptrFormulaTemplateVersion,
+	Value:        valueFormulaTemplateVersion,
+	Attach:       attachFormulaTemplateVersion,
+	BeforeCreate: beforeCreateFormulaTemplateVersion,
 }
 
 var formulaTemplateVersionsRef = keel.Ref{Table: &formulaTemplateVersionsTable}
@@ -645,6 +651,10 @@ func attachFormulaTemplateVersion(p unsafe.Pointer, rel int32, child unsafe.Poin
 	case 0:
 		r.CreatedBy = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateFormulaTemplateVersion(ctx context.Context, p unsafe.Pointer) error {
+	return (*formulatemplate.FormulaTemplateVersion)(p).BeforeCreate(ctx)
 }
 
 // reviewsTable is the schema of formulatemplate.Review.

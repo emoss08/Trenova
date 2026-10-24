@@ -59,6 +59,7 @@ var fuelIndexesTable = schema.Table{
 	Ptr:          ptrFuelIndex,
 	Value:        valueFuelIndex,
 	BeforeCreate: beforeCreateFuelIndex,
+	BeforeSave:   beforeSaveFuelIndex,
 }
 
 var fuelIndexesRef = keel.Ref{Table: &fuelIndexesTable}
@@ -245,6 +246,10 @@ func beforeCreateFuelIndex(ctx context.Context, p unsafe.Pointer) error {
 	return (*fuelsurcharge.FuelIndex)(p).BeforeCreate(ctx)
 }
 
+func beforeSaveFuelIndex(ctx context.Context, p unsafe.Pointer) error {
+	return (*fuelsurcharge.FuelIndex)(p).BeforeSave(ctx)
+}
+
 // fuelIndexPricesTable is the schema of fuelsurcharge.FuelIndexPrice.
 var fuelIndexPricesTable = schema.Table{
 	Name:   "fuel_index_prices",
@@ -287,6 +292,7 @@ var fuelIndexPricesTable = schema.Table{
 	Value:        valueFuelIndexPrice,
 	Attach:       attachFuelIndexPrice,
 	BeforeCreate: beforeCreateFuelIndexPrice,
+	BeforeUpdate: beforeUpdateFuelIndexPrice,
 }
 
 var fuelIndexPricesRef = keel.Ref{Table: &fuelIndexPricesTable}
@@ -441,6 +447,10 @@ func beforeCreateFuelIndexPrice(ctx context.Context, p unsafe.Pointer) error {
 	return (*fuelsurcharge.FuelIndexPrice)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateFuelIndexPrice(ctx context.Context, p unsafe.Pointer) error {
+	return (*fuelsurcharge.FuelIndexPrice)(p).BeforeUpdate(ctx)
+}
+
 // fuelSurchargeProgramsTable is the schema of fuelsurcharge.FuelSurchargeProgram.
 var fuelSurchargeProgramsTable = schema.Table{
 	Name:   "fuel_surcharge_programs",
@@ -508,6 +518,7 @@ var fuelSurchargeProgramsTable = schema.Table{
 	Value:        valueFuelSurchargeProgram,
 	Attach:       attachFuelSurchargeProgram,
 	BeforeCreate: beforeCreateFuelSurchargeProgram,
+	BeforeSave:   beforeSaveFuelSurchargeProgram,
 }
 
 var fuelSurchargeProgramsRef = keel.Ref{Table: &fuelSurchargeProgramsTable}
@@ -852,6 +863,10 @@ func attachFuelSurchargeProgram(p unsafe.Pointer, rel int32, child unsafe.Pointe
 
 func beforeCreateFuelSurchargeProgram(ctx context.Context, p unsafe.Pointer) error {
 	return (*fuelsurcharge.FuelSurchargeProgram)(p).BeforeCreate(ctx)
+}
+
+func beforeSaveFuelSurchargeProgram(ctx context.Context, p unsafe.Pointer) error {
+	return (*fuelsurcharge.FuelSurchargeProgram)(p).BeforeSave(ctx)
 }
 
 // fuelSurchargeTableRowsTable is the schema of fuelsurcharge.FuelSurchargeTableRow.

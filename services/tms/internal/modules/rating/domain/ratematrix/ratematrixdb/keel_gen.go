@@ -70,6 +70,7 @@ var rateMatrixesTable = schema.Table{
 	Value:        valueRateMatrix,
 	Attach:       attachRateMatrix,
 	BeforeCreate: beforeCreateRateMatrix,
+	BeforeSave:   beforeSaveRateMatrix,
 }
 
 var rateMatrixesRef = keel.Ref{Table: &rateMatrixesTable}
@@ -324,6 +325,10 @@ func attachRateMatrix(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateRateMatrix(ctx context.Context, p unsafe.Pointer) error {
 	return (*ratematrix.RateMatrix)(p).BeforeCreate(ctx)
+}
+
+func beforeSaveRateMatrix(ctx context.Context, p unsafe.Pointer) error {
+	return (*ratematrix.RateMatrix)(p).BeforeSave(ctx)
 }
 
 // rateMatrixCellsTable is the schema of ratematrix.RateMatrixCell.

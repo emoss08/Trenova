@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -34,7 +33,7 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	DB            kernelports.DBConnection
+	DB            kernelports.Transactor
 	Repo          ratematrixports.RateMatrixRepository
 	VersionRepo   ratematrixports.RateMatrixVersionRepository
 	ReviewRepo    ratematrixports.RateMatrixReviewRepository
@@ -47,7 +46,7 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	db            kernelports.DBConnection
+	db            kernelports.Transactor
 	repo          ratematrixports.RateMatrixRepository
 	versionRepo   ratematrixports.RateMatrixVersionRepository
 	reviewRepo    ratematrixports.RateMatrixReviewRepository
@@ -164,7 +163,7 @@ func (s *Service) Update(
 	userID pulid.ID,
 ) (*ratematrix.RateMatrix, error) {
 	var original, updated *ratematrix.RateMatrix
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		loaded, err := s.repo.GetByID(txCtx, &ratematrixports.GetRateMatrixByIDRequest{
 			RateMatrixID:      payload.ID,
 			TenantInfo:        matrixTenant(payload),
@@ -283,7 +282,7 @@ func (s *Service) ReplaceCells(
 	userID pulid.ID,
 ) error {
 	var original, updated *ratematrix.RateMatrix
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		matrix, err := s.repo.GetByID(txCtx, &ratematrixports.GetRateMatrixByIDRequest{
 			RateMatrixID:      req.RateMatrixID,
 			TenantInfo:        req.TenantInfo,

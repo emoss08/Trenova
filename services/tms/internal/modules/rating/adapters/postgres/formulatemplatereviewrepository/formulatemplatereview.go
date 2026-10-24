@@ -2,20 +2,16 @@ package formulatemplatereviewrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-
-	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -24,6 +20,8 @@ const (
 	defaultHistoryLimit = 100
 	defaultStaleLimit   = 200
 )
+
+var reviewErrors = dberror.Mapping{Entity: "FormulaTemplateReview"}
 
 type Params struct {
 	fx.In
@@ -49,12 +47,12 @@ func (r *repository) Create(
 	entity *formulatemplate.Review,
 ) (*formulatemplate.Review, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*formulatemplate.Review, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+		if err := formulatemplatedb.Reviews.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to record formula template review",
 				zap.String("templateID", entity.TemplateID.String()),
 				zap.Error(err),
 			)
-			return nil, err
+			return nil, reviewErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -66,25 +64,17 @@ func (r *repository) ListByTemplate(
 	req *formulatemplateports.ListTemplateReviewsRequest,
 ) ([]*formulatemplate.Review, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.Review, error) {
-		cols := formulatemplatecol.ReviewColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultHistoryLimit
 		}
 
-		reviews := make([]*formulatemplate.Review, 0, 8)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&reviews).
-			Relation(buncolgen.Rel(formulatemplatecol.ReviewRelations.Actor)).
-			Relation(buncolgen.Rel(formulatemplatecol.ReviewRelations.RequestedReviewer)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return formulatemplatecol.ReviewScopeTenant(sq, req.TenantInfo).
-					Where(cols.TemplateID.Eq(), req.TemplateID)
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		rv := formulatemplatedb.Reviews
+		reviews, err := rv.Where(rv.TemplateID.Eq(req.TemplateID)).
+			Load(rv.Actor(), rv.RequestedReviewer()).
+			Order(rv.CreatedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list formula template reviews", zap.Error(err))
 			return nil, err
@@ -97,24 +87,15 @@ func (r *repository) ListByTemplate(
 func (r *repository) Latest(
 	ctx context.Context,
 	templateID pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*formulatemplate.Review, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*formulatemplate.Review, error) {
-		cols := formulatemplatecol.ReviewColumns
-
-		review := new(formulatemplate.Review)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(review).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return formulatemplatecol.ReviewScopeTenant(sq, tenantInfo).
-					Where(cols.TemplateID.Eq(), templateID)
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		rv := formulatemplatedb.Reviews
+		review, err := rv.Where(rv.TemplateID.Eq(templateID)).
+			Order(rv.CreatedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
+			if dberror.IsNotFoundError(err) {
 				return nil, nil //nolint:nilnil // no history yet is an answer, not a failure
 			}
 			r.l.Error("failed to read latest formula template review", zap.Error(err))
@@ -139,22 +120,21 @@ func (r *repository) ListStaleSubmissions(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
-			cols := formulatemplatecol.FormulaTemplateColumns
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultStaleLimit
 			}
 
-			templates := make([]*formulatemplate.FormulaTemplate, 0, 8)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&templates).
-				Where(cols.Status.Eq(), formulatemplate.StatusInReview).
-				Where(cols.SubmittedAt.IsNotNull()).
-				Where(cols.SubmittedAt.Lt(), req.SubmittedBefore).
-				Order(cols.SubmittedAt.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx)
+			ft := formulatemplatedb.FormulaTemplates
+			templates, err := ft.AllTenants().
+				Where(
+					ft.Status.Eq(formulatemplate.StatusInReview),
+					ft.SubmittedAt.IsNotNull(),
+					ft.SubmittedAt.Lt(req.SubmittedBefore),
+				).
+				Order(ft.SubmittedAt.Asc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list stale formula template submissions", zap.Error(err))
 				return nil, err

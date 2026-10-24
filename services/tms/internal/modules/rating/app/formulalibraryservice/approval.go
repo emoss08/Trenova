@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -85,7 +84,7 @@ func (s *Service) Submit(
 	req *SubmitRequest,
 ) (*formulalibrary.FormulaLibrary, error) {
 	var submitted *formulalibrary.FormulaLibrary
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).
 			Apply(txCtx, &req.ApprovalActionRequest, libraryTransition{
 				Operation:    "Submit",
@@ -180,7 +179,7 @@ func (s *Service) Approve(
 ) (*formulalibrary.FormulaLibrary, error) {
 	var approved *formulalibrary.FormulaLibrary
 	var content *contentCheck
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, libraryTransition{
 			Operation:    "Approve",
 			From:         formulatemplate.StatusInReview,
@@ -319,7 +318,7 @@ func (s *Service) Reject(
 
 	var submitterID *pulid.ID
 	var rejected *formulalibrary.FormulaLibrary
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, libraryTransition{
 			Operation:    "Reject",
 			From:         formulatemplate.StatusInReview,
@@ -373,7 +372,7 @@ func (s *Service) RequestChanges(
 
 	var submitterID *pulid.ID
 	var returned *formulalibrary.FormulaLibrary
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, libraryTransition{
 			Operation:    "RequestChanges",
 			From:         formulatemplate.StatusInReview,
@@ -523,7 +522,7 @@ func (s *Service) expireSubmission(
 	library.ReviewComment = "Submission expired after waiting for review"
 
 	var updated *formulalibrary.FormulaLibrary
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, txErr := s.repo.Update(txCtx, library)
 		if txErr != nil {
 			return txErr

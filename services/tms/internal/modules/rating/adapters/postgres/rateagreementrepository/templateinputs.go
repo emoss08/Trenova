@@ -3,16 +3,15 @@ package rateagreementrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -26,11 +25,18 @@ func NewTemplateInputsLister(p Params) rateagreementports.TemplateInputsLister {
 }
 
 type templateInputsRow struct {
-	Rule        tarifftypes.Inputs `bun:"rule_inputs"`
-	Agreement   tarifftypes.Inputs `bun:"agreement_inputs"`
-	ExampleID   pulid.ID           `bun:"example_id"`
-	ExampleName string             `bun:"example_name"`
-	Count       int                `bun:"count"`
+	Rule        tarifftypes.Inputs
+	Agreement   tarifftypes.Inputs
+	ExampleID   pulid.ID
+	ExampleName string
+	Count       int64
+}
+
+type shipmentInputsRow struct {
+	Rule        tarifftypes.Inputs
+	ExampleID   pulid.ID
+	ExampleName string
+	Count       int64
 }
 
 func (r *repository) ListInputsByTemplate(
@@ -60,9 +66,15 @@ func (r *repository) ListInputsByTemplate(
 				out = append(out, inputSet(rateagreementports.TemplateInputsRule, &rules[i]))
 			}
 			for i := range shipments {
+				row := &shipments[i]
 				out = append(
 					out,
-					inputSet(rateagreementports.TemplateInputsShipment, &shipments[i]),
+					inputSet(rateagreementports.TemplateInputsShipment, &templateInputsRow{
+						Rule:        row.Rule,
+						ExampleID:   row.ExampleID,
+						ExampleName: row.ExampleName,
+						Count:       row.Count,
+					}),
 				)
 			}
 			return out, nil
@@ -78,10 +90,28 @@ func inputSet(
 		Kind:        kind,
 		ExampleID:   row.ExampleID,
 		ExampleName: row.ExampleName,
-		Count:       row.Count,
+		Count:       int(row.Count),
 		Rule:        row.Rule,
 		Agreement:   row.Agreement,
 	}
+}
+
+func ruleInputsQuery(
+	req *rateagreementports.ListInputsByTemplateRequest,
+	limit int,
+) *keel.Query[rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+	ra := rateagreementdb.RateAgreements
+
+	return rr.Join(ra, ra.ID.EqCol(rr.RateAgreementID)).
+		Where(
+			rr.FormulaTemplateID.Eq(req.TemplateID),
+			rr.Status.Eq(rateagreement.RuleStatusActive),
+		).
+		Group(rr.Inputs, ra.Inputs).
+		Pick(rr.Inputs, ra.Inputs, keel.Min(rr.ID), keel.Min(ra.Name), keel.Count()).
+		Order(keel.Count().Desc()).
+		Limit(limit)
 }
 
 func (r *repository) ruleInputSets(
@@ -89,82 +119,45 @@ func (r *repository) ruleInputSets(
 	req *rateagreementports.ListInputsByTemplateRequest,
 	limit int,
 ) ([]templateInputsRow, error) {
-	rule := rateagreementcol.RateAgreementRuleColumns
-	agreement := rateagreementcol.RateAgreementColumns
-
-	rows := make([]templateInputsRow, 0, 16)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		TableExpr(
-			"? AS ?",
-			bun.Ident(rateagreementcol.RateAgreementRuleTable.Name),
-			bun.Ident(rateagreementcol.RateAgreementRuleTable.Alias),
-		).
-		Join(
-			"JOIN ? AS ? ON ? AND ? AND ?",
-			bun.Ident(rateagreementcol.RateAgreementTable.Name),
-			bun.Ident(rateagreementcol.RateAgreementTable.Alias),
-			bun.Safe(agreement.ID.EqColumn(rule.RateAgreementID)),
-			bun.Safe(agreement.OrganizationID.EqColumn(rule.OrganizationID)),
-			bun.Safe(agreement.BusinessUnitID.EqColumn(rule.BusinessUnitID)),
-		).
-		ColumnExpr(rule.Inputs.As("rule_inputs")).
-		ColumnExpr(agreement.Inputs.As("agreement_inputs")).
-		ColumnExpr("MIN(?) AS example_id", bun.Safe(rule.ID.Qualified())).
-		ColumnExpr("MIN(?) AS example_name", bun.Safe(agreement.Name.Qualified())).
-		ColumnExpr("COUNT(*) AS count").
-		Where(rule.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		Where(rule.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-		Where(rule.FormulaTemplateID.Eq(), req.TemplateID).
-		Where(rule.Status.Eq(), rateagreement.RuleStatusActive).
-		GroupExpr(rule.Inputs.Qualified()).
-		GroupExpr(agreement.Inputs.Qualified()).
-		OrderExpr("count DESC").
-		Limit(int64(limit)).
-		Scan(ctx, &rows)
+	rows, err := keel.Into[templateInputsRow](ctx, r.db.Keel(ctx), ruleInputsQuery(req, limit))
 	if err != nil {
 		r.l.Error("failed to list rule inputs by template", zap.Error(err))
 		return nil, err
 	}
+
 	return rows, nil
+}
+
+func shipmentInputsQuery(
+	req *rateagreementports.ListInputsByTemplateRequest,
+	limit int,
+) *keel.Query[shipment.Shipment] {
+	sp := shipmentdb.Shipments
+
+	return sp.Where(
+		sp.FormulaTemplateID.Eq(req.TemplateID),
+		sp.Status.NotIn(shipment.StatusInvoiced, shipment.StatusCanceled),
+	).
+		Group(sp.TariffInputs).
+		Pick(sp.TariffInputs, keel.Min(sp.ID), keel.Min(sp.ProNumber), keel.Count()).
+		Order(keel.Count().Desc()).
+		Limit(limit)
 }
 
 func (r *repository) shipmentInputSets(
 	ctx context.Context,
 	req *rateagreementports.ListInputsByTemplateRequest,
 	limit int,
-) ([]templateInputsRow, error) {
-	rows := make([]templateInputsRow, 0, 16)
+) ([]shipmentInputsRow, error) {
 	if limit <= 0 {
-		return rows, nil
+		return []shipmentInputsRow{}, nil
 	}
 
-	cols := shipmentcol.ShipmentColumns
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		TableExpr(
-			"? AS ?",
-			bun.Ident(shipmentcol.ShipmentTable.Name),
-			bun.Ident(shipmentcol.ShipmentTable.Alias),
-		).
-		ColumnExpr(cols.TariffInputs.As("rule_inputs")).
-		ColumnExpr("MIN(?) AS example_id", bun.Safe(cols.ID.Qualified())).
-		ColumnExpr("MIN(?) AS example_name", bun.Safe(cols.ProNumber.Qualified())).
-		ColumnExpr("COUNT(*) AS count").
-		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-		Where(cols.FormulaTemplateID.Eq(), req.TemplateID).
-		Where(cols.Status.NotIn(), bun.List([]shipment.Status{
-			shipment.StatusInvoiced,
-			shipment.StatusCanceled,
-		})).
-		GroupExpr(cols.TariffInputs.Qualified()).
-		OrderExpr("count DESC").
-		Limit(int64(limit)).
-		Scan(ctx, &rows)
+	rows, err := keel.Into[shipmentInputsRow](ctx, r.db.Keel(ctx), shipmentInputsQuery(req, limit))
 	if err != nil {
 		r.l.Error("failed to list shipment inputs by template", zap.Error(err))
 		return nil, err
 	}
+
 	return rows, nil
 }

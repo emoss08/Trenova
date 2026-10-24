@@ -3,28 +3,37 @@ package ratematrixrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const (
-	cellInsertBatch = 1000
-	busyMessage     = "Rate matrix is busy. Retry the request."
-)
+const busyMessage = "Rate matrix is busy. Retry the request."
+
+var rateMatrixErrors = dberror.Mapping{
+	Entity: "RateMatrix",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_rate_matrices_code",
+			Field:   "code",
+			Message: "A rate matrix with this code already exists in your organization",
+		},
+		{
+			Name:    "uq_rate_matrix_dimensions_position",
+			Field:   "dimensions",
+			Message: "Two dimensions cannot share a position",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -45,32 +54,9 @@ func New(p Params) ratematrixports.RateMatrixRepository {
 	}
 }
 
-func draftDimensions(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := ratematrixcol.RateMatrixDimensionColumns
-	return sq.Where(cols.VersionNumber.Eq(), ratematrix.DraftVersion).
-		Order(cols.Position.OrderAsc())
-}
-
-func matrixTenant(entity *ratematrix.RateMatrix) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-}
-
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *ratematrixports.ListRateMatrixRequest,
-) *bun.SelectQuery {
-	cols := ratematrixcol.RateMatrixColumns
-	q = querybuilder.ApplyFilters(
-		q,
-		ratematrixcol.RateMatrixTable.Alias,
-		req.Filter,
-		(*ratematrix.RateMatrix)(nil),
-	)
-
-	return q.Apply(ratematrixcol.RateMatrixApplyTenant(req.Filter.TenantInfo)).
-		Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset())).
-		Order(cols.CreatedAt.OrderDesc())
+func draftDimensions() keel.Loader {
+	d := ratematrixdb.RateMatrixes.Dimensions()
+	return d.Where(d.VersionNumber.Eq(ratematrix.DraftVersion)).Order(d.Position.Asc())
 }
 
 func (r *repository) List(
@@ -81,33 +67,24 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-			entities := make([]*ratematrix.RateMatrix, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).
-				ScanAndCount(ctx)
+			rm := ratematrixdb.RateMatrixes
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				rm.Query(),
+				&listquery.Request[ratematrix.RateMatrix]{
+					Filter: req.Filter,
+					Then:   []keel.Order{rm.CreatedAt.Desc()},
+				},
+			)
 			if err != nil {
-				r.l.Error("failed to scan and count rate matrices", zap.Error(err))
+				r.l.Error("failed to list rate matrices", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*ratematrix.RateMatrix]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func applyRateMatrixColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(ratematrixcol.RateMatrixTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
@@ -118,55 +95,18 @@ func (r *repository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*ratematrix.RateMatrix], error) {
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*ratematrix.RateMatrix)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							ratematrixcol.RateMatrixTable.Alias,
-							req.Filter,
-							(*ratematrix.RateMatrix)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					r.l.Error("failed to count rate matrices", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*ratematrix.RateMatrix]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*ratematrix.RateMatrix) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyRateMatrixColumns(sq, req.RateMatrixColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							ratematrixcol.RateMatrixTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*ratematrix.RateMatrix)(nil),
-						)
-					},
+				r.db.Keel(ctx),
+				ratematrixdb.RateMatrixes.Query(),
+				&listquery.Request[ratematrix.RateMatrix]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.RateMatrixColumns,
 				},
 			)
 			if err != nil {
-				r.l.Error("failed to scan rate matrices", zap.Error(err))
+				r.l.Error("failed to list rate matrices", zap.Error(err))
 				return nil, err
 			}
 
@@ -175,34 +115,29 @@ func (r *repository) ListConnection(
 	)
 }
 
+func rateMatrixQuery(
+	req *ratematrixports.GetRateMatrixByIDRequest,
+) *keel.Query[ratematrix.RateMatrix] {
+	rm := ratematrixdb.RateMatrixes
+	q := rm.Where(rm.ID.Eq(req.RateMatrixID))
+	if req.IncludeDimensions {
+		q = q.Load(draftDimensions())
+	}
+	if req.ForUpdate {
+		q = q.Lock(keel.ForUpdate)
+	}
+
+	return q
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *ratematrixports.GetRateMatrixByIDRequest,
 ) (*ratematrix.RateMatrix, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrix, error) {
-		entity := new(ratematrix.RateMatrix)
-		cols := ratematrixcol.RateMatrixColumns
-
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ratematrixcol.RateMatrixScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.RateMatrixID)
-			})
-
-		if req.IncludeDimensions {
-			q = q.Relation(
-				buncolgen.Rel(ratematrixcol.RateMatrixRelations.Dimensions),
-				draftDimensions,
-			)
-		}
-		if req.ForUpdate {
-			q = q.For("UPDATE")
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "RateMatrix")
+		entity, err := rateMatrixQuery(req).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, rateMatrixErrors.Map(err, req.RateMatrixID.String())
 		}
 
 		return entity, nil
@@ -217,20 +152,16 @@ func (r *repository) GetByIDs(
 		if len(req.RateMatrixIDs) == 0 {
 			return []*ratematrix.RateMatrix{}, nil
 		}
-		cols := ratematrixcol.RateMatrixColumns
-		entities := make([]*ratematrix.RateMatrix, 0, len(req.RateMatrixIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ratematrixcol.RateMatrixScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.RateMatrixIDs))
-			}).
-			Scan(ctx)
+
+		rm := ratematrixdb.RateMatrixes
+		entities, err := rm.Where(rm.ID.In(req.RateMatrixIDs...)).
+			Limit(len(req.RateMatrixIDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get rate matrices by ids", zap.Error(err))
 			return nil, err
 		}
+
 		return entities, nil
 	})
 }
@@ -240,51 +171,22 @@ func (r *repository) Create(
 	entity *ratematrix.RateMatrix,
 ) (*ratematrix.RateMatrix, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrix, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); iErr != nil {
-				return iErr
-			}
-
+		err := ratematrixdb.RateMatrixes.Create(ctx, r.db.Keel(ctx), entity)
+		if err == nil {
 			stampDimensions(entity, false)
-
-			return r.insertDimensions(c, entity)
-		})
+			err = r.insertDimensions(ctx, entity)
+		}
 		if err != nil {
 			r.l.Error(
 				"failed to create rate matrix",
 				zap.String("code", entity.Code),
 				zap.Error(err),
 			)
-			return nil, dberror.MapRetryableTransactionError(err, busyMessage)
+			return nil, mapRateMatrixError(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
-}
-
-func (r *repository) updateRow(
-	ctx context.Context,
-	entity *ratematrix.RateMatrix,
-) error {
-	ov := entity.Version
-	entity.Version++
-
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where(ratematrixcol.RateMatrixColumns.Version.Eq(), ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	return dberror.CheckRowsAffected(results, "RateMatrix", entity.ID.String())
 }
 
 func (r *repository) UpdateHeader(
@@ -292,15 +194,14 @@ func (r *repository) UpdateHeader(
 	entity *ratematrix.RateMatrix,
 ) (*ratematrix.RateMatrix, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrix, error) {
-		dimensions := entity.Dimensions
-		if err := r.updateRow(ctx, entity); err != nil {
+		if err := ratematrixdb.RateMatrixes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update rate matrix header",
 				zap.String("id", entity.ID.String()),
 				zap.Error(err),
 			)
-			return nil, err
+			return nil, rateMatrixErrors.Map(err, entity.ID.String())
 		}
-		entity.Dimensions = dimensions
+
 		return entity, nil
 	})
 }
@@ -310,60 +211,38 @@ func (r *repository) Update(
 	entity *ratematrix.RateMatrix,
 ) (*ratematrix.RateMatrix, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrix, error) {
-		dimensionCols := ratematrixcol.RateMatrixDimensionColumns
-		dimensions := entity.Dimensions
+		db := r.db.Keel(ctx)
+		d := ratematrixdb.RateMatrixDimensions
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if uErr := r.updateRow(c, entity); uErr != nil {
-				return uErr
-			}
-			entity.Dimensions = dimensions
-
-			if _, dErr := r.db.DBForContext(c).
-				NewDelete().
-				Model((*ratematrix.RateMatrixDimension)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return ratematrixcol.RateMatrixDimensionScopeTenantDelete(dq, matrixTenant(entity)).
-						Where(dimensionCols.RateMatrixID.Eq(), entity.ID).
-						Where(dimensionCols.VersionNumber.Eq(), ratematrix.DraftVersion)
-				}).
-				Exec(c); dErr != nil {
-				return dErr
-			}
-
+		err := ratematrixdb.RateMatrixes.Save(ctx, db, entity)
+		if err == nil {
+			_, err = d.Where(
+				d.RateMatrixID.Eq(entity.ID),
+				d.VersionNumber.Eq(ratematrix.DraftVersion),
+			).Delete(ctx, db)
+		}
+		if err == nil {
 			stampDimensions(entity, true)
-
-			return r.insertDimensions(c, entity)
-		})
+			err = r.insertDimensions(ctx, entity)
+		}
 		if err != nil {
 			r.l.Error("failed to update rate matrix",
 				zap.String("id", entity.ID.String()),
 				zap.Error(err),
 			)
-			return nil, dberror.MapRetryableTransactionError(err, busyMessage)
+			return nil, mapRateMatrixError(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
 }
 
-func (r *repository) insertDimensions(
-	ctx context.Context,
-	entity *ratematrix.RateMatrix,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if len(entity.Dimensions) == 0 {
-			return nil
-		}
+func (r *repository) insertDimensions(ctx context.Context, entity *ratematrix.RateMatrix) error {
+	if len(entity.Dimensions) == 0 {
+		return nil
+	}
 
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&entity.Dimensions).
-			Returning("*").
-			Exec(ctx)
-
-		return err
-	})
+	return ratematrixdb.RateMatrixDimensions.CreateMany(ctx, r.db.Keel(ctx), entity.Dimensions)
 }
 
 func (r *repository) Delete(
@@ -371,25 +250,35 @@ func (r *repository) Delete(
 	req *ratematrixports.GetRateMatrixByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := ratematrixcol.RateMatrixColumns
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*ratematrix.RateMatrix)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return ratematrixcol.RateMatrixScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.RateMatrixID)
-			}).
-			Exec(ctx)
+		err := ratematrixdb.RateMatrixes.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&ratematrix.RateMatrix{ID: req.RateMatrixID},
+		)
 		if err != nil {
 			r.l.Error("failed to delete rate matrix",
 				zap.String("id", req.RateMatrixID.String()),
 				zap.Error(err),
 			)
-			return err
+			return rateMatrixErrors.Map(err, req.RateMatrixID.String())
 		}
 
-		return dberror.CheckRowsAffected(results, "RateMatrix", req.RateMatrixID.String())
+		return nil
 	})
+}
+
+func selectOptionsQuery() *keel.Query[ratematrix.RateMatrix] {
+	rm := ratematrixdb.RateMatrixes
+
+	return rm.Pick(
+		rm.ID,
+		rm.Code,
+		rm.Name,
+		rm.Description,
+		rm.ValueType,
+		rm.Status,
+		rm.PublishedVersionNumber,
+	).Where(rm.PublishedVersionNumber.Gt(0), rm.Status.Ne(formulatemplate.StatusInactive))
 }
 
 func (r *repository) SelectOptions(
@@ -400,32 +289,21 @@ func (r *repository) SelectOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-			cols := ratematrixcol.RateMatrixColumns
+			rm := ratematrixdb.RateMatrixes
 
-			return dbhelper.SelectOptions[*ratematrix.RateMatrix](
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				selectOptionsQuery(),
 				req,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Code,
-						cols.Name,
-						cols.Description,
-						cols.ValueType,
-						cols.Status,
-						cols.PublishedVersionNumber,
-					},
-					OrgColumnRef:     &cols.OrganizationID,
-					BuColumnRef:      &cols.BusinessUnitID,
-					SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
-					EntityName:       "RateMatrix",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.PublishedVersionNumber.Gt(), 0).
-							Where(cols.Status.Ne(), formulatemplate.StatusInactive)
-					},
+				func(s string) keel.Pred {
+					return keel.Or(rm.Code.ContainsFold(s), rm.Name.ContainsFold(s))
 				},
 			)
 		},
 	)
+}
+
+func mapRateMatrixError(err error, id string) error {
+	return dberror.MapRetryableTransactionError(rateMatrixErrors.Map(err, id), busyMessage)
 }

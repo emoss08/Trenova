@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -50,19 +51,17 @@ func newBuilder(
 		return builder
 	}
 
+	checker := validationframework.NewKeelChecker(db, rateagreementdb.RateAgreementsSchema())
+
 	return builder.
-		WithUniquenessChecker(
-			validationframework.NewBunUniquenessCheckerScoped(db),
-		).
+		WithUniquenessChecker(checker).
 		WithUniqueField(
 			"code",
 			"code",
 			"A rate agreement with this code already exists in your organization",
 			func(a *rateagreement.RateAgreement) any { return a.Code },
 		).
-		WithReferenceChecker(
-			validationframework.NewBunReferenceCheckerScoped(db),
-		).
+		WithReferenceChecker(checker).
 		WithOptionalReferenceCheck(
 			"customerId",
 			"customers",

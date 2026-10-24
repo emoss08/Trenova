@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -37,9 +36,8 @@ const (
 )
 
 type RateZone struct {
-	bun.BaseModel             `bun:"table:rate_zones,alias:rzn" json:"-"`
-	keel.Table                `keel:"rate_zones"`
-	pagination.CursorValueSet `bun:",embed"                     json:"-"`
+	bun.BaseModel `bun:"table:rate_zones,alias:rzn" json:"-"`
+	keel.Table    `keel:"rate_zones"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rzn_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

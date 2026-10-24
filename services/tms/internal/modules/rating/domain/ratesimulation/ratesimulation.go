@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratesimulation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,9 +43,8 @@ const (
 
 // RateSimulation is one replay of an agreement against historical shipments.
 type RateSimulation struct {
-	bun.BaseModel             `bun:"table:rate_simulations,alias:rsim" json:"-"`
-	keel.Table                `keel:"rate_simulations"`
-	pagination.CursorValueSet `bun:",embed"                            json:"-"`
+	bun.BaseModel `bun:"table:rate_simulations,alias:rsim" json:"-"`
+	keel.Table    `keel:"rate_simulations"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rsim_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

@@ -96,6 +96,7 @@ var rateAgreementsTable = schema.Table{
 	Value:        valueRateAgreement,
 	Attach:       attachRateAgreement,
 	BeforeCreate: beforeCreateRateAgreement,
+	BeforeSave:   beforeSaveRateAgreement,
 }
 
 var rateAgreementsRef = keel.Ref{Table: &rateAgreementsTable}
@@ -486,6 +487,10 @@ func beforeCreateRateAgreement(ctx context.Context, p unsafe.Pointer) error {
 	return (*rateagreement.RateAgreement)(p).BeforeCreate(ctx)
 }
 
+func beforeSaveRateAgreement(ctx context.Context, p unsafe.Pointer) error {
+	return (*rateagreement.RateAgreement)(p).BeforeSave(ctx)
+}
+
 // rateAgreementAccessorialsTable is the schema of rateagreement.RateAgreementAccessorial.
 var rateAgreementAccessorialsTable = schema.Table{
 	Name:   "rate_agreement_accessorials",
@@ -522,23 +527,24 @@ var rateAgreementAccessorialsTable = schema.Table{
 		{Name: "Agreement", Alias: "a", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Agreement`},
 		{Name: "AccessorialCharge", Alias: "ac", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Accessorial Charge`, JSON: `accessorialCharge`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
-	Returning:  nil,
-	Version:    17,
-	AutoID:     0,
-	AutoCreate: 18,
-	AutoUpdate: 19,
-	IDPrefix:   "raga_",
-	New:        newRateAgreementAccessorial,
-	NewN:       newNRateAgreementAccessorial,
-	Size:       unsafe.Sizeof(rateagreement.RateAgreementAccessorial{}),
-	Ptr:        ptrRateAgreementAccessorial,
-	Value:      valueRateAgreementAccessorial,
-	Attach:     attachRateAgreementAccessorial,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
+	Returning:    nil,
+	Version:      17,
+	AutoID:       0,
+	AutoCreate:   18,
+	AutoUpdate:   19,
+	IDPrefix:     "raga_",
+	New:          newRateAgreementAccessorial,
+	NewN:         newNRateAgreementAccessorial,
+	Size:         unsafe.Sizeof(rateagreement.RateAgreementAccessorial{}),
+	Ptr:          ptrRateAgreementAccessorial,
+	Value:        valueRateAgreementAccessorial,
+	Attach:       attachRateAgreementAccessorial,
+	BeforeCreate: beforeCreateRateAgreementAccessorial,
 }
 
 var rateAgreementAccessorialsRef = keel.Ref{Table: &rateAgreementAccessorialsTable}
@@ -774,6 +780,10 @@ func attachRateAgreementAccessorial(p unsafe.Pointer, rel int32, child unsafe.Po
 	case 1:
 		r.AccessorialCharge = (*accessorialcharge.AccessorialCharge)(child)
 	}
+}
+
+func beforeCreateRateAgreementAccessorial(ctx context.Context, p unsafe.Pointer) error {
+	return (*rateagreement.RateAgreementAccessorial)(p).BeforeCreate(ctx)
 }
 
 // rateAgreementFuelBindingsTable is the schema of rateagreement.RateAgreementFuelBinding.
@@ -1643,23 +1653,24 @@ var rateAgreementVersionsTable = schema.Table{
 		{Name: "Agreement", Alias: "a", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Agreement`},
 		{Name: "CreatedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{31}, Remote: []int32{0}, Label: `Created By`, JSON: `createdBy`, NoReport: true},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 32,
-	AutoUpdate: -1,
-	IDPrefix:   "ragv_",
-	New:        newRateAgreementVersion,
-	NewN:       newNRateAgreementVersion,
-	Size:       unsafe.Sizeof(rateagreement.RateAgreementVersion{}),
-	Ptr:        ptrRateAgreementVersion,
-	Value:      valueRateAgreementVersion,
-	Attach:     attachRateAgreementVersion,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   32,
+	AutoUpdate:   -1,
+	IDPrefix:     "ragv_",
+	New:          newRateAgreementVersion,
+	NewN:         newNRateAgreementVersion,
+	Size:         unsafe.Sizeof(rateagreement.RateAgreementVersion{}),
+	Ptr:          ptrRateAgreementVersion,
+	Value:        valueRateAgreementVersion,
+	Attach:       attachRateAgreementVersion,
+	BeforeCreate: beforeCreateRateAgreementVersion,
 }
 
 var rateAgreementVersionsRef = keel.Ref{Table: &rateAgreementVersionsTable}
@@ -2007,6 +2018,10 @@ func attachRateAgreementVersion(p unsafe.Pointer, rel int32, child unsafe.Pointe
 	case 1:
 		r.CreatedBy = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateRateAgreementVersion(ctx context.Context, p unsafe.Pointer) error {
+	return (*rateagreement.RateAgreementVersion)(p).BeforeCreate(ctx)
 }
 
 func init() {

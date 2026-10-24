@@ -3,48 +3,55 @@ package ratematrixversionrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const maxAxisRanges = 20_000
 
 type axisColumns struct {
-	key buncolgen.Column
-	to  buncolgen.Column
+	key keel.StringCol
+	to  keel.StringCol
 }
 
 func columnsForAxis(position int16) (axisColumns, bool) {
-	cols := ratematrixcol.RateMatrixCellColumns
+	c := ratematrixdb.RateMatrixCells
 
 	switch position {
 	case 0:
-		return axisColumns{key: cols.D0Key, to: cols.D0KeyTo}, true
+		return axisColumns{key: c.D0Key, to: c.D0KeyTo}, true
 	case 1:
-		return axisColumns{key: cols.D1Key, to: cols.D1KeyTo}, true
+		return axisColumns{key: c.D1Key, to: c.D1KeyTo}, true
 	case 2:
-		return axisColumns{key: cols.D2Key, to: cols.D2KeyTo}, true
+		return axisColumns{key: c.D2Key, to: c.D2KeyTo}, true
 	case 3:
-		return axisColumns{key: cols.D3Key, to: cols.D3KeyTo}, true
+		return axisColumns{key: c.D3Key, to: c.D3KeyTo}, true
 	default:
 		return axisColumns{}, false
 	}
 }
 
-func scopeVersionCells(
-	sq *bun.SelectQuery,
-	req *ratematrixports.ListAxisKeysRequest,
-) *bun.SelectQuery {
-	cols := ratematrixcol.RateMatrixCellColumns
-	return ratematrixcol.RateMatrixCellScopeTenant(sq, req.TenantInfo).
-		Where(cols.RateMatrixID.Eq(), req.Key.RateMatrixID).
-		Where(cols.VersionNumber.Eq(), req.Key.VersionNumber)
+func versionCells(key ratematrix.VersionKey) *keel.Query[ratematrix.RateMatrixCell] {
+	c := ratematrixdb.RateMatrixCells
+
+	return c.Where(c.RateMatrixID.Eq(key.RateMatrixID), c.VersionNumber.Eq(key.VersionNumber))
+}
+
+func tableCellsQuery(
+	req *ratematrixports.LoadTableCellsRequest,
+) *keel.Query[ratematrix.RateMatrixCell] {
+	q := versionCells(req.Key)
+	for position, keys := range req.Keys {
+		if columns, ok := columnsForAxis(position); ok {
+			q = q.Where(columns.key.In(keys...))
+		}
+	}
+
+	return q.Order(ratematrixdb.RateMatrixCells.ID.Asc())
 }
 
 func (r *repository) LoadTableCells(
@@ -52,28 +59,7 @@ func (r *repository) LoadTableCells(
 	req *ratematrixports.LoadTableCellsRequest,
 ) ([]*ratematrix.RateMatrixCell, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratematrix.RateMatrixCell, error) {
-		cols := ratematrixcol.RateMatrixCellColumns
-		entities := make([]*ratematrix.RateMatrixCell, 0, len(req.Keys)*4)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = scopeVersionCells(sq, &ratematrixports.ListAxisKeysRequest{
-					TenantInfo: req.TenantInfo,
-					Key:        req.Key,
-				})
-				for position, keys := range req.Keys {
-					columns, ok := columnsForAxis(position)
-					if !ok {
-						continue
-					}
-					sq = sq.Where(columns.key.In(), bun.List(keys))
-				}
-				return sq
-			}).
-			Order(cols.ID.OrderAsc()).
-			Scan(ctx)
+		entities, err := tableCellsQuery(req).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to load rate table cells",
 				zap.String("matrixId", req.Key.RateMatrixID.String()),
@@ -92,42 +78,22 @@ func (r *repository) ListTableCells(
 	req *ratematrixports.ListTableCellsRequest,
 ) ([]*ratematrix.RateMatrixCell, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratematrix.RateMatrixCell, error) {
-		if len(req.Keys) == 0 {
+		keys := uniqueKeys(req.Keys)
+		if len(keys) == 0 {
 			return nil, nil
 		}
-		matrixIDs, numbers := splitKeys(req.Keys)
-		cols := ratematrixcol.RateMatrixCellColumns
-		candidates := make([]*ratematrix.RateMatrixCell, 0, len(req.Keys)*16)
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&candidates).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ratematrixcol.RateMatrixCellScopeTenant(sq, req.TenantInfo).
-					Where(cols.RateMatrixID.In(), bun.List(matrixIDs)).
-					Where(cols.VersionNumber.In(), bun.List(numbers))
-			}).
-			Order(cols.RateMatrixID.OrderAsc(), cols.VersionNumber.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx)
+		c := ratematrixdb.RateMatrixCells
+		wanted := versionKeys(keys)
+		cells, err := c.With(wanted).
+			Join(wanted, matchesKey(wanted, c.RateMatrixID.Col, c.VersionNumber.Col)...).
+			Order(c.RateMatrixID.Asc(), c.VersionNumber.Asc(), c.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list rate table cells", zap.Error(err))
 			return nil, err
 		}
 
-		wanted := make(map[ratematrix.VersionKey]struct{}, len(req.Keys))
-		for _, key := range req.Keys {
-			wanted[key] = struct{}{}
-		}
-		cells := candidates[:0]
-		for _, cell := range candidates {
-			key := ratematrix.VersionKey{
-				RateMatrixID:  cell.RateMatrixID,
-				VersionNumber: cell.VersionNumber,
-			}
-			if _, ok := wanted[key]; ok {
-				cells = append(cells, cell)
-			}
-		}
 		return cells, nil
 	})
 }
@@ -141,16 +107,9 @@ func (r *repository) ListAxisKeys(
 		if !ok {
 			return nil, nil
 		}
-		keys := make([]string, 0, 32)
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*ratematrix.RateMatrixCell)(nil)).
-			ColumnExpr("DISTINCT "+columns.key.Qualified()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return scopeVersionCells(sq, req)
-			}).
-			Scan(ctx, &keys)
+		keys, err := keel.Into[string](ctx, r.db.Keel(ctx),
+			versionCells(req.Key).Group(columns.key).Pick(columns.key))
 		if err != nil {
 			r.l.Error("failed to list rate table axis keys", zap.Error(err))
 			return nil, err
@@ -158,6 +117,11 @@ func (r *repository) ListAxisKeys(
 
 		return keys, nil
 	})
+}
+
+type rangeRow struct {
+	From string
+	To   string
 }
 
 func (r *repository) ListAxisRanges(
@@ -170,21 +134,10 @@ func (r *repository) ListAxisRanges(
 			return nil, nil
 		}
 
-		type rangeRow struct {
-			From string `bun:"range_from"`
-			To   string `bun:"range_to"`
-		}
-		rows := make([]rangeRow, 0, 32)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*ratematrix.RateMatrixCell)(nil)).
-			ColumnExpr("DISTINCT "+columns.key.As("range_from")).
-			ColumnExpr(columns.to.As("range_to")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return scopeVersionCells(sq, req)
-			}).
-			Limit(maxAxisRanges).
-			Scan(ctx, &rows)
+		rows, err := keel.Into[rangeRow](ctx, r.db.Keel(ctx), versionCells(req.Key).
+			Group(columns.key, columns.to).
+			Pick(columns.key, columns.to).
+			Limit(maxAxisRanges))
 		if err != nil {
 			r.l.Error("failed to list rate table axis ranges", zap.Error(err))
 			return nil, err
@@ -194,6 +147,7 @@ func (r *repository) ListAxisRanges(
 		for _, row := range rows {
 			ranges = append(ranges, ratematrix.PostalRange{From: row.From, To: row.To})
 		}
+
 		return ranges, nil
 	})
 }

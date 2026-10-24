@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -92,7 +91,7 @@ func (s *Service) CreateVersion(
 	template.CurrentVersionNumber = newVersionNumber
 
 	var createdVersion *formulatemplate.FormulaTemplateVersion
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, txErr := s.repo.Update(txCtx, template); txErr != nil {
 			log.Error("failed to update template version number", zap.Error(txErr))
 			return txErr
@@ -197,7 +196,7 @@ func (s *Service) Rollback(
 	}
 
 	var updatedTemplate *formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		updated, txErr := s.repo.Update(txCtx, resolved)
 		if txErr != nil {
 			log.Error("failed to update template", zap.Error(txErr))
@@ -295,7 +294,7 @@ func (s *Service) Fork(
 	}
 
 	var createdTemplate *formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		created, txErr := s.repo.Create(txCtx, forkedTemplate)
 		if txErr != nil {
 			log.Error("failed to create forked template", zap.Error(txErr))

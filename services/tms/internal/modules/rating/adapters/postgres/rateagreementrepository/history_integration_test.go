@@ -5,12 +5,11 @@ package rateagreementrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/ratingdb"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -25,16 +24,14 @@ import (
 func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 	t.Parallel()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, data := rdb.A.Ctx, rdb.Admin, rdb.A.Data
 	tenantInfo := pagination.TenantInfo{
 		OrgID: data.Organization.ID,
 		BuID:  data.BusinessUnit.ID,
 	}
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: rdb.Conn, Logger: zap.NewNop()})
 
 	billTo := &customer.Customer{
 		ID:             pulid.MustNew("cus_"),
@@ -47,8 +44,7 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 		City:           "Atlanta",
 		PostalCode:     "30303",
 	}
-	_, err := db.NewInsert().Model(billTo).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, billTo)
 
 	agreement := &rateagreement.RateAgreement{
 		ID:             pulid.MustNew("ragr_"),
@@ -63,8 +59,7 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 		Currency:       "USD",
 		EffectiveFrom:  100,
 	}
-	_, err = db.NewInsert().Model(agreement).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, agreement)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:             pulid.MustNew("ft_"),
@@ -74,8 +69,7 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 		Source:         perMileTariff,
 		Status:         formulatemplate.StatusActive,
 	}
-	_, err = db.NewInsert().Model(template).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, template)
 
 	original := &rateagreement.RateAgreementRule{
 		ID:                    pulid.MustNew("rarl_"),
@@ -96,8 +90,7 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 		Inputs:                perMileRate("2.00"),
 		EffectiveFrom:         100,
 	}
-	_, err = db.NewInsert().Model(original).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, original)
 
 	successorRate := perMileRate("2.10")
 	successor := *original

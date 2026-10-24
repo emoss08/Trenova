@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -23,7 +24,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -52,21 +52,6 @@ input rate: Money/mi
 
 charge "Per Mile" (quantity: shipment.distance, rate: rate)
 `
-
-type testDBConnection struct{}
-
-func (testDBConnection) DB() *bun.DB                          { return nil }
-func (testDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (testDBConnection) HealthCheck(context.Context) error    { return nil }
-func (testDBConnection) IsHealthy(context.Context) bool       { return true }
-func (testDBConnection) Close() error                         { return nil }
-func (testDBConnection) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
 
 type emptyContext struct{}
 
@@ -124,13 +109,15 @@ func setupTest(t *testing.T) *testDeps {
 		LibraryVersions: deps.versionRepo,
 	})
 	deps.svc = &Service{
-		l:            zap.NewNop(),
-		db:           testDBConnection{},
-		repo:         deps.repo,
-		versionRepo:  deps.versionRepo,
-		reviewRepo:   deps.reviewRepo,
-		usages:       deps.usages,
-		checker:      tariff.NewChecker(tariff.CheckerParams{Resolver: resolver, Context: emptyContext{}}),
+		l:           zap.NewNop(),
+		db:          dbtest.NopConnection{},
+		repo:        deps.repo,
+		versionRepo: deps.versionRepo,
+		reviewRepo:  deps.reviewRepo,
+		usages:      deps.usages,
+		checker: tariff.NewChecker(
+			tariff.CheckerParams{Resolver: resolver, Context: emptyContext{}},
+		),
 		auditService: deps.auditSvc,
 	}
 	return deps
@@ -159,7 +146,10 @@ func newLibrary() *formulalibrary.FormulaLibrary {
 	}
 }
 
-func returnsLibrary(_ context.Context, entity *formulalibrary.FormulaLibrary) *formulalibrary.FormulaLibrary {
+func returnsLibrary(
+	_ context.Context,
+	entity *formulalibrary.FormulaLibrary,
+) *formulalibrary.FormulaLibrary {
 	return entity
 }
 
@@ -343,10 +333,13 @@ func TestSubmit_RefusesALibraryWhoseTestsFail(t *testing.T) {
 	library.Source = accessorialsFailingSource
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(library, nil)
 
-	_, err := deps.svc.Submit(t.Context(), &SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
-		EntityID:   library.ID,
-	}})
+	_, err := deps.svc.Submit(
+		t.Context(),
+		&SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
+			TenantInfo: newTenantInfo(),
+			EntityID:   library.ID,
+		}},
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "test")
 	deps.repo.AssertNotCalled(t, "Update")

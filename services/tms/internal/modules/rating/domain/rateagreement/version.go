@@ -265,6 +265,11 @@ func (ragv *RateAgreementVersion) BeforeAppendModel(_ context.Context, query bun
 	return nil
 }
 
+func (ragv *RateAgreementVersion) BeforeCreate(_ context.Context) error {
+	ragv.Inputs = ragv.Inputs.OrEmpty()
+	return nil
+}
+
 func (ragv *RateAgreementVersion) GetID() pulid.ID {
 	return ragv.ID
 }

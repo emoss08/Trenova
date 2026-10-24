@@ -3,21 +3,16 @@ package rateagreementrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -41,40 +36,20 @@ func New(p Params) rateagreementports.RateAgreementRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *rateagreementports.ListRateAgreementRequest,
-) *bun.SelectQuery {
-	cols := rateagreementcol.RateAgreementColumns
-	q = querybuilder.ApplyFilters(
-		q,
-		rateagreementcol.RateAgreementTable.Alias,
-		req.Filter,
-		(*rateagreement.RateAgreement)(nil),
-	)
-
-	q = q.Apply(rateagreementcol.RateAgreementApplyTenant(req.Filter.TenantInfo))
-
-	if req.PartyType != "" {
-		q = q.Where(cols.PartyType.Eq(), req.PartyType)
+func listFilters(req *rateagreementports.ListRateAgreementRequest) []keel.Pred {
+	ra := rateagreementdb.RateAgreements
+	preds := []keel.Pred{
+		keel.When(req.PartyType != "", ra.PartyType.Eq(req.PartyType)),
+		keel.When(req.Status != "", ra.Status.Eq(req.Status)),
 	}
-
-	if req.Status != "" {
-		q = q.Where(cols.Status.Eq(), req.Status)
-	}
-
 	if req.CustomerID != nil {
-		q = q.Where(cols.CustomerID.Eq(), *req.CustomerID)
+		preds = append(preds, ra.CustomerID.Eq(*req.CustomerID))
 	}
-
 	if req.CarrierID != nil {
-		q = q.Where(cols.CarrierID.Eq(), *req.CarrierID)
+		preds = append(preds, ra.CarrierID.Eq(*req.CarrierID))
 	}
 
-	return q.
-		Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset())).
-		Order(cols.CreatedAt.OrderDesc())
+	return preds
 }
 
 func (r *repository) List(
@@ -85,102 +60,18 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
-			log := r.l.With(zap.String("operation", "List"))
-
-			entities := make([]*rateagreement.RateAgreement, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).
-				ScanAndCount(ctx)
-			if err != nil {
-				log.Error("failed to scan and count rate agreements", zap.Error(err))
-				return nil, err
-			}
-
-			return &pagination.ListResult[*rateagreement.RateAgreement]{
-				Items: entities,
-				Total: int(total),
-			}, nil
-		},
-	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *rateagreementports.ListRateAgreementConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		rateagreementcol.RateAgreementTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*rateagreement.RateAgreement)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *rateagreementports.ListRateAgreementConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		rateagreementcol.RateAgreementTable.Alias,
-		req.Filter,
-		(*rateagreement.RateAgreement)(nil),
-	)
-}
-
-func (r *repository) ListConnection(
-	ctx context.Context,
-	req *rateagreementports.ListRateAgreementConnectionRequest,
-) (*pagination.CursorListResult[*rateagreement.RateAgreement], error) {
-	return dbtx.Write(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*rateagreement.RateAgreement], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*rateagreement.RateAgreement)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count rate agreements", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			ra := rateagreementdb.RateAgreements
+			result, err := listquery.List(
 				ctx,
-				dbhelper.CursorListParams[*rateagreement.RateAgreement]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*rateagreement.RateAgreement) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyRateAgreementColumns(sq, req.RateAgreementColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
+				r.db.Keel(ctx),
+				ra.Where(listFilters(req)...),
+				&listquery.Request[rateagreement.RateAgreement]{
+					Filter: req.Filter,
+					Then:   []keel.Order{ra.CreatedAt.Desc()},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan rate agreements", zap.Error(err))
+				r.l.Error("failed to list rate agreements", zap.Error(err))
 				return nil, err
 			}
 
@@ -189,61 +80,92 @@ func (r *repository) ListConnection(
 	)
 }
 
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *rateagreementports.ListRateAgreementConnectionRequest,
+) (*pagination.CursorListResult[*rateagreement.RateAgreement], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*rateagreement.RateAgreement], error) {
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				rateagreementdb.RateAgreements.Query(),
+				&listquery.Request[rateagreement.RateAgreement]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.RateAgreementColumns,
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to list rate agreements", zap.Error(err))
+				return nil, err
+			}
+
+			return result, nil
+		},
+	)
+}
+
+func agreementQuery(
+	req *rateagreementports.GetRateAgreementByIDRequest,
+	now int64,
+) *keel.Query[rateagreement.RateAgreement] {
+	ra := rateagreementdb.RateAgreements
+	q := ra.Where(ra.ID.Eq(req.RateAgreementID))
+
+	if req.IncludeChildren && !req.OmitRules {
+		rules := ra.Rules()
+		window := ruleWindowColumns{from: rules.EffectiveFrom, to: rules.EffectiveTo}
+		scope := openAt(rules.EffectiveTo, now)
+		if req.AsOf > 0 {
+			scope = effectiveAt(window, req.AsOf)
+		}
+		q = q.Load(rules.Where(scope).Order(rules.SpecificityScore.Desc()))
+	}
+
+	if req.IncludeChildren {
+		q = q.Load(ra.Accessorials(), ra.FuelBinding())
+	}
+
+	return q
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *rateagreementports.GetRateAgreementByIDRequest,
 ) (*rateagreement.RateAgreement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateagreement.RateAgreement, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.RateAgreementID.String()),
-		)
-
-		entity := new(rateagreement.RateAgreement)
-		cols := rateagreementcol.RateAgreementColumns
-
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return rateagreementcol.RateAgreementScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.RateAgreementID)
-			})
-
-		if req.IncludeChildren && !req.OmitRules {
-			q = q.
-				Relation(
-					buncolgen.Rel(rateagreementcol.RateAgreementRelations.Rules),
-					func(sq *bun.SelectQuery) *bun.SelectQuery {
-						if req.AsOf > 0 {
-							sq = applyRuleWindow(sq, req.AsOf)
-						} else {
-							// With no moment given this is an editor load, which
-							// wants every lane that still has a future — current
-							// and forthcoming — and none of the closed-out history
-							// an amendment leaves behind.
-							sq = applyOpenRuleWindow(sq, timeutils.NowUnix())
-						}
-						return sq.Order(
-							rateagreementcol.RateAgreementRuleColumns.SpecificityScore.OrderDesc(),
-						)
-					},
-				)
-		}
-
-		if req.IncludeChildren {
-			q = q.
-				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRelations.Accessorials)).
-				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRelations.FuelBinding))
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get rate agreement", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "RateAgreement")
+		entity, err := agreementQuery(req, timeutils.NowUnix()).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get rate agreement",
+				zap.String("id", req.RateAgreementID.String()),
+				zap.Error(err),
+			)
+			return nil, agreementErrors.Map(err, req.RateAgreementID.String())
 		}
 
 		return entity, nil
 	})
+}
+
+func rulesQuery(
+	req *rateagreementports.ListRateAgreementRulesRequest,
+) *keel.Query[rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+	q := rr.Where(
+		rr.RateAgreementID.Eq(req.RateAgreementID),
+		keel.When(!req.IncludeInactive, rr.Status.Eq(rateagreement.RuleStatusActive)),
+		keel.When(req.LaneKey != "", rr.LaneKey.Eq(req.LaneKey)),
+	)
+
+	if req.IncludeSuperseded {
+		return q.Order(rr.EffectiveFrom.Desc())
+	}
+
+	return q.Where(ruleWindowAt(ruleWindow(), req.AsOf)).
+		Order(rr.SpecificityScore.Desc(), rr.ID.Asc())
 }
 
 func (r *repository) ListRules(
@@ -254,49 +176,9 @@ func (r *repository) ListRules(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*rateagreement.RateAgreementRule, error) {
-			log := r.l.With(zap.String("operation", "ListRules"))
-
-			cols := rateagreementcol.RateAgreementRuleColumns
-			entities := make([]*rateagreement.RateAgreementRule, 0)
-
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = rateagreementcol.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
-						Where(cols.RateAgreementID.Eq(), req.RateAgreementID)
-
-					if !req.IncludeInactive {
-						sq = sq.Where(cols.Status.Eq(), rateagreement.RuleStatusActive)
-					}
-
-					if req.LaneKey != "" {
-						sq = sq.Where(cols.LaneKey.Eq(), req.LaneKey)
-					}
-
-					return sq
-				}).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					// History keeps the closed-out rules — the lineage is the point —
-					// so the window filter only applies to a point-in-time read.
-					if req.IncludeSuperseded {
-						return sq
-					}
-
-					return applyRuleWindow(sq, req.AsOf)
-				}).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					if req.IncludeSuperseded {
-						return sq.Order(cols.EffectiveFrom.OrderDesc())
-					}
-
-					return sq.
-						Order(cols.SpecificityScore.OrderDesc()).
-						Order(cols.ID.OrderAsc())
-				})
-
-			if err := q.Scan(ctx); err != nil {
-				log.Error("failed to list rate agreement rules", zap.Error(err))
+			entities, err := rulesQuery(req).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list rate agreement rules", zap.Error(err))
 				return nil, err
 			}
 
@@ -313,26 +195,16 @@ func (r *repository) GetRuleByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*rateagreement.RateAgreementRule, error) {
-			log := r.l.With(
-				zap.String("operation", "GetRuleByID"),
-				zap.String("id", req.RuleID.String()),
-			)
-
-			entity := new(rateagreement.RateAgreementRule)
-			cols := rateagreementcol.RateAgreementRuleColumns
-
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRuleRelations.Agreement)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return rateagreementcol.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
-						Where(cols.ID.Eq(), req.RuleID)
-				}).
-				Scan(ctx)
+			rr := rateagreementdb.RateAgreementRules
+			entity, err := rr.Where(rr.ID.Eq(req.RuleID)).
+				Load(rr.Agreement()).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get rate agreement rule", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "RateAgreementRule")
+				r.l.Error("failed to get rate agreement rule",
+					zap.String("id", req.RuleID.String()),
+					zap.Error(err),
+				)
+				return nil, ruleErrors.Map(err, req.RuleID.String())
 			}
 
 			return entity, nil
@@ -345,26 +217,12 @@ func (r *repository) Create(
 	entity *rateagreement.RateAgreement,
 ) (*rateagreement.RateAgreement, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rateagreement.RateAgreement, error) {
-		log := r.l.With(zap.String("operation", "Create"), zap.String("code", entity.Code))
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); iErr != nil {
-				return iErr
-			}
-
-			if cErr := r.writeChildren(c, entity, false); cErr != nil {
-				return cErr
-			}
-
-			if len(entity.Rules) == 0 {
-				return nil
-			}
-
-			return r.insertRules(c, &rateagreementports.AmendRateAgreementRulesRequest{
+		err := rateagreementdb.RateAgreements.Create(ctx, r.db.Keel(ctx), entity)
+		if err == nil {
+			err = r.writeChildren(ctx, entity, false)
+		}
+		if err == nil && len(entity.Rules) > 0 {
+			err = r.insertRules(ctx, &rateagreementports.AmendRateAgreementRulesRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
@@ -373,13 +231,13 @@ func (r *repository) Create(
 				EffectiveFrom:   entity.EffectiveFrom,
 				Rules:           entity.Rules,
 			})
-		})
+		}
 		if err != nil {
-			log.Error("failed to create rate agreement", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Rate agreement is busy. Retry the request.",
+			r.l.Error("failed to create rate agreement",
+				zap.String("code", entity.Code),
+				zap.Error(err),
 			)
+			return nil, mapAgreementError(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -396,44 +254,16 @@ func (r *repository) Update(
 	entity *rateagreement.RateAgreement,
 ) (*rateagreement.RateAgreement, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rateagreement.RateAgreement, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-		cols := rateagreementcol.RateAgreementColumns
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			results, uErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				OmitZero().
-				Returning("*").
-				Exec(c)
-			if uErr != nil {
-				return uErr
-			}
-
-			if uErr = dberror.CheckRowsAffected(
-				results,
-				"RateAgreement",
-				entity.ID.String(),
-			); uErr != nil {
-				return uErr
-			}
-
-			return r.writeChildren(c, entity, true)
-		})
+		err := rateagreementdb.RateAgreements.Save(ctx, r.db.Keel(ctx), entity)
+		if err == nil {
+			err = r.writeChildren(ctx, entity, true)
+		}
 		if err != nil {
-			log.Error("failed to update rate agreement", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Rate agreement is busy. Retry the request.",
+			r.l.Error("failed to update rate agreement",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
 			)
+			return nil, mapAgreementError(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -450,112 +280,77 @@ func (r *repository) writeChildren(
 	entity *rateagreement.RateAgreement,
 	replace bool,
 ) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if replace {
-			if err := r.deleteChildren(ctx, entity); err != nil {
-				return err
-			}
-		}
-
-		stampAccessorials(entity, replace)
-
-		if len(entity.Accessorials) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.Accessorials).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return err
-			}
-		}
-
-		if entity.FuelBinding == nil {
-			return nil
-		}
-
-		if replace {
-			entity.FuelBinding.ID = pulid.Nil
-		}
-		entity.FuelBinding.RateAgreementID = entity.ID
-		entity.FuelBinding.OrganizationID = entity.OrganizationID
-		entity.FuelBinding.BusinessUnitID = entity.BusinessUnitID
-
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity.FuelBinding).
-			Returning("*").
-			Exec(ctx)
-
-		return err
-	})
-}
-
-func (r *repository) deleteChildren(
-	ctx context.Context,
-	entity *rateagreement.RateAgreement,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		tenantInfo := pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		}
-
-		accessorialCols := rateagreementcol.RateAgreementAccessorialColumns
-		if _, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*rateagreement.RateAgreementAccessorial)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return rateagreementcol.RateAgreementAccessorialScopeTenantDelete(dq, tenantInfo).
-					Where(accessorialCols.RateAgreementID.Eq(), entity.ID)
-			}).
-			Exec(ctx); err != nil {
+	db := r.db.Keel(ctx)
+	if replace {
+		if err := deleteChildren(ctx, db, entity.ID); err != nil {
 			return err
 		}
+	}
 
-		bindingCols := rateagreementcol.RateAgreementFuelBindingColumns
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*rateagreement.RateAgreementFuelBinding)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return rateagreementcol.RateAgreementFuelBindingScopeTenantDelete(dq, tenantInfo).
-					Where(bindingCols.RateAgreementID.Eq(), entity.ID)
-			}).
-			Exec(ctx)
+	stampAccessorials(entity, replace)
 
+	accessorials := make([]*rateagreement.RateAgreementAccessorial, 0, len(entity.Accessorials))
+	for _, accessorial := range entity.Accessorials {
+		if accessorial != nil {
+			accessorials = append(accessorials, accessorial)
+		}
+	}
+	if len(accessorials) > 0 {
+		if err := rateagreementdb.RateAgreementAccessorials.CreateMany(ctx, db, accessorials); err != nil {
+			return err
+		}
+	}
+
+	if entity.FuelBinding == nil {
+		return nil
+	}
+
+	if replace {
+		entity.FuelBinding.ID = pulid.Nil
+	}
+	entity.FuelBinding.RateAgreementID = entity.ID
+	entity.FuelBinding.OrganizationID = entity.OrganizationID
+	entity.FuelBinding.BusinessUnitID = entity.BusinessUnitID
+
+	return rateagreementdb.RateAgreementFuelBindings.Create(ctx, db, entity.FuelBinding)
+}
+
+func deleteChildren(ctx context.Context, db *keel.DB, agreementID pulid.ID) error {
+	ac := rateagreementdb.RateAgreementAccessorials
+	if _, err := ac.Where(ac.RateAgreementID.Eq(agreementID)).Delete(ctx, db); err != nil {
 		return err
-	})
+	}
+
+	fb := rateagreementdb.RateAgreementFuelBindings
+	_, err := fb.Where(fb.RateAgreementID.Eq(agreementID)).Delete(ctx, db)
+
+	return err
+}
+
+func selectOptionsQuery() *keel.Query[rateagreement.RateAgreement] {
+	ra := rateagreementdb.RateAgreements
+
+	return ra.Pick(ra.ID, ra.Code, ra.Name, ra.PartyType, ra.Status, ra.Currency).
+		Where(ra.Status.Eq(rateagreement.StatusActive))
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
-			cols := rateagreementcol.RateAgreementColumns
+			ra := rateagreementdb.RateAgreements
 
-			return dbhelper.SelectOptions[*rateagreement.RateAgreement](
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				selectOptionsQuery(),
 				req,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Code,
-						cols.Name,
-						cols.PartyType,
-						cols.Status,
-						cols.Currency,
-					},
-					OrgColumnRef:     &cols.OrganizationID,
-					BuColumnRef:      &cols.BusinessUnitID,
-					SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
-					EntityName:       "RateAgreement",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), rateagreement.StatusActive)
-					},
+				func(s string) keel.Pred {
+					return keel.Or(ra.Code.ContainsFold(s), ra.Name.ContainsFold(s))
 				},
 			)
 		},

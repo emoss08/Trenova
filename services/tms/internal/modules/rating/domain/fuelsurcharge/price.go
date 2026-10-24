@@ -24,21 +24,21 @@ const PriceDateLayout = "2006-01-02"
 
 type FuelIndexPrice struct {
 	bun.BaseModel `bun:"table:fuel_index_prices,alias:fip" json:"-"`
-	keel.Table    `keel:"fuel_index_prices"`
+	keel.Table    `                                                 keel:"fuel_index_prices"`
 
-	ID             pulid.ID        `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:fip_"`
-	BusinessUnitID pulid.ID        `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID        `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	FuelIndexID    pulid.ID        `json:"fuelIndexId"    bun:"fuel_index_id,type:VARCHAR(100),notnull" keel:"fuel_index_id"`
-	PriceDate      string          `json:"priceDate"      bun:"price_date,type:DATE,notnull" keel:"price_date"`
-	Price          decimal.Decimal `json:"price"          bun:"price,type:NUMERIC(19,4),notnull" keel:"price"`
-	Currency       string          `json:"currency"       bun:"currency,type:VARCHAR(3),notnull,default:'USD'" keel:"currency"`
-	IsManual       bool            `json:"isManual"       bun:"is_manual,type:BOOLEAN,notnull" keel:"is_manual"`
-	EnteredByID    *pulid.ID       `json:"enteredById"    bun:"entered_by_id,type:VARCHAR(100),nullzero" keel:"entered_by_id"`
-	SourceRaw      string          `json:"sourceRaw"      bun:"source_raw,type:VARCHAR(64),nullzero" keel:"source_raw,nullzero"`
+	ID             pulid.ID        `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"                               keel:"id,pk,autoid:fip_"`
+	BusinessUnitID pulid.ID        `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                 keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID        `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"                  keel:"organization_id,pk,tenant"`
+	FuelIndexID    pulid.ID        `json:"fuelIndexId"    bun:"fuel_index_id,type:VARCHAR(100),notnull"                       keel:"fuel_index_id"`
+	PriceDate      string          `json:"priceDate"      bun:"price_date,type:DATE,notnull"                                  keel:"price_date"`
+	Price          decimal.Decimal `json:"price"          bun:"price,type:NUMERIC(19,4),notnull"                              keel:"price"`
+	Currency       string          `json:"currency"       bun:"currency,type:VARCHAR(3),notnull,default:'USD'"                keel:"currency"`
+	IsManual       bool            `json:"isManual"       bun:"is_manual,type:BOOLEAN,notnull"                                keel:"is_manual"`
+	EnteredByID    *pulid.ID       `json:"enteredById"    bun:"entered_by_id,type:VARCHAR(100),nullzero"                      keel:"entered_by_id"`
+	SourceRaw      string          `json:"sourceRaw"      bun:"source_raw,type:VARCHAR(64),nullzero"                          keel:"source_raw,nullzero"`
 	FetchedAt      time.Time       `json:"fetchedAt"      bun:"fetched_at,type:TIMESTAMPTZ,notnull,default:current_timestamp" keel:"fetched_at"`
 
-	FuelIndex    *FuelIndex           `json:"fuelIndex,omitempty" bun:"rel:belongs-to,join:fuel_index_id=id" keel:"belongs:fuel_index_id"`
+	FuelIndex    *FuelIndex           `json:"fuelIndex,omitempty" bun:"rel:belongs-to,join:fuel_index_id=id"    keel:"belongs:fuel_index_id"`
 	BusinessUnit *tenant.BusinessUnit `json:"-"                   bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"                   bun:"rel:belongs-to,join:organization_id=id"`
 }
@@ -114,4 +114,9 @@ func (fp *FuelIndexPrice) BeforeAppendModel(_ context.Context, query bun.Query) 
 
 func (fp *FuelIndexPrice) BeforeCreate(ctx context.Context) error {
 	return fp.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
+func (fp *FuelIndexPrice) BeforeUpdate(_ context.Context) error {
+	fp.FetchedAt = time.Now().UTC()
+	return nil
 }

@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -20,24 +21,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
-
-type testDBConnection struct{}
-
-func (testDBConnection) DB() *bun.DB                          { return nil }
-func (testDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (testDBConnection) HealthCheck(context.Context) error    { return nil }
-func (testDBConnection) IsHealthy(context.Context) bool       { return true }
-func (testDBConnection) Close() error                         { return nil }
-func (testDBConnection) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
 
 type testDeps struct {
 	repo        *ratematrixportsmock.MockRateMatrixRepository
@@ -60,7 +45,7 @@ func setupTest(t *testing.T) *testDeps {
 	}
 	deps.svc = &Service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         deps.repo,
 		versionRepo:  deps.versionRepo,
 		reviewRepo:   deps.reviewRepo,
@@ -127,7 +112,10 @@ func expectHeaderSave(deps *testDeps) {
 }
 
 func expectReviews(deps *testDeps) {
-	deps.reviewRepo.EXPECT().Latest(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	deps.reviewRepo.EXPECT().
+		Latest(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
 	deps.reviewRepo.EXPECT().Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
@@ -461,14 +449,18 @@ func TestRestoringThePublishedVersionDiscardsTheDraft(t *testing.T) {
 	matrix.HasDraftChanges = true
 	matrix.DraftEditorIDs = []pulid.ID{editor}
 	expectLoad(deps, matrix)
-	deps.versionRepo.EXPECT().Get(mock.Anything, mock.Anything).Return(&ratematrix.RateMatrixVersion{
-		RateMatrixID:  matrix.ID,
-		VersionNumber: 4,
-		ValueType:     ratematrix.ValueTypePercent,
-	}, nil)
-	deps.repo.EXPECT().CopyVersion(mock.Anything, mock.MatchedBy(func(req *ratematrixports.CopyVersionRequest) bool {
-		return req.From == 4 && req.To == ratematrix.DraftVersion
-	})).Return(int64(12), nil)
+	deps.versionRepo.EXPECT().
+		Get(mock.Anything, mock.Anything).
+		Return(&ratematrix.RateMatrixVersion{
+			RateMatrixID:  matrix.ID,
+			VersionNumber: 4,
+			ValueType:     ratematrix.ValueTypePercent,
+		}, nil)
+	deps.repo.EXPECT().
+		CopyVersion(mock.Anything, mock.MatchedBy(func(req *ratematrixports.CopyVersionRequest) bool {
+			return req.From == 4 && req.To == ratematrix.DraftVersion
+		})).
+		Return(int64(12), nil)
 	var saved *ratematrix.RateMatrix
 	deps.repo.EXPECT().UpdateHeader(mock.Anything, mock.Anything).
 		RunAndReturn(func(

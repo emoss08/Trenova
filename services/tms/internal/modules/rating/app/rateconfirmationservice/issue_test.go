@@ -3,6 +3,8 @@ package rateconfirmationservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 
@@ -35,7 +37,7 @@ func setupIssueTest(t *testing.T) *issueTestDeps {
 	}
 	deps.svc = &Service{
 		l:                     zap.NewNop(),
-		db:                    testDBConnection{},
+		db:                    dbtest.NopConnection{},
 		repo:                  deps.repo,
 		carrierAssignmentRepo: deps.carrierAssignmentRepo,
 		carrierRepo:           deps.carrierRepo,

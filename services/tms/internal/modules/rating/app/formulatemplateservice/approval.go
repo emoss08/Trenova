@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -36,7 +35,7 @@ func (s *Service) Submit(
 	req *SubmitRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
 	var submitted *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).
 			Apply(txCtx, &req.ApprovalActionRequest, templateTransition{
 				Operation:    "Submit",
@@ -121,7 +120,7 @@ func (s *Service) ApproveFrom(
 
 	var approved *formulatemplate.FormulaTemplate
 	var pinned *contentCheck
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, templateTransition{
 			Operation:    "Approve",
 			From:         formulatemplate.StatusInReview,
@@ -301,7 +300,7 @@ func (s *Service) Reject(
 
 	var submitterID *pulid.ID
 	var rejected *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, templateTransition{
 			Operation:    "Reject",
 			From:         formulatemplate.StatusInReview,

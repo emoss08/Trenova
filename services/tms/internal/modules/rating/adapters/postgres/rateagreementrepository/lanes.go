@@ -2,19 +2,24 @@ package rateagreementrepository
 
 import (
 	"context"
-	"database/sql"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
-	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+const rateInputSQL = "CASE WHEN jsonb_typeof(? -> 'rate') = 'object' " +
+	"THEN (? -> 'rate' ->> '$q')::numeric END"
+
+type laneCounts struct {
+	Total int64
+	Live  int64
+}
 
 // ListLanes pages an agreement's live lanes — active rules an amendment has
 // not closed out, most specific first — and counts the live and retired rules
@@ -41,11 +46,12 @@ func (r *repository) ListLanes(
 				return nil, err
 			}
 
-			total, live, err := r.countLanes(ctx, req, now)
+			counts, err := keel.IntoOne[laneCounts](ctx, r.db.Keel(ctx), laneCountQuery(req, now))
 			if err != nil {
 				log.Error("failed to count rate agreement lanes", zap.Error(err))
 				return nil, err
 			}
+			total, live := int(counts.Total), int(counts.Live)
 
 			pageSize := min(req.Limit, max(live-req.Offset, 0))
 			page := &rateagreementports.RateAgreementLanePage{
@@ -60,25 +66,69 @@ func (r *repository) ListLanes(
 				return page, nil
 			}
 
-			cols := rateagreementcol.RateAgreementRuleColumns
-			if err = r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&page.Lanes).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return applyLiveLanes(scopeAgreementRules(sq, req), now)
-				}).
-				Order(cols.SpecificityScore.OrderDesc()).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(req.Limit)).
-				Offset(int64(req.Offset)).
-				Scan(ctx); err != nil {
+			lanes, err := lanePageQuery(req, now).List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				log.Error("failed to list rate agreement lanes", zap.Error(err))
 				return nil, err
 			}
+			page.Lanes = lanes
 
 			return page, nil
 		},
 	)
+}
+
+func agreementRules(
+	req *rateagreementports.ListRateAgreementLanesRequest,
+) *keel.Query[rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+
+	return rr.Where(rr.RateAgreementID.Eq(req.RateAgreementID))
+}
+
+func laneCountQuery(
+	req *rateagreementports.ListRateAgreementLanesRequest,
+	now int64,
+) *keel.Query[rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+
+	return agreementRules(req).Pick(keel.Count(), keel.Count().Filter(liveLanes(rr, now)))
+}
+
+func lanePageQuery(
+	req *rateagreementports.ListRateAgreementLanesRequest,
+	now int64,
+) *keel.Query[rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+
+	return agreementRules(req).
+		Where(liveLanes(rr, now)).
+		Order(rr.SpecificityScore.Desc(), rr.ID.Asc()).
+		Limit(req.Limit).
+		Offset(req.Offset)
+}
+
+func laneSummaryQuery(
+	req *rateagreementports.ListRateAgreementLanesRequest,
+	now int64,
+) *keel.Query[rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+	ft := formulatemplatedb.FormulaTemplates
+	rate := keel.Raw(rateInputSQL, rr.Inputs, rr.Inputs)
+
+	return agreementRules(req).
+		LeftJoin(ft, ft.ID.EqCol(rr.FormulaTemplateID)).
+		Where(liveLanes(rr, now)).
+		Group(rr.FormulaTemplateID, ft.Name, rr.Currency).
+		Pick(
+			rr.FormulaTemplateID,
+			keel.Raw("COALESCE(?, '')", ft.Name),
+			keel.Raw("COALESCE(?, '')", rr.Currency),
+			keel.Count(),
+			keel.Min(rate),
+			keel.Max(rate),
+		).
+		Order(keel.Count().Desc())
 }
 
 func (r *repository) SummarizeLanes(
@@ -99,42 +149,22 @@ func (r *repository) SummarizeLanes(
 				return nil, err
 			}
 
-			cols := rateagreementcol.RateAgreementRuleColumns
-			ftCols := formulatemplatecol.FormulaTemplateColumns
-			groups := make([]*rateagreementports.LanePricingGroup, 0, 8)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*rateagreement.RateAgreementRule)(nil)).
-				ColumnExpr(cols.FormulaTemplateID.As("formula_template_id")).
-				ColumnExpr("COALESCE(?, '') AS formula_template_name", bun.Safe(ftCols.Name.Qualified())).
-				ColumnExpr("COALESCE(?, '') AS currency", bun.Safe(cols.Currency.Qualified())).
-				ColumnExpr(buncolgen.Count("lanes")).
-				ColumnExpr("MIN(?) AS min_rate", bun.Safe(rateInputExpr(cols.Inputs.Qualified()))).
-				ColumnExpr("MAX(?) AS max_rate", bun.Safe(rateInputExpr(cols.Inputs.Qualified()))).
-				Join(
-					"LEFT JOIN ? AS ? ON ?",
-					bun.Safe(formulatemplatecol.FormulaTemplateTable.Name),
-					bun.Safe(formulatemplatecol.FormulaTemplateTable.Alias),
-					bun.Safe(ftCols.ID.EqColumn(cols.FormulaTemplateID)+
-						" AND "+ftCols.OrganizationID.EqColumn(cols.OrganizationID)+
-						" AND "+ftCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)),
-				).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return applyLiveLanes(scopeAgreementRules(sq, req), timeutils.NowUnix())
-				}).
-				GroupExpr(cols.FormulaTemplateID.Qualified()).
-				GroupExpr(ftCols.Name.Qualified()).
-				GroupExpr(cols.Currency.Qualified()).
-				OrderExpr("lanes DESC").
-				Scan(ctx, &groups)
+			groups, err := keel.Into[rateagreementports.LanePricingGroup](
+				ctx,
+				r.db.Keel(ctx),
+				laneSummaryQuery(req, timeutils.NowUnix()),
+			)
 			if err != nil {
 				log.Error("failed to summarize rate agreement lanes", zap.Error(err))
 				return nil, err
 			}
 
-			summary := &rateagreementports.RateAgreementLaneSummary{Groups: groups}
-			for _, group := range groups {
-				summary.Count += group.Lanes
+			summary := &rateagreementports.RateAgreementLaneSummary{
+				Groups: make([]*rateagreementports.LanePricingGroup, 0, len(groups)),
+			}
+			for i := range groups {
+				summary.Groups = append(summary.Groups, &groups[i])
+				summary.Count += groups[i].Lanes
 			}
 
 			return summary, nil
@@ -149,79 +179,15 @@ func (r *repository) requireAgreement(
 	ctx context.Context,
 	req *rateagreementports.ListRateAgreementLanesRequest,
 ) error {
-	cols := rateagreementcol.RateAgreementColumns
-
-	exists, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*rateagreement.RateAgreement)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return rateagreementcol.RateAgreementScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.RateAgreementID)
-		}).
-		Exists(ctx)
+	ra := rateagreementdb.RateAgreements
+	exists, err := ra.Where(ra.ID.Eq(req.RateAgreementID)).Exists(ctx, r.db.Keel(ctx))
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		return dberror.HandleNotFoundError(sql.ErrNoRows, "RateAgreement")
+		return agreementErrors.Map(keel.ErrNotFound, req.RateAgreementID.String())
 	}
 
 	return nil
-}
-
-func (r *repository) countLanes(
-	ctx context.Context,
-	req *rateagreementports.ListRateAgreementLanesRequest,
-	now int64,
-) (total, live int, err error) {
-	cols := rateagreementcol.RateAgreementRuleColumns
-
-	err = r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*rateagreement.RateAgreementRule)(nil)).
-		ColumnExpr(buncolgen.Count("total")).
-		ColumnExpr(
-			buncolgen.CountFilter("live", cols.Status.Eq(), openRuleWindowCondition()),
-			rateagreement.RuleStatusActive,
-			now,
-		).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return scopeAgreementRules(sq, req)
-		}).
-		Scan(ctx, &total, &live)
-
-	return total, live, err
-}
-
-func scopeAgreementRules(
-	q *bun.SelectQuery,
-	req *rateagreementports.ListRateAgreementLanesRequest,
-) *bun.SelectQuery {
-	cols := rateagreementcol.RateAgreementRuleColumns
-
-	return rateagreementcol.RateAgreementRuleScopeTenant(q, req.TenantInfo).
-		Where(cols.RateAgreementID.Eq(), req.RateAgreementID)
-}
-
-// applyLiveLanes keeps the rules that price today or will: active, and not
-// closed out by an amendment. countLanes states the same predicate as an
-// aggregate filter, so the page and its count can never disagree.
-func applyLiveLanes(q *bun.SelectQuery, now int64) *bun.SelectQuery {
-	cols := rateagreementcol.RateAgreementRuleColumns
-
-	return applyOpenRuleWindow(q.Where(cols.Status.Eq(), rateagreement.RuleStatusActive), now)
-}
-
-// openRuleWindowCondition is applyOpenRuleWindow as a single predicate, for an
-// aggregate FILTER clause. It binds the moment once.
-func openRuleWindowCondition() string {
-	cols := rateagreementcol.RateAgreementRuleColumns
-
-	return "(" + cols.EffectiveTo.IsNull() + " OR " + cols.EffectiveTo.Gt() + ")"
-}
-
-func rateInputExpr(column string) string {
-	return "CASE WHEN jsonb_typeof(" + column + " -> 'rate') = 'object' THEN (" + column +
-		" -> 'rate' ->> '$q')::numeric END"
 }

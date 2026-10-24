@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,9 +34,8 @@ var (
 
 // How each shipment was priced, what it cost, and what an override gave away
 type RateQuote struct {
-	bun.BaseModel             `bun:"table:rate_quotes,alias:rqt" json:"-"`
-	keel.Table                `                                           keel:"rate_quotes,report=Billing"`
-	pagination.CursorValueSet `bun:",embed"                      json:"-"`
+	bun.BaseModel `bun:"table:rate_quotes,alias:rqt" json:"-"`
+	keel.Table    `                                           keel:"rate_quotes,report=Billing"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:rqt_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

@@ -28,7 +28,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -37,7 +36,7 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	DB                kernelports.DBConnection
+	DB                kernelports.Transactor
 	Repo              shipmentports.CarrierAssignmentRepository
 	AssignmentRepo    shipmentports.AssignmentRepository
 	CarrierRepo       carrierports.CarrierRepository
@@ -61,7 +60,7 @@ type Params struct {
 
 type Service struct {
 	l                 *zap.Logger
-	db                kernelports.DBConnection
+	db                kernelports.Transactor
 	repo              shipmentports.CarrierAssignmentRepository
 	assignmentRepo    shipmentports.AssignmentRepository
 	carrierRepo       carrierports.CarrierRepository
@@ -201,7 +200,7 @@ func (s *Service) AssignToMove(
 
 	intelGate := s.refreshIntel(ctx, req.TenantInfo, req.CarrierID)
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, txErr := s.planAssignToMove(txCtx, req, intelGate)
 		if txErr != nil {
 			return txErr
@@ -374,7 +373,7 @@ func (s *Service) Cancel(
 	var shipmentID pulid.ID
 	var canceled *shipment.CarrierAssignment
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, txErr := s.planCancel(txCtx, req)
 		if txErr != nil {
 			return txErr
