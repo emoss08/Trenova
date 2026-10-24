@@ -9,65 +9,126 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-const slowQueryLogLimit = 1024
+const (
+	slowQueryLogLimit  = 1024
+	slowQueryThreshold = time.Second
+)
 
-type slowQueryHook struct {
+type slowQueryLog struct {
 	threshold time.Duration
 	logger    *observability.ContextLogger
+	pool      *pgxpool.Pool
 }
 
-func newSlowQueryHook(threshold time.Duration, logger *observability.ContextLogger) *slowQueryHook {
-	return &slowQueryHook{
-		threshold: threshold,
+type slowQuery struct {
+	duration  time.Duration
+	operation string
+	table     string
+	query     string
+	err       error
+}
+
+func newSlowQueryLog(logger *observability.ContextLogger) *slowQueryLog {
+	return &slowQueryLog{
+		threshold: slowQueryThreshold,
 		logger:    logger.Named("slow-query"),
 	}
 }
+
+func (l *slowQueryLog) record(ctx context.Context, q slowQuery) {
+	if l == nil || l.logger == nil {
+		return
+	}
+
+	if q.duration < l.threshold && ctx.Err() == nil {
+		return
+	}
+
+	fields := []zap.Field{
+		zap.Duration("duration", q.duration),
+		zap.String("operation", q.operation),
+		zap.String("query_hash", queryHash(q.query)),
+		zap.String("query", cappedQuery(q.query)),
+	}
+	if q.table != "" {
+		fields = append(fields, zap.String("table", q.table))
+	}
+
+	if q.err != nil && !errors.Is(q.err, sql.ErrNoRows) && !errors.Is(q.err, keel.ErrNotFound) {
+		fields = append(fields, zap.Error(q.err))
+	}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		fields = append(fields, zap.String("context_error", ctxErr.Error()))
+	}
+	if l.pool != nil {
+		fields = append(fields, metrics.PoolStatsFields(poolStats(l.pool))...)
+	}
+
+	l.logger.Warn(ctx, "slow database query", fields...)
+}
+
+func poolStats(pool *pgxpool.Pool) metrics.PoolStats {
+	stat := pool.Stat()
+
+	return metrics.PoolStats{
+		Open:         int(stat.TotalConns()),
+		InUse:        int(stat.AcquiredConns()),
+		Idle:         int(stat.IdleConns()),
+		MaxOpen:      int(stat.MaxConns()),
+		WaitCount:    stat.EmptyAcquireCount(),
+		WaitDuration: stat.EmptyAcquireWaitTime(),
+	}
+}
+
+type slowQueryHook struct {
+	log *slowQueryLog
+}
+
+var _ bun.QueryHook = (*slowQueryHook)(nil)
 
 func (h *slowQueryHook) BeforeQuery(ctx context.Context, _ *bun.QueryEvent) context.Context {
 	return ctx
 }
 
 func (h *slowQueryHook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
-	if event == nil || h == nil || h.logger == nil {
+	if event == nil || h == nil {
 		return
 	}
 
-	duration := time.Since(event.StartTime)
-	if duration < h.threshold && ctx.Err() == nil {
-		return
-	}
+	h.log.record(ctx, slowQuery{
+		duration:  time.Since(event.StartTime),
+		operation: event.Operation(),
+		query:     queryText(event),
+		err:       event.Err,
+	})
+}
 
-	fields := []zap.Field{
-		zap.Duration("duration", duration),
-		zap.String("operation", event.Operation()),
-		zap.String("query_hash", queryHash(queryText(event))),
-		zap.String("query", cappedQuery(queryText(event))),
-	}
+type slowQueryObserver struct {
+	log *slowQueryLog
+}
 
-	if event.Err != nil && !errors.Is(event.Err, sql.ErrNoRows) {
-		fields = append(fields, zap.Error(event.Err))
-	}
-	if ctxErr := ctx.Err(); ctxErr != nil {
-		fields = append(fields, zap.String("context_error", ctxErr.Error()))
-	}
-	if event.DB != nil {
-		stats := event.DB.Stats()
-		fields = append(fields,
-			zap.Int("db_pool_open", stats.OpenConnections),
-			zap.Int("db_pool_in_use", stats.InUse),
-			zap.Int("db_pool_idle", stats.Idle),
-			zap.Int64("db_pool_wait_count", stats.WaitCount),
-			zap.Duration("db_pool_wait_duration", stats.WaitDuration),
-			zap.Int("db_pool_max_open", stats.MaxOpenConnections),
-		)
-	}
+var _ keel.Observer = (*slowQueryObserver)(nil)
 
-	h.logger.Warn(ctx, "slow database query", fields...)
+func (o *slowQueryObserver) BeforeQuery(ctx context.Context, _ *keel.QueryEvent) context.Context {
+	return ctx
+}
+
+func (o *slowQueryObserver) AfterQuery(ctx context.Context, event *keel.QueryEvent) {
+	o.log.record(ctx, slowQuery{
+		duration:  event.Duration,
+		operation: event.Op,
+		table:     event.Table,
+		query:     event.SQL,
+		err:       event.Err,
+	})
 }
 
 func queryText(event *bun.QueryEvent) string {
@@ -89,5 +150,3 @@ func cappedQuery(query string) string {
 	}
 	return query[:slowQueryLogLimit]
 }
-
-var _ bun.QueryHook = (*slowQueryHook)(nil)

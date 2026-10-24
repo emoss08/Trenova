@@ -2,19 +2,18 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/uptrace/bun/extra/bunotel"
 	"go.opentelemetry.io/otel"
@@ -34,22 +33,23 @@ type ConnectionParams struct {
 }
 
 type Connection struct {
-	db       *bun.DB
-	system   *bun.DB
-	cfg      *config.Config
-	logger   *observability.ContextLogger
-	metrics  *metrics.Registry
-	settings connectionSettings
-	rls      *rlsRuntime
+	db         *bun.DB
+	system     *bun.DB
+	tenantKeel *keel.DB
+	systemKeel *keel.DB
+	cfg        *config.Config
+	logger     *observability.ContextLogger
+	metrics    *metrics.Registry
+	settings   connectionSettings
+	rls        *rlsRuntime
 }
 
 type connectionSettings struct {
 	component       string
 	maxOpenConns    int
-	maxIdleConns    int
 	connMaxLifetime time.Duration
 	connMaxIdleTime time.Duration
-	connParams      map[string]any
+	connParams      map[string]string
 	registerStats   bool
 }
 
@@ -58,7 +58,6 @@ type txContextKey struct{}
 type txBinding struct {
 	tx    bun.Tx
 	scope dbscope.Scope
-	ready bool
 }
 
 type detachedFromTx struct{}
@@ -118,23 +117,13 @@ func oltpSettings(cfg *config.Config) connectionSettings {
 	return connectionSettings{
 		component:       "postgres",
 		maxOpenConns:    cfg.Database.MaxOpenConns,
-		maxIdleConns:    cfg.Database.MaxIdleConns,
 		connMaxLifetime: cfg.Database.ConnMaxLifetime,
 		connMaxIdleTime: cfg.Database.ConnMaxIdleTime,
-		connParams: map[string]any{
-			"statement_timeout": fmt.Sprintf(
-				"%dms",
-				max(cfg.Database.GetStatementTimeout().Milliseconds(), 1),
-			),
-			"lock_timeout": fmt.Sprintf(
-				"%dms",
-				max(cfg.Database.GetLockTimeout().Milliseconds(), 1),
-			),
-			"idle_in_transaction_session_timeout": fmt.Sprintf(
-				"%dms",
-				max(cfg.Database.GetIdleTxTimeout().Milliseconds(), 1),
-			),
-		},
+		connParams: sessionParams(
+			cfg.Database.GetStatementTimeout(),
+			cfg.Database.GetLockTimeout(),
+			cfg.Database.GetIdleTxTimeout(),
+		),
 		registerStats: true,
 	}
 }
@@ -145,61 +134,71 @@ func reportingSettings(cfg *config.Config) connectionSettings {
 	return connectionSettings{
 		component:       "postgres-reporting",
 		maxOpenConns:    reporting.GetPoolMaxOpenConns(),
-		maxIdleConns:    reporting.GetPoolMaxIdleConns(),
 		connMaxLifetime: cfg.Database.ConnMaxLifetime,
 		connMaxIdleTime: cfg.Database.ConnMaxIdleTime,
-		connParams: map[string]any{
-			"statement_timeout": fmt.Sprintf(
-				"%dms",
-				max(reporting.GetStatementTimeout().Milliseconds(), 1),
-			),
-			"lock_timeout": fmt.Sprintf(
-				"%dms",
-				max(cfg.Database.GetLockTimeout().Milliseconds(), 1),
-			),
-			"idle_in_transaction_session_timeout": fmt.Sprintf(
-				"%dms",
-				max(cfg.Database.GetIdleTxTimeout().Milliseconds(), 1),
-			),
-		},
+		connParams: sessionParams(
+			reporting.GetStatementTimeout(),
+			cfg.Database.GetLockTimeout(),
+			cfg.Database.GetIdleTxTimeout(),
+		),
 		registerStats: false,
 	}
 }
 
+func sessionParams(statement, lock, idleInTx time.Duration) map[string]string {
+	return map[string]string{
+		"statement_timeout":                   milliseconds(statement),
+		"lock_timeout":                        milliseconds(lock),
+		"idle_in_transaction_session_timeout": milliseconds(idleInTx),
+	}
+}
+
+func milliseconds(d time.Duration) string {
+	return fmt.Sprintf("%dms", max(d.Milliseconds(), 1))
+}
+
 func (c *Connection) connect(ctx context.Context) error {
-	dsn := c.cfg.GetDSN(c.cfg.Database.Password)
-	maskedDSN := c.cfg.GetDSNMasked()
+	c.logger.Debug(ctx, "Connecting to database", zap.String("dsn", c.cfg.GetDSNMasked()))
 
-	c.logger.Debug(ctx, "Connecting to database", zap.String("dsn", maskedDSN))
-
-	sqldb := c.openDB(dsn)
-	c.applyPoolSettings(sqldb)
-
-	c.db = bun.NewDB(sqldb, pgdialect.New())
-	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
-		c.metrics.Database.RegisterSQLStats(c.db.Stats)
+	var guard dbpool.Guard
+	if c.rls != nil {
+		guard = c.rls.guard(scopePoolTenant, !c.cfg.Database.System.Configured())
 	}
 
-	c.db = c.withHooks(c.db)
-	registerModels(c.db)
+	tenant, err := c.openPool(ctx, &dbpool.Options{
+		DSN:             c.cfg.GetDSN(c.cfg.Database.Password),
+		MaxConns:        c.settings.maxOpenConns,
+		MaxConnLifetime: c.settings.connMaxLifetime,
+		MaxConnIdleTime: c.settings.connMaxIdleTime,
+		RuntimeParams:   c.settings.connParams,
+		Guard:           guard,
+	})
+	if err != nil {
+		return err
+	}
+	c.db, c.tenantKeel = tenant.Bun, tenant.Keel
 
-	if err := c.HealthCheck(ctx); err != nil {
+	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
+		pool := tenant.Keel.Pool()
+		c.metrics.Database.RegisterPoolStats(func() metrics.PoolStats { return poolStats(pool) })
+	}
+
+	if err = c.HealthCheck(ctx); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	if err := c.connectSystem(ctx); err != nil {
+	if err = c.connectSystem(ctx); err != nil {
 		return err
 	}
 
-	if err := c.verifyRLS(ctx); err != nil {
+	if err = c.verifyRLS(ctx); err != nil {
 		return err
 	}
 
 	c.logger.Info(
 		ctx, "Database connection established",
 		zap.String("database", c.cfg.Database.Name),
-		zap.Int("max_open_conns", c.settings.maxOpenConns),
-		zap.Int("max_idle_conns", c.settings.maxIdleConns),
+		zap.Int32("max_conns", tenant.Keel.Pool().Config().MaxConns),
 		zap.String("row_level_security", c.rlsMode()),
 	)
 
@@ -212,6 +211,37 @@ func (c *Connection) connect(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (dbpool.Pool, error) {
+	slow := newSlowQueryLog(c.logger)
+	opts.Observers = c.observers(slow)
+
+	pool, err := dbpool.Open(ctx, opts)
+	if err != nil {
+		return dbpool.Pool{}, err
+	}
+
+	slow.pool = pool.Keel.Pool()
+	pool.Bun = c.withHooks(pool.Bun, slow)
+	registerModels(pool.Bun)
+
+	return pool, nil
+}
+
+func (c *Connection) observers(slow *slowQueryLog) []keel.Observer {
+	observers := make([]keel.Observer, 0, 3)
+	if c.cfg.App.IsDevelopment() && c.cfg.App.Debug {
+		observers = append(observers, &debugObserver{
+			logger:  c.logger.Named("keel"),
+			verbose: c.cfg.Database.Verbose,
+		})
+	}
+
+	return append(observers,
+		&slowQueryObserver{log: slow},
+		newTracingObserver(c.cfg.Database.Name),
+	)
 }
 
 func (c *Connection) ScopedTransactions() bool {
@@ -257,38 +287,7 @@ func registerModels(db *bun.DB) {
 	db.RegisterModel(domainregistry.RegisterEntities()...)
 }
 
-func (c *Connection) openDB(dsn string) *sql.DB {
-	if c.rls != nil {
-		return sql.OpenDB(c.rls.connector(
-			dsn,
-			c.settings.connParams,
-			scopePoolTenant,
-			!c.cfg.Database.System.Configured(),
-		))
-	}
-
-	return sql.OpenDB(pgdriver.NewConnector(
-		pgdriver.WithDSN(dsn),
-		pgdriver.WithConnParams(c.settings.connParams),
-	))
-}
-
-func (c *Connection) applyPoolSettings(sqldb *sql.DB) {
-	if c.settings.maxOpenConns > 0 {
-		sqldb.SetMaxOpenConns(c.settings.maxOpenConns)
-	}
-	if c.settings.maxIdleConns > 0 {
-		sqldb.SetMaxIdleConns(c.settings.maxIdleConns)
-	}
-	if c.settings.connMaxLifetime > 0 {
-		sqldb.SetConnMaxLifetime(c.settings.connMaxLifetime)
-	}
-	if c.settings.connMaxIdleTime > 0 {
-		sqldb.SetConnMaxIdleTime(c.settings.connMaxIdleTime)
-	}
-}
-
-func (c *Connection) withHooks(db *bun.DB) *bun.DB {
+func (c *Connection) withHooks(db *bun.DB, slow *slowQueryLog) *bun.DB {
 	if c.cfg.App.IsDevelopment() && c.cfg.App.Debug {
 		db = db.WithQueryHook(bundebug.NewQueryHook(
 			bundebug.WithVerbose(c.cfg.Database.Verbose),
@@ -296,7 +295,7 @@ func (c *Connection) withHooks(db *bun.DB) *bun.DB {
 		))
 	}
 
-	db = db.WithQueryHook(newSlowQueryHook(time.Second, c.logger))
+	db = db.WithQueryHook(&slowQueryHook{log: slow})
 
 	return db.WithQueryHook(
 		bunotel.NewQueryHook(
@@ -310,17 +309,19 @@ func (c *Connection) withHooks(db *bun.DB) *bun.DB {
 func (c *Connection) shutdown(ctx context.Context) error {
 	c.logger.Info(ctx, "Closing PostgreSQL connection")
 
-	if c.system != nil {
-		if err := c.system.Close(); err != nil {
-			c.logger.Error(ctx, "Failed to close system database connection", zap.Error(err))
+	for _, db := range []*bun.DB{c.system, c.db} {
+		if db == nil {
+			continue
+		}
+		if err := db.Close(); err != nil {
+			c.logger.Error(ctx, "Failed to close database connection", zap.Error(err))
 			return err
 		}
 	}
 
-	if c.db != nil {
-		if err := c.db.Close(); err != nil {
-			c.logger.Error(ctx, "Failed to close database connection", zap.Error(err))
-			return err
+	for _, db := range []*keel.DB{c.systemKeel, c.tenantKeel} {
+		if db != nil {
+			db.Close()
 		}
 	}
 
@@ -330,7 +331,7 @@ func (c *Connection) shutdown(ctx context.Context) error {
 
 func WrapDB(db *bun.DB) *Connection {
 	registerModels(db)
-	return &Connection{db: db}
+	return &Connection{db: db, tenantKeel: dbpool.KeelOf(db.DB)}
 }
 
 func NewTestConnection(db *bun.DB) *Connection {
@@ -339,6 +340,14 @@ func NewTestConnection(db *bun.DB) *Connection {
 
 func (c *Connection) DB() *bun.DB {
 	return c.db
+}
+
+func (c *Connection) Keel(ctx context.Context) *keel.DB {
+	if c.systemKeel != nil && dbscope.IsSystem(ctx) {
+		return c.systemKeel
+	}
+
+	return c.tenantKeel
 }
 
 func (c *Connection) DBForContext(ctx context.Context) bun.IDB {
@@ -351,7 +360,7 @@ func (c *Connection) DBForContext(ctx context.Context) bun.IDB {
 
 func (c *Connection) txForContext(ctx context.Context) (bun.Tx, bool) {
 	binding, ok := ctx.Value(txContextKey{}).(*txBinding)
-	if !ok || !binding.ready {
+	if !ok {
 		return bun.Tx{}, false
 	}
 
@@ -370,12 +379,11 @@ func (c *Connection) poolForContext(ctx context.Context) *bun.DB {
 	return c.db
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (c *Connection) WithTx(
 	ctx context.Context,
 	opts kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
-) (err error) {
+) error {
 	if c.db == nil {
 		return ErrDatabaseConnectionNotInitialized
 	}
@@ -394,45 +402,36 @@ func (c *Connection) WithTx(
 		return fn(ctx, existingTx)
 	}
 
-	binding := &txBinding{scope: dbscope.From(ctx)}
-	baseCtx := context.WithValue(ctx, txContextKey{}, binding)
+	baseCtx := ctx
 	if opts.ReadOnly {
 		baseCtx = kernelports.WithReadOnly(baseCtx)
 	}
 	txCtx, hooks := kernelports.WithAfterCommitHooks(baseCtx)
 
-	tx, err := c.poolForContext(ctx).BeginTx(txCtx, &sql.TxOptions{
-		Isolation: opts.Isolation,
-		ReadOnly:  opts.ReadOnly,
-	})
+	tx, err := c.begin(txCtx, opts)
 	if err != nil {
 		return err
 	}
-	binding.tx = tx
-	binding.ready = true
-
-	committed := false
-	defer func() {
-		if !committed {
-			_ = tx.Rollback()
-		}
-	}()
+	defer tx.end(false)
 
 	if opts.LockTimeout > 0 {
-		if err = applyLockTimeout(ctx, tx, opts.LockTimeout); err != nil {
+		if err = applyLockTimeout(txCtx, tx.bun, opts.LockTimeout); err != nil {
 			return err
 		}
 	}
 
-	if err = fn(txCtx, tx); err != nil {
+	if err = fn(tx.ctx, tx.bun); err != nil {
 		return err
 	}
 
-	if err = tx.Commit(); err != nil {
+	if err = txCtx.Err(); err != nil {
 		return err
 	}
 
-	committed = true
+	if err = tx.commit(); err != nil {
+		return err
+	}
+
 	hooks.Run(ctx)
 	return nil
 }
@@ -456,6 +455,10 @@ func (c *Connection) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	if c.tenantKeel != nil {
+		return c.tenantKeel.Ping(ctx)
+	}
+
 	return c.db.PingContext(ctx)
 }
 
@@ -464,8 +467,14 @@ func (c *Connection) IsHealthy(ctx context.Context) bool {
 }
 
 func (c *Connection) Close() error {
-	if c.db != nil {
-		return c.db.Close()
+	for _, db := range []*bun.DB{c.system, c.db} {
+		if db == nil {
+			continue
+		}
+		if err := db.Close(); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }

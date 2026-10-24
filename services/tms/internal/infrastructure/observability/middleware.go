@@ -176,17 +176,10 @@ func (m *Middleware) dbPoolFields() []zap.Field {
 		return nil
 	}
 
-	stats, ok := m.metrics.Database.SQLStats()
+	stats, ok := m.metrics.Database.PoolStats()
 	if !ok {
 		return nil
 	}
 
-	return []zap.Field{
-		zap.Int("db_pool_open", stats.OpenConnections),
-		zap.Int("db_pool_in_use", stats.InUse),
-		zap.Int("db_pool_idle", stats.Idle),
-		zap.Int64("db_pool_wait_count", stats.WaitCount),
-		zap.Duration("db_pool_wait_duration", stats.WaitDuration),
-		zap.Int("db_pool_max_open", stats.MaxOpenConnections),
-	}
+	return metrics.PoolStatsFields(stats)
 }
