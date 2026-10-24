@@ -186,21 +186,8 @@ type InstanceBootstrap struct {
 	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
 }
 
-func (r *InstanceBootstrap) BeforeUpdate(_ context.Context) error {
-	return nil
-	now := timeutils.NowUnix()
-	if r.CompletedAt == 0 {
-		r.CompletedAt = now
-	}
-
-	return nil
-}
 
 func (r *InstanceBootstrap) BeforeCreate(_ context.Context) error {
-	now := timeutils.NowUnix()
-	if r.CompletedAt == 0 {
-		r.CompletedAt = now
-	}
 	if r.CompletedAt == 0 {
 		r.CompletedAt = timeutils.NowUnix()
 	}

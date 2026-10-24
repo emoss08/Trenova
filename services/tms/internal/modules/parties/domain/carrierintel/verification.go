@@ -53,9 +53,6 @@ type CarrierEquipmentVerification struct {
 func (v *CarrierEquipmentVerification) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
 	if v.VerifiedAt == 0 {
-		v.VerifiedAt = now
-	}
-	if v.VerifiedAt == 0 {
 		v.VerifiedAt = v.CreatedAt
 	}
 

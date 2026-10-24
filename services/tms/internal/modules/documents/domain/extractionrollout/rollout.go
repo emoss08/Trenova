@@ -170,15 +170,6 @@ func (r *ExtractionRollout) GetBusinessUnitID() pulid.ID { return r.BusinessUnit
 
 func (r *ExtractionRollout) BeforeCreate(_ context.Context) error {
 	if r.Percent == 0 {
-		r.Percent = 5
-	}
-	if r.MaxAccuracyDropPoints == 0 {
-		r.MaxAccuracyDropPoints = 5
-	}
-	if r.MaxRejectionIncreasePoints == 0 {
-		r.MaxRejectionIncreasePoints = 10
-	}
-	if r.Percent == 0 {
 		r.Percent = DefaultPercent
 	}
 	if r.MaxAccuracyDropPoints == 0 {

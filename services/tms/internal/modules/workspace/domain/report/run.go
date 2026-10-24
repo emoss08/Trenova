@@ -63,9 +63,6 @@ type ReportRun struct {
 
 func (rr *ReportRun) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
-	if rr.QueuedAt == 0 {
-		rr.QueuedAt = now
-	}
 	if rr.Trigger == "" {
 		rr.Trigger = RunTriggerManual
 	}

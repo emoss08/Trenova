@@ -100,9 +100,6 @@ func (c *EDIConnection) BeforeCreate(ctx context.Context) error {
 	if err := c.BeforeSave(ctx); err != nil {
 		return err
 	}
-	if c.RequestedAt == 0 {
-		c.RequestedAt = now
-	}
 	if c.Status == "" {
 		c.Status = ConnectionStatusPendingAcceptance
 	}

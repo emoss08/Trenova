@@ -97,9 +97,6 @@ func (fp *FuelIndexPrice) BeforeCreate(ctx context.Context) error {
 	if fp.Currency == "" {
 		fp.Currency = "USD"
 	}
-	if fp.FetchedAt.IsZero() {
-		fp.FetchedAt = timeutils.Now()
-	}
 	now := time.Now().UTC()
 	if fp.FetchedAt.IsZero() {
 		fp.FetchedAt = now

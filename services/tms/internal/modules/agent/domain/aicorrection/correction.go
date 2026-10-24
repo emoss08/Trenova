@@ -234,9 +234,6 @@ func (c *Correction) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 func (c *Correction) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
 	if c.CapturedAt == 0 {
-		c.CapturedAt = now
-	}
-	if c.CapturedAt == 0 {
 		c.CapturedAt = timeutils.NowUnix()
 	}
 

@@ -99,12 +99,6 @@ func (s *ShadowSettings) GetBusinessUnitID() pulid.ID { return s.BusinessUnitID 
 
 func (s *ShadowSettings) BeforeCreate(_ context.Context) error {
 	if s.SamplePercent == 0 {
-		s.SamplePercent = 10
-	}
-	if s.DailyLimit == 0 {
-		s.DailyLimit = 200
-	}
-	if s.SamplePercent == 0 {
 		s.SamplePercent = DefaultSamplePercent
 	}
 	if s.DailyLimit == 0 {

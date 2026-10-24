@@ -90,7 +90,7 @@ func TestApprovalQueue_RefusesCursorsFromAnotherList(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			after, err := pagination.EncodeKeysetCursor(sort, "opaque", 0)
+			after, err := pagination.EncodeKeysetCursor(sort, "opaque")
 			require.NoError(t, err)
 			cursor, err := pagination.NewCursorInfo(2, after)
 			require.NoError(t, err)

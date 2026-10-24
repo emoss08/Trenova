@@ -223,12 +223,6 @@ func (p *Provider) BeforeCreate(_ context.Context) error {
 	if p.EmbeddingInputStyle == "" {
 		p.EmbeddingInputStyle = EmbeddingInputStyleNone
 	}
-	if p.TimeoutSeconds == 0 {
-		p.TimeoutSeconds = 60
-	}
-	if p.MaxConcurrent == 0 {
-		p.MaxConcurrent = 8
-	}
 	if p.OnCap == "" {
 		p.OnCap = CapActionNext
 	}

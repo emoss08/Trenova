@@ -62,9 +62,6 @@ func (e *CarrierIntelEvent) BeforeCreate(_ context.Context) error {
 		e.Status = EventStatusOpen
 	}
 	if e.DetectedAt == 0 {
-		e.DetectedAt = now
-	}
-	if e.DetectedAt == 0 {
 		e.DetectedAt = e.CreatedAt
 	}
 

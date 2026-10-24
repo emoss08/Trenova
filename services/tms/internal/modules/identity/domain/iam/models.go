@@ -217,9 +217,6 @@ func (e *AuthEvent) BeforeCreate(_ context.Context) error {
 	if e.RiskSignals == nil {
 		e.RiskSignals = []string{}
 	}
-	if e.OccurredAt == 0 {
-		e.OccurredAt = e.CreatedAt
-	}
 	if e.AuthenticatorAAL == 0 {
 		e.AuthenticatorAAL = 1
 	}

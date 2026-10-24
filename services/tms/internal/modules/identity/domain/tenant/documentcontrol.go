@@ -165,9 +165,6 @@ func (dc *DocumentControl) BeforeCreate(_ context.Context) error {
 		dc.ShipmentDraftAllowedResources = []string{"shipment"}
 	}
 	if dc.CaptureRetentionDays == 0 {
-		dc.CaptureRetentionDays = DefaultCaptureRetentionDays
-	}
-	if dc.CaptureRetentionDays == 0 {
 		dc.CaptureRetentionDays = 30
 	}
 

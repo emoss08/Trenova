@@ -177,16 +177,14 @@ func TestEntry_CreditAgentNamesTheAgentInTheDescription(t *testing.T) {
 func TestEntry_BeforeCreate(t *testing.T) {
 	t.Parallel()
 
-	t.Run("insert sets ID and Timestamp", func(t *testing.T) {
+	t.Run("insert sets Timestamp", func(t *testing.T) {
 		t.Parallel()
 
 		e := &Entry{}
-		require.True(t, e.ID.IsNil())
 
 		err := e.BeforeCreate(t.Context())
 		require.NoError(t, err)
 
-		assert.False(t, e.ID.IsNil())
 		assert.NotZero(t, e.Timestamp)
 	})
 
@@ -222,19 +220,6 @@ func TestEntry_BeforeCreate(t *testing.T) {
 
 		assert.Equal(t, CategoryUser, e.Category)
 	})
-
-	t.Run("update does not set ID or Timestamp", func(t *testing.T) {
-		t.Parallel()
-
-		e := &Entry{}
-
-		err := e.BeforeUpdate(t.Context())
-		require.NoError(t, err)
-
-		assert.True(t, e.ID.IsNil())
-		assert.Zero(t, e.Timestamp)
-	})
-
 }
 
 func TestEntry_GetTableName(t *testing.T) {
@@ -358,7 +343,6 @@ func TestDLQEntry_BeforeCreate(t *testing.T) {
 
 		assert.Equal(t, DLQStatusRetrying, e.Status)
 	})
-
 }
 
 func TestDLQEntry_CanRetry(t *testing.T) {

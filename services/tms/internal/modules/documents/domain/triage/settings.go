@@ -125,9 +125,6 @@ func (s *Settings) Validate(multiErr *errortypes.MultiError) {
 
 func (s *Settings) BeforeCreate(_ context.Context) error {
 	if s.EndOfDayMinute == 0 {
-		s.EndOfDayMinute = 1020
-	}
-	if s.EndOfDayMinute == 0 {
 		s.EndOfDayMinute = DefaultEndOfDayMinute
 	}
 

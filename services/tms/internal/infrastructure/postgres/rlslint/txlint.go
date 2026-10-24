@@ -130,7 +130,7 @@ func (p *repositoryPackage) callsUnscopedHelper(
 			return true
 		}
 		helper := p.methods[typeName][sel.Sel.Name]
-		if helper == nil || takesTransaction(helper.Type) || len(helper.Recv.List[0].Names) == 0 {
+		if helper == nil || len(helper.Recv.List[0].Names) == 0 {
 			return true
 		}
 		visited[sel.Sel.Name] = true

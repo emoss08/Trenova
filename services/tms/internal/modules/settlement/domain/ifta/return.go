@@ -289,9 +289,6 @@ func (r *Return) BeforeCreate(ctx context.Context) error {
 		r.Status = ReturnStatusDraft
 	}
 	if r.CurrencyCode == "" {
-		r.CurrencyCode = "USD"
-	}
-	if r.CurrencyCode == "" {
 		r.CurrencyCode = money.DefaultCurrencyCode
 	}
 

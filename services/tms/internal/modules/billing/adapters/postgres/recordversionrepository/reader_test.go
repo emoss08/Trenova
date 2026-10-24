@@ -186,7 +186,9 @@ func TestRecordsSharingAResourceAreToldApartByTheirIDs(t *testing.T) {
 func TestVersionLookup_ReadsTheVersionByID(t *testing.T) {
 	t.Parallel()
 
-	sql, args := keeltest.Render(t, lookups[permission.ResourceOrder].read(pulid.ID("ord_1")))
+	query, ok := lookups[permission.ResourceOrder].read(pulid.ID("ord_1")).(keeltest.Renderer)
+	require.True(t, ok)
+	sql, args := keeltest.Render(t, query)
 
 	assert.Contains(t, sql, `."version" FROM "orders"`)
 	assert.Contains(t, sql, `."id" = $`)

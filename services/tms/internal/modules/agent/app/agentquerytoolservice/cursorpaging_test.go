@@ -83,7 +83,7 @@ func assertCursorPaging(t *testing.T, c cursorPagingCase) {
 	result, err := c.call(nil, c.args)
 	require.NoError(t, err)
 	first := readCursorPage(t, result)
-	assert.True(t, c.received().Cursor.ID.IsNil(), "the first page starts from the top")
+	assert.Empty(t, c.received().Cursor.Keyset, "the first page starts from the top")
 	assert.Equal(t, c.limit, first.Count)
 	assert.True(t, first.HasMore)
 	require.NotEmpty(t, first.NextCursor, "a full page names where the next one starts")
@@ -97,7 +97,7 @@ func assertCursorPaging(t *testing.T, c cursorPagingCase) {
 		result, err = c.call(map[string]any{paramAfter: after}, c.args)
 		require.NoError(t, err)
 		page := readCursorPage(t, result)
-		assert.Equal(t, c.ids[seen-1], c.received().Cursor.ID,
+		assert.Equal(t, c.ids[seen-1].String(), c.received().Cursor.Keyset,
 			"after reaches the repository as the last row of the previous page")
 		assert.Equal(t, page.HasMore, page.NextCursor != "")
 		seen += page.Count

@@ -268,9 +268,6 @@ func (p *FuelPurchase) BeforeCreate(ctx context.Context) error {
 	if p.QuantityUnit == "" {
 		p.QuantityUnit = QuantityUnitGallon
 	}
-	if p.CurrencyCode == "" {
-		p.CurrencyCode = "USD"
-	}
 	if p.Source == "" {
 		p.Source = PurchaseSourceManual
 	}

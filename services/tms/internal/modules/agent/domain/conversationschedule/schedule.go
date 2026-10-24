@@ -82,9 +82,6 @@ type Schedule struct {
 
 func (s *Schedule) BeforeCreate(_ context.Context) error {
 	if s.Timezone == "" {
-		s.Timezone = DefaultTimezone
-	}
-	if s.Timezone == "" {
 		s.Timezone = "UTC"
 	}
 

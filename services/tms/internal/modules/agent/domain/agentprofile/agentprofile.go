@@ -233,9 +233,6 @@ func (p *Profile) BeforeCreate(_ context.Context) error {
 		p.GuidanceIDs = []pulid.ID{}
 	}
 	if p.CheckedAt == 0 {
-		p.CheckedAt = now
-	}
-	if p.CheckedAt == 0 {
 		p.CheckedAt = timeutils.NowUnix()
 	}
 

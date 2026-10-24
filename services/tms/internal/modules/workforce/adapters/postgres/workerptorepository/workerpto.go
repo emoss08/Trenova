@@ -427,51 +427,6 @@ type upcomingPTOFilterParsed struct {
 
 func (r *repository) parseUpcomingPTOFilterParams(
 	req *workerports.ListUpcomingPTORequest,
-	log *zap.Logger,
-) (*upcomingPTOFilterParsed, error) {
-	out := &upcomingPTOFilterParsed{}
-	if req.Type != "" {
-		ptoType, err := worker.PTOTypeFromString(req.Type)
-		if err != nil {
-			log.Error(
-				"failed to convert type to PTO type, returning original query",
-				zap.Error(err),
-			)
-			return nil, err
-		}
-		out.Type = ptoType
-		out.HasType = true
-	}
-	if req.Status != "" {
-		ptoStatus, err := worker.PTOStatusFromString(req.Status)
-		if err != nil {
-			log.Error(
-				"failed to convert status to PTO status, returning original query",
-				zap.Error(err),
-			)
-			return nil, err
-		}
-		out.Status = ptoStatus
-		out.HasStatus = true
-	}
-	if req.WorkerID != "" {
-		wrkID, err := pulid.MustParse(req.WorkerID)
-		if err != nil {
-			log.Error(
-				"failed to parse worker ID, returning original query",
-				zap.Error(err),
-				zap.String("workerId", req.WorkerID),
-			)
-			return nil, err
-		}
-		out.WorkerID = wrkID
-		out.HasWorkerID = true
-	}
-	return out, nil
-}
-
-func (r *repository) parseUpcomingPTOFilterParams(
-	req *workerports.ListUpcomingPTORequest,
 ) (*upcomingPTOFilterParsed, error) {
 	out := &upcomingPTOFilterParsed{}
 	if req.Type != "" {

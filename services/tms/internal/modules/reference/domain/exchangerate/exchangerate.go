@@ -144,28 +144,6 @@ type SettlementQuote struct {
 	Organization *tenant.Organization `json:"organization,omitempty"`
 }
 
-func (q *SettlementQuote) BeforeUpdate(_ context.Context) error {
-	now := time.Now().UTC()
-
-	return nil
-	if q.Provider == "" {
-		q.Provider = ProviderOANDA
-	}
-	if q.RateType == "" {
-		q.RateType = RateTypeMid
-	}
-	if q.SourceTimestamp.IsZero() {
-		q.SourceTimestamp = now
-	}
-	if q.FetchedAt.IsZero() {
-		q.FetchedAt = now
-	}
-	if q.ExpiresAt.IsZero() {
-		q.ExpiresAt = q.FetchedAt.Add(15 * time.Minute)
-	}
-
-	return nil
-}
 
 func (q *SettlementQuote) BeforeCreate(_ context.Context) error {
 	now := time.Now().UTC()
@@ -177,9 +155,6 @@ func (q *SettlementQuote) BeforeCreate(_ context.Context) error {
 	}
 	if q.SourceTimestamp.IsZero() {
 		q.SourceTimestamp = now
-	}
-	if q.FetchedAt.IsZero() {
-		q.FetchedAt = now
 	}
 	if q.ExpiresAt.IsZero() {
 		q.ExpiresAt = q.FetchedAt.Add(15 * time.Minute)

@@ -284,9 +284,6 @@ func (d *Document) BeforeCreate(ctx context.Context) error {
 	if d.ProcessingProfile == "" {
 		d.ProcessingProfile = ProcessingProfileNone
 	}
-	if d.PreviewStatus == "" {
-		d.PreviewStatus = PreviewStatusUnsupported
-	}
 	if d.ContentStatus == "" {
 		d.ContentStatus = ContentStatusPending
 	}

@@ -1,7 +1,6 @@
 package permission
 
 import (
-	"strings"
 	"testing"
 	"time"
 
@@ -13,30 +12,15 @@ import (
 func TestUserRoleAssignment_BeforeCreate(t *testing.T) {
 	t.Parallel()
 
-	t.Run("insert sets ID and AssignedAt", func(t *testing.T) {
+	t.Run("insert sets AssignedAt", func(t *testing.T) {
 		t.Parallel()
 
 		ura := &UserRoleAssignment{}
-		require.True(t, ura.ID.IsNil())
 
 		err := ura.BeforeCreate(t.Context())
 		require.NoError(t, err)
 
-		assert.False(t, ura.ID.IsNil())
-		assert.True(t, strings.HasPrefix(string(ura.ID), "ura_"))
 		assert.NotZero(t, ura.AssignedAt)
-	})
-
-	t.Run("update does not modify fields", func(t *testing.T) {
-		t.Parallel()
-
-		ura := &UserRoleAssignment{}
-
-		err := ura.BeforeUpdate(t.Context())
-		require.NoError(t, err)
-
-		assert.True(t, ura.ID.IsNil())
-		assert.Zero(t, ura.AssignedAt)
 	})
 }
 

@@ -386,7 +386,7 @@ func (r *repository) UpsertVehicleInspections(
 
 		vi := telematicsdb.VehicleInspections
 		_, err := vi.Upsert(ctx, r.db.Keel(ctx), inspections,
-			keel.OnConflict(vi.OrganizationID, vi.BusinessUnitID, vi.Provider, vi.ProviderDVIRID).
+			keel.OnConflict(vi.OrganizationID, vi.BusinessUnitID, vi.Provider, vi.ProviderDvirID).
 				Update(
 					vi.TractorID,
 					vi.WorkerID,

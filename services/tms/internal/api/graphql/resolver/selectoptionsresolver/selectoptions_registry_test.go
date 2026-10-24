@@ -36,9 +36,9 @@ func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {
 					ID:    id.String(),
 					Label: "John Smith",
 				},
-				cursor: pagination.Cursor{
-					CreatedAt: createdAt,
-					ID:        id,
+				cursor: pagination.PositionCursor{
+					At: createdAt,
+					ID: id,
 				},
 			},
 		},
@@ -52,9 +52,9 @@ func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {
 	require.NotNil(t, result.PageInfo.EndCursor)
 	assert.Equal(t, result.Edges[0].Cursor, *result.PageInfo.EndCursor)
 
-	decoded, err := pagination.DecodeCursor(result.Edges[0].Cursor)
+	decoded, err := pagination.DecodePositionCursor(result.Edges[0].Cursor)
 	require.NoError(t, err)
-	assert.Equal(t, createdAt, decoded.CreatedAt)
+	assert.Equal(t, createdAt, decoded.At)
 	assert.Equal(t, id, decoded.ID)
 }
 

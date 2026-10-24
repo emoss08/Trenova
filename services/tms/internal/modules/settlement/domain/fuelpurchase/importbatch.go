@@ -239,9 +239,6 @@ func (b *ImportBatch) BeforeCreate(ctx context.Context) error {
 		b.Status = ImportStatusPending
 	}
 	if b.DefaultCurrency == "" {
-		b.DefaultCurrency = "USD"
-	}
-	if b.DefaultCurrency == "" {
 		b.DefaultCurrency = money.DefaultCurrencyCode
 	}
 

@@ -604,7 +604,7 @@ func (r *repository) UpdateProfileQualification(
 		wp := workerdb.WorkerProfiles
 		_, err := wp.Where(
 			wp.WorkerID.Eq(req.WorkerID),
-			wp.IsQualified.Ne(req.Qualified),
+			wp.IsQualified.Eq(!req.Qualified),
 		).Update(ctx, r.db.Keel(ctx), wp.IsQualified.To(req.Qualified), wp.Version.Add(0))
 		if err != nil {
 			r.l.Error("failed to update worker qualification",
