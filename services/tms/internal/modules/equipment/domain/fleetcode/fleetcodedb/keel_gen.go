@@ -26,25 +26,27 @@ var fleetCodesTable = schema.Table{
 	Doc:    `Fleet groupings`,
 	Report: &schema.TableReport{Category: `Equipment`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
-		{Name: "manager_id", Quoted: `"manager_id"`, Field: "ManagerID", Kind: schema.KindString, Flags: 0, Label: `Manager ID`, Report: &reportDimString},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
-		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`, Report: &reportDimString},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, Report: &reportDimString},
-		{Name: "revenue_goal", Quoted: `"revenue_goal"`, Field: "RevenueGoal", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Revenue Goal`, Report: &reportMeasureFloatMoney},
-		{Name: "deadhead_goal", Quoted: `"deadhead_goal"`, Field: "DeadheadGoal", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Deadhead Goal`, Report: &reportMeasureFloatPercent},
-		{Name: "mileage_goal", Quoted: `"mileage_goal"`, Field: "MileageGoal", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Mileage Goal`, Report: &reportMeasureFloatDistance},
-		{Name: "color", Quoted: `"color"`, Field: "Color", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Color`, Report: &reportDimString},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
+		{Name: "manager_id", Quoted: `"manager_id"`, Field: "ManagerID", Kind: schema.KindString, Flags: 0, Label: `Manager ID`, JSON: `managerId`, Report: &reportDimString},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`, JSON: `code`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`, Report: &reportDimString},
+		{Name: "revenue_goal", Quoted: `"revenue_goal"`, Field: "RevenueGoal", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Revenue Goal`, JSON: `revenueGoal`, Report: &reportMeasureFloatMoney},
+		{Name: "deadhead_goal", Quoted: `"deadhead_goal"`, Field: "DeadheadGoal", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Deadhead Goal`, JSON: `deadheadGoal`, Report: &reportMeasureFloatPercent},
+		{Name: "mileage_goal", Quoted: `"mileage_goal"`, Field: "MileageGoal", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Mileage Goal`, JSON: `mileageGoal`, Report: &reportMeasureFloatDistance},
+		{Name: "color", Quoted: `"color"`, Field: "Color", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Color`, JSON: `color`, Report: &reportDimString},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
-		{Name: "Manager", Alias: "m", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Manager`, NoReport: true},
+		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`, JSON: `businessUnit`, NoReport: true},
+		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`, JSON: `organization`, NoReport: true},
+		{Name: "Manager", Alias: "m", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Manager`, JSON: `manager`, NoReport: true},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -140,9 +142,19 @@ func (t *FleetCodesTable) As(alias string) *FleetCodesTable {
 	return keel.Alias(t.Ref, alias, BuildFleetCodes)
 }
 
+// BusinessUnit is the belongs relation.
+func (t *FleetCodesTable) BusinessUnit() *tenantdb.BusinessUnitsTable {
+	return keel.Path(t.Ref, 0, tenantdb.BuildBusinessUnits)
+}
+
+// Organization is the belongs relation.
+func (t *FleetCodesTable) Organization() *tenantdb.OrganizationsTable {
+	return keel.Path(t.Ref, 1, tenantdb.BuildOrganizations)
+}
+
 // Manager is the belongs relation.
 func (t *FleetCodesTable) Manager() *tenantdb.UsersTable {
-	return keel.Path(t.Ref, 0, tenantdb.BuildUsers)
+	return keel.Path(t.Ref, 2, tenantdb.BuildUsers)
 }
 
 // Get returns the fleet_codes row with the given key, or keel.ErrNotFound.
@@ -253,12 +265,18 @@ func attachFleetCode(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	r := (*fleetcode.FleetCode)(p)
 	switch rel {
 	case 0:
+		r.BusinessUnit = (*tenant.BusinessUnit)(child)
+	case 1:
+		r.Organization = (*tenant.Organization)(child)
+	case 2:
 		r.Manager = (*tenant.User)(child)
 	}
 }
 
 func init() {
-	fleetCodesTable.Relations[0].Target = tenantdb.UsersSchema()
+	fleetCodesTable.Relations[0].Target = tenantdb.BusinessUnitsSchema()
+	fleetCodesTable.Relations[1].Target = tenantdb.OrganizationsSchema()
+	fleetCodesTable.Relations[2].Target = tenantdb.UsersSchema()
 }
 
 var enumDomaintypesStatus = [...]schema.EnumValue{
