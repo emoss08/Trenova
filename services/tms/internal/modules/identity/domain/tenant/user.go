@@ -23,7 +23,7 @@ type OrganizationMembership struct {
 	keel.Table `keel:"user_organization_memberships"`
 
 	ID             pulid.ID `json:"id" keel:"id,pk,autoid:uom_"`
-	IsDefault      bool     `json:"isDefault" keel:"is_default,nullzero"`
+	IsDefault      bool     `json:"isDefault" keel:"is_default"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
 	UserID         pulid.ID `json:"userId" keel:"user_id"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`

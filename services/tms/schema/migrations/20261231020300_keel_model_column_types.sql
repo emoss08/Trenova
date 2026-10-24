@@ -33,3 +33,8 @@ UPDATE "telematics_form_mappings" SET "version" = 0 WHERE "version" IS NULL;
 ALTER TABLE "telematics_form_mappings"
     ALTER COLUMN "version" SET DEFAULT 0,
     ALTER COLUMN "version" SET NOT NULL;
+
+UPDATE "user_organization_memberships" SET "is_default" = false WHERE "is_default" IS NULL;
+
+ALTER TABLE "user_organization_memberships"
+    ALTER COLUMN "is_default" SET NOT NULL;

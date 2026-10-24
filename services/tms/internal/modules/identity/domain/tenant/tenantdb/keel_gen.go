@@ -2863,7 +2863,7 @@ var organizationMembershipsTable = schema.Table{
 	Plural: `Organization Memberships`,
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "is_default", Quoted: `"is_default"`, Field: "IsDefault", Kind: schema.KindBool, Flags: schema.FlagNullZero, Label: `Is Default`, JSON: `isDefault`},
+		{Name: "is_default", Quoted: `"is_default"`, Field: "IsDefault", Kind: schema.KindBool, Flags: 0, Label: `Is Default`, JSON: `isDefault`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: 0, Label: `User ID`, JSON: `userId`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -3008,9 +3008,6 @@ func valueOrganizationMembership(p unsafe.Pointer, c int32) any {
 	case 0:
 		return string(r.ID)
 	case 1:
-		if !r.IsDefault {
-			return nil
-		}
 		return r.IsDefault
 	case 2:
 		return string(r.BusinessUnitID)
