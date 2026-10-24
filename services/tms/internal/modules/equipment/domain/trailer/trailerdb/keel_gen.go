@@ -31,46 +31,48 @@ var trailersTable = schema.Table{
 	Model:  "trailer.Trailer",
 	Label:  `Trailer`,
 	Plural: `Trailers`,
+	Doc:    `Trailers and towed equipment`,
+	Report: &schema.TableReport{Category: `Equipment`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "equipment_type_id", Quoted: `"equipment_type_id"`, Field: "EquipmentTypeID", Kind: schema.KindString, Flags: 0, Label: `Equipment Type ID`},
-		{Name: "equipment_manufacturer_id", Quoted: `"equipment_manufacturer_id"`, Field: "EquipmentManufacturerID", Kind: schema.KindString, Flags: 0, Label: `Equipment Manufacturer ID`},
-		{Name: "registration_state_id", Quoted: `"registration_state_id"`, Field: "RegistrationStateID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Registration State ID`},
-		{Name: "fleet_code_id", Quoted: `"fleet_code_id"`, Field: "FleetCodeID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Fleet Code ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesEquipmentStatus[:]},
-		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`},
-		{Name: "model", Quoted: `"model"`, Field: "Model", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Model`},
-		{Name: "make", Quoted: `"make"`, Field: "Make", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Make`},
-		{Name: "year", Quoted: `"year"`, Field: "Year", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Year`},
-		{Name: "license_plate_number", Quoted: `"license_plate_number"`, Field: "LicensePlateNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `License Plate Number`},
-		{Name: "vin", Quoted: `"vin"`, Field: "Vin", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Vin`},
-		{Name: "external_id", Quoted: `"external_id"`, Field: "ExternalID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `External ID`},
-		{Name: "registration_number", Quoted: `"registration_number"`, Field: "RegistrationNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Registration Number`},
-		{Name: "max_load_weight", Quoted: `"max_load_weight"`, Field: "MaxLoadWeight", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Max Load Weight`},
-		{Name: "ownership_type", Quoted: `"ownership_type"`, Field: "OwnershipType", Kind: schema.KindString, Flags: 0, Label: `Ownership Type`, Enum: enumDomaintypesOwnershipType[:]},
-		{Name: "owner_worker_id", Quoted: `"owner_worker_id"`, Field: "OwnerWorkerID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Owner Worker ID`},
-		{Name: "lessor_name", Quoted: `"lessor_name"`, Field: "LessorName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Lessor Name`},
-		{Name: "lease_reference", Quoted: `"lease_reference"`, Field: "LeaseReference", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Lease Reference`},
-		{Name: "lease_end_date", Quoted: `"lease_end_date"`, Field: "LeaseEndDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Lease End Date`},
-		{Name: "last_inspection_date", Quoted: `"last_inspection_date"`, Field: "LastInspectionDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Inspection Date`},
-		{Name: "registration_expiry", Quoted: `"registration_expiry"`, Field: "RegistrationExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Registration Expiry`},
-		{Name: "last_known_location_id", Quoted: `"last_known_location_id"`, Field: "LastKnownLocationID", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Last Known Location ID`},
-		{Name: "last_known_location_name", Quoted: `"last_known_location_name"`, Field: "LastKnownLocationName", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Last Known Location Name`},
-		{Name: "last_known_location_latitude", Quoted: `"last_known_location_latitude"`, Field: "LastKnownLocationLatitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Latitude`},
-		{Name: "last_known_location_longitude", Quoted: `"last_known_location_longitude"`, Field: "LastKnownLocationLongitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Longitude`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "equipment_type_id", Quoted: `"equipment_type_id"`, Field: "EquipmentTypeID", Kind: schema.KindString, Flags: 0, Label: `Equipment Type ID`, Report: &reportDimStringHidden},
+		{Name: "equipment_manufacturer_id", Quoted: `"equipment_manufacturer_id"`, Field: "EquipmentManufacturerID", Kind: schema.KindString, Flags: 0, Label: `Equipment Manufacturer ID`, Report: &reportDimStringHidden},
+		{Name: "registration_state_id", Quoted: `"registration_state_id"`, Field: "RegistrationStateID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Registration State ID`, Report: &reportDimString},
+		{Name: "fleet_code_id", Quoted: `"fleet_code_id"`, Field: "FleetCodeID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Fleet Code ID`, Report: &reportDimStringHidden},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesEquipmentStatus[:], Report: &reportDimEnum},
+		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Unit Number`, Report: &reportDimString},
+		{Name: "model", Quoted: `"model"`, Field: "Model", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Model`, Report: &reportDimString},
+		{Name: "make", Quoted: `"make"`, Field: "Make", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Make`, Report: &reportDimString},
+		{Name: "year", Quoted: `"year"`, Field: "Year", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Year`, Report: &reportDimInteger},
+		{Name: "license_plate_number", Quoted: `"license_plate_number"`, Field: "LicensePlateNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `License Plate`, Report: &reportDimString},
+		{Name: "vin", Quoted: `"vin"`, Field: "Vin", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `VIN`, Report: &reportDimString},
+		{Name: "external_id", Quoted: `"external_id"`, Field: "ExternalID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `External ID`, Report: &reportDimString},
+		{Name: "registration_number", Quoted: `"registration_number"`, Field: "RegistrationNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Registration Number`, Report: &reportDimString},
+		{Name: "max_load_weight", Quoted: `"max_load_weight"`, Field: "MaxLoadWeight", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Max Load Weight`, Report: &reportMeasureIntegerWeight},
+		{Name: "ownership_type", Quoted: `"ownership_type"`, Field: "OwnershipType", Kind: schema.KindString, Flags: 0, Label: `Ownership Type`, Enum: enumDomaintypesOwnershipType[:], Report: &reportDimEnum},
+		{Name: "owner_worker_id", Quoted: `"owner_worker_id"`, Field: "OwnerWorkerID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Owner Worker ID`, Report: &reportDimStringHidden},
+		{Name: "lessor_name", Quoted: `"lessor_name"`, Field: "LessorName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Lessor Name`, Report: &reportDimString},
+		{Name: "lease_reference", Quoted: `"lease_reference"`, Field: "LeaseReference", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Lease Reference`, Report: &reportDimString},
+		{Name: "lease_end_date", Quoted: `"lease_end_date"`, Field: "LeaseEndDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Lease End Date`, Report: &reportDimEpoch},
+		{Name: "last_inspection_date", Quoted: `"last_inspection_date"`, Field: "LastInspectionDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Inspection`, Report: &reportDimEpoch},
+		{Name: "registration_expiry", Quoted: `"registration_expiry"`, Field: "RegistrationExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Registration Expiry`, Report: &reportDimEpoch},
+		{Name: "last_known_location_id", Quoted: `"last_known_location_id"`, Field: "LastKnownLocationID", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Last Known Location ID`, Report: &reportDimStringHidden},
+		{Name: "last_known_location_name", Quoted: `"last_known_location_name"`, Field: "LastKnownLocationName", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Last Known Location Name`, Report: &reportDimStringHidden},
+		{Name: "last_known_location_latitude", Quoted: `"last_known_location_latitude"`, Field: "LastKnownLocationLatitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Latitude`, Report: &reportMeasureFloatHidden},
+		{Name: "last_known_location_longitude", Quoted: `"last_known_location_longitude"`, Field: "LastKnownLocationLongitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Longitude`, Report: &reportMeasureFloatHidden},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "EquipmentType", Alias: "et", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Equipment Type`},
-		{Name: "EquipmentManufacturer", Alias: "em", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Equipment Manufacturer`},
+		{Name: "EquipmentManufacturer", Alias: "em", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Manufacturer`},
 		{Name: "FleetCode", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Fleet Code`},
-		{Name: "RegistrationState", Alias: "rs", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Registration State`},
+		{Name: "RegistrationState", Alias: "rs", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Registration State`, NoReport: true},
 		{Name: "OwnerWorker", Alias: "ow", Kind: schema.BelongsTo, Local: []int32{18}, Remote: []int32{0}, Label: `Owner Worker`},
 	},
 	PK:         []int32{0, 1, 2},
@@ -493,3 +495,21 @@ var enumDomaintypesOwnershipType = [...]schema.EnumValue{
 	{Value: `Leased`, Label: `Leased`},
 	{Value: `OwnerOperator`, Label: `Owner Operator`},
 }
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureFloatHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueFloat, Aggs: schema.AggsNumeric}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportMeasureIntegerWeight = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric, Format: `weight`}

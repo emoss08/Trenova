@@ -25,48 +25,50 @@ var rateQuotesTable = schema.Table{
 	Model:  "ratequote.RateQuote",
 	Label:  `Rate Quote`,
 	Plural: `Rate Quotes`,
+	Doc:    `How each shipment was priced, what it cost, and what an override gave away`,
+	Report: &schema.TableReport{Category: `Billing`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "shipment_id", Quoted: `"shipment_id"`, Field: "ShipmentID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Shipment ID`},
-		{Name: "shipment_move_id", Quoted: `"shipment_move_id"`, Field: "ShipmentMoveID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Shipment Move ID`},
-		{Name: "party_type", Quoted: `"party_type"`, Field: "PartyType", Kind: schema.KindString, Flags: 0, Label: `Party Type`, Enum: enumRateagreementPartyType[:]},
-		{Name: "party_id", Quoted: `"party_id"`, Field: "PartyID", Kind: schema.KindString, Flags: 0, Label: `Party ID`},
-		{Name: "purpose", Quoted: `"purpose"`, Field: "Purpose", Kind: schema.KindString, Flags: 0, Label: `Purpose`, Enum: enumPurpose[:]},
-		{Name: "outcome", Quoted: `"outcome"`, Field: "Outcome", Kind: schema.KindString, Flags: 0, Label: `Outcome`, Enum: enumOutcome[:]},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumStatus[:]},
-		{Name: "rate_agreement_id", Quoted: `"rate_agreement_id"`, Field: "RateAgreementID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Rate Agreement ID`},
-		{Name: "rate_agreement_rule_id", Quoted: `"rate_agreement_rule_id"`, Field: "RateAgreementRuleID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Rate Agreement Rule ID`},
-		{Name: "agreement_version_number", Quoted: `"agreement_version_number"`, Field: "AgreementVersionNumber", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Agreement Version Number`},
-		{Name: "formula_template_id", Quoted: `"formula_template_id"`, Field: "FormulaTemplateID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Formula Template ID`},
-		{Name: "formula_template_version_number", Quoted: `"formula_template_version_number"`, Field: "FormulaTemplateVersionNumber", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Formula Template Version Number`},
-		{Name: "specificity_score", Quoted: `"specificity_score"`, Field: "SpecificityScore", Kind: schema.KindInt32, Flags: 0, Label: `Specificity Score`},
-		{Name: "currency", Quoted: `"currency"`, Field: "Currency", Kind: schema.KindString, Flags: 0, Label: `Currency`},
-		{Name: "linehaul_amount", Quoted: `"linehaul_amount"`, Field: "LinehaulAmount", Kind: schema.KindOther, Flags: 0, Label: `Linehaul Amount`},
-		{Name: "fuel_amount", Quoted: `"fuel_amount"`, Field: "FuelAmount", Kind: schema.KindOther, Flags: 0, Label: `Fuel Amount`},
-		{Name: "accessorial_amount", Quoted: `"accessorial_amount"`, Field: "AccessorialAmount", Kind: schema.KindOther, Flags: 0, Label: `Accessorial Amount`},
-		{Name: "total_amount", Quoted: `"total_amount"`, Field: "TotalAmount", Kind: schema.KindOther, Flags: 0, Label: `Total Amount`},
-		{Name: "cost_amount", Quoted: `"cost_amount"`, Field: "CostAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Cost Amount`},
-		{Name: "margin_amount", Quoted: `"margin_amount"`, Field: "MarginAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Margin Amount`},
-		{Name: "margin_percent", Quoted: `"margin_percent"`, Field: "MarginPercent", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Margin Percent`},
-		{Name: "billing_currency", Quoted: `"billing_currency"`, Field: "BillingCurrency", Kind: schema.KindString, Flags: 0, Label: `Billing Currency`, Doc: `The billing amounts are the same money in the organization's own currency. Both are stored, along with the rate used, so the quote stays reproducible after the market has moved.`},
-		{Name: "billing_amount", Quoted: `"billing_amount"`, Field: "BillingAmount", Kind: schema.KindOther, Flags: 0, Label: `Billing Amount`},
-		{Name: "fx_rate", Quoted: `"fx_rate"`, Field: "FxRate", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Fx Rate`},
-		{Name: "exchange_rate_id", Quoted: `"exchange_rate_id"`, Field: "ExchangeRateID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Exchange Rate ID`},
-		{Name: "as_of", Quoted: `"as_of"`, Field: "AsOf", Kind: schema.KindInt64, Flags: 0, Label: `As Of`, Doc: `AsOf is the date the rating was performed against, which is not the same as when it ran: a shipment picked up last week rates on last week's contract terms however long the invoice takes to produce.`},
-		{Name: "rated_at", Quoted: `"rated_at"`, Field: "RatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Rated At`},
-		{Name: "rated_by_id", Quoted: `"rated_by_id"`, Field: "RatedByID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Rated By ID`},
-		{Name: "engine_version", Quoted: `"engine_version"`, Field: "EngineVersion", Kind: schema.KindString, Flags: 0, Label: `Engine Version`},
-		{Name: "context_hash", Quoted: `"context_hash"`, Field: "ContextHash", Kind: schema.KindString, Flags: 0, Label: `Context Hash`, Doc: `ContextHash fingerprints the inputs. Two ratings with the same hash and the same engine version must agree, which makes it both a cheap dedupe and the signal that separates "the shipment changed" from "we changed how we price".`},
-		{Name: "override_reason", Quoted: `"override_reason"`, Field: "OverrideReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Override Reason`},
-		{Name: "foregone_amount", Quoted: `"foregone_amount"`, Field: "ForegoneAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Foregone Amount`, Doc: `ForegoneAmount is what the contract would have charged on a quote the user overrode. It is the rate leakage report, kept on the row that caused it rather than recomputed later against terms that may have changed.`},
-		{Name: "trace", Quoted: `"trace"`, Field: "Trace", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Trace`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "shipment_id", Quoted: `"shipment_id"`, Field: "ShipmentID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Shipment ID`, Report: &reportDimString},
+		{Name: "shipment_move_id", Quoted: `"shipment_move_id"`, Field: "ShipmentMoveID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Shipment Move ID`, Report: &reportDimString},
+		{Name: "party_type", Quoted: `"party_type"`, Field: "PartyType", Kind: schema.KindString, Flags: 0, Label: `Party Type`, Enum: enumRateagreementPartyType[:], Report: &reportDimEnum},
+		{Name: "party_id", Quoted: `"party_id"`, Field: "PartyID", Kind: schema.KindString, Flags: 0, Label: `Party ID`, Report: &reportDimString},
+		{Name: "purpose", Quoted: `"purpose"`, Field: "Purpose", Kind: schema.KindString, Flags: 0, Label: `Purpose`, Enum: enumPurpose[:], Report: &reportDimEnum},
+		{Name: "outcome", Quoted: `"outcome"`, Field: "Outcome", Kind: schema.KindString, Flags: 0, Label: `Outcome`, Enum: enumOutcome[:], Report: &reportDimEnum},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumStatus[:], Report: &reportDimEnum},
+		{Name: "rate_agreement_id", Quoted: `"rate_agreement_id"`, Field: "RateAgreementID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Rate Agreement ID`, Report: &reportDimStringHidden},
+		{Name: "rate_agreement_rule_id", Quoted: `"rate_agreement_rule_id"`, Field: "RateAgreementRuleID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Rate Agreement Rule ID`, Report: &reportDimString},
+		{Name: "agreement_version_number", Quoted: `"agreement_version_number"`, Field: "AgreementVersionNumber", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Agreement Version`, Report: &reportDimInteger},
+		{Name: "formula_template_id", Quoted: `"formula_template_id"`, Field: "FormulaTemplateID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Formula Template ID`, Report: &reportDimString},
+		{Name: "formula_template_version_number", Quoted: `"formula_template_version_number"`, Field: "FormulaTemplateVersionNumber", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Formula Template Version Number`, Report: &reportDimInteger},
+		{Name: "specificity_score", Quoted: `"specificity_score"`, Field: "SpecificityScore", Kind: schema.KindInt32, Flags: 0, Label: `Specificity Score`, Report: &reportDimInteger},
+		{Name: "currency", Quoted: `"currency"`, Field: "Currency", Kind: schema.KindString, Flags: 0, Label: `Currency`, Report: &reportDimString},
+		{Name: "linehaul_amount", Quoted: `"linehaul_amount"`, Field: "LinehaulAmount", Kind: schema.KindOther, Flags: 0, Label: `Linehaul`, Report: &reportMeasureDecimalMoney},
+		{Name: "fuel_amount", Quoted: `"fuel_amount"`, Field: "FuelAmount", Kind: schema.KindOther, Flags: 0, Label: `Fuel`, Report: &reportMeasureDecimalMoney},
+		{Name: "accessorial_amount", Quoted: `"accessorial_amount"`, Field: "AccessorialAmount", Kind: schema.KindOther, Flags: 0, Label: `Accessorials`, Report: &reportMeasureDecimalMoney},
+		{Name: "total_amount", Quoted: `"total_amount"`, Field: "TotalAmount", Kind: schema.KindOther, Flags: 0, Label: `Total`, Report: &reportMeasureDecimalMoney},
+		{Name: "cost_amount", Quoted: `"cost_amount"`, Field: "CostAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Cost`, Report: &reportMeasureDecimalMoney},
+		{Name: "margin_amount", Quoted: `"margin_amount"`, Field: "MarginAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Margin`, Report: &reportMeasureDecimalMoney},
+		{Name: "margin_percent", Quoted: `"margin_percent"`, Field: "MarginPercent", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Margin (%)`, Report: &reportMeasureDecimal},
+		{Name: "billing_currency", Quoted: `"billing_currency"`, Field: "BillingCurrency", Kind: schema.KindString, Flags: 0, Label: `Billing Currency`, Report: &reportDimString},
+		{Name: "billing_amount", Quoted: `"billing_amount"`, Field: "BillingAmount", Kind: schema.KindOther, Flags: 0, Label: `Billing Amount`, Report: &reportMeasureDecimalMoney},
+		{Name: "fx_rate", Quoted: `"fx_rate"`, Field: "FxRate", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `FX Rate`, Report: &reportMeasureDecimal},
+		{Name: "exchange_rate_id", Quoted: `"exchange_rate_id"`, Field: "ExchangeRateID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Exchange Rate ID`, Report: &reportDimString},
+		{Name: "as_of", Quoted: `"as_of"`, Field: "AsOf", Kind: schema.KindInt64, Flags: 0, Label: `As Of`, Report: &reportDimEpoch},
+		{Name: "rated_at", Quoted: `"rated_at"`, Field: "RatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Rated At`, Report: &reportDimEpoch},
+		{Name: "rated_by_id", Quoted: `"rated_by_id"`, Field: "RatedByID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Rated By ID`, Report: &reportDimString},
+		{Name: "engine_version", Quoted: `"engine_version"`, Field: "EngineVersion", Kind: schema.KindString, Flags: 0, Label: `Engine Version`, Report: &reportDimString},
+		{Name: "context_hash", Quoted: `"context_hash"`, Field: "ContextHash", Kind: schema.KindString, Flags: 0, Label: `Context Hash`, Report: &reportDimStringHidden},
+		{Name: "override_reason", Quoted: `"override_reason"`, Field: "OverrideReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Override Reason`, Report: &reportDimString},
+		{Name: "foregone_amount", Quoted: `"foregone_amount"`, Field: "ForegoneAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Foregone Amount`, Report: &reportMeasureDecimalMoney},
+		{Name: "trace", Quoted: `"trace"`, Field: "Trace", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Trace`, Report: &reportDimJsonbHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
-		{Name: "Agreement", Alias: "a", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Agreement`},
-		{Name: "RatedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{30}, Remote: []int32{0}, Label: `Rated By`},
+		{Name: "Agreement", Alias: "a", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Rate Agreement`},
+		{Name: "RatedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{30}, Remote: []int32{0}, Label: `Rated By`, NoReport: true},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -465,11 +467,11 @@ var enumOutcome = [...]schema.EnumValue{
 }
 
 var enumPurpose = [...]schema.EnumValue{
-	{Value: `Rating`, Label: `Rating`, Doc: `PurposeRating is a quote that priced a real shipment.`},
-	{Value: `Quote`, Label: `Quote`, Doc: `PurposeQuote priced a load that has not been booked, which is what goes to the customer before there is a shipment to attach it to.`},
-	{Value: `Shopping`, Label: `Shopping`, Doc: `PurposeShopping compares carriers before one is chosen.`},
-	{Value: `Simulation`, Label: `Simulation`, Doc: `PurposeSimulation is produced by replaying a proposed change against history and never touches a live shipment.`},
-	{Value: `WhatIf`, Label: `What If`, Doc: `PurposeWhatIf answers "what would this have cost" on demand.`},
+	{Value: `Rating`, Label: `Rating`, Doc: `Priced a real shipment.`},
+	{Value: `Quote`, Label: `Quote`, Doc: `Priced a load that has not been booked yet, as sent to the customer.`},
+	{Value: `Shopping`, Label: `Shopping`, Doc: `Compared carriers before one was chosen.`},
+	{Value: `Simulation`, Label: `Simulation`, Doc: `Replayed a proposed change against history; never touches a live shipment.`},
+	{Value: `WhatIf`, Label: `What If`, Doc: `Answered "what would this have cost" on demand.`},
 }
 
 var enumRateagreementPartyType = [...]schema.EnumValue{
@@ -478,10 +480,26 @@ var enumRateagreementPartyType = [...]schema.EnumValue{
 }
 
 var enumStatus = [...]schema.EnumValue{
-	{Value: `Applied`, Label: `Applied`, Doc: `StatusApplied is the quote currently governing its shipment.`},
-	{Value: `Superseded`, Label: `Superseded`, Doc: `StatusSuperseded is a quote a later rating replaced. Re-rating happens on every stop edit, assignment and fuel price job, so the history matters: overwriting it would destroy exactly what a dispute needs.`},
-	{Value: `Quoted`, Label: `Quoted`, Doc: `StatusQuoted has no shipment behind it yet.`},
+	{Value: `Applied`, Label: `Applied`, Doc: `The quote currently pricing its shipment.`},
+	{Value: `Superseded`, Label: `Superseded`, Doc: `Replaced by a later rating; kept as the history a dispute needs.`},
+	{Value: `Quoted`, Label: `Quoted`, Doc: `No shipment behind it yet.`},
 }
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportDimJsonbHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueJSON, Aggs: schema.AggsCount}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportMeasureDecimal = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueDecimal, Aggs: schema.AggsNumeric}
+
+var reportMeasureDecimalMoney = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueDecimal, Aggs: schema.AggsNumeric, Format: `money`}
 
 // OutcomeCol is a column of ratequote.Outcome values.
 type OutcomeCol struct{ keel.StringCol }

@@ -13,32 +13,33 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// Pickup and delivery stops on a move
 type Stop struct {
 	bun.BaseModel `json:"-" bun:"table:stops,alias:stp"`
-	keel.Table    `keel:"stops"`
+	keel.Table    `                                     keel:"stops,report=Operations"`
 
-	ID                     pulid.ID           `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:stp_"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID           `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	ShipmentMoveID         pulid.ID           `json:"shipmentMoveId"         bun:"shipment_move_id,type:VARCHAR(100),notnull" keel:"shipment_move_id"`
-	LocationID             pulid.ID           `json:"locationId"             bun:"location_id,type:VARCHAR(100),notnull" keel:"location_id"`
-	Status                 StopStatus         `json:"status"                 bun:"status,type:stop_status_enum,notnull,default:'New'" keel:"status"`
-	Type                   StopType           `json:"type"                   bun:"type,type:stop_type_enum,notnull,default:'Pickup'" keel:"type"`
-	ScheduleType           StopScheduleType   `json:"scheduleType"           bun:"schedule_type,type:stop_schedule_type_enum,notnull,default:'Open'" keel:"schedule_type"`
-	Sequence               int64              `json:"sequence"               bun:"sequence,type:INTEGER,notnull" keel:"sequence"`
-	Pieces                 *int64             `json:"pieces"                 bun:"pieces,type:INTEGER,nullzero" keel:"pieces"`
-	Weight                 *int64             `json:"weight"                 bun:"weight,type:INTEGER,nullzero" keel:"weight"`
-	ScheduledWindowStart   int64              `json:"scheduledWindowStart"   bun:"scheduled_window_start,type:BIGINT,notnull" keel:"scheduled_window_start"`
-	ScheduledWindowEnd     *int64             `json:"scheduledWindowEnd"     bun:"scheduled_window_end,type:BIGINT,nullzero" keel:"scheduled_window_end"`
-	ActualArrival          *int64             `json:"actualArrival"          bun:"actual_arrival,type:BIGINT,nullzero" keel:"actual_arrival"`
-	ActualDeparture        *int64             `json:"actualDeparture"        bun:"actual_departure,type:BIGINT,nullzero" keel:"actual_departure"`
-	CountLateOverride      *bool              `json:"countLateOverride"      bun:"count_late_override,type:BOOLEAN,nullzero" keel:"count_late_override"`
-	CountDetentionOverride *bool              `json:"countDetentionOverride" bun:"count_detention_override,type:BOOLEAN,nullzero" keel:"count_detention_override"`
-	AddressLine            string             `json:"addressLine"            bun:"address_line,type:VARCHAR(200),nullzero" keel:"address_line,nullzero"`
-	Version                int64              `json:"version"                bun:"version,type:BIGINT" keel:"version,version"`
+	ID                     pulid.ID           `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:stp_"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID           `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
+	ShipmentMoveID         pulid.ID           `json:"shipmentMoveId"         bun:"shipment_move_id,type:VARCHAR(100),notnull"                                           keel:"shipment_move_id"`
+	LocationID             pulid.ID           `json:"locationId"             bun:"location_id,type:VARCHAR(100),notnull"                                                keel:"location_id"`
+	Status                 StopStatus         `json:"status"                 bun:"status,type:stop_status_enum,notnull,default:'New'"                                   keel:"status"`
+	Type                   StopType           `json:"type"                   bun:"type,type:stop_type_enum,notnull,default:'Pickup'"                                    keel:"type"`
+	ScheduleType           StopScheduleType   `json:"scheduleType"           bun:"schedule_type,type:stop_schedule_type_enum,notnull,default:'Open'"                    keel:"schedule_type"`
+	Sequence               int64              `json:"sequence"               bun:"sequence,type:INTEGER,notnull"                                                        keel:"sequence,dimension"`
+	Pieces                 *int64             `json:"pieces"                 bun:"pieces,type:INTEGER,nullzero"                                                         keel:"pieces,format=count"`
+	Weight                 *int64             `json:"weight"                 bun:"weight,type:INTEGER,nullzero"                                                         keel:"weight,format=weight"`
+	ScheduledWindowStart   int64              `json:"scheduledWindowStart"   bun:"scheduled_window_start,type:BIGINT,notnull"                                           keel:"scheduled_window_start,type=epoch"`
+	ScheduledWindowEnd     *int64             `json:"scheduledWindowEnd"     bun:"scheduled_window_end,type:BIGINT,nullzero"                                            keel:"scheduled_window_end,type=epoch"`
+	ActualArrival          *int64             `json:"actualArrival"          bun:"actual_arrival,type:BIGINT,nullzero"                                                  keel:"actual_arrival,type=epoch"`
+	ActualDeparture        *int64             `json:"actualDeparture"        bun:"actual_departure,type:BIGINT,nullzero"                                                keel:"actual_departure,type=epoch"`
+	CountLateOverride      *bool              `json:"countLateOverride"      bun:"count_late_override,type:BOOLEAN,nullzero"                                            keel:"count_late_override"`
+	CountDetentionOverride *bool              `json:"countDetentionOverride" bun:"count_detention_override,type:BOOLEAN,nullzero"                                       keel:"count_detention_override"`
+	AddressLine            string             `json:"addressLine"            bun:"address_line,type:VARCHAR(200),nullzero"                                              keel:"address_line,nullzero"`
+	Version                int64              `json:"version"                bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt              int64              `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt              int64              `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	Location               *location.Location `json:"location,omitempty"     bun:"rel:belongs-to,join:location_id=id" keel:"belongs:location_id"`
+	Location               *location.Location `json:"location,omitempty"     bun:"rel:belongs-to,join:location_id=id"                                                   keel:"belongs:location_id"`
 }
 
 func (s *Stop) BeforeAppendModel(_ context.Context, query bun.Query) error {

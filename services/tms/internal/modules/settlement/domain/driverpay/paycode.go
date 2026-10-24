@@ -42,25 +42,26 @@ func (d PayCodeDirection) IsValid() bool {
 	}
 }
 
+// Earning and deduction codes and the GL accounts they post to
 type PayCode struct {
 	bun.BaseModel             `bun:"table:pay_codes,alias:payc" json:"-"`
-	keel.Table                `keel:"pay_codes"`
+	keel.Table                `                                          keel:"pay_codes,report=Payroll"`
 	pagination.CursorValueSet `bun:",embed"                     json:"-"`
 
-	ID                    pulid.ID           `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:payc_"`
-	BusinessUnitID        pulid.ID           `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID           `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	Status                domaintypes.Status `json:"status"                bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
-	Direction             PayCodeDirection   `json:"direction"             bun:"direction,type:VARCHAR(20),notnull" keel:"direction"`
-	Code                  string             `json:"code"                  bun:"code,type:VARCHAR(20),notnull" keel:"code"`
-	Name                  string             `json:"name"                  bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Description           string             `json:"description"           bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Taxable               bool               `json:"taxable"               bun:"taxable,type:BOOLEAN,notnull" keel:"taxable"`
-	CountsTowardGuarantee bool               `json:"countsTowardGuarantee" bun:"counts_toward_guarantee,type:BOOLEAN,notnull" keel:"counts_toward_guarantee"`
-	GLAccountID           *pulid.ID          `json:"glAccountId"           bun:"gl_account_id,type:VARCHAR(100),nullzero" keel:"gl_account_id"`
-	DefaultAmountMinor    *int64             `json:"defaultAmountMinor"    bun:"default_amount_minor,type:BIGINT,nullzero" keel:"default_amount_minor"`
-	IsSystem              bool               `json:"isSystem"              bun:"is_system,type:BOOLEAN,notnull" keel:"is_system"`
-	Version               int64              `json:"version"               bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	ID                    pulid.ID           `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:payc_"`
+	BusinessUnitID        pulid.ID           `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID           `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	Status                domaintypes.Status `json:"status"                bun:"status,type:status_enum,notnull,default:'Active'"                                     keel:"status"`
+	Direction             PayCodeDirection   `json:"direction"             bun:"direction,type:VARCHAR(20),notnull"                                                   keel:"direction"`
+	Code                  string             `json:"code"                  bun:"code,type:VARCHAR(20),notnull"                                                        keel:"code"`
+	Name                  string             `json:"name"                  bun:"name,type:VARCHAR(100),notnull"                                                       keel:"name"`
+	Description           string             `json:"description"           bun:"description,type:TEXT,nullzero"                                                       keel:"description,nullzero"`
+	Taxable               bool               `json:"taxable"               bun:"taxable,type:BOOLEAN,notnull"                                                         keel:"taxable"`
+	CountsTowardGuarantee bool               `json:"countsTowardGuarantee" bun:"counts_toward_guarantee,type:BOOLEAN,notnull"                                         keel:"counts_toward_guarantee"`
+	GLAccountID           *pulid.ID          `json:"glAccountId"           bun:"gl_account_id,type:VARCHAR(100),nullzero"                                             keel:"gl_account_id"`
+	DefaultAmountMinor    *int64             `json:"defaultAmountMinor"    bun:"default_amount_minor,type:BIGINT,nullzero"                                            keel:"default_amount_minor,label=Default Amount (Minor)"`
+	IsSystem              bool               `json:"isSystem"              bun:"is_system,type:BOOLEAN,notnull"                                                       keel:"is_system,label=System Code"`
+	Version               int64              `json:"version"               bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
 	CreatedAt             int64              `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt             int64              `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 

@@ -23,28 +23,30 @@ var bankReceiptsTable = schema.Table{
 	Model:  "bankreceipt.BankReceipt",
 	Label:  `Bank Receipt`,
 	Plural: `Bank Receipts`,
+	Doc:    `Deposits read off the bank statement and their match state`,
+	Report: &schema.TableReport{Category: `Accounting`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "receipt_date", Quoted: `"receipt_date"`, Field: "ReceiptDate", Kind: schema.KindInt64, Flags: 0, Label: `Receipt Date`},
-		{Name: "amount_minor", Quoted: `"amount_minor"`, Field: "AmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Amount Minor`},
-		{Name: "reference_number", Quoted: `"reference_number"`, Field: "ReferenceNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reference Number`},
-		{Name: "memo", Quoted: `"memo"`, Field: "Memo", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Memo`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumStatus[:]},
-		{Name: "import_batch_id", Quoted: `"import_batch_id"`, Field: "ImportBatchID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Import Batch ID`},
-		{Name: "matched_customer_payment_id", Quoted: `"matched_customer_payment_id"`, Field: "MatchedCustomerPaymentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Matched Customer Payment ID`},
-		{Name: "matched_at", Quoted: `"matched_at"`, Field: "MatchedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Matched At`},
-		{Name: "matched_by_id", Quoted: `"matched_by_id"`, Field: "MatchedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Matched By ID`},
-		{Name: "exception_reason", Quoted: `"exception_reason"`, Field: "ExceptionReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Exception Reason`},
-		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: 0, Label: `Created By ID`},
-		{Name: "updated_by_id", Quoted: `"updated_by_id"`, Field: "UpdatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Updated By ID`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "receipt_date", Quoted: `"receipt_date"`, Field: "ReceiptDate", Kind: schema.KindInt64, Flags: 0, Label: `Receipt Date`, Report: &reportDimEpoch},
+		{Name: "amount_minor", Quoted: `"amount_minor"`, Field: "AmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Amount (Minor)`, Report: &reportMeasureInteger},
+		{Name: "reference_number", Quoted: `"reference_number"`, Field: "ReferenceNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reference Number`, Report: &reportDimString},
+		{Name: "memo", Quoted: `"memo"`, Field: "Memo", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Bank Memo`, Report: &reportDimString},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumStatus[:], Report: &reportDimEnum},
+		{Name: "import_batch_id", Quoted: `"import_batch_id"`, Field: "ImportBatchID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Import Batch ID`, Report: &reportDimString},
+		{Name: "matched_customer_payment_id", Quoted: `"matched_customer_payment_id"`, Field: "MatchedCustomerPaymentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Matched Customer Payment ID`, Report: &reportDimStringHidden},
+		{Name: "matched_at", Quoted: `"matched_at"`, Field: "MatchedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Matched At`, Report: &reportDimEpoch},
+		{Name: "matched_by_id", Quoted: `"matched_by_id"`, Field: "MatchedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Matched By ID`, Report: &reportDimString},
+		{Name: "exception_reason", Quoted: `"exception_reason"`, Field: "ExceptionReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Exception Reason`, Report: &reportDimString},
+		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: 0, Label: `Created By ID`, Report: &reportDimString},
+		{Name: "updated_by_id", Quoted: `"updated_by_id"`, Field: "UpdatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Updated By ID`, Report: &reportDimString},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
-		{Name: "MatchedCustomerPayment", Alias: "mcp", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `Matched Customer Payment`},
+		{Name: "MatchedCustomerPayment", Alias: "mcp", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `Matched Payment`},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -289,6 +291,18 @@ var enumStatus = [...]schema.EnumValue{
 	{Value: `Matched`, Label: `Matched`},
 	{Value: `Exception`, Label: `Exception`},
 }
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // StatusCol is a column of bankreceipt.Status values.
 type StatusCol struct{ keel.StringCol }

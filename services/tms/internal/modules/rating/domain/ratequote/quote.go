@@ -33,77 +33,65 @@ var (
 	_ validationframework.TenantedEntity = (*RateQuote)(nil)
 )
 
+// How each shipment was priced, what it cost, and what an override gave away
 type RateQuote struct {
 	bun.BaseModel             `bun:"table:rate_quotes,alias:rqt" json:"-"`
-	keel.Table                `keel:"rate_quotes"`
+	keel.Table                `                                           keel:"rate_quotes,report=Billing"`
 	pagination.CursorValueSet `bun:",embed"                      json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rqt_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:rqt_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
 
-	ShipmentID     *pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),nullzero" keel:"shipment_id"`
+	ShipmentID     *pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),nullzero"      keel:"shipment_id"`
 	ShipmentMoveID *pulid.ID `json:"shipmentMoveId" bun:"shipment_move_id,type:VARCHAR(100),nullzero" keel:"shipment_move_id"`
 
 	PartyType rateagreement.PartyType `json:"partyType" bun:"party_type,type:rate_agreement_party_type_enum,notnull" keel:"party_type"`
-	PartyID   pulid.ID                `json:"partyId"   bun:"party_id,type:VARCHAR(100),notnull" keel:"party_id"`
+	PartyID   pulid.ID                `json:"partyId"   bun:"party_id,type:VARCHAR(100),notnull"                     keel:"party_id"`
 
 	Purpose Purpose `json:"purpose" bun:"purpose,type:rate_quote_purpose_enum,notnull,default:'Rating'" keel:"purpose"`
-	Outcome Outcome `json:"outcome" bun:"outcome,type:rate_quote_outcome_enum,notnull" keel:"outcome"`
-	Status  Status  `json:"status"  bun:"status,type:rate_quote_status_enum,notnull,default:'Applied'" keel:"status"`
+	Outcome Outcome `json:"outcome" bun:"outcome,type:rate_quote_outcome_enum,notnull"                  keel:"outcome"`
+	Status  Status  `json:"status"  bun:"status,type:rate_quote_status_enum,notnull,default:'Applied'"  keel:"status"`
 
-	RateAgreementID              *pulid.ID `json:"rateAgreementId"              bun:"rate_agreement_id,type:VARCHAR(100),nullzero" keel:"rate_agreement_id"`
-	RateAgreementRuleID          *pulid.ID `json:"rateAgreementRuleId"          bun:"rate_agreement_rule_id,type:VARCHAR(100),nullzero" keel:"rate_agreement_rule_id"`
-	AgreementVersionNumber       *int64    `json:"agreementVersionNumber"       bun:"agreement_version_number,type:BIGINT,nullzero" keel:"agreement_version_number"`
-	FormulaTemplateID            *pulid.ID `json:"formulaTemplateId"            bun:"formula_template_id,type:VARCHAR(100),nullzero" keel:"formula_template_id"`
-	FormulaTemplateVersionNumber *int64    `json:"formulaTemplateVersionNumber" bun:"formula_template_version_number,type:BIGINT,nullzero" keel:"formula_template_version_number"`
-	SpecificityScore             int32     `json:"specificityScore"             bun:"specificity_score,type:INTEGER,notnull,default:0" keel:"specificity_score"`
+	RateAgreementID              *pulid.ID `json:"rateAgreementId"              bun:"rate_agreement_id,type:VARCHAR(100),nullzero"         keel:"rate_agreement_id"`
+	RateAgreementRuleID          *pulid.ID `json:"rateAgreementRuleId"          bun:"rate_agreement_rule_id,type:VARCHAR(100),nullzero"    keel:"rate_agreement_rule_id"`
+	AgreementVersionNumber       *int64    `json:"agreementVersionNumber"       bun:"agreement_version_number,type:BIGINT,nullzero"        keel:"agreement_version_number,label=Agreement Version,dimension"`
+	FormulaTemplateID            *pulid.ID `json:"formulaTemplateId"            bun:"formula_template_id,type:VARCHAR(100),nullzero"       keel:"formula_template_id"`
+	FormulaTemplateVersionNumber *int64    `json:"formulaTemplateVersionNumber" bun:"formula_template_version_number,type:BIGINT,nullzero" keel:"formula_template_version_number,dimension"`
+	SpecificityScore             int32     `json:"specificityScore"             bun:"specificity_score,type:INTEGER,notnull,default:0"     keel:"specificity_score,dimension"`
 
-	Currency          string              `json:"currency"          bun:"currency,type:VARCHAR(3),notnull" keel:"currency"`
-	LinehaulAmount    decimal.Decimal     `json:"linehaulAmount"    bun:"linehaul_amount,type:NUMERIC(19,4),notnull,default:0" keel:"linehaul_amount"`
-	FuelAmount        decimal.Decimal     `json:"fuelAmount"        bun:"fuel_amount,type:NUMERIC(19,4),notnull,default:0" keel:"fuel_amount"`
-	AccessorialAmount decimal.Decimal     `json:"accessorialAmount" bun:"accessorial_amount,type:NUMERIC(19,4),notnull,default:0" keel:"accessorial_amount"`
-	TotalAmount       decimal.Decimal     `json:"totalAmount"       bun:"total_amount,type:NUMERIC(19,4),notnull,default:0" keel:"total_amount"`
-	CostAmount        decimal.NullDecimal `json:"costAmount"        bun:"cost_amount,type:NUMERIC(19,4),nullzero" keel:"cost_amount"`
-	MarginAmount      decimal.NullDecimal `json:"marginAmount"      bun:"margin_amount,type:NUMERIC(19,4),nullzero" keel:"margin_amount"`
-	MarginPercent     decimal.NullDecimal `json:"marginPercent"     bun:"margin_percent,type:NUMERIC(9,4),nullzero" keel:"margin_percent"`
+	Currency          string              `json:"currency"          bun:"currency,type:VARCHAR(3),notnull"                        keel:"currency"`
+	LinehaulAmount    decimal.Decimal     `json:"linehaulAmount"    bun:"linehaul_amount,type:NUMERIC(19,4),notnull,default:0"    keel:"linehaul_amount,label=Linehaul,format=money"`
+	FuelAmount        decimal.Decimal     `json:"fuelAmount"        bun:"fuel_amount,type:NUMERIC(19,4),notnull,default:0"        keel:"fuel_amount,label=Fuel,format=money"`
+	AccessorialAmount decimal.Decimal     `json:"accessorialAmount" bun:"accessorial_amount,type:NUMERIC(19,4),notnull,default:0" keel:"accessorial_amount,label=Accessorials,format=money"`
+	TotalAmount       decimal.Decimal     `json:"totalAmount"       bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"       keel:"total_amount,label=Total,format=money"`
+	CostAmount        decimal.NullDecimal `json:"costAmount"        bun:"cost_amount,type:NUMERIC(19,4),nullzero"                 keel:"cost_amount,label=Cost,format=money"`
+	MarginAmount      decimal.NullDecimal `json:"marginAmount"      bun:"margin_amount,type:NUMERIC(19,4),nullzero"               keel:"margin_amount,label=Margin,format=money"`
+	MarginPercent     decimal.NullDecimal `json:"marginPercent"     bun:"margin_percent,type:NUMERIC(9,4),nullzero"               keel:"margin_percent,label=Margin (%)"`
 
-	// The billing amounts are the same money in the organization's own
-	// currency. Both are stored, along with the rate used, so the quote stays
-	// reproducible after the market has moved.
-	BillingCurrency string              `json:"billingCurrency" bun:"billing_currency,type:VARCHAR(3),notnull" keel:"billing_currency"`
-	BillingAmount   decimal.Decimal     `json:"billingAmount"   bun:"billing_amount,type:NUMERIC(19,4),notnull,default:0" keel:"billing_amount"`
-	FxRate          decimal.NullDecimal `json:"fxRate"          bun:"fx_rate,type:NUMERIC(24,12),nullzero" keel:"fx_rate"`
-	ExchangeRateID  *pulid.ID           `json:"exchangeRateId"  bun:"exchange_rate_id,type:VARCHAR(100),nullzero" keel:"exchange_rate_id"`
+	BillingCurrency string              `json:"billingCurrency" bun:"billing_currency,type:VARCHAR(3),notnull"            keel:"billing_currency"`
+	BillingAmount   decimal.Decimal     `json:"billingAmount"   bun:"billing_amount,type:NUMERIC(19,4),notnull,default:0" keel:"billing_amount,format=money"`
+	FxRate          decimal.NullDecimal `json:"fxRate"          bun:"fx_rate,type:NUMERIC(24,12),nullzero"                keel:"fx_rate"`
+	ExchangeRateID  *pulid.ID           `json:"exchangeRateId"  bun:"exchange_rate_id,type:VARCHAR(100),nullzero"         keel:"exchange_rate_id"`
 
-	// AsOf is the date the rating was performed against, which is not the same
-	// as when it ran: a shipment picked up last week rates on last week's
-	// contract terms however long the invoice takes to produce.
-	AsOf          int64     `json:"asOf"          bun:"as_of,type:BIGINT,notnull" keel:"as_of"`
-	RatedAt       int64     `json:"ratedAt"       bun:"rated_at,type:BIGINT,notnull" keel:"rated_at"`
-	RatedByID     *pulid.ID `json:"ratedById"     bun:"rated_by_id,type:VARCHAR(100),nullzero" keel:"rated_by_id"`
+	AsOf          int64     `json:"asOf"          bun:"as_of,type:BIGINT,notnull"               keel:"as_of,type=epoch"`
+	RatedAt       int64     `json:"ratedAt"       bun:"rated_at,type:BIGINT,notnull"            keel:"rated_at"`
+	RatedByID     *pulid.ID `json:"ratedById"     bun:"rated_by_id,type:VARCHAR(100),nullzero"  keel:"rated_by_id"`
 	EngineVersion string    `json:"engineVersion" bun:"engine_version,type:VARCHAR(32),notnull" keel:"engine_version"`
 
-	// ContextHash fingerprints the inputs. Two ratings with the same hash and
-	// the same engine version must agree, which makes it both a cheap dedupe
-	// and the signal that separates "the shipment changed" from "we changed how
-	// we price".
-	ContextHash string `json:"contextHash" bun:"context_hash,type:VARCHAR(64),notnull" keel:"context_hash"`
+	ContextHash string `json:"contextHash" bun:"context_hash,type:VARCHAR(64),notnull" keel:"context_hash,noreport"`
 
-	OverrideReason string `json:"overrideReason" bun:"override_reason,type:TEXT,nullzero" keel:"override_reason,nullzero"`
-	// ForegoneAmount is what the contract would have charged on a quote the
-	// user overrode. It is the rate leakage report, kept on the row that caused
-	// it rather than recomputed later against terms that may have changed.
-	ForegoneAmount decimal.NullDecimal `json:"foregoneAmount" bun:"foregone_amount,type:NUMERIC(19,4),nullzero" keel:"foregone_amount"`
+	OverrideReason string              `json:"overrideReason" bun:"override_reason,type:TEXT,nullzero"          keel:"override_reason,nullzero"`
+	ForegoneAmount decimal.NullDecimal `json:"foregoneAmount" bun:"foregone_amount,type:NUMERIC(19,4),nullzero" keel:"foregone_amount,format=money"`
 
-	Trace *ratetypes.Trace `json:"trace" bun:"trace,type:JSONB,nullzero" keel:"trace,jsonb"`
+	Trace *ratetypes.Trace `json:"trace" bun:"trace,type:JSONB,nullzero" keel:"trace,jsonb,noreport"`
 
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
 	BusinessUnit *tenant.BusinessUnit         `json:"-"                   bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization         `json:"-"                   bun:"rel:belongs-to,join:organization_id=id"`
-	Agreement    *rateagreement.RateAgreement `json:"agreement,omitempty" bun:"rel:belongs-to,join:rate_agreement_id=id" keel:"belongs:rate_agreement_id"`
-	RatedBy      *tenant.User                 `json:"ratedBy,omitempty"   bun:"rel:belongs-to,join:rated_by_id=id" keel:"belongs:rated_by_id"`
+	Agreement    *rateagreement.RateAgreement `json:"agreement,omitempty" bun:"rel:belongs-to,join:rate_agreement_id=id" keel:"belongs:rate_agreement_id,label=Rate Agreement"`
+	RatedBy      *tenant.User                 `json:"ratedBy,omitempty"   bun:"rel:belongs-to,join:rated_by_id=id"       keel:"belongs:rated_by_id,noreport"`
 }
 
 // Explanation is the one line answer to "why this rate", assembled from what

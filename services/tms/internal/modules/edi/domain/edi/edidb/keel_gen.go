@@ -42,7 +42,7 @@ var carrierInvoicesTable = schema.Table{
 		{Name: "delivery_date", Quoted: `"delivery_date"`, Field: "DeliveryDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Delivery Date`},
 		{Name: "shipment_reference", Quoted: `"shipment_reference"`, Field: "ShipmentReference", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment Reference`},
 		{Name: "bol", Quoted: `"bol"`, Field: "BOL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `BOL`},
-		{Name: "pro_number", Quoted: `"pro_number"`, Field: "ProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Pro Number`},
+		{Name: "pro_number", Quoted: `"pro_number"`, Field: "ProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `PRO Number`},
 		{Name: "bill_to_name", Quoted: `"bill_to_name"`, Field: "BillToName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Bill To Name`},
 		{Name: "bill_to_source_id", Quoted: `"bill_to_source_id"`, Field: "BillToSourceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Bill To Source ID`},
 		{Name: "currency_code", Quoted: `"currency_code"`, Field: "CurrencyCode", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Currency Code`},

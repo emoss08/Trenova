@@ -14,25 +14,22 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*Source)(nil)
 
-// Source is the bridge between an operational event and the journal it
-// produced: it answers which shipment, settlement or payment is behind a given
-// entry. SourceEventType and Status are varchar rather than database enums and
-// their value sets are extended by later migrations, so they stay strings.
+// What operational event produced each journal entry
 type Source struct {
 	bun.BaseModel `bun:"table:journal_sources,alias:js" json:"-"`
-	keel.Table    `keel:"journal_sources"`
+	keel.Table    `                                              keel:"journal_sources,report=Accounting,label=Journal Source"`
 
-	ID                   pulid.ID `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:jsrc_"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	SourceObjectType     string   `json:"sourceObjectType"     bun:"source_object_type,type:VARCHAR(50),notnull" keel:"source_object_type"`
-	SourceObjectID       string   `json:"sourceObjectId"       bun:"source_object_id,type:VARCHAR(100),notnull" keel:"source_object_id"`
-	SourceEventType      string   `json:"sourceEventType"      bun:"source_event_type,type:VARCHAR(100),notnull" keel:"source_event_type"`
-	SourceDocumentNumber string   `json:"sourceDocumentNumber" bun:"source_document_number,type:VARCHAR(100),nullzero" keel:"source_document_number,nullzero"`
-	Status               string   `json:"status"               bun:"status,type:VARCHAR(50),notnull" keel:"status"`
-	IdempotencyKey       string   `json:"idempotencyKey"       bun:"idempotency_key,type:VARCHAR(200),nullzero" keel:"idempotency_key,nullzero"`
-	JournalBatchID       pulid.ID `json:"journalBatchId"       bun:"journal_batch_id,type:VARCHAR(100),notnull" keel:"journal_batch_id"`
-	JournalEntryID       pulid.ID `json:"journalEntryId"       bun:"journal_entry_id,type:VARCHAR(100),notnull" keel:"journal_entry_id"`
+	ID                   pulid.ID `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:jsrc_"`
+	BusinessUnitID       pulid.ID `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	SourceObjectType     string   `json:"sourceObjectType"     bun:"source_object_type,type:VARCHAR(50),notnull"                                          keel:"source_object_type,label=Source Object"`
+	SourceObjectID       string   `json:"sourceObjectId"       bun:"source_object_id,type:VARCHAR(100),notnull"                                           keel:"source_object_id"`
+	SourceEventType      string   `json:"sourceEventType"      bun:"source_event_type,type:VARCHAR(100),notnull"                                          keel:"source_event_type,label=Source Event"`
+	SourceDocumentNumber string   `json:"sourceDocumentNumber" bun:"source_document_number,type:VARCHAR(100),nullzero"                                    keel:"source_document_number,nullzero,label=Source Document"`
+	Status               string   `json:"status"               bun:"status,type:VARCHAR(50),notnull"                                                      keel:"status"`
+	IdempotencyKey       string   `json:"idempotencyKey"       bun:"idempotency_key,type:VARCHAR(200),nullzero"                                           keel:"idempotency_key,nullzero,noreport"`
+	JournalBatchID       pulid.ID `json:"journalBatchId"       bun:"journal_batch_id,type:VARCHAR(100),notnull"                                           keel:"journal_batch_id"`
+	JournalEntryID       pulid.ID `json:"journalEntryId"       bun:"journal_entry_id,type:VARCHAR(100),notnull"                                           keel:"journal_entry_id"`
 	CreatedAt            int64    `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
 	JournalBatch *journalentry.JournalBatch `json:"journalBatch,omitempty" bun:"rel:belongs-to,join:journal_batch_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:journal_batch_id"`

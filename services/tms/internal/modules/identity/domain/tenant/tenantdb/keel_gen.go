@@ -1536,7 +1536,7 @@ var dashControlsTable = schema.Table{
 		{Name: "allow_settlement_disputes", Quoted: `"allow_settlement_disputes"`, Field: "AllowSettlementDisputes", Kind: schema.KindBool, Flags: 0, Label: `Allow Settlement Disputes`},
 		{Name: "allow_profile_document_upload", Quoted: `"allow_profile_document_upload"`, Field: "AllowProfileDocumentUpload", Kind: schema.KindBool, Flags: 0, Label: `Allow Profile Document Upload`},
 		{Name: "allow_contact_info_edit", Quoted: `"allow_contact_info_edit"`, Field: "AllowContactInfoEdit", Kind: schema.KindBool, Flags: 0, Label: `Allow Contact Info Edit`},
-		{Name: "allow_pto_requests", Quoted: `"allow_pto_requests"`, Field: "AllowPtoRequests", Kind: schema.KindBool, Flags: 0, Label: `Allow Pto Requests`},
+		{Name: "allow_pto_requests", Quoted: `"allow_pto_requests"`, Field: "AllowPtoRequests", Kind: schema.KindBool, Flags: 0, Label: `Allow PTO Requests`},
 		{Name: "send_credential_reminders", Quoted: `"send_credential_reminders"`, Field: "SendCredentialReminders", Kind: schema.KindBool, Flags: 0, Label: `Send Credential Reminders`},
 		{Name: "require_contact_change_approval", Quoted: `"require_contact_change_approval"`, Field: "RequireContactChangeApproval", Kind: schema.KindBool, Flags: 0, Label: `Require Contact Change Approval`, Doc: `RequireContactChangeApproval makes a driver's own contact edits wait on the office instead of landing straight on the record. Off keeps the behaviour every existing carrier relies on.`},
 		{Name: "driver_digest_cadence", Quoted: `"driver_digest_cadence"`, Field: "DriverDigestCadence", Kind: schema.KindString, Flags: 0, Label: `Driver Digest Cadence`, Doc: `DriverDigestCadence bundles a driver's obligations into one notice instead of one each. Immediate is the default so no carrier silently loses notices they already rely on.`, Enum: enumDriverDigestCadence[:]},
@@ -2516,7 +2516,7 @@ var organizationsTable = schema.Table{
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
 		{Name: "login_slug", Quoted: `"login_slug"`, Field: "LoginSlug", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Login Slug`},
-		{Name: "scac_code", Quoted: `"scac_code"`, Field: "ScacCode", Kind: schema.KindString, Flags: 0, Label: `Scac Code`},
+		{Name: "scac_code", Quoted: `"scac_code"`, Field: "ScacCode", Kind: schema.KindString, Flags: 0, Label: `SCAC Code`},
 		{Name: "dot_number", Quoted: `"dot_number"`, Field: "DOTNumber", Kind: schema.KindString, Flags: 0, Label: `DOT Number`},
 		{Name: "logo_url", Quoted: `"logo_url"`, Field: "LogoURL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Logo URL`},
 		{Name: "bucket_name", Quoted: `"bucket_name"`, Field: "BucketName", Kind: schema.KindString, Flags: 0, Label: `Bucket Name`},
@@ -5140,7 +5140,7 @@ var enumSSOProvider = [...]schema.EnumValue{
 }
 
 var enumSequenceType = [...]schema.EnumValue{
-	{Value: `pro_number`, Label: `Pro Number`},
+	{Value: `pro_number`, Label: `PRO Number`},
 	{Value: `consolidation`, Label: `Consolidation`},
 	{Value: `order`, Label: `Order`},
 	{Value: `invoice`, Label: `Invoice`},

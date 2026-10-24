@@ -25,21 +25,22 @@ var gLAccountPeriodBalancesTable = schema.Table{
 	Quoted: `"gl_account_balances_by_period"`,
 	Alias:  "gabbp",
 	Model:  "glbalance.GLAccountPeriodBalance",
-	Label:  `GL Account Period Balance`,
-	Plural: `GL Account Period Balances`,
-	Doc:    `GLAccountPeriodBalance is the trial balance, one row per account per period. It has no id column: its identity is the five-column key below, which is why it implements neither GetID nor GetCreatedAt and is not cursor-paginated.`,
+	Label:  `Account Period Balance`,
+	Plural: `Account Period Balances`,
+	Doc:    `Debits, credits and net change per GL account per fiscal period`,
+	Report: &schema.TableReport{Category: `Accounting`},
 	Columns: []schema.Column{
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "gl_account_id", Quoted: `"gl_account_id"`, Field: "GLAccountID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `GL Account ID`},
-		{Name: "fiscal_year_id", Quoted: `"fiscal_year_id"`, Field: "FiscalYearID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Fiscal Year ID`},
-		{Name: "fiscal_period_id", Quoted: `"fiscal_period_id"`, Field: "FiscalPeriodID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Fiscal Period ID`},
-		{Name: "period_debit_minor", Quoted: `"period_debit_minor"`, Field: "PeriodDebitMinor", Kind: schema.KindInt64, Flags: 0, Label: `Period Debit Minor`},
-		{Name: "period_credit_minor", Quoted: `"period_credit_minor"`, Field: "PeriodCreditMinor", Kind: schema.KindInt64, Flags: 0, Label: `Period Credit Minor`},
-		{Name: "net_change_minor", Quoted: `"net_change_minor"`, Field: "NetChangeMinor", Kind: schema.KindInt64, Flags: 0, Label: `Net Change Minor`},
-		{Name: "last_journal_entry_id", Quoted: `"last_journal_entry_id"`, Field: "LastJournalEntryID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Journal Entry ID`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "gl_account_id", Quoted: `"gl_account_id"`, Field: "GLAccountID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `GL Account ID`, Report: &reportDimStringHidden},
+		{Name: "fiscal_year_id", Quoted: `"fiscal_year_id"`, Field: "FiscalYearID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Fiscal Year ID`, Report: &reportDimStringHidden},
+		{Name: "fiscal_period_id", Quoted: `"fiscal_period_id"`, Field: "FiscalPeriodID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Fiscal Period ID`, Report: &reportDimStringHidden},
+		{Name: "period_debit_minor", Quoted: `"period_debit_minor"`, Field: "PeriodDebitMinor", Kind: schema.KindInt64, Flags: 0, Label: `Period Debit (Minor)`, Report: &reportMeasureInteger},
+		{Name: "period_credit_minor", Quoted: `"period_credit_minor"`, Field: "PeriodCreditMinor", Kind: schema.KindInt64, Flags: 0, Label: `Period Credit (Minor)`, Report: &reportMeasureInteger},
+		{Name: "net_change_minor", Quoted: `"net_change_minor"`, Field: "NetChangeMinor", Kind: schema.KindInt64, Flags: 0, Label: `Net Change (Minor)`, Report: &reportMeasureInteger},
+		{Name: "last_journal_entry_id", Quoted: `"last_journal_entry_id"`, Field: "LastJournalEntryID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Journal Entry ID`, Report: &reportDimStringHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "GLAccount", Alias: "ga", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `GL Account`},
@@ -235,3 +236,9 @@ func init() {
 	gLAccountPeriodBalancesTable.Relations[2].Target = fiscalperioddb.FiscalPeriodsSchema()
 	gLAccountPeriodBalancesTable.Relations[3].Target = journalentrydb.JournalEntriesSchema()
 }
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}

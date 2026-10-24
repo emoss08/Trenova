@@ -25,38 +25,39 @@ var (
 	_ pagination.CursorEntity        = (*Order)(nil)
 )
 
+// Commercial orders grouping one or more shipments
 type Order struct {
 	bun.BaseModel             `json:"-" bun:"table:orders,alias:ord"`
-	keel.Table                `keel:"orders"`
+	keel.Table                `                                      keel:"orders,report=Operations"`
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID            `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:ord_"`
-	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	CustomerID     pulid.ID            `json:"customerId"     bun:"customer_id,type:VARCHAR(100),notnull" keel:"customer_id"`
-	OwnerID        pulid.ID            `json:"ownerId"        bun:"owner_id,type:VARCHAR(100),nullzero" keel:"owner_id,nullzero"`
-	EnteredByID    pulid.ID            `json:"enteredById"    bun:"entered_by_id,type:VARCHAR(100),nullzero" keel:"entered_by_id,nullzero"`
-	Status         Status              `json:"status"         bun:"status,type:order_status_enum,notnull,default:'Draft'" keel:"status"`
-	OrderNumber    string              `json:"orderNumber"    bun:"order_number,type:VARCHAR(100),notnull" keel:"order_number"`
-	PONumber       string              `json:"poNumber"       bun:"po_number,type:VARCHAR(100),nullzero" keel:"po_number,nullzero"`
-	BOL            string              `json:"bol"            bun:"bol,type:VARCHAR(100),nullzero" keel:"bol,nullzero"`
-	CurrencyCode   string              `json:"currencyCode"   bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'" keel:"currency_code"`
-	QuotedAmount   decimal.NullDecimal `json:"quotedAmount"   bun:"quoted_amount,type:NUMERIC(19,4),nullzero" keel:"quoted_amount"`
-	BaseAmount     decimal.NullDecimal `json:"baseAmount"     bun:"base_amount,type:NUMERIC(19,4),nullzero" keel:"base_amount"`
-	TotalAmount    decimal.NullDecimal `json:"totalAmount"    bun:"total_amount,type:NUMERIC(19,4),notnull,default:0" keel:"total_amount"`
-	SearchVector   string              `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string              `json:"-"              bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
-	Version        int64               `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	ID             pulid.ID            `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:ord_"`
+	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
+	CustomerID     pulid.ID            `json:"customerId"     bun:"customer_id,type:VARCHAR(100),notnull"                                                keel:"customer_id"`
+	OwnerID        pulid.ID            `json:"ownerId"        bun:"owner_id,type:VARCHAR(100),nullzero"                                                  keel:"owner_id,nullzero"`
+	EnteredByID    pulid.ID            `json:"enteredById"    bun:"entered_by_id,type:VARCHAR(100),nullzero"                                             keel:"entered_by_id,nullzero"`
+	Status         Status              `json:"status"         bun:"status,type:order_status_enum,notnull,default:'Draft'"                                keel:"status"`
+	OrderNumber    string              `json:"orderNumber"    bun:"order_number,type:VARCHAR(100),notnull"                                               keel:"order_number"`
+	PONumber       string              `json:"poNumber"       bun:"po_number,type:VARCHAR(100),nullzero"                                                 keel:"po_number,nullzero"`
+	BOL            string              `json:"bol"            bun:"bol,type:VARCHAR(100),nullzero"                                                       keel:"bol,nullzero"`
+	CurrencyCode   string              `json:"currencyCode"   bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"                                  keel:"currency_code"`
+	QuotedAmount   decimal.NullDecimal `json:"quotedAmount"   bun:"quoted_amount,type:NUMERIC(19,4),nullzero"                                            keel:"quoted_amount,format=money"`
+	BaseAmount     decimal.NullDecimal `json:"baseAmount"     bun:"base_amount,type:NUMERIC(19,4),nullzero"                                              keel:"base_amount,format=money"`
+	TotalAmount    decimal.NullDecimal `json:"totalAmount"    bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"                                    keel:"total_amount,format=money"`
+	SearchVector   string              `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string              `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
+	Version        int64               `json:"version"        bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Customer     *customer.Customer   `json:"customer,omitempty"     bun:"rel:belongs-to,join:customer_id=id" keel:"belongs:customer_id"`
-	Owner        *tenant.User         `json:"owner,omitempty"        bun:"rel:belongs-to,join:owner_id=id" keel:"belongs:owner_id"`
-	EnteredBy    *tenant.User         `json:"enteredBy,omitempty"    bun:"rel:belongs-to,join:entered_by_id=id" keel:"belongs:entered_by_id"`
-	Shipments    []*shipment.Shipment `json:"shipments,omitempty"    bun:"rel:has-many,join:id=order_id" keel:"many:order_id"`
-	Charges      []*OrderCharge       `json:"charges,omitempty"      bun:"rel:has-many,join:id=order_id" keel:"many:order_id"`
+	Customer     *customer.Customer   `json:"customer,omitempty"     bun:"rel:belongs-to,join:customer_id=id"      keel:"belongs:customer_id"`
+	Owner        *tenant.User         `json:"owner,omitempty"        bun:"rel:belongs-to,join:owner_id=id"         keel:"belongs:owner_id,noreport"`
+	EnteredBy    *tenant.User         `json:"enteredBy,omitempty"    bun:"rel:belongs-to,join:entered_by_id=id"    keel:"belongs:entered_by_id,noreport"`
+	Shipments    []*shipment.Shipment `json:"shipments,omitempty"    bun:"rel:has-many,join:id=order_id"           keel:"many:order_id"`
+	Charges      []*OrderCharge       `json:"charges,omitempty"      bun:"rel:has-many,join:id=order_id"           keel:"many:order_id,noreport"`
 }
 
 func (o *Order) Validate(multiErr *errortypes.MultiError) {

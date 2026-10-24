@@ -17,31 +17,32 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*Assignment)(nil)
 
+// Equipment and driver assignments for a move
 type Assignment struct {
 	bun.BaseModel `json:"-" bun:"table:assignments,alias:a"`
-	keel.Table    `keel:"assignments"`
+	keel.Table    `                                         keel:"assignments,report=Operations"`
 
-	ID                pulid.ID         `json:"id"                          bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:asn_"`
-	BusinessUnitID    pulid.ID         `json:"businessUnitId"              bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID         `json:"organizationId"              bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ShipmentMoveID    pulid.ID         `json:"shipmentMoveId"              bun:"shipment_move_id,type:VARCHAR(100),notnull" keel:"shipment_move_id"`
-	PrimaryWorkerID   *pulid.ID        `json:"primaryWorkerId"             bun:"primary_worker_id,type:VARCHAR(100),nullzero" keel:"primary_worker_id"`
-	TractorID         *pulid.ID        `json:"tractorId"                   bun:"tractor_id,type:VARCHAR(100),nullzero" keel:"tractor_id"`
-	TrailerID         *pulid.ID        `json:"trailerId,omitempty"         bun:"trailer_id,type:VARCHAR(100),nullzero" keel:"trailer_id"`
-	SecondaryWorkerID *pulid.ID        `json:"secondaryWorkerId,omitempty" bun:"secondary_worker_id,type:VARCHAR(100),nullzero" keel:"secondary_worker_id"`
-	Status            AssignmentStatus `json:"status"                      bun:"status,type:assignment_status_enum,notnull,default:'New'" keel:"status"`
-	AckStatus         AssignmentAck    `json:"ackStatus"                   bun:"ack_status,type:VARCHAR(20),notnull,default:'Pending'" keel:"ack_status"`
-	AckAt             *int64           `json:"ackAt,omitempty"             bun:"ack_at,type:BIGINT,nullzero" keel:"ack_at"`
-	AckReason         string           `json:"ackReason,omitempty"         bun:"ack_reason,type:TEXT,nullzero" keel:"ack_reason,nullzero"`
-	ArchivedAt        *int64           `json:"archivedAt,omitempty"        bun:"archived_at,type:BIGINT,nullzero" keel:"archived_at"`
-	Version           int64            `json:"version"                     bun:"version,type:BIGINT" keel:"version,version"`
+	ID                pulid.ID         `json:"id"                          bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:asn_"`
+	BusinessUnitID    pulid.ID         `json:"businessUnitId"              bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID         `json:"organizationId"              bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	ShipmentMoveID    pulid.ID         `json:"shipmentMoveId"              bun:"shipment_move_id,type:VARCHAR(100),notnull"                                           keel:"shipment_move_id"`
+	PrimaryWorkerID   *pulid.ID        `json:"primaryWorkerId"             bun:"primary_worker_id,type:VARCHAR(100),nullzero"                                         keel:"primary_worker_id"`
+	TractorID         *pulid.ID        `json:"tractorId"                   bun:"tractor_id,type:VARCHAR(100),nullzero"                                                keel:"tractor_id"`
+	TrailerID         *pulid.ID        `json:"trailerId,omitempty"         bun:"trailer_id,type:VARCHAR(100),nullzero"                                                keel:"trailer_id"`
+	SecondaryWorkerID *pulid.ID        `json:"secondaryWorkerId,omitempty" bun:"secondary_worker_id,type:VARCHAR(100),nullzero"                                       keel:"secondary_worker_id"`
+	Status            AssignmentStatus `json:"status"                      bun:"status,type:assignment_status_enum,notnull,default:'New'"                             keel:"status"`
+	AckStatus         AssignmentAck    `json:"ackStatus"                   bun:"ack_status,type:VARCHAR(20),notnull,default:'Pending'"                                keel:"ack_status"`
+	AckAt             *int64           `json:"ackAt,omitempty"             bun:"ack_at,type:BIGINT,nullzero"                                                          keel:"ack_at"`
+	AckReason         string           `json:"ackReason,omitempty"         bun:"ack_reason,type:TEXT,nullzero"                                                        keel:"ack_reason,nullzero"`
+	ArchivedAt        *int64           `json:"archivedAt,omitempty"        bun:"archived_at,type:BIGINT,nullzero"                                                     keel:"archived_at"`
+	Version           int64            `json:"version"                     bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt         int64            `json:"createdAt"                   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt         int64            `json:"updatedAt"                   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	ShipmentMove    *ShipmentMove    `json:"shipmentMove,omitempty"    bun:"rel:belongs-to,join:shipment_move_id=id" keel:"belongs:shipment_move_id"`
-	Tractor         *tractor.Tractor `json:"tractor,omitempty"         bun:"rel:belongs-to,join:tractor_id=id" keel:"belongs:tractor_id"`
-	Trailer         *trailer.Trailer `json:"trailer,omitempty"         bun:"rel:belongs-to,join:trailer_id=id" keel:"belongs:trailer_id"`
-	PrimaryWorker   *worker.Worker   `json:"primaryWorker,omitempty"   bun:"rel:belongs-to,join:primary_worker_id=id" keel:"belongs:primary_worker_id"`
+	ShipmentMove    *ShipmentMove    `json:"shipmentMove,omitempty"    bun:"rel:belongs-to,join:shipment_move_id=id"    keel:"belongs:shipment_move_id"`
+	Tractor         *tractor.Tractor `json:"tractor,omitempty"         bun:"rel:belongs-to,join:tractor_id=id"          keel:"belongs:tractor_id"`
+	Trailer         *trailer.Trailer `json:"trailer,omitempty"         bun:"rel:belongs-to,join:trailer_id=id"          keel:"belongs:trailer_id"`
+	PrimaryWorker   *worker.Worker   `json:"primaryWorker,omitempty"   bun:"rel:belongs-to,join:primary_worker_id=id"   keel:"belongs:primary_worker_id"`
 	SecondaryWorker *worker.Worker   `json:"secondaryWorker,omitempty" bun:"rel:belongs-to,join:secondary_worker_id=id" keel:"belongs:secondary_worker_id"`
 }
 

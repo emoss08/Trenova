@@ -25,38 +25,40 @@ var locationsTable = schema.Table{
 	Model:  "location.Location",
 	Label:  `Location`,
 	Plural: `Locations`,
+	Doc:    `Physical pickup, delivery, and facility locations`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "location_category_id", Quoted: `"location_category_id"`, Field: "LocationCategoryID", Kind: schema.KindString, Flags: 0, Label: `Location Category ID`},
-		{Name: "state_id", Quoted: `"state_id"`, Field: "StateID", Kind: schema.KindString, Flags: 0, Label: `State ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
-		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`},
-		{Name: "address_line_1", Quoted: `"address_line_1"`, Field: "AddressLine1", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 1`},
-		{Name: "address_line_2", Quoted: `"address_line_2"`, Field: "AddressLine2", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 2`},
-		{Name: "city", Quoted: `"city"`, Field: "City", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `City`},
-		{Name: "postal_code", Quoted: `"postal_code"`, Field: "PostalCode", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Postal Code`},
-		{Name: "timezone", Quoted: `"timezone"`, Field: "Timezone", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Timezone`},
-		{Name: "place_id", Quoted: `"place_id"`, Field: "PlaceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Place ID`},
-		{Name: "is_geocoded", Quoted: `"is_geocoded"`, Field: "IsGeocoded", Kind: schema.KindBool, Flags: 0, Label: `Is Geocoded`},
-		{Name: "longitude", Quoted: `"longitude"`, Field: "Longitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Longitude`},
-		{Name: "latitude", Quoted: `"latitude"`, Field: "Latitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Latitude`},
-		{Name: "geom", Quoted: `"geom"`, Field: "Geom", Kind: schema.KindOther, Flags: schema.FlagReadOnly | schema.FlagNullable, Label: `Geom`},
-		{Name: "geofence_type", Quoted: `"geofence_type"`, Field: "GeofenceType", Kind: schema.KindString, Flags: 0, Label: `Geofence Type`, Enum: enumGeofenceType[:]},
-		{Name: "geofence_radius_meters", Quoted: `"geofence_radius_meters"`, Field: "GeofenceRadiusMeters", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Geofence Radius Meters`},
-		{Name: "geofence_geometry", Quoted: `"geofence_geometry"`, Field: "GeofenceGeometry", Kind: schema.KindOther, Flags: schema.FlagReadOnly | schema.FlagNullable, Label: `Geofence Geometry`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "location_category_id", Quoted: `"location_category_id"`, Field: "LocationCategoryID", Kind: schema.KindString, Flags: 0, Label: `Location Category ID`, Report: &reportDimStringHidden},
+		{Name: "state_id", Quoted: `"state_id"`, Field: "StateID", Kind: schema.KindString, Flags: 0, Label: `State ID`, Report: &reportDimString},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`, Report: &reportDimString},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Name`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, Report: &reportDimString},
+		{Name: "address_line_1", Quoted: `"address_line_1"`, Field: "AddressLine1", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 1`, Report: &reportDimString},
+		{Name: "address_line_2", Quoted: `"address_line_2"`, Field: "AddressLine2", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 2`, Report: &reportDimString},
+		{Name: "city", Quoted: `"city"`, Field: "City", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `City`, Report: &reportDimString},
+		{Name: "postal_code", Quoted: `"postal_code"`, Field: "PostalCode", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Postal Code`, Report: &reportDimString},
+		{Name: "timezone", Quoted: `"timezone"`, Field: "Timezone", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Timezone`, Report: &reportDimString},
+		{Name: "place_id", Quoted: `"place_id"`, Field: "PlaceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Place ID`, Report: &reportDimString},
+		{Name: "is_geocoded", Quoted: `"is_geocoded"`, Field: "IsGeocoded", Kind: schema.KindBool, Flags: 0, Label: `Is Geocoded`, Report: &reportDimBool},
+		{Name: "longitude", Quoted: `"longitude"`, Field: "Longitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Longitude`, Report: &reportDimFloat},
+		{Name: "latitude", Quoted: `"latitude"`, Field: "Latitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Latitude`, Report: &reportDimFloat},
+		{Name: "geom", Quoted: `"geom"`, Field: "Geom", Kind: schema.KindOther, Flags: schema.FlagReadOnly | schema.FlagNullable, Label: `Geom`, Report: &reportDimOther},
+		{Name: "geofence_type", Quoted: `"geofence_type"`, Field: "GeofenceType", Kind: schema.KindString, Flags: 0, Label: `Geofence Type`, Enum: enumGeofenceType[:], Report: &reportDimEnum},
+		{Name: "geofence_radius_meters", Quoted: `"geofence_radius_meters"`, Field: "GeofenceRadiusMeters", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Geofence Radius Meters`, Report: &reportMeasureFloat},
+		{Name: "geofence_geometry", Quoted: `"geofence_geometry"`, Field: "GeofenceGeometry", Kind: schema.KindOther, Flags: schema.FlagReadOnly | schema.FlagNullable, Label: `Geofence Geometry`, Report: &reportDimOther},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
 	},
 	Relations: []schema.Relation{
-		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `State`},
-		{Name: "LocationCategory", Alias: "lc", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Location Category`},
+		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `State`, NoReport: true},
+		{Name: "LocationCategory", Alias: "lc", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Category`},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -393,3 +395,23 @@ var enumGeofenceType = [...]schema.EnumValue{
 	{Value: `rectangle`, Label: `Rectangle`},
 	{Value: `draw`, Label: `Draw`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimFloat = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueFloat, Aggs: schema.AggsNumeric}
+
+var reportDimOther = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueOther, Aggs: schema.AggsCount}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureFloat = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueFloat, Aggs: schema.AggsNumeric}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}

@@ -21,31 +21,32 @@ var (
 	_ validationframework.TenantedEntity = (*SettlementBatch)(nil)
 )
 
+// A pay run and its totals
 type SettlementBatch struct {
 	bun.BaseModel             `bun:"table:driver_settlement_batches,alias:dstlb" json:"-"`
-	keel.Table                `keel:"driver_settlement_batches"`
+	keel.Table                `                                                           keel:"driver_settlement_batches,report=Payroll"`
 	pagination.CursorValueSet `bun:",embed"                                      json:"-"`
 
-	ID              pulid.ID    `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dstlb_"`
-	BusinessUnitID  pulid.ID    `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID    `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	Status          BatchStatus `json:"status"          bun:"status,type:VARCHAR(50),notnull,default:'Open'" keel:"status"`
-	Name            string      `json:"name"            bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	PeriodStart     int64       `json:"periodStart"     bun:"period_start,type:BIGINT,notnull" keel:"period_start"`
-	PeriodEnd       int64       `json:"periodEnd"       bun:"period_end,type:BIGINT,notnull" keel:"period_end"`
-	PayDate         int64       `json:"payDate"         bun:"pay_date,type:BIGINT,notnull" keel:"pay_date"`
-	SettlementCount int         `json:"settlementCount" bun:"settlement_count,type:INTEGER,notnull" keel:"settlement_count"`
-	ExceptionCount  int         `json:"exceptionCount"  bun:"exception_count,type:INTEGER,notnull" keel:"exception_count"`
-	TotalGrossMinor int64       `json:"totalGrossMinor" bun:"total_gross_minor,type:BIGINT,notnull" keel:"total_gross_minor"`
-	TotalNetMinor   int64       `json:"totalNetMinor"   bun:"total_net_minor,type:BIGINT,notnull" keel:"total_net_minor"`
-	CurrencyCode    string      `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'" keel:"currency_code"`
-	Notes           string      `json:"notes"           bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	GeneratedByID   pulid.ID    `json:"generatedById"   bun:"generated_by_id,type:VARCHAR(100),nullzero" keel:"generated_by_id,nullzero"`
-	GeneratedAt     *int64      `json:"generatedAt"     bun:"generated_at,type:BIGINT,nullzero" keel:"generated_at"`
-	CompletedAt     *int64      `json:"completedAt"     bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
-	CanceledByID    pulid.ID    `json:"canceledById"    bun:"canceled_by_id,type:VARCHAR(100),nullzero" keel:"canceled_by_id,nullzero"`
-	CanceledAt      *int64      `json:"canceledAt"      bun:"canceled_at,type:BIGINT,nullzero" keel:"canceled_at"`
-	Version         int64       `json:"version"         bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	ID              pulid.ID    `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:dstlb_"`
+	BusinessUnitID  pulid.ID    `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID    `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
+	Status          BatchStatus `json:"status"          bun:"status,type:VARCHAR(50),notnull,default:'Open'"                                       keel:"status"`
+	Name            string      `json:"name"            bun:"name,type:VARCHAR(100),notnull"                                                       keel:"name,label=Batch Name"`
+	PeriodStart     int64       `json:"periodStart"     bun:"period_start,type:BIGINT,notnull"                                                     keel:"period_start,type=epoch"`
+	PeriodEnd       int64       `json:"periodEnd"       bun:"period_end,type:BIGINT,notnull"                                                       keel:"period_end,type=epoch"`
+	PayDate         int64       `json:"payDate"         bun:"pay_date,type:BIGINT,notnull"                                                         keel:"pay_date"`
+	SettlementCount int         `json:"settlementCount" bun:"settlement_count,type:INTEGER,notnull"                                                keel:"settlement_count,label=Settlements,format=count"`
+	ExceptionCount  int         `json:"exceptionCount"  bun:"exception_count,type:INTEGER,notnull"                                                 keel:"exception_count,label=Exceptions,format=count"`
+	TotalGrossMinor int64       `json:"totalGrossMinor" bun:"total_gross_minor,type:BIGINT,notnull"                                                keel:"total_gross_minor,label=Total Gross (Minor)"`
+	TotalNetMinor   int64       `json:"totalNetMinor"   bun:"total_net_minor,type:BIGINT,notnull"                                                  keel:"total_net_minor,label=Total Net (Minor)"`
+	CurrencyCode    string      `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"                                  keel:"currency_code,label=Currency"`
+	Notes           string      `json:"notes"           bun:"notes,type:TEXT,nullzero"                                                             keel:"notes,nullzero"`
+	GeneratedByID   pulid.ID    `json:"generatedById"   bun:"generated_by_id,type:VARCHAR(100),nullzero"                                           keel:"generated_by_id,nullzero"`
+	GeneratedAt     *int64      `json:"generatedAt"     bun:"generated_at,type:BIGINT,nullzero"                                                    keel:"generated_at"`
+	CompletedAt     *int64      `json:"completedAt"     bun:"completed_at,type:BIGINT,nullzero"                                                    keel:"completed_at"`
+	CanceledByID    pulid.ID    `json:"canceledById"    bun:"canceled_by_id,type:VARCHAR(100),nullzero"                                            keel:"canceled_by_id,nullzero"`
+	CanceledAt      *int64      `json:"canceledAt"      bun:"canceled_at,type:BIGINT,nullzero"                                                     keel:"canceled_at"`
+	Version         int64       `json:"version"         bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
 	CreatedAt       int64       `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt       int64       `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 

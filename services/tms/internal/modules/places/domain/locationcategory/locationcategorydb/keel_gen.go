@@ -21,24 +21,26 @@ var locationCategoriesTable = schema.Table{
 	Model:  "locationcategory.LocationCategory",
 	Label:  `Location Category`,
 	Plural: `Location Categories`,
+	Doc:    `Classification of locations`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`},
-		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, Enum: enumCategory[:]},
-		{Name: "facility_type", Quoted: `"facility_type"`, Field: "FacilityType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Facility Type`, Enum: enumFacilityType[:]},
-		{Name: "color", Quoted: `"color"`, Field: "Color", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Color`},
-		{Name: "has_secure_parking", Quoted: `"has_secure_parking"`, Field: "HasSecureParking", Kind: schema.KindBool, Flags: 0, Label: `Has Secure Parking`},
-		{Name: "requires_appointment", Quoted: `"requires_appointment"`, Field: "RequiresAppointment", Kind: schema.KindBool, Flags: 0, Label: `Requires Appointment`},
-		{Name: "allows_overnight", Quoted: `"allows_overnight"`, Field: "AllowsOvernight", Kind: schema.KindBool, Flags: 0, Label: `Allows Overnight`},
-		{Name: "has_restroom", Quoted: `"has_restroom"`, Field: "HasRestroom", Kind: schema.KindBool, Flags: 0, Label: `Has Restroom`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, Report: &reportDimString},
+		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, Enum: enumCategory[:], Report: &reportDimEnum},
+		{Name: "facility_type", Quoted: `"facility_type"`, Field: "FacilityType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Facility Type`, Enum: enumFacilityType[:], Report: &reportDimEnum},
+		{Name: "color", Quoted: `"color"`, Field: "Color", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Color`, Report: &reportDimString},
+		{Name: "has_secure_parking", Quoted: `"has_secure_parking"`, Field: "HasSecureParking", Kind: schema.KindBool, Flags: 0, Label: `Has Secure Parking`, Report: &reportDimBool},
+		{Name: "requires_appointment", Quoted: `"requires_appointment"`, Field: "RequiresAppointment", Kind: schema.KindBool, Flags: 0, Label: `Requires Appointment`, Report: &reportDimBool},
+		{Name: "allows_overnight", Quoted: `"allows_overnight"`, Field: "AllowsOvernight", Kind: schema.KindBool, Flags: 0, Label: `Allows Overnight`, Report: &reportDimBool},
+		{Name: "has_restroom", Quoted: `"has_restroom"`, Field: "HasRestroom", Kind: schema.KindBool, Flags: 0, Label: `Has Restroom`, Report: &reportDimBool},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -259,6 +261,20 @@ var enumFacilityType = [...]schema.EnumValue{
 	{Value: `HazmatFacility`, Label: `Hazmat Facility`},
 	{Value: `IntermodalFacility`, Label: `Intermodal Facility`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // CategoryCol is a column of locationcategory.Category values.
 type CategoryCol struct{ keel.StringCol }

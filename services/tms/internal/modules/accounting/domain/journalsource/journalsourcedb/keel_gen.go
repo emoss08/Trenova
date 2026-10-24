@@ -21,22 +21,23 @@ var sourcesTable = schema.Table{
 	Quoted: `"journal_sources"`,
 	Alias:  "js",
 	Model:  "journalsource.Source",
-	Label:  `Source`,
-	Plural: `Sources`,
-	Doc:    `Source is the bridge between an operational event and the journal it produced: it answers which shipment, settlement or payment is behind a given entry. SourceEventType and Status are varchar rather than database enums and their value sets are extended by later migrations, so they stay strings.`,
+	Label:  `Journal Source`,
+	Plural: `Journal Sources`,
+	Doc:    `What operational event produced each journal entry`,
+	Report: &schema.TableReport{Category: `Accounting`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "source_object_type", Quoted: `"source_object_type"`, Field: "SourceObjectType", Kind: schema.KindString, Flags: 0, Label: `Source Object Type`},
-		{Name: "source_object_id", Quoted: `"source_object_id"`, Field: "SourceObjectID", Kind: schema.KindString, Flags: 0, Label: `Source Object ID`},
-		{Name: "source_event_type", Quoted: `"source_event_type"`, Field: "SourceEventType", Kind: schema.KindString, Flags: 0, Label: `Source Event Type`},
-		{Name: "source_document_number", Quoted: `"source_document_number"`, Field: "SourceDocumentNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Source Document Number`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`},
-		{Name: "idempotency_key", Quoted: `"idempotency_key"`, Field: "IdempotencyKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Idempotency Key`},
-		{Name: "journal_batch_id", Quoted: `"journal_batch_id"`, Field: "JournalBatchID", Kind: schema.KindString, Flags: 0, Label: `Journal Batch ID`},
-		{Name: "journal_entry_id", Quoted: `"journal_entry_id"`, Field: "JournalEntryID", Kind: schema.KindString, Flags: 0, Label: `Journal Entry ID`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "source_object_type", Quoted: `"source_object_type"`, Field: "SourceObjectType", Kind: schema.KindString, Flags: 0, Label: `Source Object`, Report: &reportDimString},
+		{Name: "source_object_id", Quoted: `"source_object_id"`, Field: "SourceObjectID", Kind: schema.KindString, Flags: 0, Label: `Source Object ID`, Report: &reportDimString},
+		{Name: "source_event_type", Quoted: `"source_event_type"`, Field: "SourceEventType", Kind: schema.KindString, Flags: 0, Label: `Source Event`, Report: &reportDimString},
+		{Name: "source_document_number", Quoted: `"source_document_number"`, Field: "SourceDocumentNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Source Document`, Report: &reportDimString},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Report: &reportDimString},
+		{Name: "idempotency_key", Quoted: `"idempotency_key"`, Field: "IdempotencyKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Idempotency Key`, Report: &reportDimStringHidden},
+		{Name: "journal_batch_id", Quoted: `"journal_batch_id"`, Field: "JournalBatchID", Kind: schema.KindString, Flags: 0, Label: `Journal Batch ID`, Report: &reportDimStringHidden},
+		{Name: "journal_entry_id", Quoted: `"journal_entry_id"`, Field: "JournalEntryID", Kind: schema.KindString, Flags: 0, Label: `Journal Entry ID`, Report: &reportDimStringHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "JournalBatch", Alias: "jb", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `Journal Batch`},
@@ -225,3 +226,9 @@ func init() {
 	sourcesTable.Relations[0].Target = journalentrydb.JournalBatchesSchema()
 	sourcesTable.Relations[1].Target = journalentrydb.JournalEntriesSchema()
 }
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}

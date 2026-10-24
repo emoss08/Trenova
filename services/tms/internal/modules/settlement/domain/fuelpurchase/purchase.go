@@ -38,53 +38,54 @@ var (
 	_ validationframework.TenantedEntity = (*FuelPurchase)(nil)
 )
 
+// Fuel bought at the pump or on a fuel card
 type FuelPurchase struct {
 	bun.BaseModel             `bun:"table:fuel_purchases,alias:fpur" json:"-"`
-	keel.Table                `keel:"fuel_purchases"`
+	keel.Table                `                                               keel:"fuel_purchases,report=Equipment"`
 	pagination.CursorValueSet `bun:",embed"                          json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:fpur_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:fpur_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
 
-	TractorID      pulid.ID  `json:"tractorId"      bun:"tractor_id,type:VARCHAR(100),notnull" keel:"tractor_id"`
-	WorkerID       *pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),nullzero" keel:"worker_id"`
+	TractorID      pulid.ID  `json:"tractorId"      bun:"tractor_id,type:VARCHAR(100),notnull"      keel:"tractor_id"`
+	WorkerID       *pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),nullzero"      keel:"worker_id"`
 	JurisdictionID pulid.ID  `json:"jurisdictionId" bun:"jurisdiction_id,type:VARCHAR(100),notnull" keel:"jurisdiction_id"`
-	FuelCardID     *pulid.ID `json:"fuelCardId"     bun:"fuel_card_id,type:VARCHAR(100),nullzero" keel:"fuel_card_id"`
-	CardLastFour   string    `json:"cardLastFour"   bun:"card_last_four,type:VARCHAR(4),nullzero" keel:"card_last_four,nullzero"`
+	FuelCardID     *pulid.ID `json:"fuelCardId"     bun:"fuel_card_id,type:VARCHAR(100),nullzero"   keel:"fuel_card_id"`
+	CardLastFour   string    `json:"cardLastFour"   bun:"card_last_four,type:VARCHAR(4),nullzero"   keel:"card_last_four,nullzero"`
 
-	PurchasedAt int64  `json:"purchasedAt" bun:"purchased_at,type:BIGINT,notnull" keel:"purchased_at"`
-	Vendor      string `json:"vendor"      bun:"vendor,type:VARCHAR(150),nullzero" keel:"vendor,nullzero"`
+	PurchasedAt int64  `json:"purchasedAt" bun:"purchased_at,type:BIGINT,notnull"       keel:"purchased_at"`
+	Vendor      string `json:"vendor"      bun:"vendor,type:VARCHAR(150),nullzero"      keel:"vendor,nullzero"`
 	VendorCity  string `json:"vendorCity"  bun:"vendor_city,type:VARCHAR(100),nullzero" keel:"vendor_city,nullzero"`
 
-	FuelType     domaintypes.IFTAFuelType `json:"fuelType"     bun:"fuel_type,type:ifta_fuel_type_enum,notnull" keel:"fuel_type"`
-	Quantity     decimal.Decimal          `json:"quantity"     bun:"quantity,type:NUMERIC(12,3),notnull" keel:"quantity"`
+	FuelType     domaintypes.IFTAFuelType `json:"fuelType"     bun:"fuel_type,type:ifta_fuel_type_enum,notnull"                          keel:"fuel_type"`
+	Quantity     decimal.Decimal          `json:"quantity"     bun:"quantity,type:NUMERIC(12,3),notnull"                                 keel:"quantity"`
 	QuantityUnit QuantityUnit             `json:"quantityUnit" bun:"quantity_unit,type:fuel_quantity_unit_enum,notnull,default:'Gallon'" keel:"quantity_unit"`
-	Gallons      decimal.Decimal          `json:"gallons"      bun:"gallons,type:NUMERIC(12,3),notnull" keel:"gallons"`
-	UnitPrice    decimal.NullDecimal      `json:"unitPrice"    bun:"unit_price,type:NUMERIC(19,4),nullzero" keel:"unit_price"`
+	Gallons      decimal.Decimal          `json:"gallons"      bun:"gallons,type:NUMERIC(12,3),notnull"                                  keel:"gallons"`
+	UnitPrice    decimal.NullDecimal      `json:"unitPrice"    bun:"unit_price,type:NUMERIC(19,4),nullzero"                              keel:"unit_price"`
 
-	TotalAmountMinor int64  `json:"totalAmountMinor" bun:"total_amount_minor,type:BIGINT,notnull" keel:"total_amount_minor"`
-	CurrencyCode     string `json:"currencyCode"     bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'" keel:"currency_code"`
-	Odometer         *int64 `json:"odometer"         bun:"odometer,type:BIGINT,nullzero" keel:"odometer"`
+	TotalAmountMinor int64  `json:"totalAmountMinor" bun:"total_amount_minor,type:BIGINT,notnull"              keel:"total_amount_minor,label=Total Amount (Minor)"`
+	CurrencyCode     string `json:"currencyCode"     bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'" keel:"currency_code,label=Currency"`
+	Odometer         *int64 `json:"odometer"         bun:"odometer,type:BIGINT,nullzero"                       keel:"odometer,format=distance"`
 
-	TransactionReference string         `json:"transactionReference" bun:"transaction_reference,type:VARCHAR(150),nullzero" keel:"transaction_reference,nullzero"`
+	TransactionReference string         `json:"transactionReference" bun:"transaction_reference,type:VARCHAR(150),nullzero"               keel:"transaction_reference,nullzero"`
 	Source               PurchaseSource `json:"source"               bun:"source,type:fuel_purchase_source_enum,notnull,default:'Manual'" keel:"source"`
-	ImportBatchID        *pulid.ID      `json:"importBatchId"        bun:"import_batch_id,type:VARCHAR(100),nullzero" keel:"import_batch_id"`
-	TaxPaid              bool           `json:"taxPaid"              bun:"tax_paid,type:BOOLEAN,notnull" keel:"tax_paid"`
-	Notes                string         `json:"notes"                bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	CreatedByID          pulid.ID       `json:"createdById"          bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
+	ImportBatchID        *pulid.ID      `json:"importBatchId"        bun:"import_batch_id,type:VARCHAR(100),nullzero"                     keel:"import_batch_id"`
+	TaxPaid              bool           `json:"taxPaid"              bun:"tax_paid,type:BOOLEAN,notnull"                                  keel:"tax_paid"`
+	Notes                string         `json:"notes"                bun:"notes,type:TEXT,nullzero"                                       keel:"notes,nullzero"`
+	CreatedByID          pulid.ID       `json:"createdById"          bun:"created_by_id,type:VARCHAR(100),nullzero"                       keel:"created_by_id,nullzero"`
 
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
-	Version      int64  `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Tractor      *tractor.Tractor   `json:"tractor,omitempty"      bun:"rel:belongs-to,join:tractor_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:tractor_id"`
-	Worker       *worker.Worker     `json:"worker,omitempty"       bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
-	FuelCard     *FuelCard          `json:"fuelCard,omitempty"     bun:"rel:belongs-to,join:fuel_card_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:fuel_card_id"`
-	Jurisdiction *ifta.Jurisdiction `json:"jurisdiction,omitempty" bun:"rel:belongs-to,join:jurisdiction_id=id" keel:"belongs:jurisdiction_id"`
-	ImportBatch  *ImportBatch       `json:"importBatch,omitempty"  bun:"rel:belongs-to,join:import_batch_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:import_batch_id"`
+	Tractor      *tractor.Tractor   `json:"tractor,omitempty"      bun:"rel:belongs-to,join:tractor_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"      keel:"belongs:tractor_id"`
+	Worker       *worker.Worker     `json:"worker,omitempty"       bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"       keel:"belongs:worker_id,label=Driver"`
+	FuelCard     *FuelCard          `json:"fuelCard,omitempty"     bun:"rel:belongs-to,join:fuel_card_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"    keel:"belongs:fuel_card_id"`
+	Jurisdiction *ifta.Jurisdiction `json:"jurisdiction,omitempty" bun:"rel:belongs-to,join:jurisdiction_id=id"                                                                             keel:"belongs:jurisdiction_id,noreport"`
+	ImportBatch  *ImportBatch       `json:"importBatch,omitempty"  bun:"rel:belongs-to,join:import_batch_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:import_batch_id,noreport"`
 }
 
 func (p *FuelPurchase) Normalize() {

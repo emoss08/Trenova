@@ -23,32 +23,33 @@ var factoringCompaniesTable = schema.Table{
 	Model:  "factoringcompany.FactoringCompany",
 	Label:  `Factoring Company`,
 	Plural: `Factoring Companies`,
-	Doc:    `FactoringCompany is a factor customers' invoices can be assigned to.`,
+	Doc:    `Factors that buy customer invoices and the remittance details invoices carry to them`,
+	Report: &schema.TableReport{Category: `Parties`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
-		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
-		{Name: "address_line_1", Quoted: `"address_line_1"`, Field: "AddressLine1", Kind: schema.KindString, Flags: 0, Label: `Address Line 1`},
-		{Name: "address_line_2", Quoted: `"address_line_2"`, Field: "AddressLine2", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 2`},
-		{Name: "city", Quoted: `"city"`, Field: "City", Kind: schema.KindString, Flags: 0, Label: `City`},
-		{Name: "state_id", Quoted: `"state_id"`, Field: "StateID", Kind: schema.KindString, Flags: 0, Label: `State ID`},
-		{Name: "postal_code", Quoted: `"postal_code"`, Field: "PostalCode", Kind: schema.KindString, Flags: 0, Label: `Postal Code`},
-		{Name: "email", Quoted: `"email"`, Field: "Email", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Email`},
-		{Name: "phone_number", Quoted: `"phone_number"`, Field: "PhoneNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Phone Number`},
-		{Name: "remittance_instructions", Quoted: `"remittance_instructions"`, Field: "RemittanceInstructions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Remittance Instructions`, Doc: `RemittanceInstructions say how the factor is paid: its bank, lockbox or ACH details. They print under its address wherever an invoice assigned to it says where to pay.`},
-		{Name: "notice_of_assignment", Quoted: `"notice_of_assignment"`, Field: "NoticeOfAssignment", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notice Of Assignment`, Doc: `NoticeOfAssignment is the notice printed on every invoice assigned to the factor. Blank prints the standard notice.`},
-		{Name: "non_recourse", Quoted: `"non_recourse"`, Field: "NonRecourse", Kind: schema.KindBool, Flags: 0, Label: `Non Recourse`, Doc: `NonRecourse is true when the factor buys invoices outright and carries the credit risk. Its invoices then belong to the factor: they leave the collections worklist and stop counting toward the customer's credit exposure. With recourse, the default, an unpaid invoice comes back, so it is still collected and still counts.`},
-		{Name: "notes", Quoted: `"notes"`, Field: "Notes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notes`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`, Report: &reportDimString},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, Report: &reportDimString},
+		{Name: "address_line_1", Quoted: `"address_line_1"`, Field: "AddressLine1", Kind: schema.KindString, Flags: 0, Label: `Address Line 1`, Report: &reportDimString},
+		{Name: "address_line_2", Quoted: `"address_line_2"`, Field: "AddressLine2", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 2`, Report: &reportDimString},
+		{Name: "city", Quoted: `"city"`, Field: "City", Kind: schema.KindString, Flags: 0, Label: `City`, Report: &reportDimString},
+		{Name: "state_id", Quoted: `"state_id"`, Field: "StateID", Kind: schema.KindString, Flags: 0, Label: `State ID`, Report: &reportDimString},
+		{Name: "postal_code", Quoted: `"postal_code"`, Field: "PostalCode", Kind: schema.KindString, Flags: 0, Label: `Postal Code`, Report: &reportDimString},
+		{Name: "email", Quoted: `"email"`, Field: "Email", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Email`, Report: &reportDimString},
+		{Name: "phone_number", Quoted: `"phone_number"`, Field: "PhoneNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Phone Number`, Report: &reportDimString},
+		{Name: "remittance_instructions", Quoted: `"remittance_instructions"`, Field: "RemittanceInstructions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Remittance Instructions`, Report: &reportDimStringHidden},
+		{Name: "notice_of_assignment", Quoted: `"notice_of_assignment"`, Field: "NoticeOfAssignment", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notice Of Assignment`, Report: &reportDimStringHidden},
+		{Name: "non_recourse", Quoted: `"non_recourse"`, Field: "NonRecourse", Kind: schema.KindBool, Flags: 0, Label: `Non-Recourse`, Report: &reportDimBool},
+		{Name: "notes", Quoted: `"notes"`, Field: "Notes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notes`, Report: &reportDimStringHidden},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
-		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `State`},
+		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `State`, NoReport: true},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -309,3 +310,17 @@ var enumDomaintypesStatus = [...]schema.EnumValue{
 	{Value: `Active`, Label: `Active`},
 	{Value: `Inactive`, Label: `Inactive`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}

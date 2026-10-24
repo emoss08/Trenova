@@ -17,52 +17,41 @@ var _ bun.BeforeAppendModelHook = (*RateAgreementAccessorial)(nil)
 
 const maxConditionLength = 20000
 
-// RateAgreementAccessorial is a contract's price for one accessorial.
-//
-// Organizations already define accessorials once, centrally, with a default
-// price. What a contract negotiates is a different price for the same charge —
-// or free hours before it starts, or a cap, or a waiver. This row carries that
-// negotiation, and it is why the rate confirmation and the invoice can finally
-// agree: both read the accessorial's price from the same contract.
+// The negotiated price of each accessorial under a contract
 type RateAgreementAccessorial struct {
 	bun.BaseModel `bun:"table:rate_agreement_accessorials,alias:raga" json:"-"`
-	keel.Table    `keel:"rate_agreement_accessorials"`
+	keel.Table    `                                                            keel:"rate_agreement_accessorials,report=Billing,label=Contract Accessorial"`
 
-	ID                  pulid.ID `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:raga_"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	RateAgreementID     pulid.ID `json:"rateAgreementId"     bun:"rate_agreement_id,type:VARCHAR(100),notnull" keel:"rate_agreement_id"`
+	ID                  pulid.ID `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"                 keel:"id,pk,autoid:raga_"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"    keel:"organization_id,pk,tenant"`
+	RateAgreementID     pulid.ID `json:"rateAgreementId"     bun:"rate_agreement_id,type:VARCHAR(100),notnull"     keel:"rate_agreement_id"`
 	AccessorialChargeID pulid.ID `json:"accessorialChargeId" bun:"accessorial_charge_id,type:VARCHAR(100),notnull" keel:"accessorial_charge_id"`
 
 	Method   accessorialcharge.Method   `json:"method"   bun:"method,type:accessorial_method_enum,notnull" keel:"method"`
-	RateUnit accessorialcharge.RateUnit `json:"rateUnit" bun:"rate_unit,type:rate_unit_enum,nullzero" keel:"rate_unit,nullzero"`
-	Amount   decimal.Decimal            `json:"amount"   bun:"amount,type:NUMERIC(19,4),notnull,default:0" keel:"amount"`
+	RateUnit accessorialcharge.RateUnit `json:"rateUnit" bun:"rate_unit,type:rate_unit_enum,nullzero"      keel:"rate_unit,nullzero"`
+	Amount   decimal.Decimal            `json:"amount"   bun:"amount,type:NUMERIC(19,4),notnull,default:0" keel:"amount,format=money"`
 
-	// Waived prices the accessorial at nothing for this contract. It is a
-	// distinct state from an amount of zero, because a waiver has to survive a
-	// later change to the organization's default price.
 	Waived bool `json:"waived" bun:"waived,type:BOOLEAN,notnull,default:false" keel:"waived"`
 
 	AutoApply bool `json:"autoApply" bun:"auto_apply,type:BOOLEAN,notnull,default:false" keel:"auto_apply"`
 
 	Condition string `json:"condition" bun:"condition,type:TEXT,nullzero" keel:"condition,nullzero"`
 
-	// FreeUnits are granted before the charge starts counting, which is how
-	// detention and storage allowances are written.
-	FreeUnits *int16              `json:"freeUnits" bun:"free_units,type:SMALLINT,nullzero" keel:"free_units"`
-	MaxAmount decimal.NullDecimal `json:"maxAmount" bun:"max_amount,type:NUMERIC(19,4),nullzero" keel:"max_amount"`
+	FreeUnits *int16              `json:"freeUnits" bun:"free_units,type:SMALLINT,nullzero"      keel:"free_units,format=count"`
+	MaxAmount decimal.NullDecimal `json:"maxAmount" bun:"max_amount,type:NUMERIC(19,4),nullzero" keel:"max_amount,label=Maximum Amount,format=money"`
 
-	ServiceTypeIDs  []pulid.ID `json:"serviceTypeIds"  bun:"service_type_ids,type:JSONB,nullzero" keel:"service_type_ids,jsonb,nullzero"`
+	ServiceTypeIDs  []pulid.ID `json:"serviceTypeIds"  bun:"service_type_ids,type:JSONB,nullzero"  keel:"service_type_ids,jsonb,nullzero"`
 	ShipmentTypeIDs []pulid.ID `json:"shipmentTypeIds" bun:"shipment_type_ids,type:JSONB,nullzero" keel:"shipment_type_ids,jsonb,nullzero"`
 
-	EffectiveFrom *int64 `json:"effectiveFrom" bun:"effective_from,type:BIGINT,nullzero" keel:"effective_from"`
-	EffectiveTo   *int64 `json:"effectiveTo"   bun:"effective_to,type:BIGINT,nullzero" keel:"effective_to"`
+	EffectiveFrom *int64 `json:"effectiveFrom" bun:"effective_from,type:BIGINT,nullzero" keel:"effective_from,type=epoch"`
+	EffectiveTo   *int64 `json:"effectiveTo"   bun:"effective_to,type:BIGINT,nullzero"   keel:"effective_to,type=epoch"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Agreement         *RateAgreement                       `json:"-"                           bun:"rel:belongs-to,join:rate_agreement_id=id" keel:"belongs:rate_agreement_id"`
+	Agreement         *RateAgreement                       `json:"-"                           bun:"rel:belongs-to,join:rate_agreement_id=id"     keel:"belongs:rate_agreement_id"`
 	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" bun:"rel:belongs-to,join:accessorial_charge_id=id" keel:"belongs:accessorial_charge_id"`
 }
 

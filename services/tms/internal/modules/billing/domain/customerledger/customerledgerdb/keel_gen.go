@@ -25,26 +25,27 @@ var customerLedgerEntriesTable = schema.Table{
 	Model:  "customerledger.CustomerLedgerEntry",
 	Label:  `Customer Ledger Entry`,
 	Plural: `Customer Ledger Entries`,
-	Doc:    `CustomerLedgerEntry is the AR subledger: one signed row per document that moved a customer's balance. Aging is built from these rather than from invoices, because credits and unapplied cash never appear on an invoice.`,
+	Doc:    `The AR subledger — every document that moved a customer's balance`,
+	Report: &schema.TableReport{Category: `Accounting`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: 0, Label: `Customer ID`},
-		{Name: "source_object_type", Quoted: `"source_object_type"`, Field: "SourceObjectType", Kind: schema.KindString, Flags: 0, Label: `Source Object Type`},
-		{Name: "source_object_id", Quoted: `"source_object_id"`, Field: "SourceObjectID", Kind: schema.KindString, Flags: 0, Label: `Source Object ID`},
-		{Name: "source_event_type", Quoted: `"source_event_type"`, Field: "SourceEventType", Kind: schema.KindString, Flags: 0, Label: `Source Event Type`},
-		{Name: "related_invoice_id", Quoted: `"related_invoice_id"`, Field: "RelatedInvoiceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Related Invoice ID`},
-		{Name: "document_number", Quoted: `"document_number"`, Field: "DocumentNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Document Number`},
-		{Name: "transaction_date", Quoted: `"transaction_date"`, Field: "TransactionDate", Kind: schema.KindInt64, Flags: 0, Label: `Transaction Date`},
-		{Name: "line_number", Quoted: `"line_number"`, Field: "LineNumber", Kind: schema.KindInt64, Flags: 0, Label: `Line Number`},
-		{Name: "amount_minor", Quoted: `"amount_minor"`, Field: "AmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Amount Minor`},
-		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: 0, Label: `Created By ID`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: 0, Label: `Customer ID`, Report: &reportDimStringHidden},
+		{Name: "source_object_type", Quoted: `"source_object_type"`, Field: "SourceObjectType", Kind: schema.KindString, Flags: 0, Label: `Source Object`, Report: &reportDimString},
+		{Name: "source_object_id", Quoted: `"source_object_id"`, Field: "SourceObjectID", Kind: schema.KindString, Flags: 0, Label: `Source Object ID`, Report: &reportDimString},
+		{Name: "source_event_type", Quoted: `"source_event_type"`, Field: "SourceEventType", Kind: schema.KindString, Flags: 0, Label: `Source Event`, Report: &reportDimString},
+		{Name: "related_invoice_id", Quoted: `"related_invoice_id"`, Field: "RelatedInvoiceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Related Invoice ID`, Report: &reportDimStringHidden},
+		{Name: "document_number", Quoted: `"document_number"`, Field: "DocumentNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Document Number`, Report: &reportDimString},
+		{Name: "transaction_date", Quoted: `"transaction_date"`, Field: "TransactionDate", Kind: schema.KindInt64, Flags: 0, Label: `Transaction Date`, Report: &reportDimEpoch},
+		{Name: "line_number", Quoted: `"line_number"`, Field: "LineNumber", Kind: schema.KindInt64, Flags: 0, Label: `Line`, Report: &reportDimInteger},
+		{Name: "amount_minor", Quoted: `"amount_minor"`, Field: "AmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Amount (Minor)`, Report: &reportMeasureInteger},
+		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: 0, Label: `Created By ID`, Report: &reportDimString},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Customer`},
-		{Name: "RelatedInvoice", Alias: "ri", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Related Invoice`},
+		{Name: "RelatedInvoice", Alias: "ri", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Invoice`},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -250,3 +251,13 @@ func init() {
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
 const intIs64 = unsafe.Sizeof(int(0)) - 8
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}

@@ -23,22 +23,24 @@ var applicationsTable = schema.Table{
 	Quoted: `"customer_payment_applications"`,
 	Alias:  "cpa",
 	Model:  "customerpayment.Application",
-	Label:  `Application`,
-	Plural: `Applications`,
+	Label:  `Payment Application`,
+	Plural: `Payment Applications`,
+	Doc:    `Which invoice each dollar of a payment was applied to`,
+	Report: &schema.TableReport{Category: `Accounting`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "customer_payment_id", Quoted: `"customer_payment_id"`, Field: "CustomerPaymentID", Kind: schema.KindString, Flags: 0, Label: `Customer Payment ID`},
-		{Name: "invoice_id", Quoted: `"invoice_id"`, Field: "InvoiceID", Kind: schema.KindString, Flags: 0, Label: `Invoice ID`},
-		{Name: "applied_amount_minor", Quoted: `"applied_amount_minor"`, Field: "AppliedAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Applied Amount Minor`},
-		{Name: "short_pay_amount_minor", Quoted: `"short_pay_amount_minor"`, Field: "ShortPayAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Short Pay Amount Minor`},
-		{Name: "line_number", Quoted: `"line_number"`, Field: "LineNumber", Kind: schema.KindInt64, Flags: 0, Label: `Line Number`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "customer_payment_id", Quoted: `"customer_payment_id"`, Field: "CustomerPaymentID", Kind: schema.KindString, Flags: 0, Label: `Customer Payment ID`, Report: &reportDimStringHidden},
+		{Name: "invoice_id", Quoted: `"invoice_id"`, Field: "InvoiceID", Kind: schema.KindString, Flags: 0, Label: `Invoice ID`, Report: &reportDimStringHidden},
+		{Name: "applied_amount_minor", Quoted: `"applied_amount_minor"`, Field: "AppliedAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Applied (Minor)`, Report: &reportMeasureInteger},
+		{Name: "short_pay_amount_minor", Quoted: `"short_pay_amount_minor"`, Field: "ShortPayAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Short Pay (Minor)`, Report: &reportMeasureInteger},
+		{Name: "line_number", Quoted: `"line_number"`, Field: "LineNumber", Kind: schema.KindInt64, Flags: 0, Label: `Line`, Report: &reportDimInteger},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
-		{Name: "Payment", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Payment`},
+		{Name: "Payment", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Customer Payment`},
 		{Name: "Invoice", Alias: "i", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Invoice`},
 	},
 	PK:         []int32{0, 1, 2},
@@ -443,35 +445,37 @@ var paymentsTable = schema.Table{
 	Quoted: `"customer_payments"`,
 	Alias:  "cp",
 	Model:  "customerpayment.Payment",
-	Label:  `Payment`,
-	Plural: `Payments`,
+	Label:  `Customer Payment`,
+	Plural: `Customer Payments`,
+	Doc:    `Cash received from customers and how much of it is applied`,
+	Report: &schema.TableReport{Category: `Accounting`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: 0, Label: `Customer ID`},
-		{Name: "payment_date", Quoted: `"payment_date"`, Field: "PaymentDate", Kind: schema.KindInt64, Flags: 0, Label: `Payment Date`},
-		{Name: "accounting_date", Quoted: `"accounting_date"`, Field: "AccountingDate", Kind: schema.KindInt64, Flags: 0, Label: `Accounting Date`},
-		{Name: "amount_minor", Quoted: `"amount_minor"`, Field: "AmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Amount Minor`},
-		{Name: "applied_amount_minor", Quoted: `"applied_amount_minor"`, Field: "AppliedAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Applied Amount Minor`},
-		{Name: "unapplied_amount_minor", Quoted: `"unapplied_amount_minor"`, Field: "UnappliedAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Unapplied Amount Minor`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumStatus[:]},
-		{Name: "payment_method", Quoted: `"payment_method"`, Field: "PaymentMethod", Kind: schema.KindString, Flags: 0, Label: `Payment Method`, Enum: enumMethod[:]},
-		{Name: "reference_number", Quoted: `"reference_number"`, Field: "ReferenceNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reference Number`},
-		{Name: "memo", Quoted: `"memo"`, Field: "Memo", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Memo`},
-		{Name: "currency_code", Quoted: `"currency_code"`, Field: "CurrencyCode", Kind: schema.KindString, Flags: 0, Label: `Currency Code`},
-		{Name: "exchange_rate", Quoted: `"exchange_rate"`, Field: "ExchangeRate", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Exchange Rate`},
-		{Name: "exchange_rate_date", Quoted: `"exchange_rate_date"`, Field: "ExchangeRateDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Exchange Rate Date`},
-		{Name: "posted_batch_id", Quoted: `"posted_batch_id"`, Field: "PostedBatchID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Posted Batch ID`},
-		{Name: "reversal_batch_id", Quoted: `"reversal_batch_id"`, Field: "ReversalBatchID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reversal Batch ID`},
-		{Name: "reversed_by_id", Quoted: `"reversed_by_id"`, Field: "ReversedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reversed By ID`},
-		{Name: "reversed_at", Quoted: `"reversed_at"`, Field: "ReversedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Reversed At`},
-		{Name: "reversal_reason", Quoted: `"reversal_reason"`, Field: "ReversalReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reversal Reason`},
-		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: 0, Label: `Created By ID`},
-		{Name: "updated_by_id", Quoted: `"updated_by_id"`, Field: "UpdatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Updated By ID`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: 0, Label: `Customer ID`, Report: &reportDimStringHidden},
+		{Name: "payment_date", Quoted: `"payment_date"`, Field: "PaymentDate", Kind: schema.KindInt64, Flags: 0, Label: `Payment Date`, Report: &reportDimEpoch},
+		{Name: "accounting_date", Quoted: `"accounting_date"`, Field: "AccountingDate", Kind: schema.KindInt64, Flags: 0, Label: `Accounting Date`, Report: &reportDimEpoch},
+		{Name: "amount_minor", Quoted: `"amount_minor"`, Field: "AmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Amount (Minor)`, Report: &reportMeasureInteger},
+		{Name: "applied_amount_minor", Quoted: `"applied_amount_minor"`, Field: "AppliedAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Applied (Minor)`, Report: &reportMeasureInteger},
+		{Name: "unapplied_amount_minor", Quoted: `"unapplied_amount_minor"`, Field: "UnappliedAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Unapplied (Minor)`, Report: &reportMeasureInteger},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumStatus[:], Report: &reportDimEnum},
+		{Name: "payment_method", Quoted: `"payment_method"`, Field: "PaymentMethod", Kind: schema.KindString, Flags: 0, Label: `Payment Method`, Enum: enumMethod[:], Report: &reportDimEnum},
+		{Name: "reference_number", Quoted: `"reference_number"`, Field: "ReferenceNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reference Number`, Report: &reportDimString},
+		{Name: "memo", Quoted: `"memo"`, Field: "Memo", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Memo`, Report: &reportDimString},
+		{Name: "currency_code", Quoted: `"currency_code"`, Field: "CurrencyCode", Kind: schema.KindString, Flags: 0, Label: `Currency`, Report: &reportDimString},
+		{Name: "exchange_rate", Quoted: `"exchange_rate"`, Field: "ExchangeRate", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Exchange Rate`, Report: &reportMeasureDecimal},
+		{Name: "exchange_rate_date", Quoted: `"exchange_rate_date"`, Field: "ExchangeRateDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Exchange Rate Date`, Report: &reportDimEpoch},
+		{Name: "posted_batch_id", Quoted: `"posted_batch_id"`, Field: "PostedBatchID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Posted Batch ID`, Report: &reportDimString},
+		{Name: "reversal_batch_id", Quoted: `"reversal_batch_id"`, Field: "ReversalBatchID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reversal Batch ID`, Report: &reportDimString},
+		{Name: "reversed_by_id", Quoted: `"reversed_by_id"`, Field: "ReversedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reversed By ID`, Report: &reportDimString},
+		{Name: "reversed_at", Quoted: `"reversed_at"`, Field: "ReversedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Reversed At`, Report: &reportDimEpoch},
+		{Name: "reversal_reason", Quoted: `"reversal_reason"`, Field: "ReversalReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reversal Reason`, Report: &reportDimString},
+		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: 0, Label: `Created By ID`, Report: &reportDimString},
+		{Name: "updated_by_id", Quoted: `"updated_by_id"`, Field: "UpdatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Updated By ID`, Report: &reportDimString},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "Applications", Alias: "a", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Applications`},
@@ -807,6 +811,22 @@ var enumStatus = [...]schema.EnumValue{
 	{Value: `Posted`, Label: `Posted`},
 	{Value: `Reversed`, Label: `Reversed`},
 }
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportMeasureDecimal = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueDecimal, Aggs: schema.AggsNumeric}
+
+var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // CreditApplicationStatusCol is a column of customerpayment.CreditApplicationStatus values.
 type CreditApplicationStatusCol struct{ keel.StringCol }

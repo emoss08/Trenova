@@ -658,7 +658,7 @@ var detentionOccurrencesTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 		{Name: "location_name", Quoted: `"location_name"`, Field: "LocationName", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Location Name`},
 		{Name: "customer_name", Quoted: `"customer_name"`, Field: "CustomerName", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Customer Name`},
-		{Name: "shipment_pro_number", Quoted: `"shipment_pro_number"`, Field: "ShipmentProNumber", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Shipment Pro Number`},
+		{Name: "shipment_pro_number", Quoted: `"shipment_pro_number"`, Field: "ShipmentProNumber", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Shipment PRO Number`},
 	},
 	Relations: []schema.Relation{
 		{Name: "DetentionPolicy", Alias: "dp", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Detention Policy`},

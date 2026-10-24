@@ -80,38 +80,38 @@ func (fc FreightClass) IsValid() bool {
 	return slices.Contains(FreightClasses, fc)
 }
 
+// Freight commodities
 type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
-	keel.Table    `keel:"commodities"`
+	keel.Table    `                                           keel:"commodities,report=Freight"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID                     pulid.ID           `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:com_"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID           `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	HazardousMaterialID    pulid.ID           `json:"hazardousMaterialId"    bun:"hazardous_material_id,type:VARCHAR(100),nullzero" keel:"hazardous_material_id,nullzero"`
-	Status                 domaintypes.Status `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
-	Name                   string             `json:"name"                   bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Description            string             `json:"description"            bun:"description,type:TEXT,notnull" keel:"description"`
-	MinTemperature         *int               `json:"minTemperature"         bun:"min_temperature,type:INTEGER,nullzero" keel:"min_temperature"`
-	MaxTemperature         *int               `json:"maxTemperature"         bun:"max_temperature,type:INTEGER,nullzero" keel:"max_temperature"`
-	WeightPerUnit          *float64           `json:"weightPerUnit"          bun:"weight_per_unit,type:NUMERIC(10,2),nullzero" keel:"weight_per_unit"`
-	LinearFeetPerUnit      *float64           `json:"linearFeetPerUnit"      bun:"linear_feet_per_unit,type:NUMERIC(10,2),nullzero" keel:"linear_feet_per_unit"`
-	LengthPerUnit          *float64           `json:"lengthPerUnit"          bun:"length_per_unit,type:NUMERIC(10,2),nullzero" keel:"length_per_unit"`
-	WidthPerUnit           *float64           `json:"widthPerUnit"           bun:"width_per_unit,type:NUMERIC(10,2),nullzero" keel:"width_per_unit"`
-	HeightPerUnit          *float64           `json:"heightPerUnit"          bun:"height_per_unit,type:NUMERIC(10,2),nullzero" keel:"height_per_unit"`
-	MaxQuantityPerShipment *float64           `json:"maxQuantityPerShipment" bun:"max_quantity_per_shipment,type:NUMERIC(10,2),nullzero" keel:"max_quantity_per_shipment"`
-	FreightClass           FreightClass       `json:"freightClass"           bun:"freight_class,type:freight_class_enum,nullzero" keel:"freight_class,nullzero"`
-	LoadingInstructions    string             `json:"loadingInstructions"    bun:"loading_instructions,type:TEXT,nullzero" keel:"loading_instructions,nullzero"`
-	Stackable              bool               `json:"stackable"              bun:"stackable,type:BOOLEAN" keel:"stackable"`
-	Fragile                bool               `json:"fragile"                bun:"fragile,type:BOOLEAN" keel:"fragile"`
-	SearchVector           string             `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                   string             `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
-	Version                int64              `json:"version"                bun:"version,type:BIGINT" keel:"version,version"`
+	ID                     pulid.ID           `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"                                          keel:"id,pk,autoid:com_"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                            keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID           `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"                             keel:"organization_id,pk,tenant"`
+	HazardousMaterialID    pulid.ID           `json:"hazardousMaterialId"    bun:"hazardous_material_id,type:VARCHAR(100),nullzero"                         keel:"hazardous_material_id,nullzero"`
+	Status                 domaintypes.Status `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'"                         keel:"status"`
+	Name                   string             `json:"name"                   bun:"name,type:VARCHAR(100),notnull"                                           keel:"name"`
+	Description            string             `json:"description"            bun:"description,type:TEXT,notnull"                                            keel:"description"`
+	MinTemperature         *int               `json:"minTemperature"         bun:"min_temperature,type:INTEGER,nullzero"                                    keel:"min_temperature,dimension"`
+	MaxTemperature         *int               `json:"maxTemperature"         bun:"max_temperature,type:INTEGER,nullzero"                                    keel:"max_temperature,dimension"`
+	WeightPerUnit          *float64           `json:"weightPerUnit"          bun:"weight_per_unit,type:NUMERIC(10,2),nullzero"                              keel:"weight_per_unit"`
+	LinearFeetPerUnit      *float64           `json:"linearFeetPerUnit"      bun:"linear_feet_per_unit,type:NUMERIC(10,2),nullzero"                         keel:"linear_feet_per_unit"`
+	LengthPerUnit          *float64           `json:"lengthPerUnit"          bun:"length_per_unit,type:NUMERIC(10,2),nullzero"                              keel:"length_per_unit"`
+	WidthPerUnit           *float64           `json:"widthPerUnit"           bun:"width_per_unit,type:NUMERIC(10,2),nullzero"                               keel:"width_per_unit"`
+	HeightPerUnit          *float64           `json:"heightPerUnit"          bun:"height_per_unit,type:NUMERIC(10,2),nullzero"                              keel:"height_per_unit"`
+	MaxQuantityPerShipment *float64           `json:"maxQuantityPerShipment" bun:"max_quantity_per_shipment,type:NUMERIC(10,2),nullzero"                    keel:"max_quantity_per_shipment"`
+	FreightClass           FreightClass       `json:"freightClass"           bun:"freight_class,type:freight_class_enum,nullzero"                           keel:"freight_class,nullzero"`
+	LoadingInstructions    string             `json:"loadingInstructions"    bun:"loading_instructions,type:TEXT,nullzero"                                  keel:"loading_instructions,nullzero"`
+	Stackable              bool               `json:"stackable"              bun:"stackable,type:BOOLEAN"                                                   keel:"stackable"`
+	Fragile                bool               `json:"fragile"                bun:"fragile,type:BOOLEAN"                                                     keel:"fragile"`
+	SearchVector           string             `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"                                     keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                   string             `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"                                          keel:"rank,computed"`
+	Version                int64              `json:"version"                bun:"version,type:BIGINT"                                                      keel:"version,version"`
 	CreatedAt              int64              `json:"createdAt"              bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt              int64              `json:"updatedAt"              bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	// Relationships
 	BusinessUnit      *tenant.BusinessUnit                 `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization      *tenant.Organization                 `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`
 	HazardousMaterial *hazardousmaterial.HazardousMaterial `json:"hazardousMaterial,omitempty" bun:"rel:belongs-to,join:hazardous_material_id=id" keel:"belongs:hazardous_material_id"`

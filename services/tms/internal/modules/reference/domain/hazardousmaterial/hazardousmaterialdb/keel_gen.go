@@ -21,34 +21,36 @@ var hazardousMaterialsTable = schema.Table{
 	Model:  "hazardousmaterial.HazardousMaterial",
 	Label:  `Hazardous Material`,
 	Plural: `Hazardous Materials`,
+	Doc:    `Hazmat reference data`,
+	Report: &schema.TableReport{Category: `Freight`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
-		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: 0, Label: `Description`},
-		{Name: "class", Quoted: `"class"`, Field: "Class", Kind: schema.KindString, Flags: 0, Label: `Class`, Enum: enumHazardousClass[:]},
-		{Name: "un_number", Quoted: `"un_number"`, Field: "UNNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `UN Number`},
-		{Name: "packing_group", Quoted: `"packing_group"`, Field: "PackingGroup", Kind: schema.KindString, Flags: 0, Label: `Packing Group`, Enum: enumPackingGroup[:]},
-		{Name: "subsidiary_hazard_class", Quoted: `"subsidiary_hazard_class"`, Field: "SubsidiaryHazardClass", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subsidiary Hazard Class`},
-		{Name: "erg_guide_number", Quoted: `"erg_guide_number"`, Field: "ErgGuideNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Erg Guide Number`},
-		{Name: "label_codes", Quoted: `"label_codes"`, Field: "LabelCodes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Label Codes`},
-		{Name: "special_provisions", Quoted: `"special_provisions"`, Field: "SpecialProvisions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Special Provisions`},
-		{Name: "proper_shipping_name", Quoted: `"proper_shipping_name"`, Field: "ProperShippingName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Proper Shipping Name`},
-		{Name: "handling_instructions", Quoted: `"handling_instructions"`, Field: "HandlingInstructions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Handling Instructions`},
-		{Name: "emergency_contact", Quoted: `"emergency_contact"`, Field: "EmergencyContact", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Emergency Contact`},
-		{Name: "emergency_contact_phone_number", Quoted: `"emergency_contact_phone_number"`, Field: "EmergencyContactPhoneNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Emergency Contact Phone Number`},
-		{Name: "quantity_threshold", Quoted: `"quantity_threshold"`, Field: "QuantityThreshold", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Quantity Threshold`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
-		{Name: "placard_required", Quoted: `"placard_required"`, Field: "PlacardRequired", Kind: schema.KindBool, Flags: 0, Label: `Placard Required`},
-		{Name: "is_reportable_quantity", Quoted: `"is_reportable_quantity"`, Field: "IsReportableQuantity", Kind: schema.KindBool, Flags: 0, Label: `Is Reportable Quantity`},
-		{Name: "marine_pollutant", Quoted: `"marine_pollutant"`, Field: "MarinePollutant", Kind: schema.KindBool, Flags: 0, Label: `Marine Pollutant`},
-		{Name: "inhalation_hazard", Quoted: `"inhalation_hazard"`, Field: "InhalationHazard", Kind: schema.KindBool, Flags: 0, Label: `Inhalation Hazard`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`, Report: &reportDimString},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: 0, Label: `Description`, Report: &reportDimString},
+		{Name: "class", Quoted: `"class"`, Field: "Class", Kind: schema.KindString, Flags: 0, Label: `Class`, Enum: enumHazardousClass[:], Report: &reportDimEnum},
+		{Name: "un_number", Quoted: `"un_number"`, Field: "UNNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `UN Number`, Report: &reportDimString},
+		{Name: "packing_group", Quoted: `"packing_group"`, Field: "PackingGroup", Kind: schema.KindString, Flags: 0, Label: `Packing Group`, Enum: enumPackingGroup[:], Report: &reportDimEnum},
+		{Name: "subsidiary_hazard_class", Quoted: `"subsidiary_hazard_class"`, Field: "SubsidiaryHazardClass", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subsidiary Hazard Class`, Report: &reportDimString},
+		{Name: "erg_guide_number", Quoted: `"erg_guide_number"`, Field: "ErgGuideNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Erg Guide Number`, Report: &reportDimString},
+		{Name: "label_codes", Quoted: `"label_codes"`, Field: "LabelCodes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Label Codes`, Report: &reportDimString},
+		{Name: "special_provisions", Quoted: `"special_provisions"`, Field: "SpecialProvisions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Special Provisions`, Report: &reportDimString},
+		{Name: "proper_shipping_name", Quoted: `"proper_shipping_name"`, Field: "ProperShippingName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Proper Shipping Name`, Report: &reportDimString},
+		{Name: "handling_instructions", Quoted: `"handling_instructions"`, Field: "HandlingInstructions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Handling Instructions`, Report: &reportDimString},
+		{Name: "emergency_contact", Quoted: `"emergency_contact"`, Field: "EmergencyContact", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Emergency Contact`, Report: &reportDimString},
+		{Name: "emergency_contact_phone_number", Quoted: `"emergency_contact_phone_number"`, Field: "EmergencyContactPhoneNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Emergency Contact Phone Number`, Report: &reportDimString},
+		{Name: "quantity_threshold", Quoted: `"quantity_threshold"`, Field: "QuantityThreshold", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Quantity Threshold`, Report: &reportDimString},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
+		{Name: "placard_required", Quoted: `"placard_required"`, Field: "PlacardRequired", Kind: schema.KindBool, Flags: 0, Label: `Placard Required`, Report: &reportDimBool},
+		{Name: "is_reportable_quantity", Quoted: `"is_reportable_quantity"`, Field: "IsReportableQuantity", Kind: schema.KindBool, Flags: 0, Label: `Is Reportable Quantity`, Report: &reportDimBool},
+		{Name: "marine_pollutant", Quoted: `"marine_pollutant"`, Field: "MarinePollutant", Kind: schema.KindBool, Flags: 0, Label: `Marine Pollutant`, Report: &reportDimBool},
+		{Name: "inhalation_hazard", Quoted: `"inhalation_hazard"`, Field: "InhalationHazard", Kind: schema.KindBool, Flags: 0, Label: `Inhalation Hazard`, Report: &reportDimBool},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -375,6 +377,18 @@ var enumPackingGroup = [...]schema.EnumValue{
 	{Value: `II`, Label: `II`},
 	{Value: `III`, Label: `III`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // HazardousClassCol is a column of hazardousmaterial.HazardousClass values.
 type HazardousClassCol struct{ keel.StringCol }

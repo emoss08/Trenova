@@ -33,56 +33,57 @@ var (
 	_ pagination.CursorEntity            = (*Worker)(nil)
 )
 
+// Drivers and operational workers
 type Worker struct {
 	bun.BaseModel             `bun:"table:workers,alias:wrk" json:"-"`
-	keel.Table                `keel:"workers"`
+	keel.Table                `                                       keel:"workers,report=Parties"`
 	pagination.CursorValueSet `bun:",embed"                  json:"-"`
 
-	ID                    pulid.ID           `json:"id"                          bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:wrk_"`
-	BusinessUnitID        pulid.ID           `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),notnull,pk" keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID           `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),notnull,pk" keel:"organization_id,pk,tenant"`
-	StateID               pulid.ID           `json:"stateId"                     bun:"state_id,type:VARCHAR(100),notnull" keel:"state_id"`
-	FleetCodeID           pulid.ID           `json:"fleetCodeId"                 bun:"fleet_code_id,type:VARCHAR(100),nullzero" keel:"fleet_code_id,nullzero"`
-	ManagerID             pulid.ID           `json:"managerId"                   bun:"manager_id,type:VARCHAR(100),nullzero" keel:"manager_id,nullzero"`
-	PositionID            pulid.ID           `json:"positionId"                  bun:"position_id,type:VARCHAR(100),nullzero" keel:"position_id,nullzero"`
-	UserID                pulid.ID           `json:"userId"                      bun:"user_id,type:VARCHAR(100),nullzero" keel:"user_id,nullzero"`
-	Status                domaintypes.Status `json:"status"                      bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
-	Type                  WorkerType         `json:"type"                        bun:"type,type:worker_type_enum,notnull,default:'Employee'" keel:"type"`
-	DriverType            DriverType         `json:"driverType"                  bun:"driver_type,type:driver_type_enum,notnull,default:'OTR'" keel:"driver_type"`
-	LeaveType             LeaveType          `json:"leaveType"                   bun:"leave_type,type:worker_leave_type_enum,nullzero" keel:"leave_type,nullzero"`
-	ProfilePicURL         string             `json:"profilePicUrl"               bun:"profile_pic_url,type:VARCHAR(255),nullzero" keel:"profile_pic_url,nullzero"`
-	FirstName             string             `json:"firstName"                   bun:"first_name,type:VARCHAR(100),notnull" keel:"first_name"`
-	LastName              string             `json:"lastName"                    bun:"last_name,type:VARCHAR(100),notnull" keel:"last_name"`
-	WholeName             string             `json:"wholeName"                   bun:"whole_name,type:VARCHAR(201),scanonly" keel:"whole_name,readonly"`
-	AddressLine1          string             `json:"addressLine1"                bun:"address_line1,type:VARCHAR(150),notnull" keel:"address_line1"`
-	AddressLine2          string             `json:"addressLine2"                bun:"address_line2,type:VARCHAR(150),nullzero" keel:"address_line2,nullzero"`
-	City                  string             `json:"city"                        bun:"city,type:VARCHAR(100),notnull" keel:"city"`
-	PostalCode            string             `json:"postalCode"                  bun:"postal_code,type:us_postal_code,notnull" keel:"postal_code"`
-	Email                 string             `json:"email"                       bun:"email,type:VARCHAR(255),nullzero" keel:"email,nullzero"`
-	PhoneNumber           string             `json:"phoneNumber"                 bun:"phone_number,type:VARCHAR(20),nullzero" keel:"phone_number,nullzero"`
-	EmergencyContactName  string             `json:"emergencyContactName"        bun:"emergency_contact_name,type:VARCHAR(100),nullzero" keel:"emergency_contact_name,nullzero"`
-	EmergencyContactPhone string             `json:"emergencyContactPhone"       bun:"emergency_contact_phone,type:VARCHAR(20),nullzero" keel:"emergency_contact_phone,nullzero"`
-	ExternalID            string             `json:"externalId"                  bun:"external_id,type:TEXT,nullzero" keel:"external_id,nullzero"`
-	SearchVector          string             `json:"-"                           bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                  string             `json:"-"                           bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
-	AssignmentBlocked     string             `json:"assignmentBlocked,omitempty" bun:"assignment_blocked,type:VARCHAR(255),nullzero" keel:"assignment_blocked,nullzero"`
-	Gender                Gender             `json:"gender"                      bun:"gender,type:gender_enum,notnull" keel:"gender"`
-	CanBeAssigned         bool               `json:"canBeAssigned"               bun:"can_be_assigned,type:BOOLEAN,notnull" keel:"can_be_assigned"`
-	AvailableForDispatch  bool               `json:"availableForDispatch"        bun:"available_for_dispatch,type:BOOLEAN,notnull" keel:"available_for_dispatch"`
-	Version               int64              `json:"version"                     bun:"version,type:BIGINT" keel:"version,version"`
+	ID                    pulid.ID           `json:"id"                          bun:"id,pk,type:VARCHAR(100)"                                                  keel:"id,pk,autoid:wrk_"`
+	BusinessUnitID        pulid.ID           `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),notnull,pk"                            keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID           `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),notnull,pk"                             keel:"organization_id,pk,tenant"`
+	StateID               pulid.ID           `json:"stateId"                     bun:"state_id,type:VARCHAR(100),notnull"                                       keel:"state_id"`
+	FleetCodeID           pulid.ID           `json:"fleetCodeId"                 bun:"fleet_code_id,type:VARCHAR(100),nullzero"                                 keel:"fleet_code_id,nullzero"`
+	ManagerID             pulid.ID           `json:"managerId"                   bun:"manager_id,type:VARCHAR(100),nullzero"                                    keel:"manager_id,nullzero"`
+	PositionID            pulid.ID           `json:"positionId"                  bun:"position_id,type:VARCHAR(100),nullzero"                                   keel:"position_id,nullzero"`
+	UserID                pulid.ID           `json:"userId"                      bun:"user_id,type:VARCHAR(100),nullzero"                                       keel:"user_id,nullzero"`
+	Status                domaintypes.Status `json:"status"                      bun:"status,type:status_enum,notnull,default:'Active'"                         keel:"status"`
+	Type                  WorkerType         `json:"type"                        bun:"type,type:worker_type_enum,notnull,default:'Employee'"                    keel:"type"`
+	DriverType            DriverType         `json:"driverType"                  bun:"driver_type,type:driver_type_enum,notnull,default:'OTR'"                  keel:"driver_type"`
+	LeaveType             LeaveType          `json:"leaveType"                   bun:"leave_type,type:worker_leave_type_enum,nullzero"                          keel:"leave_type,nullzero"`
+	ProfilePicURL         string             `json:"profilePicUrl"               bun:"profile_pic_url,type:VARCHAR(255),nullzero"                               keel:"profile_pic_url,nullzero"`
+	FirstName             string             `json:"firstName"                   bun:"first_name,type:VARCHAR(100),notnull"                                     keel:"first_name"`
+	LastName              string             `json:"lastName"                    bun:"last_name,type:VARCHAR(100),notnull"                                      keel:"last_name"`
+	WholeName             string             `json:"wholeName"                   bun:"whole_name,type:VARCHAR(201),scanonly"                                    keel:"whole_name,readonly,label=Full Name"`
+	AddressLine1          string             `json:"addressLine1"                bun:"address_line1,type:VARCHAR(150),notnull"                                  keel:"address_line1"`
+	AddressLine2          string             `json:"addressLine2"                bun:"address_line2,type:VARCHAR(150),nullzero"                                 keel:"address_line2,nullzero"`
+	City                  string             `json:"city"                        bun:"city,type:VARCHAR(100),notnull"                                           keel:"city"`
+	PostalCode            string             `json:"postalCode"                  bun:"postal_code,type:us_postal_code,notnull"                                  keel:"postal_code"`
+	Email                 string             `json:"email"                       bun:"email,type:VARCHAR(255),nullzero"                                         keel:"email,nullzero"`
+	PhoneNumber           string             `json:"phoneNumber"                 bun:"phone_number,type:VARCHAR(20),nullzero"                                   keel:"phone_number,nullzero"`
+	EmergencyContactName  string             `json:"emergencyContactName"        bun:"emergency_contact_name,type:VARCHAR(100),nullzero"                        keel:"emergency_contact_name,nullzero"`
+	EmergencyContactPhone string             `json:"emergencyContactPhone"       bun:"emergency_contact_phone,type:VARCHAR(20),nullzero"                        keel:"emergency_contact_phone,nullzero"`
+	ExternalID            string             `json:"externalId"                  bun:"external_id,type:TEXT,nullzero"                                           keel:"external_id,nullzero"`
+	SearchVector          string             `json:"-"                           bun:"search_vector,type:TSVECTOR,scanonly"                                     keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                  string             `json:"-"                           bun:"rank,type:VARCHAR(100),scanonly"                                          keel:"rank,computed"`
+	AssignmentBlocked     string             `json:"assignmentBlocked,omitempty" bun:"assignment_blocked,type:VARCHAR(255),nullzero"                            keel:"assignment_blocked,nullzero"`
+	Gender                Gender             `json:"gender"                      bun:"gender,type:gender_enum,notnull"                                          keel:"gender"`
+	CanBeAssigned         bool               `json:"canBeAssigned"               bun:"can_be_assigned,type:BOOLEAN,notnull"                                     keel:"can_be_assigned"`
+	AvailableForDispatch  bool               `json:"availableForDispatch"        bun:"available_for_dispatch,type:BOOLEAN,notnull"                              keel:"available_for_dispatch"`
+	Version               int64              `json:"version"                     bun:"version,type:BIGINT"                                                      keel:"version,version"`
 	CreatedAt             int64              `json:"createdAt"                   bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt             int64              `json:"updatedAt"                   bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 	CustomFields          map[string]any     `json:"customFields,omitempty"      bun:"-"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	State        *usstate.UsState     `json:"state,omitempty"        bun:"rel:belongs-to,join:state_id=id" keel:"belongs:state_id"`
-	FleetCode    *fleetcode.FleetCode `json:"fleetCode,omitempty"    bun:"rel:belongs-to,join:fleet_code_id=id" keel:"belongs:fleet_code_id"`
-	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id" keel:"belongs:manager_id"`
+	State        *usstate.UsState     `json:"state,omitempty"        bun:"rel:belongs-to,join:state_id=id"                                                                                keel:"belongs:state_id,noreport"`
+	FleetCode    *fleetcode.FleetCode `json:"fleetCode,omitempty"    bun:"rel:belongs-to,join:fleet_code_id=id"                                                                           keel:"belongs:fleet_code_id"`
+	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"                                                                              keel:"belongs:manager_id,noreport"`
 	Position     *JobPosition         `json:"position,omitempty"     bun:"rel:belongs-to,join:position_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:position_id"`
-	PortalUser   *tenant.User         `json:"portalUser,omitempty"   bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
-	Profile      *WorkerProfile       `json:"profile,omitempty"      bun:"rel:has-one,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"one:worker_id"`
-	PTO          []*WorkerPTO         `json:"pto,omitempty"          bun:"rel:has-many,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:worker_id"`
+	PortalUser   *tenant.User         `json:"portalUser,omitempty"   bun:"rel:belongs-to,join:user_id=id"                                                                                 keel:"belongs:user_id,noreport"`
+	Profile      *WorkerProfile       `json:"profile,omitempty"      bun:"rel:has-one,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"      keel:"one:worker_id"`
+	PTO          []*WorkerPTO         `json:"pto,omitempty"          bun:"rel:has-many,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"     keel:"many:worker_id,label=Time Off"`
 }
 
 func (w *Worker) Validate(multiErr *errortypes.MultiError) {

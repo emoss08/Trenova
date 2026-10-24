@@ -67,35 +67,25 @@ var (
 	_ validationframework.TenantedEntity = (*JobPosition)(nil)
 )
 
-// JobPosition is what somebody does, as distinct from where they do it. A
-// fleet code is a terminal; this is the title the headcount is counted by and
-// the org chart is drawn from.
+// Job titles the roster is counted by, and the reporting lines between them
 type JobPosition struct {
 	bun.BaseModel `bun:"table:job_positions,alias:jpos" json:"-"`
-	keel.Table    `keel:"job_positions"`
+	keel.Table    `                                              keel:"job_positions,report=Parties"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:jpos_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:jpos_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
 
-	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
-	Code        string             `json:"code"        bun:"code,type:VARCHAR(20),notnull" keel:"code"`
-	Title       string             `json:"title"       bun:"title,type:VARCHAR(100),notnull" keel:"title"`
-	Description string             `json:"description" bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Department  JobDepartment      `json:"department"  bun:"department,type:job_department_enum,notnull,default:'Operations'" keel:"department"`
-	// FLSAExempt says the position is exempt from overtime. It lives on the
-	// position because that is where the duties test is applied — two people
-	// doing the same job are exempt or not together.
-	FLSAExempt bool `json:"flsaExempt" bun:"flsa_exempt,type:BOOLEAN,notnull" keel:"flsa_exempt"`
-	// IsDrivingPosition separates the roster that needs a CDL from the one that
-	// does not, which is the line most compliance rules are drawn along.
-	IsDrivingPosition bool `json:"isDrivingPosition" bun:"is_driving_position,type:BOOLEAN,notnull" keel:"is_driving_position"`
-	// ReportsToPositionID is the shape of the org chart. A person's own manager
-	// is on the worker, because two people in the same position can report to
-	// different managers.
-	ReportsToPositionID pulid.ID `json:"reportsToPositionId" bun:"reports_to_position_id,type:VARCHAR(100),nullzero" keel:"reports_to_position_id,nullzero"`
+	Status              domaintypes.Status `json:"status"              bun:"status,type:status_enum,notnull,default:'Active'"                 keel:"status"`
+	Code                string             `json:"code"                bun:"code,type:VARCHAR(20),notnull"                                    keel:"code"`
+	Title               string             `json:"title"               bun:"title,type:VARCHAR(100),notnull"                                  keel:"title"`
+	Description         string             `json:"description"         bun:"description,type:TEXT,nullzero"                                   keel:"description,nullzero"`
+	Department          JobDepartment      `json:"department"          bun:"department,type:job_department_enum,notnull,default:'Operations'" keel:"department"`
+	FLSAExempt          bool               `json:"flsaExempt"          bun:"flsa_exempt,type:BOOLEAN,notnull"                                 keel:"flsa_exempt,label=Exempt from Overtime"`
+	IsDrivingPosition   bool               `json:"isDrivingPosition"   bun:"is_driving_position,type:BOOLEAN,notnull"                         keel:"is_driving_position,label=Driving Position"`
+	ReportsToPositionID pulid.ID           `json:"reportsToPositionId" bun:"reports_to_position_id,type:VARCHAR(100),nullzero"                keel:"reports_to_position_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 

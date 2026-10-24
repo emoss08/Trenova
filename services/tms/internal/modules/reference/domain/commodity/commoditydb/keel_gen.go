@@ -23,31 +23,33 @@ var commoditiesTable = schema.Table{
 	Model:  "commodity.Commodity",
 	Label:  `Commodity`,
 	Plural: `Commodities`,
+	Doc:    `Freight commodities`,
+	Report: &schema.TableReport{Category: `Freight`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
-		{Name: "hazardous_material_id", Quoted: `"hazardous_material_id"`, Field: "HazardousMaterialID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Hazardous Material ID`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: 0, Label: `Description`},
-		{Name: "min_temperature", Quoted: `"min_temperature"`, Field: "MinTemperature", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Min Temperature`},
-		{Name: "max_temperature", Quoted: `"max_temperature"`, Field: "MaxTemperature", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Max Temperature`},
-		{Name: "weight_per_unit", Quoted: `"weight_per_unit"`, Field: "WeightPerUnit", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Weight Per Unit`},
-		{Name: "linear_feet_per_unit", Quoted: `"linear_feet_per_unit"`, Field: "LinearFeetPerUnit", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Linear Feet Per Unit`},
-		{Name: "length_per_unit", Quoted: `"length_per_unit"`, Field: "LengthPerUnit", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Length Per Unit`},
-		{Name: "width_per_unit", Quoted: `"width_per_unit"`, Field: "WidthPerUnit", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Width Per Unit`},
-		{Name: "height_per_unit", Quoted: `"height_per_unit"`, Field: "HeightPerUnit", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Height Per Unit`},
-		{Name: "max_quantity_per_shipment", Quoted: `"max_quantity_per_shipment"`, Field: "MaxQuantityPerShipment", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Max Quantity Per Shipment`},
-		{Name: "freight_class", Quoted: `"freight_class"`, Field: "FreightClass", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Freight Class`, Enum: enumFreightClass[:]},
-		{Name: "loading_instructions", Quoted: `"loading_instructions"`, Field: "LoadingInstructions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Loading Instructions`},
-		{Name: "stackable", Quoted: `"stackable"`, Field: "Stackable", Kind: schema.KindBool, Flags: 0, Label: `Stackable`},
-		{Name: "fragile", Quoted: `"fragile"`, Field: "Fragile", Kind: schema.KindBool, Flags: 0, Label: `Fragile`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, Report: &reportDimStringHidden},
+		{Name: "hazardous_material_id", Quoted: `"hazardous_material_id"`, Field: "HazardousMaterialID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Hazardous Material ID`, Report: &reportDimStringHidden},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, Report: &reportDimString},
+		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: 0, Label: `Description`, Report: &reportDimString},
+		{Name: "min_temperature", Quoted: `"min_temperature"`, Field: "MinTemperature", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Min Temperature`, Report: &reportDimInteger},
+		{Name: "max_temperature", Quoted: `"max_temperature"`, Field: "MaxTemperature", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Max Temperature`, Report: &reportDimInteger},
+		{Name: "weight_per_unit", Quoted: `"weight_per_unit"`, Field: "WeightPerUnit", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Weight Per Unit`, Report: &reportMeasureFloat},
+		{Name: "linear_feet_per_unit", Quoted: `"linear_feet_per_unit"`, Field: "LinearFeetPerUnit", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Linear Feet Per Unit`, Report: &reportMeasureFloat},
+		{Name: "length_per_unit", Quoted: `"length_per_unit"`, Field: "LengthPerUnit", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Length Per Unit`, Report: &reportMeasureFloat},
+		{Name: "width_per_unit", Quoted: `"width_per_unit"`, Field: "WidthPerUnit", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Width Per Unit`, Report: &reportMeasureFloat},
+		{Name: "height_per_unit", Quoted: `"height_per_unit"`, Field: "HeightPerUnit", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Height Per Unit`, Report: &reportMeasureFloat},
+		{Name: "max_quantity_per_shipment", Quoted: `"max_quantity_per_shipment"`, Field: "MaxQuantityPerShipment", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Max Quantity Per Shipment`, Report: &reportMeasureFloat},
+		{Name: "freight_class", Quoted: `"freight_class"`, Field: "FreightClass", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Freight Class`, Enum: enumFreightClass[:], Report: &reportDimEnum},
+		{Name: "loading_instructions", Quoted: `"loading_instructions"`, Field: "LoadingInstructions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Loading Instructions`, Report: &reportDimString},
+		{Name: "stackable", Quoted: `"stackable"`, Field: "Stackable", Kind: schema.KindBool, Flags: 0, Label: `Stackable`, Report: &reportDimBool},
+		{Name: "fragile", Quoted: `"fragile"`, Field: "Fragile", Kind: schema.KindBool, Flags: 0, Label: `Fragile`, Report: &reportDimBool},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "HazardousMaterial", Alias: "hm", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Hazardous Material`},
@@ -369,6 +371,24 @@ var enumFreightClass = [...]schema.EnumValue{
 	{Value: `Class400`, Label: `400`},
 	{Value: `Class500`, Label: `500`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
+
+var reportMeasureFloat = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueFloat, Aggs: schema.AggsNumeric}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // FreightClassCol is a column of commodity.FreightClass values.
 type FreightClassCol struct{ keel.StringCol }
