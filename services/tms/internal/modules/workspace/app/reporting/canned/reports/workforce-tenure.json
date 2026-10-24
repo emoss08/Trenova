@@ -1,0 +1,127 @@
+{
+  "key": "workforce-tenure",
+  "version": "1.0.0",
+  "name": "Workforce Tenure",
+  "description": "Every active worker with their hire date, terminal, position and manager, for reading tenure across the roster",
+  "category": "Compliance",
+  "tags": [
+    "workforce",
+    "roster",
+    "tenure"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "worker",
+    "columns": [
+      {
+        "id": "first_name",
+        "label": "First Name",
+        "dimension": {
+          "field": "firstName"
+        }
+      },
+      {
+        "id": "last_name",
+        "label": "Last Name",
+        "dimension": {
+          "field": "lastName"
+        }
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "dimension": {
+          "field": "status"
+        }
+      },
+      {
+        "id": "worker_type",
+        "label": "Worker Type",
+        "dimension": {
+          "field": "type"
+        }
+      },
+      {
+        "id": "driver_type",
+        "label": "Driver Type",
+        "dimension": {
+          "field": "driverType"
+        }
+      },
+      {
+        "id": "fleet_code",
+        "label": "Fleet",
+        "dimension": {
+          "field": "fleetCode.code"
+        }
+      },
+      {
+        "id": "position",
+        "label": "Position",
+        "dimension": {
+          "field": "position.title"
+        }
+      },
+      {
+        "id": "department",
+        "label": "Department",
+        "dimension": {
+          "field": "position.department"
+        }
+      },
+      {
+        "id": "hire_date",
+        "label": "Hire Date",
+        "dimension": {
+          "field": "profile.hireDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "termination_date",
+        "label": "Termination Date",
+        "dimension": {
+          "field": "profile.terminationDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "in",
+          "param": "statuses"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "hire_date"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "statuses",
+        "label": "Statuses",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Active"
+        ],
+        "allowed": [
+          "Active",
+          "Inactive"
+        ]
+      }
+    ]
+  }
+}

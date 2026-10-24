@@ -28,6 +28,7 @@ type Options struct {
 	RuntimeParams   map[string]string
 	Guard           Guard
 	Observers       []keel.Observer
+	VersionErrors   func(error)
 }
 
 type Pool struct {
@@ -56,6 +57,11 @@ func Open(ctx context.Context, opts *Options) (Pool, error) {
 
 	cfg := KeelConfig(opts.Guard, opts.Observers)
 	cfg.Pool = pc
+	cfg.DataVersions = keel.DataVersionsConfig{
+		Enabled:  true,
+		Interval: dataVersionInterval,
+		OnError:  opts.VersionErrors,
+	}
 
 	db, err := keel.Open(ctx, cfg)
 	if err != nil {
@@ -68,7 +74,10 @@ func Open(ctx context.Context, opts *Options) (Pool, error) {
 	}, nil
 }
 
-const maxConns = 1 << 15
+const (
+	maxConns            = 1 << 15
+	dataVersionInterval = time.Second
+)
 
 func KeelConfig(guard Guard, observers []keel.Observer) keel.Config {
 	cfg := keel.Config{

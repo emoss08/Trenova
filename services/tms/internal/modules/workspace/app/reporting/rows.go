@@ -1,14 +1,15 @@
 package reporting
 
 import (
+	"bytes"
 	"context"
 	"io"
 
+	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -31,7 +32,7 @@ const maxRunRowsBytes = 24 * 1024 * 1024
 func (s *Service) ReadRunRows(
 	ctx context.Context,
 	req *GetRunRequest,
-) (*reportrows.Envelope, error) {
+) (*export.Envelope, error) {
 	run, err := s.GetRun(ctx, req)
 	if err != nil {
 		return nil, err
@@ -66,7 +67,7 @@ func (s *Service) ReadRunRows(
 		return nil, err
 	}
 
-	envelope, err := reportrows.Decode(data)
+	envelope, err := export.ReadJSON(bytes.NewReader(data))
 	if err != nil {
 		s.l.Error("stored report rows could not be decoded",
 			zap.String("runId", run.ID.String()),

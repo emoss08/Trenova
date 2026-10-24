@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/cronutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -75,7 +74,7 @@ func (s *Service) PlanResetCannedFork(
 	reset := *existing
 	reset.Definition = entry.Definition
 	reset.CannedVersion = entry.Version
-	reset.CatalogVersion = reportcatalog.Version
+	reset.CatalogVersion = s.CatalogVersion()
 	reset.Status = report.DefinitionStatusActive
 	reset.Diagnostics = nil
 

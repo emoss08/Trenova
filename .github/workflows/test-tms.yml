@@ -423,19 +423,8 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          if ! go tool keel gen -check -kinds pkg/keelkinds -tables internal/keeltables ./internal/modules/.../domain/...; then
+          if ! go tool keel gen -check -acronyms ID,URL,API,JSON,UUID,GL,IFTA,BOL,EDI,PRO,DOT,MC,PDF,VIN,CDL,TWIC,MVR,PTO,YTD,SCAC,ETA,CSV,UN,FX,ELD,SFTP,NOA,ACH,EIN,FLSA -kinds pkg/keelkinds -tables internal/keeltables ./internal/modules/.../domain/...; then
             echo "::error::keel table packages are stale - run 'task keel-gen' in services/tms and commit"
-            exit 1
-          fi
-
-      - name: Report catalog
-        working-directory: ./services/tms
-        run: |
-          set -euo pipefail
-          go generate ./internal/infrastructure/database/reportcatalog/...
-          if ! git diff --quiet -- pkg/reportcatalog/catalog_gen.go; then
-            echo "::error::Report catalog is stale - run 'go generate ./internal/infrastructure/database/reportcatalog/...' and commit"
-            git diff --stat -- pkg/reportcatalog/catalog_gen.go
             exit 1
           fi
 

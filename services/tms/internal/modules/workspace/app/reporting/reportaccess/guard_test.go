@@ -13,21 +13,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// accessPrimitives are the calls a report access decision is made of: a
-// ceiling comparison, refview's field decision and the person's handle on it,
-// the reference view test, the catalog's classification and the protected
-// group read. Only reportaccess makes them for a report.
 var accessPrimitives = map[string]bool{
-	"CanAccess":       true,
-	"Decide":          true,
-	"Person":          true,
-	"InReferenceView": true,
-	"Classify":        true,
-	"Visible":         true,
+	"CanAccess":        true,
+	"Decide":           true,
+	"Person":           true,
+	"InReferenceView":  true,
+	"ProtectedGroupAt": true,
+	"Visible":          true,
 }
 
-// reportSurface is a directory that decides what a report may use, and the
-// files of it that do.
 type reportSurface struct {
 	dir   string
 	match func(name string) bool
@@ -36,22 +30,18 @@ type reportSurface struct {
 func allFiles(string) bool { return true }
 
 var reportSurfaces = []reportSurface{
-	{dir: "../compiler", match: allFiles},
 	{dir: "..", match: allFiles},
+	{dir: "../../../jobs/reportjobs", match: allFiles},
+	{dir: "../../../../../infrastructure/reportengine", match: allFiles},
 	{dir: "../../../../../api/graphql/resolver/reportresolver", match: allFiles},
 	{
 		dir: "../../../../agent/app/agentquerytoolservice",
 		match: func(name string) bool {
-			return strings.HasPrefix(name, "report_")
+			return strings.HasPrefix(name, "report")
 		},
 	},
 }
 
-// TestReportSurfacesDecideAccessOnlyThroughReportaccess holds the compiler,
-// the catalog the builder reads, drill-through and the agent's dataset tools
-// to one decision: each asks reportaccess, so a field the builder marks
-// available is one the compiler accepts. A surface that compared a ceiling
-// or asked refview itself would drift from the others.
 func TestReportSurfacesDecideAccessOnlyThroughReportaccess(t *testing.T) {
 	t.Parallel()
 
@@ -100,17 +90,13 @@ func primitiveCalls(t *testing.T, path string) []string {
 	return calls
 }
 
-// TestTheCompilerAndTheCatalogShareTheDecision holds the two ends of the
-// promise to the same functions: the compiler decides each field and edge a
-// report uses with Access.Field and Access.Edge, and the catalog is built by
-// Access.Catalog, which decides with the same two.
-func TestTheCompilerAndTheCatalogShareTheDecision(t *testing.T) {
+func TestTheEngineAndTheCatalogShareTheDecision(t *testing.T) {
 	t.Parallel()
 
 	for path, want := range map[string][]string{
-		"../compiler/authorize.go": {"For", "Field", "Edge", "Reason"},
-		"../catalog.go":            {"ForCatalog", "Catalog"},
-		"catalog.go":               {"Field", "Edge"},
+		"../engine.go":  {"For"},
+		"../catalog.go": {"For", "FieldUse", "EdgeUse"},
+		"access.go":     {"FieldUse", "EdgeUse", "EntityUse"},
 	} {
 		called := selectorCalls(t, path)
 		for _, name := range want {
@@ -127,10 +113,12 @@ func selectorCalls(t *testing.T, path string) []string {
 
 	var calls []string
 	ast.Inspect(file, func(node ast.Node) bool {
-		if call, ok := node.(*ast.CallExpr); ok {
-			if selector, isSelector := call.Fun.(*ast.SelectorExpr); isSelector {
-				calls = append(calls, selector.Sel.Name)
-			}
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		if selector, isSelector := call.Fun.(*ast.SelectorExpr); isSelector {
+			calls = append(calls, selector.Sel.Name)
 		}
 		return true
 	})

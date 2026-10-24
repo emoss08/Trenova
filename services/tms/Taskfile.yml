@@ -14,6 +14,7 @@ vars:
   CLIENT_DIR: "{{.REPO_DIR}}/client"
   TEST_DB_CONTAINER: trenova-integration-postgres
   TEST_DB_PORT: "55432"
+  KEEL_GEN_ARGS: "-acronyms ID,URL,API,JSON,UUID,GL,IFTA,BOL,EDI,PRO,DOT,MC,PDF,VIN,CDL,TWIC,MVR,PTO,YTD,SCAC,ETA,CSV,UN,FX,ELD,SFTP,NOA,ACH,EIN,FLSA -kinds pkg/keelkinds -tables internal/keeltables ./internal/modules/.../domain/..."
   TEST_POSTGRES_DSN: "postgres://postgres:postgres@localhost:55432/trenova_test?sslmode=disable"
   # Plain PostGIS runs every test on the keyword-only fallback path. Build the
   # pgvector image with `task test-db-image` and export
@@ -376,33 +377,17 @@ tasks:
   keel-gen:
     desc: Generate the keel table packages from the domain models' keel tags
     cmds:
-      - go tool keel gen -kinds pkg/keelkinds -tables internal/keeltables ./internal/modules/.../domain/...
+      - go tool keel gen {{.KEEL_GEN_ARGS}}
 
   keel-gen-check:
     desc: Verify the generated keel table packages are up to date
     cmds:
-      - go tool keel gen -check -kinds pkg/keelkinds -tables internal/keeltables ./internal/modules/.../domain/...
+      - go tool keel gen -check {{.KEEL_GEN_ARGS}}
 
   generate-columns:
     desc: Generate Bun column constants from domain entities
     cmds:
       - go generate ./internal/infrastructure/database/colgen/...
-
-  generate-reportcatalog:
-    desc: Generate the reporting field catalog from domain entities and reportcatalog.yml
-    cmds:
-      - go generate ./internal/infrastructure/database/reportcatalog/...
-
-  generate-reportcatalog-check:
-    desc: Verify the generated report catalog is up to date
-    cmds:
-      - |
-        go generate ./internal/infrastructure/database/reportcatalog/...
-        if ! git diff --quiet -- pkg/reportcatalog/catalog_gen.go; then
-          echo "Report catalog is out of date — run 'task generate-reportcatalog' and commit"
-          git diff --stat -- pkg/reportcatalog/catalog_gen.go
-          exit 1
-        fi
 
   generate-write-coverage:
     desc: Regenerate docs/engineering/agent-write-coverage.md from writecoverage.yml, the schema, the routes and the agent tools

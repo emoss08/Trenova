@@ -4,9 +4,11 @@ import (
 	"context"
 	"io"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -14,52 +16,74 @@ type StreamCSVRequest struct {
 	Request
 
 	Title      string
-	Definition *report.Definition
+	Definition *ir.Definition
 	Params     map[string]any
 }
 
-// StreamCSV runs a definition whole and writes it as CSV as the rows arrive.
-//
-// It is the download of something already on screen: a preview the person
-// is looking at. It runs synchronously, under the same row cap and statement
-// timeout a run has, rather than as a stored run, because nothing about it
-// needs keeping once the file has been written.
 func (s *Service) StreamCSV(
 	ctx context.Context,
 	req *StreamCSVRequest,
 	sink io.Writer,
 ) (*reportports.ReportRenderStats, error) {
-	timezone := s.orgTimezone(ctx, req.TenantInfo)
-	compiled, err := s.compiler.Compile(ctx, &reportports.ReportCompileRequest{
-		Definition:  req.Definition,
-		Tenant:      req.TenantInfo,
-		Principal:   req.Principal,
-		Params:      req.Params,
-		OrgTimezone: timezone,
-		NowUnix:     timeutils.NowUnix(),
+	prepared, err := s.Prepare(ctx, &PrepareParams{
+		Tenant:     req.TenantInfo,
+		Definition: req.Definition,
+		Params:     req.Params,
+		Mode:       reportaccess.ModeExport,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	reader, err := s.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
-		Compiled: compiled,
-		MaxRows:  s.cfg.GetMaxRows(),
-		Timeout:  s.cfg.GetStatementTimeout(),
-	})
+	stream, err := s.engine.Run(prepared.Context, prepared.Request)
 	if err != nil {
-		return nil, err
+		return nil, EngineError(prepared.Context, prepared.Access, err)
 	}
-	defer reader.Close()
+	defer stream.Close()
 
-	return render.NewCSVRenderer(s.cfg.CSVIncludeBOM).Render(ctx, &reportports.ReportRenderRequest{
-		Dataset: reader,
-		Sink:    sink,
-		Meta: reportports.ReportRunMeta{
-			Title:           req.Title,
-			GeneratedAtUnix: timeutils.NowUnix(),
-			Timezone:        timezone,
-			Params:          req.Params,
-		},
-	})
+	stats, err := render.NewCSVRenderer(s.cfg.CSVIncludeBOM, s.cfg.GetMaxArtifactBytes()).
+		Render(prepared.Context, &reportports.ReportRenderRequest{
+			Dataset: stream,
+			Sink:    sink,
+			Meta: reportports.ReportRunMeta{
+				Title:           req.Title,
+				GeneratedAtUnix: timeutils.NowUnix(),
+				Timezone:        prepared.Location.String(),
+				Locale:          i18n.FromContext(ctx).String(),
+				Params:          OrderedParams(req.Definition, req.Params),
+			},
+		})
+	if err != nil {
+		return nil, EngineError(prepared.Context, prepared.Access, err)
+	}
+	return stats, nil
+}
+
+func OrderedParams(def *ir.Definition, values map[string]any) []reportports.ReportParam {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make([]reportports.ReportParam, 0, len(values))
+	listed := make(map[string]bool, len(values))
+	if def != nil {
+		for i := range def.Parameters {
+			p := &def.Parameters[i]
+			value, ok := values[p.Name]
+			if !ok {
+				continue
+			}
+			name := p.Label
+			if name == "" {
+				name = p.Name
+			}
+			listed[p.Name] = true
+			out = append(out, reportports.ReportParam{Name: name, Value: value})
+		}
+	}
+	for _, name := range sortedNames(values) {
+		if !listed[name] {
+			out = append(out, reportports.ReportParam{Name: name, Value: values[name]})
+		}
+	}
+	return out
 }

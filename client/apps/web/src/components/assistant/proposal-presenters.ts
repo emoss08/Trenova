@@ -116,8 +116,9 @@ function severityOf(value: string): { label: string; tone: Tone } | null {
 }
 
 type DefinitionColumn = {
-  ref?: { path?: unknown; field?: unknown };
-  agg?: unknown;
+  dimension?: { field?: unknown };
+  measure?: { field?: unknown; agg?: unknown };
+  calc?: unknown;
   label?: unknown;
 };
 
@@ -133,7 +134,7 @@ function definitionFacts(definition: unknown): ProposalFact[] {
   }
   const shape = definition as {
     columns?: unknown;
-    filters?: { filters?: unknown; groups?: unknown };
+    filters?: unknown;
     parameters?: unknown;
   };
 
@@ -155,10 +156,9 @@ function definitionFacts(definition: unknown): ProposalFact[] {
 }
 
 function columnText(column: DefinitionColumn): string {
-  const path = Array.isArray(column.ref?.path) ? column.ref.path.map(text) : [];
-  const field = [...path, text(column.ref?.field)].filter((part) => part !== "").join(".");
+  const field = text(column.dimension?.field ?? column.measure?.field);
   const label = text(column.label);
-  const agg = text(column.agg);
+  const agg = text(column.measure?.agg);
 
   if (field === "") {
     return label;
@@ -184,19 +184,17 @@ function columnText(column: DefinitionColumn): string {
   }
 }
 
-function countFilters(group: { filters?: unknown; groups?: unknown } | undefined): number {
-  if (typeof group !== "object" || group === null) {
+function countFilters(filter: unknown): number {
+  if (typeof filter !== "object" || filter === null) {
     return 0;
   }
-  const own = Array.isArray(group.filters) ? group.filters.length : 0;
-  const nested = Array.isArray(group.groups)
-    ? group.groups.reduce(
-        (sum: number, child) => sum + countFilters(child as { filters?: unknown }),
-        0,
-      )
-    : 0;
+  const node = filter as { and?: unknown; or?: unknown };
+  const children = Array.isArray(node.and) ? node.and : Array.isArray(node.or) ? node.or : null;
+  if (!children) {
+    return 1;
+  }
 
-  return own + nested;
+  return children.reduce((sum: number, child) => sum + countFilters(child), 0);
 }
 
 const REPORT_METADATA_KEYS = [

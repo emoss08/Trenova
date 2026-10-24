@@ -3,11 +3,11 @@ import type {
   ReportCatalog,
   ReportCatalogEntity,
   ReportCatalogField,
-  ReportIrInput,
+  ReportDefinitionInput,
 } from "@/lib/graphql/reports";
+import { toKeelDefinition } from "@/lib/report-definition";
 import {
   PIVOT_OTHER_VALUE,
-  REPORT_IR_VERSION,
   bandIsSet,
   computedOperand,
   computedOperandIsTarget,
@@ -19,7 +19,6 @@ import {
   type ReportFieldRef,
   type ReportFilterGroup,
   type ReportIR,
-  type ReportParameterDef,
   type ReportTransformSpec,
 } from "@/types/report";
 import { isFieldAvailable } from "@/lib/report-catalog-access";
@@ -47,7 +46,7 @@ export function resolvePathEntity(
   for (const edgeName of path ?? []) {
     if (!current) return undefined;
     const edge = current.edges.find((e) => e.name === edgeName);
-    if (!edge || !edge.traversable) return undefined;
+    if (!edge) return undefined;
     current = index.entities.get(edge.target);
   }
   return current;
@@ -73,11 +72,8 @@ export function refTargetEntity(
   entityKey: string,
   ref: ReportFieldRef,
 ): string | undefined {
-  const owner = resolvePathEntity(index, entityKey, ref.path);
-  if (!owner) return undefined;
-
-  const base = ref.field.endsWith("Id") ? ref.field.slice(0, -2) : ref.field;
-  return owner.edges.find((edge) => edge.name === base)?.target;
+  if (ref.field !== "id") return undefined;
+  return resolvePathEntity(index, entityKey, ref.path)?.key;
 }
 
 /**
@@ -104,19 +100,14 @@ export function preferReferenceField(
   const owner = resolvePathEntity(index, entityKey, parentPath);
 
   const edge = owner?.edges.find((candidate) => candidate.name === lastEdge);
-  if (!owner || !edge || edge.cardinality !== "one") return ref;
+  if (!owner || !edge || edge.toMany || edge.pick) return ref;
 
-  // i18n-ignore: catalog field key
-  const foreignKey = `${lastEdge}Id`;
-  const field = owner.fields.find(
-    (candidate) =>
-      candidate.key === foreignKey &&
-      candidate.type === "ref" &&
-      candidate.filterable &&
-      isFieldAvailable(candidate),
+  const target = index.entities.get(edge.target);
+  const id = target?.fields.find(
+    (candidate) => candidate.key === "id" && candidate.filterable && isFieldAvailable(candidate),
   );
 
-  return field ? { path: parentPath.length > 0 ? parentPath : undefined, field: foreignKey } : ref;
+  return id ? { path, field: "id" } : ref;
 }
 
 export function pathCrossesToMany(
@@ -129,7 +120,7 @@ export function pathCrossesToMany(
     if (!current) return false;
     const edge = current.edges.find((e) => e.name === edgeName);
     if (!edge) return false;
-    if (edge.cardinality !== "one") return true;
+    if (edge.toMany) return true;
     current = index.entities.get(edge.target);
   }
   return false;
@@ -150,7 +141,6 @@ export function refLabel(index: CatalogIndex, entityKey: string, ref: ReportFiel
 
 export function emptyIR(entity: string): ReportIR {
   return {
-    irVersion: REPORT_IR_VERSION,
     entity,
     columns: [],
     filters: { op: "and", filters: [] },
@@ -495,177 +485,77 @@ function pruneFilterGroup(
   return { op: group.op, filters, groups };
 }
 
-type FilterGroupInput = NonNullable<ReportIrInput["filters"]>;
-
-function filterGroupToInput(
-  group: ReportFilterGroup | null | undefined,
-): FilterGroupInput | undefined {
-  const pruned = pruneFilterGroup(group);
-  if (!pruned) return undefined;
-  return {
-    op: pruned.op,
-    filters: (pruned.filters ?? []).map((filter) => ({
-      ref: { path: filter.ref.path, field: filter.ref.field },
-      operator: filter.operator,
-      value: filter.value ?? undefined,
-      param: filter.param || undefined,
-      agg: filter.agg || undefined,
-      transform: transformToInput(filter.transform),
-    })),
-    groups: (pruned.groups ?? [])
-      .map((nested) => filterGroupToInput(nested))
-      .filter((nested): nested is FilterGroupInput => nested !== undefined),
-  };
-}
-
-type TransformInput = NonNullable<ReportIrInput["columns"][number]["transform"]>;
-
-function transformToInput(transform: ReportTransformSpec | undefined): TransformInput | undefined {
+function cleanTransform(
+  transform: ReportTransformSpec | undefined,
+): ReportTransformSpec | undefined {
   if (!transform) return undefined;
   return {
     op: transform.op,
-    precision: transform.precision ?? undefined,
-    factor: transform.factor ?? undefined,
+    ...(transform.precision !== undefined && transform.precision !== null
+      ? { precision: transform.precision }
+      : {}),
+    ...(transform.factor !== undefined && transform.factor !== null
+      ? { factor: transform.factor }
+      : {}),
   };
 }
 
-type BandInput = NonNullable<ReportIrInput["columns"][number]["band"]>;
-
 // Only the mode the author chose is sent — the server rejects a band carrying
 // both a width and a boundary list.
-function bandToInput(band: ReportBandSpec | undefined): BandInput | undefined {
+function cleanBand(band: ReportBandSpec | undefined): ReportBandSpec | undefined {
   if (!bandIsSet(band)) return undefined;
   if (band?.edges && band.edges.length > 0) return { edges: band.edges };
   return { width: band?.width };
 }
 
-type DisplayInput = NonNullable<ReportIrInput["columns"][number]["display"]>;
-
 // Only the keys the author actually set are sent; everything else stays at the
 // server-resolved default for the column's type and format hint.
-function displayToInput(display: ReportDisplaySpec | undefined): DisplayInput | undefined {
+function cleanDisplay(display: ReportDisplaySpec | undefined): ReportDisplaySpec | undefined {
   if (!display) return undefined;
-
-  const input: DisplayInput = {
-    style: display.style || undefined,
-    decimals: display.decimals ?? undefined,
-    grouping: display.grouping ?? undefined,
-    currency: display.currency || undefined,
-    negative: display.negative || undefined,
-    notation: display.notation || undefined,
-    prefix: display.prefix || undefined,
-    suffix: display.suffix || undefined,
-    dateStyle: display.dateStyle || undefined,
-    boolStyle: display.boolStyle || undefined,
-    durationUnit: display.durationUnit || undefined,
-    durationStyle: display.durationStyle || undefined,
-    nullText: display.nullText || undefined,
-    rules:
-      display.rules && display.rules.length > 0
-        ? display.rules.map((rule) => ({
-            op: rule.op,
-            value: rule.value,
-            upper: rule.upper ?? undefined,
-            tone: rule.tone,
-          }))
-        : undefined,
-  };
-
-  const hasOverride = Object.values(input).some((value) => value !== undefined);
-  return hasOverride ? input : undefined;
+  const cleaned: ReportDisplaySpec = {};
+  for (const [key, value] of Object.entries(display) as [keyof ReportDisplaySpec, unknown][]) {
+    if (value === undefined || value === null || value === "") continue;
+    if (key === "rules" && Array.isArray(value) && value.length === 0) continue;
+    (cleaned as Record<string, unknown>)[key] = value;
+  }
+  return Object.keys(cleaned).length > 0 ? cleaned : undefined;
 }
 
-// Converts the persisted IR shape into the GraphQL input the save/preview
-// operations expect. Empty filter groups are pruned so the server never sees
-// vacuous groups.
-export function irToInput(ir: ReportIR): ReportIrInput {
+function cleanFilterGroup(group: ReportFilterGroup | null | undefined): ReportFilterGroup | null {
+  const pruned = pruneFilterGroup(group);
+  if (!pruned) return null;
   return {
-    entity: ir.entity,
+    op: pruned.op,
+    filters: (pruned.filters ?? []).map((filter) => ({
+      ...filter,
+      transform: cleanTransform(filter.transform),
+    })),
+    groups: (pruned.groups ?? [])
+      .map((nested) => cleanFilterGroup(nested))
+      .filter((nested): nested is ReportFilterGroup => nested !== null),
+  };
+}
+
+// Converts the builder's editing model into the keel definition the save and
+// preview operations take. Empty filter groups are pruned so the server never
+// sees vacuous groups.
+export function irToInput(ir: ReportIR): ReportDefinitionInput {
+  return toKeelDefinition({
+    ...ir,
     columns: ir.columns.map((column) => ({
-      id: column.id,
-      ref: column.ref ? { path: column.ref.path, field: column.ref.field } : undefined,
-      kind: column.kind,
+      ...column,
       agg: column.kind === "measure" ? column.agg : undefined,
       bucket: column.bucket || undefined,
-      band: bandToInput(column.band),
+      band: cleanBand(column.band),
       label: column.label || undefined,
-      computed:
-        column.kind === "computed" && column.computed
-          ? {
-              op: column.computed.op,
-              leftId: column.computed.leftId || undefined,
-              rightId: column.computed.rightId || undefined,
-              leftValue: column.computed.leftValue,
-              rightValue: column.computed.rightValue,
-              format:
-                column.computed.format && column.computed.format !== "none"
-                  ? column.computed.format
-                  : undefined,
-            }
-          : undefined,
-      transform: transformToInput(column.transform),
-      display: displayToInput(column.display),
-      filter: column.kind === "measure" ? filterGroupToInput(column.filter) : undefined,
+      transform: cleanTransform(column.transform),
+      display: cleanDisplay(column.display),
+      filter:
+        column.kind === "measure" ? (cleanFilterGroup(column.filter) ?? undefined) : undefined,
     })),
-    filters: filterGroupToInput(ir.filters),
-    having: filterGroupToInput(ir.having),
-    sort: (ir.sort ?? []).map((sortSpec) => ({
-      columnId: sortSpec.columnId,
-      direction: sortSpec.direction,
-    })),
-    limit: ir.limit || undefined,
-    pivot: ir.pivot
-      ? {
-          ref: { path: ir.pivot.ref.path, field: ir.pivot.ref.field },
-          values: ir.pivot.values,
-          labels: ir.pivot.labels && ir.pivot.labels.length > 0 ? ir.pivot.labels : undefined,
-          measureIds: ir.pivot.measureIds,
-          includeOther: ir.pivot.includeOther ?? false,
-        }
-      : undefined,
-    parameters: (ir.parameters ?? []).map(parameterToInput),
-    totals: ir.totals ?? false,
-    charts: (ir.charts ?? []).map((chart) => ({
-      id: chart.id,
-      type: chart.type,
-      title: chart.title || undefined,
-      xColumnId: chart.xColumnId || undefined,
-      seriesIds: chart.seriesIds ?? [],
-      stacked: chart.stacked ?? false,
-      hideLegend: chart.hideLegend ?? false,
-      showValues: chart.showValues ?? false,
-      curved: chart.curved ?? false,
-      limit: chart.limit || undefined,
-      compareId: chart.compareId || undefined,
-      latColumnId: chart.latColumnId || undefined,
-      lngColumnId: chart.lngColumnId || undefined,
-      labelColumnId: chart.labelColumnId || undefined,
-      goal:
-        chart.goal && (chart.goal.value !== undefined || chart.goal.columnId)
-          ? {
-              value: chart.goal.value ?? undefined,
-              columnId: chart.goal.columnId || undefined,
-              label: chart.goal.label || undefined,
-            }
-          : undefined,
-    })),
-  };
-}
-
-export function parameterToInput(
-  param: ReportParameterDef,
-): NonNullable<ReportIrInput["parameters"]>[number] {
-  return {
-    name: param.name,
-    label: param.label || undefined,
-    type: param.type,
-    required: param.required,
-    default: param.default ?? undefined,
-    multi: param.multi ?? false,
-    allowedValues:
-      param.allowedValues && param.allowedValues.length > 0 ? param.allowedValues : undefined,
-    refEntity: param.type === "ref" ? param.refEntity || undefined : undefined,
-  };
+    filters: cleanFilterGroup(ir.filters),
+    having: cleanFilterGroup(ir.having),
+  });
 }
 
 export function defaultPreviewParams(ir: ReportIR): Record<string, unknown> | undefined {

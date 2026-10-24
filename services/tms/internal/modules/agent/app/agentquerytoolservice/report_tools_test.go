@@ -9,6 +9,12 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel/analytics/export"
+	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/keel/analytics/table"
+	"github.com/emoss08/keel/analytics/value"
+	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -19,8 +25,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -43,13 +47,22 @@ type fakeReporting struct {
 	// whose rows were never stored, which is a state the tool has to report
 	// rather than crash on.
 	runs    []*report.ReportRun
-	rows    map[pulid.ID]*reportrows.Envelope
+	rows    map[pulid.ID]*export.Envelope
 	rowsErr map[pulid.ID]error
 
 	submitted *reporting.RunReportRequest
 	fetched   *reporting.GetRunRequest
 	listed    *reporting.ListDefinitionsRequest
 	previewed *reporting.PreviewRequest
+
+	kinds *reportaccess.Resolver
+}
+
+func (f *fakeReporting) Catalog(
+	ctx context.Context,
+	req *reporting.Request,
+) (*reporting.Catalog, error) {
+	return reporting.CatalogFor(ctx, f.kinds, req.TenantInfo)
 }
 
 func (f *fakeReporting) ListCanned() []*canned.Entry { return f.entries }
@@ -101,7 +114,7 @@ func (f *fakeReporting) GetRun(
 func (f *fakeReporting) ReadRunRows(
 	_ context.Context,
 	req *reporting.GetRunRequest,
-) (*reportrows.Envelope, error) {
+) (*export.Envelope, error) {
 	if err, failed := f.rowsErr[req.RunID]; failed {
 		return nil, err
 	}
@@ -233,10 +246,10 @@ func agingEntry() *canned.Entry {
 		Description:   "Open receivables bucketed by age.",
 		Category:      "Accounting",
 		DefaultFormat: report.FormatXLSX,
-		Definition: &report.Definition{
-			Parameters: []report.ParameterDef{
-				{Name: "asOf", Label: "As of", Required: true},
-				{Name: "customerId", Label: "Customer"},
+		Definition: &ir.Definition{
+			Parameters: []ir.Parameter{
+				{Name: "asOf", Label: "As of", Type: "date", Required: true},
+				{Name: "customerId", Label: "Customer", Type: "ref"},
 			},
 		},
 	}
@@ -257,6 +270,7 @@ func reportingTools(
 		},
 	}
 	permissions := &fakePermissions{allowed: true}
+	service.kinds = catalogResolver(t, permissions)
 
 	runner, ok := newRunReportTool(service, permissions).(*runReportTool)
 	require.True(t, ok)
@@ -272,8 +286,8 @@ func reportingTools(
 		runner,
 		newGetReportRunTool(service),
 		newDescribeReportTool(service),
-		newListReportDatasetsTool(catalogResolver(permissions)),
-		newDescribeReportDatasetTool(catalogResolver(permissions)),
+		newListReportDatasetsTool(service),
+		newDescribeReportDatasetTool(service),
 		newPreviewReportTool(service),
 		newCompareReportRunsTool(service),
 	} {
@@ -285,14 +299,20 @@ func reportingTools(
 
 // catalogResolver decides the catalog as production does: reference views by
 // refview, and every protected group granted.
-func catalogResolver(engine permissionports.PermissionEngine) *reportaccess.Resolver {
+func catalogResolver(t *testing.T, engine permissionports.PermissionEngine) *reportaccess.Resolver {
+	t.Helper()
+	catalog, err := reportengine.NewCatalog()
+	require.NoError(t, err)
 	registry := permission.NewRegistry()
-	return reportaccess.New(reportaccess.Params{
+	resolver, err := reportaccess.New(reportaccess.Params{
+		Catalog:  catalog,
 		Engine:   engine,
 		Registry: registry,
 		Views:    refview.NewPort(refview.New(registry), engine),
 		Fields:   allGroups{},
 	})
+	require.NoError(t, err)
+	return resolver
 }
 
 type allGroups struct{}
@@ -643,14 +663,14 @@ func TestRequireReportParameters_NamesTheChoicesAndSaysToAsk(t *testing.T) {
 
 	entry := &canned.Entry{
 		Name: "Driver Productivity",
-		Definition: &report.Definition{
-			Parameters: []report.ParameterDef{
+		Definition: &ir.Definition{
+			Parameters: []ir.Parameter{
 				{Name: "windowDays", Label: "Window in days", Required: true},
 				{
-					Name:          "fleet",
-					Label:         "Fleet",
-					Required:      true,
-					AllowedValues: []string{"Regional", "OTR", "Local"},
+					Name:     "fleet",
+					Label:    "Fleet",
+					Required: true,
+					Allowed:  []any{"Regional", "OTR", "Local"},
 				},
 			},
 		},
@@ -671,8 +691,8 @@ func TestRequireReportParameters_SaysNothingWhenEveryValueIsSupplied(t *testing.
 
 	entry := &canned.Entry{
 		Name: "Driver Productivity",
-		Definition: &report.Definition{
-			Parameters: []report.ParameterDef{
+		Definition: &ir.Definition{
+			Parameters: []ir.Parameter{
 				{Name: "windowDays", Required: true},
 				{Name: "fleet", Required: false},
 			},
@@ -779,20 +799,28 @@ func TestRunReport_ReportsAFailureItSawWhileWaiting(t *testing.T) {
 	assert.Contains(t, status.Note, "the dataset timed out")
 }
 
-func storedRows(count int) *reportrows.Envelope {
-	rows := make([][]any, 0, count)
+func storedRows(t *testing.T, count int) *export.Envelope {
+	t.Helper()
+	columns := []table.Column{
+		{
+			ID:      "c1",
+			Label:   "Customer",
+			Type:    value.String,
+			Display: format.Resolve(value.String, format.Hint{}, nil),
+		},
+		{
+			ID:      "c2",
+			Label:   "Delivered",
+			Type:    value.Epoch,
+			Display: format.Resolve(value.Epoch, format.Hint{}, nil),
+		},
+	}
+	builder := table.NewBuilder(columns)
 	for idx := range count {
-		rows = append(rows, []any{"Customer " + string(rune('A'+idx%26)), int64(1789996617)})
+		require.NoError(t, builder.Append("Customer "+string(rune('A'+idx%26)), int64(1789996617)))
 	}
 
-	return &reportrows.Envelope{
-		Schema: []reportrows.Column{
-			{ID: "c1", Label: "Customer", Type: reportcatalog.FieldString},
-			{ID: "c2", Label: "Delivered", Type: reportcatalog.FieldEpoch},
-		},
-		Rows:    rows,
-		Summary: reportrows.Summary{RowCount: int64(count)},
-	}
+	return &export.Envelope{Table: builder.Table(), RowCount: int64(count)}
 }
 
 func finishedRun(service *fakeReporting, rowCount int64) *report.ReportRun {
@@ -817,7 +845,7 @@ func TestRunReport_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 	service.settled = finishedRun(service, 25)
-	service.rows = map[pulid.ID]*reportrows.Envelope{service.run.ID: storedRows(25)}
+	service.rows = map[pulid.ID]*export.Envelope{service.run.ID: storedRows(t, 25)}
 
 	params := testParams(map[string]any{
 		"reportKey":  "ar_aging_by_customer",
@@ -889,7 +917,7 @@ func TestGetReportRun_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 	service.run = finishedRun(service, 3)
-	service.rows = map[pulid.ID]*reportrows.Envelope{service.run.ID: storedRows(3)}
+	service.rows = map[pulid.ID]*export.Envelope{service.run.ID: storedRows(t, 3)}
 
 	result, err := tools["report_get_run"].Query(t.Context(), testParams(map[string]any{
 		"runId": service.run.ID.String(),

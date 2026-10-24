@@ -8,6 +8,15 @@
       "routes/order"
     ]
   },
+  "\"{0}\" cannot compare field \"{1}\"": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "\"{0}\" exceeds the 25 MB attachment limit": {
     "sites": 1,
     "scope": [
@@ -15,33 +24,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "\"{0}\" holds whole numbers, so its range boundaries must be whole numbers too": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "\"{0}\" is a grouping column and cannot be plotted as a measure": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "\"{0}\" is not a column of this report": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "\"{0}\" is not a date (YYYY-MM-DD)": {
@@ -75,15 +57,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "\"{0}\" is not a grouping column of this report": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "\"{0}\" is not a pattern matches can use": {
@@ -166,15 +139,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "\"{0}\" is spread across pivot columns; sort by one of them instead": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "\"{0}\" paused — no shipments will generate until resumed": {
@@ -649,6 +613,60 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "1 And 1": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "1 And 2": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "1 And 3": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "1 And 4": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "1 And 5": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "1 And 6": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "1 acknowledgment": {
@@ -1133,6 +1151,33 @@
       "routes/carrier-sourcing"
     ]
   },
+  "2 And 1": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "2 And 2": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "2 And 3": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "2 Days": {
     "sites": 1,
     "scope": [
@@ -1435,6 +1480,33 @@
       "routes/carrier-sourcing"
     ]
   },
+  "4 And 1": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "4 And 2": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "4 And 3": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "4 hours": {
     "sites": 2,
     "scope": [
@@ -1535,6 +1607,24 @@
       "routes/edi"
     ]
   },
+  "5 And 1": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "5 And 2": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "5 min": {
     "sites": 1,
     "scope": [
@@ -1578,6 +1668,24 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "6 And 1": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "6 And 2": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "6 months": {
@@ -2905,6 +3013,15 @@
       "routes/desk"
     ]
   },
+  "A 55": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A CSV built in your browser, up to {0} rows.": {
     "sites": 1,
     "scope": [
@@ -2973,15 +3090,6 @@
     ]
   },
   "A KPI tile needs the column whose number it shows": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A KPI tile shows a single number and has no category axis": {
     "sites": 1,
     "scope": [
       "go"
@@ -3586,24 +3694,6 @@
       "go/other"
     ]
   },
-  "A calculation needs at least one measure — two target values are a constant": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A calculation operand is either a measure or a target value, not both": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A calendar date, written `@2026-10-22`.": {
     "sites": 2,
     "scope": [
@@ -3613,6 +3703,24 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "A calendar month, periods 1 to 12.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A calendar quarter.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person.": {
@@ -4308,15 +4416,6 @@
       "rules/tariff"
     ]
   },
-  "A chart can plot at most {0} measures": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A checklist can have at most 12 added steps": {
     "sites": 1,
     "scope": [
@@ -4470,15 +4569,6 @@
     ]
   },
   "A column can be pinned to one side only": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A column can carry a date bucket or a numeric range, not both": {
     "sites": 1,
     "scope": [
       "go"
@@ -4701,15 +4791,6 @@
     ],
     "areas": [
       "routes/training-course"
-    ]
-  },
-  "A computed column cannot reference itself": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "A computer appears here once somebody approves it from Trenova Capture's pairing code.": {
@@ -5030,6 +5111,15 @@
     ]
   },
   "A credit memo settles invoices and debit memos only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A credit or debit memo raised against a customer on its own, with no shipment behind it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -6209,24 +6299,6 @@
       "go/other"
     ]
   },
-  "A filter may bind either a literal value or a parameter, not both": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A filter on \"{0}\" can only use fields of {1}, the records this measure aggregates; move \"{2}\" to the report filters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A finalized return must record when it was finalized": {
     "sites": 1,
     "scope": [
@@ -6335,6 +6407,15 @@
     ]
   },
   "A formula template named \"{0}\" already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A free-form memo line, counted in the total but in neither the freight subtotal nor the accessorial figure.": {
     "sites": 1,
     "scope": [
       "go"
@@ -7188,24 +7269,6 @@
     ],
     "areas": [
       "routes/billing-control"
-    ]
-  },
-  "A map needs a {0} column": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A map positions rows by coordinate and has no category axis": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "A match arm used as a value must give one": {
@@ -8991,15 +9054,6 @@
       "rules/tariff"
     ]
   },
-  "A ranged column cannot also carry a transform; the range already reshapes the value": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A rate agreement": {
     "sites": 1,
     "scope": [
@@ -9614,15 +9668,6 @@
       "routes/agent-control"
     ]
   },
-  "A report can carry at most {0} charts": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A report definition or canned report key is required": {
     "sites": 1,
     "scope": [
@@ -10207,6 +10252,15 @@
       "go/other"
     ]
   },
+  "A run of weeks on a 4-4-5, 4-5-4 or 5-4-4 fiscal calendar.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A run that scored fewer cases is not compared with the median.": {
     "sites": 1,
     "scope": [
@@ -10266,24 +10320,6 @@
     ]
   },
   "A scanned page must be a PDF of exactly one page": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A scatter plot needs a measure on the horizontal axis": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A scatter plot needs a measure on the horizontal axis, not a grouping column": {
     "sites": 1,
     "scope": [
       "go"
@@ -11551,24 +11587,6 @@
       "go/other"
     ]
   },
-  "A target is either a fixed number or a column, not both": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A target value must be a finite number": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A task another agent handed you cannot be parked on a wait. Finish what you can and tell that agent what to wait for.": {
     "sites": 1,
     "scope": [
@@ -12098,24 +12116,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "A total row cannot be combined with measure filters — move the condition to the row filters, or turn totals off": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A total row needs at least one measure to total": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "A tracking link can last at most 180 days": {
@@ -12857,15 +12857,6 @@
       "go/other"
     ]
   },
-  "A {0} chart plots exactly one measure": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A {0} entry must reference the move it came from": {
     "sites": 1,
     "scope": [
@@ -13048,13 +13039,11 @@
     ]
   },
   "A55": {
-    "sites": 4,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/desk"
     ]
   },
@@ -13095,7 +13084,7 @@
     ]
   },
   "ACH": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -13115,6 +13104,15 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/carrier-settlement"
+    ]
+  },
+  "ACH Manual": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "ACH file / batch ID (optional)": {
@@ -14523,6 +14521,15 @@
       "routes/edi"
     ]
   },
+  "Accepting every posting, from the subledgers and by hand.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Accepting...": {
     "sites": 1,
     "scope": [
@@ -14683,7 +14690,7 @@
     ]
   },
   "Accessorial Charge ID": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -15080,15 +15087,6 @@
       "go/other"
     ]
   },
-  "Account Type ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Account Types": {
     "sites": 1,
     "scope": [
@@ -15272,15 +15270,6 @@
       "routes/account-type"
     ]
   },
-  "Account-level view of volume, revenue quality, freight profile, and first and last shipment dates": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Accountant": {
     "sites": 1,
     "scope": [
@@ -15291,7 +15280,7 @@
     ]
   },
   "Accounting": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -15915,15 +15904,6 @@
       "routes/carrier-settlement-workspace"
     ]
   },
-  "Accrued time off the organisation is carrying, by type and terminal, with what has been accrued and used this year": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Accrues an adjustment cost event for the variance so the carrier is paid the billed amount": {
     "sites": 1,
     "scope": [
@@ -16013,24 +15993,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Ach": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Ach Manual": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Ack At": {
@@ -16755,6 +16717,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Active and accepting transactions.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Active communication profile": {
@@ -20046,11 +20017,13 @@
     ]
   },
   "Address Line 1": {
-    "sites": 5,
+    "sites": 10,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/admin",
       "routes/carrier",
       "routes/worker"
@@ -20075,34 +20048,18 @@
     ]
   },
   "Address Line 2": {
-    "sites": 6,
+    "sites": 11,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/admin",
       "routes/carrier",
       "routes/customer",
       "routes/location",
       "routes/worker"
-    ]
-  },
-  "Address Line1": {
-    "sites": 5,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Address Line2": {
-    "sites": 5,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Address information": {
@@ -20514,15 +20471,6 @@
       "routes/settings"
     ]
   },
-  "Adjusted Trenova": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Adjusting": {
     "sites": 4,
     "scope": [
@@ -20560,15 +20508,6 @@
       "routes/escrow-account",
       "routes/invoice",
       "routes/invoice-adjustment-batch"
-    ]
-  },
-  "Adjustment Credit Memo": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Adjustment Deadline": {
@@ -20846,14 +20785,12 @@
     ]
   },
   "Administration": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "go/other",
       "packages/shared/lib",
       "routes/admin"
     ]
@@ -22286,15 +22223,6 @@
       "routes/reports"
     ]
   },
-  "Aggregation \"{0}\" is not legal for field \"{1}\"": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Aging": {
     "sites": 5,
     "scope": [
@@ -22382,7 +22310,7 @@
     ]
   },
   "Agreement": {
-    "sites": 5,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -22422,7 +22350,7 @@
     ]
   },
   "Agreement ID": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -24058,15 +23986,6 @@
       "routes/location-category"
     ]
   },
-  "Already Paid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Already a shipment": {
     "sites": 1,
     "scope": [
@@ -24517,7 +24436,7 @@
       "routes/ifta-return"
     ]
   },
-  "Amends Return ID": {
+  "Amends Return": {
     "sites": 1,
     "scope": [
       "go"
@@ -24646,24 +24565,6 @@
     ]
   },
   "Amount Minor": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Amount Mismatch": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Amount Only": {
     "sites": 1,
     "scope": [
       "go"
@@ -27732,6 +27633,15 @@
       "routes/agent-control"
     ]
   },
+  "Answered \"what would this have cost\" on demand.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Answered by <b>{0}</b> · {1} didn't respond": {
     "sites": 1,
     "scope": [
@@ -27934,15 +27844,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Any driver credential — CDL, medical card, hazmat, or TWIC — expiring inside the horizon, with fleet and contact routing": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Any facility": {
@@ -28568,7 +28469,7 @@
     ]
   },
   "Applied": {
-    "sites": 20,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -28966,15 +28867,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Apply Failed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Apply Increase": {
@@ -30361,7 +30253,7 @@
     ]
   },
   "Approved": {
-    "sites": 64,
+    "sites": 63,
     "scope": [
       "go",
       "ts"
@@ -31534,24 +31426,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Arrivals": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Arrivals And Departures": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Arrivals and departures": {
@@ -33528,24 +33402,6 @@
       "go/other"
     ]
   },
-  "Assigned Tractor ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Assigned Worker ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Assigned automatically on hire, rehire and driver-type change.": {
     "sites": 1,
     "scope": [
@@ -33833,15 +33689,6 @@
     ]
   },
   "Assignment Version": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Assignment counts per tractor with the drivers and trailers it ran with, plus first and last assignment dates": {
     "sites": 1,
     "scope": [
       "go"
@@ -34204,15 +34051,6 @@
     ]
   },
   "At least one case is needed to compare scores": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "At least one column is required": {
     "sites": 1,
     "scope": [
       "go"
@@ -35531,15 +35369,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Auth": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Auth secret is required": {
@@ -37112,13 +36941,15 @@
     ]
   },
   "Average": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/types",
+      "go/other",
       "routes/desk"
     ]
   },
@@ -37187,13 +37018,11 @@
     ]
   },
   "Average {0}": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
@@ -38095,14 +37924,12 @@
     ]
   },
   "Backfill": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
-      "go/other",
       "routes/accounting-sync"
     ]
   },
@@ -38390,6 +38217,15 @@
     ],
     "areas": [
       "template/invoice.pdf"
+    ]
+  },
+  "Balance Due Minor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Balance actions": {
@@ -39225,7 +39061,7 @@
     ]
   },
   "Batch ID": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -39572,6 +39408,15 @@
     "areas": [
       "apps/web/components",
       "routes/inbox"
+    ]
+  },
+  "Being set up; nothing can be posted to any of its periods.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Below": {
@@ -40003,15 +39848,6 @@
       "routes/shipment"
     ]
   },
-  "Bill Payment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Bill To": {
     "sites": 8,
     "scope": [
@@ -40037,7 +39873,7 @@
       "go/other"
     ]
   },
-  "Bill To Address Line1": {
+  "Bill To Address Line 1": {
     "sites": 1,
     "scope": [
       "go"
@@ -40046,7 +39882,7 @@
       "go/other"
     ]
   },
-  "Bill To Address Line2": {
+  "Bill To Address Line 2": {
     "sites": 1,
     "scope": [
       "go"
@@ -40082,8 +39918,17 @@
       "go/other"
     ]
   },
+  "Bill To Customer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Bill To Customer ID": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -40849,6 +40694,87 @@
     ]
   },
   "Billing Queue Item ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing Transfer Approved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing Transfer Canceled": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing Transfer Exception": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing Transfer In Review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing Transfer None": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing Transfer On Hold": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing Transfer Posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing Transfer Ready For Review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing Transfer Sent Back To Ops": {
     "sites": 1,
     "scope": [
       "go"
@@ -43755,15 +43681,6 @@
       "go/other"
     ]
   },
-  "Business Unit ID": {
-    "sites": 81,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Business Unit ID is required": {
     "sites": 1,
     "scope": [
@@ -44322,11 +44239,13 @@
     ]
   },
   "CNG": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/desk"
     ]
   },
@@ -44519,13 +44438,11 @@
     ]
   },
   "Calculation": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/invoice",
       "routes/reports"
     ]
@@ -45617,7 +45534,7 @@
     ]
   },
   "Canceled": {
-    "sites": 45,
+    "sites": 44,
     "scope": [
       "go",
       "ts"
@@ -46348,15 +46265,6 @@
     ]
   },
   "Cannot disable {0}: {1}. Resolve or close this work before turning {2} off": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Cannot divide by a target value of zero": {
     "sites": 1,
     "scope": [
       "go"
@@ -47097,7 +47005,7 @@
     ]
   },
   "Carrier": {
-    "sites": 50,
+    "sites": 52,
     "scope": [
       "go",
       "ts"
@@ -47131,24 +47039,6 @@
   },
   "Carrier Assignment ID": {
     "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Carrier Bill": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Carrier Bill Payment": {
-    "sites": 2,
     "scope": [
       "go"
     ],
@@ -47213,7 +47103,7 @@
     ]
   },
   "Carrier ID": {
-    "sites": 4,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -47295,33 +47185,6 @@
       "routes/admin"
     ]
   },
-  "Carrier Settlement Paid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Carrier Settlement Posted": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Carrier Settlement Voided": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Carrier Settlements": {
     "sites": 2,
     "scope": [
@@ -47369,24 +47232,6 @@
   },
   "Carrier Type": {
     "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Carrier Updated": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Carrier Vendor": {
-    "sites": 2,
     "scope": [
       "go"
     ],
@@ -49586,16 +49431,27 @@
     ]
   },
   "Change": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/agent-control",
       "routes/desk",
       "routes/rate-agreement",
       "routes/settings"
+    ]
+  },
+  "Change %": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Change (%)": {
@@ -50923,26 +50779,15 @@
     ]
   },
   "Chargeback": {
-    "sites": 5,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
-      "go/other"
+      "apps/web/lib"
     ]
   },
   "Chargeback Reason": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Chargeback Reversal": {
     "sites": 1,
     "scope": [
       "go"
@@ -51188,15 +51033,6 @@
       "routes/order"
     ]
   },
-  "Charges, volume, and revenue per mile grouped by service level and shipment type": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Chart": {
     "sites": 6,
     "scope": [
@@ -51209,35 +51045,8 @@
       "routes/worker"
     ]
   },
-  "Chart ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Chart category limit must be between 0 and {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Chart of accounts type definitions": {
     "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Chart references unknown column \"{0}\"": {
-    "sites": 5,
     "scope": [
       "go"
     ],
@@ -51270,15 +51079,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Charts group by a dimension column, not by a measure": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Charts plot measures — add one to the report first.": {
@@ -53114,15 +52914,6 @@
       "go/other"
     ]
   },
-  "Choose at least one measure to plot": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Choose at least one measure to plot.": {
     "sites": 1,
     "scope": [
@@ -53509,15 +53300,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "Choose the column that groups this chart": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Choose the column that holds the amount paid, the advance, the reserve or the invoice amount": {
@@ -54470,15 +54252,6 @@
       "apps/web/components"
     ]
   },
-  "Chosen By Person": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Chosen by": {
     "sites": 1,
     "scope": [
@@ -54943,15 +54716,6 @@
       "routes/admin"
     ]
   },
-  "Claimed By Another Line": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Clamp to top band": {
     "sites": 1,
     "scope": [
@@ -55256,168 +55020,6 @@
       "routes/hazardous-material"
     ]
   },
-  "Class100": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class110": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class125": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class150": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class175": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class200": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class250": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class300": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class400": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class50": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class500": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class55": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class60": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class65": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class70": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class77 5": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class85": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Class92 5": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Classification": {
     "sites": 11,
     "scope": [
@@ -55682,7 +55284,7 @@
     ]
   },
   "Clear": {
-    "sites": 28,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -56940,15 +56542,6 @@
       "go/other"
     ]
   },
-  "Closed Period": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Closed accounts stop accepting contributions and accruing interest. Refund or apply each balance first — accounts holding funds cannot be closed.": {
     "sites": 1,
     "scope": [
@@ -57019,6 +56612,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Closed for good once the audit is certified; it can never be reopened.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Closed for good once the audit is signed off; it can never be reopened.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Closed in the driver's favor, optionally with a correcting adjustment.": {
@@ -57195,15 +56806,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Cng": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Co-driver": {
@@ -58052,24 +57654,6 @@
       "routes/reports"
     ]
   },
-  "Column ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Column IDs cannot contain ':'": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Column headings, in order. Required: a table with no headings cannot be read.": {
     "sites": 1,
     "scope": [
@@ -58086,15 +57670,6 @@
     ],
     "areas": [
       "api/graphql"
-    ]
-  },
-  "Column kind must be dimension or measure": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Column name": {
@@ -58662,15 +58237,6 @@
       "go/other"
     ]
   },
-  "Commodity ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Commodity ID is required": {
     "sites": 2,
     "scope": [
@@ -58680,7 +58246,7 @@
       "go/other"
     ]
   },
-  "Commodity Ids": {
+  "Commodity IDs": {
     "sites": 1,
     "scope": [
       "go"
@@ -59216,6 +58782,15 @@
       "routes/agent-control"
     ]
   },
+  "Compared carriers before one was chosen.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Compared report runs": {
     "sites": 1,
     "scope": [
@@ -59299,15 +58874,6 @@
       "routes/admin"
     ]
   },
-  "Comparison column \"{0}\" is not a measure this report returns": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Comparisons can't be chained; write each one and join them with `and`": {
     "sites": 2,
     "scope": [
@@ -59329,7 +58895,7 @@
     ]
   },
   "Complete": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -60007,42 +59573,6 @@
       "go/other"
     ]
   },
-  "Computed columns cannot carry an aggregation or date bucket": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Computed columns cannot reference a field directly": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Computed columns require a computed expression": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Computed columns require a label": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Computed from open invoices once this customer's receivables next move, or overnight.": {
     "sites": 1,
     "scope": [
@@ -60059,33 +59589,6 @@
     ],
     "areas": [
       "routes/fuel-purchase"
-    ]
-  },
-  "Computed operand \"{0}\" does not reference a valid column": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Computed operand \"{0}\" must be a measure column": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Computed operator must be add, subtract, multiply, or divide": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Computed time is required": {
@@ -61267,15 +60770,13 @@
     ]
   },
   "Conflict": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/hooks",
-      "go/other",
       "routes/scheduling"
     ]
   },
@@ -66317,12 +65818,14 @@
     ]
   },
   "Count": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/types",
+      "go/other",
       "routes/ar-open-items",
       "routes/edi",
       "routes/reconciliation-summary"
@@ -68413,6 +67916,15 @@
       "go/other"
     ]
   },
+  "Created but not yet open; nothing can be posted to it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Created by is required": {
     "sites": 5,
     "scope": [
@@ -68639,15 +68151,6 @@
   },
   "Credential Type": {
     "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Credential Type ID": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -68896,24 +68399,6 @@
       "go/other"
     ]
   },
-  "Credit And Rebill": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Credit Application": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Credit Balance (Minor)": {
     "sites": 1,
     "scope": [
@@ -68924,15 +68409,6 @@
     ]
   },
   "Credit Memo": {
-    "sites": 4,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Credit Memo Applied": {
     "sites": 1,
     "scope": [
       "go"
@@ -68959,24 +68435,6 @@
       "go/other"
     ]
   },
-  "Credit Memo Posted": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Credit Memo Unapplied": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Credit Only": {
     "sites": 2,
     "scope": [
@@ -68989,6 +68447,15 @@
     ]
   },
   "Credit Quantity": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Credit Rebill": {
     "sites": 1,
     "scope": [
       "go"
@@ -69539,7 +69006,7 @@
     ]
   },
   "Currency": {
-    "sites": 40,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -69565,15 +69032,6 @@
   },
   "Currency Code": {
     "sites": 5,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Currency Mismatch": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -70446,7 +69904,7 @@
     ]
   },
   "Customer": {
-    "sites": 94,
+    "sites": 92,
     "scope": [
       "go",
       "ts"
@@ -70484,15 +69942,6 @@
       "template/detention.notice.pdf"
     ]
   },
-  "Customer Balance Mismatch": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Customer Communication": {
     "sites": 1,
     "scope": [
@@ -70521,7 +69970,7 @@
     ]
   },
   "Customer ID": {
-    "sites": 12,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -70602,7 +70051,7 @@
     ]
   },
   "Customer Payment": {
-    "sites": 8,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -70610,42 +70059,6 @@
     "areas": [
       "go/other",
       "routes/journal-entry"
-    ]
-  },
-  "Customer Payment Applied": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Customer Payment ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Customer Payment Posted": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Customer Payment Reversed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Customer Payments": {
@@ -70712,15 +70125,6 @@
     ]
   },
   "Customer Update": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Customer Updated": {
     "sites": 1,
     "scope": [
       "go"
@@ -71300,15 +70704,6 @@
       "go/other"
     ]
   },
-  "Customer, Carrier or Driver": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Customer, carrier or driver": {
     "sites": 2,
     "scope": [
@@ -71565,6 +70960,15 @@
       "routes/osha"
     ]
   },
+  "DBA Name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "DBA name": {
     "sites": 3,
     "scope": [
@@ -71585,11 +70989,13 @@
     ]
   },
   "DEF": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/desk"
     ]
   },
@@ -71874,15 +71280,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "DQ file at a glance — compliance standing, credential dates, MVR and physical due dates, and disqualification reasons": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "DR": {
@@ -72232,7 +71629,7 @@
     ]
   },
   "Dashboard": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -72318,12 +71715,14 @@
     ]
   },
   "Data": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/desk"
     ]
   },
@@ -72616,15 +72015,6 @@
     ]
   },
   "Date basis is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Date buckets are only valid on date/timestamp fields": {
     "sites": 1,
     "scope": [
       "go"
@@ -73439,15 +72829,6 @@
       "routes/factoring-company"
     ]
   },
-  "Dba Name": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Deactivate": {
     "sites": 13,
     "scope": [
@@ -73661,15 +73042,6 @@
       "go/other"
     ]
   },
-  "Deadhead exposure by fleet and tractor — loaded miles against empty miles for the selected window": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Deadhead goal": {
     "sites": 2,
     "scope": [
@@ -73726,15 +73098,6 @@
     ]
   },
   "Debit Memo": {
-    "sites": 4,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Debit Memo Posted": {
     "sites": 1,
     "scope": [
       "go"
@@ -73852,15 +73215,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Debits, credits and net change per GL account for the current fiscal year, grouped by account category": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Debits, credits and net change per GL account per fiscal period": {
@@ -74860,15 +74214,6 @@
     ],
     "areas": [
       "api/handlers"
-    ]
-  },
-  "Def": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Default": {
@@ -76130,17 +75475,8 @@
       "routes/invoice-adjustment-control"
     ]
   },
-  "Definition ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Definition is required": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -77008,15 +76344,6 @@
       "routes/desk"
     ]
   },
-  "Deleted In Provider": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Deleted comments cannot be edited": {
     "sites": 1,
     "scope": [
@@ -77673,6 +77000,15 @@
       "routes/settlement-dispute"
     ]
   },
+  "Dense rank": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Density": {
     "sites": 1,
     "scope": [
@@ -77838,7 +77174,88 @@
       "routes/org-structure"
     ]
   },
+  "Department Administration": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Department Billing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Department Executive": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Department Human Resources": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Department ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Department Maintenance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Department Operations": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Department Other": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Department Safety": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Department Sales": {
     "sites": 1,
     "scope": [
       "go"
@@ -77903,15 +77320,6 @@
       "routes/shipment"
     ]
   },
-  "Departures": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Departures only": {
     "sites": 1,
     "scope": [
@@ -77919,15 +77327,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Dependency Of": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Depends on the call": {
@@ -78278,7 +77677,7 @@
     ]
   },
   "Description": {
-    "sites": 180,
+    "sites": 181,
     "scope": [
       "go",
       "ts"
@@ -79107,14 +78506,12 @@
     ]
   },
   "Detected": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "go/other",
       "routes/carrier-monitoring",
       "routes/desk",
       "routes/service-failure"
@@ -79811,6 +79208,15 @@
       "go/other"
     ]
   },
+  "Detention, driver assist": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Detention: the time `dwell` runs past `free`, rounded up to the next `increment`, at `rate`.": {
     "sites": 2,
     "scope": [
@@ -80302,25 +79708,7 @@
       "routes/reports"
     ]
   },
-  "Dimension \"{0}\" crosses a to-many relationship; only measures may aggregate across to-many paths": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Dimension positions must run from zero without gaps": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Dimensions cannot have an aggregation": {
     "sites": 1,
     "scope": [
       "go"
@@ -81200,7 +80588,7 @@
     ]
   },
   "Dismissed": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -82362,6 +81750,15 @@
       "go/other"
     ]
   },
+  "Distinct count": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Distinct units seen at inspections compared with the power units on file.": {
     "sites": 1,
     "scope": [
@@ -82372,13 +81769,11 @@
     ]
   },
   "Distinct {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
@@ -83824,15 +83219,6 @@
       "routes/factoring-company"
     ]
   },
-  "Documents held, failed or skipped on their way to the accounting system, by the week they were queued, the reason and the kind of document; choose document types to see receivables or payables alone": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Documents must include an expiration date": {
     "sites": 1,
     "scope": [
@@ -84132,6 +83518,15 @@
     ]
   },
   "Double Drop": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Double Triple": {
     "sites": 1,
     "scope": [
       "go"
@@ -84988,6 +84383,51 @@
       "routes/settings"
     ]
   },
+  "Drift Adjusted Trenova": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Amount Mismatch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Customer Balance Mismatch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Deleted In Provider": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Dismissed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Drift Finding": {
     "sites": 1,
     "scope": [
@@ -85006,7 +84446,97 @@
       "go/other"
     ]
   },
-  "Drift Resolved": {
+  "Drift Fix Credit Memo": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Fix Debit Memo": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Fix Invoice Void": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Fix Payment Reversal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Fix Sync Record": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift No Longer Differs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Object GL Account": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Pushed Trenova Value": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Status Mismatch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Trial Balance Mismatch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drift Voided In Provider": {
     "sites": 1,
     "scope": [
       "go"
@@ -85206,24 +84736,6 @@
       "template/rateconfirmation.pdf"
     ]
   },
-  "Driver Bill": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Driver Bill Payment": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Driver Dispatch Hold": {
     "sites": 1,
     "scope": [
@@ -85323,33 +84835,6 @@
       "routes/admin"
     ]
   },
-  "Driver Settlement Paid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Driver Settlement Posted": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Driver Settlement Voided": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Driver Settlements": {
     "sites": 1,
     "scope": [
@@ -85361,24 +84846,6 @@
   },
   "Driver Type": {
     "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Driver Updated": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Driver Vendor": {
-    "sites": 2,
     "scope": [
       "go"
     ],
@@ -86602,7 +86069,43 @@
       "routes/worker"
     ]
   },
+  "Drug Alcohol Clear": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drug Alcohol Pending": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drug Alcohol Prohibited": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Drug Alcohol Status": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drug Alcohol Unknown": {
     "sites": 1,
     "scope": [
       "go"
@@ -87047,7 +86550,7 @@
     ]
   },
   "Duplicate": {
-    "sites": 25,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -87121,24 +86624,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Duplicate chart ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Duplicate column ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Duplicate commodities detected in this shipment.": {
@@ -87524,6 +87009,15 @@
       "go/other"
     ]
   },
+  "E 85": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "E-85": {
     "sites": 1,
     "scope": [
@@ -87534,13 +87028,11 @@
     ]
   },
   "E85": {
-    "sites": 4,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/desk"
     ]
   },
@@ -88387,7 +87879,7 @@
     ]
   },
   "EFS": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -88395,6 +87887,15 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "EFS Money Code": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "EFS code the driver cashes at a truck stop.": {
@@ -88479,13 +87980,15 @@
     ]
   },
   "EIN": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "EIN or SSN used for tax reporting. Selecting a tax ID type is required when this is set.": {
@@ -89552,13 +89055,11 @@
     ]
   },
   "Earliest {0}": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
@@ -90570,34 +90071,7 @@
       "template/factoring.noa.pdf"
     ]
   },
-  "Efs": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Efs Money Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Egress class is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Ein": {
     "sites": 1,
     "scope": [
       "go"
@@ -90853,7 +90327,7 @@
       "routes/worker"
     ]
   },
-  "Email Bcc Snapshot": {
+  "Email BCC Snapshot": {
     "sites": 1,
     "scope": [
       "go"
@@ -90871,7 +90345,7 @@
       "go/other"
     ]
   },
-  "Email Cc Snapshot": {
+  "Email CC Snapshot": {
     "sites": 1,
     "scope": [
       "go"
@@ -92146,6 +91620,105 @@
   },
   "Employment Event": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Hired": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Leave Ended": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Leave Started": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Probation Ended": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Promoted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Rate Changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Rehired": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Reinstated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Suspended": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Terminated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Employment Event Transferred": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -95277,7 +94850,7 @@
     ]
   },
   "Equipment": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -95323,15 +94896,6 @@
       "go/other"
     ]
   },
-  "Equipment Manufacturer ID": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Equipment Manufacturer is required": {
     "sites": 4,
     "scope": [
@@ -95361,15 +94925,6 @@
     "areas": [
       "go/other",
       "routes/shipment"
-    ]
-  },
-  "Equipment Type ID": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Equipment Type is required": {
@@ -95585,7 +95140,7 @@
     ]
   },
   "Error": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -95935,7 +95490,7 @@
     ]
   },
   "Escrow Account ID": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -97018,15 +96573,6 @@
       "routes/home"
     ]
   },
-  "Every active worker with their hire date, terminal, position and manager, for reading tenure across the roster": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Every address mail arrives on": {
     "sites": 1,
     "scope": [
@@ -97398,15 +96944,6 @@
       "routes/worker"
     ]
   },
-  "Every credential on file for every driver, with type, requirement, issue and expiry dates and who verified it": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Every credential this worker must hold to be dispatched.": {
     "sites": 1,
     "scope": [
@@ -97534,15 +97071,6 @@
       "go/other"
     ]
   },
-  "Every document that moved a customer balance — invoices, credits, payments and adjustments — with its signed amount": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Every document that moved the balance in the period, oldest first, with the running balance after each.": {
     "sites": 1,
     "scope": [
@@ -97577,15 +97105,6 @@
     ],
     "areas": [
       "routes/settlement-workspace"
-    ]
-  },
-  "Every driver on the board with fleet, class, dispatch availability, and hire date": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Every enabled vetting rule passed for this carrier.": {
@@ -98258,15 +97777,6 @@
       "routes/formula-library"
     ]
   },
-  "Every schedule of accounts sent to a factor, newest first, with how many invoices it carried, their total, the advance, fee and reserve the agreement expected, and whether it was delivered": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Every scheduled occurrence generates a shipment.": {
     "sites": 1,
     "scope": [
@@ -98430,15 +97940,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Every side of a calculation needs a measure or a target value": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Every sign-in attempt in that time succeeded.": {
@@ -98621,15 +98122,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Every tracked credential expiring inside the horizon, from the credential registry rather than the fixed profile columns": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Every transaction in this file was processed successfully.": {
@@ -99296,14 +98788,12 @@
     ]
   },
   "Excel": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "go/other"
+      "apps/web/components"
     ]
   },
   "Excel (XLSX)": {
@@ -99337,7 +98827,7 @@
     ]
   },
   "Exception": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -99840,13 +99330,11 @@
     ]
   },
   "Executive": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/lib"
     ]
   },
@@ -100424,24 +99912,6 @@
       "rules/tariff"
     ]
   },
-  "Expected a number for a ranged column, got \"{0}\"": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Expected a number for a ranged column, got {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Expected a parameter's name, or `)`": {
     "sites": 2,
     "scope": [
@@ -100473,24 +99943,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "Expected a timestamp for a bucketed column, got \"{0}\"": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Expected a timestamp for a bucketed column, got {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Expected a type inside `<…>`": {
@@ -102368,6 +101820,15 @@
       "go/other"
     ]
   },
+  "Export between 1 and {0} columns": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Export carrier data": {
     "sites": 1,
     "scope": [
@@ -103602,11 +103063,13 @@
     ]
   },
   "FMLA": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "packages/shared/lib",
       "packages/shared/types"
     ]
@@ -103877,15 +103340,6 @@
       "go/other"
     ]
   },
-  "Factored invoices that pass every readiness check and are waiting to be submitted, with their factor, open balance and how long they have been ready, oldest first": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Factoring": {
     "sites": 9,
     "scope": [
@@ -103937,16 +103391,7 @@
     ]
   },
   "Factoring Company": {
-    "sites": 8,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Factoring Company ID": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "go"
     ],
@@ -107185,26 +106630,8 @@
       "routes/agent-control"
     ]
   },
-  "Field \"{0}\" cannot be pivoted": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Field \"{0}\" cannot be used as a grouping dimension": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Field \"{0}\" is not filterable": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -108484,15 +107911,6 @@
       "go/other"
     ]
   },
-  "Filter group operator must be and/or": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Filter operator is invalid": {
     "sites": 1,
     "scope": [
@@ -108554,15 +107972,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Filter value is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Filter value is too long": {
@@ -109495,6 +108904,15 @@
       "api/handlers"
     ]
   },
+  "First": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "First 2 hours": {
     "sites": 1,
     "scope": [
@@ -109774,15 +109192,6 @@
       "go/other"
     ]
   },
-  "Fiscal Period ID": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Fiscal Periods": {
     "sites": 2,
     "scope": [
@@ -109802,7 +109211,7 @@
     ]
   },
   "Fiscal Year ID": {
-    "sites": 4,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -110151,6 +109560,15 @@
   },
   "Fixed With": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Fixed amount (TONU, layover, tarp, hazmat)": {
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -110533,15 +109951,6 @@
       "go/other"
     ]
   },
-  "Fleet Code ID": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Fleet Codes": {
     "sites": 2,
     "scope": [
@@ -110560,6 +109969,15 @@
       "routes/ifta-return"
     ]
   },
+  "Fleet MPG By Fuel Type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Fleet MPG divisor: rate = (price − peg) ÷ MPG.": {
     "sites": 1,
     "scope": [
@@ -110570,15 +109988,6 @@
     ]
   },
   "Fleet Map": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Fleet Mpg By Fuel Type": {
     "sites": 1,
     "scope": [
       "go"
@@ -110792,15 +110201,6 @@
       "go/other"
     ]
   },
-  "Fmla": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Focus": {
     "sites": 2,
     "scope": [
@@ -110899,15 +110299,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Follow Up Testing": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Follow a shipment": {
@@ -112418,7 +111809,7 @@
     ]
   },
   "Freight": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -112688,15 +112079,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Freight, accessorial, and total charges per customer with volume, miles, and revenue per mile over a rolling window": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Frequency": {
@@ -113197,15 +112579,6 @@
   },
   "Fuel Card": {
     "sites": 4,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Fuel Card ID": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -113843,11 +113216,13 @@
     ]
   },
   "Full": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/desk"
     ]
   },
@@ -113933,15 +113308,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Full power-unit roster: identity, specification, registration, fleet assignment, and the drivers currently attached": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Full profile": {
@@ -114253,14 +113619,12 @@
     ]
   },
   "Funding": {
-    "sites": 7,
+    "sites": 4,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "go/other",
       "routes/factoring-company",
       "routes/factoring-submission"
     ]
@@ -114459,16 +113823,7 @@
     ]
   },
   "GL Account": {
-    "sites": 6,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "GL Account ID": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -115360,7 +114715,7 @@
     ]
   },
   "Generated": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -115375,7 +114730,7 @@
     ]
   },
   "Generated At": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -116907,15 +116262,6 @@
       "routes/driver-settlement"
     ]
   },
-  "Gross earnings, deductions and net pay per settlement, with the miles and shipment count behind each one": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Gross pay": {
     "sites": 1,
     "scope": [
@@ -117974,6 +117320,15 @@
       "apps/web/components"
     ]
   },
+  "Hard-closed: nothing can be posted; it can be reopened with authorization and a reason, which is audited.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Has Exceptions": {
     "sites": 1,
     "scope": [
@@ -118146,195 +117501,6 @@
       "apps/web/lib"
     ]
   },
-  "Hazard Class1": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class1 And1": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class1 And2": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class1 And3": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class1 And4": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class1 And5": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class1 And6": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class2 And1": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class2 And2": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class2 And3": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class3": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class4 And1": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class4 And2": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class4 And3": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class5 And1": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class5 And2": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class6 And1": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class6 And2": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class7": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class8": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazard Class9": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Hazard class is required": {
     "sites": 1,
     "scope": [
@@ -118355,15 +117521,6 @@
   },
   "Hazardous Material": {
     "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Hazardous Material ID": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -118441,7 +117598,7 @@
     ]
   },
   "Hazmat": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -119812,13 +118969,11 @@
     ]
   },
   "Hired": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/types",
       "routes/desk"
     ]
@@ -119839,15 +118994,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Hires, terminations and rehires by month, read from the employment timeline rather than the current roster": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Hires, terminations, leave, suspensions, transfers and other employment history": {
@@ -121355,15 +120501,6 @@
       "routes/agent-control"
     ]
   },
-  "How long each factor takes to fund a schedule once it is sent, averaged over the schedules it funded in the window, with how many and how much": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "How long one call may run before it's abandoned.": {
     "sites": 1,
     "scope": [
@@ -122398,13 +121535,11 @@
     ]
   },
   "Human Resources": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/lib"
     ]
   },
@@ -122854,6 +121989,15 @@
       "routes/desk"
     ]
   },
+  "II": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "II - medium danger": {
     "sites": 1,
     "scope": [
@@ -122861,6 +122005,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "III": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "III - low danger": {
@@ -123585,15 +122738,13 @@
     ]
   },
   "Ignored": {
-    "sites": 8,
+    "sites": 6,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
       "apps/web/lib",
-      "go/other",
       "routes/accounting-inbound",
       "routes/inbox"
     ]
@@ -123635,24 +122786,6 @@
     ]
   },
   "Ignoring a payment from the accounting system requires an authenticated user": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Ii": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Iii": {
     "sites": 1,
     "scope": [
       "go"
@@ -124403,7 +123536,7 @@
     ]
   },
   "In Review": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -125049,6 +124182,24 @@
       "routes/edi"
     ]
   },
+  "Inbound Bill Payment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Customer Payment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Inbound EDI 210 invoices from tendered carriers are matched to their carrier assignment automatically; gaps beyond the tolerance still land in the review workspace.": {
     "sites": 1,
     "scope": [
@@ -125077,6 +124228,159 @@
     ]
   },
   "Inbound Message ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Already Paid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Apply Failed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Currency Mismatch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Not Trenova Document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Overpayment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Partial Bill Payment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Party Mismatch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Period Not Open": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Policy Propose": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Sent From Trenova": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Unknown Document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Reason Voided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Status Applied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Status Detected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Status Ignored": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Status Proposed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Inbound Status Superseded": {
     "sites": 1,
     "scope": [
       "go"
@@ -127945,15 +127249,6 @@
       "api/graphql"
     ]
   },
-  "Invalid date bucket": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Invalid date format. Use ISO 8601 format (e.g., 2024-01-15 or 2024-01-15T10:30:00Z)": {
     "sites": 1,
     "scope": [
@@ -128817,7 +128112,7 @@
     ]
   },
   "Invoice": {
-    "sites": 55,
+    "sites": 54,
     "scope": [
       "go",
       "ts"
@@ -128903,25 +128198,7 @@
       "go/other"
     ]
   },
-  "Invoice Amount": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Invoice Amount (Minor)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Invoice Amount Date": {
     "sites": 1,
     "scope": [
       "go"
@@ -128994,14 +128271,12 @@
     ]
   },
   "Invoice ID": {
-    "sites": 6,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
-      "go/other"
+      "apps/web/lib"
     ]
   },
   "Invoice ID is required": {
@@ -129049,15 +128324,6 @@
       "go/other"
     ]
   },
-  "Invoice Near Amount": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Invoice Number": {
     "sites": 5,
     "scope": [
@@ -129069,25 +128335,7 @@
       "routes/admin"
     ]
   },
-  "Invoice Only": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Invoice PDF generation requires workflow processing to be enabled": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Invoice Posted": {
     "sites": 1,
     "scope": [
       "go"
@@ -129142,15 +128390,6 @@
     ]
   },
   "Invoice Total": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Invoice Void": {
     "sites": 1,
     "scope": [
       "go"
@@ -130612,6 +129851,15 @@
       "apps/web/lib"
     ]
   },
+  "Is 1099 Eligible": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Is Adjustment Artifact": {
     "sites": 1,
     "scope": [
@@ -130783,15 +130031,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Is1099 Eligible": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Issue": {
@@ -131925,11 +131164,13 @@
     ]
   },
   "Items": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/worker-checklist-template"
     ]
   },
@@ -132481,7 +131722,7 @@
     ]
   },
   "Journal Batch ID": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -132517,7 +131758,7 @@
     ]
   },
   "Journal Entry": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -132526,7 +131767,7 @@
     ]
   },
   "Journal Entry ID": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -132570,15 +131811,6 @@
       "go/other"
     ]
   },
-  "Journal Posted": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Journal Reversal": {
     "sites": 2,
     "scope": [
@@ -132601,15 +131833,6 @@
   },
   "Journal Sources": {
     "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Journal Summary": {
-    "sites": 2,
     "scope": [
       "go"
     ],
@@ -134940,11 +134163,13 @@
     ]
   },
   "LNG": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/desk"
     ]
   },
@@ -135527,6 +134752,15 @@
       "routes/org-structure"
     ]
   },
+  "Last": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Last 14 days": {
     "sites": 2,
     "scope": [
@@ -135669,15 +134903,6 @@
     ]
   },
   "Last Journal Entry": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Last Journal Entry ID": {
     "sites": 1,
     "scope": [
       "go"
@@ -136940,13 +136165,11 @@
     ]
   },
   "Latest {0}": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
@@ -136961,15 +136184,6 @@
       "go/other",
       "routes/reports",
       "routes/shipment"
-    ]
-  },
-  "Latitude and longitude cannot be the same column": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Latitude is required when longitude is provided": {
@@ -137067,6 +136281,15 @@
   },
   "Layover conversion threshold must be greater than zero": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Layover, storage": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -137313,24 +136536,6 @@
     ]
   },
   "Leave & FMLA": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Leave Ended": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Leave Started": {
     "sites": 1,
     "scope": [
       "go"
@@ -139169,15 +138374,6 @@
       "routes/edi"
     ]
   },
-  "Limit cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Limit cannot exceed 500": {
     "sites": 2,
     "scope": [
@@ -139194,15 +138390,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Limit exceeds the maximum of {0} rows": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Limit must be a number": {
@@ -139602,15 +138789,6 @@
       "routes/invoice-reconciliation"
     ]
   },
-  "Line-level record of hazardous freight moved — UN number, class, packing group, and placarding, by shipment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Lineage": {
     "sites": 2,
     "scope": [
@@ -139735,15 +138913,6 @@
       "apps/web/lib"
     ]
   },
-  "Linehaul economics per customer — charges, loaded miles, revenue per mile, and average length of haul": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Linehaul only": {
     "sites": 1,
     "scope": [
@@ -139754,7 +138923,7 @@
     ]
   },
   "Lines": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -140878,15 +140047,6 @@
     "areas": [
       "apps/web/components",
       "routes/formula-template"
-    ]
-  },
-  "Lng": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Load": {
@@ -143636,15 +142796,6 @@
       "go/other"
     ]
   },
-  "Location Category ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Location Code": {
     "sites": 1,
     "scope": [
@@ -143656,15 +142807,6 @@
   },
   "Location Details": {
     "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Location ID": {
-    "sites": 2,
     "scope": [
       "go"
     ],
@@ -145094,6 +144236,15 @@
       "routes/desk"
     ]
   },
+  "M 85": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "M-85": {
     "sites": 1,
     "scope": [
@@ -145104,13 +144255,11 @@
     ]
   },
   "M85": {
-    "sites": 4,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/desk"
     ]
   },
@@ -145537,13 +144686,11 @@
     ]
   },
   "Maintenance": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/lib"
     ]
   },
@@ -146847,7 +145994,7 @@
     ]
   },
   "Mapping": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -147824,6 +146971,114 @@
       "go/other"
     ]
   },
+  "Match Reason Amount Only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason Chosen By Person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason Claimed By Another Line": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason Invoice Amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason Invoice Amount Date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason Invoice Near Amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason Invoice Only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason Near Amount Only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason No Open Item": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason Not Booked From Remittance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason Partial Invoice Amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Match Reason Partial Invoice Near": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Match Score": {
     "sites": 1,
     "scope": [
@@ -148140,7 +147395,7 @@
     ]
   },
   "Matched": {
-    "sites": 17,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -148179,15 +147434,6 @@
     ]
   },
   "Matched By ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Matched Customer Payment ID": {
     "sites": 1,
     "scope": [
       "go"
@@ -148768,12 +148014,14 @@
     ]
   },
   "Maximum": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/types",
+      "go/other",
       "routes/agent-control"
     ]
   },
@@ -149274,13 +148522,11 @@
     ]
   },
   "Maximum {0}": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
@@ -149395,15 +148641,6 @@
       "routes/reports"
     ]
   },
-  "Measure \"{0}\" is plotted twice": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Measure filter": {
     "sites": 2,
     "scope": [
@@ -149420,42 +148657,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Measure filters compare the aggregate itself and cannot carry a transform": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Measure filters require an aggregation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Measure filters require at least one measure column": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Measure filters support only comparison operators": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Measured": {
@@ -149502,33 +148703,6 @@
     "areas": [
       "routes/insights",
       "routes/reports"
-    ]
-  },
-  "Measures cannot be date-bucketed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Measures cannot be grouped into ranges; band the dimension instead": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Measures require an aggregation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Measures to pivot": {
@@ -149635,7 +148809,7 @@
       "go/other"
     ]
   },
-  "Medical Examiner Name": {
+  "Medical Examiner NPI": {
     "sites": 1,
     "scope": [
       "go"
@@ -149644,7 +148818,7 @@
       "go/other"
     ]
   },
-  "Medical Examiner Npi": {
+  "Medical Examiner Name": {
     "sites": 1,
     "scope": [
       "go"
@@ -150954,15 +150128,6 @@
       "routes/ifta-return"
     ]
   },
-  "Miles, moves, loaded versus empty split, and last activity per power unit — spot idle and under-worked tractors": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Military": {
     "sites": 3,
     "scope": [
@@ -151129,12 +150294,14 @@
     ]
   },
   "Minimum": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "go/other"
     ]
   },
   "Minimum Fee (Minor)": {
@@ -151488,13 +150655,11 @@
     ]
   },
   "Minimum {0}": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
@@ -153040,15 +152205,6 @@
       "routes/accounting-sync"
     ]
   },
-  "Month-over-month shipments, revenue mix, tonnage, miles, and revenue per mile": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Month-to-date spend": {
     "sites": 1,
     "scope": [
@@ -153139,24 +152295,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "Monthly posted debits, credits and net movement per GL account and customer": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Monthly posted invoice totals, collections, outstanding balance, and collection rate for the current year": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Monthly spend cap": {
@@ -154253,15 +153391,6 @@
       "routes/desk"
     ]
   },
-  "Moves, loaded and empty miles, and last activity per driver — the asset-based view of who is turning miles": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Moving": {
     "sites": 4,
     "scope": [
@@ -154271,6 +153400,15 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/desk"
+    ]
+  },
+  "Moving average": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Moving is opening.": {
@@ -155970,15 +155108,6 @@
       "apps/web/components"
     ]
   },
-  "Near Amount Only": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Near limit": {
     "sites": 1,
     "scope": [
@@ -156561,57 +155690,69 @@
     ]
   },
   "Net 10": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Net 15": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Net 30": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Net 45": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Net 60": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Net 90": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Net Change (Minor)": {
@@ -156841,60 +155982,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Net10": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Net15": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Net30": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Net45": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Net60": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Net90": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "NetSuite integration record": {
@@ -159027,15 +158114,13 @@
     ]
   },
   "No": {
-    "sites": 31,
+    "sites": 30,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
-      "go/other",
       "packages/shared/components",
       "packages/shared/lib",
       "routes/admin",
@@ -159314,24 +158399,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "No Longer Differs": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "No Open Item": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "No PRO": {
@@ -165985,6 +165052,15 @@
       "apps/web/lib"
     ]
   },
+  "No shipment behind it yet.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "No shipment carries this order yet.": {
     "sites": 1,
     "scope": [
@@ -167750,7 +166826,7 @@
     ]
   },
   "Non-Recourse": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -167777,15 +166853,6 @@
       "packages/shared/lib",
       "routes/home",
       "routes/worker"
-    ]
-  },
-  "Non-groupable dimension in an aggregated report": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Non-member": {
@@ -167827,7 +166894,7 @@
     ]
   },
   "None": {
-    "sites": 48,
+    "sites": 50,
     "scope": [
       "go",
       "ts"
@@ -168233,6 +167300,15 @@
       "routes/edi"
     ]
   },
+  "Normalized Invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Normalizer": {
     "sites": 2,
     "scope": [
@@ -168287,25 +167363,7 @@
       "api/helpers"
     ]
   },
-  "Not Booked From Remittance": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Not Configured": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Not Found": {
     "sites": 1,
     "scope": [
       "go"
@@ -168342,7 +167400,7 @@
     ]
   },
   "Not Required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -168352,15 +167410,6 @@
   },
   "Not Sent": {
     "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Not Trenova Document": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -174262,11 +173311,13 @@
     ]
   },
   "OOS": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/worker"
     ]
   },
@@ -174317,12 +173368,14 @@
     ]
   },
   "OTR": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "OTR (over the road)": {
@@ -175347,7 +174400,7 @@
     ]
   },
   "On Hold": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -176965,15 +176018,6 @@
       "go/other"
     ]
   },
-  "Only KPI tiles show a comparison value": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Only Locked fiscal periods can be unlocked. Current status: {0}": {
     "sites": 1,
     "scope": [
@@ -178378,15 +177422,6 @@
       "go/other"
     ]
   },
-  "Only computed columns may carry a computed expression": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Only consolidate with other shipments from this same customer — never mix with other customers' freight. Requires 'Allow Consolidation' to be enabled.": {
     "sites": 1,
     "scope": [
@@ -178743,15 +177778,6 @@
   },
   "Only manual adjustment lines can be removed": {
     "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Only measure columns can carry their own filter; filter a calculation by filtering the measures it divides": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -180402,15 +179428,6 @@
     ],
     "areas": [
       "routes/accounting-drift"
-    ]
-  },
-  "Open differences between Trenova and the accounting system, by customer, carrier or driver and the kind of difference, with the net amount": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Open dispatch board": {
@@ -182067,15 +181084,6 @@
       "routes/desk"
     ]
   },
-  "Opening Balances": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Opening Trenova": {
     "sites": 1,
     "scope": [
@@ -182563,15 +181571,6 @@
     "areas": [
       "routes/admin",
       "routes/table-change-alert"
-    ]
-  },
-  "Operator \"{0}\" is not valid for {1} fields": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Opt": {
@@ -183342,7 +182341,7 @@
     ]
   },
   "Order ID": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -183679,15 +182678,6 @@
       "go/other",
       "routes/agent-control",
       "routes/desk"
-    ]
-  },
-  "Organization ID": {
-    "sites": 81,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Organization ID is required": {
@@ -184450,7 +183440,7 @@
     ]
   },
   "Other": {
-    "sites": 59,
+    "sites": 55,
     "scope": [
       "go",
       "ts"
@@ -184651,15 +183641,6 @@
       "routes/factoring-submission"
     ]
   },
-  "Otr": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Our AS2 ID": {
     "sites": 1,
     "scope": [
@@ -184823,15 +183804,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Out Of Service": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Out now · back {0}": {
@@ -185321,15 +184293,6 @@
       "routes/dispatch-console"
     ]
   },
-  "Outstanding receivables rolled up per customer with collection rate and the oldest open invoice date": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Over": {
     "sites": 2,
     "scope": [
@@ -185620,15 +184583,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Overpayment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Overridden": {
@@ -186112,7 +185066,7 @@
       "go/other"
     ]
   },
-  "Owner Worker ID": {
+  "Owner Worker": {
     "sites": 2,
     "scope": [
       "go"
@@ -186610,7 +185564,7 @@
     ]
   },
   "PO Number": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -186766,7 +185720,7 @@
     ]
   },
   "PRO Number": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -188062,11 +187016,13 @@
     ]
   },
   "Parameter": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/reports"
     ]
   },
@@ -188144,15 +187100,6 @@
     ]
   },
   "Parent Account": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Parent ID": {
     "sites": 1,
     "scope": [
       "go"
@@ -188430,33 +187377,6 @@
       "routes/invoice-adjustment-batch"
     ]
   },
-  "Partial Bill Payment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Partial Invoice Amount": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Partial Invoice Near Amount": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Partial settlement payment": {
     "sites": 1,
     "scope": [
@@ -188464,6 +187384,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Partially": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Partially Applied": {
@@ -188485,15 +187414,6 @@
     ]
   },
   "Partially Completed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Partially Funded": {
     "sites": 1,
     "scope": [
       "go"
@@ -188604,11 +187524,13 @@
     ]
   },
   "Parties": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/desk",
       "routes/shipment"
     ]
@@ -188956,7 +187878,7 @@
       "go/other"
     ]
   },
-  "Party Mismatch": {
+  "Party Name": {
     "sites": 1,
     "scope": [
       "go"
@@ -189069,6 +187991,15 @@
     ]
   },
   "Passed, failed and skipped cases cannot add up to more than the suite holds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Passenger": {
     "sites": 1,
     "scope": [
       "go"
@@ -190028,15 +188959,6 @@
       "go/other"
     ]
   },
-  "Pay Code ID": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Pay Codes": {
     "sites": 1,
     "scope": [
@@ -190890,15 +189812,6 @@
       "go/other"
     ]
   },
-  "Payment Reversal": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Payment Term": {
     "sites": 1,
     "scope": [
@@ -191399,7 +190312,7 @@
     ]
   },
   "Payroll": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -191568,7 +190481,7 @@
     ]
   },
   "Pending": {
-    "sites": 39,
+    "sites": 38,
     "scope": [
       "go",
       "ts"
@@ -192472,6 +191385,15 @@
       "routes/desk"
     ]
   },
+  "Percentage of linehaul (fuel surcharge)": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Percentage of linehaul, freight charges, or declared value": {
     "sites": 1,
     "scope": [
@@ -192630,15 +191552,6 @@
     ]
   },
   "Period Name": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Period Not Open": {
     "sites": 1,
     "scope": [
       "go"
@@ -195128,51 +194041,6 @@
       "routes/reports"
     ]
   },
-  "Pivot fields cannot cross to-many relationships": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Pivot labels must match the number of pivot values": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Pivot measure \"{0}\" does not reference a measure column": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Pivot must reference at least one measure": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Pivot produces {0} columns, exceeding the maximum of {1}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Pivot values": {
     "sites": 1,
     "scope": [
@@ -195180,24 +194048,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Pivot values are required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Pivots require measure columns": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Pivots spread measures across the values of a dimension — add a measure column first.": {
@@ -195950,15 +194800,6 @@
       "apps/web/types"
     ]
   },
-  "Po Number": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Point Samsara's webhook at this URL. It is unique to your organization.": {
     "sites": 1,
     "scope": [
@@ -196131,15 +194972,6 @@
       "go/other",
       "routes/policies",
       "routes/worker"
-    ]
-  },
-  "Policy Propose": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Policy Reason": {
@@ -196683,15 +195515,6 @@
       "go/other",
       "routes/org-structure",
       "routes/worker"
-    ]
-  },
-  "Position ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Position and size": {
@@ -197305,7 +196128,7 @@
     ]
   },
   "Posted": {
-    "sites": 40,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -197335,7 +196158,7 @@
       "routes/settlement-workspace"
     ]
   },
-  "Posted Ap Account ID": {
+  "Posted AP Account ID": {
     "sites": 1,
     "scope": [
       "go"
@@ -197450,15 +196273,6 @@
     ],
     "areas": [
       "routes/factoring"
-    ]
-  },
-  "Posted invoices carrying a balance, with amount applied and open balance, oldest due dates first": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Posted on the effective date; leave 0 for none.": {
@@ -197792,15 +196606,6 @@
       "apps/web/components",
       "go/other",
       "routes/carrier-sourcing"
-    ]
-  },
-  "Power units whose plates expire inside the horizon, with the drivers and fleet affected": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Powered by Google maps": {
@@ -199416,6 +198221,24 @@
       "routes/shipment"
     ]
   },
+  "Priced a load that has not been booked yet, as sent to the customer.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Priced a real shipment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Priced shipments": {
     "sites": 1,
     "scope": [
@@ -199512,15 +198335,6 @@
     ]
   },
   "Primary Worker": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Primary Worker ID": {
     "sites": 2,
     "scope": [
       "go"
@@ -200040,7 +198854,7 @@
     ]
   },
   "Pro Number": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -200091,15 +198905,6 @@
     ]
   },
   "Pro number.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Probation Ended": {
     "sites": 1,
     "scope": [
       "go"
@@ -200710,7 +199515,7 @@
     ]
   },
   "Prohibited": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -200876,13 +199681,11 @@
     ]
   },
   "Promoted": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/types"
     ]
   },
@@ -201604,14 +200407,12 @@
     ]
   },
   "Proposed": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
-      "go/other",
       "routes/accounting-mapping",
       "routes/agent-control",
       "routes/detention-policy"
@@ -202966,15 +201767,6 @@
       "apps/dash/routes"
     ]
   },
-  "Pushed Trenova Value": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Pushes the pickup later — the common choice for holiday closures.": {
     "sites": 1,
     "scope": [
@@ -204307,15 +203099,6 @@
       "go/other"
     ]
   },
-  "Quoted versus actual order value by customer, with the shipment charges booked underneath each order": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Quoted {0}": {
     "sites": 1,
     "scope": [
@@ -204377,6 +203160,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "RGN": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "RPM ${0}": {
@@ -204889,21 +203681,14 @@
       "routes/reports"
     ]
   },
-  "Ranges are only valid on numeric fields; \"{0}\" is not one": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Rank": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/routing-guide"
     ]
   },
@@ -205121,7 +203906,7 @@
     ]
   },
   "Rate Agreement ID": {
-    "sites": 5,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -205148,15 +203933,6 @@
     ]
   },
   "Rate Basis Amount": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Rate Changed": {
     "sites": 1,
     "scope": [
       "go"
@@ -205209,15 +203985,6 @@
     ],
     "areas": [
       "api/helpers"
-    ]
-  },
-  "Rate Limited": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Rate Locked": {
@@ -206286,6 +205053,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Rate × units (detention/hr, storage/day, team/mile)": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Rate:": {
@@ -208461,13 +207237,15 @@
     ]
   },
   "Ready": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "go/other",
       "packages/shared/components",
       "routes/admin",
       "routes/agent-control",
@@ -208477,15 +207255,6 @@
     ]
   },
   "Ready Announced At": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Ready For Review": {
     "sites": 1,
     "scope": [
       "go"
@@ -208562,15 +207331,6 @@
     ]
   },
   "Ready to Bill At": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Ready to Factor": {
     "sites": 1,
     "scope": [
       "go"
@@ -212332,7 +211092,7 @@
     ]
   },
   "Recourse": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -212987,7 +211747,7 @@
       "go/other"
     ]
   },
-  "Reference Invoice ID": {
+  "Reference Invoice": {
     "sites": 1,
     "scope": [
       "go"
@@ -213928,13 +212688,11 @@
     ]
   },
   "Rehired": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/types"
     ]
   },
@@ -213984,13 +212742,11 @@
     ]
   },
   "Reinstated": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/types"
     ]
   },
@@ -214564,14 +213320,12 @@
     ]
   },
   "Rejection": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
-      "go/other"
+      "apps/web/lib"
     ]
   },
   "Rejection Reason": {
@@ -214626,15 +213380,6 @@
     ]
   },
   "Rejector ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Related Invoice ID": {
     "sites": 1,
     "scope": [
       "go"
@@ -215011,7 +213756,7 @@
       "go/other"
     ]
   },
-  "Remit Address Line1": {
+  "Remit Address Line 1": {
     "sites": 1,
     "scope": [
       "go"
@@ -215020,7 +213765,7 @@
       "go/other"
     ]
   },
-  "Remit Address Line2": {
+  "Remit Address Line 2": {
     "sites": 1,
     "scope": [
       "go"
@@ -215148,7 +213893,106 @@
       "go/other"
     ]
   },
+  "Remittance Line Applied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line Chargeback": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line Error": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line Funding": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Remittance Line ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line Ignored": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line Matched": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line Other": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line Rejection": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line Reserve Release": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line Suggested": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Remittance Line Unmatched": {
     "sites": 1,
     "scope": [
       "go"
@@ -217187,6 +216031,15 @@
       "routes/desk"
     ]
   },
+  "Replaced by a later rating; kept as the history a dispute needs.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Replaced by a newer memory": {
     "sites": 1,
     "scope": [
@@ -217442,6 +216295,15 @@
       "routes/agent-control"
     ]
   },
+  "Replayed a proposed change against history; never touches a live shipment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Replayed in every suite": {
     "sites": 1,
     "scope": [
@@ -217692,7 +216554,7 @@
     ]
   },
   "Report": {
-    "sites": 15,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -218059,11 +216921,13 @@
     ]
   },
   "Reporting": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/admin"
     ]
   },
@@ -218099,15 +216963,6 @@
     ]
   },
   "Reports To": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Reports To Position ID": {
     "sites": 1,
     "scope": [
       "go"
@@ -218623,11 +217478,13 @@
     ]
   },
   "Requested By": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/invoice-approval",
       "routes/invoice-reconciliation"
     ]
@@ -218696,11 +217553,13 @@
     ]
   },
   "Requested by": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/worker"
     ]
   },
@@ -219999,7 +218858,43 @@
       "go/other"
     ]
   },
+  "Reserve Entry Chargeback": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reserve Entry Chargeback Reversal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reserve Entry Funding": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Reserve Entry ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reserve Entry Release": {
     "sites": 1,
     "scope": [
       "go"
@@ -220010,15 +218905,6 @@
   },
   "Reserve Rate (bp)": {
     "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Reserve Release": {
-    "sites": 3,
     "scope": [
       "go"
     ],
@@ -221680,6 +220566,24 @@
       "go/other"
     ]
   },
+  "Results were truncated at the row limit; narrow your filters or use a larger export format.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Results were truncated at the size limit; narrow your filters or choose fewer columns.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Results will post into this conversation": {
     "sites": 1,
     "scope": [
@@ -222220,7 +221124,52 @@
       "routes/tender-offer-public"
     ]
   },
-  "Return ID": {
+  "Return": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Return To Duty Complete": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Return To Duty Follow Up Testing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Return To Duty Not Required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Return To Duty RTD Test Required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Return To Duty SAP Evaluation": {
     "sites": 1,
     "scope": [
       "go"
@@ -222684,15 +221633,6 @@
       "routes/accounting-control"
     ]
   },
-  "Revenue sitting in the billing queue — delivered shipments with no invoice, aged by delivery date": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Revenue today": {
     "sites": 1,
     "scope": [
@@ -222718,15 +221658,6 @@
     ],
     "areas": [
       "routes/income-statement"
-    ]
-  },
-  "Revenue, volume, and miles by origin and destination city — which lanes carry the book and what they earn": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Reversal": {
@@ -222767,15 +221698,6 @@
     ],
     "areas": [
       "routes/journal-entry"
-    ]
-  },
-  "Reversal Of ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Reversal Reason": {
@@ -222917,7 +221839,7 @@
     ]
   },
   "Reversed By ID": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -224260,15 +223182,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Rgn": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Rhode island (RI)": {
@@ -225708,15 +224621,6 @@
       "routes/reports"
     ]
   },
-  "Row filters cannot have an aggregation; use a measure filter": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Row has no reference": {
     "sites": 1,
     "scope": [
@@ -225947,15 +224851,6 @@
     ],
     "areas": [
       "routes/home"
-    ]
-  },
-  "Rtd Test Required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Rubric": {
@@ -226975,6 +225870,15 @@
       "routes/billing-queue"
     ]
   },
+  "Running total": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Running v{0}": {
     "sites": 1,
     "scope": [
@@ -227720,12 +226624,14 @@
     ]
   },
   "SSN": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "SSO account email address is invalid": {
@@ -227846,30 +226752,19 @@
     ]
   },
   "Safety": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
-      "go/other",
       "packages/shared/lib",
       "packages/shared/types",
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/worker"
-    ]
-  },
-  "Safety Net": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Safety Rating": {
@@ -228057,13 +226952,11 @@
     ]
   },
   "Sales": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/lib"
     ]
   },
@@ -228510,15 +227403,6 @@
     ]
   },
   "Sandbox template must be an E2B template name such as code-interpreter-v1": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Sap Evaluation": {
     "sites": 1,
     "scope": [
       "go"
@@ -231150,7 +230034,7 @@
     ]
   },
   "Schedule Invoice ID": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -233419,15 +232303,6 @@
     ]
   },
   "Secondary Worker": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Secondary Worker ID": {
     "sites": 2,
     "scope": [
       "go"
@@ -238419,15 +237294,6 @@
       "routes/edi"
     ]
   },
-  "Sent Back To Ops": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Sent By": {
     "sites": 1,
     "scope": [
@@ -238438,15 +237304,6 @@
     ]
   },
   "Sent By ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Sent From Trenova": {
     "sites": 1,
     "scope": [
       "go"
@@ -239321,16 +238178,7 @@
       "routes/shipment"
     ]
   },
-  "Service Type ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Service Type Ids": {
+  "Service Type IDs": {
     "sites": 2,
     "scope": [
       "go"
@@ -240884,7 +239732,7 @@
     ]
   },
   "Settlement ID": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -241612,7 +240460,7 @@
     ]
   },
   "Share": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -242327,7 +241175,7 @@
     ]
   },
   "Shipment ID": {
-    "sites": 13,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -242407,7 +241255,7 @@
     ]
   },
   "Shipment Move": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -242416,7 +241264,7 @@
     ]
   },
   "Shipment Move ID": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -242433,7 +241281,7 @@
       "go/other"
     ]
   },
-  "Shipment Pro Number": {
+  "Shipment PRO Number": {
     "sites": 2,
     "scope": [
       "go"
@@ -242460,16 +241308,7 @@
       "go/other"
     ]
   },
-  "Shipment Type ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Shipment Type Ids": {
+  "Shipment Type IDs": {
     "sites": 2,
     "scope": [
       "go"
@@ -244043,7 +242882,7 @@
       "template/invoice.pdf"
     ]
   },
-  "Shipper Customer ID": {
+  "Shipper Customer": {
     "sites": 1,
     "scope": [
       "go"
@@ -245124,6 +243963,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Showing the first {0} of {1} rows — the full result is in the report file.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Showing the latest {0} of {1} movements. A report on factoring reserve entries lists them all.": {
@@ -247380,6 +246228,15 @@
       "routes/admin"
     ]
   },
+  "Soft-closed: subledger postings are blocked, manual journal entries are still allowed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Sold": {
     "sites": 5,
     "scope": [
@@ -247992,7 +246849,7 @@
     ]
   },
   "Sort direction must be asc or desc": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -248046,33 +246903,6 @@
     ]
   },
   "Sort order is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Sort references pivot column \"{0}\", but \"{1}\" is not spread across the pivot": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Sort references pivot value \"{0}\", which this report does not produce": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Sort references unknown column \"{0}\"": {
     "sites": 1,
     "scope": [
       "go"
@@ -249519,15 +248349,6 @@
     ],
     "areas": [
       "routes/settings"
-    ]
-  },
-  "Ssn": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Stable": {
@@ -251570,7 +250391,34 @@
       "routes/worker-credential-type"
     ]
   },
-  "Status Mismatch": {
+  "Status Update Arrivals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Status Update Arrivals And Departures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Status Update Departures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Status Update None": {
     "sites": 1,
     "scope": [
       "go"
@@ -252872,6 +251720,15 @@
       "routes/shipment-tracking-public"
     ]
   },
+  "Stop-off charges": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Stopped": {
     "sites": 9,
     "scope": [
@@ -253633,16 +252490,7 @@
       "routes/factoring-company"
     ]
   },
-  "Submission Cutoff (Minutes After Midnight)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Submission ID": {
+  "Submission Item": {
     "sites": 1,
     "scope": [
       "go"
@@ -254205,7 +253053,7 @@
     ]
   },
   "Subtotal": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -254331,14 +253179,12 @@
     ]
   },
   "Suggested": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "go/other",
       "packages/shared/components",
       "routes/agent-control",
       "routes/factoring-remittance",
@@ -254530,12 +253376,14 @@
     ]
   },
   "Sum": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "go/other"
     ]
   },
   "Summarize older turns to free up context": {
@@ -254740,7 +253588,7 @@
     ]
   },
   "Superseded": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -255017,7 +253865,7 @@
     ]
   },
   "Suspended": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -255230,7 +254078,7 @@
       "routes/carrier"
     ]
   },
-  "Sync Record": {
+  "Sync Error Auth": {
     "sites": 1,
     "scope": [
       "go"
@@ -255239,7 +254087,439 @@
       "go/other"
     ]
   },
+  "Sync Error Closed Period": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Error Configuration": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Error Conflict": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Error Currency": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Error Duplicate": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Error Mapping": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Error Not Found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Error Rate Limited": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Error Transient": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Error Validation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Carrier Bill": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Carrier Bill Pay": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Carrier Vendor": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Credit Application": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Credit Memo": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Customer": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Customer Payment": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Debit Memo": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Driver Bill": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Driver Bill Pay": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Driver Vendor": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Invoice": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Journal Entry": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Object Journal Summary": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Sync Samsara vehicle mappings and ingest HOS violations for all enabled tenants": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Adjustment Credit Memo": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Backfill": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Carrier Settlement Paid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Carrier Settlement Posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Carrier Settlement Voided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Carrier Updated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Credit Memo Applied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Credit Memo Posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Credit Memo Unapplied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Customer Payment Applied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Customer Payment Posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Customer Payment Reversed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Customer Updated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Debit Memo Posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Dependency Of": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Drift Resolved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Driver Settlement Paid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Driver Settlement Posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Driver Settlement Voided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Driver Updated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Invoice Posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Journal Posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Opening Balances": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sync Source Safety Net": {
     "sites": 1,
     "scope": [
       "go"
@@ -256245,6 +255525,15 @@
       "go/other"
     ]
   },
+  "Tanker": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Tanker (N)": {
     "sites": 1,
     "scope": [
@@ -256261,6 +255550,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Tanker Hazmat": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Target": {
@@ -256339,15 +255637,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Target column \"{0}\" is not a measure this report returns": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Target custom field key": {
@@ -257100,6 +256389,15 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "go/other"
+    ]
+  },
+  "Team drivers, per-mile fuel surcharge": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "go/other"
     ]
   },
@@ -258592,13 +257890,11 @@
     ]
   },
   "Terminated": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/types",
       "routes/admin"
     ]
@@ -260655,15 +259951,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "The active roster counted by terminal, position and department, with the driving half broken out": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "The active view ID is too long": {
@@ -266950,6 +266237,15 @@
       "go/other"
     ]
   },
+  "The filter on {0} cannot be exported as a report; remove it or export from the browser": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The filters the report ran with. Print these or a reader cannot tell what they are looking at.": {
     "sites": 1,
     "scope": [
@@ -271668,15 +270964,6 @@
       "rules/tariff"
     ]
   },
-  "The pivot field cannot also be selected as a dimension": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The plaintext token is only shown once.": {
     "sites": 1,
     "scope": [
@@ -272565,6 +271852,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The quote currently pricing its shipment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The quoted price and currency the order is billed in": {
@@ -276473,15 +275769,6 @@
       "go/other"
     ]
   },
-  "The target must be a finite number": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The tariff billed the accessorial code {0}, which is not in the accessorial charge catalog": {
     "sites": 2,
     "scope": [
@@ -278445,6 +277732,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The year-end adjustment period (period 13 or 14), sharing the final period's dates so auditor entries stay out of operating results.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The year-end entries could not be calculated. Try again before closing.": {
@@ -283820,6 +283116,15 @@
       "apps/web/components"
     ]
   },
+  "This page cursor does not belong to this report": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This page has no assistant conversation": {
     "sites": 1,
     "scope": [
@@ -284507,6 +283812,33 @@
       "go/other"
     ]
   },
+  "This report cannot run: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This report definition is not valid: {0}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This report definition is not valid: {0}. Did you mean {1}?": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This report has changed since it ran, so its result cannot be served — run it again": {
     "sites": 1,
     "scope": [
@@ -284590,7 +283922,7 @@
     ]
   },
   "This report references data you do not have access to: {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -284706,7 +284038,25 @@
       "go/other"
     ]
   },
+  "This report took too long to run; narrow its filters or run it in the background": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This report was already recorded for a different stop or action": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This report would read too much data to run; narrow its filters or date range": {
     "sites": 1,
     "scope": [
       "go"
@@ -284731,6 +284081,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "This report's parameters are not valid: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This request has already been decided.": {
@@ -286624,15 +285983,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Throughput by facility — stops handled, pieces, weight, and the average time trucks spend on site": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Throw away every unfiled document of a scanned stack in capture intake, when nothing left in it is worth filing. Documents already filed stay on their records.": {
@@ -288720,15 +288070,6 @@
       "go/other"
     ]
   },
-  "Too many dimensions ({0} > {1})": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Too many extracted fields": {
     "sites": 1,
     "scope": [
@@ -289357,7 +288698,7 @@
     ]
   },
   "Total": {
-    "sites": 49,
+    "sites": 51,
     "scope": [
       "go",
       "ts"
@@ -290075,14 +289416,12 @@
     ]
   },
   "Total {0}": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "go/other",
       "routes/reports"
     ]
   },
@@ -290482,15 +289821,6 @@
       "go/other"
     ]
   },
-  "Tractor ID": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Tractor ID is required": {
     "sites": 2,
     "scope": [
@@ -290511,16 +289841,7 @@
       "routes/shipment"
     ]
   },
-  "Tractor Type ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Tractor Type Ids": {
+  "Tractor Type IDs": {
     "sites": 1,
     "scope": [
       "go"
@@ -290834,15 +290155,6 @@
       "go/other"
     ]
   },
-  "Trailer ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Trailer ID is required": {
     "sites": 1,
     "scope": [
@@ -290863,16 +290175,7 @@
       "routes/shipment"
     ]
   },
-  "Trailer Type ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Trailer Type Ids": {
+  "Trailer Type IDs": {
     "sites": 1,
     "scope": [
       "go"
@@ -290998,15 +290301,6 @@
       "go/other"
     ]
   },
-  "Trailer roster with specification, capacity, registration, and last inspection date": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Trailer temperature (°F)": {
     "sites": 1,
     "scope": [
@@ -291094,15 +290388,6 @@
     ]
   },
   "Trailers and towed equipment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Trailers whose plates expire inside the horizon, with inspection status and fleet assignment": {
     "sites": 1,
     "scope": [
       "go"
@@ -291809,13 +291094,11 @@
     ]
   },
   "Transferred": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/types",
       "routes/billing-queue"
     ]
@@ -291899,15 +291182,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Transient": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Transport": {
@@ -292593,15 +291867,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Trial Balance Mismatch": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Trial balance": {
@@ -293798,15 +293063,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "Turns and miles per trailer with last activity — find trailers sitting idle or over-cycled": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Turns on credit control for this customer: a 'Hold' or 'Suspended' status stops new shipments from being booked for them.": {
@@ -295080,15 +294336,6 @@
       "routes/agent-control"
     ]
   },
-  "Undeclared parameter \"{0}\"": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Under": {
     "sites": 1,
     "scope": [
@@ -295730,16 +294977,14 @@
     ]
   },
   "Unknown": {
-    "sites": 19,
+    "sites": 18,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/dash/lib",
       "apps/web/components",
       "apps/web/lib",
-      "go/other",
       "packages/shared/lib",
       "routes/admin",
       "routes/agent-control",
@@ -295748,15 +294993,6 @@
       "routes/invoice-approval",
       "routes/shipment",
       "routes/worker"
-    ]
-  },
-  "Unknown Document": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Unknown attention metric: {0}": {
@@ -295806,15 +295042,6 @@
       "routes/dispatch-console"
     ]
   },
-  "Unknown chart type \"{0}\"": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Unknown comparison": {
     "sites": 1,
     "scope": [
@@ -295850,15 +295077,6 @@
     "areas": [
       "routes/desk",
       "routes/detention-desk"
-    ]
-  },
-  "Unknown date bucket \"{0}\"": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Unknown draft surface": {
@@ -295898,7 +295116,7 @@
     ]
   },
   "Unknown entity \"{0}\"": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -295916,15 +295134,6 @@
     ]
   },
   "Unknown field \"{0}\"": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Unknown format hint \"{0}\"": {
     "sites": 1,
     "scope": [
       "go"
@@ -296473,14 +295682,12 @@
     ]
   },
   "Unmatched": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
-      "go/other",
       "routes/accounting-mapping"
     ]
   },
@@ -296942,15 +296149,6 @@
     "areas": [
       "apps/web/lib",
       "routes/agent-control"
-    ]
-  },
-  "Unsupported IR version {0} (expected {1})": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Unsupported SSO provider": {
@@ -300172,13 +299370,11 @@
     ]
   },
   "Validation": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/edi"
     ]
   },
@@ -301077,7 +300273,7 @@
     ]
   },
   "Version": {
-    "sites": 79,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -303405,7 +302601,7 @@
     ]
   },
   "Voided": {
-    "sites": 31,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -303442,15 +302638,6 @@
   },
   "Voided By ID": {
     "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Voided In Provider": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -303633,6 +302820,15 @@
       "api/handlers"
     ]
   },
+  "W 9 On File": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "W-2 employee paid through driver pay expense.": {
     "sites": 1,
     "scope": [
@@ -303669,17 +302865,8 @@
       "routes/carrier"
     ]
   },
-  "W9 On File": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "WEX": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -306682,15 +305869,6 @@
       "apps/web/lib"
     ]
   },
-  "Wex": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "What": {
     "sites": 4,
     "scope": [
@@ -307212,15 +306390,6 @@
     ],
     "areas": [
       "routes/home"
-    ]
-  },
-  "What factoring cost for each customer's invoices: the fees booked at funding and on release or chargeback, the cash the factors paid and what was paid back, by customer and factor, over the window": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "What factors funded, held in reserve, released and charged back, booked to the ledger": {
@@ -310464,15 +309633,6 @@
       "apps/web/components"
     ]
   },
-  "Where drivers are losing hours — average dwell on site and how far arrivals drift from the scheduled window, by facility": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Where dropping a file attaches it to your message.": {
     "sites": 1,
     "scope": [
@@ -310786,15 +309946,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Where the book of business is sitting — counts, revenue, and freight profile per lifecycle status": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Where the browser opens; it must be on one of the addresses.": {
@@ -312863,6 +312014,15 @@
       "routes/invoice-adjustment-control"
     ]
   },
+  "Whole Name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Whole days past the due date; zero when it is not yet due.": {
     "sites": 1,
     "scope": [
@@ -314699,7 +313859,7 @@
     ]
   },
   "Worker ID": {
-    "sites": 12,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -316577,6 +315737,15 @@
       "routes/desk"
     ]
   },
+  "XLSX": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Xero app": {
     "sites": 1,
     "scope": [
@@ -316596,7 +315765,7 @@
     ]
   },
   "Xlsx": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -316807,6 +315976,15 @@
       "packages/shared/types"
     ]
   },
+  "Year-end close is done; it can be reopened with authorization and a reason, which is audited.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Year-end settings": {
     "sites": 1,
     "scope": [
@@ -316826,15 +316004,13 @@
     ]
   },
   "Yes": {
-    "sites": 32,
+    "sites": 31,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
-      "go/other",
       "packages/shared/components",
       "packages/shared/lib",
       "routes/admin",
@@ -317467,15 +316643,6 @@
     ]
   },
   "You did not submit this template": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "You do not have access to any fields of {0}": {
     "sites": 1,
     "scope": [
       "go"
@@ -319052,6 +318219,15 @@
       "apps/web/lib"
     ]
   },
+  "Your organization is already running as many reports as it can at once; try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Your organization is not entitled to this feature": {
     "sites": 1,
     "scope": [
@@ -319933,7 +319109,7 @@
       "routes/shipment"
     ]
   },
-  "Zip3": {
+  "Zip 3": {
     "sites": 2,
     "scope": [
       "go"
@@ -319942,7 +319118,7 @@
       "go/other"
     ]
   },
-  "Zip5": {
+  "Zip 5": {
     "sites": 2,
     "scope": [
       "go"
@@ -322438,15 +321614,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "count_distinct is not supported across to-many relationships": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "covers every fuel price": {
@@ -325617,6 +324784,33 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "field \"{0}\" on {1} is in the {2} protected field group, which your role does not grant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "field \"{0}\" on {1} is not available to you": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "field \"{0}\" on {1} requires {2} access": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "file it and queue it for pay": {
@@ -331539,6 +330733,42 @@
       "apps/web/lib"
     ]
   },
+  "you do not have export access to {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "you do not have export access to {0}, which \"{1}\" on {2} needs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "you do not have read access to {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "you do not have read access to {0}, which \"{1}\" on {2} needs; without it a report can use only its reference fields": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "you@carrier.com": {
     "sites": 2,
     "scope": [
@@ -331557,7 +330787,7 @@
       "apps/dash/routes"
     ]
   },
-  "your access to {0} is limited to your own records, but {1} does not support per-user scoping in reports": {
+  "your access to {0} is limited to your own records, but {0} cannot be limited that way in reports": {
     "sites": 1,
     "scope": [
       "go"
@@ -335026,13 +334256,14 @@
     ]
   },
   "{0, plural, one {# row} other {# rows}}": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/desk",
       "routes/ifta-tax-rate",
       "routes/reports",
@@ -338079,68 +337310,56 @@
     ]
   },
   "{0} (Day)": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
   "{0} (Month)": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
   "{0} (Quarter)": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
   "{0} (Range)": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
   "{0} (Week)": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
   "{0} (Year)": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
@@ -338408,13 +337627,11 @@
     ]
   },
   "{0} Count": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/reports"
     ]
   },
@@ -352382,6 +351599,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{agg} of {field}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{column} · {value}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{id}": {

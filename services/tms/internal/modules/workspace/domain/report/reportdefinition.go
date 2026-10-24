@@ -3,6 +3,8 @@ package report
 import (
 	"context"
 
+	"github.com/emoss08/keel/analytics/ir"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -27,37 +29,38 @@ var (
 	_ validationframework.TenantedEntity = (*ReportDefinition)(nil)
 )
 
+// Saved report definitions
 type ReportDefinition struct {
 	bun.BaseModel             `bun:"table:report_definitions,alias:rdef" json:"-"`
-	keel.Table                `keel:"report_definitions"`
+	keel.Table                `                                                   keel:"report_definitions,report=Reporting,label=Report"`
 	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
-	ID              pulid.ID         `json:"id"              bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:rd_"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID         `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	Name            string           `json:"name"            bun:"name,type:VARCHAR(255),notnull" keel:"name"`
-	Description     string           `json:"description"     bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Category        string           `json:"category"        bun:"category,type:VARCHAR(100),nullzero" keel:"category,nullzero"`
-	Tags            []string         `json:"tags"            bun:"tags,type:TEXT[],array,nullzero" keel:"tags,nullzero"`
-	Kind            DefinitionKind   `json:"kind"            bun:"kind,type:VARCHAR(20),notnull,default:'custom'" keel:"kind"`
-	CannedKey       string           `json:"cannedKey"       bun:"canned_key,type:VARCHAR(100),nullzero" keel:"canned_key,nullzero"`
-	CannedVersion   string           `json:"cannedVersion"   bun:"canned_version,type:VARCHAR(20),nullzero" keel:"canned_version,nullzero"`
-	OwnerID         pulid.ID         `json:"ownerId"         bun:"owner_id,type:VARCHAR(100),notnull" keel:"owner_id"`
-	Visibility      Visibility       `json:"visibility"      bun:"visibility,type:VARCHAR(20),notnull,default:'private'" keel:"visibility"`
-	Status          DefinitionStatus `json:"status"          bun:"status,type:VARCHAR(20),notnull,default:'draft'" keel:"status"`
-	Diagnostics     []string         `json:"diagnostics"     bun:"diagnostics,type:TEXT[],array,nullzero" keel:"diagnostics,nullzero"`
-	CatalogVersion  string           `json:"catalogVersion"  bun:"catalog_version,type:VARCHAR(80),notnull" keel:"catalog_version"`
-	Definition      *Definition      `json:"definition"      bun:"definition,type:JSONB,notnull" keel:"definition,jsonb"`
-	DefaultFormat   Format           `json:"defaultFormat"   bun:"default_format,type:VARCHAR(10),notnull,default:'csv'" keel:"default_format"`
-	CurrentRevision int64            `json:"currentRevision" bun:"current_revision,type:BIGINT,notnull,default:1" keel:"current_revision"`
-	LastRunAt       int64            `json:"lastRunAt"       bun:"last_run_at,type:BIGINT,nullzero" keel:"last_run_at,nullzero"`
-	Version         int64            `json:"version"         bun:"version,type:BIGINT" keel:"version,version"`
+	ID              pulid.ID         `json:"id"              bun:"id,pk,type:VARCHAR(100)"                                                           keel:"id,pk,autoid:rd_"`
+	BusinessUnitID  pulid.ID         `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                     keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID         `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"                                      keel:"organization_id,pk,tenant"`
+	Name            string           `json:"name"            bun:"name,type:VARCHAR(255),notnull"                                                    keel:"name"`
+	Description     string           `json:"description"     bun:"description,type:TEXT,nullzero"                                                    keel:"description,nullzero"`
+	Category        string           `json:"category"        bun:"category,type:VARCHAR(100),nullzero"                                               keel:"category,nullzero"`
+	Tags            []string         `json:"tags"            bun:"tags,type:TEXT[],array,nullzero"                                                   keel:"tags,nullzero,noreport"`
+	Kind            DefinitionKind   `json:"kind"            bun:"kind,type:VARCHAR(20),notnull,default:'custom'"                                    keel:"kind"`
+	CannedKey       string           `json:"cannedKey"       bun:"canned_key,type:VARCHAR(100),nullzero"                                             keel:"canned_key,nullzero,label=Canned Report Key"`
+	CannedVersion   string           `json:"cannedVersion"   bun:"canned_version,type:VARCHAR(20),nullzero"                                          keel:"canned_version,nullzero,noreport"`
+	OwnerID         pulid.ID         `json:"ownerId"         bun:"owner_id,type:VARCHAR(100),notnull"                                                keel:"owner_id"`
+	Visibility      Visibility       `json:"visibility"      bun:"visibility,type:VARCHAR(20),notnull,default:'private'"                             keel:"visibility"`
+	Status          DefinitionStatus `json:"status"          bun:"status,type:VARCHAR(20),notnull,default:'draft'"                                   keel:"status"`
+	Diagnostics     []string         `json:"diagnostics"     bun:"diagnostics,type:TEXT[],array,nullzero"                                            keel:"diagnostics,nullzero,noreport"`
+	CatalogVersion  string           `json:"catalogVersion"  bun:"catalog_version,type:VARCHAR(80),notnull"                                          keel:"catalog_version,noreport"`
+	Definition      *ir.Definition   `json:"definition"      bun:"definition,type:JSONB,notnull"                                                     keel:"definition,jsonb,noreport"`
+	DefaultFormat   Format           `json:"defaultFormat"   bun:"default_format,type:VARCHAR(10),notnull,default:'csv'"                             keel:"default_format"`
+	CurrentRevision int64            `json:"currentRevision" bun:"current_revision,type:BIGINT,notnull,default:1"                                    keel:"current_revision,label=Revision,format=count,dimension"`
+	LastRunAt       int64            `json:"lastRunAt"       bun:"last_run_at,type:BIGINT,nullzero"                                                  keel:"last_run_at,nullzero"`
+	Version         int64            `json:"version"         bun:"version,type:BIGINT"                                                               keel:"version,version,noreport"`
 	CreatedAt       int64            `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt       int64            `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	UpdatedAt       int64            `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate,noreport"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Owner        *tenant.User         `json:"owner,omitempty"        bun:"rel:belongs-to,join:owner_id=id" keel:"belongs:owner_id"`
+	Owner        *tenant.User         `json:"owner,omitempty"        bun:"rel:belongs-to,join:owner_id=id"         keel:"belongs:owner_id,noreport"`
 }
 
 func (rd *ReportDefinition) Validate(multiErr *errortypes.MultiError) {

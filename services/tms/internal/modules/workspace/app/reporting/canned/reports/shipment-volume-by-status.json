@@ -1,0 +1,167 @@
+{
+  "key": "shipment-volume-by-status",
+  "version": "1.0.0",
+  "name": "Shipment Volume by Status",
+  "description": "Where the book of business is sitting — counts, revenue, and freight profile per lifecycle status",
+  "category": "Operations",
+  "tags": [
+    "shipments",
+    "operations",
+    "pipeline"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "shipment",
+    "columns": [
+      {
+        "id": "status",
+        "label": "Status",
+        "dimension": {
+          "field": "status"
+        }
+      },
+      {
+        "id": "service_type",
+        "label": "Service Type",
+        "dimension": {
+          "field": "serviceType.code"
+        }
+      },
+      {
+        "id": "shipment_count",
+        "label": "Shipments",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_revenue",
+        "label": "Total Revenue",
+        "measure": {
+          "field": "totalChargeAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "avg_revenue",
+        "label": "Average Revenue per Shipment",
+        "measure": {
+          "field": "totalChargeAmount",
+          "agg": "avg"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 2
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "total_weight",
+        "label": "Total Weight",
+        "measure": {
+          "field": "weight",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " lbs"
+        }
+      },
+      {
+        "id": "total_pieces",
+        "label": "Total Pieces",
+        "measure": {
+          "field": "pieces",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_miles",
+        "label": "Total Miles",
+        "measure": {
+          "field": "moves.distance",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 0
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " mi"
+        }
+      },
+      {
+        "id": "oldest_shipment",
+        "label": "Oldest Shipment",
+        "measure": {
+          "field": "createdAt",
+          "agg": "min"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      },
+      {
+        "id": "newest_shipment",
+        "label": "Newest Shipment",
+        "measure": {
+          "field": "createdAt",
+          "agg": "max"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "createdAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "shipment_count",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 30
+      }
+    ]
+  }
+}

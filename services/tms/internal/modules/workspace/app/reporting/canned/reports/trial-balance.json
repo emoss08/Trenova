@@ -1,0 +1,112 @@
+{
+  "key": "trial-balance",
+  "version": "1.0.0",
+  "name": "Trial Balance",
+  "description": "Debits, credits and net change per GL account for the current fiscal year, grouped by account category",
+  "category": "Accounting",
+  "tags": [
+    "ledger",
+    "accounting",
+    "trial-balance"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "gl_account_period_balance",
+    "columns": [
+      {
+        "id": "account_code",
+        "label": "Account Code",
+        "dimension": {
+          "field": "glAccount.accountCode"
+        }
+      },
+      {
+        "id": "account_name",
+        "label": "Account Name",
+        "dimension": {
+          "field": "glAccount.name"
+        }
+      },
+      {
+        "id": "account_category",
+        "label": "Category",
+        "dimension": {
+          "field": "glAccount.accountType.category"
+        }
+      },
+      {
+        "id": "period",
+        "label": "Period",
+        "dimension": {
+          "field": "fiscalPeriod.name"
+        }
+      },
+      {
+        "id": "period_debit",
+        "label": "Debits",
+        "measure": {
+          "field": "periodDebitMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "period_credit",
+        "label": "Credits",
+        "measure": {
+          "field": "periodCreditMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "net_change",
+        "label": "Net Change",
+        "measure": {
+          "field": "netChangeMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "fiscalYear.isCurrent",
+          "op": "eq",
+          "value": true
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "account_code"
+      }
+    ]
+  }
+}

@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/zap"
 )
@@ -118,41 +117,6 @@ func (a *Activities) DeliverScheduledRunActivity(
 	a.auditDelivery(run, schedule, result)
 
 	return result, nil
-}
-
-// digestTotal reads one column's grand total out of the captured digest.
-// A missing column or absent total returns nil rather than zero: the measure
-// did not appear, and treating that as zero would fire "revenue below target"
-// on a report that simply lost the column.
-func digestTotal(digest *reportports.ReportDigest, columnID string) *float64 {
-	if digest.IsEmpty() || len(digest.Totals) == 0 {
-		return nil
-	}
-	for i := range digest.Columns {
-		if digest.Columns[i].ID != columnID {
-			continue
-		}
-		if i >= len(digest.Totals) {
-			return nil
-		}
-		return numericTotal(digest.Totals[i])
-	}
-	return nil
-}
-
-func numericTotal(value any) *float64 {
-	switch typed := value.(type) {
-	case decimal.Decimal:
-		converted, _ := typed.Float64()
-		return &converted
-	case int64:
-		converted := float64(typed)
-		return &converted
-	case float64:
-		return &typed
-	default:
-		return nil
-	}
 }
 
 // evaluateAlert decides whether a run's result is worth sending. A schedule

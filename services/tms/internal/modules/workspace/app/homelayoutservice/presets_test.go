@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +22,8 @@ import (
 func TestBuiltInLayoutsReferenceRealCannedReports(t *testing.T) {
 	t.Parallel()
 
-	registry := canned.Default()
+	registry, err := canned.Default()
+	require.NoError(t, err)
 
 	responsibilities := []permission.CoreResponsibility{
 		permission.CoreResponsibilityOperations,

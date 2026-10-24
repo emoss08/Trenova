@@ -3585,6 +3585,7 @@ deps:
       - infrastructure
       - pkg
       - schema
+      - keeltables
       - agent-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (4 imports)
       - bootstrap # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)
       - documents-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)

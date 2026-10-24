@@ -216,6 +216,9 @@ func (c *Connection) connect(ctx context.Context) error {
 func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (dbpool.Pool, error) {
 	slow := newSlowQueryLog(c.logger)
 	opts.Observers = c.observers(slow)
+	opts.VersionErrors = func(err error) {
+		c.logger.Warn(context.Background(), "Failed to record data versions", zap.Error(err))
+	}
 
 	pool, err := dbpool.Open(ctx, opts)
 	if err != nil {

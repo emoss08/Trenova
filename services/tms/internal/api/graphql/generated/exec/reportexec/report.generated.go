@@ -463,7 +463,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_previewReport_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PreviewReport(ctx, fc.Args["definition"].(gqlmodel.ReportIRInput), fc.Args["params"].(map[string]any), fc.Args["supersede"].(*bool))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").PreviewReport(ctx, fc.Args["definition"].(map[string]any), fc.Args["params"].(map[string]any), fc.Args["supersede"].(*bool), fc.Args["cursor"].(*string), fc.Args["pageSize"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPreview),
 			},
@@ -584,6 +584,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "rules",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalog)
+					return obj.Rules, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
 				Name:      "entities",
 				NonNull:   true,
 				HasChild:  true,
@@ -617,6 +627,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "description",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogEdge)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
 				Name:     "target",
 				NonNull:  true,
 				ChildErr: errNoChild0,
@@ -627,22 +646,22 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "cardinality",
-				NonNull:  true,
-				ChildErr: errNoChild0,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ReportCatalogEdge)
-					return obj.Cardinality, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:     "traversable",
+				Name:     "toMany",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportCatalogEdge)
-					return obj.Traversable, nil
+					return obj.ToMany, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "pick",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogEdge)
+					return obj.Pick, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -862,12 +881,12 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
-				Name:     "nullable",
+				Name:     "measure",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportCatalogField)
-					return obj.Nullable, nil
+					return obj.Measure, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -889,6 +908,16 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportCatalogField)
 					return obj.Aggregations, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "operators",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogField)
+					return obj.Operators, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
@@ -1126,6 +1155,15 @@ var Shard = &gqlexec.Shard{
 					return obj.Band, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOReportBand2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportBand),
+			},
+			{
+				Name:     "labels",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportColumnDisplay)
+					return obj.Labels, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
 		}},
 		{Object: "ReportDashboard", Fields: []*gqlexec.Field{
@@ -1655,6 +1693,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAny2interface),
 			},
 			{
+				Name:     "levels",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPreview)
+					return obj.Levels, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2ᚕintᚄ),
+			},
+			{
 				Name:     "totals",
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -1674,6 +1722,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "cursor",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPreview)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
 				Name:     "timezone",
 				NonNull:  true,
 				ChildErr: errNoChild0,
@@ -1682,6 +1739,25 @@ var Shard = &gqlexec.Shard{
 					return obj.Timezone, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "rollup",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPreview)
+					return obj.Rollup, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "cached",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPreview)
+					return obj.Cached, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
 		{Object: "ReportPreviewColumn", Fields: []*gqlexec.Field{
@@ -1716,15 +1792,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "format",
-				ChildErr: errNoChild0,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ReportPreviewColumn)
-					return obj.Format, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
-			},
-			{
 				Name:      "display",
 				NonNull:   true,
 				HasChild:  true,
@@ -1734,6 +1801,15 @@ var Shard = &gqlexec.Shard{
 					return obj.Display, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNReportColumnDisplay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportColumnDisplay),
+			},
+			{
+				Name:     "sensitivity",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPreviewColumn)
+					return obj.Sensitivity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 		}},
 		{Object: "ReportRun", Fields: []*gqlexec.Field{
@@ -2485,28 +2561,14 @@ var Shard = &gqlexec.Shard{
 		{Name: "CreateReportViewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateReportViewInput)},
 		{Name: "ExportTableViewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputExportTableViewInput)},
 		{Name: "ForkCannedReportInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputForkCannedReportInput)},
-		{Name: "ReportBandInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportBandInput)},
-		{Name: "ReportChartGoalInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportChartGoalInput)},
-		{Name: "ReportChartInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportChartInput)},
-		{Name: "ReportColumnInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportColumnInput)},
-		{Name: "ReportComputedInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportComputedInput)},
 		{Name: "ReportDashboardFilterInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportDashboardFilterInput)},
 		{Name: "ReportDashboardLayoutInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportDashboardLayoutInput)},
 		{Name: "ReportDashboardTileInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportDashboardTileInput)},
-		{Name: "ReportDisplayInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportDisplayInput)},
-		{Name: "ReportDisplayRuleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportDisplayRuleInput)},
 		{Name: "ReportDrillInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportDrillInput)},
 		{Name: "ReportDrillValueInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportDrillValueInput)},
-		{Name: "ReportFieldRefInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportFieldRefInput)},
-		{Name: "ReportFilterGroupInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportFilterGroupInput)},
-		{Name: "ReportFilterInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportFilterInput)},
-		{Name: "ReportIRInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportIRInput)},
-		{Name: "ReportParameterDefInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportParameterDefInput)},
-		{Name: "ReportPivotInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportPivotInput)},
+		{Name: "ReportParameterInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportParameterInput)},
 		{Name: "ReportRunsFilterInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportRunsFilterInput)},
 		{Name: "ReportScheduleAlertInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportScheduleAlertInput)},
-		{Name: "ReportSortInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportSortInput)},
-		{Name: "ReportTransformInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportTransformInput)},
 		{Name: "RunReportInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRunReportInput)},
 		{Name: "SaveReportDashboardInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSaveReportDashboardInput)},
 		{Name: "SaveReportDefinitionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSaveReportDefinitionInput)},
@@ -2554,7 +2616,7 @@ type resolverQuery interface {
 	ReportDefinitionRevisions(ctx context.Context, definitionID string, limit *int) ([]*gqlmodel.ReportDefinitionRevision, error)
 	ReportRun(ctx context.Context, id string) (*gqlmodel.ReportRun, error)
 	ReportRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.ReportRunsFilterInput) (*gqlmodel.ReportRunConnection, error)
-	PreviewReport(ctx context.Context, definition gqlmodel.ReportIRInput, params map[string]any, supersede *bool) (*gqlmodel.ReportPreview, error)
+	PreviewReport(ctx context.Context, definition map[string]any, params map[string]any, supersede *bool, cursor *string, pageSize *int) (*gqlmodel.ReportPreview, error)
 	DrillThroughReport(ctx context.Context, input gqlmodel.ReportDrillInput) (*gqlmodel.ReportPreview, error)
 	ReportSchedules(ctx context.Context, definitionID *string, enabledOnly *bool, limit *int) ([]*gqlmodel.ReportSchedule, error)
 	ReportViews(ctx context.Context, definitionID *string) ([]*gqlmodel.ReportView, error)
@@ -2896,10 +2958,10 @@ func field_Query_reportRuns_args(ctx context.Context, ec *gqlexec.Exec, rawArgs 
 }
 
 func field_Query_previewReport_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 3)
+	args := make(map[string]any, 5)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "definition",
-		func(ctx context.Context, v any) (gqlmodel.ReportIRInput, error) {
-			return unmarshalNReportIRInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportIRInput(ctx, ec, v)
+		func(ctx context.Context, v any) (map[string]any, error) {
+			return unmarshalNJSON2map(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -2921,6 +2983,22 @@ func field_Query_previewReport_args(ctx context.Context, ec *gqlexec.Exec, rawAr
 		return nil, err
 	}
 	args["supersede"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "cursor",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["cursor"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "pageSize",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["pageSize"] = arg4
 	return args, nil
 }
 
@@ -3251,380 +3329,6 @@ func unmarshalInputForkCannedReportInput(ctx context.Context, ec *gqlexec.Exec, 
 	return it, nil
 }
 
-func unmarshalInputReportBandInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportBandInput, error) {
-	var it gqlmodel.ReportBandInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"width", "edges"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "width":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("width"))
-			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Width = data
-		case "edges":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("edges"))
-			data, err := unmarshalOFloat2ᚕfloat64ᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Edges = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportChartGoalInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportChartGoalInput, error) {
-	var it gqlmodel.ReportChartGoalInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"value", "columnId", "label"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "value":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Value = data
-		case "columnId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("columnId"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.ColumnID = data
-		case "label":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Label = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportChartInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportChartInput, error) {
-	var it gqlmodel.ReportChartInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id", "type", "title", "xColumnId", "seriesIds", "stacked", "hideLegend", "showValues", "curved", "limit", "compareId", "goal", "latColumnId", "lngColumnId", "labelColumnId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		case "type":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Type = data
-		case "title":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Title = data
-		case "xColumnId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("xColumnId"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.XColumnID = data
-		case "seriesIds":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("seriesIds"))
-			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.SeriesIds = data
-		case "stacked":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stacked"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Stacked = data
-		case "hideLegend":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hideLegend"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.HideLegend = data
-		case "showValues":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showValues"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.ShowValues = data
-		case "curved":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("curved"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Curved = data
-		case "limit":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Limit = data
-		case "compareId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("compareId"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.CompareID = data
-		case "goal":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("goal"))
-			data, err := unmarshalOReportChartGoalInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportChartGoalInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Goal = data
-		case "latColumnId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("latColumnId"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.LatColumnID = data
-		case "lngColumnId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lngColumnId"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.LngColumnID = data
-		case "labelColumnId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labelColumnId"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.LabelColumnID = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportColumnInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportColumnInput, error) {
-	var it gqlmodel.ReportColumnInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id", "ref", "kind", "agg", "bucket", "band", "label", "computed", "transform", "display", "filter"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		case "ref":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ref"))
-			data, err := unmarshalOReportFieldRefInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldRefInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Ref = data
-		case "kind":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Kind = data
-		case "agg":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agg"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Agg = data
-		case "bucket":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucket"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Bucket = data
-		case "band":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("band"))
-			data, err := unmarshalOReportBandInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportBandInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Band = data
-		case "label":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Label = data
-		case "computed":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("computed"))
-			data, err := unmarshalOReportComputedInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportComputedInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Computed = data
-		case "transform":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transform"))
-			data, err := unmarshalOReportTransformInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportTransformInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Transform = data
-		case "display":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("display"))
-			data, err := unmarshalOReportDisplayInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDisplayInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Display = data
-		case "filter":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-			data, err := unmarshalOReportFilterGroupInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterGroupInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Filter = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportComputedInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportComputedInput, error) {
-	var it gqlmodel.ReportComputedInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"op", "leftId", "rightId", "leftValue", "rightValue", "format"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "op":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("op"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Op = data
-		case "leftId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("leftId"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.LeftID = data
-		case "rightId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rightId"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.RightID = data
-		case "leftValue":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("leftValue"))
-			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.LeftValue = data
-		case "rightValue":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rightValue"))
-			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.RightValue = data
-		case "format":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("format"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Format = data
-		}
-	}
-	return it, nil
-}
-
 func unmarshalInputReportDashboardFilterInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportDashboardFilterInput, error) {
 	var it gqlmodel.ReportDashboardFilterInput
 	if obj == nil {
@@ -3636,7 +3340,7 @@ func unmarshalInputReportDashboardFilterInput(ctx context.Context, ec *gqlexec.E
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "label", "entity", "ref", "operator", "default"}
+	fieldsInOrder := [...]string{"id", "label", "entity", "field", "op", "default"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3664,20 +3368,20 @@ func unmarshalInputReportDashboardFilterInput(ctx context.Context, ec *gqlexec.E
 				return it, err
 			}
 			it.Entity = data
-		case "ref":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ref"))
-			data, err := unmarshalNReportFieldRefInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldRefInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Ref = data
-		case "operator":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
 			data, err := unmarshalNString2string(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
-			it.Operator = data
+			it.Field = data
+		case "op":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("op"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Op = data
 		case "default":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("default"))
 			data, err := unmarshalOAny2interface(ctx, ec, v)
@@ -3717,7 +3421,7 @@ func unmarshalInputReportDashboardLayoutInput(ctx context.Context, ec *gqlexec.E
 			it.Tiles = data
 		case "parameters":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parameters"))
-			data, err := unmarshalOReportParameterDefInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportParameterDefInputᚄ(ctx, ec, v)
+			data, err := unmarshalOReportParameterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportParameterInputᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3855,178 +3559,6 @@ func unmarshalInputReportDashboardTileInput(ctx context.Context, ec *gqlexec.Exe
 	return it, nil
 }
 
-func unmarshalInputReportDisplayInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportDisplayInput, error) {
-	var it gqlmodel.ReportDisplayInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"style", "decimals", "grouping", "currency", "negative", "notation", "prefix", "suffix", "dateStyle", "boolStyle", "durationUnit", "durationStyle", "nullText", "rules"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "style":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("style"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Style = data
-		case "decimals":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("decimals"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Decimals = data
-		case "grouping":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("grouping"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Grouping = data
-		case "currency":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currency"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Currency = data
-		case "negative":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("negative"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Negative = data
-		case "notation":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notation"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Notation = data
-		case "prefix":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Prefix = data
-		case "suffix":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("suffix"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Suffix = data
-		case "dateStyle":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateStyle"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.DateStyle = data
-		case "boolStyle":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boolStyle"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.BoolStyle = data
-		case "durationUnit":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("durationUnit"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.DurationUnit = data
-		case "durationStyle":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("durationStyle"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.DurationStyle = data
-		case "nullText":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nullText"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.NullText = data
-		case "rules":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rules"))
-			data, err := unmarshalOReportDisplayRuleInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDisplayRuleInputᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Rules = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportDisplayRuleInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportDisplayRuleInput, error) {
-	var it gqlmodel.ReportDisplayRuleInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"op", "value", "upper", "tone"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "op":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("op"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Op = data
-		case "value":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := unmarshalNFloat2float64(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Value = data
-		case "upper":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("upper"))
-			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Upper = data
-		case "tone":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tone"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Tone = data
-		}
-	}
-	return it, nil
-}
-
 func unmarshalInputReportDrillInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportDrillInput, error) {
 	var it gqlmodel.ReportDrillInput
 	if obj == nil {
@@ -4038,7 +3570,7 @@ func unmarshalInputReportDrillInput(ctx context.Context, ec *gqlexec.Exec, obj a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"definition", "params", "dimensions", "columnId", "limit"}
+	fieldsInOrder := [...]string{"definition", "params", "dimensions", "columnId", "pivotValues", "limit"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4047,7 +3579,7 @@ func unmarshalInputReportDrillInput(ctx context.Context, ec *gqlexec.Exec, obj a
 		switch k {
 		case "definition":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("definition"))
-			data, err := unmarshalNReportIRInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportIRInput(ctx, ec, v)
+			data, err := unmarshalNJSON2map(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -4073,6 +3605,13 @@ func unmarshalInputReportDrillInput(ctx context.Context, ec *gqlexec.Exec, obj a
 				return it, err
 			}
 			it.ColumnID = data
+		case "pivotValues":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pivotValues"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PivotValues = data
 		case "limit":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
 			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
@@ -4122,8 +3661,8 @@ func unmarshalInputReportDrillValueInput(ctx context.Context, ec *gqlexec.Exec, 
 	return it, nil
 }
 
-func unmarshalInputReportFieldRefInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportFieldRefInput, error) {
-	var it gqlmodel.ReportFieldRefInput
+func unmarshalInputReportParameterInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportParameterInput, error) {
+	var it gqlmodel.ReportParameterInput
 	if obj == nil {
 		return it, nil
 	}
@@ -4133,246 +3672,7 @@ func unmarshalInputReportFieldRefInput(ctx context.Context, ec *gqlexec.Exec, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"path", "field"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "path":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
-			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Path = data
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportFilterGroupInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportFilterGroupInput, error) {
-	var it gqlmodel.ReportFilterGroupInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"op", "filters", "groups"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "op":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("op"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Op = data
-		case "filters":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filters"))
-			data, err := unmarshalOReportFilterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterInputᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Filters = data
-		case "groups":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("groups"))
-			data, err := unmarshalOReportFilterGroupInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterGroupInputᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Groups = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportFilterInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportFilterInput, error) {
-	var it gqlmodel.ReportFilterInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"ref", "operator", "value", "param", "agg", "transform"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "ref":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ref"))
-			data, err := unmarshalNReportFieldRefInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldRefInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Ref = data
-		case "operator":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Operator = data
-		case "value":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := unmarshalOAny2interface(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Value = data
-		case "param":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("param"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Param = data
-		case "agg":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agg"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Agg = data
-		case "transform":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transform"))
-			data, err := unmarshalOReportTransformInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportTransformInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Transform = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportIRInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportIRInput, error) {
-	var it gqlmodel.ReportIRInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"entity", "columns", "filters", "having", "sort", "limit", "pivot", "parameters", "totals", "charts"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "entity":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entity"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Entity = data
-		case "columns":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("columns"))
-			data, err := unmarshalNReportColumnInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportColumnInputᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Columns = data
-		case "filters":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filters"))
-			data, err := unmarshalOReportFilterGroupInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterGroupInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Filters = data
-		case "having":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("having"))
-			data, err := unmarshalOReportFilterGroupInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterGroupInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Having = data
-		case "sort":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
-			data, err := unmarshalOReportSortInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportSortInputᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Sort = data
-		case "limit":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Limit = data
-		case "pivot":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pivot"))
-			data, err := unmarshalOReportPivotInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPivotInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Pivot = data
-		case "parameters":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parameters"))
-			data, err := unmarshalOReportParameterDefInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportParameterDefInputᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Parameters = data
-		case "totals":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("totals"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Totals = data
-		case "charts":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("charts"))
-			data, err := unmarshalOReportChartInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportChartInputᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Charts = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportParameterDefInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportParameterDefInput, error) {
-	var it gqlmodel.ReportParameterDefInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name", "label", "type", "required", "default", "multi", "allowedValues", "refEntity"}
+	fieldsInOrder := [...]string{"name", "label", "type", "required", "multi", "default", "allowed", "entity"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4407,13 +3707,6 @@ func unmarshalInputReportParameterDefInput(ctx context.Context, ec *gqlexec.Exec
 				return it, err
 			}
 			it.Required = data
-		case "default":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("default"))
-			data, err := unmarshalOAny2interface(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Default = data
 		case "multi":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("multi"))
 			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
@@ -4421,78 +3714,27 @@ func unmarshalInputReportParameterDefInput(ctx context.Context, ec *gqlexec.Exec
 				return it, err
 			}
 			it.Multi = data
-		case "allowedValues":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowedValues"))
-			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+		case "default":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("default"))
+			data, err := unmarshalOAny2interface(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
-			it.AllowedValues = data
-		case "refEntity":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("refEntity"))
+			it.Default = data
+		case "allowed":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowed"))
+			data, err := unmarshalOAny2ᚕinterfaceᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Allowed = data
+		case "entity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entity"))
 			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
-			it.RefEntity = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportPivotInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportPivotInput, error) {
-	var it gqlmodel.ReportPivotInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"ref", "values", "labels", "measureIds", "includeOther"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "ref":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ref"))
-			data, err := unmarshalNReportFieldRefInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldRefInput(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Ref = data
-		case "values":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
-			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Values = data
-		case "labels":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
-			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Labels = data
-		case "measureIds":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measureIds"))
-			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.MeasureIds = data
-		case "includeOther":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeOther"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.IncludeOther = data
+			it.Entity = data
 		}
 	}
 	return it, nil
@@ -4588,87 +3830,6 @@ func unmarshalInputReportScheduleAlertInput(ctx context.Context, ec *gqlexec.Exe
 				return it, err
 			}
 			it.SuppressWhileFiring = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportSortInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportSortInput, error) {
-	var it gqlmodel.ReportSortInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"columnId", "direction"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "columnId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("columnId"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.ColumnID = data
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputReportTransformInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReportTransformInput, error) {
-	var it gqlmodel.ReportTransformInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"op", "precision", "factor"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "op":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("op"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Op = data
-		case "precision":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("precision"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Precision = data
-		case "factor":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("factor"))
-			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Factor = data
 		}
 	}
 	return it, nil
@@ -4866,7 +4027,7 @@ func unmarshalInputSaveReportDefinitionInput(ctx context.Context, ec *gqlexec.Ex
 			it.DefaultFormat = data
 		case "definition":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("definition"))
-			data, err := unmarshalNReportIRInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportIRInput(ctx, ec, v)
+			data, err := unmarshalNJSON2map(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5198,7 +4359,7 @@ func unmarshalInputUpdateReportDefinitionInput(ctx context.Context, ec *gqlexec.
 			it.DefaultFormat = data
 		case "definition":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("definition"))
-			data, err := unmarshalNReportIRInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportIRInput(ctx, ec, v)
+			data, err := unmarshalNJSON2map(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5398,6 +4559,11 @@ func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exe
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
+func unmarshalNAny2interface(ctx context.Context, ec *gqlexec.Exec, v any) (any, error) {
+	res, err := graphql.UnmarshalAny(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5423,11 +4589,6 @@ func unmarshalNExportTableViewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFloat2float64(ctx context.Context, ec *gqlexec.Exec, v any) (float64, error) {
-	res, err := graphql.UnmarshalFloatContext(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func unmarshalNForkCannedReportInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐForkCannedReportInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ForkCannedReportInput, error) {
 	res, err := unmarshalInputForkCannedReportInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5443,18 +4604,9 @@ func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNReportChartInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportChartInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportChartInput, error) {
-	res, err := unmarshalInputReportChartInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNReportColumnInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportColumnInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ReportColumnInput, error) {
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNReportColumnInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportColumnInput)
-}
-
-func unmarshalNReportColumnInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportColumnInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportColumnInput, error) {
-	res, err := unmarshalInputReportColumnInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+func unmarshalNJSON2map(ctx context.Context, ec *gqlexec.Exec, v any) (map[string]any, error) {
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNReportDashboardFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDashboardFilterInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportDashboardFilterInput, error) {
@@ -5476,11 +4628,6 @@ func unmarshalNReportDashboardTileInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNReportDisplayRuleInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDisplayRuleInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportDisplayRuleInput, error) {
-	res, err := unmarshalInputReportDisplayRuleInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func unmarshalNReportDrillInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDrillInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ReportDrillInput, error) {
 	res, err := unmarshalInputReportDrillInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5495,38 +4642,8 @@ func unmarshalNReportDrillValueInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNReportFieldRefInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldRefInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportFieldRefInput, error) {
-	res, err := unmarshalInputReportFieldRefInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNReportFilterGroupInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterGroupInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportFilterGroupInput, error) {
-	res, err := unmarshalInputReportFilterGroupInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNReportFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportFilterInput, error) {
-	res, err := unmarshalInputReportFilterInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNReportIRInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportIRInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ReportIRInput, error) {
-	res, err := unmarshalInputReportIRInput(ctx, ec, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNReportIRInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportIRInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportIRInput, error) {
-	res, err := unmarshalInputReportIRInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNReportParameterDefInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportParameterDefInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportParameterDefInput, error) {
-	res, err := unmarshalInputReportParameterDefInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNReportSortInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportSortInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportSortInput, error) {
-	res, err := unmarshalInputReportSortInput(ctx, ec, v)
+func unmarshalNReportParameterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportParameterInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportParameterInput, error) {
+	res, err := unmarshalInputReportParameterInput(ctx, ec, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -5601,6 +4718,13 @@ func unmarshalOAny2interface(ctx context.Context, ec *gqlexec.Exec, v any) (any,
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalOAny2ᚕinterfaceᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAny2interface)
+}
+
 func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
 	if v == nil {
 		return nil, nil
@@ -5615,13 +4739,6 @@ func unmarshalODataTableConnectionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	}
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOFloat2ᚕfloat64ᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]float64, error) {
-	if v == nil {
-		return nil, nil
-	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFloat2float64)
 }
 
 func unmarshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, v any) (*float64, error) {
@@ -5663,37 +4780,6 @@ func unmarshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, v any) (map[strin
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOReportBandInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportBandInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportBandInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := unmarshalInputReportBandInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOReportChartGoalInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportChartGoalInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportChartGoalInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := unmarshalInputReportChartGoalInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOReportChartInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportChartInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ReportChartInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNReportChartInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportChartInput)
-}
-
-func unmarshalOReportComputedInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportComputedInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportComputedInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := unmarshalInputReportComputedInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func unmarshalOReportDashboardFilterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDashboardFilterInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ReportDashboardFilterInput, error) {
 	if v == nil {
 		return nil, nil
@@ -5701,64 +4787,11 @@ func unmarshalOReportDashboardFilterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenova
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNReportDashboardFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDashboardFilterInput)
 }
 
-func unmarshalOReportDisplayInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDisplayInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportDisplayInput, error) {
+func unmarshalOReportParameterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportParameterInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ReportParameterInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := unmarshalInputReportDisplayInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOReportDisplayRuleInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDisplayRuleInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ReportDisplayRuleInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNReportDisplayRuleInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDisplayRuleInput)
-}
-
-func unmarshalOReportFieldRefInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldRefInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportFieldRefInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := unmarshalInputReportFieldRefInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOReportFilterGroupInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterGroupInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ReportFilterGroupInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNReportFilterGroupInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterGroupInput)
-}
-
-func unmarshalOReportFilterGroupInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterGroupInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportFilterGroupInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := unmarshalInputReportFilterGroupInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOReportFilterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ReportFilterInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNReportFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFilterInput)
-}
-
-func unmarshalOReportParameterDefInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportParameterDefInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ReportParameterDefInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNReportParameterDefInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportParameterDefInput)
-}
-
-func unmarshalOReportPivotInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPivotInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportPivotInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := unmarshalInputReportPivotInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNReportParameterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportParameterInput)
 }
 
 func unmarshalOReportRunsFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunsFilterInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportRunsFilterInput, error) {
@@ -5774,21 +4807,6 @@ func unmarshalOReportScheduleAlertInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 		return nil, nil
 	}
 	res, err := unmarshalInputReportScheduleAlertInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOReportSortInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportSortInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ReportSortInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNReportSortInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportSortInput)
-}
-
-func unmarshalOReportTransformInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportTransformInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ReportTransformInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := unmarshalInputReportTransformInput(ctx, ec, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -5883,6 +4901,15 @@ func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNInt2ᚕintᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []int) graphql.Marshaler {
+	return gqlexec.List[int]{
+		Elem:        marshalNInt2int,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v map[string]any) graphql.Marshaler {

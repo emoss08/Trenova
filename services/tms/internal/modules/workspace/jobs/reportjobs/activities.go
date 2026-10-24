@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"time"
+
+	"github.com/emoss08/keel/analytics/export"
+	"github.com/emoss08/keel/analytics/ir"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -19,8 +22,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
-	reportingcompiler "github.com/emoss08/trenova/internal/modules/workspace/app/reporting/compiler"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
@@ -55,16 +59,14 @@ type ActivitiesParams struct {
 	WorkflowStarter     kernelports.WorkflowStarter
 	OrganizationRepo    tenantports.OrganizationRepository
 	UserRepo            tenantports.UserRepository
-	Compiler            reportports.ReportCompiler
-	Executor            reportports.ReportDatasetExecutor
+	Reporting           *reporting.Service
+	Engine              reportports.ReportEngine
 	Renderers           reportports.ReportRendererRegistry
-	ReportingDB         *postgres.ReportingConnection
 	Storage             kernelports.Client
 	NotificationService *notificationservice.Service
 	EmailService        emailports.EmailService `optional:"true"`
 	Templates           documenttemplateports.DocumentTemplateResolver
-	RealtimeService     agentports.RealtimeService    `optional:"true"`
-	ResultCache         reportports.ReportResultCache `optional:"true"`
+	RealtimeService     agentports.RealtimeService `optional:"true"`
 	ReadScopes          permissionports.ReadScopes
 	AuditService        auditports.AuditService
 	Metrics             *metrics.Registry `optional:"true"`
@@ -79,20 +81,18 @@ type Activities struct {
 	workflows    kernelports.WorkflowStarter
 	orgRepo      tenantports.OrganizationRepository
 	userRepo     tenantports.UserRepository
-	compiler     reportports.ReportCompiler
-	executor     reportports.ReportDatasetExecutor
+	reporting    *reporting.Service
+	engine       reportports.ReportEngine
 	renderers    reportports.ReportRendererRegistry
-	reportingDB  *postgres.ReportingConnection
 	storage      kernelports.Client
 	notification *notificationservice.Service
 	email        emailports.EmailService
 	templates    documenttemplateports.DocumentTemplateResolver
 	realtime     agentports.RealtimeService
-	resultCache  reportports.ReportResultCache
 	readScopes   permissionports.ReadScopes
 	audit        auditports.AuditService
 	metrics      *metrics.Report
-	canned       *canned.Registry
+	canned       cannedLibrary
 	cfg          *config.ReportingConfig
 	l            *zap.Logger
 }
@@ -106,20 +106,18 @@ func NewActivities(p ActivitiesParams) *Activities {
 		workflows:    p.WorkflowStarter,
 		orgRepo:      p.OrganizationRepo,
 		userRepo:     p.UserRepo,
-		compiler:     p.Compiler,
-		executor:     p.Executor,
+		reporting:    p.Reporting,
+		engine:       p.Engine,
 		renderers:    p.Renderers,
-		reportingDB:  p.ReportingDB,
 		storage:      p.Storage,
 		notification: p.NotificationService,
 		templates:    p.Templates,
 		email:        p.EmailService,
 		realtime:     p.RealtimeService,
-		resultCache:  p.ResultCache,
 		readScopes:   p.ReadScopes,
 		audit:        p.AuditService,
 		metrics:      reportMetrics(p.Metrics),
-		canned:       canned.Default(),
+		canned:       p.Reporting,
 		cfg:          p.Config.GetReportingConfig(),
 		l:            p.Logger.Named("reportjobs"),
 	}
@@ -130,6 +128,10 @@ func reportMetrics(registry *metrics.Registry) *metrics.Report {
 		return nil
 	}
 	return registry.Report
+}
+
+type cannedLibrary interface {
+	GetCanned(key string) (*canned.Entry, error)
 }
 
 func classifyCompileError(err error) error {
@@ -209,12 +211,12 @@ func (a *Activities) PrepareRunActivity(
 		UserID: run.RequestedByID,
 	}
 
-	if _, err = a.compiler.ValidateAndAuthorize(ctx, &reportports.ReportCompileRequest{
-		Definition:  definition,
-		Tenant:      runnerTenant,
-		Params:      run.Params,
-		OrgTimezone: org.Timezone,
-		NowUnix:     timeutils.NowUnix(),
+	if err = a.reporting.Check(ctx, &reporting.PrepareParams{
+		Tenant:     runnerTenant,
+		Definition: definition,
+		Params:     run.Params,
+		Mode:       reportaccess.ModeExport,
+		Timezone:   org.Timezone,
 	}); err != nil {
 		return nil, classifyCompileError(err)
 	}
@@ -233,7 +235,6 @@ func (a *Activities) PrepareRunActivity(
 		Title:          title,
 		Description:    description,
 		Params:         run.Params,
-		ParamOrder:     definition.ParameterNames(),
 		OrgTimezone:    org.Timezone,
 		RequestedBy:    requestedBy,
 		Locale:         locale,
@@ -276,7 +277,7 @@ func (a *Activities) resolveDefinition(
 	tenant pagination.TenantInfo,
 	revisionID pulid.ID,
 	cannedKey string,
-) (*report.Definition, error) {
+) (*ir.Definition, error) {
 	if !revisionID.IsNil() {
 		revision, err := a.defRepo.GetRevision(ctx, &reportports.GetReportRevisionRequest{
 			TenantInfo: tenant,
@@ -288,11 +289,11 @@ func (a *Activities) resolveDefinition(
 		return revision.Definition, nil
 	}
 
-	entry, ok := a.canned.Get(cannedKey)
-	if !ok {
+	entry, err := a.canned.GetCanned(cannedKey)
+	if err != nil {
 		return nil, temporal.NewNonRetryableApplicationError(
 			fmt.Sprintf("canned report %q is not registered in this build", cannedKey),
-			ErrTypeReportValidation, nil,
+			ErrTypeReportValidation, err,
 		)
 	}
 	return entry.Definition, nil
@@ -344,7 +345,7 @@ func (a *Activities) reportTitle(
 			description = def.Description
 		}
 	case run.CannedKey != "":
-		if entry, ok := a.canned.Get(run.CannedKey); ok {
+		if entry, err := a.canned.GetCanned(run.CannedKey); err == nil {
 			title = entry.Name
 			description = entry.Description
 		}
@@ -374,51 +375,16 @@ func (a *Activities) ExecuteAndRenderActivity(
 	}
 	ctx = withRunLocale(ctx, prepared)
 
-	compiled, err := a.compiler.Compile(ctx, &reportports.ReportCompileRequest{
-		Definition:  definition,
-		Tenant:      tenant,
-		Params:      prepared.Params,
-		OrgTimezone: prepared.OrgTimezone,
-		NowUnix:     timeutils.NowUnix(),
+	run, err := a.reporting.Prepare(ctx, &reporting.PrepareParams{
+		Tenant:     tenant,
+		Definition: definition,
+		Params:     prepared.Params,
+		Mode:       reportaccess.ModeExport,
+		Timezone:   prepared.OrgTimezone,
 	})
 	if err != nil {
 		return nil, classifyCompileError(err)
 	}
-
-	if err = a.reportingDB.RunScoped(ctx, true, func(ctx context.Context) error {
-		return reportingcompiler.PreflightCost(ctx, a.reportingDB.DBForContext(ctx), compiled,
-			reportingcompiler.CostLimits{
-				MaxEstimatedCost: a.cfg.GetExplainCostLimit(),
-				MaxEstimatedRows: a.cfg.GetExplainRowLimit(),
-			},
-		)
-	}); err != nil {
-		return nil, temporal.NewNonRetryableApplicationError(
-			err.Error(), ErrTypeReportTooExpensive, err,
-		)
-	}
-
-	cached, cacheKey := a.cachedResult(ctx, compiled, prepared)
-	if cached != nil {
-		return cached, nil
-	}
-
-	maxRows := a.cfg.GetMaxRows()
-	if prepared.Format == report.FormatPDF && a.cfg.GetPDFMaxRows() < maxRows {
-		maxRows = a.cfg.GetPDFMaxRows() + 1
-	}
-
-	reader, err := a.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
-		Compiled: compiled,
-		MaxRows:  maxRows,
-		Timeout:  a.cfg.GetStatementTimeout(),
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
-	source, digesting := wrapReader(ctx, reader, prepared)
 
 	renderer, err := a.renderers.For(prepared.Format)
 	if err != nil {
@@ -426,6 +392,20 @@ func (a *Activities) ExecuteAndRenderActivity(
 			err.Error(), ErrTypeReportValidation, err,
 		)
 	}
+
+	stream, err := a.engine.Run(run.Context, run.Request)
+	if err != nil {
+		return nil, classifyEngineError(reporting.EngineError(run.Context, run.Access, err))
+	}
+	defer stream.Close()
+
+	var digest *digestCapture
+	if prepared.WantDigest {
+		digest = newDigestCapture(reportports.MaxDigestRows)
+	}
+	source := newRunReader(stream, func() {
+		activity.RecordHeartbeat(ctx)
+	}, heartbeatEveryRows, digest)
 
 	attempt := activity.GetInfo(ctx).Attempt
 	artifactKey := fmt.Sprintf("%s/%s/%s/%d/report.%s",
@@ -436,38 +416,30 @@ func (a *Activities) ExecuteAndRenderActivity(
 		prepared.Format.Extension(),
 	)
 
-	result, err := a.renderToStorage(ctx, prepared, renderer, source, artifactKey)
+	result, err := a.renderToStorage(
+		run.Context,
+		prepared,
+		definition,
+		renderer,
+		source,
+		artifactKey,
+	)
 	if err != nil {
-		return nil, err
+		return nil, classifyEngineError(reporting.EngineError(run.Context, run.Access, err))
 	}
 
-	if digesting != nil {
-		result.Digest = digesting.digest(ctx)
-	}
-
-	if a.resultCache != nil && cacheKey != "" {
-		expiresAt := timeutils.NowUnix() + int64(a.cfg.GetArtifactRetention().Seconds())
-		result.ArtifactExpiresAt = expiresAt
-		if storeErr := a.resultCache.Store(ctx, cacheKey, &reportports.ReportCacheEntry{
-			ArtifactKey:       result.ArtifactKey,
-			RowsKey:           result.RowsKey,
-			RowCount:          result.RowCount,
-			ByteSize:          result.ByteSize,
-			Truncated:         result.Truncated,
-			ArtifactExpiresAt: expiresAt,
-			Digest:            result.Digest,
-		}); storeErr != nil {
-			a.l.Warn("failed to store report cache entry", zap.Error(storeErr))
+	if digest != nil {
+		captured, digestErr := digest.digest(run.Context, stream.Columns())
+		if digestErr != nil {
+			a.l.Warn("failed to capture report digest", zap.Error(digestErr))
+		} else {
+			result.Digest = captured
 		}
 	}
 
 	return result, nil
 }
 
-// withReadScope narrows the run's queries to the records the person who asked
-// for it may read, as ReadScopeMiddleware does for a request: the read_scope
-// policies narrow only work that carries a holder, and a run without one would
-// read its whole tenant.
 func (a *Activities) withReadScope(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
@@ -483,71 +455,12 @@ func (a *Activities) withReadScope(
 	return readscope.With(ctx, a.readScopes.Resolver(principal)), nil
 }
 
-// cachedResult returns a previously cached artifact for an identical compiled
-// query (same SQL, args, format, and data-version vector), plus the cache key
-// to store a fresh result under on a miss.
-func (a *Activities) cachedResult(
-	ctx context.Context,
-	compiled *reportports.CompiledReportQuery,
-	prepared *PreparedRun,
-) (cached *ExecuteResult, cacheKey string) {
-	if a.resultCache == nil {
-		return nil, ""
-	}
-
-	cacheKey, err := a.resultCache.Key(
-		ctx,
-		compiled,
-		prepared.Format,
-		prepared.OrganizationID,
-	)
-	if err != nil {
-		a.l.Warn("failed to derive report cache key", zap.Error(err))
-		return nil, ""
-	}
-
-	entry, hit, err := a.resultCache.Lookup(ctx, cacheKey)
-	if err != nil {
-		a.l.Warn("report cache lookup failed", zap.Error(err))
-		return nil, cacheKey
-	}
-	if !hit {
-		if a.metrics != nil {
-			a.metrics.RecordCacheLookup("miss")
-		}
-		return nil, cacheKey
-	}
-
-	// A run that needs an inline digest cannot use an entry stored by a run that
-	// did not: the artifact is identical, but the email would silently lose its
-	// table. Re-running is the cheaper mistake.
-	if prepared.WantDigest && entry.Digest.IsEmpty() {
-		if a.metrics != nil {
-			a.metrics.RecordCacheLookup("miss")
-		}
-		return nil, cacheKey
-	}
-
-	if a.metrics != nil {
-		a.metrics.RecordCacheLookup("hit")
-	}
-	return &ExecuteResult{
-		ArtifactKey:       entry.ArtifactKey,
-		RowsKey:           entry.RowsKey,
-		RowCount:          entry.RowCount,
-		ByteSize:          entry.ByteSize,
-		Truncated:         entry.Truncated,
-		CacheHit:          true,
-		ArtifactExpiresAt: entry.ArtifactExpiresAt,
-		Digest:            entry.Digest,
-	}, cacheKey
-}
-
 func (a *Activities) renderToStorage(
 	ctx context.Context,
 	prepared *PreparedRun,
+	definition *ir.Definition,
 	renderer reportports.ReportRenderer,
-	dataset reportports.ReportDatasetReader,
+	source *runReader,
 	artifactKey string,
 ) (*ExecuteResult, error) {
 	meta := reportports.ReportRunMeta{
@@ -555,39 +468,49 @@ func (a *Activities) renderToStorage(
 		Description:     prepared.Description,
 		GeneratedAtUnix: timeutils.NowUnix(),
 		Timezone:        prepared.OrgTimezone,
+		Locale:          prepared.Locale,
 		RequestedBy:     prepared.RequestedBy,
-		Params:          prepared.Params,
-		ParamOrder:      prepared.ParamOrder,
+		Params:          reporting.OrderedParams(definition, prepared.Params),
 	}
 	objectMetadata := map[string]string{
 		"organization-id": prepared.OrganizationID.String(),
 		"run-id":          prepared.RunID.String(),
 	}
+	uploadCap := a.cfg.GetMaxArtifactBytes() + artifactSlackBytes
 
 	artifact := uploadpipe.Open(ctx, a.storage, uploadpipe.Params{
 		Key:         artifactKey,
 		ContentType: prepared.Format.ContentType(),
 		Metadata:    objectMetadata,
-		MaxBytes:    a.cfg.GetMaxArtifactBytes(),
+		MaxBytes:    uploadCap,
 	})
 
-	// The sidecar rides the same pass over the rows. It cannot be a second
-	// render: the dataset is a forward-only cursor, and re-running the query
-	// would give two results free to disagree.
 	rowsKey := artifactKey + rowsSidecarSuffix
 	rowsUpload := uploadpipe.Open(ctx, a.storage, uploadpipe.Params{
 		Key:         rowsKey,
 		ContentType: report.FormatJSON.ContentType(),
 		Metadata:    objectMetadata,
-		MaxBytes:    a.cfg.GetMaxArtifactBytes(),
+		MaxBytes:    uploadCap,
 	})
-	sidecar := render.NewRowsSidecar(dataset, rowsUpload.Writer(), meta)
+	sidecarDone := make(chan error, 1)
+	go func() {
+		defer close(source.sideExit)
+		_, err := export.JSON(ctx, rowsUpload.Writer(), source.Sidecar(), render.Options(
+			ctx, &meta, a.cfg.GetMaxArtifactBytes(),
+		))
+		sidecarDone <- err
+	}()
 
 	stats, renderErr := renderer.Render(ctx, &reportports.ReportRenderRequest{
-		Dataset: sidecar,
+		Dataset: source,
 		Sink:    artifact.Writer(),
 		Meta:    meta,
 	})
+	if renderErr == nil {
+		renderErr = drain(ctx, source)
+	}
+	source.Stop()
+	sidecarErr := <-sidecarDone
 	if renderErr != nil {
 		rowsUpload.Abort(renderErr)
 		artifact.Abort(renderErr)
@@ -595,7 +518,7 @@ func (a *Activities) renderToStorage(
 		return nil, renderFailure(renderErr, a.cfg.GetMaxArtifactBytes())
 	}
 
-	rowsKey = a.closeRowsSidecar(ctx, sidecar, rowsUpload, rowsKey)
+	rowsKey = a.closeRowsSidecar(ctx, sidecarErr, rowsUpload, rowsKey)
 
 	uploadedBytes, err := artifact.Close()
 	if err != nil {
@@ -611,19 +534,24 @@ func (a *Activities) renderToStorage(
 	}, nil
 }
 
-// closeRowsSidecar finishes the sidecar and returns the key it was stored
-// under, or "" if it could not be written.
-//
-// A sidecar failure never fails the run. The artifact is what the person asked
-// for; the sidecar is only what makes a later comparison possible, and a run
-// without one is already a state report_compare_runs understands and reports.
+func drain(ctx context.Context, source *runReader) error {
+	for {
+		_, err := source.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+	}
+}
+
 func (a *Activities) closeRowsSidecar(
 	ctx context.Context,
-	sidecar *render.RowsSidecar,
+	err error,
 	upload *uploadpipe.Pipe,
 	rowsKey string,
 ) string {
-	err := sidecar.Finish(ctx)
 	if err == nil {
 		_, err = upload.Close()
 	} else {
@@ -921,6 +849,25 @@ func (a *Activities) ReconcileZombieRunsActivity(
 
 var errArtifactTooLarge = uploadpipe.ErrTooLarge
 
+const artifactSlackBytes = 1 << 20
+
+func classifyEngineError(err error) error {
+	var rateErr *errortypes.RateLimitError
+	if errors.As(err, &rateErr) {
+		return temporal.NewApplicationErrorWithOptions(rateErr.Error(), ErrTypeReportBusy,
+			temporal.ApplicationErrorOptions{Cause: err, NextRetryDelay: busyRetryDelay})
+	}
+	var bizErr *errortypes.BusinessError
+	if errors.As(err, &bizErr) {
+		return temporal.NewNonRetryableApplicationError(
+			bizErr.Error(),
+			ErrTypeReportTooExpensive,
+			err,
+		)
+	}
+	return classifyCompileError(err)
+}
+
 func renderFailure(err error, maxArtifactBytes int64) error {
 	var rowLimit *render.RowLimitError
 	switch {
@@ -939,79 +886,4 @@ func renderFailure(err error, maxArtifactBytes int64) error {
 	default:
 		return err
 	}
-}
-
-// wrapReader layers the activity's concerns over the raw dataset: heartbeats so
-// a long render is not killed, and — only when a schedule renders an inline
-// email table — a bounded tee of the rows.
-func wrapReader(
-	ctx context.Context,
-	reader reportports.ReportDatasetReader,
-	prepared *PreparedRun,
-) (reportports.ReportDatasetReader, *digestReader) {
-	var source reportports.ReportDatasetReader = uploadpipe.NewHeartbeatingReader(
-		ctx, reader, heartbeatEveryRows, activity.RecordHeartbeat,
-	)
-	if !prepared.WantDigest {
-		return source, nil
-	}
-	digesting := newDigestReader(source, reportports.MaxDigestRows)
-	return digesting, digesting
-}
-
-// digestReader captures a bounded prefix of the rows on their way to the
-// renderer, so an inline email digest costs one pass over data the run is
-// already streaming rather than a second query.
-type digestReader struct {
-	inner   reportports.ReportDatasetReader
-	rows    []reportports.ReportRow
-	limit   int
-	dropped bool
-}
-
-func newDigestReader(inner reportports.ReportDatasetReader, limit int) *digestReader {
-	if limit > reportports.MaxDigestRows {
-		limit = reportports.MaxDigestRows
-	}
-	return &digestReader{inner: inner, limit: limit}
-}
-
-func (r *digestReader) Schema() []reportports.ReportResultColumn { return r.inner.Schema() }
-
-func (r *digestReader) Next(ctx context.Context) (reportports.ReportRow, error) {
-	row, err := r.inner.Next(ctx)
-	if err != nil {
-		return row, err
-	}
-	if len(r.rows) < r.limit {
-		// The renderer owns the slice it was handed, so the digest keeps a copy.
-		r.rows = append(r.rows, append(reportports.ReportRow(nil), row...))
-	} else {
-		r.dropped = true
-	}
-	return row, nil
-}
-
-func (r *digestReader) Totals(ctx context.Context) (reportports.ReportRow, error) {
-	return r.inner.Totals(ctx)
-}
-
-func (r *digestReader) RowCount() int64 { return r.inner.RowCount() }
-
-func (r *digestReader) Truncated() bool { return r.inner.Truncated() }
-
-func (r *digestReader) Close() error { return r.inner.Close() }
-
-// digest assembles what was captured. Totals are read after the stream so the
-// grand total covers every matching row, not only the sampled ones.
-func (r *digestReader) digest(ctx context.Context) *reportports.ReportDigest {
-	digest := &reportports.ReportDigest{
-		Columns:   r.inner.Schema(),
-		Rows:      r.rows,
-		Truncated: r.dropped,
-	}
-	if totals, err := r.inner.Totals(ctx); err == nil {
-		digest.Totals = totals
-	}
-	return digest
 }

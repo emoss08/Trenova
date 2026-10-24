@@ -1,3 +1,4 @@
+import { dashboardFilterToKeel, parameterToKeel } from "@/lib/report-definition";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -342,7 +343,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
             .filter(([, values]) => Object.keys(values).length > 0)
             .map(([tileId, values]) => [
               tileId,
-              { filters: tileFilterFields[tileId] ?? [], values },
+              { filters: (tileFilterFields[tileId] ?? []).map(dashboardFilterToKeel), values },
             ]),
         ),
       });
@@ -405,8 +406,8 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
         visibility: dashboard.visibility,
         layout: {
           tiles: packTiles(draft.tiles),
-          parameters: draft.parameters,
-          filters: draft.filters,
+          parameters: draft.parameters?.map(parameterToKeel),
+          filters: draft.filters?.map(dashboardFilterToKeel),
         },
       },
       {

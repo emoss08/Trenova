@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel/analytics"
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 )
 
 const MaxColumns = 100
@@ -28,64 +30,98 @@ type View struct {
 }
 
 type Built struct {
-	Definition *report.Definition
+	Definition *ir.Definition
 	Skipped    []string
 }
 
-func entityFor(
-	catalog *reportcatalog.Catalog,
-	resource permission.Resource,
-) (*reportcatalog.Entity, bool) {
-	for idx := range catalog.Entities {
-		if catalog.Entities[idx].Resource == resource {
-			return &catalog.Entities[idx], true
-		}
-	}
-	return nil, false
+var tableOperators = map[dbtype.Operator]ir.Op{
+	dbtype.OpEqual:              ir.OpEq,
+	dbtype.OpNotEqual:           ir.OpNe,
+	dbtype.OpGreaterThan:        ir.OpGt,
+	dbtype.OpGreaterThanOrEqual: ir.OpGte,
+	dbtype.OpLessThan:           ir.OpLt,
+	dbtype.OpLessThanOrEqual:    ir.OpLte,
+	dbtype.OpContains:           ir.OpContains,
+	dbtype.OpStartsWith:         ir.OpStartsWith,
+	dbtype.OpEndsWith:           ir.OpEndsWith,
+	dbtype.OpLike:               ir.OpLike,
+	dbtype.OpILike:              ir.OpILike,
+	dbtype.OpIn:                 ir.OpIn,
+	dbtype.OpNotIn:              ir.OpNotIn,
+	dbtype.OpIsNull:             ir.OpIsNull,
+	dbtype.OpIsNotNull:          ir.OpIsNotNull,
+	dbtype.OpDateRange:          ir.OpBetween,
+	dbtype.OpLastNDays:          ir.OpLastNDays,
+	dbtype.OpNextNDays:          ir.OpNextNDays,
+	dbtype.OpToday:              ir.OpToday,
+	dbtype.OpYesterday:          ir.OpYesterday,
+	dbtype.OpTomorrow:           ir.OpTomorrow,
+	dbtype.OpThisWeek:           ir.OpThisWeek,
+	dbtype.OpLastWeek:           ir.OpLastWeek,
+	dbtype.OpThisMonth:          ir.OpThisMonth,
+	dbtype.OpLastMonth:          ir.OpLastMonth,
+	dbtype.OpThisQuarter:        ir.OpThisQuarter,
+	dbtype.OpLastQuarter:        ir.OpLastQuarter,
+	dbtype.OpThisYear:           ir.OpThisYear,
+	dbtype.OpLastYear:           ir.OpLastYear,
 }
 
-type resolvedRef struct {
-	ref    report.FieldRef
-	field  *reportcatalog.Field
+type resolvedField struct {
+	path   string
+	field  *analytics.Field
 	toMany bool
 }
 
-func resolveRef(
-	catalog *reportcatalog.Catalog,
-	entity *reportcatalog.Entity,
-	apiField string,
-) (resolvedRef, bool) {
+func resolveField(entity *analytics.Entity, apiField string) (resolvedField, bool) {
 	segments := strings.Split(apiField, ".")
-	field := segments[len(segments)-1]
-	var path []string
-	if len(segments) > 1 {
-		path = segments[:len(segments)-1]
-	}
-
-	target := entity
+	current := entity
+	names := make([]string, 0, len(segments))
 	toMany := false
-	if len(path) > 0 {
-		base, resolved, err := catalog.ResolvePath(entity.Key, path)
-		if err != nil {
-			return resolvedRef{}, false
+	for _, segment := range segments[:len(segments)-1] {
+		edge, ok := current.Edge(segment)
+		if !ok {
+			return resolvedField{}, false
 		}
-		target = resolved.Terminal(base)
-		toMany = resolved.CrossesToMany()
+		names = append(names, edge.Name)
+		toMany = toMany || edge.ToMany
+		current = edge.Target
 	}
 
-	spec, ok := target.Field(field)
+	leaf := segments[len(segments)-1]
+	field, key, ok := fieldByAPIName(current, leaf)
 	if !ok {
-		return resolvedRef{}, false
+		return resolvedField{}, false
 	}
-	return resolvedRef{
-		ref:    report.FieldRef{Path: path, Field: field},
-		field:  spec,
-		toMany: toMany,
-	}, true
+	if key != leaf && strings.Contains(key, ".") {
+		edgeName, _, _ := strings.Cut(key, ".")
+		edge, _ := current.Edge(edgeName)
+		toMany = toMany || edge.ToMany
+	}
+	names = append(names, key)
+	return resolvedField{path: strings.Join(names, "."), field: field, toMany: toMany}, true
 }
 
-func Build(catalog *reportcatalog.Catalog, view *View) (*Built, error) {
-	entity, ok := entityFor(catalog, view.Resource)
+func fieldByAPIName(entity *analytics.Entity, name string) (*analytics.Field, string, bool) {
+	if field, ok := entity.Field(name); ok {
+		return field, name, true
+	}
+	for _, field := range entity.Fields {
+		if reportaccess.APIKey(entity.Table.Columns[field.Column].Name) == name {
+			return field, field.Key, true
+		}
+	}
+	if edgeName, isRef := strings.CutSuffix(name, "Id"); isRef {
+		if edge, ok := entity.Edge(edgeName); ok && !edge.ToMany {
+			if id, found := edge.Target.Field("id"); found {
+				return id, edge.Name + ".id", true
+			}
+		}
+	}
+	return nil, "", false
+}
+
+func Build(kinds *reportaccess.Resolver, view *View) (*Built, error) {
+	entity, ok := kinds.RootEntity(view.Resource)
 	if !ok {
 		return nil, errortypes.NewValidationError(
 			"resource",
@@ -104,26 +140,26 @@ func Build(catalog *reportcatalog.Catalog, view *View) (*Built, error) {
 		return nil, errortypes.NewValidationError(
 			"columns",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("Export between 1 and %d columns", MaxColumns),
+			"Export between 1 and {0} columns",
+			MaxColumns,
 		)
 	}
 
-	definition := &report.Definition{IRVersion: report.CurrentIRVersion, Entity: entity.Key}
+	definition := &ir.Definition{Version: ir.Version, Entity: entity.Key}
 	built := &Built{Definition: definition}
 	columnIDs := make(map[string]string, len(view.Columns))
 	for _, column := range view.Columns {
-		resolved, found := resolveRef(catalog, entity, column.Field)
-		if !found || resolved.toMany {
+		resolved, found := resolveField(entity, column.Field)
+		if !found || resolved.toMany || !resolved.field.Groupable {
 			built.Skipped = append(built.Skipped, column.Label)
 			continue
 		}
 		id := fmt.Sprintf("c%d", len(definition.Columns))
 		columnIDs[column.Field] = id
-		definition.Columns = append(definition.Columns, report.ColumnSpec{
-			ID:    id,
-			Ref:   resolved.ref,
-			Kind:  report.ColumnKindDimension,
-			Label: column.Label,
+		definition.Columns = append(definition.Columns, ir.Column{
+			ID:        id,
+			Label:     column.Label,
+			Dimension: &ir.Dimension{Field: resolved.path},
 		})
 	}
 	if len(definition.Columns) == 0 {
@@ -134,7 +170,7 @@ func Build(catalog *reportcatalog.Catalog, view *View) (*Built, error) {
 		)
 	}
 
-	filters, err := buildFilters(catalog, entity, view)
+	filters, err := buildFilters(entity, view)
 	if err != nil {
 		return nil, err
 	}
@@ -145,53 +181,44 @@ func Build(catalog *reportcatalog.Catalog, view *View) (*Built, error) {
 		if !shown {
 			continue
 		}
-		definition.Sort = append(
-			definition.Sort,
-			report.SortSpec{ColumnID: id, Direction: sort.Direction},
-		)
+		definition.Sort = append(definition.Sort, ir.Sort{
+			Column: id,
+			Desc:   strings.EqualFold(string(sort.Direction), "desc"),
+		})
 	}
 
 	return built, nil
 }
 
-func buildFilters(
-	catalog *reportcatalog.Catalog,
-	entity *reportcatalog.Entity,
-	view *View,
-) (*report.FilterGroup, error) {
+func buildFilters(entity *analytics.Entity, view *View) (*ir.Filter, error) {
 	if len(view.FieldFilters) == 0 && len(view.FilterGroups) == 0 {
 		return nil, nil //nolint:nilnil // an unfiltered view has no filter group
 	}
 
-	convert := func(field string, filter domaintypes.FieldFilter) (report.FieldFilter, error) {
-		resolved, ok := resolveRef(catalog, entity, filter.Field)
-		if !ok || !resolved.field.Filterable {
-			return report.FieldFilter{}, errortypes.NewValidationError(
-				field,
+	convert := func(at string, filter domaintypes.FieldFilter) (ir.Filter, error) {
+		resolved, ok := resolveField(entity, filter.Field)
+		op, known := tableOperators[filter.Operator]
+		if !ok || !known || !resolved.field.Filterable {
+			return ir.Filter{}, errortypes.NewValidationError(
+				at,
 				errortypes.ErrInvalid,
-				fmt.Sprintf(
-					"The filter on %q cannot be exported as a report; remove it or export from the browser",
-					filter.Field,
-				),
+				"The filter on {0} cannot be exported as a report; remove it or export from the browser",
+				filter.Field,
 			)
 		}
-		return report.FieldFilter{
-			Ref:      resolved.ref,
-			Operator: filter.Operator,
-			Value:    filter.Value,
-		}, nil
+		return ir.Filter{Field: resolved.path, Op: op, Value: filter.Value}, nil
 	}
 
-	root := &report.FilterGroup{Op: report.BoolOpAnd}
+	children := make([]ir.Filter, 0, len(view.FieldFilters)+len(view.FilterGroups))
 	for idx, filter := range view.FieldFilters {
 		converted, err := convert(fmt.Sprintf("fieldFilters[%d]", idx), filter)
 		if err != nil {
 			return nil, err
 		}
-		root.Filters = append(root.Filters, converted)
+		children = append(children, converted)
 	}
 	for groupIdx, group := range view.FilterGroups {
-		either := report.FilterGroup{Op: report.BoolOpOr}
+		either := make([]ir.Filter, 0, len(group.Filters))
 		for idx, filter := range group.Filters {
 			converted, err := convert(
 				fmt.Sprintf("filterGroups[%d].filters[%d]", groupIdx, idx),
@@ -200,11 +227,11 @@ func buildFilters(
 			if err != nil {
 				return nil, err
 			}
-			either.Filters = append(either.Filters, converted)
+			either = append(either, converted)
 		}
-		if len(either.Filters) > 0 {
-			root.Groups = append(root.Groups, either)
+		if len(either) > 0 {
+			children = append(children, *ir.Or(either...))
 		}
 	}
-	return root, nil
+	return ir.And(children...), nil
 }
