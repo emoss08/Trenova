@@ -1,22 +1,22 @@
 package tractorservice
 
 import (
+	"errors"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
-	"context"
-	"errors"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,7 +24,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -36,7 +35,7 @@ func newLocateTestService(
 ) *Service {
 	return &Service{
 		l:              zap.NewNop(),
-		db:             tractorTestDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           repo,
 		assignmentRepo: assignmentRepo,
 		continuityRepo: continuityRepo,
@@ -378,19 +377,4 @@ func TestLocate_PropagatesMissingLocation(t *testing.T) {
 	assert.ErrorIs(t, err, locationErr)
 	assignmentRepo.AssertNotCalled(t, "FindInProgressByTractorID")
 	continuityRepo.AssertNotCalled(t, "Advance")
-}
-
-type tractorTestDBConnection struct{}
-
-func (tractorTestDBConnection) DB() *bun.DB                          { return nil }
-func (tractorTestDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (tractorTestDBConnection) HealthCheck(context.Context) error    { return nil }
-func (tractorTestDBConnection) IsHealthy(context.Context) bool       { return true }
-func (tractorTestDBConnection) Close() error                         { return nil }
-func (tractorTestDBConnection) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
 }

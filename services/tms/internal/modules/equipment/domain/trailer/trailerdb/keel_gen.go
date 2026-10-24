@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -56,8 +58,8 @@ var trailersTable = schema.Table{
 		{Name: "lease_end_date", Quoted: `"lease_end_date"`, Field: "LeaseEndDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Lease End Date`},
 		{Name: "last_inspection_date", Quoted: `"last_inspection_date"`, Field: "LastInspectionDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Inspection Date`},
 		{Name: "registration_expiry", Quoted: `"registration_expiry"`, Field: "RegistrationExpiry", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Registration Expiry`},
-		{Name: "last_known_location_id", Quoted: `"last_known_location_id"`, Field: "LastKnownLocationID", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Last Known Location ID`},
-		{Name: "last_known_location_name", Quoted: `"last_known_location_name"`, Field: "LastKnownLocationName", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Last Known Location Name`},
+		{Name: "last_known_location_id", Quoted: `"last_known_location_id"`, Field: "LastKnownLocationID", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Last Known Location ID`},
+		{Name: "last_known_location_name", Quoted: `"last_known_location_name"`, Field: "LastKnownLocationName", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Last Known Location Name`},
 		{Name: "last_known_location_latitude", Quoted: `"last_known_location_latitude"`, Field: "LastKnownLocationLatitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Latitude`},
 		{Name: "last_known_location_longitude", Quoted: `"last_known_location_longitude"`, Field: "LastKnownLocationLongitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Longitude`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
@@ -67,6 +69,8 @@ var trailersTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
 	Relations: []schema.Relation{
+		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`},
+		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`},
 		{Name: "EquipmentType", Alias: "et", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Equipment Type`},
 		{Name: "EquipmentManufacturer", Alias: "em", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Equipment Manufacturer`},
 		{Name: "FleetCode", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Fleet Code`},
@@ -218,29 +222,39 @@ func (t *TrailersTable) As(alias string) *TrailersTable {
 	return keel.Alias(t.Ref, alias, BuildTrailers)
 }
 
+// BusinessUnit is the belongs relation.
+func (t *TrailersTable) BusinessUnit() *tenantdb.BusinessUnitsTable {
+	return keel.Path(t.Ref, 0, tenantdb.BuildBusinessUnits)
+}
+
+// Organization is the belongs relation.
+func (t *TrailersTable) Organization() *tenantdb.OrganizationsTable {
+	return keel.Path(t.Ref, 1, tenantdb.BuildOrganizations)
+}
+
 // EquipmentType is the belongs relation.
 func (t *TrailersTable) EquipmentType() *equipmenttypedb.EquipmentTypesTable {
-	return keel.Path(t.Ref, 0, equipmenttypedb.BuildEquipmentTypes)
+	return keel.Path(t.Ref, 2, equipmenttypedb.BuildEquipmentTypes)
 }
 
 // EquipmentManufacturer is the belongs relation.
 func (t *TrailersTable) EquipmentManufacturer() *equipmentmanufacturerdb.EquipmentManufacturersTable {
-	return keel.Path(t.Ref, 1, equipmentmanufacturerdb.BuildEquipmentManufacturers)
+	return keel.Path(t.Ref, 3, equipmentmanufacturerdb.BuildEquipmentManufacturers)
 }
 
 // FleetCode is the belongs relation.
 func (t *TrailersTable) FleetCode() *fleetcodedb.FleetCodesTable {
-	return keel.Path(t.Ref, 2, fleetcodedb.BuildFleetCodes)
+	return keel.Path(t.Ref, 4, fleetcodedb.BuildFleetCodes)
 }
 
 // RegistrationState is the belongs relation.
 func (t *TrailersTable) RegistrationState() *usstatedb.UsStatesTable {
-	return keel.Path(t.Ref, 3, usstatedb.BuildUsStates)
+	return keel.Path(t.Ref, 5, usstatedb.BuildUsStates)
 }
 
 // OwnerWorker is the belongs relation.
 func (t *TrailersTable) OwnerWorker() *workerdb.WorkersTable {
-	return keel.Path(t.Ref, 4, workerdb.BuildWorkers)
+	return keel.Path(t.Ref, 6, workerdb.BuildWorkers)
 }
 
 // Get returns the trailers row with the given key, or keel.ErrNotFound.
@@ -427,8 +441,14 @@ func valueTrailer(p unsafe.Pointer, c int32) any {
 		}
 		return *r.RegistrationExpiry
 	case 24:
+		if r.LastKnownLocationID == "" {
+			return nil
+		}
 		return string(r.LastKnownLocationID)
 	case 25:
+		if r.LastKnownLocationName == "" {
+			return nil
+		}
 		return r.LastKnownLocationName
 	case 26:
 		if r.LastKnownLocationLatitude == nil {
@@ -458,24 +478,30 @@ func attachTrailer(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	r := (*trailer.Trailer)(p)
 	switch rel {
 	case 0:
-		r.EquipmentType = (*equipmenttype.EquipmentType)(child)
+		r.BusinessUnit = (*tenant.BusinessUnit)(child)
 	case 1:
-		r.EquipmentManufacturer = (*equipmentmanufacturer.EquipmentManufacturer)(child)
+		r.Organization = (*tenant.Organization)(child)
 	case 2:
-		r.FleetCode = (*fleetcode.FleetCode)(child)
+		r.EquipmentType = (*equipmenttype.EquipmentType)(child)
 	case 3:
-		r.RegistrationState = (*usstate.UsState)(child)
+		r.EquipmentManufacturer = (*equipmentmanufacturer.EquipmentManufacturer)(child)
 	case 4:
+		r.FleetCode = (*fleetcode.FleetCode)(child)
+	case 5:
+		r.RegistrationState = (*usstate.UsState)(child)
+	case 6:
 		r.OwnerWorker = (*worker.Worker)(child)
 	}
 }
 
 func init() {
-	trailersTable.Relations[0].Target = equipmenttypedb.EquipmentTypesSchema()
-	trailersTable.Relations[1].Target = equipmentmanufacturerdb.EquipmentManufacturersSchema()
-	trailersTable.Relations[2].Target = fleetcodedb.FleetCodesSchema()
-	trailersTable.Relations[3].Target = usstatedb.UsStatesSchema()
-	trailersTable.Relations[4].Target = workerdb.WorkersSchema()
+	trailersTable.Relations[0].Target = tenantdb.BusinessUnitsSchema()
+	trailersTable.Relations[1].Target = tenantdb.OrganizationsSchema()
+	trailersTable.Relations[2].Target = equipmenttypedb.EquipmentTypesSchema()
+	trailersTable.Relations[3].Target = equipmentmanufacturerdb.EquipmentManufacturersSchema()
+	trailersTable.Relations[4].Target = fleetcodedb.FleetCodesSchema()
+	trailersTable.Relations[5].Target = usstatedb.UsStatesSchema()
+	trailersTable.Relations[6].Target = workerdb.WorkersSchema()
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

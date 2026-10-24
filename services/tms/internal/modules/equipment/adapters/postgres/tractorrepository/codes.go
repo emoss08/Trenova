@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -18,7 +17,7 @@ func normalizeLookupKeys(values []string) []string {
 	out := make([]string, 0, len(values))
 	seen := make(map[string]struct{}, len(values))
 	for _, value := range values {
-		key := strings.ToUpper(strings.TrimSpace(value))
+		key := strings.ToLower(strings.TrimSpace(value))
 		if key == "" {
 			continue
 		}
@@ -42,29 +41,11 @@ func (r *repository) GetByCodes(
 			return map[string]*tractor.Tractor{}, nil
 		}
 
-		cols := tractorcol.TractorColumns
-		entities := make([]*tractor.Tractor, 0, len(codes)+len(plates))
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ColumnExpr(tractorcol.TractorTable.All()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tractorcol.TractorScopeTenant(sq, req.TenantInfo).
-					WhereGroup(" AND ", func(oq *bun.SelectQuery) *bun.SelectQuery {
-						if len(codes) > 0 {
-							oq = oq.Where(cols.Code.Expr("UPPER({}) IN (?)"), bun.In(codes))
-						}
-						if len(plates) > 0 {
-							oq = oq.WhereOr(
-								cols.LicensePlateNumber.Expr("UPPER({}) IN (?)"),
-								bun.In(plates),
-							)
-						}
-						return oq
-					})
-			}).
-			Scan(ctx)
+		t := tractordb.Tractors
+		entities, err := t.Where(keel.Or(
+			keel.When(len(codes) > 0, t.Code.Lower().In(codes...)),
+			keel.When(len(plates) > 0, t.LicensePlateNumber.Lower().In(plates...)),
+		)).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get tractors by code", zap.Error(err))
 			return nil, fmt.Errorf("get tractors by codes: %w", err)

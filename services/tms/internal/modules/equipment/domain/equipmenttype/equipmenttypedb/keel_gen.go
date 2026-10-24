@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -41,6 +43,10 @@ var equipmentTypesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
+	Relations: []schema.Relation{
+		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`},
+		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`},
+	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
 	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17},
@@ -57,6 +63,7 @@ var equipmentTypesTable = schema.Table{
 	Size:       unsafe.Sizeof(equipmenttype.EquipmentType{}),
 	Ptr:        ptrEquipmentType,
 	Value:      valueEquipmentType,
+	Attach:     attachEquipmentType,
 }
 
 var equipmentTypesRef = keel.Ref{Table: &equipmentTypesTable}
@@ -138,6 +145,16 @@ func EquipmentTypesSchema() *schema.Table { return &equipmentTypesTable }
 // As returns a handle that references equipment_types under its own alias.
 func (t *EquipmentTypesTable) As(alias string) *EquipmentTypesTable {
 	return keel.Alias(t.Ref, alias, BuildEquipmentTypes)
+}
+
+// BusinessUnit is the belongs relation.
+func (t *EquipmentTypesTable) BusinessUnit() *tenantdb.BusinessUnitsTable {
+	return keel.Path(t.Ref, 0, tenantdb.BuildBusinessUnits)
+}
+
+// Organization is the belongs relation.
+func (t *EquipmentTypesTable) Organization() *tenantdb.OrganizationsTable {
+	return keel.Path(t.Ref, 1, tenantdb.BuildOrganizations)
 }
 
 // Get returns the equipment_types row with the given key, or keel.ErrNotFound.
@@ -256,6 +273,21 @@ func valueEquipmentType(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func attachEquipmentType(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
+	r := (*equipmenttype.EquipmentType)(p)
+	switch rel {
+	case 0:
+		r.BusinessUnit = (*tenant.BusinessUnit)(child)
+	case 1:
+		r.Organization = (*tenant.Organization)(child)
+	}
+}
+
+func init() {
+	equipmentTypesTable.Relations[0].Target = tenantdb.BusinessUnitsSchema()
+	equipmentTypesTable.Relations[1].Target = tenantdb.OrganizationsSchema()
 }
 
 var enumClass = [...]schema.EnumValue{
