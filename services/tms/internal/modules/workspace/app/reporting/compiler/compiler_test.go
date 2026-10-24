@@ -178,7 +178,11 @@ func newRequest(def *report.Definition) *reportports.ReportCompileRequest {
 	}
 }
 
-func mustCompile(t *testing.T, c *Compiler, def *report.Definition) *reportports.CompiledReportQuery {
+func mustCompile(
+	t *testing.T,
+	c *Compiler,
+	def *report.Definition,
+) *reportports.CompiledReportQuery {
 	t.Helper()
 	compiled, err := c.Compile(context.Background(), newRequest(def))
 	require.NoError(t, err)
@@ -380,7 +384,7 @@ func TestCompileDateBucketAndRelativeFilter(t *testing.T) {
 		},
 	})
 
-	bucketExpr := "EXTRACT(EPOCH FROM date_trunc(?, to_timestamp(t0.created_at) AT TIME ZONE ?))::bigint"
+	bucketExpr := "EXTRACT(EPOCH FROM date_trunc(?, to_timestamp(t0.created_at), ?))::bigint"
 	want := "SELECT " + bucketExpr + " AS c0, COUNT(t0.id) AS c1 " +
 		"FROM shipments AS t0 " +
 		"WHERE t0.organization_id = ? AND t0.business_unit_id = ? AND " +
@@ -856,4 +860,40 @@ func TestUserLabelsNeverReachSQLText(t *testing.T) {
 
 	assert.NotContains(t, compiled.SQL, "DROP")
 	assert.Equal(t, hostileLabel, compiled.Columns[0].Label)
+}
+
+func TestCompileForPreviewAsksForOneRowMoreThanItKeeps(t *testing.T) {
+	c := newTestCompiler(allowAllEngine())
+
+	cases := []struct {
+		name  string
+		limit int
+		want  string
+	}{
+		{name: "no limit of its own", limit: 0, want: " LIMIT 101"},
+		{name: "a limit above the preview's", limit: 5000, want: " LIMIT 101"},
+		{name: "a limit at the preview's", limit: 100, want: " LIMIT 100"},
+		{name: "a limit below the preview's", limit: 25, want: " LIMIT 25"},
+	}
+	for _, tc := range cases {
+		req := newRequest(&report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    "shipment",
+			Columns:   []report.ColumnSpec{dim("c_pro", "proNumber")},
+			Limit:     tc.limit,
+		})
+		req.MaxRows = 100
+
+		compiled, err := c.CompileForPreview(t.Context(), req)
+		require.NoError(t, err, tc.name)
+		assert.True(t, strings.HasSuffix(compiled.SQL, tc.want), "%s: %s", tc.name, compiled.SQL)
+	}
+
+	unbounded, err := c.Compile(t.Context(), newRequest(&report.Definition{
+		IRVersion: report.CurrentIRVersion,
+		Entity:    "shipment",
+		Columns:   []report.ColumnSpec{dim("c_pro", "proNumber")},
+	}))
+	require.NoError(t, err)
+	assert.True(t, strings.HasSuffix(unbounded.SQL, " LIMIT 100000"), unbounded.SQL)
 }

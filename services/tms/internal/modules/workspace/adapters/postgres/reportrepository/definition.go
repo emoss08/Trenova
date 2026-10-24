@@ -194,10 +194,13 @@ func (r *definitionRepository) List(
 		cols := reportcol.ReportDefinitionColumns
 
 		entities := make([]*report.ReportDefinition, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(reportcol.ReportDefinitionApplyTenant(req.TenantInfo))
+		q := definitionVisibilityScope(
+			r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(reportcol.ReportDefinitionApplyTenant(req.TenantInfo)),
+			req.ViewerID,
+		)
 
 		if len(req.Statuses) > 0 {
 			q = q.Where(cols.Status.In(), bun.List(req.Statuses))

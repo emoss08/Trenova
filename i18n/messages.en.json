@@ -217896,6 +217896,15 @@
       "template/notification.report_schedule_skipped"
     ]
   },
+  "Report schedules are listed for a person, and this request has no person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Report views": {
     "sites": 1,
     "scope": [
@@ -240463,6 +240472,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Set up by a teammate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Set up how schedules reach {0} on the factor's page before submitting": {

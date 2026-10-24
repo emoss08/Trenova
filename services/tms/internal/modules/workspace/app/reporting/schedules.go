@@ -166,12 +166,21 @@ type ListSchedulesRequest struct {
 	Offset       int
 }
 
+var errSchedulesNeedAPerson = errortypes.NewAuthorizationError(
+	"Report schedules are listed for a person, and this request has no person",
+)
+
 func (s *Service) ListSchedules(
 	ctx context.Context,
 	req *ListSchedulesRequest,
 ) ([]*report.ReportSchedule, error) {
+	if req.TenantInfo.UserID.IsNil() {
+		return nil, errSchedulesNeedAPerson
+	}
+
 	return s.scheduleRepo.List(ctx, &reportports.ListReportSchedulesRequest{
 		TenantInfo:   req.TenantInfo,
+		VisibleTo:    req.TenantInfo.UserID,
 		DefinitionID: req.DefinitionID,
 		EnabledOnly:  req.EnabledOnly,
 		Limit:        req.Limit,

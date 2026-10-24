@@ -75,3 +75,12 @@ func TestValidate_StillRefusesWhatTheCallerOwes(t *testing.T) {
 
 	require.NotEmpty(t, messages(blank))
 }
+
+func TestDefinitionParameterNamesKeepDefinitionOrder(t *testing.T) {
+	def := &report.Definition{Parameters: []report.ParameterDef{
+		{Name: "status"}, {Name: "region"}, {Name: "customer"},
+	}}
+
+	assert.Equal(t, []string{"status", "region", "customer"}, def.ParameterNames())
+	assert.Empty(t, (&report.Definition{}).ParameterNames())
+}

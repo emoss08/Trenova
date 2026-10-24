@@ -33,6 +33,7 @@ fragment ReportPreviewFields on ReportPreview {
   rows
   totals
   truncated
+  timezone
 }
 
 query PreviewReport($definition: ReportIRInput!, $params: JSON, $supersede: Boolean) {

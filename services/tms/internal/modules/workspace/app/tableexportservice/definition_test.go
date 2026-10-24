@@ -105,3 +105,46 @@ func TestBuild_RefusesATableTheCatalogDoesNotKnow(t *testing.T) {
 
 	require.Error(t, err)
 }
+
+func TestBuild_ResolvesANestedColumnOnTheEntityItsPathReaches(t *testing.T) {
+	built, err := Build(&reportcatalog.Default, &View{
+		Resource: permission.ResourceShipment,
+		Columns: []Column{
+			{Field: "proNumber", Label: "PRO"},
+			{Field: "customer.name", Label: "Customer"},
+			{Field: "customer.proNumber", Label: "Customer PRO"},
+			{Field: "moves.status", Label: "Move status"},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, built.Definition.Columns, 2)
+	assert.Equal(t, report.FieldRef{Field: "proNumber"}, built.Definition.Columns[0].Ref)
+	assert.Equal(t,
+		report.FieldRef{Path: []string{"customer"}, Field: "name"},
+		built.Definition.Columns[1].Ref)
+	assert.Equal(t, []string{"Customer PRO", "Move status"}, built.Skipped)
+}
+
+func TestBuild_ResolvesANestedFilterOnTheEntityItsPathReaches(t *testing.T) {
+	view := shipmentView()
+	view.FieldFilters = []domaintypes.FieldFilter{
+		{Field: "customer.name", Operator: dbtype.OpContains, Value: "Acme"},
+	}
+
+	built, err := Build(&reportcatalog.Default, view)
+	require.NoError(t, err)
+	require.NotNil(t, built.Definition.Filters)
+	require.Len(t, built.Definition.Filters.Filters, 1)
+	assert.Equal(t,
+		report.FieldRef{Path: []string{"customer"}, Field: "name"},
+		built.Definition.Filters.Filters[0].Ref)
+
+	view.FieldFilters = []domaintypes.FieldFilter{
+		{Field: "customer.proNumber", Operator: dbtype.OpEqual, Value: "P-1"},
+	}
+	_, err = Build(&reportcatalog.Default, view)
+
+	var validation *errortypes.Error
+	require.ErrorAs(t, err, &validation)
+}

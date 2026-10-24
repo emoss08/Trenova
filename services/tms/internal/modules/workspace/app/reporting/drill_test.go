@@ -3,6 +3,7 @@ package reporting
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -94,4 +96,60 @@ func TestDetailColumns_LeavesOutProtectedFieldsTheReaderCannotSee(t *testing.T) 
 
 	granted := keys(permission.AllFieldGroups())
 	assert.Contains(t, granted, "dob", "a reader with personal details drills into them")
+}
+
+func TestDrillDimensionFilters_ABucketCoversItsLocalPeriod(t *testing.T) {
+	t.Parallel()
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+
+	cases := []struct {
+		bucket report.DateBucket
+		start  time.Time
+		end    time.Time
+	}{
+		{
+			bucket: report.DateBucketMonth,
+			start:  time.Date(2026, 3, 1, 0, 0, 0, 0, chicago),
+			end:    time.Date(2026, 4, 1, 0, 0, 0, 0, chicago),
+		},
+		{
+			bucket: report.DateBucketDay,
+			start:  time.Date(2026, 3, 8, 0, 0, 0, 0, chicago),
+			end:    time.Date(2026, 3, 9, 0, 0, 0, 0, chicago),
+		},
+		{
+			bucket: report.DateBucketWeek,
+			start:  time.Date(2026, 10, 26, 0, 0, 0, 0, chicago),
+			end:    time.Date(2026, 11, 2, 0, 0, 0, 0, chicago),
+		},
+		{
+			bucket: report.DateBucketYear,
+			start:  time.Date(2026, 1, 1, 0, 0, 0, 0, chicago),
+			end:    time.Date(2027, 1, 1, 0, 0, 0, 0, chicago),
+		},
+	}
+
+	for _, tc := range cases {
+		def := &report.Definition{
+			Columns: []report.ColumnSpec{{
+				ID:     "c_period",
+				Ref:    report.FieldRef{Field: "createdAt"},
+				Kind:   report.ColumnKindDimension,
+				Bucket: tc.bucket,
+			}},
+		}
+
+		filters, filterErr := drillDimensionFilters(def, &DrillValue{
+			ColumnID: "c_period",
+			Value:    float64(tc.start.Unix()),
+		}, chicago)
+		require.NoError(t, filterErr, tc.bucket)
+		require.Len(t, filters, 2, tc.bucket)
+		assert.Equal(t, dbtype.OpGreaterThanOrEqual, filters[0].Operator, tc.bucket)
+		assert.Equal(t, tc.start.Unix(), filters[0].Value, tc.bucket)
+		assert.Equal(t, dbtype.OpLessThan, filters[1].Operator, tc.bucket)
+		assert.Equal(t, tc.end.Unix(), filters[1].Value, tc.bucket)
+	}
 }

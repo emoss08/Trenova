@@ -15,6 +15,7 @@ type GetReportDefinitionRequest struct {
 
 type ListReportDefinitionsRequest struct {
 	TenantInfo pagination.TenantInfo
+	ViewerID   pulid.ID
 	Statuses   []report.DefinitionStatus
 	OwnerID    pulid.ID
 	Limit      int
@@ -176,6 +177,7 @@ type GetReportScheduleRequest struct {
 
 type ListReportSchedulesRequest struct {
 	TenantInfo   pagination.TenantInfo
+	VisibleTo    pulid.ID
 	DefinitionID pulid.ID
 	EnabledOnly  bool
 	Limit        int

@@ -17380,7 +17380,7 @@ export type DeskReportSchedulesQueryVariables = Exact<{
 
 export type DeskReportSchedulesQuery = { reportSchedules: Array<{ id: string, definitionId: string, cronExpression: string, timezone: string, formats: Array<string>, emailRecipients: Array<string>, enabled: boolean, mine: boolean, nextRunAt: number | null, consecutiveFailures: number }> };
 
-export type ReportPreviewFieldsFragment = { rows: unknown, totals: unknown, truncated: boolean, columns: Array<{ id: string, label: string, type: string, format: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
+export type ReportPreviewFieldsFragment = { rows: unknown, totals: unknown, truncated: boolean, timezone: string, columns: Array<{ id: string, label: string, type: string, format: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
 
 export type PreviewReportQueryVariables = Exact<{
   definition: ReportIrInput;

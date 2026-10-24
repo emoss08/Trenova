@@ -8237,6 +8237,7 @@
   "Report run": "Ejecución del informe",
   "Report schedule disabled": "Programación de informe desactivada",
   "Report schedule skipped": "Programación de informe omitida",
+  "Report schedules are listed for a person, and this request has no person": "Las programaciones de informes se muestran a una persona, y esta solicitud no tiene persona",
   "ReportDefinition not found": "No se encontró la definición del informe",
   "Reported mileage, inspections and power units fall outside industry benchmarks.": "El millaje, las inspecciones y las unidades tractoras reportados están fuera de los parámetros de referencia del sector.",
   "Reported time cannot be in the future": "La hora informada no puede estar en el futuro",

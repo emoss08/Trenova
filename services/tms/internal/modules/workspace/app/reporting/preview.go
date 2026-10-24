@@ -73,6 +73,7 @@ type PreviewResult struct {
 	Rows      []reportports.ReportRow
 	Totals    reportports.ReportRow
 	Truncated bool
+	Timezone  string
 }
 
 func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*PreviewResult, error) {
@@ -111,12 +112,15 @@ func (s *Service) runPreview(
 	if req.export {
 		compile = s.compiler.Compile
 	}
+	timezone := s.orgTimezone(ctx, req.TenantInfo)
+	rowLimit := int64(s.cfg.GetPreviewRowLimit())
 	compiled, err := compile(ctx, &reportports.ReportCompileRequest{
 		Definition:  req.Definition,
 		Tenant:      req.TenantInfo,
 		Params:      req.Params,
-		OrgTimezone: s.orgTimezone(ctx, req.TenantInfo),
+		OrgTimezone: timezone,
 		NowUnix:     timeutils.NowUnix(),
+		MaxRows:     rowLimit,
 	})
 	if err != nil {
 		if s.metrics != nil {
@@ -125,7 +129,6 @@ func (s *Service) runPreview(
 		return nil, err
 	}
 
-	rowLimit := int64(s.cfg.GetPreviewRowLimit())
 	reader, err := s.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
 		Compiled: compiled,
 		MaxRows:  rowLimit,
@@ -159,5 +162,6 @@ func (s *Service) runPreview(
 		Rows:      rows,
 		Totals:    totals,
 		Truncated: reader.Truncated(),
+		Timezone:  timezone,
 	}, nil
 }

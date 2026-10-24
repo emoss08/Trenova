@@ -21,6 +21,7 @@ type ReportCompileRequest struct {
 	Params      map[string]any
 	OrgTimezone string
 	NowUnix     int64
+	MaxRows     int64
 }
 
 type ReportResultColumn struct {
@@ -101,6 +102,7 @@ type ReportRunMeta struct {
 	Timezone        string
 	RequestedBy     string
 	Params          map[string]any
+	ParamOrder      []string
 }
 
 type ReportRenderRequest struct {

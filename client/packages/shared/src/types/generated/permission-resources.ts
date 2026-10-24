@@ -268,6 +268,7 @@ export const PERMISSION_OPERATIONS = [
   "resolve",
   "manage",
   "post",
+  "approve_own",
 ] as const;
 
 export type PermissionOperation = (typeof PERMISSION_OPERATIONS)[number];

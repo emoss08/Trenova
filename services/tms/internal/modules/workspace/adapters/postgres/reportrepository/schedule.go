@@ -111,12 +111,25 @@ func (r *scheduleRepository) List(
 ) ([]*report.ReportSchedule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportSchedule, error) {
 		cols := reportcol.ReportScheduleColumns
+		definitions := reportcol.ReportDefinitionColumns
+		db := r.db.DBForContext(ctx)
+
+		ownedReport := db.NewSelect().
+			Model((*report.ReportDefinition)(nil)).
+			ColumnExpr("1").
+			Where(definitions.ID.EqColumn(cols.DefinitionID)).
+			Where(definitions.OrganizationID.EqColumn(cols.OrganizationID)).
+			Where(definitions.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
+			Where(definitions.OwnerID.Eq(), req.VisibleTo)
 
 		entities := make([]*report.ReportSchedule, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
+		q := db.NewSelect().
 			Model(&entities).
-			Apply(reportcol.ReportScheduleApplyTenant(req.TenantInfo))
+			Apply(reportcol.ReportScheduleApplyTenant(req.TenantInfo)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where(cols.RunAsID.Eq(), req.VisibleTo).
+					WhereOr("EXISTS (?)", ownedReport)
+			})
 
 		if !req.DefinitionID.IsNil() {
 			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID)

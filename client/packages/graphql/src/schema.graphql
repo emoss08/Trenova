@@ -27072,6 +27072,7 @@ input ReportPivotInput {
 type ReportPreview {
   columns: [ReportPreviewColumn!]!
   rows: Any!
+  timezone: String!
   totals: Any
   truncated: Boolean!
 }

@@ -25,7 +25,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-
 func reportIRFromGraphQL(input *gqlmodel.ReportIRInput) *report.Definition {
 	def := &report.Definition{
 		IRVersion: report.CurrentIRVersion,
@@ -502,7 +501,6 @@ func reportScheduleAlertFromGraphQL(
 func saveReportScheduleRequest(
 	authCtx *authctx.AuthContext,
 	input *gqlmodel.CreateReportScheduleInput,
-	update *gqlmodel.UpdateReportScheduleInput,
 ) (*reportingservice.SaveScheduleRequest, error) {
 	definitionID, err := pulid.MustParse(input.DefinitionID)
 	if err != nil {
@@ -534,14 +532,41 @@ func saveReportScheduleRequest(
 		req.Timezone = *input.Timezone
 	}
 
-	if update != nil {
-		scheduleID, parseErr := pulid.MustParse(update.ID)
-		if parseErr != nil {
-			return nil, parseErr
-		}
-		req.ScheduleID = scheduleID
-		req.Version = int64(update.Version)
+	return req, nil
+}
+
+func createReportScheduleInputOf(
+	input *gqlmodel.UpdateReportScheduleInput,
+) *gqlmodel.CreateReportScheduleInput {
+	return &gqlmodel.CreateReportScheduleInput{
+		DefinitionID:    input.DefinitionID,
+		CronExpression:  input.CronExpression,
+		Timezone:        input.Timezone,
+		Formats:         input.Formats,
+		EmailRecipients: input.EmailRecipients,
+		EmailAttach:     input.EmailAttach,
+		EmailInline:     input.EmailInline,
+		NotifyUserIds:   input.NotifyUserIds,
+		Alert:           input.Alert,
+		Enabled:         input.Enabled,
 	}
+}
+
+func updateReportScheduleRequest(
+	authCtx *authctx.AuthContext,
+	input *gqlmodel.UpdateReportScheduleInput,
+) (*reportingservice.SaveScheduleRequest, error) {
+	req, err := saveReportScheduleRequest(authCtx, createReportScheduleInputOf(input))
+	if err != nil {
+		return nil, err
+	}
+
+	scheduleID, err := pulid.MustParse(input.ID)
+	if err != nil {
+		return nil, err
+	}
+	req.ScheduleID = scheduleID
+	req.Version = int64(input.Version)
 
 	return req, nil
 }
@@ -885,6 +910,7 @@ func reportPreviewToModel(result *reportingservice.PreviewResult) *gqlmodel.Repo
 		Columns:   columns,
 		Rows:      rows,
 		Truncated: result.Truncated,
+		Timezone:  result.Timezone,
 	}
 	if result.Totals != nil {
 		preview.Totals = encodeReportRow(result.Totals)

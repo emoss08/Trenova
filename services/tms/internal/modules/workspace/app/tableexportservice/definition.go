@@ -44,29 +44,44 @@ func entityFor(
 	return nil, false
 }
 
+type resolvedRef struct {
+	ref    report.FieldRef
+	field  *reportcatalog.Field
+	toMany bool
+}
+
 func resolveRef(
 	catalog *reportcatalog.Catalog,
 	entity *reportcatalog.Entity,
 	apiField string,
-) (report.FieldRef, *reportcatalog.Field, bool) {
+) (resolvedRef, bool) {
 	segments := strings.Split(apiField, ".")
 	field := segments[len(segments)-1]
-	path := segments[:len(segments)-1]
+	var path []string
+	if len(segments) > 1 {
+		path = segments[:len(segments)-1]
+	}
 
 	target := entity
+	toMany := false
 	if len(path) > 0 {
-		resolved, _, err := catalog.ResolvePath(entity.Key, path)
-		if err != nil || resolved == nil {
-			return report.FieldRef{}, nil, false
+		base, resolved, err := catalog.ResolvePath(entity.Key, path)
+		if err != nil {
+			return resolvedRef{}, false
 		}
-		target = resolved
+		target = resolved.Terminal(base)
+		toMany = resolved.CrossesToMany()
 	}
 
 	spec, ok := target.Field(field)
 	if !ok {
-		return report.FieldRef{}, nil, false
+		return resolvedRef{}, false
 	}
-	return report.FieldRef{Path: path, Field: field}, spec, true
+	return resolvedRef{
+		ref:    report.FieldRef{Path: path, Field: field},
+		field:  spec,
+		toMany: toMany,
+	}, true
 }
 
 func Build(catalog *reportcatalog.Catalog, view *View) (*Built, error) {
@@ -97,8 +112,8 @@ func Build(catalog *reportcatalog.Catalog, view *View) (*Built, error) {
 	built := &Built{Definition: definition}
 	columnIDs := make(map[string]string, len(view.Columns))
 	for _, column := range view.Columns {
-		ref, _, resolved := resolveRef(catalog, entity, column.Field)
-		if !resolved {
+		resolved, found := resolveRef(catalog, entity, column.Field)
+		if !found || resolved.toMany {
 			built.Skipped = append(built.Skipped, column.Label)
 			continue
 		}
@@ -106,7 +121,7 @@ func Build(catalog *reportcatalog.Catalog, view *View) (*Built, error) {
 		columnIDs[column.Field] = id
 		definition.Columns = append(definition.Columns, report.ColumnSpec{
 			ID:    id,
-			Ref:   ref,
+			Ref:   resolved.ref,
 			Kind:  report.ColumnKindDimension,
 			Label: column.Label,
 		})
@@ -149,8 +164,8 @@ func buildFilters(
 	}
 
 	convert := func(field string, filter domaintypes.FieldFilter) (report.FieldFilter, error) {
-		ref, spec, ok := resolveRef(catalog, entity, filter.Field)
-		if !ok || !spec.Filterable {
+		resolved, ok := resolveRef(catalog, entity, filter.Field)
+		if !ok || !resolved.field.Filterable {
 			return report.FieldFilter{}, errortypes.NewValidationError(
 				field,
 				errortypes.ErrInvalid,
@@ -160,7 +175,11 @@ func buildFilters(
 				),
 			)
 		}
-		return report.FieldFilter{Ref: ref, Operator: filter.Operator, Value: filter.Value}, nil
+		return report.FieldFilter{
+			Ref:      resolved.ref,
+			Operator: filter.Operator,
+			Value:    filter.Value,
+		}, nil
 	}
 
 	root := &report.FilterGroup{Op: report.BoolOpAnd}

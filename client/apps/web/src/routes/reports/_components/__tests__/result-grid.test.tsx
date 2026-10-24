@@ -104,4 +104,30 @@ describe("ResultGrid", () => {
     expect(await screen.findByTitle("Total")).toBeInTheDocument();
     expect(screen.getByTitle("1,234.50")).toBeInTheDocument();
   });
+
+  // A date bucket is the instant its period starts in the organization's zone. Kiritimati is
+  // UTC+14, so its March starts on Feb 28 in every zone a browser can be in: only writing the
+  // date in the result's zone shows the period the server grouped.
+  it("writes a date bucket in the result's zone, not the browser's", async () => {
+    const monthBucket = [
+      {
+        id: "period",
+        label: "Month",
+        type: "epoch",
+        format: null,
+        display: { ...DISPLAY, style: "date", dateStyle: "monthYear", rules: [] },
+      },
+    ] as unknown as ReportPreviewColumn[];
+    const marchInKiritimati = Date.UTC(2026, 1, 28, 10, 0, 0) / 1000;
+
+    render(
+      <ResultGrid
+        columns={monthBucket}
+        rows={[[marchInKiritimati]]}
+        timeZone="Pacific/Kiritimati"
+      />,
+    );
+
+    expect(await screen.findByTitle("Mar 2026")).toHaveTextContent("Mar 2026");
+  });
 });

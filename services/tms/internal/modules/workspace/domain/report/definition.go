@@ -438,6 +438,15 @@ type ParameterDef struct {
 	RefEntity     string                  `json:"refEntity,omitempty"`
 }
 
+func (d *Definition) ParameterNames() []string {
+	names := make([]string, 0, len(d.Parameters))
+	for i := range d.Parameters {
+		names = append(names, d.Parameters[i].Name)
+	}
+
+	return names
+}
+
 func (d *Definition) ColumnByID(id string) (*ColumnSpec, bool) {
 	for i := range d.Columns {
 		if d.Columns[i].ID == id {

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:49031f30da82ed610a4db004c346e1d45cac9e0b644d7a679437c94f5e7ad1f3",
+  "version": "sha256:79f7a26a212b1829702d5040078b65b967343747c695b62e57084860da77664e",
   "modules": [
     {
       "id": "home",
@@ -17419,7 +17419,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to reports. **New report**, **New dashboard**, **Duplicate** and customizing a gallery report need create permission; **Schedules** needs export permission on reports. Each card shows whether the report is **Shared** or **Private**, set by its **Visibility** when saved.",
+      "notes": "Needs read access to reports. **New report**, **New dashboard**, **Duplicate** and customizing a gallery report need create permission; **Schedules** needs export permission on reports. Each card shows whether the report is **Shared** or **Private**, set by its **Visibility** when saved.\n\n**Schedules** lists the schedules you set up, and on a report you own every schedule on it, because deleting the report deletes them too. A schedule runs with the permissions of the person who set it up, and only they can change, turn off or delete it; a teammate's schedule shows **Set up by a teammate**.",
       "related": [
         "/reports/runs",
         "/reports/builder",

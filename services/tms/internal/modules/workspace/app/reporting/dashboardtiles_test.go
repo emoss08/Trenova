@@ -4,8 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -130,6 +132,7 @@ func tileTestService(
 		dashboardRepo: &stubDashboardRepo{dashboard: dashboard},
 		defRepo:       &stubDefinitionRepo{definitions: definitions},
 		canned:        canned.Default(),
+		cfg:           &config.ReportingConfig{},
 	}
 }
 

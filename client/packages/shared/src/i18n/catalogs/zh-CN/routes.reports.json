@@ -215,6 +215,7 @@
   "Sends only when {0} is {1} {2}.": "仅在 {0} 为 {1} {2} 时才发送。",
   "Served from the result cache": "自结果缓存提供",
   "Server default": "服务器默认值",
+  "Set up by a teammate": "由团队成员设置",
   "Share with everyone who can read this report": "与所有可阅读此报表的人分享",
   "Show the results in the email": "在电子邮件中显示结果",
   "Show values": "显示值",

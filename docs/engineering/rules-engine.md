@@ -1004,6 +1004,10 @@ the `valueType`.
 integer part, truncated toward zero, as Go's `IntPart`), with its tone, for the host to write in
 the report's time zone: Go's layouts on the server, `Intl` in the browser. The module has no time
 zone data. A Go `time.Time` value never reaches the module: the host formats it directly.
+A date bucket's value is the instant its period starts in the organization's zone (the compiler
+emits `date_trunc(field, to_timestamp(col), zone)`, and drill-through inverts it in that zone),
+so a host that wrote it in another zone would show the wrong period: the browser takes the zone
+from the result (`ReportPreview.timezone`) and passes it to `reportCellText`.
 
 **The order of decisions** (`Resolved.String`): empty → `nullText`; style `""` → the raw value
 (a decimal normalised, a boolean as `true`/`false`, text as is); a number in a column with a
