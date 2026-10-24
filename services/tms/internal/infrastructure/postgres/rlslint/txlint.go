@@ -431,6 +431,8 @@ func runsInScopedTransaction(body *ast.BlockStmt, recv string, fields map[string
 	return false
 }
 
+var connectionAccessors = map[string]bool{"DBForContext": true, "DB": true, "Keel": true}
+
 func connectionUsedBefore(stmts []ast.Stmt, recv string, fields map[string]bool) bool {
 	for _, stmt := range stmts {
 		used := false
@@ -440,7 +442,7 @@ func connectionUsedBefore(stmts []ast.Stmt, recv string, fields map[string]bool)
 				return !used
 			}
 			sel, ok := call.Fun.(*ast.SelectorExpr)
-			if !ok || (sel.Sel.Name != "DBForContext" && sel.Sel.Name != "DB") {
+			if !ok || !connectionAccessors[sel.Sel.Name] {
 				return !used
 			}
 			if inner, isSel := sel.X.(*ast.SelectorExpr); isSel {
