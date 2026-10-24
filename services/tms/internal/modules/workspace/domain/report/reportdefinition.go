@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -31,9 +30,8 @@ var (
 
 // Saved report definitions
 type ReportDefinition struct {
-	bun.BaseModel             `bun:"table:report_definitions,alias:rdef" json:"-"`
-	keel.Table                `                                                   keel:"report_definitions,report=Reporting,label=Report"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	bun.BaseModel `bun:"table:report_definitions,alias:rdef" json:"-"`
+	keel.Table    `                                                   keel:"report_definitions,report=Reporting,label=Report"`
 
 	ID              pulid.ID         `json:"id"              bun:"id,pk,type:VARCHAR(100)"                                                           keel:"id,pk,autoid:rd_"`
 	BusinessUnitID  pulid.ID         `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                     keel:"business_unit_id,pk,tenant"`
@@ -157,4 +155,24 @@ func (rd *ReportDefinition) GetPostgresSearchConfig() domaintypes.PostgresSearch
 			{Name: "category", Type: domaintypes.FieldTypeText},
 		},
 	}
+}
+
+func (rd *ReportDefinition) BeforeCreate(context.Context) error {
+	if rd.Kind == "" {
+		rd.Kind = DefinitionKindCustom
+	}
+	if rd.Visibility == "" {
+		rd.Visibility = VisibilityPrivate
+	}
+	if rd.Status == "" {
+		rd.Status = DefinitionStatusDraft
+	}
+	if rd.DefaultFormat == "" {
+		rd.DefaultFormat = FormatCSV
+	}
+	if rd.CurrentRevision == 0 {
+		rd.CurrentRevision = 1
+	}
+
+	return nil
 }

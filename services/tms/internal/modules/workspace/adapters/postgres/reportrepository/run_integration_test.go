@@ -3,12 +3,11 @@
 package reportrepository
 
 import (
-	"context"
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,21 +25,18 @@ func TestCountActiveUnderConcurrentEnqueue(t *testing.T) {
 
 	dataA := seedtest.SeedFullTestData(t, ctx, db)
 
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err)
-	stateB := seedtest.NewState().WithName("Texas").WithAbbreviation("TX").Build(t, ctx, tx)
-	buB := seedtest.NewBusinessUnit().WithName("Gate B BU").WithCode("GATEB").Build(t, ctx, tx)
+	stateB := seedtest.NewState().WithName("Texas").WithAbbreviation("TX").Build(t, ctx, db)
+	buB := seedtest.NewBusinessUnit().WithName("Gate B BU").WithCode("GATEB").Build(t, ctx, db)
 	orgB := seedtest.NewOrganization(buB.ID, stateB.ID).
 		WithName("Gate Org B").
 		WithScacCode("GATB").
 		WithBucketName("gate-bucket-b").
-		Build(t, ctx, tx)
+		Build(t, ctx, db)
 	userB := seedtest.NewUser(orgB.ID, buB.ID).
 		WithUsername("gate_b_user").
 		WithEmail("gate_b@example.com").
 		WithPassword("password123").
-		Build(t, ctx, tx)
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, db)
 
 	repo := NewRunRepository(RunParams{
 		DB:     postgres.NewTestConnection(db),
@@ -70,7 +66,7 @@ func TestCountActiveUnderConcurrentEnqueue(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				_, createErr := repo.Create(ctx, &report.ReportRun{
+				_, createErr := repo.Create(tenantCtx(ctx, tenant), &report.ReportRun{
 					BusinessUnitID: tenant.BuID,
 					OrganizationID: tenant.OrgID,
 					RequestedByID:  tenant.UserID,
@@ -102,9 +98,12 @@ func TestCountActiveUnderConcurrentEnqueue(t *testing.T) {
 	seedWG.Wait()
 
 	for _, tenant := range []pagination.TenantInfo{tenantA, tenantB} {
-		counts, countErr := repo.CountActive(ctx, &reportports.CountActiveReportRunsRequest{
-			TenantInfo: tenant,
-		})
+		counts, countErr := repo.CountActive(
+			tenantCtx(ctx, tenant),
+			&reportports.CountActiveReportRunsRequest{
+				TenantInfo: tenant,
+			},
+		)
 		require.NoError(t, countErr)
 		assert.Equal(t, queuedPerOrg, counts.Queued)
 		assert.Equal(t, runningPerOrg, counts.Running)
@@ -138,7 +137,7 @@ func TestCountActiveIgnoresTerminalRuns(t *testing.T) {
 		report.RunStatusExpired,
 	}
 	for _, status := range statuses {
-		_, err := repo.Create(context.Background(), &report.ReportRun{
+		_, err := repo.Create(tenantCtx(ctx, tenant), &report.ReportRun{
 			BusinessUnitID: tenant.BuID,
 			OrganizationID: tenant.OrgID,
 			RequestedByID:  tenant.UserID,
@@ -151,9 +150,12 @@ func TestCountActiveIgnoresTerminalRuns(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	counts, err := repo.CountActive(ctx, &reportports.CountActiveReportRunsRequest{
-		TenantInfo: tenant,
-	})
+	counts, err := repo.CountActive(
+		tenantCtx(ctx, tenant),
+		&reportports.CountActiveReportRunsRequest{
+			TenantInfo: tenant,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 1, counts.Queued)
 	assert.Equal(t, 1, counts.Running)

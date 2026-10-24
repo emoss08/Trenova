@@ -711,23 +711,22 @@ var profilesTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
-	Returning:    nil,
-	Version:      12,
-	AutoID:       0,
-	AutoCreate:   13,
-	AutoUpdate:   14,
-	IDPrefix:     "emlprof_",
-	New:          newProfile,
-	NewN:         newNProfile,
-	Size:         unsafe.Sizeof(email.Profile{}),
-	Ptr:          ptrProfile,
-	Value:        valueProfile,
-	BeforeCreate: beforeCreateProfile,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:  nil,
+	Version:    12,
+	AutoID:     0,
+	AutoCreate: 13,
+	AutoUpdate: 14,
+	IDPrefix:   "emlprof_",
+	New:        newProfile,
+	NewN:       newNProfile,
+	Size:       unsafe.Sizeof(email.Profile{}),
+	Ptr:        ptrProfile,
+	Value:      valueProfile,
 }
 
 var profilesRef = keel.Ref{Table: &profilesTable}
@@ -906,10 +905,6 @@ func valueProfile(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreateProfile(ctx context.Context, p unsafe.Pointer) error {
-	return (*email.Profile)(p).BeforeCreate(ctx)
-}
-
 // profileAssignmentsTable is the schema of email.ProfileAssignment.
 var profileAssignmentsTable = schema.Table{
 	Name:   "email_profile_assignments",
@@ -1081,22 +1076,23 @@ var suppressionsTable = schema.Table{
 		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Created By ID`, JSON: `createdById`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Update:     []int32{3, 4, 5, 6, 7, 8},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 9,
-	AutoUpdate: -1,
-	IDPrefix:   "emlsup_",
-	New:        newSuppression,
-	NewN:       newNSuppression,
-	Size:       unsafe.Sizeof(email.Suppression{}),
-	Ptr:        ptrSuppression,
-	Value:      valueSuppression,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:       []int32{3, 4, 5, 6, 7, 8},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   9,
+	AutoUpdate:   -1,
+	IDPrefix:     "emlsup_",
+	New:          newSuppression,
+	NewN:         newNSuppression,
+	Size:         unsafe.Sizeof(email.Suppression{}),
+	Ptr:          ptrSuppression,
+	Value:        valueSuppression,
+	BeforeCreate: beforeCreateSuppression,
 }
 
 var suppressionsRef = keel.Ref{Table: &suppressionsTable}
@@ -1231,6 +1227,10 @@ func valueSuppression(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	}
 	return nil
+}
+
+func beforeCreateSuppression(ctx context.Context, p unsafe.Pointer) error {
+	return (*email.Suppression)(p).BeforeCreate(ctx)
 }
 
 func init() {

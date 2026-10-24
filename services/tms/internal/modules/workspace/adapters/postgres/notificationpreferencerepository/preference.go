@@ -3,14 +3,14 @@ package notificationpreferencerepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification/notificationdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
-	"github.com/emoss08/trenova/pkg/buncolgen/notificationcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -44,20 +44,12 @@ func (r *repository) Get(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*notification.Preference, bool, error) {
-			cols := notificationcol.PreferenceColumns
-			entity := new(notification.Preference)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return notificationcol.PreferenceScopeTenant(sq, req.TenantInfo)
-				}).
-				Where(cols.UserID.Eq(), req.TenantInfo.UserID).
-				Scan(ctx)
+			p := notificationdb.Preferences
+			entity, err := p.Where(p.UserID.Eq(req.TenantInfo.UserID)).One(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
+				return nil, false, nil
+			}
 			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, false, nil
-				}
 				r.l.Error("failed to get notification preference",
 					zap.String("userID", req.TenantInfo.UserID.String()),
 					zap.Error(err),
@@ -75,29 +67,33 @@ func (r *repository) Upsert(
 	entity *notification.Preference,
 ) (*notification.Preference, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*notification.Preference, error) {
-		cols := notificationcol.PreferenceColumns
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT (" +
-				cols.OrganizationID.Bare() + ", " +
-				cols.BusinessUnitID.Bare() + ", " +
-				cols.UserID.Bare() + ") DO UPDATE").
-			Set(cols.DisabledEventTypes.SetExcluded()).
-			Set(cols.DesktopMode.SetExcluded()).
-			Set(cols.EmailMode.SetExcluded()).
-			Set(cols.EmailDigest.SetExcluded()).
-			Set(cols.Sound.SetExcluded()).
-			Set(cols.QuietHoursEnabled.SetExcluded()).
-			Set(cols.QuietHoursStart.SetExcluded()).
-			Set(cols.QuietHoursEnd.SetExcluded()).
-			Set(cols.QuietHoursDays.SetExcluded()).
-			Set(cols.QuietHoursAllowUrgent.SetExcluded()).
-			Set(cols.PausedUntil.SetExcluded()).
-			Set(cols.UpdatedAt.SetExcluded()).
-			Set(cols.Version.IncConflict(1)).
-			Returning("*").
-			Exec(ctx)
+		p := notificationdb.Preferences
+		db := r.db.Keel(ctx)
+		inserted, err := p.Upsert(
+			ctx,
+			db,
+			[]*notification.Preference{entity},
+			keel.OnConflict(p.OrganizationID, p.BusinessUnitID, p.UserID).Update(
+				p.DisabledEventTypes,
+				p.DesktopMode,
+				p.EmailMode,
+				p.EmailDigest,
+				p.Sound,
+				p.QuietHoursEnabled,
+				p.QuietHoursStart,
+				p.QuietHoursEnd,
+				p.QuietHoursDays,
+				p.QuietHoursAllowUrgent,
+				p.PausedUntil,
+			),
+		)
+		if err == nil && !inserted[0] {
+			var stored *notification.Preference
+			stored, err = p.Where(p.UserID.Eq(entity.UserID)).One(ctx, db)
+			if err == nil {
+				entity = stored
+			}
+		}
 		if err != nil {
 			r.l.Error("failed to save notification preference",
 				zap.String("userID", entity.UserID.String()),
@@ -118,14 +114,10 @@ func (r *repository) ListDigestSubscribers(
 		"find every person, in every organization, who bundles notification emails into a daily digest",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*notification.Preference, error) {
-		cols := notificationcol.PreferenceColumns
-		entities := make([]*notification.Preference, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.EmailMode.Eq(), notification.DeliveryModeAll).
-			Where(cols.EmailDigest.IsTrue()).
-			Scan(ctx)
+		p := notificationdb.Preferences
+		entities, err := p.AllTenants().
+			Where(p.EmailMode.Eq(notification.DeliveryModeAll), p.EmailDigest.IsTrue()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list digest subscribers", zap.Error(err))
 			return nil, err
@@ -140,16 +132,14 @@ func (r *repository) MarkDigestSent(
 	req notificationports.MarkDigestSentRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := notificationcol.PreferenceColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*notification.Preference)(nil)).
-			Set(cols.LastDigestAt.Set(), req.SentAt).
-			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return notificationcol.PreferenceScopeTenantUpdate(uq, req.TenantInfo)
-			}).
-			Where(cols.UserID.Eq(), req.TenantInfo.UserID).
-			Exec(ctx)
+		p := notificationdb.Preferences
+		_, err := p.Where(p.UserID.Eq(req.TenantInfo.UserID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			p.LastDigestAt.To(req.SentAt),
+			p.Version.ToExpr(p.Version),
+			p.UpdatedAt.ToExpr(p.UpdatedAt),
+		)
 		if err != nil {
 			r.l.Error("failed to mark digest sent",
 				zap.String("userID", req.TenantInfo.UserID.String()),
@@ -165,27 +155,22 @@ func (r *repository) ListDigestNotifications(
 	req notificationports.ListDigestNotificationsRequest,
 ) ([]*notification.Notification, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*notification.Notification, error) {
-		cols := notificationcol.NotificationColumns
+		n := notificationdb.Notifications
 		limit := req.Limit
 		if limit <= 0 || limit > maxDigestNotifications {
 			limit = maxDigestNotifications
 		}
 
-		entities := make([]*notification.Notification, 0, limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return notificationcol.NotificationScopeTenant(sq, req.TenantInfo)
-			}).
-			Where(cols.TargetUserID.Eq(), req.TenantInfo.UserID).
-			Where(cols.CreatedAt.Gt(), req.Since).
-			Where(cols.CreatedAt.Lte(), req.Until).
-			Where(cols.Data.Expr("{}->'delivery'->>'email'")+" = ?", string(notification.EmailDeliveryDigest)).
-			Where(cols.DismissedAt.IsNull()).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		entities, err := n.Where(
+			n.TargetUserID.Eq(req.TenantInfo.UserID),
+			n.CreatedAt.Gt(req.Since),
+			n.CreatedAt.Lte(req.Until),
+			n.Data.Text("delivery", "email").Eq(string(notification.EmailDeliveryDigest)),
+			n.DismissedAt.IsNull(),
+		).
+			Order(n.CreatedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list digest notifications", zap.Error(err))
 			return nil, err

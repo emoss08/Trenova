@@ -2,23 +2,36 @@ package emailrepository
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email/emaildb"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration/integrationdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var (
+	profileErrors     = dberror.Mapping{Entity: "EmailProfile"}
+	messageErrors     = dberror.Mapping{Entity: "EmailMessage"}
+	webhookErrors     = dberror.Mapping{Entity: "EmailWebhook"}
+	suppressionErrors = dberror.Mapping{Entity: "EmailSuppression"}
+)
+
+type webhookRow struct {
+	OrganizationID       pulid.ID
+	BusinessUnitID       pulid.ID
+	WebhookSigningSecret string
+}
 
 type Params struct {
 	fx.In
@@ -32,31 +45,8 @@ type repository struct {
 	l  *zap.Logger
 }
 
-const profileReturningColumns = `
-	id,
-	business_unit_id,
-	organization_id,
-	name,
-	description,
-	from_name,
-	from_address,
-	reply_to,
-	provider_type,
-	auth_type,
-	encryption_type,
-	status,
-	version,
-	created_at,
-	updated_at
-`
-
 func New(p Params) emailports.EmailRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.email-repository")}
-}
-
-func applyTenant(q *bun.SelectQuery, alias string, ti pagination.TenantInfo) *bun.SelectQuery {
-	return q.Where(alias+".organization_id = ?", ti.OrgID).
-		Where(alias+".business_unit_id = ?", ti.BuID)
 }
 
 func (r *repository) ListProfiles(
@@ -67,108 +57,40 @@ func (r *repository) ListProfiles(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*email.Profile], error) {
-			entities := make([]*email.Profile, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).NewSelect().
-				Model(&entities).
-				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = applyTenant(q, "ep", req.Filter.TenantInfo)
-					q = querybuilder.ApplyFilters(q, "ep", req.Filter, (*email.Profile)(nil))
-					return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-						Offset(int64(req.Filter.Pagination.SafeOffset()))
-				}).
-				OrderExpr("ep.created_at DESC").
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return &pagination.ListResult[*email.Profile]{Items: entities, Total: int(total)}, nil
+			p := emaildb.Profiles
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				p.Query(),
+				&listquery.Request[email.Profile]{
+					Filter: req.Filter,
+					Then:   []keel.Order{p.CreatedAt.Desc()},
+				},
+			)
 		},
 	)
-}
-
-func (r *repository) applyProfileCursorPageFilters(
-	q *bun.SelectQuery,
-	req *emailports.ListEmailProfileConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		"ep",
-		req.Filter,
-		req.Cursor,
-		(*email.Profile)(nil),
-	)
-}
-
-func (r *repository) applyProfileTotalCountFilters(
-	q *bun.SelectQuery,
-	req *emailports.ListEmailProfileConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		"ep",
-		req.Filter,
-		(*email.Profile)(nil),
-	)
-}
-
-func applyEmailProfileColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListProfilesConnection(
 	ctx context.Context,
 	req *emailports.ListEmailProfileConnectionRequest,
 ) (*pagination.CursorListResult[*email.Profile], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*email.Profile], error) {
-			log := r.l.With(
-				zap.String("operation", "ListProfilesConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*email.Profile)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyProfileTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count email profiles", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*email.Profile]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*email.Profile) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyEmailProfileColumns(sq, req.EmailProfileColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyProfileCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				emaildb.Profiles.Query(),
+				&listquery.Request[email.Profile]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.EmailProfileColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan email profiles", zap.Error(err))
+				r.l.Error("failed to list email profile connection", zap.Error(err))
 				return nil, err
 			}
 
@@ -181,39 +103,37 @@ func (r *repository) SelectProfileOptions(
 	ctx context.Context,
 	req *emailports.EmailProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*email.Profile], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*email.Profile], error) {
-			return dbhelper.SelectOptions[*email.Profile](
+			p := emaildb.Profiles
+			q := p.Pick(
+				p.ID,
+				p.BusinessUnitID,
+				p.OrganizationID,
+				p.Name,
+				p.SenderName,
+				p.SenderEmail,
+				p.ReplyToEmail,
+				p.Provider,
+				p.Status,
+				p.UpdatedAt,
+			).
+				Where(p.Status.Eq(email.ProfileStatusActive)).
+				Order(p.Name.Asc())
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					Columns: []string{
-						"id",
-						"business_unit_id",
-						"organization_id",
-						"name",
-						"from_name",
-						"from_address",
-						"reply_to",
-						"provider_type",
-						"status",
-						"updated_at",
-					},
-					OrgColumn: "ep.organization_id",
-					BuColumn:  "ep.business_unit_id",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where("ep.status = ?", email.ProfileStatusActive).
-							OrderExpr("ep.name ASC")
-					},
-					EntityName: "EmailProfile",
-					SearchColumns: []string{
-						"ep.name",
-						"ep.from_address",
-						"ep.from_name",
-					},
+				func(s string) keel.Pred {
+					return keel.Or(
+						p.Name.ContainsFold(s),
+						p.SenderEmail.ContainsFold(s),
+						p.SenderName.ContainsFold(s),
+					)
 				},
 			)
 		},
@@ -225,14 +145,12 @@ func (r *repository) GetProfile(
 	req emailports.GetEmailEntityRequest,
 ) (*email.Profile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*email.Profile, error) {
-		entity := new(email.Profile)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				return applyTenant(q, "ep", req.TenantInfo).Where("ep.id = ?", req.ID)
-			}).
-			Scan(ctx)
-		return entity, dberror.HandleNotFoundError(err, "EmailProfile")
+		entity, err := emaildb.Profiles.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, profileErrors.Map(err, req.ID.String())
+		}
+
+		return entity, nil
 	})
 }
 
@@ -241,12 +159,7 @@ func (r *repository) CreateProfile(
 	entity *email.Profile,
 ) (*email.Profile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*email.Profile, error) {
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning(profileReturningColumns).
-			Exec(ctx)
-		return entity, err
+		return entity, emaildb.Profiles.Create(ctx, r.db.Keel(ctx), entity)
 	})
 }
 
@@ -255,21 +168,24 @@ func (r *repository) UpdateProfile(
 	entity *email.Profile,
 ) (*email.Profile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*email.Profile, error) {
-		previousVersion := entity.Version
-		entity.Version++
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", previousVersion).
-			OmitZero().
-			Returning(profileReturningColumns).
-			Exec(ctx)
+		p := emaildb.Profiles
+		db := r.db.Keel(ctx)
+
+		var err error
+		switch {
+		case entity.AuthType == "" && entity.EncryptionType == "":
+			err = p.SaveExcept(ctx, db, entity, p.AuthType, p.EncryptionType)
+		case entity.AuthType == "":
+			err = p.SaveExcept(ctx, db, entity, p.AuthType)
+		case entity.EncryptionType == "":
+			err = p.SaveExcept(ctx, db, entity, p.EncryptionType)
+		default:
+			err = p.Save(ctx, db, entity)
+		}
 		if err != nil {
-			return nil, err
+			return nil, profileErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(result, "EmailProfile", entity.ID.String()); err != nil {
-			return nil, err
-		}
+
 		return entity, nil
 	})
 }
@@ -279,34 +195,23 @@ func (r *repository) DeleteProfile(
 	req emailports.GetEmailEntityRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*email.Profile)(nil)).
-			Where("id = ?", req.ID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Exec(ctx)
+		p := emaildb.Profiles
+		rows, err := p.Where(p.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return err
 		}
-		return dberror.CheckRowsAffected(result, "EmailProfile", req.ID.String())
+
+		return dberror.CheckAffected(rows, "EmailProfile", req.ID.String())
 	})
 }
 
 func (r *repository) ListAssignments(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*email.ProfileAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*email.ProfileAssignment, error) {
-		entities := make([]*email.ProfileAssignment, 0, len(email.Purposes()))
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Relation("Profile").
-			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				return applyTenant(q, "epa", tenantInfo)
-			}).
-			OrderExpr("epa.purpose ASC").
-			Scan(ctx)
-		return entities, err
+		a := emaildb.ProfileAssignments
+		return a.Load(a.Profile()).Order(a.Purpose.Asc()).All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -316,10 +221,12 @@ func (r *repository) UpsertAssignments(
 	assignments []*email.ProfileAssignment,
 ) ([]*email.ProfileAssignment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*email.ProfileAssignment, error) {
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			purposes := email.Purposes()
-			provided := make(map[email.Purpose]struct{}, len(assignments))
+		err := dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
+			a := emaildb.ProfileAssignments
+			db := r.db.Keel(ctx)
 
+			rows := make([]*email.ProfileAssignment, 0, len(assignments))
+			provided := make(map[email.Purpose]struct{}, len(assignments))
 			for _, assignment := range assignments {
 				if assignment == nil {
 					continue
@@ -327,20 +234,22 @@ func (r *repository) UpsertAssignments(
 				provided[assignment.Purpose] = struct{}{}
 				assignment.OrganizationID = tenantInfo.OrgID
 				assignment.BusinessUnitID = tenantInfo.BuID
-				_, err := tx.NewInsert().
-					Model(assignment).
-					On("CONFLICT (organization_id, business_unit_id, purpose) DO UPDATE").
-					Set("profile_id = EXCLUDED.profile_id").
-					Set("updated_at = " + dbhelper.NowEpoch).
-					Returning("*").
-					Exec(ctx)
-				if err != nil {
+				rows = append(rows, assignment)
+			}
+
+			if len(rows) > 0 {
+				if _, err := a.Upsert(
+					ctx,
+					db,
+					rows,
+					keel.OnConflict(a.OrganizationID, a.BusinessUnitID, a.Purpose).Update(a.ProfileID),
+				); err != nil {
 					return err
 				}
 			}
 
-			missing := make([]email.Purpose, 0, len(purposes))
-			for _, purpose := range purposes {
+			missing := make([]email.Purpose, 0, len(email.Purposes()))
+			for _, purpose := range email.Purposes() {
 				if _, ok := provided[purpose]; !ok {
 					missing = append(missing, purpose)
 				}
@@ -349,41 +258,34 @@ func (r *repository) UpsertAssignments(
 				return nil
 			}
 
-			_, err := tx.NewDelete().
-				Model((*email.ProfileAssignment)(nil)).
-				Where("organization_id = ?", tenantInfo.OrgID).
-				Where("business_unit_id = ?", tenantInfo.BuID).
-				Where("purpose IN (?)", bun.List(missing)).
-				Exec(ctx)
-			if err != nil {
-				return err
-			}
-
-			return nil
+			_, err := a.Where(a.Purpose.In(missing...)).Delete(ctx, db)
+			return err
 		})
 		if err != nil {
 			return nil, err
 		}
+
 		return r.ListAssignments(ctx, tenantInfo)
 	})
 }
 
 func (r *repository) GetAssignedProfile(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	purpose email.Purpose,
 ) (*email.Profile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*email.Profile, error) {
-		entity := new(email.Profile)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Join("JOIN email_profile_assignments AS epa ON epa.profile_id = ep.id").
-			Where("epa.organization_id = ?", tenantInfo.OrgID).
-			Where("epa.business_unit_id = ?", tenantInfo.BuID).
-			Where("epa.purpose = ?", purpose).
-			Where("ep.status = ?", email.ProfileStatusActive).
-			Scan(ctx)
-		return entity, dberror.HandleNotFoundError(err, "EmailProfile")
+		p := emaildb.Profiles
+		a := emaildb.ProfileAssignments
+		entity, err := p.Join(a, a.ProfileID.EqCol(p.ID)).
+			Where(a.Purpose.Eq(purpose), p.Status.Eq(email.ProfileStatusActive)).
+			Limit(1).
+			First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, profileErrors.Map(err, string(purpose))
+		}
+
+		return entity, nil
 	})
 }
 
@@ -392,8 +294,7 @@ func (r *repository) CreateMessage(
 	entity *email.Message,
 ) (*email.Message, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*email.Message, error) {
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx)
-		return entity, err
+		return entity, emaildb.Messages.Create(ctx, r.db.Keel(ctx), entity)
 	})
 }
 
@@ -402,33 +303,28 @@ func (r *repository) CreateMessageOnce(
 	entity *email.Message,
 ) (*email.Message, bool, error) {
 	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*email.Message, bool, error) {
-		res, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT (organization_id, business_unit_id, idempotency_key) DO NOTHING").
-			Returning("*").
-			Exec(ctx)
+		m := emaildb.Messages
+		db := r.db.Keel(ctx)
+		inserted, err := m.CreateOrSkip(
+			ctx,
+			db,
+			[]*email.Message{entity},
+			m.OrganizationID,
+			m.BusinessUnitID,
+			m.IdempotencyKey,
+		)
 		if err != nil {
 			return nil, false, err
 		}
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return nil, false, err
-		}
-		if rows > 0 {
+		if inserted > 0 {
 			return entity, true, nil
 		}
 
-		existing := new(email.Message)
-		err = r.db.DBForContext(ctx).NewSelect().
-			Model(existing).
-			Where("em.organization_id = ?", entity.OrganizationID).
-			Where("em.business_unit_id = ?", entity.BusinessUnitID).
-			Where("em.idempotency_key = ?", entity.IdempotencyKey).
-			Scan(ctx)
+		existing, err := m.Where(m.IdempotencyKey.Eq(entity.IdempotencyKey)).One(ctx, db)
 		if err != nil {
-			return nil, false, dberror.HandleNotFoundError(err, "EmailMessage")
+			return nil, false, messageErrors.Map(err, entity.IdempotencyKey)
 		}
+
 		return existing, false, nil
 	})
 }
@@ -438,21 +334,24 @@ func (r *repository) UpdateMessage(
 	entity *email.Message,
 ) (*email.Message, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*email.Message, error) {
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Set("provider_message_id = ?", entity.ProviderMessageID).
-			Set("status = ?", entity.Status).
-			Set("attempts = ?", entity.Attempts).
-			Set("last_error = ?", entity.LastError).
-			Set("sent_at = ?", entity.SentAt).
-			Set("delivered_at = ?", entity.DeliveredAt).
-			Set("failed_at = ?", entity.FailedAt).
-			Set("updated_at = ?", entity.UpdatedAt).
-			Returning("*").
-			Exec(ctx)
-		return entity, err
+		m := emaildb.Messages
+		err := m.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			m.ProviderMessageID,
+			m.Status,
+			m.Attempts,
+			m.LastError,
+			m.SentAt,
+			m.DeliveredAt,
+			m.FailedAt,
+		)
+		if err != nil {
+			return nil, messageErrors.Map(err, entity.ID.String())
+		}
+
+		return entity, nil
 	})
 }
 
@@ -461,15 +360,13 @@ func (r *repository) GetMessage(
 	req emailports.GetEmailEntityRequest,
 ) (*email.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*email.Message, error) {
-		entity := new(email.Message)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Relation("Profile").
-			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				return applyTenant(q, "em", req.TenantInfo).Where("em.id = ?", req.ID)
-			}).
-			Scan(ctx)
-		return entity, dberror.HandleNotFoundError(err, "EmailMessage")
+		m := emaildb.Messages
+		entity, err := m.Where(m.ID.Eq(req.ID)).Load(m.Profile()).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, messageErrors.Map(err, req.ID.String())
+		}
+
+		return entity, nil
 	})
 }
 
@@ -478,15 +375,16 @@ func (r *repository) GetMessageByProviderID(
 	req emailports.GetEmailMessageByProviderIDRequest,
 ) (*email.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*email.Message, error) {
-		entity := new(email.Message)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Where("em.organization_id = ?", req.TenantInfo.OrgID).
-			Where("em.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("em.provider = ?", req.Provider).
-			Where("em.provider_message_id = ?", req.ProviderMessageID).
-			Scan(ctx)
-		return entity, dberror.HandleNotFoundError(err, "EmailMessage")
+		m := emaildb.Messages
+		entity, err := m.Where(
+			m.Provider.Eq(req.Provider),
+			m.ProviderMessageID.Eq(req.ProviderMessageID),
+		).First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, messageErrors.Map(err, req.ProviderMessageID)
+		}
+
+		return entity, nil
 	})
 }
 
@@ -498,8 +396,8 @@ func (r *repository) CreateAttachments(
 		if len(entities) == 0 {
 			return []*email.Attachment{}, nil
 		}
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(&entities).Returning("*").Exec(ctx)
-		return entities, err
+
+		return entities, emaildb.Attachments.CreateMany(ctx, r.db.Keel(ctx), entities)
 	})
 }
 
@@ -508,15 +406,10 @@ func (r *repository) ListAttachments(
 	req emailports.ListEmailAttachmentsRequest,
 ) ([]*email.Attachment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*email.Attachment, error) {
-		entities := make([]*email.Attachment, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("ema.organization_id = ?", req.TenantInfo.OrgID).
-			Where("ema.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("ema.message_id = ?", req.MessageID).
-			OrderExpr("ema.created_at ASC").
-			Scan(ctx)
-		return entities, err
+		a := emaildb.Attachments
+		return a.Where(a.MessageID.Eq(req.MessageID)).
+			Order(a.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -529,37 +422,31 @@ func (r *repository) GetEmailWebhookConfig(
 		"resolve the email provider webhook that was called before its tenant is known",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*emailports.EmailWebhookConfig, error) {
-		var row struct {
-			OrganizationID       string `bun:"organization_id"`
-			BusinessUnitID       string `bun:"business_unit_id"`
-			WebhookSigningSecret string `bun:"webhook_signing_secret"`
-		}
-		err := r.db.DBForContext(ctx).NewSelect().
-			TableExpr("integrations AS integ").
-			ColumnExpr("integ.organization_id").
-			ColumnExpr("integ.business_unit_id").
-			ColumnExpr("integ.configuration ->> 'webhookSigningSecret' AS webhook_signing_secret").
-			Where("integ.type = ?", req.IntegrationType).
-			Where("integ.configuration ->> 'webhookToken' = ?", req.Token).
-			Where("integ.enabled = ?", true).
-			Scan(ctx, &row)
+		i := integrationdb.Integrations
+		row, err := keel.IntoOne[webhookRow](
+			ctx,
+			r.db.Keel(ctx),
+			i.AllTenants().
+				Pick(
+					i.OrganizationID,
+					i.BusinessUnitID,
+					keel.Raw("coalesce(?, '')", i.Configuration.Text("webhookSigningSecret")),
+				).
+				Where(
+					i.Type.Eq(req.IntegrationType),
+					i.Configuration.Text("webhookToken").Eq(req.Token),
+					i.Enabled.IsTrue(),
+				).
+				Limit(1),
+		)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EmailWebhook")
-		}
-
-		orgID, err := pulid.Parse(row.OrganizationID)
-		if err != nil {
-			return nil, fmt.Errorf("parse webhook organization id: %w", err)
-		}
-		buID, err := pulid.Parse(row.BusinessUnitID)
-		if err != nil {
-			return nil, fmt.Errorf("parse webhook business unit id: %w", err)
+			return nil, webhookErrors.Map(err, string(req.IntegrationType))
 		}
 
 		return &emailports.EmailWebhookConfig{
 			TenantInfo: pagination.TenantInfo{
-				OrgID: orgID,
-				BuID:  buID,
+				OrgID: row.OrganizationID,
+				BuID:  row.BusinessUnitID,
 			},
 			SigningSecret: row.WebhookSigningSecret,
 		}, nil
@@ -574,37 +461,37 @@ func (r *repository) ListMessages(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*email.Message], error) {
-			entities := make([]*email.Message, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).NewSelect().
-				Model(&entities).
-				Relation("Profile").
-				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = applyTenant(q, "em", req.Filter.TenantInfo)
-					q = querybuilder.ApplyFilters(q, "em", req.Filter, (*email.Message)(nil))
-					return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-						Offset(int64(req.Filter.Pagination.SafeOffset()))
-				}).
-				OrderExpr("em.created_at DESC").
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return &pagination.ListResult[*email.Message]{Items: entities, Total: int(total)}, nil
+			m := emaildb.Messages
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				m.Query(),
+				&listquery.Request[email.Message]{
+					Filter: req.Filter,
+					Shape: func(q *keel.Query[email.Message]) *keel.Query[email.Message] {
+						return q.Load(m.Profile())
+					},
+					Then: []keel.Order{m.CreatedAt.Desc()},
+				},
+			)
 		},
 	)
 }
 
 func (r *repository) CreateEvent(ctx context.Context, entity *email.Event) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		result, err := r.db.DBForContext(ctx).NewInsert().
-			Model(entity).
-			On("CONFLICT (organization_id, business_unit_id, provider, provider_event_id) DO NOTHING").
-			Exec(ctx)
-		if err != nil {
-			return false, err
-		}
-		rows, err := result.RowsAffected()
-		return rows > 0, err
+		e := emaildb.Events
+		inserted, err := e.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*email.Event{entity},
+			e.OrganizationID,
+			e.BusinessUnitID,
+			e.Provider,
+			e.ProviderEventID,
+		)
+
+		return inserted > 0, err
 	})
 }
 
@@ -614,17 +501,25 @@ func (r *repository) ListEventRecipients(
 	req emailports.ListEmailEventRecipientsRequest,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
-		recipients := make([]string, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model((*email.Event)(nil)).
-			ColumnExpr("DISTINCT lower(ee.recipient)").
-			Where("ee.organization_id = ?", req.TenantInfo.OrgID).
-			Where("ee.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("ee.message_id = ?", req.MessageID).
-			Where("ee.type = ?", req.Type).
-			Where("ee.recipient IS NOT NULL").
-			Scan(ctx, &recipients)
-		return recipients, err
+		e := emaildb.Events
+		recipient := keel.Raw("lower(?)", e.Recipient)
+		recipients, err := keel.Into[string](
+			ctx,
+			r.db.Keel(ctx),
+			e.Where(
+				e.MessageID.Eq(req.MessageID),
+				e.Type.Eq(req.Type),
+				e.Recipient.IsNotNull(),
+			).Group(recipient).Pick(recipient),
+		)
+		if err != nil {
+			return nil, err
+		}
+		if recipients == nil {
+			recipients = []string{}
+		}
+
+		return recipients, nil
 	})
 }
 
@@ -636,23 +531,22 @@ func (r *repository) ListSuppressions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*email.Suppression], error) {
-			entities := make([]*email.Suppression, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).NewSelect().
-				Model(&entities).
-				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-					return applyTenant(q, "es", req.Filter.TenantInfo).
-						Limit(int64(req.Filter.Pagination.SafeLimit())).
-						Offset(int64(req.Filter.Pagination.SafeOffset()))
-				}).
-				OrderExpr("es.created_at DESC").
-				ScanAndCount(ctx)
-			if err != nil {
+			s := emaildb.Suppressions
+			page := req.Filter.Pagination
+			rows := s.Order(s.CreatedAt.Desc()).Limit(page.SafeLimit()).Offset(page.SafeOffset())
+
+			var items []*email.Suppression
+			var total int64
+			if err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				keel.ListInto(rows, &items),
+				keel.CountInto(s.Query(), &total),
+			); err != nil {
 				return nil, err
 			}
-			return &pagination.ListResult[*email.Suppression]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+
+			return &pagination.ListResult[*email.Suppression]{Items: items, Total: int(total)}, nil
 		},
 	)
 }
@@ -662,17 +556,29 @@ func (r *repository) CreateSuppression(
 	entity *email.Suppression,
 ) (*email.Suppression, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*email.Suppression, error) {
+		s := emaildb.Suppressions
+		db := r.db.Keel(ctx)
 		entity.EmailAddress = stringutils.NormalizeEmailAddress(entity.EmailAddress)
-		_, err := r.db.DBForContext(ctx).NewInsert().
-			Model(entity).
-			On("CONFLICT (organization_id, business_unit_id, email_address) DO UPDATE").
-			Set("reason = EXCLUDED.reason").
-			Set("provider = EXCLUDED.provider").
-			Set("source_event_id = EXCLUDED.source_event_id").
-			Set("notes = EXCLUDED.notes").
-			Returning("*").
-			Exec(ctx)
-		return entity, err
+		inserted, err := s.Upsert(
+			ctx,
+			db,
+			[]*email.Suppression{entity},
+			keel.OnConflict(s.OrganizationID, s.BusinessUnitID, s.EmailAddress).
+				Update(s.Reason, s.Provider, s.SourceEventID, s.Notes),
+		)
+		if err != nil {
+			return nil, err
+		}
+		if inserted[0] {
+			return entity, nil
+		}
+
+		stored, err := s.Where(s.EmailAddress.Eq(entity.EmailAddress)).One(ctx, db)
+		if err != nil {
+			return nil, suppressionErrors.Map(err, entity.EmailAddress)
+		}
+
+		return stored, nil
 	})
 }
 
@@ -681,31 +587,24 @@ func (r *repository) DeleteSuppression(
 	req emailports.GetEmailEntityRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*email.Suppression)(nil)).
-			Where("id = ?", req.ID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Exec(ctx)
+		s := emaildb.Suppressions
+		rows, err := s.Where(s.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return err
 		}
-		return dberror.CheckRowsAffected(result, "EmailSuppression", req.ID.String())
+
+		return dberror.CheckAffected(rows, "EmailSuppression", req.ID.String())
 	})
 }
 
 func (r *repository) HasSuppression(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	emailAddress string,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		count, err := r.db.DBForContext(ctx).NewSelect().
-			Model((*email.Suppression)(nil)).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Where("email_address = ?", stringutils.NormalizeEmailAddress(emailAddress)).
-			Count(ctx)
-		return count > 0, err
+		s := emaildb.Suppressions
+		return s.Where(s.EmailAddress.Eq(stringutils.NormalizeEmailAddress(emailAddress))).
+			Exists(ctx, r.db.Keel(ctx))
 	})
 }

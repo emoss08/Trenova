@@ -33,23 +33,22 @@ var tCAAllowlistedTablesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Update:       []int32{3, 4, 5, 7},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   6,
-	AutoUpdate:   7,
-	IDPrefix:     "tcaw_",
-	New:          newTCAAllowlistedTable,
-	NewN:         newNTCAAllowlistedTable,
-	Size:         unsafe.Sizeof(tablechangealert.TCAAllowlistedTable{}),
-	Ptr:          ptrTCAAllowlistedTable,
-	Value:        valueTCAAllowlistedTable,
-	BeforeCreate: beforeCreateTCAAllowlistedTable,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:     []int32{3, 4, 5, 7},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 6,
+	AutoUpdate: 7,
+	IDPrefix:   "tcaw_",
+	New:        newTCAAllowlistedTable,
+	NewN:       newNTCAAllowlistedTable,
+	Size:       unsafe.Sizeof(tablechangealert.TCAAllowlistedTable{}),
+	Ptr:        ptrTCAAllowlistedTable,
+	Value:      valueTCAAllowlistedTable,
 }
 
 var tCAAllowlistedTablesRef = keel.Ref{Table: &tCAAllowlistedTablesTable}
@@ -162,10 +161,6 @@ func valueTCAAllowlistedTable(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreateTCAAllowlistedTable(ctx context.Context, p unsafe.Pointer) error {
-	return (*tablechangealert.TCAAllowlistedTable)(p).BeforeCreate(ctx)
-}
-
 // tCASubscriptionsTable is the schema of tablechangealert.TCASubscription.
 var tCASubscriptionsTable = schema.Table{
 	Name:   "tca_subscriptions",
@@ -198,23 +193,24 @@ var tCASubscriptionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "User", Alias: "u", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `User`, JSON: `user`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
-	IDPrefix:   "tcas_",
-	New:        newTCASubscription,
-	NewN:       newNTCASubscription,
-	Size:       unsafe.Sizeof(tablechangealert.TCASubscription{}),
-	Ptr:        ptrTCASubscription,
-	Value:      valueTCASubscription,
-	Attach:     attachTCASubscription,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       0,
+	AutoCreate:   17,
+	AutoUpdate:   18,
+	IDPrefix:     "tcas_",
+	New:          newTCASubscription,
+	NewN:         newNTCASubscription,
+	Size:         unsafe.Sizeof(tablechangealert.TCASubscription{}),
+	Ptr:          ptrTCASubscription,
+	Value:        valueTCASubscription,
+	Attach:       attachTCASubscription,
+	BeforeCreate: beforeCreateTCASubscription,
 }
 
 var tCASubscriptionsRef = keel.Ref{Table: &tCASubscriptionsTable}
@@ -427,6 +423,10 @@ func attachTCASubscription(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.User = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateTCASubscription(ctx context.Context, p unsafe.Pointer) error {
+	return (*tablechangealert.TCASubscription)(p).BeforeCreate(ctx)
 }
 
 func init() {

@@ -44,23 +44,24 @@ var tableConfigurationsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "User", Alias: "u", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `User`, JSON: `user`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 11, 12, 15},
-	Returning:  nil,
-	Version:    13,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
-	IDPrefix:   "tc_",
-	New:        newTableConfiguration,
-	NewN:       newNTableConfiguration,
-	Size:       unsafe.Sizeof(tableconfiguration.TableConfiguration{}),
-	Ptr:        ptrTableConfiguration,
-	Value:      valueTableConfiguration,
-	Attach:     attachTableConfiguration,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 11, 12, 15},
+	Returning:    nil,
+	Version:      13,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   15,
+	IDPrefix:     "tc_",
+	New:          newTableConfiguration,
+	NewN:         newNTableConfiguration,
+	Size:         unsafe.Sizeof(tableconfiguration.TableConfiguration{}),
+	Ptr:          ptrTableConfiguration,
+	Value:        valueTableConfiguration,
+	Attach:       attachTableConfiguration,
+	BeforeCreate: beforeCreateTableConfiguration,
 }
 
 var tableConfigurationsRef = keel.Ref{Table: &tableConfigurationsTable}
@@ -246,6 +247,10 @@ func attachTableConfiguration(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 	case 0:
 		r.User = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateTableConfiguration(ctx context.Context, p unsafe.Pointer) error {
+	return (*tableconfiguration.TableConfiguration)(p).BeforeCreate(ctx)
 }
 
 func init() {

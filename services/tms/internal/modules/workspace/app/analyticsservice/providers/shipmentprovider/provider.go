@@ -3,12 +3,12 @@ package shipmentprovider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
@@ -17,18 +17,23 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/lanequery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-var _ kernelports.AnalyticsPageProvider = (*Provider)(nil)
+var (
+	_ kernelports.AnalyticsPageProvider = (*Provider)(nil)
+
+	errUnexpectedRows = errors.New("shipment analytics query returned an unexpected row count")
+)
 
 const laneHeatmapInclude = "laneHeatmap"
 const tomorrowsPickupsInclude = "tomorrowsPickups"
@@ -57,35 +62,35 @@ type Provider struct {
 }
 
 type laneStateRow struct {
-	OriginState      string `bun:"origin_state"`
-	DestinationState string `bun:"destination_state"`
-	Count            int    `bun:"count"`
+	OriginState      string `db:"origin_state"`
+	DestinationState string `db:"destination_state"`
+	Count            int    `db:"count"`
 }
 
 type customerMixRow struct {
-	CustomerID      string  `bun:"customer_id"`
-	Name            string  `bun:"name"`
-	Revenue         float64 `bun:"revenue"`
-	Loads           int     `bun:"loads"`
-	PreviousRevenue float64 `bun:"previous_revenue"`
-	TotalRevenue    float64 `bun:"total_revenue"`
+	CustomerID      string  `db:"customer_id"`
+	Name            string  `db:"name"`
+	Revenue         float64 `db:"revenue"`
+	Loads           int     `db:"loads"`
+	PreviousRevenue float64 `db:"previous_revenue"`
+	TotalRevenue    float64 `db:"total_revenue"`
 }
 
 type tomorrowPickupRow struct {
-	ShipmentID        string          `bun:"shipment_id"`
-	ProNumber         string          `bun:"pro_number"`
-	PickupWindowStart int64           `bun:"pickup_window_start"`
-	Customer          string          `bun:"customer"`
-	Origin            string          `bun:"origin"`
-	Destination       string          `bun:"destination"`
-	Driver            string          `bun:"driver"`
-	ShipmentStatus    shipment.Status `bun:"shipment_status"`
-	HasPrimaryWorker  bool            `bun:"has_primary_worker"`
+	ShipmentID        string          `db:"shipment_id"`
+	ProNumber         string          `db:"pro_number"`
+	PickupWindowStart int64           `db:"pickup_window_start"`
+	Customer          string          `db:"customer"`
+	Origin            string          `db:"origin"`
+	Destination       string          `db:"destination"`
+	Driver            string          `db:"driver"`
+	ShipmentStatus    shipment.Status `db:"shipment_status"`
+	HasPrimaryWorker  bool            `db:"has_primary_worker"`
 }
 
 type hourlyMetricRow struct {
-	Hour  int     `bun:"hr"`
-	Value float64 `bun:"value"`
+	Hour  int     `db:"hr"`
+	Value float64 `db:"value"`
 }
 
 type analyticsWindow struct {
@@ -313,6 +318,62 @@ var activeStatuses = []shipment.Status{
 	shipment.StatusPartiallyCompleted,
 }
 
+func queryOne[T any](ctx context.Context, db *keel.DB, sql string, args ...any) (T, error) {
+	var zero T
+	rows, err := keel.QueryAll(ctx, db, pgx.RowToStructByNameLax[T], sql, args...)
+	if err != nil {
+		return zero, err
+	}
+	if len(rows) != 1 {
+		return zero, fmt.Errorf("%w: expected one row, got %d", errUnexpectedRows, len(rows))
+	}
+
+	return rows[0], nil
+}
+
+func queryAll[T any](ctx context.Context, db *keel.DB, sql string, args ...any) ([]T, error) {
+	rows, err := keel.QueryAll(ctx, db, pgx.RowToStructByNameLax[T], sql, args...)
+	if err != nil {
+		return nil, err
+	}
+	if rows == nil {
+		rows = []T{}
+	}
+
+	return rows, nil
+}
+
+func statusList[S ~string](values []S) []string {
+	out := make([]string, len(values))
+	for i, value := range values {
+		out[i] = string(value)
+	}
+
+	return out
+}
+
+const activeShipmentsSQL = `SELECT
+	COUNT(*) FILTER (WHERE sp.status = ANY($3))::int AS total_active,
+	COUNT(*) FILTER (WHERE sp.created_at >= $4 AND sp.created_at <= $5)::int AS created_today,
+	COUNT(*) FILTER (WHERE sp.created_at >= $6 AND sp.created_at <= $7)::int AS created_yesterday,
+	COUNT(*) FILTER (WHERE sp.status = $8)::int AS in_transit,
+	COUNT(*) FILTER (WHERE sp.status = $9)::int AS at_risk,
+	COUNT(*) FILTER (WHERE sp.status = $10)::int AS loading,
+	COUNT(*) FILTER (WHERE sp.status = ANY($11))::int AS done
+FROM shipments sp
+WHERE sp.organization_id = $1 AND sp.business_unit_id = $2`
+
+const hourlyShipmentsSQL = `SELECT
+	EXTRACT(HOUR FROM TO_TIMESTAMP(sp.created_at) AT TIME ZONE $3)::int AS hr,
+	COUNT(*)::float8 AS value
+FROM shipments sp
+WHERE sp.organization_id = $1
+	AND sp.business_unit_id = $2
+	AND sp.created_at >= $4
+	AND sp.created_at <= $5
+GROUP BY hr
+ORDER BY hr ASC`
+
 func (p *Provider) getActiveShipments(
 	ctx context.Context,
 	orgID, buID pulid.ID,
@@ -324,48 +385,49 @@ func (p *Provider) getActiveShipments(
 			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
 		}
 
-		var result struct {
-			TotalActive      int `bun:"total_active"`
-			CreatedToday     int `bun:"created_today"`
-			CreatedYesterday int `bun:"created_yesterday"`
-			InTransit        int `bun:"in_transit"`
-			AtRisk           int `bun:"at_risk"`
-			Loading          int `bun:"loading"`
-			Done             int `bun:"done"`
-		}
-
-		err = p.db.DBForContext(ctx).NewSelect().
-			TableExpr("shipments sp").
-			ColumnExpr("COUNT(*) FILTER (WHERE sp.status IN (?))::int AS total_active", bun.List(activeStatuses)).
-			ColumnExpr("COUNT(*) FILTER (WHERE sp.created_at >= ? AND sp.created_at <= ?)::int AS created_today", window.TodayStart, window.Now).
-			ColumnExpr("COUNT(*) FILTER (WHERE sp.created_at >= ? AND sp.created_at <= ?)::int AS created_yesterday", window.YesterdayStart, window.YesterdayEnd).
-			ColumnExpr("COUNT(*) FILTER (WHERE sp.status = ?)::int AS in_transit", shipment.StatusInTransit).
-			ColumnExpr("COUNT(*) FILTER (WHERE sp.status = ?)::int AS at_risk", shipment.StatusDelayed).
-			ColumnExpr("COUNT(*) FILTER (WHERE sp.status = ?)::int AS loading", shipment.StatusAssigned).
-			ColumnExpr("COUNT(*) FILTER (WHERE sp.status IN (?))::int AS done", bun.List([]shipment.Status{
+		db := p.db.Keel(ctx)
+		result, err := queryOne[struct {
+			TotalActive      int `db:"total_active"`
+			CreatedToday     int `db:"created_today"`
+			CreatedYesterday int `db:"created_yesterday"`
+			InTransit        int `db:"in_transit"`
+			AtRisk           int `db:"at_risk"`
+			Loading          int `db:"loading"`
+			Done             int `db:"done"`
+		}](
+			ctx,
+			db,
+			activeShipmentsSQL,
+			orgID.String(),
+			buID.String(),
+			statusList(activeStatuses),
+			window.TodayStart,
+			window.Now,
+			window.YesterdayStart,
+			window.YesterdayEnd,
+			string(shipment.StatusInTransit),
+			string(shipment.StatusDelayed),
+			string(shipment.StatusAssigned),
+			statusList([]shipment.Status{
 				shipment.StatusCompleted,
 				shipment.StatusInvoiced,
 				shipment.StatusReadyToInvoice,
-			})).
-			Where("sp.organization_id = ?", orgID).
-			Where("sp.business_unit_id = ?", buID).
-			Scan(ctx, &result)
+			}),
+		)
 		if err != nil {
 			return nil, err
 		}
 
-		hourlyRows := make([]hourlyMetricRow, 0, 24)
-		err = p.db.DBForContext(ctx).NewSelect().
-			TableExpr("shipments sp").
-			ColumnExpr("EXTRACT(HOUR FROM TO_TIMESTAMP(sp.created_at) AT TIME ZONE ?)::int AS hr", tz).
-			ColumnExpr("COUNT(*)::float8 AS value").
-			Where("sp.organization_id = ?", orgID).
-			Where("sp.business_unit_id = ?", buID).
-			Where("sp.created_at >= ?", window.TodayStart).
-			Where("sp.created_at <= ?", window.Now).
-			GroupExpr("hr").
-			OrderExpr("hr ASC").
-			Scan(ctx, &hourlyRows)
+		hourlyRows, err := queryAll[hourlyMetricRow](
+			ctx,
+			db,
+			hourlyShipmentsSQL,
+			orgID.String(),
+			buID.String(),
+			tz,
+			window.TodayStart,
+			window.Now,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -384,7 +446,25 @@ func (p *Provider) getActiveShipments(
 	})
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
+const onTimeSQL = `SELECT
+	COUNT(*) FILTER (WHERE stp.actual_arrival >= $1 AND stp.actual_arrival <= $2)::int AS total,
+	COUNT(*) FILTER (WHERE stp.actual_arrival >= $1 AND stp.actual_arrival <= $2
+		AND stp.actual_arrival <= COALESCE(stp.scheduled_window_end, stp.scheduled_window_start))::int AS on_time,
+	COUNT(*) FILTER (WHERE stp.actual_arrival >= $3 AND stp.actual_arrival <= $4)::int AS yesterday_total,
+	COUNT(*) FILTER (WHERE stp.actual_arrival >= $3 AND stp.actual_arrival <= $4
+		AND stp.actual_arrival <= COALESCE(stp.scheduled_window_end, stp.scheduled_window_start))::int AS yesterday_on_time,
+	COUNT(*) FILTER (WHERE stp.actual_arrival >= $5 AND stp.actual_arrival < $1)::int AS seven_day_total,
+	COUNT(*) FILTER (WHERE stp.actual_arrival >= $5 AND stp.actual_arrival < $1
+		AND stp.actual_arrival <= COALESCE(stp.scheduled_window_end, stp.scheduled_window_start))::int AS seven_day_on_time
+FROM stops stp
+WHERE stp.organization_id = $6
+	AND stp.business_unit_id = $7
+	AND stp.status = $8
+	AND stp.type = ANY($9)
+	AND stp.actual_arrival IS NOT NULL
+	AND stp.actual_arrival > 0
+	AND stp.scheduled_window_start > 0`
+
 func (p *Provider) getOnTimePercent(
 	ctx context.Context,
 	orgID, buID pulid.ID,
@@ -396,51 +476,44 @@ func (p *Provider) getOnTimePercent(
 			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
 		}
 
-		var result struct {
-			Total           int `bun:"total"`
-			OnTime          int `bun:"on_time"`
-			YesterdayTotal  int `bun:"yesterday_total"`
-			YesterdayOnTime int `bun:"yesterday_on_time"`
-			SevenDayTotal   int `bun:"seven_day_total"`
-			SevenDayOnTime  int `bun:"seven_day_on_time"`
-		}
-
-		err = p.db.DBForContext(ctx).NewSelect().
-			TableExpr("stops stp").
-			ColumnExpr("COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival <= ?)::int AS total", window.TodayStart, window.Now).
-			ColumnExpr("COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival <= ? AND stp.actual_arrival <= COALESCE(stp.scheduled_window_end, stp.scheduled_window_start))::int AS on_time", window.TodayStart, window.Now).
-			ColumnExpr("COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival <= ?)::int AS yesterday_total", window.YesterdayStart, window.YesterdayEnd).
-			ColumnExpr("COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival <= ? AND stp.actual_arrival <= COALESCE(stp.scheduled_window_end, stp.scheduled_window_start))::int AS yesterday_on_time", window.YesterdayStart, window.YesterdayEnd).
-			ColumnExpr("COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival < ?)::int AS seven_day_total", window.SevenDayStart, window.TodayStart).
-			ColumnExpr("COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival < ? AND stp.actual_arrival <= COALESCE(stp.scheduled_window_end, stp.scheduled_window_start))::int AS seven_day_on_time", window.SevenDayStart, window.TodayStart).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("stp.organization_id = ?", orgID).
-					Where("stp.business_unit_id = ?", buID).
-					Where("stp.status = ?", shipment.StopStatusCompleted).
-					Where("stp.type IN (?)", bun.List([]shipment.StopType{
-						shipment.StopTypeDelivery,
-						shipment.StopTypeSplitDelivery,
-					})).
-					Where("stp.actual_arrival IS NOT NULL").
-					Where("stp.actual_arrival > 0").
-					Where("stp.scheduled_window_start > 0")
-			}).
-			Scan(ctx, &result)
+		result, err := queryOne[struct {
+			Total           int `db:"total"`
+			OnTime          int `db:"on_time"`
+			YesterdayTotal  int `db:"yesterday_total"`
+			YesterdayOnTime int `db:"yesterday_on_time"`
+			SevenDayTotal   int `db:"seven_day_total"`
+			SevenDayOnTime  int `db:"seven_day_on_time"`
+		}](
+			ctx,
+			p.db.Keel(ctx),
+			onTimeSQL,
+			window.TodayStart,
+			window.Now,
+			window.YesterdayStart,
+			window.YesterdayEnd,
+			window.SevenDayStart,
+			orgID.String(),
+			buID.String(),
+			string(shipment.StopStatusCompleted),
+			statusList([]shipment.StopType{
+				shipment.StopTypeDelivery,
+				shipment.StopTypeSplitDelivery,
+			}),
+		)
 		if err != nil {
 			return nil, err
 		}
 
 		var target *float64
 		if p.dispatchRepo != nil {
-			control, err := p.dispatchRepo.GetByOrgID(
+			control, controlErr := p.dispatchRepo.GetByOrgID(
 				ctx,
 				dispatchcontrolports.GetDispatchControlRequest{
 					TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 				},
 			)
-			if err != nil {
-				return nil, err
+			if controlErr != nil {
+				return nil, controlErr
 			}
 			target = control.ServiceFailureTarget
 		}
@@ -451,18 +524,55 @@ func (p *Provider) getOnTimePercent(
 			TotalCount:  result.Total,
 			Target:      target,
 			DeltaPp: roundTenth(
-				percent(
-					result.OnTime,
-					result.Total,
-				) - percent(
-					result.YesterdayOnTime,
-					result.YesterdayTotal,
-				),
+				percent(result.OnTime, result.Total) -
+					percent(result.YesterdayOnTime, result.YesterdayTotal),
 			),
 			SevenDayPercent: percent(result.SevenDayOnTime, result.SevenDayTotal),
 		}, nil
 	})
 }
+
+const revenueTodaySQL = `WITH revenue AS (
+	SELECT
+		COALESCE(SUM(sp.total_charge_amount) FILTER (
+			WHERE sp.actual_delivery_date >= $3 AND sp.actual_delivery_date <= $4
+		), 0)::float8 AS amount,
+		COALESCE(SUM(sp.total_charge_amount) FILTER (
+			WHERE sp.actual_delivery_date >= $5 AND sp.actual_delivery_date <= $6
+		), 0)::float8 AS yesterday_amount
+	FROM shipments sp
+	WHERE sp.organization_id = $1
+		AND sp.business_unit_id = $2
+		AND sp.actual_delivery_date >= $5
+		AND sp.actual_delivery_date <= $4
+),
+mileage AS (
+	SELECT COALESCE(SUM(sm.distance), 0)::float8 AS miles
+	FROM shipment_moves sm
+	INNER JOIN shipments sp
+		ON sp.id = sm.shipment_id
+		AND sp.organization_id = sm.organization_id
+		AND sp.business_unit_id = sm.business_unit_id
+	WHERE sp.organization_id = $1
+		AND sp.business_unit_id = $2
+		AND sp.actual_delivery_date >= $3
+		AND sp.actual_delivery_date <= $4
+		AND sm.distance IS NOT NULL
+		AND sm.distance > 0
+)
+SELECT revenue.amount, revenue.yesterday_amount, mileage.miles
+FROM revenue CROSS JOIN mileage`
+
+const hourlyRevenueSQL = `SELECT
+	EXTRACT(HOUR FROM TO_TIMESTAMP(sp.actual_delivery_date) AT TIME ZONE $3)::int AS hr,
+	COALESCE(SUM(sp.total_charge_amount), 0)::float8 AS value
+FROM shipments sp
+WHERE sp.organization_id = $1
+	AND sp.business_unit_id = $2
+	AND sp.actual_delivery_date >= $4
+	AND sp.actual_delivery_date <= $5
+GROUP BY hr
+ORDER BY hr ASC`
 
 func (p *Provider) getRevenueToday(
 	ctx context.Context,
@@ -475,75 +585,36 @@ func (p *Provider) getRevenueToday(
 			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
 		}
 
-		var result struct {
-			Amount          float64 `bun:"amount"`
-			YesterdayAmount float64 `bun:"yesterday_amount"`
-			Miles           float64 `bun:"miles"`
-		}
-
-		err = p.db.DBForContext(ctx).NewRaw(
-			`WITH revenue AS (
-			SELECT
-				COALESCE(SUM(sp.total_charge_amount) FILTER (
-					WHERE sp.actual_delivery_date >= ? AND sp.actual_delivery_date <= ?
-				), 0)::float8 AS amount,
-				COALESCE(SUM(sp.total_charge_amount) FILTER (
-					WHERE sp.actual_delivery_date >= ? AND sp.actual_delivery_date <= ?
-				), 0)::float8 AS yesterday_amount
-			FROM shipments sp
-			WHERE sp.organization_id = ?
-				AND sp.business_unit_id = ?
-				AND sp.actual_delivery_date >= ?
-				AND sp.actual_delivery_date <= ?
-		),
-		mileage AS (
-			SELECT COALESCE(SUM(sm.distance), 0)::float8 AS miles
-			FROM shipment_moves sm
-			INNER JOIN shipments sp
-				ON sp.id = sm.shipment_id
-				AND sp.organization_id = sm.organization_id
-				AND sp.business_unit_id = sm.business_unit_id
-			WHERE sp.organization_id = ?
-				AND sp.business_unit_id = ?
-				AND sp.actual_delivery_date >= ?
-				AND sp.actual_delivery_date <= ?
-				AND sm.distance IS NOT NULL
-				AND sm.distance > 0
-		)
-		SELECT revenue.amount, revenue.yesterday_amount, mileage.miles
-		FROM revenue CROSS JOIN mileage`,
+		db := p.db.Keel(ctx)
+		result, err := queryOne[struct {
+			Amount          float64 `db:"amount"`
+			YesterdayAmount float64 `db:"yesterday_amount"`
+			Miles           float64 `db:"miles"`
+		}](
+			ctx,
+			db,
+			revenueTodaySQL,
+			orgID.String(),
+			buID.String(),
 			window.TodayStart,
 			window.Now,
 			window.YesterdayStart,
 			window.YesterdayEnd,
-			orgID,
-			buID,
-			window.YesterdayStart,
-			window.Now,
-			orgID,
-			buID,
-			window.TodayStart,
-			window.Now,
-		).Scan(ctx, &result)
+		)
 		if err != nil {
 			return nil, err
 		}
 
-		hourlyRows := make([]hourlyMetricRow, 0, 24)
-		err = p.db.DBForContext(ctx).NewSelect().
-			TableExpr("shipments sp").
-			ColumnExpr("EXTRACT(HOUR FROM TO_TIMESTAMP(sp.actual_delivery_date) AT TIME ZONE ?)::int AS hr", tz).
-			ColumnExpr("COALESCE(SUM(sp.total_charge_amount), 0)::float8 AS value").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("sp.organization_id = ?", orgID).
-					Where("sp.business_unit_id = ?", buID).
-					Where("sp.actual_delivery_date >= ?", window.TodayStart).
-					Where("sp.actual_delivery_date <= ?", window.Now)
-			}).
-			GroupExpr("hr").
-			OrderExpr("hr ASC").
-			Scan(ctx, &hourlyRows)
+		hourlyRows, err := queryAll[hourlyMetricRow](
+			ctx,
+			db,
+			hourlyRevenueSQL,
+			orgID.String(),
+			buID.String(),
+			tz,
+			window.TodayStart,
+			window.Now,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -557,6 +628,19 @@ func (p *Provider) getRevenueToday(
 	})
 }
 
+const emptyMileSQL = `SELECT
+	COALESCE(SUM(sm.distance) FILTER (WHERE sm.created_at >= $3 AND sm.created_at <= $4), 0)::float8 AS total_miles,
+	COALESCE(SUM(sm.distance) FILTER (WHERE sm.created_at >= $3 AND sm.created_at <= $4 AND sm.loaded = false), 0)::float8 AS empty_miles,
+	COALESCE(SUM(sm.distance) FILTER (WHERE sm.created_at >= $5 AND sm.created_at <= $6), 0)::float8 AS yesterday_total_miles,
+	COALESCE(SUM(sm.distance) FILTER (WHERE sm.created_at >= $5 AND sm.created_at <= $6 AND sm.loaded = false), 0)::float8 AS yesterday_empty_miles
+FROM shipment_moves sm
+WHERE sm.organization_id = $1
+	AND sm.business_unit_id = $2
+	AND sm.created_at >= $5
+	AND sm.created_at <= $4
+	AND sm.distance IS NOT NULL
+	AND sm.distance > 0`
+
 func (p *Provider) getEmptyMilePercent(
 	ctx context.Context,
 	orgID, buID pulid.ID,
@@ -568,29 +652,22 @@ func (p *Provider) getEmptyMilePercent(
 			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
 		}
 
-		var result struct {
-			TotalMiles          float64 `bun:"total_miles"`
-			EmptyMiles          float64 `bun:"empty_miles"`
-			YesterdayTotalMiles float64 `bun:"yesterday_total_miles"`
-			YesterdayEmptyMiles float64 `bun:"yesterday_empty_miles"`
-		}
-
-		err = p.db.DBForContext(ctx).NewSelect().
-			TableExpr("shipment_moves sm").
-			ColumnExpr("COALESCE(SUM(sm.distance) FILTER (WHERE sm.created_at >= ? AND sm.created_at <= ?), 0)::float8 AS total_miles", window.TodayStart, window.Now).
-			ColumnExpr("COALESCE(SUM(sm.distance) FILTER (WHERE sm.created_at >= ? AND sm.created_at <= ? AND sm.loaded = false), 0)::float8 AS empty_miles", window.TodayStart, window.Now).
-			ColumnExpr("COALESCE(SUM(sm.distance) FILTER (WHERE sm.created_at >= ? AND sm.created_at <= ?), 0)::float8 AS yesterday_total_miles", window.YesterdayStart, window.YesterdayEnd).
-			ColumnExpr("COALESCE(SUM(sm.distance) FILTER (WHERE sm.created_at >= ? AND sm.created_at <= ? AND sm.loaded = false), 0)::float8 AS yesterday_empty_miles", window.YesterdayStart, window.YesterdayEnd).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("sm.organization_id = ?", orgID).
-					Where("sm.business_unit_id = ?", buID).
-					Where("sm.created_at >= ?", window.YesterdayStart).
-					Where("sm.created_at <= ?", window.Now).
-					Where("sm.distance IS NOT NULL").
-					Where("sm.distance > 0")
-			}).
-			Scan(ctx, &result)
+		result, err := queryOne[struct {
+			TotalMiles          float64 `db:"total_miles"`
+			EmptyMiles          float64 `db:"empty_miles"`
+			YesterdayTotalMiles float64 `db:"yesterday_total_miles"`
+			YesterdayEmptyMiles float64 `db:"yesterday_empty_miles"`
+		}](
+			ctx,
+			p.db.Keel(ctx),
+			emptyMileSQL,
+			orgID.String(),
+			buID.String(),
+			window.TodayStart,
+			window.Now,
+			window.YesterdayStart,
+			window.YesterdayEnd,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -607,6 +684,66 @@ func (p *Provider) getEmptyMilePercent(
 	})
 }
 
+const atRiskSQL = `WITH risky_shipments AS (
+	SELECT DISTINCT sp.id, sp.created_at, sp.temperature_min, sp.temperature_max,
+		EXISTS (
+			SELECT 1
+			FROM stop_etas seta
+			WHERE seta.shipment_id = sp.id
+				AND seta.organization_id = sp.organization_id
+				AND seta.business_unit_id = sp.business_unit_id
+				AND seta.verdict = ANY($3)
+				AND NOT seta.arrived
+		) AS eta_slipping
+	FROM shipments sp
+	LEFT JOIN shipment_moves sm
+		ON sm.shipment_id = sp.id
+		AND sm.organization_id = sp.organization_id
+		AND sm.business_unit_id = sp.business_unit_id
+	LEFT JOIN stops stp
+		ON stp.shipment_move_id = sm.id
+		AND stp.organization_id = sm.organization_id
+		AND stp.business_unit_id = sm.business_unit_id
+	WHERE sp.organization_id = $1
+		AND sp.business_unit_id = $2
+		AND sp.status = ANY($4)
+		AND (
+			sp.status = $5
+			OR (
+				stp.status != $6
+				AND stp.scheduled_window_start > 0
+				AND stp.scheduled_window_start < $7
+			)
+			OR EXISTS (
+				SELECT 1
+				FROM stop_etas seta
+				WHERE seta.shipment_id = sp.id
+					AND seta.organization_id = sp.organization_id
+					AND seta.business_unit_id = sp.business_unit_id
+					AND seta.verdict = ANY($3)
+					AND NOT seta.arrived
+			)
+		)
+),
+active_weather AS (
+	SELECT COUNT(*)::int AS weather
+	FROM weather_alerts wa
+	WHERE wa.organization_id = $1
+		AND wa.business_unit_id = $2
+		AND wa.expired_at IS NULL
+		AND (wa.expires IS NULL OR wa.expires >= $7)
+)
+SELECT
+	COUNT(rs.id)::int AS count,
+	COUNT(rs.id) FILTER (WHERE rs.created_at >= $8 AND rs.created_at <= $7)::int AS created_today,
+	COUNT(rs.id) FILTER (WHERE rs.created_at >= $9 AND rs.created_at <= $10)::int AS created_yesterday,
+	COUNT(rs.id) FILTER (WHERE rs.eta_slipping)::int AS eta_slip,
+	active_weather.weather,
+	COUNT(rs.id) FILTER (WHERE rs.temperature_min IS NOT NULL OR rs.temperature_max IS NOT NULL)::int AS reefer
+FROM active_weather
+LEFT JOIN risky_shipments rs ON true
+GROUP BY active_weather.weather`
+
 func (p *Provider) getAtRisk(
 	ctx context.Context,
 	orgID, buID pulid.ID,
@@ -618,91 +755,28 @@ func (p *Provider) getAtRisk(
 			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
 		}
 
-		var result struct {
-			Count            int `bun:"count"`
-			CreatedToday     int `bun:"created_today"`
-			CreatedYesterday int `bun:"created_yesterday"`
-			ETASlip          int `bun:"eta_slip"`
-			Weather          int `bun:"weather"`
-			Reefer           int `bun:"reefer"`
-		}
-
-		err = p.db.DBForContext(ctx).NewRaw(
-			`WITH risky_shipments AS (
-			SELECT DISTINCT sp.id, sp.created_at, sp.temperature_min, sp.temperature_max,
-				EXISTS (
-					SELECT 1
-					FROM stop_etas seta
-					WHERE seta.shipment_id = sp.id
-						AND seta.organization_id = sp.organization_id
-						AND seta.business_unit_id = sp.business_unit_id
-						AND seta.verdict IN (?)
-						AND NOT seta.arrived
-				) AS eta_slipping
-			FROM shipments sp
-			LEFT JOIN shipment_moves sm
-				ON sm.shipment_id = sp.id
-				AND sm.organization_id = sp.organization_id
-				AND sm.business_unit_id = sp.business_unit_id
-			LEFT JOIN stops stp
-				ON stp.shipment_move_id = sm.id
-				AND stp.organization_id = sm.organization_id
-				AND stp.business_unit_id = sm.business_unit_id
-			WHERE sp.organization_id = ?
-				AND sp.business_unit_id = ?
-				AND sp.status IN (?)
-				AND (
-					sp.status = ?
-					OR (
-						stp.status != ?
-						AND stp.scheduled_window_start > 0
-						AND stp.scheduled_window_start < ?
-					)
-					OR EXISTS (
-						SELECT 1
-						FROM stop_etas seta
-						WHERE seta.shipment_id = sp.id
-							AND seta.organization_id = sp.organization_id
-							AND seta.business_unit_id = sp.business_unit_id
-							AND seta.verdict IN (?)
-							AND NOT seta.arrived
-					)
-				)
-		),
-		active_weather AS (
-			SELECT COUNT(*)::int AS weather
-			FROM weather_alerts wa
-			WHERE wa.organization_id = ?
-				AND wa.business_unit_id = ?
-				AND wa.expired_at IS NULL
-				AND (wa.expires IS NULL OR wa.expires >= ?)
-		)
-		SELECT
-			COUNT(*)::int AS count,
-			COUNT(*) FILTER (WHERE rs.created_at >= ? AND rs.created_at <= ?)::int AS created_today,
-			COUNT(*) FILTER (WHERE rs.created_at >= ? AND rs.created_at <= ?)::int AS created_yesterday,
-			COUNT(*) FILTER (WHERE rs.eta_slipping)::int AS eta_slip,
-			active_weather.weather,
-			COUNT(*) FILTER (WHERE rs.temperature_min IS NOT NULL OR rs.temperature_max IS NOT NULL)::int AS reefer
-		FROM active_weather
-		LEFT JOIN risky_shipments rs ON true
-		GROUP BY active_weather.weather`,
-			bun.List(etaAttentionVerdicts),
-			orgID,
-			buID,
-			bun.List(activeStatuses),
-			shipment.StatusDelayed,
-			shipment.StopStatusCompleted,
-			window.Now,
-			bun.List(etaAttentionVerdicts),
-			orgID,
-			buID,
+		result, err := queryOne[struct {
+			Count            int `db:"count"`
+			CreatedToday     int `db:"created_today"`
+			CreatedYesterday int `db:"created_yesterday"`
+			ETASlip          int `db:"eta_slip"`
+			Weather          int `db:"weather"`
+			Reefer           int `db:"reefer"`
+		}](
+			ctx,
+			p.db.Keel(ctx),
+			atRiskSQL,
+			orgID.String(),
+			buID.String(),
+			statusList(etaAttentionVerdicts),
+			statusList(activeStatuses),
+			string(shipment.StatusDelayed),
+			string(shipment.StopStatusCompleted),
 			window.Now,
 			window.TodayStart,
-			window.Now,
 			window.YesterdayStart,
 			window.YesterdayEnd,
-		).Scan(ctx, &result)
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -719,6 +793,34 @@ func (p *Provider) getAtRisk(
 
 var etaAttentionVerdicts = []stopeta.Verdict{stopeta.VerdictAtRisk, stopeta.VerdictLate}
 
+const unassignedSQL = `WITH unassigned_shipments AS (
+	SELECT DISTINCT sp.id, sp.created_at, sp.total_charge_amount
+	FROM shipments sp
+	WHERE sp.organization_id = $1
+		AND sp.business_unit_id = $2
+		AND sp.status = ANY($3)
+		AND NOT EXISTS (
+			SELECT 1
+			FROM shipment_moves sm
+			INNER JOIN assignments a
+				ON a.shipment_move_id = sm.id
+				AND a.organization_id = sm.organization_id
+				AND a.business_unit_id = sm.business_unit_id
+				AND a.archived_at IS NULL
+				AND a.status != $4
+			WHERE sm.shipment_id = sp.id
+				AND sm.organization_id = sp.organization_id
+				AND sm.business_unit_id = sp.business_unit_id
+				AND sm.status != $5
+		)
+)
+SELECT
+	COUNT(*)::int AS count,
+	COUNT(*) FILTER (WHERE created_at >= $6 AND created_at <= $7)::int AS created_today,
+	COUNT(*) FILTER (WHERE created_at >= $8 AND created_at <= $9)::int AS created_yesterday,
+	COALESCE(SUM(total_charge_amount), 0)::float8 AS revenue_waiting
+FROM unassigned_shipments`
+
 func (p *Provider) getUnassigned(
 	ctx context.Context,
 	orgID, buID pulid.ID,
@@ -730,51 +832,25 @@ func (p *Provider) getUnassigned(
 			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
 		}
 
-		var result struct {
-			Count            int     `bun:"count"`
-			CreatedToday     int     `bun:"created_today"`
-			CreatedYesterday int     `bun:"created_yesterday"`
-			RevenueWaiting   float64 `bun:"revenue_waiting"`
-		}
-
-		err = p.db.DBForContext(ctx).NewRaw(
-			`WITH unassigned_shipments AS (
-			SELECT DISTINCT sp.id, sp.created_at, sp.total_charge_amount
-			FROM shipments sp
-			WHERE sp.organization_id = ?
-				AND sp.business_unit_id = ?
-				AND sp.status IN (?)
-				AND NOT EXISTS (
-					SELECT 1
-					FROM shipment_moves sm
-					INNER JOIN assignments a
-						ON a.shipment_move_id = sm.id
-						AND a.organization_id = sm.organization_id
-						AND a.business_unit_id = sm.business_unit_id
-						AND a.archived_at IS NULL
-						AND a.status != ?
-					WHERE sm.shipment_id = sp.id
-						AND sm.organization_id = sp.organization_id
-						AND sm.business_unit_id = sp.business_unit_id
-						AND sm.status != ?
-				)
-		)
-		SELECT
-			COUNT(*)::int AS count,
-			COUNT(*) FILTER (WHERE created_at >= ? AND created_at <= ?)::int AS created_today,
-			COUNT(*) FILTER (WHERE created_at >= ? AND created_at <= ?)::int AS created_yesterday,
-			COALESCE(SUM(total_charge_amount), 0)::float8 AS revenue_waiting
-		FROM unassigned_shipments`,
-			orgID,
-			buID,
-			bun.List(activeStatuses),
-			shipment.AssignmentStatusCanceled,
-			shipment.MoveStatusCanceled,
+		result, err := queryOne[struct {
+			Count            int     `db:"count"`
+			CreatedToday     int     `db:"created_today"`
+			CreatedYesterday int     `db:"created_yesterday"`
+			RevenueWaiting   float64 `db:"revenue_waiting"`
+		}](
+			ctx,
+			p.db.Keel(ctx),
+			unassignedSQL,
+			orgID.String(),
+			buID.String(),
+			statusList(activeStatuses),
+			string(shipment.AssignmentStatusCanceled),
+			string(shipment.MoveStatusCanceled),
 			window.TodayStart,
 			window.Now,
 			window.YesterdayStart,
 			window.YesterdayEnd,
-		).Scan(ctx, &result)
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -787,6 +863,39 @@ func (p *Provider) getUnassigned(
 	})
 }
 
+const readyToDispatchSQL = `WITH active_shipments AS (
+	SELECT sp.id, sp.status, sp.created_at
+	FROM shipments sp
+	WHERE sp.organization_id = $1
+		AND sp.business_unit_id = $2
+		AND sp.status = ANY($3)
+),
+shipment_assignments AS (
+	SELECT DISTINCT sp.id, a.primary_worker_id
+	FROM active_shipments sp
+	INNER JOIN shipment_moves sm
+		ON sm.shipment_id = sp.id
+		AND sm.organization_id = $1
+		AND sm.business_unit_id = $2
+		AND sm.status != $4
+	INNER JOIN assignments a
+		ON a.shipment_move_id = sm.id
+		AND a.organization_id = sm.organization_id
+		AND a.business_unit_id = sm.business_unit_id
+		AND a.archived_at IS NULL
+		AND a.status != $5
+)
+SELECT
+	COUNT(*) FILTER (WHERE ash.status = $6 AND sa.id IS NOT NULL)::int AS count,
+	COUNT(*) FILTER (WHERE ash.status = $6 AND sa.id IS NOT NULL
+		AND ash.created_at >= $7 AND ash.created_at <= $8)::int AS created_today,
+	COUNT(*) FILTER (WHERE ash.status = $6 AND sa.id IS NOT NULL
+		AND ash.created_at >= $9 AND ash.created_at < $10)::int AS created_yesterday,
+	COUNT(*) FILTER (WHERE sa.id IS NULL)::int AS unassigned,
+	COUNT(*) FILTER (WHERE sa.primary_worker_id IS NOT NULL)::int AS driver_ready
+FROM active_shipments ash
+LEFT JOIN shipment_assignments sa ON sa.id = ash.id`
+
 func (p *Provider) getReadyToDispatch(
 	ctx context.Context,
 	orgID, buID pulid.ID,
@@ -798,60 +907,27 @@ func (p *Provider) getReadyToDispatch(
 			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
 		}
 
-		var result struct {
-			Count            int `bun:"count"`
-			CreatedToday     int `bun:"created_today"`
-			CreatedYesterday int `bun:"created_yesterday"`
-			Unassigned       int `bun:"unassigned"`
-			DriverReady      int `bun:"driver_ready"`
-		}
-
-		err = p.db.DBForContext(ctx).NewRaw(
-			`WITH active_shipments AS (
-			SELECT sp.id, sp.status, sp.created_at
-			FROM shipments sp
-			WHERE sp.organization_id = ?
-				AND sp.business_unit_id = ?
-				AND sp.status IN (?)
-		),
-		shipment_assignments AS (
-			SELECT DISTINCT sp.id, a.primary_worker_id
-			FROM active_shipments sp
-			INNER JOIN shipment_moves sm
-				ON sm.shipment_id = sp.id
-				AND sm.organization_id = ?
-				AND sm.business_unit_id = ?
-				AND sm.status != ?
-			INNER JOIN assignments a
-				ON a.shipment_move_id = sm.id
-				AND a.organization_id = sm.organization_id
-				AND a.business_unit_id = sm.business_unit_id
-				AND a.archived_at IS NULL
-				AND a.status != ?
-		)
-		SELECT
-			COUNT(*) FILTER (WHERE ash.status = ? AND sa.id IS NOT NULL)::int AS count,
-			COUNT(*) FILTER (WHERE ash.status = ? AND sa.id IS NOT NULL AND ash.created_at >= ? AND ash.created_at <= ?)::int AS created_today,
-			COUNT(*) FILTER (WHERE ash.status = ? AND sa.id IS NOT NULL AND ash.created_at >= ? AND ash.created_at < ?)::int AS created_yesterday,
-			COUNT(*) FILTER (WHERE sa.id IS NULL)::int AS unassigned,
-			COUNT(*) FILTER (WHERE sa.primary_worker_id IS NOT NULL)::int AS driver_ready
-		FROM active_shipments ash
-		LEFT JOIN shipment_assignments sa ON sa.id = ash.id`,
-			orgID,
-			buID,
-			bun.List(activeStatuses),
-			orgID,
-			buID,
-			shipment.MoveStatusCanceled,
-			shipment.AssignmentStatusCanceled,
-			shipment.StatusAssigned,
-			shipment.StatusAssigned,
+		result, err := queryOne[struct {
+			Count            int `db:"count"`
+			CreatedToday     int `db:"created_today"`
+			CreatedYesterday int `db:"created_yesterday"`
+			Unassigned       int `db:"unassigned"`
+			DriverReady      int `db:"driver_ready"`
+		}](
+			ctx,
+			p.db.Keel(ctx),
+			readyToDispatchSQL,
+			orgID.String(),
+			buID.String(),
+			statusList(activeStatuses),
+			string(shipment.MoveStatusCanceled),
+			string(shipment.AssignmentStatusCanceled),
+			string(shipment.StatusAssigned),
 			window.TodayStart,
 			window.Now,
-			shipment.StatusAssigned,
 			window.YesterdayStart,
 			window.YesterdayEnd,
-		).Scan(ctx, &result)
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -865,60 +941,107 @@ func (p *Provider) getReadyToDispatch(
 	})
 }
 
+const detentionWatchlistSQL = `SELECT
+	sp.pro_number AS shipment_id,
+	cus.name AS customer,
+	($1 - stp.actual_arrival)::bigint AS dwell_seconds
+FROM stops stp
+INNER JOIN shipment_moves sm
+	ON sm.id = stp.shipment_move_id
+	AND sm.organization_id = stp.organization_id
+	AND sm.business_unit_id = stp.business_unit_id
+INNER JOIN shipments sp
+	ON sp.id = sm.shipment_id
+	AND sp.organization_id = sm.organization_id
+	AND sp.business_unit_id = sm.business_unit_id
+INNER JOIN customers cus
+	ON cus.id = sp.customer_id
+	AND cus.organization_id = sp.organization_id
+	AND cus.business_unit_id = sp.business_unit_id
+WHERE stp.organization_id = $2
+	AND stp.business_unit_id = $3
+	AND stp.status != $4
+	AND stp.actual_arrival IS NOT NULL
+	AND stp.actual_arrival > 0
+	AND (stp.actual_departure IS NULL OR stp.actual_departure = 0)
+	AND ($1 - stp.actual_arrival) > $5
+ORDER BY dwell_seconds DESC, sp.pro_number ASC
+LIMIT 10`
+
+type detentionRow struct {
+	ShipmentID   string  `db:"shipment_id"`
+	Customer     *string `db:"customer"`
+	DwellSeconds int64   `db:"dwell_seconds"`
+}
+
 func (p *Provider) getDetentionWatchlist(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 ) (*DetentionWatchlistCard, error) {
 	return dbtx.Write(ctx, p.db, func(ctx context.Context) (*DetentionWatchlistCard, error) {
-		nowUnix := timeutils.NowUnix()
-
-		rows := make([]*DetentionWatchlistItem, 0, 10)
-		err := p.db.DBForContext(ctx).NewRaw(
-			`SELECT
-			sp.pro_number AS shipment_id,
-			cus.name AS customer,
-			(? - stp.actual_arrival)::bigint AS dwell_seconds
-		FROM stops stp
-		INNER JOIN shipment_moves sm
-			ON sm.id = stp.shipment_move_id
-			AND sm.organization_id = stp.organization_id
-			AND sm.business_unit_id = stp.business_unit_id
-		INNER JOIN shipments sp
-			ON sp.id = sm.shipment_id
-			AND sp.organization_id = sm.organization_id
-			AND sp.business_unit_id = sm.business_unit_id
-		INNER JOIN customers cus
-			ON cus.id = sp.customer_id
-			AND cus.organization_id = sp.organization_id
-			AND cus.business_unit_id = sp.business_unit_id
-		WHERE stp.organization_id = ?
-			AND stp.business_unit_id = ?
-			AND stp.status != ?
-			AND stp.actual_arrival IS NOT NULL
-			AND stp.actual_arrival > 0
-			AND (stp.actual_departure IS NULL OR stp.actual_departure = 0)
-			AND (? - stp.actual_arrival) > ?
-		ORDER BY dwell_seconds DESC, sp.pro_number ASC
-		LIMIT 10`,
-			nowUnix,
-			orgID,
-			buID,
-			shipment.StopStatusCanceled,
-			nowUnix,
+		rows, err := queryAll[detentionRow](
+			ctx,
+			p.db.Keel(ctx),
+			detentionWatchlistSQL,
+			timeutils.NowUnix(),
+			orgID.String(),
+			buID.String(),
+			string(shipment.StopStatusCanceled),
 			int64(2*60*60),
-		).Scan(ctx, &rows)
+		)
 		if err != nil {
 			return nil, err
 		}
 
+		items := make([]*DetentionWatchlistItem, 0, len(rows))
 		for _, row := range rows {
-			row.DwellLabel = formatDwell(row.DwellSeconds)
-			row.Tone = detentionTone(row.DwellSeconds)
+			items = append(items, &DetentionWatchlistItem{
+				ShipmentID:   row.ShipmentID,
+				Customer:     row.Customer,
+				DwellSeconds: row.DwellSeconds,
+				DwellLabel:   formatDwell(row.DwellSeconds),
+				Tone:         detentionTone(row.DwellSeconds),
+			})
 		}
 
-		return &DetentionWatchlistCard{Items: rows}, nil
+		return &DetentionWatchlistCard{Items: items}, nil
 	})
 }
+
+const customerMixSQL = `WITH customer_revenue AS (
+	SELECT
+		sp.customer_id,
+		COALESCE(cus.name, '') AS name,
+		COALESCE(SUM(sp.total_charge_amount) FILTER (WHERE sp.created_at >= $1), 0)::float8 AS revenue,
+		COUNT(*) FILTER (WHERE sp.created_at >= $1)::int AS loads,
+		COALESCE(SUM(sp.total_charge_amount) FILTER (WHERE sp.created_at >= $2 AND sp.created_at < $1), 0)::float8 AS previous_revenue
+	FROM shipments sp
+	INNER JOIN customers cus
+		ON cus.id = sp.customer_id
+		AND cus.organization_id = sp.organization_id
+		AND cus.business_unit_id = sp.business_unit_id
+	WHERE sp.organization_id = $3
+		AND sp.business_unit_id = $4
+		AND sp.created_at >= $2
+		AND sp.created_at <= $5
+		AND sp.status != $6
+	GROUP BY sp.customer_id, cus.name
+),
+ranked_customers AS (
+	SELECT
+		customer_id,
+		name,
+		revenue,
+		loads,
+		previous_revenue,
+		SUM(revenue) OVER ()::float8 AS total_revenue
+	FROM customer_revenue
+	WHERE revenue > 0
+)
+SELECT customer_id, name, revenue, loads, previous_revenue, total_revenue
+FROM ranked_customers
+ORDER BY revenue DESC
+LIMIT 5`
 
 func (p *Provider) getCustomerMix(
 	ctx context.Context,
@@ -929,52 +1052,17 @@ func (p *Provider) getCustomerMix(
 		currentStart := now - int64(customerMixWindowDays)*24*60*60
 		previousStart := currentStart - int64(customerMixWindowDays)*24*60*60
 
-		rows := make([]customerMixRow, 0)
-		err := p.db.DBForContext(ctx).NewRaw(
-			`WITH customer_revenue AS (
-			SELECT
-				sp.customer_id,
-				cus.name,
-				COALESCE(SUM(sp.total_charge_amount) FILTER (WHERE sp.created_at >= ?), 0)::float8 AS revenue,
-				COUNT(*) FILTER (WHERE sp.created_at >= ?)::int AS loads,
-				COALESCE(SUM(sp.total_charge_amount) FILTER (WHERE sp.created_at >= ? AND sp.created_at < ?), 0)::float8 AS previous_revenue
-			FROM shipments sp
-			INNER JOIN customers cus
-				ON cus.id = sp.customer_id
-				AND cus.organization_id = sp.organization_id
-				AND cus.business_unit_id = sp.business_unit_id
-			WHERE sp.organization_id = ?
-				AND sp.business_unit_id = ?
-				AND sp.created_at >= ?
-				AND sp.created_at <= ?
-				AND sp.status != ?
-			GROUP BY sp.customer_id, cus.name
-		),
-		ranked_customers AS (
-			SELECT
-				customer_id,
-				name,
-				revenue,
-				loads,
-				previous_revenue,
-				SUM(revenue) OVER ()::float8 AS total_revenue
-			FROM customer_revenue
-			WHERE revenue > 0
-		)
-		SELECT customer_id, name, revenue, loads, previous_revenue, total_revenue
-		FROM ranked_customers
-		ORDER BY revenue DESC
-		LIMIT 5`,
-			currentStart,
+		rows, err := queryAll[customerMixRow](
+			ctx,
+			p.db.Keel(ctx),
+			customerMixSQL,
 			currentStart,
 			previousStart,
-			currentStart,
-			orgID,
-			buID,
-			previousStart,
+			orgID.String(),
+			buID.String(),
 			now,
-			shipment.StatusCanceled,
-		).Scan(ctx, &rows)
+			string(shipment.StatusCanceled),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -983,7 +1071,75 @@ func (p *Provider) getCustomerMix(
 	})
 }
 
-func (p *Provider) getTomorrowsPickups( //nolint:funlen // legacy workflow
+const tomorrowsPickupsSQL = `SELECT
+	sp.id AS shipment_id,
+	sp.pro_number,
+	stp.scheduled_window_start AS pickup_window_start,
+	COALESCE(cus.name, '') AS customer,
+	COALESCE(NULLIF(pickup_loc.code, ''), NULLIF(pickup_loc.city, ''), pickup_loc.name, '') AS origin,
+	COALESCE(NULLIF(dest_loc.code, ''), NULLIF(dest_loc.city, ''), dest_loc.name, '') AS destination,
+	COALESCE(NULLIF(CONCAT_WS(' ', NULLIF(wrk.first_name, ''), NULLIF(wrk.last_name, '')), ''), '') AS driver,
+	sp.status AS shipment_status,
+	(a.primary_worker_id IS NOT NULL) AS has_primary_worker
+FROM stops stp
+INNER JOIN shipment_moves sm
+	ON sm.id = stp.shipment_move_id
+	AND sm.organization_id = stp.organization_id
+	AND sm.business_unit_id = stp.business_unit_id
+INNER JOIN shipments sp
+	ON sp.id = sm.shipment_id
+	AND sp.organization_id = sm.organization_id
+	AND sp.business_unit_id = sm.business_unit_id
+INNER JOIN customers cus
+	ON cus.id = sp.customer_id
+	AND cus.organization_id = sp.organization_id
+	AND cus.business_unit_id = sp.business_unit_id
+INNER JOIN locations pickup_loc
+	ON pickup_loc.id = stp.location_id
+	AND pickup_loc.organization_id = stp.organization_id
+	AND pickup_loc.business_unit_id = stp.business_unit_id
+LEFT JOIN assignments a
+	ON a.shipment_move_id = sm.id
+	AND a.organization_id = sm.organization_id
+	AND a.business_unit_id = sm.business_unit_id
+	AND a.archived_at IS NULL
+	AND a.status != $1
+LEFT JOIN workers wrk
+	ON wrk.id = a.primary_worker_id
+	AND wrk.organization_id = a.organization_id
+	AND wrk.business_unit_id = a.business_unit_id
+LEFT JOIN LATERAL (
+	SELECT loc_dest.code, loc_dest.city, loc_dest.name
+	FROM shipment_moves sm_dest
+	INNER JOIN stops stp_dest
+		ON stp_dest.shipment_move_id = sm_dest.id
+		AND stp_dest.organization_id = sm_dest.organization_id
+		AND stp_dest.business_unit_id = sm_dest.business_unit_id
+	INNER JOIN locations loc_dest
+		ON loc_dest.id = stp_dest.location_id
+		AND loc_dest.organization_id = stp_dest.organization_id
+		AND loc_dest.business_unit_id = stp_dest.business_unit_id
+	WHERE sm_dest.shipment_id = sp.id
+		AND sm_dest.organization_id = sp.organization_id
+		AND sm_dest.business_unit_id = sp.business_unit_id
+		AND stp_dest.status != $2
+		AND stp_dest.type = ANY($3)
+	ORDER BY sm_dest.sequence DESC, stp_dest.sequence DESC
+	LIMIT 1
+) dest_loc ON true
+WHERE stp.organization_id = $4
+	AND stp.business_unit_id = $5
+	AND stp.type = ANY($6)
+	AND stp.status != $2
+	AND sm.status != $7
+	AND sp.status != $8
+	AND stp.scheduled_window_start >= $9
+	AND stp.scheduled_window_start < $10
+ORDER BY stp.scheduled_window_start ASC, sp.pro_number ASC
+LIMIT $11
+OFFSET $12`
+
+func (p *Provider) getTomorrowsPickups(
 	ctx context.Context,
 	req tomorrowsPickupsRequest,
 ) (*TomorrowsPickupsCard, error) {
@@ -1012,91 +1168,25 @@ func (p *Provider) getTomorrowsPickups( //nolint:funlen // legacy workflow
 		)
 		tomorrowEnd := tomorrowStart.AddDate(0, 0, 1)
 
-		rows := make([]tomorrowPickupRow, 0)
-		err = p.db.DBForContext(ctx).NewRaw(
-			`SELECT
-			sp.id AS shipment_id,
-			sp.pro_number,
-			stp.scheduled_window_start AS pickup_window_start,
-			cus.name AS customer,
-			COALESCE(NULLIF(pickup_loc.code, ''), NULLIF(pickup_loc.city, ''), pickup_loc.name) AS origin,
-			COALESCE(NULLIF(dest_loc.code, ''), NULLIF(dest_loc.city, ''), dest_loc.name, '') AS destination,
-			COALESCE(NULLIF(CONCAT_WS(' ', NULLIF(wrk.first_name, ''), NULLIF(wrk.last_name, '')), ''), '') AS driver,
-			sp.status AS shipment_status,
-			(a.primary_worker_id IS NOT NULL) AS has_primary_worker
-		FROM stops stp
-		INNER JOIN shipment_moves sm
-			ON sm.id = stp.shipment_move_id
-			AND sm.organization_id = stp.organization_id
-			AND sm.business_unit_id = stp.business_unit_id
-		INNER JOIN shipments sp
-			ON sp.id = sm.shipment_id
-			AND sp.organization_id = sm.organization_id
-			AND sp.business_unit_id = sm.business_unit_id
-		INNER JOIN customers cus
-			ON cus.id = sp.customer_id
-			AND cus.organization_id = sp.organization_id
-			AND cus.business_unit_id = sp.business_unit_id
-		INNER JOIN locations pickup_loc
-			ON pickup_loc.id = stp.location_id
-			AND pickup_loc.organization_id = stp.organization_id
-			AND pickup_loc.business_unit_id = stp.business_unit_id
-		LEFT JOIN assignments a
-			ON a.shipment_move_id = sm.id
-			AND a.organization_id = sm.organization_id
-			AND a.business_unit_id = sm.business_unit_id
-			AND a.archived_at IS NULL
-			AND a.status != ?
-		LEFT JOIN workers wrk
-			ON wrk.id = a.primary_worker_id
-			AND wrk.organization_id = a.organization_id
-			AND wrk.business_unit_id = a.business_unit_id
-		LEFT JOIN LATERAL (
-			SELECT loc_dest.code, loc_dest.city, loc_dest.name
-			FROM shipment_moves sm_dest
-			INNER JOIN stops stp_dest
-				ON stp_dest.shipment_move_id = sm_dest.id
-				AND stp_dest.organization_id = sm_dest.organization_id
-				AND stp_dest.business_unit_id = sm_dest.business_unit_id
-			INNER JOIN locations loc_dest
-				ON loc_dest.id = stp_dest.location_id
-				AND loc_dest.organization_id = stp_dest.organization_id
-				AND loc_dest.business_unit_id = stp_dest.business_unit_id
-			WHERE sm_dest.shipment_id = sp.id
-				AND sm_dest.organization_id = sp.organization_id
-				AND sm_dest.business_unit_id = sp.business_unit_id
-				AND stp_dest.status != ?
-				AND stp_dest.type IN (?, ?)
-			ORDER BY sm_dest.sequence DESC, stp_dest.sequence DESC
-			LIMIT 1
-		) dest_loc ON true
-		WHERE stp.organization_id = ?
-			AND stp.business_unit_id = ?
-			AND stp.type IN (?, ?)
-			AND stp.status != ?
-			AND sm.status != ?
-			AND sp.status != ?
-			AND stp.scheduled_window_start >= ?
-			AND stp.scheduled_window_start < ?
-		ORDER BY stp.scheduled_window_start ASC, sp.pro_number ASC
-		LIMIT ?
-		OFFSET ?`,
-			shipment.AssignmentStatusCanceled,
-			shipment.StopStatusCanceled,
-			shipment.StopTypeDelivery,
-			shipment.StopTypeSplitDelivery,
-			req.orgID,
-			req.buID,
-			shipment.StopTypePickup,
-			shipment.StopTypeSplitPickup,
-			shipment.StopStatusCanceled,
-			shipment.MoveStatusCanceled,
-			shipment.StatusCanceled,
+		rows, err := queryAll[tomorrowPickupRow](
+			ctx,
+			p.db.Keel(ctx),
+			tomorrowsPickupsSQL,
+			string(shipment.AssignmentStatusCanceled),
+			string(shipment.StopStatusCanceled),
+			statusList(
+				[]shipment.StopType{shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery},
+			),
+			req.orgID.String(),
+			req.buID.String(),
+			statusList([]shipment.StopType{shipment.StopTypePickup, shipment.StopTypeSplitPickup}),
+			string(shipment.MoveStatusCanceled),
+			string(shipment.StatusCanceled),
 			tomorrowStart.Unix(),
 			tomorrowEnd.Unix(),
-			limit,
-			req.offset,
-		).Scan(ctx, &rows)
+			int64(limit),
+			int64(req.offset),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -1107,7 +1197,7 @@ func (p *Provider) getTomorrowsPickups( //nolint:funlen // legacy workflow
 
 func (p *Provider) getLaneHeatmap(
 	ctx context.Context,
-	orgID, buID pulid.ID,
+	_, _ pulid.ID,
 	windowDays int,
 ) (*LaneHeatmapCard, error) {
 	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*LaneHeatmapCard, error) {
@@ -1118,17 +1208,18 @@ func (p *Provider) getLaneHeatmap(
 		now := timeutils.NowUnix()
 		windowStart := now - int64(windowDays)*24*60*60
 
-		rows := make([]laneStateRow, 0)
-		cols := shipmentcol.ShipmentColumns
-		err := lanequery.New(p.db.DBForContext(ctx), lanequery.Options{
-			Tenant: &pagination.TenantInfo{OrgID: orgID, BuID: buID},
-			ShipmentFilter: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(cols.CreatedAt.Gte(), windowStart).
-					Where(cols.CreatedAt.Lte(), now).
-					Where(cols.Status.Ne(), shipment.StatusCanceled)
-			},
-		}).Scan(ctx, &rows)
+		s := shipmentdb.Shipments
+		rows, err := keel.Into[laneStateRow](
+			ctx,
+			p.db.Keel(ctx),
+			lanequery.New(lanequery.Options{
+				Shipments: []keel.Pred{
+					s.CreatedAt.Gte(windowStart),
+					s.CreatedAt.Lte(now),
+					s.Status.Ne(shipment.StatusCanceled),
+				},
+			}),
+		)
 		if err != nil {
 			return nil, err
 		}

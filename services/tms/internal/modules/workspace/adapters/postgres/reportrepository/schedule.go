@@ -3,18 +3,19 @@ package reportrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var scheduleErrors = dberror.Mapping{Entity: "ReportSchedule"}
 
 type ScheduleParams struct {
 	fx.In
@@ -40,7 +41,7 @@ func (r *scheduleRepository) Create(
 	entity *report.ReportSchedule,
 ) (*report.ReportSchedule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*report.ReportSchedule, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+		if err := reportdb.ReportSchedules.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create report schedule", zap.Error(err))
 			return nil, err
 		}
@@ -54,29 +55,13 @@ func (r *scheduleRepository) Update(
 	entity *report.ReportSchedule,
 ) (*report.ReportSchedule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*report.ReportSchedule, error) {
-		log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
-
-		ov := entity.Version
-		entity.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(reportcol.ReportScheduleColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update report schedule", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			result,
-			"ReportSchedule",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+		if err := reportdb.ReportSchedules.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update report schedule",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, scheduleErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -88,17 +73,9 @@ func (r *scheduleRepository) GetByID(
 	req *reportports.GetReportScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportSchedule, error) {
-		entity := new(report.ReportSchedule)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return reportcol.ReportScheduleScopeTenant(sq, req.TenantInfo).
-					Where(reportcol.ReportScheduleColumns.ID.Eq(), req.ScheduleID)
-			}).
-			Scan(ctx)
+		entity, err := reportdb.ReportSchedules.Get(ctx, r.db.Keel(ctx), req.ScheduleID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "ReportSchedule")
+			return nil, scheduleErrors.Map(err, req.ScheduleID.String())
 		}
 
 		return entity, nil
@@ -110,41 +87,28 @@ func (r *scheduleRepository) List(
 	req *reportports.ListReportSchedulesRequest,
 ) ([]*report.ReportSchedule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportSchedule, error) {
-		cols := reportcol.ReportScheduleColumns
-		definitions := reportcol.ReportDefinitionColumns
-		db := r.db.DBForContext(ctx)
+		s := reportdb.ReportSchedules
+		d := reportdb.ReportDefinitions
 
-		ownedReport := db.NewSelect().
-			Model((*report.ReportDefinition)(nil)).
-			ColumnExpr("1").
-			Where(definitions.ID.EqColumn(cols.DefinitionID)).
-			Where(definitions.OrganizationID.EqColumn(cols.OrganizationID)).
-			Where(definitions.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-			Where(definitions.OwnerID.Eq(), req.VisibleTo)
+		ownedReport := keel.Exists(d.Pick(d.ID).Where(
+			d.ID.EqCol(s.DefinitionID),
+			d.OwnerID.Eq(req.VisibleTo),
+		))
 
-		entities := make([]*report.ReportSchedule, 0)
-		q := db.NewSelect().
-			Model(&entities).
-			Apply(reportcol.ReportScheduleApplyTenant(req.TenantInfo)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where(cols.RunAsID.Eq(), req.VisibleTo).
-					WhereOr("EXISTS (?)", ownedReport)
-			})
-
-		if !req.DefinitionID.IsNil() {
-			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID)
-		}
-		if req.EnabledOnly {
-			q = q.Where(cols.Enabled.IsTrue())
-		}
+		q := s.Where(
+			keel.Or(s.RunAsID.Eq(req.VisibleTo), ownedReport),
+			keel.When(!req.DefinitionID.IsNil(), s.DefinitionID.Eq(req.DefinitionID)),
+			keel.When(req.EnabledOnly, s.Enabled.IsTrue()),
+		).Order(s.CreatedAt.Desc())
 		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
+			q = q.Limit(req.Limit)
 		}
 		if req.Offset > 0 {
-			q = q.Offset(int64(req.Offset))
+			q = q.Offset(req.Offset)
 		}
 
-		if err := q.Order(cols.CreatedAt.OrderDesc()).Scan(ctx); err != nil {
+		entities, err := q.All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list report schedules", zap.Error(err))
 			return nil, err
 		}
@@ -157,13 +121,10 @@ func (r *scheduleRepository) ListAllEnabled(
 	ctx context.Context,
 ) ([]*report.ReportSchedule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportSchedule, error) {
-		entities := make([]*report.ReportSchedule, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(reportcol.ReportScheduleColumns.Enabled.IsTrue()).
-			Order(reportcol.ReportScheduleColumns.CreatedAt.OrderAsc()).
-			Scan(ctx)
+		s := reportdb.ReportSchedules
+		entities, err := s.Where(s.Enabled.IsTrue()).
+			Order(s.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list enabled report schedules", zap.Error(err))
 			return nil, err
@@ -178,20 +139,14 @@ func (r *scheduleRepository) Delete(
 	req *reportports.GetReportScheduleRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*report.ReportSchedule)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return reportcol.ReportScheduleScopeTenantDelete(dq, req.TenantInfo).
-					Where(reportcol.ReportScheduleColumns.ID.Eq(), req.ScheduleID)
-			}).
-			Exec(ctx)
+		s := reportdb.ReportSchedules
+		rows, err := s.Where(s.ID.Eq(req.ScheduleID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to delete report schedule", zap.Error(err))
 			return err
 		}
 
-		return dberror.CheckRowsAffected(result, "ReportSchedule", req.ScheduleID.String())
+		return dberror.CheckAffected(rows, "ReportSchedule", req.ScheduleID.String())
 	})
 }
 
@@ -202,22 +157,16 @@ func (r *scheduleRepository) ListDue(
 ) ([]*report.ReportSchedule, error) {
 	ctx = dbscope.WithSystem(ctx, "list report schedules due across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportSchedule, error) {
-		cols := reportcol.ReportScheduleColumns
-
-		entities := make([]*report.ReportSchedule, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.Enabled.IsTrue()).
-			Where(cols.NextRunAt.IsNotNull()).
-			Where(cols.NextRunAt.Lte(), nowUnix).
-			Order(cols.NextRunAt.OrderAsc())
-
+		s := reportdb.ReportSchedules
+		q := s.AllTenants().
+			Where(s.Enabled.IsTrue(), s.NextRunAt.IsNotNull(), s.NextRunAt.Lte(nowUnix)).
+			Order(s.NextRunAt.Asc())
 		if limit > 0 {
-			q = q.Limit(int64(limit))
+			q = q.Limit(limit)
 		}
 
-		if err := q.Scan(ctx); err != nil {
+		entities, err := q.All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list due report schedules", zap.Error(err))
 			return nil, err
 		}

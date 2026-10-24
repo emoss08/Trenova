@@ -40,22 +40,23 @@ var dLQEntriesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{8, 9},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 11},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
-	IDPrefix:   "dlq_",
-	New:        newDLQEntry,
-	NewN:       newNDLQEntry,
-	Size:       unsafe.Sizeof(audit.DLQEntry{}),
-	Ptr:        ptrDLQEntry,
-	Value:      valueDLQEntry,
+	PK:           []int32{0},
+	Tenant:       []int32{8, 9},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 11},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   10,
+	AutoUpdate:   11,
+	IDPrefix:     "dlq_",
+	New:          newDLQEntry,
+	NewN:         newNDLQEntry,
+	Size:         unsafe.Sizeof(audit.DLQEntry{}),
+	Ptr:          ptrDLQEntry,
+	Value:        valueDLQEntry,
+	BeforeCreate: beforeCreateDLQEntry,
 }
 
 var dLQEntriesRef = keel.Ref{Table: &dLQEntriesTable}
@@ -203,6 +204,10 @@ func valueDLQEntry(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateDLQEntry(ctx context.Context, p unsafe.Pointer) error {
+	return (*audit.DLQEntry)(p).BeforeCreate(ctx)
+}
+
 // entriesTable is the schema of audit.Entry.
 var entriesTable = schema.Table{
 	Name:   "audit_entries",
@@ -239,23 +244,24 @@ var entriesTable = schema.Table{
 		{Name: "User", Alias: "u", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `User`, JSON: `user`},
 		{Name: "APIKey", Alias: "ak", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `API Key`, JSON: `apiKey`},
 	},
-	PK:         []int32{0, 5, 6},
-	Tenant:     []int32{5, 6},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "ae_",
-	New:        newEntry,
-	NewN:       newNEntry,
-	Size:       unsafe.Sizeof(audit.Entry{}),
-	Ptr:        ptrEntry,
-	Value:      valueEntry,
-	Attach:     attachEntry,
+	PK:           []int32{0, 5, 6},
+	Tenant:       []int32{5, 6},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "ae_",
+	New:          newEntry,
+	NewN:         newNEntry,
+	Size:         unsafe.Sizeof(audit.Entry{}),
+	Ptr:          ptrEntry,
+	Value:        valueEntry,
+	Attach:       attachEntry,
+	BeforeCreate: beforeCreateEntry,
 }
 
 var entriesRef = keel.Ref{Table: &entriesTable}
@@ -504,6 +510,10 @@ func attachEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.APIKey = (*apikey.Key)(child)
 	}
+}
+
+func beforeCreateEntry(ctx context.Context, p unsafe.Pointer) error {
+	return (*audit.Entry)(p).BeforeCreate(ctx)
 }
 
 func init() {

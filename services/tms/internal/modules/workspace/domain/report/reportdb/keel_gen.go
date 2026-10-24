@@ -41,23 +41,24 @@ var dashboardsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Owner", Alias: "o", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Owner`, JSON: `owner`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:  nil,
-	Version:    10,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "rdb_",
-	New:        newDashboard,
-	NewN:       newNDashboard,
-	Size:       unsafe.Sizeof(report.Dashboard{}),
-	Ptr:        ptrDashboard,
-	Value:      valueDashboard,
-	Attach:     attachDashboard,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:    nil,
+	Version:      10,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   12,
+	IDPrefix:     "rdb_",
+	New:          newDashboard,
+	NewN:         newNDashboard,
+	Size:         unsafe.Sizeof(report.Dashboard{}),
+	Ptr:          ptrDashboard,
+	Value:        valueDashboard,
+	Attach:       attachDashboard,
+	BeforeCreate: beforeCreateDashboard,
 }
 
 var dashboardsRef = keel.Ref{Table: &dashboardsTable}
@@ -228,6 +229,10 @@ func attachDashboard(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateDashboard(ctx context.Context, p unsafe.Pointer) error {
+	return (*report.Dashboard)(p).BeforeCreate(ctx)
+}
+
 // reportDefinitionsTable is the schema of report.ReportDefinition.
 var reportDefinitionsTable = schema.Table{
 	Name:   "report_definitions",
@@ -265,23 +270,24 @@ var reportDefinitionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Owner", Alias: "o", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Owner`, JSON: `owner`, NoReport: true},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "rd_",
-	New:        newReportDefinition,
-	NewN:       newNReportDefinition,
-	Size:       unsafe.Sizeof(report.ReportDefinition{}),
-	Ptr:        ptrReportDefinition,
-	Value:      valueReportDefinition,
-	Attach:     attachReportDefinition,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "rd_",
+	New:          newReportDefinition,
+	NewN:         newNReportDefinition,
+	Size:         unsafe.Sizeof(report.ReportDefinition{}),
+	Ptr:          ptrReportDefinition,
+	Value:        valueReportDefinition,
+	Attach:       attachReportDefinition,
+	BeforeCreate: beforeCreateReportDefinition,
 }
 
 var reportDefinitionsRef = keel.Ref{Table: &reportDefinitionsTable}
@@ -527,6 +533,10 @@ func attachReportDefinition(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateReportDefinition(ctx context.Context, p unsafe.Pointer) error {
+	return (*report.ReportDefinition)(p).BeforeCreate(ctx)
+}
+
 // reportDefinitionRevisionsTable is the schema of report.ReportDefinitionRevision.
 var reportDefinitionRevisionsTable = schema.Table{
 	Name:   "report_definition_revisions",
@@ -748,23 +758,24 @@ var reportRunsTable = schema.Table{
 		{Name: "ReportDefinition", Alias: "rd", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Report`, JSON: `reportDefinition`},
 		{Name: "Revision", Alias: "r", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Revision`, JSON: `revision`, NoReport: true},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
-	Returning:  nil,
-	Version:    27,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "rrun_",
-	New:        newReportRun,
-	NewN:       newNReportRun,
-	Size:       unsafe.Sizeof(report.ReportRun{}),
-	Ptr:        ptrReportRun,
-	Value:      valueReportRun,
-	Attach:     attachReportRun,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Returning:    nil,
+	Version:      27,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "rrun_",
+	New:          newReportRun,
+	NewN:         newNReportRun,
+	Size:         unsafe.Sizeof(report.ReportRun{}),
+	Ptr:          ptrReportRun,
+	Value:        valueReportRun,
+	Attach:       attachReportRun,
+	BeforeCreate: beforeCreateReportRun,
 }
 
 var reportRunsRef = keel.Ref{Table: &reportRunsTable}
@@ -1108,6 +1119,10 @@ func attachReportRun(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.Revision = (*report.ReportDefinitionRevision)(child)
 	}
+}
+
+func beforeCreateReportRun(ctx context.Context, p unsafe.Pointer) error {
+	return (*report.ReportRun)(p).BeforeCreate(ctx)
 }
 
 // reportSchedulesTable is the schema of report.ReportSchedule.

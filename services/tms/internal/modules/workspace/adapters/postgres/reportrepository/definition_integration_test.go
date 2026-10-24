@@ -3,6 +3,7 @@
 package reportrepository
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/keel/analytics/ir"
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,14 +25,11 @@ func TestListDefinitionsPagesOnlyWhatTheViewerMaySee(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err)
 	colleague := seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
 		WithUsername("defs_colleague").
 		WithEmail("definitions_colleague@example.com").
 		WithPassword("password123").
-		Build(t, ctx, tx)
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, db)
 
 	definitions := NewDefinitionRepository(DefinitionParams{
 		DB:     postgres.NewTestConnection(db),
@@ -49,7 +48,7 @@ func TestListDefinitionsPagesOnlyWhatTheViewerMaySee(t *testing.T) {
 		name string,
 		visibility report.Visibility,
 	) pulid.ID {
-		created, createErr := definitions.Create(ctx, &report.ReportDefinition{
+		created, createErr := definitions.Create(tenantCtx(ctx, owner), &report.ReportDefinition{
 			BusinessUnitID: owner.BuID,
 			OrganizationID: owner.OrgID,
 			Name:           name,
@@ -79,12 +78,15 @@ func TestListDefinitionsPagesOnlyWhatTheViewerMaySee(t *testing.T) {
 	visible = append(visible, create(peer, "Colleague's second shared", report.VisibilityShared))
 
 	list := func(limit, offset int) []pulid.ID {
-		listed, listErr := definitions.List(ctx, &reportports.ListReportDefinitionsRequest{
-			TenantInfo: viewer,
-			ViewerID:   viewer.UserID,
-			Limit:      limit,
-			Offset:     offset,
-		})
+		listed, listErr := definitions.List(
+			tenantCtx(ctx, viewer),
+			&reportports.ListReportDefinitionsRequest{
+				TenantInfo: viewer,
+				ViewerID:   viewer.UserID,
+				Limit:      limit,
+				Offset:     offset,
+			},
+		)
 		require.NoError(t, listErr)
 		ids := make([]pulid.ID, 0, len(listed))
 		for _, definition := range listed {
@@ -99,4 +101,8 @@ func TestListDefinitionsPagesOnlyWhatTheViewerMaySee(t *testing.T) {
 	assert.Len(t, second, 1)
 	assert.ElementsMatch(t, visible, append(first, second...))
 	assert.ElementsMatch(t, visible, list(0, 0))
+}
+
+func tenantCtx(ctx context.Context, info pagination.TenantInfo) context.Context {
+	return dbscope.WithTenant(ctx, info.DBTenant())
 }

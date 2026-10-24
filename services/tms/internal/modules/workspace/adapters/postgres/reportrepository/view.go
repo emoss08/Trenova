@@ -3,17 +3,18 @@ package reportrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var viewErrors = dberror.Mapping{Entity: "ReportView"}
 
 type ViewParams struct {
 	fx.In
@@ -39,7 +40,7 @@ func (r *viewRepository) Create(
 	entity *report.ReportView,
 ) (*report.ReportView, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*report.ReportView, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+		if err := reportdb.ReportViews.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create report view", zap.Error(err))
 			return nil, err
 		}
@@ -53,25 +54,13 @@ func (r *viewRepository) Update(
 	entity *report.ReportView,
 ) (*report.ReportView, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*report.ReportView, error) {
-		log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
-
-		ov := entity.Version
-		entity.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(reportcol.ReportViewColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update report view", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(result, "ReportView", entity.ID.String()); err != nil {
-			return nil, err
+		if err := reportdb.ReportViews.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update report view",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, viewErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -83,58 +72,40 @@ func (r *viewRepository) GetByID(
 	req *reportports.GetReportViewRequest,
 ) (*report.ReportView, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportView, error) {
-		entity := new(report.ReportView)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return reportcol.ReportViewScopeTenant(sq, req.TenantInfo).
-					Where(reportcol.ReportViewColumns.ID.Eq(), req.ViewID)
-			}).
-			Scan(ctx)
+		entity, err := reportdb.ReportViews.Get(ctx, r.db.Keel(ctx), req.ViewID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "ReportView")
+			return nil, viewErrors.Map(err, req.ViewID.String())
 		}
 
 		return entity, nil
 	})
 }
 
+// List enforces visibility in the database rather than after the fetch, so a
+// private view never leaves it for a caller who cannot see it, and orders pinned
+// views first, then the most recently used, so the picker opens on the views
+// someone actually reaches for.
 func (r *viewRepository) List(
 	ctx context.Context,
 	req *reportports.ListReportViewsRequest,
 ) ([]*report.ReportView, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportView, error) {
-		cols := reportcol.ReportViewColumns
-
-		entities := make([]*report.ReportView, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(reportcol.ReportViewApplyTenant(req.TenantInfo))
-
-		if !req.DefinitionID.IsNil() {
-			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID)
-		}
-		// Visibility is enforced here rather than filtered after the fetch, so a
-		// private view never leaves the database for a caller who cannot see it.
-		if !req.VisibleToID.IsNil() {
-			q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where(cols.Shared.IsTrue()).
-					WhereOr(cols.OwnerID.Eq(), req.VisibleToID)
-			})
-		}
+		v := reportdb.ReportViews
+		q := v.Where(
+			keel.When(!req.DefinitionID.IsNil(), v.DefinitionID.Eq(req.DefinitionID)),
+			keel.When(
+				!req.VisibleToID.IsNil(),
+				keel.Or(v.Shared.IsTrue(), v.OwnerID.Eq(req.VisibleToID)),
+			),
+		).Order(v.Pinned.Desc(), v.LastRunAt.Desc(), v.Name.Asc())
 		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
+			q = q.Limit(req.Limit)
 		}
 		if req.Offset > 0 {
-			q = q.Offset(int64(req.Offset))
+			q = q.Offset(req.Offset)
 		}
 
-		// Pinned first, then most recently used, so the picker opens on the views
-		// someone actually reaches for.
-		err := q.Order(cols.Pinned.OrderDesc(), cols.LastRunAt.OrderDesc(), cols.Name.OrderAsc()).
-			Scan(ctx)
+		entities, err := q.All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list report views", zap.Error(err))
 			return nil, err
@@ -152,24 +123,21 @@ func (r *viewRepository) RecordRun(
 	req *reportports.RecordReportViewRunRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := reportcol.ReportViewColumns
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*report.ReportView)(nil)).
-			Set(cols.LastRunAt.Set(), req.RanAt).
-			Set(cols.RunCount.Inc(1)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return reportcol.ReportViewScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ViewID)
-			}).
-			Exec(ctx)
+		v := reportdb.ReportViews
+		rows, err := v.Where(v.ID.Eq(req.ViewID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			v.LastRunAt.To(req.RanAt),
+			v.RunCount.Add(1),
+			v.Version.ToExpr(v.Version),
+			v.UpdatedAt.ToExpr(v.UpdatedAt),
+		)
 		if err != nil {
 			r.l.Error("failed to record report view run", zap.Error(err))
 			return err
 		}
 
-		return dberror.CheckRowsAffected(result, "ReportView", req.ViewID.String())
+		return dberror.CheckAffected(rows, "ReportView", req.ViewID.String())
 	})
 }
 
@@ -178,19 +146,13 @@ func (r *viewRepository) Delete(
 	req *reportports.GetReportViewRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*report.ReportView)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return reportcol.ReportViewScopeTenantDelete(dq, req.TenantInfo).
-					Where(reportcol.ReportViewColumns.ID.Eq(), req.ViewID)
-			}).
-			Exec(ctx)
+		v := reportdb.ReportViews
+		rows, err := v.Where(v.ID.Eq(req.ViewID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to delete report view", zap.Error(err))
 			return err
 		}
 
-		return dberror.CheckRowsAffected(result, "ReportView", req.ViewID.String())
+		return dberror.CheckAffected(rows, "ReportView", req.ViewID.String())
 	})
 }

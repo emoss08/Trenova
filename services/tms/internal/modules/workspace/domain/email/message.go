@@ -19,39 +19,39 @@ import (
 
 type Message struct {
 	bun.BaseModel `bun:"table:email_messages,alias:em" json:"-"`
-	keel.Table    `keel:"email_messages"`
+	keel.Table    `                                             keel:"email_messages"`
 
-	ID                pulid.ID      `json:"id"                bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:emlmsg_"`
-	BusinessUnitID    pulid.ID      `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID      `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	ProfileID         pulid.ID      `json:"profileId"         bun:"profile_id,type:VARCHAR(100),notnull" keel:"profile_id"`
-	Purpose           Purpose       `json:"purpose"           bun:"purpose,type:email_purpose_enum,notnull" keel:"purpose"`
-	Provider          Provider      `json:"provider"          bun:"provider,type:email_provider_type_enum,notnull" keel:"provider"`
-	IdempotencyKey    string        `json:"idempotencyKey"    bun:"idempotency_key,type:VARCHAR(160),notnull" keel:"idempotency_key"`
-	ProviderMessageID string        `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(160),nullzero" keel:"provider_message_id,nullzero"`
-	Status            MessageStatus `json:"status"            bun:"status,type:email_message_status_enum,notnull" keel:"status"`
-	Attempts          int32         `json:"attempts"          bun:"attempts,type:INTEGER,notnull" keel:"attempts"`
-	FromEmail         string        `json:"fromEmail"         bun:"from_email,type:VARCHAR(320),notnull" keel:"from_email"`
-	FromName          string        `json:"fromName"          bun:"from_name,type:VARCHAR(100),notnull" keel:"from_name"`
-	ReplyToEmail      string        `json:"replyToEmail"      bun:"reply_to_email,type:VARCHAR(320),nullzero" keel:"reply_to_email,nullzero"`
-	ToRecipients      []string      `json:"toRecipients"      bun:"to_recipients,array,type:text[],notnull" keel:"to_recipients"`
-	CCRecipients      []string      `json:"ccRecipients"      bun:"cc_recipients,array,type:text[],nullzero" keel:"cc_recipients,nullzero"`
-	BCCRecipients     []string      `json:"bccRecipients"     bun:"bcc_recipients,array,type:text[],nullzero" keel:"bcc_recipients,nullzero"`
-	Subject           string        `json:"subject"           bun:"subject,type:VARCHAR(998),notnull" keel:"subject"`
-	BodyTextSize      int64         `json:"bodyTextSize"      bun:"body_text_size,type:BIGINT,notnull" keel:"body_text_size"`
-	BodyHTMLSize      int64         `json:"bodyHtmlSize"      bun:"body_html_size,type:BIGINT,notnull" keel:"body_html_size"`
-	LastError         string        `json:"lastError"         bun:"last_error,type:TEXT,nullzero" keel:"last_error,nullzero"`
-	SentAt            int64         `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero" keel:"sent_at,nullzero"`
-	DeliveredAt       int64         `json:"deliveredAt"       bun:"delivered_at,type:BIGINT,nullzero" keel:"delivered_at,nullzero"`
-	FailedAt          int64         `json:"failedAt"          bun:"failed_at,type:BIGINT,nullzero" keel:"failed_at,nullzero"`
+	ID                pulid.ID      `json:"id"                bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:emlmsg_"`
+	BusinessUnitID    pulid.ID      `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID      `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
+	ProfileID         pulid.ID      `json:"profileId"         bun:"profile_id,type:VARCHAR(100),notnull"                                                 keel:"profile_id"`
+	Purpose           Purpose       `json:"purpose"           bun:"purpose,type:email_purpose_enum,notnull"                                              keel:"purpose"`
+	Provider          Provider      `json:"provider"          bun:"provider,type:email_provider_type_enum,notnull"                                       keel:"provider"`
+	IdempotencyKey    string        `json:"idempotencyKey"    bun:"idempotency_key,type:VARCHAR(160),notnull"                                            keel:"idempotency_key"`
+	ProviderMessageID string        `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(160),nullzero"                                       keel:"provider_message_id,nullzero"`
+	Status            MessageStatus `json:"status"            bun:"status,type:email_message_status_enum,notnull"                                        keel:"status"`
+	Attempts          int32         `json:"attempts"          bun:"attempts,type:INTEGER,notnull"                                                        keel:"attempts"`
+	FromEmail         string        `json:"fromEmail"         bun:"from_email,type:VARCHAR(320),notnull"                                                 keel:"from_email"`
+	FromName          string        `json:"fromName"          bun:"from_name,type:VARCHAR(100),notnull"                                                  keel:"from_name"`
+	ReplyToEmail      string        `json:"replyToEmail"      bun:"reply_to_email,type:VARCHAR(320),nullzero"                                            keel:"reply_to_email,nullzero"`
+	ToRecipients      []string      `json:"toRecipients"      bun:"to_recipients,array,type:text[],notnull"                                              keel:"to_recipients"`
+	CCRecipients      []string      `json:"ccRecipients"      bun:"cc_recipients,array,type:text[],nullzero"                                             keel:"cc_recipients,nullzero"`
+	BCCRecipients     []string      `json:"bccRecipients"     bun:"bcc_recipients,array,type:text[],nullzero"                                            keel:"bcc_recipients,nullzero"`
+	Subject           string        `json:"subject"           bun:"subject,type:VARCHAR(998),notnull"                                                    keel:"subject"`
+	BodyTextSize      int64         `json:"bodyTextSize"      bun:"body_text_size,type:BIGINT,notnull"                                                   keel:"body_text_size"`
+	BodyHTMLSize      int64         `json:"bodyHtmlSize"      bun:"body_html_size,type:BIGINT,notnull"                                                   keel:"body_html_size"`
+	LastError         string        `json:"lastError"         bun:"last_error,type:TEXT,nullzero"                                                        keel:"last_error,nullzero"`
+	SentAt            int64         `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero"                                                         keel:"sent_at,nullzero"`
+	DeliveredAt       int64         `json:"deliveredAt"       bun:"delivered_at,type:BIGINT,nullzero"                                                    keel:"delivered_at,nullzero"`
+	FailedAt          int64         `json:"failedAt"          bun:"failed_at,type:BIGINT,nullzero"                                                       keel:"failed_at,nullzero"`
 	CreatedAt         int64         `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt         int64         `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector      string        `json:"-"                 bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	SearchVector      string        `json:"-"                 bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
 
-	Profile      *Profile             `json:"profile,omitempty"     bun:"rel:belongs-to,join:profile_id=id" keel:"belongs:profile_id"`
+	Profile      *Profile             `json:"profile,omitempty"     bun:"rel:belongs-to,join:profile_id=id"       keel:"belongs:profile_id"`
 	BusinessUnit *tenant.BusinessUnit `json:"-"                     bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"                     bun:"rel:belongs-to,join:organization_id=id"`
-	Attachments  []*Attachment        `json:"attachments,omitempty" bun:"rel:has-many,join:id=message_id" keel:"many:message_id"`
+	Attachments  []*Attachment        `json:"attachments,omitempty" bun:"rel:has-many,join:id=message_id"         keel:"many:message_id"`
 
 	Replayed bool `json:"-" bun:"-"`
 }
@@ -103,17 +103,17 @@ func (m *Message) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 type Attachment struct {
 	bun.BaseModel `bun:"table:email_message_attachments,alias:ema" json:"-"`
-	keel.Table    `keel:"email_message_attachments"`
+	keel.Table    `                                                         keel:"email_message_attachments"`
 
-	ID             pulid.ID       `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:emlatt_"`
-	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	MessageID      pulid.ID       `json:"messageId"      bun:"message_id,type:VARCHAR(100),notnull" keel:"message_id"`
-	FileName       string         `json:"fileName"       bun:"file_name,type:VARCHAR(255),notnull" keel:"file_name"`
-	ContentType    string         `json:"contentType"    bun:"content_type,type:VARCHAR(120),notnull" keel:"content_type"`
-	ObjectKey      string         `json:"objectKey"      bun:"object_key,type:TEXT,notnull" keel:"object_key"`
-	SizeBytes      int64          `json:"sizeBytes"      bun:"size_bytes,type:BIGINT,notnull" keel:"size_bytes"`
-	Seal           AttachmentSeal `json:"seal"           bun:"seal,type:VARCHAR(32),nullzero" keel:"seal,nullzero"`
+	ID             pulid.ID       `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:emlatt_"`
+	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
+	MessageID      pulid.ID       `json:"messageId"      bun:"message_id,type:VARCHAR(100),notnull"                                                 keel:"message_id"`
+	FileName       string         `json:"fileName"       bun:"file_name,type:VARCHAR(255),notnull"                                                  keel:"file_name"`
+	ContentType    string         `json:"contentType"    bun:"content_type,type:VARCHAR(120),notnull"                                               keel:"content_type"`
+	ObjectKey      string         `json:"objectKey"      bun:"object_key,type:TEXT,notnull"                                                         keel:"object_key"`
+	SizeBytes      int64          `json:"sizeBytes"      bun:"size_bytes,type:BIGINT,notnull"                                                       keel:"size_bytes"`
+	Seal           AttachmentSeal `json:"seal"           bun:"seal,type:VARCHAR(32),nullzero"                                                       keel:"seal,nullzero"`
 	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
@@ -129,18 +129,18 @@ func (a *Attachment) BeforeAppendModel(_ context.Context, query bun.Query) error
 
 type Event struct {
 	bun.BaseModel `bun:"table:email_events,alias:ee" json:"-"`
-	keel.Table    `keel:"email_events"`
+	keel.Table    `                                           keel:"email_events"`
 
-	ID              pulid.ID       `json:"id"              bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:emlevt_"`
-	BusinessUnitID  pulid.ID       `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID       `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	MessageID       pulid.ID       `json:"messageId"       bun:"message_id,type:VARCHAR(100),nullzero" keel:"message_id,nullzero"`
-	Provider        Provider       `json:"provider"        bun:"provider,type:email_provider_type_enum,notnull" keel:"provider"`
-	ProviderEventID string         `json:"providerEventId" bun:"provider_event_id,type:VARCHAR(200),notnull" keel:"provider_event_id"`
-	Type            EventType      `json:"type"            bun:"type,type:email_event_type_enum,notnull" keel:"type"`
-	Recipient       string         `json:"recipient"       bun:"recipient,type:VARCHAR(320),nullzero" keel:"recipient,nullzero"`
-	OccurredAt      int64          `json:"occurredAt"      bun:"occurred_at,type:BIGINT,notnull" keel:"occurred_at"`
-	Raw             map[string]any `json:"raw"             bun:"raw,type:JSONB,nullzero" keel:"raw,jsonb,nullzero"`
+	ID              pulid.ID       `json:"id"              bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:emlevt_"`
+	BusinessUnitID  pulid.ID       `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID       `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
+	MessageID       pulid.ID       `json:"messageId"       bun:"message_id,type:VARCHAR(100),nullzero"                                                keel:"message_id,nullzero"`
+	Provider        Provider       `json:"provider"        bun:"provider,type:email_provider_type_enum,notnull"                                       keel:"provider"`
+	ProviderEventID string         `json:"providerEventId" bun:"provider_event_id,type:VARCHAR(200),notnull"                                          keel:"provider_event_id"`
+	Type            EventType      `json:"type"            bun:"type,type:email_event_type_enum,notnull"                                              keel:"type"`
+	Recipient       string         `json:"recipient"       bun:"recipient,type:VARCHAR(320),nullzero"                                                 keel:"recipient,nullzero"`
+	OccurredAt      int64          `json:"occurredAt"      bun:"occurred_at,type:BIGINT,notnull"                                                      keel:"occurred_at"`
+	Raw             map[string]any `json:"raw"             bun:"raw,type:JSONB,nullzero"                                                              keel:"raw,jsonb,nullzero"`
 	CreatedAt       int64          `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
@@ -156,17 +156,17 @@ func (e *Event) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 type Suppression struct {
 	bun.BaseModel `bun:"table:email_suppressions,alias:es" json:"-"`
-	keel.Table    `keel:"email_suppressions"`
+	keel.Table    `                                                 keel:"email_suppressions"`
 
-	ID             pulid.ID          `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:emlsup_"`
-	BusinessUnitID pulid.ID          `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID          `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	EmailAddress   string            `json:"emailAddress"   bun:"email_address,type:VARCHAR(320),notnull" keel:"email_address"`
-	Reason         SuppressionReason `json:"reason"         bun:"reason,type:email_suppression_reason_enum,notnull" keel:"reason"`
-	Provider       Provider          `json:"provider"       bun:"provider,type:email_provider_type_enum,nullzero" keel:"provider,nullzero"`
-	SourceEventID  string            `json:"sourceEventId"  bun:"source_event_id,type:VARCHAR(200),nullzero" keel:"source_event_id,nullzero"`
-	Notes          string            `json:"notes"          bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	CreatedByID    pulid.ID          `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
+	ID             pulid.ID          `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:emlsup_"`
+	BusinessUnitID pulid.ID          `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID          `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
+	EmailAddress   string            `json:"emailAddress"   bun:"email_address,type:VARCHAR(320),notnull"                                              keel:"email_address"`
+	Reason         SuppressionReason `json:"reason"         bun:"reason,type:email_suppression_reason_enum,notnull"                                    keel:"reason"`
+	Provider       Provider          `json:"provider"       bun:"provider,type:email_provider_type_enum,nullzero"                                      keel:"provider,nullzero"`
+	SourceEventID  string            `json:"sourceEventId"  bun:"source_event_id,type:VARCHAR(200),nullzero"                                           keel:"source_event_id,nullzero"`
+	Notes          string            `json:"notes"          bun:"notes,type:TEXT,nullzero"                                                             keel:"notes,nullzero"`
+	CreatedByID    pulid.ID          `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero"                                             keel:"created_by_id,nullzero"`
 	CreatedAt      int64             `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
@@ -369,3 +369,9 @@ const (
 	maxContentTypeLength     = 120
 	maxProviderEventIDLength = 200
 )
+
+func (s *Suppression) BeforeCreate(context.Context) error {
+	s.EmailAddress = strings.ToLower(strings.TrimSpace(s.EmailAddress))
+
+	return nil
+}

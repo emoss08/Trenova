@@ -24,7 +24,7 @@ var notificationsTable = schema.Table{
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant | schema.FlagNullable, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "target_user_id", Quoted: `"target_user_id"`, Field: "TargetUserID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Target User ID`, JSON: `targetUserId`},
 		{Name: "event_type", Quoted: `"event_type"`, Field: "EventType", Kind: schema.KindString, Flags: 0, Label: `Event Type`, JSON: `eventType`},
 		{Name: "priority", Quoted: `"priority"`, Field: "Priority", Kind: schema.KindString, Flags: 0, Label: `Priority`, JSON: `priority`, Enum: enumPriority[:]},
@@ -49,22 +49,23 @@ var notificationsTable = schema.Table{
 		{Name: "tags", Quoted: `"tags"`, Field: "Tags", Kind: schema.KindStringArray, Flags: schema.FlagNullable, Label: `Tags`, JSON: `tags`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24},
-	Returning:  nil,
-	Version:    25,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "notif_",
-	New:        newNotification,
-	NewN:       newNNotification,
-	Size:       unsafe.Sizeof(notification.Notification{}),
-	Ptr:        ptrNotification,
-	Value:      valueNotification,
+	PK:           []int32{0},
+	Tenant:       []int32{1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24},
+	Returning:    nil,
+	Version:      25,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "notif_",
+	New:          newNotification,
+	NewN:         newNNotification,
+	Size:         unsafe.Sizeof(notification.Notification{}),
+	Ptr:          ptrNotification,
+	Value:        valueNotification,
+	BeforeCreate: beforeCreateNotification,
 }
 
 var notificationsRef = keel.Ref{Table: &notificationsTable}
@@ -335,6 +336,10 @@ func valueNotification(p unsafe.Pointer, c int32) any {
 		return r.Version
 	}
 	return nil
+}
+
+func beforeCreateNotification(ctx context.Context, p unsafe.Pointer) error {
+	return (*notification.Notification)(p).BeforeCreate(ctx)
 }
 
 // preferencesTable is the schema of notification.Preference.

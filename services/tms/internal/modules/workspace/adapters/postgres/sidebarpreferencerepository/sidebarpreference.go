@@ -6,12 +6,16 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/sidebarpreference"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/sidebarpreference/sidebarpreferencedb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/sidebarpreferenceports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const entityName = "SidebarPreference"
+
+var sidebarPreferenceErrors = dberror.Mapping{Entity: entityName}
 
 type Params struct {
 	fx.In
@@ -40,26 +44,17 @@ func (r *repository) Get(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*sidebarpreference.SidebarPreference, bool, error) {
-			log := r.l.With(
-				zap.String("operation", "Get"),
-				zap.String("userID", req.TenantInfo.UserID.String()),
-			)
-
-			entity := new(sidebarpreference.SidebarPreference)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("sbp.user_id = ?", req.TenantInfo.UserID).
-						Where("sbp.organization_id = ?", req.TenantInfo.OrgID).
-						Where("sbp.business_unit_id = ?", req.TenantInfo.BuID)
-				}).
-				Scan(ctx)
+			sp := sidebarpreferencedb.SidebarPreferences
+			entity, err := sp.Where(sp.UserID.Eq(req.TenantInfo.UserID)).One(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
+				return nil, false, nil
+			}
 			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, false, nil
-				}
-				log.Error("failed to get sidebar preference", zap.Error(err))
+				r.l.Error(
+					"failed to get sidebar preference",
+					zap.String("userID", req.TenantInfo.UserID.String()),
+					zap.Error(err),
+				)
 				return nil, false, err
 			}
 
@@ -76,19 +71,16 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*sidebarpreference.SidebarPreference, error) {
-			log := r.l.With(
-				zap.String("operation", "Create"),
-				zap.String("userID", entity.UserID.String()),
-			)
-
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-				if dberror.IsUniqueConstraintViolation(err) {
-					return nil, dberror.CreateVersionMismatchError(
-						"SidebarPreference",
-						entity.UserID.String(),
-					)
-				}
-				log.Error("failed to create sidebar preference", zap.Error(err))
+			err := sidebarpreferencedb.SidebarPreferences.Create(ctx, r.db.Keel(ctx), entity)
+			if dberror.IsUniqueConstraintViolation(err) {
+				return nil, dberror.CreateVersionMismatchError(entityName, entity.UserID.String())
+			}
+			if err != nil {
+				r.l.Error(
+					"failed to create sidebar preference",
+					zap.String("userID", entity.UserID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
@@ -105,30 +97,14 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*sidebarpreference.SidebarPreference, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
-			ov := entity.Version
-			entity.Version++
-
-			result, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("sbp.version = ?", ov).
-				OmitZero().
-				Returning("*").
-				Exec(ctx)
+			err := sidebarpreferencedb.SidebarPreferences.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				log.Error("failed to update sidebar preference", zap.Error(err))
-				return nil, err
-			}
-
-			err = dberror.CheckRowsAffected(result, "SidebarPreference", entity.ID.String())
-			if err != nil {
-				return nil, err
+				r.l.Error(
+					"failed to update sidebar preference",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
+				)
+				return nil, sidebarPreferenceErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil

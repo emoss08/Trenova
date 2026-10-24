@@ -3,19 +3,20 @@ package bulkeditrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/bulkeditcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/bulkedit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/bulkedit/bulkeditdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const maxListed = 50
+
+var bulkEditErrors = dberror.Mapping{Entity: "Bulk edit"}
 
 type Params struct {
 	fx.In
@@ -38,7 +39,7 @@ func (r *repository) Create(
 	entity *bulkedit.BulkEdit,
 ) (*bulkedit.BulkEdit, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bulkedit.BulkEdit, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+		if err := bulkeditdb.BulkEdits.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create bulk edit", zap.Error(err))
 			return nil, err
 		}
@@ -51,17 +52,9 @@ func (r *repository) GetByID(
 	req *bulkeditports.GetBulkEditRequest,
 ) (*bulkedit.BulkEdit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*bulkedit.BulkEdit, error) {
-		entity := new(bulkedit.BulkEdit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return bulkeditcol.BulkEditScopeTenant(sq, req.TenantInfo).
-					Where(bulkeditcol.BulkEditColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := bulkeditdb.BulkEdits.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Bulk edit")
+			return nil, bulkEditErrors.Map(err, req.ID.String())
 		}
 		return entity, nil
 	})
@@ -72,24 +65,9 @@ func (r *repository) Update(
 	entity *bulkedit.BulkEdit,
 ) (*bulkedit.BulkEdit, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bulkedit.BulkEdit, error) {
-		previous := entity.Version
-		entity.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(bulkeditcol.BulkEditColumns.Version.Eq(), previous).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = previous
+		if err := bulkeditdb.BulkEdits.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update bulk edit", zap.Error(err))
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(result, "Bulk edit", entity.ID.String()); err != nil {
-			entity.Version = previous
-			return nil, err
+			return nil, bulkEditErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})
@@ -100,28 +78,20 @@ func (r *repository) ListForUser(
 	req *bulkeditports.ListBulkEditsRequest,
 ) ([]*bulkedit.BulkEdit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bulkedit.BulkEdit, error) {
-		cols := bulkeditcol.BulkEditColumns
+		b := bulkeditdb.BulkEdits
 		limit := req.Limit
 		if limit <= 0 || limit > maxListed {
 			limit = maxListed
 		}
 
-		entities := make([]*bulkedit.BulkEdit, 0, limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ExcludeColumn(cols.Targets.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = bulkeditcol.BulkEditScopeTenant(sq, req.TenantInfo).
-					Where(cols.UserID.Eq(), req.TenantInfo.UserID)
-				if req.Resource != "" {
-					sq = sq.Where(cols.Resource.Eq(), req.Resource)
-				}
-				return sq
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		entities, err := b.Omit(b.Targets).
+			Where(
+				b.UserID.Eq(req.TenantInfo.UserID),
+				keel.When(req.Resource != "", b.Resource.Eq(req.Resource)),
+			).
+			Order(b.CreatedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list bulk edits", zap.Error(err))
 			return nil, err

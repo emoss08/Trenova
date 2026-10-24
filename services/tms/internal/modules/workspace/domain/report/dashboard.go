@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -120,9 +119,8 @@ func (l *DashboardLayout) Tile(id string) (*DashboardTile, bool) {
 }
 
 type Dashboard struct {
-	bun.BaseModel             `bun:"table:report_dashboards,alias:rdash" json:"-"`
-	keel.Table                `                                                   keel:"report_dashboards"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	bun.BaseModel `bun:"table:report_dashboards,alias:rdash" json:"-"`
+	keel.Table    `                                                   keel:"report_dashboards"`
 
 	ID             pulid.ID         `json:"id"             bun:"id,pk,type:VARCHAR(100)"                                                           keel:"id,pk,autoid:rdb_"`
 	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                     keel:"business_unit_id,pk,tenant"`
@@ -342,4 +340,12 @@ func (d *Dashboard) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "category", Type: domaintypes.FieldTypeText},
 		},
 	}
+}
+
+func (d *Dashboard) BeforeCreate(context.Context) error {
+	if d.Visibility == "" {
+		d.Visibility = VisibilityPrivate
+	}
+
+	return nil
 }

@@ -3,7 +3,6 @@ package auditports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,20 +28,6 @@ type ListByResourceIDRequest struct {
 	Filter     *pagination.QueryOptions `json:"filter"`
 }
 
-type GetAuditByResourceRequest struct {
-	Resource       permission.Resource
-	ResourceID     string
-	Operation      uint32
-	OrganizationID pulid.ID
-	Limit          int
-}
-
-type GetRecentEntriesRequest struct {
-	SinceTimestamp int64
-	Operation      uint32
-	Limit          int
-}
-
 type DeleteAuditEntriesRequest struct {
 	OrgID          pulid.ID
 	BuID           pulid.ID
@@ -65,10 +50,5 @@ type AuditRepository interface {
 		req *ListByResourceIDRequest,
 	) (*pagination.ListResult[*audit.Entry], error)
 	GetByID(ctx context.Context, req GetAuditEntryByIDOptions) (*audit.Entry, error)
-	GetByResourceAndOperation(
-		ctx context.Context,
-		req *GetAuditByResourceRequest,
-	) ([]*audit.Entry, error)
-	GetRecentEntries(ctx context.Context, req *GetRecentEntriesRequest) ([]*audit.Entry, error)
 	DeleteAuditEntries(ctx context.Context, req DeleteAuditEntriesRequest) (int64, error)
 }
