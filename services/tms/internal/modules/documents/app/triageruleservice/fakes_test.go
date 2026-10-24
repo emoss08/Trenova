@@ -8,24 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
-
-type fakeTx struct {
-	kernelports.DBConnection
-}
-
-func (fakeTx) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
 
 type fakeMessages struct {
 	inboundmessageports.InboundMessageRepository

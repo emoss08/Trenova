@@ -37,6 +37,11 @@ without one. `pagination.TenantInfo` on a repository request is not a filter any
 `AllTenants()` on each query and filters the tenant explicitly. Tests put the scope on the
 context (`equipmenttest.Database.A.Ctx`).
 
+A query that relied on a row-level security policy wider than the keel scope (a person reads their
+own `user_organization_memberships` rows in every organization) cannot run under the tenant
+scope, which pins the row to the scope's organization. Write the policy's rule into the query and
+run it under a system scope with `AllTenants()`, as `userrepository.membershipReadScope` does.
+
 ## Repository shape
 
 Unchanged: `Params{DB *postgres.Connection; Logger}`, one `dbtx.Read`/`Write` per exported method,
@@ -401,7 +406,13 @@ validationframework.NewTenantedValidatorBuilder[*tractor.Tractor]().
 ```
 
 The checker answers references to the entity's table and every table it relates to; a table it
-does not relate to gets a `WithCustomReferenceCheck` with `validationframework.KeelReferenceCheck`.
+does not relate to gets a `WithCustomReferenceCheck` with `validationframework.KeelReferenceCheck`,
+or, when the table belongs to a module this one may not import, with
+`validationframework.KeelTableReferenceCheck(p.DB, "gl_accounts")` (one constant `EXISTS` over the
+table's `id`, `organization_id` and `business_unit_id`). A uniqueness check that must see rows
+row-level security hides (other organizations of the business unit) wraps the checker in a
+`UniquenessChecker` that puts `dbscope.WithSystem` on the context and pins the request's
+`BusinessUnitID` to the caller's (`organizationservice.businessUnitWideChecker`).
 
 ## Models
 

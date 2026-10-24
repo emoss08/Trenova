@@ -3,56 +3,44 @@ package assistantartifactrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-func versionsTestRequest(summary bool) *versionsRequest {
+func versionsTestRequest() *versionsRequest {
 	return &versionsRequest{
-		tenant:   pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		threadID: pulid.MustNew("athr_"),
 		roots:    []string{"aart_a", "aart_b"},
-		summary:  summary,
 	}
 }
 
-func TestVersionsQueryKeepsOnlyTheSummaryKeysOfAPayload(t *testing.T) {
+func TestSummaryQueryKeepsOnlyTheSummaryKeysOfAPayload(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(nil, pgdialect.New())
-	var dest []*assistantartifact.Artifact
-
-	sql := versionsQuery(db, &dest, versionsTestRequest(true)).String()
+	sql, args := keeltest.Render(t, summaryQuery(versionsTestRequest()))
 
 	assert.Contains(
 		t,
 		sql,
-		"COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each(aart.payload) AS e WHERE e.key IN ('tool', 'entity', 'path', 'documentId')), jsonb_build_object()) AS payload",
+		`COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each(aa."payload") AS e WHERE e.key = ANY(`,
 	)
-	assert.NotContains(t, sql, `"aart"."payload"`, "the full payload is not read alongside it")
-	assert.NotContains(t, sql, "'aart.payload'",
-		"Column.Expr replaces every {}, so an empty-object literal written as '{}' became the column's name and Postgres refused it as JSON")
-	assert.Contains(t, sql, `"aart"."title"`, "every other column is still read")
-	assert.Contains(t, sql, "COALESCE(aart.lineage_id, aart.id) IN ('aart_a', 'aart_b')")
+	assert.Contains(t, sql, "jsonb_build_object())")
+	assert.Contains(t, args, []string{"tool", "entity", "path", "documentId"})
+	assert.Contains(t, args, []string{"aart_a", "aart_b"})
 }
 
-func TestVersionsQueryReadsTheWholePayloadOtherwise(t *testing.T) {
+func TestVersionsQueryReadsTheWholePayloadInLineageOrder(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(nil, pgdialect.New())
-	var dest []*assistantartifact.Artifact
-
-	sql := versionsQuery(db, &dest, versionsTestRequest(false)).String()
+	sql, _ := keeltest.Render(t, versionsQuery(versionsTestRequest()))
 
 	assert.NotContains(t, sql, "jsonb_object_agg")
-	assert.Contains(t, sql, `"aart"."payload"`)
+	assert.Contains(t, sql, `aa."payload"`)
+	assert.Contains(t, sql, `COALESCE(aa."lineage_id", aa."id") = ANY(`)
 	assert.Contains(
 		t,
 		sql,
-		`ORDER BY "aart"."lineage_seq" ASC, "aart"."created_at" ASC, "aart"."id" ASC`,
+		`ORDER BY aa."lineage_seq" ASC, aa."created_at" ASC, aa."id" ASC`,
 	)
 }

@@ -217,6 +217,31 @@ func (r *repository) GetByID(
 	})
 }
 
+func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) *keel.Query[permission.Role] {
+	ro := permissiondb.Roles
+	parent := ro.As(parentRoleAlias)
+	closure := keel.RecursiveCTE(
+		roleClosureName,
+		[]string{roleClosureRoleColumn, roleClosureParentColumn},
+		forTenant(ctx, ro.Pick(ro.ID, ro.ParentRoleIDs), ro.ID.In(roleIDs...)),
+	)
+	closure.Recurse(forTenant(
+		ctx,
+		parent.Pick(parent.ID, parent.ParentRoleIDs).
+			Join(closure, keel.Raw(
+				inParentRolesSQL,
+				parent.ID,
+				closure.Col(roleClosureParentColumn),
+			)),
+	)).Distinct()
+
+	return forTenant(
+		ctx,
+		ro.With(closure),
+		ro.ID.InQuery(closure.Query().Pick(closure.Col(roleClosureRoleColumn))),
+	).Load(ro.Permissions())
+}
+
 func (r *repository) GetRolesWithInheritance(
 	ctx context.Context,
 	roleIDs []pulid.ID,
@@ -226,30 +251,7 @@ func (r *repository) GetRolesWithInheritance(
 			return []*permission.Role{}, nil
 		}
 
-		ro := permissiondb.Roles
-		parent := ro.As(parentRoleAlias)
-		closure := keel.RecursiveCTE(
-			roleClosureName,
-			[]string{roleClosureRoleColumn, roleClosureParentColumn},
-			forTenant(ctx, ro.Pick(ro.ID, ro.ParentRoleIDs), ro.ID.In(roleIDs...)),
-		)
-		closure.Recurse(forTenant(
-			ctx,
-			parent.Pick(parent.ID, parent.ParentRoleIDs).
-				Join(closure, keel.Raw(
-					inParentRolesSQL,
-					parent.ID,
-					closure.Col(roleClosureParentColumn),
-				)),
-		)).Distinct()
-
-		roles, err := forTenant(
-			ctx,
-			ro.With(closure),
-			ro.ID.InQuery(closure.Query().Pick(closure.Col(roleClosureRoleColumn))),
-		).
-			Load(ro.Permissions()).
-			All(ctx, r.db.Keel(ctx))
+		roles, err := rolesWithInheritance(ctx, roleIDs).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error(
 				"failed to get roles with inheritance",

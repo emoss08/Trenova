@@ -1,6 +1,9 @@
 package accountingcontrolservice
 
 import (
+	"context"
+	"errors"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -17,7 +20,7 @@ func NewTestValidator() *Validator {
 func NewTestValidatorWithGLAccountCheck(
 	glAccountExists validationframework.CustomReferenceCheckFunc,
 ) *Validator {
-	builder := newValidatorBuilder()
+	builder := newValidatorBuilder().WithReferenceChecker(customChecksOnly{})
 	addGLAccountReferenceChecks(builder, glAccountExists)
 
 	return &Validator{
@@ -31,6 +34,15 @@ func NewTestValidatorWithIntegrationRepository(
 	return &Validator{
 		validator: newValidatorBuilderWithIntegrationRepo(integrationRepo).Build(),
 	}
+}
+
+type customChecksOnly struct{}
+
+func (customChecksOnly) CheckReference(
+	context.Context,
+	*validationframework.ReferenceRequest,
+) (bool, error) {
+	return false, errors.New("accounting control references are checked through custom checks")
 }
 
 func validAccountingControl() *tenant.AccountingControl {

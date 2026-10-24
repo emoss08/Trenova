@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	minioadapter "github.com/emoss08/trenova/internal/infrastructure/minio"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -20,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -41,13 +43,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type serviceHarness struct {
 	ctx              context.Context
-	db               *bun.DB
+	db               *keel.DB
 	tenantInfo       pagination.TenantInfo
 	service          *documentservice.Service
 	documentRepo     documentports.DocumentRepository
@@ -70,6 +71,7 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	t.Cleanup(minioCtx.Cancel)
 
 	fixtures := createTestFixtures(t, db, ctx)
+	ctx = fixtures.ctx
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
 
@@ -165,17 +167,19 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 }
 
 type testFixtures struct {
+	ctx    context.Context
 	orgID  pulid.ID
 	buID   pulid.ID
 	userID pulid.ID
 }
 
-func createTestFixtures(t *testing.T, db *bun.DB, ctx context.Context) *testFixtures {
+func createTestFixtures(t *testing.T, db *keel.DB, ctx context.Context) *testFixtures {
 	t.Helper()
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 
 	return &testFixtures{
+		ctx:    data.Ctx(ctx),
 		orgID:  data.Organization.ID,
 		buID:   data.BusinessUnit.ID,
 		userID: data.User.ID,
@@ -269,19 +273,19 @@ func updateDocumentExpiration(
 	// The schema refuses to store an expiration in the past, which is right for
 	// real writes but leaves no way to age a document. Dropping the check on the
 	// throwaway test database lets the suite simulate elapsed time.
-	_, err := h.db.ExecContext(
+	_, err := keel.Exec(
 		h.ctx,
+		h.db,
 		`ALTER TABLE documents DROP CONSTRAINT IF EXISTS chk_documents_expiration_date`,
 	)
 	require.NoError(t, err)
 
-	_, err = h.db.NewUpdate().
-		Table("documents").
-		Set("expiration_date = ?", expiration).
-		Where("id = ?", documentID).
-		Where("organization_id = ?", h.tenantInfo.OrgID).
-		Where("business_unit_id = ?", h.tenantInfo.BuID).
-		Exec(h.ctx)
+	d := documentdb.Documents
+	set := d.ExpirationDate.ToNull()
+	if expiration != nil {
+		set = d.ExpirationDate.To(*expiration)
+	}
+	_, err = d.Where(d.ID.Eq(documentID)).Update(h.ctx, h.db, set)
 	require.NoError(t, err)
 }
 
@@ -390,12 +394,8 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	})
 	require.Error(t, err)
 
-	lineageCount, err := h.db.NewSelect().
-		Table("documents").
-		Where("lineage_id = ?", firstVersion.LineageID).
-		Where("organization_id = ?", h.tenantInfo.OrgID).
-		Where("business_unit_id = ?", h.tenantInfo.BuID).
-		Count(h.ctx)
+	d := documentdb.Documents
+	lineageCount, err := d.Where(d.LineageID.Eq(firstVersion.LineageID)).Count(h.ctx, h.db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), lineageCount)
 
@@ -462,12 +462,8 @@ func TestService_BulkDeleteDeletesLineages_Integration(t *testing.T) {
 	assert.Equal(t, 4, result.DeletedCount)
 
 	for _, lineageID := range []pulid.ID{firstV1.LineageID, secondV1.LineageID} {
-		count, countErr := h.db.NewSelect().
-			Table("documents").
-			Where("lineage_id = ?", lineageID).
-			Where("organization_id = ?", h.tenantInfo.OrgID).
-			Where("business_unit_id = ?", h.tenantInfo.BuID).
-			Count(h.ctx)
+		d := documentdb.Documents
+		count, countErr := d.Where(d.LineageID.Eq(lineageID)).Count(h.ctx, h.db)
 		require.NoError(t, countErr)
 		assert.Equal(t, int64(0), count)
 	}

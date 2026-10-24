@@ -75,7 +75,6 @@ func New(p Params) *Service {
 	}
 }
 
-
 // PayPeriodSpec reads the organisation's settlement calendar for per-pay-period
 // accrual; nil when settlement is not configured.
 func (s *Service) PayPeriodSpec(

@@ -204,10 +204,14 @@ func (r *repository) ExpirePendingByRun(
 	})
 }
 
-func (r *repository) expireByRuns(ctx context.Context, runs *keel.Query[agent.AgentRun]) (int, error) {
+func pendingOfRuns(runs *keel.Query[agent.AgentRun]) *keel.Query[agent.AgentProposal] {
 	p := agentdb.AgentProposals
-	n, err := p.Where(p.Status.Eq(agent.ProposalStatusPending), p.RunID.InQuery(runs)).
-		Update(ctx, r.db.Keel(ctx), expiry()...)
+
+	return p.Where(p.Status.Eq(agent.ProposalStatusPending), p.RunID.InQuery(runs))
+}
+
+func (r *repository) expireByRuns(ctx context.Context, runs *keel.Query[agent.AgentRun]) (int, error) {
+	n, err := pendingOfRuns(runs).Update(ctx, r.db.Keel(ctx), expiry()...)
 	if err != nil {
 		return 0, err
 	}

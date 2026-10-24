@@ -4,22 +4,19 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 )
 
@@ -29,6 +26,7 @@ const (
 
 	newerTenderAlias     = "newer_tnd"
 	latestStopAlias      = "last_stp"
+	latestMoveAlias      = "last_smv"
 	shipmentResourceType = "shipment"
 )
 
@@ -72,78 +70,148 @@ func deliveredShipmentStatuses() []shipment.Status {
 	}
 }
 
+func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[shipment.Stop] {
+	stp := shipmentdb.Stops
+	sm := shipmentdb.ShipmentMoves
+	sp := shipmentdb.Shipments
+	loc := locationdb.Locations
+	ust := loc.State()
+	cutoff := keel.Raw("COALESCE(?, ?)", stp.ScheduledWindowEnd, stp.ScheduledWindowStart)
+
+	return stp.Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
+		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
+		LeftJoin(loc, loc.ID.EqCol(stp.LocationID)).
+		Pick(
+			stp.ID,
+			sm.ID,
+			sp.ID,
+			sp.ProNumber,
+			sp.OwnerID,
+			stp.Type,
+			cutoff,
+			keel.Raw("COALESCE(?, '')", loc.Name),
+			keel.Raw("COALESCE(?, '')", loc.City),
+			keel.Raw("COALESCE(?, '')", ust.Abbreviation),
+		).
+		Where(
+			stp.Type.In(req.StopTypes...),
+			stp.ActualArrival.IsNull(),
+			stp.Status.NotIn(shipment.StopStatusCompleted, shipment.StopStatusCanceled),
+			sm.Status.Ne(shipment.MoveStatusCanceled),
+			sp.Status.In(openShipmentStatuses()...),
+			keel.Raw("? < ?", cutoff, req.ClosedBefore),
+			keel.When(len(req.ShipmentIDs) > 0, sp.ID.In(req.ShipmentIDs...)),
+		).
+		Order(keel.Asc(cutoff), stp.ID.Asc()).
+		Limit(boundedLimit(req.Limit))
+}
+
+func lastDeliveryQuery(sp *shipmentdb.ShipmentsTable) *keel.Query[shipment.Stop] {
+	stp := shipmentdb.Stops.As(latestStopAlias)
+	sm := shipmentdb.ShipmentMoves.As(latestMoveAlias)
+
+	return stp.Pick(stp.ActualArrival).
+		Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
+		Where(
+			sm.ShipmentID.EqCol(sp.ID),
+			sm.Status.Ne(shipment.MoveStatusCanceled),
+			stp.Type.In(shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery),
+			stp.Status.Ne(shipment.StopStatusCanceled),
+			stp.ActualArrival.IsNotNull(),
+		).
+		Order(sm.Sequence.Desc(), stp.Sequence.Desc()).
+		Limit(1)
+}
+
+func podOnFile(sp *shipmentdb.ShipmentsTable) keel.Pred {
+	doc := documentdb.Documents
+
+	return keel.Exists(doc.Where(
+		doc.ResourceType.Eq(shipmentResourceType),
+		doc.ResourceID.EqCol(sp.ID),
+		doc.IsCurrentVersion.IsTrue(),
+		doc.Status.NotIn(document.StatusRejected, document.StatusArchived),
+		doc.DocumentType().Code.Eq(documenttype.CodePOD),
+	))
+}
+
+func missingPODsQuery(req *watchtowerports.ListMissingPODsRequest) *keel.Query[shipment.Shipment] {
+	sp := shipmentdb.Shipments
+	delivered := shipmentdb.Stops.As(latestStopAlias).ActualArrival
+
+	return sp.JoinLateral(lastDeliveryQuery(sp)).
+		Pick(
+			sp.ID,
+			sp.ProNumber,
+			sp.OwnerID,
+			keel.Raw("COALESCE(?, '')", sp.Customer().Name),
+			delivered,
+		).
+		Where(
+			sp.Status.In(deliveredShipmentStatuses()...),
+			delivered.Lt(req.DeliveredBefore),
+			delivered.Gte(req.DeliveredAfter),
+			keel.Not(podOnFile(sp)),
+			keel.When(len(req.ShipmentIDs) > 0, sp.ID.In(req.ShipmentIDs...)),
+		).
+		Order(delivered.Asc(), sp.ID.Asc()).
+		Limit(boundedLimit(req.Limit))
+}
+
+func exhaustedTendersQuery(
+	req *watchtowerports.ListExhaustedTendersRequest,
+) *keel.Query[tender.Tender] {
+	tc := tenderdb.Tenders
+	sm := shipmentdb.ShipmentMoves
+	sp := shipmentdb.Shipments
+	ca := shipmentdb.CarrierAssignments
+	newer := tenderdb.Tenders.As(newerTenderAlias)
+
+	newerTender := newer.Where(
+		newer.ShipmentMoveID.EqCol(tc.ShipmentMoveID),
+		keel.Raw("(?, ?) > (?, ?)", newer.CreatedAt, newer.ID, tc.CreatedAt, tc.ID),
+	)
+	covered := ca.Where(
+		ca.ShipmentMoveID.EqCol(sm.ID),
+		ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+	)
+
+	return tc.Join(sm, sm.ID.EqCol(tc.ShipmentMoveID)).
+		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
+		Pick(
+			tc.ID,
+			sm.ID,
+			sp.ID,
+			sp.ProNumber,
+			sp.OwnerID,
+			keel.Raw("COALESCE(?, ?)", tc.ExhaustedAt, tc.UpdatedAt),
+		).
+		Where(
+			tc.Status.Eq(tender.StatusExhausted),
+			sm.Status.Eq(shipment.MoveStatusNew),
+			sp.Status.In(openShipmentStatuses()...),
+			keel.NotExists(newerTender),
+			keel.NotExists(covered),
+			keel.When(len(req.ShipmentIDs) > 0, sp.ID.In(req.ShipmentIDs...)),
+		).
+		Order(tc.CreatedAt.Asc(), tc.ID.Asc()).
+		Limit(boundedLimit(req.Limit))
+}
+
 func (r *repository) ListMissedStops(
 	ctx context.Context,
 	req *watchtowerports.ListMissedStopsRequest,
 ) ([]*watchtowerports.MissedStop, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*watchtowerports.MissedStop, error) {
-		stp := shipmentcol.StopColumns
-		sm := shipmentcol.ShipmentMoveColumns
-		sp := shipmentcol.ShipmentColumns
-		loc := locationcol.LocationColumns
-		ust := usstatecol.UsStateColumns
-		smTable := shipmentcol.ShipmentMoveTable
-		spTable := shipmentcol.ShipmentTable
-		locTable := locationcol.LocationTable
-		ustTable := usstatecol.UsStateTable
-		cutoff := buncolgen.Expr(
-			"COALESCE({0}, {1})",
-			stp.ScheduledWindowEnd,
-			stp.ScheduledWindowStart,
+		rows, err := keel.Into[watchtowerports.MissedStop](
+			ctx,
+			r.db.Keel(ctx),
+			missedStopsQuery(req),
 		)
-
-		limit := boundedLimit(req.Limit)
-		rows := make([]*watchtowerports.MissedStop, 0, min(limit, 64))
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model((*shipment.Stop)(nil)).
-			ColumnExpr(stp.ID.As("stop_id")).
-			ColumnExpr(sm.ID.As("move_id")).
-			ColumnExpr(sp.ID.As("shipment_id")).
-			ColumnExpr(sp.ProNumber.As("pro_number")).
-			ColumnExpr(sp.OwnerID.As("owner_id")).
-			ColumnExpr(stp.Type.As("stop_type")).
-			ColumnExpr(cutoff+" AS cutoff").
-			ColumnExpr(loc.Name.Expr("COALESCE({}, '')")+" AS location_name").
-			ColumnExpr(loc.City.Expr("COALESCE({}, '')")+" AS city").
-			ColumnExpr(ust.Abbreviation.Expr("COALESCE({}, '')")+" AS state_code").
-			Join("JOIN "+smTable.As(smTable.Alias)).
-			JoinOn(sm.ID.EqColumn(stp.ShipmentMoveID)).
-			JoinOn(sm.OrganizationID.EqColumn(stp.OrganizationID)).
-			JoinOn(sm.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
-			Join("JOIN "+spTable.As(spTable.Alias)).
-			JoinOn(sp.ID.EqColumn(sm.ShipmentID)).
-			JoinOn(sp.OrganizationID.EqColumn(sm.OrganizationID)).
-			JoinOn(sp.BusinessUnitID.EqColumn(sm.BusinessUnitID)).
-			Join("LEFT JOIN "+locTable.As(locTable.Alias)).
-			JoinOn(loc.ID.EqColumn(stp.LocationID)).
-			JoinOn(loc.OrganizationID.EqColumn(stp.OrganizationID)).
-			JoinOn(loc.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
-			Join("LEFT JOIN "+ustTable.As(ustTable.Alias)).
-			JoinOn(ust.ID.EqColumn(loc.StateID)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = shipmentcol.StopScopeTenant(sq, req.TenantInfo).
-					Where(stp.Type.In(), bun.List(req.StopTypes)).
-					Where(stp.ActualArrival.IsNull()).
-					Where(stp.Status.NotIn(), bun.List([]shipment.StopStatus{
-						shipment.StopStatusCompleted,
-						shipment.StopStatusCanceled,
-					})).
-					Where(sm.Status.Ne(), shipment.MoveStatusCanceled).
-					Where(sp.Status.In(), bun.List(openShipmentStatuses())).
-					Where(cutoff+" < ?", req.ClosedBefore)
-				if len(req.ShipmentIDs) > 0 {
-					sq = sq.Where(sp.ID.In(), bun.List(req.ShipmentIDs))
-				}
-				return sq
-			}).
-			OrderExpr(cutoff+" ASC").
-			Order(stp.ID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx, &rows)
 		if err != nil {
 			return nil, fmt.Errorf("list missed stops: %w", err)
 		}
-		return rows, nil
+		return sliceutils.Pointers(rows), nil
 	})
 }
 
@@ -152,98 +220,16 @@ func (r *repository) ListMissingPODs(
 	req *watchtowerports.ListMissingPODsRequest,
 ) ([]*watchtowerports.MissingPOD, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*watchtowerports.MissingPOD, error) {
-		db := r.db.DBForContext(ctx)
-		sp := shipmentcol.ShipmentColumns
-		cus := customercol.CustomerColumns
-		cusTable := customercol.CustomerTable
-		delivered := shipmentcol.StopColumns.ActualArrival.WithAlias(latestStopAlias)
-
-		limit := boundedLimit(req.Limit)
-		rows := make([]*watchtowerports.MissingPOD, 0, min(limit, 64))
-		err := db.NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			ColumnExpr(sp.ID.As("shipment_id")).
-			ColumnExpr(sp.ProNumber.As("pro_number")).
-			ColumnExpr(sp.OwnerID.As("owner_id")).
-			ColumnExpr(cus.Name.Expr("COALESCE({}, '')")+" AS customer_name").
-			ColumnExpr(delivered.As("delivered_at")).
-			Join("JOIN LATERAL (?) AS ? ON TRUE", lastDeliveryQuery(db), bun.Ident(latestStopAlias)).
-			Join("LEFT JOIN "+cusTable.As(cusTable.Alias)).
-			JoinOn(cus.ID.EqColumn(sp.CustomerID)).
-			JoinOn(cus.OrganizationID.EqColumn(sp.OrganizationID)).
-			JoinOn(cus.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-					Where(sp.Status.In(), bun.List(deliveredShipmentStatuses())).
-					Where(delivered.Lt(), req.DeliveredBefore).
-					Where(delivered.Gte(), req.DeliveredAfter).
-					Where("NOT EXISTS (?)", podOnFileQuery(db))
-				if len(req.ShipmentIDs) > 0 {
-					sq = sq.Where(sp.ID.In(), bun.List(req.ShipmentIDs))
-				}
-				return sq
-			}).
-			Order(delivered.OrderAsc(), sp.ID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx, &rows)
+		rows, err := keel.Into[watchtowerports.MissingPOD](
+			ctx,
+			r.db.Keel(ctx),
+			missingPODsQuery(req),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("list shipments missing a pod: %w", err)
 		}
-		return rows, nil
+		return sliceutils.Pointers(rows), nil
 	})
-}
-
-func lastDeliveryQuery(db bun.IDB) *bun.SelectQuery {
-	stp := shipmentcol.StopColumns
-	sm := shipmentcol.ShipmentMoveColumns
-	sp := shipmentcol.ShipmentColumns
-	smTable := shipmentcol.ShipmentMoveTable
-
-	return db.NewSelect().
-		Model((*shipment.Stop)(nil)).
-		ColumnExpr(stp.ActualArrival.Qualified()).
-		Join("JOIN "+smTable.As(smTable.Alias)).
-		JoinOn(sm.ID.EqColumn(stp.ShipmentMoveID)).
-		JoinOn(sm.OrganizationID.EqColumn(stp.OrganizationID)).
-		JoinOn(sm.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
-		Where(sm.ShipmentID.EqColumn(sp.ID)).
-		Where(sm.OrganizationID.EqColumn(sp.OrganizationID)).
-		Where(sm.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
-		Where(sm.Status.Ne(), shipment.MoveStatusCanceled).
-		Where(stp.Type.In(), bun.List([]shipment.StopType{
-			shipment.StopTypeDelivery,
-			shipment.StopTypeSplitDelivery,
-		})).
-		Where(stp.Status.Ne(), shipment.StopStatusCanceled).
-		Where(stp.ActualArrival.IsNotNull()).
-		Order(sm.Sequence.OrderDesc(), stp.Sequence.OrderDesc()).
-		Limit(1)
-}
-
-func podOnFileQuery(db bun.IDB) *bun.SelectQuery {
-	doc := documentcol.DocumentColumns
-	dt := documenttypecol.DocumentTypeColumns
-	sp := shipmentcol.ShipmentColumns
-	dtTable := documenttypecol.DocumentTypeTable
-	docTable := documentcol.DocumentTable
-
-	return db.NewSelect().
-		TableExpr(docTable.As(docTable.Alias)).
-		ColumnExpr("1").
-		Join("JOIN "+dtTable.As(dtTable.Alias)).
-		JoinOn(dt.ID.EqColumn(doc.DocumentTypeID)).
-		JoinOn(dt.OrganizationID.EqColumn(doc.OrganizationID)).
-		JoinOn(dt.BusinessUnitID.EqColumn(doc.BusinessUnitID)).
-		Where(doc.OrganizationID.EqColumn(sp.OrganizationID)).
-		Where(doc.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
-		Where(doc.ResourceType.Eq(), shipmentResourceType).
-		Where(doc.ResourceID.EqColumn(sp.ID)).
-		Where(doc.IsCurrentVersion.IsTrue()).
-		Where(doc.Status.NotIn(), bun.List([]document.Status{
-			document.StatusRejected,
-			document.StatusArchived,
-		})).
-		Where(dt.Code.Eq(), documenttype.CodePOD)
 }
 
 func (r *repository) ListExhaustedTenders(
@@ -254,80 +240,15 @@ func (r *repository) ListExhaustedTenders(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*watchtowerports.ExhaustedTender, error) {
-			db := r.db.DBForContext(ctx)
-			tc := tendercol.TenderColumns
-			sm := shipmentcol.ShipmentMoveColumns
-			sp := shipmentcol.ShipmentColumns
-			ca := shipmentcol.CarrierAssignmentColumns
-			smTable := shipmentcol.ShipmentMoveTable
-			spTable := shipmentcol.ShipmentTable
-			caTable := shipmentcol.CarrierAssignmentTable
-			tenderTable := tendercol.TenderTable
-			newerMove := tc.ShipmentMoveID.WithAlias(newerTenderAlias)
-			newerOrg := tc.OrganizationID.WithAlias(newerTenderAlias)
-			newerBu := tc.BusinessUnitID.WithAlias(newerTenderAlias)
-			newerCreated := tc.CreatedAt.WithAlias(newerTenderAlias)
-			newerID := tc.ID.WithAlias(newerTenderAlias)
-
-			newer := db.NewSelect().
-				TableExpr(tenderTable.Name+" AS "+newerTenderAlias).
-				ColumnExpr("1").
-				Where(newerMove.EqColumn(tc.ShipmentMoveID)).
-				Where(newerOrg.EqColumn(tc.OrganizationID)).
-				Where(newerBu.EqColumn(tc.BusinessUnitID)).
-				Where(
-					"(?, ?) > (?, ?)",
-					bun.Safe(newerCreated.Qualified()),
-					bun.Safe(newerID.Qualified()),
-					bun.Safe(tc.CreatedAt.Qualified()),
-					bun.Safe(tc.ID.Qualified()),
-				)
-
-			covered := db.NewSelect().
-				TableExpr(caTable.As(caTable.Alias)).
-				ColumnExpr("1").
-				Where(ca.ShipmentMoveID.EqColumn(sm.ID)).
-				Where(ca.OrganizationID.EqColumn(sm.OrganizationID)).
-				Where(ca.BusinessUnitID.EqColumn(sm.BusinessUnitID)).
-				Where(ca.Status.Ne(), shipment.CarrierAssignmentStatusCanceled)
-
-			limit := boundedLimit(req.Limit)
-			rows := make([]*watchtowerports.ExhaustedTender, 0, min(limit, 32))
-			err := db.NewSelect().
-				TableExpr(tenderTable.As(tenderTable.Alias)).
-				ColumnExpr(tc.ID.As("tender_id")).
-				ColumnExpr(sm.ID.As("move_id")).
-				ColumnExpr(sp.ID.As("shipment_id")).
-				ColumnExpr(sp.ProNumber.As("pro_number")).
-				ColumnExpr(sp.OwnerID.As("owner_id")).
-				ColumnExpr(buncolgen.Expr("COALESCE({0}, {1}) AS exhausted_at", tc.ExhaustedAt, tc.UpdatedAt)).
-				Join("JOIN "+smTable.As(smTable.Alias)).
-				JoinOn(sm.ID.EqColumn(tc.ShipmentMoveID)).
-				JoinOn(sm.OrganizationID.EqColumn(tc.OrganizationID)).
-				JoinOn(sm.BusinessUnitID.EqColumn(tc.BusinessUnitID)).
-				Join("JOIN "+spTable.As(spTable.Alias)).
-				JoinOn(sp.ID.EqColumn(sm.ShipmentID)).
-				JoinOn(sp.OrganizationID.EqColumn(sm.OrganizationID)).
-				JoinOn(sp.BusinessUnitID.EqColumn(sm.BusinessUnitID)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = tendercol.TenderScopeTenant(sq, req.TenantInfo).
-						Where(tc.Status.Eq(), tender.StatusExhausted).
-						Where(sm.Status.Eq(), shipment.MoveStatusNew).
-						Where(sp.Status.In(), bun.List(openShipmentStatuses())).
-						Where("NOT EXISTS (?)", newer).
-						Where("NOT EXISTS (?)", covered)
-					if len(req.ShipmentIDs) > 0 {
-						sq = sq.Where(sp.ID.In(), bun.List(req.ShipmentIDs))
-					}
-					return sq
-				}).
-				Order(tc.CreatedAt.OrderAsc(), tc.ID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx, &rows)
+			rows, err := keel.Into[watchtowerports.ExhaustedTender](
+				ctx,
+				r.db.Keel(ctx),
+				exhaustedTendersQuery(req),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list exhausted tenders: %w", err)
 			}
-			return rows, nil
+			return sliceutils.Pointers(rows), nil
 		},
 	)
 }

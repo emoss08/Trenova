@@ -53,7 +53,6 @@ func conversationByDocumentQuery(
 				c.Status,
 				string(shipmentimportchat.ConversationStatusActive),
 			)),
-			c.UpdatedAt.Desc(),
 		)
 	}
 

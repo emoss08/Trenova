@@ -6,34 +6,34 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type definitionRow struct {
-	ID             pulid.ID `bun:"id"`
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	ID             pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 type fixture struct {
+	base       context.Context
 	ctx        context.Context
-	db         *bun.DB
+	db         *keel.DB
 	repo       agentqualityports.AgentEvalCaseRepository
 	tenant     pagination.TenantInfo
 	definition pulid.ID
@@ -45,21 +45,29 @@ func setup(t *testing.T) *fixture {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	cols := agentdefinitioncol.DefinitionColumns
-	var row definitionRow
-	require.NoError(t, db.NewSelect().
-		TableExpr(agentdefinitioncol.DefinitionTable.As(agentdefinitioncol.DefinitionTable.Alias)).
-		Column(cols.ID.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
-		Limit(1).
-		Scan(ctx, &row))
+	rows, err := keel.QueryAll(
+		ctx,
+		db,
+		pgx.RowToStructByPos[definitionRow],
+		"SELECT id, organization_id, business_unit_id FROM agent_definitions LIMIT 1",
+	)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	row := rows[0]
+	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
 
 	return &fixture{
-		ctx:        ctx,
+		base:       ctx,
+		ctx:        dbscope.WithTenant(ctx, tenant.DBTenant()),
 		db:         db,
 		repo:       New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}),
-		tenant:     pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID},
+		tenant:     tenant,
 		definition: row.ID,
 	}
+}
+
+func (f *fixture) scoped(tenant pagination.TenantInfo) context.Context {
+	return dbscope.WithTenant(f.base, tenant.DBTenant())
 }
 
 func (f *fixture) newCase(t *testing.T, input string) *agentquality.EvalCase {
@@ -127,21 +135,22 @@ func TestTenantIsolation_AnotherTenantSeesNothing(t *testing.T) {
 	created, err := f.repo.Create(f.ctx, f.newCase(t, "Put S-101 on hold"))
 	require.NoError(t, err)
 	other := otherTenant()
+	otherCtx := f.scoped(other)
 
-	_, err = f.repo.GetByID(f.ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
+	_, err = f.repo.GetByID(otherCtx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         created.ID,
 		TenantInfo: other,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	_, err = f.repo.GetByContent(f.ctx, agentqualityports.GetAgentEvalCaseByContentRequest{
+	_, err = f.repo.GetByContent(otherCtx, agentqualityports.GetAgentEvalCaseByContentRequest{
 		AgentDefinitionID: f.definition,
 		ContentHash:       created.ContentHash,
 		TenantInfo:        other,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	listed, err := f.repo.ListByAgent(f.ctx, agentqualityports.ListAgentEvalCasesRequest{
+	listed, err := f.repo.ListByAgent(otherCtx, agentqualityports.ListAgentEvalCasesRequest{
 		AgentDefinitionID: f.definition,
 		TenantInfo:        other,
 	})
@@ -152,10 +161,10 @@ func TestTenantIsolation_AnotherTenantSeesNothing(t *testing.T) {
 	stolen.OrganizationID = other.OrgID
 	stolen.BusinessUnitID = other.BuID
 	stolen.Title = "Rewritten from elsewhere"
-	_, err = f.repo.Update(f.ctx, &stolen)
+	_, err = f.repo.Update(otherCtx, &stolen)
 	require.Error(t, err, "an update scoped to another tenant touches nothing")
 
-	purged, err := f.repo.PurgeExpired(f.ctx, agentqualityports.PurgeExpiredEvalCasesRequest{
+	purged, err := f.repo.PurgeExpired(otherCtx, agentqualityports.PurgeExpiredEvalCasesRequest{
 		TenantInfo:    other,
 		CreatedBefore: timeutils.NowUnix() + 3600,
 		Now:           timeutils.NowUnix(),

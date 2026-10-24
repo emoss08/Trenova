@@ -4,45 +4,69 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// The resolution query is assembled from generated fragments, so the risk is not
-// a typo in an identifier but a join that silently widens the scope. These assert
-// the shape of the SQL that actually reaches Postgres.
+const resolveTemplateJoin = `JOIN "document_templates" dt ON dt."business_unit_id" = $1 ` +
+	`AND dt."organization_id" = $2 AND dt."id" = dtv."template_id" AND dt."active_version_id" = dtv."id"`
 
-func TestResolveTemplateJoinPinsTenantAndActiveVersion(t *testing.T) {
+func TestResolveWithoutACustomerReadsOnlyTheLiveOrgDefault(t *testing.T) {
 	t.Parallel()
 
-	// Without the active_version_id predicate the join would match every version
-	// of the template, and a draft could render to a customer.
-	require.Contains(t, resolveTemplateJoin, "dtpl.active_version_id = dtv.id")
-	require.Contains(t, resolveTemplateJoin, "dtpl.organization_id = dtv.organization_id")
-	require.Contains(t, resolveTemplateJoin, "dtpl.business_unit_id = dtv.business_unit_id")
+	sqlText, args := keeltest.Render(t, resolveQuery(&documenttemplateports.ResolveDocumentTemplateRequest{
+		Kind: documenttemplate.KindInvoicePDF,
+	}))
+
+	assert.Contains(t, sqlText, resolveTemplateJoin, sqlText)
+	assert.Contains(
+		t,
+		sqlText,
+		`WHERE dtv."business_unit_id" = $1 AND dtv."organization_id" = $2 AND dtv."status" = $3 `+
+			`AND dt."kind" = $4 AND dt."is_org_default" IS TRUE LIMIT 1`,
+		sqlText,
+	)
+	assert.Contains(t, sqlText, `NULL::varchar FROM`, sqlText)
+	assert.NotContains(t, sqlText, "document_template_assignments", sqlText)
+	assert.Equal(
+		t,
+		[]any{"bu_1", "org_1", string(documenttemplate.VersionStatusActive), string(documenttemplate.KindInvoicePDF)},
+		args,
+	)
 }
 
-func TestResolveAssignmentJoinIsTenantAndKindScoped(t *testing.T) {
+func TestResolveForACustomerPrefersItsAssignmentOfTheSameKind(t *testing.T) {
 	t.Parallel()
 
-	// An assignment join missing kind would let an invoice assignment decide
-	// which detention notice a customer receives.
-	require.Contains(t, resolveAssignmentJoin, "dta.kind = dtpl.kind")
-	require.Contains(t, resolveAssignmentJoin, "dta.template_id = dtpl.id")
-	require.Contains(t, resolveAssignmentJoin, "dta.organization_id = dtpl.organization_id")
-	require.Contains(t, resolveAssignmentJoin, "dta.business_unit_id = dtpl.business_unit_id")
-	require.Contains(t, resolveAssignmentJoin, "dta.customer_id = ?")
+	customerID := pulid.ID("cus_1")
+	sqlText, args := keeltest.Render(t, resolveQuery(&documenttemplateports.ResolveDocumentTemplateRequest{
+		Kind:       documenttemplate.KindInvoicePDF,
+		CustomerID: &customerID,
+	}))
+
+	assert.Contains(t, sqlText, resolveTemplateJoin, sqlText)
+	assert.Contains(
+		t,
+		sqlText,
+		`LEFT JOIN "document_template_assignments" dta ON dta."business_unit_id" = $1 `+
+			`AND dta."organization_id" = $2 AND dta."template_id" = dt."id" `+
+			`AND dta."kind" = dt."kind" AND dta."customer_id" = $5`,
+		sqlText,
+	)
+	assert.Contains(
+		t,
+		sqlText,
+		`AND (dta."id" IS NOT NULL OR dt."is_org_default" IS TRUE) `+
+			`ORDER BY (dta."id" IS NOT NULL) DESC LIMIT 1`,
+		sqlText,
+	)
+	require.Len(t, args, 5)
+	assert.Equal(t, "cus_1", args[4])
 }
 
-func TestResolveOrderPrefersTheAssignment(t *testing.T) {
-	t.Parallel()
-
-	require.Equal(t, "(dta.id IS NOT NULL) DESC", resolveOrder)
-}
-
-// resolvedScan is hand-maintained against the version entity. A field added to
-// the entity that the projection does not carry would reach a renderer as a zero
-// value, so the count is pinned deliberately.
 func TestResolvedScanCarriesEveryRenderedVersionField(t *testing.T) {
 	t.Parallel()
 
@@ -73,9 +97,6 @@ func TestResolvedScanCarriesEveryRenderedVersionField(t *testing.T) {
 	require.Equal(t, documenttemplate.PageSizeA4, row.Version.ResolvedPageSize())
 	require.Equal(t, documenttemplate.OrientationLandscape, row.Version.ResolvedOrientation())
 	require.Equal(t, "hash", row.Version.ContentHash)
-
-	// The template must name the version that resolved, or a generated document
-	// would record a pointer that disagrees with the bytes it describes.
 	require.NotNil(t, row.Template.ActiveVersionID)
 	require.Equal(t, row.Version.ID, *row.Template.ActiveVersionID)
 	require.Same(t, row.Template, row.Version.Template)
@@ -91,9 +112,5 @@ func TestResolvedScanReportsAnAssignmentAsAssigned(t *testing.T) {
 		TemplateIsOrgDefault: true,
 		AssignmentID:         &assignmentID,
 	}
-
-	// A template that is both the organization default and explicitly assigned
-	// resolves as Assigned: the administrator chose it for this customer, and
-	// that is what the source is there to report.
 	require.Equal(t, documenttemplate.SourceAssigned, scan.toRow().Source)
 }

@@ -345,12 +345,7 @@ func (r *repository) versionsOf(
 	)
 	err := keel.Batch(ctx, db,
 		keel.ListInto(versionsQuery(&req).Omit(a.Payload), &artifacts),
-		keel.IntoSlice(versionsQuery(&req).Pick(a.ID, keel.Raw(
-			"COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each(?) AS e "+
-				"WHERE e.key = ANY(?)), jsonb_build_object())",
-			a.Payload,
-			assistantartifact.SummaryPayloadKeys(),
-		)), &payloads),
+		keel.IntoSlice(summaryQuery(&req), &payloads),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("read artifact versions: %w", err)
@@ -365,6 +360,17 @@ func (r *repository) versionsOf(
 	}
 
 	return artifacts, nil
+}
+
+func summaryQuery(req *versionsRequest) *keel.Query[assistantartifact.Artifact] {
+	a := assistantartifactdb.Artifacts
+
+	return versionsQuery(req).Pick(a.ID, keel.Raw(
+		"COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each(?) AS e "+
+			"WHERE e.key = ANY(?)), jsonb_build_object())",
+		a.Payload,
+		assistantartifact.SummaryPayloadKeys(),
+	))
 }
 
 func versionsQuery(req *versionsRequest) *keel.Query[assistantartifact.Artifact] {
@@ -493,7 +499,7 @@ func (r *repository) TurnQuestions(
 				Where(
 					asked.ThreadID.EqCol(m.ThreadID),
 					asked.Role.Eq(conversation.RoleUser),
-					asked.Sequence.LtCol(m.Sequence),
+					keel.Raw("? < ?", asked.Sequence, m.Sequence),
 				).
 				Pick(asked.Content).
 				Order(asked.Sequence.Desc()).

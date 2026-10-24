@@ -6,27 +6,35 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documenttemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type fixture struct {
 	ctx         context.Context
-	db          *bun.DB
+	db          *keel.DB
 	templates   documenttemplateports.DocumentTemplateRepository
 	versions    documenttemplateports.DocumentTemplateVersionRepository
 	assignments documenttemplateports.DocumentTemplateAssignmentRepository
 	tenantInfo  pagination.TenantInfo
 	userID      pulid.ID
+}
+
+type orgRow struct {
+	ID             pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 func setup(t *testing.T) *fixture {
@@ -35,24 +43,24 @@ func setup(t *testing.T) *fixture {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("organizations").
-		Column("id", "business_unit_id").
-		Order("created_at ASC").
-		Limit(1).
-		Scan(ctx, &org))
+	o := tenantdb.Organizations
+	org, err := keel.IntoOne[orgRow](
+		dbscope.WithSystem(ctx, "find the first seeded organization"),
+		db,
+		o.AllTenants().Pick(o.ID, o.BusinessUnitID).Order(o.CreatedAt.Asc()).Limit(1),
+	)
+	require.NoError(t, err)
 
-	var userID pulid.ID
-	require.NoError(t, db.NewSelect().
-		TableExpr("users").
-		Column("id").
-		Where("current_organization_id = ?", org.ID).
-		Limit(1).
-		Scan(ctx, &userID))
+	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+
+	u := tenantdb.Users
+	userID, err := keel.IntoOne[pulid.ID](
+		ctx,
+		db,
+		u.Pick(u.ID).Where(u.CurrentOrganizationID.Eq(org.ID)).Limit(1),
+	)
+	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -69,27 +77,24 @@ func setup(t *testing.T) *fixture {
 		assignments: documenttemplaterepository.NewAssignmentRepository(
 			documenttemplaterepository.AssignmentParams{DB: conn, Logger: logger},
 		),
-		tenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+		tenantInfo: tenantInfo,
 		userID:     userID,
 	}
 }
 
-// seededTemplate returns the draft the starter seed created for a kind.
 func (f *fixture) seededTemplate(
 	t *testing.T,
 	kind documenttemplate.Kind,
 ) *documenttemplate.DocumentTemplate {
 	t.Helper()
 
-	template := new(documenttemplate.DocumentTemplate)
-	require.NoError(t, f.db.NewSelect().
-		Model(template).
-		Relation("Versions").
-		Where("dtpl.organization_id = ?", f.tenantInfo.OrgID).
-		Where("dtpl.business_unit_id = ?", f.tenantInfo.BuID).
-		Where("dtpl.kind = ?", kind).
+	dt := documenttemplatedb.DocumentTemplates
+	template, err := dt.Where(dt.Kind.Eq(kind)).
+		Load(dt.Versions()).
+		Order(dt.ID.Asc()).
 		Limit(1).
-		Scan(f.ctx))
+		One(f.ctx, f.db)
+	require.NoError(t, err)
 
 	return template
 }
@@ -97,14 +102,9 @@ func (f *fixture) seededTemplate(
 func (f *fixture) customerID(t *testing.T) pulid.ID {
 	t.Helper()
 
-	var id pulid.ID
-	require.NoError(t, f.db.NewSelect().
-		TableExpr("customers").
-		Column("id").
-		Where("organization_id = ?", f.tenantInfo.OrgID).
-		Where("business_unit_id = ?", f.tenantInfo.BuID).
-		Limit(1).
-		Scan(f.ctx, &id))
+	c := customerdb.Customers
+	id, err := keel.IntoOne[pulid.ID](f.ctx, f.db, c.Pick(c.ID).Order(c.ID.Asc()).Limit(1))
+	require.NoError(t, err)
 
 	return id
 }
@@ -112,12 +112,14 @@ func (f *fixture) customerID(t *testing.T) pulid.ID {
 func (f *fixture) makeOrgDefault(t *testing.T, templateID pulid.ID) {
 	t.Helper()
 
-	_, err := f.db.NewUpdate().
-		Model((*documenttemplate.DocumentTemplate)(nil)).
-		Set("is_org_default = TRUE").
-		Where("id = ?", templateID).
-		Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, f.setOrgDefault(templateID))
+}
+
+func (f *fixture) setOrgDefault(templateID pulid.ID) error {
+	dt := documenttemplatedb.DocumentTemplates
+	_, err := dt.Where(dt.ID.Eq(templateID)).Update(f.ctx, f.db, dt.IsOrgDefault.To(true))
+
+	return err
 }
 
 // Resolution is the load-bearing query: it decides what every customer of an
@@ -266,15 +268,13 @@ func (f *fixture) publishSecondTemplate(
 func (f *fixture) otherCustomerID(t *testing.T, exclude pulid.ID) pulid.ID {
 	t.Helper()
 
-	var id pulid.ID
-	require.NoError(t, f.db.NewSelect().
-		TableExpr("customers").
-		Column("id").
-		Where("organization_id = ?", f.tenantInfo.OrgID).
-		Where("business_unit_id = ?", f.tenantInfo.BuID).
-		Where("id <> ?", exclude).
-		Limit(1).
-		Scan(f.ctx, &id))
+	c := customerdb.Customers
+	id, err := keel.IntoOne[pulid.ID](
+		f.ctx,
+		f.db,
+		c.Pick(c.ID).Where(c.ID.Ne(exclude)).Order(c.ID.Asc()).Limit(1),
+	)
+	require.NoError(t, err)
 
 	return id
 }
@@ -298,11 +298,7 @@ func TestOnlyOneOrgDefaultPerKindIsAccepted(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = f.db.NewUpdate().
-		Model((*documenttemplate.DocumentTemplate)(nil)).
-		Set("is_org_default = TRUE").
-		Where("id = ?", second.ID).
-		Exec(f.ctx)
+	err = f.setOrgDefault(second.ID)
 	require.Error(t, err, "a second organization default for one kind must be rejected")
 	require.Contains(t, err.Error(), "uq_document_templates_org_default")
 }
@@ -348,15 +344,13 @@ func TestAVersionThatProducedADocumentCannotBeDeleted(t *testing.T) {
 		FileName:          "notice.pdf",
 		Status:            documenttemplate.GenerationStatusPending,
 	}
-	_, err := f.db.NewInsert().Model(generated).Exec(f.ctx)
+	err := documenttemplatedb.GeneratedDocuments.Create(f.ctx, f.db, generated)
 	require.NoError(t, err)
 
 	// The repository refuses a non-draft delete, so this drives the constraint
 	// directly to prove the database is the backstop and not just the service.
-	_, err = f.db.NewDelete().
-		Model((*documenttemplate.DocumentTemplateVersion)(nil)).
-		Where("id = ?", version.ID).
-		Exec(f.ctx)
+	dtv := documenttemplatedb.DocumentTemplateVersions
+	_, err = dtv.Where(dtv.ID.Eq(version.ID)).Delete(f.ctx, f.db)
 	require.Error(t, err, "deleting a version with output attributed to it must be refused")
 	require.Contains(t, err.Error(), "fk_generated_documents_template_version")
 }
@@ -376,7 +370,7 @@ func TestACompletedGeneratedDocumentMustRecordWhereItLanded(t *testing.T) {
 		Status:         documenttemplate.GenerationStatusCompleted,
 	}
 
-	_, err := f.db.NewInsert().Model(generated).Exec(f.ctx)
+	err := documenttemplatedb.GeneratedDocuments.Create(f.ctx, f.db, generated)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "chk_generated_documents_completed")
 }

@@ -4,37 +4,48 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-/*
-An upsert names the row it reads its version from.
-
-On a conflict Postgres sees two rows, the one already there and EXCLUDED, so a
-bare "version + 1" is ambiguous and the statement fails outright. The recorder
-only warns on a failed save, so every artifact a turn produced was dropped and
-the Desk's pane stayed empty through the turns that should have filled it.
-*/
-func TestUpsertBumpsTheStoredRowsVersion(t *testing.T) {
+func TestIdentityNamesTheRowAnUpsertReplaces(t *testing.T) {
 	t.Parallel()
 
-	artifact := &assistantartifact.Artifact{
-		ThreadID:         pulid.MustNew("athr_"),
-		Kind:             assistantartifact.KindTableView,
-		Status:           assistantartifact.StatusReady,
-		Title:            "Shipments",
-		SourceToolCallID: "call_1",
+	a := assistantartifactdb.Artifacts
+	proposalID, planID := pulid.MustNew("aprop_"), pulid.MustNew("apl_")
+
+	for name, tc := range map[string]struct {
+		artifact *assistantartifact.Artifact
+		columns  []string
+	}{
+		"proposal": {
+			artifact: &assistantartifact.Artifact{ProposalID: proposalID, SourceToolCallID: "call_1"},
+			columns:  []string{`"proposal_id" = `},
+		},
+		"plan": {
+			artifact: &assistantartifact.Artifact{PlanID: planID, SourceToolCallID: "call_1"},
+			columns:  []string{`"plan_id" = `},
+		},
+		"tool call": {
+			artifact: &assistantartifact.Artifact{
+				SourceToolCallID: "call_1",
+				Kind:             assistantartifact.KindTableView,
+			},
+			columns: []string{`"source_tool_call_id" = `, `"kind" = `},
+		},
+	} {
+		id, err := identityOf(tc.artifact)
+		require.NoError(t, err, name)
+
+		sql, _ := keeltest.Render(t, a.Where(id.match...))
+		for _, column := range tc.columns {
+			assert.Contains(t, sql, column, name)
+		}
 	}
-	target, err := conflictTarget(artifact)
-	require.NoError(t, err)
 
-	sql := buildUpsert(bun.NewDB(nil, pgdialect.New()), artifact, target).String()
-
-	assert.Contains(t, sql, "version = aart.version + 1", sql)
-	assert.NotContains(t, sql, "version = version + 1", sql)
-	assert.Contains(t, sql, "payload = EXCLUDED.payload", sql)
+	_, err := identityOf(&assistantartifact.Artifact{})
+	require.ErrorIs(t, err, ErrNoIdentity)
 }

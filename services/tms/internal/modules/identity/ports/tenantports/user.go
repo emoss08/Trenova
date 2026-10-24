@@ -130,14 +130,6 @@ type UserRepository interface {
 		ctx context.Context,
 		userID pulid.ID,
 	) ([]*tenant.OrganizationMembership, error)
-	GetOrganizationsByBusinessUnit(
-		ctx context.Context,
-		businessUnitID pulid.ID,
-	) ([]*tenant.Organization, error)
-	GetOrganizationByID(
-		ctx context.Context,
-		organizationID pulid.ID,
-	) (*tenant.Organization, error)
 	ListOrganizationMemberships(
 		ctx context.Context,
 		userID, businessUnitID pulid.ID,

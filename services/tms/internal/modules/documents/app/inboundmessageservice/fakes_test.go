@@ -11,26 +11,23 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const testNow = int64(1_784_131_200)
 
 type fakeDB struct {
-	kernelports.DBConnection
-
 	txs int
 }
 
-func (f *fakeDB) WithTx(
+func (f *fakeDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	f.txs++
 
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
 
 type fakeQueueRepo struct {

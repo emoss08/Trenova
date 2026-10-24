@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
@@ -20,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -412,12 +412,12 @@ func (s *Service) UploadProfilePicture(
 	user.ProfilePicURL = key
 	user.ThumbnailURL = key
 
-	cols := tenantcol.UserColumns
+	cols := tenantdb.Users
 	updatedUser, err := s.updateColumns(ctx, &columnUpdate{
 		tenantInfo: tenantInfo,
 		user:       user,
 		original:   &original,
-		columns:    []string{cols.ProfilePicURL.String(), cols.ThumbnailURL.String()},
+		columns:    []string{columnName(cols.ProfilePicURL.Col), columnName(cols.ThumbnailURL.Col)},
 		comment:    "Profile picture updated",
 	})
 	if err != nil {
@@ -451,12 +451,12 @@ func (s *Service) DeleteProfilePicture(
 	user.ProfilePicURL = ""
 	user.ThumbnailURL = ""
 
-	cols := tenantcol.UserColumns
+	cols := tenantdb.Users
 	updatedUser, err := s.updateColumns(ctx, &columnUpdate{
 		tenantInfo: tenantInfo,
 		user:       user,
 		original:   &original,
-		columns:    []string{cols.ProfilePicURL.String(), cols.ThumbnailURL.String()},
+		columns:    []string{columnName(cols.ProfilePicURL.Col), columnName(cols.ThumbnailURL.Col)},
 		comment:    "Profile picture removed",
 	})
 	if err != nil {
@@ -585,11 +585,11 @@ func (s *Service) UpdateMySettings(
 	user.Timezone = req.Timezone
 	user.TimeFormat = req.TimeFormat
 
-	cols := tenantcol.UserColumns
-	columns := []string{cols.Timezone.String(), cols.TimeFormat.String()}
+	cols := tenantdb.Users
+	columns := []string{columnName(cols.Timezone.Col), columnName(cols.TimeFormat.Col)}
 	if req.Locale != "" {
 		user.Locale = req.Locale
-		columns = append(columns, cols.Locale.String())
+		columns = append(columns, columnName(cols.Locale.Col))
 	}
 
 	updated, err := s.updateColumns(ctx, &columnUpdate{

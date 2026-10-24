@@ -107,7 +107,7 @@ func (r *resultRepository) ListPending(
 				Where(
 					res.RunID.Eq(req.RunID),
 					res.Status.Eq(extractioneval.ResultStatusPending),
-					res.Ordinal.Gt(req.AfterOrdinal),
+					res.Ordinal.Gt(int64(req.AfterOrdinal)),
 				).
 				Order(res.Ordinal.Asc()).
 				Limit(limit).

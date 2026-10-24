@@ -193,14 +193,7 @@ func (r *repository) ListPendingExtraction(
 	req *documentcontentports.ListPendingDocumentExtractionRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
-		d := documentdb.Documents
-		dc := documentcontentdb.Contents
-		items, err := d.LeftJoin(dc, dc.DocumentID.EqCol(d.ID)).
-			Where(pendingExtraction(d, dc)...).
-			Where(d.UpdatedAt.Lte(req.OlderThan)).
-			Order(d.UpdatedAt.Asc()).
-			Limit(pendingLimit(req.Limit)).
-			List(ctx, r.db.Keel(ctx))
+		items, err := pendingExtractionQuery(req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, err
 		}
@@ -220,21 +213,7 @@ func (r *repository) ListPendingExtractionTenants(
 			BusinessUnitID pulid.ID
 		}
 
-		d := documentdb.Documents
-		dc := documentcontentdb.Contents
-		rows, err := keel.Into[tenantRow](ctx, r.db.Keel(ctx), d.AllTenants().
-			LeftJoin(
-				dc,
-				dc.DocumentID.EqCol(d.ID),
-				dc.OrganizationID.EqCol(d.OrganizationID),
-				dc.BusinessUnitID.EqCol(d.BusinessUnitID),
-			).
-			Where(pendingExtraction(d, dc)...).
-			Where(d.UpdatedAt.Lte(req.OlderThan)).
-			Group(d.OrganizationID, d.BusinessUnitID).
-			Pick(d.OrganizationID, d.BusinessUnitID).
-			Order(d.OrganizationID.Asc(), d.BusinessUnitID.Asc()).
-			Limit(pendingLimit(req.Limit)))
+		rows, err := keel.Into[tenantRow](ctx, r.db.Keel(ctx), pendingTenantsQuery(req))
 		if err != nil {
 			return nil, err
 		}
@@ -249,6 +228,40 @@ func (r *repository) ListPendingExtractionTenants(
 
 		return tenants, nil
 	})
+}
+
+func pendingExtractionQuery(
+	req *documentcontentports.ListPendingDocumentExtractionRequest,
+) *keel.Query[document.Document] {
+	d := documentdb.Documents
+	dc := documentcontentdb.Contents
+
+	return d.LeftJoin(dc, dc.DocumentID.EqCol(d.ID)).
+		Where(pendingExtraction(d, dc)...).
+		Where(d.UpdatedAt.Lte(req.OlderThan)).
+		Order(d.UpdatedAt.Asc()).
+		Limit(pendingLimit(req.Limit))
+}
+
+func pendingTenantsQuery(
+	req *documentcontentports.ListPendingDocumentExtractionRequest,
+) *keel.Query[document.Document] {
+	d := documentdb.Documents
+	dc := documentcontentdb.Contents
+
+	return d.AllTenants().
+		LeftJoin(
+			dc,
+			dc.DocumentID.EqCol(d.ID),
+			dc.OrganizationID.EqCol(d.OrganizationID),
+			dc.BusinessUnitID.EqCol(d.BusinessUnitID),
+		).
+		Where(pendingExtraction(d, dc)...).
+		Where(d.UpdatedAt.Lte(req.OlderThan)).
+		Group(d.OrganizationID, d.BusinessUnitID).
+		Pick(d.OrganizationID, d.BusinessUnitID).
+		Order(d.OrganizationID.Asc(), d.BusinessUnitID.Asc()).
+		Limit(pendingLimit(req.Limit))
 }
 
 func pendingLimit(limit int) int {
