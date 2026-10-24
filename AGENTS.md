@@ -76,15 +76,14 @@ and still break production or the build.
   `domain`, `ports` and `<name>contract` packages (`archlint`). Public code never imports
   `internal/cloud`.
 - **Tenancy.** Repository methods run in `dbtx.Read`/`dbtx.Write` and query through
-  `DBForContext(ctx)` (Bun) or `Keel(ctx)` (keel), never `.DB()`; while Bun remains, start
-  transactions with `dbtx`, never `keel.Write` ([keel-migration.md](docs/engineering/backend/keel-migration.md)).
+  `Keel(ctx)`, never `keel.Write`/`keel.Read` directly
+  ([data-access.md](docs/engineering/backend/data-access.md)).
   `trenova-db` runs `SELECT trenova_rls.reconcile()` after every migration run, which protects a
   table with non-null `organization_id` and `business_unit_id`; any other shape calls
   `trenova_rls.apply_policy` or joins `trenova_rls.global_tables` in its migration. Cross-tenant
   code declares `dbscope.WithSystem` and is listed in `rlslint`'s allowlist.
-- **Columns** come from the generated keel tables (`<entity>db`) or, in Bun code, `pkg/buncolgen`
-  helpers, never hand-written names. Converting a module follows
-  [keel-conversion.md](docs/engineering/backend/keel-conversion.md).
+- **Columns** come from the generated keel tables (`<entity>db`, `task keel-gen`), never
+  hand-written names.
 - **Authorization.** Every root resolver and route reaches a permission check or is listed with a
   reason in `authzlint`; every new write has an agent tool, exemption or `pending` entry in
   `writecoverage.yml`; access changes are audited through `SecurityAuditor`.

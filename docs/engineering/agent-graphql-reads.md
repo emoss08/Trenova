@@ -588,7 +588,7 @@ credential into `canBeAssigned`, as `worker.Standing` does, and keeps the creden
 present and null when nothing is on file).
 
 The parameters are derived when the tool is built, not when the code is generated, because the
-filter configuration is computed from the entity at runtime (`querybuilder.GetFieldConfiguration`).
+filter configuration is computed from the entity at runtime (`listquery.Describe`).
 The catalog snapshot (`TestToolCatalogSnapshot`) pins the result, so a schema or configuration
 change that moves a parameter shows in review. `TestGraphQLReadsKeepEveryFilterTheCatalogOffered`
 fails a conversion that loses a filter the tool's catalog entry offered.
@@ -885,7 +885,7 @@ A list whose free-text `query` matches a field the reader may not be shown leaks
 match at a time, as a filter on it would, so the tool refuses such a query before the read, with
 advice to narrow by another parameter. What a query matches is read, not declared, wherever it
 can be: a table input's query matches the record's search configuration, which the repository's
-query builder searches with (`querybuilder.ApplyCursorFilters`), so the tool reads the same
+list query searches with (`listquery.Connection`), so the tool reads the same
 configuration (`configuredSearch`): its searchable columns, named by the record field each is
 stored in, or, where it names none, every filterable field that is not an enum, as the builder
 falls back to. A bespoke filter's search (`filter.search`, `input.query`) names the fields it

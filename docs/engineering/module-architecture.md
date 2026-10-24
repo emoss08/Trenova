@@ -7,7 +7,7 @@ a change costs the build.
 The service was one hexagon. Every domain package lived in `internal/core/domain`, every
 interface in two hub packages (`internal/core/ports/repositories` and
 `internal/core/ports/services`), every service in `internal/core/services`, every column helper
-in one `pkg/buncolgen` package, and one bootstrap linked the API and the worker together. A new
+in one generated package, and one bootstrap linked the API and the worker together. A new
 method on any port therefore recompiled almost every service, a new column recompiled every
 repository, and the API binary carried every workflow and activity. The modules put a boundary
 around each part of the business, and the rules below keep the import graph a DAG, so an
@@ -35,7 +35,7 @@ internal/modules/<module>/
 | Dependency rules | `services/tms/.go-arch-lint.yml`, checked by `go run ./scripts/archlint` |
 | Shared, domain-free port types (`WorkflowStarter`, `AfterCommit`, storage, search, actors) | `internal/modules/kernel/ports/kernelports` |
 | Mocks | `internal/testutil/mocks/<entity>portsmock`, configured in `.mockery.yaml` |
-| Column helpers | `pkg/buncolgen` (shared `Column` and `TableInfo`) and `pkg/buncolgen/<domain>col` |
+| Generated tables and columns | `domain/<entity>/<entity>db`, from `task keel-gen` |
 | Graph shared by every process | `internal/bootstrap/core` |
 | API-only and worker-only graphs | `internal/bootstrap/apiapp`, `internal/bootstrap/workerapp` |
 | Binaries | `cmd/api`, `cmd/worker`, `cmd/cli` |
@@ -45,8 +45,8 @@ internal/modules/<module>/
 
 Package names did not change when packages moved: `shipmentservice` is still
 `shipmentservice`, now at `internal/modules/operations/app/shipmentservice`. Domain package
-names must stay unique across modules, because the column generator names its output after the
-package's base name (`domain/shipment` becomes `pkg/buncolgen/shipmentcol`).
+names must stay unique across modules, because `keel gen` names its output after the package's
+base name (`domain/shipment` becomes `domain/shipment/shipmentdb`).
 
 ## Modules and levels
 
@@ -257,11 +257,10 @@ as the Temporal runtime, `m2msync`, and the storage and search clients.
 2. Write the migration in `schema/migrations` (`task db-create-migration`, then `task db-stamp`;
    "Migrations" in [data-access.md](backend/data-access.md)), and follow
    [row-level-security.md](row-level-security.md) for a tenant table.
-3. Regenerate the column helpers with `task generate-columns`. The generator reads every
-   `internal/modules/*/domain/*` package and writes one package per domain package,
-   `pkg/buncolgen/<domain>col`. Repositories import that package (`shipmentcol.ShipmentColumns`),
-   not `pkg/buncolgen` itself, so a column change recompiles only the repositories that use it. If the entity is reportable, tag
-   its table `report=<Category>`, run `task keel-gen`, add its kind to
+3. Regenerate the keel tables with `task keel-gen`, which writes one `<entity>db` package beside
+   each domain package (`shipmentdb.Shipments`), so a column change recompiles only the
+   repositories that use it. If the entity is reportable, tag
+   its table `report=<Category>`, add its kind to
    `reportaccess/kinds.go` and run `go generate ./internal/infrastructure/reportengine/...`
    ([reporting.md](reporting.md#adding-a-reportable-model-or-field)).
 4. Add its ports, repository and service as below.
@@ -296,7 +295,7 @@ as the Temporal runtime, `m2msync`, and the storage and search clients.
 
 1. Create `internal/modules/<module>/adapters/postgres/<entity>repository/` with a `New`
    constructor that returns the port interface.
-2. Use the generated `<domain>col` helpers ([docs/engineering/bun/buncolgen.md](bun/buncolgen.md)) and run
+2. Use the generated keel tables ([backend/data-access.md](backend/data-access.md)) and run
    every exported method in `dbtx.Read` or `dbtx.Write`
    ([row-level-security.md](row-level-security.md)).
 3. Register `<entity>repository.New` in the module's `SharedOptions()`.
@@ -342,8 +341,7 @@ goimports, which drops imports left unused. It handles named imports; it does no
 imports. It prints how many files it changed.
 
 When you move a package, append its line to `moves.tsv`; when you move a symbol between
-packages, append it to `symbol-moves.tsv`. The column helper split is in the symbol ledger too,
-so `buncolgen.ShipmentColumns` in overlay code becomes `shipmentcol.ShipmentColumns`.
+packages, append it to `symbol-moves.tsv`.
 
 ## Generics and build time
 
@@ -373,19 +371,6 @@ These designs did this at scale before they were changed:
 | `auditservice.SensitiveDataManager`, the RLS scope reporter behind `postgres.Connection` | `sync.Map`'s generic internals in every package that reaches a service or a repository | mutex-guarded maps |
 | `*lru.Cache` / `*expirable.LRU` fields in the template engine, the rate table cache and six other packages | golang-lru's cache, list and entry methods, about 17 KB in each of 30 packages | fields typed `lrucache.Cache[K, V]` from `shared/lrucache`, built with `lrucache.New` or `lrucache.NewExpirable` |
 
-Bun does the same to every package that mentions any Bun type, which includes every domain
-package with a `BeforeAppendModel(ctx, bun.Query)` hook: `schema.Table` holds a `sync.Map` and
-`schema.Tables` an `xsync.MapOf`, both reachable from `bun.Query` through `schema.Dialect`. That
-is about 180 functions (24 KB) in each of about 1,500 packages, close to half of all the generic
-code the API's first-party packages compile. Hiding the two maps behind unexported interfaces in
-Bun cut a cold API build by 15% and a rebuild after an exported edit to `domain/shipment` by
-about 20% on a 4-core machine. Nothing on this side of the import can stop it, so the fix lives
-in Trenova's fork of Bun, [`emoss08/bun`](https://github.com/emoss08/bun), whose `master` is
-upstream `master` plus that change and a fix for slice inserts that dropped a later row's value
-when the first row took the column default ([uptrace/bun#1394](https://github.com/uptrace/bun/issues/1394)). `services/tms/go.mod` and `shared/go.mod` replace every
-`github.com/uptrace/bun` module with the fork at one commit; the Bun modules are separate Go
-modules, so a new fork commit moves all of the `replace` lines together, never one of them.
-
 go-redis did it to every package that holds a `*redis.Client` or a `redis.UniversalClient`, at
 about 0.7 seconds each. `baseClient` kept a `weak.Pointer[Client]`, and because `Client` embeds
 `cmdable`, the stand-in type the compiler builds for that instantiation carries every promoted
@@ -396,7 +381,7 @@ clear of both. Trenova builds against
 plus a change that holds the weak reference and the maps behind types whose method signatures
 name no generic type. A package holding a `*redis.Client` now compiles 114 functions in about
 66 ms instead of 1,722 in about 690 ms. The core module, `extra/redisotel` and `extra/rediscmd`
-are replaced at one commit, under the same rule as Bun's modules.
+are replaced at one commit, and a new fork commit moves all three `replace` lines together.
 
 These measurements come from probe packages: a package that imports one dependency and mentions
 one of its types in a function signature, compiled on its own. A probe that compiles thousands of

@@ -62,11 +62,6 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.44.0
-	github.com/uptrace/bun v1.3.0
-	github.com/uptrace/bun/dialect/pgdialect v1.3.0
-	github.com/uptrace/bun/driver/pgdriver v1.3.0 // indirect
-	github.com/uptrace/bun/extra/bundebug v1.3.0
-	github.com/uptrace/bun/extra/bunotel v1.3.0
 	github.com/vektah/gqlparser/v2 v2.5.62
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.47.0
@@ -328,11 +323,6 @@ replace (
 	github.com/redis/go-redis/extra/rediscmd/v9 => github.com/emoss08/go-redis/extra/rediscmd/v9 v9.0.0-20261016021426-01e29e5f58fd
 	github.com/redis/go-redis/extra/redisotel/v9 => github.com/emoss08/go-redis/extra/redisotel/v9 v9.0.0-20261016021426-01e29e5f58fd
 	github.com/redis/go-redis/v9 => github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd
-	github.com/uptrace/bun => github.com/emoss08/bun v0.0.0-20261016005222-2580fd217ad8
-	github.com/uptrace/bun/dialect/pgdialect => github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016005222-2580fd217ad8
-	github.com/uptrace/bun/driver/pgdriver => github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016005222-2580fd217ad8
-	github.com/uptrace/bun/extra/bundebug => github.com/emoss08/bun/extra/bundebug v0.0.0-20261016005222-2580fd217ad8
-	github.com/uptrace/bun/extra/bunotel => github.com/emoss08/bun/extra/bunotel v0.0.0-20261016005222-2580fd217ad8
 )
 
 tool (

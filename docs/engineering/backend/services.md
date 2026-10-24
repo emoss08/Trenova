@@ -18,9 +18,9 @@ and announce what happened. The reference is
 - Bulk changes are one plan over many records (`statuschange.Plan`,
   `auditservice.BuildBulkLogEntries`), one statement, one batch of audit entries.
 - A use case that spans several repositories runs in one transaction on the context; the
-  repositories join it through `DBForContext` or `Keel(ctx)`. A service that only needs the
-  transaction depends on `kernelports.Transactor` (`Transact(ctx, opts, fn)`), not the Bun
-  `DBConnection` (`app/tractorservice`).
+  repositories join it through `Keel(ctx)`. A service that only needs the transaction depends on
+  `kernelports.Transactor` (`Transact(ctx, opts, fn)`), not `kernelports.DBConnection`
+  (`app/tractorservice`).
 
 ## Validation
 

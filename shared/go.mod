@@ -18,9 +18,6 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.44.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.41.0
-	github.com/uptrace/bun v1.3.0
-	github.com/uptrace/bun/dialect/pgdialect v1.3.0
-	github.com/uptrace/bun/driver/pgdriver v1.3.0
 	golang.org/x/net v0.61.0
 	golang.org/x/time v0.16.0
 )
@@ -133,8 +130,5 @@ require (
 )
 
 replace (
-	github.com/uptrace/bun => github.com/emoss08/bun v0.0.0-20261016005222-2580fd217ad8
-	github.com/uptrace/bun/dialect/pgdialect => github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016005222-2580fd217ad8
-	github.com/uptrace/bun/driver/pgdriver => github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016005222-2580fd217ad8
 	github.com/redis/go-redis/v9 => github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd
 )

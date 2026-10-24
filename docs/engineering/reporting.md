@@ -196,7 +196,7 @@ reporting pool, built when fx starts:
 The cache key covers the statement and its arguments (the tenant and the policy's row rules
 among them), the output, and keel's data version of every table the statement reads, which keel
 bumps after a write through it commits
-([backend/keel-migration.md](backend/keel-migration.md#transactions)). The read scope is a
+([backend/data-access.md](backend/data-access.md#pools-and-transactions)). The read scope is a
 session setting rather than an argument, which is why a narrowed run never reads the cache. The
 TTL is the backstop for writes keel does not see.
 

@@ -323,10 +323,11 @@ one fails until it is listed.
 
 ## Columns
 
-`task generate-columns` regenerates `pkg/buncolgen` from the domain entities. Adding or
-removing a field on a Bun model without rerunning it leaves repositories referencing a
-column helper that no longer matches the table — and, as above, can break the projection
-generator too. Never hand-write column references; see [docs/engineering/bun/buncolgen.md](bun/buncolgen.md).
+`task keel-gen` regenerates every `<entity>db` package (tables, columns, relations and
+schema) from the keel tags on the domain models. Adding or removing a field or relation
+without rerunning it leaves repositories referencing a column that no longer matches the
+model — and, as above, can break the projection generator too. Never hand-write column
+names; `keel_verify_integration_test.go` fails when a model and the migrated schema disagree.
 
 ## Client checks are narrower than they look
 

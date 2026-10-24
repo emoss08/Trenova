@@ -16,10 +16,9 @@ refuses them.
 ```
 request / activity ──▶ dbscope.WithTenant(ctx, org, bu, user)
                                │
-repository method ──▶ dbtx.Read / dbtx.Write (one transaction per method, shared by Bun and keel)
+repository method ──▶ dbtx.Read / dbtx.Write (one keel transaction per method, joined by nested calls of the same scope)
                                │
-scope guard ──▶ Bun (scoped driver):  BEGIN [READ ONLY]; SET LOCAL trenova.scope = 'v1.<key>.<org>.<bu>.<user>.<exp>.<hmac>'
-                keel (Config.OnBegin): BEGIN; SELECT set_config('trenova.scope', $1, true)
+scope guard ──▶ keel (Config.OnBegin): BEGIN [READ ONLY]; SELECT set_config('trenova.scope', 'v1.<key>.<org>.<bu>.<user>.<exp>.<hmac>', true)
                                │
 PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
                        AND business_unit_id = (SELECT trenova_rls.bu_id())
@@ -31,8 +30,8 @@ PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
 |---|---|
 | Scope on a context (`WithTenant`, `WithSystem`, `TenantOf`) | `pkg/dbscope` |
 | Per-method transaction helpers | `internal/infrastructure/postgres/dbtx` |
-| Signing, the scope guard both layers use, system pool, startup checks | `internal/infrastructure/postgres/{rlsscope,scopeguard,connection_rls}.go` |
-| pgx pools, the `database/sql` driver wrapper Bun runs on, keel's configuration | `internal/infrastructure/postgres/dbpool` |
+| Signing, the scope guard, system pool, startup checks | `internal/infrastructure/postgres/{rlsscope,scopeguard,connection_rls}.go` |
+| pgx pools and keel's configuration | `internal/infrastructure/postgres/dbpool` |
 | Key install, policy reconcile, role provisioning | `internal/infrastructure/postgres/rlsprovision.go`, `trenova db rls`, the `rls_scope_key` reference seed (`internal/infrastructure/database/dbcli/scopekey.go`) |
 | Policy reconcile after every migration run | `migrations.Options` (`schema/migrations`): `trenova-db` runs `SELECT trenova_rls.reconcile()` once a run applied anything |
 | Roles, scope schema and every policy | migration `20261231007040_row_level_security` |
@@ -73,21 +72,20 @@ scope to the transaction, which is what PgBouncer's transaction pooling needs: t
 next transaction on the same server connection starts with no scope and is
 refused.
 
-One `scopeGuard` per pool decides every transaction's scope, for both layers: the
-scoped driver calls it when Bun begins a transaction, and keel calls it through
-`Config.OnBegin` for every transaction keel begins itself, explicit (`keel.Write`,
-`keel.Read`) or implicit (a terminal outside a transaction, which keel runs in one
-whenever `OnBegin` is set). A transaction `dbtx` opens is begun by Bun and joined by
-keel (`keel.JoinTx`), so it carries one scope for both; keel sends no `OnBegin`
-statements into it. See [backend/keel-migration.md](backend/keel-migration.md).
+One `scopeGuard` per pool decides every transaction's scope: keel calls it through
+`Config.OnBegin` for every transaction it begins, explicit (`dbtx`, `Transact`) or
+implicit (a terminal outside a transaction, which keel runs in one whenever `OnBegin`
+is set). A nested `dbtx` call with the same scope joins the open transaction and
+sends no `OnBegin` statements; one with another scope begins its own. See
+[backend/data-access.md](backend/data-access.md#pools-and-transactions).
 
 ## Modes
 
-| `database.rls.mode` | Driver | When |
+| `database.rls.mode` | Scope guard | When |
 |---|---|---|
 | `off` (default) | not installed; `dbtx` helpers call straight through; keel has no `OnBegin` | deployments not yet migrated |
 | `observe` | signs scopes, logs and meters access that `enforce` would refuse | while rolling out |
-| `enforce` | refuses unscoped statements and statements outside a scoped transaction; keel's `OnBegin` refuses a transaction with no tenant or system scope | production |
+| `enforce` | `OnBegin` refuses a transaction with no tenant or system scope | production |
 
 `trenova_db_rls_scope_events_total{pool,event,outcome}` counts every decision.
 In `observe`, the first sighting of each unscoped call site is logged at warn with
@@ -97,20 +95,15 @@ its caller; refusals are always logged at error.
 
 **Repository methods** run their body in `dbtx.Read` (read-only transaction) or
 `dbtx.Write`, which reuse the caller's transaction when it has the same scope.
-Inside, use `r.db.DBForContext(ctx)` as before; never `r.db.DB()`, which is the raw
-pool and runs outside the transaction.
+Inside, pass `r.db.Keel(ctx)` to every terminal; it joins the transaction on the
+context.
 
 ```go
 func (r *repository) GetByID(ctx context.Context, req GetRequest) (*thing.Thing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*thing.Thing, error) {
-		entity := new(thing.Thing)
-		err := r.db.DBForContext(ctx).NewSelect().Model(entity).
-			Where(cols.ID.Eq(), req.ID).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Scan(ctx)
+		entity, err := thingdb.Things.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Thing")
+			return nil, thingErrors.Map(err, req.ID.String())
 		}
 		return entity, nil
 	})
@@ -131,10 +124,9 @@ func (r *repository) GetByID(ctx context.Context, req GetRequest) (*thing.Thing,
   aborts the transaction and the read after it fails too.
 - Work that must commit on its own regardless of the caller's transaction
   (sequence allocation) uses `Connection.RunDetached`.
-- Validators use `validationframework.NewBunUniquenessCheckerScoped(conn)` /
-  `NewBunReferenceCheckerScoped(conn)` / `NewUSStateReferenceCheck(conn)`.
-- keel code takes its DB from `r.db.Keel(ctx)` inside the same `dbtx` call; `rlslint`
-  holds `Keel(ctx)` to the rule above. A keel query under a system scope must say
+- Validators use `validationframework.NewKeelChecker(conn, xdb.XsSchema())`, which
+  runs its checks through `Keel(ctx)` in the caller's transaction.
+- A keel query under a system scope must say
   `AllTenants()`, and keel fills and checks the tenant columns of every write from
   the scope, a second wall in Go beside the policies.
 
@@ -238,7 +230,7 @@ switch to `enforce` and watch for `Refused database access` errors.
 ## Rolling out
 
 `observe` is a dry run only while the application still connects as a role that
-bypasses row-level security. The driver signs every scope and reports the
+bypasses row-level security. The scope guard signs every scope and reports the
 access `enforce` would refuse, but PostgreSQL lets it through. Connected as the
 tenant-bound application role, PostgreSQL itself refuses an unscoped statement
 on a tenant table (`no tenant scope is set for this transaction`) whatever the
@@ -267,7 +259,7 @@ mode, so switch roles and enforcement together.
    system role); logical decoding ignores policies but its snapshot does not.
 
 Rolling back takes both changes in the same deploy: point `database.user` back at
-the owner role and set `mode` to `off` (no driver, no per-method transactions) or
+the owner role and set `mode` to `off` (no scope guard, no per-method transactions) or
 `observe`. Neither is enough alone: the tenant-bound role with `mode: off` is
 refused every unscoped statement by PostgreSQL, and the owner role under
 `enforce` is refused at startup.

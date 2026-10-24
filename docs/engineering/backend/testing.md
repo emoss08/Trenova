@@ -30,8 +30,7 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
   migrations plus the reference seeds for `SetupTestDB`, and the fixtures on top for
   `seededtest`. A template is keyed by the seeds' fingerprints, so editing a seed or its
   data builds a new one. The first test on a server builds each template and every later one
-  reuses it until a migration or a seed changes; its
-  `*bun.DB` runs on pgx's `database/sql` driver.
+  reuses it until a migration or a seed changes.
 - A migration that rewrites data gets a test that runs its file against rows it must change and
   rows it must leave: `migrations.File("<version>_<name>")` returns the SQL
   (`formula_template_backfill_integration_test.go`).
