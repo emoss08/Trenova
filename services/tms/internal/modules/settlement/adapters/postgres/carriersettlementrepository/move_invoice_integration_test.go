@@ -5,6 +5,9 @@ package carriersettlementrepository_test
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,12 +18,13 @@ import (
 
 func (f *holdFixture) moveOf(t *testing.T, assignmentID pulid.ID) pulid.ID {
 	t.Helper()
-	var moveID pulid.ID
-	require.NoError(t, f.db.NewSelect().
-		TableExpr("carrier_assignments").
-		Column("shipment_move_id").
-		Where("id = ?", assignmentID).
-		Scan(f.ctx, &moveID))
+	moveID, err := keel.QueryValue[pulid.ID](
+		f.ctx,
+		f.db,
+		"SELECT shipment_move_id FROM carrier_assignments WHERE id = $1",
+		assignmentID.String(),
+	)
+	require.NoError(t, err)
 	return moveID
 }
 
@@ -65,14 +69,15 @@ func TestListLiveByMoveIDsGroupsEachMovesLiveInvoicesThroughItsAssignment_Integr
 	assert.Empty(t, grouped[rejectedMove])
 	assert.Empty(t, grouped[quietMove])
 
+	otherTenant := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
 	elsewhere, err := f.matches.ListLiveByMoveIDs(
-		f.ctx,
+		dbscope.WithTenant(f.ctx, otherTenant.DBTenant()),
 		carriersettlementports.ListLiveCarrierInvoiceMatchesByMoveIDsRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: pulid.MustNew("org_"),
-				BuID:  pulid.MustNew("bu_"),
-			},
-			MoveIDs: []pulid.ID{invoicedMove},
+			TenantInfo: otherTenant,
+			MoveIDs:    []pulid.ID{invoicedMove},
 		},
 	)
 	require.NoError(t, err)

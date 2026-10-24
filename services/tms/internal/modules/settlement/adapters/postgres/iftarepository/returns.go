@@ -4,24 +4,25 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-var openReturnStatuses = []ifta.ReturnStatus{ifta.ReturnStatusDraft, ifta.ReturnStatusFinalized}
+const returnEntity = "IFTA return"
+
+var (
+	openReturnStatuses = []ifta.ReturnStatus{ifta.ReturnStatusDraft, ifta.ReturnStatusFinalized}
+	returnErrors       = dberror.Mapping{Entity: returnEntity}
+)
 
 func openReturnConflict() error {
 	return errortypes.NewConflictError(
@@ -29,88 +30,37 @@ func openReturnConflict() error {
 	)
 }
 
-func (r *repository) applyReturnFilters(
-	q *bun.SelectQuery,
-	req *iftaports.ListReturnsRequest,
-) *bun.SelectQuery {
-	cols := iftacol.ReturnColumns
-	if req.Year > 0 {
-		q = q.Where(cols.Year.Eq(), req.Year)
+func returnFilters(req *iftaports.ListReturnsRequest) []keel.Pred {
+	rt := iftadb.Returns
+
+	return []keel.Pred{
+		when(req.Year > 0, rt.Year.Eq(int64(req.Year))),
+		when(len(req.Statuses) > 0, rt.Status.In(req.Statuses...)),
 	}
-	if len(req.Statuses) > 0 {
-		q = q.Where(cols.Status.In(), bun.In(req.Statuses))
-	}
-	return q
 }
 
 func (r *repository) ListReturns(
 	ctx context.Context,
 	req *iftaports.ListReturnsRequest,
 ) (*pagination.CursorListResult[*ifta.Return], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*ifta.Return], error) {
-			dba := r.db.DBForContext(ctx)
-			filter := filterOrEmpty(req.Filter)
-			cols := iftacol.ReturnColumns
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*ifta.Return)(nil)).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return iftacol.ReturnScopeTenant(sq, filter.TenantInfo)
-					}).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							iftacol.ReturnTable.Alias,
-							filter,
-							(*ifta.Return)(nil),
-						)
-						return r.applyReturnFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					r.l.Error("failed to count ifta returns", zap.Error(err))
-					return nil, fmt.Errorf("count ifta returns: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ifta.Return]{
-				Filter:     filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*ifta.Return) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(items).
-						ColumnExpr(iftacol.ReturnTable.All()).
-						WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return iftacol.ReturnScopeTenant(sq, filter.TenantInfo)
-						})
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				iftadb.Returns.Where(returnFilters(req)...),
+				&listquery.Request[ifta.Return]{
+					Filter: withDefaultSort(
+						req.Filter,
+						desc("year"),
+						desc("quarter"),
+						desc("amendmentNumber"),
+					),
+					Cursor: req.Cursor,
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						iftacol.ReturnTable.Alias,
-						filter,
-						req.Cursor,
-						(*ifta.Return)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					sq = r.applyReturnFilters(sq, req)
-					if len(filter.Sort) == 0 {
-						sq = sq.Order(cols.Year.OrderDesc()).
-							Order(cols.Quarter.OrderDesc()).
-							Order(cols.AmendmentNumber.OrderDesc())
-					}
-					return sq, nil
-				},
-			})
+			)
 			if err != nil {
 				r.l.Error("failed to list ifta returns", zap.Error(err))
 				return nil, fmt.Errorf("list ifta returns: %w", err)
@@ -126,26 +76,20 @@ func (r *repository) GetReturnByID(
 	req *iftaports.GetReturnByIDRequest,
 ) (*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
-		rel := iftacol.ReturnRelations
-		entity := new(ifta.Return)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return iftacol.ReturnScopeTenant(sq, req.TenantInfo).
-					Where(iftacol.ReturnColumns.ID.Eq(), req.ID)
-			})
+		rt := iftadb.Returns
+		q := rt.Where(rt.ID.Eq(req.ID))
 		if req.IncludeLines || req.IncludeJurisdictions {
-			q = q.Relation(rel.Lines, func(lq *bun.SelectQuery) *bun.SelectQuery {
-				return lq.Order(iftacol.ReturnLineColumns.SortOrder.OrderAsc())
-			})
-		}
-		if req.IncludeJurisdictions {
-			q = q.Relation(buncolgen.Rel(rel.Lines, iftacol.ReturnLineRelations.Jurisdiction))
+			lines := rt.Lines()
+			ordered := lines.Order(lines.SortOrder.Asc())
+			if req.IncludeJurisdictions {
+				ordered = ordered.Load(lines.Jurisdiction())
+			}
+			q = q.Load(ordered)
 		}
 
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "IFTA return")
+		entity, err := q.One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, returnErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -157,19 +101,14 @@ func (r *repository) GetReturnsByIDs(
 	req *iftaports.GetReturnsByIDsRequest,
 ) ([]*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ifta.Return, error) {
-		entities := make([]*ifta.Return, 0, len(req.IDs))
 		if len(req.IDs) == 0 {
-			return entities, nil
+			return []*ifta.Return{}, nil
 		}
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return iftacol.ReturnScopeTenant(sq, req.TenantInfo).
-					Where(iftacol.ReturnColumns.ID.In(), bun.List(req.IDs))
-			}).
-			Scan(ctx)
+		rt := iftadb.Returns
+		entities, err := rt.Where(rt.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get ifta returns by ids", zap.Error(err))
 			return nil, fmt.Errorf("get ifta returns by ids: %w", err)
@@ -184,24 +123,16 @@ func (r *repository) GetOpenReturnForPeriod(
 	req *iftaports.GetOpenReturnForPeriodRequest,
 ) (*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
-		cols := iftacol.ReturnColumns
-		entity := new(ifta.Return)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return iftacol.ReturnScopeTenant(sq, req.TenantInfo).
-					Where(cols.Year.Eq(), req.Year).
-					Where(cols.Quarter.Eq(), req.Quarter).
-					Where(cols.Status.In(), bun.In(openReturnStatuses))
-			}).
-			Order(cols.AmendmentNumber.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		rt := iftadb.Returns
+		entity, err := rt.Where(
+			rt.Year.Eq(int64(req.Year)),
+			rt.Quarter.Eq(int64(req.Quarter)),
+			rt.Status.In(openReturnStatuses...),
+		).Order(rt.AmendmentNumber.Desc()).First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil
-			}
 			r.l.Error("failed to read open ifta return", zap.Error(err))
 			return nil, fmt.Errorf("get open ifta return: %w", err)
 		}
@@ -215,24 +146,15 @@ func (r *repository) GetLatestReturnForPeriod(
 	req *iftaports.GetLatestReturnForPeriodRequest,
 ) (*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
-		cols := iftacol.ReturnColumns
-		entity := new(ifta.Return)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return iftacol.ReturnScopeTenant(sq, req.TenantInfo).
-					Where(cols.Year.Eq(), req.Year).
-					Where(cols.Quarter.Eq(), req.Quarter)
-			}).
-			Order(cols.AmendmentNumber.OrderDesc()).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		rt := iftadb.Returns
+		entity, err := rt.Where(
+			rt.Year.Eq(int64(req.Year)),
+			rt.Quarter.Eq(int64(req.Quarter)),
+		).Order(rt.AmendmentNumber.Desc(), rt.CreatedAt.Desc()).First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil
-			}
 			r.l.Error("failed to read latest ifta return", zap.Error(err))
 			return nil, fmt.Errorf("get latest ifta return: %w", err)
 		}
@@ -243,16 +165,12 @@ func (r *repository) GetLatestReturnForPeriod(
 
 func (r *repository) CreateReturn(ctx context.Context, entity *ifta.Return) (*ifta.Return, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := iftadb.Returns.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, openReturnConflict()
 			}
 			r.l.Error("failed to create ifta return", zap.Error(err))
-			return nil, fmt.Errorf("create ifta return: %w", err)
+			return nil, returnErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -261,29 +179,24 @@ func (r *repository) CreateReturn(ctx context.Context, entity *ifta.Return) (*if
 
 func (r *repository) UpdateReturn(ctx context.Context, entity *ifta.Return) (*ifta.Return, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(iftacol.ReturnColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, openReturnConflict()
-			}
-			r.l.Error("failed to update ifta return", zap.Error(err))
-			return nil, fmt.Errorf("update ifta return: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(results, "IFTA return", entity.ID.String()); err != nil {
+		if err := r.saveReturn(ctx, entity); err != nil {
 			return nil, err
 		}
 
 		return entity, nil
 	})
+}
+
+func (r *repository) saveReturn(ctx context.Context, entity *ifta.Return) error {
+	if err := iftadb.Returns.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if dberror.IsUniqueConstraintViolation(err) {
+			return openReturnConflict()
+		}
+		r.l.Error("failed to update ifta return", zap.Error(err))
+		return returnErrors.Map(err, entity.ID.String())
+	}
+
+	return nil
 }
 
 func (r *repository) ReplaceReturnLines(
@@ -292,56 +205,27 @@ func (r *repository) ReplaceReturnLines(
 	lines []*ifta.ReturnLine,
 ) (*ifta.Return, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
-		tenantInfo := pagination.TenantInfo{OrgID: ret.OrganizationID, BuID: ret.BusinessUnitID}
-		lineCols := iftacol.ReturnLineColumns
-		ov := ret.Version
-		ret.Version++
+		db := r.db.Keel(ctx)
+		rl := iftadb.ReturnLines
+		if _, err := rl.Where(rl.ReturnID.Eq(ret.ID)).Delete(ctx, db); err != nil {
+			r.l.Error("failed to replace ifta return lines", zap.Error(err))
+			return nil, fmt.Errorf("delete return lines: %w", err)
+		}
+
+		for i, line := range lines {
+			line.ReturnID = ret.ID
+			line.OrganizationID = ret.OrganizationID
+			line.BusinessUnitID = ret.BusinessUnitID
+			line.SortOrder = i
+		}
+		if err := rl.CreateMany(ctx, db, lines); err != nil {
+			r.l.Error("failed to replace ifta return lines", zap.Error(err))
+			return nil, fmt.Errorf("insert return lines: %w", err)
+		}
+
 		now := timeutils.NowUnix()
 		ret.ComputedAt = &now
-
-		err := r.db.WithTx(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context, tx bun.Tx) error {
-				if _, dErr := tx.NewDelete().
-					Model((*ifta.ReturnLine)(nil)).
-					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-						return iftacol.ReturnLineScopeTenantDelete(dq, tenantInfo).
-							Where(lineCols.ReturnID.Eq(), ret.ID)
-					}).
-					Exec(txCtx); dErr != nil {
-					return fmt.Errorf("delete return lines: %w", dErr)
-				}
-
-				if len(lines) > 0 {
-					for i, line := range lines {
-						line.ReturnID = ret.ID
-						line.OrganizationID = ret.OrganizationID
-						line.BusinessUnitID = ret.BusinessUnitID
-						line.SortOrder = i
-					}
-					if _, iErr := tx.NewInsert().
-						Model(&lines).
-						Returning("*").
-						Exec(txCtx); iErr != nil {
-						return fmt.Errorf("insert return lines: %w", iErr)
-					}
-				}
-
-				results, uErr := tx.NewUpdate().
-					Model(ret).
-					WherePK().
-					Where(iftacol.ReturnColumns.Version.Eq(), ov).
-					Returning("*").
-					Exec(txCtx)
-				if uErr != nil {
-					return fmt.Errorf("update return totals: %w", uErr)
-				}
-				return dberror.CheckRowsAffected(results, "IFTA return", ret.ID.String())
-			},
-		)
-		if err != nil {
-			r.l.Error("failed to replace ifta return lines", zap.Error(err))
+		if err := r.saveReturn(ctx, ret); err != nil {
 			return nil, err
 		}
 
@@ -359,43 +243,24 @@ func (r *repository) DeleteReturn(
 	req *iftaports.DeleteReturnRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := iftacol.ReturnColumns
-		lineCols := iftacol.ReturnLineColumns
-
-		err := r.db.WithTx(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context, tx bun.Tx) error {
-				if _, lErr := tx.NewDelete().
-					Model((*ifta.ReturnLine)(nil)).
-					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-						return iftacol.ReturnLineScopeTenantDelete(dq, req.TenantInfo).
-							Where(lineCols.ReturnID.Eq(), req.ID)
-					}).
-					Exec(txCtx); lErr != nil {
-					return fmt.Errorf("delete ifta return lines: %w", lErr)
-				}
-
-				result, dErr := tx.NewDelete().
-					Model((*ifta.Return)(nil)).
-					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-						return iftacol.ReturnScopeTenantDelete(dq, req.TenantInfo).
-							Where(cols.ID.Eq(), req.ID).
-							Where(cols.Version.Eq(), req.Version).
-							Where(cols.Status.Eq(), ifta.ReturnStatusDraft)
-					}).
-					Exec(txCtx)
-				if dErr != nil {
-					return fmt.Errorf("delete ifta return: %w", dErr)
-				}
-				return dberror.CheckRowsAffected(result, "IFTA return", req.ID.String())
-			},
-		)
-		if err != nil {
+		db := r.db.Keel(ctx)
+		rl := iftadb.ReturnLines
+		if _, err := rl.Where(rl.ReturnID.Eq(req.ID)).Delete(ctx, db); err != nil {
 			r.l.Error("failed to delete ifta return", zap.Error(err))
-			return err
+			return fmt.Errorf("delete ifta return lines: %w", err)
 		}
 
-		return nil
+		rt := iftadb.Returns
+		n, err := rt.Where(
+			rt.ID.Eq(req.ID),
+			rt.Version.Eq(req.Version),
+			rt.Status.Eq(ifta.ReturnStatusDraft),
+		).Delete(ctx, db)
+		if err != nil {
+			r.l.Error("failed to delete ifta return", zap.Error(err))
+			return fmt.Errorf("delete ifta return: %w", err)
+		}
+
+		return dberror.CheckAffected(n, returnEntity, req.ID.String())
 	})
 }

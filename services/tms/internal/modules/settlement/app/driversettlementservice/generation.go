@@ -20,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -230,7 +229,7 @@ func (s *Service) GenerateForWorker(
 	}
 
 	var created *driversettlement.Settlement
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		settlement, events, buildErr := s.buildSettlement(txCtx, req, control)
 		if buildErr != nil {
 			return buildErr

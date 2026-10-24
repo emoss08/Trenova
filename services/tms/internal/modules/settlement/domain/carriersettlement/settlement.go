@@ -27,9 +27,8 @@ var (
 
 // Carrier payable statements for purchased transportation
 type CarrierSettlement struct {
-	bun.BaseModel             `bun:"table:carrier_settlements,alias:carstl" json:"-"`
-	keel.Table                `                                                      keel:"carrier_settlements,report=Billing"`
-	pagination.CursorValueSet `bun:",embed"                                 json:"-"`
+	bun.BaseModel `bun:"table:carrier_settlements,alias:carstl" json:"-"`
+	keel.Table    `                                                      keel:"carrier_settlements,report=Billing"`
 
 	ID                     pulid.ID            `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:carstl_"`
 	BusinessUnitID         pulid.ID            `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`

@@ -34,9 +34,8 @@ var (
 
 // Miles by state or province recorded outside routed shipment moves
 type JurisdictionMileageEntry struct {
-	bun.BaseModel             `bun:"table:ifta_jurisdiction_mileage_entries,alias:ifme" json:"-"`
-	keel.Table                `                                                                  keel:"ifta_jurisdiction_mileage_entries,report=Equipment"`
-	pagination.CursorValueSet `bun:",embed"                                             json:"-"`
+	bun.BaseModel `bun:"table:ifta_jurisdiction_mileage_entries,alias:ifme" json:"-"`
+	keel.Table    `                                                                  keel:"ifta_jurisdiction_mileage_entries,report=Equipment"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:ifme_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

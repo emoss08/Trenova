@@ -256,15 +256,7 @@ func (p *BenefitPlan) BeforeAppendModel(_ context.Context, query bun.Query) erro
 		if p.ID.IsNil() {
 			p.ID = pulid.MustNew("bplan_")
 		}
-		if p.Status == "" {
-			p.Status = domaintypes.StatusActive
-		}
-		if p.PlanType == "" {
-			p.PlanType = BenefitPlanMedical
-		}
-		if p.CurrencyCode == "" {
-			p.CurrencyCode = "USD"
-		}
+		p.applyDefaults()
 		p.CreatedAt = now
 		p.UpdatedAt = now
 	case *bun.UpdateQuery:
@@ -272,6 +264,23 @@ func (p *BenefitPlan) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	}
 
 	return nil
+}
+
+func (p *BenefitPlan) BeforeCreate(context.Context) error {
+	p.applyDefaults()
+	return nil
+}
+
+func (p *BenefitPlan) applyDefaults() {
+	if p.Status == "" {
+		p.Status = domaintypes.StatusActive
+	}
+	if p.PlanType == "" {
+		p.PlanType = BenefitPlanMedical
+	}
+	if p.CurrencyCode == "" {
+		p.CurrencyCode = "USD"
+	}
 }
 
 var (
@@ -394,12 +403,7 @@ func (e *WorkerBenefitEnrollment) BeforeAppendModel(_ context.Context, query bun
 		if e.ID.IsNil() {
 			e.ID = pulid.MustNew("wben_")
 		}
-		if e.Status == "" {
-			e.Status = EnrollmentPending
-		}
-		if e.CoverageTier == "" {
-			e.CoverageTier = TierEmployee
-		}
+		e.applyDefaults()
 		e.CreatedAt = now
 		e.UpdatedAt = now
 	case *bun.UpdateQuery:
@@ -407,4 +411,18 @@ func (e *WorkerBenefitEnrollment) BeforeAppendModel(_ context.Context, query bun
 	}
 
 	return nil
+}
+
+func (e *WorkerBenefitEnrollment) BeforeCreate(context.Context) error {
+	e.applyDefaults()
+	return nil
+}
+
+func (e *WorkerBenefitEnrollment) applyDefaults() {
+	if e.Status == "" {
+		e.Status = EnrollmentPending
+	}
+	if e.CoverageTier == "" {
+		e.CoverageTier = TierEmployee
+	}
 }

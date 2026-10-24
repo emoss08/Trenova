@@ -5,6 +5,9 @@ package fuelpurchaserepository_test
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/fuelpurchaserepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
@@ -46,7 +49,7 @@ func (f *fixture) createPurchase(t *testing.T, p cardPurchase) *fuelpurchase.Fue
 		odometer := p.odometer
 		purchase.Odometer = &odometer
 	}
-	created, err := f.repo.CreatePurchase(f.ctx, purchase)
+	created, err := f.repo.CreatePurchase(f.as(p.spec.tenant), purchase)
 	require.NoError(t, err)
 
 	return created
@@ -56,9 +59,9 @@ func TestDeskSumsTotalOneCardPerCurrencyInsideTheWindow(t *testing.T) {
 	f := setup(t)
 	desk := f.deskReader()
 
-	card, err := f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "4412"))
+	card, err := f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "4412"))
 	require.NoError(t, err)
-	other, err := f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "0931"))
+	other, err := f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "0931"))
 	require.NoError(t, err)
 
 	base := purchaseSpec{tenant: f.tenantA, tractorID: f.tractorA, jurisdiction: f.texas}
@@ -76,7 +79,7 @@ func TestDeskSumsTotalOneCardPerCurrencyInsideTheWindow(t *testing.T) {
 	f.createPurchase(t, cardPurchase{spec: spec("SUM-4", "70", true, windowEnd+10), cardID: card.ID})
 	f.createPurchase(t, cardPurchase{spec: spec("SUM-5", "40", true, windowStart+40), cardID: other.ID})
 
-	rows, err := desk.SumPurchases(f.ctx, &fuelpurchaseports.SumFuelPurchasesRequest{
+	rows, err := desk.SumPurchases(f.ctxA, &fuelpurchaseports.SumFuelPurchasesRequest{
 		TenantInfo: f.tenantA,
 		FuelCardID: card.ID,
 		From:       windowStart,
@@ -96,7 +99,7 @@ func TestDeskSumsTotalOneCardPerCurrencyInsideTheWindow(t *testing.T) {
 	assert.Equal(t, 1, cad.PurchaseCount)
 	assert.Equal(t, "0", cad.UntaxedGallons.String())
 
-	lifetime, err := desk.SumPurchases(f.ctx, &fuelpurchaseports.SumFuelPurchasesRequest{
+	lifetime, err := desk.SumPurchases(f.ctxA, &fuelpurchaseports.SumFuelPurchasesRequest{
 		TenantInfo: f.tenantA,
 		FuelCardID: card.ID,
 	})
@@ -107,7 +110,7 @@ func TestDeskSumsTotalOneCardPerCurrencyInsideTheWindow(t *testing.T) {
 	}
 	assert.Equal(t, 4, count)
 
-	elsewhere, err := desk.SumPurchases(f.ctx, &fuelpurchaseports.SumFuelPurchasesRequest{
+	elsewhere, err := desk.SumPurchases(f.ctxB, &fuelpurchaseports.SumFuelPurchasesRequest{
 		TenantInfo: f.tenantB,
 		FuelCardID: card.ID,
 	})
@@ -119,7 +122,7 @@ func TestDeskSumsGallonsByJurisdictionMostFirstAndIFTAFuelOnly(t *testing.T) {
 	f := setup(t)
 	desk := f.deskReader()
 
-	card, err := f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "4412"))
+	card, err := f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "4412"))
 	require.NoError(t, err)
 
 	add := func(ref, gallons string, jurisdiction pulid.ID, fuelType domaintypes.IFTAFuelType) {
@@ -133,7 +136,7 @@ func TestDeskSumsGallonsByJurisdictionMostFirstAndIFTAFuelOnly(t *testing.T) {
 	add("J-3", "110", f.oklahoma, domaintypes.IFTAFuelTypeDiesel)
 	add("J-4", "500", f.texas, domaintypes.IFTAFuelTypeDEF)
 
-	rows, err := desk.SumGallonsByJurisdiction(f.ctx, &fuelpurchaseports.SumFuelPurchasesRequest{
+	rows, err := desk.SumGallonsByJurisdiction(f.ctxA, &fuelpurchaseports.SumFuelPurchasesRequest{
 		TenantInfo: f.tenantA,
 		FuelCardID: card.ID,
 		FuelTypes:  domaintypes.IFTAFuelTypes(),
@@ -169,7 +172,7 @@ func TestDeskPreviousFillIsTheLastEarlierRoadFuelFillWithAnOdometer(t *testing.T
 		gallons: "100", taxPaid: true, reference: "ODO-B", purchasedAt: windowStart + 290,
 	}, odometer: 99000})
 
-	previous, err := desk.GetPreviousFill(f.ctx, &fuelpurchaseports.GetPreviousFillRequest{
+	previous, err := desk.GetPreviousFill(f.ctxA, &fuelpurchaseports.GetPreviousFillRequest{
 		TenantInfo: f.tenantA,
 		Purchase:   current,
 	})
@@ -177,7 +180,7 @@ func TestDeskPreviousFillIsTheLastEarlierRoadFuelFillWithAnOdometer(t *testing.T
 	require.NotNil(t, previous)
 	assert.Equal(t, expected.ID, previous.ID)
 
-	none, err := desk.GetPreviousFill(f.ctx, &fuelpurchaseports.GetPreviousFillRequest{
+	none, err := desk.GetPreviousFill(f.ctxA, &fuelpurchaseports.GetPreviousFillRequest{
 		TenantInfo: f.tenantA,
 		Purchase:   first,
 	})
@@ -198,19 +201,16 @@ func (f *fixture) feedBatch(
 	if origin == fuelpurchase.ImportOriginFeed {
 		batch.UploadedByID = pulid.Nil
 	}
-	created, err := f.repo.CreateImportBatch(f.ctx, batch)
+	ctx := f.as(tenant)
+	created, err := f.repo.CreateImportBatch(ctx, batch)
 	require.NoError(t, err)
 	if status != fuelpurchase.ImportStatusPending {
-		update := f.db.NewUpdate().
-			TableExpr("fuel_purchase_import_batches").
-			Set("status = ?", status).
-			Where("id = ?", created.ID)
+		b := fuelpurchasedb.ImportBatches
+		sets := []keel.Assignment{b.Status.To(status)}
 		if status == fuelpurchase.ImportStatusCommitted {
-			update = update.
-				Set("committed_at = ?", windowStart).
-				Set("committed_by_id = ?", f.userA)
+			sets = append(sets, b.CommittedAt.To(windowStart), b.CommittedByID.To(f.userA))
 		}
-		_, err = update.Exec(f.ctx)
+		_, err = b.Where(b.ID.Eq(created.ID)).Update(ctx, f.db, sets...)
 		require.NoError(t, err)
 		created.Status = status
 	}
@@ -237,13 +237,13 @@ func TestDeskHeldCardRowsAreTheCardsRowsStillWaitingInAnOpenImport(t *testing.T)
 	f := setup(t)
 	desk := f.deskReader()
 
-	card, err := f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "7720"))
+	card, err := f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "7720"))
 	require.NoError(t, err)
-	other, err := f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "0931"))
+	other, err := f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "0931"))
 	require.NoError(t, err)
 
 	feed := f.feedBatch(t, f.tenantA, fuelpurchase.ImportOriginFeed, fuelpurchase.ImportStatusCommitted)
-	require.NoError(t, f.repo.ReplaceImportRows(f.ctx, feed, []*fuelpurchase.ImportRow{
+	require.NoError(t, f.repo.ReplaceImportRows(f.ctxA, feed, []*fuelpurchase.ImportRow{
 		heldRow(2, card.ID, fuelpurchase.ImportRowStatusError),
 		heldRow(3, card.ID, fuelpurchase.ImportRowStatusError),
 		heldRow(4, other.ID, fuelpurchase.ImportRowStatusError),
@@ -253,23 +253,23 @@ func TestDeskHeldCardRowsAreTheCardsRowsStillWaitingInAnOpenImport(t *testing.T)
 	discarded := f.feedBatch(
 		t, f.tenantA, fuelpurchase.ImportOriginFeed, fuelpurchase.ImportStatusDiscarded,
 	)
-	require.NoError(t, f.repo.ReplaceImportRows(f.ctx, discarded, []*fuelpurchase.ImportRow{
+	require.NoError(t, f.repo.ReplaceImportRows(f.ctxA, discarded, []*fuelpurchase.ImportRow{
 		heldRow(2, card.ID, fuelpurchase.ImportRowStatusError),
 	}))
 
 	upload := f.feedBatch(t, f.tenantA, fuelpurchase.ImportOriginUpload, fuelpurchase.ImportStatusPending)
-	require.NoError(t, f.repo.ReplaceImportRows(f.ctx, upload, []*fuelpurchase.ImportRow{
+	require.NoError(t, f.repo.ReplaceImportRows(f.ctxA, upload, []*fuelpurchase.ImportRow{
 		heldRow(2, card.ID, fuelpurchase.ImportRowStatusNew),
 	}))
 
 	committedUpload := f.feedBatch(
 		t, f.tenantA, fuelpurchase.ImportOriginUpload, fuelpurchase.ImportStatusCommitted,
 	)
-	require.NoError(t, f.repo.ReplaceImportRows(f.ctx, committedUpload, []*fuelpurchase.ImportRow{
+	require.NoError(t, f.repo.ReplaceImportRows(f.ctxA, committedUpload, []*fuelpurchase.ImportRow{
 		heldRow(2, card.ID, fuelpurchase.ImportRowStatusError),
 	}))
 
-	rows, err := desk.ListHeldCardRows(f.ctx, &fuelpurchaseports.ListHeldCardRowsRequest{
+	rows, err := desk.ListHeldCardRows(f.ctxA, &fuelpurchaseports.ListHeldCardRowsRequest{
 		TenantInfo: f.tenantA,
 		CardID:     card.ID,
 	})
@@ -283,7 +283,7 @@ func TestDeskHeldCardRowsAreTheCardsRowsStillWaitingInAnOpenImport(t *testing.T)
 	}
 	assert.Equal(t, map[pulid.ID][]int{feed.ID: {2, 3}, upload.ID: {2}}, byBatch)
 
-	elsewhere, err := desk.ListHeldCardRows(f.ctx, &fuelpurchaseports.ListHeldCardRowsRequest{
+	elsewhere, err := desk.ListHeldCardRows(f.ctxB, &fuelpurchaseports.ListHeldCardRowsRequest{
 		TenantInfo: f.tenantB,
 		CardID:     card.ID,
 	})
@@ -306,7 +306,7 @@ func TestDeskPurchaseImportRowIsTheRowThePurchaseWasCommittedFrom(t *testing.T) 
 
 	batch := f.feedBatch(t, f.tenantA, fuelpurchase.ImportOriginFeed, fuelpurchase.ImportStatusCommitted)
 	purchaseID := purchase.ID
-	require.NoError(t, f.repo.ReplaceImportRows(f.ctx, batch, []*fuelpurchase.ImportRow{{
+	require.NoError(t, f.repo.ReplaceImportRows(f.ctxA, batch, []*fuelpurchase.ImportRow{{
 		RowNumber:       37,
 		Cells:           []string{"PROV-1"},
 		Status:          fuelpurchase.ImportRowStatusCommitted,
@@ -314,7 +314,7 @@ func TestDeskPurchaseImportRowIsTheRowThePurchaseWasCommittedFrom(t *testing.T) 
 		ResolutionNotes: []string{"Tractor matched by license plate FA-1001"},
 	}}))
 
-	row, err := desk.GetPurchaseImportRow(f.ctx, &fuelpurchaseports.GetPurchaseImportRowRequest{
+	row, err := desk.GetPurchaseImportRow(f.ctxA, &fuelpurchaseports.GetPurchaseImportRowRequest{
 		TenantInfo: f.tenantA,
 		PurchaseID: purchase.ID,
 	})
@@ -325,14 +325,14 @@ func TestDeskPurchaseImportRowIsTheRowThePurchaseWasCommittedFrom(t *testing.T) 
 	require.NotNil(t, row.Batch)
 	assert.Equal(t, batch.ID, row.Batch.ID)
 
-	none, err := desk.GetPurchaseImportRow(f.ctx, &fuelpurchaseports.GetPurchaseImportRowRequest{
+	none, err := desk.GetPurchaseImportRow(f.ctxA, &fuelpurchaseports.GetPurchaseImportRowRequest{
 		TenantInfo: f.tenantA,
 		PurchaseID: manual.ID,
 	})
 	require.NoError(t, err)
 	assert.Nil(t, none)
 
-	elsewhere, err := desk.GetPurchaseImportRow(f.ctx, &fuelpurchaseports.GetPurchaseImportRowRequest{
+	elsewhere, err := desk.GetPurchaseImportRow(f.ctxB, &fuelpurchaseports.GetPurchaseImportRowRequest{
 		TenantInfo: f.tenantB,
 		PurchaseID: purchase.ID,
 	})
@@ -344,7 +344,7 @@ func TestDeskRecentCardPurchasesAreNewestFirstWithTheirJurisdiction(t *testing.T
 	f := setup(t)
 	desk := f.deskReader()
 
-	card, err := f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "4412"))
+	card, err := f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "4412"))
 	require.NoError(t, err)
 
 	refs := []string{"REC-1", "REC-2", "REC-3"}
@@ -357,7 +357,7 @@ func TestDeskRecentCardPurchasesAreNewestFirstWithTheirJurisdiction(t *testing.T
 	}
 
 	purchases, err := desk.ListRecentCardPurchases(
-		f.ctx,
+		f.ctxA,
 		&fuelpurchaseports.ListRecentCardPurchasesRequest{
 			TenantInfo: f.tenantA,
 			CardID:     card.ID,

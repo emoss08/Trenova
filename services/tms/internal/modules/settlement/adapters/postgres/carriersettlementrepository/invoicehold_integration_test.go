@@ -8,29 +8,34 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicarrierinvoicerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carrierinvoicematchrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type holdFixture struct {
 	ctx       context.Context
-	db        *bun.DB
+	db        *keel.DB
 	tenant    pagination.TenantInfo
 	carrierID pulid.ID
 	moveIDs   []pulid.ID
@@ -40,42 +45,52 @@ type holdFixture struct {
 	invoices  ediports.EDICarrierInvoiceRepository
 }
 
+const holdMovesSQL = "SELECT sm.id FROM shipment_moves AS sm " +
+	"WHERE sm.organization_id = $1 AND sm.business_unit_id = $2 " +
+	"AND NOT EXISTS (SELECT 1 FROM carrier_assignments AS ca " +
+	"WHERE ca.shipment_move_id = sm.id AND ca.status <> 'Canceled') LIMIT 4"
+
+type tenantRow struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+}
+
 func setupHoldFixture(t *testing.T) *holdFixture {
 	t.Helper()
 
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var tenantRow struct {
-		OrganizationID pulid.ID `bun:"organization_id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("shipment_moves").
-		ColumnExpr("organization_id, business_unit_id").
-		Limit(1).
-		Scan(ctx, &tenantRow))
-	tenant := pagination.TenantInfo{OrgID: tenantRow.OrganizationID, BuID: tenantRow.BusinessUnitID}
+	rows, err := keel.QueryAll(
+		ctx,
+		db,
+		pgx.RowToStructByPos[tenantRow],
+		"SELECT organization_id, business_unit_id FROM shipment_moves LIMIT 1",
+	)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	tenant := pagination.TenantInfo{OrgID: rows[0].OrganizationID, BuID: rows[0].BusinessUnitID}
+	tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
 
-	var moveIDs []pulid.ID
-	require.NoError(t, db.NewSelect().
-		TableExpr("shipment_moves AS sm").
-		Column("sm.id").
-		Where("sm.organization_id = ?", tenant.OrgID).
-		Where("sm.business_unit_id = ?", tenant.BuID).
-		Where("NOT EXISTS (SELECT 1 FROM carrier_assignments AS ca WHERE ca.shipment_move_id = sm.id AND ca.status <> 'Canceled')").
-		Limit(4).
-		Scan(ctx, &moveIDs))
+	moveIDs, err := keel.QueryAll(
+		ctx,
+		db,
+		pgx.RowTo[pulid.ID],
+		holdMovesSQL,
+		tenant.OrgID.String(),
+		tenant.BuID.String(),
+	)
+	require.NoError(t, err)
 	require.Len(t, moveIDs, 4, "the development seed has moves without a carrier")
 
-	var carrierID pulid.ID
-	require.NoError(t, db.NewSelect().
-		TableExpr("carriers").
-		Column("id").
-		Where("organization_id = ?", tenant.OrgID).
-		Where("business_unit_id = ?", tenant.BuID).
-		Limit(1).
-		Scan(ctx, &carrierID))
+	carrierID, err := keel.QueryValue[pulid.ID](
+		ctx,
+		db,
+		"SELECT id FROM carriers WHERE organization_id = $1 AND business_unit_id = $2 LIMIT 1",
+		tenant.OrgID.String(),
+		tenant.BuID.String(),
+	)
+	require.NoError(t, err)
 
 	partner := &edi.EDIPartner{
 		BusinessUnitID: tenant.BuID,
@@ -84,12 +99,11 @@ func setupHoldFixture(t *testing.T) *holdFixture {
 		Code:           "HOLD-TEST",
 		Name:           "Hold Test Partner",
 	}
-	_, err := db.NewInsert().Model(partner).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, edidb.EDIPartners.Create(tenantCtx, db, partner))
 
 	conn := postgres.NewTestConnection(db)
 	return &holdFixture{
-		ctx:       ctx,
+		ctx:       tenantCtx,
 		db:        db,
 		tenant:    tenant,
 		carrierID: carrierID,
@@ -124,8 +138,7 @@ func (f *holdFixture) assignment(t *testing.T) pulid.ID {
 		TotalCost:      decimal.NewFromInt(1000),
 		CurrencyCode:   "USD",
 	}
-	_, err := f.db.NewInsert().Model(assignment).Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, shipmentdb.CarrierAssignments.Create(f.ctx, f.db, assignment))
 	return assignment.ID
 }
 
@@ -148,8 +161,7 @@ func (f *holdFixture) costEvent(t *testing.T, assignmentID *pulid.ID, settlement
 	if settlementID != nil {
 		event.Status = carriersettlement.CostEventStatusAttached
 	}
-	_, err := f.db.NewInsert().Model(event).Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, carriersettlementdb.CostEvents.Create(f.ctx, f.db, event))
 	return event.ID
 }
 
@@ -311,7 +323,7 @@ func TestCarrierInvoiceDuplicatesMigration_MarksExistingRepeats_Integration(t *t
 		`DROP INDEX IF EXISTS "uq_edi_carrier_invoices_partner_invoice_number"`,
 		`DROP INDEX IF EXISTS "uq_carrier_invoice_matches_carrier_invoice_number"`,
 	} {
-		_, err := f.db.ExecContext(f.ctx, statement)
+		_, err := keel.Exec(f.ctx, f.db, statement)
 		require.NoError(t, err)
 	}
 
@@ -324,9 +336,15 @@ func TestCarrierInvoiceDuplicatesMigration_MarksExistingRepeats_Integration(t *t
 			EDIPartnerID:     f.partnerID,
 			InboundMessageID: pulid.MustNew("edim_"),
 			InvoiceNumber:    number,
-			CreatedAt:        int64(1_700_000_000 + i),
 		}
-		_, err := f.db.NewInsert().Model(invoice).Exec(f.ctx)
+		require.NoError(t, edidb.CarrierInvoices.Create(f.ctx, f.db, invoice))
+		_, err := keel.Exec(
+			f.ctx,
+			f.db,
+			"UPDATE edi_carrier_invoices SET created_at = $1 WHERE id = $2",
+			int64(1_700_000_000+i),
+			invoice.ID.String(),
+		)
 		require.NoError(t, err)
 		invoiceIDs = append(invoiceIDs, invoice.ID)
 	}
@@ -337,15 +355,16 @@ func TestCarrierInvoiceDuplicatesMigration_MarksExistingRepeats_Integration(t *t
 
 	migration, err := migrations.File("20261231007190_carrier_invoice_duplicates")
 	require.NoError(t, err)
-	_, err = f.db.ExecContext(f.ctx, migration)
+	_, err = keel.Exec(f.ctx, f.db, migration)
 	require.NoError(t, err)
 
-	var duplicateOf pulid.ID
-	require.NoError(t, f.db.NewSelect().
-		TableExpr("edi_carrier_invoices").
-		Column("duplicate_of_id").
-		Where("id = ?", invoiceIDs[1]).
-		Scan(f.ctx, &duplicateOf))
+	duplicateOf, err := keel.QueryValue[pulid.ID](
+		f.ctx,
+		f.db,
+		"SELECT duplicate_of_id FROM edi_carrier_invoices WHERE id = $1",
+		invoiceIDs[1].String(),
+	)
+	require.NoError(t, err)
 	assert.Equal(t, invoiceIDs[0], duplicateOf, "the later copy points at the first")
 
 	repeat, err := f.matches.GetByID(f.ctx, carriersettlementports.GetCarrierInvoiceMatchByIDRequest{

@@ -4,21 +4,42 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var (
+	settlementErrors = dberror.Mapping{
+		Entity: "DriverSettlement",
+		Unique: []dberror.Constraint{
+			{
+				Name:    "uq_driver_settlements_number",
+				Field:   "settlementNumber",
+				Message: "Settlement with this number already exists in your organization",
+			},
+		},
+	}
+	settlementLineErrors = dberror.Mapping{
+		Entity: "DriverSettlementLine",
+		Unique: []dberror.Constraint{
+			{
+				Name:    "uq_driver_settlement_lines_number",
+				Field:   "lines",
+				Message: "Settlement line numbers must be unique within a settlement",
+			},
+		},
+	}
 )
 
 type Params struct {
@@ -40,6 +61,21 @@ func NewSettlement(p Params) driversettlementports.DriverSettlementRepository {
 	}
 }
 
+func settlementSearch(s *driversettlementdb.SettlementsTable, query string) keel.Pred {
+	if query == "" {
+		return nil
+	}
+
+	pattern := "%" + stringutils.EscapeLikePattern(query) + "%"
+	w := s.Worker()
+
+	return keel.Or(
+		s.SettlementNumber.ILike(pattern),
+		s.PayProfileName.ILike(pattern),
+		keel.Raw("concat_ws(' ', ?, ?) ILIKE ?", w.FirstName, w.LastName, pattern),
+	)
+}
+
 func (r *settlementRepository) List(
 	ctx context.Context,
 	req *driversettlementports.ListDriverSettlementsRequest,
@@ -48,116 +84,59 @@ func (r *settlementRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*driversettlement.Settlement], error) {
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*driversettlement.Settlement, 0, limit)
+			s := driversettlementdb.Settlements
+			q := s.Where(
+				settlementSearch(s, req.Filter.Query),
+				when(!req.WorkerID.IsNil(), s.WorkerID.Eq(req.WorkerID)),
+				when(!req.BatchID.IsNil(), s.BatchID.Eq(req.BatchID)),
+				when(req.Status != "", s.Status.Eq(req.Status)),
+				when(len(req.Statuses) > 0, s.Status.In(req.Statuses...)),
+				hasExceptions(s, req.HasExceptions),
+			).Load(s.Worker()).Order(s.PeriodEnd.Desc(), s.CreatedAt.Desc())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Where("dstl.organization_id = ?", req.Filter.TenantInfo.OrgID).
-				Where("dstl.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-				Order("dstl.period_end DESC").
-				Order("dstl.created_at DESC").
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if req.Filter.Query != "" {
-				pattern := "%" + stringutils.EscapeLikePattern(req.Filter.Query) + "%"
-				query = query.Where(
-					"(dstl.settlement_number ILIKE ? OR dstl.pay_profile_name ILIKE ? OR "+
-						"concat_ws(' ', worker.first_name, worker.last_name) ILIKE ?)",
-					pattern,
-					pattern,
-					pattern,
-				)
-			}
-			if !req.WorkerID.IsNil() {
-				query = query.Where("dstl.worker_id = ?", req.WorkerID)
-			}
-			if !req.BatchID.IsNil() {
-				query = query.Where("dstl.batch_id = ?", req.BatchID)
-			}
-			if req.Status != "" {
-				query = query.Where("dstl.status = ?", req.Status)
-			}
-			if len(req.Statuses) > 0 {
-				query = query.Where("dstl.status IN (?)", bun.List(req.Statuses))
-			}
-			if req.HasExceptions != nil {
-				query = query.Where("dstl.has_exceptions = ?", *req.HasExceptions)
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 			if err != nil {
 				return nil, fmt.Errorf("list driver settlements: %w", err)
 			}
 
-			return &pagination.ListResult[*driversettlement.Settlement]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
+}
+
+func hasExceptions(s *driversettlementdb.SettlementsTable, value *bool) keel.Pred {
+	if value == nil {
+		return nil
+	}
+
+	return s.HasExceptions.Eq(*value)
 }
 
 func (r *settlementRepository) ListConnection(
 	ctx context.Context,
 	req *driversettlementports.ListDriverSettlementConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.Settlement], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.Settlement], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*driversettlement.Settlement)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"dstl",
-							req.Filter,
-							(*driversettlement.Settlement)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count driver settlements", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			s := driversettlementdb.Settlements
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*driversettlement.Settlement]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*driversettlement.Settlement) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(driversettlementcol.SettlementTable.All()).
-							Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							"dstl",
-							req.Filter,
-							req.Cursor,
-							(*driversettlement.Settlement)(nil),
-						)
+				r.db.Keel(ctx),
+				s.Query(),
+				&listquery.Request[driversettlement.Settlement]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[driversettlement.Settlement],
+					) *keel.Query[driversettlement.Settlement] {
+						return q.Load(s.Worker())
 					},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan driver settlements", zap.Error(err))
+				r.l.Error("failed to list driver settlements", zap.Error(err))
 				return nil, err
 			}
 
@@ -171,22 +150,18 @@ func (r *settlementRepository) GetByID(
 	req driversettlementports.GetDriverSettlementByIDRequest,
 ) (*driversettlement.Settlement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlement.Settlement, error) {
-		entity := new(driversettlement.Settlement)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("dstl.id = ?", req.ID).
-			Where("dstl.organization_id = ?", req.TenantInfo.OrgID).
-			Where("dstl.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
+		s := driversettlementdb.Settlements
+		q := s.Where(s.ID.Eq(req.ID)).Load(s.Worker())
 		if req.IncludeLines {
-			query = query.Relation("Lines", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order("dstll.line_number ASC")
-			})
+			l := s.Lines()
+			q = q.Load(l.Order(l.LineNumber.Asc()))
 		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "DriverSettlement")
+
+		entity, err := q.One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, settlementErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -196,20 +171,15 @@ func (r *settlementRepository) GetLatestForWorker(
 	req driversettlementports.GetLatestSettlementForWorkerRequest,
 ) (*driversettlement.Settlement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlement.Settlement, error) {
-		entity := new(driversettlement.Settlement)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("dstl.organization_id = ?", req.TenantInfo.OrgID).
-			Where("dstl.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("dstl.worker_id = ?", req.WorkerID).
-			Where("dstl.status != ?", driversettlement.StatusVoided).
-			Order("dstl.period_end DESC").
-			Limit(1).
-			Scan(ctx)
+		s := driversettlementdb.Settlements
+		entity, err := s.Where(
+			s.WorkerID.Eq(req.WorkerID),
+			s.Status.Ne(driversettlement.StatusVoided),
+		).Order(s.PeriodEnd.Desc()).First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "DriverSettlement")
+			return nil, settlementErrors.Map(err, req.WorkerID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -219,20 +189,15 @@ func (r *settlementRepository) GetOpenDraftForWorker(
 	req driversettlementports.GetOpenDraftForWorkerRequest,
 ) (*driversettlement.Settlement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlement.Settlement, error) {
-		entity := new(driversettlement.Settlement)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("dstl.organization_id = ?", req.TenantInfo.OrgID).
-			Where("dstl.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("dstl.worker_id = ?", req.WorkerID).
-			Where("dstl.status = ?", driversettlement.StatusDraft).
-			Order("dstl.period_end DESC").
-			Limit(1).
-			Scan(ctx)
+		s := driversettlementdb.Settlements
+		entity, err := s.Where(
+			s.WorkerID.Eq(req.WorkerID),
+			s.Status.Eq(driversettlement.StatusDraft),
+		).Order(s.PeriodEnd.Desc()).First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "DriverSettlement")
+			return nil, settlementErrors.Map(err, req.WorkerID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -245,36 +210,33 @@ func (r *settlementRepository) GetWorkspaceCounts(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*driversettlementports.SettlementWorkspaceCounts, error) {
-			counts := new(driversettlementports.SettlementWorkspaceCounts)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*driversettlement.Settlement)(nil)).
-				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS draft_count",
-					driversettlement.StatusDraft).
-				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS pending_approval_count",
-					driversettlement.StatusPendingApproval).
-				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS approved_count",
-					driversettlement.StatusApproved).
-				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS posted_count",
-					driversettlement.StatusPosted).
-				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS paid_count",
-					driversettlement.StatusPaid).
-				ColumnExpr("COUNT(*) FILTER (WHERE has_exceptions = true AND status NOT IN (?, ?)) "+
-					"AS exception_count",
-					driversettlement.StatusVoided, driversettlement.StatusPaid).
-				ColumnExpr("COALESCE(SUM(net_pay_minor) FILTER (WHERE status != ?), 0) "+
-					"AS total_net_minor", driversettlement.StatusVoided).
-				ColumnExpr("COALESCE(SUM(gross_earnings_minor) FILTER (WHERE status != ?), 0) "+
-					"AS total_gross_minor", driversettlement.StatusVoided).
-				Where("organization_id = ?", req.TenantInfo.OrgID).
-				Where("business_unit_id = ?", req.TenantInfo.BuID).
-				Where("period_start = ?", req.PeriodStart).
-				Where("period_end = ?", req.PeriodEnd).
-				Scan(ctx, counts)
+			s := driversettlementdb.Settlements
+			notVoided := s.Status.Ne(driversettlement.StatusVoided)
+			counts, err := keel.IntoOne[driversettlementports.SettlementWorkspaceCounts](
+				ctx,
+				r.db.Keel(ctx),
+				s.Pick(
+					keel.Count().Filter(s.Status.Eq(driversettlement.StatusDraft)),
+					keel.Count().Filter(s.Status.Eq(driversettlement.StatusPendingApproval)),
+					keel.Count().Filter(s.Status.Eq(driversettlement.StatusApproved)),
+					keel.Count().Filter(s.Status.Eq(driversettlement.StatusPosted)),
+					keel.Count().Filter(s.Status.Eq(driversettlement.StatusPaid)),
+					keel.Count().Filter(keel.And(
+						s.HasExceptions.IsTrue(),
+						s.Status.NotIn(driversettlement.StatusVoided, driversettlement.StatusPaid),
+					)),
+					coalesceZero(s.NetPayMinor.Sum().Filter(notVoided)),
+					coalesceZero(s.GrossEarningsMinor.Sum().Filter(notVoided)),
+				).Where(
+					s.PeriodStart.Eq(req.PeriodStart),
+					s.PeriodEnd.Eq(req.PeriodEnd),
+				),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get settlement workspace counts: %w", err)
 			}
-			return counts, nil
+
+			return &counts, nil
 		},
 	)
 }
@@ -284,46 +246,49 @@ func (r *settlementRepository) ListTrailingNetPay(
 	req *driversettlementports.ListTrailingNetPayRequest,
 ) ([]int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]int64, error) {
-		nets := make([]int64, 0, req.Limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*driversettlement.Settlement)(nil)).
-			Column("net_pay_minor").
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Where("worker_id = ?", req.WorkerID).
-			Where("status != ?", driversettlement.StatusVoided).
-			Where("period_end < ?", req.BeforeDate).
-			Order("period_end DESC").
-			Limit(int64(req.Limit)).
-			Scan(ctx, &nets)
+		if req.Limit <= 0 {
+			return []int64{}, nil
+		}
+
+		s := driversettlementdb.Settlements
+		nets, err := keel.Into[int64](
+			ctx,
+			r.db.Keel(ctx),
+			s.Pick(s.NetPayMinor).
+				Where(
+					s.WorkerID.Eq(req.WorkerID),
+					s.Status.Ne(driversettlement.StatusVoided),
+					s.PeriodEnd.Lt(req.BeforeDate),
+				).
+				Order(s.PeriodEnd.Desc()).
+				Limit(req.Limit),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("list trailing net pay: %w", err)
 		}
+
 		return nets, nil
 	})
 }
 
 func (r *settlementRepository) ExistsForWorkerPeriod(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workerID pulid.ID,
 	periodStart, periodEnd int64,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		exists, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*driversettlement.Settlement)(nil)).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Where("worker_id = ?", workerID).
-			Where("period_start = ?", periodStart).
-			Where("period_end = ?", periodEnd).
-			Where("status != ?", driversettlement.StatusVoided).
-			Exists(ctx)
+		s := driversettlementdb.Settlements
+		exists, err := s.Where(
+			s.WorkerID.Eq(workerID),
+			s.PeriodStart.Eq(periodStart),
+			s.PeriodEnd.Eq(periodEnd),
+			s.Status.Ne(driversettlement.StatusVoided),
+		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return false, fmt.Errorf("check settlement exists for period: %w", err)
 		}
+
 		return exists, nil
 	})
 }
@@ -333,27 +298,25 @@ func (r *settlementRepository) Create(
 	entity *driversettlement.Settlement,
 ) (*driversettlement.Settlement, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driversettlement.Settlement, error) {
+		db := r.db.Keel(ctx)
 		if entity.ID.IsNil() {
 			entity.ID = pulid.MustNew("dstl_")
 		}
 		assignLineFields(entity)
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create driver settlement: %w", err)
+
+		if err := driversettlementdb.Settlements.Create(ctx, db, entity); err != nil {
+			return nil, settlementErrors.Map(err, entity.ID.String())
 		}
-		if len(entity.Lines) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.Lines).
-				Exec(ctx); err != nil {
-				return nil, fmt.Errorf("create driver settlement lines: %w", err)
-			}
+		if err := driversettlementdb.SettlementLines.CreateMany(ctx, db, entity.Lines); err != nil {
+			return nil, fmt.Errorf(
+				"create driver settlement lines: %w",
+				settlementLineErrors.Map(err, entity.ID.String()),
+			)
 		}
+
 		return r.GetByID(ctx, driversettlementports.GetDriverSettlementByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			ID:           entity.ID,
+			TenantInfo:   tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 			IncludeLines: true,
 		})
 	})
@@ -364,63 +327,50 @@ func (r *settlementRepository) Update(
 	entity *driversettlement.Settlement,
 ) (*driversettlement.Settlement, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driversettlement.Settlement, error) {
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("status = ?", entity.Status).
-			Set("batch_id = ?", entity.BatchID).
-			Set("pay_profile_id = ?", entity.PayProfileID).
-			Set("pay_profile_name = ?", entity.PayProfileName).
-			Set("classification = ?", entity.Classification).
-			Set("pay_date = ?", entity.PayDate).
-			Set("gross_earnings_minor = ?", entity.GrossEarningsMinor).
-			Set("reimbursements_minor = ?", entity.ReimbursementsMinor).
-			Set("deductions_minor = ?", entity.DeductionsMinor).
-			Set("carry_forward_in_minor = ?", entity.CarryForwardInMinor).
-			Set("carry_forward_out_minor = ?", entity.CarryForwardOutMinor).
-			Set("net_pay_minor = ?", entity.NetPayMinor).
-			Set("total_miles = ?", entity.TotalMiles).
-			Set("shipment_count = ?", entity.ShipmentCount).
-			Set("has_exceptions = ?", entity.HasExceptions).
-			Set("exceptions = ?", entity.Exceptions).
-			Set("notes = ?", entity.Notes).
-			Set("submitted_by_id = ?", entity.SubmittedByID).
-			Set("submitted_at = ?", entity.SubmittedAt).
-			Set("approved_by_id = ?", entity.ApprovedByID).
-			Set("approved_at = ?", entity.ApprovedAt).
-			Set("posted_by_id = ?", entity.PostedByID).
-			Set("posted_at = ?", entity.PostedAt).
-			Set("posted_journal_batch_id = ?", entity.PostedJournalBatchID).
-			Set("paid_at = ?", entity.PaidAt).
-			Set("paid_by_id = ?", entity.PaidByID).
-			Set("payment_method = ?", entity.PaymentMethod).
-			Set("payment_reference = ?", entity.PaymentReference).
-			Set("voided_by_id = ?", entity.VoidedByID).
-			Set("voided_at = ?", entity.VoidedAt).
-			Set("void_reason = ?", entity.VoidReason).
-			Set("void_journal_batch_id = ?", entity.VoidJournalBatchID).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update driver settlement: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"DriverSettlement",
-			entity.ID.String(),
+		s := driversettlementdb.Settlements
+		if err := s.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			s.Status,
+			s.BatchID,
+			s.PayProfileID,
+			s.PayProfileName,
+			s.Classification,
+			s.PayDate,
+			s.GrossEarningsMinor,
+			s.ReimbursementsMinor,
+			s.DeductionsMinor,
+			s.CarryForwardInMinor,
+			s.CarryForwardOutMinor,
+			s.NetPayMinor,
+			s.TotalMiles,
+			s.ShipmentCount,
+			s.HasExceptions,
+			s.Exceptions,
+			s.Notes,
+			s.SubmittedByID,
+			s.SubmittedAt,
+			s.ApprovedByID,
+			s.ApprovedAt,
+			s.PostedByID,
+			s.PostedAt,
+			s.PostedJournalBatchID,
+			s.PaidAt,
+			s.PaidByID,
+			s.PaymentMethod,
+			s.PaymentReference,
+			s.VoidedByID,
+			s.VoidedAt,
+			s.VoidReason,
+			s.VoidJournalBatchID,
 		); err != nil {
-			return nil, err
+			return nil, settlementErrors.Map(err, entity.ID.String())
 		}
+
 		return r.GetByID(ctx, driversettlementports.GetDriverSettlementByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			ID:           entity.ID,
+			TenantInfo:   tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 			IncludeLines: true,
 		})
 	})
@@ -431,24 +381,20 @@ func (r *settlementRepository) ReplaceLines(
 	entity *driversettlement.Settlement,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		db := r.db.Keel(ctx)
 		assignLineFields(entity)
-		if _, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*driversettlement.SettlementLine)(nil)).
-			Where("settlement_id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Exec(ctx); err != nil {
+
+		l := driversettlementdb.SettlementLines
+		if _, err := l.Where(l.SettlementID.Eq(entity.ID)).Delete(ctx, db); err != nil {
 			return fmt.Errorf("delete driver settlement lines: %w", err)
 		}
-		if len(entity.Lines) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.Lines).
-				Exec(ctx); err != nil {
-				return fmt.Errorf("insert driver settlement lines: %w", err)
-			}
+		if err := l.CreateMany(ctx, db, entity.Lines); err != nil {
+			return fmt.Errorf(
+				"insert driver settlement lines: %w",
+				settlementLineErrors.Map(err, entity.ID.String()),
+			)
 		}
+
 		return nil
 	})
 }

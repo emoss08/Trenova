@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -107,7 +106,7 @@ func (s *Service) AdjustEscrowAccount(
 	}
 
 	var updated *driverpay.EscrowAccount
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		account, txErr := s.escrowRepo.GetByID(txCtx, driverpayports.GetEscrowAccountByIDRequest{
 			ID:         req.AccountID,
 			TenantInfo: req.TenantInfo,
@@ -140,7 +139,7 @@ func (s *Service) CloseEscrowAccount(
 		return nil, err
 	}
 	var updated *driverpay.EscrowAccount
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		account, txErr := s.escrowRepo.GetByID(txCtx, driverpayports.GetEscrowAccountByIDRequest{
 			ID:         accountID,
 			TenantInfo: tenantInfo,
@@ -178,7 +177,7 @@ func (s *Service) AccrueEscrowInterest(
 	accountID pulid.ID,
 ) (*driverpay.EscrowAccount, error) {
 	var updated *driverpay.EscrowAccount
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		account, txErr := s.escrowRepo.GetByID(txCtx, driverpayports.GetEscrowAccountByIDRequest{
 			ID:         accountID,
 			TenantInfo: tenantInfo,

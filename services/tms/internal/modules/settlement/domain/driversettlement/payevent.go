@@ -36,9 +36,8 @@ type PayEventComponent struct {
 
 // Pay accrued against a shipment, before and after it settles
 type PayEvent struct {
-	bun.BaseModel             `bun:"table:driver_pay_events,alias:dpe" json:"-"`
-	keel.Table                `                                                 keel:"driver_pay_events,report=Payroll,label=Driver Pay Event"`
-	pagination.CursorValueSet `bun:",embed"                            json:"-"`
+	bun.BaseModel `bun:"table:driver_pay_events,alias:dpe" json:"-"`
+	keel.Table    `                                                 keel:"driver_pay_events,report=Payroll,label=Driver Pay Event"`
 
 	ID               pulid.ID            `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:dpe_"`
 	BusinessUnitID   pulid.ID            `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`

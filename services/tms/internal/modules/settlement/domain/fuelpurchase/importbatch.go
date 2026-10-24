@@ -43,9 +43,8 @@ type ImportSummary struct {
 }
 
 type ImportBatch struct {
-	bun.BaseModel             `bun:"table:fuel_purchase_import_batches,alias:fpib" json:"-"`
-	keel.Table                `keel:"fuel_purchase_import_batches"`
-	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
+	bun.BaseModel `bun:"table:fuel_purchase_import_batches,alias:fpib" json:"-"`
+	keel.Table    `keel:"fuel_purchase_import_batches"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:fpib_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

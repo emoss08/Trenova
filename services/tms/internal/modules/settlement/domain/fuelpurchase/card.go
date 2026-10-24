@@ -33,9 +33,8 @@ var (
 
 // Fuel cards issued to drivers and units
 type FuelCard struct {
-	bun.BaseModel             `bun:"table:fuel_cards,alias:fcard" json:"-"`
-	keel.Table                `                                            keel:"fuel_cards,report=Equipment"`
-	pagination.CursorValueSet `bun:",embed"                       json:"-"`
+	bun.BaseModel `bun:"table:fuel_cards,alias:fcard" json:"-"`
+	keel.Table    `                                            keel:"fuel_cards,report=Equipment"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:fcard_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

@@ -25,9 +25,8 @@ var (
 
 // Owner-operator escrow balances against their target
 type EscrowAccount struct {
-	bun.BaseModel             `bun:"table:escrow_accounts,alias:escr" json:"-"`
-	keel.Table                `                                                keel:"escrow_accounts,report=Payroll"`
-	pagination.CursorValueSet `bun:",embed"                           json:"-"`
+	bun.BaseModel `bun:"table:escrow_accounts,alias:escr" json:"-"`
+	keel.Table    `                                                keel:"escrow_accounts,report=Payroll"`
 
 	ID                      pulid.ID            `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:escr_"`
 	BusinessUnitID          pulid.ID            `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`

@@ -22,9 +22,8 @@ var (
 )
 
 type CarrierSettlementBatch struct {
-	bun.BaseModel             `bun:"table:carrier_settlement_batches,alias:carstlb" json:"-"`
-	keel.Table                `keel:"carrier_settlement_batches"`
-	pagination.CursorValueSet `bun:",embed"                                         json:"-"`
+	bun.BaseModel `bun:"table:carrier_settlement_batches,alias:carstlb" json:"-"`
+	keel.Table    `keel:"carrier_settlement_batches"`
 
 	ID              pulid.ID    `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:carstlb_"`
 	BusinessUnitID  pulid.ID    `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

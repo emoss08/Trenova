@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -25,7 +24,7 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	DB                kernelports.DBConnection
+	DB                kernelports.Transactor
 	ProfileRepo       driverpayports.PayProfileRepository
 	AssignmentRepo    driverpayports.WorkerPayAssignmentRepository
 	DeductionRepo     driverpayports.RecurringDeductionRepository
@@ -39,7 +38,7 @@ type Params struct {
 
 type Service struct {
 	l                 *zap.Logger
-	db                kernelports.DBConnection
+	db                kernelports.Transactor
 	profileRepo       driverpayports.PayProfileRepository
 	assignmentRepo    driverpayports.WorkerPayAssignmentRepository
 	deductionRepo     driverpayports.RecurringDeductionRepository
@@ -197,7 +196,7 @@ func (s *Service) AssignProfileToWorker(
 	}
 
 	var created *driverpay.WorkerPayAssignment
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if txErr := s.endOverlappingAssignments(txCtx, entity); txErr != nil {
 			return txErr
 		}

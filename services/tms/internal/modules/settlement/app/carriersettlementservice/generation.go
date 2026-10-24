@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -199,7 +198,7 @@ func (s *Service) GenerateForCarrier(
 	}
 
 	var created *carriersettlement.CarrierSettlement
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		settlement, events, buildErr := s.buildSettlement(txCtx, req)
 		if buildErr != nil {
 			return buildErr

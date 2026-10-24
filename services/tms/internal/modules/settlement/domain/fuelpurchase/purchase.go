@@ -40,9 +40,8 @@ var (
 
 // Fuel bought at the pump or on a fuel card
 type FuelPurchase struct {
-	bun.BaseModel             `bun:"table:fuel_purchases,alias:fpur" json:"-"`
-	keel.Table                `                                               keel:"fuel_purchases,report=Equipment"`
-	pagination.CursorValueSet `bun:",embed"                          json:"-"`
+	bun.BaseModel `bun:"table:fuel_purchases,alias:fpur" json:"-"`
+	keel.Table    `                                               keel:"fuel_purchases,report=Equipment"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:fpur_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

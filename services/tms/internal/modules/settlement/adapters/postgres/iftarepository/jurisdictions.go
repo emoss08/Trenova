@@ -5,37 +5,29 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
-const (
-	jurisdictionKeySeparator = "_"
-	defaultJurisdictionCount = 64
-)
+const jurisdictionKeySeparator = "_"
 
 func (r *repository) allJurisdictions(ctx context.Context) ([]*ifta.Jurisdiction, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*ifta.Jurisdiction, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ifta.Jurisdiction, error) {
 		cached, err := r.jurisdictionCache.GetAll(ctx)
 		if err == nil && len(cached) > 0 {
 			return cached, nil
 		}
 
-		cols := iftacol.JurisdictionColumns
-		entities := make([]*ifta.Jurisdiction, 0, defaultJurisdictionCount)
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Order(cols.SortOrder.OrderAsc()).
-			Order(cols.CountryCode.OrderAsc()).
-			Order(cols.Code.OrderAsc()).
-			Scan(ctx); err != nil {
+		j := iftadb.Jurisdictions
+		entities, err := j.Query().
+			Order(j.SortOrder.Asc(), j.CountryCode.Asc(), j.Code.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to load ifta jurisdictions", zap.Error(err))
 			return nil, fmt.Errorf("load ifta jurisdictions: %w", err)
 		}

@@ -52,23 +52,24 @@ var benefitPlansTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "PayCode", Alias: "pc", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Pay Code`, JSON: `payCode`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
-	IDPrefix:   "bplan_",
-	New:        newBenefitPlan,
-	NewN:       newNBenefitPlan,
-	Size:       unsafe.Sizeof(driverpay.BenefitPlan{}),
-	Ptr:        ptrBenefitPlan,
-	Value:      valueBenefitPlan,
-	Attach:     attachBenefitPlan,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       0,
+	AutoCreate:   17,
+	AutoUpdate:   18,
+	IDPrefix:     "bplan_",
+	New:          newBenefitPlan,
+	NewN:         newNBenefitPlan,
+	Size:         unsafe.Sizeof(driverpay.BenefitPlan{}),
+	Ptr:          ptrBenefitPlan,
+	Value:        valueBenefitPlan,
+	Attach:       attachBenefitPlan,
+	BeforeCreate: beforeCreateBenefitPlan,
 }
 
 var benefitPlansRef = keel.Ref{Table: &benefitPlansTable}
@@ -274,6 +275,10 @@ func attachBenefitPlan(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.PayCode = (*driverpay.PayCode)(child)
 	}
+}
+
+func beforeCreateBenefitPlan(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.BenefitPlan)(p).BeforeCreate(ctx)
 }
 
 // escrowAccountsTable is the schema of driverpay.EscrowAccount.
@@ -2644,23 +2649,24 @@ var workerBenefitEnrollmentsTable = schema.Table{
 		{Name: "BenefitPlan", Alias: "bp", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Benefit Plan`, JSON: `benefitPlan`},
 		{Name: "Deduction", Alias: "d", Kind: schema.BelongsTo, Local: []int32{11}, Remote: []int32{0}, Label: `Deduction`, JSON: `deduction`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "wben_",
-	New:        newWorkerBenefitEnrollment,
-	NewN:       newNWorkerBenefitEnrollment,
-	Size:       unsafe.Sizeof(driverpay.WorkerBenefitEnrollment{}),
-	Ptr:        ptrWorkerBenefitEnrollment,
-	Value:      valueWorkerBenefitEnrollment,
-	Attach:     attachWorkerBenefitEnrollment,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "wben_",
+	New:          newWorkerBenefitEnrollment,
+	NewN:         newNWorkerBenefitEnrollment,
+	Size:         unsafe.Sizeof(driverpay.WorkerBenefitEnrollment{}),
+	Ptr:          ptrWorkerBenefitEnrollment,
+	Value:        valueWorkerBenefitEnrollment,
+	Attach:       attachWorkerBenefitEnrollment,
+	BeforeCreate: beforeCreateWorkerBenefitEnrollment,
 }
 
 var workerBenefitEnrollmentsRef = keel.Ref{Table: &workerBenefitEnrollmentsTable}
@@ -2883,6 +2889,10 @@ func attachWorkerBenefitEnrollment(p unsafe.Pointer, rel int32, child unsafe.Poi
 	case 2:
 		r.Deduction = (*driverpay.RecurringDeduction)(child)
 	}
+}
+
+func beforeCreateWorkerBenefitEnrollment(ctx context.Context, p unsafe.Pointer) error {
+	return (*driverpay.WorkerBenefitEnrollment)(p).BeforeCreate(ctx)
 }
 
 // workerPayAssignmentsTable is the schema of driverpay.WorkerPayAssignment.

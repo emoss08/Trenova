@@ -29,9 +29,8 @@ type RateKey struct {
 }
 
 type TaxRate struct {
-	bun.BaseModel             `bun:"table:ifta_tax_rates,alias:iftr" json:"-"`
-	keel.Table                `keel:"ifta_tax_rates"`
-	pagination.CursorValueSet `bun:",embed"                          json:"-"`
+	bun.BaseModel `bun:"table:ifta_tax_rates,alias:iftr" json:"-"`
+	keel.Table    `keel:"ifta_tax_rates"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:iftr_"`
 	JurisdictionID pulid.ID `json:"jurisdictionId" bun:"jurisdiction_id,type:VARCHAR(100),notnull" keel:"jurisdiction_id"`

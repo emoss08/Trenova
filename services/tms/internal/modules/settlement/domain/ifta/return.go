@@ -32,9 +32,8 @@ var (
 
 // Quarterly fuel tax returns
 type Return struct {
-	bun.BaseModel             `bun:"table:ifta_returns,alias:ifr" json:"-"`
-	keel.Table                `                                            keel:"ifta_returns,report=Equipment,label=IFTA Return"`
-	pagination.CursorValueSet `bun:",embed"                       json:"-"`
+	bun.BaseModel `bun:"table:ifta_returns,alias:ifr" json:"-"`
+	keel.Table    `                                            keel:"ifta_returns,report=Equipment,label=IFTA Return"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:ifr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

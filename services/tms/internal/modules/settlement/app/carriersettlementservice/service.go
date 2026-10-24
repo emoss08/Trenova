@@ -34,7 +34,7 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	DB                kernelports.DBConnection
+	DB                kernelports.Transactor
 	SettlementRepo    carriersettlementports.CarrierSettlementRepository
 	BatchRepo         carriersettlementports.CarrierSettlementBatchRepository
 	CostEventRepo     carriersettlementports.CarrierCostEventRepository
@@ -57,7 +57,7 @@ type Params struct {
 
 type Service struct {
 	l                 *zap.Logger
-	db                kernelports.DBConnection
+	db                kernelports.Transactor
 	settlementRepo    carriersettlementports.CarrierSettlementRepository
 	batchRepo         carriersettlementports.CarrierSettlementBatchRepository
 	costEventRepo     carriersettlementports.CarrierCostEventRepository

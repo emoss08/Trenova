@@ -24,9 +24,8 @@ var (
 )
 
 type InvoiceMatch struct {
-	bun.BaseModel             `bun:"table:carrier_invoice_matches,alias:cim" json:"-"`
-	keel.Table                `keel:"carrier_invoice_matches"`
-	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
+	bun.BaseModel `bun:"table:carrier_invoice_matches,alias:cim" json:"-"`
+	keel.Table    `keel:"carrier_invoice_matches"`
 
 	ID                     pulid.ID           `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:cim_"`
 	BusinessUnitID         pulid.ID           `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

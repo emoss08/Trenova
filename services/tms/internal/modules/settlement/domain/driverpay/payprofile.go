@@ -25,9 +25,8 @@ var (
 )
 
 type PayProfile struct {
-	bun.BaseModel             `bun:"table:driver_pay_profiles,alias:dpp" json:"-"`
-	keel.Table                `keel:"driver_pay_profiles"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	bun.BaseModel `bun:"table:driver_pay_profiles,alias:dpp" json:"-"`
+	keel.Table    `keel:"driver_pay_profiles"`
 
 	ID                           pulid.ID            `json:"id"                           bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dpp_"`
 	BusinessUnitID               pulid.ID            `json:"businessUnitId"               bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`

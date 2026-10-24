@@ -5,6 +5,12 @@ package driversettlementrepository_test
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/jackc/pgx/v5"
+
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -21,29 +27,35 @@ import (
 	"go.uber.org/zap"
 )
 
+type workerRow struct {
+	ID             pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+}
+
 func TestSettlementCardBatchReads_Integration(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var workerRow struct {
-		ID             pulid.ID `bun:"id"`
-		OrganizationID pulid.ID `bun:"organization_id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("workers").
-		ColumnExpr("id, organization_id, business_unit_id").
-		Limit(1).
-		Scan(ctx, &workerRow))
-	tenant := pagination.TenantInfo{OrgID: workerRow.OrganizationID, BuID: workerRow.BusinessUnitID}
-	var userID pulid.ID
-	require.NoError(t, db.NewSelect().TableExpr("users").Column("id").Limit(1).Scan(ctx, &userID))
+	workerRows, err := keel.QueryAll(
+		ctx,
+		db,
+		pgx.RowToStructByPos[workerRow],
+		"SELECT id, organization_id, business_unit_id FROM workers LIMIT 1",
+	)
+	require.NoError(t, err)
+	require.Len(t, workerRows, 1)
+	worker := workerRows[0]
+	tenant := pagination.TenantInfo{OrgID: worker.OrganizationID, BuID: worker.BusinessUnitID}
+	userID, err := keel.QueryValue[pulid.ID](ctx, db, "SELECT id FROM users LIMIT 1")
+	require.NoError(t, err)
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
 	advance := &driverpay.PayAdvance{
 		ID:             pulid.MustNew("padv_"),
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
-		WorkerID:       workerRow.ID,
+		WorkerID:       worker.ID,
 		Status:         driverpay.AdvanceStatusPartiallyRecovered,
 		Source:         driverpay.AdvanceSourceCash,
 		IssuedDate:     1_790_000_000,
@@ -51,21 +63,19 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 		RecoveredMinor: 20000,
 		CurrencyCode:   "USD",
 	}
-	_, err := db.NewInsert().Model(advance).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, driverpaydb.PayAdvances.Create(ctx, db, advance))
 	escrow := &driverpay.EscrowAccount{
 		ID:                pulid.MustNew("escr_"),
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
-		WorkerID:          workerRow.ID,
+		WorkerID:          worker.ID,
 		Status:            driverpay.EscrowAccountStatusActive,
 		TargetAmountMinor: 250000,
 		BalanceMinor:      190000,
 		OpenedDate:        1_780_000_000,
 		CurrencyCode:      "USD",
 	}
-	_, err = db.NewInsert().Model(escrow).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, driverpaydb.EscrowAccounts.Create(ctx, db, escrow))
 
 	settlements := make([]*driversettlement.Settlement, 0, 2)
 	for _, number := range []string{"DS-CARD-1", "DS-CARD-2"} {
@@ -73,7 +83,7 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 			ID:               pulid.MustNew("dstl_"),
 			OrganizationID:   tenant.OrgID,
 			BusinessUnitID:   tenant.BuID,
-			WorkerID:         workerRow.ID,
+			WorkerID:         worker.ID,
 			SettlementNumber: number,
 			Status:           driversettlement.StatusPendingApproval,
 			Classification:   driverpay.PayeeClassificationCompanyDriver,
@@ -82,8 +92,7 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 			PayDate:          1_790_900_000,
 			CurrencyCode:     "USD",
 		}
-		_, err = db.NewInsert().Model(settlement).Exec(ctx)
-		require.NoError(t, err)
+		require.NoError(t, driversettlementdb.Settlements.Create(ctx, db, settlement))
 		settlements = append(settlements, settlement)
 	}
 	disputed, quiet := settlements[0], settlements[1]
@@ -94,19 +103,20 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 			OrganizationID:    tenant.OrgID,
 			BusinessUnitID:    tenant.BuID,
 			SettlementID:      disputed.ID,
-			WorkerID:          workerRow.ID,
+			WorkerID:          worker.ID,
 			Status:            driversettlement.DisputeStatusOpen,
 			Category:          driversettlement.DisputeCategoryMissingPay,
 			Description:       "Stop pay missing",
 			SubmittedByUserID: userID,
 		}
-		_, err = db.NewInsert().Model(dispute).Exec(ctx)
-		require.NoError(t, err)
-		_, err = db.NewUpdate().
-			TableExpr("settlement_disputes").
-			Set("created_at = ?", created).
-			Where("id = ?", dispute.ID).
-			Exec(ctx)
+		require.NoError(t, driversettlementdb.Disputes.Create(ctx, db, dispute))
+		_, err = keel.Exec(
+			ctx,
+			db,
+			"UPDATE settlement_disputes SET created_at = $1 WHERE id = $2",
+			created,
+			dispute.ID.String(),
+		)
 		require.NoError(t, err)
 		disputes = append(disputes, dispute)
 	}
@@ -123,7 +133,7 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, gotAdvances, 1)
 	assert.Equal(t, int64(30000), gotAdvances[0].OutstandingMinor())
-	foreign, err := advances.GetByIDs(ctx, driverpayports.GetPayAdvancesByIDsRequest{
+	foreign, err := advances.GetByIDs(dbscope.WithTenant(ctx, stranger.DBTenant()), driverpayports.GetPayAdvancesByIDsRequest{
 		TenantInfo: stranger,
 		IDs:        []pulid.ID{advance.ID},
 	})

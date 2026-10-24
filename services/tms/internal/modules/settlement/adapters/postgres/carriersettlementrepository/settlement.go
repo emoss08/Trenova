@@ -4,21 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var settlementErrors = dberror.Mapping{Entity: "CarrierSettlement"}
 
 type Params struct {
 	fx.In
@@ -47,46 +47,21 @@ func (r *settlementRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*carriersettlement.CarrierSettlement], error) {
-			cols := carriersettlementcol.CarrierSettlementColumns
-			rel := carriersettlementcol.CarrierSettlementRelations
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*carriersettlement.CarrierSettlement, 0, limit)
+			s := carriersettlementdb.CarrierSettlements
+			q := s.Where(
+				when(req.Filter.Query != "", s.SettlementNumber.ContainsFold(req.Filter.Query)),
+				when(!req.CarrierID.IsNil(), s.CarrierID.Eq(req.CarrierID)),
+				when(!req.BatchID.IsNil(), s.BatchID.Eq(req.BatchID)),
+				when(req.Status != "", s.Status.Eq(req.Status)),
+				when(len(req.Statuses) > 0, s.Status.In(req.Statuses...)),
+			).Load(s.Carrier()).Order(s.PeriodEnd.Desc(), s.CreatedAt.Desc())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Apply(carriersettlementcol.CarrierSettlementApplyTenant(req.Filter.TenantInfo)).
-				Relation(rel.Carrier).
-				Order(cols.PeriodEnd.OrderDesc()).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if req.Filter.Query != "" {
-				query = query.Where(cols.SettlementNumber.ILike(), "%"+req.Filter.Query+"%")
-			}
-			if !req.CarrierID.IsNil() {
-				query = query.Where(cols.CarrierID.Eq(), req.CarrierID)
-			}
-			if !req.BatchID.IsNil() {
-				query = query.Where(cols.BatchID.Eq(), req.BatchID)
-			}
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-			if len(req.Statuses) > 0 {
-				query = query.Where(cols.Status.In(), bun.List(req.Statuses))
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 			if err != nil {
 				return nil, fmt.Errorf("list carrier settlements: %w", err)
 			}
 
-			return &pagination.ListResult[*carriersettlement.CarrierSettlement]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -95,59 +70,27 @@ func (r *settlementRepository) ListConnection(
 	ctx context.Context,
 	req *carriersettlementports.ListCarrierSettlementConnectionRequest,
 ) (*pagination.CursorListResult[*carriersettlement.CarrierSettlement], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*carriersettlement.CarrierSettlement], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*carriersettlement.CarrierSettlement)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							carriersettlementcol.CarrierSettlementTable.Alias,
-							req.Filter,
-							(*carriersettlement.CarrierSettlement)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count carrier settlements", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			s := carriersettlementdb.CarrierSettlements
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*carriersettlement.CarrierSettlement]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*carriersettlement.CarrierSettlement) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(carriersettlementcol.CarrierSettlementTable.All()).
-							Relation(carriersettlementcol.CarrierSettlementRelations.Carrier)
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							carriersettlementcol.CarrierSettlementTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*carriersettlement.CarrierSettlement)(nil),
-						)
+				r.db.Keel(ctx),
+				s.Query(),
+				&listquery.Request[carriersettlement.CarrierSettlement]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[carriersettlement.CarrierSettlement],
+					) *keel.Query[carriersettlement.CarrierSettlement] {
+						return q.Load(s.Carrier())
 					},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan carrier settlements", zap.Error(err))
+				r.l.Error("failed to list carrier settlements", zap.Error(err))
 				return nil, err
 			}
 
@@ -164,27 +107,18 @@ func (r *settlementRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.CarrierSettlement, error) {
-			cols := carriersettlementcol.CarrierSettlementColumns
-			rel := carriersettlementcol.CarrierSettlementRelations
-			entity := new(carriersettlement.CarrierSettlement)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carriersettlementcol.CarrierSettlementScopeTenant(sq, req.TenantInfo).
-						Where(cols.ID.Eq(), req.ID)
-				}).
-				Relation(rel.Carrier)
+			s := carriersettlementdb.CarrierSettlements
+			q := s.Where(s.ID.Eq(req.ID)).Load(s.Carrier())
 			if req.IncludeLines {
-				query = query.Relation(rel.Lines, func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Order(
-						carriersettlementcol.CarrierSettlementLineColumns.LineNumber.OrderAsc(),
-					)
-				})
+				l := s.Lines()
+				q = q.Load(l.Order(l.LineNumber.Asc()))
 			}
-			if err := query.Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "CarrierSettlement")
+
+			entity, err := q.One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, settlementErrors.Map(err, req.ID.String())
 			}
+
 			return entity, nil
 		},
 	)
@@ -198,59 +132,51 @@ func (r *settlementRepository) GetWorkspaceCounts(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlementports.CarrierSettlementWorkspaceCounts, error) {
-			counts := new(carriersettlementports.CarrierSettlementWorkspaceCounts)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*carriersettlement.CarrierSettlement)(nil)).
-				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS draft_count",
-					carriersettlement.StatusDraft).
-				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS pending_approval_count",
-					carriersettlement.StatusPendingApproval).
-				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS approved_count",
-					carriersettlement.StatusApproved).
-				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS posted_count",
-					carriersettlement.StatusPosted).
-				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS paid_count",
-					carriersettlement.StatusPaid).
-				ColumnExpr("COALESCE(SUM(net_payable_minor) FILTER (WHERE status != ?), 0) "+
-					"AS total_net_minor", carriersettlement.StatusVoided).
-				ColumnExpr("COALESCE(SUM(gross_cost_minor) FILTER (WHERE status != ?), 0) "+
-					"AS total_gross_minor", carriersettlement.StatusVoided).
-				Where("organization_id = ?", req.TenantInfo.OrgID).
-				Where("business_unit_id = ?", req.TenantInfo.BuID).
-				Where("period_start = ?", req.PeriodStart).
-				Where("period_end = ?", req.PeriodEnd).
-				Scan(ctx, counts)
+			s := carriersettlementdb.CarrierSettlements
+			notVoided := s.Status.Ne(carriersettlement.StatusVoided)
+			counts, err := keel.IntoOne[carriersettlementports.CarrierSettlementWorkspaceCounts](
+				ctx,
+				r.db.Keel(ctx),
+				s.Pick(
+					keel.Count().Filter(s.Status.Eq(carriersettlement.StatusDraft)),
+					keel.Count().Filter(s.Status.Eq(carriersettlement.StatusPendingApproval)),
+					keel.Count().Filter(s.Status.Eq(carriersettlement.StatusApproved)),
+					keel.Count().Filter(s.Status.Eq(carriersettlement.StatusPosted)),
+					keel.Count().Filter(s.Status.Eq(carriersettlement.StatusPaid)),
+					coalesceZero(s.NetPayableMinor.Sum().Filter(notVoided)),
+					coalesceZero(s.GrossCostMinor.Sum().Filter(notVoided)),
+				).Where(
+					s.PeriodStart.Eq(req.PeriodStart),
+					s.PeriodEnd.Eq(req.PeriodEnd),
+				),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get carrier settlement workspace counts: %w", err)
 			}
-			return counts, nil
+
+			return &counts, nil
 		},
 	)
 }
 
 func (r *settlementRepository) ExistsForCarrierPeriod(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	carrierID pulid.ID,
 	periodStart, periodEnd int64,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := carriersettlementcol.CarrierSettlementColumns
-		exists, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carriersettlement.CarrierSettlement)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.CarrierSettlementScopeTenant(sq, tenantInfo).
-					Where(cols.CarrierID.Eq(), carrierID).
-					Where(cols.PeriodStart.Eq(), periodStart).
-					Where(cols.PeriodEnd.Eq(), periodEnd).
-					Where(cols.Status.NotEq(), carriersettlement.StatusVoided)
-			}).
-			Exists(ctx)
+		s := carriersettlementdb.CarrierSettlements
+		exists, err := s.Where(
+			s.CarrierID.Eq(carrierID),
+			s.PeriodStart.Eq(periodStart),
+			s.PeriodEnd.Eq(periodEnd),
+			s.Status.Ne(carriersettlement.StatusVoided),
+		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return false, fmt.Errorf("check carrier settlement exists for period: %w", err)
 		}
+
 		return exists, nil
 	})
 }
@@ -263,27 +189,29 @@ func (r *settlementRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.CarrierSettlement, error) {
+			db := r.db.Keel(ctx)
 			if entity.ID.IsNil() {
 				entity.ID = pulid.MustNew("carstl_")
 			}
 			assignLineFields(entity)
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-				return nil, fmt.Errorf("create carrier settlement: %w", err)
+
+			if err := carriersettlementdb.CarrierSettlements.Create(ctx, db, entity); err != nil {
+				return nil, fmt.Errorf(
+					"create carrier settlement: %w",
+					settlementErrors.Map(err, entity.ID.String()),
+				)
 			}
-			if len(entity.Lines) > 0 {
-				if _, err := r.db.DBForContext(ctx).
-					NewInsert().
-					Model(&entity.Lines).
-					Exec(ctx); err != nil {
-					return nil, fmt.Errorf("create carrier settlement lines: %w", err)
-				}
+			if err := carriersettlementdb.CarrierSettlementLines.CreateMany(
+				ctx,
+				db,
+				entity.Lines,
+			); err != nil {
+				return nil, fmt.Errorf("create carrier settlement lines: %w", err)
 			}
+
 			return r.GetByID(ctx, carriersettlementports.GetCarrierSettlementByIDRequest{
-				ID: entity.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
+				ID:           entity.ID,
+				TenantInfo:   tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 				IncludeLines: true,
 			})
 		},
@@ -298,61 +226,43 @@ func (r *settlementRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.CarrierSettlement, error) {
-			cols := carriersettlementcol.CarrierSettlementColumns
-			res, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return carriersettlementcol.CarrierSettlementScopeTenantUpdate(uq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).
-						Where(cols.ID.Eq(), entity.ID).
-						Where(cols.Version.Eq(), entity.Version)
-				}).
-				Set(cols.Status.Set(), entity.Status).
-				Set(cols.BatchID.Set(), entity.BatchID).
-				Set(cols.PayDate.Set(), entity.PayDate).
-				Set(cols.GrossCostMinor.Set(), entity.GrossCostMinor).
-				Set(cols.AdjustmentsMinor.Set(), entity.AdjustmentsMinor).
-				Set(cols.NetPayableMinor.Set(), entity.NetPayableMinor).
-				Set(cols.ShipmentCount.Set(), entity.ShipmentCount).
-				Set(cols.CurrencyCode.Set(), entity.CurrencyCode).
-				Set(cols.Notes.Set(), entity.Notes).
-				Set(cols.SubmittedByID.Set(), entity.SubmittedByID).
-				Set(cols.SubmittedAt.Set(), entity.SubmittedAt).
-				Set(cols.ApprovedByID.Set(), entity.ApprovedByID).
-				Set(cols.ApprovedAt.Set(), entity.ApprovedAt).
-				Set(cols.PostedByID.Set(), entity.PostedByID).
-				Set(cols.PostedAt.Set(), entity.PostedAt).
-				Set(cols.PostedJournalBatchID.Set(), entity.PostedJournalBatchID).
-				Set(cols.PaidAt.Set(), entity.PaidAt).
-				Set(cols.PaidByID.Set(), entity.PaidByID).
-				Set(cols.PaymentMethod.Set(), entity.PaymentMethod).
-				Set(cols.PaymentReference.Set(), entity.PaymentReference).
-				Set(cols.PaidJournalBatchID.Set(), entity.PaidJournalBatchID).
-				Set(cols.VoidedByID.Set(), entity.VoidedByID).
-				Set(cols.VoidedAt.Set(), entity.VoidedAt).
-				Set(cols.VoidReason.Set(), entity.VoidReason).
-				Set(cols.VoidJournalBatchID.Set(), entity.VoidJournalBatchID).
-				Set(cols.Version.Inc(1)).
-				Exec(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("update carrier settlement: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				res,
-				"CarrierSettlement",
-				entity.ID.String(),
+			s := carriersettlementdb.CarrierSettlements
+			if err := s.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+				s.Status,
+				s.BatchID,
+				s.PayDate,
+				s.GrossCostMinor,
+				s.AdjustmentsMinor,
+				s.NetPayableMinor,
+				s.ShipmentCount,
+				s.CurrencyCode,
+				s.Notes,
+				s.SubmittedByID,
+				s.SubmittedAt,
+				s.ApprovedByID,
+				s.ApprovedAt,
+				s.PostedByID,
+				s.PostedAt,
+				s.PostedJournalBatchID,
+				s.PaidAt,
+				s.PaidByID,
+				s.PaymentMethod,
+				s.PaymentReference,
+				s.PaidJournalBatchID,
+				s.VoidedByID,
+				s.VoidedAt,
+				s.VoidReason,
+				s.VoidJournalBatchID,
 			); err != nil {
-				return nil, err
+				return nil, settlementErrors.Map(err, entity.ID.String())
 			}
+
 			return r.GetByID(ctx, carriersettlementports.GetCarrierSettlementByIDRequest{
-				ID: entity.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
+				ID:           entity.ID,
+				TenantInfo:   tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 				IncludeLines: true,
 			})
 		},
@@ -364,29 +274,17 @@ func (r *settlementRepository) ReplaceLines(
 	entity *carriersettlement.CarrierSettlement,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		lineCols := carriersettlementcol.CarrierSettlementLineColumns
+		db := r.db.Keel(ctx)
 		assignLineFields(entity)
-		if _, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*carriersettlement.CarrierSettlementLine)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return carriersettlementcol.CarrierSettlementLineScopeTenantDelete(dq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).
-					Where(lineCols.SettlementID.Eq(), entity.ID)
-			}).
-			Exec(ctx); err != nil {
+
+		l := carriersettlementdb.CarrierSettlementLines
+		if _, err := l.Where(l.SettlementID.Eq(entity.ID)).Delete(ctx, db); err != nil {
 			return fmt.Errorf("delete carrier settlement lines: %w", err)
 		}
-		if len(entity.Lines) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.Lines).
-				Exec(ctx); err != nil {
-				return fmt.Errorf("insert carrier settlement lines: %w", err)
-			}
+		if err := l.CreateMany(ctx, db, entity.Lines); err != nil {
+			return fmt.Errorf("insert carrier settlement lines: %w", err)
 		}
+
 		return nil
 	})
 }

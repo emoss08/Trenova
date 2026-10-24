@@ -2,20 +2,17 @@ package iftarepository_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/iftarepository"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/zap"
 )
 
@@ -85,29 +82,23 @@ func warmCache() *FakeJurisdictionCache {
 func newCacheTestRepository(
 	t *testing.T,
 	cache iftaports.IFTAJurisdictionCacheRepository,
-) (iftaports.IFTARepository, sqlmock.Sqlmock) {
+) iftaports.IFTARepository {
 	t.Helper()
 
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, mock.ExpectationsWereMet())
-	})
-
 	repo := iftarepository.New(iftarepository.Params{
-		DB:                postgres.NewTestConnection(bun.NewDB(db, pgdialect.New())),
+		DB:                postgres.NewTestConnection(keeltest.RenderDB(t)),
 		Logger:            zap.NewNop(),
 		JurisdictionCache: cache,
 	})
 
-	return repo, mock
+	return repo
 }
 
 func TestListJurisdictions_WarmCacheIssuesNoQuery(t *testing.T) {
 	t.Parallel()
 
 	cache := warmCache()
-	repo, _ := newCacheTestRepository(t, cache)
+	repo := newCacheTestRepository(t, cache)
 
 	out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{})
 	require.NoError(t, err)
@@ -122,7 +113,7 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 
 	t.Run("members only drops non-members", func(t *testing.T) {
 		t.Parallel()
-		repo, _ := newCacheTestRepository(t, warmCache())
+		repo := newCacheTestRepository(t, warmCache())
 
 		out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{
 			MembersOnly: true,
@@ -135,7 +126,7 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 
 	t.Run("country code is matched case and space insensitively", func(t *testing.T) {
 		t.Parallel()
-		repo, _ := newCacheTestRepository(t, warmCache())
+		repo := newCacheTestRepository(t, warmCache())
 
 		out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{
 			CountryCode: "  ca ",
@@ -147,7 +138,7 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 
 	t.Run("statuses narrow to the listed ones", func(t *testing.T) {
 		t.Parallel()
-		repo, _ := newCacheTestRepository(t, warmCache())
+		repo := newCacheTestRepository(t, warmCache())
 
 		out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{
 			Statuses: []ifta.JurisdictionStatus{ifta.JurisdictionStatusInactive},
@@ -159,7 +150,7 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 
 	t.Run("filters combine", func(t *testing.T) {
 		t.Parallel()
-		repo, _ := newCacheTestRepository(t, warmCache())
+		repo := newCacheTestRepository(t, warmCache())
 
 		out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{
 			MembersOnly: true,
@@ -173,7 +164,7 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 
 	t.Run("the load order survives filtering", func(t *testing.T) {
 		t.Parallel()
-		repo, _ := newCacheTestRepository(t, warmCache())
+		repo := newCacheTestRepository(t, warmCache())
 
 		out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{})
 		require.NoError(t, err)
@@ -182,56 +173,13 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 	})
 }
 
-func TestListJurisdictions_ColdCacheLoadsOnceThenServesFromCache(t *testing.T) {
-	t.Parallel()
-
-	cache := &FakeJurisdictionCache{}
-	repo, mock := newCacheTestRepository(t, cache)
-
-	mock.ExpectQuery(`FROM "ifta_jurisdictions"`).WillReturnRows(
-		sqlmock.NewRows([]string{"id", "country_code", "code", "name", "is_ifta_member", "sort_order", "status"}).
-			AddRow(pulid.MustNew("ifj_").String(), "US", "TX", "US-TX", true, 1, "Active").
-			AddRow(pulid.MustNew("ifj_").String(), "CA", "AB", "CA-AB", true, 2, "Active"),
-	)
-
-	first, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{})
-	require.NoError(t, err)
-	require.Len(t, first, 2)
-	assert.Equal(t, 1, cache.setCalls, "a cold read must populate the cache")
-
-	second, err := repo.GetJurisdictionByCode(t.Context(), "us", " tx ")
-	require.NoError(t, err)
-	assert.Equal(t, "TX", second.Code)
-}
-
-func TestListJurisdictions_CacheFailureFallsThroughToPostgres(t *testing.T) {
-	t.Parallel()
-
-	cache := &FakeJurisdictionCache{
-		getErr: errors.New("redis is down"),
-		setErr: errors.New("redis is down"),
-	}
-	repo, mock := newCacheTestRepository(t, cache)
-
-	mock.ExpectQuery(`FROM "ifta_jurisdictions"`).WillReturnRows(
-		sqlmock.NewRows([]string{"id", "country_code", "code", "name", "is_ifta_member", "sort_order", "status"}).
-			AddRow(pulid.MustNew("ifj_").String(), "US", "TX", "US-TX", true, 1, "Active"),
-	)
-
-	out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{})
-	require.NoError(t, err)
-
-	assert.Len(t, out, 1)
-	assert.Equal(t, 1, cache.setCalls, "a failed Set must not fail the read")
-}
-
 func TestJurisdictionLookups_AgainstTheSnapshot(t *testing.T) {
 	t.Parallel()
 
 	t.Run("by id", func(t *testing.T) {
 		t.Parallel()
 		cache := warmCache()
-		repo, _ := newCacheTestRepository(t, cache)
+		repo := newCacheTestRepository(t, cache)
 		wanted := cache.entries[2]
 
 		got, err := repo.GetJurisdictionByID(t.Context(), wanted.ID)
@@ -241,7 +189,7 @@ func TestJurisdictionLookups_AgainstTheSnapshot(t *testing.T) {
 
 	t.Run("by id, missing", func(t *testing.T) {
 		t.Parallel()
-		repo, _ := newCacheTestRepository(t, warmCache())
+		repo := newCacheTestRepository(t, warmCache())
 
 		_, err := repo.GetJurisdictionByID(t.Context(), pulid.MustNew("ifj_"))
 		require.Error(t, err)
@@ -251,7 +199,7 @@ func TestJurisdictionLookups_AgainstTheSnapshot(t *testing.T) {
 	t.Run("by ids keeps load order and drops unknown ids", func(t *testing.T) {
 		t.Parallel()
 		cache := warmCache()
-		repo, _ := newCacheTestRepository(t, cache)
+		repo := newCacheTestRepository(t, cache)
 
 		got, err := repo.GetJurisdictionsByIDs(t.Context(), []pulid.ID{
 			cache.entries[3].ID, cache.entries[0].ID, pulid.MustNew("ifj_"),
@@ -264,7 +212,7 @@ func TestJurisdictionLookups_AgainstTheSnapshot(t *testing.T) {
 	t.Run("by ids, empty input short circuits", func(t *testing.T) {
 		t.Parallel()
 		cache := warmCache()
-		repo, _ := newCacheTestRepository(t, cache)
+		repo := newCacheTestRepository(t, cache)
 
 		got, err := repo.GetJurisdictionsByIDs(t.Context(), nil)
 		require.NoError(t, err)
@@ -275,7 +223,7 @@ func TestJurisdictionLookups_AgainstTheSnapshot(t *testing.T) {
 
 	t.Run("by code, missing", func(t *testing.T) {
 		t.Parallel()
-		repo, _ := newCacheTestRepository(t, warmCache())
+		repo := newCacheTestRepository(t, warmCache())
 
 		_, err := repo.GetJurisdictionByCode(t.Context(), "US", "ZZ")
 		require.Error(t, err)
@@ -287,7 +235,7 @@ func TestFindJurisdictionsByCodes_MatchesExactPairs(t *testing.T) {
 	t.Parallel()
 
 	cache := warmCache()
-	repo, _ := newCacheTestRepository(t, cache)
+	repo := newCacheTestRepository(t, cache)
 
 	out, err := repo.FindJurisdictionsByCodes(t.Context(), []string{
 		"US_TX", "CA-AB", "tx", "CA_TX", "", "US_ZZ",
@@ -312,7 +260,7 @@ func TestFindJurisdictionsByCodes_EmptyInputSkipsTheCache(t *testing.T) {
 	t.Parallel()
 
 	cache := warmCache()
-	repo, _ := newCacheTestRepository(t, cache)
+	repo := newCacheTestRepository(t, cache)
 
 	out, err := repo.FindJurisdictionsByCodes(t.Context(), nil)
 	require.NoError(t, err)

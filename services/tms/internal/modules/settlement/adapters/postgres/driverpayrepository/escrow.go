@@ -4,19 +4,30 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
+)
+
+var (
+	escrowAccountErrors = dberror.Mapping{
+		Entity: "EscrowAccount",
+		Unique: []dberror.Constraint{
+			{
+				Name:    "uq_escrow_accounts_worker_active",
+				Field:   "workerId",
+				Message: "Worker already has an active escrow account",
+			},
+		},
+	}
+	escrowTransactionErrors = dberror.Mapping{Entity: "EscrowTransaction"}
 )
 
 type escrowAccountRepository struct {
@@ -39,35 +50,18 @@ func (r *escrowAccountRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*driverpay.EscrowAccount, 0, limit)
+			ea := driverpaydb.EscrowAccounts
+			q := ea.Where(
+				when(!req.WorkerID.IsNil(), ea.WorkerID.Eq(req.WorkerID)),
+				when(req.Status != "", ea.Status.Eq(req.Status)),
+			).Load(ea.Worker()).Order(ea.CreatedAt.Desc())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Where("escr.organization_id = ?", req.Filter.TenantInfo.OrgID).
-				Where("escr.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-				Order("escr.created_at DESC").
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if !req.WorkerID.IsNil() {
-				query = query.Where("escr.worker_id = ?", req.WorkerID)
-			}
-			if req.Status != "" {
-				query = query.Where("escr.status = ?", req.Status)
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 			if err != nil {
 				return nil, fmt.Errorf("list escrow accounts: %w", err)
 			}
 
-			return &pagination.ListResult[*driverpay.EscrowAccount]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -76,59 +70,27 @@ func (r *escrowAccountRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListEscrowAccountConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*driverpay.EscrowAccount)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"escr",
-							req.Filter,
-							(*driverpay.EscrowAccount)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count escrow accounts", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			ea := driverpaydb.EscrowAccounts
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*driverpay.EscrowAccount]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*driverpay.EscrowAccount) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(driverpaycol.EscrowAccountTable.All()).
-							Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							"escr",
-							req.Filter,
-							req.Cursor,
-							(*driverpay.EscrowAccount)(nil),
-						)
+				r.db.Keel(ctx),
+				ea.Query(),
+				&listquery.Request[driverpay.EscrowAccount]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[driverpay.EscrowAccount],
+					) *keel.Query[driverpay.EscrowAccount] {
+						return q.Load(ea.Worker())
 					},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan escrow accounts", zap.Error(err))
+				r.l.Error("failed to list escrow accounts", zap.Error(err))
 				return nil, err
 			}
 
@@ -142,22 +104,18 @@ func (r *escrowAccountRepository) GetByID(
 	req driverpayports.GetEscrowAccountByIDRequest,
 ) (*driverpay.EscrowAccount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowAccount, error) {
-		entity := new(driverpay.EscrowAccount)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("escr.id = ?", req.ID).
-			Where("escr.organization_id = ?", req.TenantInfo.OrgID).
-			Where("escr.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
+		ea := driverpaydb.EscrowAccounts
+		q := ea.Where(ea.ID.Eq(req.ID)).Load(ea.Worker())
 		if req.IncludeTransactions {
-			query = query.Relation("Transactions", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order("esctx.occurred_date DESC").Order("esctx.created_at DESC")
-			})
+			tx := ea.Transactions()
+			q = q.Load(tx.Order(tx.OccurredDate.Desc(), tx.CreatedAt.Desc()))
 		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EscrowAccount")
+
+		entity, err := q.One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, escrowAccountErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -166,23 +124,19 @@ func (r *escrowAccountRepository) GetByIDs(
 	ctx context.Context,
 	req driverpayports.GetEscrowAccountsByIDsRequest,
 ) ([]*driverpay.EscrowAccount, error) {
-	if len(req.IDs) == 0 {
-		return []*driverpay.EscrowAccount{}, nil
-	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.EscrowAccount, error) {
-		cols := driverpaycol.EscrowAccountColumns
-		items := make([]*driverpay.EscrowAccount, 0, len(req.IDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return driverpaycol.EscrowAccountScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.IDs))
-			}).
-			Scan(ctx)
+		if len(req.IDs) == 0 {
+			return []*driverpay.EscrowAccount{}, nil
+		}
+
+		ea := driverpaydb.EscrowAccounts
+		items, err := ea.Where(ea.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("get escrow accounts by ids: %w", err)
 		}
+
 		return items, nil
 	})
 }
@@ -192,19 +146,15 @@ func (r *escrowAccountRepository) GetActiveForWorker(
 	req driverpayports.GetActiveEscrowAccountForWorkerRequest,
 ) (*driverpay.EscrowAccount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowAccount, error) {
-		entity := new(driverpay.EscrowAccount)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("escr.organization_id = ?", req.TenantInfo.OrgID).
-			Where("escr.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("escr.worker_id = ?", req.WorkerID).
-			Where("escr.status = ?", driverpay.EscrowAccountStatusActive).
-			Limit(1).
-			Scan(ctx)
+		ea := driverpaydb.EscrowAccounts
+		entity, err := ea.Where(
+			ea.WorkerID.Eq(req.WorkerID),
+			ea.Status.Eq(driverpay.EscrowAccountStatusActive),
+		).First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EscrowAccount")
+			return nil, escrowAccountErrors.Map(err, req.WorkerID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -214,23 +164,22 @@ func (r *escrowAccountRepository) ListDueForInterest(
 	req driverpayports.ListEscrowAccountsForInterestRequest,
 ) ([]*driverpay.EscrowAccount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.EscrowAccount, error) {
-		items := make([]*driverpay.EscrowAccount, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("escr.organization_id = ?", req.TenantInfo.OrgID).
-			Where("escr.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("escr.status = ?", driverpay.EscrowAccountStatusActive).
-			Where("escr.balance_minor > 0").
-			Where("escr.annual_interest_rate > 0").
-			Where(
-				"COALESCE(escr.last_interest_accrual_date, escr.opened_date) <= ?",
+		ea := driverpaydb.EscrowAccounts
+		items, err := ea.Where(
+			ea.Status.Eq(driverpay.EscrowAccountStatusActive),
+			ea.BalanceMinor.Gt(0),
+			keel.Raw("? > 0", ea.AnnualInterestRate),
+			keel.Raw(
+				"coalesce(?, ?) <= ?",
+				ea.LastInterestAccrualDate,
+				ea.OpenedDate,
 				req.AccrueOnOrBefore,
-			).
-			Scan(ctx)
+			),
+		).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list escrow accounts due for interest: %w", err)
 		}
+
 		return items, nil
 	})
 }
@@ -240,18 +189,13 @@ func (r *escrowAccountRepository) Create(
 	entity *driverpay.EscrowAccount,
 ) (*driverpay.EscrowAccount, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowAccount, error) {
-		if entity.ID.IsNil() {
-			entity.ID = pulid.MustNew("escr_")
+		if err := driverpaydb.EscrowAccounts.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, escrowAccountErrors.Map(err, entity.ID.String())
 		}
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create escrow account: %w", err)
-		}
+
 		return r.GetByID(ctx, driverpayports.GetEscrowAccountByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			ID:         entity.ID,
+			TenantInfo: tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 		})
 	})
 }
@@ -261,33 +205,24 @@ func (r *escrowAccountRepository) Update(
 	entity *driverpay.EscrowAccount,
 ) (*driverpay.EscrowAccount, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowAccount, error) {
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("status = ?", entity.Status).
-			Set("target_amount_minor = ?", entity.TargetAmountMinor).
-			Set("balance_minor = ?", entity.BalanceMinor).
-			Set("annual_interest_rate = ?", entity.AnnualInterestRate).
-			Set("last_interest_accrual_date = ?", entity.LastInterestAccrualDate).
-			Set("closed_date = ?", entity.ClosedDate).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update escrow account: %w", err)
+		ea := driverpaydb.EscrowAccounts
+		if err := ea.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			ea.Status,
+			ea.TargetAmountMinor,
+			ea.BalanceMinor,
+			ea.AnnualInterestRate,
+			ea.LastInterestAccrualDate,
+			ea.ClosedDate,
+		); err != nil {
+			return nil, escrowAccountErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(res, "EscrowAccount", entity.ID.String()); err != nil {
-			return nil, err
-		}
+
 		return r.GetByID(ctx, driverpayports.GetEscrowAccountByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			ID:         entity.ID,
+			TenantInfo: tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 		})
 	})
 }
@@ -297,12 +232,10 @@ func (r *escrowAccountRepository) AppendTransaction(
 	entity *driverpay.EscrowTransaction,
 ) (*driverpay.EscrowTransaction, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowTransaction, error) {
-		if entity.ID.IsNil() {
-			entity.ID = pulid.MustNew("esctx_")
+		if err := driverpaydb.EscrowTransactions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, escrowTransactionErrors.Map(err, entity.ID.String())
 		}
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("append escrow transaction: %w", err)
-		}
+
 		return entity, nil
 	})
 }
@@ -312,19 +245,14 @@ func (r *escrowAccountRepository) ListTransactions(
 	req driverpayports.GetEscrowAccountByIDRequest,
 ) ([]*driverpay.EscrowTransaction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.EscrowTransaction, error) {
-		items := make([]*driverpay.EscrowTransaction, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("esctx.organization_id = ?", req.TenantInfo.OrgID).
-			Where("esctx.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("esctx.escrow_account_id = ?", req.ID).
-			Order("esctx.occurred_date DESC").
-			Order("esctx.created_at DESC").
-			Scan(ctx)
+		tx := driverpaydb.EscrowTransactions
+		items, err := tx.Where(tx.EscrowAccountID.Eq(req.ID)).
+			Order(tx.OccurredDate.Desc(), tx.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list escrow transactions: %w", err)
 		}
+
 		return items, nil
 	})
 }

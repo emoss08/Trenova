@@ -3,38 +3,17 @@ package driverpayservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
-
-type fakeDB struct{}
-
-func (fakeDB) DB() *bun.DB { return nil }
-
-func (fakeDB) DBForContext(context.Context) bun.IDB { return nil }
-
-func (fakeDB) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
-
-func (fakeDB) HealthCheck(context.Context) error { return nil }
-
-func (fakeDB) IsHealthy(context.Context) bool { return true }
-
-func (fakeDB) Close() error { return nil }
 
 type fakeAuditService struct {
 	auditports.AuditService
@@ -229,7 +208,7 @@ func newTestService() (*Service, *fakeAuditService) {
 	audit := &fakeAuditService{}
 	svc := &Service{
 		l:            zap.NewNop(),
-		db:           fakeDB{},
+		db:           dbtest.NopConnection{},
 		auditService: audit,
 	}
 	return svc, audit

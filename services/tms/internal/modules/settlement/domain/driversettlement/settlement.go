@@ -35,9 +35,8 @@ type Exception struct {
 
 // Driver and owner-operator pay statements
 type Settlement struct {
-	bun.BaseModel             `bun:"table:driver_settlements,alias:dstl" json:"-"`
-	keel.Table                `                                                   keel:"driver_settlements,report=Payroll,label=Driver Settlement"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	bun.BaseModel `bun:"table:driver_settlements,alias:dstl" json:"-"`
+	keel.Table    `                                                   keel:"driver_settlements,report=Payroll,label=Driver Settlement"`
 
 	ID                     pulid.ID                      `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:dstl_"`
 	BusinessUnitID         pulid.ID                      `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`

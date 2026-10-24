@@ -23,9 +23,8 @@ var (
 
 // Purchased transportation cost accruals from carrier assignments
 type CostEvent struct {
-	bun.BaseModel             `bun:"table:carrier_cost_events,alias:cacc" json:"-"`
-	keel.Table                `                                                    keel:"carrier_cost_events,report=Billing,label=Carrier Cost Event"`
-	pagination.CursorValueSet `bun:",embed"                               json:"-"`
+	bun.BaseModel `bun:"table:carrier_cost_events,alias:cacc" json:"-"`
+	keel.Table    `                                                    keel:"carrier_cost_events,report=Billing,label=Carrier Cost Event"`
 
 	ID                  pulid.ID        `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:cacc_"`
 	BusinessUnitID      pulid.ID        `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`

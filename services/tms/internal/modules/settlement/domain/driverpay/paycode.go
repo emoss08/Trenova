@@ -44,9 +44,8 @@ func (d PayCodeDirection) IsValid() bool {
 
 // Earning and deduction codes and the GL accounts they post to
 type PayCode struct {
-	bun.BaseModel             `bun:"table:pay_codes,alias:payc" json:"-"`
-	keel.Table                `                                          keel:"pay_codes,report=Payroll"`
-	pagination.CursorValueSet `bun:",embed"                     json:"-"`
+	bun.BaseModel `bun:"table:pay_codes,alias:payc" json:"-"`
+	keel.Table    `                                          keel:"pay_codes,report=Payroll"`
 
 	ID                    pulid.ID           `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:payc_"`
 	BusinessUnitID        pulid.ID           `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`

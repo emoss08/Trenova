@@ -4,8 +4,16 @@ package fuelpurchaserepository_test
 
 import (
 	"context"
+
 	"strings"
 	"testing"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
@@ -25,7 +33,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -38,7 +45,9 @@ const (
 
 type fixture struct {
 	ctx      context.Context
-	db       *bun.DB
+	ctxA     context.Context
+	ctxB     context.Context
+	db       *keel.DB
 	repo     fuelpurchaseports.FuelPurchaseRepository
 	tenantA  pagination.TenantInfo
 	tenantB  pagination.TenantInfo
@@ -74,8 +83,10 @@ func setup(t *testing.T) *fixture {
 	tractorB := seedTractor(t, ctx, db, tenantB, other.State.ID, "FB")
 
 	f := &fixture{
-		ctx: ctx,
-		db:  db,
+		ctx:  ctx,
+		ctxA: dbscope.WithTenant(ctx, tenantA.DBTenant()),
+		ctxB: dbscope.WithTenant(ctx, tenantB.DBTenant()),
+		db:   db,
 		repo: fuelpurchaserepository.New(fuelpurchaserepository.Params{
 			DB:     postgres.NewTestConnection(db),
 			Logger: zap.NewNop(),
@@ -95,19 +106,19 @@ func setup(t *testing.T) *fixture {
 func jurisdictionID(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	country, code string,
 ) pulid.ID {
 	t.Helper()
 
-	var id pulid.ID
-	require.NoError(t, db.NewSelect().
-		TableExpr("ifta_jurisdictions").
-		Column("id").
-		Where("country_code = ?", country).
-		Where("code = ?", code).
-		Limit(1).
-		Scan(ctx, &id))
+	id, err := keel.QueryValue[pulid.ID](
+		ctx,
+		db,
+		"SELECT id FROM ifta_jurisdictions WHERE country_code = $1 AND code = $2 LIMIT 1",
+		country,
+		code,
+	)
+	require.NoError(t, err)
 
 	return id
 }
@@ -115,7 +126,7 @@ func jurisdictionID(
 func seedTractor(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	tenant pagination.TenantInfo,
 	stateID pulid.ID,
 	suffix string,
@@ -123,6 +134,7 @@ func seedTractor(
 	t.Helper()
 
 	lower := strings.ToLower(suffix)
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
 	equipType := &equipmenttype.EquipmentType{
 		ID:             pulid.MustNew("et_"),
@@ -133,8 +145,7 @@ func seedTractor(
 		Class:          equipmenttype.ClassTractor,
 		Status:         domaintypes.StatusActive,
 	}
-	_, err := db.NewInsert().Model(equipType).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, equipmenttypedb.EquipmentTypes.Create(ctx, db, equipType))
 
 	manufacturer := &equipmentmanufacturer.EquipmentManufacturer{
 		ID:             pulid.MustNew("em_"),
@@ -144,8 +155,7 @@ func seedTractor(
 		Description:    "Freightliner",
 		Status:         domaintypes.StatusActive,
 	}
-	_, err = db.NewInsert().Model(manufacturer).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, equipmentmanufacturerdb.EquipmentManufacturers.Create(ctx, db, manufacturer))
 
 	driver := &worker.Worker{
 		ID:                   pulid.MustNew("wrk_"),
@@ -166,8 +176,7 @@ func seedTractor(
 		CanBeAssigned:        true,
 		AvailableForDispatch: true,
 	}
-	_, err = db.NewInsert().Model(driver).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, workerdb.Workers.Create(ctx, db, driver))
 
 	entity := &tractor.Tractor{
 		ID:                      pulid.MustNew("trac_"),
@@ -185,10 +194,13 @@ func seedTractor(
 		FuelType:                domaintypes.IFTAFuelTypeDiesel,
 		IFTAQualified:           true,
 	}
-	_, err = db.NewInsert().Model(entity).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, tractordb.Tractors.Create(ctx, db, entity))
 
 	return entity.ID
+}
+
+func (f *fixture) as(tenant pagination.TenantInfo) context.Context {
+	return dbscope.WithTenant(f.ctx, tenant.DBTenant())
 }
 
 func (f *fixture) newCard(tenant pagination.TenantInfo, lastFour string) *fuelpurchase.FuelCard {
@@ -259,24 +271,24 @@ func requireDuplicate(t *testing.T, err error, field string) {
 func TestCardsAreTenantScopedAndLastFourReusableAfterCancel(t *testing.T) {
 	f := setup(t)
 
-	card, err := f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "1234"))
+	card, err := f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "1234"))
 	require.NoError(t, err)
 	require.False(t, card.ID.IsNil())
 
-	_, err = f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "1234"))
+	_, err = f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "1234"))
 	requireDuplicate(t, err, "lastFour")
 
-	otherTenantCard, err := f.repo.CreateCard(f.ctx, f.newCard(f.tenantB, "1234"))
+	otherTenantCard, err := f.repo.CreateCard(f.ctxB, f.newCard(f.tenantB, "1234"))
 	require.NoError(t, err)
 
-	_, err = f.repo.GetCardByID(f.ctx, &fuelpurchaseports.GetFuelCardByIDRequest{
+	_, err = f.repo.GetCardByID(f.ctxB, &fuelpurchaseports.GetFuelCardByIDRequest{
 		ID:         card.ID,
 		TenantInfo: f.tenantB,
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	found, err := f.repo.FindCardByLastFour(f.ctx, &fuelpurchaseports.FindFuelCardByLastFourRequest{
+	found, err := f.repo.FindCardByLastFour(f.ctxB, &fuelpurchaseports.FindFuelCardByLastFourRequest{
 		TenantInfo: f.tenantB,
 		Provider:   fuelpurchase.CardProviderComdata,
 		LastFour:   "1234",
@@ -285,14 +297,14 @@ func TestCardsAreTenantScopedAndLastFourReusableAfterCancel(t *testing.T) {
 	require.NotNil(t, found)
 	assert.Equal(t, otherTenantCard.ID, found.ID)
 
-	active, err := f.repo.ListActiveCards(f.ctx, &fuelpurchaseports.ListActiveFuelCardsRequest{
+	active, err := f.repo.ListActiveCards(f.ctxA, &fuelpurchaseports.ListActiveFuelCardsRequest{
 		TenantInfo: f.tenantA,
 	})
 	require.NoError(t, err)
 	require.Len(t, active, 1)
 	assert.Equal(t, card.ID, active[0].ID)
 
-	byIDs, err := f.repo.GetCardsByIDs(f.ctx, &fuelpurchaseports.GetFuelCardsByIDsRequest{
+	byIDs, err := f.repo.GetCardsByIDs(f.ctxB, &fuelpurchaseports.GetFuelCardsByIDsRequest{
 		TenantInfo: f.tenantB,
 		IDs:        []pulid.ID{card.ID, otherTenantCard.ID},
 	})
@@ -301,16 +313,16 @@ func TestCardsAreTenantScopedAndLastFourReusableAfterCancel(t *testing.T) {
 	assert.Equal(t, otherTenantCard.ID, byIDs[0].ID)
 
 	card.Cancel(purchasedInWindow, "Card reported lost by the driver")
-	cancelled, err := f.repo.UpdateCard(f.ctx, card)
+	cancelled, err := f.repo.UpdateCard(f.ctxA, card)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), cancelled.Version)
 
 	stale := *cancelled
 	stale.Version = 0
-	_, err = f.repo.UpdateCard(f.ctx, &stale)
+	_, err = f.repo.UpdateCard(f.ctxA, &stale)
 	require.Error(t, err)
 
-	none, err := f.repo.FindCardByLastFour(f.ctx, &fuelpurchaseports.FindFuelCardByLastFourRequest{
+	none, err := f.repo.FindCardByLastFour(f.ctxA, &fuelpurchaseports.FindFuelCardByLastFourRequest{
 		TenantInfo: f.tenantA,
 		Provider:   fuelpurchase.CardProviderComdata,
 		LastFour:   "1234",
@@ -318,11 +330,11 @@ func TestCardsAreTenantScopedAndLastFourReusableAfterCancel(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, none)
 
-	replacement, err := f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "1234"))
+	replacement, err := f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "1234"))
 	require.NoError(t, err)
 	assert.NotEqual(t, card.ID, replacement.ID)
 
-	listed, err := f.repo.ListCards(f.ctx, &fuelpurchaseports.ListFuelCardsRequest{
+	listed, err := f.repo.ListCards(f.ctxA, &fuelpurchaseports.ListFuelCardsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: f.tenantA,
 			Pagination: pagination.Info{Limit: 10},
@@ -340,45 +352,45 @@ func TestCardsAreTenantScopedAndLastFourReusableAfterCancel(t *testing.T) {
 func TestPurchaseReferencesAreUniquePerTenant(t *testing.T) {
 	f := setup(t)
 
-	first, err := f.repo.CreatePurchase(f.ctx, f.newPurchase(purchaseSpec{
+	first, err := f.repo.CreatePurchase(f.ctxA, f.newPurchase(purchaseSpec{
 		tenant: f.tenantA, tractorID: f.tractorA, jurisdiction: f.texas,
 		gallons: "100", taxPaid: true, reference: "ref-1",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "REF-1", first.TransactionReference)
 
-	_, err = f.repo.CreatePurchase(f.ctx, f.newPurchase(purchaseSpec{
+	_, err = f.repo.CreatePurchase(f.ctxA, f.newPurchase(purchaseSpec{
 		tenant: f.tenantA, tractorID: f.tractorA, jurisdiction: f.texas,
 		gallons: "50", taxPaid: true, reference: "REF-1",
 	}))
 	requireDuplicate(t, err, "transactionReference")
 
-	_, err = f.repo.CreatePurchase(f.ctx, f.newPurchase(purchaseSpec{
+	_, err = f.repo.CreatePurchase(f.ctxB, f.newPurchase(purchaseSpec{
 		tenant: f.tenantB, tractorID: f.tractorB, jurisdiction: f.texas,
 		gallons: "50", taxPaid: true, reference: "REF-1",
 	}))
 	require.NoError(t, err)
 
-	blankOne, err := f.repo.CreatePurchase(f.ctx, f.newPurchase(purchaseSpec{
+	blankOne, err := f.repo.CreatePurchase(f.ctxA, f.newPurchase(purchaseSpec{
 		tenant: f.tenantA, tractorID: f.tractorA, jurisdiction: f.texas,
 		gallons: "10", taxPaid: true,
 	}))
 	require.NoError(t, err)
-	blankTwo, err := f.repo.CreatePurchase(f.ctx, f.newPurchase(purchaseSpec{
+	blankTwo, err := f.repo.CreatePurchase(f.ctxA, f.newPurchase(purchaseSpec{
 		tenant: f.tenantA, tractorID: f.tractorA, jurisdiction: f.texas,
 		gallons: "20", taxPaid: true,
 	}))
 	require.NoError(t, err)
 	assert.NotEqual(t, blankOne.ID, blankTwo.ID)
 
-	_, err = f.repo.GetPurchaseByID(f.ctx, &fuelpurchaseports.GetFuelPurchaseByIDRequest{
+	_, err = f.repo.GetPurchaseByID(f.ctxB, &fuelpurchaseports.GetFuelPurchaseByIDRequest{
 		ID:         first.ID,
 		TenantInfo: f.tenantB,
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	loaded, err := f.repo.GetPurchaseByID(f.ctx, &fuelpurchaseports.GetFuelPurchaseByIDRequest{
+	loaded, err := f.repo.GetPurchaseByID(f.ctxA, &fuelpurchaseports.GetFuelPurchaseByIDRequest{
 		ID:                  first.ID,
 		TenantInfo:          f.tenantA,
 		IncludeTractor:      true,
@@ -389,7 +401,7 @@ func TestPurchaseReferencesAreUniquePerTenant(t *testing.T) {
 	require.NotNil(t, loaded.Jurisdiction)
 	assert.Equal(t, "TX", loaded.Jurisdiction.Code)
 
-	refs, err := f.repo.FindReferences(f.ctx, &fuelpurchaseports.FindFuelPurchaseReferencesRequest{
+	refs, err := f.repo.FindReferences(f.ctxA, &fuelpurchaseports.FindFuelPurchaseReferencesRequest{
 		TenantInfo: f.tenantA,
 		References: []string{"ref-1", "REF-9", ""},
 	})
@@ -397,22 +409,22 @@ func TestPurchaseReferencesAreUniquePerTenant(t *testing.T) {
 	assert.Equal(t, map[string]pulid.ID{"REF-1": first.ID}, refs)
 
 	blankTwo.TransactionReference = "REF-1"
-	_, err = f.repo.UpdatePurchase(f.ctx, blankTwo)
+	_, err = f.repo.UpdatePurchase(f.ctxA, blankTwo)
 	requireDuplicate(t, err, "transactionReference")
 
-	err = f.repo.DeletePurchase(f.ctx, &fuelpurchaseports.DeleteFuelPurchaseRequest{
+	err = f.repo.DeletePurchase(f.ctxB, &fuelpurchaseports.DeleteFuelPurchaseRequest{
 		ID:         first.ID,
 		TenantInfo: f.tenantB,
 	})
 	require.Error(t, err)
 
-	err = f.repo.DeletePurchase(f.ctx, &fuelpurchaseports.DeleteFuelPurchaseRequest{
+	err = f.repo.DeletePurchase(f.ctxA, &fuelpurchaseports.DeleteFuelPurchaseRequest{
 		ID:         first.ID,
 		TenantInfo: f.tenantA,
 	})
 	require.NoError(t, err)
 
-	page, err := f.repo.ListPurchases(f.ctx, &fuelpurchaseports.ListFuelPurchasesRequest{
+	page, err := f.repo.ListPurchases(f.ctxA, &fuelpurchaseports.ListFuelPurchasesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: f.tenantA,
 			Pagination: pagination.Info{Limit: 10},
@@ -440,16 +452,16 @@ func (f *fixture) newBatch(tenant pagination.TenantInfo) *fuelpurchase.ImportBat
 func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 	f := setup(t)
 
-	existing, err := f.repo.CreatePurchase(f.ctx, f.newPurchase(purchaseSpec{
+	existing, err := f.repo.CreatePurchase(f.ctxA, f.newPurchase(purchaseSpec{
 		tenant: f.tenantA, tractorID: f.tractorA, jurisdiction: f.texas,
 		gallons: "100", taxPaid: true, reference: "DUP-1",
 	}))
 	require.NoError(t, err)
 
-	batch, err := f.repo.CreateImportBatch(f.ctx, f.newBatch(f.tenantA))
+	batch, err := f.repo.CreateImportBatch(f.ctxA, f.newBatch(f.tenantA))
 	require.NoError(t, err)
 
-	_, err = f.repo.GetImportBatchByID(f.ctx, &fuelpurchaseports.GetImportBatchByIDRequest{
+	_, err = f.repo.GetImportBatchByID(f.ctxB, &fuelpurchaseports.GetImportBatchByIDRequest{
 		ID:         batch.ID,
 		TenantInfo: f.tenantB,
 	})
@@ -477,9 +489,9 @@ func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 		Status:    fuelpurchase.ImportRowStatusError,
 		Error:     "quantity must be greater than zero",
 	})
-	require.NoError(t, f.repo.ReplaceImportRows(f.ctx, batch, rows))
+	require.NoError(t, f.repo.ReplaceImportRows(f.ctxA, batch, rows))
 
-	staged, err := f.repo.GetImportBatchByID(f.ctx, &fuelpurchaseports.GetImportBatchByIDRequest{
+	staged, err := f.repo.GetImportBatchByID(f.ctxA, &fuelpurchaseports.GetImportBatchByIDRequest{
 		ID:          batch.ID,
 		TenantInfo:  f.tenantA,
 		IncludeRows: true,
@@ -509,7 +521,7 @@ func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 	}
 	require.Len(t, purchases, 3)
 
-	result, err := f.repo.CommitImport(f.ctx, &fuelpurchaseports.CommitImportRequest{
+	result, err := f.repo.CommitImport(f.ctxA, &fuelpurchaseports.CommitImportRequest{
 		Batch:            staged,
 		Purchases:        purchases,
 		RowIDByReference: rowIDByReference,
@@ -520,7 +532,7 @@ func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 	assert.Equal(t, 2, result.Committed)
 	assert.Equal(t, 1, result.AlreadyImported)
 
-	committed, err := f.repo.GetImportBatchByID(f.ctx, &fuelpurchaseports.GetImportBatchByIDRequest{
+	committed, err := f.repo.GetImportBatchByID(f.ctxA, &fuelpurchaseports.GetImportBatchByIDRequest{
 		ID:          batch.ID,
 		TenantInfo:  f.tenantA,
 		IncludeRows: true,
@@ -543,7 +555,7 @@ func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 	assert.Nil(t, byRef["DUP-1"].FuelPurchaseID)
 	assert.Equal(t, fuelpurchase.ImportRowStatusError, byRef[""].Status)
 
-	refs, err := f.repo.FindReferences(f.ctx, &fuelpurchaseports.FindFuelPurchaseReferencesRequest{
+	refs, err := f.repo.FindReferences(f.ctxA, &fuelpurchaseports.FindFuelPurchaseReferencesRequest{
 		TenantInfo: f.tenantA,
 		References: references,
 	})
@@ -551,7 +563,7 @@ func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 	assert.Len(t, refs, 3)
 	assert.Equal(t, existing.ID, refs["DUP-1"])
 
-	imported, err := f.repo.GetPurchaseByID(f.ctx, &fuelpurchaseports.GetFuelPurchaseByIDRequest{
+	imported, err := f.repo.GetPurchaseByID(f.ctxA, &fuelpurchaseports.GetFuelPurchaseByIDRequest{
 		ID:         *byRef["NEW-1"].FuelPurchaseID,
 		TenantInfo: f.tenantA,
 	})
@@ -560,7 +572,7 @@ func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 	require.NotNil(t, imported.ImportBatchID)
 	assert.Equal(t, batch.ID, *imported.ImportBatchID)
 
-	firstPage, err := f.repo.ListImportRows(f.ctx, &fuelpurchaseports.ListImportRowsRequest{
+	firstPage, err := f.repo.ListImportRows(f.ctxA, &fuelpurchaseports.ListImportRowsRequest{
 		BatchID:    batch.ID,
 		TenantInfo: f.tenantA,
 		Cursor:     pagination.CursorInfo{Limit: 2, IncludeTotalCount: true},
@@ -573,12 +585,13 @@ func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 	assert.Equal(t, 2, firstPage.Items[0].RowNumber)
 	assert.Equal(t, 3, firstPage.Items[1].RowNumber)
 
-	after, err := pagination.EncodeCursorFromEntity(firstPage.Items[1])
+	require.Len(t, firstPage.EdgeCursors, 2)
+	after, err := pagination.NewCursorInfo(2, firstPage.EdgeCursors[1])
 	require.NoError(t, err)
-	secondPage, err := f.repo.ListImportRows(f.ctx, &fuelpurchaseports.ListImportRowsRequest{
+	secondPage, err := f.repo.ListImportRows(f.ctxA, &fuelpurchaseports.ListImportRowsRequest{
 		BatchID:    batch.ID,
 		TenantInfo: f.tenantA,
-		Cursor:     pagination.CursorInfo{Limit: 2, After: after},
+		Cursor:     after,
 	})
 	require.NoError(t, err)
 	require.Len(t, secondPage.Items, 2)
@@ -586,7 +599,7 @@ func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 	assert.Equal(t, 4, secondPage.Items[0].RowNumber)
 	assert.Equal(t, 5, secondPage.Items[1].RowNumber)
 
-	onlyErrors, err := f.repo.ListImportRows(f.ctx, &fuelpurchaseports.ListImportRowsRequest{
+	onlyErrors, err := f.repo.ListImportRows(f.ctxA, &fuelpurchaseports.ListImportRowsRequest{
 		BatchID:    batch.ID,
 		TenantInfo: f.tenantA,
 		Cursor:     pagination.CursorInfo{Limit: 10},
@@ -595,7 +608,7 @@ func TestCommitImportIsAtomicAndTenantScoped(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, onlyErrors.Items, 1)
 
-	foreign, err := f.repo.ListImportRows(f.ctx, &fuelpurchaseports.ListImportRowsRequest{
+	foreign, err := f.repo.ListImportRows(f.ctxB, &fuelpurchaseports.ListImportRowsRequest{
 		BatchID:    batch.ID,
 		TenantInfo: f.tenantB,
 		Cursor:     pagination.CursorInfo{Limit: 10},
@@ -650,11 +663,11 @@ func TestAccumulateFuelGroupsByTractorJurisdictionAndFuelType(t *testing.T) {
 		},
 	}
 	for _, spec := range specs {
-		_, err := f.repo.CreatePurchase(f.ctx, f.newPurchase(spec))
+		_, err := f.repo.CreatePurchase(f.as(spec.tenant), f.newPurchase(spec))
 		require.NoError(t, err)
 	}
 
-	rows, err := f.repo.AccumulateFuel(f.ctx, &fuelpurchaseports.AccumulateFuelRequest{
+	rows, err := f.repo.AccumulateFuel(f.ctxA, &fuelpurchaseports.AccumulateFuelRequest{
 		TenantInfo: f.tenantA,
 		Start:      windowStart,
 		End:        windowEnd,
@@ -688,7 +701,7 @@ func TestAccumulateFuelGroupsByTractorJurisdictionAndFuelType(t *testing.T) {
 	require.NotNil(t, texasGasoline)
 	assert.Equal(t, "30.000", texasGasoline.Gallons.StringFixed(3))
 
-	otherTenant, err := f.repo.AccumulateFuel(f.ctx, &fuelpurchaseports.AccumulateFuelRequest{
+	otherTenant, err := f.repo.AccumulateFuel(f.ctxB, &fuelpurchaseports.AccumulateFuelRequest{
 		TenantInfo: f.tenantB,
 		Start:      windowStart,
 		End:        windowEnd,
@@ -708,14 +721,14 @@ func TestCardSearchMatchesTheLabelAndLastFourOnly(t *testing.T) {
 	card := f.newCard(f.tenantA, "4321")
 	card.Label = "Fleet card East"
 	card.ExternalCardID = "PROV-998877"
-	created, err := f.repo.CreateCard(f.ctx, card)
+	created, err := f.repo.CreateCard(f.ctxA, card)
 	require.NoError(t, err)
-	_, err = f.repo.CreateCard(f.ctx, f.newCard(f.tenantA, "5555"))
+	_, err = f.repo.CreateCard(f.ctxA, f.newCard(f.tenantA, "5555"))
 	require.NoError(t, err)
 
 	search := func(query string) []pulid.ID {
 		t.Helper()
-		listed, listErr := f.repo.ListCards(f.ctx, &fuelpurchaseports.ListFuelCardsRequest{
+		listed, listErr := f.repo.ListCards(f.ctxA, &fuelpurchaseports.ListFuelCardsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: f.tenantA,
 				Query:      query,

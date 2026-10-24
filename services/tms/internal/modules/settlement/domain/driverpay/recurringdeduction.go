@@ -24,9 +24,8 @@ var (
 
 // Standing deductions, including garnishments and escrow contributions
 type RecurringDeduction struct {
-	bun.BaseModel             `bun:"table:recurring_deductions,alias:rded" json:"-"`
-	keel.Table                `                                                     keel:"recurring_deductions,report=Payroll"`
-	pagination.CursorValueSet `bun:",embed"                                json:"-"`
+	bun.BaseModel `bun:"table:recurring_deductions,alias:rded" json:"-"`
+	keel.Table    `                                                     keel:"recurring_deductions,report=Payroll"`
 
 	ID                  pulid.ID           `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:rded_"`
 	BusinessUnitID      pulid.ID           `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`

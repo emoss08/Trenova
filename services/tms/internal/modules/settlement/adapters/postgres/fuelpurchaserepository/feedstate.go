@@ -2,50 +2,37 @@ package fuelpurchaserepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/zap"
 )
 
-// GetFeedState returns how far a provider's feed has been read. A feed that has
-// never run yields a zero-valued state rather than an error, because the caller's
-// next move is the same either way: read from the fallback window.
 func (r *repository) GetFeedState(
 	ctx context.Context,
 	req *fuelpurchaseports.GetFuelFeedStateRequest,
 ) (*fuelpurchase.CardFeedState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.CardFeedState, error) {
-		cols := fuelpurchasecol.CardFeedStateColumns
-
-		state := new(fuelpurchase.CardFeedState)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(state).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelpurchasecol.CardFeedStateScopeTenant(sq, req.TenantInfo).
-					Where(cols.Provider.Eq(), req.Provider).
-					Where(cols.FeedType.Eq(), req.FeedType)
-			}).
-			Scan(ctx)
+		fs := fuelpurchasedb.CardFeedStates
+		state, err := fs.Where(
+			fs.Provider.Eq(req.Provider),
+			fs.FeedType.Eq(req.FeedType),
+		).One(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return &fuelpurchase.CardFeedState{
+				OrganizationID: req.TenantInfo.OrgID,
+				BusinessUnitID: req.TenantInfo.BuID,
+				Provider:       req.Provider,
+				FeedType:       req.FeedType,
+			}, nil
+		}
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return &fuelpurchase.CardFeedState{
-					OrganizationID: req.TenantInfo.OrgID,
-					BusinessUnitID: req.TenantInfo.BuID,
-					Provider:       req.Provider,
-					FeedType:       req.FeedType,
-				}, nil
-			}
-
 			r.l.Error("failed to read fuel feed state", zap.Error(err))
-
 			return nil, fmt.Errorf("read fuel feed state: %w", err)
 		}
 
@@ -53,26 +40,19 @@ func (r *repository) GetFeedState(
 	})
 }
 
-// SaveFeedState writes the watermark. It is an upsert on the composite key so the
-// first run of a feed and every run after it take the same path.
 func (r *repository) SaveFeedState(ctx context.Context, state *fuelpurchase.CardFeedState) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := fuelpurchasecol.CardFeedStateColumns
-		conflict := "CONFLICT (" + cols.OrganizationID.Name + ", " + cols.BusinessUnitID.Name +
-			", " + cols.Provider.Name + ", " + cols.FeedType.Name + ") DO UPDATE"
-
-		if _, err := r.db.DBForContext(ctx).NewInsert().
-			Model(state).
-			On(conflict).
-			Set(cols.Cursor.SetExcluded()).
-			Set(cols.LastPolledAt.SetExcluded()).
-			Set(cols.LastSuccessAt.SetExcluded()).
-			Set(cols.FailureCount.SetExcluded()).
-			Set(cols.LastError.SetExcluded()).
-			Exec(ctx); err != nil {
+		fs := fuelpurchasedb.CardFeedStates
+		_, err := fs.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			[]*fuelpurchase.CardFeedState{state},
+			keel.OnConflict(fs.OrganizationID, fs.BusinessUnitID, fs.Provider, fs.FeedType).
+				Update(fs.Cursor, fs.LastPolledAt, fs.LastSuccessAt, fs.FailureCount, fs.LastError),
+		)
+		if err != nil {
 			r.l.Error("failed to save fuel feed state", zap.Error(err))
-
-			return fmt.Errorf("save fuel feed state: %w", err)
+			return fmt.Errorf("save fuel feed state: %w", feedStateErrors.Map(err, string(state.Provider)))
 		}
 
 		return nil
