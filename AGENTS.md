@@ -74,7 +74,9 @@ and still break production or the build.
   `domain`, `ports` and `<name>contract` packages (`archlint`). Public code never imports
   `internal/cloud`.
 - **Tenancy.** Repository methods run in `dbtx.Read`/`dbtx.Write` and query through
-  `DBForContext(ctx)`, never `.DB()`. A new tenant table's migration ends with
+  `DBForContext(ctx)` (Bun) or `Keel(ctx)` (keel), never `.DB()`; while Bun remains, start
+  transactions with `dbtx`, never `keel.Write` ([keel-migration.md](docs/engineering/backend/keel-migration.md)).
+  A new tenant table's migration ends with
   `SELECT trenova_rls.reconcile();`. Cross-tenant code declares `dbscope.WithSystem` and is listed
   in `rlslint`'s allowlist.
 - **Columns** come from `pkg/buncolgen` helpers, never hand-written names.

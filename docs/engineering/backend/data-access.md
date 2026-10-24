@@ -3,7 +3,8 @@
 Entities, repositories, migrations, locking and caching. The reference vertical is commodity:
 `internal/modules/reference/{domain/commodity,adapters/postgres/commodityrepository}`. Paths are
 under `services/tms/`. Read [row-level-security.md](../row-level-security.md) and
-[bun/buncolgen.md](../bun/buncolgen.md) before writing a repository.
+[bun/buncolgen.md](../bun/buncolgen.md) before writing a repository, and
+[keel-migration.md](keel-migration.md) before converting one to keel.
 
 ## Entities
 

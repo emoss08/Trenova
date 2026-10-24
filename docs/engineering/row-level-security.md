@@ -16,9 +16,10 @@ refuses them.
 ```
 request / activity ──▶ dbscope.WithTenant(ctx, org, bu, user)
                                │
-repository method ──▶ dbtx.Read / dbtx.Write (one transaction per method)
+repository method ──▶ dbtx.Read / dbtx.Write (one transaction per method, shared by Bun and keel)
                                │
-scoped driver ──▶ BEGIN [READ ONLY]; SET LOCAL trenova.scope = 'v1.<key>.<org>.<bu>.<user>.<exp>.<hmac>'
+scope guard ──▶ Bun (scoped driver):  BEGIN [READ ONLY]; SET LOCAL trenova.scope = 'v1.<key>.<org>.<bu>.<user>.<exp>.<hmac>'
+                keel (Config.OnBegin): BEGIN; SELECT set_config('trenova.scope', $1, true)
                                │
 PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
                        AND business_unit_id = (SELECT trenova_rls.bu_id())
@@ -30,7 +31,8 @@ PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
 |---|---|
 | Scope on a context (`WithTenant`, `WithSystem`, `TenantOf`) | `pkg/dbscope` |
 | Per-method transaction helpers | `internal/infrastructure/postgres/dbtx` |
-| Signing, driver wrapper, system pool, startup checks | `internal/infrastructure/postgres/{rlsscope,scopeddriver,connection_rls}.go` |
+| Signing, the scope guard both layers use, system pool, startup checks | `internal/infrastructure/postgres/{rlsscope,scopeguard,connection_rls}.go` |
+| pgx pools, the `database/sql` driver wrapper Bun runs on, keel's configuration | `internal/infrastructure/postgres/dbpool` |
 | Key install, policy reconcile, role provisioning | `internal/infrastructure/postgres/rlsprovision.go`, `trenova db rls` |
 | Roles, scope schema and every policy | migration `20261231007040_row_level_security` |
 | HTTP binding | `pkg/authctx` (`SetSessionAuthContext`, `SetAPIKeyContext`, `SetCaptureDeviceContext`) |
@@ -64,17 +66,26 @@ the key. The key is installed as HMAC pads, never in the clear, by
 `trenova db migrate`; rotate it by configuring a new `scopeKeyId`, deploying, and
 `trenova db rls retire-key <old>` once nothing signs with the old one.
 
-`SET LOCAL` keeps the scope to the transaction, which is what PgBouncer's
-transaction pooling needs: the next transaction on the same server connection
-starts with no scope and is refused.
+`SET LOCAL` (and keel's `set_config(…, true)`, which is the same thing) keeps the
+scope to the transaction, which is what PgBouncer's transaction pooling needs: the
+next transaction on the same server connection starts with no scope and is
+refused.
+
+One `scopeGuard` per pool decides every transaction's scope, for both layers: the
+scoped driver calls it when Bun begins a transaction, and keel calls it through
+`Config.OnBegin` for every transaction keel begins itself, explicit (`keel.Write`,
+`keel.Read`) or implicit (a terminal outside a transaction, which keel runs in one
+whenever `OnBegin` is set). A transaction `dbtx` opens is begun by Bun and joined by
+keel (`keel.JoinTx`), so it carries one scope for both; keel sends no `OnBegin`
+statements into it. See [backend/keel-migration.md](backend/keel-migration.md).
 
 ## Modes
 
 | `database.rls.mode` | Driver | When |
 |---|---|---|
-| `off` (default) | not installed; `dbtx` helpers call straight through | deployments not yet migrated |
+| `off` (default) | not installed; `dbtx` helpers call straight through; keel has no `OnBegin` | deployments not yet migrated |
 | `observe` | signs scopes, logs and meters access that `enforce` would refuse | while rolling out |
-| `enforce` | refuses unscoped statements and statements outside a scoped transaction | production |
+| `enforce` | refuses unscoped statements and statements outside a scoped transaction; keel's `OnBegin` refuses a transaction with no tenant or system scope | production |
 
 `trenova_db_rls_scope_events_total{pool,event,outcome}` counts every decision.
 In `observe`, the first sighting of each unscoped call site is logged at warn with
@@ -120,6 +131,10 @@ func (r *repository) GetByID(ctx context.Context, req GetRequest) (*thing.Thing,
   (sequence allocation) uses `Connection.RunDetached`.
 - Validators use `validationframework.NewBunUniquenessCheckerScoped(conn)` /
   `NewBunReferenceCheckerScoped(conn)` / `NewUSStateReferenceCheck(conn)`.
+- keel code takes its DB from `r.db.Keel(ctx)` inside the same `dbtx` call; `rlslint`
+  holds `Keel(ctx)` to the rule above. A keel query under a system scope must say
+  `AllTenants()`, and keel fills and checks the tenant columns of every write from
+  the scope, a second wall in Go beside the policies.
 
 **A new tenant table** needs nothing when it has non-null `organization_id` and
 `business_unit_id`: end the migration with `SELECT trenova_rls.reconcile();`, and
