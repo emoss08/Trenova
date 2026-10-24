@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testRuntime = sync.OnceValue(func() *Runtime { return New(nil) })
+var testRuntime = sync.OnceValue(func() *Runtime { return New(Options{}) })
 
 type call struct {
 	Function Function
@@ -118,13 +118,16 @@ func TestAnExceptionComesBackWithItsTraceback(t *testing.T) {
 func TestTheWallLimitStopsAScriptMidLoop(t *testing.T) {
 	t.Parallel()
 
+	rt := New(Options{MaxConcurrent: 1})
+	t.Cleanup(func() { _ = rt.Close(context.Background()) })
+	require.NoError(t, rt.Warm())
 	prog := program("while True:\n    pass\n")
 	prog.Limits.CPU = time.Minute
 	ctx, cancel := context.WithTimeout(t.Context(), 200*time.Millisecond)
 	defer cancel()
 
 	started := time.Now()
-	outcome, err := testRuntime().Run(ctx, prog, &fakeHost{})
+	outcome, err := rt.Run(ctx, prog, &fakeHost{})
 	require.NoError(t, err)
 	assert.Equal(t, StatusLimit, outcome.Status)
 	assert.Equal(t, LimitWall, outcome.Limit)
@@ -189,6 +192,78 @@ func TestScriptsRunSideBySide(t *testing.T) {
 	for err := range errs {
 		require.NoError(t, err)
 	}
+}
+
+type blockingHost struct {
+	entered chan struct{}
+	release chan struct{}
+}
+
+func (h *blockingHost) Call(ctx context.Context, _ Function, _ []byte) ([]byte, error) {
+	h.entered <- struct{}{}
+	select {
+	case <-h.release:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+	return []byte(`{"status":"ok","data":[]}`), nil
+}
+
+func TestAScriptPastTheWorkersSlotsWaitsThenIsRefused(t *testing.T) {
+	t.Parallel()
+
+	rt := New(Options{MaxConcurrent: 1, QueueWait: 50 * time.Millisecond})
+	t.Cleanup(func() { _ = rt.Close(context.Background()) })
+	host := &blockingHost{entered: make(chan struct{}, 1), release: make(chan struct{})}
+
+	first := make(chan error, 1)
+	go func() {
+		_, err := rt.Run(t.Context(), program("trenova.shipment.list()"), host)
+		first <- err
+	}()
+	<-host.entered
+
+	started := time.Now()
+	_, err := rt.Run(t.Context(), program("print(1)"), &fakeHost{})
+	require.ErrorIs(t, err, ErrBusy)
+	assert.GreaterOrEqual(t, time.Since(started), 50*time.Millisecond, "it waited for a slot first")
+
+	close(host.release)
+	require.NoError(t, <-first)
+	outcome, err := rt.Run(t.Context(), program("print(1)"), &fakeHost{})
+	require.NoError(t, err)
+	assert.Equal(t, "1\n", outcome.Output, "a freed slot runs the next script")
+}
+
+func TestAScriptWaitingForASlotGivesUpWithItsContext(t *testing.T) {
+	t.Parallel()
+
+	rt := New(Options{MaxConcurrent: 1, QueueWait: time.Minute})
+	t.Cleanup(func() { _ = rt.Close(context.Background()) })
+	host := &blockingHost{entered: make(chan struct{}, 1), release: make(chan struct{})}
+	t.Cleanup(func() { close(host.release) })
+	go func() { _, _ = rt.Run(t.Context(), program("trenova.shipment.list()"), host) }()
+	<-host.entered
+
+	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Millisecond)
+	defer cancel()
+	_, err := rt.Run(ctx, program("print(1)"), &fakeHost{})
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+}
+
+func TestTheClockAScriptSeesMovesInWholeMilliseconds(t *testing.T) {
+	t.Parallel()
+
+	nanotime := coarseNanotime(time.Now().Add(-1234567 * time.Nanosecond))
+	previous := int64(0)
+	for range 1000 {
+		now := nanotime()
+		assert.Zero(t, now%int64(time.Millisecond), "nanotime %d", now)
+		assert.GreaterOrEqual(t, now, previous)
+		previous = now
+	}
+	_, nanos := coarseWalltime()
+	assert.Zero(t, int64(nanos)%int64(time.Millisecond), "walltime nanos %d", nanos)
 }
 
 func BenchmarkStartAndPrint(b *testing.B) {

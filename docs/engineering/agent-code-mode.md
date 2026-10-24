@@ -219,6 +219,11 @@ A script runs in Monty inside a WebAssembly instance, two walls deep:
 A fresh instance runs each script and is dropped after, so nothing outlives a run. The module
 holds no Trenova secret, and there is no address inside it to reach.
 
+**The clock moves in whole milliseconds.** The instance's monotonic and wall clocks are
+truncated to 1 ms (`ClockResolution`), which is all Monty's interpreter-time limit needs. A
+script sharing a process with other work has no use for a finer timer, and a fine timer is what
+timing side channels (Spectre-style reads across a sandbox) are built on.
+
 ### 5.2 The channel
 
 The runner and the module exchange JSON through three exports (`scripts_alloc`, `scripts_call`,
@@ -265,6 +270,7 @@ cannot raise one. The values are `codemode.DefaultLimits()` and the constants in
 | Memory | 256 MiB | Monty's memory limit (`MemoryError`, which a script cannot catch); past a margin, `monty-alloc` exits the module; the instance's pages are capped at 1 GiB | `Stopped`, `memory` |
 | Host calls | the read limit plus 8 | the module | `Stopped`, `calls` |
 | Scripts per turn | 3 | `runScriptTool`, from `DispatchCall.ScriptPosition` | the call is refused |
+| Scripts running at once | 8 per worker | `pkg/scriptvm`'s slots (`DefaultMaxConcurrent`), so a worker's script memory stays near 8 × 256 MiB | the script waits up to 10 s for a slot (`DefaultQueueWait`), then `Failed`: too many scripts are running |
 
 One script spends one call of the turn's tool budget, and its reads are counted against its own
 limits. The per-turn ceiling is therefore 3 × 60 reads, run at most 8 at a time.
@@ -450,6 +456,14 @@ traceback, the wall, CPU and memory limits (and that the next script still runs)
 cannot answer, eight scripts at once, and benchmarks. `scriptrunner` holds the runner to its
 contract over a fake broker: gathered reads numbered in the order asked, the argument and result
 limits, refusals, tracebacks, the organization's zone, and the checks made before a script runs.
+
+**Fuzzing.** Everything a script sends reaches Go as a host function's payload, so
+`FuzzHostAnswersWhateverAScriptSends` (`scriptrunner`) holds the runner to answering any
+function and payload with a reply, never a panic, and a `gather` with one reply per call. The
+crate's `cargo-fuzz` targets (`services/crates/scripts/fuzz`) run arbitrary scripts against
+arbitrary host replies (`script_session`, seeded with real scripts and a dictionary of Python
+and SDK tokens) and arbitrary first requests (`request`); each must end with a step. CI's bounded
+fuzz job runs both.
 
 ## 11. Eval plan
 
