@@ -596,6 +596,8 @@ github.com/emoss08/keel v0.0.0-20261024064411-d7cf8af14c42 h1:D+8ICpwRa26rk9plT+
 github.com/emoss08/keel v0.0.0-20261024064411-d7cf8af14c42/go.mod h1:fid+JkFigYL9Uuak7s/u2ZJeT4d+YwJfJFdGtx0VZtY=
 github.com/emoss08/keel v0.0.0-20261024085249-450aad26c26c h1:3OnXMFgi+yQOwOVUSZGN9zy27li7LG/DNlSSL1sc/PQ=
 github.com/emoss08/keel v0.0.0-20261024085249-450aad26c26c/go.mod h1:fid+JkFigYL9Uuak7s/u2ZJeT4d+YwJfJFdGtx0VZtY=
+github.com/emoss08/keel v0.0.0-20261024144227-53e021463c19 h1:syEpiaBrRDnroRU/vdIjYizYuLyrssjT/Kz7gwvVIcw=
+github.com/emoss08/keel v0.0.0-20261024144227-53e021463c19/go.mod h1:fid+JkFigYL9Uuak7s/u2ZJeT4d+YwJfJFdGtx0VZtY=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
