@@ -292,6 +292,10 @@ func (rm *RateMatrix) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	return nil
 }
 
+func (rm *RateMatrix) BeforeCreate(ctx context.Context) error {
+	return rm.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (rm *RateMatrix) GetID() pulid.ID {
 	return rm.ID
 }

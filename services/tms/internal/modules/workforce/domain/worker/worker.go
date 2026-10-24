@@ -254,6 +254,10 @@ func (w *Worker) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (w *Worker) BeforeCreate(ctx context.Context) error {
+	return w.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (w *Worker) SamePartyDetails(other *Worker) bool {
 	if w == nil || other == nil {
 		return w == other

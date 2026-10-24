@@ -38,7 +38,7 @@ type SettingVersion struct {
 	bun.BaseModel `bun:"table:ai_setting_versions,alias:aisv" json:"-"`
 	keel.Table    `keel:"ai_setting_versions"`
 
-	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aisv_"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	Kind           Kind           `json:"kind"           bun:"kind,type:VARCHAR(30),notnull" keel:"kind"`
@@ -60,4 +60,8 @@ func (v *SettingVersion) BeforeAppendModel(_ context.Context, query bun.Query) e
 	}
 
 	return nil
+}
+
+func (v *SettingVersion) BeforeCreate(ctx context.Context) error {
+	return v.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

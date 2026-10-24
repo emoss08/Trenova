@@ -158,6 +158,10 @@ func (e *JurisdictionMileageEntry) BeforeAppendModel(_ context.Context, query bu
 	return nil
 }
 
+func (e *JurisdictionMileageEntry) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (e *JurisdictionMileageEntry) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias: "ifme",

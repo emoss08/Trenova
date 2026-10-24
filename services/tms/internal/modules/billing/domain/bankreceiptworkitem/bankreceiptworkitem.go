@@ -54,3 +54,7 @@ func (w *WorkItem) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 	return nil
 }
+
+func (w *WorkItem) BeforeCreate(ctx context.Context) error {
+	return w.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

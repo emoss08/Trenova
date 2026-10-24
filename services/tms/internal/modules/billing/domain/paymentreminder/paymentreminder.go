@@ -51,6 +51,10 @@ func (r *Reminder) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (r *Reminder) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // StepReached is the latest step of the schedule an invoice this many days
 // past due has reached, counting from one; zero before the first.
 func StepReached(daysPastDue int, schedule []int32) int {

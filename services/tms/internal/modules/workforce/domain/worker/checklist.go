@@ -333,6 +333,10 @@ func (t *WorkerChecklistTemplate) BeforeAppendModel(_ context.Context, query bun
 	return nil
 }
 
+func (t *WorkerChecklistTemplate) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 type WorkerChecklistTemplateItem struct {
 	bun.BaseModel `bun:"table:worker_checklist_template_items,alias:wclti" json:"-"`
 	keel.Table    `keel:"worker_checklist_template_items"`
@@ -412,6 +416,10 @@ func (i *WorkerChecklistTemplateItem) BeforeAppendModel(_ context.Context, query
 	}
 
 	return nil
+}
+
+func (i *WorkerChecklistTemplateItem) BeforeCreate(ctx context.Context) error {
+	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 type WorkerChecklist struct {

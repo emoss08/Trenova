@@ -55,3 +55,7 @@ func (b *BankReceiptBatch) BeforeAppendModel(_ context.Context, query bun.Query)
 	}
 	return nil
 }
+
+func (b *BankReceiptBatch) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

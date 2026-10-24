@@ -52,7 +52,7 @@ type QueuedMessage struct {
 	bun.BaseModel `bun:"table:assistant_queued_messages,alias:aqm" json:"-"`
 	keel.Table    `keel:"assistant_queued_messages"`
 
-	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:aqm_"`
 	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	ThreadID       pulid.ID       `json:"threadId"       bun:"thread_id,type:VARCHAR(100),notnull" keel:"thread_id"`

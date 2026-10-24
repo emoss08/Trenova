@@ -217,23 +217,24 @@ var fuelCardsTable = schema.Table{
 		{Name: "AssignedWorker", Alias: "aw", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Assigned Worker`},
 		{Name: "AssignedTractor", Alias: "at_", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Assigned Tractor`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 19},
-	Returning:  nil,
-	Version:    17,
-	AutoID:     0,
-	AutoCreate: 18,
-	AutoUpdate: 19,
-	IDPrefix:   "fcard_",
-	New:        newFuelCard,
-	NewN:       newNFuelCard,
-	Size:       unsafe.Sizeof(fuelpurchase.FuelCard{}),
-	Ptr:        ptrFuelCard,
-	Value:      valueFuelCard,
-	Attach:     attachFuelCard,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 19},
+	Returning:    nil,
+	Version:      17,
+	AutoID:       0,
+	AutoCreate:   18,
+	AutoUpdate:   19,
+	IDPrefix:     "fcard_",
+	New:          newFuelCard,
+	NewN:         newNFuelCard,
+	Size:         unsafe.Sizeof(fuelpurchase.FuelCard{}),
+	Ptr:          ptrFuelCard,
+	Value:        valueFuelCard,
+	Attach:       attachFuelCard,
+	BeforeCreate: beforeCreateFuelCard,
 }
 
 var fuelCardsRef = keel.Ref{Table: &fuelCardsTable}
@@ -472,6 +473,10 @@ func attachFuelCard(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateFuelCard(ctx context.Context, p unsafe.Pointer) error {
+	return (*fuelpurchase.FuelCard)(p).BeforeCreate(ctx)
+}
+
 // fuelPurchasesTable is the schema of fuelpurchase.FuelPurchase.
 var fuelPurchasesTable = schema.Table{
 	Name:   "fuel_purchases",
@@ -519,23 +524,24 @@ var fuelPurchasesTable = schema.Table{
 		{Name: "Jurisdiction", Alias: "j", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Jurisdiction`},
 		{Name: "ImportBatch", Alias: "ib", Kind: schema.BelongsTo, Local: []int32{21}, Remote: []int32{0}, Label: `Import Batch`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 29},
-	Returning:  nil,
-	Version:    27,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "fpur_",
-	New:        newFuelPurchase,
-	NewN:       newNFuelPurchase,
-	Size:       unsafe.Sizeof(fuelpurchase.FuelPurchase{}),
-	Ptr:        ptrFuelPurchase,
-	Value:      valueFuelPurchase,
-	Attach:     attachFuelPurchase,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 29},
+	Returning:    nil,
+	Version:      27,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "fpur_",
+	New:          newFuelPurchase,
+	NewN:         newNFuelPurchase,
+	Size:         unsafe.Sizeof(fuelpurchase.FuelPurchase{}),
+	Ptr:          ptrFuelPurchase,
+	Value:        valueFuelPurchase,
+	Attach:       attachFuelPurchase,
+	BeforeCreate: beforeCreateFuelPurchase,
 }
 
 var fuelPurchasesRef = keel.Ref{Table: &fuelPurchasesTable}
@@ -869,6 +875,10 @@ func attachFuelPurchase(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateFuelPurchase(ctx context.Context, p unsafe.Pointer) error {
+	return (*fuelpurchase.FuelPurchase)(p).BeforeCreate(ctx)
+}
+
 // importBatchesTable is the schema of fuelpurchase.ImportBatch.
 var importBatchesTable = schema.Table{
 	Name:   "fuel_purchase_import_batches",
@@ -915,23 +925,24 @@ var importBatchesTable = schema.Table{
 		{Name: "CommittedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{23}, Remote: []int32{0}, Label: `Committed By`},
 		{Name: "Rows", Alias: "r", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Rows`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26, 27, 28},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26, 27, 28},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 28},
-	Returning:  nil,
-	Version:    26,
-	AutoID:     0,
-	AutoCreate: 27,
-	AutoUpdate: 28,
-	IDPrefix:   "fpib_",
-	New:        newImportBatch,
-	NewN:       newNImportBatch,
-	Size:       unsafe.Sizeof(fuelpurchase.ImportBatch{}),
-	Ptr:        ptrImportBatch,
-	Value:      valueImportBatch,
-	Attach:     attachImportBatch,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26, 27, 28},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26, 27, 28},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 28},
+	Returning:    nil,
+	Version:      26,
+	AutoID:       0,
+	AutoCreate:   27,
+	AutoUpdate:   28,
+	IDPrefix:     "fpib_",
+	New:          newImportBatch,
+	NewN:         newNImportBatch,
+	Size:         unsafe.Sizeof(fuelpurchase.ImportBatch{}),
+	Ptr:          ptrImportBatch,
+	Value:        valueImportBatch,
+	Attach:       attachImportBatch,
+	BeforeCreate: beforeCreateImportBatch,
 }
 
 var importBatchesRef = keel.Ref{Table: &importBatchesTable}
@@ -1270,6 +1281,10 @@ func attachImportBatch(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateImportBatch(ctx context.Context, p unsafe.Pointer) error {
+	return (*fuelpurchase.ImportBatch)(p).BeforeCreate(ctx)
+}
+
 // importRowsTable is the schema of fuelpurchase.ImportRow.
 var importRowsTable = schema.Table{
 	Name:   "fuel_purchase_import_rows",
@@ -1300,23 +1315,24 @@ var importRowsTable = schema.Table{
 		{Name: "Batch", Alias: "b", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Batch`},
 		{Name: "FuelPurchase", Alias: "fp", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `Fuel Purchase`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: -1,
-	IDPrefix:   "fpir_",
-	New:        newImportRow,
-	NewN:       newNImportRow,
-	Size:       unsafe.Sizeof(fuelpurchase.ImportRow{}),
-	Ptr:        ptrImportRow,
-	Value:      valueImportRow,
-	Attach:     attachImportRow,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   -1,
+	IDPrefix:     "fpir_",
+	New:          newImportRow,
+	NewN:         newNImportRow,
+	Size:         unsafe.Sizeof(fuelpurchase.ImportRow{}),
+	Ptr:          ptrImportRow,
+	Value:        valueImportRow,
+	Attach:       attachImportRow,
+	BeforeCreate: beforeCreateImportRow,
 }
 
 var importRowsRef = keel.Ref{Table: &importRowsTable}
@@ -1526,6 +1542,10 @@ func attachImportRow(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.FuelPurchase = (*fuelpurchase.FuelPurchase)(child)
 	}
+}
+
+func beforeCreateImportRow(ctx context.Context, p unsafe.Pointer) error {
+	return (*fuelpurchase.ImportRow)(p).BeforeCreate(ctx)
 }
 
 func init() {

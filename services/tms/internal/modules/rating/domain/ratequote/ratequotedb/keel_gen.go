@@ -68,23 +68,24 @@ var rateQuotesTable = schema.Table{
 		{Name: "Agreement", Alias: "a", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Agreement`},
 		{Name: "RatedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{30}, Remote: []int32{0}, Label: `Rated By`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 36,
-	AutoUpdate: -1,
-	IDPrefix:   "rqt_",
-	New:        newRateQuote,
-	NewN:       newNRateQuote,
-	Size:       unsafe.Sizeof(ratequote.RateQuote{}),
-	Ptr:        ptrRateQuote,
-	Value:      valueRateQuote,
-	Attach:     attachRateQuote,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   36,
+	AutoUpdate:   -1,
+	IDPrefix:     "rqt_",
+	New:          newRateQuote,
+	NewN:         newNRateQuote,
+	Size:         unsafe.Sizeof(ratequote.RateQuote{}),
+	Ptr:          ptrRateQuote,
+	Value:        valueRateQuote,
+	Attach:       attachRateQuote,
+	BeforeCreate: beforeCreateRateQuote,
 }
 
 var rateQuotesRef = keel.Ref{Table: &rateQuotesTable}
@@ -449,6 +450,10 @@ func attachRateQuote(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.RatedBy = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateRateQuote(ctx context.Context, p unsafe.Pointer) error {
+	return (*ratequote.RateQuote)(p).BeforeCreate(ctx)
 }
 
 func init() {

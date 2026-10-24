@@ -219,6 +219,10 @@ func (c *ShipmentComment) BeforeAppendModel(_ context.Context, query bun.Query) 
 	return nil
 }
 
+func (c *ShipmentComment) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (m *ShipmentCommentMention) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	if _, ok := query.(*bun.InsertQuery); ok {
 		if m.ID.IsNil() {
@@ -230,6 +234,10 @@ func (m *ShipmentCommentMention) BeforeAppendModel(_ context.Context, query bun.
 	}
 
 	return nil
+}
+
+func (m *ShipmentCommentMention) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (a *ShipmentCommentAcknowledgment) BeforeAppendModel(

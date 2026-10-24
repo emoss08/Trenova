@@ -290,3 +290,7 @@ func (fy *FiscalYear) BeforeAppendModel(_ context.Context, query bun.Query) erro
 
 	return nil
 }
+
+func (fy *FiscalYear) BeforeCreate(ctx context.Context) error {
+	return fy.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

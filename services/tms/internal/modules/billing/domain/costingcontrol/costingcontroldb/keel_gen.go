@@ -253,23 +253,24 @@ var costCategoryGLAccountsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "GLAccount", Alias: "ga", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `GL Account`, Doc: `Relationships`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5},
-	Insert:     []int32{0, 1, 2, 3, 4, 5},
-	Update:     []int32{3, 4},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 5,
-	AutoUpdate: -1,
-	IDPrefix:   "ccga_",
-	New:        newCostCategoryGLAccount,
-	NewN:       newNCostCategoryGLAccount,
-	Size:       unsafe.Sizeof(costingcontrol.CostCategoryGLAccount{}),
-	Ptr:        ptrCostCategoryGLAccount,
-	Value:      valueCostCategoryGLAccount,
-	Attach:     attachCostCategoryGLAccount,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5},
+	Insert:       []int32{0, 1, 2, 3, 4, 5},
+	Update:       []int32{3, 4},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   5,
+	AutoUpdate:   -1,
+	IDPrefix:     "ccga_",
+	New:          newCostCategoryGLAccount,
+	NewN:         newNCostCategoryGLAccount,
+	Size:         unsafe.Sizeof(costingcontrol.CostCategoryGLAccount{}),
+	Ptr:          ptrCostCategoryGLAccount,
+	Value:        valueCostCategoryGLAccount,
+	Attach:       attachCostCategoryGLAccount,
+	BeforeCreate: beforeCreateCostCategoryGLAccount,
 }
 
 var costCategoryGLAccountsRef = keel.Ref{Table: &costCategoryGLAccountsTable}
@@ -381,6 +382,10 @@ func attachCostCategoryGLAccount(p unsafe.Pointer, rel int32, child unsafe.Point
 	}
 }
 
+func beforeCreateCostCategoryGLAccount(ctx context.Context, p unsafe.Pointer) error {
+	return (*costingcontrol.CostCategoryGLAccount)(p).BeforeCreate(ctx)
+}
+
 // costingControlsTable is the schema of costingcontrol.CostingControl.
 var costingControlsTable = schema.Table{
 	Name:   "costing_controls",
@@ -409,23 +414,24 @@ var costingControlsTable = schema.Table{
 		{Name: "FuelIndex", Alias: "fi", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Fuel Index`, Doc: `Relationships`},
 		{Name: "Categories", Alias: "c", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Categories`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "cstc_",
-	New:        newCostingControl,
-	NewN:       newNCostingControl,
-	Size:       unsafe.Sizeof(costingcontrol.CostingControl{}),
-	Ptr:        ptrCostingControl,
-	Value:      valueCostingControl,
-	Attach:     attachCostingControl,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "cstc_",
+	New:          newCostingControl,
+	NewN:         newNCostingControl,
+	Size:         unsafe.Sizeof(costingcontrol.CostingControl{}),
+	Ptr:          ptrCostingControl,
+	Value:        valueCostingControl,
+	Attach:       attachCostingControl,
+	BeforeCreate: beforeCreateCostingControl,
 }
 
 var costingControlsRef = keel.Ref{Table: &costingControlsTable}
@@ -602,6 +608,10 @@ func attachCostingControl(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Categories = append(r.Categories, (*costingcontrol.CostCategory)(child))
 	}
+}
+
+func beforeCreateCostingControl(ctx context.Context, p unsafe.Pointer) error {
+	return (*costingcontrol.CostingControl)(p).BeforeCreate(ctx)
 }
 
 func init() {

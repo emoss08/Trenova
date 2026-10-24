@@ -41,6 +41,10 @@ func (cga *CostCategoryGLAccount) BeforeAppendModel(_ context.Context, query bun
 	return nil
 }
 
+func (cga *CostCategoryGLAccount) BeforeCreate(ctx context.Context) error {
+	return cga.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (l *CostCategoryGLAccount) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(l,
 		validation.Field(&l.OrganizationID,

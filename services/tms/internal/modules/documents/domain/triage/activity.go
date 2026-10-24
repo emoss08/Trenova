@@ -94,6 +94,10 @@ func (a *Activity) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (a *Activity) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (a *Activity) GetID() pulid.ID      { return a.ID }
 func (a *Activity) GetCreatedAt() int64  { return a.CreatedAt }
 func (a *Activity) GetTableName() string { return "inbound_message_activities" }

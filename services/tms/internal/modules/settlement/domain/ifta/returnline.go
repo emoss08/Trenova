@@ -151,3 +151,7 @@ func (l *ReturnLine) BeforeAppendModel(_ context.Context, query bun.Query) error
 
 	return nil
 }
+
+func (l *ReturnLine) BeforeCreate(ctx context.Context) error {
+	return l.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

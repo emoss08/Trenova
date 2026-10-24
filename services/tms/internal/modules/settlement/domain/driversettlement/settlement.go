@@ -301,6 +301,10 @@ func (s *Settlement) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+func (s *Settlement) BeforeCreate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (l *SettlementLine) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	switch query.(type) {
@@ -313,4 +317,8 @@ func (l *SettlementLine) BeforeAppendModel(_ context.Context, query bun.Query) e
 		l.UpdatedAt = now
 	}
 	return nil
+}
+
+func (l *SettlementLine) BeforeCreate(ctx context.Context) error {
+	return l.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

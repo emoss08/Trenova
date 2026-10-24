@@ -149,3 +149,7 @@ func (r *RecurringEarning) BeforeAppendModel(_ context.Context, query bun.Query)
 	}
 	return nil
 }
+
+func (r *RecurringEarning) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

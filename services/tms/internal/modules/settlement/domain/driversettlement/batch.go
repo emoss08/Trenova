@@ -110,3 +110,7 @@ func (b *SettlementBatch) BeforeAppendModel(_ context.Context, query bun.Query) 
 	}
 	return nil
 }
+
+func (b *SettlementBatch) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

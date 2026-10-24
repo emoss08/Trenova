@@ -192,6 +192,10 @@ func (r *Rule) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (r *Rule) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (r *Rule) GetID() pulid.ID      { return r.ID }
 func (r *Rule) GetCreatedAt() int64  { return r.CreatedAt }
 func (r *Rule) GetTableName() string { return "triage_rules" }

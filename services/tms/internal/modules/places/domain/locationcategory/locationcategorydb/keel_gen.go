@@ -40,22 +40,23 @@ var locationCategoriesTable = schema.Table{
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
-	Returning:  nil,
-	Version:    12,
-	AutoID:     0,
-	AutoCreate: 13,
-	AutoUpdate: 14,
-	IDPrefix:   "lc_",
-	New:        newLocationCategory,
-	NewN:       newNLocationCategory,
-	Size:       unsafe.Sizeof(locationcategory.LocationCategory{}),
-	Ptr:        ptrLocationCategory,
-	Value:      valueLocationCategory,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:    nil,
+	Version:      12,
+	AutoID:       0,
+	AutoCreate:   13,
+	AutoUpdate:   14,
+	IDPrefix:     "lc_",
+	New:          newLocationCategory,
+	NewN:         newNLocationCategory,
+	Size:         unsafe.Sizeof(locationcategory.LocationCategory{}),
+	Ptr:          ptrLocationCategory,
+	Value:        valueLocationCategory,
+	BeforeCreate: beforeCreateLocationCategory,
 }
 
 var locationCategoriesRef = keel.Ref{Table: &locationCategoriesTable}
@@ -238,6 +239,10 @@ func valueLocationCategory(p unsafe.Pointer, c int32) any {
 		return r.Rank
 	}
 	return nil
+}
+
+func beforeCreateLocationCategory(ctx context.Context, p unsafe.Pointer) error {
+	return (*locationcategory.LocationCategory)(p).BeforeCreate(ctx)
 }
 
 var enumCategory = [...]schema.EnumValue{

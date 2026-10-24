@@ -175,6 +175,10 @@ func (rmd *RateMatrixDimension) BeforeAppendModel(_ context.Context, query bun.Q
 	return nil
 }
 
+func (rmd *RateMatrixDimension) BeforeCreate(ctx context.Context) error {
+	return rmd.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (rmd *RateMatrixDimension) applyModeDefaults() {
 	if rmd.KeyNormalization == "" {
 		rmd.KeyNormalization = KeyNormalizationNone

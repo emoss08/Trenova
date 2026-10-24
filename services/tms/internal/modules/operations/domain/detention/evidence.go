@@ -185,3 +185,7 @@ func (e *DetentionEvidence) BeforeAppendModel(_ context.Context, query bun.Query
 
 	return nil
 }
+
+func (e *DetentionEvidence) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

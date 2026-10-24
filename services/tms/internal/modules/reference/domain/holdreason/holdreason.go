@@ -137,3 +137,7 @@ func (hr *HoldReason) BeforeAppendModel(_ context.Context, query bun.Query) erro
 
 	return nil
 }
+
+func (hr *HoldReason) BeforeCreate(ctx context.Context) error {
+	return hr.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

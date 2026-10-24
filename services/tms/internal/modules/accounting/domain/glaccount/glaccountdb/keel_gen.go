@@ -50,23 +50,24 @@ var gLAccountsTable = schema.Table{
 		{Name: "Parent", Alias: "p", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Parent`},
 		{Name: "Children", Alias: "c", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{5}, Label: `Children`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "gla_",
-	New:        newGLAccount,
-	NewN:       newNGLAccount,
-	Size:       unsafe.Sizeof(glaccount.GLAccount{}),
-	Ptr:        ptrGLAccount,
-	Value:      valueGLAccount,
-	Attach:     attachGLAccount,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "gla_",
+	New:          newGLAccount,
+	NewN:         newNGLAccount,
+	Size:         unsafe.Sizeof(glaccount.GLAccount{}),
+	Ptr:          ptrGLAccount,
+	Value:        valueGLAccount,
+	Attach:       attachGLAccount,
+	BeforeCreate: beforeCreateGLAccount,
 }
 
 var gLAccountsRef = keel.Ref{Table: &gLAccountsTable}
@@ -288,6 +289,10 @@ func attachGLAccount(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.Children = append(r.Children, (*glaccount.GLAccount)(child))
 	}
+}
+
+func beforeCreateGLAccount(ctx context.Context, p unsafe.Pointer) error {
+	return (*glaccount.GLAccount)(p).BeforeCreate(ctx)
 }
 
 func init() {

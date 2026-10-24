@@ -37,22 +37,23 @@ var fixturesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 2, 3},
-	Tenant:     []int32{2, 3},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{1, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "dprf_",
-	New:        newFixture,
-	NewN:       newNFixture,
-	Size:       unsafe.Sizeof(documentparsingrule.Fixture{}),
-	Ptr:        ptrFixture,
-	Value:      valueFixture,
+	PK:           []int32{0, 2, 3},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{1, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "dprf_",
+	New:          newFixture,
+	NewN:         newNFixture,
+	Size:         unsafe.Sizeof(documentparsingrule.Fixture{}),
+	Ptr:          ptrFixture,
+	Value:        valueFixture,
+	BeforeCreate: beforeCreateFixture,
 }
 
 var fixturesRef = keel.Ref{Table: &fixturesTable}
@@ -217,6 +218,10 @@ func valueFixture(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateFixture(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentparsingrule.Fixture)(p).BeforeCreate(ctx)
+}
+
 // ruleSetsTable is the schema of documentparsingrule.RuleSet.
 var ruleSetsTable = schema.Table{
 	Name:   "document_parsing_rule_sets",
@@ -238,22 +243,23 @@ var ruleSetsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:     []int32{3, 4, 5, 6, 7, 10},
-	Returning:  nil,
-	Version:    8,
-	AutoID:     0,
-	AutoCreate: 9,
-	AutoUpdate: 10,
-	IDPrefix:   "dprs_",
-	New:        newRuleSet,
-	NewN:       newNRuleSet,
-	Size:       unsafe.Sizeof(documentparsingrule.RuleSet{}),
-	Ptr:        ptrRuleSet,
-	Value:      valueRuleSet,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:       []int32{3, 4, 5, 6, 7, 10},
+	Returning:    nil,
+	Version:      8,
+	AutoID:       0,
+	AutoCreate:   9,
+	AutoUpdate:   10,
+	IDPrefix:     "dprs_",
+	New:          newRuleSet,
+	NewN:         newNRuleSet,
+	Size:         unsafe.Sizeof(documentparsingrule.RuleSet{}),
+	Ptr:          ptrRuleSet,
+	Value:        valueRuleSet,
+	BeforeCreate: beforeCreateRuleSet,
 }
 
 var ruleSetsRef = keel.Ref{Table: &ruleSetsTable}
@@ -391,6 +397,10 @@ func valueRuleSet(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateRuleSet(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentparsingrule.RuleSet)(p).BeforeCreate(ctx)
+}
+
 // ruleVersionsTable is the schema of documentparsingrule.RuleVersion.
 var ruleVersionsTable = schema.Table{
 	Name:   "document_parsing_rule_versions",
@@ -420,23 +430,24 @@ var ruleVersionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "RuleSet", Alias: "rs", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Rule Set`},
 	},
-	PK:         []int32{0, 2, 3},
-	Tenant:     []int32{2, 3},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
-	Returning:  nil,
-	Version:    13,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
-	IDPrefix:   "dprv_",
-	New:        newRuleVersion,
-	NewN:       newNRuleVersion,
-	Size:       unsafe.Sizeof(documentparsingrule.RuleVersion{}),
-	Ptr:        ptrRuleVersion,
-	Value:      valueRuleVersion,
-	Attach:     attachRuleVersion,
+	PK:           []int32{0, 2, 3},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
+	Returning:    nil,
+	Version:      13,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   15,
+	IDPrefix:     "dprv_",
+	New:          newRuleVersion,
+	NewN:         newNRuleVersion,
+	Size:         unsafe.Sizeof(documentparsingrule.RuleVersion{}),
+	Ptr:          ptrRuleVersion,
+	Value:        valueRuleVersion,
+	Attach:       attachRuleVersion,
+	BeforeCreate: beforeCreateRuleVersion,
 }
 
 var ruleVersionsRef = keel.Ref{Table: &ruleVersionsTable}
@@ -624,6 +635,10 @@ func attachRuleVersion(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.RuleSet = (*documentparsingrule.RuleSet)(child)
 	}
+}
+
+func beforeCreateRuleVersion(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentparsingrule.RuleVersion)(p).BeforeCreate(ctx)
 }
 
 func init() {

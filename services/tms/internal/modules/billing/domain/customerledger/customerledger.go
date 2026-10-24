@@ -77,3 +77,7 @@ func (e *CustomerLedgerEntry) BeforeAppendModel(_ context.Context, query bun.Que
 	}
 	return nil
 }
+
+func (e *CustomerLedgerEntry) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

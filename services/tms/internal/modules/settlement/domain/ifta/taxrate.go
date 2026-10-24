@@ -141,6 +141,10 @@ func (r *TaxRate) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (r *TaxRate) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (r *TaxRate) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias: "iftr",

@@ -68,7 +68,7 @@ type PortalSite struct {
 	bun.BaseModel `bun:"table:agent_portal_sites,alias:apst" json:"-"`
 	keel.Table    `keel:"agent_portal_sites"`
 
-	ID               pulid.ID       `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	ID               pulid.ID       `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:apst_"`
 	BusinessUnitID   pulid.ID       `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID   pulid.ID       `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	Name             string         `json:"name"             bun:"name,type:VARCHAR(100),notnull" keel:"name"`
@@ -100,6 +100,10 @@ func (s *PortalSite) BeforeAppendModel(_ context.Context, query bun.Query) error
 	}
 
 	return nil
+}
+
+func (s *PortalSite) BeforeCreate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (s *PortalSite) HasSignIn() bool {
@@ -283,7 +287,7 @@ type PortalRun struct {
 	bun.BaseModel `bun:"table:agent_portal_runs,alias:aprn" json:"-"`
 	keel.Table    `keel:"agent_portal_runs"`
 
-	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aprn_"`
 	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	SiteID            pulid.ID          `json:"siteId"            bun:"site_id,type:VARCHAR(100),notnull" keel:"site_id"`

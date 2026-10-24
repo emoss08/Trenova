@@ -25,7 +25,7 @@ var definitionsTable = schema.Table{
 	Label:  `Definition`,
 	Plural: `Definitions`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
 		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
@@ -80,22 +80,23 @@ var definitionsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 53},
-	Returning:  nil,
-	Version:    51,
-	AutoID:     -1,
-	AutoCreate: 52,
-	AutoUpdate: 53,
-	IDPrefix:   "",
-	New:        newDefinition,
-	NewN:       newNDefinition,
-	Size:       unsafe.Sizeof(agentdefinition.Definition{}),
-	Ptr:        ptrDefinition,
-	Value:      valueDefinition,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 53},
+	Returning:    nil,
+	Version:      51,
+	AutoID:       0,
+	AutoCreate:   52,
+	AutoUpdate:   53,
+	IDPrefix:     "agdef_",
+	New:          newDefinition,
+	NewN:         newNDefinition,
+	Size:         unsafe.Sizeof(agentdefinition.Definition{}),
+	Ptr:          ptrDefinition,
+	Value:        valueDefinition,
+	BeforeCreate: beforeCreateDefinition,
 }
 
 var definitionsRef = keel.Ref{Table: &definitionsTable}
@@ -615,6 +616,10 @@ func valueDefinition(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateDefinition(ctx context.Context, p unsafe.Pointer) error {
+	return (*agentdefinition.Definition)(p).BeforeCreate(ctx)
+}
+
 // definitionVersionsTable is the schema of agentdefinition.DefinitionVersion.
 var definitionVersionsTable = schema.Table{
 	Name:   "agent_definition_versions",
@@ -625,7 +630,7 @@ var definitionVersionsTable = schema.Table{
 	Plural: `Definition Versions`,
 	Doc:    `DefinitionVersion is an agent as it stood after one save: the whole definition, who saved it and a one-line account of what that save changed. Restoring a version loads it into the builder as a draft; nothing is saved until the person saves it, which writes a new version.`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
 		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: 0, Label: `Agent Definition ID`},
@@ -645,10 +650,10 @@ var definitionVersionsTable = schema.Table{
 	Update:     []int32{3, 5, 6, 7},
 	Returning:  nil,
 	Version:    4,
-	AutoID:     -1,
+	AutoID:     0,
 	AutoCreate: 8,
 	AutoUpdate: -1,
-	IDPrefix:   "",
+	IDPrefix:   "agdv_",
 	New:        newDefinitionVersion,
 	NewN:       newNDefinitionVersion,
 	Size:       unsafe.Sizeof(agentdefinition.DefinitionVersion{}),
@@ -806,7 +811,7 @@ var testPromptsTable = schema.Table{
 	Plural: `Test Prompts`,
 	Doc:    `TestPrompt is a message kept with an agent for trying it again after an edit, so a change can be checked against the same questions each time.`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
 		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: 0, Label: `Agent Definition ID`},
@@ -821,10 +826,10 @@ var testPromptsTable = schema.Table{
 	Update:     []int32{3, 4, 5},
 	Returning:  nil,
 	Version:    -1,
-	AutoID:     -1,
+	AutoID:     0,
 	AutoCreate: 6,
 	AutoUpdate: -1,
-	IDPrefix:   "",
+	IDPrefix:   "agtp_",
 	New:        newTestPrompt,
 	NewN:       newNTestPrompt,
 	Size:       unsafe.Sizeof(agentdefinition.TestPrompt{}),

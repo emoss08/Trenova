@@ -123,6 +123,10 @@ func (i *Item) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (i *Item) BeforeCreate(ctx context.Context) error {
+	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // Normalize trims what a person reads and bounds it to what the columns
 // hold, so a source whose summary runs long is cut rather than refused.
 func (i *Item) Normalize() {

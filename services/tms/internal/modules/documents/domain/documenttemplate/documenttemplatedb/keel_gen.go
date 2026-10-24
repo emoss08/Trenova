@@ -47,23 +47,24 @@ var documentTemplatesTable = schema.Table{
 		{Name: "Versions", Alias: "v", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Versions`},
 		{Name: "Assignments", Alias: "a", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{4}, Label: `Assignments`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 11, 12, 13},
-	Returning:  nil,
-	Version:    9,
-	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
-	IDPrefix:   "dtpl_",
-	New:        newDocumentTemplate,
-	NewN:       newNDocumentTemplate,
-	Size:       unsafe.Sizeof(documenttemplate.DocumentTemplate{}),
-	Ptr:        ptrDocumentTemplate,
-	Value:      valueDocumentTemplate,
-	Attach:     attachDocumentTemplate,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 11, 12, 13},
+	Returning:    nil,
+	Version:      9,
+	AutoID:       0,
+	AutoCreate:   10,
+	AutoUpdate:   11,
+	IDPrefix:     "dtpl_",
+	New:          newDocumentTemplate,
+	NewN:         newNDocumentTemplate,
+	Size:         unsafe.Sizeof(documenttemplate.DocumentTemplate{}),
+	Ptr:          ptrDocumentTemplate,
+	Value:        valueDocumentTemplate,
+	Attach:       attachDocumentTemplate,
+	BeforeCreate: beforeCreateDocumentTemplate,
 }
 
 var documentTemplatesRef = keel.Ref{Table: &documentTemplatesTable}
@@ -269,6 +270,10 @@ func attachDocumentTemplate(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.Assignments = append(r.Assignments, (*documenttemplate.DocumentTemplateAssignment)(child))
 	}
+}
+
+func beforeCreateDocumentTemplate(ctx context.Context, p unsafe.Pointer) error {
+	return (*documenttemplate.DocumentTemplate)(p).BeforeCreate(ctx)
 }
 
 // documentTemplateAssignmentsTable is the schema of documenttemplate.DocumentTemplateAssignment.
@@ -507,23 +512,24 @@ var documentTemplateVersionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Template", Alias: "t", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Template`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30},
-	Returning:  nil,
-	Version:    26,
-	AutoID:     0,
-	AutoCreate: 27,
-	AutoUpdate: 28,
-	IDPrefix:   "dtv_",
-	New:        newDocumentTemplateVersion,
-	NewN:       newNDocumentTemplateVersion,
-	Size:       unsafe.Sizeof(documenttemplate.DocumentTemplateVersion{}),
-	Ptr:        ptrDocumentTemplateVersion,
-	Value:      valueDocumentTemplateVersion,
-	Attach:     attachDocumentTemplateVersion,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30},
+	Returning:    nil,
+	Version:      26,
+	AutoID:       0,
+	AutoCreate:   27,
+	AutoUpdate:   28,
+	IDPrefix:     "dtv_",
+	New:          newDocumentTemplateVersion,
+	NewN:         newNDocumentTemplateVersion,
+	Size:         unsafe.Sizeof(documenttemplate.DocumentTemplateVersion{}),
+	Ptr:          ptrDocumentTemplateVersion,
+	Value:        valueDocumentTemplateVersion,
+	Attach:       attachDocumentTemplateVersion,
+	BeforeCreate: beforeCreateDocumentTemplateVersion,
 }
 
 var documentTemplateVersionsRef = keel.Ref{Table: &documentTemplateVersionsTable}
@@ -871,6 +877,10 @@ func attachDocumentTemplateVersion(p unsafe.Pointer, rel int32, child unsafe.Poi
 	case 0:
 		r.Template = (*documenttemplate.DocumentTemplate)(child)
 	}
+}
+
+func beforeCreateDocumentTemplateVersion(ctx context.Context, p unsafe.Pointer) error {
+	return (*documenttemplate.DocumentTemplateVersion)(p).BeforeCreate(ctx)
 }
 
 // generatedDocumentsTable is the schema of documenttemplate.GeneratedDocument.

@@ -139,7 +139,7 @@ type AnalysisRun struct {
 	bun.BaseModel `bun:"table:agent_analysis_runs,alias:aanr" json:"-"`
 	keel.Table    `keel:"agent_analysis_runs"`
 
-	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aanr_"`
 	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	ExtensionType     Type              `json:"extensionType"     bun:"extension_type,type:VARCHAR(50),notnull" keel:"extension_type"`

@@ -57,23 +57,24 @@ var rateConfirmationsTable = schema.Table{
 		{Name: "CarrierAssignment", Alias: "ca", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Carrier Assignment`},
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Shipment`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
-	Returning:  nil,
-	Version:    22,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "ratecon_",
-	New:        newRateConfirmation,
-	NewN:       newNRateConfirmation,
-	Size:       unsafe.Sizeof(rateconfirmation.RateConfirmation{}),
-	Ptr:        ptrRateConfirmation,
-	Value:      valueRateConfirmation,
-	Attach:     attachRateConfirmation,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Returning:    nil,
+	Version:      22,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "ratecon_",
+	New:          newRateConfirmation,
+	NewN:         newNRateConfirmation,
+	Size:         unsafe.Sizeof(rateconfirmation.RateConfirmation{}),
+	Ptr:          ptrRateConfirmation,
+	Value:        valueRateConfirmation,
+	Attach:       attachRateConfirmation,
+	BeforeCreate: beforeCreateRateConfirmation,
 }
 
 var rateConfirmationsRef = keel.Ref{Table: &rateConfirmationsTable}
@@ -366,6 +367,10 @@ func attachRateConfirmation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.Shipment = (*shipment.Shipment)(child)
 	}
+}
+
+func beforeCreateRateConfirmation(ctx context.Context, p unsafe.Pointer) error {
+	return (*rateconfirmation.RateConfirmation)(p).BeforeCreate(ctx)
 }
 
 // rateConfirmationTokensTable is the schema of rateconfirmation.RateConfirmationToken.

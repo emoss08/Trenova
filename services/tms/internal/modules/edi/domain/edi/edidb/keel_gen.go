@@ -60,23 +60,24 @@ var carrierInvoicesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Partner", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Partner`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
-	Returning:  nil,
-	Version:    27,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "edici_",
-	New:        newCarrierInvoice,
-	NewN:       newNCarrierInvoice,
-	Size:       unsafe.Sizeof(edi.CarrierInvoice{}),
-	Ptr:        ptrCarrierInvoice,
-	Value:      valueCarrierInvoice,
-	Attach:     attachCarrierInvoice,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Returning:    nil,
+	Version:      27,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "edici_",
+	New:          newCarrierInvoice,
+	NewN:         newNCarrierInvoice,
+	Size:         unsafe.Sizeof(edi.CarrierInvoice{}),
+	Ptr:          ptrCarrierInvoice,
+	Value:        valueCarrierInvoice,
+	Attach:       attachCarrierInvoice,
+	BeforeCreate: beforeCreateCarrierInvoice,
 }
 
 var carrierInvoicesRef = keel.Ref{Table: &carrierInvoicesTable}
@@ -400,6 +401,10 @@ func attachCarrierInvoice(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Partner = (*edi.EDIPartner)(child)
 	}
+}
+
+func beforeCreateCarrierInvoice(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.CarrierInvoice)(p).BeforeCreate(ctx)
 }
 
 // eDICodeListDefinitionsTable is the schema of edi.EDICodeListDefinition.
@@ -2392,23 +2397,24 @@ var eDIMessagesTable = schema.Table{
 		{Name: "TemplateVersion", Alias: "tv", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Template Version`},
 		{Name: "ValidationErrors", Alias: "ve", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Validation Errors`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 42},
-	Returning:  nil,
-	Version:    40,
-	AutoID:     0,
-	AutoCreate: 41,
-	AutoUpdate: 42,
-	IDPrefix:   "edimsg_",
-	New:        newEDIMessage,
-	NewN:       newNEDIMessage,
-	Size:       unsafe.Sizeof(edi.EDIMessage{}),
-	Ptr:        ptrEDIMessage,
-	Value:      valueEDIMessage,
-	Attach:     attachEDIMessage,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 42},
+	Returning:    nil,
+	Version:      40,
+	AutoID:       0,
+	AutoCreate:   41,
+	AutoUpdate:   42,
+	IDPrefix:     "edimsg_",
+	New:          newEDIMessage,
+	NewN:         newNEDIMessage,
+	Size:         unsafe.Sizeof(edi.EDIMessage{}),
+	Ptr:          ptrEDIMessage,
+	Value:        valueEDIMessage,
+	Attach:       attachEDIMessage,
+	BeforeCreate: beforeCreateEDIMessage,
 }
 
 var eDIMessagesRef = keel.Ref{Table: &eDIMessagesTable}
@@ -2880,6 +2886,10 @@ func attachEDIMessage(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateEDIMessage(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIMessage)(p).BeforeCreate(ctx)
+}
+
 // eDIMessageValidationErrorsTable is the schema of edi.EDIMessageValidationError.
 var eDIMessageValidationErrorsTable = schema.Table{
 	Name:   "edi_message_validation_errors",
@@ -3111,23 +3121,24 @@ var eDIPartnersTable = schema.Table{
 		{Name: "MappingProfile", Alias: "mp", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Mapping Profile`},
 		{Name: "MappingEntries", Alias: "me", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Mapping Entries`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25},
-	Returning:  nil,
-	Version:    23,
-	AutoID:     0,
-	AutoCreate: 24,
-	AutoUpdate: 25,
-	IDPrefix:   "edip_",
-	New:        newEDIPartner,
-	NewN:       newNEDIPartner,
-	Size:       unsafe.Sizeof(edi.EDIPartner{}),
-	Ptr:        ptrEDIPartner,
-	Value:      valueEDIPartner,
-	Attach:     attachEDIPartner,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25},
+	Returning:    nil,
+	Version:      23,
+	AutoID:       0,
+	AutoCreate:   24,
+	AutoUpdate:   25,
+	IDPrefix:     "edip_",
+	New:          newEDIPartner,
+	NewN:         newNEDIPartner,
+	Size:         unsafe.Sizeof(edi.EDIPartner{}),
+	Ptr:          ptrEDIPartner,
+	Value:        valueEDIPartner,
+	Attach:       attachEDIPartner,
+	BeforeCreate: beforeCreateEDIPartner,
 }
 
 var eDIPartnersRef = keel.Ref{Table: &eDIPartnersTable}
@@ -3445,6 +3456,10 @@ func attachEDIPartner(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateEDIPartner(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIPartner)(p).BeforeCreate(ctx)
+}
+
 // eDIPartnerDocumentProfilesTable is the schema of edi.EDIPartnerDocumentProfile.
 var eDIPartnerDocumentProfilesTable = schema.Table{
 	Name:   "edi_partner_document_profiles",
@@ -3485,23 +3500,24 @@ var eDIPartnerDocumentProfilesTable = schema.Table{
 		{Name: "Template", Alias: "t", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Template`},
 		{Name: "TemplateVersion", Alias: "tv", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Template Version`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
-	Returning:  nil,
-	Version:    20,
-	AutoID:     0,
-	AutoCreate: 21,
-	AutoUpdate: 22,
-	IDPrefix:   "edidp_",
-	New:        newEDIPartnerDocumentProfile,
-	NewN:       newNEDIPartnerDocumentProfile,
-	Size:       unsafe.Sizeof(edi.EDIPartnerDocumentProfile{}),
-	Ptr:        ptrEDIPartnerDocumentProfile,
-	Value:      valueEDIPartnerDocumentProfile,
-	Attach:     attachEDIPartnerDocumentProfile,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
+	Returning:    nil,
+	Version:      20,
+	AutoID:       0,
+	AutoCreate:   21,
+	AutoUpdate:   22,
+	IDPrefix:     "edidp_",
+	New:          newEDIPartnerDocumentProfile,
+	NewN:         newNEDIPartnerDocumentProfile,
+	Size:         unsafe.Sizeof(edi.EDIPartnerDocumentProfile{}),
+	Ptr:          ptrEDIPartnerDocumentProfile,
+	Value:        valueEDIPartnerDocumentProfile,
+	Attach:       attachEDIPartnerDocumentProfile,
+	BeforeCreate: beforeCreateEDIPartnerDocumentProfile,
 }
 
 var eDIPartnerDocumentProfilesRef = keel.Ref{Table: &eDIPartnerDocumentProfilesTable}
@@ -3773,6 +3789,10 @@ func attachEDIPartnerDocumentProfile(p unsafe.Pointer, rel int32, child unsafe.P
 	case 4:
 		r.TemplateVersion = (*edi.EDITemplateVersion)(child)
 	}
+}
+
+func beforeCreateEDIPartnerDocumentProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIPartnerDocumentProfile)(p).BeforeCreate(ctx)
 }
 
 // eDIPartnerSettingFieldsTable is the schema of edi.EDIPartnerSettingField.
@@ -4734,23 +4754,24 @@ var eDITemplatesTable = schema.Table{
 		{Name: "ActiveVersion", Alias: "av", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Active Version`},
 		{Name: "Versions", Alias: "v", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Versions`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:  nil,
-	Version:    10,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "editpl_",
-	New:        newEDITemplate,
-	NewN:       newNEDITemplate,
-	Size:       unsafe.Sizeof(edi.EDITemplate{}),
-	Ptr:        ptrEDITemplate,
-	Value:      valueEDITemplate,
-	Attach:     attachEDITemplate,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:    nil,
+	Version:      10,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   12,
+	IDPrefix:     "editpl_",
+	New:          newEDITemplate,
+	NewN:         newNEDITemplate,
+	Size:         unsafe.Sizeof(edi.EDITemplate{}),
+	Ptr:          ptrEDITemplate,
+	Value:        valueEDITemplate,
+	Attach:       attachEDITemplate,
+	BeforeCreate: beforeCreateEDITemplate,
 }
 
 var eDITemplatesRef = keel.Ref{Table: &eDITemplatesTable}
@@ -4931,6 +4952,10 @@ func attachEDITemplate(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.Versions = append(r.Versions, (*edi.EDITemplateVersion)(child))
 	}
+}
+
+func beforeCreateEDITemplate(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDITemplate)(p).BeforeCreate(ctx)
 }
 
 // eDITemplateScriptLibrariesTable is the schema of edi.EDITemplateScriptLibrary.
@@ -5399,23 +5424,24 @@ var eDITemplateVersionsTable = schema.Table{
 		{Name: "Segments", Alias: "s", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Segments`},
 		{Name: "ScriptLibraries", Alias: "sl", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Script Libraries`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
-	Returning:  nil,
-	Version:    26,
-	AutoID:     0,
-	AutoCreate: 27,
-	AutoUpdate: 28,
-	IDPrefix:   "editv_",
-	New:        newEDITemplateVersion,
-	NewN:       newNEDITemplateVersion,
-	Size:       unsafe.Sizeof(edi.EDITemplateVersion{}),
-	Ptr:        ptrEDITemplateVersion,
-	Value:      valueEDITemplateVersion,
-	Attach:     attachEDITemplateVersion,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
+	Returning:    nil,
+	Version:      26,
+	AutoID:       0,
+	AutoCreate:   27,
+	AutoUpdate:   28,
+	IDPrefix:     "editv_",
+	New:          newEDITemplateVersion,
+	NewN:         newNEDITemplateVersion,
+	Size:         unsafe.Sizeof(edi.EDITemplateVersion{}),
+	Ptr:          ptrEDITemplateVersion,
+	Value:        valueEDITemplateVersion,
+	Attach:       attachEDITemplateVersion,
+	BeforeCreate: beforeCreateEDITemplateVersion,
 }
 
 var eDITemplateVersionsRef = keel.Ref{Table: &eDITemplateVersionsTable}
@@ -5756,6 +5782,10 @@ func attachEDITemplateVersion(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 	case 3:
 		r.ScriptLibraries = append(r.ScriptLibraries, (*edi.EDITemplateScriptLibrary)(child))
 	}
+}
+
+func beforeCreateEDITemplateVersion(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDITemplateVersion)(p).BeforeCreate(ctx)
 }
 
 // eDITestCasesTable is the schema of edi.EDITestCase.

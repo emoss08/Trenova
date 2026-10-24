@@ -157,6 +157,10 @@ func (r *Reply) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (r *Reply) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (r *Reply) GetID() pulid.ID      { return r.ID }
 func (r *Reply) GetCreatedAt() int64  { return r.CreatedAt }
 func (r *Reply) GetTableName() string { return "inbound_replies" }

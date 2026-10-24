@@ -35,22 +35,23 @@ var serviceTypesTable = schema.Table{
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Update:     []int32{3, 4, 5, 6, 9},
-	Returning:  nil,
-	Version:    7,
-	AutoID:     0,
-	AutoCreate: 8,
-	AutoUpdate: 9,
-	IDPrefix:   "st_",
-	New:        newServiceType,
-	NewN:       newNServiceType,
-	Size:       unsafe.Sizeof(servicetype.ServiceType{}),
-	Ptr:        ptrServiceType,
-	Value:      valueServiceType,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:       []int32{3, 4, 5, 6, 9},
+	Returning:    nil,
+	Version:      7,
+	AutoID:       0,
+	AutoCreate:   8,
+	AutoUpdate:   9,
+	IDPrefix:     "st_",
+	New:          newServiceType,
+	NewN:         newNServiceType,
+	Size:         unsafe.Sizeof(servicetype.ServiceType{}),
+	Ptr:          ptrServiceType,
+	Value:        valueServiceType,
+	BeforeCreate: beforeCreateServiceType,
 }
 
 var serviceTypesRef = keel.Ref{Table: &serviceTypesTable}
@@ -193,6 +194,10 @@ func valueServiceType(p unsafe.Pointer, c int32) any {
 		return r.Rank
 	}
 	return nil
+}
+
+func beforeCreateServiceType(ctx context.Context, p unsafe.Pointer) error {
+	return (*servicetype.ServiceType)(p).BeforeCreate(ctx)
 }
 
 var enumDomaintypesStatus = [...]schema.EnumValue{

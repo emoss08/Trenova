@@ -77,6 +77,10 @@ func (e *ItemEvent) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	return nil
 }
 
+func (e *ItemEvent) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (e *ItemEvent) GetID() pulid.ID             { return e.ID }
 func (e *ItemEvent) GetOrganizationID() pulid.ID { return e.OrganizationID }
 func (e *ItemEvent) GetBusinessUnitID() pulid.ID { return e.BusinessUnitID }

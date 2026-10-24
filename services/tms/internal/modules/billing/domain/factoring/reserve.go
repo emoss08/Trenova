@@ -120,6 +120,10 @@ func (e *ReserveEntry) BeforeAppendModel(_ context.Context, query bun.Query) err
 	return nil
 }
 
+func (e *ReserveEntry) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (e *ReserveEntry) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "facres",

@@ -40,22 +40,23 @@ var dotHazmatReferencesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "dhr_",
-	New:        newDotHazmatReference,
-	NewN:       newNDotHazmatReference,
-	Size:       unsafe.Sizeof(dothazmatreference.DotHazmatReference{}),
-	Ptr:        ptrDotHazmatReference,
-	Value:      valueDotHazmatReference,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "dhr_",
+	New:          newDotHazmatReference,
+	NewN:         newNDotHazmatReference,
+	Size:         unsafe.Sizeof(dothazmatreference.DotHazmatReference{}),
+	Ptr:          ptrDotHazmatReference,
+	Value:        valueDotHazmatReference,
+	BeforeCreate: beforeCreateDotHazmatReference,
 }
 
 var dotHazmatReferencesRef = keel.Ref{Table: &dotHazmatReferencesTable}
@@ -262,4 +263,8 @@ func valueDotHazmatReference(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateDotHazmatReference(ctx context.Context, p unsafe.Pointer) error {
+	return (*dothazmatreference.DotHazmatReference)(p).BeforeCreate(ctx)
 }

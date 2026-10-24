@@ -142,7 +142,7 @@ type WebWatch struct {
 	bun.BaseModel `bun:"table:agent_web_watches,alias:awwt" json:"-"`
 	keel.Table    `keel:"agent_web_watches"`
 
-	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:awwt_"`
 	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	ExtensionType     Type            `json:"extensionType"     bun:"extension_type,type:VARCHAR(50),notnull" keel:"extension_type"`
@@ -305,7 +305,7 @@ type WebWatchFinding struct {
 	bun.BaseModel `bun:"table:agent_web_watch_findings,alias:awwf" json:"-"`
 	keel.Table    `keel:"agent_web_watch_findings"`
 
-	ID             pulid.ID         `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	ID             pulid.ID         `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:awwf_"`
 	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	WatchID        pulid.ID         `json:"watchId"        bun:"watch_id,type:VARCHAR(100),notnull" keel:"watch_id"`

@@ -54,23 +54,24 @@ var reasonCodesTable = schema.Table{
 		{Name: "ArchivedBy", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{16}, Remote: []int32{0}, Label: `Archived By`},
 		{Name: "ActivatedBy", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{18}, Remote: []int32{0}, Label: `Activated By`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "sfrc_",
-	New:        newReasonCode,
-	NewN:       newNReasonCode,
-	Size:       unsafe.Sizeof(servicefailure.ReasonCode{}),
-	Ptr:        ptrReasonCode,
-	Value:      valueReasonCode,
-	Attach:     attachReasonCode,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "sfrc_",
+	New:          newReasonCode,
+	NewN:         newNReasonCode,
+	Size:         unsafe.Sizeof(servicefailure.ReasonCode{}),
+	Ptr:          ptrReasonCode,
+	Value:        valueReasonCode,
+	Attach:       attachReasonCode,
+	BeforeCreate: beforeCreateReasonCode,
 }
 
 var reasonCodesRef = keel.Ref{Table: &reasonCodesTable}
@@ -334,6 +335,10 @@ func attachReasonCode(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.ActivatedBy = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateReasonCode(ctx context.Context, p unsafe.Pointer) error {
+	return (*servicefailure.ReasonCode)(p).BeforeCreate(ctx)
 }
 
 // serviceFailuresTable is the schema of servicefailure.ServiceFailure.

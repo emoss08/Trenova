@@ -54,23 +54,24 @@ var disputesTable = schema.Table{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Worker`},
 		{Name: "ResolvedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Resolved By`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
-	Returning:  nil,
-	Version:    14,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "dsd_",
-	New:        newDispute,
-	NewN:       newNDispute,
-	Size:       unsafe.Sizeof(driversettlement.Dispute{}),
-	Ptr:        ptrDispute,
-	Value:      valueDispute,
-	Attach:     attachDispute,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
+	Returning:    nil,
+	Version:      14,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "dsd_",
+	New:          newDispute,
+	NewN:         newNDispute,
+	Size:         unsafe.Sizeof(driversettlement.Dispute{}),
+	Ptr:          ptrDispute,
+	Value:        valueDispute,
+	Attach:       attachDispute,
+	BeforeCreate: beforeCreateDispute,
 }
 
 var disputesRef = keel.Ref{Table: &disputesTable}
@@ -291,6 +292,10 @@ func attachDispute(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateDispute(ctx context.Context, p unsafe.Pointer) error {
+	return (*driversettlement.Dispute)(p).BeforeCreate(ctx)
+}
+
 // payEventsTable is the schema of driversettlement.PayEvent.
 var payEventsTable = schema.Table{
 	Name:   "driver_pay_events",
@@ -331,23 +336,24 @@ var payEventsTable = schema.Table{
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Shipment`},
 		{Name: "Settlement", Alias: "s", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Settlement`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
-	Returning:  nil,
-	Version:    22,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "dpe_",
-	New:        newPayEvent,
-	NewN:       newNPayEvent,
-	Size:       unsafe.Sizeof(driversettlement.PayEvent{}),
-	Ptr:        ptrPayEvent,
-	Value:      valuePayEvent,
-	Attach:     attachPayEvent,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Returning:    nil,
+	Version:      22,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "dpe_",
+	New:          newPayEvent,
+	NewN:         newNPayEvent,
+	Size:         unsafe.Sizeof(driversettlement.PayEvent{}),
+	Ptr:          ptrPayEvent,
+	Value:        valuePayEvent,
+	Attach:       attachPayEvent,
+	BeforeCreate: beforeCreatePayEvent,
 }
 
 var payEventsRef = keel.Ref{Table: &payEventsTable}
@@ -632,6 +638,10 @@ func attachPayEvent(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreatePayEvent(ctx context.Context, p unsafe.Pointer) error {
+	return (*driversettlement.PayEvent)(p).BeforeCreate(ctx)
+}
+
 // settlementsTable is the schema of driversettlement.Settlement.
 var settlementsTable = schema.Table{
 	Name:   "driver_settlements",
@@ -697,23 +707,24 @@ var settlementsTable = schema.Table{
 		{Name: "PayProfile", Alias: "pp", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Pay Profile`},
 		{Name: "Lines", Alias: "l", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Lines`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 48},
-	Returning:  nil,
-	Version:    46,
-	AutoID:     0,
-	AutoCreate: 47,
-	AutoUpdate: 48,
-	IDPrefix:   "dstl_",
-	New:        newSettlement,
-	NewN:       newNSettlement,
-	Size:       unsafe.Sizeof(driversettlement.Settlement{}),
-	Ptr:        ptrSettlement,
-	Value:      valueSettlement,
-	Attach:     attachSettlement,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 48},
+	Returning:    nil,
+	Version:      46,
+	AutoID:       0,
+	AutoCreate:   47,
+	AutoUpdate:   48,
+	IDPrefix:     "dstl_",
+	New:          newSettlement,
+	NewN:         newNSettlement,
+	Size:         unsafe.Sizeof(driversettlement.Settlement{}),
+	Ptr:          ptrSettlement,
+	Value:        valueSettlement,
+	Attach:       attachSettlement,
+	BeforeCreate: beforeCreateSettlement,
 }
 
 var settlementsRef = keel.Ref{Table: &settlementsTable}
@@ -1217,6 +1228,10 @@ func attachSettlement(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateSettlement(ctx context.Context, p unsafe.Pointer) error {
+	return (*driversettlement.Settlement)(p).BeforeCreate(ctx)
+}
+
 // settlementBatchesTable is the schema of driversettlement.SettlementBatch.
 var settlementBatchesTable = schema.Table{
 	Name:   "driver_settlement_batches",
@@ -1252,23 +1267,24 @@ var settlementBatchesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Settlements", Alias: "s", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{4}, Label: `Settlements`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "dstlb_",
-	New:        newSettlementBatch,
-	NewN:       newNSettlementBatch,
-	Size:       unsafe.Sizeof(driversettlement.SettlementBatch{}),
-	Ptr:        ptrSettlementBatch,
-	Value:      valueSettlementBatch,
-	Attach:     attachSettlementBatch,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "dstlb_",
+	New:          newSettlementBatch,
+	NewN:         newNSettlementBatch,
+	Size:         unsafe.Sizeof(driversettlement.SettlementBatch{}),
+	Ptr:          ptrSettlementBatch,
+	Value:        valueSettlementBatch,
+	Attach:       attachSettlementBatch,
+	BeforeCreate: beforeCreateSettlementBatch,
 }
 
 var settlementBatchesRef = keel.Ref{Table: &settlementBatchesTable}
@@ -1510,6 +1526,10 @@ func attachSettlementBatch(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateSettlementBatch(ctx context.Context, p unsafe.Pointer) error {
+	return (*driversettlement.SettlementBatch)(p).BeforeCreate(ctx)
+}
+
 // settlementLinesTable is the schema of driversettlement.SettlementLine.
 var settlementLinesTable = schema.Table{
 	Name:   "driver_settlement_lines",
@@ -1549,23 +1569,24 @@ var settlementLinesTable = schema.Table{
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Shipment`},
 		{Name: "PayCode", Alias: "pc", Kind: schema.BelongsTo, Local: []int32{17}, Remote: []int32{0}, Label: `Pay Code`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 22,
-	AutoUpdate: 23,
-	IDPrefix:   "dstll_",
-	New:        newSettlementLine,
-	NewN:       newNSettlementLine,
-	Size:       unsafe.Sizeof(driversettlement.SettlementLine{}),
-	Ptr:        ptrSettlementLine,
-	Value:      valueSettlementLine,
-	Attach:     attachSettlementLine,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   22,
+	AutoUpdate:   23,
+	IDPrefix:     "dstll_",
+	New:          newSettlementLine,
+	NewN:         newNSettlementLine,
+	Size:         unsafe.Sizeof(driversettlement.SettlementLine{}),
+	Ptr:          ptrSettlementLine,
+	Value:        valueSettlementLine,
+	Attach:       attachSettlementLine,
+	BeforeCreate: beforeCreateSettlementLine,
 }
 
 var settlementLinesRef = keel.Ref{Table: &settlementLinesTable}
@@ -1846,6 +1867,10 @@ func attachSettlementLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.PayCode = (*driverpay.PayCode)(child)
 	}
+}
+
+func beforeCreateSettlementLine(ctx context.Context, p unsafe.Pointer) error {
+	return (*driversettlement.SettlementLine)(p).BeforeCreate(ctx)
 }
 
 func init() {

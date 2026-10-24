@@ -30,22 +30,23 @@ var resourcePermissionsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{1, 2, 3, 4, 6},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 5,
-	AutoUpdate: 6,
-	IDPrefix:   "rp_",
-	New:        newResourcePermission,
-	NewN:       newNResourcePermission,
-	Size:       unsafe.Sizeof(permission.ResourcePermission{}),
-	Ptr:        ptrResourcePermission,
-	Value:      valueResourcePermission,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:       []int32{1, 2, 3, 4, 6},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   5,
+	AutoUpdate:   6,
+	IDPrefix:     "rp_",
+	New:          newResourcePermission,
+	NewN:         newNResourcePermission,
+	Size:         unsafe.Sizeof(permission.ResourcePermission{}),
+	Ptr:          ptrResourcePermission,
+	Value:        valueResourcePermission,
+	BeforeCreate: beforeCreateResourcePermission,
 }
 
 var resourcePermissionsRef = keel.Ref{Table: &resourcePermissionsTable}
@@ -154,6 +155,10 @@ func valueResourcePermission(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateResourcePermission(ctx context.Context, p unsafe.Pointer) error {
+	return (*permission.ResourcePermission)(p).BeforeCreate(ctx)
+}
+
 // rolesTable is the schema of permission.Role.
 var rolesTable = schema.Table{
 	Name:   "roles",
@@ -179,23 +184,24 @@ var rolesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Permissions", Alias: "p", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{1}, Label: `Permissions`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 11},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
-	IDPrefix:   "rol_",
-	New:        newRole,
-	NewN:       newNRole,
-	Size:       unsafe.Sizeof(permission.Role{}),
-	Ptr:        ptrRole,
-	Value:      valueRole,
-	Attach:     attachRole,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 11},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   10,
+	AutoUpdate:   11,
+	IDPrefix:     "rol_",
+	New:          newRole,
+	NewN:         newNRole,
+	Size:         unsafe.Sizeof(permission.Role{}),
+	Ptr:          ptrRole,
+	Value:        valueRole,
+	Attach:       attachRole,
+	BeforeCreate: beforeCreateRole,
 }
 
 var rolesRef = keel.Ref{Table: &rolesTable}
@@ -355,6 +361,10 @@ func attachRole(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Permissions = append(r.Permissions, (*permission.ResourcePermission)(child))
 	}
+}
+
+func beforeCreateRole(ctx context.Context, p unsafe.Pointer) error {
+	return (*permission.Role)(p).BeforeCreate(ctx)
 }
 
 // roleAgentGrantsTable is the schema of permission.RoleAgentGrant.
@@ -1027,23 +1037,24 @@ var userRoleAssignmentsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Role", Alias: "r", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Role`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{1, 3, 4, 5, 6},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "ura_",
-	New:        newUserRoleAssignment,
-	NewN:       newNUserRoleAssignment,
-	Size:       unsafe.Sizeof(permission.UserRoleAssignment{}),
-	Ptr:        ptrUserRoleAssignment,
-	Value:      valueUserRoleAssignment,
-	Attach:     attachUserRoleAssignment,
+	PK:           []int32{0},
+	Tenant:       []int32{2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:       []int32{1, 3, 4, 5, 6},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "ura_",
+	New:          newUserRoleAssignment,
+	NewN:         newNUserRoleAssignment,
+	Size:         unsafe.Sizeof(permission.UserRoleAssignment{}),
+	Ptr:          ptrUserRoleAssignment,
+	Value:        valueUserRoleAssignment,
+	Attach:       attachUserRoleAssignment,
+	BeforeCreate: beforeCreateUserRoleAssignment,
 }
 
 var userRoleAssignmentsRef = keel.Ref{Table: &userRoleAssignmentsTable}
@@ -1164,6 +1175,10 @@ func attachUserRoleAssignment(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 	case 0:
 		r.Role = (*permission.Role)(child)
 	}
+}
+
+func beforeCreateUserRoleAssignment(ctx context.Context, p unsafe.Pointer) error {
+	return (*permission.UserRoleAssignment)(p).BeforeCreate(ctx)
 }
 
 func init() {

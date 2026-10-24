@@ -48,6 +48,10 @@ func (a *TCAAllowlistedTable) BeforeAppendModel(_ context.Context, query bun.Que
 	return nil
 }
 
+func (a *TCAAllowlistedTable) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (a *TCAAllowlistedTable) GetID() pulid.ID {
 	return a.ID
 }

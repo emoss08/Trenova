@@ -135,6 +135,10 @@ func (h *ShipmentHold) BeforeAppendModel(_ context.Context, query bun.Query) err
 	return nil
 }
 
+func (h *ShipmentHold) BeforeCreate(ctx context.Context) error {
+	return h.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (h *ShipmentHold) IsActive() bool {
 	return h != nil && h.ReleasedAt == nil
 }

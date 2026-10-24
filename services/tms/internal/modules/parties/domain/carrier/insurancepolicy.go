@@ -120,3 +120,7 @@ func (cip *CarrierInsurancePolicy) BeforeAppendModel(_ context.Context, query bu
 
 	return nil
 }
+
+func (cip *CarrierInsurancePolicy) BeforeCreate(ctx context.Context) error {
+	return cip.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

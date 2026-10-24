@@ -181,7 +181,7 @@ type InstanceBootstrap struct {
 	bun.BaseModel `bun:"table:instance_bootstraps,alias:ibs" json:"-"`
 	keel.Table    `keel:"instance_bootstraps"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ibs_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
 	AdminUserID    pulid.ID `json:"adminUserId"    bun:"admin_user_id,type:VARCHAR(100),nullzero" keel:"admin_user_id,nullzero"`

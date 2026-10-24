@@ -87,7 +87,7 @@ type Preference struct {
 	bun.BaseModel `bun:"table:user_notification_preferences,alias:unp" json:"-"`
 	keel.Table    `keel:"user_notification_preferences"`
 
-	ID                    pulid.ID     `json:"id"                    bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID                    pulid.ID     `json:"id"                    bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:unp_"`
 	OrganizationID        pulid.ID     `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
 	BusinessUnitID        pulid.ID     `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
 	UserID                pulid.ID     `json:"userId"                bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`

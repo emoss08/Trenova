@@ -175,6 +175,10 @@ func (m *Mailbox) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (m *Mailbox) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // ApplyDefaults leaves a mailbox reviewing everything, because a mailbox
 // somebody created and did not finish configuring should not be acting on its
 // own.

@@ -148,3 +148,7 @@ func (fi *FuelIndex) BeforeAppendModel(_ context.Context, query bun.Query) error
 
 	return nil
 }
+
+func (fi *FuelIndex) BeforeCreate(ctx context.Context) error {
+	return fi.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

@@ -1150,7 +1150,7 @@ var businessUnitsTable = schema.Table{
 	Label:  `Business Unit`,
 	Plural: `Business Units`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
 		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`},
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`},
@@ -1158,22 +1158,23 @@ var businessUnitsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{1, 2, 3, 6},
-	Returning:  nil,
-	Version:    4,
-	AutoID:     -1,
-	AutoCreate: 5,
-	AutoUpdate: 6,
-	IDPrefix:   "",
-	New:        newBusinessUnit,
-	NewN:       newNBusinessUnit,
-	Size:       unsafe.Sizeof(tenant.BusinessUnit{}),
-	Ptr:        ptrBusinessUnit,
-	Value:      valueBusinessUnit,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:       []int32{1, 2, 3, 6},
+	Returning:    nil,
+	Version:      4,
+	AutoID:       0,
+	AutoCreate:   5,
+	AutoUpdate:   6,
+	IDPrefix:     "bu_",
+	New:          newBusinessUnit,
+	NewN:         newNBusinessUnit,
+	Size:         unsafe.Sizeof(tenant.BusinessUnit{}),
+	Ptr:          ptrBusinessUnit,
+	Value:        valueBusinessUnit,
+	BeforeCreate: beforeCreateBusinessUnit,
 }
 
 var businessUnitsRef = keel.Ref{Table: &businessUnitsTable}
@@ -1280,6 +1281,10 @@ func valueBusinessUnit(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateBusinessUnit(ctx context.Context, p unsafe.Pointer) error {
+	return (*tenant.BusinessUnit)(p).BeforeCreate(ctx)
+}
+
 // carrierSettlementControlsTable is the schema of tenant.CarrierSettlementControl.
 var carrierSettlementControlsTable = schema.Table{
 	Name:   "carrier_settlement_controls",
@@ -1308,22 +1313,23 @@ var carrierSettlementControlsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "carstlc_",
-	New:        newCarrierSettlementControl,
-	NewN:       newNCarrierSettlementControl,
-	Size:       unsafe.Sizeof(tenant.CarrierSettlementControl{}),
-	Ptr:        ptrCarrierSettlementControl,
-	Value:      valueCarrierSettlementControl,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "carstlc_",
+	New:          newCarrierSettlementControl,
+	NewN:         newNCarrierSettlementControl,
+	Size:         unsafe.Sizeof(tenant.CarrierSettlementControl{}),
+	Ptr:          ptrCarrierSettlementControl,
+	Value:        valueCarrierSettlementControl,
+	BeforeCreate: beforeCreateCarrierSettlementControl,
 }
 
 var carrierSettlementControlsRef = keel.Ref{Table: &carrierSettlementControlsTable}
@@ -1510,6 +1516,10 @@ func valueCarrierSettlementControl(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateCarrierSettlementControl(ctx context.Context, p unsafe.Pointer) error {
+	return (*tenant.CarrierSettlementControl)(p).BeforeCreate(ctx)
 }
 
 // dashControlsTable is the schema of tenant.DashControl.
@@ -2511,7 +2521,7 @@ var organizationsTable = schema.Table{
 	Label:  `Organization`,
 	Plural: `Organizations`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "state_id", Quoted: `"state_id"`, Field: "StateID", Kind: schema.KindString, Flags: 0, Label: `State ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`},
@@ -2538,23 +2548,24 @@ var organizationsTable = schema.Table{
 		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `State`, Doc: `Relationships`},
 		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Business Unit`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     -1,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "",
-	New:        newOrganization,
-	NewN:       newNOrganization,
-	Size:       unsafe.Sizeof(tenant.Organization{}),
-	Ptr:        ptrOrganization,
-	Value:      valueOrganization,
-	Attach:     attachOrganization,
+	PK:           []int32{0},
+	Tenant:       []int32{2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "org_",
+	New:          newOrganization,
+	NewN:         newNOrganization,
+	Size:         unsafe.Sizeof(tenant.Organization{}),
+	Ptr:          ptrOrganization,
+	Value:        valueOrganization,
+	Attach:       attachOrganization,
+	BeforeCreate: beforeCreateOrganization,
 }
 
 var organizationsRef = keel.Ref{Table: &organizationsTable}
@@ -2798,6 +2809,10 @@ func attachOrganization(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateOrganization(ctx context.Context, p unsafe.Pointer) error {
+	return (*tenant.Organization)(p).BeforeCreate(ctx)
+}
+
 // organizationMembershipsTable is the schema of tenant.OrganizationMembership.
 var organizationMembershipsTable = schema.Table{
 	Name:   "user_organization_memberships",
@@ -2822,23 +2837,24 @@ var organizationMembershipsTable = schema.Table{
 		{Name: "GrantedBy", Alias: "gb", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Granted By`},
 		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Organization`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{2, 4},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{1, 3, 5, 6, 7, 8},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "uom_",
-	New:        newOrganizationMembership,
-	NewN:       newNOrganizationMembership,
-	Size:       unsafe.Sizeof(tenant.OrganizationMembership{}),
-	Ptr:        ptrOrganizationMembership,
-	Value:      valueOrganizationMembership,
-	Attach:     attachOrganizationMembership,
+	PK:           []int32{0},
+	Tenant:       []int32{2, 4},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Update:       []int32{1, 3, 5, 6, 7, 8},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "uom_",
+	New:          newOrganizationMembership,
+	NewN:         newNOrganizationMembership,
+	Size:         unsafe.Sizeof(tenant.OrganizationMembership{}),
+	Ptr:          ptrOrganizationMembership,
+	Value:        valueOrganizationMembership,
+	Attach:       attachOrganizationMembership,
+	BeforeCreate: beforeCreateOrganizationMembership,
 }
 
 var organizationMembershipsRef = keel.Ref{Table: &organizationMembershipsTable}
@@ -2996,6 +3012,10 @@ func attachOrganizationMembership(p unsafe.Pointer, rel int32, child unsafe.Poin
 	case 2:
 		r.Organization = (*tenant.Organization)(child)
 	}
+}
+
+func beforeCreateOrganizationMembership(ctx context.Context, p unsafe.Pointer) error {
+	return (*tenant.OrganizationMembership)(p).BeforeCreate(ctx)
 }
 
 // passwordResetTokensTable is the schema of tenant.PasswordResetToken.
@@ -4072,22 +4092,23 @@ var settlementControlsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
-	IDPrefix:   "stlc_",
-	New:        newSettlementControl,
-	NewN:       newNSettlementControl,
-	Size:       unsafe.Sizeof(tenant.SettlementControl{}),
-	Ptr:        ptrSettlementControl,
-	Value:      valueSettlementControl,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       0,
+	AutoCreate:   17,
+	AutoUpdate:   18,
+	IDPrefix:     "stlc_",
+	New:          newSettlementControl,
+	NewN:         newNSettlementControl,
+	Size:         unsafe.Sizeof(tenant.SettlementControl{}),
+	Ptr:          ptrSettlementControl,
+	Value:        valueSettlementControl,
+	BeforeCreate: beforeCreateSettlementControl,
 }
 
 var settlementControlsRef = keel.Ref{Table: &settlementControlsTable}
@@ -4273,6 +4294,10 @@ func valueSettlementControl(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateSettlementControl(ctx context.Context, p unsafe.Pointer) error {
+	return (*tenant.SettlementControl)(p).BeforeCreate(ctx)
 }
 
 // shipmentControlsTable is the schema of tenant.ShipmentControl.
@@ -4547,7 +4572,7 @@ var usersTable = schema.Table{
 	Label:  `User`,
 	Plural: `Users`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "current_organization_id", Quoted: `"current_organization_id"`, Field: "CurrentOrganizationID", Kind: schema.KindString, Flags: 0, Label: `Current Organization ID`},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Enum: enumDomaintypesStatus[:]},
@@ -4582,23 +4607,24 @@ var usersTable = schema.Table{
 		{Name: "Memberships", Alias: "m", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Memberships`},
 		{Name: "Assignments", Alias: "a", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{1}, Label: `Assignments`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Update:     []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     -1,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "",
-	New:        newUser,
-	NewN:       newNUser,
-	Size:       unsafe.Sizeof(tenant.User{}),
-	Ptr:        ptrUser,
-	Value:      valueUser,
-	Attach:     attachUser,
+	PK:           []int32{0},
+	Tenant:       []int32{1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "usr_",
+	New:          newUser,
+	NewN:         newNUser,
+	Size:         unsafe.Sizeof(tenant.User{}),
+	Ptr:          ptrUser,
+	Value:        valueUser,
+	Attach:       attachUser,
+	BeforeCreate: beforeCreateUser,
 }
 
 var usersRef = keel.Ref{Table: &usersTable}
@@ -4898,6 +4924,10 @@ func attachUser(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.Assignments = append(r.Assignments, (*permission.UserRoleAssignment)(child))
 	}
+}
+
+func beforeCreateUser(ctx context.Context, p unsafe.Pointer) error {
+	return (*tenant.User)(p).BeforeCreate(ctx)
 }
 
 func init() {

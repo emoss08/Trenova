@@ -87,6 +87,10 @@ func (r *RuleSet) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (r *RuleSet) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 type RuleVersion struct {
 	bun.BaseModel `bun:"table:document_parsing_rule_versions,alias:dprv" json:"-"`
 	keel.Table    `keel:"document_parsing_rule_versions"`
@@ -180,6 +184,10 @@ func (r *RuleVersion) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	return nil
 }
 
+func (r *RuleVersion) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 type Fixture struct {
 	bun.BaseModel `bun:"table:document_parsing_rule_fixtures,alias:dprf" json:"-"`
 	keel.Table    `keel:"document_parsing_rule_fixtures"`
@@ -249,6 +257,10 @@ func (f *Fixture) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		f.UpdatedAt = now
 	}
 	return nil
+}
+
+func (f *Fixture) BeforeCreate(ctx context.Context) error {
+	return f.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 type MatchConfig struct {

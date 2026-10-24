@@ -73,6 +73,10 @@ func (p *EDIPartnerDocumentProfile) BeforeAppendModel(_ context.Context, query b
 	return nil
 }
 
+func (p *EDIPartnerDocumentProfile) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (p *EDIPartnerDocumentProfile) GetID() pulid.ID {
 	return p.ID
 }

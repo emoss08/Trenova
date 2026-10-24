@@ -274,14 +274,26 @@ func (a *InvoiceAdjustment) BeforeAppendModel(_ context.Context, query bun.Query
 	return nil
 }
 
+func (a *InvoiceAdjustment) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (a *InvoiceAdjustmentLine) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	beforeAppendIDModel(query, &a.ID, "iadjl_", &a.CreatedAt, &a.UpdatedAt)
 	return nil
 }
 
+func (a *InvoiceAdjustmentLine) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (s *InvoiceAdjustmentSnapshot) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	beforeAppendIDModel(query, &s.ID, "iadjs_", &s.CreatedAt, nil)
 	return nil
+}
+
+func (s *InvoiceAdjustmentSnapshot) BeforeCreate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (g *InvoiceAdjustmentCorrectionGroup) BeforeAppendModel(
@@ -305,9 +317,17 @@ func (b *InvoiceAdjustmentBatch) BeforeAppendModel(_ context.Context, query bun.
 	return nil
 }
 
+func (b *InvoiceAdjustmentBatch) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (b *InvoiceAdjustmentBatchItem) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	beforeAppendIDModel(query, &b.ID, "iadjbi_", &b.CreatedAt, &b.UpdatedAt)
 	return nil
+}
+
+func (b *InvoiceAdjustmentBatchItem) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (d *InvoiceAdjustmentDocumentReference) BeforeAppendModel(

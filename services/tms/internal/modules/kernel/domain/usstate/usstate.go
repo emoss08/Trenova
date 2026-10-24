@@ -57,6 +57,10 @@ func (us *UsState) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	return nil
 }
 
+func (us *UsState) BeforeCreate(ctx context.Context) error {
+	return us.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 var stateAbbreviationRegions = map[string]Region{
 	"CT": RegionNortheast,
 	"ME": RegionNortheast,

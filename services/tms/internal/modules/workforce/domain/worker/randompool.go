@@ -316,6 +316,10 @@ func (p *DOTRandomPool) BeforeAppendModel(_ context.Context, query bun.Query) er
 	return nil
 }
 
+func (p *DOTRandomPool) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 var (
 	_ bun.BeforeAppendModelHook          = (*DOTRandomDraw)(nil)
 	_ validationframework.TenantedEntity = (*DOTRandomDraw)(nil)

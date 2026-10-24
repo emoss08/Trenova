@@ -236,6 +236,10 @@ func (e *JournalEntry) BeforeAppendModel(_ context.Context, query bun.Query) err
 	return nil
 }
 
+func (e *JournalEntry) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (l *JournalEntryLine) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	switch query.(type) {
@@ -249,4 +253,8 @@ func (l *JournalEntryLine) BeforeAppendModel(_ context.Context, query bun.Query)
 		l.UpdatedAt = now
 	}
 	return nil
+}
+
+func (l *JournalEntryLine) BeforeCreate(ctx context.Context) error {
+	return l.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

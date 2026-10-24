@@ -37,22 +37,23 @@ var statementsTable = schema.Table{
 		{Name: "sent_by_id", Quoted: `"sent_by_id"`, Field: "SentByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Sent By ID`},
 		{Name: "sent_at", Quoted: `"sent_at"`, Field: "SentAt", Kind: schema.KindInt64, Flags: 0, Label: `Sent At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "cst_",
-	New:        newStatement,
-	NewN:       newNStatement,
-	Size:       unsafe.Sizeof(customerstatement.Statement{}),
-	Ptr:        ptrStatement,
-	Value:      valueStatement,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "cst_",
+	New:          newStatement,
+	NewN:         newNStatement,
+	Size:         unsafe.Sizeof(customerstatement.Statement{}),
+	Ptr:          ptrStatement,
+	Value:        valueStatement,
+	BeforeCreate: beforeCreateStatement,
 }
 
 var statementsRef = keel.Ref{Table: &statementsTable}
@@ -199,4 +200,8 @@ func valueStatement(p unsafe.Pointer, c int32) any {
 		return r.SentAt
 	}
 	return nil
+}
+
+func beforeCreateStatement(ctx context.Context, p unsafe.Pointer) error {
+	return (*customerstatement.Statement)(p).BeforeCreate(ctx)
 }

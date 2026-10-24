@@ -125,6 +125,10 @@ func (m *ShipmentMove) BeforeAppendModel(_ context.Context, query bun.Query) err
 	return nil
 }
 
+func (m *ShipmentMove) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (m *ShipmentMove) IsCompleted() bool {
 	return m.Status == MoveStatusCompleted
 }

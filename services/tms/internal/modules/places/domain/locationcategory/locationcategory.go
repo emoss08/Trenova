@@ -87,6 +87,10 @@ func (lc *LocationCategory) BeforeAppendModel(_ context.Context, query bun.Query
 	return nil
 }
 
+func (lc *LocationCategory) BeforeCreate(ctx context.Context) error {
+	return lc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (lc *LocationCategory) GetID() pulid.ID {
 	return lc.ID
 }

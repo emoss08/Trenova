@@ -66,6 +66,10 @@ func (r *Role) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	return nil
 }
 
+func (r *Role) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (r *Role) GetID() pulid.ID {
 	return r.ID
 }

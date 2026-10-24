@@ -197,6 +197,10 @@ func (e *EscrowAccount) BeforeAppendModel(_ context.Context, query bun.Query) er
 	return nil
 }
 
+func (e *EscrowAccount) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (t *EscrowTransaction) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	if _, ok := query.(*bun.InsertQuery); ok {
 		if t.ID.IsNil() {
@@ -205,4 +209,8 @@ func (t *EscrowTransaction) BeforeAppendModel(_ context.Context, query bun.Query
 		t.CreatedAt = timeutils.NowUnix()
 	}
 	return nil
+}
+
+func (t *EscrowTransaction) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

@@ -101,3 +101,7 @@ func (sht *ShipmentType) BeforeAppendModel(_ context.Context, query bun.Query) e
 
 	return nil
 }
+
+func (sht *ShipmentType) BeforeCreate(ctx context.Context) error {
+	return sht.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

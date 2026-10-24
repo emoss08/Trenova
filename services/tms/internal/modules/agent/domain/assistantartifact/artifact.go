@@ -104,6 +104,10 @@ func (a *Artifact) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (a *Artifact) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (a *Artifact) GetID() pulid.ID { return a.ID }
 
 func (a *Artifact) GetTableName() string { return "assistant_artifacts" }

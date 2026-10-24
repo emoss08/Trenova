@@ -120,6 +120,10 @@ func (d *DistanceOverride) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
+func (d *DistanceOverride) BeforeCreate(ctx context.Context) error {
+	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (d *DistanceOverride) BuildRouteSignature() string {
 	routeParts := make([]string, 0, len(d.IntermediateStops)+2)
 	routeParts = append(routeParts, d.OriginLocationID.String())

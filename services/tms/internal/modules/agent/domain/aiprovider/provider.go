@@ -232,6 +232,10 @@ func (p *Provider) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (p *Provider) BeforeCreate(ctx context.Context) error {
+	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // TestOutcome is what a live probe of the endpoint revealed, recorded on the
 // provider when it ran.
 type TestOutcome struct {

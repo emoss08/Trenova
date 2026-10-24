@@ -189,3 +189,7 @@ func (r *RecurringDeduction) BeforeAppendModel(_ context.Context, query bun.Quer
 	}
 	return nil
 }
+
+func (r *RecurringDeduction) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

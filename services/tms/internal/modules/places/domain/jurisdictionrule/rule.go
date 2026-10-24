@@ -200,3 +200,7 @@ func (r *JurisdictionRule) BeforeAppendModel(_ context.Context, query bun.Query)
 
 	return nil
 }
+
+func (r *JurisdictionRule) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

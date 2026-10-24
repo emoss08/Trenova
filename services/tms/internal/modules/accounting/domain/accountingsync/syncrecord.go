@@ -62,7 +62,7 @@ type AccountingSyncRecord struct {
 	keel.Table                `keel:"accounting_sync_records"`
 	pagination.CursorValueSet `bun:",embed"                                     json:"-"`
 
-	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctsr_"`
 	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	ConnectionID      pulid.ID          `json:"connectionId"      bun:"connection_id,type:VARCHAR(100),notnull" keel:"connection_id"`
@@ -483,7 +483,7 @@ type AccountingSyncAttempt struct {
 	bun.BaseModel `bun:"table:accounting_sync_attempts,alias:acctsa" json:"-"`
 	keel.Table    `keel:"accounting_sync_attempts"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctsa_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	SyncRecordID   pulid.ID           `json:"syncRecordId"   bun:"sync_record_id,type:VARCHAR(100),notnull" keel:"sync_record_id"`
@@ -554,7 +554,7 @@ type AccountingBackfill struct {
 	bun.BaseModel `bun:"table:accounting_backfills,alias:acctbf" json:"-"`
 	keel.Table    `keel:"accounting_backfills"`
 
-	ID                 pulid.ID         `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID                 pulid.ID         `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctbf_"`
 	BusinessUnitID     pulid.ID         `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 	OrganizationID     pulid.ID         `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	ConnectionID       pulid.ID         `json:"connectionId"       bun:"connection_id,type:VARCHAR(100),notnull" keel:"connection_id"`

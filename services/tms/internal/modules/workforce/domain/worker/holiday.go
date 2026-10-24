@@ -118,6 +118,10 @@ func (h *OrgHoliday) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+func (h *OrgHoliday) BeforeCreate(ctx context.Context) error {
+	return h.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // HolidayCalendar answers "is this local calendar day a holiday / a blackout"
 // for the day walk in ComputePTODays and the blackout check on requests.
 type HolidayCalendar struct {

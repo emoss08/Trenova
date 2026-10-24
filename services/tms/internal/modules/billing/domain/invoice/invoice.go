@@ -711,6 +711,10 @@ func (i *Invoice) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (i *Invoice) BeforeCreate(ctx context.Context) error {
+	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (a *Attachment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	switch query.(type) {
@@ -780,6 +784,10 @@ func (l *InvoiceLine) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	}
 
 	return nil
+}
+
+func (l *InvoiceLine) BeforeCreate(ctx context.Context) error {
+	return l.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (i *Invoice) GetID() pulid.ID {

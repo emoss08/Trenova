@@ -248,6 +248,10 @@ func (m *InboundMessage) BeforeAppendModel(_ context.Context, query bun.Query) e
 	return nil
 }
 
+func (m *InboundMessage) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // GetPostgresSearchConfig covers what a person actually remembers about a
 // message they are hunting for: who sent it and what the subject said. The body
 // is left out on purpose — it is bounded to 32 KB of quoted thread, and
@@ -352,6 +356,10 @@ func (a *InboundAttachment) BeforeAppendModel(_ context.Context, query bun.Query
 	}
 
 	return nil
+}
+
+func (a *InboundAttachment) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (a *InboundAttachment) GetID() pulid.ID      { return a.ID }

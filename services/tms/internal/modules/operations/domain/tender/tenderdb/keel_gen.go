@@ -46,23 +46,24 @@ var routingGuidesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Entries", Alias: "e", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Entries`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
-	Returning:  nil,
-	Version:    13,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
-	IDPrefix:   "rg_",
-	New:        newRoutingGuide,
-	NewN:       newNRoutingGuide,
-	Size:       unsafe.Sizeof(tender.RoutingGuide{}),
-	Ptr:        ptrRoutingGuide,
-	Value:      valueRoutingGuide,
-	Attach:     attachRoutingGuide,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
+	Returning:    nil,
+	Version:      13,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   15,
+	IDPrefix:     "rg_",
+	New:          newRoutingGuide,
+	NewN:         newNRoutingGuide,
+	Size:         unsafe.Sizeof(tender.RoutingGuide{}),
+	Ptr:          ptrRoutingGuide,
+	Value:        valueRoutingGuide,
+	Attach:       attachRoutingGuide,
+	BeforeCreate: beforeCreateRoutingGuide,
 }
 
 var routingGuidesRef = keel.Ref{Table: &routingGuidesTable}
@@ -263,6 +264,10 @@ func attachRoutingGuide(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateRoutingGuide(ctx context.Context, p unsafe.Pointer) error {
+	return (*tender.RoutingGuide)(p).BeforeCreate(ctx)
+}
+
 // routingGuideEntriesTable is the schema of tender.RoutingGuideEntry.
 var routingGuideEntriesTable = schema.Table{
 	Name:   "routing_guide_entries",
@@ -291,23 +296,24 @@ var routingGuideEntriesTable = schema.Table{
 		{Name: "RoutingGuide", Alias: "rg", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Routing Guide`},
 		{Name: "Carrier", Alias: "c", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Carrier`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "rge_",
-	New:        newRoutingGuideEntry,
-	NewN:       newNRoutingGuideEntry,
-	Size:       unsafe.Sizeof(tender.RoutingGuideEntry{}),
-	Ptr:        ptrRoutingGuideEntry,
-	Value:      valueRoutingGuideEntry,
-	Attach:     attachRoutingGuideEntry,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "rge_",
+	New:          newRoutingGuideEntry,
+	NewN:         newNRoutingGuideEntry,
+	Size:         unsafe.Sizeof(tender.RoutingGuideEntry{}),
+	Ptr:          ptrRoutingGuideEntry,
+	Value:        valueRoutingGuideEntry,
+	Attach:       attachRoutingGuideEntry,
+	BeforeCreate: beforeCreateRoutingGuideEntry,
 }
 
 var routingGuideEntriesRef = keel.Ref{Table: &routingGuideEntriesTable}
@@ -478,6 +484,10 @@ func attachRoutingGuideEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	case 1:
 		r.Carrier = (*carrier.Carrier)(child)
 	}
+}
+
+func beforeCreateRoutingGuideEntry(ctx context.Context, p unsafe.Pointer) error {
+	return (*tender.RoutingGuideEntry)(p).BeforeCreate(ctx)
 }
 
 // tendersTable is the schema of tender.Tender.

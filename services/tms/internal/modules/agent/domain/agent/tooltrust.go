@@ -174,3 +174,7 @@ func (t *ToolTrust) BeforeAppendModel(_ context.Context, query bun.Query) error 
 
 	return nil
 }
+
+func (t *ToolTrust) BeforeCreate(ctx context.Context) error {
+	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

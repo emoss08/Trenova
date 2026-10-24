@@ -228,3 +228,7 @@ func (rc *RateConfirmation) BeforeAppendModel(_ context.Context, query bun.Query
 
 	return nil
 }
+
+func (rc *RateConfirmation) BeforeCreate(ctx context.Context) error {
+	return rc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

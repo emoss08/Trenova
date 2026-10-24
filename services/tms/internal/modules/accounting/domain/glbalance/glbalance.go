@@ -86,3 +86,7 @@ func (b *GLAccountPeriodBalance) BeforeAppendModel(_ context.Context, query bun.
 	}
 	return nil
 }
+
+func (b *GLAccountPeriodBalance) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

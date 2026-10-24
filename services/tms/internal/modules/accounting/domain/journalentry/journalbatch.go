@@ -88,3 +88,7 @@ func (b *JournalBatch) BeforeAppendModel(_ context.Context, query bun.Query) err
 	}
 	return nil
 }
+
+func (b *JournalBatch) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

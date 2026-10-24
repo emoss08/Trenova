@@ -207,3 +207,7 @@ func (r *AgentRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (r *AgentRun) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

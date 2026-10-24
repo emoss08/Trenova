@@ -151,3 +151,7 @@ func (a *PayAdvance) BeforeAppendModel(_ context.Context, query bun.Query) error
 	}
 	return nil
 }
+
+func (a *PayAdvance) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

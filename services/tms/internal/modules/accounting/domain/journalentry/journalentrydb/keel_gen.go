@@ -56,23 +56,24 @@ var journalBatchesTable = schema.Table{
 		{Name: "FiscalPeriod", Alias: "fp", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `Fiscal Period`},
 		{Name: "Entries", Alias: "e", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{5}, Label: `Entries`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "jb_",
-	New:        newJournalBatch,
-	NewN:       newNJournalBatch,
-	Size:       unsafe.Sizeof(journalentry.JournalBatch{}),
-	Ptr:        ptrJournalBatch,
-	Value:      valueJournalBatch,
-	Attach:     attachJournalBatch,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "jb_",
+	New:          newJournalBatch,
+	NewN:         newNJournalBatch,
+	Size:         unsafe.Sizeof(journalentry.JournalBatch{}),
+	Ptr:          ptrJournalBatch,
+	Value:        valueJournalBatch,
+	Attach:       attachJournalBatch,
+	BeforeCreate: beforeCreateJournalBatch,
 }
 
 var journalBatchesRef = keel.Ref{Table: &journalBatchesTable}
@@ -282,6 +283,10 @@ func attachJournalBatch(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateJournalBatch(ctx context.Context, p unsafe.Pointer) error {
+	return (*journalentry.JournalBatch)(p).BeforeCreate(ctx)
+}
+
 // journalEntriesTable is the schema of journalentry.JournalEntry.
 var journalEntriesTable = schema.Table{
 	Name:   "journal_entries",
@@ -341,23 +346,24 @@ var journalEntriesTable = schema.Table{
 		{Name: "ReversedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{23}, Remote: []int32{0}, Label: `Reversed By`},
 		{Name: "Lines", Alias: "l", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Lines`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39},
-	Returning:  nil,
-	Version:    37,
-	AutoID:     0,
-	AutoCreate: 38,
-	AutoUpdate: 39,
-	IDPrefix:   "je_",
-	New:        newJournalEntry,
-	NewN:       newNJournalEntry,
-	Size:       unsafe.Sizeof(journalentry.JournalEntry{}),
-	Ptr:        ptrJournalEntry,
-	Value:      valueJournalEntry,
-	Attach:     attachJournalEntry,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39},
+	Returning:    nil,
+	Version:      37,
+	AutoID:       0,
+	AutoCreate:   38,
+	AutoUpdate:   39,
+	IDPrefix:     "je_",
+	New:          newJournalEntry,
+	NewN:         newNJournalEntry,
+	Size:         unsafe.Sizeof(journalentry.JournalEntry{}),
+	Ptr:          ptrJournalEntry,
+	Value:        valueJournalEntry,
+	Attach:       attachJournalEntry,
+	BeforeCreate: beforeCreateJournalEntry,
 }
 
 var journalEntriesRef = keel.Ref{Table: &journalEntriesTable}
@@ -798,6 +804,10 @@ func attachJournalEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateJournalEntry(ctx context.Context, p unsafe.Pointer) error {
+	return (*journalentry.JournalEntry)(p).BeforeCreate(ctx)
+}
+
 // journalEntryLinesTable is the schema of journalentry.JournalEntryLine.
 var journalEntryLinesTable = schema.Table{
 	Name:   "journal_entry_lines",
@@ -838,23 +848,24 @@ var journalEntryLinesTable = schema.Table{
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{13}, Remote: []int32{0}, Label: `Customer`},
 		{Name: "Location", Alias: "l", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Location`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
-	Returning:  nil,
-	Version:    21,
-	AutoID:     0,
-	AutoCreate: 22,
-	AutoUpdate: 23,
-	IDPrefix:   "jel_",
-	New:        newJournalEntryLine,
-	NewN:       newNJournalEntryLine,
-	Size:       unsafe.Sizeof(journalentry.JournalEntryLine{}),
-	Ptr:        ptrJournalEntryLine,
-	Value:      valueJournalEntryLine,
-	Attach:     attachJournalEntryLine,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
+	Returning:    nil,
+	Version:      21,
+	AutoID:       0,
+	AutoCreate:   22,
+	AutoUpdate:   23,
+	IDPrefix:     "jel_",
+	New:          newJournalEntryLine,
+	NewN:         newNJournalEntryLine,
+	Size:         unsafe.Sizeof(journalentry.JournalEntryLine{}),
+	Ptr:          ptrJournalEntryLine,
+	Value:        valueJournalEntryLine,
+	Attach:       attachJournalEntryLine,
+	BeforeCreate: beforeCreateJournalEntryLine,
 }
 
 var journalEntryLinesRef = keel.Ref{Table: &journalEntryLinesTable}
@@ -1133,6 +1144,10 @@ func attachJournalEntryLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 3:
 		r.Location = (*location.Location)(child)
 	}
+}
+
+func beforeCreateJournalEntryLine(ctx context.Context, p unsafe.Pointer) error {
+	return (*journalentry.JournalEntryLine)(p).BeforeCreate(ctx)
 }
 
 func init() {

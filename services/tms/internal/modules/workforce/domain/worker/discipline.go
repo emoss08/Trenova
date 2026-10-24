@@ -262,6 +262,10 @@ func (a *WorkerDisciplinaryAction) BeforeAppendModel(_ context.Context, query bu
 	return nil
 }
 
+func (a *WorkerDisciplinaryAction) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // DisciplinaryLadder is where a worker stands: the rungs already taken that
 // still count, and the rung the next action would normally be.
 type DisciplinaryLadder struct {
@@ -410,4 +414,8 @@ func (r *WorkerRecognition) BeforeAppendModel(_ context.Context, query bun.Query
 	}
 
 	return nil
+}
+
+func (r *WorkerRecognition) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

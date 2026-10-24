@@ -40,6 +40,10 @@ func (ura *UserRoleAssignment) BeforeAppendModel(_ context.Context, q bun.Query)
 	return nil
 }
 
+func (ura *UserRoleAssignment) BeforeCreate(ctx context.Context) error {
+	return ura.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (ura *UserRoleAssignment) GetCreatedAt() int64 {
 	return ura.AssignedAt
 }

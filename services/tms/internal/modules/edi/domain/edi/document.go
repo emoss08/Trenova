@@ -197,6 +197,10 @@ func (v *EDITemplateVersion) BeforeAppendModel(_ context.Context, query bun.Quer
 	return nil
 }
 
+func (v *EDITemplateVersion) BeforeCreate(ctx context.Context) error {
+	return v.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (v *EDITemplateVersion) GetID() pulid.ID {
 	return v.ID
 }

@@ -246,6 +246,10 @@ func (n *Noa) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (n *Noa) BeforeCreate(ctx context.Context) error {
+	return n.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (n *Noa) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "facnoa",

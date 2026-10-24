@@ -261,3 +261,7 @@ func (b *ImportBatch) BeforeAppendModel(_ context.Context, query bun.Query) erro
 
 	return nil
 }
+
+func (b *ImportBatch) BeforeCreate(ctx context.Context) error {
+	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

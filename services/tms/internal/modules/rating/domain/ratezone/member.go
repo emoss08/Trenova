@@ -149,6 +149,10 @@ func (rzm *RateZoneMember) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
+func (rzm *RateZoneMember) BeforeCreate(ctx context.Context) error {
+	return rzm.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (rzm *RateZoneMember) GetID() pulid.ID {
 	return rzm.ID
 }

@@ -58,23 +58,24 @@ var locationsTable = schema.Table{
 		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `State`},
 		{Name: "LocationCategory", Alias: "lc", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Location Category`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 24},
-	Returning:  []int32{18, 21},
-	Version:    22,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "loc_",
-	New:        newLocation,
-	NewN:       newNLocation,
-	Size:       unsafe.Sizeof(location.Location{}),
-	Ptr:        ptrLocation,
-	Value:      valueLocation,
-	Attach:     attachLocation,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 24},
+	Returning:    []int32{18, 21},
+	Version:      22,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "loc_",
+	New:          newLocation,
+	NewN:         newNLocation,
+	Size:         unsafe.Sizeof(location.Location{}),
+	Ptr:          ptrLocation,
+	Value:        valueLocation,
+	Attach:       attachLocation,
+	BeforeCreate: beforeCreateLocation,
 }
 
 var locationsRef = keel.Ref{Table: &locationsTable}
@@ -375,6 +376,10 @@ func attachLocation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.LocationCategory = (*locationcategory.LocationCategory)(child)
 	}
+}
+
+func beforeCreateLocation(ctx context.Context, p unsafe.Pointer) error {
+	return (*location.Location)(p).BeforeCreate(ctx)
 }
 
 func init() {

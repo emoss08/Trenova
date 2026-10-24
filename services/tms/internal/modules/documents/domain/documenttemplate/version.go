@@ -290,6 +290,10 @@ func (v *DocumentTemplateVersion) BeforeAppendModel(_ context.Context, query bun
 	return nil
 }
 
+func (v *DocumentTemplateVersion) BeforeCreate(ctx context.Context) error {
+	return v.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func floatOr(value *float64, fallback float64) float64 {
 	if value == nil {
 		return fallback

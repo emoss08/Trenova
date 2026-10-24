@@ -126,6 +126,10 @@ func (m *InvoiceMatch) BeforeAppendModel(_ context.Context, query bun.Query) err
 	return nil
 }
 
+func (m *InvoiceMatch) BeforeCreate(ctx context.Context) error {
+	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (m *InvoiceMatch) IsDuplicate() bool {
 	return m.DuplicateOfMatchID != nil && m.DuplicateOfMatchID.IsNotNil()
 }

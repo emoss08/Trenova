@@ -311,6 +311,10 @@ func (r *Return) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (r *Return) BeforeCreate(ctx context.Context) error {
+	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (r *Return) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias: "ifr",

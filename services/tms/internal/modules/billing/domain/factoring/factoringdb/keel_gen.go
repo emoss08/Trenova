@@ -61,23 +61,24 @@ var agreementsTable = schema.Table{
 		{Name: "FeeTiers", Alias: "ft", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Fee Tiers`},
 		{Name: "DocumentTypes", Alias: "dt", Kind: schema.ManyToMany, Local: []int32{0}, Remote: []int32{0}, JoinAlias: "fadt", JoinTable: "factoring_agreement_document_types", JoinLocal: []string{`agreement_id`}, JoinRemote: []string{`document_type_id`}, JoinQuoted: `"factoring_agreement_document_types"`, JoinLocalQ: []string{`"agreement_id"`}, JoinRemoteQ: []string{`"document_type_id"`}, Label: `Document Types`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
-	Returning:  nil,
-	Version:    22,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "facagr_",
-	New:        newAgreement,
-	NewN:       newNAgreement,
-	Size:       unsafe.Sizeof(factoring.Agreement{}),
-	Ptr:        ptrAgreement,
-	Value:      valueAgreement,
-	Attach:     attachAgreement,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Returning:    nil,
+	Version:      22,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "facagr_",
+	New:          newAgreement,
+	NewN:         newNAgreement,
+	Size:         unsafe.Sizeof(factoring.Agreement{}),
+	Ptr:          ptrAgreement,
+	Value:        valueAgreement,
+	Attach:       attachAgreement,
+	BeforeCreate: beforeCreateAgreement,
 }
 
 var agreementsRef = keel.Ref{Table: &agreementsTable}
@@ -356,6 +357,10 @@ func attachAgreement(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateAgreement(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.Agreement)(p).BeforeCreate(ctx)
+}
+
 // agreementDocumentTypesTable is the schema of factoring.AgreementDocumentType.
 var agreementDocumentTypesTable = schema.Table{
 	Name:   "factoring_agreement_document_types",
@@ -508,22 +513,23 @@ var feeTiersTable = schema.Table{
 		{Name: "rate_bp", Quoted: `"rate_bp"`, Field: "RateBP", Kind: schema.KindInt64, Flags: 0, Label: `Rate BP`},
 		{Name: "flat_minor", Quoted: `"flat_minor"`, Field: "FlatMinor", Kind: schema.KindInt64, Flags: 0, Label: `Flat Minor`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Update:     []int32{3, 4, 5, 6, 7},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "facfee_",
-	New:        newFeeTier,
-	NewN:       newNFeeTier,
-	Size:       unsafe.Sizeof(factoring.FeeTier{}),
-	Ptr:        ptrFeeTier,
-	Value:      valueFeeTier,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:       []int32{3, 4, 5, 6, 7},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "facfee_",
+	New:          newFeeTier,
+	NewN:         newNFeeTier,
+	Size:         unsafe.Sizeof(factoring.FeeTier{}),
+	Ptr:          ptrFeeTier,
+	Value:        valueFeeTier,
+	BeforeCreate: beforeCreateFeeTier,
 }
 
 var feeTiersRef = keel.Ref{Table: &feeTiersTable}
@@ -635,6 +641,10 @@ func valueFeeTier(p unsafe.Pointer, c int32) any {
 		return r.FlatMinor
 	}
 	return nil
+}
+
+func beforeCreateFeeTier(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.FeeTier)(p).BeforeCreate(ctx)
 }
 
 // invoiceStatesTable is the schema of factoring.InvoiceState.
@@ -898,23 +908,24 @@ var noasTable = schema.Table{
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Customer`},
 		{Name: "FactoringCompany", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Factoring Company`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "facnoa_",
-	New:        newNoa,
-	NewN:       newNNoa,
-	Size:       unsafe.Sizeof(factoring.Noa{}),
-	Ptr:        ptrNoa,
-	Value:      valueNoa,
-	Attach:     attachNoa,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "facnoa_",
+	New:          newNoa,
+	NewN:         newNNoa,
+	Size:         unsafe.Sizeof(factoring.Noa{}),
+	Ptr:          ptrNoa,
+	Value:        valueNoa,
+	Attach:       attachNoa,
+	BeforeCreate: beforeCreateNoa,
 }
 
 var noasRef = keel.Ref{Table: &noasTable}
@@ -1138,6 +1149,10 @@ func attachNoa(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateNoa(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.Noa)(p).BeforeCreate(ctx)
+}
+
 // remittancesTable is the schema of factoring.Remittance.
 var remittancesTable = schema.Table{
 	Name:   "factoring_remittances",
@@ -1183,23 +1198,24 @@ var remittancesTable = schema.Table{
 		{Name: "FactoringCompany", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Factoring Company`},
 		{Name: "Lines", Alias: "l", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Lines`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30},
-	Returning:  nil,
-	Version:    28,
-	AutoID:     0,
-	AutoCreate: 29,
-	AutoUpdate: 30,
-	IDPrefix:   "facrem_",
-	New:        newRemittance,
-	NewN:       newNRemittance,
-	Size:       unsafe.Sizeof(factoring.Remittance{}),
-	Ptr:        ptrRemittance,
-	Value:      valueRemittance,
-	Attach:     attachRemittance,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30},
+	Returning:    nil,
+	Version:      28,
+	AutoID:       0,
+	AutoCreate:   29,
+	AutoUpdate:   30,
+	IDPrefix:     "facrem_",
+	New:          newRemittance,
+	NewN:         newNRemittance,
+	Size:         unsafe.Sizeof(factoring.Remittance{}),
+	Ptr:          ptrRemittance,
+	Value:        valueRemittance,
+	Attach:       attachRemittance,
+	BeforeCreate: beforeCreateRemittance,
 }
 
 var remittancesRef = keel.Ref{Table: &remittancesTable}
@@ -1534,6 +1550,10 @@ func attachRemittance(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Lines = append(r.Lines, (*factoring.RemittanceLine)(child))
 	}
+}
+
+func beforeCreateRemittance(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.Remittance)(p).BeforeCreate(ctx)
 }
 
 // remittanceLinesTable is the schema of factoring.RemittanceLine.
@@ -1946,22 +1966,23 @@ var remittanceProfilesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{3, 4, 5, 8},
-	Returning:  nil,
-	Version:    6,
-	AutoID:     0,
-	AutoCreate: 7,
-	AutoUpdate: 8,
-	IDPrefix:   "facrmp_",
-	New:        newRemittanceProfile,
-	NewN:       newNRemittanceProfile,
-	Size:       unsafe.Sizeof(factoring.RemittanceProfile{}),
-	Ptr:        ptrRemittanceProfile,
-	Value:      valueRemittanceProfile,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Update:       []int32{3, 4, 5, 8},
+	Returning:    nil,
+	Version:      6,
+	AutoID:       0,
+	AutoCreate:   7,
+	AutoUpdate:   8,
+	IDPrefix:     "facrmp_",
+	New:          newRemittanceProfile,
+	NewN:         newNRemittanceProfile,
+	Size:         unsafe.Sizeof(factoring.RemittanceProfile{}),
+	Ptr:          ptrRemittanceProfile,
+	Value:        valueRemittanceProfile,
+	BeforeCreate: beforeCreateRemittanceProfile,
 }
 
 var remittanceProfilesRef = keel.Ref{Table: &remittanceProfilesTable}
@@ -2082,6 +2103,10 @@ func valueRemittanceProfile(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateRemittanceProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.RemittanceProfile)(p).BeforeCreate(ctx)
+}
+
 // reserveEntriesTable is the schema of factoring.ReserveEntry.
 var reserveEntriesTable = schema.Table{
 	Name:   "factoring_reserve_entries",
@@ -2124,23 +2149,24 @@ var reserveEntriesTable = schema.Table{
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Customer`},
 		{Name: "Submission", Alias: "s", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Submission`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 25,
-	AutoUpdate: -1,
-	IDPrefix:   "facres_",
-	New:        newReserveEntry,
-	NewN:       newNReserveEntry,
-	Size:       unsafe.Sizeof(factoring.ReserveEntry{}),
-	Ptr:        ptrReserveEntry,
-	Value:      valueReserveEntry,
-	Attach:     attachReserveEntry,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   25,
+	AutoUpdate:   -1,
+	IDPrefix:     "facres_",
+	New:          newReserveEntry,
+	NewN:         newNReserveEntry,
+	Size:         unsafe.Sizeof(factoring.ReserveEntry{}),
+	Ptr:          ptrReserveEntry,
+	Value:        valueReserveEntry,
+	Attach:       attachReserveEntry,
+	BeforeCreate: beforeCreateReserveEntry,
 }
 
 var reserveEntriesRef = keel.Ref{Table: &reserveEntriesTable}
@@ -2423,6 +2449,10 @@ func attachReserveEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateReserveEntry(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.ReserveEntry)(p).BeforeCreate(ctx)
+}
+
 // submissionsTable is the schema of factoring.Submission.
 var submissionsTable = schema.Table{
 	Name:   "factoring_submissions",
@@ -2470,23 +2500,24 @@ var submissionsTable = schema.Table{
 		{Name: "Agreement", Alias: "a", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Agreement`},
 		{Name: "Items", Alias: "i", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Items`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
-	Returning:  nil,
-	Version:    29,
-	AutoID:     0,
-	AutoCreate: 30,
-	AutoUpdate: 31,
-	IDPrefix:   "facsub_",
-	New:        newSubmission,
-	NewN:       newNSubmission,
-	Size:       unsafe.Sizeof(factoring.Submission{}),
-	Ptr:        ptrSubmission,
-	Value:      valueSubmission,
-	Attach:     attachSubmission,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
+	Returning:    nil,
+	Version:      29,
+	AutoID:       0,
+	AutoCreate:   30,
+	AutoUpdate:   31,
+	IDPrefix:     "facsub_",
+	New:          newSubmission,
+	NewN:         newNSubmission,
+	Size:         unsafe.Sizeof(factoring.Submission{}),
+	Ptr:          ptrSubmission,
+	Value:        valueSubmission,
+	Attach:       attachSubmission,
+	BeforeCreate: beforeCreateSubmission,
 }
 
 var submissionsRef = keel.Ref{Table: &submissionsTable}
@@ -2823,6 +2854,10 @@ func attachSubmission(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateSubmission(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.Submission)(p).BeforeCreate(ctx)
+}
+
 // submissionItemsTable is the schema of factoring.SubmissionItem.
 var submissionItemsTable = schema.Table{
 	Name:   "factoring_submission_items",
@@ -2864,23 +2899,24 @@ var submissionItemsTable = schema.Table{
 		{Name: "Invoice", Alias: "i", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Invoice`},
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Customer`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 25,
-	AutoUpdate: 26,
-	IDPrefix:   "facsit_",
-	New:        newSubmissionItem,
-	NewN:       newNSubmissionItem,
-	Size:       unsafe.Sizeof(factoring.SubmissionItem{}),
-	Ptr:        ptrSubmissionItem,
-	Value:      valueSubmissionItem,
-	Attach:     attachSubmissionItem,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   25,
+	AutoUpdate:   26,
+	IDPrefix:     "facsit_",
+	New:          newSubmissionItem,
+	NewN:         newNSubmissionItem,
+	Size:         unsafe.Sizeof(factoring.SubmissionItem{}),
+	Ptr:          ptrSubmissionItem,
+	Value:        valueSubmissionItem,
+	Attach:       attachSubmissionItem,
+	BeforeCreate: beforeCreateSubmissionItem,
 }
 
 var submissionItemsRef = keel.Ref{Table: &submissionItemsTable}
@@ -3177,6 +3213,10 @@ func attachSubmissionItem(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateSubmissionItem(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.SubmissionItem)(p).BeforeCreate(ctx)
+}
+
 // transportsTable is the schema of factoring.Transport.
 var transportsTable = schema.Table{
 	Name:   "factoring_transports",
@@ -3206,22 +3246,23 @@ var transportsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
-	IDPrefix:   "factrn_",
-	New:        newTransport,
-	NewN:       newNTransport,
-	Size:       unsafe.Sizeof(factoring.Transport{}),
-	Ptr:        ptrTransport,
-	Value:      valueTransport,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       0,
+	AutoCreate:   17,
+	AutoUpdate:   18,
+	IDPrefix:     "factrn_",
+	New:          newTransport,
+	NewN:         newNTransport,
+	Size:         unsafe.Sizeof(factoring.Transport{}),
+	Ptr:          ptrTransport,
+	Value:        valueTransport,
+	BeforeCreate: beforeCreateTransport,
 }
 
 var transportsRef = keel.Ref{Table: &transportsTable}
@@ -3437,6 +3478,10 @@ func valueTransport(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateTransport(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.Transport)(p).BeforeCreate(ctx)
 }
 
 func init() {

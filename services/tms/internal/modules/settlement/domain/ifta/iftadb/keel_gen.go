@@ -43,23 +43,24 @@ var jurisdictionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "UsState", Alias: "us", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Us State`},
 	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 10},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 9,
-	AutoUpdate: 10,
-	IDPrefix:   "ifj_",
-	New:        newJurisdiction,
-	NewN:       newNJurisdiction,
-	Size:       unsafe.Sizeof(ifta.Jurisdiction{}),
-	Ptr:        ptrJurisdiction,
-	Value:      valueJurisdiction,
-	Attach:     attachJurisdiction,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 10},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   9,
+	AutoUpdate:   10,
+	IDPrefix:     "ifj_",
+	New:          newJurisdiction,
+	NewN:         newNJurisdiction,
+	Size:         unsafe.Sizeof(ifta.Jurisdiction{}),
+	Ptr:          ptrJurisdiction,
+	Value:        valueJurisdiction,
+	Attach:       attachJurisdiction,
+	BeforeCreate: beforeCreateJurisdiction,
 }
 
 var jurisdictionsRef = keel.Ref{Table: &jurisdictionsTable}
@@ -207,6 +208,10 @@ func attachJurisdiction(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateJurisdiction(ctx context.Context, p unsafe.Pointer) error {
+	return (*ifta.Jurisdiction)(p).BeforeCreate(ctx)
+}
+
 // jurisdictionMileageEntriesTable is the schema of ifta.JurisdictionMileageEntry.
 var jurisdictionMileageEntriesTable = schema.Table{
 	Name:   "ifta_jurisdiction_mileage_entries",
@@ -239,23 +244,24 @@ var jurisdictionMileageEntriesTable = schema.Table{
 		{Name: "Jurisdiction", Alias: "j", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Jurisdiction`},
 		{Name: "CreatedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{13}, Remote: []int32{0}, Label: `Created By`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
-	Returning:  nil,
-	Version:    14,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "ifme_",
-	New:        newJurisdictionMileageEntry,
-	NewN:       newNJurisdictionMileageEntry,
-	Size:       unsafe.Sizeof(ifta.JurisdictionMileageEntry{}),
-	Ptr:        ptrJurisdictionMileageEntry,
-	Value:      valueJurisdictionMileageEntry,
-	Attach:     attachJurisdictionMileageEntry,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
+	Returning:    nil,
+	Version:      14,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "ifme_",
+	New:          newJurisdictionMileageEntry,
+	NewN:         newNJurisdictionMileageEntry,
+	Size:         unsafe.Sizeof(ifta.JurisdictionMileageEntry{}),
+	Ptr:          ptrJurisdictionMileageEntry,
+	Value:        valueJurisdictionMileageEntry,
+	Attach:       attachJurisdictionMileageEntry,
+	BeforeCreate: beforeCreateJurisdictionMileageEntry,
 }
 
 var jurisdictionMileageEntriesRef = keel.Ref{Table: &jurisdictionMileageEntriesTable}
@@ -467,6 +473,10 @@ func attachJurisdictionMileageEntry(p unsafe.Pointer, rel int32, child unsafe.Po
 	}
 }
 
+func beforeCreateJurisdictionMileageEntry(ctx context.Context, p unsafe.Pointer) error {
+	return (*ifta.JurisdictionMileageEntry)(p).BeforeCreate(ctx)
+}
+
 // returnsTable is the schema of ifta.Return.
 var returnsTable = schema.Table{
 	Name:   "ifta_returns",
@@ -522,23 +532,24 @@ var returnsTable = schema.Table{
 		{Name: "ReopenedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{33}, Remote: []int32{0}, Label: `Reopened By`},
 		{Name: "Lines", Alias: "l", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Lines`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 37},
-	Returning:  nil,
-	Version:    35,
-	AutoID:     0,
-	AutoCreate: 36,
-	AutoUpdate: 37,
-	IDPrefix:   "ifr_",
-	New:        newReturn,
-	NewN:       newNReturn,
-	Size:       unsafe.Sizeof(ifta.Return{}),
-	Ptr:        ptrReturn,
-	Value:      valueReturn,
-	Attach:     attachReturn,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 37},
+	Returning:    nil,
+	Version:      35,
+	AutoID:       0,
+	AutoCreate:   36,
+	AutoUpdate:   37,
+	IDPrefix:     "ifr_",
+	New:          newReturn,
+	NewN:         newNReturn,
+	Size:         unsafe.Sizeof(ifta.Return{}),
+	Ptr:          ptrReturn,
+	Value:        valueReturn,
+	Attach:       attachReturn,
+	BeforeCreate: beforeCreateReturn,
 }
 
 var returnsRef = keel.Ref{Table: &returnsTable}
@@ -930,6 +941,10 @@ func attachReturn(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateReturn(ctx context.Context, p unsafe.Pointer) error {
+	return (*ifta.Return)(p).BeforeCreate(ctx)
+}
+
 // returnLinesTable is the schema of ifta.ReturnLine.
 var returnLinesTable = schema.Table{
 	Name:   "ifta_return_lines",
@@ -971,23 +986,24 @@ var returnLinesTable = schema.Table{
 		{Name: "Return", Alias: "r", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Return`},
 		{Name: "Jurisdiction", Alias: "j", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Jurisdiction`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 25,
-	AutoUpdate: 26,
-	IDPrefix:   "ifrl_",
-	New:        newReturnLine,
-	NewN:       newNReturnLine,
-	Size:       unsafe.Sizeof(ifta.ReturnLine{}),
-	Ptr:        ptrReturnLine,
-	Value:      valueReturnLine,
-	Attach:     attachReturnLine,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   25,
+	AutoUpdate:   26,
+	IDPrefix:     "ifrl_",
+	New:          newReturnLine,
+	NewN:         newNReturnLine,
+	Size:         unsafe.Sizeof(ifta.ReturnLine{}),
+	Ptr:          ptrReturnLine,
+	Value:        valueReturnLine,
+	Attach:       attachReturnLine,
+	BeforeCreate: beforeCreateReturnLine,
 }
 
 var returnLinesRef = keel.Ref{Table: &returnLinesTable}
@@ -1249,6 +1265,10 @@ func attachReturnLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateReturnLine(ctx context.Context, p unsafe.Pointer) error {
+	return (*ifta.ReturnLine)(p).BeforeCreate(ctx)
+}
+
 // taxRatesTable is the schema of ifta.TaxRate.
 var taxRatesTable = schema.Table{
 	Name:   "ifta_tax_rates",
@@ -1275,23 +1295,24 @@ var taxRatesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Jurisdiction", Alias: "j", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Jurisdiction`},
 	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 12},
-	Returning:  nil,
-	Version:    10,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "iftr_",
-	New:        newTaxRate,
-	NewN:       newNTaxRate,
-	Size:       unsafe.Sizeof(ifta.TaxRate{}),
-	Ptr:        ptrTaxRate,
-	Value:      valueTaxRate,
-	Attach:     attachTaxRate,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12},
+	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 12},
+	Returning:    nil,
+	Version:      10,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   12,
+	IDPrefix:     "iftr_",
+	New:          newTaxRate,
+	NewN:         newNTaxRate,
+	Size:         unsafe.Sizeof(ifta.TaxRate{}),
+	Ptr:          ptrTaxRate,
+	Value:        valueTaxRate,
+	Attach:       attachTaxRate,
+	BeforeCreate: beforeCreateTaxRate,
 }
 
 var taxRatesRef = keel.Ref{Table: &taxRatesTable}
@@ -1454,6 +1475,10 @@ func attachTaxRate(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Jurisdiction = (*ifta.Jurisdiction)(child)
 	}
+}
+
+func beforeCreateTaxRate(ctx context.Context, p unsafe.Pointer) error {
+	return (*ifta.TaxRate)(p).BeforeCreate(ctx)
 }
 
 func init() {

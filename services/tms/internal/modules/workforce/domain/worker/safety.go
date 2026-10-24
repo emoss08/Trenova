@@ -370,6 +370,10 @@ func (e *WorkerSafetyEvent) BeforeAppendModel(_ context.Context, query bun.Query
 	return nil
 }
 
+func (e *WorkerSafetyEvent) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 // SafetyRating buckets a scorecard for chips and gauges.
 type SafetyRating string
 

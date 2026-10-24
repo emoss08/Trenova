@@ -219,6 +219,10 @@ func (s *CarrierSettlement) BeforeAppendModel(_ context.Context, query bun.Query
 	return nil
 }
 
+func (s *CarrierSettlement) BeforeCreate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (l *CarrierSettlementLine) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	switch query.(type) {
@@ -231,4 +235,8 @@ func (l *CarrierSettlementLine) BeforeAppendModel(_ context.Context, query bun.Q
 		l.UpdatedAt = now
 	}
 	return nil
+}
+
+func (l *CarrierSettlementLine) BeforeCreate(ctx context.Context) error {
+	return l.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

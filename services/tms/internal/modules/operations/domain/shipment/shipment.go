@@ -731,4 +731,8 @@ func (s *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (s *Shipment) BeforeCreate(ctx context.Context) error {
+	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 const MaxExternalReferenceLength = 100

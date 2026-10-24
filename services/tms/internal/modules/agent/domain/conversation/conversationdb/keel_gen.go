@@ -324,23 +324,24 @@ var messagesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Thread", Alias: "t", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Thread`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 43,
-	AutoUpdate: -1,
-	IDPrefix:   "amsg_",
-	New:        newMessage,
-	NewN:       newNMessage,
-	Size:       unsafe.Sizeof(conversation.Message{}),
-	Ptr:        ptrMessage,
-	Value:      valueMessage,
-	Attach:     attachMessage,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   43,
+	AutoUpdate:   -1,
+	IDPrefix:     "amsg_",
+	New:          newMessage,
+	NewN:         newNMessage,
+	Size:         unsafe.Sizeof(conversation.Message{}),
+	Ptr:          ptrMessage,
+	Value:        valueMessage,
+	Attach:       attachMessage,
+	BeforeCreate: beforeCreateMessage,
 }
 
 var messagesRef = keel.Ref{Table: &messagesTable}
@@ -807,6 +808,10 @@ func attachMessage(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateMessage(ctx context.Context, p unsafe.Pointer) error {
+	return (*conversation.Message)(p).BeforeCreate(ctx)
+}
+
 // queuedMessagesTable is the schema of conversation.QueuedMessage.
 var queuedMessagesTable = schema.Table{
 	Name:   "assistant_queued_messages",
@@ -816,7 +821,7 @@ var queuedMessagesTable = schema.Table{
 	Label:  `Queued Message`,
 	Plural: `Queued Messages`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},
 		{Name: "thread_id", Quoted: `"thread_id"`, Field: "ThreadID", Kind: schema.KindString, Flags: 0, Label: `Thread ID`},
@@ -840,10 +845,10 @@ var queuedMessagesTable = schema.Table{
 	Update:     []int32{3, 4, 5, 6, 7, 8, 11},
 	Returning:  nil,
 	Version:    9,
-	AutoID:     -1,
+	AutoID:     0,
 	AutoCreate: 10,
 	AutoUpdate: 11,
-	IDPrefix:   "",
+	IDPrefix:   "aqm_",
 	New:        newQueuedMessage,
 	NewN:       newNQueuedMessage,
 	Size:       unsafe.Sizeof(conversation.QueuedMessage{}),
@@ -1050,23 +1055,24 @@ var threadsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "User", Alias: "u", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `User`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26},
-	Returning:  nil,
-	Version:    24,
-	AutoID:     0,
-	AutoCreate: 25,
-	AutoUpdate: 26,
-	IDPrefix:   "athr_",
-	New:        newThread,
-	NewN:       newNThread,
-	Size:       unsafe.Sizeof(conversation.Thread{}),
-	Ptr:        ptrThread,
-	Value:      valueThread,
-	Attach:     attachThread,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26},
+	Returning:    nil,
+	Version:      24,
+	AutoID:       0,
+	AutoCreate:   25,
+	AutoUpdate:   26,
+	IDPrefix:     "athr_",
+	New:          newThread,
+	NewN:         newNThread,
+	Size:         unsafe.Sizeof(conversation.Thread{}),
+	Ptr:          ptrThread,
+	Value:        valueThread,
+	Attach:       attachThread,
+	BeforeCreate: beforeCreateThread,
 }
 
 var threadsRef = keel.Ref{Table: &threadsTable}
@@ -1356,6 +1362,10 @@ func attachThread(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.User = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateThread(ctx context.Context, p unsafe.Pointer) error {
+	return (*conversation.Thread)(p).BeforeCreate(ctx)
 }
 
 func init() {

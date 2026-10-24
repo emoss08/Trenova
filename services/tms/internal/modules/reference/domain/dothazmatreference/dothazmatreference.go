@@ -53,6 +53,10 @@ func (d *DotHazmatReference) BeforeAppendModel(_ context.Context, q bun.Query) e
 	return nil
 }
 
+func (d *DotHazmatReference) BeforeCreate(ctx context.Context) error {
+	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (r *DotHazmatReference) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(r,
 		// This table is the regulatory reference the hazmat surfaces read from,

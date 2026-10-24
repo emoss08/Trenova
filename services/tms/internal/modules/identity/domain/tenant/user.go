@@ -61,6 +61,10 @@ func (om *OrganizationMembership) BeforeAppendModel(_ context.Context, q bun.Que
 	return nil
 }
 
+func (om *OrganizationMembership) BeforeCreate(ctx context.Context) error {
+	return om.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 var (
 	_ bun.BeforeAppendModelHook          = (*User)(nil)
 	_ domaintypes.PostgresSearchable     = (*User)(nil)
@@ -78,7 +82,7 @@ type User struct {
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID                    pulid.ID               `json:"id"                    bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID                    pulid.ID               `json:"id"                    bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:usr_"`
 	BusinessUnitID        pulid.ID               `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
 	CurrentOrganizationID pulid.ID               `json:"currentOrganizationId" bun:"current_organization_id,type:VARCHAR(100),notnull" keel:"current_organization_id"`
 	Status                domaintypes.Status     `json:"status"                bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`

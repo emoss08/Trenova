@@ -294,6 +294,10 @@ func (c *Carrier) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (c *Carrier) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (c *Carrier) SamePartyDetails(other *Carrier) bool {
 	if c == nil || other == nil {
 		return c == other

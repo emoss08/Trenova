@@ -216,3 +216,7 @@ func (c *FuelCard) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (c *FuelCard) BeforeCreate(ctx context.Context) error {
+	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}

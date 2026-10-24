@@ -46,22 +46,23 @@ var inboundAttachmentsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "imsga_",
-	New:        newInboundAttachment,
-	NewN:       newNInboundAttachment,
-	Size:       unsafe.Sizeof(inboundmessage.InboundAttachment{}),
-	Ptr:        ptrInboundAttachment,
-	Value:      valueInboundAttachment,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "imsga_",
+	New:          newInboundAttachment,
+	NewN:         newNInboundAttachment,
+	Size:         unsafe.Sizeof(inboundmessage.InboundAttachment{}),
+	Ptr:          ptrInboundAttachment,
+	Value:        valueInboundAttachment,
+	BeforeCreate: beforeCreateInboundAttachment,
 }
 
 var inboundAttachmentsRef = keel.Ref{Table: &inboundAttachmentsTable}
@@ -311,6 +312,10 @@ func valueInboundAttachment(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateInboundAttachment(ctx context.Context, p unsafe.Pointer) error {
+	return (*inboundmessage.InboundAttachment)(p).BeforeCreate(ctx)
+}
+
 // inboundMessagesTable is the schema of inboundmessage.InboundMessage.
 var inboundMessagesTable = schema.Table{
 	Name:   "inbound_messages",
@@ -382,23 +387,24 @@ var inboundMessagesTable = schema.Table{
 		{Name: "Mailbox", Alias: "m", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Mailbox`},
 		{Name: "Attachments", Alias: "a", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Attachments`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 55},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 55},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 55},
-	Returning:  nil,
-	Version:    53,
-	AutoID:     0,
-	AutoCreate: 54,
-	AutoUpdate: 55,
-	IDPrefix:   "imsg_",
-	New:        newInboundMessage,
-	NewN:       newNInboundMessage,
-	Size:       unsafe.Sizeof(inboundmessage.InboundMessage{}),
-	Ptr:        ptrInboundMessage,
-	Value:      valueInboundMessage,
-	Attach:     attachInboundMessage,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 55},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 55},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 55},
+	Returning:    nil,
+	Version:      53,
+	AutoID:       0,
+	AutoCreate:   54,
+	AutoUpdate:   55,
+	IDPrefix:     "imsg_",
+	New:          newInboundMessage,
+	NewN:         newNInboundMessage,
+	Size:         unsafe.Sizeof(inboundmessage.InboundMessage{}),
+	Ptr:          ptrInboundMessage,
+	Value:        valueInboundMessage,
+	Attach:       attachInboundMessage,
+	BeforeCreate: beforeCreateInboundMessage,
 }
 
 var inboundMessagesRef = keel.Ref{Table: &inboundMessagesTable}
@@ -980,6 +986,10 @@ func attachInboundMessage(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateInboundMessage(ctx context.Context, p unsafe.Pointer) error {
+	return (*inboundmessage.InboundMessage)(p).BeforeCreate(ctx)
+}
+
 // mailboxesTable is the schema of inboundmessage.Mailbox.
 var mailboxesTable = schema.Table{
 	Name:   "inbound_mailboxes",
@@ -1012,22 +1022,23 @@ var mailboxesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "imbx_",
-	New:        newMailbox,
-	NewN:       newNMailbox,
-	Size:       unsafe.Sizeof(inboundmessage.Mailbox{}),
-	Ptr:        ptrMailbox,
-	Value:      valueMailbox,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "imbx_",
+	New:          newMailbox,
+	NewN:         newNMailbox,
+	Size:         unsafe.Sizeof(inboundmessage.Mailbox{}),
+	Ptr:          ptrMailbox,
+	Value:        valueMailbox,
+	BeforeCreate: beforeCreateMailbox,
 }
 
 var mailboxesRef = keel.Ref{Table: &mailboxesTable}
@@ -1251,6 +1262,10 @@ func valueMailbox(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateMailbox(ctx context.Context, p unsafe.Pointer) error {
+	return (*inboundmessage.Mailbox)(p).BeforeCreate(ctx)
 }
 
 func init() {

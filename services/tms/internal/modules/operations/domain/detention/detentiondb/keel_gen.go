@@ -43,22 +43,23 @@ var detentionEvidencesTable = schema.Table{
 		{Name: "hash", Quoted: `"hash"`, Field: "Hash", Kind: schema.KindString, Flags: 0, Label: `Hash`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: -1,
-	IDPrefix:   "dte_",
-	New:        newDetentionEvidence,
-	NewN:       newNDetentionEvidence,
-	Size:       unsafe.Sizeof(detention.DetentionEvidence{}),
-	Ptr:        ptrDetentionEvidence,
-	Value:      valueDetentionEvidence,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   -1,
+	IDPrefix:     "dte_",
+	New:          newDetentionEvidence,
+	NewN:         newNDetentionEvidence,
+	Size:         unsafe.Sizeof(detention.DetentionEvidence{}),
+	Ptr:          ptrDetentionEvidence,
+	Value:        valueDetentionEvidence,
+	BeforeCreate: beforeCreateDetentionEvidence,
 }
 
 var detentionEvidencesRef = keel.Ref{Table: &detentionEvidencesTable}
@@ -234,6 +235,10 @@ func valueDetentionEvidence(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateDetentionEvidence(ctx context.Context, p unsafe.Pointer) error {
+	return (*detention.DetentionEvidence)(p).BeforeCreate(ctx)
+}
+
 // detentionNoticesTable is the schema of detention.DetentionNotice.
 var detentionNoticesTable = schema.Table{
 	Name:   "detention_notices",
@@ -275,22 +280,23 @@ var detentionNoticesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
-	Returning:  nil,
-	Version:    27,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "dtn_",
-	New:        newDetentionNotice,
-	NewN:       newNDetentionNotice,
-	Size:       unsafe.Sizeof(detention.DetentionNotice{}),
-	Ptr:        ptrDetentionNotice,
-	Value:      valueDetentionNotice,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Returning:    nil,
+	Version:      27,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "dtn_",
+	New:          newDetentionNotice,
+	NewN:         newNDetentionNotice,
+	Size:         unsafe.Sizeof(detention.DetentionNotice{}),
+	Ptr:          ptrDetentionNotice,
+	Value:        valueDetentionNotice,
+	BeforeCreate: beforeCreateDetentionNotice,
 }
 
 var detentionNoticesRef = keel.Ref{Table: &detentionNoticesTable}
@@ -588,6 +594,10 @@ func valueDetentionNotice(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateDetentionNotice(ctx context.Context, p unsafe.Pointer) error {
+	return (*detention.DetentionNotice)(p).BeforeCreate(ctx)
+}
+
 // detentionOccurrencesTable is the schema of detention.DetentionOccurrence.
 var detentionOccurrencesTable = schema.Table{
 	Name:   "detention_occurrences",
@@ -665,23 +675,24 @@ var detentionOccurrencesTable = schema.Table{
 		{Name: "Evidence", Alias: "e", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Evidence`},
 		{Name: "Notices", Alias: "n", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Notices`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 57},
-	Returning:  nil,
-	Version:    55,
-	AutoID:     0,
-	AutoCreate: 56,
-	AutoUpdate: 57,
-	IDPrefix:   "dto_",
-	New:        newDetentionOccurrence,
-	NewN:       newNDetentionOccurrence,
-	Size:       unsafe.Sizeof(detention.DetentionOccurrence{}),
-	Ptr:        ptrDetentionOccurrence,
-	Value:      valueDetentionOccurrence,
-	Attach:     attachDetentionOccurrence,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 57},
+	Returning:    nil,
+	Version:      55,
+	AutoID:       0,
+	AutoCreate:   56,
+	AutoUpdate:   57,
+	IDPrefix:     "dto_",
+	New:          newDetentionOccurrence,
+	NewN:         newNDetentionOccurrence,
+	Size:         unsafe.Sizeof(detention.DetentionOccurrence{}),
+	Ptr:          ptrDetentionOccurrence,
+	Value:        valueDetentionOccurrence,
+	Attach:       attachDetentionOccurrence,
+	BeforeCreate: beforeCreateDetentionOccurrence,
 }
 
 var detentionOccurrencesRef = keel.Ref{Table: &detentionOccurrencesTable}
@@ -1255,6 +1266,10 @@ func attachDetentionOccurrence(p unsafe.Pointer, rel int32, child unsafe.Pointer
 	}
 }
 
+func beforeCreateDetentionOccurrence(ctx context.Context, p unsafe.Pointer) error {
+	return (*detention.DetentionOccurrence)(p).BeforeCreate(ctx)
+}
+
 // detentionPoliciesTable is the schema of detention.DetentionPolicy.
 var detentionPoliciesTable = schema.Table{
 	Name:   "detention_policies",
@@ -1323,23 +1338,24 @@ var detentionPoliciesTable = schema.Table{
 		{Name: "AccessorialCharge", Alias: "ac", Kind: schema.BelongsTo, Local: []int32{30}, Remote: []int32{0}, Label: `Accessorial Charge`},
 		{Name: "Tiers", Alias: "t", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Tiers`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 51},
-	Returning:  nil,
-	Version:    49,
-	AutoID:     0,
-	AutoCreate: 50,
-	AutoUpdate: 51,
-	IDPrefix:   "dtp_",
-	New:        newDetentionPolicy,
-	NewN:       newNDetentionPolicy,
-	Size:       unsafe.Sizeof(detention.DetentionPolicy{}),
-	Ptr:        ptrDetentionPolicy,
-	Value:      valueDetentionPolicy,
-	Attach:     attachDetentionPolicy,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 51},
+	Returning:    nil,
+	Version:      49,
+	AutoID:       0,
+	AutoCreate:   50,
+	AutoUpdate:   51,
+	IDPrefix:     "dtp_",
+	New:          newDetentionPolicy,
+	NewN:         newNDetentionPolicy,
+	Size:         unsafe.Sizeof(detention.DetentionPolicy{}),
+	Ptr:          ptrDetentionPolicy,
+	Value:        valueDetentionPolicy,
+	Attach:       attachDetentionPolicy,
+	BeforeCreate: beforeCreateDetentionPolicy,
 }
 
 var detentionPoliciesRef = keel.Ref{Table: &detentionPoliciesTable}
@@ -1840,6 +1856,10 @@ func attachDetentionPolicy(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateDetentionPolicy(ctx context.Context, p unsafe.Pointer) error {
+	return (*detention.DetentionPolicy)(p).BeforeCreate(ctx)
+}
+
 // detentionPolicyTiersTable is the schema of detention.DetentionPolicyTier.
 var detentionPolicyTiersTable = schema.Table{
 	Name:   "detention_policy_tiers",
@@ -1863,22 +1883,23 @@ var detentionPolicyTiersTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 11},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
-	IDPrefix:   "dpt_",
-	New:        newDetentionPolicyTier,
-	NewN:       newNDetentionPolicyTier,
-	Size:       unsafe.Sizeof(detention.DetentionPolicyTier{}),
-	Ptr:        ptrDetentionPolicyTier,
-	Value:      valueDetentionPolicyTier,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 11},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   10,
+	AutoUpdate:   11,
+	IDPrefix:     "dpt_",
+	New:          newDetentionPolicyTier,
+	NewN:         newNDetentionPolicyTier,
+	Size:         unsafe.Sizeof(detention.DetentionPolicyTier{}),
+	Ptr:          ptrDetentionPolicyTier,
+	Value:        valueDetentionPolicyTier,
+	BeforeCreate: beforeCreateDetentionPolicyTier,
 }
 
 var detentionPolicyTiersRef = keel.Ref{Table: &detentionPolicyTiersTable}
@@ -2023,6 +2044,10 @@ func valueDetentionPolicyTier(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateDetentionPolicyTier(ctx context.Context, p unsafe.Pointer) error {
+	return (*detention.DetentionPolicyTier)(p).BeforeCreate(ctx)
 }
 
 func init() {

@@ -84,6 +84,10 @@ func (a *LateChargeAssessment) BeforeAppendModel(_ context.Context, query bun.Qu
 	return nil
 }
 
+func (a *LateChargeAssessment) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (a *LateChargeAssessment) GetID() pulid.ID {
 	return a.ID
 }
