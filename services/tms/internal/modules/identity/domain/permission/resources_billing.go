@@ -639,7 +639,7 @@ func (r *Registry) registerBillingResources() {
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceCodeMode.String(),
 		DisplayName: "Read-only scripts",
-		Description: "Agents answering a question that needs many reads with one short read-only script, through an enabled extension",
+		Description: "Agents answering a question that needs many reads with one short read-only script",
 		Category:    "Desk",
 		Operations: []OperationDefinition{
 			{

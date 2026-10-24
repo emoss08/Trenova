@@ -269,8 +269,8 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead: {},
 	},
 	// Running a short script whose every read is one of the agent's own reads,
-	// checked as the person, in a sandbox that cannot reach the network. It
-	// changes nothing.
+	// checked as the person, in an interpreter that reaches no file or network.
+	// It changes nothing.
 	ResourceCodeMode: {
 		OpRead: {},
 	},

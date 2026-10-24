@@ -130,18 +130,13 @@ func (l *syncLedger) byCallID() map[string]agentports.RunStep {
 	return steps
 }
 
-type codeModeExtensions struct{}
+type noExtensions struct{}
 
-func (codeModeExtensions) ActiveCapabilities(
+func (noExtensions) ActiveCapabilities(
 	context.Context,
 	pagination.TenantInfo,
 ) (agentextension.Active, error) {
-	return agentextension.Active{
-		agentextension.CapabilityCodeMode: {
-			Type:         agentextension.TypeE2B,
-			Availability: agentextension.AvailabilitySelectedAgents,
-		},
-	}, nil
+	return agentextension.Active{}, nil
 }
 
 type scriptStep func(ctx context.Context, broker codemode.Broker) codemode.Reply
@@ -154,13 +149,13 @@ type stubScriptTool struct {
 	data    any
 }
 
-func (t *stubScriptTool) Name() string                { return agentextension.ToolRunScript }
+func (t *stubScriptTool) Name() string                { return codemode.ToolRunScript }
 func (t *stubScriptTool) Description() string         { return "Run a read-only script." }
 func (t *stubScriptTool) ParamSchema() map[string]any { return map[string]any{"type": "object"} }
 
 func (t *stubScriptTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          agentextension.ToolRunScript,
+		Name:          codemode.ToolRunScript,
 		Kind:          agent.ToolKindQuery,
 		Resource:      permission.ResourceCodeMode,
 		Operation:     permission.OpRead,
@@ -220,11 +215,11 @@ func newScriptHarness(
 	tools := append([]agentports.AgentQueryTool{script}, reads...)
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{Tools: tools},
 		&stubActionRegistry{Tools: actions}, permissions)
-	rt.extensions = codeModeExtensions{}
+	rt.extensions = noExtensions{}
 	rt.codeMode = codemode.Gate{}
 	rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true})
 
-	names := []string{agentextension.ToolRunScript}
+	names := []string{codemode.ToolRunScript}
 	for _, tool := range reads {
 		names = append(names, tool.Name())
 	}
@@ -259,7 +254,7 @@ func (h *scriptHarness) run(ctx context.Context, steps ...scriptStep) ToolOutcom
 	return h.rt.DispatchStep(ctx, h.req, DispatchCall{
 		Call: agentports.ToolCall{
 			ID:        "call_script",
-			Name:      agentextension.ToolRunScript,
+			Name:      codemode.ToolRunScript,
 			Arguments: map[string]any{},
 		},
 		Taint:          &agent.RunTaint{},
@@ -532,7 +527,7 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 
 	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
 	denied := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:     agentports.ToolCall{ID: "call_haiku", Name: agentextension.ToolRunScript},
+		Call:     agentports.ToolCall{ID: "call_haiku", Name: codemode.ToolRunScript},
 		Taint:    &agent.RunTaint{},
 		Model:    "claude-haiku-5-5",
 		Provider: aiprovider.KindAnthropicMessages,
@@ -548,7 +543,7 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	h.req.CodeMode = codemode.OverrideDefault
 
 	fourth := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:           agentports.ToolCall{ID: "call_fourth", Name: agentextension.ToolRunScript},
+		Call:           agentports.ToolCall{ID: "call_fourth", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Model:          scriptModel,
 		Provider:       aiprovider.KindAnthropicMessages,
@@ -584,13 +579,13 @@ func TestOpenTurnOffersTheScriptToolOnlyWhileTheGateIsOpen(t *testing.T) {
 	h.rt.scripts = scripts
 
 	closed := h.rt.OpenTurn(t.Context(), h.req)
-	assert.False(t, closed.tools.offers(agentextension.ToolRunScript))
+	assert.False(t, closed.tools.offers(codemode.ToolRunScript))
 
 	scripts.set(aiprovider.ScriptSettings{Scripts: true})
-	assert.False(t, closed.tools.offers(agentextension.ToolRunScript),
+	assert.False(t, closed.tools.offers(codemode.ToolRunScript),
 		"turning scripts on mid-turn adds nothing to a turn already open")
 	open := h.rt.OpenTurn(t.Context(), h.req)
-	assert.True(t, open.tools.offers(agentextension.ToolRunScript))
+	assert.True(t, open.tools.offers(codemode.ToolRunScript))
 }
 
 func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
@@ -606,7 +601,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 	scripts.set(aiprovider.ScriptSettings{})
 	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
 	turnedOff := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:           agentports.ToolCall{ID: "call_second", Name: agentextension.ToolRunScript},
+		Call:           agentports.ToolCall{ID: "call_second", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Ordinal:        1,
 		Model:          scriptModel,
@@ -619,7 +614,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 
 	scripts.set(aiprovider.ScriptSettings{Scripts: true})
 	failover := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:           agentports.ToolCall{ID: "call_failover", Name: agentextension.ToolRunScript},
+		Call:           agentports.ToolCall{ID: "call_failover", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Model:          "claude-haiku-5-5",
 		Provider:       aiprovider.KindAnthropicMessages,
@@ -660,7 +655,7 @@ func TestScriptTraceAndSteps(t *testing.T) {
 	}
 
 	anchor := aitrace.ForRun(h.req.StepOwner, h.req.Delegation)
-	parent := aitracetest.One(t, anchor.TraceID, "execute_tool "+agentextension.ToolRunScript)
+	parent := aitracetest.One(t, anchor.TraceID, "execute_tool "+codemode.ToolRunScript)
 	assert.Equal(t, anchor.RootSpanID, parent.Parent.SpanID(), "the script hangs under the turn")
 	reads := aitracetest.Named(anchor.TraceID, "execute_tool shipment_list")
 	require.Len(t, reads, 3)
@@ -703,5 +698,5 @@ func TestScriptIndexListsOnlyHeldReadsAScriptMayCall(t *testing.T) {
 		"not the script tool itself, and not a web read")
 	encoded, err := sonic.Marshal(broker.Index())
 	require.NoError(t, err)
-	assert.False(t, strings.Contains(string(encoded), agentextension.ToolRunScript))
+	assert.False(t, strings.Contains(string(encoded), codemode.ToolRunScript))
 }

@@ -10448,7 +10448,7 @@
       "go/other"
     ]
   },
-  "A script runs in your organization's E2B sandbox with no network access, and the rows it reads are sent to E2B, as data analysis does. It also needs Read-only scripts turned on in the E2B extension and the code_mode permission. Every read goes through the same permissions as a normal tool call, and sandbox time counts against the extension's daily limit.": {
+  "A script runs inside Trenova in a sandboxed Python interpreter with no access to files or the network, and nothing it reads leaves Trenova. Every read goes through the same permissions as a normal tool call, and a person needs the Read-only scripts permission, which the Desk bundle grants.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -21784,15 +21784,6 @@
       "go/other"
     ]
   },
-  "Agent read-only scripts": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "Agent run": {
     "sites": 3,
     "scope": [
@@ -21971,7 +21962,7 @@
       "go/other"
     ]
   },
-  "Agents answering a question that needs many reads with one short read-only script, through an enabled extension": {
+  "Agents answering a question that needs many reads with one short read-only script": {
     "sites": 1,
     "scope": [
       "go"
@@ -27802,15 +27793,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Answers a question that needs many reads with one short Python script whose every read is the agent's own, checked as the person.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Answers from your records": {
@@ -138566,7 +138548,7 @@
       "apps/web/components"
     ]
   },
-  "Lets this provider's model answer fan-out, reconciliation and report questions with one short read-only Python script instead of many tool calls. Off by default.": {
+  "Lets this provider's model answer fan-out, reconciliation and report questions with one short read-only Python script instead of many tool calls. On by default.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -154618,15 +154600,6 @@
     ],
     "areas": [
       "packages/shared/lib"
-    ]
-  },
-  "Must be true or false": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Must be valid JSON": {
@@ -208015,15 +207988,6 @@
     ]
   },
   "Read-only scripts": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Read-only scripts are turned off for this organization. Answer with the discrete reads.": {
     "sites": 1,
     "scope": [
       "go"
@@ -208467,15 +208431,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Reads per script": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Reads the full text of a page a search returned.": {
@@ -226315,15 +226270,6 @@
       "go/other"
     ]
   },
-  "Run a read-only script": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Run a request on a schedule and post the results here": {
     "sites": 1,
     "scope": [
@@ -233510,15 +233456,6 @@
     ]
   },
   "Seconds per analysis": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Seconds per script": {
     "sites": 1,
     "scope": [
       "go"
@@ -330068,7 +330005,7 @@
     ]
   },
   "the read's answer could not be encoded": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -330085,6 +330022,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "the result is too large": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "the script was stopped": {
@@ -330192,7 +330138,7 @@
     ]
   },
   "the {0} extension cannot run code": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],

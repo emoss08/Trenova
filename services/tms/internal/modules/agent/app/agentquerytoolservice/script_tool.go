@@ -3,16 +3,14 @@ package agentquerytoolservice
 import (
 	"context"
 	"errors"
-	"slices"
 	"strings"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -22,9 +20,9 @@ import (
 )
 
 const (
-	paramScriptTitle   = agentextension.ParamScriptTitle
-	paramScriptPurpose = agentextension.ParamScriptPurpose
-	paramScriptCode    = agentextension.ParamScriptCode
+	paramScriptTitle   = codemode.ParamScriptTitle
+	paramScriptPurpose = codemode.ParamScriptPurpose
+	paramScriptCode    = codemode.ParamScriptCode
 	paramScriptInputs  = "inputs"
 	paramInputName     = "name"
 	paramInputValue    = "value"
@@ -52,14 +50,14 @@ const (
 var errScriptBrokerMissing = errors.New("agent_run_script runs only through the agent runtime")
 
 type runScriptTool struct {
-	runner agentextensionports.ScriptRunner
+	runner scriptports.Runner
 }
 
-func newRunScriptTool(runner agentextensionports.ScriptRunner) agentports.AgentQueryTool {
+func newRunScriptTool(runner scriptports.Runner) agentports.AgentQueryTool {
 	return &runScriptTool{runner: runner}
 }
 
-func (t *runScriptTool) Name() string { return agentextension.ToolRunScript }
+func (t *runScriptTool) Name() string { return codemode.ToolRunScript }
 
 func (t *runScriptTool) Description() string {
 	return "Run a short Python script that calls the reads you hold, for questions " +
@@ -71,9 +69,8 @@ func (t *runScriptTool) Description() string {
 		"what you may call, help(trenova.shipment.list) gives one's parameters, " +
 		"trenova.gather(a.defer(...), b.defer(...)) runs several at once, and a refused call " +
 		"raises trenova.Refused. Only what you print and one trenova.result(value) come back. " +
-		"A script cannot reach the internet and changes nothing: a call to a change " +
-		"trenova.tools() lists prepares it, and what it prepared is proposed as one batch " +
-		"for a person to approve."
+		"A script changes nothing: a call to a change trenova.tools() lists prepares it, and " +
+		"what it prepared is proposed as one batch for a person to approve."
 }
 
 func (t *runScriptTool) ParamSchema() map[string]any {
@@ -94,8 +91,11 @@ func (t *runScriptTool) ParamSchema() map[string]any {
 			},
 			paramScriptCode: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "The Python to run. import trenova is done for you; " +
-					"print() what you need to answer and pass one summary to trenova.result().",
+				toolschema.KeyDescription: "The Python to run, in a sandboxed interpreter: " +
+					"trenova is already there; json, datetime, math, re, collections and " +
+					"itertools import as usual; date.today() is the organization's today; " +
+					"classes cannot inherit; there are no files, packages or network. print() " +
+					"what you need to answer and pass one summary to trenova.result().",
 				toolschema.KeyMaxLength: codemode.MaxCodeChars,
 			},
 			paramScriptInputs: map[string]any{
@@ -135,8 +135,9 @@ func (t *runScriptTool) Policy() agentports.ToolPolicy {
 		resource: permission.ResourceCodeMode,
 		reads:    agent.ExternalReadMarked,
 		source:   agent.TaintSourceRecordNote,
-		rationale: "Runs a short script in a sandbox that cannot reach the network; every read " +
-			"it makes is one of the agent's own reads, run as the person under the same checks, " +
+		rationale: "Runs a short script in an interpreter that cannot reach the network or a " +
+			"file; every read it makes is one of the agent's own reads, run as the person under " +
+			"the same checks, " +
 			"and the call carries the taint of every read that brought outside text in. It " +
 			"changes nothing itself: a change it prepares is proposed with the rest of its " +
 			"batch for a person to approve.",
@@ -196,7 +197,7 @@ type scriptAnswer struct {
 // ScriptCompleted reports a script that ran to its end, the only one whose
 // prepared changes are proposed.
 func (a *scriptAnswer) ScriptCompleted() bool {
-	return a.Status == string(agentextensionports.ScriptSucceeded)
+	return a.Status == string(scriptports.Succeeded)
 }
 
 func (t *runScriptTool) Query(
@@ -212,18 +213,19 @@ func (t *runScriptTool) Query(
 	code, _ := params.Params[paramScriptCode].(string)
 	inputs := scriptInputs(params.Params[paramScriptInputs])
 
-	outcome, err := t.runner.RunScript(ctx, &agentextensionports.ScriptRequest{
+	outcome, err := t.runner.Run(ctx, &scriptports.Request{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
 			BuID:   params.BusinessUnitID,
 			UserID: params.Actor.UserID,
 		},
-		Title:   stringutils.TruncateRunes(title, maxScriptTitleRunes),
-		Purpose: stringutils.TruncateRunes(purpose, maxScriptPurposeRunes),
-		Code:    code,
-		Inputs:  inputs,
-		Broker:  params.Broker,
-		StepKey: params.StepKey,
+		Title:    stringutils.TruncateRunes(title, maxScriptTitleRunes),
+		Purpose:  stringutils.TruncateRunes(purpose, maxScriptPurposeRunes),
+		Code:     code,
+		Inputs:   inputs,
+		Timezone: params.Timezone,
+		Broker:   params.Broker,
+		StepKey:  params.StepKey,
 	})
 	summary := params.Broker.Summary()
 	if err != nil {
@@ -266,7 +268,7 @@ var scriptTaintSources = []agent.TaintSource{
 
 func scriptAnswerOf(
 	title string,
-	outcome *agentextensionports.ScriptOutcome,
+	outcome *scriptports.Outcome,
 	summary *codemode.Summary,
 ) *scriptAnswer {
 	answer := &scriptAnswer{
@@ -310,12 +312,12 @@ func scriptAnswerOf(
 	}
 
 	switch outcome.Status {
-	case agentextensionports.ScriptSucceeded:
+	case scriptports.Succeeded:
 		answer.Note = scriptDoneNote
-	case agentextensionports.ScriptErrored:
+	case scriptports.Errored:
 		answer.Note = scriptErrorNote
-	case agentextensionports.ScriptTimedOut, agentextensionports.ScriptStopped,
-		agentextensionports.ScriptFailed:
+	case scriptports.TimedOut, scriptports.Stopped,
+		scriptports.Failed:
 		answer.Note = scriptStoppedNote
 	}
 	answer.Note += batchNote(answer, &summary.Batch)
@@ -323,7 +325,7 @@ func scriptAnswerOf(
 	return answer
 }
 
-func hitOf(outcome *agentextensionports.ScriptOutcome, summary *codemode.Summary) codemode.Limit {
+func hitOf(outcome *scriptports.Outcome, summary *codemode.Summary) codemode.Limit {
 	if outcome.Limit != codemode.LimitNone {
 		return outcome.Limit
 	}
@@ -347,7 +349,7 @@ func boundedError(err *codemode.ScriptError) *codemode.ScriptError {
 func markScriptSpan(
 	ctx context.Context,
 	summary *codemode.Summary,
-	outcome *agentextensionports.ScriptOutcome,
+	outcome *scriptports.Outcome,
 ) {
 	span := trace.SpanFromContext(ctx)
 	if !span.IsRecording() {
@@ -357,7 +359,6 @@ func markScriptSpan(
 		aitrace.AICodeModeCalls.Int(summary.Usage.Calls),
 		aitrace.AICodeModeRows.Int(summary.Usage.Rows),
 		aitrace.AICodeModeBytes.Int(summary.Usage.Bytes),
-		aitrace.AICodeModePollMs.Int64(codemode.PollInterval.Milliseconds()),
 	}
 	broker := make([]int64, 0, len(summary.Calls))
 	reply := make([]int64, 0, len(summary.Calls))
@@ -374,7 +375,6 @@ func markScriptSpan(
 	if outcome != nil {
 		attrs = append(attrs,
 			aitrace.AICodeModeStatus.String(string(outcome.Status)),
-			aitrace.AICodeModeRoundTripMs.Int64Slice(slices.Clone(outcome.RoundTripsMs)),
 		)
 		if hit := hitOf(outcome, summary); hit != codemode.LimitNone {
 			attrs = append(attrs, aitrace.AICodeModeLimitHit.String(string(hit)))

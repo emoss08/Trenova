@@ -132,6 +132,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			},
 			Priority: 20,
 			Enabled:  true,
+			Scripts:  true,
 		},
 		{
 			OrganizationID: orgID,
@@ -151,6 +152,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			Priority: 5,
 			Trusted:  true,
 			Enabled:  false,
+			Scripts:  true,
 		},
 	}
 }

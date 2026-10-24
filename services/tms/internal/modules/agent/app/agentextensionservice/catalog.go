@@ -30,17 +30,6 @@ var capabilityDefinitions = map[agentextension.Capability]capabilityDefinition{
 			},
 		},
 	},
-	agentextension.CapabilityCodeMode: {
-		Label: "Read-only scripts",
-		Plan:  platformplan.CapabilityAgentCodeMode,
-		Tools: []agentextensionports.AgentExtensionTool{
-			{
-				Name:        agentextension.ToolRunScript,
-				Label:       "Run a read-only script",
-				Description: "Answers a question that needs many reads with one short Python script whose every read is the agent's own, checked as the person.",
-			},
-		},
-	},
 	agentextension.CapabilityPortalAutomation: {
 		Label: "Portal work",
 		Plan:  platformplan.CapabilityAgentPortalAutomation,

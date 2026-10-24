@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/runstepledger"
+	"github.com/emoss08/trenova/internal/modules/agent/app/scriptrunner"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs"
@@ -52,5 +53,6 @@ func WorkerOptions() fx.Option {
 		decisioncommitjobs.Module,
 		retrievaljobs.Module,
 		dispatchjobs.Module,
+		scriptrunner.WarmModule,
 	)
 }

@@ -20,7 +20,7 @@
 #   fonts      Liberation 2.1.5 (SIL OFL 1.1), metric-compatible stand-ins for the base fonts
 #              a PDF names without embedding.
 
-ARG RUST_VERSION=1.94
+ARG RUST_VERSION=1.96
 ARG DEBIAN_RELEASE=trixie
 
 FROM rust:${RUST_VERSION}-slim-${DEBIAN_RELEASE} AS chef

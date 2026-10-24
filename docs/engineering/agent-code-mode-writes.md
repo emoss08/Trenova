@@ -2,7 +2,7 @@
 
 **Status: built (2026-10-20), off by default.** A script prepares writes only for a chat
 provider whose "Scripts may propose writes" setting is on in AI Control, which requires its
-"Scripts" setting (see "Enablement"). Every provider ships with both off.
+"Scripts" setting (see "Enablement"). Scripts ship on and writes off.
 
 A code-mode script can prepare many writes in one run, but none of them happens until a person
 approves them as **one batch proposal**. Each write in the batch is a call to one single-record
@@ -12,7 +12,7 @@ changed is refused. Every rule a discrete write obeys still holds. The bar is **
 unauthorized commits**.
 
 This page builds on Phase 5a, code mode for reads ([agent-code-mode.md](agent-code-mode.md)).
-That page describes the sandbox, the SDK and the broker, which runs every call as the person and
+That page describes the interpreter, the SDK and the broker, which runs every call as the person and
 is the only path from a script to data. Read these first:
 
 - [proposal-previews.md](proposal-previews.md): previews, digests, plans and decisions;
@@ -30,9 +30,9 @@ Background is in [docs/desk-harness-review.md](../desk-harness-review.md):
 - **One tool runs the script.** The model calls `agent_run_script`, which is one step in
   `agent_run_steps`. Each broker call is a step of its own (`caller=script`,
   `parent_step_key`, `Scope: "script:<script step key>"`).
-- **The SDK is generated.** It is a generic shim plus a per-call index built from the turn's
+- **The SDK is generated.** It is a generic SDK plus a per-call index built from the turn's
   tools. 5b appends the writes the turn may prepare to that index, each marked `writes: true`
-  (`codemode.Read.Writes`); the shim gains no tool name, and `trenova.tools()` lists each entry as
+  (`codemode.Read.Writes`); the SDK gains no tool name, and `trenova.tools()` lists each entry as
   a read or a change.
 - **Frames out, files back.** Frames go out on stdout (`\x1etrenova-rpc:<nonce>:<json>`) and
   responses come back as files. A write frame is answered in the same way a read frame is.
@@ -40,9 +40,8 @@ Background is in [docs/desk-harness-review.md](../desk-harness-review.md):
   clear it.
 - **The broker refuses a write where the provider may not write.** The refusal names the tool
   to propose the change with instead (`TestBrokerRefusesAWriteWhenTheModelMayNotWrite`).
-- **Gates.** Code mode has its own capability (`agent.code_mode`, `CapabilityCodeMode`) and
-  runs only for a chat provider with Scripts on, read at dispatch from the provider that
-  answered (5a §7).
+- **Gates.** Code mode runs only for a chat provider with Scripts on, read at dispatch from the
+  provider that answered, and for a person with the `code_mode` permission (5a §7).
 - **Limits.** 5a's limits (60 s, 60 broker calls, `maxScriptsPerTurn` 3) bound the script. Every
   write the script names counts as one broker call.
 
@@ -157,7 +156,7 @@ command changes, so the replay histories under `agentjobs/testdata/replay*` repl
 ### The outbox
 
 The outbox lives for one `agent_run_script` call: an ordered list of `PendingAction`s and their
-baselines. It is never written to the sandbox and never sent back through the RPC; the script
+baselines. It is never handed to the interpreter and never sent back to the script; the script
 holds only intent numbers. The broker asks it to `Admit` each call before dispatch and to `Hold`
 the decided action after, and the SDK call raises in each of these cases:
 
@@ -170,11 +169,11 @@ the decided action after, and the SDK call raises in each of these cases:
 | **No permission.** The person may not perform the write. | Dispatch's own permission refusal. The intent is never kept. |
 | **Ran.** An action dispatch returned as executed, simulated or automatic. | `ErrIntentRan`. No path produces one; the outbox refuses it anyway. |
 
-Each write frame is a broker call, and so a ledger step of its own under the script's step
+Each write the script names is a broker call, and so a ledger step of its own under the script's step
 (`caller=script`, `parent_step_key`), as 5a's reads are. It never records an effect, because none
 happens. It counts against 5a's per-script call budget.
 
-**A script that ends badly files nothing.** That covers an exception, a timeout, a sandbox
+**A script that ends badly files nothing.** That covers an exception, a timeout, an interpreter
 failure, a broker error, or a script killed by the 5a limits (`TestScriptWrites_AScriptThatDidNotFinishFilesNothing`).
 The `agent_run_script` result says so: its batch note says what was filed, what was dropped
 because the script did not finish, or why the batch was refused. Intents are a plan the script
@@ -182,7 +181,7 @@ finished writing, never a part of one.
 
 ### Taint is the script's, not the step's
 
-Statements inside the sandbox run in an order the host cannot verify. The broker therefore taints
+Statements inside the interpreter run in an order the host cannot verify. The broker therefore taints
 every intent with the taint **of the whole `agent_run_script` call**, applied when the script
 settles, never with the taint the turn had when that intent was prepared:
 
@@ -337,7 +336,7 @@ to:
 | `script_batch_pinned` | Every step that names a record is pinned to the version its preview read, so a stale approval is caught at decision. |
 
 The cases, `testdata/cases/22`–`27_codemode_write_*.yaml`, use 5a's `script` source (the
-script's frames played through the real broker), so they need no Python and no E2B. Their agents
+script's lines run as Python in the real interpreter, through the real runner and broker). Their agents
 set the answering provider's settings to `provider: {scripts: true, scriptWrites: true}`, which
 the harness hands the runtime (`providerScripts`) so the gate decides as in production, and a
 case may deny the person a permission (`denied`):
@@ -393,8 +392,7 @@ The scenarios are written and validated by tests, not run. The owner runs the be
 
 ## Enablement
 
-Writes from a script need everything 5a needs (the `agent.code_mode` capability, the E2B
-extension's "Read-only scripts" setting, the `code_mode` permission, and Scripts on for the
+Writes from a script need everything 5a needs (the `code_mode` permission and Scripts on for the
 answering provider), plus one more thing: that provider's **Scripts may propose writes** setting
 (`scriptWrites`, column `code_mode_writes` on `ai_providers`). It requires Scripts, in
 validation and in a database check constraint, and is off by default.

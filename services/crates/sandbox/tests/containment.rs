@@ -220,7 +220,7 @@ async fn a_receiver_that_goes_away_mid_job_ends_it_and_frees_the_slot() {
     let job = Job {
         body: b"outputs:100000".to_vec(),
         input: None,
-        deadline: Instant::now() + Duration::from_secs(600),
+        deadline: Instant::now() + Duration::from_mins(10),
     };
     let reader = tokio::spawn(async move {
         let first = rx.recv().await;
@@ -243,7 +243,7 @@ async fn dropping_the_caller_stops_the_job() {
     let job = Job {
         body: b"hang".to_vec(),
         input: None,
-        deadline: Instant::now() + Duration::from_secs(600),
+        deadline: Instant::now() + Duration::from_mins(10),
     };
     let abandoned = tokio::time::timeout(Duration::from_millis(200), pool.run(job, tx)).await;
     assert!(abandoned.is_err(), "the job was still running");

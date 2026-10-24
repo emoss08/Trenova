@@ -1,0 +1,23 @@
+[package]
+name = "trenova-scripts"
+description = "Runs an agent's read-only Python script in Monty, a sandboxed interpreter, pausing at every read for the host to answer. Compiled to one WebAssembly module the TMS runs in wazero."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+monty.workspace = true
+monty-types.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+monty-alloc = { workspace = true, features = ["exit-code"] }
+
+[lints]
+workspace = true

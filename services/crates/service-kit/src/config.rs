@@ -399,7 +399,7 @@ mod tests {
         assert_eq!(bytes::parse("512"), Ok(512));
         assert!(bytes::parse("4MB").is_err());
         assert_eq!(duration::parse("250ms"), Ok(Duration::from_millis(250)));
-        assert_eq!(duration::parse("2m"), Ok(Duration::from_secs(120)));
+        assert_eq!(duration::parse("2m"), Ok(Duration::from_mins(2)));
         assert!(duration::parse("10").is_err());
     }
 }

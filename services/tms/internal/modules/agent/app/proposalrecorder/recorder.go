@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -921,9 +921,9 @@ func (s *Service) scriptOrigin(
 }
 
 func scriptOriginOf(arguments map[string]any) *agent.ScriptOrigin {
-	title, _ := arguments[agentextension.ParamScriptTitle].(string)
-	purpose, _ := arguments[agentextension.ParamScriptPurpose].(string)
-	code, _ := arguments[agentextension.ParamScriptCode].(string)
+	title, _ := arguments[codemode.ParamScriptTitle].(string)
+	purpose, _ := arguments[codemode.ParamScriptPurpose].(string)
+	code, _ := arguments[codemode.ParamScriptCode].(string)
 	if title == "" && purpose == "" && code == "" {
 		return nil
 	}

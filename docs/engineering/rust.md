@@ -41,7 +41,7 @@ and a crash in a PDF parser must never stop anything else.
 services/
   Cargo.toml              [workspace] members = ["imaging", "crates/*"]; dependencies, lints, profiles
   Cargo.lock
-  rust-toolchain.toml     1.94 (the channel desktop/capture pins), rustfmt, clippy, the wasm32-unknown-unknown target
+  rust-toolchain.toml     1.96 (the channel desktop/capture pins), rustfmt, clippy, the wasm32-unknown-unknown and wasm32-wasip1 targets
   deny.toml               cargo-deny: advisories, licences, duplicate majors, sources
   clippy.toml             words doc comments may use unquoted (PDFium, WebP, ...)
   .cargo/config.toml      only what every build needs
@@ -52,6 +52,9 @@ services/
     sandbox/              trenova-sandbox: a supervised pool of hardened child processes
     imaging-core/         trenova-imaging-core: platform-neutral page imaging (shared with capture)
     rules/                trenova-rules: the rules engine, one WebAssembly module for the TMS and the browser
+    scripts/              trenova-scripts: agent scripts in Monty, a WebAssembly module only the TMS runs
+  scripts/wasm-module.sh  the reproducible WebAssembly build both modules' build-wasm.sh source
+  vendor/monty/           Monty with one patch (vendor/monty/TRENOVA.md); excluded from the workspace
   imaging/                trenova-imaging: the imaging worker (a deployable)
   tms/                    the Go service
   postgres/<ext>/         future pgrx extensions; outside the workspace, built by deploy/Dockerfile.postgres
@@ -178,14 +181,22 @@ Fat-LTO builds are slow; do not run them over and over. Cap parallelism with
 ## WebAssembly modules
 
 `trenova-rules` (`services/crates/rules`, [rules-engine.md](rules-engine.md)) is the first
-WebAssembly crate, and the pattern for any later one.
+WebAssembly crate, and the pattern for any later one. `trenova-scripts`
+(`services/crates/scripts`, [agent-code-mode.md](agent-code-mode.md)) is the second.
 
-- **One `wasm32-unknown-unknown` module serves both hosts.** The crate is pure computation
-  with no imports at all (no WASI, no clock, no randomness, no I/O), so the bytes the TMS runs
-  in wazero are the bytes the browser runs. That is why `wasm32-wasip1` is not used: it imports
-  WASI functions a browser does not have, and a second build per host would turn "the same
-  answer to the cent" back into something tests have to keep true. Code that needs the outside
-  world is a service, not a module.
+- **A module the browser runs is `wasm32-unknown-unknown` with no imports at all** (no WASI, no
+  clock, no randomness, no I/O), so the bytes the TMS runs in wazero are the bytes the browser
+  runs. `wasm32-wasip1` imports WASI functions a browser does not have, and a second build per
+  host would turn "the same answer to the cent" back into something tests have to keep true.
+- **A module only the TMS runs may be `wasm32-wasip1`** when a dependency needs the standard
+  library's clock or randomness (Monty's `chrono` pulls browser bindings on
+  `unknown-unknown`). The host gives it a WASI with nothing in it: no directories, no
+  environment, no arguments, and it refuses a module importing anything but
+  `wasi_snapshot_preview1` (`pkg/scriptvm`, `checkABI`).
+- **Untrusted code may run in a module rather than a service** when the module itself grants
+  nothing: an instance's linear memory is its whole world, wazero stops it when its context
+  ends, and a fresh instance per run leaves nothing behind. That is how agent scripts run.
+  Code that needs a native library, or the outside world, is still a service.
 - **The ABI** is three exports and JSON in and out (`rules_alloc`, `rules_call`,
   `rules_free`; see "The ABI" in rules-engine.md). Nothing else crosses the boundary.
 - **Two committed copies**, each with a `rules.wasm.sha256` sidecar in `sha256sum` format:
@@ -195,7 +206,9 @@ WebAssembly crate, and the pattern for any later one.
 
   Never edit either by hand. The Go and the client tests both check that the bytes match the
   sidecar, and the Go test that the two copies are identical.
-- **The build** is `services/crates/rules/scripts/build-wasm.sh`, run by `task rust:wasm-rules`:
+- **The build** is `services/crates/rules/scripts/build-wasm.sh`, run by `task rust:wasm-rules`,
+  on the shared `services/scripts/wasm-module.sh` (the scripts module's build sources the same
+  file, with its own target, profile and optimisation level):
   - `cargo build --locked -p trenova-rules --profile wasm --target wasm32-unknown-unknown`, with
     `--remap-path-prefix` for the services checkout (`/trenova/services`), the cargo target
     directory (`/trenova/target`), `CARGO_HOME` (`/cargo`) and the toolchain's `rust-src`
@@ -205,7 +218,7 @@ WebAssembly crate, and the pattern for any later one.
     `services/target/binaryen/` and verified against the SHA-256 pinned in the script for each
     platform (Linux x86_64 and aarch64, macOS arm64 and x86_64; elsewhere set
     `TRENOVA_WASM_OPT` to a wasm-opt that reports version 133);
-  - with exactly the features rustc 1.94 enables for the target, so nothing is lowered or
+  - with exactly the features rustc 1.96 enables for the target, so nothing is lowered or
     rejected: `--mvp-features` plus bulk memory (and its `-opt` subset), overlong
     `call_indirect`, multi-value, mutable globals, non-trapping float-to-int, reference types
     and sign extension;
@@ -246,14 +259,16 @@ WebAssembly crate, and the pattern for any later one.
 | `task rust:image-imaging` | the imaging worker's image |
 | `task rust:wasm-rules` | build `trenova-rules` to WebAssembly and install both committed copies with their `.sha256` |
 | `task rust:wasm-rules-check` | rebuild it and fail when a committed copy or its `.sha256` differs |
+| `task rust:wasm-scripts` | build `trenova-scripts` to WebAssembly (`wasm32-wasip1`, profile `wasm-server`, `wasm-opt -O3`) and install `services/tms/pkg/scriptvm/scripts.wasm` with its `.sha256` |
+| `task rust:wasm-scripts-check` | rebuild it and fail when the committed copy or its `.sha256` differs |
 
 ## CI
 
 `.github/workflows/rust.yml` runs on changes under `services/` outside `services/tms`, the
 generated Go contracts, the committed `rules.wasm` copies, the toolchain pins and the imaging
 Dockerfile: the toolchain-pin check, `cargo fmt --check`, clippy with `-D warnings`,
-`cargo test --workspace` with PDFium and libheif installed, the WebAssembly module (clippy for
-`wasm32-unknown-unknown` and `build-wasm.sh check`), `cargo deny check`, buf lint and
+`cargo test --workspace` with PDFium and libheif installed, the two WebAssembly modules (clippy
+for `wasm32-unknown-unknown` and `wasm32-wasip1`, and each `build-wasm.sh check`), `cargo deny check`, buf lint and
 breaking, the generated-Go check, bounded fuzzing, and the imaging image (its test stage, the runtime image, and a start-up check that it refuses
 to run in production without TLS and reports ready in development). `native-capture.yml` also
 runs when `services/crates/imaging-core`, the workspace manifest or the toolchain pin changes.

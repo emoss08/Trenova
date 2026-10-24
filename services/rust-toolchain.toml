@@ -1,6 +1,6 @@
 # Every backend Rust crate builds with this toolchain. desktop/capture pins the same channel
 # in its own rust-toolchain.toml (it adds the Windows targets); CI fails when the two differ.
 [toolchain]
-channel = "1.94"
+channel = "1.96"
 components = ["rustfmt", "clippy"]
-targets = ["wasm32-unknown-unknown"]
+targets = ["wasm32-unknown-unknown", "wasm32-wasip1"]

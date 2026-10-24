@@ -3,7 +3,6 @@ package codemode
 import "time"
 
 const (
-	PollInterval       = 10 * time.Millisecond
 	MaxConcurrentReads = 8
 	ScriptsPerTurn     = 3
 
@@ -16,8 +15,11 @@ const (
 	DefaultCallBytes  = 1 << 20
 	DefaultOutput     = 8_000
 	DefaultResult     = 64 << 10
-	DefaultMemory     = 1 << 30
+	DefaultMemory     = 256 << 20
 	DefaultFrameBytes = 64 << 10
+
+	DefaultSeconds = 60
+	DefaultCalls   = 60
 
 	MinSeconds = 15
 	MaxSeconds = 180
@@ -36,6 +38,10 @@ type Limits struct {
 	MemoryBytes int64
 	FrameBytes  int
 	Concurrent  int
+}
+
+func DefaultLimits() Limits {
+	return LimitsFor(DefaultSeconds, DefaultCalls)
 }
 
 func LimitsFor(seconds, calls int) Limits {
