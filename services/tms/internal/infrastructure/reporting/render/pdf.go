@@ -115,6 +115,17 @@ var pdfTemplate = template.Must(template.New("report").Parse(`<!DOCTYPE html>
 </body>
 </html>`))
 
+type RowLimitError struct {
+	MaxRows int64
+}
+
+func (e *RowLimitError) Error() string {
+	return fmt.Sprintf(
+		"PDF output is limited to %d rows; export this report as CSV or XLSX instead",
+		e.MaxRows,
+	)
+}
+
 func (r *PDFRenderer) Render(
 	ctx context.Context,
 	req *reportports.ReportRenderRequest,
@@ -140,10 +151,7 @@ func (r *PDFRenderer) Render(
 
 	if err := streamFormatted(ctx, req.Dataset, loc, func(row *reportfmt.Row) error {
 		if int64(len(data.Rows)) >= r.maxRows {
-			return fmt.Errorf(
-				"PDF output is limited to %d rows; export this report as CSV or XLSX instead",
-				r.maxRows,
-			)
+			return &RowLimitError{MaxRows: r.maxRows}
 		}
 
 		record := make([]pdfCell, len(row.Cells))

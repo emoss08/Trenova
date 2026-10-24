@@ -590,17 +590,7 @@ func (a *Activities) renderToStorage(
 		rowsUpload.Abort(renderErr)
 		artifact.Abort(renderErr)
 
-		if errors.Is(renderErr, errArtifactTooLarge) {
-			return nil, temporal.NewNonRetryableApplicationError(
-				fmt.Sprintf(
-					"report artifact exceeds the maximum size of %d bytes — narrow your filters or reduce columns",
-					a.cfg.GetMaxArtifactBytes(),
-				),
-				ErrTypeReportTooExpensive, renderErr,
-			)
-		}
-
-		return nil, renderErr
+		return nil, renderFailure(renderErr, a.cfg.GetMaxArtifactBytes())
 	}
 
 	rowsKey = a.closeRowsSidecar(ctx, sidecar, rowsUpload, rowsKey)
@@ -928,6 +918,26 @@ func (a *Activities) ReconcileZombieRunsActivity(
 }
 
 var errArtifactTooLarge = uploadpipe.ErrTooLarge
+
+func renderFailure(err error, maxArtifactBytes int64) error {
+	var rowLimit *render.RowLimitError
+	switch {
+	case errors.As(err, &rowLimit):
+		return temporal.NewNonRetryableApplicationError(
+			rowLimit.Error(), ErrTypeReportTooExpensive, err,
+		)
+	case errors.Is(err, errArtifactTooLarge):
+		return temporal.NewNonRetryableApplicationError(
+			fmt.Sprintf(
+				"report artifact exceeds the maximum size of %d bytes — narrow your filters or reduce columns",
+				maxArtifactBytes,
+			),
+			ErrTypeReportTooExpensive, err,
+		)
+	default:
+		return err
+	}
+}
 
 // wrapReader layers the activity's concerns over the raw dataset: heartbeats so
 // a long render is not killed, and — only when a schedule renders an inline

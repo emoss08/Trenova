@@ -406,8 +406,12 @@ func TestPDFRendererRowCap(t *testing.T) {
 		Sink:    &buf,
 		Meta:    testMeta(),
 	})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "CSV or XLSX")
+	var rowLimit *RowLimitError
+	require.ErrorAs(t, err, &rowLimit)
+	assert.Equal(t, int64(2), rowLimit.MaxRows)
+	assert.Equal(t,
+		"PDF output is limited to 2 rows; export this report as CSV or XLSX instead",
+		err.Error())
 }
 
 func TestPDFRendererSubmitsReportPageSetup(t *testing.T) {
