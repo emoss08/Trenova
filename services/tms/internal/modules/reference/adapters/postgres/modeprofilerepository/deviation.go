@@ -3,21 +3,43 @@ package modeprofilerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/modeprofilecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile/modeprofiledb"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var deviationErrors = dberror.Mapping{
+	Entity: "Deviation",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_mode_profile_deviations_profile",
+			Field:   "modeProfileId",
+			Message: "Mode profile does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_mode_profile_deviations_acknowledged_by",
+			Field:   "acknowledgedById",
+			Message: "Acknowledging user does not exist",
+		},
+	},
+}
+
+type ledgerRow struct {
+	RuleKey        modeprofile.RuleKey
+	Capability     modeprofile.Capability
+	Occurrences    int64
+	OpenCount      int64
+	LastOccurredAt int64
+}
 
 type DeviationParams struct {
 	fx.In
@@ -47,52 +69,17 @@ func (r *deviationRepository) RecordMany(
 			return nil
 		}
 
-		log := r.l.With(
-			zap.String("operation", "RecordMany"),
-			zap.Int("count", len(deviations)),
-		)
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&deviations).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to record deviations", zap.Error(err))
-			return err
+		if err := modeprofiledb.Deviations.CreateMany(ctx, r.db.Keel(ctx), deviations); err != nil {
+			r.l.Error(
+				"failed to record deviations",
+				zap.Int("count", len(deviations)),
+				zap.Error(err),
+			)
+			return deviationErrors.Map(err, "")
 		}
 
 		return nil
 	})
-}
-
-func (r *deviationRepository) filterQuery(
-	q *bun.SelectQuery,
-	req *modeprofileports.ListDeviationsRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		modeprofilecol.DeviationTable.Alias,
-		req.Filter,
-		(*modeprofile.Deviation)(nil),
-	)
-
-	cols := modeprofilecol.DeviationColumns
-
-	if req.ResourceType != "" {
-		q = q.Where(cols.ResourceType.Eq(), req.ResourceType)
-	}
-	if req.ResourceID.IsNotNil() {
-		q = q.Where(cols.ResourceID.Eq(), req.ResourceID)
-	}
-	if req.RuleKey != "" {
-		q = q.Where(cols.RuleKey.Eq(), req.RuleKey)
-	}
-	if req.State != "" {
-		q = q.Where(cols.State.Eq(), req.State)
-	}
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *deviationRepository) List(
@@ -103,28 +90,28 @@ func (r *deviationRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*modeprofile.Deviation], error) {
-			log := r.l.With(zap.String("operation", "List"))
+			d := modeprofiledb.Deviations
+			q := d.Where(
+				keel.When(req.ResourceType != "", d.ResourceType.Eq(req.ResourceType)),
+				keel.When(req.ResourceID.IsNotNil(), d.ResourceID.Eq(req.ResourceID)),
+				keel.When(req.RuleKey != "", d.RuleKey.Eq(modeprofile.RuleKey(req.RuleKey))),
+				keel.When(req.State != "", d.State.Eq(modeprofile.DeviationState(req.State))),
+			)
 
-			entities := make([]*modeprofile.Deviation, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(modeprofilecol.DeviationRelations.Profile).
-				Relation(modeprofilecol.DeviationRelations.AcknowledgedBy).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).
-				Order(modeprofilecol.DeviationColumns.OccurredAt.OrderDesc()).
-				ScanAndCount(ctx)
+			result, err := listquery.List(ctx, r.db.Keel(ctx), q,
+				&listquery.Request[modeprofile.Deviation]{
+					Filter: req.Filter,
+					Shape: func(q *keel.Query[modeprofile.Deviation]) *keel.Query[modeprofile.Deviation] {
+						return q.Load(d.Profile(), d.AcknowledgedBy())
+					},
+					Then: []keel.Order{d.OccurredAt.Desc()},
+				})
 			if err != nil {
-				log.Error("failed to scan and count deviations", zap.Error(err))
+				r.l.Error("failed to list deviations", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*modeprofile.Deviation]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -134,24 +121,12 @@ func (r *deviationRepository) GetByID(
 	req *modeprofileports.GetDeviationByIDRequest,
 ) (*modeprofile.Deviation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*modeprofile.Deviation, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.DeviationID.String()),
-		)
-
-		entity := new(modeprofile.Deviation)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(modeprofilecol.DeviationRelations.Profile).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return modeprofilecol.DeviationScopeTenant(sq, req.TenantInfo).
-					Where(modeprofilecol.DeviationColumns.ID.Eq(), req.DeviationID)
-			}).
-			Scan(ctx)
+		d := modeprofiledb.Deviations
+		entity, err := d.Where(d.ID.Eq(req.DeviationID)).
+			Load(d.Profile()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get deviation", zap.Error(err))
-			return nil, err
+			return nil, deviationErrors.Map(err, req.DeviationID.String())
 		}
 
 		return entity, nil
@@ -163,11 +138,6 @@ func (r *deviationRepository) Acknowledge(
 	req *modeprofileports.AcknowledgeDeviationRequest,
 ) (*modeprofile.Deviation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*modeprofile.Deviation, error) {
-		log := r.l.With(
-			zap.String("operation", "Acknowledge"),
-			zap.String("id", req.DeviationID.String()),
-		)
-
 		entity, err := r.GetByID(ctx, &modeprofileports.GetDeviationByIDRequest{
 			DeviationID: req.DeviationID,
 			TenantInfo:  req.TenantInfo,
@@ -184,26 +154,23 @@ func (r *deviationRepository) Acknowledge(
 		entity.AcknowledgedAt = &now
 		entity.AcknowledgementReason = req.Reason
 
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
+		d := modeprofiledb.Deviations
+		err = d.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			d.State,
+			d.AcknowledgedByID,
+			d.AcknowledgedAt,
+			d.AcknowledgementReason,
+		)
 		if err != nil {
-			log.Error("failed to acknowledge deviation", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			results, "Deviation", entity.ID.String(),
-		); err != nil {
-			return nil, err
+			r.l.Error(
+				"failed to acknowledge deviation",
+				zap.String("id", req.DeviationID.String()),
+				zap.Error(err),
+			)
+			return nil, deviationErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -215,31 +182,24 @@ func (r *deviationRepository) SupersedeOpenForResource(
 	req *modeprofileports.SupersedeDeviationsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "SupersedeOpenForResource"),
-			zap.String("resourceId", req.ResourceID.String()),
-		)
-
-		cols := modeprofilecol.DeviationColumns
-
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*modeprofile.Deviation)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return modeprofilecol.DeviationScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ResourceType.Eq(), req.ResourceType).
-					Where(cols.ResourceID.Eq(), req.ResourceID).
-					Where(cols.State.Eq(), modeprofile.DeviationStateOpen)
-			}).
-			Set(cols.State.Set(), modeprofile.DeviationStateResolved).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix())
-
-		if len(req.KeepRuleKeys) > 0 {
-			q = q.Where(cols.RuleKey.NotIn(), bun.List(req.KeepRuleKeys))
+		d := modeprofiledb.Deviations
+		keep := make([]modeprofile.RuleKey, 0, len(req.KeepRuleKeys))
+		for _, key := range req.KeepRuleKeys {
+			keep = append(keep, modeprofile.RuleKey(key))
 		}
 
-		if _, err := q.Exec(ctx); err != nil {
-			log.Error("failed to supersede open deviations", zap.Error(err))
+		_, err := d.Where(
+			d.ResourceType.Eq(req.ResourceType),
+			d.ResourceID.Eq(req.ResourceID),
+			d.State.Eq(modeprofile.DeviationStateOpen),
+			keel.When(len(keep) > 0, d.RuleKey.NotIn(keep...)),
+		).Update(ctx, r.db.Keel(ctx), d.State.To(modeprofile.DeviationStateResolved))
+		if err != nil {
+			r.l.Error(
+				"failed to supersede open deviations",
+				zap.String("resourceId", req.ResourceID.String()),
+				zap.Error(err),
+			)
 			return err
 		}
 
@@ -252,29 +212,27 @@ func (r *deviationRepository) LiveRuleKeysForResource(
 	req *modeprofileports.LiveDeviationKeysRequest,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
-		log := r.l.With(
-			zap.String("operation", "LiveRuleKeysForResource"),
-			zap.String("resourceId", req.ResourceID.String()),
-		)
-
-		cols := modeprofilecol.DeviationColumns
-		keys := make([]string, 0, 8)
-
-		if err := modeprofilecol.DeviationScopeTenant(
-			r.db.DBForContext(ctx).NewSelect().Model((*modeprofile.Deviation)(nil)),
-			req.TenantInfo,
-		).
-			Column(cols.RuleKey.Name).
-			Distinct().
-			Where(cols.ResourceType.Eq(), req.ResourceType).
-			Where(cols.ResourceID.Eq(), req.ResourceID).
-			Where(cols.State.In(), bun.List([]modeprofile.DeviationState{
-				modeprofile.DeviationStateOpen,
-				modeprofile.DeviationStateAcknowledged,
-			})).
-			Scan(ctx, &keys); err != nil {
-			log.Error("failed to read live deviation rule keys", zap.Error(err))
+		d := modeprofiledb.Deviations
+		ruleKeys, err := keel.Into[modeprofile.RuleKey](ctx, r.db.Keel(ctx), d.
+			Group(d.RuleKey).
+			Pick(d.RuleKey).
+			Where(
+				d.ResourceType.Eq(req.ResourceType),
+				d.ResourceID.Eq(req.ResourceID),
+				d.State.In(modeprofile.DeviationStateOpen, modeprofile.DeviationStateAcknowledged),
+			))
+		if err != nil {
+			r.l.Error(
+				"failed to read live deviation rule keys",
+				zap.String("resourceId", req.ResourceID.String()),
+				zap.Error(err),
+			)
 			return nil, err
+		}
+
+		keys := make([]string, 0, len(ruleKeys))
+		for _, key := range ruleKeys {
+			keys = append(keys, string(key))
 		}
 
 		return keys, nil
@@ -289,46 +247,37 @@ func (r *deviationRepository) Ledger(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*modeprofileports.DeviationLedgerEntry, error) {
-			log := r.l.With(zap.String("operation", "Ledger"))
-
-			cols := modeprofilecol.DeviationColumns
-			entries := make([]*modeprofileports.DeviationLedgerEntry, 0, 16)
-
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*modeprofile.Deviation)(nil)).
-				ColumnExpr(cols.RuleKey.As("rule_key")).
-				ColumnExpr(cols.Capability.As("capability")).
-				ColumnExpr(buncolgen.Count("occurrences")).
-				ColumnExpr(
-					buncolgen.CountFilter("open_count", cols.State.Eq()),
-					modeprofile.DeviationStateOpen,
+			d := modeprofiledb.Deviations
+			rows, err := keel.Into[ledgerRow](ctx, r.db.Keel(ctx), d.
+				Group(d.RuleKey, d.Capability).
+				Pick(
+					d.RuleKey,
+					d.Capability,
+					keel.Count(),
+					keel.Count().Filter(d.State.Eq(modeprofile.DeviationStateOpen)),
+					d.OccurredAt.Max(),
 				).
-				ColumnExpr(buncolgen.Max(cols.OccurredAt, "last_occurred_at")).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return modeprofilecol.DeviationScopeTenant(sq, req.TenantInfo)
-				}).
-				GroupExpr(cols.RuleKey.Qualified()).
-				GroupExpr(cols.Capability.Qualified()).
-				OrderExpr("occurrences DESC")
-
-			if req.Since > 0 {
-				q = q.Where(cols.OccurredAt.Gte(), req.Since)
-			}
-
-			if err := q.Scan(ctx, &entries); err != nil {
-				log.Error("failed to build deviation ledger", zap.Error(err))
+				Where(keel.When(req.Since > 0, d.OccurredAt.Gte(req.Since))).
+				Order(keel.Count().Desc()))
+			if err != nil {
+				r.l.Error("failed to build deviation ledger", zap.Error(err))
 				return nil, err
 			}
 
-			for _, entry := range entries {
-				if def, err := modeprofile.RuleDefinitionFor(
-					modeprofile.RuleKey(entry.RuleKey),
-				); err == nil {
-					entry.Label = def.Label
-				} else {
-					entry.Label = entry.RuleKey
+			entries := make([]*modeprofileports.DeviationLedgerEntry, 0, len(rows))
+			for _, row := range rows {
+				label := string(row.RuleKey)
+				if def, defErr := modeprofile.RuleDefinitionFor(row.RuleKey); defErr == nil {
+					label = def.Label
 				}
+				entries = append(entries, &modeprofileports.DeviationLedgerEntry{
+					RuleKey:        string(row.RuleKey),
+					Capability:     string(row.Capability),
+					Label:          label,
+					Occurrences:    row.Occurrences,
+					OpenCount:      row.OpenCount,
+					LastOccurredAt: row.LastOccurredAt,
+				})
 			}
 
 			return entries, nil

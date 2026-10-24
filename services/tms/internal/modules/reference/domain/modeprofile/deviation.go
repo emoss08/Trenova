@@ -26,43 +26,43 @@ var (
 
 type Deviation struct {
 	bun.BaseModel             `bun:"table:mode_profile_deviations,alias:mpd" json:"-"`
-	keel.Table                `keel:"mode_profile_deviations"`
+	keel.Table                `                                                       keel:"mode_profile_deviations"`
 	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
 
-	ID               pulid.ID  `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:mpd_"`
+	ID               pulid.ID  `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:mpd_"`
 	BusinessUnitID   pulid.ID  `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID  `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ModeProfileID    pulid.ID  `json:"modeProfileId"    bun:"mode_profile_id,type:VARCHAR(100),notnull" keel:"mode_profile_id"`
+	OrganizationID   pulid.ID  `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	ModeProfileID    pulid.ID  `json:"modeProfileId"    bun:"mode_profile_id,type:VARCHAR(100),notnull"     keel:"mode_profile_id"`
 	CapabilityRuleID *pulid.ID `json:"capabilityRuleId" bun:"capability_rule_id,type:VARCHAR(100),nullzero" keel:"capability_rule_id"`
 
-	RuleKey     RuleKey                 `json:"ruleKey"     bun:"rule_key,type:VARCHAR(100),notnull" keel:"rule_key"`
-	Capability  Capability              `json:"capability"  bun:"capability,type:VARCHAR(100),notnull" keel:"capability"`
+	RuleKey     RuleKey                 `json:"ruleKey"     bun:"rule_key,type:VARCHAR(100),notnull"              keel:"rule_key"`
+	Capability  Capability              `json:"capability"  bun:"capability,type:VARCHAR(100),notnull"            keel:"capability"`
 	Enforcement tenant.EnforcementLevel `json:"enforcement" bun:"enforcement,type:enforcement_level_enum,notnull" keel:"enforcement"`
 
 	ResourceType string   `json:"resourceType" bun:"resource_type,type:VARCHAR(100),notnull" keel:"resource_type"`
-	ResourceID   pulid.ID `json:"resourceId"   bun:"resource_id,type:VARCHAR(100),notnull" keel:"resource_id"`
+	ResourceID   pulid.ID `json:"resourceId"   bun:"resource_id,type:VARCHAR(100),notnull"   keel:"resource_id"`
 
 	Field   string `json:"field"   bun:"field,type:VARCHAR(200),nullzero" keel:"field,nullzero"`
-	Message string `json:"message" bun:"message,type:TEXT,notnull" keel:"message"`
+	Message string `json:"message" bun:"message,type:TEXT,notnull"        keel:"message"`
 
 	State      DeviationState `json:"state"      bun:"state,type:mode_profile_deviation_state_enum,notnull,default:'Open'" keel:"state"`
-	OccurredAt int64          `json:"occurredAt" bun:"occurred_at,type:BIGINT,notnull" keel:"occurred_at"`
+	OccurredAt int64          `json:"occurredAt" bun:"occurred_at,type:BIGINT,notnull"                                     keel:"occurred_at"`
 
 	AcknowledgedByID      *pulid.ID `json:"acknowledgedById"      bun:"acknowledged_by_id,type:VARCHAR(100),nullzero" keel:"acknowledged_by_id"`
-	AcknowledgedAt        *int64    `json:"acknowledgedAt"        bun:"acknowledged_at,type:BIGINT,nullzero" keel:"acknowledged_at"`
-	AcknowledgementReason string    `json:"acknowledgementReason" bun:"acknowledgement_reason,type:TEXT,nullzero" keel:"acknowledgement_reason,nullzero"`
+	AcknowledgedAt        *int64    `json:"acknowledgedAt"        bun:"acknowledged_at,type:BIGINT,nullzero"          keel:"acknowledged_at"`
+	AcknowledgementReason string    `json:"acknowledgementReason" bun:"acknowledgement_reason,type:TEXT,nullzero"     keel:"acknowledgement_reason,nullzero"`
 
 	Provenance *Provenance `json:"provenance" bun:"provenance,type:JSONB,nullzero" keel:"provenance,jsonb"`
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
 
 	BusinessUnit   *tenant.BusinessUnit `json:"-"                        bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization   *tenant.Organization `json:"-"                        bun:"rel:belongs-to,join:organization_id=id"`
-	Profile        *Profile             `json:"profile,omitempty"        bun:"rel:belongs-to,join:mode_profile_id=id" keel:"belongs:mode_profile_id"`
+	Profile        *Profile             `json:"profile,omitempty"        bun:"rel:belongs-to,join:mode_profile_id=id"    keel:"belongs:mode_profile_id"`
 	AcknowledgedBy *tenant.User         `json:"acknowledgedBy,omitempty" bun:"rel:belongs-to,join:acknowledged_by_id=id" keel:"belongs:acknowledged_by_id"`
 }
 
@@ -144,18 +144,7 @@ func (d *Deviation) validateAcknowledgement(multiErr *errortypes.MultiError) {
 
 func (d *Deviation) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
-
-	if d.State == "" {
-		d.State = DeviationStateOpen
-	}
-	if d.OccurredAt == 0 {
-		d.OccurredAt = now
-	}
-	if d.Capability == "" {
-		if def, err := RuleDefinitionFor(d.RuleKey); err == nil {
-			d.Capability = def.Capability
-		}
-	}
+	d.applyDefaults()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -168,5 +157,24 @@ func (d *Deviation) BeforeAppendModel(_ context.Context, query bun.Query) error 
 		d.UpdatedAt = now
 	}
 
+	return nil
+}
+
+func (d *Deviation) applyDefaults() {
+	if d.State == "" {
+		d.State = DeviationStateOpen
+	}
+	if d.OccurredAt == 0 {
+		d.OccurredAt = timeutils.NowUnix()
+	}
+	if d.Capability == "" {
+		if def, err := RuleDefinitionFor(d.RuleKey); err == nil {
+			d.Capability = def.Capability
+		}
+	}
+}
+
+func (d *Deviation) BeforeSave(_ context.Context) error {
+	d.applyDefaults()
 	return nil
 }

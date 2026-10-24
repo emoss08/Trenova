@@ -204,7 +204,3 @@ func (c *Commodity) BeforeAppendModel(_ context.Context, query bun.Query) error 
 
 	return nil
 }
-
-func (c *Commodity) BeforeCreate(ctx context.Context) error {
-	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}

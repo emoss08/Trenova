@@ -101,7 +101,3 @@ func (st *ServiceType) BeforeAppendModel(_ context.Context, query bun.Query) err
 
 	return nil
 }
-
-func (st *ServiceType) BeforeCreate(ctx context.Context) error {
-	return st.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}

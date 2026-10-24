@@ -28,27 +28,27 @@ var (
 
 type DocumentType struct {
 	bun.BaseModel             `bun:"table:document_types,alias:dt" json:"-"`
-	keel.Table                `keel:"document_types"`
+	keel.Table                `                                             keel:"document_types"`
 	pagination.CursorValueSet `bun:",embed"                        json:"-"`
 
-	ID                     pulid.ID               `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dt_"`
-	BusinessUnitID         pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),notnull,pk" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID               `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),notnull,pk" keel:"organization_id,pk,tenant"`
-	Code                   string                 `json:"code"                   bun:"code,type:VARCHAR(10),notnull" keel:"code"`
-	Name                   string                 `json:"name"                   bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Description            string                 `json:"description"            bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Color                  string                 `json:"color"                  bun:"color,type:VARCHAR(10),nullzero" keel:"color,nullzero"`
-	DocumentClassification DocumentClassification `json:"documentClassification" bun:"document_classification,type:document_classification_enum,notnull,default:'Public'" keel:"document_classification"`
-	DocumentCategory       DocumentCategory       `json:"documentCategory"       bun:"document_category,type:document_category_enum,notnull,default:'Other'" keel:"document_category"`
-	IsSystem               bool                   `json:"isSystem"               bun:"is_system,type:BOOLEAN" keel:"is_system"`
+	ID                     pulid.ID               `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:dt_"`
+	BusinessUnitID         pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),notnull,pk"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID               `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),notnull,pk"                                         keel:"organization_id,pk,tenant"`
+	Code                   string                 `json:"code"                   bun:"code,type:VARCHAR(10),notnull"                                                        keel:"code"`
+	Name                   string                 `json:"name"                   bun:"name,type:VARCHAR(100),notnull"                                                       keel:"name"`
+	Description            string                 `json:"description"            bun:"description,type:TEXT,nullzero"                                                       keel:"description,nullzero"`
+	Color                  string                 `json:"color"                  bun:"color,type:VARCHAR(10),nullzero"                                                      keel:"color,nullzero"`
+	DocumentClassification DocumentClassification `json:"documentClassification" bun:"document_classification,type:document_classification_enum,notnull,default:'Public'"   keel:"document_classification"`
+	DocumentCategory       DocumentCategory       `json:"documentCategory"       bun:"document_category,type:document_category_enum,notnull,default:'Other'"                keel:"document_category"`
+	IsSystem               bool                   `json:"isSystem"               bun:"is_system,type:BOOLEAN"                                                               keel:"is_system"`
 	// RequiresSignature makes a document of this type count only once it is
 	// signed, the way a proof of delivery is proof only with the receiver's name.
-	RequiresSignature bool   `json:"requiresSignature" bun:"requires_signature,type:BOOLEAN,notnull,default:false" keel:"requires_signature"`
-	Version           int64  `json:"version"           bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt         int64  `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt         int64  `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector      string `json:"-"                 bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank              string `json:"-"                 bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	RequiresSignature bool   `json:"requiresSignature"      bun:"requires_signature,type:BOOLEAN,notnull,default:false"                                keel:"requires_signature"`
+	Version           int64  `json:"version"                bun:"version,type:BIGINT"                                                                  keel:"version,version"`
+	CreatedAt         int64  `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt         int64  `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector      string `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	Rank              string `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
@@ -106,10 +106,6 @@ func (dt *DocumentType) BeforeAppendModel(_ context.Context, query bun.Query) er
 	}
 
 	return nil
-}
-
-func (dt *DocumentType) BeforeCreate(ctx context.Context) error {
-	return dt.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (dt *DocumentType) GetID() pulid.ID {

@@ -3,21 +3,42 @@ package hazmatsegregationrulerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/hazmatsegregationrulecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule/hazmatsegregationruledb"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var hazmatSegregationRuleErrors = dberror.Mapping{
+	Entity: "HazmatSegregationRule",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "idx_hazmat_segregation_rules_unique",
+			Field:   "classA",
+			Message: "A segregation rule for these classes and materials already exists in your organization",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_hazmat_segregation_rules_hazmat_a",
+			Field:   "hazmatAId",
+			Message: "Hazardous material A does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_hazmat_segregation_rules_hazmat_b",
+			Field:   "hazmatBId",
+			Message: "Hazardous material B does not exist or belongs to a different organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -38,21 +59,6 @@ func New(p Params) hazmatsegregationruleports.HazmatSegregationRuleRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *hazmatsegregationruleports.ListHazmatSegregationRuleRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"hsr",
-		req.Filter,
-		(*hazmatsegregationrule.HazmatSegregationRule)(nil),
-	)
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *hazmatsegregationruleports.ListHazmatSegregationRuleRequest,
@@ -61,32 +67,18 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
-			)
-
-			entities := make(
-				[]*hazmatsegregationrule.HazmatSegregationRule,
-				0,
-				req.Filter.Pagination.SafeLimit(),
-			)
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).
-				ScanAndCount(ctx)
+			hsr := hazmatsegregationruledb.HazmatSegregationRules
+			result, err := listquery.List(ctx, r.db.Keel(ctx), hsr.Query(),
+				&listquery.Request[hazmatsegregationrule.HazmatSegregationRule]{
+					Filter: req.Filter,
+					Then:   []keel.Order{hsr.CreatedAt.Desc()},
+				})
 			if err != nil {
-				log.Error("failed to scan and count hazmat segregation rules", zap.Error(err))
+				r.l.Error("failed to list hazmat segregation rules", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*hazmatsegregationrule.HazmatSegregationRule]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -99,21 +91,13 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*hazmatsegregationrule.HazmatSegregationRule, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByID"),
-				zap.String("id", req.ID.String()),
+			entity, err := hazmatsegregationruledb.HazmatSegregationRules.Get(
+				ctx,
+				r.db.Keel(ctx),
+				req.ID,
 			)
-
-			entity := new(hazmatsegregationrule.HazmatSegregationRule)
-			err := r.db.DBForContext(ctx).NewSelect().Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("hsr.id = ?", req.ID).
-						Where("hsr.organization_id = ?", req.TenantInfo.OrgID).
-						Where("hsr.business_unit_id = ?", req.TenantInfo.BuID)
-				}).Scan(ctx)
 			if err != nil {
-				log.Error("failed to get hazmat segregation rule", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "HazmatSegregationRule")
+				return nil, hazmatSegregationRuleErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -123,23 +107,15 @@ func (r *repository) GetByID(
 
 func (r *repository) ListActiveByTenant(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*hazmatsegregationrule.HazmatSegregationRule, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*hazmatsegregationrule.HazmatSegregationRule, error) {
-			entities := make([]*hazmatsegregationrule.HazmatSegregationRule, 0)
-
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where("hsr.organization_id = ?", tenantInfo.OrgID).
-				Where("hsr.business_unit_id = ?", tenantInfo.BuID).
-				Where("hsr.status = ?", domaintypes.StatusActive).
-				Order("hsr.name ASC", "hsr.id ASC").
-				Scan(ctx)
+			entities, err := activeRules().All(ctx, r.db.Keel(ctx))
 			if err != nil {
+				r.l.Error("failed to list active hazmat segregation rules", zap.Error(err))
 				return nil, err
 			}
 
@@ -148,95 +124,32 @@ func (r *repository) ListActiveByTenant(
 	)
 }
 
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *hazmatsegregationruleports.ListHazmatSegregationRuleConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		hazmatsegregationrulecol.HazmatSegregationRuleTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*hazmatsegregationrule.HazmatSegregationRule)(nil),
-	)
-}
+func activeRules() *keel.Query[hazmatsegregationrule.HazmatSegregationRule] {
+	hsr := hazmatsegregationruledb.HazmatSegregationRules
 
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *hazmatsegregationruleports.ListHazmatSegregationRuleConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		hazmatsegregationrulecol.HazmatSegregationRuleTable.Alias,
-		req.Filter,
-		(*hazmatsegregationrule.HazmatSegregationRule)(nil),
-	)
-}
-
-func applyHazmatSegregationRuleColumns(
-	q *bun.SelectQuery,
-	columns []string,
-) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(hazmatsegregationrulecol.HazmatSegregationRuleTable.All())
-	}
-
-	return q.Column(columns...)
+	return hsr.Where(hsr.Status.Eq(domaintypes.StatusActive)).Order(hsr.Name.Asc(), hsr.ID.Asc())
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *hazmatsegregationruleports.ListHazmatSegregationRuleConnectionRequest,
 ) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*hazmatsegregationrule.HazmatSegregationRule)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count hazmat segregation rules", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*hazmatsegregationrule.HazmatSegregationRule]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*hazmatsegregationrule.HazmatSegregationRule) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyHazmatSegregationRuleColumns(
-									sq,
-									req.HazmatSegregationRuleColumns,
-								)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				hazmatsegregationruledb.HazmatSegregationRules.Query(),
+				&listquery.Request[hazmatsegregationrule.HazmatSegregationRule]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.HazmatSegregationRuleColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan hazmat segregation rules", zap.Error(err))
+				r.l.Error("failed to list hazmat segregation rules", zap.Error(err))
 				return nil, err
 			}
 
@@ -253,17 +166,18 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*hazmatsegregationrule.HazmatSegregationRule, error) {
-			log := r.l.With(
-				zap.String("operation", "Create"),
+			err := hazmatsegregationruledb.HazmatSegregationRules.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
 			)
-
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				log.Error("failed to create hazmat segregation rule", zap.Error(err))
-				return nil, err
+			if err != nil {
+				r.l.Error(
+					"failed to create hazmat segregation rule",
+					zap.String("name", entity.Name),
+					zap.Error(err),
+				)
+				return nil, hazmatSegregationRuleErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -279,32 +193,14 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*hazmatsegregationrule.HazmatSegregationRule, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("version = ?", ov).
-				OmitZero().
-				Returning("*").
-				Exec(ctx)
+			err := hazmatsegregationruledb.HazmatSegregationRules.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				log.Error("failed to update hazmat segregation rule", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"HazmatSegregationRule",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				r.l.Error(
+					"failed to update hazmat segregation rule",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
+				)
+				return nil, hazmatSegregationRuleErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil

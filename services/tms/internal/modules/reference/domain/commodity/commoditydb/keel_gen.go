@@ -54,24 +54,23 @@ var commoditiesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "HazardousMaterial", Alias: "hm", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Hazardous Material`, JSON: `hazardousMaterial`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 23},
-	Returning:    nil,
-	Version:      21,
-	AutoID:       0,
-	AutoCreate:   22,
-	AutoUpdate:   23,
-	IDPrefix:     "com_",
-	New:          newCommodity,
-	NewN:         newNCommodity,
-	Size:         unsafe.Sizeof(commodity.Commodity{}),
-	Ptr:          ptrCommodity,
-	Value:        valueCommodity,
-	Attach:       attachCommodity,
-	BeforeCreate: beforeCreateCommodity,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 23},
+	Returning:  nil,
+	Version:    21,
+	AutoID:     0,
+	AutoCreate: 22,
+	AutoUpdate: 23,
+	IDPrefix:   "com_",
+	New:        newCommodity,
+	NewN:       newNCommodity,
+	Size:       unsafe.Sizeof(commodity.Commodity{}),
+	Ptr:        ptrCommodity,
+	Value:      valueCommodity,
+	Attach:     attachCommodity,
 }
 
 var commoditiesRef = keel.Ref{Table: &commoditiesTable}
@@ -338,10 +337,6 @@ func attachCommodity(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.HazardousMaterial = (*hazardousmaterial.HazardousMaterial)(child)
 	}
-}
-
-func beforeCreateCommodity(ctx context.Context, p unsafe.Pointer) error {
-	return (*commodity.Commodity)(p).BeforeCreate(ctx)
 }
 
 func init() {

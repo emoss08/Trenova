@@ -39,23 +39,23 @@ var accessorialChargesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 13},
-	Returning:    nil,
-	Version:      11,
-	AutoID:       0,
-	AutoCreate:   12,
-	AutoUpdate:   13,
-	IDPrefix:     "acc_",
-	New:          newAccessorialCharge,
-	NewN:         newNAccessorialCharge,
-	Size:         unsafe.Sizeof(accessorialcharge.AccessorialCharge{}),
-	Ptr:          ptrAccessorialCharge,
-	Value:        valueAccessorialCharge,
-	BeforeCreate: beforeCreateAccessorialCharge,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 13},
+	Returning:  nil,
+	Version:    11,
+	AutoID:     0,
+	AutoCreate: 12,
+	AutoUpdate: 13,
+	IDPrefix:   "acc_",
+	New:        newAccessorialCharge,
+	NewN:       newNAccessorialCharge,
+	Size:       unsafe.Sizeof(accessorialcharge.AccessorialCharge{}),
+	Ptr:        ptrAccessorialCharge,
+	Value:      valueAccessorialCharge,
+	BeforeSave: beforeSaveAccessorialCharge,
 }
 
 var accessorialChargesRef = keel.Ref{Table: &accessorialChargesTable}
@@ -213,8 +213,8 @@ func valueAccessorialCharge(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreateAccessorialCharge(ctx context.Context, p unsafe.Pointer) error {
-	return (*accessorialcharge.AccessorialCharge)(p).BeforeCreate(ctx)
+func beforeSaveAccessorialCharge(ctx context.Context, p unsafe.Pointer) error {
+	return (*accessorialcharge.AccessorialCharge)(p).BeforeSave(ctx)
 }
 
 var enumDomaintypesStatus = [...]schema.EnumValue{

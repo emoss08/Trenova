@@ -150,6 +150,11 @@ func (a *AccessorialCharge) BeforeAppendModel(_ context.Context, query bun.Query
 	return nil
 }
 
-func (a *AccessorialCharge) BeforeCreate(ctx context.Context) error {
-	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (a *AccessorialCharge) BeforeSave(_ context.Context) error {
+	a.Code = NormalizeCode(a.Code)
+	if a.Method != MethodPerUnit {
+		a.RateUnit = ""
+	}
+
+	return nil
 }

@@ -3,22 +3,30 @@ package accessorialchargerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var accessorialChargeErrors = dberror.Mapping{
+	Entity: "AccessorialCharge",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_accessorial_charges_code",
+			Field:   "code",
+			Message: "Accessorial charge with this code already exists in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -35,26 +43,8 @@ type repository struct {
 func New(p Params) accessorialchargeports.AccessorialChargeRepository {
 	return &repository{
 		db: p.DB,
-		l:  p.Logger.Named("postgres.accessorialcharge-repository"),
+		l:  p.Logger.Named("postgres.accessorial-charge-repository"),
 	}
-}
-
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *accessorialchargeports.ListAccessorialChargeRequest,
-) *bun.SelectQuery {
-	cols := accessorialchargecol.AccessorialChargeColumns
-	q = querybuilder.ApplyFilters(
-		q,
-		accessorialchargecol.AccessorialChargeTable.Alias,
-		req.Filter,
-		(*accessorialcharge.AccessorialCharge)(nil),
-	)
-
-	return q.Apply(accessorialchargecol.AccessorialChargeApplyTenant(req.Filter.TenantInfo)).
-		Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset())).
-		Order(cols.CreatedAt.OrderDesc())
 }
 
 func (r *repository) List(
@@ -65,121 +55,42 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
-			)
-
-			entities := make(
-				[]*accessorialcharge.AccessorialCharge,
-				0,
-				req.Filter.Pagination.SafeLimit(),
-			)
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
+			ac := accessorialchargedb.AccessorialCharges
+			result, err := listquery.List(ctx, r.db.Keel(ctx), ac.Query(),
+				&listquery.Request[accessorialcharge.AccessorialCharge]{
+					Filter: req.Filter,
+					Then:   []keel.Order{ac.CreatedAt.Desc()},
+				})
 			if err != nil {
-				log.Error("failed to scan and count accessorial charges", zap.Error(err))
+				r.l.Error("failed to list accessorial charges", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*accessorialcharge.AccessorialCharge]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *accessorialchargeports.ListAccessorialChargeConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		accessorialchargecol.AccessorialChargeTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*accessorialcharge.AccessorialCharge)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *accessorialchargeports.ListAccessorialChargeConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		accessorialchargecol.AccessorialChargeTable.Alias,
-		req.Filter,
-		(*accessorialcharge.AccessorialCharge)(nil),
-	)
-}
-
-func applyAccessorialChargeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(accessorialchargecol.AccessorialChargeTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *accessorialchargeports.ListAccessorialChargeConnectionRequest,
 ) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*accessorialcharge.AccessorialCharge)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count accessorial charges", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*accessorialcharge.AccessorialCharge]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*accessorialcharge.AccessorialCharge) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyAccessorialChargeColumns(
-									sq,
-									req.AccessorialChargeColumns,
-								)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				accessorialchargedb.AccessorialCharges.Query(),
+				&listquery.Request[accessorialcharge.AccessorialCharge]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.AccessorialChargeColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan accessorial charges", zap.Error(err))
+				r.l.Error("failed to list accessorial charges", zap.Error(err))
 				return nil, err
 			}
 
@@ -196,18 +107,14 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accessorialcharge.AccessorialCharge, error) {
-			log := r.l.With(
-				zap.String("operation", "Create"),
-				zap.String("code", entity.Code),
-			)
-
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				log.Error("failed to create accessorial charge", zap.Error(err))
-				return nil, err
+			err := accessorialchargedb.AccessorialCharges.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
+				r.l.Error(
+					"failed to create accessorial charge",
+					zap.String("code", entity.Code),
+					zap.Error(err),
+				)
+				return nil, accessorialChargeErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -223,33 +130,14 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accessorialcharge.AccessorialCharge, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
-			ov := entity.Version
-			entity.Version++
-			cols := accessorialchargecol.AccessorialChargeColumns
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).WherePK().
-				Where(cols.Version.Eq(), ov).
-				OmitZero().
-				Returning("*").
-				Exec(ctx)
+			err := accessorialchargedb.AccessorialCharges.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				log.Error("failed to update accessorial charge", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"AccessorialCharge",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				r.l.Error(
+					"failed to update accessorial charge",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
+				)
+				return nil, accessorialChargeErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -265,24 +153,9 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accessorialcharge.AccessorialCharge, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByID"),
-				zap.String("id", req.ID.String()),
-			)
-
-			entity := new(accessorialcharge.AccessorialCharge)
-			cols := accessorialchargecol.AccessorialChargeColumns
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return accessorialchargecol.AccessorialChargeScopeTenant(sq, *req.TenantInfo).
-						Where(cols.ID.Eq(), req.ID)
-				}).
-				Scan(ctx)
+			entity, err := accessorialchargedb.AccessorialCharges.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
-				log.Error("failed to get accessorial charge", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "AccessorialCharge")
+				return nil, accessorialChargeErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -292,36 +165,28 @@ func (r *repository) GetByID(
 
 func (r *repository) ListCatalog(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*accessorialcharge.AccessorialCharge, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*accessorialcharge.AccessorialCharge, error) {
-			cols := accessorialchargecol.AccessorialChargeColumns
-			entities := make([]*accessorialcharge.AccessorialCharge, 0, 32)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Column(
-					cols.ID.Bare(),
-					cols.OrganizationID.Bare(),
-					cols.BusinessUnitID.Bare(),
-					cols.Code.Bare(),
-					cols.Description.Bare(),
-					cols.Status.Bare(),
-					cols.Method.Bare(),
-					cols.RateUnit.Bare(),
-					cols.Amount.Bare(),
-				).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return accessorialchargecol.AccessorialChargeScopeTenant(sq, tenantInfo)
-				}).
-				Order(cols.Code.OrderAsc()).
-				Scan(ctx)
+			ac := accessorialchargedb.AccessorialCharges
+			entities, err := ac.Pick(
+				ac.ID,
+				ac.OrganizationID,
+				ac.BusinessUnitID,
+				ac.Code,
+				ac.Description,
+				ac.Status,
+				ac.Method,
+				ac.RateUnit,
+				ac.Amount,
+			).
+				Order(ac.Code.Asc()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
-				r.l.With(zap.String("operation", "ListCatalog")).
-					Error("failed to list the accessorial charge catalog", zap.Error(err))
+				r.l.Error("failed to list the accessorial charge catalog", zap.Error(err))
 				return nil, err
 			}
 
@@ -334,33 +199,28 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
-			cols := accessorialchargecol.AccessorialChargeColumns
+			ac := accessorialchargedb.AccessorialCharges
+			q := ac.Pick(
+				ac.ID,
+				ac.Code,
+				ac.Description,
+				ac.Status,
+				ac.Method,
+				ac.RateUnit,
+				ac.Amount,
+			).Where(ac.Status.Eq(domaintypes.StatusActive))
 
-			return dbhelper.SelectOptions[*accessorialcharge.AccessorialCharge](
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Code,
-						cols.Description,
-						cols.Status,
-						cols.Method,
-						cols.RateUnit,
-						cols.Amount,
-					},
-					OrgColumnRef:     &cols.OrganizationID,
-					BuColumnRef:      &cols.BusinessUnitID,
-					SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Description},
-					EntityName:       "AccessorialCharge",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-					},
+				func(s string) keel.Pred {
+					return keel.Or(ac.Code.ContainsFold(s), ac.Description.ContainsFold(s))
 				},
 			)
 		},

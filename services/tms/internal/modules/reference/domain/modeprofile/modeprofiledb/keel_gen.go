@@ -58,6 +58,7 @@ var capabilityRulesTable = schema.Table{
 	Ptr:        ptrCapabilityRule,
 	Value:      valueCapabilityRule,
 	Attach:     attachCapabilityRule,
+	BeforeSave: beforeSaveCapabilityRule,
 }
 
 var capabilityRulesRef = keel.Ref{Table: &capabilityRulesTable}
@@ -220,6 +221,10 @@ func attachCapabilityRule(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeSaveCapabilityRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*modeprofile.CapabilityRule)(p).BeforeSave(ctx)
+}
+
 // deviationsTable is the schema of modeprofile.Deviation.
 var deviationsTable = schema.Table{
 	Name:   "mode_profile_deviations",
@@ -274,6 +279,7 @@ var deviationsTable = schema.Table{
 	Ptr:        ptrDeviation,
 	Value:      valueDeviation,
 	Attach:     attachDeviation,
+	BeforeSave: beforeSaveDeviation,
 }
 
 var deviationsRef = keel.Ref{Table: &deviationsTable}
@@ -525,6 +531,10 @@ func attachDeviation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeSaveDeviation(ctx context.Context, p unsafe.Pointer) error {
+	return (*modeprofile.Deviation)(p).BeforeSave(ctx)
+}
+
 // profilesTable is the schema of modeprofile.Profile.
 var profilesTable = schema.Table{
 	Name:   "mode_profiles",
@@ -580,6 +590,7 @@ var profilesTable = schema.Table{
 	Ptr:        ptrProfile,
 	Value:      valueProfile,
 	Attach:     attachProfile,
+	BeforeSave: beforeSaveProfile,
 }
 
 var profilesRef = keel.Ref{Table: &profilesTable}
@@ -844,6 +855,10 @@ func attachProfile(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Rules = append(r.Rules, (*modeprofile.CapabilityRule)(child))
 	}
+}
+
+func beforeSaveProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*modeprofile.Profile)(p).BeforeSave(ctx)
 }
 
 func init() {

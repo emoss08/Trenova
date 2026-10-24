@@ -3,22 +3,30 @@ package servicetyperepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var serviceTypeErrors = dberror.Mapping{
+	Entity: "ServiceType",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "idx_service_types_code",
+			Field:   "code",
+			Message: "Service type with this code already exists in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -35,26 +43,8 @@ type repository struct {
 func New(p Params) servicetypeports.ServiceTypeRepository {
 	return &repository{
 		db: p.DB,
-		l:  p.Logger.Named("postgres.servicetype-repository"),
+		l:  p.Logger.Named("postgres.service-type-repository"),
 	}
-}
-
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *servicetypeports.ListServiceTypesRequest,
-) *bun.SelectQuery {
-	cols := servicetypecol.ServiceTypeColumns
-	q = querybuilder.ApplyFilters(
-		q,
-		servicetypecol.ServiceTypeTable.Alias,
-		req.Filter,
-		(*servicetype.ServiceType)(nil),
-	)
-
-	return q.Apply(servicetypecol.ServiceTypeApplyTenant(req.Filter.TenantInfo)).
-		Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset())).
-		Order(cols.CreatedAt.OrderDesc())
 }
 
 func (r *repository) List(
@@ -65,114 +55,42 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*servicetype.ServiceType], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
-			)
-
-			entities := make([]*servicetype.ServiceType, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
+			st := servicetypedb.ServiceTypes
+			result, err := listquery.List(ctx, r.db.Keel(ctx), st.Query(),
+				&listquery.Request[servicetype.ServiceType]{
+					Filter: req.Filter,
+					Then:   []keel.Order{st.CreatedAt.Desc()},
+				})
 			if err != nil {
-				log.Error("failed to scan and count service types", zap.Error(err))
+				r.l.Error("failed to list service types", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*servicetype.ServiceType]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *servicetypeports.ListServiceTypesConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		servicetypecol.ServiceTypeTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*servicetype.ServiceType)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *servicetypeports.ListServiceTypesConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		servicetypecol.ServiceTypeTable.Alias,
-		req.Filter,
-		(*servicetype.ServiceType)(nil),
-	)
-}
-
-func applyServiceTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(servicetypecol.ServiceTypeTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *servicetypeports.ListServiceTypesConnectionRequest,
 ) (*pagination.CursorListResult[*servicetype.ServiceType], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*servicetype.ServiceType], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*servicetype.ServiceType)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count service types", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*servicetype.ServiceType]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*servicetype.ServiceType) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyServiceTypeColumns(sq, req.ServiceTypeColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				servicetypedb.ServiceTypes.Query(),
+				&listquery.Request[servicetype.ServiceType]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.ServiceTypeColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan service types", zap.Error(err))
+				r.l.Error("failed to list service types", zap.Error(err))
 				return nil, err
 			}
 
@@ -186,18 +104,13 @@ func (r *repository) Create(
 	entity *servicetype.ServiceType,
 ) (*servicetype.ServiceType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*servicetype.ServiceType, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("code", entity.Description),
-		)
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create service type", zap.Error(err))
-			return nil, err
+		if err := servicetypedb.ServiceTypes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to create service type",
+				zap.String("code", entity.Code),
+				zap.Error(err),
+			)
+			return nil, serviceTypeErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -209,30 +122,13 @@ func (r *repository) Update(
 	entity *servicetype.ServiceType,
 ) (*servicetype.ServiceType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*servicetype.ServiceType, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("description", entity.Description),
-		)
-
-		ov := entity.Version
-		entity.Version++
-		cols := servicetypecol.ServiceTypeColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update service type", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(results, "ServiceType", entity.ID.String()); err != nil {
-			return nil, err
+		if err := servicetypedb.ServiceTypes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update service type",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, serviceTypeErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -244,100 +140,12 @@ func (r *repository) GetByID(
 	req servicetypeports.GetServiceTypeByIDRequest,
 ) (*servicetype.ServiceType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicetype.ServiceType, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
-
-		entity := new(servicetype.ServiceType)
-		cols := servicetypecol.ServiceTypeColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return servicetypecol.ServiceTypeScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := servicetypedb.ServiceTypes.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			log.Error("failed to get service type", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "ServiceType")
+			return nil, serviceTypeErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
-	})
-}
-
-func (r *repository) SelectOptions(
-	ctx context.Context,
-	req *servicetypeports.ServiceTypeSelectOptionsRequest,
-) (*pagination.ListResult[*servicetype.ServiceType], error) {
-	return dbtx.Write(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*servicetype.ServiceType], error) {
-			cols := servicetypecol.ServiceTypeColumns
-
-			return dbhelper.SelectOptions[*servicetype.ServiceType](
-				ctx,
-				r.db.DBForContext(ctx),
-				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Code,
-						cols.Description,
-						cols.Color,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-					},
-					EntityName:       "ServiceType",
-					SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Description},
-				},
-			)
-		},
-	)
-}
-
-func (r *repository) BulkUpdateStatus(
-	ctx context.Context,
-	req *servicetypeports.BulkUpdateServiceTypeStatusRequest,
-) ([]*servicetype.ServiceType, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*servicetype.ServiceType, error) {
-		log := r.l.With(
-			zap.String("operation", "BulkUpdateStatus"),
-			zap.Any("request", req),
-		)
-
-		entities := make([]*servicetype.ServiceType, 0, len(req.ServiceTypeIDs))
-		cols := servicetypecol.ServiceTypeColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&entities).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return servicetypecol.ServiceTypeScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.ServiceTypeIDs))
-			}).
-			Set(cols.Status.Set(), req.Status).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to bulk update service type status", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckBulkRowsAffected(
-			results,
-			"ServiceType",
-			req.ServiceTypeIDs,
-		); err != nil {
-			return nil, err
-		}
-
-		return entities, nil
 	})
 }
 
@@ -346,26 +154,70 @@ func (r *repository) GetByIDs(
 	req servicetypeports.GetServiceTypesByIDsRequest,
 ) ([]*servicetype.ServiceType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*servicetype.ServiceType, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByIDs"),
-			zap.Any("request", req),
-		)
+		if len(req.ServiceTypeIDs) == 0 {
+			return []*servicetype.ServiceType{}, nil
+		}
 
-		entities := make([]*servicetype.ServiceType, 0, len(req.ServiceTypeIDs))
-		cols := servicetypecol.ServiceTypeColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return servicetypecol.ServiceTypeScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.ServiceTypeIDs))
-			}).
-			Scan(ctx)
+		st := servicetypedb.ServiceTypes
+		entities, err := st.Where(st.ID.In(req.ServiceTypeIDs...)).
+			Limit(len(req.ServiceTypeIDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get service types", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "ServiceType")
+			r.l.Error("failed to get service types", zap.Error(err))
+			return nil, err
 		}
 
 		return entities, nil
 	})
+}
+
+func (r *repository) BulkUpdateStatus(
+	ctx context.Context,
+	req *servicetypeports.BulkUpdateServiceTypeStatusRequest,
+) ([]*servicetype.ServiceType, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*servicetype.ServiceType, error) {
+		st := servicetypedb.ServiceTypes
+		entities, err := listquery.UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			st.Where(st.ID.In(req.ServiceTypeIDs...)),
+			st.Status.To(req.Status),
+		)
+		if err != nil {
+			r.l.Error("failed to bulk update service type status", zap.Error(err))
+			return nil, err
+		}
+
+		err = dberror.CheckBulkAffected(int64(len(entities)), "ServiceType", req.ServiceTypeIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *servicetypeports.ServiceTypeSelectOptionsRequest,
+) (*pagination.ListResult[*servicetype.ServiceType], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*servicetype.ServiceType], error) {
+			st := servicetypedb.ServiceTypes
+			q := st.Pick(st.ID, st.Status, st.Code, st.Description, st.Color).
+				Where(st.Status.Eq(domaintypes.StatusActive))
+
+			return listquery.SelectOptions(
+				ctx,
+				r.db.Keel(ctx),
+				q,
+				req.SelectQueryRequest,
+				func(s string) keel.Pred {
+					return keel.Or(st.Code.ContainsFold(s), st.Description.ContainsFold(s))
+				},
+			)
+		},
+	)
 }

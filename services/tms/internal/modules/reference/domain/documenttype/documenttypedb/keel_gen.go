@@ -39,23 +39,22 @@ var documentTypesTable = schema.Table{
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:    nil,
-	Version:      11,
-	AutoID:       0,
-	AutoCreate:   12,
-	AutoUpdate:   13,
-	IDPrefix:     "dt_",
-	New:          newDocumentType,
-	NewN:         newNDocumentType,
-	Size:         unsafe.Sizeof(documenttype.DocumentType{}),
-	Ptr:          ptrDocumentType,
-	Value:        valueDocumentType,
-	BeforeCreate: beforeCreateDocumentType,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:  nil,
+	Version:    11,
+	AutoID:     0,
+	AutoCreate: 12,
+	AutoUpdate: 13,
+	IDPrefix:   "dt_",
+	New:        newDocumentType,
+	NewN:       newNDocumentType,
+	Size:       unsafe.Sizeof(documenttype.DocumentType{}),
+	Ptr:        ptrDocumentType,
+	Value:      valueDocumentType,
 }
 
 var documentTypesRef = keel.Ref{Table: &documentTypesTable}
@@ -226,10 +225,6 @@ func valueDocumentType(p unsafe.Pointer, c int32) any {
 		return r.Rank
 	}
 	return nil
-}
-
-func beforeCreateDocumentType(ctx context.Context, p unsafe.Pointer) error {
-	return (*documenttype.DocumentType)(p).BeforeCreate(ctx)
 }
 
 var enumDocumentCategory = [...]schema.EnumValue{

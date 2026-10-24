@@ -21,22 +21,22 @@ var (
 
 type CapabilityRule struct {
 	bun.BaseModel `bun:"table:mode_profile_capability_rules,alias:mpr" json:"-"`
-	keel.Table    `keel:"mode_profile_capability_rules"`
+	keel.Table    `                                                             keel:"mode_profile_capability_rules"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:mpr_"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:mpr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ModeProfileID  pulid.ID `json:"modeProfileId"  bun:"mode_profile_id,type:VARCHAR(100),notnull" keel:"mode_profile_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	ModeProfileID  pulid.ID `json:"modeProfileId"  bun:"mode_profile_id,type:VARCHAR(100),notnull"     keel:"mode_profile_id"`
 
-	RuleKey     RuleKey                 `json:"ruleKey"     bun:"rule_key,type:VARCHAR(100),notnull" keel:"rule_key"`
-	Capability  Capability              `json:"capability"  bun:"capability,type:VARCHAR(100),notnull" keel:"capability"`
+	RuleKey     RuleKey                 `json:"ruleKey"     bun:"rule_key,type:VARCHAR(100),notnull"                              keel:"rule_key"`
+	Capability  Capability              `json:"capability"  bun:"capability,type:VARCHAR(100),notnull"                            keel:"capability"`
 	Enforcement tenant.EnforcementLevel `json:"enforcement" bun:"enforcement,type:enforcement_level_enum,notnull,default:'Block'" keel:"enforcement"`
-	Enabled     bool                    `json:"enabled"     bun:"enabled,type:BOOLEAN,notnull" keel:"enabled"`
-	Parameters  map[string]any          `json:"parameters"  bun:"parameters,type:JSONB,nullzero" keel:"parameters,jsonb,nullzero"`
+	Enabled     bool                    `json:"enabled"     bun:"enabled,type:BOOLEAN,notnull"                                    keel:"enabled"`
+	Parameters  map[string]any          `json:"parameters"  bun:"parameters,type:JSONB,nullzero"                                  keel:"parameters,jsonb,nullzero"`
 
 	OverrideReason string `json:"overrideReason" bun:"override_reason,type:TEXT,nullzero" keel:"override_reason,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
@@ -200,13 +200,7 @@ func (r *CapabilityRule) validateOverrideReason(multiErr *errortypes.MultiError)
 
 func (r *CapabilityRule) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
-
-	if r.Enforcement == "" {
-		r.Enforcement = tenant.EnforcementLevelBlock
-	}
-	if def, err := RuleDefinitionFor(r.RuleKey); err == nil {
-		r.Capability = def.Capability
-	}
+	r.applyDefaults()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -219,5 +213,19 @@ func (r *CapabilityRule) BeforeAppendModel(_ context.Context, query bun.Query) e
 		r.UpdatedAt = now
 	}
 
+	return nil
+}
+
+func (r *CapabilityRule) applyDefaults() {
+	if r.Enforcement == "" {
+		r.Enforcement = tenant.EnforcementLevelBlock
+	}
+	if def, err := RuleDefinitionFor(r.RuleKey); err == nil {
+		r.Capability = def.Capability
+	}
+}
+
+func (r *CapabilityRule) BeforeSave(_ context.Context) error {
+	r.applyDefaults()
 	return nil
 }
