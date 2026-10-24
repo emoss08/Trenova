@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -55,7 +54,7 @@ type SampleDataLoader interface {
 type Params struct {
 	fx.In
 
-	DB            kernelports.DBConnection
+	DB            kernelports.Transactor
 	Repository    onboardingports.OnboardingRepository
 	Organizations tenantports.OrganizationService
 	SampleData    *SampleData
@@ -63,7 +62,7 @@ type Params struct {
 }
 
 type Service struct {
-	db            kernelports.DBConnection
+	db            kernelports.Transactor
 	repo          onboardingports.OnboardingRepository
 	organizations OrganizationStore
 	sampleData    SampleDataLoader
@@ -169,7 +168,7 @@ func (s *Service) Complete(
 	// organizations would wait on that lock until lock_timeout. Retrying after a
 	// failed second step re-applies the same update.
 	var org *tenant.Organization
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, txErr := s.getPending(txCtx, req.TenantInfo); txErr != nil {
 			return txErr
 		}
@@ -183,7 +182,7 @@ func (s *Service) Complete(
 	}
 
 	var state *onboardingports.OnboardingState
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.getPending(txCtx, req.TenantInfo)
 		if txErr != nil {
 			return txErr

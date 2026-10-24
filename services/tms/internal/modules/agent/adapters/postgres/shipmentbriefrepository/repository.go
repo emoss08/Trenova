@@ -2,19 +2,15 @@ package shipmentbriefrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
-
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentbriefcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief/shipmentbriefdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -45,26 +41,16 @@ func (r *repository) Latest(
 	req *shipmentbriefports.GetLatestShipmentBriefRequest,
 ) (*shipmentbrief.Brief, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentbrief.Brief, error) {
-		return latest(ctx, r.db.DBForContext(ctx), req)
+		return r.latest(ctx, req.BriefDate)
 	})
 }
 
-func latest(
-	ctx context.Context,
-	db bun.IDB,
-	req *shipmentbriefports.GetLatestShipmentBriefRequest,
-) (*shipmentbrief.Brief, error) {
-	cols := shipmentbriefcol.BriefColumns
-	brief := new(shipmentbrief.Brief)
-	err := db.NewSelect().
-		Model(brief).
-		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-		Where(cols.BriefDate.Eq(), req.BriefDate).
-		Order(cols.Generation.OrderDesc()).
-		Limit(1).
-		Scan(ctx)
-	if errors.Is(err, sql.ErrNoRows) {
+func (r *repository) latest(ctx context.Context, briefDate string) (*shipmentbrief.Brief, error) {
+	b := shipmentbriefdb.Briefs
+	brief, err := b.Where(b.BriefDate.Eq(briefDate)).
+		Order(b.Generation.Desc()).
+		First(ctx, r.db.Keel(ctx))
+	if dberror.IsNotFoundError(err) {
 		return nil, nil //nolint:nilnil // no brief has been written for the day yet
 	}
 	if err != nil {
@@ -79,28 +65,25 @@ func (r *repository) Insert(
 	brief *shipmentbrief.Brief,
 ) (*shipmentbrief.Brief, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmentbrief.Brief, error) {
-		cols := shipmentbriefcol.BriefColumns
-		db := r.db.DBForContext(ctx)
-		result, err := db.NewInsert().
-			Model(brief).
-			On("CONFLICT (" + cols.OrganizationID.Bare() + ", " + cols.BusinessUnitID.Bare() +
-				", " + cols.BriefDate.Bare() + ", " + cols.Generation.Bare() + ") DO NOTHING").
-			Exec(ctx)
+		b := shipmentbriefdb.Briefs
+		inserted, err := b.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*shipmentbrief.Brief{brief},
+			b.OrganizationID,
+			b.BusinessUnitID,
+			b.BriefDate,
+			b.Generation,
+		)
 		if err != nil {
 			r.l.Error("failed to insert shipment brief", zap.Error(err))
 			return nil, fmt.Errorf("insert shipment brief: %w", err)
 		}
-		if affected, _ := result.RowsAffected(); affected > 0 {
+		if inserted > 0 {
 			return brief, nil
 		}
 
-		return latest(ctx, db, &shipmentbriefports.GetLatestShipmentBriefRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: brief.OrganizationID,
-				BuID:  brief.BusinessUnitID,
-			},
-			BriefDate: brief.BriefDate,
-		})
+		return r.latest(ctx, brief.BriefDate)
 	})
 }
 
@@ -118,23 +101,19 @@ func (r *repository) DeleteBefore(
 			limit = maxDeleteBatch
 		}
 
-		cols := shipmentbriefcol.BriefColumns
-		res, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*shipmentbrief.Brief)(nil)).
-			Where(
-				cols.ID.Qualified()+" IN (SELECT "+cols.ID.Qualified()+" FROM "+
-					shipmentbriefcol.BriefTable.Name+" AS "+shipmentbriefcol.BriefTable.Alias+
-					" WHERE "+cols.BriefDate.Qualified()+" < ? ORDER BY "+
-					cols.BriefDate.Qualified()+" LIMIT ?)",
-				req.BeforeDate,
-				limit,
-			).
-			Exec(ctx)
+		b := shipmentbriefdb.Briefs
+		stale := b.As("stale")
+		n, err := b.AllTenants().
+			Where(b.ID.InQuery(stale.AllTenants().
+				Pick(stale.ID).
+				Where(stale.BriefDate.Lt(req.BeforeDate)).
+				Order(stale.BriefDate.Asc()).
+				Limit(limit))).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("delete shipment briefs: %w", err)
 		}
-		affected, _ := res.RowsAffected()
 
-		return int(affected), nil
+		return int(n), nil
 	})
 }

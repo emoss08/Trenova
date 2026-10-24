@@ -2,25 +2,24 @@ package assistantqueuerepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const entityName = "Queued message"
+
+var queuedMessageErrors = dberror.Mapping{Entity: entityName}
 
 type Params struct {
 	fx.In
@@ -41,56 +40,78 @@ func New(p Params) agentports.AssistantQueueRepository {
 	}
 }
 
-func scopeSelect(
-	q *bun.SelectQuery,
-	scope *agentports.AssistantQueueScope,
-) *bun.SelectQuery {
-	cols := conversationcol.QueuedMessageColumns
-	q = conversationcol.QueuedMessageScopeTenant(q, scope.TenantInfo).
-		Where(cols.ThreadID.Eq(), scope.ThreadID)
-	if scope.UserID.IsNotNil() {
-		q = q.Where(cols.UserID.Eq(), scope.UserID)
-	}
-
-	return q
+type queueTally struct {
+	Count int64
+	Last  int64
 }
 
-func scopeUpdate(
-	q *bun.UpdateQuery,
-	scope *agentports.AssistantQueueScope,
-) *bun.UpdateQuery {
-	cols := conversationcol.QueuedMessageColumns
-	q = conversationcol.QueuedMessageScopeTenantUpdate(q, scope.TenantInfo).
-		Where(cols.ThreadID.Eq(), scope.ThreadID)
-	if scope.UserID.IsNotNil() {
-		q = q.Where(cols.UserID.Eq(), scope.UserID)
-	}
+func inScope(scope *agentports.AssistantQueueScope) keel.Pred {
+	q := conversationdb.QueuedMessages
 
-	return q
-}
-
-func scopeDelete(
-	q *bun.DeleteQuery,
-	scope *agentports.AssistantQueueScope,
-) *bun.DeleteQuery {
-	cols := conversationcol.QueuedMessageColumns
-	q = conversationcol.QueuedMessageScopeTenantDelete(q, scope.TenantInfo).
-		Where(cols.ThreadID.Eq(), scope.ThreadID)
-	if scope.UserID.IsNotNil() {
-		q = q.Where(cols.UserID.Eq(), scope.UserID)
-	}
-
-	return q
-}
-
-func inOrder(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := conversationcol.QueuedMessageColumns
-
-	return q.Order(
-		cols.Position.OrderAsc(),
-		cols.CreatedAt.OrderAsc(),
-		cols.ID.OrderAsc(),
+	return keel.And(
+		q.ThreadID.Eq(scope.ThreadID),
+		keel.When(scope.UserID.IsNotNil(), q.UserID.Eq(scope.UserID)),
 	)
+}
+
+func inOrder() []keel.Order {
+	q := conversationdb.QueuedMessages
+
+	return []keel.Order{q.Position.Asc(), q.CreatedAt.Asc(), q.ID.Asc()}
+}
+
+func listQuery(scope *agentports.AssistantQueueScope) *keel.Query[conversation.QueuedMessage] {
+	return conversationdb.QueuedMessages.Where(inScope(scope)).Order(inOrder()...)
+}
+
+func getQuery(req *agentports.QueuedMessageRequest) *keel.Query[conversation.QueuedMessage] {
+	q := conversationdb.QueuedMessages
+
+	return q.Where(inScope(&req.Scope), q.ID.Eq(req.ID))
+}
+
+func tallyQuery(threadID pulid.ID) *keel.Query[conversation.QueuedMessage] {
+	q := conversationdb.QueuedMessages
+
+	return q.Pick(keel.Count(), keel.Raw("COALESCE(MAX(?), 0)", q.Position)).
+		Where(inScope(&agentports.AssistantQueueScope{ThreadID: threadID}))
+}
+
+func editQuery(
+	entity *conversation.QueuedMessage,
+	version int64,
+) *keel.Query[conversation.QueuedMessage] {
+	q := conversationdb.QueuedMessages
+
+	return q.Where(
+		inScope(&agentports.AssistantQueueScope{ThreadID: entity.ThreadID, UserID: entity.UserID}),
+		q.ID.Eq(entity.ID),
+		q.Version.Eq(version),
+	)
+}
+
+func reorderQuery(req *agentports.ReorderQueuedMessagesRequest) *keel.Query[conversation.QueuedMessage] {
+	q := conversationdb.QueuedMessages
+
+	return q.Where(inScope(&req.Scope), q.ID.In(req.IDs...))
+}
+
+func reorderPosition(ids []pulid.ID) keel.Assignment {
+	q := conversationdb.QueuedMessages
+
+	return q.Position.ToExpr(keel.Raw(
+		"array_position(?::varchar[], ?)",
+		pulid.Map(ids, func(id pulid.ID) string { return id.String() }),
+		q.ID,
+	))
+}
+
+func headQuery(scope *agentports.AssistantQueueScope) *keel.Query[conversation.QueuedMessage] {
+	return listQuery(scope).Limit(1).Lock(keel.ForUpdate, keel.SkipLocked)
+}
+
+func claimQuery(req *agentports.QueuedMessageRequest) *keel.Query[conversation.QueuedMessage] {
+	return getQuery(req).Lock(keel.ForUpdate)
 }
 
 func (r *repository) List(
@@ -98,15 +119,7 @@ func (r *repository) List(
 	scope *agentports.AssistantQueueScope,
 ) ([]*conversation.QueuedMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.QueuedMessage, error) {
-		items := make([]*conversation.QueuedMessage, 0, conversation.MaxQueuedPerThread)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return scopeSelect(sq, scope)
-			}).
-			Apply(inOrder).
-			Scan(ctx)
+		items, err := listQuery(scope).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list queued messages",
 				zap.String("thread", scope.ThreadID.String()),
@@ -124,17 +137,9 @@ func (r *repository) Get(
 	req *agentports.QueuedMessageRequest,
 ) (*conversation.QueuedMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.QueuedMessage, error) {
-		entity := new(conversation.QueuedMessage)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return scopeSelect(sq, &req.Scope).
-					Where(conversationcol.QueuedMessageColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := getQuery(req).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, entityName)
+			return nil, queuedMessageErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -146,27 +151,12 @@ func (r *repository) Insert(
 	entity *conversation.QueuedMessage,
 ) (*conversation.QueuedMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.QueuedMessage, error) {
-		db := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
 		if err := lockThread(ctx, db, entity.ThreadID); err != nil {
 			return nil, err
 		}
 
-		cols := conversationcol.QueuedMessageColumns
-		var tally struct {
-			Count int   `bun:"queued"`
-			Last  int64 `bun:"last"`
-		}
-		err := db.NewSelect().
-			Model((*conversation.QueuedMessage)(nil)).
-			ColumnExpr(buncolgen.Count("queued")).
-			ColumnExpr(cols.Position.Expr("COALESCE(MAX({}), 0) AS last")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return scopeSelect(sq, &agentports.AssistantQueueScope{
-					ThreadID:   entity.ThreadID,
-					TenantInfo: tenantOf(entity),
-				})
-			}).
-			Scan(ctx, &tally)
+		tally, err := keel.IntoOne[queueTally](ctx, db, tallyQuery(entity.ThreadID))
 		if err != nil {
 			return nil, fmt.Errorf("read the conversation's queue: %w", err)
 		}
@@ -175,7 +165,7 @@ func (r *repository) Insert(
 		}
 
 		entity.Position = tally.Last + 1
-		if _, err = db.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if err = conversationdb.QueuedMessages.Create(ctx, db, entity); err != nil {
 			r.l.Error("failed to queue a message",
 				zap.String("thread", entity.ThreadID.String()),
 				zap.Error(err),
@@ -192,25 +182,13 @@ func (r *repository) Update(
 	entity *conversation.QueuedMessage,
 ) (*conversation.QueuedMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.QueuedMessage, error) {
-		cols := conversationcol.QueuedMessageColumns
-		previous := entity.Version
-		entity.Version++
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Column(cols.Content.Bare(), cols.Request.Bare(), cols.Version.Bare(),
-				cols.UpdatedAt.Bare()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return scopeUpdate(uq, &agentports.AssistantQueueScope{
-					ThreadID:   entity.ThreadID,
-					UserID:     entity.UserID,
-					TenantInfo: tenantOf(entity),
-				}).
-					Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), previous)
-			}).
-			Returning("*").
-			Exec(ctx)
+		q := conversationdb.QueuedMessages
+		rows, err := editQuery(entity, entity.Version).UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			q.Content.To(entity.Content),
+			q.Request.To(entity.Request),
+		)
 		if err != nil {
 			r.l.Error("failed to edit a queued message",
 				zap.String("message", entity.ID.String()),
@@ -218,11 +196,11 @@ func (r *repository) Update(
 			)
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(result, entityName, entity.ID.String()); err != nil {
-			return nil, err
+		if len(rows) == 0 {
+			return nil, dberror.CreateVersionMismatchError(entityName, entity.ID.String())
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
@@ -231,44 +209,27 @@ func (r *repository) MarkSteer(
 	req *agentports.QueuedMessageRequest,
 ) (*conversation.QueuedMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.QueuedMessage, error) {
-		cols := conversationcol.QueuedMessageColumns
-		entity := new(conversation.QueuedMessage)
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set(cols.Steer.Set(), true).
-			Set(cols.Version.Inc(1)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return scopeUpdate(uq, &req.Scope).Where(cols.ID.Eq(), req.ID)
-			}).
-			Returning("*").
-			Exec(ctx)
+		q := conversationdb.QueuedMessages
+		rows, err := getQuery(req).UpdateReturning(ctx, r.db.Keel(ctx), q.Steer.To(true))
 		if err != nil {
 			return nil, err
 		}
-		if err = dberror.CheckFound(result, entityName); err != nil {
+		if err = dberror.CheckFoundCount(int64(len(rows)), entityName); err != nil {
 			return nil, err
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
 func (r *repository) Delete(ctx context.Context, req *agentports.QueuedMessageRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*conversation.QueuedMessage)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return scopeDelete(dq, &req.Scope).
-					Where(conversationcol.QueuedMessageColumns.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		n, err := getQuery(req).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return err
 		}
 
-		return dberror.CheckFound(result, entityName)
+		return dberror.CheckFoundCount(n, entityName)
 	})
 }
 
@@ -281,14 +242,8 @@ func (r *repository) DeleteMany(
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*conversation.QueuedMessage)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return scopeDelete(dq, &req.Scope).
-					Where(conversationcol.QueuedMessageColumns.ID.In(), bun.List(req.IDs))
-			}).
-			Exec(ctx)
+		q := conversationdb.QueuedMessages
+		_, err := q.Where(inScope(&req.Scope), q.ID.In(req.IDs...)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to clear read queued messages",
 				zap.String("thread", req.Scope.ThreadID.String()),
@@ -305,26 +260,12 @@ func (r *repository) Reorder(
 	req *agentports.ReorderQueuedMessagesRequest,
 ) ([]*conversation.QueuedMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*conversation.QueuedMessage, error) {
-		db := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
 		if err := lockThread(ctx, db, req.Scope.ThreadID); err != nil {
 			return nil, err
 		}
 
-		cols := conversationcol.QueuedMessageColumns
-		ids := pulid.Map(req.IDs, func(id pulid.ID) string { return id.String() })
-		items := make([]*conversation.QueuedMessage, 0, len(req.IDs))
-		_, err := db.NewUpdate().
-			Model((*conversation.QueuedMessage)(nil)).
-			Set(
-				cols.Position.SetExpr("array_position(?::varchar[], "+cols.ID.Bare()+")"),
-				pgdialect.Array(ids),
-			).
-			Set(cols.Version.Inc(1)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return scopeUpdate(uq, &req.Scope).Where(cols.ID.In(), bun.List(req.IDs))
-			}).
-			Returning("*").
-			Exec(ctx, &items)
+		items, err := reorderQuery(req).UpdateReturning(ctx, db, reorderPosition(req.IDs))
 		if err != nil {
 			r.l.Error("failed to reorder queued messages",
 				zap.String("thread", req.Scope.ThreadID.String()),
@@ -345,21 +286,7 @@ func (r *repository) ClaimNext(
 	scope *agentports.AssistantQueueScope,
 ) (*conversation.QueuedMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.QueuedMessage, error) {
-		db := r.db.DBForContext(ctx)
-		cols := conversationcol.QueuedMessageColumns
-		head := db.NewSelect().
-			Model((*conversation.QueuedMessage)(nil)).
-			Column(cols.ID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return scopeSelect(sq, scope)
-			}).
-			Apply(inOrder).
-			Limit(1).
-			For("UPDATE SKIP LOCKED")
-
-		return r.claim(ctx, db, scope, func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return dq.Where(cols.ID.Qualified()+" = (?)", head)
-		})
+		return r.claim(ctx, scope, headQuery(scope))
 	})
 }
 
@@ -368,27 +295,26 @@ func (r *repository) Claim(
 	req *agentports.QueuedMessageRequest,
 ) (*conversation.QueuedMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.QueuedMessage, error) {
-		return r.claim(ctx, r.db.DBForContext(ctx), &req.Scope,
-			func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.Where(conversationcol.QueuedMessageColumns.ID.Eq(), req.ID)
-			})
+		return r.claim(ctx, &req.Scope, claimQuery(req))
 	})
 }
 
 func (r *repository) claim(
 	ctx context.Context,
-	db bun.IDB,
 	scope *agentports.AssistantQueueScope,
-	pick func(*bun.DeleteQuery) *bun.DeleteQuery,
+	pick *keel.Query[conversation.QueuedMessage],
 ) (*conversation.QueuedMessage, error) {
-	entity := new(conversation.QueuedMessage)
-	result, err := db.NewDelete().
-		Model(entity).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return pick(scopeDelete(dq, scope))
-		}).
-		Returning("*").
-		Exec(ctx)
+	db := r.db.Keel(ctx)
+	entity, err := pick.First(ctx, db)
+	if errors.Is(err, keel.ErrNotFound) {
+		return nil, agentports.ErrQueueEmpty
+	}
+	if err == nil {
+		err = conversationdb.QueuedMessages.DeleteRow(ctx, db, entity)
+		if errors.Is(err, keel.ErrNotFound) {
+			return nil, agentports.ErrQueueEmpty
+		}
+	}
 	if err != nil {
 		r.l.Error("failed to take a queued message",
 			zap.String("thread", scope.ThreadID.String()),
@@ -396,24 +322,17 @@ func (r *repository) claim(
 		)
 		return nil, err
 	}
-	taken, err := result.RowsAffected()
-	if err != nil {
-		return nil, fmt.Errorf("count the queued message taken: %w", err)
-	}
-	if taken == 0 {
-		return nil, agentports.ErrQueueEmpty
-	}
 
 	return entity, nil
 }
 
 func (r *repository) Restore(ctx context.Context, entity *conversation.QueuedMessage) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT DO NOTHING").
-			Exec(ctx)
+		_, err := conversationdb.QueuedMessages.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*conversation.QueuedMessage{entity},
+		)
 		if err != nil {
 			r.l.Error("failed to put a queued message back",
 				zap.String("message", entity.ID.String()),
@@ -425,17 +344,10 @@ func (r *repository) Restore(ctx context.Context, entity *conversation.QueuedMes
 	})
 }
 
-func lockThread(ctx context.Context, db bun.IDB, threadID pulid.ID) error {
-	if _, err := db.NewRaw(
-		"SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
-		"assistant-queue:"+threadID.String(),
-	).Exec(ctx); err != nil {
+func lockThread(ctx context.Context, db *keel.DB, threadID pulid.ID) error {
+	if err := keel.LockKey(ctx, db, "assistant-queue:"+threadID.String()); err != nil {
 		return fmt.Errorf("hold the conversation's queue: %w", err)
 	}
 
 	return nil
-}
-
-func tenantOf(entity *conversation.QueuedMessage) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

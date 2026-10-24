@@ -4,28 +4,27 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-	"github.com/emoss08/trenova/pkg/dbhelper"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/jackc/pgx/v5"
 )
 
 type threadAttentionRow struct {
-	ThreadID       pulid.ID                         `bun:"thread_id"`
-	PendingPlans   int                              `bun:"pending_plans"`
-	LastTurnStatus conversation.AssistantTurnStatus `bun:"last_turn_status"`
+	ThreadID       pulid.ID
+	PendingPlans   int
+	LastTurnStatus conversation.AssistantTurnStatus
 }
 
 type pendingProposalRunRow struct {
-	ThreadID pulid.ID `bun:"thread_id"`
-	RunID    pulid.ID `bun:"run_id"`
+	ThreadID pulid.ID
+	RunID    pulid.ID
 }
 
 const threadAttentionQuery = `
@@ -40,8 +39,8 @@ SELECT
 			AND r.business_unit_id = pl.business_unit_id
 		WHERE pl.organization_id = t.organization_id
 			AND pl.business_unit_id = t.business_unit_id
-			AND pl.status = ?
-			AND r.subject_type = ?
+			AND pl.status = $1
+			AND r.subject_type = $2
 			AND r.subject_id = t.id
 	) AS pending_plans,
 	COALESCE((
@@ -54,10 +53,10 @@ SELECT
 		LIMIT 1
 	), '') AS last_turn_status
 FROM assistant_threads AS t
-WHERE t.organization_id = ?
-	AND t.business_unit_id = ?
-	AND t.user_id = ?
-	AND t.id IN (?)
+WHERE t.organization_id = $3
+	AND t.business_unit_id = $4
+	AND t.user_id = $5
+	AND t.id = ANY($6::text[])
 `
 
 const pendingProposalRunsQuery = `
@@ -67,13 +66,14 @@ JOIN agent_runs AS r
 	ON r.id = p.run_id
 	AND r.organization_id = p.organization_id
 	AND r.business_unit_id = p.business_unit_id
-WHERE p.organization_id = ?
-	AND p.business_unit_id = ?
-	AND p.status = ?
+WHERE p.organization_id = $1
+	AND p.business_unit_id = $2
+	AND p.status = $3
 	AND p.plan_id IS NULL
-	AND (p.expires_at IS NULL OR p.expires_at = 0 OR p.expires_at > ?)
-	AND r.subject_type = ?
-	AND r.subject_id IN (?)
+	AND (p.expires_at IS NULL OR p.expires_at = 0
+		OR p.expires_at > extract(epoch from current_timestamp)::bigint)
+	AND r.subject_type = $4
+	AND r.subject_id = ANY($5::text[])
 `
 
 func (r *repository) ListThreadAttention(
@@ -89,17 +89,20 @@ func (r *repository) ListThreadAttention(
 				return out, nil
 			}
 
-			db := r.db.DBForContext(ctx)
-			rows := make([]threadAttentionRow, 0, len(req.ThreadIDs))
-			if err := db.NewRaw(
+			db := r.db.Keel(ctx)
+			rows, err := keel.QueryAll(
+				ctx,
+				db,
+				pgx.RowToStructByName[threadAttentionRow],
 				threadAttentionQuery,
-				agent.PlanStatusPending,
-				agent.SubjectAssistantThread,
-				req.TenantInfo.OrgID,
-				req.TenantInfo.BuID,
-				req.UserID,
-				bun.In(req.ThreadIDs),
-			).Scan(ctx, &rows); err != nil {
+				string(agent.PlanStatusPending),
+				string(agent.SubjectAssistantThread),
+				req.TenantInfo.OrgID.String(),
+				req.TenantInfo.BuID.String(),
+				req.UserID.String(),
+				sliceutils.Strings(req.ThreadIDs),
+			)
+			if err != nil {
 				return nil, fmt.Errorf("list thread attention: %w", err)
 			}
 
@@ -115,16 +118,18 @@ func (r *repository) ListThreadAttention(
 				return out, nil
 			}
 
-			runs := make([]pendingProposalRunRow, 0)
-			if err := db.NewRaw(
+			runs, err := keel.QueryAll(
+				ctx,
+				db,
+				pgx.RowToStructByName[pendingProposalRunRow],
 				pendingProposalRunsQuery,
-				req.TenantInfo.OrgID,
-				req.TenantInfo.BuID,
-				agent.ProposalStatusPending,
-				bun.Safe(dbhelper.NowEpoch),
-				agent.SubjectAssistantThread,
-				bun.In(owned),
-			).Scan(ctx, &runs); err != nil {
+				req.TenantInfo.OrgID.String(),
+				req.TenantInfo.BuID.String(),
+				string(agent.ProposalStatusPending),
+				string(agent.SubjectAssistantThread),
+				sliceutils.Strings(owned),
+			)
+			if err != nil {
 				return nil, fmt.Errorf("list pending proposal runs: %w", err)
 			}
 
@@ -144,22 +149,19 @@ func (r *repository) MarkThreadRead(
 	req agentports.MarkThreadReadRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := conversationcol.ThreadColumns
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*conversation.Thread)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return conversationcol.ThreadScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ThreadID).
-					Where(cols.UserID.Eq(), req.UserID)
-			}).
-			Set(cols.LastReadAt.SetExpr("GREATEST({}, ?)"), req.ReadAt).
-			Exec(ctx)
+		th := conversationdb.Threads
+		n, err := th.Where(th.ID.Eq(req.ThreadID), th.UserID.Eq(req.UserID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			th.LastReadAt.ToExpr(keel.Raw("GREATEST(?, ?)", th.LastReadAt, req.ReadAt)),
+			keepThreadVersion(),
+			keepThreadUpdatedAt(),
+		)
 		if err != nil {
 			return fmt.Errorf("mark thread read: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(res, "Thread", req.ThreadID.String())
+		return dberror.CheckAffected(n, "Thread", req.ThreadID.String())
 	})
 }
 
@@ -168,31 +170,22 @@ func (r *repository) WakeThread(
 	req *agentports.WakeThreadRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := conversationcol.ThreadColumns
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*conversation.Thread)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return conversationcol.ThreadScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ThreadID).
-					Where(cols.UserID.Eq(), req.UserID).
-					Where(cols.SnoozedUntil.IsNotNull())
-			}).
-			Set(cols.SnoozedUntil.SetNull()).
-			Set(cols.SnoozeAnchor.SetNull()).
-			Set(cols.SnoozeStopID.SetNull()).
-			Set(cols.Version.Inc(1)).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Exec(ctx)
+		th := conversationdb.Threads
+		n, err := th.Where(
+			th.ID.Eq(req.ThreadID),
+			th.UserID.Eq(req.UserID),
+			th.SnoozedUntil.IsNotNull(),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			th.SnoozedUntil.ToNull(),
+			th.SnoozeAnchor.ToNull(),
+			th.SnoozeStopID.ToNull(),
+		)
 		if err != nil {
 			return false, fmt.Errorf("wake thread: %w", err)
 		}
 
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("wake thread: %w", err)
-		}
-
-		return affected > 0, nil
+		return n > 0, nil
 	})
 }

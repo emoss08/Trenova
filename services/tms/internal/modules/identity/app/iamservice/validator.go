@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -26,7 +27,8 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	return newValidator(p.Repo, validationframework.NewBunUniquenessCheckerScoped(p.DB))
+	return newValidator(p.Repo, validationframework.NewKeelChecker(p.DB, iamdb.AccessPoliciesSchema()),
+	)
 }
 
 func newValidator(

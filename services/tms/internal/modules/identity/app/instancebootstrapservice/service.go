@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/shared/emailutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -44,18 +43,10 @@ var (
 	ErrInputsDiffer       = errors.New("instance was bootstrapped with different inputs")
 )
 
-type transactor interface {
-	WithTx(
-		ctx context.Context,
-		opts kernelports.TxOptions,
-		fn func(context.Context, bun.Tx) error,
-	) error
-}
-
 type Params struct {
 	fx.In
 
-	DB      kernelports.DBConnection
+	DB      kernelports.Transactor
 	Tenants tenantports.TenantBootstrapRepository
 	Repo    instancebootstrapports.InstanceBootstrapRepository
 	Auditor permissionports.SecurityAuditor
@@ -64,7 +55,7 @@ type Params struct {
 }
 
 type Service struct {
-	db                 transactor
+	db                 kernelports.Transactor
 	tenants            tenantports.TenantBootstrapRepository
 	repo               instancebootstrapports.InstanceBootstrapRepository
 	auditor            permissionports.SecurityAuditor
@@ -138,10 +129,7 @@ func (s *Service) Bootstrap(
 
 	var out *created
 	sysCtx := dbscope.WithSystem(ctx, bootstrapScopeReason)
-	err = s.db.WithTx(sysCtx, kernelports.TxOptions{LockTimeout: lockTimeout}, func(
-		txCtx context.Context,
-		_ bun.Tx,
-	) error {
+	err = s.db.Transact(sysCtx, kernelports.TxOptions{LockTimeout: lockTimeout}, func(txCtx context.Context) error {
 		if lockErr := s.tenants.LockProvisioning(txCtx); lockErr != nil {
 			return lockErr
 		}

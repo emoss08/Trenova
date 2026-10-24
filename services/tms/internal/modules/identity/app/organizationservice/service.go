@@ -27,7 +27,6 @@ import (
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -36,7 +35,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           kernelports.DBConnection
+	DB           kernelports.Transactor
 	Repo         tenantports.OrganizationRepository
 	SSORepo      tenantports.SSOConfigRepository
 	AuditService auditports.AuditService
@@ -50,7 +49,7 @@ type Params struct {
 
 type service struct {
 	l            *zap.Logger
-	db           kernelports.DBConnection
+	db           kernelports.Transactor
 	repo         tenantports.OrganizationRepository
 	ssoRepo      tenantports.SSOConfigRepository
 	auditService auditports.AuditService
@@ -112,10 +111,10 @@ func (s *service) Update(
 	}
 
 	var updatedEntity *tenant.Organization
-	if err := s.db.WithTx(
+	if err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			if err := s.guardCapabilityDisable(txCtx, entity); err != nil {
 				return err
 			}

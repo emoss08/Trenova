@@ -14,12 +14,11 @@ func NewTestValidator() *Validator {
 	}
 }
 
-func NewTestValidatorWithReferenceChecker(
-	checker validationframework.ReferenceChecker,
+func NewTestValidatorWithGLAccountCheck(
+	glAccountExists validationframework.CustomReferenceCheckFunc,
 ) *Validator {
-	builder := newValidatorBuilder().
-		WithReferenceChecker(checker)
-	addGLAccountReferenceChecks(builder)
+	builder := newValidatorBuilder()
+	addGLAccountReferenceChecks(builder, glAccountExists)
 
 	return &Validator{
 		validator: builder.Build(),

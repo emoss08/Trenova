@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,19 +23,16 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	checker := validationframework.NewKeelChecker(p.DB, tenantdb.ShipmentControlsSchema())
+
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*tenant.ShipmentControl]().
 			WithModelName("ShipmentControl").
-			WithUniquenessChecker(
-				validationframework.NewBunUniquenessCheckerScoped(p.DB),
-			).
-			WithReferenceChecker(
-				validationframework.NewBunReferenceCheckerScoped(p.DB),
-			).
-			WithOptionalReferenceCheck(
+			WithUniquenessChecker(checker).
+			WithReferenceChecker(checker).
+			WithOptionalCustomReferenceCheck(
 				"detentionChargeId",
-				"accessorial_charges",
 				"Detention charge does not exist in your organization",
 				func(sc *tenant.ShipmentControl) pulid.ID {
 					if sc.DetentionChargeID == nil {
@@ -43,6 +41,7 @@ func NewValidator(p ValidatorParams) *Validator {
 
 					return *sc.DetentionChargeID
 				},
+				validationframework.KeelTableReferenceCheck(p.DB, "accessorial_charges"),
 			).
 			Build(),
 	}

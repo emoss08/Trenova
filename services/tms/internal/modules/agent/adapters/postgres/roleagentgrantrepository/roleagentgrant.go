@@ -4,19 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -40,6 +39,43 @@ func New(p Params) permissionports.RoleAgentGrantRepository {
 	}
 }
 
+func grantedAgentIDsQuery(
+	ctx context.Context,
+	req permissionports.ListGrantedAgentIDsRequest,
+) *keel.Query[permission.RoleAgentGrant] {
+	rag := permissiondb.RoleAgentGrants
+	q := rag.Group(rag.AgentDefinitionID).Pick(rag.AgentDefinitionID)
+	if dbscope.IsSystem(ctx) {
+		q = q.AllTenants()
+	}
+
+	return q.Where(rag.OrganizationID.Eq(req.OrganizationID), rag.RoleID.In(req.RoleIDs...))
+}
+
+func grantsQuery(key keelkinds.PulidIDCol, ids []pulid.ID) *keel.Query[permission.RoleAgentGrant] {
+	rag := permissiondb.RoleAgentGrants
+
+	return rag.Where(key.In(ids...)).Order(rag.GrantedAt.Asc())
+}
+
+func rolesQuery(ids []pulid.ID) *keel.Query[permission.Role] {
+	ro := permissiondb.Roles
+
+	return ro.Where(keel.When(len(ids) > 0, ro.ID.In(ids...))).Order(ro.Name.Asc())
+}
+
+func definitionsQuery(ids []pulid.ID) *keel.Query[agentdefinition.Definition] {
+	d := agentdefinitiondb.Definitions
+
+	return d.Where(d.ID.In(ids...)).Order(d.Name.Asc())
+}
+
+func currentGrantsQuery(p replaceParams) *keel.Query[permission.RoleAgentGrant] {
+	rag := permissiondb.RoleAgentGrants
+
+	return rag.Pick(p.varying).Where(p.fixed.Eq(p.fixedID)).Lock(keel.ForUpdate)
+}
+
 func (r *repository) ListGrantedAgentIDs(
 	ctx context.Context,
 	req permissionports.ListGrantedAgentIDsRequest,
@@ -49,16 +85,7 @@ func (r *repository) ListGrantedAgentIDs(
 			return []pulid.ID{}, nil
 		}
 
-		cols := permissioncol.RoleAgentGrantColumns
-		ids := make([]pulid.ID, 0, len(req.RoleIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*permission.RoleAgentGrant)(nil)).
-			Distinct().
-			Column(cols.AgentDefinitionID.Bare()).
-			Where(cols.OrganizationID.Eq(), req.OrganizationID).
-			Where(cols.RoleID.In(), bun.List(req.RoleIDs)).
-			Scan(ctx, &ids)
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), grantedAgentIDsQuery(ctx, req))
 		if err != nil {
 			r.l.Error("failed to list granted agents", zap.Error(err))
 			return nil, fmt.Errorf("list agents granted to roles: %w", err)
@@ -70,21 +97,11 @@ func (r *repository) ListGrantedAgentIDs(
 
 func (r *repository) listGrants(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
-	key buncolgen.Column,
+	key keelkinds.PulidIDCol,
 	ids []pulid.ID,
 ) ([]*permission.RoleAgentGrant, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.RoleAgentGrant, error) {
-		grants := make([]*permission.RoleAgentGrant, 0, len(ids))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&grants).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return permissioncol.RoleAgentGrantScopeTenant(sq, tenant).
-					Where(key.In(), bun.List(ids))
-			}).
-			Order(permissioncol.RoleAgentGrantColumns.GrantedAt.OrderAsc()).
-			Scan(ctx)
+		grants, err := grantsQuery(key, ids).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list role agent grants: %w", err)
 		}
@@ -108,8 +125,7 @@ func (r *repository) ListRolesByAgents(
 
 			grants, err := r.listGrants(
 				ctx,
-				req.TenantInfo,
-				permissioncol.RoleAgentGrantColumns.AgentDefinitionID,
+				permissiondb.RoleAgentGrants.AgentDefinitionID,
 				req.AgentIDs,
 			)
 			if err != nil {
@@ -125,17 +141,7 @@ func (r *repository) ListRolesByAgents(
 				roleIDs = append(roleIDs, grant.RoleID)
 			}
 
-			roleCols := permissioncol.RoleColumns
-			roles := make([]*permission.Role, 0, len(roleIDs))
-			err = r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&roles).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return permissioncol.RoleScopeTenant(sq, req.TenantInfo).
-						Where(roleCols.ID.In(), bun.List(sliceutils.Dedupe(roleIDs)))
-				}).
-				Order(roleCols.Name.OrderAsc()).
-				Scan(ctx)
+			roles, err := rolesQuery(sliceutils.Dedupe(roleIDs)).All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list granted roles", zap.Error(err))
 				return nil, fmt.Errorf("list roles granted agents: %w", err)
@@ -169,12 +175,7 @@ func (r *repository) ListAgentsByRoles(
 				return out, nil
 			}
 
-			grants, err := r.listGrants(
-				ctx,
-				req.TenantInfo,
-				permissioncol.RoleAgentGrantColumns.RoleID,
-				req.RoleIDs,
-			)
+			grants, err := r.listGrants(ctx, permissiondb.RoleAgentGrants.RoleID, req.RoleIDs)
 			if err != nil {
 				r.l.Error("failed to list grants by role", zap.Error(err))
 				return nil, err
@@ -188,17 +189,8 @@ func (r *repository) ListAgentsByRoles(
 				agentIDs = append(agentIDs, grant.AgentDefinitionID)
 			}
 
-			definitionCols := agentdefinitioncol.DefinitionColumns
-			definitions := make([]*agentdefinition.Definition, 0, len(agentIDs))
-			err = r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&definitions).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
-						Where(definitionCols.ID.In(), bun.List(sliceutils.Dedupe(agentIDs)))
-				}).
-				Order(definitionCols.Name.OrderAsc()).
-				Scan(ctx)
+			definitions, err := definitionsQuery(sliceutils.Dedupe(agentIDs)).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list granted agents", zap.Error(err))
 				return nil, fmt.Errorf("list agents granted to roles: %w", err)
@@ -227,21 +219,7 @@ func (r *repository) ListGrantableRoles(
 	req permissionports.ListGrantableRolesRequest,
 ) ([]*permission.Role, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.Role, error) {
-		cols := permissioncol.RoleColumns
-		roles := make([]*permission.Role, 0, len(req.RoleIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&roles).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = permissioncol.RoleScopeTenant(sq, req.TenantInfo)
-				if len(req.RoleIDs) > 0 {
-					sq = sq.Where(cols.ID.In(), bun.List(req.RoleIDs))
-				}
-
-				return sq
-			}).
-			Order(cols.Name.OrderAsc()).
-			Scan(ctx)
+		roles, err := rolesQuery(req.RoleIDs).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list grantable roles", zap.Error(err))
 			return nil, fmt.Errorf("list grantable roles: %w", err)
@@ -252,10 +230,9 @@ func (r *repository) ListGrantableRoles(
 }
 
 type replaceParams struct {
-	tenant  pagination.TenantInfo
-	fixed   buncolgen.Column
+	fixed   keelkinds.PulidIDCol
 	fixedID pulid.ID
-	varying buncolgen.Column
+	varying keelkinds.PulidIDCol
 	wanted  []pulid.ID
 	grant   func(varyingID pulid.ID) *permission.RoleAgentGrant
 }
@@ -265,18 +242,10 @@ func (r *repository) replace(
 	p replaceParams,
 ) (permissionports.GrantChange, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (permissionports.GrantChange, error) {
-		db := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
+		rag := permissiondb.RoleAgentGrants
 
-		previous := make([]pulid.ID, 0, len(p.wanted))
-		err := db.NewSelect().
-			Model((*permission.RoleAgentGrant)(nil)).
-			Column(p.varying.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return permissioncol.RoleAgentGrantScopeTenant(sq, p.tenant).
-					Where(p.fixed.Eq(), p.fixedID)
-			}).
-			For("UPDATE").
-			Scan(ctx, &previous)
+		previous, err := keel.Into[pulid.ID](ctx, db, currentGrantsQuery(p))
 		if err != nil {
 			return permissionports.GrantChange{}, fmt.Errorf("read the current grants: %w", err)
 		}
@@ -289,14 +258,8 @@ func (r *repository) replace(
 		}
 
 		if len(change.Removed) > 0 {
-			_, err = db.NewDelete().
-				Model((*permission.RoleAgentGrant)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return permissioncol.RoleAgentGrantScopeTenantDelete(dq, p.tenant).
-						Where(p.fixed.Eq(), p.fixedID).
-						Where(p.varying.In(), bun.List(change.Removed))
-				}).
-				Exec(ctx)
+			_, err = rag.Where(p.fixed.Eq(p.fixedID), p.varying.In(change.Removed...)).
+				Delete(ctx, db)
 			if err != nil {
 				return permissionports.GrantChange{}, fmt.Errorf("remove grants: %w", err)
 			}
@@ -307,13 +270,7 @@ func (r *repository) replace(
 			for _, id := range change.Added {
 				rows = append(rows, p.grant(id))
 			}
-			cols := permissioncol.RoleAgentGrantColumns
-			_, err = db.NewInsert().
-				Model(&rows).
-				On("CONFLICT (" + cols.RoleID.Bare() + ", " + cols.AgentDefinitionID.Bare() +
-					") DO NOTHING").
-				Exec(ctx)
-			if err != nil {
+			if _, err = rag.CreateOrSkip(ctx, db, rows, rag.RoleID, rag.AgentDefinitionID); err != nil {
 				return permissionports.GrantChange{}, fmt.Errorf("add grants: %w", err)
 			}
 		}
@@ -326,12 +283,11 @@ func (r *repository) ReplaceForAgent(
 	ctx context.Context,
 	req permissionports.ReplaceAgentGrantsRequest,
 ) (permissionports.GrantChange, error) {
-	cols := permissioncol.RoleAgentGrantColumns
+	rag := permissiondb.RoleAgentGrants
 	change, err := r.replace(ctx, replaceParams{
-		tenant:  req.TenantInfo,
-		fixed:   cols.AgentDefinitionID,
+		fixed:   rag.AgentDefinitionID,
 		fixedID: req.AgentID,
-		varying: cols.RoleID,
+		varying: rag.RoleID,
 		wanted:  req.RoleIDs,
 		grant: func(roleID pulid.ID) *permission.RoleAgentGrant {
 			return &permission.RoleAgentGrant{
@@ -355,12 +311,11 @@ func (r *repository) ReplaceForRole(
 	ctx context.Context,
 	req permissionports.ReplaceRoleGrantsRequest,
 ) (permissionports.GrantChange, error) {
-	cols := permissioncol.RoleAgentGrantColumns
+	rag := permissiondb.RoleAgentGrants
 	change, err := r.replace(ctx, replaceParams{
-		tenant:  req.TenantInfo,
-		fixed:   cols.RoleID,
+		fixed:   rag.RoleID,
 		fixedID: req.RoleID,
-		varying: cols.AgentDefinitionID,
+		varying: rag.AgentDefinitionID,
 		wanted:  req.AgentIDs,
 		grant: func(agentID pulid.ID) *permission.RoleAgentGrant {
 			return &permission.RoleAgentGrant{

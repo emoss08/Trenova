@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit/auditdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,7 +38,7 @@ func New(p Params) auditports.AuditDLQRepository {
 
 func (r *repository) Insert(ctx context.Context, entry *audit.DLQEntry) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entry).Exec(ctx); err != nil {
+		if err := auditdb.DLQEntries.Create(ctx, r.db.Keel(ctx), entry); err != nil {
 			r.l.Error("failed to insert DLQ entry",
 				zap.String("entryID", entry.ID.String()),
 				zap.Error(err),
@@ -54,7 +56,7 @@ func (r *repository) InsertBatch(ctx context.Context, entries []*audit.DLQEntry)
 			return nil
 		}
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(&entries).Exec(ctx); err != nil {
+		if err := auditdb.DLQEntries.CreateMany(ctx, r.db.Keel(ctx), entries); err != nil {
 			r.l.Error("failed to insert DLQ entries batch",
 				zap.Int("count", len(entries)),
 				zap.Error(err),
@@ -71,16 +73,15 @@ func (r *repository) GetPendingEntries(ctx context.Context, limit int) ([]*audit
 		"retry audit entries that failed to flush, which mix organizations",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*audit.DLQEntry, error) {
-		entries := make([]*audit.DLQEntry, 0, limit)
-
-		now := timeutils.NowUnix()
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entries).
-			Where("status IN (?, ?)", audit.DLQStatusPending, audit.DLQStatusRetrying).
-			Where("next_retry_at IS NULL OR next_retry_at <= ?", now).
-			OrderExpr("created_at ASC").
-			Limit(int64(limit)).
-			Scan(ctx)
+		d := auditdb.DLQEntries
+		entries, err := d.AllTenants().
+			Where(
+				d.Status.In(audit.DLQStatusPending, audit.DLQStatusRetrying),
+				keel.Or(d.NextRetryAt.IsNull(), d.NextRetryAt.Lte(timeutils.NowUnix())),
+			).
+			Order(d.CreatedAt.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get pending DLQ entries",
 				zap.Int("limit", limit),
@@ -95,12 +96,7 @@ func (r *repository) GetPendingEntries(ctx context.Context, limit int) ([]*audit
 
 func (r *repository) GetByID(ctx context.Context, id pulid.ID) (*audit.DLQEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*audit.DLQEntry, error) {
-		entry := new(audit.DLQEntry)
-
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entry).
-			Where("id = ?", id).
-			Scan(ctx)
+		entry, err := auditdb.DLQEntries.Get(ctx, r.db.Keel(ctx), id)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get DLQ entry by ID: %w", err)
 		}
@@ -112,12 +108,7 @@ func (r *repository) GetByID(ctx context.Context, id pulid.ID) (*audit.DLQEntry,
 func (r *repository) Update(ctx context.Context, entry *audit.DLQEntry) error {
 	ctx = dbscope.WithSystem(ctx, "update a dead-lettered audit entry")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		entry.UpdatedAt = timeutils.NowUnix()
-
-		if _, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entry).
-			WherePK().
-			Exec(ctx); err != nil {
+		if err := auditdb.DLQEntries.Save(ctx, r.db.Keel(ctx), entry); err != nil {
 			return fmt.Errorf("failed to update DLQ entry: %w", err)
 		}
 
@@ -132,13 +123,10 @@ func (r *repository) MarkAsRecovered(ctx context.Context, ids []pulid.ID) error 
 			return nil
 		}
 
-		now := timeutils.NowUnix()
-		if _, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*audit.DLQEntry)(nil)).
-			Set("status = ?", audit.DLQStatusRecovered).
-			Set("updated_at = ?", now).
-			Where("id IN (?)", ids).
-			Exec(ctx); err != nil {
+		d := auditdb.DLQEntries
+		if _, err := d.AllTenants().
+			Where(d.ID.In(ids...)).
+			Update(ctx, r.db.Keel(ctx), d.Status.To(audit.DLQStatusRecovered)); err != nil {
 			return fmt.Errorf("failed to mark DLQ entries as recovered: %w", err)
 		}
 
@@ -150,14 +138,15 @@ func (r *repository) MarkAsRecovered(ctx context.Context, ids []pulid.ID) error 
 func (r *repository) MarkAsFailed(ctx context.Context, id pulid.ID, errMsg string) error {
 	ctx = dbscope.WithSystem(ctx, "mark dead-lettered audit entries failed across organizations")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		now := timeutils.NowUnix()
-		if _, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*audit.DLQEntry)(nil)).
-			Set("status = ?", audit.DLQStatusFailed).
-			Set("last_error = ?", errMsg).
-			Set("updated_at = ?", now).
-			Where("id = ?", id).
-			Exec(ctx); err != nil {
+		d := auditdb.DLQEntries
+		if _, err := d.AllTenants().
+			Where(d.ID.Eq(id)).
+			Update(
+				ctx,
+				r.db.Keel(ctx),
+				d.Status.To(audit.DLQStatusFailed),
+				d.LastError.To(errMsg),
+			); err != nil {
 			return fmt.Errorf("failed to mark DLQ entry as failed: %w", err)
 		}
 
@@ -167,16 +156,15 @@ func (r *repository) MarkAsFailed(ctx context.Context, id pulid.ID, errMsg strin
 
 func (r *repository) DeleteRecovered(ctx context.Context, olderThan int64) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		result, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*audit.DLQEntry)(nil)).
-			Where("status = ?", audit.DLQStatusRecovered).
-			Where("updated_at < ?", olderThan).
-			Exec(ctx)
+		d := auditdb.DLQEntries
+		count, err := d.Where(
+			d.Status.Eq(audit.DLQStatusRecovered),
+			d.UpdatedAt.Lt(olderThan),
+		).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("failed to delete recovered DLQ entries: %w", err)
 		}
 
-		count, _ := result.RowsAffected()
 		r.l.Info("deleted recovered DLQ entries", zap.Int64("count", count))
 		return count, nil
 	})
@@ -185,27 +173,23 @@ func (r *repository) DeleteRecovered(ctx context.Context, olderThan int64) (int6
 func (r *repository) Count(ctx context.Context) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "count dead-lettered audit entries instance-wide")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		count, err := r.db.DBForContext(ctx).NewSelect().
-			Model((*audit.DLQEntry)(nil)).
-			Count(ctx)
+		count, err := auditdb.DLQEntries.AllTenants().Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("failed to count DLQ entries: %w", err)
 		}
 
-		return int64(count), nil
+		return count, nil
 	})
 }
 
 func (r *repository) CountByStatus(ctx context.Context, status audit.DLQStatus) (int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		count, err := r.db.DBForContext(ctx).NewSelect().
-			Model((*audit.DLQEntry)(nil)).
-			Where("status = ?", status).
-			Count(ctx)
+		d := auditdb.DLQEntries
+		count, err := d.Where(d.Status.Eq(status)).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("failed to count DLQ entries by status: %w", err)
 		}
 
-		return int64(count), nil
+		return count, nil
 	})
 }

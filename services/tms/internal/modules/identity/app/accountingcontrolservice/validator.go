@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	accountingcontrol "github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,14 +36,14 @@ func NewValidator(p ValidatorParams) *Validator {
 	builder := newValidatorBuilderWithIntegrationRepo(p.IntegrationRepo)
 
 	if p.DB != nil {
+		checker := validationframework.NewKeelChecker(p.DB, tenantdb.AccountingControlsSchema())
 		builder.
-			WithUniquenessChecker(
-				validationframework.NewBunUniquenessCheckerScoped(p.DB),
-			).
-			WithReferenceChecker(
-				validationframework.NewBunReferenceCheckerScoped(p.DB),
-			)
-		addGLAccountReferenceChecks(builder)
+			WithUniquenessChecker(checker).
+			WithReferenceChecker(checker)
+		addGLAccountReferenceChecks(
+			builder,
+			validationframework.KeelTableReferenceCheck(p.DB, "gl_accounts"),
+		)
 	}
 
 	return &Validator{
@@ -70,41 +71,42 @@ func newValidatorBuilderWithIntegrationRepo(
 
 func addGLAccountReferenceChecks(
 	builder *validationframework.TenantedValidatorBuilder[*accountingcontrol.AccountingControl],
+	glAccountExists validationframework.CustomReferenceCheckFunc,
 ) {
 	builder.
-		WithOptionalReferenceCheck("defaultRevenueAccountId", "gl_accounts", "Default revenue account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		WithOptionalCustomReferenceCheck("defaultRevenueAccountId", "Default revenue account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultRevenueAccountID
-		}).
-		WithOptionalReferenceCheck("defaultCashAccountId", "gl_accounts", "Default cash account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}, glAccountExists).
+		WithOptionalCustomReferenceCheck("defaultCashAccountId", "Default cash account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultCashAccountID
-		}).
-		WithOptionalReferenceCheck("defaultUnappliedCashAccountId", "gl_accounts", "Default unapplied cash account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}, glAccountExists).
+		WithOptionalCustomReferenceCheck("defaultUnappliedCashAccountId", "Default unapplied cash account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultUnappliedCashAccountID
-		}).
-		WithOptionalReferenceCheck("defaultExpenseAccountId", "gl_accounts", "Default expense account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}, glAccountExists).
+		WithOptionalCustomReferenceCheck("defaultExpenseAccountId", "Default expense account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultExpenseAccountID
-		}).
-		WithOptionalReferenceCheck("defaultArAccountId", "gl_accounts", "Default AR account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}, glAccountExists).
+		WithOptionalCustomReferenceCheck("defaultArAccountId", "Default AR account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultARAccountID
-		}).
-		WithOptionalReferenceCheck("defaultApAccountId", "gl_accounts", "Default AP account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}, glAccountExists).
+		WithOptionalCustomReferenceCheck("defaultApAccountId", "Default AP account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultAPAccountID
-		}).
-		WithOptionalReferenceCheck("defaultTaxLiabilityAccountId", "gl_accounts", "Default tax liability account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}, glAccountExists).
+		WithOptionalCustomReferenceCheck("defaultTaxLiabilityAccountId", "Default tax liability account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultTaxLiabilityAccountID
-		}).
-		WithOptionalReferenceCheck("defaultWriteOffAccountId", "gl_accounts", "Default write-off account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}, glAccountExists).
+		WithOptionalCustomReferenceCheck("defaultWriteOffAccountId", "Default write-off account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultWriteOffAccountID
-		}).
-		WithOptionalReferenceCheck("defaultRetainedEarningsAccountId", "gl_accounts", "Default retained earnings account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}, glAccountExists).
+		WithOptionalCustomReferenceCheck("defaultRetainedEarningsAccountId", "Default retained earnings account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultRetainedEarningsAccountID
-		}).
-		WithOptionalReferenceCheck("realizedFxGainAccountId", "gl_accounts", "Realized FX gain account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}, glAccountExists).
+		WithOptionalCustomReferenceCheck("realizedFxGainAccountId", "Realized FX gain account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.RealizedFXGainAccountID
-		}).
-		WithOptionalReferenceCheck("realizedFxLossAccountId", "gl_accounts", "Realized FX loss account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}, glAccountExists).
+		WithOptionalCustomReferenceCheck("realizedFxLossAccountId", "Realized FX loss account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.RealizedFXLossAccountID
-		})
+		}, glAccountExists)
 }
 
 func createAccountingBasisRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {

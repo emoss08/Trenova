@@ -5,14 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/uptrace/bun"
 )
 
 const maxThreadOwnersPerCall = 1000
@@ -24,11 +21,6 @@ func NewThreadOwners(p Params) agentports.ThreadOwnerRepository {
 		db: p.DB,
 		l:  p.Logger.Named("postgres.thread-owner-repository"),
 	}
-}
-
-type threadOwnerRow struct {
-	ID     pulid.ID `bun:"id"`
-	UserID pulid.ID `bun:"user_id"`
 }
 
 func (r *repository) ThreadOwners(
@@ -50,15 +42,12 @@ func (r *repository) ThreadOwners(
 			return owners, nil
 		}
 
-		cols := conversationcol.ThreadColumns
-		rows := make([]threadOwnerRow, 0, len(ids))
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*conversation.Thread)(nil)).
-			Column(cols.ID.String(), cols.UserID.String()).
-			Apply(conversationcol.ThreadApplyTenant(req.TenantInfo)).
-			Where(cols.ID.In(), bun.List(ids)).
-			Scan(ctx, &rows); err != nil {
+		th := conversationdb.Threads
+		rows, err := th.Pick(th.ID, th.UserID).
+			Where(th.ID.In(ids...)).
+			Limit(len(ids)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("read thread owners: %w", err)
 		}
 

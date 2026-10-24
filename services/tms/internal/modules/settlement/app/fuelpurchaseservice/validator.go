@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,7 +35,7 @@ type Validator struct {
 
 func NewValidator(p ValidatorParams) *Validator {
 	return newValidator(
-		validationframework.NewBunReferenceCheckerScoped(p.DB),
+		validationframework.NewKeelChecker(p.DB, fuelpurchasedb.FuelCardsSchema()),
 		p.Repo,
 	)
 }

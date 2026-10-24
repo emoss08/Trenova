@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -37,7 +36,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           kernelports.DBConnection
+	DB           kernelports.Transactor
 	LedgerRepo   workerports.PTOLedgerRepository
 	PolicyRepo   workerports.PTOPolicyRepository
 	WorkerRepo   workerports.WorkerRepository
@@ -50,7 +49,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	db           kernelports.DBConnection
+	db           kernelports.Transactor
 	ledgerRepo   workerports.PTOLedgerRepository
 	policyRepo   workerports.PTOPolicyRepository
 	workerRepo   workerports.WorkerRepository
@@ -76,7 +75,6 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) DB() kernelports.DBConnection { return s.db }
 
 // PayPeriodSpec reads the organisation's settlement calendar for per-pay-period
 // accrual; nil when settlement is not configured.
@@ -200,10 +198,10 @@ func (s *Service) post(
 	entry := p.entry
 	var posted *worker.WorkerPTOLedgerEntry
 
-	err := s.db.WithTx(
+	err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: lockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			if err := s.ledgerRepo.EnsureBalance(txCtx, &p.key); err != nil {
 				return err
 			}
@@ -519,10 +517,10 @@ func (s *Service) RebuildBalance(
 	key *workerports.PTOBalanceKey,
 ) (*worker.WorkerPTOBalance, error) {
 	var rebuilt *worker.WorkerPTOBalance
-	err := s.db.WithTx(
+	err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: lockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			if err := s.ledgerRepo.EnsureBalance(txCtx, key); err != nil {
 				return err
 			}

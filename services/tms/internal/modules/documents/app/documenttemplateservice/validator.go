@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,18 +50,17 @@ func NewValidator(p ValidatorParams) *Validator {
 func withCheckers[T validationframework.TenantedEntity](
 	builder *validationframework.TenantedValidatorBuilder[T],
 	db *postgres.Connection,
+	table *schema.Table,
 ) *validationframework.TenantedValidatorBuilder[T] {
 	if db == nil {
 		return builder
 	}
 
+	checker := validationframework.NewKeelChecker(db, table)
+
 	return builder.
-		WithUniquenessChecker(
-			validationframework.NewBunUniquenessCheckerScoped(db),
-		).
-		WithReferenceChecker(
-			validationframework.NewBunReferenceCheckerScoped(db),
-		)
+		WithUniquenessChecker(checker).
+		WithReferenceChecker(checker)
 }
 
 func buildTemplateValidator(
@@ -86,7 +89,7 @@ func buildTemplateValidator(
 		builder = builder.WithCustomRule(newSingleOrgDefaultRule(p.DB))
 	}
 
-	return withCheckers(builder, p.DB).Build()
+	return withCheckers(builder, p.DB, documenttemplatedb.DocumentTemplatesSchema()).Build()
 }
 
 func buildVersionValidator(
@@ -114,6 +117,7 @@ func buildVersionValidator(
 				},
 			),
 		p.DB,
+		documenttemplatedb.DocumentTemplateVersionsSchema(),
 	).Build()
 }
 
@@ -157,6 +161,7 @@ func buildAssignmentValidator(
 				func(a *documenttemplate.DocumentTemplateAssignment) pulid.ID { return a.CustomerID },
 			),
 		p.DB,
+		documenttemplatedb.DocumentTemplateAssignmentsSchema(),
 	).Build()
 }
 
@@ -213,36 +218,36 @@ func newSingleOrgDefaultRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			return db.RunScoped(ctx, true, func(ctx context.Context) error {
-				if !entity.IsOrgDefault {
-					return nil
-				}
-
-				query := db.DBForContext(ctx).NewSelect().
-					Table("document_templates").
-					ColumnExpr("1").
-					Where("organization_id = ?", valCtx.OrganizationID).
-					Where("business_unit_id = ?", valCtx.BusinessUnitID).
-					Where("kind = ?", entity.Kind).
-					Where("is_org_default = TRUE")
-
-				if valCtx.EntityID.IsNotNil() {
-					query = query.Where("id != ?", valCtx.EntityID)
-				}
-
-				exists, err := query.Exists(ctx)
-				if err != nil {
-					return err
-				}
-
-				if exists {
-					multiErr.Add("isOrgDefault", errortypes.ErrInvalid,
-						"Another template is already the organization default for this kind. "+
-							"Clear that one first.")
-				}
-
+			if !entity.IsOrgDefault {
 				return nil
+			}
+
+			exists, err := dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
+				dt := documenttemplatedb.DocumentTemplates
+				q := dt.Where(dt.Kind.Eq(entity.Kind), dt.IsOrgDefault.IsTrue())
+				if valCtx.EntityID.IsNotNil() {
+					q = q.Where(dt.ID.Ne(valCtx.EntityID))
+				}
+				if dbscope.IsSystem(ctx) {
+					q = q.AllTenants().Where(
+						dt.OrganizationID.Eq(valCtx.OrganizationID),
+						dt.BusinessUnitID.Eq(valCtx.BusinessUnitID),
+					)
+				}
+
+				return q.Exists(ctx, db.Keel(ctx))
 			})
+			if err != nil {
+				return err
+			}
+
+			if exists {
+				multiErr.Add("isOrgDefault", errortypes.ErrInvalid,
+					"Another template is already the organization default for this kind. "+
+						"Clear that one first.")
+			}
+
+			return nil
 		})
 }
 

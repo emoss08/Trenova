@@ -2,6 +2,7 @@ package accountingcontrolservice
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -9,23 +10,35 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type capturingReferenceChecker struct {
-	valid    bool
-	requests []*validationframework.ReferenceRequest
+type glAccountCheck struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	AccountID      pulid.ID
 }
 
-func (c *capturingReferenceChecker) CheckReference(
+type capturingGLAccountCheck struct {
+	mu       sync.Mutex
+	valid    bool
+	requests []glAccountCheck
+}
+
+func (c *capturingGLAccountCheck) check(
 	_ context.Context,
-	req *validationframework.ReferenceRequest,
+	orgID, buID, accountID pulid.ID,
 ) (bool, error) {
-	c.requests = append(c.requests, req)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.requests = append(c.requests, glAccountCheck{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		AccountID:      accountID,
+	})
 	return c.valid, nil
 }
 
@@ -199,8 +212,8 @@ func TestValidateUpdate_RejectsIncompatibleAccountingBasisCombination(t *testing
 func TestValidateUpdate_SkipsOptionalReferenceChecksForZeroValueIDs(t *testing.T) {
 	t.Parallel()
 
-	checker := &capturingReferenceChecker{valid: true}
-	v := NewTestValidatorWithReferenceChecker(checker)
+	checker := &capturingGLAccountCheck{valid: true}
+	v := NewTestValidatorWithGLAccountCheck(checker.check)
 	entity := validAccountingControl()
 	entity.DefaultTaxLiabilityAccountID = pulid.ID("")
 	entity.DefaultWriteOffAccountID = pulid.ID("")
@@ -212,11 +225,11 @@ func TestValidateUpdate_SkipsOptionalReferenceChecksForZeroValueIDs(t *testing.T
 	assert.Len(t, checker.requests, 6)
 }
 
-func TestValidateUpdate_UsesGLAccountsTableForAccountReferences(t *testing.T) {
+func TestValidateUpdate_ChecksEveryGLAccountReferenceInTheEntityTenant(t *testing.T) {
 	t.Parallel()
 
-	checker := &capturingReferenceChecker{valid: true}
-	v := NewTestValidatorWithReferenceChecker(checker)
+	checker := &capturingGLAccountCheck{valid: true}
+	v := NewTestValidatorWithGLAccountCheck(checker.check)
 	entity := validAccountingControl()
 	entity.RealizedFXGainAccountID = pulid.MustNew("gla_")
 	entity.RealizedFXLossAccountID = pulid.MustNew("gla_")
@@ -228,7 +241,7 @@ func TestValidateUpdate_UsesGLAccountsTableForAccountReferences(t *testing.T) {
 	assert.Nil(t, multiErr)
 	require.Len(t, checker.requests, 11)
 	for _, req := range checker.requests {
-		assert.Equal(t, "gl_accounts", req.TableName)
+		assert.NotEmpty(t, req.AccountID)
 		assert.Equal(t, entity.OrganizationID, req.OrganizationID)
 		assert.Equal(t, entity.BusinessUnitID, req.BusinessUnitID)
 	}

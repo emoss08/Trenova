@@ -2,22 +2,24 @@ package assistantturnrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var turnErrors = dberror.Mapping{Entity: "AssistantTurn"}
 
 type Params struct {
 	fx.In
@@ -38,19 +40,79 @@ func New(p Params) agentports.AssistantTurnRepository {
 	}
 }
 
-// Start records a turn about to run.
-//
-// The partial unique index is what refuses a second live turn on one thread,
-// so the collision is the answer rather than an error to log: two turns
-// appending to the same conversation interleave their message sequence
-// numbers, and the transcript stops describing anything that happened.
+var liveStatuses = []conversation.AssistantTurnStatus{
+	conversation.AssistantTurnStatusPending,
+	conversation.AssistantTurnStatusRunning,
+}
+
+type threadTitle struct {
+	ID    pulid.ID
+	Title string
+}
+
+func prepareTurn(turn *conversation.AssistantTurn) {
+	if turn.Status == "" {
+		turn.Status = conversation.AssistantTurnStatusPending
+	}
+	if turn.Origin == "" {
+		turn.Origin = conversation.AssistantTurnOriginPerson
+	}
+	if turn.StartedAt == 0 {
+		turn.StartedAt = timeutils.NowUnix()
+	}
+}
+
+func getByIDQuery(req agentports.GetAssistantTurnRequest) *keel.Query[conversation.AssistantTurn] {
+	at := conversationdb.AssistantTurns
+
+	return at.Where(
+		at.ID.Eq(req.ID),
+		keel.When(req.UserID.IsNotNil(), at.UserID.Eq(req.UserID)),
+	)
+}
+
+func activeQuery(req agentports.ActiveAssistantTurnRequest) *keel.Query[conversation.AssistantTurn] {
+	at := conversationdb.AssistantTurns
+
+	return at.Where(
+		at.ThreadID.Eq(req.ThreadID),
+		at.UserID.Eq(req.UserID),
+		at.Status.In(liveStatuses...),
+	)
+}
+
+func liveTurnsQuery(
+	req agentports.ListLiveAssistantTurnsRequest,
+) *keel.Query[conversation.AssistantTurn] {
+	at := conversationdb.AssistantTurns
+	th := conversationdb.Threads.As("live_thread")
+
+	return at.Join(th, th.ID.EqCol(at.ThreadID)).
+		Where(
+			at.UserID.Eq(req.UserID),
+			th.UserID.Eq(req.UserID),
+			at.Status.In(liveStatuses...),
+			keel.When(len(req.ExcludeOrigins) > 0, th.Origin.NotIn(req.ExcludeOrigins...)),
+		)
+}
+
+func liveThreadTitlesQuery(
+	req agentports.ListLiveAssistantTurnsRequest,
+) *keel.Query[conversation.Thread] {
+	th := conversationdb.Threads
+
+	return th.Pick(th.ID, th.Title).Where(
+		th.ID.InQuery(liveTurnsQuery(req).Pick(conversationdb.AssistantTurns.ThreadID)),
+	)
+}
+
 func (r *repository) Start(
 	ctx context.Context,
 	turn *conversation.AssistantTurn,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(turn).Exec(ctx)
-		if err != nil {
+		prepareTurn(turn)
+		if err := conversationdb.AssistantTurns.Create(ctx, r.db.Keel(ctx), turn); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, agentports.ErrTurnAlreadyRunning
 			}
@@ -72,34 +134,13 @@ func (r *repository) GetByID(
 	req agentports.GetAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
-		cols := conversationcol.AssistantTurnColumns
-		turn := new(conversation.AssistantTurn)
-
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(turn).
-			Apply(conversationcol.AssistantTurnApplyTenant(req.TenantInfo)).
-			Where(cols.ID.Eq(), req.ID)
-		// The reader supplied the id, so the owner is checked here rather than
-		// trusted. A turn belongs to one person and this hands out their reply.
-		if !req.UserID.IsNil() {
-			q = q.Where(cols.UserID.Eq(), req.UserID)
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AssistantTurn")
+		turn, err := getByIDQuery(req).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, turnErrors.Map(err, req.ID.String())
 		}
 
 		return turn, nil
 	})
-}
-
-// liveStatuses are a turn still producing its reply. A write that marks a
-// turn live must be limited to them: a fast turn can finish before the
-// request that started it records its workflow, and marking it Running after
-// that would hold the conversation's one live slot for ever.
-var liveStatuses = []conversation.AssistantTurnStatus{
-	conversation.AssistantTurnStatusPending,
-	conversation.AssistantTurnStatusRunning,
 }
 
 func (r *repository) Active(
@@ -107,20 +148,9 @@ func (r *repository) Active(
 	req agentports.ActiveAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
-		cols := conversationcol.AssistantTurnColumns
-		turn := new(conversation.AssistantTurn)
-
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(turn).
-			Apply(conversationcol.AssistantTurnApplyTenant(req.TenantInfo)).
-			Where(cols.ThreadID.Eq(), req.ThreadID).
-			Where(cols.UserID.Eq(), req.UserID).
-			Where(cols.Status.In(), bun.List(liveStatuses)).
-			Scan(ctx)
+		turn, err := activeQuery(req).First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				// Not producing a reply is the ordinary state of a conversation,
-				// not an absence worth reporting as one.
+			if errors.Is(err, keel.ErrNotFound) {
 				return nil, nil
 			}
 
@@ -131,44 +161,22 @@ func (r *repository) Active(
 	})
 }
 
-// liveThreadTitle is the label the thread's title is read under beside a live
-// turn.
-const liveThreadTitle = "thread_title"
-
-// threadJoin reads a turn's conversation with it. The thread is joined on its
-// whole key, tenant included, so a turn can only ever be listed beside a
-// conversation of its own tenant.
-func threadJoin() string {
-	turnCols := conversationcol.AssistantTurnColumns
-	threadCols := conversationcol.ThreadColumns
-
-	return "JOIN " + conversationcol.ThreadTable.As(conversationcol.ThreadTable.Alias) +
-		" ON " + threadCols.ID.EqColumn(turnCols.ThreadID) +
-		" AND " + threadCols.OrganizationID.EqColumn(turnCols.OrganizationID) +
-		" AND " + threadCols.BusinessUnitID.EqColumn(turnCols.BusinessUnitID)
-}
-
 func (r *repository) ListLive(
 	ctx context.Context,
 	req agentports.ListLiveAssistantTurnsRequest,
 ) ([]*agentports.LiveAssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentports.LiveAssistantTurn, error) {
-		cols := conversationcol.AssistantTurnColumns
-		turns := make([]*agentports.LiveAssistantTurn, 0)
-
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&turns).
-			ColumnExpr(conversationcol.AssistantTurnTable.All()).
-			ColumnExpr(conversationcol.ThreadColumns.Title.As(liveThreadTitle)).
-			Join(threadJoin()).
-			Apply(conversationcol.AssistantTurnApplyTenant(req.TenantInfo)).
-			Where(cols.UserID.Eq(), req.UserID).
-			Where(conversationcol.ThreadColumns.UserID.Eq(), req.UserID).
-			Where(cols.Status.In(), bun.List(liveStatuses))
-		if len(req.ExcludeOrigins) > 0 {
-			q = q.Where(conversationcol.ThreadColumns.Origin.NotIn(), bun.List(req.ExcludeOrigins))
-		}
-		err := q.Order(cols.StartedAt.OrderAsc()).Scan(ctx)
+		at := conversationdb.AssistantTurns
+		var (
+			turns  []*conversation.AssistantTurn
+			titles []threadTitle
+		)
+		err := keel.Batch(
+			ctx,
+			r.db.Keel(ctx),
+			keel.AllInto(liveTurnsQuery(req).Order(at.StartedAt.Asc()), &turns),
+			keel.IntoSlice(liveThreadTitlesQuery(req), &titles),
+		)
 		if err != nil {
 			r.l.Error("failed to list live assistant turns",
 				zap.String("user", req.UserID.String()),
@@ -178,7 +186,19 @@ func (r *repository) ListLive(
 			return nil, fmt.Errorf("list the replies still in progress: %w", err)
 		}
 
-		return turns, nil
+		byThread := make(map[pulid.ID]string, len(titles))
+		for _, title := range titles {
+			byThread[title.ID] = title.Title
+		}
+		out := make([]*agentports.LiveAssistantTurn, 0, len(turns))
+		for _, turn := range turns {
+			out = append(out, &agentports.LiveAssistantTurn{
+				AssistantTurn: *turn,
+				ThreadTitle:   byThread[turn.ThreadID],
+			})
+		}
+
+		return out, nil
 	})
 }
 
@@ -191,13 +211,9 @@ func (r *repository) RecordFingerprint(
 			return nil
 		}
 
-		cols := conversationcol.AssistantTurnColumns
-		q := r.db.DBForContext(ctx).NewUpdate().
-			Model((*conversation.AssistantTurn)(nil)).
-			Set(cols.Fingerprint.Set(), req.Fingerprint).
-			Where(cols.ID.Eq(), req.ID)
-		if _, err := conversationcol.AssistantTurnScopeTenantUpdate(q, req.TenantInfo).
-			Exec(ctx); err != nil {
+		at := conversationdb.AssistantTurns
+		if _, err := at.Where(at.ID.Eq(req.ID)).
+			Update(ctx, r.db.Keel(ctx), at.Fingerprint.To(req.Fingerprint)); err != nil {
 			return fmt.Errorf("record the agent a turn ran as: %w", err)
 		}
 
@@ -210,23 +226,19 @@ func (r *repository) Complete(
 	req agentports.CompleteAssistantTurnRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := conversationcol.AssistantTurnColumns
-
-		q := r.db.DBForContext(ctx).NewUpdate().
-			Model((*conversation.AssistantTurn)(nil)).
-			Set(cols.Status.Set(), req.Status).
-			Set(cols.CompletedAt.Set(), timeutils.NowUnix()).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Where(cols.ID.Eq(), req.ID)
-		q = conversationcol.AssistantTurnScopeTenantUpdate(q, req.TenantInfo)
+		at := conversationdb.AssistantTurns
+		sets := []keel.Assignment{
+			at.Status.To(req.Status),
+			at.CompletedAt.To(timeutils.NowUnix()),
+		}
 		if req.Error != "" {
-			q = q.Set(cols.ErrorMessage.Set(), req.Error)
+			sets = append(sets, at.ErrorMessage.To(req.Error))
 		}
-		if !req.RunID.IsNil() {
-			q = q.Set(cols.RunID.Set(), req.RunID)
+		if req.RunID.IsNotNil() {
+			sets = append(sets, at.RunID.To(req.RunID))
 		}
 
-		if _, err := q.Exec(ctx); err != nil {
+		if _, err := at.Where(at.ID.Eq(req.ID)).Update(ctx, r.db.Keel(ctx), sets...); err != nil {
 			r.l.Error("failed to complete an assistant turn",
 				zap.String("turn", req.ID.String()),
 				zap.String("status", string(req.Status)),
@@ -243,21 +255,17 @@ func (r *repository) Complete(
 func (r *repository) MarkWorkflow(
 	ctx context.Context,
 	id pulid.ID,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workflowID string,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := conversationcol.AssistantTurnColumns
-
-		q := r.db.DBForContext(ctx).NewUpdate().
-			Model((*conversation.AssistantTurn)(nil)).
-			Set(cols.WorkflowID.Set(), workflowID).
-			Set(cols.Status.Set(), conversation.AssistantTurnStatusRunning).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Where(cols.ID.Eq(), id).
-			Where(cols.Status.In(), bun.List(liveStatuses))
-
-		_, err := conversationcol.AssistantTurnScopeTenantUpdate(q, tenant).Exec(ctx)
+		at := conversationdb.AssistantTurns
+		_, err := at.Where(at.ID.Eq(id), at.Status.In(liveStatuses...)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			at.WorkflowID.To(workflowID),
+			at.Status.To(conversation.AssistantTurnStatusRunning),
+		)
 		if err != nil {
 			return fmt.Errorf("record the workflow carrying a turn: %w", err)
 		}

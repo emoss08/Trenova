@@ -45,7 +45,7 @@ type Params struct {
 	Storage           kernelports.Client
 	Config            *config.Config
 	Validator         *Validator
-	DB                kernelports.DBConnection
+	DB                kernelports.Transactor
 	Roles             RoleAssigner
 	Invites           AccountInviter
 	PermissionEngine  permissionports.PermissionEngine
@@ -65,7 +65,7 @@ type Service struct {
 	storage      kernelports.Client
 	storageCfg   *config.StorageConfig
 	validator    *Validator
-	db           kernelports.DBConnection
+	db           kernelports.Transactor
 	roles        RoleAssigner
 	invites      AccountInviter
 	permissions  permissionports.PermissionEngine
