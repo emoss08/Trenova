@@ -65,6 +65,11 @@ func (r *AccountingReferenceObject) GetOrganizationID() pulid.ID { return r.Orga
 
 func (r *AccountingReferenceObject) GetBusinessUnitID() pulid.ID { return r.BusinessUnitID }
 
+func (r *AccountingReferenceObject) BeforeSave(_ context.Context) error {
+	r.SearchName = stringutils.NormalizeName(r.Name)
+	return nil
+}
+
 func (r *AccountingReferenceObject) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	r.SearchName = stringutils.NormalizeName(r.Name)

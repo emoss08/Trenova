@@ -3,17 +3,19 @@
 package journalpostingrepository
 
 import (
-	"context"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance/glbalancedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,29 +23,20 @@ import (
 	"go.uber.org/zap"
 )
 
-type seededOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
-type seededUser struct {
-	ID pulid.ID `bun:"id"`
-}
-
-type seededAccount struct {
-	ID pulid.ID `bun:"id"`
-}
-
 func TestCreateManualJournalPostingPersistsPostedRecords(t *testing.T) {
-	ctx, db, cleanup := seededtest.SetupTestDB(t)
-	defer cleanup()
+	db := accountingtest.NewDevelopmentDatabase(t)
+	ctx := db.A.Ctx
+	kdb := db.Admin
 
-	conn := postgres.NewTestConnection(db)
+	conn := db.Conn
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
-	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupPostingFixture(t, ctx, conn)
+	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupPostingFixture(t, db)
 	now := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 
-	err := repo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
+	accountBefore, err := glaccountdb.GLAccounts.Get(ctx, kdb, accountIDs[0])
+	require.NoError(t, err)
+
+	err = repo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:              pulid.MustNew("jb_"),
 		OrganizationID:       orgID,
 		BusinessUnitID:       buID,
@@ -102,117 +95,145 @@ func TestCreateManualJournalPostingPersistsPostedRecords(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	var batch struct {
-		Status   string `bun:"status"`
-		PostedAt *int64 `bun:"posted_at"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_batches").
-			Column("status", "posted_at").
-			Where("batch_number = ?", "JB-1").
-			Limit(1).
-			Scan(ctx, &batch),
-	)
+	jb := journalentrydb.JournalBatches
+	batch, err := jb.Where(jb.BatchNumber.Eq("JB-1")).One(ctx, kdb)
+	require.NoError(t, err)
 	assert.Equal(t, "Posted", batch.Status)
 	require.NotNil(t, batch.PostedAt)
 	assert.Equal(t, now, *batch.PostedAt)
 
-	var entry struct {
-		Status     string   `bun:"status"`
-		BatchID    pulid.ID `bun:"batch_id"`
-		IsPosted   bool     `bun:"is_posted"`
-		ApprovedAt *int64   `bun:"approved_at"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_entries").
-			Column("status", "batch_id", "is_posted", "approved_at").
-			Where("entry_number = ?", "JE-1").
-			Limit(1).
-			Scan(ctx, &entry),
-	)
-	assert.Equal(t, "Posted", entry.Status)
+	je := journalentrydb.JournalEntries
+	entry, err := je.Where(je.EntryNumber.Eq("JE-1")).One(ctx, kdb)
+	require.NoError(t, err)
+	assert.Equal(t, journalentry.StatusPosted, entry.Status)
+	assert.Equal(t, batch.ID, entry.BatchID)
 	assert.True(t, entry.IsPosted)
 	require.NotNil(t, entry.ApprovedAt)
 
-	lineCount, err := db.NewSelect().
-		Table("journal_entry_lines").
-		Where("journal_entry_id = (SELECT id FROM journal_entries WHERE entry_number = ? LIMIT 1)", "JE-1").
-		Count(ctx)
+	jel := journalentrydb.JournalEntryLines
+	lineCount, err := jel.Where(jel.JournalEntryID.Eq(entry.ID)).Count(ctx, kdb)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), lineCount)
 
-	var source struct {
-		Status string `bun:"status"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_sources").
-			Column("status").
-			Where("source_event_type = ?", "ManualJournalPosted").
-			Limit(1).
-			Scan(ctx, &source),
-	)
+	js := journalsourcedb.Sources
+	source, err := js.Where(js.SourceEventType.Eq("ManualJournalPosted")).One(ctx, kdb)
+	require.NoError(t, err)
 	assert.Equal(t, "Posted", source.Status)
+	assert.Equal(t, entry.ID, source.JournalEntryID)
 
-	linkCount, err := db.NewSelect().
-		Table("source_journal_links").
-		Where("journal_entry_id = (SELECT id FROM journal_entries WHERE entry_number = ? LIMIT 1)", "JE-1").
-		Count(ctx)
+	links := journalsourcedb.SourceJournalLinks
+	linkCount, err := links.Where(links.JournalEntryID.Eq(entry.ID)).Count(ctx, kdb)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), linkCount)
 
-	var balance struct {
-		PeriodDebitMinor  int64 `bun:"period_debit_minor"`
-		PeriodCreditMinor int64 `bun:"period_credit_minor"`
-		NetChangeMinor    int64 `bun:"net_change_minor"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("period_debit_minor", "period_credit_minor", "net_change_minor").
-			Where("gl_account_id = ?", accountIDs[0]).
-			Where("fiscal_period_id = ?", periodID).
-			Limit(1).
-			Scan(ctx, &balance),
-	)
+	gb := glbalancedb.GLAccountPeriodBalances
+	balance, err := gb.Where(
+		gb.GLAccountID.Eq(accountIDs[0]),
+		gb.FiscalPeriodID.Eq(periodID),
+	).One(ctx, kdb)
+	require.NoError(t, err)
 	assert.Equal(t, int64(2500), balance.PeriodDebitMinor)
 	assert.Equal(t, int64(0), balance.PeriodCreditMinor)
 	assert.Equal(t, int64(2500), balance.NetChangeMinor)
+	assert.Equal(t, entry.ID, balance.LastJournalEntryID)
 
-	var glAccount struct {
-		CurrentBalance int64 `bun:"current_balance"`
-		DebitBalance   int64 `bun:"debit_balance"`
-		CreditBalance  int64 `bun:"credit_balance"`
+	glAccount, err := glaccountdb.GLAccounts.Get(ctx, kdb, accountIDs[0])
+	require.NoError(t, err)
+	assert.Equal(t, accountBefore.CurrentBalance+2500, glAccount.CurrentBalance)
+	assert.Equal(t, accountBefore.DebitBalance+2500, glAccount.DebitBalance)
+	assert.Equal(t, accountBefore.CreditBalance, glAccount.CreditBalance)
+	assert.Equal(t, accountBefore.Version, glAccount.Version)
+}
+
+func TestCreatePostingAccumulatesBalancesAcrossPostings(t *testing.T) {
+	db := accountingtest.NewDevelopmentDatabase(t)
+	ctx := db.A.Ctx
+	kdb := db.Admin
+	repo := New(Params{DB: db.Conn, Logger: zap.NewNop()})
+	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupPostingFixture(t, db)
+	now := time.Date(2027, time.January, 20, 0, 0, 0, 0, time.UTC).Unix()
+
+	post := func(number string, amount int64) pulid.ID {
+		entryID := pulid.MustNew("je_")
+		require.NoError(t, repo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
+			BatchID:          pulid.MustNew("jb_"),
+			OrganizationID:   orgID,
+			BusinessUnitID:   buID,
+			BatchNumber:      "JB-" + number,
+			BatchType:        "Manual",
+			BatchStatus:      "Posted",
+			BatchDescription: "Accumulating batch",
+			FiscalYearID:     fiscalYearID,
+			FiscalPeriodID:   periodID,
+			AccountingDate:   now,
+			PostedAt:         &now,
+			PostedByID:       userID,
+			CreatedByID:      userID,
+			UpdatedByID:      userID,
+			EntryID:          entryID,
+			EntryNumber:      "JE-" + number,
+			EntryType:        "Standard",
+			EntryStatus:      "Posted",
+			EntryDescription: "Accumulating entry",
+			TotalDebit:       amount,
+			TotalCredit:      amount,
+			IsPosted:         true,
+			Lines: []journalentryports.JournalPostingLine{
+				{
+					ID:          pulid.MustNew("jel_"),
+					GLAccountID: accountIDs[0],
+					LineNumber:  1,
+					Description: "Debit",
+					DebitAmount: amount,
+					NetAmount:   amount,
+				},
+				{
+					ID:          pulid.MustNew("jel_"),
+					GLAccountID: accountIDs[0],
+					LineNumber:  2,
+					Description: "Second debit",
+					DebitAmount: amount,
+					NetAmount:   amount,
+				},
+				{
+					ID:           pulid.MustNew("jel_"),
+					GLAccountID:  accountIDs[1],
+					LineNumber:   3,
+					Description:  "Credit",
+					CreditAmount: 2 * amount,
+					NetAmount:    -2 * amount,
+				},
+			},
+		}))
+		return entryID
 	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_accounts").
-			Column("current_balance", "debit_balance", "credit_balance").
-			Where("id = ?", accountIDs[0]).
-			Limit(1).
-			Scan(ctx, &glAccount),
-	)
-	assert.Equal(t, int64(2500), glAccount.CurrentBalance)
-	assert.Equal(t, int64(2500), glAccount.DebitBalance)
-	assert.Equal(t, int64(0), glAccount.CreditBalance)
+
+	post("ACC-1", 100)
+	last := post("ACC-2", 300)
+
+	gb := glbalancedb.GLAccountPeriodBalances
+	debit, err := gb.Where(gb.GLAccountID.Eq(accountIDs[0]), gb.FiscalPeriodID.Eq(periodID)).One(ctx, kdb)
+	require.NoError(t, err)
+	assert.Equal(t, int64(800), debit.PeriodDebitMinor)
+	assert.Equal(t, int64(800), debit.NetChangeMinor)
+	assert.Equal(t, last, debit.LastJournalEntryID)
+
+	credit, err := gb.Where(gb.GLAccountID.Eq(accountIDs[1]), gb.FiscalPeriodID.Eq(periodID)).One(ctx, kdb)
+	require.NoError(t, err)
+	assert.Equal(t, int64(800), credit.PeriodCreditMinor)
+	assert.Equal(t, int64(-800), credit.NetChangeMinor)
 }
 
 func TestCreateManualJournalPostingPersistsPendingRecordsWithoutPostedAudit(t *testing.T) {
-	ctx, db, cleanup := seededtest.SetupTestDB(t)
-	defer cleanup()
+	db := accountingtest.NewDevelopmentDatabase(t)
+	ctx := db.A.Ctx
+	kdb := db.Admin
 
 	var err error
 
-	conn := postgres.NewTestConnection(db)
+	conn := db.Conn
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
-	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupPostingFixture(t, ctx, conn)
+	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupPostingFixture(t, db)
 	now := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 
 	err = repo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
@@ -274,104 +295,44 @@ func TestCreateManualJournalPostingPersistsPendingRecordsWithoutPostedAudit(t *t
 	})
 	require.NoError(t, err)
 
-	var batch struct {
-		Status   string `bun:"status"`
-		PostedAt *int64 `bun:"posted_at"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_batches").
-			Column("status", "posted_at").
-			Where("batch_number = ?", "JB-2").
-			Limit(1).
-			Scan(ctx, &batch),
-	)
+	jb := journalentrydb.JournalBatches
+	batch, err := jb.Where(jb.BatchNumber.Eq("JB-2")).One(ctx, kdb)
+	require.NoError(t, err)
 	assert.Equal(t, "Pending", batch.Status)
 	assert.Nil(t, batch.PostedAt)
 
-	var entry struct {
-		Status     string `bun:"status"`
-		IsPosted   bool   `bun:"is_posted"`
-		IsApproved bool   `bun:"is_approved"`
-		PostedAt   *int64 `bun:"posted_at"`
-		ApprovedAt *int64 `bun:"approved_at"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_entries").
-			Column("status", "is_posted", "is_approved", "posted_at", "approved_at").
-			Where("entry_number = ?", "JE-2").
-			Limit(1).
-			Scan(ctx, &entry),
-	)
-	assert.Equal(t, "Pending", entry.Status)
+	je := journalentrydb.JournalEntries
+	entry, err := je.Where(je.EntryNumber.Eq("JE-2")).One(ctx, kdb)
+	require.NoError(t, err)
+	assert.Equal(t, journalentry.StatusPending, entry.Status)
 	assert.False(t, entry.IsPosted)
 	assert.False(t, entry.IsApproved)
 	assert.Nil(t, entry.PostedAt)
 	assert.Nil(t, entry.ApprovedAt)
 
-	balanceCount, err := db.NewSelect().
-		Table("gl_account_balances_by_period").
-		Where("fiscal_period_id = ?", periodID).
-		Count(ctx)
+	gb := glbalancedb.GLAccountPeriodBalances
+	balanceCount, err := gb.Where(gb.FiscalPeriodID.Eq(periodID)).Count(ctx, kdb)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), balanceCount)
 }
 
 func setupPostingFixture(
 	t *testing.T,
-	ctx context.Context,
-	conn *postgres.Connection,
+	db *accountingtest.Database,
 ) (pulid.ID, pulid.ID, pulid.ID, pulid.ID, pulid.ID, []pulid.ID) {
 	t.Helper()
 
+	ctx := db.A.Ctx
 	logger := zap.NewNop()
 	fiscalYearRepo := fiscalyearrepository.New(
-		fiscalyearrepository.Params{DB: conn, Logger: logger},
+		fiscalyearrepository.Params{DB: db.Conn, Logger: logger},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
-		fiscalperiodrepository.Params{DB: conn, Logger: logger},
+		fiscalperiodrepository.Params{DB: db.Conn, Logger: logger},
 	)
-
-	var org seededOrg
-	require.NoError(
-		t,
-		conn.DB().
-			NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededUser
-	require.NoError(
-		t,
-		conn.DB().
-			NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	accounts := make([]seededAccount, 0, 2)
-	require.NoError(
-		t,
-		conn.DB().
-			NewSelect().
-			Table("gl_accounts").
-			Column("id").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Where("status = 'Active'").
-			Order("account_code ASC").
-			Limit(2).
-			Scan(ctx, &accounts),
-	)
-	require.Len(t, accounts, 2)
+	org := struct{ ID, BusinessUnitID pulid.ID }{db.A.Info.OrgID, db.A.Info.BuID}
+	user := struct{ ID pulid.ID }{db.A.Info.UserID}
+	accounts := accountingtest.ActiveAccounts(t, db, db.A, 2)
 
 	fy, err := fiscalYearRepo.Create(ctx, &fiscalyear.FiscalYear{
 		OrganizationID:        org.ID,
@@ -400,8 +361,5 @@ func setupPostingFixture(
 	})
 	require.NoError(t, err)
 
-	return org.ID, org.BusinessUnitID, user.ID, fy.ID, period.ID, []pulid.ID{
-		accounts[0].ID,
-		accounts[1].ID,
-	}
+	return org.ID, org.BusinessUnitID, user.ID, fy.ID, period.ID, accounts
 }

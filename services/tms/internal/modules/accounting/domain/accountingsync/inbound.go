@@ -70,9 +70,8 @@ type AppliedObject struct {
 
 // Payments recorded in the accounting system against documents Trenova sent, and whether each was applied in Trenova
 type AccountingInboundChange struct {
-	bun.BaseModel             `bun:"table:accounting_inbound_changes,alias:acctic" json:"-"`
-	keel.Table                `                                                             keel:"accounting_inbound_changes,report=Accounting,label=Payment From the Books,plural=Payments From the Books"`
-	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
+	bun.BaseModel `bun:"table:accounting_inbound_changes,alias:acctic" json:"-"`
+	keel.Table    `                                                             keel:"accounting_inbound_changes,report=Accounting,label=Payment From the Books,plural=Payments From the Books"`
 
 	ID                 pulid.ID            `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctic_"`
 	BusinessUnitID     pulid.ID            `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -290,14 +289,30 @@ func (c *AccountingInboundChange) GetPostgresSearchConfig() domaintypes.Postgres
 	}
 }
 
-func (c *AccountingInboundChange) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (c *AccountingInboundChange) BeforeCreate(_ context.Context) error {
+	if c.DetectedAt == 0 {
+		c.DetectedAt = timeutils.NowUnix()
+	}
+	return nil
+}
+
+func (c *AccountingInboundChange) BeforeSave(_ context.Context) error {
+	c.fillCollections()
+	return nil
+}
+
+func (c *AccountingInboundChange) fillCollections() {
 	if c.AppliedObjects == nil {
 		c.AppliedObjects = []AppliedObject{}
 	}
 	if c.Document.Lines == nil {
 		c.Document.Lines = []*InboundLine{}
 	}
+}
+
+func (c *AccountingInboundChange) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	c.fillCollections()
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if c.ID.IsNil() {

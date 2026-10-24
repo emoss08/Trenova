@@ -4,10 +4,11 @@ package accountingsyncrepository
 
 import (
 	"context"
+	"github.com/emoss08/keel"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,13 +17,12 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type mappingFixture struct {
 	ctx        context.Context
-	db         *bun.DB
+	db         *keel.DB
 	conn       *postgres.Connection
 	tenant     pagination.TenantInfo
 	connection *accountingsync.AccountingConnection
@@ -37,6 +37,7 @@ func setupMappingFixture(t *testing.T) *mappingFixture {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	connections := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})

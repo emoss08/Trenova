@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
@@ -30,7 +31,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -56,6 +56,7 @@ func TestActivateReturnsConflictWhenCurrentFiscalYearIsLocked(t *testing.T) {
 	}
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 
 	current := mustCreateFiscalYear(t, ctx, fyRepo, &fiscalyear.FiscalYear{
 		OrganizationID: data.Organization.ID,
@@ -84,9 +85,10 @@ func TestActivateReturnsConflictWhenCurrentFiscalYearIsLocked(t *testing.T) {
 
 	lock := inttestutil.HoldTxLock(
 		t,
+		ctx,
 		conn,
 		kernelports.TxOptions{},
-		func(lockCtx context.Context, _ bun.Tx) error {
+		func(lockCtx context.Context) error {
 			_, err := fyRepo.GetCurrentFiscalYearForUpdate(
 				lockCtx,
 				fiscalyearports.GetCurrentFiscalYearRequest{
@@ -119,12 +121,8 @@ func TestActivateReturnsConflictWhenCurrentFiscalYearIsLocked(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, current.ID, currentAfter.ID)
 
-	count, err := db.NewSelect().
-		Model((*fiscalyear.FiscalYear)(nil)).
-		Where("organization_id = ?", data.Organization.ID).
-		Where("business_unit_id = ?", data.BusinessUnit.ID).
-		Where("is_current = ?", true).
-		Count(ctx)
+	fy := fiscalyeardb.FiscalYears
+	count, err := fy.Where(fy.IsCurrent.Eq(true)).Count(ctx, db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), count)
 }
@@ -148,6 +146,7 @@ func TestGetCloseBlockersReturnsOpenPeriodBlocker(t *testing.T) {
 	}
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	fy := mustCreateFiscalYear(
 		t,
 		ctx,

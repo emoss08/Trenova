@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -30,7 +29,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	DB                  kernelports.DBConnection
+	DB                  kernelports.Transactor
 	JournalEntryRepo    journalentryports.JournalEntryRepository
 	JournalReversalRepo journalreversalports.JournalReversalRepository
 	JournalPostingRepo  journalentryports.JournalPostingRepository
@@ -42,7 +41,7 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
-	db                  kernelports.DBConnection
+	db                  kernelports.Transactor
 	journalEntryRepo    journalentryports.JournalEntryRepository
 	journalReversalRepo journalreversalports.JournalReversalRepository
 	journalPostingRepo  journalentryports.JournalPostingRepository
@@ -433,7 +432,7 @@ func (s *Service) Post(
 		)
 	}
 	original := *entity
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if err := s.journalPostingRepo.CreatePosting(
 			txCtx,
 			journalentryports.CreateJournalPostingParams{

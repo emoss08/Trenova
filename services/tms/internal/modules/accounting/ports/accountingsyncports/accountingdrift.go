@@ -38,12 +38,12 @@ type SummarizeAccountingDriftRequest struct {
 }
 
 type AccountingDriftSummary struct {
-	Open          int `bun:"open"`
-	AmountOpen    int `bun:"amount_open"`
-	GoneOpen      int `bun:"gone_open"`
-	StatusOpen    int `bun:"status_open"`
-	BalanceOpen   int `bun:"balance_open"`
-	ResolvedSince int `bun:"resolved_since"`
+	Open          int
+	AmountOpen    int
+	GoneOpen      int
+	StatusOpen    int
+	BalanceOpen   int
+	ResolvedSince int
 }
 
 type ListAccountingDriftAttentionRequest struct {
@@ -53,10 +53,10 @@ type ListAccountingDriftAttentionRequest struct {
 }
 
 type AccountingDriftAttentionGroup struct {
-	Kind             accountingsync.DriftKind `bun:"kind"`
-	Count            int                      `bun:"count"`
-	OldestDetectedAt int64                    `bun:"oldest_detected_at"`
-	SampleID         pulid.ID                 `bun:"sample_id"`
+	Kind             accountingsync.DriftKind
+	Count            int
+	OldestDetectedAt int64
+	SampleID         pulid.ID
 }
 
 type AccountingDriftFindingRepository interface {
@@ -98,17 +98,17 @@ type ListAccountingDriftStatesRequest struct {
 }
 
 type AccountingDriftState struct {
-	ObjectID       pulid.ID `bun:"object_id"`
-	Number         string   `bun:"number"`
-	PartyID        pulid.ID `bun:"party_id"`
-	PartyName      string   `bun:"party_name"`
-	CurrencyCode   string   `bun:"currency_code"`
-	AmountMinor    int64    `bun:"amount_minor"`
-	OpenMinor      int64    `bun:"open_minor"`
-	AppliedMinor   int64    `bun:"applied_minor"`
-	ReflectedMinor int64    `bun:"reflected_minor"`
-	Voided         bool     `bun:"voided"`
-	State          string   `bun:"state"`
+	ObjectID       pulid.ID
+	Number         string
+	PartyID        pulid.ID
+	PartyName      string
+	CurrencyCode   string
+	AmountMinor    int64
+	OpenMinor      int64
+	AppliedMinor   int64
+	ReflectedMinor int64
+	Voided         bool
+	State          string
 }
 
 type ListAccountingDriftBalancesRequest struct {
@@ -120,14 +120,14 @@ type ListAccountingDriftBalancesRequest struct {
 }
 
 type AccountingDriftBalanceLine struct {
-	CustomerID   pulid.ID                      `bun:"customer_id"`
-	CustomerName string                        `bun:"customer_name"`
-	CurrencyCode string                        `bun:"currency_code"`
-	ObjectType   accountingsync.SyncObjectType `bun:"object_type"`
-	ObjectID     pulid.ID                      `bun:"object_id"`
-	Number       string                        `bun:"number"`
-	OpenMinor    int64                         `bun:"open_minor"`
-	ExternalID   string                        `bun:"external_id"`
+	CustomerID   pulid.ID
+	CustomerName string
+	CurrencyCode string
+	ObjectType   accountingsync.SyncObjectType
+	ObjectID     pulid.ID
+	Number       string
+	OpenMinor    int64
+	ExternalID   string
 }
 
 type ListAccountingDriftRecordsRequest struct {

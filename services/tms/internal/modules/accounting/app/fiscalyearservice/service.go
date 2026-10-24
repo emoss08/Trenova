@@ -26,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -250,10 +249,10 @@ func (s *Service) bootstrapCurrentCalendarFiscalYear(
 	}
 
 	var createdEntity *fiscalyear.FiscalYear
-	err := s.db.WithTx(
+	err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: fiscalYearLockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			current, txErr := s.repo.GetCurrentFiscalYearForUpdate(
 				txCtx,
 				fiscalyearports.GetCurrentFiscalYearRequest{
@@ -407,10 +406,10 @@ func (s *Service) createWithPeriods(
 	}
 
 	var createdEntity *fiscalyear.FiscalYear
-	err := s.db.WithTx(
+	err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: fiscalYearLockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			var txErr error
 			createdEntity, txErr = s.repo.Create(txCtx, entity)
 			if txErr != nil {
@@ -604,10 +603,10 @@ func (s *Service) closeWithAccounting(
 		closedEntity *fiscalyear.FiscalYear
 		postResult   *fiscalclose.PostResult
 	)
-	err := s.db.WithTx(
+	err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: fiscalYearLockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			var txErr error
 			closedEntity, postResult, txErr = s.closeInTx(txCtx, req, userID)
 
@@ -718,10 +717,10 @@ func (s *Service) reopenWithAccounting(
 	}
 
 	var reopenedEntity *fiscalyear.FiscalYear
-	err := s.db.WithTx(
+	err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: fiscalYearLockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			var txErr error
 			reopenedEntity, txErr = s.reopenInTx(txCtx, req, userID)
 
@@ -823,10 +822,10 @@ func (s *Service) Activate(
 
 	var existing *fiscalyear.FiscalYear
 	var activatedEntity *fiscalyear.FiscalYear
-	err := s.db.WithTx(
+	err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: fiscalYearLockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			var txErr error
 			existing, txErr = s.repo.GetByIDForUpdate(
 				txCtx,

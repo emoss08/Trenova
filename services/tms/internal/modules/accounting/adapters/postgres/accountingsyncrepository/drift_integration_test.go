@@ -3,9 +3,10 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -91,7 +92,7 @@ func TestDriftFindingRepository_OneOpenFindingPerDocumentAndKind(t *testing.T) {
 	assert.Equal(t, int64(-1_000), *got.DifferenceMinor)
 
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	_, err = repo.GetByID(f.ctx, accountingsyncports.GetAccountingDriftFindingQuery{
+	_, err = repo.GetByID(dbscope.WithTenant(f.ctx, other.DBTenant()), accountingsyncports.GetAccountingDriftFindingQuery{
 		TenantInfo: other,
 		ID:         reopened.ID,
 	})
@@ -157,24 +158,11 @@ func TestDriftFindingRepository_SummaryAttentionAndTable(t *testing.T) {
 }
 
 func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
-	ctx, db, cleanup := seededtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	var org candidateOrg
-	require.NoError(t, db.NewSelect().Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
-	var userID pulid.ID
-	require.NoError(t, db.NewSelect().Table("users").Column("id").
-		Where("current_organization_id = ?", org.ID).Limit(1).Scan(ctx, &userID))
-	shipments := make([]candidateShipment, 0, 3)
-	require.NoError(t, db.NewSelect().Table("shipments").
-		Column("id", "customer_id", "pro_number", "bol").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Order("id").Limit(3).Scan(ctx, &shipments))
-	require.Len(t, shipments, 3)
-
-	tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
-	conn := postgres.NewTestConnection(db)
+	seeded := newSeededTenant(t)
+	ctx, db, tenant, userID := seeded.ctx, seeded.kdb, seeded.tenant, seeded.userID
+	org := struct{ ID, BusinessUnitID pulid.ID }{tenant.OrgID, tenant.BuID}
+	shipments := seeded.shipments(t, 3)
+	conn := seeded.conn
 	logger := zap.NewNop()
 	invoices := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	records := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: logger})
@@ -206,7 +194,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 			Status:           billingqueue.StatusPosted,
 			BillType:         billType,
 		}
-		_, insertErr := db.NewInsert().Model(queue).Exec(ctx)
+		insertErr := billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 		require.NoError(t, insertErr)
 		created, createErr := invoices.Create(ctx, &invoice.Invoice{
 			OrganizationID:     org.ID,
@@ -470,7 +458,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 		CurrencyCode:         "USD",
 		CreatedByID:          userID,
 	}
-	_, err = db.NewInsert().Model(payment).Exec(ctx)
+	err = customerpaymentdb.Payments.Create(ctx, db, payment)
 	require.NoError(t, err)
 	waitingOn(accountingsync.SyncObjectCustomerPayment, payment.ID)
 
@@ -486,7 +474,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 		Status:              customerpayment.CreditApplicationStatusApplied,
 		CreatedByID:         userID,
 	}
-	_, err = db.NewInsert().Model(application).Exec(ctx)
+	err = customerpaymentdb.CreditMemoApplications.Create(ctx, db, application)
 	require.NoError(t, err)
 	waitingOn(accountingsync.SyncObjectCreditApplication, application.ID)
 
@@ -514,11 +502,11 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	start, err := source.ScopeStart(ctx, tenant)
 	require.NoError(t, err)
 	var earliest int64
-	require.NoError(t, db.NewSelect().Table("fiscal_periods").
-		ColumnExpr("COALESCE(MIN(start_date), 0)").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Where("status IN ('Open', 'Locked')").
-		Scan(ctx, &earliest))
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		`SELECT COALESCE(MIN(start_date), 0) FROM fiscal_periods
+		WHERE organization_id = $1 AND business_unit_id = $2 AND status IN ('Open', 'Locked')`,
+		org.ID.String(),
+		org.BusinessUnitID.String(),
+	).Scan(&earliest))
 	assert.Equal(t, earliest, start)
 }

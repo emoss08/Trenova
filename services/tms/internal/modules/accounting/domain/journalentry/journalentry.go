@@ -3,8 +3,6 @@ package journalentry
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/pagination"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
@@ -27,9 +25,8 @@ var (
 
 // Double-entry journal headers, their approval state, and their reversals
 type JournalEntry struct {
-	bun.BaseModel             `bun:"table:journal_entries,alias:je" json:"-"`
-	keel.Table                `                                              keel:"journal_entries,report=Accounting"`
-	pagination.CursorValueSet `bun:",embed"                         json:"-"`
+	bun.BaseModel `bun:"table:journal_entries,alias:je" json:"-"`
+	keel.Table    `                                              keel:"journal_entries,report=Accounting"`
 
 	ID               pulid.ID  `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:je_"`
 	BusinessUnitID   pulid.ID  `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`

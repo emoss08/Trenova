@@ -11,7 +11,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/glaccountrepository"
@@ -23,20 +25,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -65,7 +71,7 @@ func (g *countingSequenceGenerator) GenerateJournalEntryNumber(
 }
 
 type closeFixture struct {
-	conn          *postgres.Connection
+	db            *keel.DB
 	postingRepo   journalentryports.JournalPostingRepository
 	svc           *Service
 	balanceRepo   glbalanceports.GLBalanceRepository
@@ -166,7 +172,7 @@ func TestCloseFiscalYearPostsClosingAndOpeningEntries(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	f := setupCloseFixture(t, ctx, db)
+	ctx, f := setupCloseFixture(t, ctx, db)
 
 	closed, err := f.svc.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
 		ID:         f.closingYear.ID,
@@ -218,12 +224,9 @@ func TestCloseFiscalYearIsBlockedWithoutARetainedEarningsAccount(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	f := setupCloseFixture(t, ctx, db)
-	_, err := f.conn.DB().NewUpdate().
-		Table("accounting_controls").
-		Set("default_retained_earnings_account_id = NULL").
-		Where("organization_id = ?", f.orgID).
-		Exec(ctx)
+	ctx, f := setupCloseFixture(t, ctx, db)
+	ac := tenantdb.AccountingControls
+	_, err := ac.Where(keel.True()).Update(ctx, db, ac.DefaultRetainedEarningsAccountID.ToNull())
 	require.NoError(t, err)
 
 	result, err := f.svc.GetCloseBlockers(ctx, fiscalyearports.GetFiscalYearByIDRequest{
@@ -245,7 +248,7 @@ func TestReopenFiscalYearReversesTheClose(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	f := setupCloseFixture(t, ctx, db)
+	ctx, f := setupCloseFixture(t, ctx, db)
 
 	_, err := f.svc.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
 		ID:         f.closingYear.ID,
@@ -284,7 +287,7 @@ func TestActivateRejectsAClosedFiscalYear(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	f := setupCloseFixture(t, ctx, db)
+	ctx, f := setupCloseFixture(t, ctx, db)
 	_, err := f.svc.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
@@ -306,7 +309,7 @@ func TestCloseFiscalYearReusesAnExistingAdjustingPeriod(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	f := setupCloseFixture(t, ctx, db)
+	ctx, f := setupCloseFixture(t, ctx, db)
 
 	existing, err := f.periodRepo.Create(ctx, &fiscalperiod.FiscalPeriod{
 		OrganizationID:        f.orgID,
@@ -362,15 +365,9 @@ func TestClosePreviewReconcilesTheARControlAccount(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	f := setupCloseFixture(t, ctx, db)
+	ctx, f := setupCloseFixture(t, ctx, db)
 
-	var arAccountID pulid.ID
-	require.NoError(t, f.conn.DB().NewSelect().
-		Table("accounting_controls").
-		Column("default_ar_account_id").
-		Where("organization_id = ?", f.orgID).
-		Limit(1).
-		Scan(ctx, &arAccountID))
+	arAccountID := defaultARAccount(t, ctx, db)
 	require.False(t, arAccountID.IsNil(), "the seeded accounting control names an AR account")
 
 	plan, err := f.svc.GetClosePreview(ctx, fiscalyearports.GetFiscalYearByIDRequest{
@@ -398,15 +395,9 @@ func TestClosePreviewReportsAnARDifference(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	f := setupCloseFixture(t, ctx, db)
+	ctx, f := setupCloseFixture(t, ctx, db)
 
-	var arAccountID pulid.ID
-	require.NoError(t, f.conn.DB().NewSelect().
-		Table("accounting_controls").
-		Column("default_ar_account_id").
-		Where("organization_id = ?", f.orgID).
-		Limit(1).
-		Scan(ctx, &arAccountID))
+	arAccountID := defaultARAccount(t, ctx, db)
 
 	// 25,000 booked to the AR control account with nothing behind it in the
 	// subledger: the detail no longer substantiates the total.
@@ -428,12 +419,11 @@ func TestClosePreviewReportsAnARDifference(t *testing.T) {
 	// Unenforced, so it is reported but does not block.
 	assert.True(t, plan.CanClose)
 
-	_, err = f.conn.DB().NewUpdate().
-		Table("accounting_controls").
-		Set("require_reconciliation_to_close = TRUE").
-		Set("reconciliation_mode = 'BlockPosting'").
-		Where("organization_id = ?", f.orgID).
-		Exec(ctx)
+	ac := tenantdb.AccountingControls
+	_, err = ac.Where(keel.True()).Update(ctx, db,
+		ac.RequireReconciliationToClose.To(true),
+		ac.ReconciliationMode.To(tenant.ReconciliationModeBlockPosting),
+	)
 	require.NoError(t, err)
 
 	plan, err = f.svc.GetClosePreview(ctx, fiscalyearports.GetFiscalYearByIDRequest{
@@ -468,21 +458,23 @@ func closeEntriesFor(
 ) []*journalentry.JournalEntry {
 	t.Helper()
 
-	entries := make([]*journalentry.JournalEntry, 0, 2)
-	require.NoError(t, f.conn.DB().NewSelect().
-		Model(&entries).
-		Where("je.organization_id = ?", f.orgID).
-		Where("je.business_unit_id = ?", f.buID).
-		Where("je.reference_id = ?", fiscalYearID.String()).
-		Where("je.entry_type IN (?, ?)", journalentry.EntryTypeClosing, journalentry.EntryTypeOpening).
-		Where("je.reversed_by_id IS NULL").
-		Scan(ctx))
+	je := journalentrydb.JournalEntries
+	entries, err := je.Where(
+		je.ReferenceID.Eq(fiscalYearID.String()),
+		je.EntryType.In(journalentry.EntryTypeClosing, journalentry.EntryTypeOpening),
+		je.ReversedByID.IsNull(),
+	).Order(je.EntryNumber.Asc()).Limit(10).List(ctx, f.db)
+	require.NoError(t, err)
 
 	return entries
 }
 
 //nolint:funlen // one readable fixture beats several partial ones
-func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixture {
+func setupCloseFixture(
+	t *testing.T,
+	ctx context.Context,
+	db *keel.DB,
+) (context.Context, closeFixture) {
 	t.Helper()
 
 	logger := zap.NewNop()
@@ -496,36 +488,17 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 
 	// The seeded organization is the one that carries a chart of accounts and an
 	// accounting control; a synthetic org would have neither.
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, conn.DB().NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org))
-	orgID := org.ID
-	buID := org.BusinessUnitID
+	seeded := accountingtest.DevelopmentTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	orgID, buID, userID := seeded.Info.OrgID, seeded.Info.BuID, seeded.Info.UserID
 
-	var userID pulid.ID
-	require.NoError(t, conn.DB().NewSelect().
-		Table("users").
-		Column("id").
-		Where("current_organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Limit(1).
-		Scan(ctx, &userID))
+	assetID := accountWithCategory(t, ctx, db, accounttype.CategoryAsset)
+	revenueID := accountWithCategory(t, ctx, db, accounttype.CategoryRevenue)
+	retainedID := accountWithCategory(t, ctx, db, accounttype.CategoryEquity)
 
-	assetID := accountWithCategory(t, ctx, conn, orgID, buID, accounttype.CategoryAsset)
-	revenueID := accountWithCategory(t, ctx, conn, orgID, buID, accounttype.CategoryRevenue)
-	retainedID := accountWithCategory(t, ctx, conn, orgID, buID, accounttype.CategoryEquity)
-
-	_, err := conn.DB().NewUpdate().
-		Table("accounting_controls").
-		Set("default_retained_earnings_account_id = ?", retainedID).
-		Where("organization_id = ?", orgID).
-		Exec(ctx)
+	ac := tenantdb.AccountingControls
+	_, err := ac.Where(keel.True()).
+		Update(ctx, db, ac.DefaultRetainedEarningsAccountID.To(retainedID))
 	require.NoError(t, err)
 
 	closingYear, err := fyRepo.Create(ctx, &fiscalyear.FiscalYear{
@@ -661,8 +634,8 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 		}),
 	}
 
-	return closeFixture{
-		conn:          conn,
+	return ctx, closeFixture{
+		db:            db,
 		postingRepo:   postingRepo,
 		svc:           svc,
 		balanceRepo:   balanceRepo,
@@ -683,25 +656,26 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 func accountWithCategory(
 	t *testing.T,
 	ctx context.Context,
-	conn *postgres.Connection,
-	orgID, buID pulid.ID,
+	db *keel.DB,
 	category accounttype.Category,
 ) pulid.ID {
 	t.Helper()
 
-	var accountID pulid.ID
-	require.NoError(t, conn.DB().NewSelect().
-		TableExpr("gl_accounts AS gla").
-		ColumnExpr("gla.id").
-		Join("JOIN account_types AS at ON at.id = gla.account_type_id").
-		Where("gla.organization_id = ?", orgID).
-		Where("gla.business_unit_id = ?", buID).
-		Where("gla.status = 'Active'").
-		Where("at.category = ?", category).
-		Order("gla.account_code ASC").
-		Limit(1).
-		Scan(ctx, &accountID))
-	require.False(t, accountID.IsNil(), "no seeded %s account", category)
+	gla := glaccountdb.GLAccounts
+	account, err := gla.Where(
+		gla.Status.Eq(domaintypes.StatusActive),
+		gla.AccountType().Category.Eq(category),
+	).Order(gla.AccountCode.Asc()).First(ctx, db)
+	require.NoError(t, err, "no seeded %s account", category)
 
-	return accountID
+	return account.ID
+}
+
+func defaultARAccount(t *testing.T, ctx context.Context, db *keel.DB) pulid.ID {
+	t.Helper()
+
+	control, err := tenantdb.AccountingControls.Query().First(ctx, db)
+	require.NoError(t, err)
+
+	return control.DefaultARAccountID
 }

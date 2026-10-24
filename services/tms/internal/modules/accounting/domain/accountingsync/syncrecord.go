@@ -59,9 +59,8 @@ var (
 
 // Every document sent to the accounting system and what happened to it
 type AccountingSyncRecord struct {
-	bun.BaseModel             `bun:"table:accounting_sync_records,alias:acctsr" json:"-"`
-	keel.Table                `                                                          keel:"accounting_sync_records,report=Accounting"`
-	pagination.CursorValueSet `bun:",embed"                                     json:"-"`
+	bun.BaseModel `bun:"table:accounting_sync_records,alias:acctsr" json:"-"`
+	keel.Table    `                                                          keel:"accounting_sync_records,report=Accounting"`
 
 	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctsr_"`
 	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -208,14 +207,30 @@ func (r *AccountingSyncRecord) GetPostgresSearchConfig() domaintypes.PostgresSea
 	}
 }
 
-func (r *AccountingSyncRecord) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (r *AccountingSyncRecord) BeforeCreate(_ context.Context) error {
+	if r.QueuedAt == 0 {
+		r.QueuedAt = timeutils.NowUnix()
+	}
+	return nil
+}
+
+func (r *AccountingSyncRecord) BeforeSave(_ context.Context) error {
+	r.fillCollections()
+	return nil
+}
+
+func (r *AccountingSyncRecord) fillCollections() {
 	if r.ExternalRefs == nil {
 		r.ExternalRefs = map[string]string{}
 	}
 	if r.MappingIDs == nil {
 		r.MappingIDs = []string{}
 	}
+}
+
+func (r *AccountingSyncRecord) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	r.fillCollections()
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if r.ID.IsNil() {

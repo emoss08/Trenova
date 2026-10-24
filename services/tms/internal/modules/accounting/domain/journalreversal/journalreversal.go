@@ -25,8 +25,6 @@ type Reversal struct {
 	bun.BaseModel `bun:"table:journal_reversals,alias:jr" json:"-"`
 	keel.Table    `keel:"journal_reversals"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
-
 	ID                      pulid.ID `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
 	OrganizationID          pulid.ID `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 	BusinessUnitID          pulid.ID `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -50,8 +48,8 @@ type Reversal struct {
 	CancelReason            string   `json:"cancelReason"            bun:"cancel_reason,type:TEXT,nullzero" keel:"cancel_reason,nullzero"`
 	PostedByID              pulid.ID `json:"postedById"              bun:"posted_by_id,type:VARCHAR(100),nullzero" keel:"posted_by_id,nullzero"`
 	PostedAt                *int64   `json:"postedAt"                bun:"posted_at,type:BIGINT,nullzero" keel:"posted_at"`
-	CreatedAt               int64    `json:"createdAt"               bun:"created_at,type:BIGINT,notnull" keel:"created_at"`
-	UpdatedAt               int64    `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull" keel:"updated_at"`
+	CreatedAt               int64    `json:"createdAt"               bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt               int64    `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 	Version                 int64    `json:"version"                 bun:"version,type:BIGINT,notnull" keel:"version,version"`
 }
 

@@ -6,9 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/glaccountrepository"
@@ -16,32 +15,25 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/manualjournalrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance/glbalancedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
-
-type seededOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
-type seededUser struct {
-	ID pulid.ID `bun:"id"`
-}
-
-type seededAccount struct {
-	ID pulid.ID `bun:"id"`
-}
 
 func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
@@ -71,43 +63,19 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	accounts := make([]seededAccount, 0, 2)
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_accounts").
-			Column("id").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Where("allow_manual_je = TRUE").
-			Where("status = 'Active'").
-			Order("account_code ASC").
-			Limit(2).
-			Scan(ctx, &accounts),
-	)
+	seeded := accountingtest.DevelopmentTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	orgID, buID, userID := seeded.Info.OrgID, seeded.Info.BuID, seeded.Info.UserID
+
+	gla := glaccountdb.GLAccounts
+	accounts, err := gla.Where(
+		gla.AllowManualJE.Eq(true),
+		gla.Status.Eq(domaintypes.StatusActive),
+	).Order(gla.AccountCode.Asc()).Limit(2).List(ctx, db)
+	require.NoError(t, err)
 	require.Len(t, accounts, 2)
 
-	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
+	control, err = accountingRepo.GetByOrgID(ctx, orgID)
 	require.NoError(t, err)
 	control.ManualJournalEntryPolicy = tenant.ManualJournalEntryPolicyAllowAll
 	control.RequireManualJEApproval = false
@@ -115,8 +83,8 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 	require.NoError(t, err)
 
 	fy, err := fiscalYearRepo.Create(ctx, &fiscalyear.FiscalYear{
-		OrganizationID:        org.ID,
-		BusinessUnitID:        org.BusinessUnitID,
+		OrganizationID:        orgID,
+		BusinessUnitID:        buID,
 		Status:                fiscalyear.StatusOpen,
 		Year:                  2027,
 		Name:                  "FY 2027",
@@ -128,8 +96,8 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 	require.NoError(t, err)
 
 	period, err := fiscalPeriodRepo.Create(ctx, &fiscalperiod.FiscalPeriod{
-		OrganizationID:        org.ID,
-		BusinessUnitID:        org.BusinessUnitID,
+		OrganizationID:        orgID,
+		BusinessUnitID:        buID,
 		FiscalYearID:          fy.ID,
 		PeriodNumber:          1,
 		PeriodType:            fiscalperiod.PeriodTypeMonth,
@@ -154,8 +122,8 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 		AuditService: &mocks.NoopAuditService{},
 	})
 
-	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID, UserID: user.ID}
-	actor := testutil.NewSessionActor(user.ID, org.ID, org.BusinessUnitID)
+	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
+	actor := testutil.NewSessionActor(userID, orgID, buID)
 
 	draft, err := svc.CreateDraft(ctx, &manualjournalports.CreateManualJournalRequest{
 		Description:    "Month-end accrual",
@@ -191,78 +159,40 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 	require.Equal(t, manualjournal.StatusPosted, posted.Status)
 	require.True(t, posted.PostedBatchID.IsNotNil())
 
-	batchCount, err := db.NewSelect().
-		Table("journal_batches").
-		Where("id = ?", posted.PostedBatchID).
-		Count(ctx)
+	batchCount, err := journalentrydb.JournalBatches.
+		Where(journalentrydb.JournalBatches.ID.Eq(posted.PostedBatchID)).
+		Count(ctx, db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), batchCount)
 
-	var entry struct {
-		ID            pulid.ID `bun:"id"`
-		BatchID       pulid.ID `bun:"batch_id"`
-		ReferenceType string   `bun:"reference_type"`
-		ReferenceID   string   `bun:"reference_id"`
-		TotalDebit    int64    `bun:"total_debit"`
-		TotalCredit   int64    `bun:"total_credit"`
-		Status        string   `bun:"status"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_entries").
-			Column("id", "batch_id", "reference_type", "reference_id", "total_debit", "total_credit", "status").
-			Where("batch_id = ?", posted.PostedBatchID).
-			Limit(1).
-			Scan(ctx, &entry),
-	)
+	je := journalentrydb.JournalEntries
+	entry, err := je.Where(je.BatchID.Eq(posted.PostedBatchID)).First(ctx, db)
+	require.NoError(t, err)
 	assert.Equal(t, posted.PostedBatchID, entry.BatchID)
 	assert.Equal(t, "ManualJournalRequest", entry.ReferenceType)
 	assert.Equal(t, draft.ID.String(), entry.ReferenceID)
 	assert.Equal(t, int64(2500), entry.TotalDebit)
 	assert.Equal(t, int64(2500), entry.TotalCredit)
-	assert.Equal(t, "Posted", entry.Status)
+	assert.Equal(t, journalentry.StatusPosted, entry.Status)
 
-	lineCount, err := db.NewSelect().
-		Table("journal_entry_lines").
-		Where("journal_entry_id = ?", entry.ID).
-		Count(ctx)
+	jel := journalentrydb.JournalEntryLines
+	lineCount, err := jel.Where(jel.JournalEntryID.Eq(entry.ID)).Count(ctx, db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), lineCount)
 
-	var source struct {
-		SourceObjectType string `bun:"source_object_type"`
-		SourceEventType  string `bun:"source_event_type"`
-		Status           string `bun:"status"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_sources").
-			Column("source_object_type", "source_event_type", "status").
-			Where("source_object_id = ?", draft.ID.String()).
-			Limit(1).
-			Scan(ctx, &source),
-	)
+	js := journalsourcedb.Sources
+	source, err := js.Where(js.SourceObjectID.Eq(draft.ID.String())).First(ctx, db)
+	require.NoError(t, err)
 	assert.Equal(t, "ManualJournalRequest", source.SourceObjectType)
 	assert.Equal(t, "ManualJournalPosted", source.SourceEventType)
 	assert.Equal(t, "Posted", source.Status)
 
-	var balance struct {
-		PeriodDebitMinor  int64 `bun:"period_debit_minor"`
-		PeriodCreditMinor int64 `bun:"period_credit_minor"`
-		NetChangeMinor    int64 `bun:"net_change_minor"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("period_debit_minor", "period_credit_minor", "net_change_minor").
-			Where("gl_account_id = ?", accounts[0].ID).
-			Where("fiscal_period_id = ?", period.ID).
-			Limit(1).
-			Scan(ctx, &balance),
-	)
+	pb := glbalancedb.GLAccountPeriodBalances
+	balance, err := pb.Where(
+		pb.GLAccountID.Eq(accounts[0].ID),
+		pb.FiscalPeriodID.Eq(period.ID),
+	).First(ctx, db)
+	require.NoError(t, err)
 	assert.Equal(t, int64(2500), balance.PeriodDebitMinor)
 	assert.Equal(t, int64(0), balance.PeriodCreditMinor)
 	assert.Equal(t, int64(2500), balance.NetChangeMinor)

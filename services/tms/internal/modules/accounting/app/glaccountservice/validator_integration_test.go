@@ -6,21 +6,21 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type testFixture struct {
 	ctx   context.Context
-	db    *bun.DB
+	db    *keel.DB
 	conn  *postgres.Connection
 	v     *Validator
 	orgID pulid.ID
@@ -30,96 +30,63 @@ type testFixture struct {
 func setupFixture(t *testing.T) *testFixture {
 	t.Helper()
 
-	ctx, db, cleanup := seededtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	err := db.NewSelect().
-		TableExpr("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org)
-	require.NoError(t, err)
-
-	conn := postgres.NewTestConnection(db)
-	v := NewTestValidatorWithDB(conn)
+	db := accountingtest.NewDevelopmentDatabase(t)
 
 	return &testFixture{
-		ctx:   ctx,
-		db:    db,
-		conn:  conn,
-		v:     v,
-		orgID: org.ID,
-		buID:  org.BusinessUnitID,
+		ctx:   db.A.Ctx,
+		db:    db.Admin,
+		conn:  db.Conn,
+		v:     NewTestValidatorWithDB(db.Conn),
+		orgID: db.A.Info.OrgID,
+		buID:  db.A.Info.BuID,
 	}
 }
 
 func (f *testFixture) getAccountTypeID(t *testing.T) pulid.ID {
 	t.Helper()
 
-	var atID pulid.ID
-	err := f.db.NewSelect().
-		Model((*accounttype.AccountType)(nil)).
-		Column("id").
-		Where("organization_id = ?", f.orgID).
-		Where("business_unit_id = ?", f.buID).
-		Limit(1).
-		Scan(f.ctx, &atID)
+	at := accounttypedb.AccountTypes
+	accountType, err := at.Pick(at.ID).Order(at.ID.Asc()).First(f.ctx, f.db)
 	require.NoError(t, err)
 
-	return atID
+	return accountType.ID
+}
+
+func (f *testFixture) firstAccount(t *testing.T, preds ...keel.Pred) *glaccount.GLAccount {
+	t.Helper()
+
+	gla := glaccountdb.GLAccounts
+	account, err := gla.Where(preds...).Order(gla.ID.Asc()).First(f.ctx, f.db)
+	require.NoError(t, err)
+
+	return account
 }
 
 func (f *testFixture) getExistingAccount(t *testing.T) *glaccount.GLAccount {
 	t.Helper()
 
-	account := new(glaccount.GLAccount)
-	err := f.db.NewSelect().
-		Model(account).
-		Where("organization_id = ?", f.orgID).
-		Where("business_unit_id = ?", f.buID).
-		Where("is_system = ?", false).
-		Where("parent_id IS NOT NULL").
-		Limit(1).
-		Scan(f.ctx)
-	require.NoError(t, err)
-
-	return account
+	gla := glaccountdb.GLAccounts
+	return f.firstAccount(t, gla.IsSystem.IsFalse(), gla.ParentID.IsNotNull())
 }
 
 func (f *testFixture) getSystemAccount(t *testing.T) *glaccount.GLAccount {
 	t.Helper()
 
-	account := new(glaccount.GLAccount)
-	err := f.db.NewSelect().
-		Model(account).
-		Where("organization_id = ?", f.orgID).
-		Where("business_unit_id = ?", f.buID).
-		Where("is_system = ?", true).
-		Limit(1).
-		Scan(f.ctx)
-	require.NoError(t, err)
-
-	return account
+	return f.firstAccount(t, glaccountdb.GLAccounts.IsSystem.IsTrue())
 }
 
 func (f *testFixture) getParentWithChildren(t *testing.T) *glaccount.GLAccount {
 	t.Helper()
 
-	account := new(glaccount.GLAccount)
-	err := f.db.NewSelect().
-		Model(account).
-		Where("gla.organization_id = ?", f.orgID).
-		Where("gla.business_unit_id = ?", f.buID).
-		Where("EXISTS (SELECT 1 FROM gl_accounts c WHERE c.parent_id = gla.id AND c.status = 'Active')").
-		Limit(1).
-		Scan(f.ctx)
-	require.NoError(t, err)
+	gla := glaccountdb.GLAccounts
+	children := gla.Children()
+	return f.firstAccount(t, children.Any(children.Status.Eq(domaintypes.StatusActive)))
+}
 
-	return account
+func (f *testFixture) insert(t *testing.T, account *glaccount.GLAccount) {
+	t.Helper()
+
+	require.NoError(t, glaccountdb.GLAccounts.Create(f.ctx, f.db, account))
 }
 
 func (f *testFixture) newValidEntity(t *testing.T) *glaccount.GLAccount {
@@ -223,8 +190,7 @@ func TestIntegration_ValidateCreate_ParentInactive(t *testing.T) {
 	parent.ID = pulid.MustNew("gla_")
 	parent.AccountCode = "8800"
 	parent.Status = domaintypes.StatusInactive
-	_, err := f.db.NewInsert().Model(parent).Exec(f.ctx)
-	require.NoError(t, err)
+	f.insert(t, parent)
 
 	entity := f.newValidEntity(t)
 	entity.AccountCode = "8801"
@@ -352,8 +318,7 @@ func TestIntegration_ValidateUpdate_DeactivateClean(t *testing.T) {
 	account := f.newValidEntity(t)
 	account.ID = pulid.MustNew("gla_")
 	account.AccountCode = "8901"
-	_, err := f.db.NewInsert().Model(account).Exec(f.ctx)
-	require.NoError(t, err)
+	f.insert(t, account)
 
 	entity := f.newValidEntity(t)
 	entity.ID = account.ID
@@ -372,14 +337,12 @@ func TestIntegration_ValidateUpdate_DuplicateAccountCode(t *testing.T) {
 	account1 := f.newValidEntity(t)
 	account1.ID = pulid.MustNew("gla_")
 	account1.AccountCode = "8910"
-	_, err := f.db.NewInsert().Model(account1).Exec(f.ctx)
-	require.NoError(t, err)
+	f.insert(t, account1)
 
 	account2 := f.newValidEntity(t)
 	account2.ID = pulid.MustNew("gla_")
 	account2.AccountCode = "8911"
-	_, err = f.db.NewInsert().Model(account2).Exec(f.ctx)
-	require.NoError(t, err)
+	f.insert(t, account2)
 
 	entity := f.newValidEntity(t)
 	entity.ID = account2.ID
@@ -413,15 +376,13 @@ func TestIntegration_ValidateUpdate_CircularReference(t *testing.T) {
 	accountA := f.newValidEntity(t)
 	accountA.ID = pulid.MustNew("gla_")
 	accountA.AccountCode = "8920"
-	_, err := f.db.NewInsert().Model(accountA).Exec(f.ctx)
-	require.NoError(t, err)
+	f.insert(t, accountA)
 
 	accountB := f.newValidEntity(t)
 	accountB.ID = pulid.MustNew("gla_")
 	accountB.AccountCode = "8921"
 	accountB.ParentID = accountA.ID
-	_, err = f.db.NewInsert().Model(accountB).Exec(f.ctx)
-	require.NoError(t, err)
+	f.insert(t, accountB)
 
 	entity := f.newValidEntity(t)
 	entity.ID = accountA.ID
@@ -440,15 +401,13 @@ func TestIntegration_ValidateCreate_ValidParentChain(t *testing.T) {
 	grandparent := f.newValidEntity(t)
 	grandparent.ID = pulid.MustNew("gla_")
 	grandparent.AccountCode = "8930"
-	_, err := f.db.NewInsert().Model(grandparent).Exec(f.ctx)
-	require.NoError(t, err)
+	f.insert(t, grandparent)
 
 	parent := f.newValidEntity(t)
 	parent.ID = pulid.MustNew("gla_")
 	parent.AccountCode = "8931"
 	parent.ParentID = grandparent.ID
-	_, err = f.db.NewInsert().Model(parent).Exec(f.ctx)
-	require.NoError(t, err)
+	f.insert(t, parent)
 
 	entity := f.newValidEntity(t)
 	entity.AccountCode = "8932"

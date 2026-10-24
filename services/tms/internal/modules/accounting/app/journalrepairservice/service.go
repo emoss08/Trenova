@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -25,7 +24,7 @@ const (
 )
 
 type Deps struct {
-	DB       kernelports.DBConnection
+	DB       kernelports.Transactor
 	Repo     driversettlementports.JournalRepairRepository
 	Controls invoiceledger.ControlReader
 	Periods  journalposting.PeriodReader
@@ -319,10 +318,10 @@ func (s *Service) inTx(ctx context.Context, dryRun bool, fn func(context.Context
 	if dryRun {
 		return fn(ctx)
 	}
-	return s.deps.DB.WithTx(
+	return s.deps.DB.Transact(
 		ctx,
 		kernelports.TxOptions{},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			return fn(txCtx)
 		},
 	)

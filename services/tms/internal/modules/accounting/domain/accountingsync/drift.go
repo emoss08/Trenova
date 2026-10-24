@@ -34,9 +34,8 @@ type DriftLine struct {
 
 // Documents Trenova sent to the accounting system that now differ there, with both values and how each was settled
 type AccountingDriftFinding struct {
-	bun.BaseModel             `bun:"table:accounting_drift_findings,alias:acctdf" json:"-"`
-	keel.Table                `                                                            keel:"accounting_drift_findings,report=Accounting,label=Drift Finding"`
-	pagination.CursorValueSet `bun:",embed"                                       json:"-"`
+	bun.BaseModel `bun:"table:accounting_drift_findings,alias:acctdf" json:"-"`
+	keel.Table    `                                                            keel:"accounting_drift_findings,report=Accounting,label=Drift Finding"`
 
 	ID                 pulid.ID        `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctdf_"`
 	BusinessUnitID     pulid.ID        `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -282,6 +281,27 @@ func (f *AccountingDriftFinding) GetPostgresSearchConfig() domaintypes.PostgresS
 	}
 }
 
+func (f *AccountingDriftFinding) BeforeCreate(_ context.Context) error {
+	f.stampSeen(timeutils.NowUnix())
+	return nil
+}
+
+func (f *AccountingDriftFinding) BeforeSave(_ context.Context) error {
+	if f.Detail == nil {
+		f.Detail = []DriftLine{}
+	}
+	return nil
+}
+
+func (f *AccountingDriftFinding) stampSeen(now int64) {
+	if f.DetectedAt == 0 {
+		f.DetectedAt = now
+	}
+	if f.LastSeenAt == 0 {
+		f.LastSeenAt = now
+	}
+}
+
 func (f *AccountingDriftFinding) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	if f.Detail == nil {
@@ -292,12 +312,7 @@ func (f *AccountingDriftFinding) BeforeAppendModel(_ context.Context, query bun.
 		if f.ID.IsNil() {
 			f.ID = pulid.MustNew(driftFindingIDPrefix)
 		}
-		if f.DetectedAt == 0 {
-			f.DetectedAt = now
-		}
-		if f.LastSeenAt == 0 {
-			f.LastSeenAt = now
-		}
+		f.stampSeen(now)
 		f.CreatedAt = now
 		f.UpdatedAt = now
 	case *bun.UpdateQuery:

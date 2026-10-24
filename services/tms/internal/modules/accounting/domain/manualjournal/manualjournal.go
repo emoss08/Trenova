@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -17,9 +16,8 @@ import (
 var _ domaintypes.PostgresSearchable = (*Request)(nil)
 
 type Request struct {
-	bun.BaseModel             `bun:"table:manual_journal_requests,alias:mjr" json:"-"`
-	keel.Table                `keel:"manual_journal_requests"`
-	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
+	bun.BaseModel `bun:"table:manual_journal_requests,alias:mjr" json:"-"`
+	keel.Table    `keel:"manual_journal_requests"`
 
 	ID                      pulid.ID `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:mjr_"`
 	OrganizationID          pulid.ID `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
@@ -56,9 +54,8 @@ type Request struct {
 }
 
 type Line struct {
-	bun.BaseModel             `bun:"table:manual_journal_request_lines,alias:mjrl" json:"-"`
-	keel.Table                `keel:"manual_journal_request_lines"`
-	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
+	bun.BaseModel `bun:"table:manual_journal_request_lines,alias:mjrl" json:"-"`
+	keel.Table    `keel:"manual_journal_request_lines"`
 
 	ID                     pulid.ID `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:mjrl_"`
 	OrganizationID         pulid.ID `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`

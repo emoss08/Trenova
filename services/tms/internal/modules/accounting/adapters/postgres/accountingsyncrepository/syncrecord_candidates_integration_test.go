@@ -3,11 +3,10 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
-	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -24,48 +23,12 @@ import (
 	"go.uber.org/zap"
 )
 
-type candidateShipment struct {
-	ID         pulid.ID `bun:"id"`
-	CustomerID pulid.ID `bun:"customer_id"`
-	ProNumber  string   `bun:"pro_number"`
-	BOL        string   `bun:"bol"`
-}
-
-type candidateOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
 func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t *testing.T) {
-	ctx, db, cleanup := seededtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	var org candidateOrg
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org))
-	var userID pulid.ID
-	require.NoError(t, db.NewSelect().
-		Table("users").
-		Column("id").
-		Where("current_organization_id = ?", org.ID).
-		Limit(1).
-		Scan(ctx, &userID))
-	shipments := make([]candidateShipment, 0, 3)
-	require.NoError(t, db.NewSelect().
-		Table("shipments").
-		Column("id", "customer_id", "pro_number", "bol").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Order("id").
-		Limit(3).
-		Scan(ctx, &shipments))
-	require.Len(t, shipments, 3)
-
-	tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
-	conn := postgres.NewTestConnection(db)
+	seeded := newSeededTenant(t)
+	ctx, db, tenant, userID := seeded.ctx, seeded.kdb, seeded.tenant, seeded.userID
+	org := struct{ ID, BusinessUnitID pulid.ID }{tenant.OrgID, tenant.BuID}
+	shipments := seeded.shipments(t, 3)
+	conn := seeded.conn
 	logger := zap.NewNop()
 	invoices := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	records := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: logger})
@@ -90,7 +53,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 			Status:           billingqueue.StatusPosted,
 			BillType:         billingqueue.BillTypeInvoice,
 		}
-		_, insertErr := db.NewInsert().Model(queue).Exec(ctx)
+		insertErr := billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 		require.NoError(t, insertErr)
 		created, createErr := invoices.Create(ctx, &invoice.Invoice{
 			OrganizationID:     org.ID,
@@ -224,15 +187,16 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 		CreatedAt:            start + 40,
 		UpdatedAt:            start + 40,
 	}
-	_, err = db.NewInsert().Model(&[]*customerpayment.Payment{undone, kept}).Exec(ctx)
-	require.NoError(t, err)
-	paymentCols := customerpaymentcol.PaymentColumns
+	cp := customerpaymentdb.Payments
+	require.NoError(t, cp.CreateMany(ctx, db, []*customerpayment.Payment{undone, kept}))
 	for _, payment := range []*customerpayment.Payment{undone, kept} {
-		_, err = db.NewUpdate().
-			Model((*customerpayment.Payment)(nil)).
-			Set(paymentCols.CreatedAt.Set(), payment.PaymentDate+10).
-			Where(paymentCols.ID.Eq(), payment.ID).
-			Exec(ctx)
+		_, err = keel.Exec(ctx, db,
+			"UPDATE customer_payments SET created_at = $1 WHERE id = $2 AND organization_id = $3 AND business_unit_id = $4",
+			payment.PaymentDate+10,
+			payment.ID.String(),
+			tenant.OrgID.String(),
+			tenant.BuID.String(),
+		)
 		require.NoError(t, err)
 	}
 

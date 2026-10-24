@@ -4,15 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/intutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -22,6 +20,8 @@ const (
 	defaultBackfillListLimit = 20
 	maxBackfillListLimit     = 100
 )
+
+var backfillErrors = dberror.Mapping{Entity: backfillEntity}
 
 type BackfillParams struct {
 	fx.In
@@ -60,11 +60,8 @@ func (r *backfillRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
+			err := accountingsyncdb.AccountingBackfills.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
 					return nil, accountingsyncports.ErrAccountingBackfillActive
 				}
@@ -84,16 +81,9 @@ func (r *backfillRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
-			entity := new(accountingsync.AccountingBackfill)
-			cols := accountingsynccol.AccountingBackfillColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Apply(accountingsynccol.AccountingBackfillApplyTenant(req.TenantInfo)).
-				Where(cols.ID.Eq(), req.ID).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, backfillEntity)
+			entity, err := accountingsyncdb.AccountingBackfills.Get(ctx, r.db.Keel(ctx), req.ID)
+			if err != nil {
+				return nil, backfillErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -109,18 +99,13 @@ func (r *backfillRepository) GetActive(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
-			entity := new(accountingsync.AccountingBackfill)
-			cols := accountingsynccol.AccountingBackfillColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Apply(accountingsynccol.AccountingBackfillApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Where(cols.Status.In(), bun.List(inProgressBackfillStatuses())).
-				Limit(1).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, backfillEntity)
+			ab := accountingsyncdb.AccountingBackfills
+			entity, err := ab.Where(
+				ab.ConnectionID.Eq(req.ConnectionID),
+				ab.Status.In(inProgressBackfillStatuses()...),
+			).First(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, backfillErrors.Map(err, "")
 			}
 
 			return entity, nil
@@ -142,20 +127,11 @@ func (r *backfillRepository) ListByConnection(
 			}
 			limit = intutils.Clamp(limit, 1, maxBackfillListLimit)
 
-			cols := accountingsynccol.AccountingBackfillColumns
-			entities := make([]*accountingsync.AccountingBackfill, 0, limit)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(accountingsynccol.AccountingBackfillApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Limit(int64(limit)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ab := accountingsyncdb.AccountingBackfills
+			return ab.Where(ab.ConnectionID.Eq(req.ConnectionID)).
+				Order(ab.CreatedAt.Desc(), ab.ID.Desc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -168,31 +144,14 @@ func (r *backfillRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
-			cols := accountingsynccol.AccountingBackfillColumns
 			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				ExcludeColumn(cols.CreatedAt.Bare()).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				Exec(ctx)
+			err := accountingsyncdb.AccountingBackfills.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				entity.Version = ov
 				if dberror.IsUniqueConstraintViolation(err) {
 					return nil, accountingsyncports.ErrAccountingBackfillActive
 				}
-				return nil, err
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				backfillEntity,
-				entity.ID.String(),
-			); err != nil {
-				entity.Version = ov
-				return nil, err
+				return nil, backfillErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil

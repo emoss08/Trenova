@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -49,9 +48,8 @@ func (s *MappingSignals) CandidateFingerprint() string {
 }
 
 type AccountingMapping struct {
-	bun.BaseModel             `bun:"table:accounting_mappings,alias:acctm" json:"-"`
-	keel.Table                `keel:"accounting_mappings"`
-	pagination.CursorValueSet `bun:",embed"                                json:"-"`
+	bun.BaseModel `bun:"table:accounting_mappings,alias:acctm" json:"-"`
+	keel.Table    `keel:"accounting_mappings"`
 
 	ID              pulid.ID          `json:"id"              bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctm_"`
 	BusinessUnitID  pulid.ID          `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
@@ -188,6 +186,11 @@ func (m *AccountingMapping) GetPostgresSearchConfig() domaintypes.PostgresSearch
 			},
 		},
 	}
+}
+
+func (m *AccountingMapping) BeforeSave(_ context.Context) error {
+	m.SearchLabel = stringutils.NormalizeName(m.TargetLabel)
+	return nil
 }
 
 func (m *AccountingMapping) BeforeAppendModel(_ context.Context, query bun.Query) error {

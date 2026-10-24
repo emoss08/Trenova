@@ -3,9 +3,12 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -30,29 +33,13 @@ import (
 )
 
 func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
-	ctx, db, cleanup := seededtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	var org candidateOrg
-	require.NoError(t, db.NewSelect().Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
-	var userID pulid.ID
-	require.NoError(t, db.NewSelect().Table("users").Column("id").
-		Where("current_organization_id = ?", org.ID).Limit(1).Scan(ctx, &userID))
-	var shp candidateShipment
-	require.NoError(t, db.NewSelect().Table("shipments").
-		Column("id", "customer_id", "pro_number", "bol").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Order("id").Limit(1).Scan(ctx, &shp))
-	var carrierID, workerID pulid.ID
-	require.NoError(t, db.NewSelect().Table("carriers").Column("id").
-		Where("organization_id = ?", org.ID).Limit(1).Scan(ctx, &carrierID))
-	require.NoError(t, db.NewSelect().Table("workers").Column("id").
-		Where("organization_id = ?", org.ID).Limit(1).Scan(ctx, &workerID))
-
-	tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	seeded := newSeededTenant(t)
+	ctx, db, tenant, userID := seeded.ctx, seeded.kdb, seeded.tenant, seeded.userID
+	org := struct{ ID, BusinessUnitID pulid.ID }{tenant.OrgID, tenant.BuID}
+	shp := seeded.shipments(t, 1)[0]
+	carrierID, workerID := seeded.carrier(t).ID, seeded.worker(t).ID
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	conn := postgres.NewTestConnection(db)
+	conn := seeded.conn
 	logger := zap.NewNop()
 	invoices := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	payments := customerpaymentrepository.New(customerpaymentrepository.Params{DB: conn, Logger: logger})
@@ -71,7 +58,7 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err := db.NewInsert().Model(queue).Exec(ctx)
+	err := billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
 	posted := dated + 100
 	inv, err := invoices.Create(ctx, &invoice.Invoice{
@@ -111,7 +98,7 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		require.NotNil(t, stored.ExchangeRateDate)
 		assert.Equal(t, dated, *stored.ExchangeRateDate)
 
-		err = invoices.StampExchangeRate(ctx, &kernelports.StampExchangeRateRequest{
+		err = invoices.StampExchangeRate(dbscope.WithTenant(ctx, other.DBTenant()), &kernelports.StampExchangeRateRequest{
 			TenantInfo: other, ID: inv.ID, Rate: paidRate, Date: dated,
 		})
 		require.Error(t, err, "another tenant cannot stamp the invoice")
@@ -133,7 +120,7 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 			CurrencyCode:         "CAD",
 			CreatedByID:          userID,
 		}
-		_, insertErr := db.NewInsert().Model(payment).Exec(ctx)
+		insertErr := customerpaymentdb.Payments.Create(ctx, db, payment)
 		require.NoError(t, insertErr)
 
 		require.NoError(t, payments.StampExchangeRate(ctx, &kernelports.StampExchangeRateRequest{
@@ -148,7 +135,7 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		require.NotNil(t, stored.ExchangeRateDate)
 		assert.Equal(t, dated, *stored.ExchangeRateDate)
 
-		err = payments.StampExchangeRate(ctx, &kernelports.StampExchangeRateRequest{
+		err = payments.StampExchangeRate(dbscope.WithTenant(ctx, other.DBTenant()), &kernelports.StampExchangeRateRequest{
 			TenantInfo: other, ID: payment.ID, Rate: paidRate, Date: dated,
 		})
 		require.Error(t, err)
@@ -172,7 +159,7 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 			PostedAt:         &posted,
 			PaidAt:           &paidAt,
 		}
-		_, insertErr := db.NewInsert().Model(settlement).Exec(ctx)
+		insertErr := carriersettlementdb.CarrierSettlements.Create(ctx, db, settlement)
 		require.NoError(t, insertErr)
 
 		require.NoError(t, payables.StampExchangeRate(ctx, &accountingsyncports.StampPayableExchangeRateRequest{
@@ -216,7 +203,7 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 			CurrencyCode:     "CAD",
 			PostedAt:         &posted,
 		}
-		_, insertErr := db.NewInsert().Model(settlement).Exec(ctx)
+		insertErr := driversettlementdb.Settlements.Create(ctx, db, settlement)
 		require.NoError(t, insertErr)
 
 		require.NoError(t, payables.StampExchangeRate(ctx, &accountingsyncports.StampPayableExchangeRateRequest{

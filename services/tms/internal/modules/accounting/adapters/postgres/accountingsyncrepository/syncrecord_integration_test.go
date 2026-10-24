@@ -5,12 +5,13 @@ package accountingsyncrepository
 import (
 	"context"
 	"errors"
+	"github.com/emoss08/keel"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -20,13 +21,12 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type syncFixture struct {
 	ctx        context.Context
-	db         *bun.DB
+	db         *keel.DB
 	conn       *postgres.Connection
 	tenant     pagination.TenantInfo
 	connection *accountingsync.AccountingConnection
@@ -42,6 +42,7 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -165,7 +166,7 @@ func TestSyncRecordRepository_EnqueueInARolledBackTransactionLeavesNothing(t *te
 
 	record := f.record(accountingsync.SyncObjectInvoice, "INV-9", f.now)
 	rollback := errors.New("posting failed")
-	err := f.conn.WithTx(f.ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := f.conn.Transact(f.ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, enqueueErr := f.records.Enqueue(txCtx, []*accountingsync.AccountingSyncRecord{record}); enqueueErr != nil {
 			return enqueueErr
 		}

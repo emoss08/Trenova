@@ -3,13 +3,10 @@
 package glbalancerepository
 
 import (
-	"context"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
@@ -24,29 +21,15 @@ import (
 	"go.uber.org/zap"
 )
 
-type seededBalanceOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
-type seededBalanceUser struct {
-	ID pulid.ID `bun:"id"`
-}
-
-type seededBalanceAccount struct {
-	ID pulid.ID `bun:"id"`
-}
-
 func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
-	ctx, db, cleanup := seededtest.SetupTestDB(t)
-	defer cleanup()
-
-	conn := postgres.NewTestConnection(db)
+	db := accountingtest.NewDevelopmentDatabase(t)
+	ctx := db.A.Ctx
+	conn := db.Conn
 	postingRepo := journalpostingrepository.New(
 		journalpostingrepository.Params{DB: conn, Logger: zap.NewNop()},
 	)
 	balanceRepo := New(Params{DB: conn, Logger: zap.NewNop()})
-	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupGLBalanceFixture(t, ctx, conn)
+	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupGLBalanceFixture(t, db)
 	now := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 
 	err := postingRepo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
@@ -120,10 +103,9 @@ func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
 // for. The adjusting period shares the final operating period's dates, so the
 // ordering has to come from the period number rather than from a date.
 func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
-	ctx, db, cleanup := seededtest.SetupTestDB(t)
-	defer cleanup()
-
-	conn := postgres.NewTestConnection(db)
+	db := accountingtest.NewDevelopmentDatabase(t)
+	ctx := db.A.Ctx
+	conn := db.Conn
 	postingRepo := journalpostingrepository.New(
 		journalpostingrepository.Params{DB: conn, Logger: zap.NewNop()},
 	)
@@ -131,7 +113,7 @@ func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
 		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
 	)
 	balanceRepo := New(Params{DB: conn, Logger: zap.NewNop()})
-	orgID, buID, userID, fiscalYearID, januaryID, accountIDs := setupGLBalanceFixture(t, ctx, conn)
+	orgID, buID, userID, fiscalYearID, januaryID, accountIDs := setupGLBalanceFixture(t, db)
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 
 	february, err := periodRepo.Create(ctx, &fiscalperiod.FiscalPeriod{
@@ -241,56 +223,21 @@ func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
 
 func setupGLBalanceFixture(
 	t *testing.T,
-	ctx context.Context,
-	conn *postgres.Connection,
+	db *accountingtest.Database,
 ) (pulid.ID, pulid.ID, pulid.ID, pulid.ID, pulid.ID, []pulid.ID) {
 	t.Helper()
 
+	ctx := db.A.Ctx
 	logger := zap.NewNop()
 	fiscalYearRepo := fiscalyearrepository.New(
-		fiscalyearrepository.Params{DB: conn, Logger: logger},
+		fiscalyearrepository.Params{DB: db.Conn, Logger: logger},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
-		fiscalperiodrepository.Params{DB: conn, Logger: logger},
+		fiscalperiodrepository.Params{DB: db.Conn, Logger: logger},
 	)
-
-	var org seededBalanceOrg
-	require.NoError(
-		t,
-		conn.DB().
-			NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededBalanceUser
-	require.NoError(
-		t,
-		conn.DB().
-			NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	accounts := make([]seededBalanceAccount, 0, 2)
-	require.NoError(
-		t,
-		conn.DB().
-			NewSelect().
-			Table("gl_accounts").
-			Column("id").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Where("status = 'Active'").
-			Order("account_code ASC").
-			Limit(2).
-			Scan(ctx, &accounts),
-	)
-	require.Len(t, accounts, 2)
+	org := struct{ ID, BusinessUnitID pulid.ID }{db.A.Info.OrgID, db.A.Info.BuID}
+	user := struct{ ID pulid.ID }{db.A.Info.UserID}
+	accounts := accountingtest.ActiveAccounts(t, db, db.A, 2)
 
 	fy, err := fiscalYearRepo.Create(ctx, &fiscalyear.FiscalYear{
 		OrganizationID:        org.ID,
@@ -318,8 +265,5 @@ func setupGLBalanceFixture(
 	})
 	require.NoError(t, err)
 
-	return org.ID, org.BusinessUnitID, user.ID, fy.ID, period.ID, []pulid.ID{
-		accounts[0].ID,
-		accounts[1].ID,
-	}
+	return org.ID, org.BusinessUnitID, user.ID, fy.ID, period.ID, accounts
 }

@@ -1,23 +1,24 @@
 package manualjournalservice
 
 import (
+	"context"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"context"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -26,7 +27,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestRequireManualJournalUser(t *testing.T) {
@@ -116,7 +116,7 @@ func TestCreateDraftPersistsGeneratedNumber(t *testing.T) {
 
 	manualRepo := newManualJournalRepositoryFake(nil)
 	svc := &Service{
-		db:             fakeDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           manualRepo,
 		accountingRepo: accountingRepo,
 		generator:      testutil.TestSequenceGenerator{SingleValue: "MJR-42"},
@@ -196,7 +196,7 @@ func TestUpdateDraftReplacesLines(t *testing.T) {
 
 	manualRepo := newManualJournalRepositoryFake(request)
 	svc := &Service{
-		db:             fakeDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           manualRepo,
 		accountingRepo: accountingRepo,
 		validator:      &Validator{fiscalRepo: fiscalRepo, glAccountRepo: glRepo},
@@ -251,7 +251,7 @@ func TestPostCreatesJournalPostingAndMarksRequestPosted(t *testing.T) {
 		}, nil)
 
 	svc := &Service{
-		db:             fakeDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           manualRepo,
 		journalRepo:    journalRepo,
 		accountingRepo: accountingRepo,
@@ -326,7 +326,7 @@ func TestPostUsesNextOpenPeriodWhenConfigured(t *testing.T) {
 		}, nil)
 
 	svc := &Service{
-		db:             fakeDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           manualRepo,
 		journalRepo:    journalRepo,
 		accountingRepo: accountingRepo,
@@ -358,7 +358,7 @@ func TestPostBlocksNonApprovedRequest(t *testing.T) {
 	manualRepo := newManualJournalRepositoryFake(request)
 	journalRepo := newJournalPostingRepositoryFake()
 	svc := &Service{
-		db:          fakeDBConnection{},
+		db:          dbtest.NopConnection{},
 		repo:        manualRepo,
 		journalRepo: journalRepo,
 		accountingRepo: func() tenantports.AccountingControlRepository {
@@ -409,7 +409,7 @@ func TestPostBlocksClosedPeriodWhenReopenRequired(t *testing.T) {
 	journalRepo := newJournalPostingRepositoryFake()
 	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
-		db:             fakeDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           repo,
 		journalRepo:    journalRepo,
 		accountingRepo: accountingRepo,
@@ -446,7 +446,7 @@ func TestSubmitMovesToPendingApprovalWhenRequired(t *testing.T) {
 
 	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
-		db:             fakeDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           repo,
 		accountingRepo: accountingRepo,
 		validator:      &Validator{},
@@ -483,7 +483,7 @@ func TestSubmitAutoApprovesWhenApprovalNotRequired(t *testing.T) {
 
 	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
-		db:             fakeDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           repo,
 		accountingRepo: accountingRepo,
 		validator:      &Validator{},
@@ -515,7 +515,7 @@ func TestApproveMarksApproved(t *testing.T) {
 
 	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
-		db:           fakeDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		validator:    &Validator{},
 		auditService: &mocks.NoopAuditService{},
@@ -546,7 +546,7 @@ func TestApproveBlocksInvalidStatus(t *testing.T) {
 
 	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
-		db:           fakeDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		validator:    &Validator{},
 		auditService: &mocks.NoopAuditService{},
@@ -576,7 +576,7 @@ func TestRejectMarksRejected(t *testing.T) {
 
 	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
-		db:           fakeDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		validator:    &Validator{},
 		auditService: &mocks.NoopAuditService{},
@@ -608,7 +608,7 @@ func TestCancelMarksCancelled(t *testing.T) {
 
 	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
-		db:           fakeDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		validator:    &Validator{},
 		auditService: &mocks.NoopAuditService{},
@@ -650,7 +650,7 @@ func TestPostAllowsLockedPeriod(t *testing.T) {
 		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: fyID, Status: fiscalperiod.StatusLocked}, nil)
 
 	svc := &Service{
-		db:             fakeDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           manualRepo,
 		journalRepo:    journalRepo,
 		accountingRepo: accountingRepo,
@@ -696,7 +696,7 @@ func TestPostErrorsWhenNoNextOpenPeriodExists(t *testing.T) {
 	repo := newManualJournalRepositoryFake(request)
 	journalRepo := newJournalPostingRepositoryFake()
 	svc := &Service{
-		db:             fakeDBConnection{},
+		db:             dbtest.NopConnection{},
 		repo:           repo,
 		journalRepo:    journalRepo,
 		accountingRepo: accountingRepo,
@@ -718,22 +718,6 @@ func TestPostErrorsWhenNoNextOpenPeriodExists(t *testing.T) {
 	assert.Contains(t, err.Error(), "No next open")
 	assert.Nil(t, journalRepo.last)
 }
-
-type fakeDBConnection struct{}
-
-func (fakeDBConnection) DB() *bun.DB                          { return nil }
-func (fakeDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-
-func (fakeDBConnection) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
-func (fakeDBConnection) HealthCheck(context.Context) error { return nil }
-func (fakeDBConnection) IsHealthy(context.Context) bool    { return true }
-func (fakeDBConnection) Close() error                      { return nil }
 
 // manualJournalRepositoryFake is an in-memory stand-in for the manual journal
 // repository. The service walks a request through several persistence steps per

@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -453,7 +452,7 @@ func (s *Service) SaveApp(
 
 	var saved *accountingsync.AccountingAppCredential
 	var previous map[string]any
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		current, prepErr := s.prepareAppChange(txCtx, req)
 		if prepErr != nil {
 			return prepErr
@@ -499,7 +498,7 @@ func (s *Service) RemoveApp(
 	name := accountingsync.ProviderName(req.IntegrationType)
 
 	var removed *accountingsync.AccountingAppCredential
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		existing, found, getErr := s.tenantCredential(txCtx, req.TenantInfo, req.IntegrationType)
 		if getErr != nil || !found {
 			return getErr

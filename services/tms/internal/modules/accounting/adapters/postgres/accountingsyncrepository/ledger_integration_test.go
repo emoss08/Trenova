@@ -3,10 +3,14 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"testing"
 	"time"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -32,13 +36,13 @@ import (
 )
 
 type ledgerFixtureAccount struct {
-	ID          pulid.ID `bun:"id"`
-	AccountCode string   `bun:"account_code"`
+	ID          pulid.ID
+	AccountCode string
 }
 
 type ledgerFixturePeriod struct {
-	ID           pulid.ID `bun:"id"`
-	FiscalYearID pulid.ID `bun:"fiscal_year_id"`
+	ID           pulid.ID
+	FiscalYearID pulid.ID
 }
 
 type ledgerFixtureLine struct {
@@ -60,49 +64,28 @@ type ledgerFixtureEntry struct {
 }
 
 func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
-	ctx, db, cleanup := seededtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	var org candidateOrg
-	require.NoError(t, db.NewSelect().Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
-	var userID pulid.ID
-	require.NoError(t, db.NewSelect().Table("users").Column("id").
-		Where("current_organization_id = ?", org.ID).Limit(1).Scan(ctx, &userID))
-	var customer struct {
-		ID   pulid.ID `bun:"id"`
-		Name string   `bun:"name"`
-	}
-	require.NoError(t, db.NewSelect().Table("customers").Column("id", "name").
-		Where("organization_id = ?", org.ID).Order("id").Limit(1).Scan(ctx, &customer))
-	var carrier struct {
-		ID   pulid.ID `bun:"id"`
-		Name string   `bun:"name"`
-	}
-	require.NoError(t, db.NewSelect().Table("carriers").Column("id", "name").
-		Where("organization_id = ?", org.ID).Order("id").Limit(1).Scan(ctx, &carrier))
-	var driver struct {
-		ID        pulid.ID `bun:"id"`
-		FirstName string   `bun:"first_name"`
-		LastName  string   `bun:"last_name"`
-	}
-	require.NoError(t, db.NewSelect().Table("workers").Column("id", "first_name", "last_name").
-		Where("organization_id = ?", org.ID).Order("id").Limit(1).Scan(ctx, &driver))
-	accounts := make([]ledgerFixtureAccount, 0, 3)
-	require.NoError(t, db.NewSelect().Table("gl_accounts").Column("id", "account_code").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Order("account_code").Limit(3).Scan(ctx, &accounts))
+	seeded := newSeededTenant(t)
+	ctx, db, tenant, userID := seeded.ctx, seeded.kdb, seeded.tenant, seeded.userID
+	org := struct{ ID, BusinessUnitID pulid.ID }{tenant.OrgID, tenant.BuID}
+	customer := seeded.customer(t)
+	carrier := seeded.carrier(t)
+	driver := seeded.worker(t)
+	accounts := seededRows[ledgerFixtureAccount](t, seeded,
+		`SELECT id, account_code FROM gl_accounts
+		WHERE organization_id = $1 AND business_unit_id = $2
+		ORDER BY account_code LIMIT 3`,
+		tenant.OrgID.String(),
+		tenant.BuID.String(),
+	)
 	require.Len(t, accounts, 3)
 	acctA, acctB, acctC := accounts[0].ID, accounts[1].ID, accounts[2].ID
-
-	tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
 	const day = int64(1_900_000_000)
 	const next = day + 86_400
 	posted := day + 60
 
-	conn := postgres.NewTestConnection(db)
+	conn := seeded.conn
 	year, err := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()}).
 		Create(ctx, &fiscalyear.FiscalYear{
 			OrganizationID: org.ID,
@@ -144,7 +127,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		CurrencyCode:     "USD",
 		PostedAt:         &posted,
 	}
-	_, err = db.NewInsert().Model(carrierSettlement).Exec(ctx)
+	err = carriersettlementdb.CarrierSettlements.Create(ctx, db, carrierSettlement)
 	require.NoError(t, err)
 	driverSettlement := &driversettlement.Settlement{
 		ID:               pulid.MustNew("dstl_"),
@@ -161,7 +144,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		CurrencyCode:     "USD",
 		PostedAt:         &posted,
 	}
-	_, err = db.NewInsert().Model(driverSettlement).Exec(ctx)
+	err = driversettlementdb.Settlements.Create(ctx, db, driverSettlement)
 	require.NoError(t, err)
 	payment := &customerpayment.Payment{
 		ID:                   pulid.MustNew("cpay_"),
@@ -178,7 +161,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		CurrencyCode:         "USD",
 		CreatedByID:          userID,
 	}
-	_, err = db.NewInsert().Model(payment).Exec(ctx)
+	err = customerpaymentdb.Payments.Create(ctx, db, payment)
 	require.NoError(t, err)
 
 	batch := &journalentry.JournalBatch{
@@ -194,7 +177,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		FiscalPeriodID: period.ID,
 		CreatedByID:    userID,
 	}
-	_, err = db.NewInsert().Model(batch).Exec(ctx)
+	err = journalentrydb.JournalBatches.Create(ctx, db, batch)
 	require.NoError(t, err)
 
 	insert := func(fixture *ledgerFixtureEntry) pulid.ID {
@@ -229,7 +212,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		} else {
 			entry.Status = journalentry.StatusPending
 		}
-		_, insertErr := db.NewInsert().Model(entry).Exec(ctx)
+		insertErr := journalentrydb.JournalEntries.Create(ctx, db, entry)
 		require.NoError(t, insertErr)
 
 		lines := make([]*journalentry.JournalEntryLine, 0, len(fixture.lines))
@@ -248,11 +231,11 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 				CustomerID:     line.customer,
 			})
 		}
-		_, insertErr = db.NewInsert().Model(&lines).Exec(ctx)
+		insertErr = journalentrydb.JournalEntryLines.CreateMany(ctx, db, lines)
 		require.NoError(t, insertErr)
 
 		if fixture.source != "" {
-			_, insertErr = db.NewInsert().Model(&journalsource.Source{
+			insertErr = journalsourcedb.Sources.Create(ctx, db, &journalsource.Source{
 				OrganizationID:       org.ID,
 				BusinessUnitID:       org.BusinessUnitID,
 				SourceObjectType:     fixture.source,
@@ -262,7 +245,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 				Status:               "Posted",
 				JournalBatchID:       batch.ID,
 				JournalEntryID:       entry.ID,
-			}).Exec(ctx)
+			})
 			require.NoError(t, insertErr)
 		}
 		return entry.ID
@@ -308,7 +291,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		Kind: journalentryports.LedgerPartyCustomer, ID: customer.ID, Name: customer.Name,
 	}
 	driverParty := journalentryports.LedgerParty{
-		Kind: journalentryports.LedgerPartyDriver, ID: driver.ID, Name: driver.FirstName + " " + driver.LastName,
+		Kind: journalentryports.LedgerPartyDriver, ID: driver.ID, Name: driver.Name,
 	}
 
 	t.Run("a reversal carries the party and number of the entry it reverses", func(t *testing.T) {
@@ -332,7 +315,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 	t.Run("an unposted entry or another tenant's is not found", func(t *testing.T) {
 		_, getErr := source.GetJournal(ctx, &journalentryports.GetLedgerJournalRequest{TenantInfo: tenant, ID: pending})
 		assert.True(t, errortypes.IsNotFoundError(getErr))
-		_, getErr = source.GetJournal(ctx, &journalentryports.GetLedgerJournalRequest{TenantInfo: other, ID: paid})
+		_, getErr = source.GetJournal(dbscope.WithTenant(ctx, other.DBTenant()), &journalentryports.GetLedgerJournalRequest{TenantInfo: other, ID: paid})
 		assert.True(t, errortypes.IsNotFoundError(getErr))
 	})
 
@@ -350,7 +333,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		assert.Equal(t, customerParty, journals[1].Lines[1].Party)
 		assert.True(t, journals[1].Lines[0].Party.IsZero())
 
-		journals, listErr = source.ListJournals(ctx, &journalentryports.ListLedgerJournalsRequest{
+		journals, listErr = source.ListJournals(dbscope.WithTenant(ctx, other.DBTenant()), &journalentryports.ListLedgerJournalsRequest{
 			TenantInfo: other, From: day, Before: next,
 		})
 		require.NoError(t, listErr)
@@ -527,7 +510,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		})
 		require.NoError(t, typeErr)
 		assert.Equal(t, journalentry.EntryTypeClosing, entryType)
-		_, typeErr = source.GetEntryType(ctx, &journalentryports.GetLedgerJournalRequest{
+		_, typeErr = source.GetEntryType(dbscope.WithTenant(ctx, other.DBTenant()), &journalentryports.GetLedgerJournalRequest{
 			TenantInfo: other, ID: closing,
 		})
 		assert.True(t, errortypes.IsNotFoundError(typeErr))

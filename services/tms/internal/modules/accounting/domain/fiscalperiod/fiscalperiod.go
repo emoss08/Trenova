@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -28,9 +27,8 @@ var (
 
 // Accounting periods, their status, and their close and reopen history
 type FiscalPeriod struct {
-	bun.BaseModel             `bun:"table:fiscal_periods,alias:fp" json:"-"`
-	keel.Table                `                                             keel:"fiscal_periods,report=Accounting"`
-	pagination.CursorValueSet `bun:",embed"                        json:"-"`
+	bun.BaseModel `bun:"table:fiscal_periods,alias:fp" json:"-"`
+	keel.Table    `                                             keel:"fiscal_periods,report=Accounting"`
 
 	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"               keel:"id,pk,autoid:fp_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`

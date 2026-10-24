@@ -6,16 +6,17 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const pendingCertificateEntity = "Pending accounting certificate"
+
+var pendingCertificateErrors = dberror.Mapping{Entity: pendingCertificateEntity}
 
 type PendingCertificateParams struct {
 	fx.In
@@ -46,16 +47,11 @@ func (r *pendingCertificateRepository) GetByType(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingPendingCertificate, error) {
-			entity := new(accountingsync.AccountingPendingCertificate)
-			cols := accountingsynccol.AccountingPendingCertificateColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where(cols.IntegrationType.Eq(), req.IntegrationType).
-				Apply(accountingsynccol.AccountingPendingCertificateApplyTenant(req.TenantInfo)).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, pendingCertificateEntity)
+			pc := accountingsyncdb.AccountingPendingCertificates
+			entity, err := pc.Where(pc.IntegrationType.Eq(req.IntegrationType)).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, pendingCertificateErrors.Map(err, "")
 			}
 
 			return entity, nil
@@ -81,12 +77,9 @@ func (r *pendingCertificateRepository) Replace(
 				return nil, err
 			}
 
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return nil, err
+			err := accountingsyncdb.AccountingPendingCertificates.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
+				return nil, pendingCertificateErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -107,15 +100,7 @@ func (r *pendingCertificateRepository) deleteByType(
 	ctx context.Context,
 	req accountingsyncports.GetAccountingConnectionRequest,
 ) error {
-	cols := accountingsynccol.AccountingPendingCertificateColumns
-
-	_, err := r.db.DBForContext(ctx).
-		NewDelete().
-		Model((*accountingsync.AccountingPendingCertificate)(nil)).
-		WhereGroup(" AND ", func(q *bun.DeleteQuery) *bun.DeleteQuery {
-			return accountingsynccol.AccountingPendingCertificateScopeTenantDelete(q, req.TenantInfo).
-				Where(cols.IntegrationType.Eq(), req.IntegrationType)
-		}).
-		Exec(ctx)
+	pc := accountingsyncdb.AccountingPendingCertificates
+	_, err := pc.Where(pc.IntegrationType.Eq(req.IntegrationType)).Delete(ctx, r.db.Keel(ctx))
 	return err
 }
