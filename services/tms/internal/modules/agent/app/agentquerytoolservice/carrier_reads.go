@@ -53,7 +53,7 @@ func carrierIntelEventsListSpec() graphQLListSpec {
 		},
 		unoffered: []string{
 			"status", "severity", "category", "carrierId", "subjectType", "subjectId",
-			"fieldPath", "ruleCode", "priorValue", "currentValue", "vendorChangedAt",
+			"fieldPath", "ruleCode", "vendorChangedAt",
 			"acknowledgedById", "resolvedById", "resolutionNote", "snapshotId", "updatedAt",
 			"createdAt",
 		},
