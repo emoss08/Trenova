@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -75,18 +76,37 @@ const analysisCalculationRule = "- Do not calculate in your head. Every figure y
 	"and matplotlib over the organization's reports and attached files, which installs nothing " +
 	"and cannot reach the internet. Never say you cannot run Python.\n"
 
-// trenovaRules depends only on whether the agent holds report_analyze_data, never on
-// what a turn loaded, so the stable part of the prompt stays the same from
-// one turn to the next and its cache holds.
+// scriptRule is how an agent that may run a script answers a question across
+// many records. Without it a Billing exceptions agent asked for every
+// customer's open loads read one page of 568, said it could not group them
+// and offered to page through the rest, with agent_run_script in hand.
+const scriptRule = "- A question across many records (every customer, each driver, all open " +
+	"loads, two lists checked against each other) is one agent_run_script call that reads " +
+	"every page, joins and counts, not page after page of list calls. Run it in that turn " +
+	"rather than answering from part of a list or offering to read the rest. What the " +
+	"script prints is a tool's result, so the counts and totals it works out are figures " +
+	"you may state. The Python is how you look records up, not software written for the " +
+	"person.\n"
+
+// trenovaRules depends only on whether the agent holds report_analyze_data and
+// agent_run_script, never on what a turn loaded, so the stable part of the
+// prompt stays the same from one turn to the next and its cache holds.
 func trenovaRules(tools []ToolSummary) string {
 	rule := calculationRule
-	if slices.ContainsFunc(tools, func(tool ToolSummary) bool {
-		return tool.Name == agentextension.ToolAnalyzeData
-	}) {
+	if holdsTool(tools, agentextension.ToolAnalyzeData) {
 		rule = analysisCalculationRule
+	}
+	if holdsTool(tools, codemode.ToolRunScript) {
+		rule += scriptRule
 	}
 
 	return trenovaRulesBeforeCalculation + rule + trenovaRulesAfterCalculation
+}
+
+func holdsTool(tools []ToolSummary, name string) bool {
+	return slices.ContainsFunc(tools, func(tool ToolSummary) bool {
+		return tool.Name == name
+	})
 }
 
 // organizationIntro opens the organization's section. It sits after every
