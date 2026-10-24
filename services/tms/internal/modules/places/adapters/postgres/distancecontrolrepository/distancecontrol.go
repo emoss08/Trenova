@@ -2,23 +2,26 @@ package distancecontrolrepository
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol/distancecontroldb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile/distanceprofiledb"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const shortestRoutingType = "shortest"
+
+var distanceControlErrors = dberror.Mapping{Entity: "DistanceControl"}
 
 type Params struct {
 	fx.In
@@ -44,20 +47,15 @@ func New(p Params) distancecontrolports.DistanceControlRepository {
 
 func (r *repository) Get(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*distancecontrol.DistanceControl, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distancecontrol.DistanceControl, error) {
-			entity := new(distancecontrol.DistanceControl)
-			err := r.db.DBForContext(ctx).NewSelect().
-				Model(entity).
-				Where("dc.organization_id = ?", tenantInfo.OrgID).
-				Where("dc.business_unit_id = ?", tenantInfo.BuID).
-				Scan(ctx)
+			entity, err := distancecontroldb.DistanceControls.Query().One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "DistanceControl")
+				return nil, distanceControlErrors.Map(err, "")
 			}
 			return entity, nil
 		},
@@ -84,17 +82,20 @@ func (r *repository) EnsureDefault(
 			if err != nil {
 				return nil, err
 			}
-			shortestID := r.shortestProfileID(ctx, tenantInfo)
 			entity := distancecontrol.NewDefault(
 				tenantInfo.OrgID,
 				tenantInfo.BuID,
 				practical.ID,
-				shortestID,
+				r.shortestProfileID(ctx),
 			)
-			if _, err = r.db.DBForContext(ctx).NewInsert().
-				Model(entity).
-				On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
-				Exec(ctx); err != nil {
+			dc := distancecontroldb.DistanceControls
+			if _, err = dc.CreateOrSkip(
+				ctx,
+				r.db.Keel(ctx),
+				[]*distancecontrol.DistanceControl{entity},
+				dc.OrganizationID,
+				dc.BusinessUnitID,
+			); err != nil {
 				return nil, err
 			}
 			return r.Get(ctx, tenantInfo)
@@ -110,27 +111,10 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distancecontrol.DistanceControl, error) {
-			previousVersion := entity.Version
-			entity.Version++
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, _ bun.Tx) error {
-					result, err := r.db.DBForContext(c).NewUpdate().
-						Model(entity).
-						WherePK().
-						Where("version = ?", previousVersion).
-						Returning("*").
-						Exec(c)
-					if err != nil {
-						return err
-					}
-					return dberror.CheckRowsAffected(result, "DistanceControl", entity.ID.String())
-				},
-			)
+			err := distancecontroldb.DistanceControls.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				return nil, dberror.MapRetryableTransactionError(
-					err,
+					distanceControlErrors.Map(err, entity.ID.String()),
 					"Distance control is busy. Retry the request.",
 				)
 			}
@@ -151,20 +135,15 @@ func (r *repository) ResolveProfile(
 	return control.ProfileIDForPurpose(purpose), nil
 }
 
-func (r *repository) shortestProfileID(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) pulid.ID {
-	entity := new(distanceprofile.DistanceProfile)
-	err := r.db.DBForContext(ctx).NewSelect().
-		Model(entity).
-		Where("dp.organization_id = ?", tenantInfo.OrgID).
-		Where("dp.business_unit_id = ?", tenantInfo.BuID).
-		Where("dp.status = ?", distanceprofile.StatusActive).
-		Where("lower(dp.routing_type) = ?", strings.ToLower("Shortest")).
-		Order("dp.is_default DESC", "dp.updated_at DESC").
-		Limit(1).
-		Scan(ctx)
+func (r *repository) shortestProfileID(ctx context.Context) pulid.ID {
+	dp := distanceprofiledb.DistanceProfiles
+	entity, err := dp.Pick(dp.ID).
+		Where(
+			dp.Status.Eq(distanceprofile.StatusActive),
+			dp.RoutingType.Lower().Eq(shortestRoutingType),
+		).
+		Order(dp.IsDefault.Desc(), dp.UpdatedAt.Desc()).
+		First(ctx, r.db.Keel(ctx))
 	if err != nil {
 		return ""
 	}

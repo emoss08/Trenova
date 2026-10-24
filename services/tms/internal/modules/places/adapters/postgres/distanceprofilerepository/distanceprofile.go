@@ -3,23 +3,33 @@ package distanceprofilerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/distanceprofilecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile/distanceprofiledb"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const busyMessage = "Distance profile is busy. Retry the request."
+
+var distanceProfileErrors = dberror.Mapping{
+	Entity: "DistanceProfile",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_distance_profiles_default",
+			Field:   "isDefault",
+			Message: "Another distance profile is already the default",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -48,120 +58,42 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
-			entities := make(
-				[]*distanceprofile.DistanceProfile,
-				0,
-				req.Filter.Pagination.SafeLimit(),
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				distanceprofiledb.DistanceProfiles.Query(),
+				&listquery.Request[distanceprofile.DistanceProfile]{Filter: req.Filter},
 			)
-			total, err := r.db.DBForContext(ctx).NewSelect().
-				Model(&entities).
-				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = querybuilder.ApplyFilters(
-						q,
-						"dp",
-						req.Filter,
-						(*distanceprofile.DistanceProfile)(nil),
-					)
-					return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-						Offset(int64(req.Filter.Pagination.SafeOffset()))
-				}).
-				ScanAndCount(ctx)
 			if err != nil {
 				r.l.Error("failed to list distance profiles", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*distanceprofile.DistanceProfile]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *distanceprofileports.ListDistanceProfileConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		distanceprofilecol.DistanceProfileTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*distanceprofile.DistanceProfile)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *distanceprofileports.ListDistanceProfileConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		distanceprofilecol.DistanceProfileTable.Alias,
-		req.Filter,
-		(*distanceprofile.DistanceProfile)(nil),
-	)
-}
-
-func applyDistanceProfileColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(distanceprofilecol.DistanceProfileTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *distanceprofileports.ListDistanceProfileConnectionRequest,
 ) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*distanceprofile.DistanceProfile)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count distance profiles", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*distanceprofile.DistanceProfile]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*distanceprofile.DistanceProfile) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyDistanceProfileColumns(sq, req.DistanceProfileColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				distanceprofiledb.DistanceProfiles.Query(),
+				&listquery.Request[distanceprofile.DistanceProfile]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.DistanceProfileColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan distance profiles", zap.Error(err))
+				r.l.Error("failed to list distance profiles", zap.Error(err))
 				return nil, err
 			}
 
@@ -178,15 +110,9 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distanceprofile.DistanceProfile, error) {
-			entity := new(distanceprofile.DistanceProfile)
-			err := r.db.DBForContext(ctx).NewSelect().
-				Model(entity).
-				Where("dp.id = ?", req.ID).
-				Where("dp.organization_id = ?", req.TenantInfo.OrgID).
-				Where("dp.business_unit_id = ?", req.TenantInfo.BuID).
-				Scan(ctx)
+			entity, err := distanceprofiledb.DistanceProfiles.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "DistanceProfile")
+				return nil, distanceProfileErrors.Map(err, req.ID.String())
 			}
 			return entity, nil
 		},
@@ -195,21 +121,16 @@ func (r *repository) GetByID(
 
 func (r *repository) GetDefault(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*distanceprofile.DistanceProfile, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distanceprofile.DistanceProfile, error) {
-			entity := new(distanceprofile.DistanceProfile)
-			err := r.db.DBForContext(ctx).NewSelect().
-				Model(entity).
-				Where("dp.organization_id = ?", tenantInfo.OrgID).
-				Where("dp.business_unit_id = ?", tenantInfo.BuID).
-				Where("dp.is_default = true").
-				Scan(ctx)
+			dp := distanceprofiledb.DistanceProfiles
+			entity, err := dp.Where(dp.IsDefault.IsTrue()).One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "DistanceProfile")
+				return nil, distanceProfileErrors.Map(err, "")
 			}
 			return entity, nil
 		},
@@ -233,14 +154,15 @@ func (r *repository) EnsureDefault(
 			}
 
 			entity := distanceprofile.NewDefault(tenantInfo.OrgID, tenantInfo.BuID)
-			result, err := r.db.DBForContext(ctx).NewInsert().
-				Model(entity).
-				On("CONFLICT DO NOTHING").
-				Exec(ctx)
+			inserted, err := distanceprofiledb.DistanceProfiles.CreateOrSkip(
+				ctx,
+				r.db.Keel(ctx),
+				[]*distanceprofile.DistanceProfile{entity},
+			)
 			if err != nil {
-				return nil, err
+				return nil, distanceProfileErrors.Map(err, entity.ID.String())
 			}
-			if rowsAffected, rowsErr := result.RowsAffected(); rowsErr == nil && rowsAffected == 0 {
+			if inserted == 0 {
 				return r.GetDefault(ctx, tenantInfo)
 			}
 			return entity, nil
@@ -256,28 +178,19 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distanceprofile.DistanceProfile, error) {
-			err := r.db.WithTx(
+			if entity.IsDefault {
+				if err := r.clearDefault(ctx, pulid.Nil); err != nil {
+					return nil, dberror.MapRetryableTransactionError(err, busyMessage)
+				}
+			}
+			if err := distanceprofiledb.DistanceProfiles.Create(
 				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, tx bun.Tx) error {
-					if entity.IsDefault {
-						if _, err := r.db.DBForContext(c).NewUpdate().
-							Model((*distanceprofile.DistanceProfile)(nil)).
-							Set("is_default = false").
-							Where("organization_id = ?", entity.OrganizationID).
-							Where("business_unit_id = ?", entity.BusinessUnitID).
-							Exec(c); err != nil {
-							return err
-						}
-					}
-					_, err := r.db.DBForContext(c).NewInsert().Model(entity).Returning("*").Exec(c)
-					return err
-				},
-			)
-			if err != nil {
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, dberror.MapRetryableTransactionError(
-					err,
-					"Distance profile is busy. Retry the request.",
+					distanceProfileErrors.Map(err, entity.ID.String()),
+					busyMessage,
 				)
 			}
 			return entity, nil
@@ -293,45 +206,19 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distanceprofile.DistanceProfile, error) {
-			previousVersion := entity.Version
-			entity.Version++
-
-			cols := distanceprofilecol.DistanceProfileColumns
-			err := r.db.WithTx(
+			if entity.IsDefault {
+				if err := r.clearDefault(ctx, entity.ID); err != nil {
+					return nil, dberror.MapRetryableTransactionError(err, busyMessage)
+				}
+			}
+			if err := distanceprofiledb.DistanceProfiles.Save(
 				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, tx bun.Tx) error {
-					if entity.IsDefault {
-						if _, err := r.db.DBForContext(c).NewUpdate().
-							Model((*distanceprofile.DistanceProfile)(nil)).
-							Set(cols.IsDefault.Set(), false).
-							WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-								return distanceprofilecol.DistanceProfileScopeTenantUpdate(uq, pagination.TenantInfo{
-									OrgID: entity.OrganizationID,
-									BuID:  entity.BusinessUnitID,
-								}).
-									Where(cols.ID.NotEq(), entity.ID)
-							}).
-							Exec(c); err != nil {
-							return err
-						}
-					}
-					result, err := r.db.DBForContext(c).NewUpdate().
-						Model(entity).
-						WherePK().
-						Where("version = ?", previousVersion).
-						Returning("*").
-						Exec(c)
-					if err != nil {
-						return err
-					}
-					return dberror.CheckRowsAffected(result, "DistanceProfile", entity.ID.String())
-				},
-			)
-			if err != nil {
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, dberror.MapRetryableTransactionError(
-					err,
-					"Distance profile is busy. Retry the request.",
+					distanceProfileErrors.Map(err, entity.ID.String()),
+					busyMessage,
 				)
 			}
 			return entity, nil
@@ -344,18 +231,13 @@ func (r *repository) Delete(
 	req distanceprofileports.DeleteDistanceProfileRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := distanceprofilecol.DistanceProfileColumns
-		result, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*distanceprofile.DistanceProfile)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return distanceprofilecol.DistanceProfileScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		dp := distanceprofiledb.DistanceProfiles
+		deleted, err := dp.Where(dp.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return err
+			return distanceProfileErrors.Map(err, req.ID.String())
 		}
-		return dberror.CheckRowsAffected(result, "DistanceProfile", req.ID.String())
+
+		return dberror.CheckFoundCount(deleted, distanceProfileErrors.Entity)
 	})
 }
 
@@ -367,51 +249,30 @@ func (r *repository) SetDefault(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distanceprofile.DistanceProfile, error) {
-			var entity *distanceprofile.DistanceProfile
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, tx bun.Tx) error {
-					current, err := r.GetByID(c, req)
-					if err != nil {
-						return err
-					}
-					if current.Status != distanceprofile.StatusActive {
-						return errortypes.NewValidationError(
-							"isDefault",
-							errortypes.ErrInvalid,
-							"Default profile must be active",
-						)
-					}
-					if _, err = r.db.DBForContext(c).NewUpdate().
-						Model((*distanceprofile.DistanceProfile)(nil)).
-						Set("is_default = false").
-						Where("organization_id = ?", req.TenantInfo.OrgID).
-						Where("business_unit_id = ?", req.TenantInfo.BuID).
-						Exec(c); err != nil {
-						return err
-					}
-					current.IsDefault = true
-					current.Version++
-					if _, err = r.db.DBForContext(c).NewUpdate().
-						Model(current).
-						Column("is_default", "version", "updated_at").
-						WherePK().
-						Returning("*").
-						Exec(c); err != nil {
-						return err
-					}
-					entity = current
-					return nil
-				},
-			)
+			current, err := r.GetByID(ctx, req)
 			if err != nil {
-				return nil, dberror.MapRetryableTransactionError(
-					err,
-					"Distance profile is busy. Retry the request.",
+				return nil, err
+			}
+			if current.Status != distanceprofile.StatusActive {
+				return nil, errortypes.NewValidationError(
+					"isDefault",
+					errortypes.ErrInvalid,
+					"Default profile must be active",
 				)
 			}
-			return entity, nil
+			if err = r.clearDefault(ctx, current.ID); err != nil {
+				return nil, dberror.MapRetryableTransactionError(err, busyMessage)
+			}
+
+			dp := distanceprofiledb.DistanceProfiles
+			current.IsDefault = true
+			if err = dp.Save(ctx, r.db.Keel(ctx), current, dp.IsDefault); err != nil {
+				return nil, dberror.MapRetryableTransactionError(
+					distanceProfileErrors.Map(err, current.ID.String()),
+					busyMessage,
+				)
+			}
+			return current, nil
 		},
 	)
 }
@@ -420,47 +281,52 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *distanceprofileports.DistanceProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
-			cols := distanceprofilecol.DistanceProfileColumns
-			return dbhelper.SelectOptions[*distanceprofile.DistanceProfile](
+			dp := distanceprofiledb.DistanceProfiles
+			q := dp.Pick(
+				dp.ID,
+				dp.Name,
+				dp.Description,
+				dp.Status,
+				dp.IsDefault,
+				dp.Provider,
+				dp.DataVersion,
+				dp.Region,
+				dp.RoutingType,
+				dp.DistanceUnits,
+				dp.LocationGranularity,
+				dp.ProfileName,
+			).
+				Where(dp.Status.Eq(distanceprofile.StatusActive)).
+				Order(dp.IsDefault.Desc(), dp.Name.Asc())
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Name,
-						cols.Description,
-						cols.Status,
-						cols.IsDefault,
-						cols.Provider,
-						cols.DataVersion,
-						cols.Region,
-						cols.RoutingType,
-						cols.DistanceUnits,
-						cols.LocationGranularity,
-						cols.ProfileName,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), distanceprofile.StatusActive).
-							Order(cols.IsDefault.OrderDesc()).
-							Order(cols.Name.OrderAsc())
-					},
-					EntityName: "DistanceProfile",
-					SearchColumnRefs: []buncolgen.Column{
-						cols.Name,
-						cols.Description,
-						cols.ProfileName,
-						cols.RoutingType,
-						cols.DistanceUnits,
-					},
+				func(s string) keel.Pred {
+					return keel.Or(
+						dp.Name.ContainsFold(s),
+						dp.Description.ContainsFold(s),
+						dp.ProfileName.ContainsFold(s),
+						dp.RoutingType.ContainsFold(s),
+						dp.DistanceUnits.ContainsFold(s),
+					)
 				},
 			)
 		},
 	)
+}
+
+func (r *repository) clearDefault(ctx context.Context, keep pulid.ID) error {
+	dp := distanceprofiledb.DistanceProfiles
+	_, err := dp.Where(
+		dp.IsDefault.IsTrue(),
+		keel.When(!keep.IsNil(), dp.ID.Ne(keep)),
+	).Update(ctx, r.db.Keel(ctx), dp.IsDefault.To(false))
+	return err
 }

@@ -3,21 +3,58 @@ package distanceoverriderepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/distanceoverridecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride/distanceoverridedb"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceoverrideports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const busyMessage = "Distance override is busy. Retry the request."
+
+var distanceOverrideErrors = dberror.Mapping{
+	Entity: "DistanceOverride",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_distance_overrides_route_signature",
+			Field:   "intermediateStops",
+			Message: "Distance override with this route already exists",
+		},
+		{
+			Name:    "uq_distance_override_stops_location",
+			Field:   "intermediateStops",
+			Message: "Intermediate stop location must be unique within the route",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_distance_overrides_origin_location",
+			Field:   "originLocationId",
+			Message: "Origin location does not exist in your organization",
+		},
+		{
+			Name:    "fk_distance_overrides_destination_location",
+			Field:   "destinationLocationId",
+			Message: "Destination location does not exist in your organization",
+		},
+		{
+			Name:    "fk_distance_overrides_customer",
+			Field:   "customerId",
+			Message: "Customer does not exist in your organization",
+		},
+		{
+			Name:    "fk_distance_override_stops_location",
+			Field:   "intermediateStops",
+			Message: "Intermediate stop location does not exist in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -38,25 +75,17 @@ func New(p Params) distanceoverrideports.DistanceOverrideRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *distanceoverrideports.ListDistanceOverrideRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"diso",
-		req.Filter,
-		(*distanceoverride.DistanceOverride)(nil),
+func listShape(
+	q *keel.Query[distanceoverride.DistanceOverride],
+) *keel.Query[distanceoverride.DistanceOverride] {
+	do := distanceoverridedb.DistanceOverrides
+	stops := do.IntermediateStops()
+	return q.Load(
+		do.Customer(),
+		do.OriginLocation().State(),
+		do.DestinationLocation().State(),
+		stops.Order(stops.StopOrder.Asc()),
 	)
-
-	q.Relation("Customer").
-		Relation("OriginLocation").
-		Relation("OriginLocation.State").
-		Relation("DestinationLocation").
-		Relation("DestinationLocation.State")
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -67,60 +96,22 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*distanceoverride.DistanceOverride], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				distanceoverridedb.DistanceOverrides.Query(),
+				&listquery.Request[distanceoverride.DistanceOverride]{
+					Filter: req.Filter,
+					Shape:  listShape,
+				},
 			)
-
-			entities := make(
-				[]*distanceoverride.DistanceOverride,
-				0,
-				req.Filter.Pagination.SafeLimit(),
-			)
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation("IntermediateStops", func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.OrderExpr("dios.stop_order ASC")
-				}).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count distance overrides", zap.Error(err))
+				r.l.Error("failed to list distance overrides", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*distanceoverride.DistanceOverride]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
-	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *distanceoverrideports.ListDistanceOverrideConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		distanceoverridecol.DistanceOverrideTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*distanceoverride.DistanceOverride)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *distanceoverrideports.ListDistanceOverrideConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		distanceoverridecol.DistanceOverrideTable.Alias,
-		req.Filter,
-		(*distanceoverride.DistanceOverride)(nil),
 	)
 }
 
@@ -128,58 +119,22 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *distanceoverrideports.ListDistanceOverrideConnectionRequest,
 ) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*distanceoverride.DistanceOverride)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count distance overrides", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*distanceoverride.DistanceOverride]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*distanceoverride.DistanceOverride) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							ColumnExpr(distanceoverridecol.DistanceOverrideTable.All()).
-							Relation("Customer").
-							Relation("OriginLocation").
-							Relation("OriginLocation.State").
-							Relation("DestinationLocation").
-							Relation("DestinationLocation.State").
-							Relation("IntermediateStops", func(q *bun.SelectQuery) *bun.SelectQuery {
-								return q.OrderExpr("dios.stop_order ASC")
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				distanceoverridedb.DistanceOverrides.Query(),
+				&listquery.Request[distanceoverride.DistanceOverride]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  listShape,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan distance overrides", zap.Error(err))
+				r.l.Error("failed to list distance overrides", zap.Error(err))
 				return nil, err
 			}
 
@@ -196,31 +151,23 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distanceoverride.DistanceOverride, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByID"),
-				zap.String("id", req.ID.String()),
-			)
-
-			entity := new(distanceoverride.DistanceOverride)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Relation("OriginLocation").
-				Relation("DestinationLocation").
-				Relation("Customer").
-				Relation("IntermediateStops", func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.OrderExpr("dios.stop_order ASC")
-				}).
-				Relation("IntermediateStops.Location").
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("diso.id = ?", req.ID).
-						Where("diso.organization_id = ?", req.TenantInfo.OrgID).
-						Where("diso.business_unit_id = ?", req.TenantInfo.BuID)
-				}).
-				Scan(ctx)
+			do := distanceoverridedb.DistanceOverrides
+			stops := do.IntermediateStops()
+			entity, err := do.Where(do.ID.Eq(req.ID)).
+				Load(
+					do.OriginLocation(),
+					do.DestinationLocation(),
+					do.Customer(),
+					stops.Order(stops.StopOrder.Asc()).Load(stops.Location()),
+				).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get distance override", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "DistanceOverride")
+				r.l.Error(
+					"failed to get distance override",
+					zap.String("id", req.ID.String()),
+					zap.Error(err),
+				)
+				return nil, distanceOverrideErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -236,45 +183,14 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distanceoverride.DistanceOverride, error) {
-			log := r.l.With(
-				zap.String("operation", "Create"),
-			)
+			db := r.db.Keel(ctx)
+			if err := distanceoverridedb.DistanceOverrides.Create(ctx, db, entity); err != nil {
+				r.l.Error("failed to create distance override", zap.Error(err))
+				return nil, r.mapWriteError(err, entity)
+			}
 
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, tx bun.Tx) error {
-					if _, insertErr := r.db.DBForContext(c).
-						NewInsert().
-						Model(entity).
-						Returning("*").
-						Exec(c); insertErr != nil {
-						log.Error("failed to create distance override", zap.Error(insertErr))
-						return insertErr
-					}
-
-					if len(entity.IntermediateStops) > 0 {
-						entity.NormalizeIntermediateStops()
-						if _, insertErr := r.db.DBForContext(c).
-							NewInsert().
-							Model(&entity.IntermediateStops).
-							Exec(c); insertErr != nil {
-							log.Error(
-								"failed to create distance override stops",
-								zap.Error(insertErr),
-							)
-							return insertErr
-						}
-					}
-
-					return nil
-				},
-			)
-			if err != nil {
-				return nil, dberror.MapRetryableTransactionError(
-					err,
-					"Distance override is busy. Retry the request.",
-				)
+			if err := r.insertStops(ctx, entity); err != nil {
+				return nil, err
 			}
 
 			return entity, nil
@@ -290,76 +206,56 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distanceoverride.DistanceOverride, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
-			ov := entity.Version
-			entity.Version++
-
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, tx bun.Tx) error {
-					results, updateErr := r.db.DBForContext(c).
-						NewUpdate().
-						Model(entity).
-						WherePK().
-						Where("version = ?", ov).
-						Returning("*").
-						Exec(c)
-					if updateErr != nil {
-						log.Error("failed to update distance override", zap.Error(updateErr))
-						return updateErr
-					}
-
-					if checkErr := dberror.CheckRowsAffected(
-						results,
-						"DistanceOverride",
-						entity.ID.String(),
-					); checkErr != nil {
-						return checkErr
-					}
-
-					if _, deleteErr := r.db.DBForContext(c).NewDelete().
-						Model((*distanceoverride.DistanceOverrideStop)(nil)).
-						WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-							return dq.Where("distance_override_id = ?", entity.ID).
-								Where("organization_id = ?", entity.OrganizationID).
-								Where("business_unit_id = ?", entity.BusinessUnitID)
-						}).
-						Exec(c); deleteErr != nil {
-						log.Error("failed to replace distance override stops", zap.Error(deleteErr))
-						return deleteErr
-					}
-
-					if len(entity.IntermediateStops) > 0 {
-						entity.NormalizeIntermediateStops()
-						if _, insertErr := r.db.DBForContext(c).
-							NewInsert().
-							Model(&entity.IntermediateStops).
-							Exec(c); insertErr != nil {
-							log.Error(
-								"failed to insert distance override stops",
-								zap.Error(insertErr),
-							)
-							return insertErr
-						}
-					}
-
-					return nil
-				},
-			)
-			if err != nil {
-				return nil, dberror.MapRetryableTransactionError(
-					err,
-					"Distance override is busy. Retry the request.",
+			db := r.db.Keel(ctx)
+			if err := distanceoverridedb.DistanceOverrides.Save(ctx, db, entity); err != nil {
+				r.l.Error(
+					"failed to update distance override",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
 				)
+				return nil, r.mapWriteError(err, entity)
+			}
+
+			st := distanceoverridedb.DistanceOverrideStops
+			if _, err := st.Where(st.DistanceOverrideID.Eq(entity.ID)).Delete(ctx, db); err != nil {
+				r.l.Error("failed to replace distance override stops", zap.Error(err))
+				return nil, r.mapWriteError(err, entity)
+			}
+
+			if err := r.insertStops(ctx, entity); err != nil {
+				return nil, err
 			}
 
 			return entity, nil
 		},
+	)
+}
+
+func (r *repository) insertStops(
+	ctx context.Context,
+	entity *distanceoverride.DistanceOverride,
+) error {
+	if len(entity.IntermediateStops) == 0 {
+		return nil
+	}
+
+	entity.NormalizeIntermediateStops()
+	if err := distanceoverridedb.DistanceOverrideStops.CreateMany(
+		ctx,
+		r.db.Keel(ctx),
+		entity.IntermediateStops,
+	); err != nil {
+		r.l.Error("failed to insert distance override stops", zap.Error(err))
+		return r.mapWriteError(err, entity)
+	}
+
+	return nil
+}
+
+func (r *repository) mapWriteError(err error, entity *distanceoverride.DistanceOverride) error {
+	return dberror.MapRetryableTransactionError(
+		distanceOverrideErrors.Map(err, entity.ID.String()),
+		busyMessage,
 	)
 }
 
@@ -368,48 +264,34 @@ func (r *repository) Delete(
 	req distanceoverrideports.DeleteDistanceOverrideRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.ID.String()),
-		)
-
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*distanceoverride.DistanceOverride)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.Where("diso.id = ?", req.ID).
-					Where("diso.organization_id = ?", req.TenantInfo.OrgID).
-					Where("diso.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Exec(ctx)
+		do := distanceoverridedb.DistanceOverrides
+		deleted, err := do.Where(do.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to delete distance override", zap.Error(err))
-			return err
+			r.l.Error(
+				"failed to delete distance override",
+				zap.String("id", req.ID.String()),
+				zap.Error(err),
+			)
+			return distanceOverrideErrors.Map(err, req.ID.String())
 		}
 
-		return dberror.CheckRowsAffected(result, "DistanceOverride", req.ID.String())
+		return dberror.CheckFoundCount(deleted, distanceOverrideErrors.Entity)
 	})
 }
 
 func (r *repository) GetByRouteSignature(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	routeSignature string,
 ) (*distanceoverride.DistanceOverride, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distanceoverride.DistanceOverride, error) {
-			entity := new(distanceoverride.DistanceOverride)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where("diso.organization_id = ?", tenantInfo.OrgID).
-				Where("diso.business_unit_id = ?", tenantInfo.BuID).
-				Where("diso.route_signature = ?", routeSignature).
-				Scan(ctx)
+			do := distanceoverridedb.DistanceOverrides
+			entity, err := do.Where(do.RouteSignature.Eq(routeSignature)).One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "DistanceOverride")
+				return nil, distanceOverrideErrors.Map(err, routeSignature)
 			}
 
 			return entity, nil
