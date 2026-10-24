@@ -1,12 +1,12 @@
 [workspace]
 resolver = "3"
 members = ["imaging", "crates/*"]
-exclude = ["tms", "postgres", "imaging/fuzz", "crates/sandbox/fuzz", "crates/rules/fuzz"]
+exclude = ["tms", "postgres", "vendor", "imaging/fuzz", "crates/sandbox/fuzz", "crates/rules/fuzz"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.94"
+rust-version = "1.96"
 license = "FSL-1.1-ALv2"
 publish = false
 repository = "https://github.com/emoss08/trenova"
@@ -16,6 +16,7 @@ trenova-imaging-core = { path = "crates/imaging-core" }
 trenova-proto = { path = "crates/proto" }
 trenova-rules = { path = "crates/rules" }
 trenova-sandbox = { path = "crates/sandbox" }
+trenova-scripts = { path = "crates/scripts" }
 trenova-service-kit = { path = "crates/service-kit" }
 
 anyhow = { version = "1.0.100", default-features = false, features = ["std"] }
@@ -35,6 +36,9 @@ landlock = "0.4.7"
 libc = "0.2.191"
 libloading = "0.9"
 libheif-rs = { version = "3.0", default-features = false }
+monty = { version = "=1.3.0", default-features = false }
+monty-alloc = { version = "=1.3.0", default-features = false }
+monty-types = { version = "=1.3.0", default-features = false }
 libwebp-sys = { version = "0.14.4", default-features = false, features = ["std", "parallel"] }
 opentelemetry = { version = "0.33", default-features = false, features = ["trace"] }
 opentelemetry-otlp = { version = "0.33", default-features = false, features = ["trace", "grpc-tonic"] }
@@ -92,6 +96,10 @@ missing_panics_doc = "allow"
 must_use_candidate = "allow"
 struct_excessive_bools = "allow"
 
+# Monty carries one patch until a release builds for wasm32-wasip1; see vendor/monty/TRENOVA.md.
+[patch.crates-io]
+monty = { path = "vendor/monty" }
+
 [profile.release]
 lto = "fat"
 codegen-units = 1
@@ -115,6 +123,12 @@ debug = "line-tables-only"
 [profile.wasm]
 inherits = "release"
 opt-level = "s"
+
+# The trenova-scripts WebAssembly module (`task rust:wasm-scripts`): release, tuned for speed,
+# since only the TMS runs it and an interpreter's time is in its dispatch loop.
+[profile.wasm-server]
+inherits = "release"
+opt-level = 3
 
 [profile.bench]
 lto = "thin"

@@ -23,6 +23,9 @@ on:
       - "services/tms/pkg/rules/rules.wasm.sha256"
       - "client/packages/shared/src/rules/rules.wasm"
       - "client/packages/shared/src/rules/rules.wasm.sha256"
+      # The trenova-scripts WebAssembly module's committed copy.
+      - "services/tms/pkg/scriptvm/scripts.wasm"
+      - "services/tms/pkg/scriptvm/scripts.wasm.sha256"
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
@@ -45,6 +48,9 @@ on:
       - "services/tms/pkg/rules/rules.wasm.sha256"
       - "client/packages/shared/src/rules/rules.wasm"
       - "client/packages/shared/src/rules/rules.wasm.sha256"
+      # The trenova-scripts WebAssembly module's committed copy.
+      - "services/tms/pkg/scriptvm/scripts.wasm"
+      - "services/tms/pkg/scriptvm/scripts.wasm.sha256"
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
@@ -99,7 +105,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.94"
+          toolchain: "1.96"
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
@@ -126,19 +132,19 @@ jobs:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.94"
+          toolchain: "1.96"
           targets: wasm32-unknown-unknown
           components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: services
           key: wasm-rules
-      # The pinned binaryen release build-wasm.sh downloads and verifies; keyed on the script,
-      # which holds the version and checksums.
+      # The pinned binaryen release the build downloads and verifies; keyed on the shared
+      # script, which holds the version and checksums.
       - uses: actions/cache@v4
         with:
           path: services/target/binaryen
-          key: binaryen-${{ runner.os }}-${{ hashFiles('services/crates/rules/scripts/build-wasm.sh') }}
+          key: binaryen-${{ runner.os }}-${{ hashFiles('services/scripts/wasm-module.sh') }}
       - name: Clippy for wasm32-unknown-unknown
         run: cargo clippy -p trenova-rules --target wasm32-unknown-unknown --locked -- -D warnings
       - name: The committed rules.wasm copies match a fresh build
@@ -146,6 +152,34 @@ jobs:
         run: |
           if ! services/crates/rules/scripts/build-wasm.sh check; then
             echo "::error::Run 'task rust:wasm-rules' and commit services/tms/pkg/rules and client/packages/shared/src/rules."
+            exit 1
+          fi
+
+  wasm-scripts:
+    name: Scripts WebAssembly module
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.96"
+          targets: wasm32-wasip1
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services
+          key: wasm-scripts
+      - uses: actions/cache@v4
+        with:
+          path: services/target/binaryen
+          key: binaryen-${{ runner.os }}-${{ hashFiles('services/scripts/wasm-module.sh') }}
+      - name: Clippy for wasm32-wasip1
+        run: cargo clippy -p trenova-scripts --target wasm32-wasip1 --locked -- -D warnings
+      - name: The committed scripts.wasm matches a fresh build
+        working-directory: .
+        run: |
+          if ! services/crates/scripts/scripts/build-wasm.sh check; then
+            echo "::error::Run 'task rust:wasm-scripts' and commit services/tms/pkg/scriptvm."
             exit 1
           fi
 
