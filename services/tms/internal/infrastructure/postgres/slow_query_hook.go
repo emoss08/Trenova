@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"crypto/sha256"
-	"database/sql"
 	"encoding/hex"
 	"errors"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -62,7 +60,7 @@ func (l *slowQueryLog) record(ctx context.Context, q slowQuery) {
 		fields = append(fields, zap.String("table", q.table))
 	}
 
-	if q.err != nil && !errors.Is(q.err, sql.ErrNoRows) && !errors.Is(q.err, keel.ErrNotFound) {
+	if q.err != nil && !errors.Is(q.err, keel.ErrNotFound) {
 		fields = append(fields, zap.Error(q.err))
 	}
 	if ctxErr := ctx.Err(); ctxErr != nil {
@@ -88,29 +86,6 @@ func poolStats(pool *pgxpool.Pool) metrics.PoolStats {
 	}
 }
 
-type slowQueryHook struct {
-	log *slowQueryLog
-}
-
-var _ bun.QueryHook = (*slowQueryHook)(nil)
-
-func (h *slowQueryHook) BeforeQuery(ctx context.Context, _ *bun.QueryEvent) context.Context {
-	return ctx
-}
-
-func (h *slowQueryHook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
-	if event == nil || h == nil {
-		return
-	}
-
-	h.log.record(ctx, slowQuery{
-		duration:  time.Since(event.StartTime),
-		operation: event.Operation(),
-		query:     queryText(event),
-		err:       event.Err,
-	})
-}
-
 type slowQueryObserver struct {
 	log *slowQueryLog
 }
@@ -129,13 +104,6 @@ func (o *slowQueryObserver) AfterQuery(ctx context.Context, event *keel.QueryEve
 		query:     event.SQL,
 		err:       event.Err,
 	})
-}
-
-func queryText(event *bun.QueryEvent) string {
-	if event.QueryTemplate != "" {
-		return event.QueryTemplate
-	}
-	return event.Query
 }
 
 func queryHash(query string) string {

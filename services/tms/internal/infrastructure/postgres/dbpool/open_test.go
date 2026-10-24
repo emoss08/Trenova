@@ -2,7 +2,6 @@ package dbpool
 
 import (
 	"context"
-	"database/sql/driver"
 	"testing"
 
 	"github.com/emoss08/keel"
@@ -13,12 +12,6 @@ import (
 )
 
 type nopGuard struct{}
-
-func (nopGuard) BeginCommand(_ context.Context, command string) (string, error) {
-	return command, nil
-}
-
-func (nopGuard) GuardStatement(context.Context) error { return nil }
 
 func (nopGuard) OnBegin(context.Context, keel.TxInfo) ([]keel.Statement, error) {
 	return nil, nil
@@ -62,31 +55,4 @@ func TestKeelConfigSetsOnBeginOnlyWithAGuard(t *testing.T) {
 	assert.NotNil(t, cfg.JSON)
 	assert.NotNil(t, cfg.Now)
 	assert.NotNil(t, cfg.NewID)
-}
-
-func TestBeginCommand(t *testing.T) {
-	t.Parallel()
-
-	cases := map[string]struct {
-		isolation int
-		readOnly  bool
-		want      string
-	}{
-		"default":             {want: "BEGIN"},
-		"read only":           {readOnly: true, want: "BEGIN READ ONLY"},
-		"serializable":        {isolation: 6, want: "BEGIN ISOLATION LEVEL SERIALIZABLE"},
-		"repeatable readonly": {isolation: 4, readOnly: true, want: "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY"},
-	}
-	for name, tc := range cases {
-		got, err := beginCommand(driverTxOptions(tc.isolation, tc.readOnly))
-		require.NoError(t, err, name)
-		assert.Equal(t, tc.want, got, name)
-	}
-
-	_, err := beginCommand(driverTxOptions(7, false))
-	require.Error(t, err)
-}
-
-func driverTxOptions(isolation int, readOnly bool) driver.TxOptions {
-	return driver.TxOptions{Isolation: driver.IsolationLevel(isolation), ReadOnly: readOnly}
 }

@@ -26,7 +26,7 @@ func OpenMaintenanceDB(ctx context.Context, cfg *config.Config) (*keel.DB, error
 		return nil, err
 	}
 
-	pool, err := dbpool.Open(ctx, &dbpool.Options{
+	db, err := dbpool.Open(ctx, &dbpool.Options{
 		DSN: cfg.GetMigrationDSN(),
 		RuntimeParams: map[string]string{
 			"statement_timeout": fmt.Sprintf("%dms", maintenanceStatementBackstop.Milliseconds()),
@@ -41,7 +41,7 @@ func OpenMaintenanceDB(ctx context.Context, cfg *config.Config) (*keel.DB, error
 		return nil, fmt.Errorf("open the maintenance connection: %w", err)
 	}
 
-	return pool.Keel, nil
+	return db, nil
 }
 
 func maintenanceObservers(cfg *config.Config) ([]keel.Observer, error) {

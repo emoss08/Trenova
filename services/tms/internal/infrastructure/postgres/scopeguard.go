@@ -22,12 +22,10 @@ const (
 )
 
 const (
-	scopeEventTenantTx        = "tenant_tx"
-	scopeEventSystemTx        = "system_tx"
-	scopeEventSystemStatement = "system_statement"
-	scopeEventUnscopedTx      = "unscoped_tx"
-	scopeEventUnscopedStmt    = "unscoped_statement"
-	scopeEventWrongPool       = "wrong_pool"
+	scopeEventTenantTx   = "tenant_tx"
+	scopeEventSystemTx   = "system_tx"
+	scopeEventUnscopedTx = "unscoped_tx"
+	scopeEventWrongPool  = "wrong_pool"
 
 	scopeOutcomeAllowed  = "allowed"
 	scopeOutcomeObserved = "observed"
@@ -42,9 +40,6 @@ const (
 var (
 	ErrNoTenantScope = errors.New(
 		"database access refused: no tenant scope is bound to this context",
-	)
-	ErrStatementOutsideTransaction = errors.New(
-		"database access refused: tenant data must be read and written inside an explicit tenant-scoped transaction",
 	)
 	ErrSystemScopeRequired = errors.New(
 		"database access refused: the system pool only serves contexts declared with dbscope.WithSystem",
@@ -133,20 +128,6 @@ func (g *scopeGuard) begin(ctx context.Context) (transactionScope, error) {
 	return transactionScope{}, g.refuseOrObserve(ctx, event, scope.Reason(), ErrNoTenantScope)
 }
 
-func (g *scopeGuard) BeginCommand(ctx context.Context, command string) (string, error) {
-	scope, err := g.begin(ctx)
-	if err != nil || !scope.tenant() {
-		return command, err
-	}
-
-	command += "; SET LOCAL trenova.scope = '" + scope.token + "'"
-	if scope.readScope != "" {
-		command += "; SET LOCAL trenova.read_scope = '" + scope.readScope + "'"
-	}
-
-	return command, nil
-}
-
 func (g *scopeGuard) OnBegin(ctx context.Context, _ keel.TxInfo) ([]keel.Statement, error) {
 	scope, err := g.begin(ctx)
 	if err != nil || !scope.tenant() {
@@ -161,21 +142,6 @@ func (g *scopeGuard) OnBegin(ctx context.Context, _ keel.TxInfo) ([]keel.Stateme
 		SQL:  setScopeAndReadScope,
 		Args: []any{scope.token, scope.readScope},
 	}}, nil
-}
-
-func (g *scopeGuard) GuardStatement(ctx context.Context) error {
-	scope := dbscope.From(ctx)
-
-	if g.pool == scopePoolSystem || g.servesSystemScope(scope) {
-		return g.checkSystemScope(ctx, scope, scopeEventSystemStatement)
-	}
-
-	return g.refuseOrObserve(
-		ctx,
-		scopeEventUnscopedStmt,
-		scope.Reason(),
-		ErrStatementOutsideTransaction,
-	)
 }
 
 func (g *scopeGuard) servesSystemScope(scope dbscope.Scope) bool {
@@ -238,8 +204,6 @@ const callerSearchDepth = 32
 
 var databaseLayerPrefixes = [...]string{
 	"runtime.",
-	"database/sql.",
-	"github.com/uptrace/bun",
 	"github.com/jackc/pgx",
 	"github.com/emoss08/keel",
 	"github.com/emoss08/trenova/internal/infrastructure/postgres.",

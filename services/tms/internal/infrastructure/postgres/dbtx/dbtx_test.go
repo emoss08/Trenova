@@ -5,10 +5,11 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type fakeConn struct {
@@ -19,13 +20,13 @@ type fakeConn struct {
 
 func (f *fakeConn) ScopedTransactions() bool { return f.scoped }
 
-func (f *fakeConn) WithTx(
+func (f *fakeConn) Transact(
 	ctx context.Context,
 	opts kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	f.opened = append(f.opened, opts)
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
 
 func TestHelpersRunDirectlyWhenScopedTransactionsAreOff(t *testing.T) {
@@ -90,4 +91,4 @@ type outsideTx struct {
 	kernelports.DBConnection
 }
 
-func (outsideTx) DBForContext(context.Context) bun.IDB { return (*bun.DB)(nil) }
+func (outsideTx) Keel(context.Context) *keel.DB { return nil }

@@ -5,15 +5,10 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/uptrace/bun"
 )
 
 type scopedTransactor interface {
 	ScopedTransactions() bool
-}
-
-type keelConnection interface {
-	Keel(ctx context.Context) *keel.DB
 }
 
 func Read[T any](
@@ -80,10 +75,10 @@ func run[T any](
 	}
 
 	var out T
-	err := conn.WithTx(
+	err := conn.Transact(
 		ctx,
 		kernelports.TxOptions{ReadOnly: readOnly},
-		func(ctx context.Context, _ bun.Tx) error {
+		func(ctx context.Context) error {
 			var err error
 			out, err = fn(ctx)
 			return err
@@ -103,10 +98,10 @@ func run2[A, B any](
 		return fn(ctx)
 	}
 
-	err = conn.WithTx(
+	err = conn.Transact(
 		ctx,
 		kernelports.TxOptions{ReadOnly: readOnly},
-		func(ctx context.Context, _ bun.Tx) error {
+		func(ctx context.Context) error {
 			var fnErr error
 			first, second, fnErr = fn(ctx)
 			return fnErr
@@ -126,13 +121,7 @@ func runErr(
 		return fn(ctx)
 	}
 
-	return conn.WithTx(
-		ctx,
-		kernelports.TxOptions{ReadOnly: readOnly},
-		func(ctx context.Context, _ bun.Tx) error {
-			return fn(ctx)
-		},
-	)
+	return conn.Transact(ctx, kernelports.TxOptions{ReadOnly: readOnly}, fn)
 }
 
 func Savepoint(
@@ -140,18 +129,10 @@ func Savepoint(
 	conn kernelports.DBConnection,
 	fn func(context.Context) error,
 ) error {
-	if kc, ok := conn.(keelConnection); ok {
-		if db := kc.Keel(ctx); db != nil && keel.InTx(ctx, db) {
-			return keel.Savepoint(ctx, db, fn)
-		}
-	}
-
-	tx, ok := conn.DBForContext(ctx).(bun.Tx)
-	if !ok {
+	db := conn.Keel(ctx)
+	if db == nil || !keel.InTx(ctx, db) {
 		return fn(ctx)
 	}
 
-	return tx.RunInTx(ctx, nil, func(context.Context, bun.Tx) error {
-		return fn(ctx)
-	})
+	return keel.Savepoint(ctx, db, fn)
 }

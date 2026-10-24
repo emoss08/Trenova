@@ -11,8 +11,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 const (
@@ -31,15 +29,14 @@ type Options struct {
 	VersionErrors   func(error)
 }
 
-type Pool struct {
-	Bun  *bun.DB
-	Keel *keel.DB
+type Guard interface {
+	OnBegin(ctx context.Context, tx keel.TxInfo) ([]keel.Statement, error)
 }
 
-func Open(ctx context.Context, opts *Options) (Pool, error) {
+func Open(ctx context.Context, opts *Options) (*keel.DB, error) {
 	pc, err := pgxpool.ParseConfig(opts.DSN)
 	if err != nil {
-		return Pool{}, fmt.Errorf("parse database dsn: %w", err)
+		return nil, fmt.Errorf("parse database dsn: %w", err)
 	}
 
 	if opts.MaxConns > 0 {
@@ -65,13 +62,10 @@ func Open(ctx context.Context, opts *Options) (Pool, error) {
 
 	db, err := keel.Open(ctx, cfg)
 	if err != nil {
-		return Pool{}, fmt.Errorf("open database pool: %w", err)
+		return nil, fmt.Errorf("open database pool: %w", err)
 	}
 
-	return Pool{
-		Bun:  bun.NewDB(openSQL(db, opts.Guard), pgdialect.New()),
-		Keel: db,
-	}, nil
+	return db, nil
 }
 
 const (
@@ -120,8 +114,4 @@ func systemOf(ctx context.Context) (string, bool) {
 
 func newID(prefix string) string {
 	return pulid.MustNew(prefix).String()
-}
-
-func BunOver(db *keel.DB) *bun.DB {
-	return bun.NewDB(openSQL(db, nil), pgdialect.New())
 }

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -13,11 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/domainregistry"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/extra/bundebug"
-	"github.com/uptrace/bun/extra/bunotel"
-	"go.opentelemetry.io/otel"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -38,8 +34,6 @@ type ConnectionParams struct {
 }
 
 type Connection struct {
-	db         *bun.DB
-	system     *bun.DB
 	tenantKeel *keel.DB
 	systemKeel *keel.DB
 	cfg        *config.Config
@@ -61,7 +55,7 @@ type connectionSettings struct {
 type txContextKey struct{}
 
 type txBinding struct {
-	tx    bun.Tx
+	db    *keel.DB
 	scope dbscope.Scope
 }
 
@@ -181,10 +175,10 @@ func (c *Connection) connect(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.db, c.tenantKeel = tenant.Bun, tenant.Keel
+	c.tenantKeel = tenant
 
 	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
-		pool := tenant.Keel.Pool()
+		pool := tenant.Pool()
 		c.metrics.Database.RegisterPoolStats(func() metrics.PoolStats { return poolStats(pool) })
 	}
 
@@ -203,7 +197,7 @@ func (c *Connection) connect(ctx context.Context) error {
 	c.logger.Info(
 		ctx, "Database connection established",
 		zap.String("database", c.cfg.Database.Name),
-		zap.Int32("max_conns", tenant.Keel.Pool().Config().MaxConns),
+		zap.Int32("max_conns", tenant.Pool().Config().MaxConns),
 		zap.String("row_level_security", c.rlsMode()),
 	)
 
@@ -218,23 +212,21 @@ func (c *Connection) connect(ctx context.Context) error {
 	return nil
 }
 
-func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (dbpool.Pool, error) {
+func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (*keel.DB, error) {
 	slow := newSlowQueryLog(c.logger)
 	opts.Observers = c.observers(slow)
 	opts.VersionErrors = func(err error) {
 		c.logger.Warn(context.Background(), "Failed to record data versions", zap.Error(err))
 	}
 
-	pool, err := dbpool.Open(ctx, opts)
+	db, err := dbpool.Open(ctx, opts)
 	if err != nil {
-		return dbpool.Pool{}, err
+		return nil, err
 	}
 
-	slow.pool = pool.Keel.Pool()
-	pool.Bun = c.withHooks(pool.Bun, slow)
-	registerModels(pool.Bun)
+	slow.pool = db.Pool()
 
-	return pool, nil
+	return db, nil
 }
 
 func (c *Connection) observers(slow *slowQueryLog) []keel.Observer {
@@ -273,13 +265,7 @@ func (c *Connection) RunScoped(
 		return fn(ctx)
 	}
 
-	return c.WithTx(
-		ctx,
-		kernelports.TxOptions{ReadOnly: readOnly},
-		func(ctx context.Context, _ bun.Tx) error {
-			return fn(ctx)
-		},
-	)
+	return c.Transact(ctx, kernelports.TxOptions{ReadOnly: readOnly}, fn)
 }
 
 func (c *Connection) rlsMode() string {
@@ -290,65 +276,27 @@ func (c *Connection) rlsMode() string {
 	return c.rls.mode
 }
 
-func registerModels(db *bun.DB) {
-	db.RegisterModel(domainregistry.RegisterManyToManyEntities()...)
-	db.RegisterModel(domainregistry.RegisterEntities()...)
-}
-
-func (c *Connection) withHooks(db *bun.DB, slow *slowQueryLog) *bun.DB {
-	if c.cfg.App.IsDevelopment() && c.cfg.App.Debug {
-		db = db.WithQueryHook(bundebug.NewQueryHook(
-			bundebug.WithVerbose(c.cfg.Database.Verbose),
-			bundebug.FromEnv("BUNDEBUG"),
-		))
-	}
-
-	db = db.WithQueryHook(&slowQueryHook{log: slow})
-
-	return db.WithQueryHook(
-		bunotel.NewQueryHook(
-			bunotel.WithDBName(c.cfg.Database.Name),
-			bunotel.WithTracerProvider(otel.GetTracerProvider()),
-			bunotel.WithFormattedQueries(c.cfg.App.IsDevelopment()),
-		),
-	)
-}
-
 func (c *Connection) shutdown(ctx context.Context) error {
 	c.logger.Info(ctx, "Closing PostgreSQL connection")
+	c.closePools()
+	c.logger.Info(ctx, "PostgreSQL connection closed successfully")
+	return nil
+}
 
-	for _, db := range []*bun.DB{c.system, c.db} {
-		if db == nil {
-			continue
-		}
-		if err := db.Close(); err != nil {
-			c.logger.Error(ctx, "Failed to close database connection", zap.Error(err))
-			return err
-		}
-	}
-
+func (c *Connection) closePools() {
 	for _, db := range []*keel.DB{c.systemKeel, c.tenantKeel} {
 		if db != nil {
 			db.Close()
 		}
 	}
-
-	c.logger.Info(ctx, "PostgreSQL connection closed successfully")
-	return nil
 }
 
 func WrapDB(db *keel.DB) *Connection {
-	bunDB := dbpool.BunOver(db)
-	registerModels(bunDB)
-	return &Connection{db: bunDB, tenantKeel: db}
+	return &Connection{tenantKeel: db}
 }
 
 func NewTestConnection(db *keel.DB) *Connection {
 	return WrapDB(db)
-}
-
-func (c *Connection) DB() *bun.DB {
-	return c.db
 }
 
 func (c *Connection) Keel(ctx context.Context) *keel.DB {
@@ -359,47 +307,28 @@ func (c *Connection) Keel(ctx context.Context) *keel.DB {
 	return c.tenantKeel
 }
 
-func (c *Connection) DBForContext(ctx context.Context) bun.IDB {
-	if tx, ok := c.txForContext(ctx); ok {
-		return tx
-	}
-
-	return c.poolForContext(ctx)
-}
-
-func (c *Connection) txForContext(ctx context.Context) (bun.Tx, bool) {
+func (c *Connection) joins(ctx context.Context, db *keel.DB) bool {
 	binding, ok := ctx.Value(txContextKey{}).(*txBinding)
-	if !ok {
-		return bun.Tx{}, false
+	if !ok || binding.db != db || !keel.InTx(ctx, db) {
+		return false
 	}
 
-	if c.rls != nil && !binding.scope.Matches(dbscope.From(ctx)) {
-		return bun.Tx{}, false
-	}
-
-	return binding.tx, true
+	return binding.scope.Matches(dbscope.From(ctx))
 }
 
-func (c *Connection) poolForContext(ctx context.Context) *bun.DB {
-	if c.system != nil && dbscope.IsSystem(ctx) {
-		return c.system
-	}
-
-	return c.db
-}
-
-func (c *Connection) WithTx(
+func (c *Connection) Transact(
 	ctx context.Context,
 	opts kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	if c.db == nil {
+	db := c.Keel(ctx)
+	if db == nil {
 		return ErrDatabaseConnectionNotInitialized
 	}
 
-	if existingTx, ok := c.txForContext(ctx); ok {
+	if c.joins(ctx, db) {
 		if opts.LockTimeout > 0 {
-			if err := applyLockTimeout(ctx, existingTx, opts.LockTimeout); err != nil {
+			if err := applyLockTimeout(ctx, db, opts.LockTimeout); err != nil {
 				return err
 			}
 		}
@@ -408,7 +337,12 @@ func (c *Connection) WithTx(
 			ctx = kernelports.WithReadOnly(ctx)
 		}
 
-		return fn(ctx, existingTx)
+		return fn(ctx)
+	}
+
+	txOpts, err := keelTxOptions(opts)
+	if err != nil {
+		return err
 	}
 
 	baseCtx := ctx
@@ -416,28 +350,14 @@ func (c *Connection) WithTx(
 		baseCtx = kernelports.WithReadOnly(baseCtx)
 	}
 	txCtx, hooks := kernelports.WithAfterCommitHooks(baseCtx)
+	txCtx = context.WithValue(txCtx, txContextKey{}, &txBinding{db: db, scope: dbscope.From(ctx)})
 
-	tx, err := c.begin(txCtx, opts)
-	if err != nil {
-		return err
-	}
-	defer tx.end(false)
-
-	if opts.LockTimeout > 0 {
-		if err = applyLockTimeout(txCtx, tx.bun, opts.LockTimeout); err != nil {
-			return err
-		}
+	run := keel.Write
+	if opts.ReadOnly {
+		run = keel.Read
 	}
 
-	if err = fn(tx.ctx, tx.bun); err != nil {
-		return err
-	}
-
-	if err = txCtx.Err(); err != nil {
-		return err
-	}
-
-	if err = tx.commit(); err != nil {
+	if err = run(txCtx, db, fn, txOpts...); err != nil {
 		return err
 	}
 
@@ -445,25 +365,40 @@ func (c *Connection) WithTx(
 	return nil
 }
 
-func (c *Connection) Transact(
-	ctx context.Context,
-	opts kernelports.TxOptions,
-	fn func(context.Context) error,
-) error {
-	return c.WithTx(ctx, opts, func(ctx context.Context, _ bun.Tx) error {
-		return fn(ctx)
-	})
+func keelTxOptions(opts kernelports.TxOptions) ([]keel.TxOption, error) {
+	txOpts := []keel.TxOption{keel.Detached()}
+
+	switch opts.Isolation {
+	case sql.LevelDefault, sql.LevelReadCommitted:
+	case sql.LevelRepeatableRead:
+		txOpts = append(txOpts, keel.RepeatableRead())
+	case sql.LevelSerializable:
+		txOpts = append(txOpts, keel.Serializable())
+	case sql.LevelReadUncommitted,
+		sql.LevelWriteCommitted,
+		sql.LevelSnapshot,
+		sql.LevelLinearizable:
+		return nil, fmt.Errorf("%w: %s", ErrUnsupportedIsolation, opts.Isolation)
+	default:
+		return nil, fmt.Errorf("%w: %s", ErrUnsupportedIsolation, opts.Isolation)
+	}
+
+	if opts.LockTimeout > 0 {
+		txOpts = append(txOpts, keel.LockTimeout(opts.LockTimeout))
+	}
+
+	return txOpts, nil
 }
 
 func (c *Connection) Savepoint(ctx context.Context, fn func(context.Context) error) error {
 	return dbtx.Savepoint(ctx, c, fn)
 }
 
-func applyLockTimeout(ctx context.Context, tx bun.Tx, timeout time.Duration) error {
+func applyLockTimeout(ctx context.Context, db *keel.DB, timeout time.Duration) error {
 	lockTimeoutMS := max(timeout.Milliseconds(), 1)
 	query := fmt.Sprintf("SET LOCAL lock_timeout = '%dms'", lockTimeoutMS)
 
-	if _, err := tx.ExecContext(ctx, query); err != nil {
+	if _, err := keel.Exec(ctx, db, query); err != nil {
 		return fmt.Errorf("set local lock_timeout: %w", err)
 	}
 
@@ -471,18 +406,14 @@ func applyLockTimeout(ctx context.Context, tx bun.Tx, timeout time.Duration) err
 }
 
 func (c *Connection) HealthCheck(ctx context.Context) error {
-	if c.db == nil {
+	if c.tenantKeel == nil {
 		return ErrDatabaseConnectionNotInitialized
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	if c.tenantKeel != nil {
-		return c.tenantKeel.Ping(ctx)
-	}
-
-	return c.db.PingContext(ctx)
+	return c.tenantKeel.Ping(ctx)
 }
 
 func (c *Connection) IsHealthy(ctx context.Context) bool {
@@ -490,14 +421,6 @@ func (c *Connection) IsHealthy(ctx context.Context) bool {
 }
 
 func (c *Connection) Close() error {
-	for _, db := range []*bun.DB{c.system, c.db} {
-		if db == nil {
-			continue
-		}
-		if err := db.Close(); err != nil {
-			return err
-		}
-	}
-
+	c.closePools()
 	return nil
 }

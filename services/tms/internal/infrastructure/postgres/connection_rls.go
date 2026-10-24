@@ -190,7 +190,7 @@ func (c *Connection) connectSystem(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.system, c.systemKeel = system.Bun, system.Keel
+	c.systemKeel = system
 
 	if err = c.systemKeel.Ping(ctx); err != nil {
 		return fmt.Errorf("failed to ping system database pool: %w", err)

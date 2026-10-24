@@ -47,7 +47,7 @@ func testTenant() dbscope.Tenant {
 	}
 }
 
-func TestScopeGuard_OnBeginSetsTheSameScopeAsTheDriver(t *testing.T) {
+func TestScopeGuard_OnBeginSetsTheSignedTenantScope(t *testing.T) {
 	t.Parallel()
 
 	guard, _ := testGuard(t, scopePoolTenant, true, false)
@@ -63,11 +63,6 @@ func TestScopeGuard_OnBeginSetsTheSameScopeAsTheDriver(t *testing.T) {
 	token, ok := statements[0].Args[0].(string)
 	require.True(t, ok)
 	assert.True(t, strings.HasPrefix(token, "v1.ktest."+tenant.OrganizationID.String()+"."))
-
-	command, err := guard.BeginCommand(ctx, "BEGIN")
-	require.NoError(t, err)
-	assert.Contains(t, command, "SET LOCAL trenova.scope = 'v1.ktest."+tenant.OrganizationID.String()+".")
-	assert.NotContains(t, command, "read_scope")
 }
 
 func TestScopeGuard_OnBeginCarriesTheReadScope(t *testing.T) {
@@ -89,10 +84,6 @@ func TestScopeGuard_OnBeginCarriesTheReadScope(t *testing.T) {
 	require.Len(t, statements, 1)
 	assert.Equal(t, setScopeAndReadScope, statements[0].SQL)
 	assert.Equal(t, "worker:team:"+manager.String(), statements[0].Args[1])
-
-	command, err := guard.BeginCommand(ctx, "BEGIN READ ONLY")
-	require.NoError(t, err)
-	assert.Contains(t, command, "SET LOCAL trenova.read_scope = 'worker:team:"+manager.String()+"'")
 }
 
 func TestScopeGuard_EnforceRefusesAnUnscopedTransaction(t *testing.T) {
