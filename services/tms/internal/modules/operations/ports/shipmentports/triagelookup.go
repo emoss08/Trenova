@@ -9,11 +9,11 @@ import (
 )
 
 type TriagePeekDetail struct {
-	ShipmentID         pulid.ID        `bun:"shipment_id"`
-	Status             shipment.Status `bun:"status"`
-	CustomerName       string          `bun:"customer_name"`
-	TrailerType        string          `bun:"trailer_type"`
-	ActualDeliveryDate *int64          `bun:"actual_delivery_date"`
+	ShipmentID         pulid.ID
+	Status             shipment.Status
+	CustomerName       string
+	TrailerType        string
+	ActualDeliveryDate *int64
 }
 
 type TriageCustomerShipmentsQuery struct {
@@ -24,24 +24,24 @@ type TriageCustomerShipmentsQuery struct {
 }
 
 type TriageShipmentDefaults struct {
-	ServiceTypeID     pulid.ID `bun:"service_type_id"`
-	ShipmentTypeID    pulid.ID `bun:"shipment_type_id"`
-	FormulaTemplateID pulid.ID `bun:"formula_template_id"`
-	TractorTypeID     pulid.ID `bun:"tractor_type_id"`
-	TrailerTypeID     pulid.ID `bun:"trailer_type_id"`
+	ServiceTypeID     pulid.ID
+	ShipmentTypeID    pulid.ID
+	FormulaTemplateID pulid.ID
+	TractorTypeID     pulid.ID
+	TrailerTypeID     pulid.ID
 }
 
 type TriageRecordMatch struct {
-	ID    pulid.ID `bun:"id"`
-	Label string   `bun:"label"`
-	Exact bool     `bun:"exact"`
+	ID    pulid.ID
+	Label string
+	Exact bool
 }
 
 type TriageLocationMatch struct {
-	ID       pulid.ID `bun:"id"`
-	Label    string   `bun:"label"`
-	Timezone string   `bun:"timezone"`
-	Exact    bool     `bun:"exact"`
+	ID       pulid.ID
+	Label    string
+	Timezone string
+	Exact    bool
 }
 
 type TriageLookupQuery struct {

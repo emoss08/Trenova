@@ -212,12 +212,7 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*tractor.Tractor, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*tractor.Tractor, error) {
 		t := tractordb.Tractors
-		entities, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			t.Where(t.ID.In(req.TractorIDs...)),
-			t.Status.To(req.Status),
-		)
+		entities, err := t.Where(t.ID.In(req.TractorIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), t.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update tractor status", zap.Error(err))
 			return nil, err

@@ -9,14 +9,11 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*PortalInvitation)(nil)
 	_ pagination.CursorEntity            = (*PortalInvitation)(nil)
 	_ validationframework.TenantedEntity = (*PortalInvitation)(nil)
 )
@@ -42,27 +39,32 @@ func (s PortalInvitationStatus) IsValid() bool {
 }
 
 type PortalInvitation struct {
-	bun.BaseModel             `bun:"table:worker_portal_invitations,alias:wpi" json:"-"`
-	keel.Table                `keel:"worker_portal_invitations"`
-	pagination.CursorValueSet `bun:",embed"                                    json:"-"`
+	keel.Table     `keel:"worker_portal_invitations"`
+	ID             pulid.ID               `json:"id" keel:"id,pk,autoid:wpi_"`
+	BusinessUnitID pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID               `json:"workerId" keel:"worker_id"`
+	Email          string                 `json:"email" keel:"email"`
+	TokenHash      string                 `json:"-" keel:"token_hash"`
+	Status         PortalInvitationStatus `json:"status" keel:"status"`
+	ExpiresAt      int64                  `json:"expiresAt" keel:"expires_at"`
+	InvitedByID    pulid.ID               `json:"invitedById" keel:"invited_by_id"`
+	AcceptedAt     *int64                 `json:"acceptedAt" keel:"accepted_at"`
+	AcceptedUserID *pulid.ID              `json:"acceptedUserId" keel:"accepted_user_id"`
+	Version        int64                  `json:"version" keel:"version,version"`
+	CreatedAt      int64                  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	ID             pulid.ID               `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wpi_"`
-	BusinessUnitID pulid.ID               `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID               `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID               `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
-	Email          string                 `json:"email"          bun:"email,type:VARCHAR(255),notnull" keel:"email"`
-	TokenHash      string                 `json:"-"              bun:"token_hash,type:VARCHAR(64),notnull" keel:"token_hash"`
-	Status         PortalInvitationStatus `json:"status"         bun:"status,type:VARCHAR(20),notnull,default:'Pending'" keel:"status"`
-	ExpiresAt      int64                  `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull" keel:"expires_at"`
-	InvitedByID    pulid.ID               `json:"invitedById"    bun:"invited_by_id,type:VARCHAR(100),notnull" keel:"invited_by_id"`
-	AcceptedAt     *int64                 `json:"acceptedAt"     bun:"accepted_at,type:BIGINT,nullzero" keel:"accepted_at"`
-	AcceptedUserID *pulid.ID              `json:"acceptedUserId" bun:"accepted_user_id,type:VARCHAR(100),nullzero" keel:"accepted_user_id"`
-	Version        int64                  `json:"version"        bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt      int64                  `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64                  `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Worker    *Worker      `json:"worker,omitempty" keel:"belongs:worker_id"`
+	InvitedBy *tenant.User `json:"invitedBy,omitempty" keel:"belongs:invited_by_id"`
+}
 
-	Worker    *Worker      `json:"worker,omitempty"    bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
-	InvitedBy *tenant.User `json:"invitedBy,omitempty" bun:"rel:belongs-to,join:invited_by_id=id" keel:"belongs:invited_by_id"`
+func (i *PortalInvitation) BeforeCreate(_ context.Context) error {
+	if i.Status == "" {
+		i.Status = PortalInvitationStatusPending
+	}
+
+	return nil
 }
 
 func (i *PortalInvitation) Validate(multiErr *errortypes.MultiError) {
@@ -111,17 +113,3 @@ func (i *PortalInvitation) GetOrganizationID() pulid.ID { return i.OrganizationI
 func (i *PortalInvitation) GetBusinessUnitID() pulid.ID { return i.BusinessUnitID }
 
 func (i *PortalInvitation) GetTableName() string { return "worker_portal_invitations" }
-
-func (i *PortalInvitation) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if i.ID.IsNil() {
-			i.ID = pulid.MustNew("wpi_")
-		}
-		i.CreatedAt = now
-	case *bun.UpdateQuery:
-		i.UpdatedAt = now
-	}
-	return nil
-}

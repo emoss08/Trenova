@@ -20,7 +20,6 @@ func fuelCardCursorConnectionToModel(
 ) (*gqlmodel.FuelCardConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *fuelpurchase.FuelCard, cursor string) *gqlmodel.FuelCardEdge {
 			return &gqlmodel.FuelCardEdge{Node: node, Cursor: cursor}
@@ -48,7 +47,6 @@ func fuelPurchaseCursorConnectionToModel(
 ) (*gqlmodel.FuelPurchaseConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *fuelpurchase.FuelPurchase, cursor string) *gqlmodel.FuelPurchaseEdge {
 			return &gqlmodel.FuelPurchaseEdge{Node: node, Cursor: cursor}
@@ -76,7 +74,6 @@ func fuelImportRowCursorConnectionToModel(
 ) (*gqlmodel.FuelPurchaseImportRowConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *fuelpurchase.ImportRow, cursor string) *gqlmodel.FuelPurchaseImportRowEdge {
 			return &gqlmodel.FuelPurchaseImportRowEdge{Node: node, Cursor: cursor}
@@ -550,7 +547,6 @@ func fuelImportCursorConnectionToModel(
 ) (*gqlmodel.FuelPurchaseImportBatchConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(
 			node *fuelpurchase.ImportBatch,

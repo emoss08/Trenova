@@ -1,7 +1,6 @@
 package aitraining
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
@@ -15,10 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*RetrainingCycle)(nil)
 
 const (
 	RetrainingRequestedByScheduler = "scheduler"
@@ -179,50 +175,49 @@ type RetrainingResult struct {
 }
 
 type RetrainingCycle struct {
-	bun.BaseModel `bun:"table:ai_retraining_cycles,alias:airc" json:"-"`
-	keel.Table    `keel:"ai_retraining_cycles"`
+	keel.Table `keel:"ai_retraining_cycles"`
 
-	ID                   pulid.ID                        `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:airc_"`
-	Task                 aicorrection.Task               `json:"task"                 bun:"task,type:VARCHAR(50),notnull" keel:"task"`
-	Trigger              RetrainingTrigger               `json:"trigger"              bun:"trigger,type:VARCHAR(20),notnull" keel:"trigger"`
-	Status               RetrainingStatus                `json:"status"               bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	SkipReason           RetrainingSkipReason            `json:"skipReason"           bun:"skip_reason,type:VARCHAR(30),nullzero" keel:"skip_reason,nullzero"`
-	RequestedBy          string                          `json:"requestedBy"          bun:"requested_by,type:VARCHAR(255),notnull" keel:"requested_by"`
-	Note                 string                          `json:"note"                 bun:"note,type:TEXT,nullzero" keel:"note,nullzero"`
-	ExportID             *pulid.ID                       `json:"exportId"             bun:"export_id,type:VARCHAR(100),nullzero" keel:"export_id"`
-	CapturedFrom         int64                           `json:"capturedFrom"         bun:"captured_from,type:BIGINT,notnull" keel:"captured_from"`
-	CapturedTo           int64                           `json:"capturedTo"           bun:"captured_to,type:BIGINT,notnull" keel:"captured_to"`
-	NewSince             int64                           `json:"newSince"             bun:"new_since,type:BIGINT,notnull" keel:"new_since"`
-	NewExamples          int                             `json:"newExamples"          bun:"new_examples,type:INTEGER,notnull,default:0" keel:"new_examples"`
-	MinNewExamples       int                             `json:"minNewExamples"       bun:"min_new_examples,type:INTEGER,notnull,default:0" keel:"min_new_examples"`
-	DriftingProviders    int                             `json:"driftingProviders"    bun:"drifting_providers,type:INTEGER,notnull,default:0" keel:"drifting_providers"`
-	MaxPerOrganization   int                             `json:"maxPerOrganization"   bun:"max_per_organization,type:INTEGER,notnull" keel:"max_per_organization"`
-	ValidationPercent    int                             `json:"validationPercent"    bun:"validation_percent,type:INTEGER,notnull" keel:"validation_percent"`
-	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode" bun:"structured_output_mode,type:VARCHAR(20),notnull" keel:"structured_output_mode"`
-	MinAccuracyPercent   int                             `json:"minAccuracyPercent"   bun:"min_accuracy_percent,type:INTEGER,notnull" keel:"min_accuracy_percent"`
-	MaxRegressionPoints  int                             `json:"maxRegressionPoints"  bun:"max_regression_points,type:INTEGER,notnull" keel:"max_regression_points"`
+	ID                   pulid.ID                        `json:"id" keel:"id,pk,autoid:airc_"`
+	Task                 aicorrection.Task               `json:"task" keel:"task"`
+	Trigger              RetrainingTrigger               `json:"trigger" keel:"trigger"`
+	Status               RetrainingStatus                `json:"status" keel:"status"`
+	SkipReason           RetrainingSkipReason            `json:"skipReason" keel:"skip_reason,nullzero"`
+	RequestedBy          string                          `json:"requestedBy" keel:"requested_by"`
+	Note                 string                          `json:"note" keel:"note,nullzero"`
+	ExportID             *pulid.ID                       `json:"exportId" keel:"export_id"`
+	CapturedFrom         int64                           `json:"capturedFrom" keel:"captured_from"`
+	CapturedTo           int64                           `json:"capturedTo" keel:"captured_to"`
+	NewSince             int64                           `json:"newSince" keel:"new_since"`
+	NewExamples          int                             `json:"newExamples" keel:"new_examples"`
+	MinNewExamples       int                             `json:"minNewExamples" keel:"min_new_examples"`
+	DriftingProviders    int                             `json:"driftingProviders" keel:"drifting_providers"`
+	MaxPerOrganization   int                             `json:"maxPerOrganization" keel:"max_per_organization"`
+	ValidationPercent    int                             `json:"validationPercent" keel:"validation_percent"`
+	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode" keel:"structured_output_mode"`
+	MinAccuracyPercent   int                             `json:"minAccuracyPercent" keel:"min_accuracy_percent"`
+	MaxRegressionPoints  int                             `json:"maxRegressionPoints" keel:"max_regression_points"`
 
-	Trainer        string `json:"trainer"        bun:"trainer,type:VARCHAR(255),nullzero" keel:"trainer,nullzero"`
-	Attempts       int    `json:"attempts"       bun:"attempts,type:INTEGER,notnull,default:0" keel:"attempts"`
-	ClaimedAt      *int64 `json:"claimedAt"      bun:"claimed_at,type:BIGINT,nullzero" keel:"claimed_at"`
-	LeaseExpiresAt *int64 `json:"leaseExpiresAt" bun:"lease_expires_at,type:BIGINT,nullzero" keel:"lease_expires_at"`
+	Trainer        string `json:"trainer" keel:"trainer,nullzero"`
+	Attempts       int    `json:"attempts" keel:"attempts"`
+	ClaimedAt      *int64 `json:"claimedAt" keel:"claimed_at"`
+	LeaseExpiresAt *int64 `json:"leaseExpiresAt" keel:"lease_expires_at"`
 
-	TrainingConfig  string `json:"trainingConfig"  bun:"training_config,type:VARCHAR(1024),nullzero" keel:"training_config,nullzero"`
-	RunDirectory    string `json:"runDirectory"    bun:"run_directory,type:VARCHAR(1024),nullzero" keel:"run_directory,nullzero"`
-	ModelDirectory  string `json:"modelDirectory"  bun:"model_directory,type:VARCHAR(1024),nullzero" keel:"model_directory,nullzero"`
-	PromptSHA256    string `json:"promptSha256"    bun:"prompt_sha256,type:VARCHAR(64),nullzero" keel:"prompt_sha256,nullzero"`
-	Examples        int    `json:"examples"        bun:"examples,type:INTEGER,notnull,default:0" keel:"examples"`
-	ModelCorrect    int    `json:"modelCorrect"    bun:"model_correct,type:INTEGER,notnull,default:0" keel:"model_correct"`
-	ModelScored     int    `json:"modelScored"     bun:"model_scored,type:INTEGER,notnull,default:0" keel:"model_scored"`
-	BaselineCorrect int    `json:"baselineCorrect" bun:"baseline_correct,type:INTEGER,notnull,default:0" keel:"baseline_correct"`
-	BaselineScored  int    `json:"baselineScored"  bun:"baseline_scored,type:INTEGER,notnull,default:0" keel:"baseline_scored"`
-	GateMessage     string `json:"gateMessage"     bun:"gate_message,type:TEXT,nullzero" keel:"gate_message,nullzero"`
-	FailureMessage  string `json:"failureMessage"  bun:"failure_message,type:TEXT,nullzero" keel:"failure_message,nullzero"`
+	TrainingConfig  string `json:"trainingConfig" keel:"training_config,nullzero"`
+	RunDirectory    string `json:"runDirectory" keel:"run_directory,nullzero"`
+	ModelDirectory  string `json:"modelDirectory" keel:"model_directory,nullzero"`
+	PromptSHA256    string `json:"promptSha256" keel:"prompt_sha256,nullzero"`
+	Examples        int    `json:"examples" keel:"examples"`
+	ModelCorrect    int    `json:"modelCorrect" keel:"model_correct"`
+	ModelScored     int    `json:"modelScored" keel:"model_scored"`
+	BaselineCorrect int    `json:"baselineCorrect" keel:"baseline_correct"`
+	BaselineScored  int    `json:"baselineScored" keel:"baseline_scored"`
+	GateMessage     string `json:"gateMessage" keel:"gate_message,nullzero"`
+	FailureMessage  string `json:"failureMessage" keel:"failure_message,nullzero"`
 
-	FinishedAt *int64 `json:"finishedAt" bun:"finished_at,type:BIGINT,nullzero" keel:"finished_at"`
-	Version    int64  `json:"version"    bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
-	CreatedAt  int64  `json:"createdAt"  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt  int64  `json:"updatedAt"  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	FinishedAt *int64 `json:"finishedAt" keel:"finished_at"`
+	Version    int64  `json:"version" keel:"version,version"`
+	CreatedAt  int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt  int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (c *RetrainingCycle) Validate(multiErr *errortypes.MultiError) {
@@ -497,21 +492,4 @@ func (c *RetrainingCycle) leaseLost() error {
 		"Retraining cycle {0} is no longer held by this trainer",
 		c.ID.String(),
 	).WithInternal(ErrRetrainingLeaseLost)
-}
-
-func (c *RetrainingCycle) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("airc_")
-		}
-		c.CreatedAt = now
-		c.UpdatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
-	}
-
-	return nil
 }

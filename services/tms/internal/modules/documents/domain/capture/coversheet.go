@@ -1,15 +1,12 @@
 package capture
 
 import (
-	"context"
 	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -30,21 +27,20 @@ const (
 // nobody which shipment it belongs to. The token is stored hashed, like every
 // other bearer secret here.
 type CaptureCoverSheet struct {
-	bun.BaseModel `bun:"table:capture_cover_sheets,alias:ccs" json:"-"`
-	keel.Table    `keel:"capture_cover_sheets"`
+	keel.Table `keel:"capture_cover_sheets"`
 
-	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ccs_"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	TokenHash      string    `json:"-"              bun:"token_hash,type:VARCHAR(128),notnull" keel:"token_hash"`
-	TargetType     string    `json:"targetType"     bun:"target_type,type:VARCHAR(50),nullzero" keel:"target_type,nullzero"`
-	TargetID       *pulid.ID `json:"targetId"       bun:"target_id,type:VARCHAR(100),nullzero" keel:"target_id"`
-	DocumentTypeID *pulid.ID `json:"documentTypeId" bun:"document_type_id,type:VARCHAR(100),nullzero" keel:"document_type_id"`
-	IssuedByID     pulid.ID  `json:"issuedById"     bun:"issued_by_id,type:VARCHAR(100),notnull" keel:"issued_by_id"`
-	ExpiresAt      int64     `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull" keel:"expires_at"`
-	LastUsedAt     *int64    `json:"lastUsedAt"     bun:"last_used_at,type:BIGINT,nullzero" keel:"last_used_at"`
-	UseCount       int       `json:"useCount"       bun:"use_count,type:INTEGER,notnull,default:0" keel:"use_count"`
-	CreatedAt      int64     `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	ID             pulid.ID  `json:"id" keel:"id,pk,autoid:ccs_"`
+	BusinessUnitID pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
+	TokenHash      string    `json:"-" keel:"token_hash"`
+	TargetType     string    `json:"targetType" keel:"target_type,nullzero"`
+	TargetID       *pulid.ID `json:"targetId" keel:"target_id"`
+	DocumentTypeID *pulid.ID `json:"documentTypeId" keel:"document_type_id"`
+	IssuedByID     pulid.ID  `json:"issuedById" keel:"issued_by_id"`
+	ExpiresAt      int64     `json:"expiresAt" keel:"expires_at"`
+	LastUsedAt     *int64    `json:"lastUsedAt" keel:"last_used_at"`
+	UseCount       int       `json:"useCount" keel:"use_count"`
+	CreatedAt      int64     `json:"createdAt" keel:"created_at,autocreate"`
 }
 
 func (c *CaptureCoverSheet) Validate(multiErr *errortypes.MultiError) {
@@ -85,17 +81,6 @@ func CoverSheetToken(payload string) (string, bool) {
 // CoverSheetPayload is what the QR code on a sheet encodes.
 func CoverSheetPayload(token string) string {
 	return CoverSheetPrefix + token
-}
-
-func (c *CaptureCoverSheet) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("ccs_")
-		}
-		c.CreatedAt = timeutils.NowUnix()
-	}
-
-	return nil
 }
 
 func (c *CaptureCoverSheet) GetID() pulid.ID      { return c.ID }

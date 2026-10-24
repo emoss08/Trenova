@@ -163,12 +163,7 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*commodity.Commodity, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*commodity.Commodity, error) {
 		c := commoditydb.Commodities
-		entities, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			c.Where(c.ID.In(req.CommodityIDs...)),
-			c.Status.To(req.Status),
-		)
+		entities, err := c.Where(c.ID.In(req.CommodityIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), c.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update commodity status", zap.Error(err))
 			return nil, err

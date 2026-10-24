@@ -7,8 +7,7 @@ import (
 
 func mappedEntityCursorEdges[TEntity pagination.CursorEntity, TNode any, TEdge any](
 	items []TEntity,
-	sort []pagination.CursorSortField,
-	cursorValues pagination.CursorValueProvider,
+	cursors pagination.EdgeCursorProvider,
 	mapNode func(TEntity) (TNode, error),
 	build func(TNode, string) TEdge,
 ) (edges []TEdge, endCursor *string, err error) {
@@ -23,11 +22,7 @@ func mappedEntityCursorEdges[TEntity pagination.CursorEntity, TNode any, TEdge a
 			return nil, nil, mapErr
 		}
 
-		cursor, cursorErr := base.EncodeConnectionCursor(
-			item,
-			sort,
-			base.CursorValuesAt(cursorValues, i),
-		)
+		cursor, cursorErr := base.EdgeCursor(cursors, i)
 		if cursorErr != nil {
 			return nil, nil, cursorErr
 		}

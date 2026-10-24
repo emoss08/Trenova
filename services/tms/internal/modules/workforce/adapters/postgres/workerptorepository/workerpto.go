@@ -206,19 +206,11 @@ func (r *repository) Update(
 ) (*worker.WorkerPTO, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTO, error) {
 		p := workerdb.WorkerPTOs
-		rows, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			p.Where(
-				p.ID.Eq(entity.ID),
-				p.Version.Eq(entity.Version),
-				p.Status.Eq(worker.PTOStatusRequested),
-			),
-			p.Type.To(entity.Type),
-			p.StartDate.To(entity.StartDate),
-			p.EndDate.To(entity.EndDate),
-			p.Reason.To(entity.Reason),
-		)
+		rows, err := p.Where(
+			p.ID.Eq(entity.ID),
+			p.Version.Eq(entity.Version),
+			p.Status.Eq(worker.PTOStatusRequested),
+		).UpdateReturning(ctx, r.db.Keel(ctx), p.Type.To(entity.Type), p.StartDate.To(entity.StartDate), p.EndDate.To(entity.EndDate), p.Reason.To(entity.Reason))
 		if err != nil {
 			r.l.Error(
 				"failed to update PTO record",
@@ -335,16 +327,11 @@ func (r *repository) UpdateStatus(
 		}
 
 		p := workerdb.WorkerPTOs
-		rows, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			p.Where(
-				p.ID.Eq(req.ID),
-				p.Status.In(sources...),
-				keel.When(req.ExpectedVersion > 0, p.Version.Eq(req.ExpectedVersion)),
-			),
-			statusAssignments(req)...,
-		)
+		rows, err := p.Where(
+			p.ID.Eq(req.ID),
+			p.Status.In(sources...),
+			keel.When(req.ExpectedVersion > 0, p.Version.Eq(req.ExpectedVersion)),
+		).UpdateReturning(ctx, r.db.Keel(ctx), statusAssignments(req)...)
 		if err != nil {
 			r.l.Error(
 				"failed to update PTO status",

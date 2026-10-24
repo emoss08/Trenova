@@ -8,14 +8,11 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerPayAssignment)(nil)
 	_ validationframework.TenantedEntity = (*WorkerPayAssignment)(nil)
 )
 
@@ -25,26 +22,25 @@ type RateOverride struct {
 }
 
 type WorkerPayAssignment struct {
-	bun.BaseModel `bun:"table:worker_pay_assignments,alias:wpa" json:"-"`
-	keel.Table    `keel:"worker_pay_assignments"`
+	keel.Table `keel:"worker_pay_assignments"`
 
-	ID             pulid.ID        `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wpa_"`
-	BusinessUnitID pulid.ID        `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID        `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID        `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
-	PayProfileID   pulid.ID        `json:"payProfileId"   bun:"pay_profile_id,type:VARCHAR(100),notnull" keel:"pay_profile_id"`
-	EffectiveFrom  int64           `json:"effectiveFrom"  bun:"effective_from,type:BIGINT,notnull" keel:"effective_from"`
-	EffectiveTo    *int64          `json:"effectiveTo"    bun:"effective_to,type:BIGINT,nullzero" keel:"effective_to"`
-	SplitPercent   decimal.Decimal `json:"splitPercent"   bun:"split_percent,type:NUMERIC(7,4),notnull,default:100" keel:"split_percent"`
-	RateOverrides  []RateOverride  `json:"rateOverrides"  bun:"rate_overrides,type:JSONB,nullzero" keel:"rate_overrides,jsonb,nullzero"`
-	Notes          string          `json:"notes"          bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	CreatedByID    pulid.ID        `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
-	Version        int64           `json:"version"        bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt      int64           `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID        `json:"id" keel:"id,pk,autoid:wpa_"`
+	BusinessUnitID pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID        `json:"workerId" keel:"worker_id"`
+	PayProfileID   pulid.ID        `json:"payProfileId" keel:"pay_profile_id"`
+	EffectiveFrom  int64           `json:"effectiveFrom" keel:"effective_from"`
+	EffectiveTo    *int64          `json:"effectiveTo" keel:"effective_to"`
+	SplitPercent   decimal.Decimal `json:"splitPercent" keel:"split_percent"`
+	RateOverrides  []RateOverride  `json:"rateOverrides" keel:"rate_overrides,jsonb,nullzero"`
+	Notes          string          `json:"notes" keel:"notes,nullzero"`
+	CreatedByID    pulid.ID        `json:"createdById" keel:"created_by_id,nullzero"`
+	Version        int64           `json:"version" keel:"version,version"`
+	CreatedAt      int64           `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker     *worker.Worker `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
-	PayProfile *PayProfile    `json:"payProfile,omitempty" bun:"rel:belongs-to,join:pay_profile_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:pay_profile_id"`
+	Worker     *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
+	PayProfile *PayProfile    `json:"payProfile,omitempty" keel:"belongs:pay_profile_id"`
 }
 
 func (a *WorkerPayAssignment) Validate(multiErr *errortypes.MultiError) {
@@ -128,20 +124,10 @@ func (a *WorkerPayAssignment) GetBusinessUnitID() pulid.ID { return a.BusinessUn
 
 func (a *WorkerPayAssignment) GetTableName() string { return "worker_pay_assignments" }
 
-func (a *WorkerPayAssignment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("wpa_")
-		}
-		a.CreatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
-	}
-	return nil
-}
-
 func (a *WorkerPayAssignment) BeforeCreate(ctx context.Context) error {
-	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	if a.SplitPercent == 0 {
+		a.SplitPercent = 100
+	}
+
+	return nil
 }

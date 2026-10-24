@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var ErrInvalidApprovalScope = errors.New("invalid approval scope")
@@ -48,7 +47,6 @@ func (s ApprovalScope) Covers(wanted ApprovalScope) bool {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*ApprovalDelegation)(nil)
 	_ validationframework.TenantedEntity = (*ApprovalDelegation)(nil)
 )
 
@@ -58,34 +56,33 @@ var (
 // could approve in the first place. Delegating from somebody who manages
 // nobody hands over nothing, which is the correct outcome rather than a bug.
 type ApprovalDelegation struct {
-	bun.BaseModel `bun:"table:approval_delegations,alias:apdl" json:"-"`
-	keel.Table    `                                                     keel:"approval_delegations"`
+	keel.Table `                                                     keel:"approval_delegations"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:apdl_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:apdl_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	DelegatorID pulid.ID      `json:"delegatorId" bun:"delegator_id,type:VARCHAR(100),notnull"               keel:"delegator_id"`
-	DelegateID  pulid.ID      `json:"delegateId"  bun:"delegate_id,type:VARCHAR(100),notnull"                keel:"delegate_id"`
-	Scope       ApprovalScope `json:"scope"       bun:"scope,type:approval_scope_enum,notnull,default:'All'" keel:"scope"`
+	DelegatorID pulid.ID      `json:"delegatorId" keel:"delegator_id"`
+	DelegateID  pulid.ID      `json:"delegateId" keel:"delegate_id"`
+	Scope       ApprovalScope `json:"scope" keel:"scope"`
 
-	StartsAt int64  `json:"startsAt" bun:"starts_at,type:BIGINT,notnull"     keel:"starts_at"`
-	EndsAt   *int64 `json:"endsAt"   bun:"ends_at,type:BIGINT,nullzero"      keel:"ends_at"`
-	Reason   string `json:"reason"   bun:"reason,type:VARCHAR(255),nullzero" keel:"reason,nullzero"`
+	StartsAt int64  `json:"startsAt" keel:"starts_at"`
+	EndsAt   *int64 `json:"endsAt" keel:"ends_at"`
+	Reason   string `json:"reason" keel:"reason,nullzero"`
 
 	// RevokedAt is set when a delegation is called back before its window ends.
 	// It is kept rather than deleted so an approval made under it can still be
 	// explained afterwards.
-	RevokedAt   *int64   `json:"revokedAt"   bun:"revoked_at,type:BIGINT,nullzero"          keel:"revoked_at"`
-	RevokedByID pulid.ID `json:"revokedById" bun:"revoked_by_id,type:VARCHAR(100),nullzero" keel:"revoked_by_id,nullzero"`
-	CreatedByID pulid.ID `json:"createdById" bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
+	RevokedAt   *int64   `json:"revokedAt" keel:"revoked_at"`
+	RevokedByID pulid.ID `json:"revokedById" keel:"revoked_by_id,nullzero"`
+	CreatedByID pulid.ID `json:"createdById" keel:"created_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Delegator *tenant.User `json:"delegator,omitempty" bun:"rel:belongs-to,join:delegator_id=id" keel:"belongs:delegator_id"`
-	Delegate  *tenant.User `json:"delegate,omitempty"  bun:"rel:belongs-to,join:delegate_id=id"  keel:"belongs:delegate_id"`
+	Delegator *tenant.User `json:"delegator,omitempty" keel:"belongs:delegator_id"`
+	Delegate  *tenant.User `json:"delegate,omitempty" keel:"belongs:delegate_id"`
 }
 
 func (d *ApprovalDelegation) Validate(multiErr *errortypes.MultiError) {
@@ -150,29 +147,6 @@ func (d *ApprovalDelegation) GetResourceType() string { return "approval_delegat
 
 func (d *ApprovalDelegation) GetResourceID() string { return d.ID.String() }
 
-func (d *ApprovalDelegation) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("apdl_")
-		}
-		if d.Scope == "" {
-			d.Scope = ApprovalScopeAll
-		}
-		if d.StartsAt <= 0 {
-			d.StartsAt = now
-		}
-		d.CreatedAt = now
-		d.UpdatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (d *ApprovalDelegation) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
 	if d.Scope == "" {
@@ -181,6 +155,7 @@ func (d *ApprovalDelegation) BeforeCreate(_ context.Context) error {
 	if d.StartsAt <= 0 {
 		d.StartsAt = now
 	}
+	now := timeutils.NowUnix()
 
 	return nil
 }

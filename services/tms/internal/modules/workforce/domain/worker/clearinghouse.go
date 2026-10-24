@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -99,40 +98,38 @@ func (r ClearinghouseResult) Prohibits() bool {
 func (r ClearinghouseResult) IsResolved() bool { return r != ClearinghouseResultPending }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerClearinghouseQuery)(nil)
 	_ validationframework.TenantedEntity = (*WorkerClearinghouseQuery)(nil)
 )
 
 type WorkerClearinghouseQuery struct {
-	bun.BaseModel `bun:"table:worker_clearinghouse_queries,alias:wchq" json:"-"`
-	keel.Table    `                                                             keel:"worker_clearinghouse_queries"`
+	keel.Table `                                                             keel:"worker_clearinghouse_queries"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:wchq_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"           keel:"worker_id"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wchq_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
 
-	QueryType ClearinghouseQueryType `json:"queryType" bun:"query_type,type:dot_clearinghouse_query_type_enum,notnull"           keel:"query_type"`
-	Result    ClearinghouseResult    `json:"result"    bun:"result,type:dot_clearinghouse_result_enum,notnull,default:'Pending'" keel:"result"`
+	QueryType ClearinghouseQueryType `json:"queryType" keel:"query_type"`
+	Result    ClearinghouseResult    `json:"result" keel:"result"`
 
-	ConsentObtainedAt *int64 `json:"consentObtainedAt" bun:"consent_obtained_at,type:BIGINT,nullzero" keel:"consent_obtained_at"`
-	ConsentExpiresAt  *int64 `json:"consentExpiresAt"  bun:"consent_expires_at,type:BIGINT,nullzero"  keel:"consent_expires_at"`
-	RequestedAt       int64  `json:"requestedAt"       bun:"requested_at,type:BIGINT,notnull"         keel:"requested_at"`
-	CompletedAt       *int64 `json:"completedAt"       bun:"completed_at,type:BIGINT,nullzero"        keel:"completed_at"`
+	ConsentObtainedAt *int64 `json:"consentObtainedAt" keel:"consent_obtained_at"`
+	ConsentExpiresAt  *int64 `json:"consentExpiresAt" keel:"consent_expires_at"`
+	RequestedAt       int64  `json:"requestedAt" keel:"requested_at"`
+	CompletedAt       *int64 `json:"completedAt" keel:"completed_at"`
 
-	ViolationCount int32    `json:"violationCount" bun:"violation_count,type:INTEGER,notnull"       keel:"violation_count"`
-	Reference      string   `json:"reference"      bun:"reference,type:VARCHAR(100),nullzero"       keel:"reference,nullzero"`
-	DocumentID     pulid.ID `json:"documentId"     bun:"document_id,type:VARCHAR(100),nullzero"     keel:"document_id,nullzero"`
-	Notes          string   `json:"notes"          bun:"notes,type:TEXT,nullzero"                   keel:"notes,nullzero"`
-	PerformedByID  pulid.ID `json:"performedById"  bun:"performed_by_id,type:VARCHAR(100),nullzero" keel:"performed_by_id,nullzero"`
+	ViolationCount int32    `json:"violationCount" keel:"violation_count"`
+	Reference      string   `json:"reference" keel:"reference,nullzero"`
+	DocumentID     pulid.ID `json:"documentId" keel:"document_id,nullzero"`
+	Notes          string   `json:"notes" keel:"notes,nullzero"`
+	PerformedByID  pulid.ID `json:"performedById" keel:"performed_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker      *Worker            `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"   keel:"belongs:worker_id"`
-	Document    *document.Document `json:"document,omitempty"    bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
-	PerformedBy *tenant.User       `json:"performedBy,omitempty" bun:"rel:belongs-to,join:performed_by_id=id"                                                                         keel:"belongs:performed_by_id"`
+	Worker      *Worker            `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Document    *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
+	PerformedBy *tenant.User       `json:"performedBy,omitempty" keel:"belongs:performed_by_id"`
 }
 
 func (q *WorkerClearinghouseQuery) Validate(multiErr *errortypes.MultiError) {
@@ -225,29 +222,6 @@ func (q *WorkerClearinghouseQuery) GetResourceType() string { return "worker_cle
 
 func (q *WorkerClearinghouseQuery) GetResourceID() string { return q.ID.String() }
 
-func (q *WorkerClearinghouseQuery) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if q.ID.IsNil() {
-			q.ID = pulid.MustNew("wchq_")
-		}
-		if q.Result == "" {
-			q.Result = ClearinghouseResultPending
-		}
-		if q.RequestedAt == 0 {
-			q.RequestedAt = now
-		}
-		q.CreatedAt = now
-		q.UpdatedAt = now
-	case *bun.UpdateQuery:
-		q.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (q *WorkerClearinghouseQuery) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
 	if q.Result == "" {
@@ -256,6 +230,7 @@ func (q *WorkerClearinghouseQuery) BeforeCreate(_ context.Context) error {
 	if q.RequestedAt == 0 {
 		q.RequestedAt = now
 	}
+	now := timeutils.NowUnix()
 
 	return nil
 }

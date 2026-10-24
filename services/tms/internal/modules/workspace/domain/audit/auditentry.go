@@ -15,45 +15,60 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook      = (*Entry)(nil)
 	_ domaintypes.PostgresSearchable = (*Entry)(nil)
 	_ pagination.CursorEntity        = (*Entry)(nil)
 )
 
 type Entry struct {
-	bun.BaseModel `bun:"table:audit_entries,alias:ae"`
-	keel.Table    `                                   keel:"audit_entries"`
+	keel.Table `                                   keel:"audit_entries"`
 
-	ID             pulid.ID             `json:"id"                      bun:"id,pk,type:VARCHAR(100)"                                                 keel:"id,pk,autoid:ae_"`
-	UserID         pulid.ID             `json:"userId,omitempty"        bun:"user_id,type:VARCHAR(100),nullzero"                                      keel:"user_id,nullzero"`
-	PrincipalType  string               `json:"principalType"           bun:"principal_type,type:VARCHAR(50),notnull,default:'session_user'"          keel:"principal_type"`
-	PrincipalID    pulid.ID             `json:"principalId"             bun:"principal_id,type:VARCHAR(100),notnull"                                  keel:"principal_id"`
-	APIKeyID       pulid.ID             `json:"apiKeyId,omitempty"      bun:"api_key_id,type:VARCHAR(100),nullzero"                                   keel:"api_key_id,nullzero"`
-	BusinessUnitID pulid.ID             `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),notnull"                              keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID             `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),notnull"                               keel:"organization_id,pk,tenant"`
-	Timestamp      int64                `json:"timestamp"               bun:"timestamp,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"timestamp"`
-	Changes        map[string]any       `json:"changes,omitempty"       bun:"changes,type:JSONB,default:'{}'"                                         keel:"changes,jsonb"`
-	PreviousState  map[string]any       `json:"previousState,omitempty" bun:"previous_state,type:JSONB,default:'{}'"                                  keel:"previous_state,jsonb"`
-	CurrentState   map[string]any       `json:"currentState,omitempty"  bun:"current_state,type:JSONB,default:'{}'"                                   keel:"current_state,jsonb"`
-	Metadata       map[string]any       `json:"metadata,omitempty"      bun:"metadata,type:JSONB,default:'{}'"                                        keel:"metadata,jsonb"`
-	Resource       permission.Resource  `json:"resource"                bun:"resource,type:VARCHAR(50),notnull"                                       keel:"resource"`  // Should be the same as the resource in the permission service
-	Operation      permission.Operation `json:"operation"               bun:"operation,type:VARCHAR(50),notnull"                                      keel:"operation"` // Should be the same as the operation in the permission service
-	ResourceID     string               `json:"resourceId"              bun:"resource_id,type:VARCHAR(100),notnull"                                   keel:"resource_id"`
-	CorrelationID  string               `json:"correlationId,omitempty" bun:"correlation_id,type:VARCHAR(100)"                                        keel:"correlation_id,nullzero"`
-	UserAgent      string               `json:"userAgent,omitempty"     bun:"user_agent,type:VARCHAR(255)"                                            keel:"user_agent,nullzero"`
-	Comment        string               `json:"comment,omitempty"       bun:"comment,type:TEXT"                                                       keel:"comment,nullzero"`
-	IPAddress      string               `json:"ipAddress,omitempty"     bun:"ip_address,type:VARCHAR(45)"                                             keel:"ip_address,nullzero"` // IPv6 addresses need space
-	Category       Category             `json:"category"                bun:"category,type:audit_category_enum,notnull,default:'System'"              keel:"category"`
-	SensitiveData  bool                 `json:"sensitiveData"           bun:"sensitive_data,notnull"                                                  keel:"sensitive_data"`
-	Critical       bool                 `json:"critical"                bun:"critical,notnull"                                                        keel:"critical"`
-	User           *tenant.User         `json:"user,omitempty"          bun:"rel:belongs-to,join:user_id=id"                                          keel:"belongs:user_id"`
-	APIKey         *apikey.Key          `json:"apiKey,omitempty"        bun:"rel:belongs-to,join:api_key_id=id"                                       keel:"belongs:api_key_id"`
-	Organization   *tenant.Organization `json:"-"                       bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit   *tenant.BusinessUnit `json:"-"                       bun:"rel:belongs-to,join:business_unit_id=id"`
+	ID             pulid.ID             `json:"id" keel:"id,pk,autoid:ae_"`
+	UserID         pulid.ID             `json:"userId,omitempty" keel:"user_id,nullzero"`
+	PrincipalType  string               `json:"principalType" keel:"principal_type"`
+	PrincipalID    pulid.ID             `json:"principalId" keel:"principal_id"`
+	APIKeyID       pulid.ID             `json:"apiKeyId,omitempty" keel:"api_key_id,nullzero"`
+	BusinessUnitID pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Timestamp      int64                `json:"timestamp" keel:"timestamp"`
+	Changes        map[string]any       `json:"changes,omitempty" keel:"changes,jsonb"`
+	PreviousState  map[string]any       `json:"previousState,omitempty" keel:"previous_state,jsonb"`
+	CurrentState   map[string]any       `json:"currentState,omitempty" keel:"current_state,jsonb"`
+	Metadata       map[string]any       `json:"metadata,omitempty" keel:"metadata,jsonb"`
+	Resource       permission.Resource  `json:"resource" keel:"resource"`   // Should be the same as the resource in the permission service
+	Operation      permission.Operation `json:"operation" keel:"operation"` // Should be the same as the operation in the permission service
+	ResourceID     string               `json:"resourceId" keel:"resource_id"`
+	CorrelationID  string               `json:"correlationId,omitempty" keel:"correlation_id,nullzero"`
+	UserAgent      string               `json:"userAgent,omitempty" keel:"user_agent,nullzero"`
+	Comment        string               `json:"comment,omitempty" keel:"comment,nullzero"`
+	IPAddress      string               `json:"ipAddress,omitempty" keel:"ip_address,nullzero"` // IPv6 addresses need space
+	Category       Category             `json:"category" keel:"category"`
+	SensitiveData  bool                 `json:"sensitiveData" keel:"sensitive_data"`
+	Critical       bool                 `json:"critical" keel:"critical"`
+	User           *tenant.User         `json:"user,omitempty" keel:"belongs:user_id"`
+	APIKey         *apikey.Key          `json:"apiKey,omitempty" keel:"belongs:api_key_id"`
+	Organization   *tenant.Organization `json:"-"`
+	BusinessUnit   *tenant.BusinessUnit `json:"-"`
+}
+
+func (e *Entry) BeforeCreate(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if e.Timestamp == 0 {
+		e.Timestamp = now
+	}
+	if e.Category == "" {
+		e.Category = CategorySystem
+	}
+	if e.PrincipalType == "" {
+		e.PrincipalType = "session_user"
+	}
+	if e.Timestamp == 0 {
+		e.Timestamp = timeutils.NowUnix()
+	}
+
+	return nil
 }
 
 func (e *Entry) Validate() error {
@@ -159,24 +174,6 @@ func AgentCredit(agentName string) string {
 	return "Ran by an agent"
 }
 
-func (e *Entry) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("ae_")
-		}
-
-		if e.Timestamp == 0 {
-			e.Timestamp = now
-		}
-
-		if e.Category == "" {
-			e.Category = CategorySystem
-		}
-	}
-	return nil
-}
-
 func (e *Entry) GetTableName() string {
 	return "audit_entries"
 }
@@ -271,18 +268,4 @@ func firstStringValue(values map[string]any, keys []string) string {
 	}
 
 	return ""
-}
-
-func (e *Entry) BeforeCreate(context.Context) error {
-	if e.Timestamp == 0 {
-		e.Timestamp = timeutils.NowUnix()
-	}
-	if e.Category == "" {
-		e.Category = CategorySystem
-	}
-	if e.PrincipalType == "" {
-		e.PrincipalType = "session_user"
-	}
-
-	return nil
 }

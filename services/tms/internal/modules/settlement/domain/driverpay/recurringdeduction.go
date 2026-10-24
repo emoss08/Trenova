@@ -11,50 +11,46 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*RecurringDeduction)(nil)
 	_ pagination.CursorEntity            = (*RecurringDeduction)(nil)
 	_ validationframework.TenantedEntity = (*RecurringDeduction)(nil)
 )
 
 // Standing deductions, including garnishments and escrow contributions
 type RecurringDeduction struct {
-	bun.BaseModel `bun:"table:recurring_deductions,alias:rded" json:"-"`
-	keel.Table    `                                                     keel:"recurring_deductions,report=Payroll"`
+	keel.Table `                                                     keel:"recurring_deductions,report=Payroll"`
 
-	ID                  pulid.ID           `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:rded_"`
-	BusinessUnitID      pulid.ID           `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID           `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
-	WorkerID            pulid.ID           `json:"workerId"            bun:"worker_id,type:VARCHAR(100),notnull"                                                  keel:"worker_id"`
-	PayCodeID           pulid.ID           `json:"payCodeId"           bun:"pay_code_id,type:VARCHAR(100),notnull"                                                keel:"pay_code_id"`
-	EscrowAccountID     *pulid.ID          `json:"escrowAccountId"     bun:"escrow_account_id,type:VARCHAR(100),nullzero"                                         keel:"escrow_account_id"`
-	Status              DeductionStatus    `json:"status"              bun:"status,type:VARCHAR(50),notnull,default:'Active'"                                     keel:"status"`
-	Kind                DeductionKind      `json:"kind"                bun:"kind,type:VARCHAR(50),notnull,default:'Standard'"                                     keel:"kind"`
-	CourtOrderNumber    string             `json:"courtOrderNumber"    bun:"court_order_number,type:VARCHAR(100),nullzero"                                        keel:"court_order_number,nullzero"`
-	CaseNumber          string             `json:"caseNumber"          bun:"case_number,type:VARCHAR(100),nullzero"                                               keel:"case_number,nullzero"`
-	IssuingAgency       string             `json:"issuingAgency"       bun:"issuing_agency,type:VARCHAR(150),nullzero"                                            keel:"issuing_agency,nullzero"`
-	Priority            int16              `json:"priority"            bun:"priority,type:SMALLINT,notnull,default:100"                                           keel:"priority,dimension"`
-	Frequency           DeductionFrequency `json:"frequency"           bun:"frequency,type:VARCHAR(50),notnull,default:'EverySettlement'"                         keel:"frequency"`
-	Description         string             `json:"description"         bun:"description,type:VARCHAR(255),notnull"                                                keel:"description"`
-	AmountMinor         int64              `json:"amountMinor"         bun:"amount_minor,type:BIGINT,notnull"                                                     keel:"amount_minor,label=Amount (Minor)"`
-	TotalCapMinor       *int64             `json:"totalCapMinor"       bun:"total_cap_minor,type:BIGINT,nullzero"                                                 keel:"total_cap_minor,label=Total Cap (Minor)"`
-	DeductedToDateMinor int64              `json:"deductedToDateMinor" bun:"deducted_to_date_minor,type:BIGINT,notnull"                                           keel:"deducted_to_date_minor,label=Deducted to Date (Minor)"`
-	StartDate           int64              `json:"startDate"           bun:"start_date,type:BIGINT,notnull"                                                       keel:"start_date,label=Starts"`
-	EndDate             *int64             `json:"endDate"             bun:"end_date,type:BIGINT,nullzero"                                                        keel:"end_date,label=Ends"`
-	CurrencyCode        string             `json:"currencyCode"        bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"                                  keel:"currency_code,label=Currency"`
-	CreatedByID         pulid.ID           `json:"createdById"         bun:"created_by_id,type:VARCHAR(100),nullzero"                                             keel:"created_by_id,nullzero"`
-	Version             int64              `json:"version"             bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
-	CreatedAt           int64              `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt           int64              `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                  pulid.ID           `json:"id" keel:"id,pk,autoid:rded_"`
+	BusinessUnitID      pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID            pulid.ID           `json:"workerId" keel:"worker_id"`
+	PayCodeID           pulid.ID           `json:"payCodeId" keel:"pay_code_id"`
+	EscrowAccountID     *pulid.ID          `json:"escrowAccountId" keel:"escrow_account_id"`
+	Status              DeductionStatus    `json:"status" keel:"status"`
+	Kind                DeductionKind      `json:"kind" keel:"kind"`
+	CourtOrderNumber    string             `json:"courtOrderNumber" keel:"court_order_number,nullzero"`
+	CaseNumber          string             `json:"caseNumber" keel:"case_number,nullzero"`
+	IssuingAgency       string             `json:"issuingAgency" keel:"issuing_agency,nullzero"`
+	Priority            int16              `json:"priority" keel:"priority,dimension"`
+	Frequency           DeductionFrequency `json:"frequency" keel:"frequency"`
+	Description         string             `json:"description" keel:"description"`
+	AmountMinor         int64              `json:"amountMinor" keel:"amount_minor,label=Amount (Minor)"`
+	TotalCapMinor       *int64             `json:"totalCapMinor" keel:"total_cap_minor,label=Total Cap (Minor)"`
+	DeductedToDateMinor int64              `json:"deductedToDateMinor" keel:"deducted_to_date_minor,label=Deducted to Date (Minor)"`
+	StartDate           int64              `json:"startDate" keel:"start_date,label=Starts"`
+	EndDate             *int64             `json:"endDate" keel:"end_date,label=Ends"`
+	CurrencyCode        string             `json:"currencyCode" keel:"currency_code,label=Currency"`
+	CreatedByID         pulid.ID           `json:"createdById" keel:"created_by_id,nullzero"`
+	Version             int64              `json:"version" keel:"version,version"`
+	CreatedAt           int64              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt           int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker        *worker.Worker `json:"worker,omitempty"        bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"         keel:"belongs:worker_id,label=Driver"`
-	PayCode       *PayCode       `json:"payCode,omitempty"       bun:"rel:belongs-to,join:pay_code_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"       keel:"belongs:pay_code_id"`
-	EscrowAccount *EscrowAccount `json:"escrowAccount,omitempty" bun:"rel:belongs-to,join:escrow_account_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:escrow_account_id"`
+	Worker        *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id,label=Driver"`
+	PayCode       *PayCode       `json:"payCode,omitempty" keel:"belongs:pay_code_id"`
+	EscrowAccount *EscrowAccount `json:"escrowAccount,omitempty" keel:"belongs:escrow_account_id"`
 }
 
 func (r *RecurringDeduction) IsEscrowContribution() bool {
@@ -165,26 +161,25 @@ func (r *RecurringDeduction) GetBusinessUnitID() pulid.ID { return r.BusinessUni
 
 func (r *RecurringDeduction) GetTableName() string { return "recurring_deductions" }
 
-func (r *RecurringDeduction) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("rded_")
-		}
-		if r.Kind == "" {
-			r.Kind = DeductionKindStandard
-		}
-		if r.Priority <= 0 {
-			r.Priority = r.Kind.DefaultPriority()
-		}
-		r.CreatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-	return nil
-}
-
 func (r *RecurringDeduction) BeforeCreate(ctx context.Context) error {
-	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	if r.Status == "" {
+		r.Status = DeductionStatusActive
+	}
+	if r.Kind == "" {
+		r.Kind = DeductionKindStandard
+	}
+	if r.Priority == 0 {
+		r.Priority = 100
+	}
+	if r.Frequency == "" {
+		r.Frequency = DeductionFrequencyEverySettlement
+	}
+	if r.CurrencyCode == "" {
+		r.CurrencyCode = "USD"
+	}
+	if r.Priority <= 0 {
+		r.Priority = r.Kind.DefaultPriority()
+	}
+
+	return nil
 }

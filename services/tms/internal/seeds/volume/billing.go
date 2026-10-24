@@ -1543,7 +1543,6 @@ func bilInsert[T any](
 }
 
 func (g *generator) bilWrite(ctx context.Context, tx *keel.DB, rows *bilRows) error {
-
 	if err := bilInsert(ctx, tx, billingqueuedb.BillingQueueItems.Handle, rows.items,
 		func(r *billingqueue.BillingQueueItem) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}

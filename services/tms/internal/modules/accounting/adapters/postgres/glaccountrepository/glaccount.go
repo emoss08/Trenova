@@ -163,12 +163,7 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*glaccount.GLAccount, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*glaccount.GLAccount, error) {
 		gla := glaccountdb.GLAccounts
-		entities, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			gla.Where(gla.ID.In(req.GLAccountIDs...)),
-			gla.Status.To(req.Status),
-		)
+		entities, err := gla.Where(gla.ID.In(req.GLAccountIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), gla.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update gl account status", zap.Error(err))
 			return nil, err

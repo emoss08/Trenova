@@ -1,6 +1,7 @@
 package fuelpurchaseservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"bytes"
 	"context"
 	"io"
@@ -118,7 +119,7 @@ func (f *fakeRepo) ListCards(
 	for _, card := range f.cards {
 		out = append(out, card)
 	}
-	return pagination.NewCursorListResult(out, len(out)+1), nil
+	return pagetest.Of(out, len(out)+1), nil
 }
 
 func (f *fakeRepo) GetCardByID(
@@ -216,7 +217,7 @@ func (f *fakeRepo) ListImportBatches(
 
 	sort.Slice(out, func(i, j int) bool { return out[i].CreatedAt > out[j].CreatedAt })
 
-	return pagination.NewCursorListResult(out, len(out)+1), nil
+	return pagetest.Of(out, len(out)+1), nil
 }
 
 func (f *fakeRepo) GetFeedState(
@@ -305,7 +306,7 @@ func (f *fakeRepo) ListPurchases(
 	for _, purchase := range f.purchases {
 		out = append(out, purchase)
 	}
-	return pagination.NewCursorListResult(out, len(out)+1), nil
+	return pagetest.Of(out, len(out)+1), nil
 }
 
 func (f *fakeRepo) GetPurchaseByID(
@@ -515,7 +516,7 @@ func (f *fakeRepo) ListImportRows(
 		}
 		out = append(out, row)
 	}
-	return pagination.NewCursorListResult(out, len(out)+1), nil
+	return pagetest.Of(out, len(out)+1), nil
 }
 
 func (f *fakeRepo) CommitImport(

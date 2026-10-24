@@ -67,8 +67,8 @@ type CountWatchtowerItemsRequest struct {
 }
 
 type WatchtowerKindCount struct {
-	SourceKind watchtower.SourceKind `bun:"source_kind"`
-	Count      int                   `bun:"count"`
+	SourceKind watchtower.SourceKind
+	Count      int
 }
 
 type WatchtowerCountsRow struct {

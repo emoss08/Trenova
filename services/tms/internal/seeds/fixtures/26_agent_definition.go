@@ -137,7 +137,6 @@ func (s *AgentDefinitionSeed) reconcileToolNames(
 	db *keel.DB,
 	orgID, buID pulid.ID,
 ) error {
-
 	existing, err := agentdefinitiondb.Definitions.AllTenants().Where(
 		agentdefinitiondb.Definitions.OrganizationID.Eq(orgID),
 		agentdefinitiondb.Definitions.BusinessUnitID.Eq(buID),

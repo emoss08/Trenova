@@ -1,7 +1,6 @@
 package accountingsync
 
 import (
-	"context"
 	"regexp"
 	"strings"
 
@@ -12,9 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var appClientIDPattern = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
@@ -36,29 +33,26 @@ func AppFingerprint(environment AppEnvironment, clientID string) string {
 	)[:appFingerprintLength]
 }
 
-var _ bun.BeforeAppendModelHook = (*AccountingAppCredential)(nil)
-
 type AccountingAppCredential struct {
-	bun.BaseModel `bun:"table:accounting_app_credentials,alias:acctapp" json:"-"`
-	keel.Table    `keel:"accounting_app_credentials"`
+	keel.Table `keel:"accounting_app_credentials"`
 
-	ID                        pulid.ID         `json:"id"              bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctapp_"`
-	BusinessUnitID            pulid.ID         `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID            pulid.ID         `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	IntegrationType           integration.Type `json:"integrationType" bun:"integration_type,type:VARCHAR(50),notnull" keel:"integration_type"`
-	Environment               AppEnvironment   `json:"environment"     bun:"environment,type:VARCHAR(20),notnull" keel:"environment"`
-	ClientID                  string           `json:"clientId"        bun:"client_id,type:VARCHAR(255),notnull" keel:"client_id"`
-	ClientSecretCiphertext    string           `json:"-"               bun:"client_secret_ciphertext,type:TEXT,notnull" keel:"client_secret_ciphertext"`
-	WebhookVerifierCiphertext string           `json:"-"               bun:"webhook_verifier_ciphertext,type:TEXT,nullzero" keel:"webhook_verifier_ciphertext,nullzero"`
-	Fingerprint               string           `json:"fingerprint"     bun:"fingerprint,type:VARCHAR(64),notnull" keel:"fingerprint"`
-	UpdatedByID               pulid.ID         `json:"updatedById"     bun:"updated_by_id,type:VARCHAR(100),nullzero" keel:"updated_by_id,nullzero"`
-	Version                   int64            `json:"version"         bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt                 int64            `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt                 int64            `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                        pulid.ID         `json:"id" keel:"id,pk,autoid:acctapp_"`
+	BusinessUnitID            pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID            pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	IntegrationType           integration.Type `json:"integrationType" keel:"integration_type"`
+	Environment               AppEnvironment   `json:"environment" keel:"environment"`
+	ClientID                  string           `json:"clientId" keel:"client_id"`
+	ClientSecretCiphertext    string           `json:"-" keel:"client_secret_ciphertext"`
+	WebhookVerifierCiphertext string           `json:"-" keel:"webhook_verifier_ciphertext,nullzero"`
+	Fingerprint               string           `json:"fingerprint" keel:"fingerprint"`
+	UpdatedByID               pulid.ID         `json:"updatedById" keel:"updated_by_id,nullzero"`
+	Version                   int64            `json:"version" keel:"version,version"`
+	CreatedAt                 int64            `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt                 int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	UpdatedBy    *tenant.User         `json:"updatedBy,omitempty"    bun:"rel:belongs-to,join:updated_by_id=id" keel:"belongs:updated_by_id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	UpdatedBy    *tenant.User         `json:"updatedBy,omitempty" keel:"belongs:updated_by_id"`
 }
 
 func (a *AccountingAppCredential) HasWebhookVerifier() bool {
@@ -108,23 +102,6 @@ func (a *AccountingAppCredential) GetID() pulid.ID { return a.ID }
 func (a *AccountingAppCredential) GetOrganizationID() pulid.ID { return a.OrganizationID }
 
 func (a *AccountingAppCredential) GetBusinessUnitID() pulid.ID { return a.BusinessUnitID }
-
-func (a *AccountingAppCredential) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("acctapp_")
-		}
-		a.CreatedAt = now
-		a.UpdatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
-	}
-
-	return nil
-}
 
 func WebhookPath(typ integration.Type) string {
 	profile := MustProfile(typ)

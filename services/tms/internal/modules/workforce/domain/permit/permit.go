@@ -9,50 +9,68 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Permit)(nil)
 	_ validationframework.TenantedEntity = (*Permit)(nil)
 	_ domaintypes.PostgresSearchable     = (*Permit)(nil)
 )
 
 type Permit struct {
-	bun.BaseModel             `bun:"table:permits,alias:pmt" json:"-"`
-	keel.Table                `                                       keel:"permits"`
-	pagination.CursorValueSet `bun:",embed"                  json:"-"`
+	keel.Table     `                                       keel:"permits"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:pmt_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ShipmentID     pulid.ID `json:"shipmentId" keel:"shipment_id"`
+	StateID        pulid.ID `json:"stateId" keel:"state_id"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:pmt_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull"         keel:"shipment_id"`
-	StateID        pulid.ID `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull"            keel:"state_id"`
+	PermitNumber string `json:"permitNumber" keel:"permit_number"`
+	Status       Status `json:"status" keel:"status"`
 
-	PermitNumber string `json:"permitNumber" bun:"permit_number,type:VARCHAR(100),notnull"                  keel:"permit_number"`
-	Status       Status `json:"status"       bun:"status,type:permit_status_enum,notnull,default:'Pending'" keel:"status"`
+	IssuedAt  *int64 `json:"issuedAt" keel:"issued_at"`
+	ExpiresAt *int64 `json:"expiresAt" keel:"expires_at"`
 
-	IssuedAt  *int64 `json:"issuedAt"  bun:"issued_at,type:BIGINT,nullzero"  keel:"issued_at"`
-	ExpiresAt *int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at"`
+	Cost  decimal.NullDecimal `json:"cost" keel:"cost"`
+	Notes string              `json:"notes" keel:"notes,nullzero"`
 
-	Cost  decimal.NullDecimal `json:"cost"  bun:"cost,type:NUMERIC(19,4),nullzero" keel:"cost"`
-	Notes string              `json:"notes" bun:"notes,type:TEXT,nullzero"         keel:"notes,nullzero"`
+	Version      int64  `json:"version" keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-" keel:"rank,computed"`
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+	State        *usstate.UsState     `json:"state,omitempty" keel:"belongs:state_id"`
+}
 
-	BusinessUnit *tenant.BusinessUnit `json:"-"               bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-"               bun:"rel:belongs-to,join:organization_id=id"`
-	State        *usstate.UsState     `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"         keel:"belongs:state_id"`
+func (p *Permit) BeforeUpdate(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if p.Status == "" {
+		p.Status = StatusPending
+	}
+	if p.Status == StatusActive && p.IsExpiredAt(now) {
+		p.Status = StatusExpired
+	}
+
+	return nil
+}
+
+func (p *Permit) BeforeCreate(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if p.Status == "" {
+		p.Status = StatusPending
+	}
+	if p.Status == StatusActive && p.IsExpiredAt(now) {
+		p.Status = StatusExpired
+	}
+
+	return nil
 }
 
 func (p *Permit) GetID() pulid.ID { return p.ID }
@@ -132,30 +150,6 @@ func (p *Permit) validateDates(multiErr *errortypes.MultiError) {
 		multiErr.Add("expiresAt", errortypes.ErrRequired,
 			"An active permit must record when it expires")
 	}
-}
-
-func (p *Permit) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	if p.Status == "" {
-		p.Status = StatusPending
-	}
-	if p.Status == StatusActive && p.IsExpiredAt(now) {
-		p.Status = StatusExpired
-	}
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("pmt_")
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (p *Permit) BeforeSave(_ context.Context) error {

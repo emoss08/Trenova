@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 // DisputeCaseStatus is where a dispute case stands. The invoice's own
@@ -87,38 +86,35 @@ func (r DisputeResolution) RequiresAdjustment() bool {
 	return r == DisputeResolutionCreditIssued || r == DisputeResolutionWrittenOff
 }
 
-var _ bun.BeforeAppendModelHook = (*InvoiceDispute)(nil)
-
 // InvoiceDispute is one dispute case raised against a posted invoice. An
 // invoice has at most one open case; resolving or withdrawing it clears the
 // invoice's Disputed flag.
 type InvoiceDispute struct {
-	bun.BaseModel `bun:"table:invoice_disputes,alias:idsp" json:"-"`
-	keel.Table    `                                                 keel:"invoice_disputes"`
+	keel.Table `                                                 keel:"invoice_disputes"`
 
-	ID                     pulid.ID          `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:idsp_"`
-	OrganizationID         pulid.ID          `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
-	BusinessUnitID         pulid.ID          `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
-	InvoiceID              pulid.ID          `json:"invoiceId"              bun:"invoice_id,type:VARCHAR(100),notnull"                                                 keel:"invoice_id"`
-	CustomerID             pulid.ID          `json:"customerId"             bun:"customer_id,type:VARCHAR(100),notnull"                                                keel:"customer_id"`
-	Status                 DisputeCaseStatus `json:"status"                 bun:"status,type:VARCHAR(20),notnull,default:'Open'"                                       keel:"status"`
-	ReasonCode             DisputeReasonCode `json:"reasonCode"             bun:"reason_code,type:VARCHAR(40),notnull"                                                 keel:"reason_code"`
-	DisputedAmount         decimal.Decimal   `json:"disputedAmount"         bun:"disputed_amount,type:NUMERIC(19,4),notnull"                                           keel:"disputed_amount"`
-	DisputedAmountMinor    int64             `json:"disputedAmountMinor"    bun:"disputed_amount_minor,type:BIGINT,notnull"                                            keel:"disputed_amount_minor"`
-	Notes                  string            `json:"notes"                  bun:"notes,type:TEXT,nullzero"                                                             keel:"notes,nullzero"`
-	OpenedByID             pulid.ID          `json:"openedById"             bun:"opened_by_id,type:VARCHAR(100),notnull"                                               keel:"opened_by_id"`
-	OpenedAt               int64             `json:"openedAt"               bun:"opened_at,type:BIGINT,notnull"                                                        keel:"opened_at"`
-	ResolvedByID           pulid.ID          `json:"resolvedById"           bun:"resolved_by_id,type:VARCHAR(100),nullzero"                                            keel:"resolved_by_id,nullzero"`
-	ResolvedAt             *int64            `json:"resolvedAt"             bun:"resolved_at,type:BIGINT,nullzero"                                                     keel:"resolved_at"`
-	Resolution             DisputeResolution `json:"resolution"             bun:"resolution,type:VARCHAR(30),nullzero"                                                 keel:"resolution,nullzero"`
-	ResolutionAdjustmentID pulid.ID          `json:"resolutionAdjustmentId" bun:"resolution_adjustment_id,type:VARCHAR(100),nullzero"                                  keel:"resolution_adjustment_id,nullzero"`
-	ResolutionNotes        string            `json:"resolutionNotes"        bun:"resolution_notes,type:TEXT,nullzero"                                                  keel:"resolution_notes,nullzero"`
-	Version                int64             `json:"version"                bun:"version,type:BIGINT,notnull,default:0"                                                keel:"version,version"`
-	CreatedAt              int64             `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt              int64             `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                     pulid.ID          `json:"id" keel:"id,pk,autoid:idsp_"`
+	OrganizationID         pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	InvoiceID              pulid.ID          `json:"invoiceId" keel:"invoice_id"`
+	CustomerID             pulid.ID          `json:"customerId" keel:"customer_id"`
+	Status                 DisputeCaseStatus `json:"status" keel:"status"`
+	ReasonCode             DisputeReasonCode `json:"reasonCode" keel:"reason_code"`
+	DisputedAmount         decimal.Decimal   `json:"disputedAmount" keel:"disputed_amount"`
+	DisputedAmountMinor    int64             `json:"disputedAmountMinor" keel:"disputed_amount_minor"`
+	Notes                  string            `json:"notes" keel:"notes,nullzero"`
+	OpenedByID             pulid.ID          `json:"openedById" keel:"opened_by_id"`
+	OpenedAt               int64             `json:"openedAt" keel:"opened_at"`
+	ResolvedByID           pulid.ID          `json:"resolvedById" keel:"resolved_by_id,nullzero"`
+	ResolvedAt             *int64            `json:"resolvedAt" keel:"resolved_at"`
+	Resolution             DisputeResolution `json:"resolution" keel:"resolution,nullzero"`
+	ResolutionAdjustmentID pulid.ID          `json:"resolutionAdjustmentId" keel:"resolution_adjustment_id,nullzero"`
+	ResolutionNotes        string            `json:"resolutionNotes" keel:"resolution_notes,nullzero"`
+	Version                int64             `json:"version" keel:"version,version"`
+	CreatedAt              int64             `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt              int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Invoice  *Invoice           `json:"invoice,omitempty"  bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"  keel:"belongs:invoice_id"`
-	Customer *customer.Customer `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:customer_id"`
+	Invoice  *Invoice           `json:"invoice,omitempty" keel:"belongs:invoice_id"`
+	Customer *customer.Customer `json:"customer,omitempty" keel:"belongs:customer_id"`
 }
 
 func (d *InvoiceDispute) Validate(multiErr *errortypes.MultiError) {
@@ -175,30 +171,16 @@ func (d *InvoiceDispute) SyncMinor() {
 	d.DisputedAmountMinor = money.MinorUnits(d.DisputedAmount)
 }
 
-func (d *InvoiceDispute) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (d *InvoiceDispute) BeforeCreate(ctx context.Context) error {
+	if d.Status == "" {
+		d.Status = DisputeCaseStatusOpen
+	}
 	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("idsp_")
-		}
-		if d.Status == "" {
-			d.Status = DisputeCaseStatusOpen
-		}
-		if d.OpenedAt == 0 {
-			d.OpenedAt = now
-		}
-		d.CreatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
+	if d.OpenedAt == 0 {
+		d.OpenedAt = now
 	}
 
 	return nil
-}
-
-func (d *InvoiceDispute) BeforeCreate(ctx context.Context) error {
-	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (d *InvoiceDispute) GetID() pulid.ID {

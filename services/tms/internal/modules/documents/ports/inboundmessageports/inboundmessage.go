@@ -70,13 +70,13 @@ type CountInboundMessagesRequest struct {
 // whether they are past due. The service folds these into lanes, kinds and
 // mailboxes, so one aggregate answers all of them.
 type InboundMessageCount struct {
-	Status         inboundmessage.Status         `bun:"status"`
-	Classification inboundmessage.Classification `bun:"classification"`
-	MailboxID      pulid.ID                      `bun:"mailbox_id"`
-	Parked         inboundmessage.Parking        `bun:"parked"`
-	Mine           bool                          `bun:"mine"`
-	Overdue        bool                          `bun:"overdue"`
-	Count          int                           `bun:"count"`
+	Status         inboundmessage.Status
+	Classification inboundmessage.Classification
+	MailboxID      pulid.ID
+	Parked         inboundmessage.Parking
+	Mine           bool
+	Overdue        bool
+	Count          int
 }
 
 type CountInboundAttachmentsRequest struct {

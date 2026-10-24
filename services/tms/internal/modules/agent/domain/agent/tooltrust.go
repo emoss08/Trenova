@@ -1,22 +1,16 @@
 package agent
 
 import (
-	"context"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*ToolTrust)(nil)
 	_ validationframework.TenantedEntity = (*ToolTrust)(nil)
 )
 
@@ -31,39 +25,36 @@ var (
 // are for people: they answer "how has this tool been going" on the agent's
 // page without a query over decisions.
 type ToolTrust struct {
-	bun.BaseModel `bun:"table:agent_tool_trust,alias:att" json:"-"`
-	keel.Table    `keel:"agent_tool_trust"`
+	keel.Table `keel:"agent_tool_trust"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:att_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:att_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
+	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id"`
+	ToolName          string   `json:"toolName" keel:"tool_name"`
 
-	AgentDefinitionID pulid.ID `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
-	ToolName          string   `json:"toolName"          bun:"tool_name,type:VARCHAR(100),notnull" keel:"tool_name"`
-
-	Streak            int `json:"streak"            bun:"streak,type:INTEGER,notnull" keel:"streak"`
-	Approvals         int `json:"approvals"         bun:"approvals,type:INTEGER,notnull" keel:"approvals"`
-	Modifications     int `json:"modifications"     bun:"modifications,type:INTEGER,notnull" keel:"modifications"`
-	Rejections        int `json:"rejections"        bun:"rejections,type:INTEGER,notnull" keel:"rejections"`
-	ExecutionFailures int `json:"executionFailures" bun:"execution_failures,type:INTEGER,notnull" keel:"execution_failures"`
+	Streak            int `json:"streak" keel:"streak"`
+	Approvals         int `json:"approvals" keel:"approvals"`
+	Modifications     int `json:"modifications" keel:"modifications"`
+	Rejections        int `json:"rejections" keel:"rejections"`
+	ExecutionFailures int `json:"executionFailures" keel:"execution_failures"`
 
 	// EarnedTier is the tier the ledger granted, when the tool's current tier
 	// on the agent was earned rather than chosen by a person. It is what lets
 	// a demotion take back only what trust gave: a tier a person set by hand
 	// never matches it and is never touched.
-	EarnedTier     AutonomyTier `json:"earnedTier"     bun:"earned_tier,type:agent_autonomy_tier_enum,nullzero" keel:"earned_tier,nullzero"`
-	LastDecisionAt *int64       `json:"lastDecisionAt" bun:"last_decision_at,type:BIGINT,nullzero" keel:"last_decision_at"`
-	PromotedAt     *int64       `json:"promotedAt"     bun:"promoted_at,type:BIGINT,nullzero" keel:"promoted_at"`
-	DemotedAt      *int64       `json:"demotedAt"      bun:"demoted_at,type:BIGINT,nullzero" keel:"demoted_at"`
+	EarnedTier     AutonomyTier `json:"earnedTier" keel:"earned_tier,nullzero"`
+	LastDecisionAt *int64       `json:"lastDecisionAt" keel:"last_decision_at"`
+	PromotedAt     *int64       `json:"promotedAt" keel:"promoted_at"`
+	DemotedAt      *int64       `json:"demotedAt" keel:"demoted_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 // TrustOutcome is what one decision or execution taught the ledger.
@@ -157,24 +148,3 @@ func (t *ToolTrust) GetOrganizationID() pulid.ID { return t.OrganizationID }
 func (t *ToolTrust) GetBusinessUnitID() pulid.ID { return t.BusinessUnitID }
 
 func (t *ToolTrust) GetTableName() string { return "agent_tool_trust" }
-
-func (t *ToolTrust) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("att_")
-		}
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
-
-	return nil
-}
-
-func (t *ToolTrust) BeforeCreate(ctx context.Context) error {
-	return t.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}

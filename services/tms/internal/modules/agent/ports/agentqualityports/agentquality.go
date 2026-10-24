@@ -57,8 +57,8 @@ type AgentSuiteRunOverviewRequest struct {
 }
 
 type AgentSuiteRunOverview struct {
-	Runs        int `bun:"runs"`
-	Regressions int `bun:"regressions"`
+	Runs        int
+	Regressions int
 }
 
 type ListAgentQualityAgentsQuery struct {
@@ -69,9 +69,9 @@ type ListAgentQualityAgentsQuery struct {
 }
 
 type AgentQualityAgentRow struct {
-	ID      pulid.ID `bun:"id"`
-	Name    string   `bun:"name"`
-	Enabled bool     `bun:"enabled"`
+	ID      pulid.ID
+	Name    string
+	Enabled bool
 }
 
 type AgentQualityAgentRows struct {
@@ -109,12 +109,12 @@ type AgentSuiteRunRepository interface {
 }
 
 type QualityScheduleTarget struct {
-	OrganizationID       pulid.ID              `bun:"organization_id"`
-	BusinessUnitID       pulid.ID              `bun:"business_unit_id"`
-	OrganizationName     string                `bun:"organization_name"`
-	OrganizationTimezone string                `bun:"organization_timezone"`
-	HasActiveCases       bool                  `bun:"has_active_cases"`
-	Control              *agentquality.Control `bun:"-"`
+	OrganizationID       pulid.ID
+	BusinessUnitID       pulid.ID
+	OrganizationName     string
+	OrganizationTimezone string
+	HasActiveCases       bool
+	Control              *agentquality.Control
 }
 
 func (t *QualityScheduleTarget) TenantInfo() pagination.TenantInfo {

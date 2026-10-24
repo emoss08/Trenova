@@ -1,46 +1,40 @@
 package worker
 
 import (
-	"context"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerPTOBalance)(nil)
 	_ validationframework.TenantedEntity = (*WorkerPTOBalance)(nil)
 )
 
 // What each worker has accrued, used and carried, per time-off type
 type WorkerPTOBalance struct {
-	bun.BaseModel `bun:"table:worker_pto_balances,alias:wpb" json:"-"`
-	keel.Table    `                                                   keel:"worker_pto_balances,report=Parties,label=PTO Balance"`
+	keel.Table `                                                   keel:"worker_pto_balances,report=Parties,label=PTO Balance"`
 
-	ID                   pulid.ID        `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:wpb_"`
-	BusinessUnitID       pulid.ID        `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID        `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
-	WorkerID             pulid.ID        `json:"workerId"             bun:"worker_id,type:VARCHAR(100),notnull"                                                  keel:"worker_id"`
-	PTOType              PTOType         `json:"ptoType"              bun:"pto_type,type:worker_pto_type_enum,notnull"                                           keel:"pto_type,label=Time Off Type"`
-	BalanceDays          decimal.Decimal `json:"balanceDays"          bun:"balance_days,type:NUMERIC(8,2),notnull,default:0"                                     keel:"balance_days,label=Balance (days)"`
-	AccruedYTDDays       decimal.Decimal `json:"accruedYtdDays"       bun:"accrued_ytd_days,type:NUMERIC(8,2),notnull,default:0"                                 keel:"accrued_ytd_days,label=Accrued YTD (days)"`
-	UsedYTDDays          decimal.Decimal `json:"usedYtdDays"          bun:"used_ytd_days,type:NUMERIC(8,2),notnull,default:0"                                    keel:"used_ytd_days,label=Used YTD (days)"`
-	CarriedDays          decimal.Decimal `json:"carriedDays"          bun:"carried_days,type:NUMERIC(8,2),notnull,default:0"                                     keel:"carried_days,label=Carried (days)"`
-	EntryCount           int64           `json:"entryCount"           bun:"entry_count,type:BIGINT,notnull"                                                      keel:"entry_count"`
-	LastAccrualPeriodKey string          `json:"lastAccrualPeriodKey" bun:"last_accrual_period_key,type:VARCHAR(64),nullzero"                                    keel:"last_accrual_period_key,nullzero"`
-	LastRolloverKey      string          `json:"lastRolloverKey"      bun:"last_rollover_key,type:VARCHAR(64),nullzero"                                          keel:"last_rollover_key,nullzero"`
-	YearStartedAt        *int64          `json:"yearStartedAt"        bun:"year_started_at,type:BIGINT,nullzero"                                                 keel:"year_started_at"`
-	Version              int64           `json:"version"              bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt            int64           `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt            int64           `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                   pulid.ID        `json:"id" keel:"id,pk,autoid:wpb_"`
+	BusinessUnitID       pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID             pulid.ID        `json:"workerId" keel:"worker_id"`
+	PTOType              PTOType         `json:"ptoType" keel:"pto_type,label=Time Off Type"`
+	BalanceDays          decimal.Decimal `json:"balanceDays" keel:"balance_days,label=Balance (days)"`
+	AccruedYTDDays       decimal.Decimal `json:"accruedYtdDays" keel:"accrued_ytd_days,label=Accrued YTD (days)"`
+	UsedYTDDays          decimal.Decimal `json:"usedYtdDays" keel:"used_ytd_days,label=Used YTD (days)"`
+	CarriedDays          decimal.Decimal `json:"carriedDays" keel:"carried_days,label=Carried (days)"`
+	EntryCount           int64           `json:"entryCount" keel:"entry_count"`
+	LastAccrualPeriodKey string          `json:"lastAccrualPeriodKey" keel:"last_accrual_period_key,nullzero"`
+	LastRolloverKey      string          `json:"lastRolloverKey" keel:"last_rollover_key,nullzero"`
+	YearStartedAt        *int64          `json:"yearStartedAt" keel:"year_started_at"`
+	Version              int64           `json:"version" keel:"version,version"`
+	CreatedAt            int64           `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt            int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker *Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Worker *Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
 }
 
 func (b *WorkerPTOBalance) Validate(multiErr *errortypes.MultiError) {
@@ -85,20 +79,3 @@ func (b *WorkerPTOBalance) GetTableName() string { return "worker_pto_balances" 
 func (b *WorkerPTOBalance) GetResourceType() string { return "worker_pto_balance" }
 
 func (b *WorkerPTOBalance) GetResourceID() string { return b.ID.String() }
-
-func (b *WorkerPTOBalance) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if b.ID.IsNil() {
-			b.ID = pulid.MustNew("wpb_")
-		}
-		b.CreatedAt = now
-		b.UpdatedAt = now
-	case *bun.UpdateQuery:
-		b.UpdatedAt = now
-	}
-
-	return nil
-}

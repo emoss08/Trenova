@@ -5,10 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
-func TestBeforeAppendModelStripsNULFromSearchText(t *testing.T) {
+func TestBeforeCreateStripsNULFromSearchText(t *testing.T) {
 	t.Parallel()
 
 	p := &Projection{
@@ -17,7 +16,7 @@ func TestBeforeAppendModelStripsNULFromSearchText(t *testing.T) {
 		Description:  "signed\x00 copy",
 		ContentText:  "received\x00 in good order",
 	}
-	require.NoError(t, p.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
+	require.NoError(t, p.BeforeCreate(t.Context()))
 	assert.Equal(t, "pod.pdf", p.FileName)
 	assert.Equal(t, "POD.pdf", p.OriginalName)
 	assert.Equal(t, "signed copy", p.Description)

@@ -11,31 +11,35 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const maxIndexedContentChars = 100000
 
 type Projection struct {
-	bun.BaseModel `bun:"table:document_search_projections,alias:dsp" json:"-"`
-	keel.Table    `keel:"document_search_projections"`
+	keel.Table `keel:"document_search_projections"`
 
-	ID                  pulid.ID `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk"`
-	OrganizationID      pulid.ID `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	ResourceID          string   `json:"resourceId"          bun:"resource_id,type:VARCHAR(100),notnull" keel:"resource_id"`
-	ResourceType        string   `json:"resourceType"        bun:"resource_type,type:VARCHAR(100),notnull" keel:"resource_type"`
-	FileName            string   `json:"fileName"            bun:"file_name,type:VARCHAR(255),notnull" keel:"file_name"`
-	OriginalName        string   `json:"originalName"        bun:"original_name,type:VARCHAR(255),notnull" keel:"original_name"`
-	Description         string   `json:"description"         bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Tags                []string `json:"tags"                bun:"tags,type:VARCHAR(100)[],default:'{}'" keel:"tags"`
-	Status              string   `json:"status"              bun:"status,type:VARCHAR(100),notnull" keel:"status"`
-	ContentStatus       string   `json:"contentStatus"       bun:"content_status,type:VARCHAR(100),notnull" keel:"content_status"`
-	DetectedKind        string   `json:"detectedKind"        bun:"detected_kind,type:VARCHAR(100),nullzero" keel:"detected_kind,nullzero"`
-	ShipmentDraftStatus string   `json:"shipmentDraftStatus" bun:"shipment_draft_status,type:VARCHAR(100),notnull" keel:"shipment_draft_status"`
-	ContentText         string   `json:"contentText"         bun:"content_text,type:TEXT,nullzero" keel:"content_text,nullzero"`
-	CreatedAt           int64    `json:"createdAt"           bun:"created_at,type:BIGINT,notnull" keel:"created_at"`
-	UpdatedAt           int64    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull" keel:"updated_at"`
+	ID                  pulid.ID `json:"id" keel:"id,pk"`
+	OrganizationID      pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	ResourceID          string   `json:"resourceId" keel:"resource_id"`
+	ResourceType        string   `json:"resourceType" keel:"resource_type"`
+	FileName            string   `json:"fileName" keel:"file_name"`
+	OriginalName        string   `json:"originalName" keel:"original_name"`
+	Description         string   `json:"description" keel:"description,nullzero"`
+	Tags                []string `json:"tags" keel:"tags"`
+	Status              string   `json:"status" keel:"status"`
+	ContentStatus       string   `json:"contentStatus" keel:"content_status"`
+	DetectedKind        string   `json:"detectedKind" keel:"detected_kind,nullzero"`
+	ShipmentDraftStatus string   `json:"shipmentDraftStatus" keel:"shipment_draft_status"`
+	ContentText         string   `json:"contentText" keel:"content_text,nullzero"`
+	CreatedAt           int64    `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt           int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+}
+
+func (p *Projection) BeforeUpdate(_ context.Context) error {
+	p.stripNUL()
+
+	return nil
 }
 
 func Build(doc *document.Document, contentText string) *Projection {
@@ -64,27 +68,8 @@ func Build(doc *document.Document, contentText string) *Projection {
 	}
 }
 
-func (p *Projection) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	p.stripNUL()
-
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.CreatedAt == 0 {
-			p.CreatedAt = now
-		}
-		if p.UpdatedAt == 0 {
-			p.UpdatedAt = now
-		}
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (p *Projection) BeforeCreate(_ context.Context) error {
+	p.stripNUL()
 	now := timeutils.NowUnix()
 	if p.CreatedAt == 0 {
 		p.CreatedAt = now

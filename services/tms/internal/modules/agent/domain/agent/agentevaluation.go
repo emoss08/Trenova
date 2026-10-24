@@ -8,16 +8,12 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Evaluation)(nil)
 	_ validationframework.TenantedEntity = (*Evaluation)(nil)
 	_ domaintypes.PostgresSearchable     = (*Evaluation)(nil)
 )
@@ -139,55 +135,63 @@ type ReplayAction struct {
 // yardstick: a change the replay drops that a person rejected is an
 // improvement, one it drops that a person approved is a regression.
 type Evaluation struct {
-	bun.BaseModel `bun:"table:agent_evaluations,alias:aeval" json:"-"`
-	keel.Table    `keel:"agent_evaluations"`
+	keel.Table `keel:"agent_evaluations"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aeval_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aeval_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
+	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" keel:"agent_definition_id"`
+	SourceRunID       pulid.ID         `json:"sourceRunId" keel:"source_run_id,nullzero"`
+	EvalCaseID        *pulid.ID        `json:"evalCaseId" keel:"eval_case_id"`
+	Status            EvaluationStatus `json:"status" keel:"status"`
+	Trigger           RunTrigger       `json:"trigger" keel:"trigger"`
+	SubjectType       SubjectType      `json:"subjectType" keel:"subject_type,nullzero"`
+	SubjectID         pulid.ID         `json:"subjectId" keel:"subject_id,nullzero"`
 
-	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
-	SourceRunID       pulid.ID         `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),nullzero" keel:"source_run_id,nullzero"`
-	EvalCaseID        *pulid.ID        `json:"evalCaseId"        bun:"eval_case_id,type:VARCHAR(100),nullzero" keel:"eval_case_id"`
-	Status            EvaluationStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Pending'" keel:"status"`
-	Trigger           RunTrigger       `json:"trigger"           bun:"trigger,type:VARCHAR(20),notnull" keel:"trigger"`
-	SubjectType       SubjectType      `json:"subjectType"       bun:"subject_type,type:VARCHAR(50),nullzero" keel:"subject_type,nullzero"`
-	SubjectID         pulid.ID         `json:"subjectId"         bun:"subject_id,type:VARCHAR(100),nullzero" keel:"subject_id,nullzero"`
+	Input             string   `json:"input" keel:"input,nullzero"`
+	DefinitionVersion int64    `json:"definitionVersion" keel:"definition_version"`
+	PromptVersion     string   `json:"promptVersion" keel:"prompt_version,nullzero"`
+	Model             string   `json:"model" keel:"model,nullzero"`
+	ProviderID        pulid.ID `json:"providerId" keel:"provider_id,nullzero"`
+	Reply             string   `json:"reply" keel:"reply,nullzero"`
 
-	Input             string   `json:"input"             bun:"input,type:TEXT,nullzero" keel:"input,nullzero"`
-	DefinitionVersion int64    `json:"definitionVersion" bun:"definition_version,type:BIGINT,notnull" keel:"definition_version"`
-	PromptVersion     string   `json:"promptVersion"     bun:"prompt_version,type:VARCHAR(100),nullzero" keel:"prompt_version,nullzero"`
-	Model             string   `json:"model"             bun:"model,type:VARCHAR(255),nullzero" keel:"model,nullzero"`
-	ProviderID        pulid.ID `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id,nullzero"`
-	Reply             string   `json:"reply"             bun:"reply,type:TEXT,nullzero" keel:"reply,nullzero"`
+	Actions           []ReplayAction    `json:"actions" keel:"actions,jsonb"`
+	Comparison        *ReplayComparison `json:"comparison" keel:"comparison,jsonb"`
+	OriginalProposals int               `json:"originalProposals" keel:"original_proposals"`
+	ToolCallsUsed     int               `json:"toolCallsUsed" keel:"tool_calls_used"`
 
-	Actions           []ReplayAction    `json:"actions"           bun:"actions,type:JSONB,notnull,default:'[]'" keel:"actions,jsonb"`
-	Comparison        *ReplayComparison `json:"comparison"        bun:"comparison,type:JSONB,nullzero" keel:"comparison,jsonb"`
-	OriginalProposals int               `json:"originalProposals" bun:"original_proposals,type:INTEGER,notnull" keel:"original_proposals"`
-	ToolCallsUsed     int               `json:"toolCallsUsed"     bun:"tool_calls_used,type:INTEGER,notnull" keel:"tool_calls_used"`
+	Checks      *CaseChecks   `json:"checks" keel:"checks,jsonb"`
+	Judge       *JudgeVerdict `json:"judge" keel:"judge,jsonb"`
+	CaseScore   *float64      `json:"caseScore" keel:"case_score"`
+	Fingerprint *Fingerprint  `json:"fingerprint" keel:"fingerprint,jsonb"`
 
-	Checks      *CaseChecks   `json:"checks"      bun:"checks,type:JSONB,nullzero" keel:"checks,jsonb"`
-	Judge       *JudgeVerdict `json:"judge"       bun:"judge,type:JSONB,nullzero" keel:"judge,jsonb"`
-	CaseScore   *float64      `json:"caseScore"   bun:"case_score,type:DOUBLE PRECISION,nullzero" keel:"case_score"`
-	Fingerprint *Fingerprint  `json:"fingerprint" bun:"fingerprint,type:JSONB,nullzero" keel:"fingerprint,jsonb"`
+	SuiteRunID   *pulid.ID `json:"suiteRunId" keel:"suite_run_id"`
+	SuiteOrdinal *int      `json:"suiteOrdinal" keel:"suite_ordinal"`
 
-	SuiteRunID   *pulid.ID `json:"suiteRunId"   bun:"suite_run_id,type:VARCHAR(100),nullzero" keel:"suite_run_id"`
-	SuiteOrdinal *int      `json:"suiteOrdinal" bun:"suite_ordinal,type:INTEGER,nullzero" keel:"suite_ordinal"`
+	WorkflowID        string    `json:"workflowId" keel:"workflow_id,nullzero"`
+	ErrorMessage      string    `json:"errorMessage" keel:"error_message,nullzero"`
+	RequestedByUserID *pulid.ID `json:"requestedByUserId" keel:"requested_by_user_id"`
+	StartedAt         *int64    `json:"startedAt" keel:"started_at"`
+	CompletedAt       *int64    `json:"completedAt" keel:"completed_at"`
 
-	WorkflowID        string    `json:"workflowId"        bun:"workflow_id,type:VARCHAR(255),nullzero" keel:"workflow_id,nullzero"`
-	ErrorMessage      string    `json:"errorMessage"      bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
-	RequestedByUserID *pulid.ID `json:"requestedByUserId" bun:"requested_by_user_id,type:VARCHAR(100),nullzero" keel:"requested_by_user_id"`
-	StartedAt         *int64    `json:"startedAt"         bun:"started_at,type:BIGINT,nullzero" keel:"started_at"`
-	CompletedAt       *int64    `json:"completedAt"       bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+}
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+func (e *Evaluation) BeforeCreate(_ context.Context) error {
+	if e.Status == "" {
+		e.Status = EvaluationStatusPending
+	}
+	if e.Actions == nil {
+		e.Actions = []ReplayAction{}
+	}
+
+	return nil
 }
 
 func (e *Evaluation) Validate(multiErr *errortypes.MultiError) {
@@ -255,27 +259,4 @@ func (e *Evaluation) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 			{Name: "model", Type: domaintypes.FieldTypeText},
 		},
 	}
-}
-
-func (e *Evaluation) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew(EvaluationIDPrefix)
-		}
-		if e.Status == "" {
-			e.Status = EvaluationStatusPending
-		}
-		if e.Actions == nil {
-			e.Actions = []ReplayAction{}
-		}
-		e.CreatedAt = now
-		e.UpdatedAt = now
-	case *bun.UpdateQuery:
-		e.UpdatedAt = now
-	}
-
-	return nil
 }

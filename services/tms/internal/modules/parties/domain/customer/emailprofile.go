@@ -1,43 +1,38 @@
 package customer
 
 import (
-	"context"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type CustomerEmailProfile struct {
-	bun.BaseModel `bun:"table:customer_email_profiles,alias:cem" json:"-"`
-	keel.Table    `                                                       keel:"customer_email_profiles"`
+	keel.Table `                                                       keel:"customer_email_profiles"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:cem_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"  keel:"organization_id,pk,tenant"`
-	CustomerID     pulid.ID `json:"customerId"     bun:"customer_id,pk,notnull,type:VARCHAR(100)"      keel:"customer_id,pk"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:cem_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	CustomerID     pulid.ID `json:"customerId" keel:"customer_id,pk"`
 
-	Subject               string `json:"subject"               bun:"subject,type:VARCHAR(255)"                                                            keel:"subject,nullzero"`
-	Comment               string `json:"comment"               bun:"comment,type:TEXT"                                                                    keel:"comment,nullzero"`
-	ToRecipients          string `json:"toRecipients"          bun:"to_recipients,type:TEXT"                                                              keel:"to_recipients,nullzero"`
-	CCRecipients          string `json:"ccRecipients"          bun:"cc_recipients,type:TEXT,nullzero"                                                     keel:"cc_recipients,nullzero"`
-	BCCRecipients         string `json:"bccRecipients"         bun:"bcc_recipients,type:TEXT,nullzero"                                                    keel:"bcc_recipients,nullzero"`
-	AttachmentName        string `json:"attachmentName"        bun:"attachment_name,type:VARCHAR(255)"                                                    keel:"attachment_name,nullzero"`
-	ReadReceipt           bool   `json:"readReceipt"           bun:"read_receipt,type:BOOLEAN,notnull"                                                    keel:"read_receipt"`
-	IncludeShipmentDetail bool   `json:"includeShipmentDetail" bun:"include_shipment_detail,type:BOOLEAN,notnull"                                         keel:"include_shipment_detail"`
-	Version               int64  `json:"version"               bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt             int64  `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt             int64  `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Subject               string `json:"subject" keel:"subject,nullzero"`
+	Comment               string `json:"comment" keel:"comment,nullzero"`
+	ToRecipients          string `json:"toRecipients" keel:"to_recipients,nullzero"`
+	CCRecipients          string `json:"ccRecipients" keel:"cc_recipients,nullzero"`
+	BCCRecipients         string `json:"bccRecipients" keel:"bcc_recipients,nullzero"`
+	AttachmentName        string `json:"attachmentName" keel:"attachment_name,nullzero"`
+	ReadReceipt           bool   `json:"readReceipt" keel:"read_receipt"`
+	IncludeShipmentDetail bool   `json:"includeShipmentDetail" keel:"include_shipment_detail"`
+	Version               int64  `json:"version" keel:"version,version"`
+	CreatedAt             int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt             int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	// Relationships
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (e *CustomerEmailProfile) GetID() string {
@@ -54,22 +49,6 @@ func (e *CustomerEmailProfile) GetOrganizationID() pulid.ID {
 
 func (e *CustomerEmailProfile) GetBusinessUnitID() pulid.ID {
 	return e.BusinessUnitID
-}
-
-func (e *CustomerEmailProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("cem_")
-		}
-		e.CreatedAt = now
-	case *bun.UpdateQuery:
-		e.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (p *CustomerEmailProfile) Validate(multiErr *errortypes.MultiError) {

@@ -17,106 +17,101 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*AgentProposal)(nil)
 	_ validationframework.TenantedEntity = (*AgentProposal)(nil)
 	_ pagination.CursorEntity            = (*AgentProposal)(nil)
 	_ domaintypes.PostgresSearchable     = (*AgentProposal)(nil)
 )
 
 type AgentProposal struct {
-	bun.BaseModel `bun:"table:agent_proposals,alias:ap" json:"-"`
-	keel.Table    `keel:"agent_proposals"`
+	keel.Table `keel:"agent_proposals"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ap_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ap_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
-
-	RunID        pulid.ID        `json:"runId"        bun:"run_id,type:VARCHAR(100),notnull" keel:"run_id"`
-	ToolName     string          `json:"toolName"     bun:"tool_name,type:VARCHAR(100),notnull" keel:"tool_name"`
-	ToolParams   map[string]any  `json:"toolParams"   bun:"tool_params,type:JSONB,notnull,default:'{}'" keel:"tool_params,jsonb"`
-	Confidence   decimal.Decimal `json:"confidence"   bun:"confidence,type:NUMERIC(5,4),notnull,default:0" keel:"confidence"`
-	Rationale    string          `json:"rationale"    bun:"rationale,type:TEXT,notnull" keel:"rationale"`
-	Evidence     []EvidenceRef   `json:"evidence"     bun:"evidence,type:JSONB,notnull,default:'[]'" keel:"evidence,jsonb"`
-	AutonomyTier AutonomyTier    `json:"autonomyTier" bun:"autonomy_tier,type:agent_autonomy_tier_enum,notnull,default:'Propose'" keel:"autonomy_tier"`
-	Status       ProposalStatus  `json:"status"       bun:"status,type:agent_proposal_status_enum,notnull,default:'Pending'" keel:"status"`
+	RunID        pulid.ID        `json:"runId" keel:"run_id"`
+	ToolName     string          `json:"toolName" keel:"tool_name"`
+	ToolParams   map[string]any  `json:"toolParams" keel:"tool_params,jsonb"`
+	Confidence   decimal.Decimal `json:"confidence" keel:"confidence"`
+	Rationale    string          `json:"rationale" keel:"rationale"`
+	Evidence     []EvidenceRef   `json:"evidence" keel:"evidence,jsonb"`
+	AutonomyTier AutonomyTier    `json:"autonomyTier" keel:"autonomy_tier"`
+	Status       ProposalStatus  `json:"status" keel:"status"`
 
 	// ExecutedAt and ExecutionError record what happened after approval. An
 	// accepted proposal with neither set has been approved but has not run.
 	// ExecutionResult is what a successful run made, when the tool says: the
 	// record and its id, so later turns refer to it and not to the proposal.
-	ExecutedAt      *int64               `json:"executedAt"      bun:"executed_at,type:BIGINT,nullzero" keel:"executed_at"`
-	ExecutionError  string               `json:"executionError"  bun:"execution_error,type:TEXT,nullzero" keel:"execution_error,nullzero"`
-	ExecutionResult *ToolExecutionResult `json:"executionResult" bun:"execution_result,type:JSONB,nullzero" keel:"execution_result,jsonb"`
-	SourceMessageID pulid.ID             `json:"sourceMessageId" bun:"source_message_id,type:VARCHAR(100),nullzero" keel:"source_message_id,nullzero"`
+	ExecutedAt      *int64               `json:"executedAt" keel:"executed_at"`
+	ExecutionError  string               `json:"executionError" keel:"execution_error,nullzero"`
+	ExecutionResult *ToolExecutionResult `json:"executionResult" keel:"execution_result,jsonb"`
+	SourceMessageID pulid.ID             `json:"sourceMessageId" keel:"source_message_id,nullzero"`
 
 	// ExpiresAt is when a pending proposal stops being decidable. A proposal
 	// is a judgement about the world as it was; past this point that world is
 	// gone and the judgement with it.
-	ExpiresAt int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at,nullzero"`
+	ExpiresAt int64 `json:"expiresAt" keel:"expires_at,nullzero"`
 
 	// SimulatedAt and Simulation are set instead of an execution when the
 	// agent was in simulation: what the write would have changed, and when
 	// that was worked out.
-	SimulatedAt *int64          `json:"simulatedAt" bun:"simulated_at,type:BIGINT,nullzero" keel:"simulated_at"`
-	Simulation  *ToolSimulation `json:"simulation"  bun:"simulation,type:JSONB,nullzero" keel:"simulation,jsonb"`
+	SimulatedAt *int64          `json:"simulatedAt" keel:"simulated_at"`
+	Simulation  *ToolSimulation `json:"simulation" keel:"simulation,jsonb"`
 
 	// PlanID and PlanStep tie a proposal to the plan it is a step of and say
 	// where in the order it sits. A proposal decided on its own has neither.
-	PlanID   *pulid.ID `json:"planId"   bun:"plan_id,type:VARCHAR(100),nullzero" keel:"plan_id"`
-	PlanStep int       `json:"planStep" bun:"plan_step,type:INTEGER,notnull" keel:"plan_step"`
+	PlanID   *pulid.ID `json:"planId" keel:"plan_id"`
+	PlanStep int       `json:"planStep" keel:"plan_step"`
 
 	// RemindedAt is when the people who could decide this proposal were told,
 	// a second time, that it was still waiting. Null until they are.
-	RemindedAt *int64 `json:"remindedAt" bun:"reminded_at,type:BIGINT,nullzero" keel:"reminded_at"`
+	RemindedAt *int64 `json:"remindedAt" keel:"reminded_at"`
 
 	// TargetResource, TargetID and TargetVersion pin the record the proposal
 	// would change, as it was when proposed. The executor refuses to run
 	// against a different version: a hold proposed on a shipment that has
 	// since been delivered is not the change anyone approved.
-	TargetResource string   `json:"targetResource" bun:"target_resource,type:VARCHAR(100),nullzero" keel:"target_resource,nullzero"`
-	TargetID       pulid.ID `json:"targetId"       bun:"target_id,type:VARCHAR(100),nullzero" keel:"target_id,nullzero"`
-	TargetVersion  int64    `json:"targetVersion"  bun:"target_version,type:BIGINT,nullzero" keel:"target_version,nullzero"`
+	TargetResource string   `json:"targetResource" keel:"target_resource,nullzero"`
+	TargetID       pulid.ID `json:"targetId" keel:"target_id,nullzero"`
+	TargetVersion  int64    `json:"targetVersion" keel:"target_version,nullzero"`
 
-	Tainted       bool        `json:"tainted"       bun:"tainted,type:BOOLEAN,notnull,default:false" keel:"tainted"`
-	Taint         *RunTaint   `json:"taint"         bun:"taint,type:JSONB,nullzero" keel:"taint,jsonb"`
-	EgressClass   EgressClass `json:"egressClass"   bun:"egress_class,type:VARCHAR(30),nullzero" keel:"egress_class,nullzero"`
-	HeldBy        []string    `json:"heldBy"        bun:"held_by,type:TEXT[],array,notnull" keel:"held_by"`
-	MoneyMinor    *int64      `json:"moneyMinor"    bun:"money_minor,type:BIGINT,nullzero" keel:"money_minor"`
-	MoneyCurrency string      `json:"moneyCurrency" bun:"money_currency,type:VARCHAR(3),nullzero" keel:"money_currency,nullzero"`
+	Tainted       bool        `json:"tainted" keel:"tainted"`
+	Taint         *RunTaint   `json:"taint" keel:"taint,jsonb"`
+	EgressClass   EgressClass `json:"egressClass" keel:"egress_class,nullzero"`
+	HeldBy        []string    `json:"heldBy" keel:"held_by"`
+	MoneyMinor    *int64      `json:"moneyMinor" keel:"money_minor"`
+	MoneyCurrency string      `json:"moneyCurrency" keel:"money_currency,nullzero"`
 
 	// TraceID and SpanID are the tool span the write was decided in, so a
 	// decision made later links back to it; StepKey is the ledger step that
 	// raised it. ExecutedByUserID and ExecutedTargetVersion say who the write
 	// ran as and what version it left the record at.
-	TraceID               string   `json:"traceId"               bun:"trace_id,type:VARCHAR(32),nullzero" keel:"trace_id,nullzero"`
-	SpanID                string   `json:"spanId"                bun:"span_id,type:VARCHAR(16),nullzero" keel:"span_id,nullzero"`
-	StepKey               string   `json:"stepKey"               bun:"step_key,type:VARCHAR(120),nullzero" keel:"step_key,nullzero"`
-	ExecutedByUserID      pulid.ID `json:"executedByUserId"      bun:"executed_by_user_id,type:VARCHAR(100),nullzero" keel:"executed_by_user_id,nullzero"`
-	ExecutedTargetVersion *int64   `json:"executedTargetVersion" bun:"executed_target_version,type:BIGINT,nullzero" keel:"executed_target_version"`
+	TraceID               string   `json:"traceId" keel:"trace_id,nullzero"`
+	SpanID                string   `json:"spanId" keel:"span_id,nullzero"`
+	StepKey               string   `json:"stepKey" keel:"step_key,nullzero"`
+	ExecutedByUserID      pulid.ID `json:"executedByUserId" keel:"executed_by_user_id,nullzero"`
+	ExecutedTargetVersion *int64   `json:"executedTargetVersion" keel:"executed_target_version"`
 
 	// ScriptStepKey is the ledger step of the script that wrote this proposal
 	// as an intent; empty for a write the model called itself.
-	ScriptStepKey string `json:"scriptStepKey" bun:"script_step_key,type:VARCHAR(120),nullzero" keel:"script_step_key,nullzero"`
+	ScriptStepKey string `json:"scriptStepKey" keel:"script_step_key,nullzero"`
 
 	// PendingModifications is the wording a person changed on the proposal
 	// and has not yet approved with, keyed by parameter, kept so the edit
 	// survives a reload. Set only while the proposal is pending; deciding it
 	// clears it, and the decision keeps what was approved.
-	PendingModifications map[string]any `json:"pendingModifications" bun:"pending_modifications,type:JSONB,nullzero" keel:"pending_modifications,jsonb,nullzero"`
+	PendingModifications map[string]any `json:"pendingModifications" keel:"pending_modifications,jsonb,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Run          *AgentRun            `bun:"rel:belongs-to,join:run_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" json:"-" keel:"belongs:run_id"`
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"                                                                   json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"                                                                    json:"-"`
+	Run          *AgentRun            `json:"-" keel:"belongs:run_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 // DefaultProposalTTL is how long a proposal waits for a decision before it
@@ -203,31 +198,22 @@ func (p *AgentProposal) GetPostgresSearchConfig() domaintypes.PostgresSearchConf
 	}
 }
 
-func (p *AgentProposal) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (p *AgentProposal) BeforeCreate(ctx context.Context) error {
+	if p.AutonomyTier == "" {
+		p.AutonomyTier = TierPropose
+	}
+	if p.Status == "" {
+		p.Status = ProposalStatusPending
+	}
 	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("ap_")
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-		if p.ExpiresAt == 0 {
-			p.ExpiresAt = now + int64(DefaultProposalTTL.Seconds())
-		}
-		if p.HeldBy == nil {
-			p.HeldBy = []string{}
-		}
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
+	if p.ExpiresAt == 0 {
+		p.ExpiresAt = now + int64(DefaultProposalTTL.Seconds())
+	}
+	if p.HeldBy == nil {
+		p.HeldBy = []string{}
 	}
 
 	return nil
-}
-
-func (p *AgentProposal) BeforeCreate(ctx context.Context) error {
-	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (*AgentProposal) IsPendingDecision() {}

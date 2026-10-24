@@ -11,9 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -25,27 +23,25 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*Jurisdiction)(nil)
-	_ pagination.CursorEntity   = (*Jurisdiction)(nil)
+	_ pagination.CursorEntity = (*Jurisdiction)(nil)
 )
 
 type Jurisdiction struct {
-	bun.BaseModel `bun:"table:ifta_jurisdictions,alias:ifj" json:"-"`
-	keel.Table    `keel:"ifta_jurisdictions"`
+	keel.Table `keel:"ifta_jurisdictions"`
 
-	ID           pulid.ID           `json:"id"           bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ifj_"`
-	CountryCode  string             `json:"countryCode"  bun:"country_code,type:CHAR(2),notnull" keel:"country_code"`
-	Code         string             `json:"code"         bun:"code,type:VARCHAR(2),notnull" keel:"code"`
-	Name         string             `json:"name"         bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	UsStateID    *pulid.ID          `json:"usStateId"    bun:"us_state_id,type:VARCHAR(100),nullzero" keel:"us_state_id"`
-	IsIftaMember bool               `json:"isIftaMember" bun:"is_ifta_member,type:BOOLEAN,notnull" keel:"is_ifta_member"`
-	HasSurcharge bool               `json:"hasSurcharge" bun:"has_surcharge,type:BOOLEAN,notnull" keel:"has_surcharge"`
-	SortOrder    int                `json:"sortOrder"    bun:"sort_order,type:INTEGER,notnull,default:0" keel:"sort_order"`
-	Status       JurisdictionStatus `json:"status"       bun:"status,type:ifta_jurisdiction_status_enum,notnull,default:'Active'" keel:"status"`
-	CreatedAt    int64              `json:"createdAt"    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt    int64              `json:"updatedAt"    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID           pulid.ID           `json:"id" keel:"id,pk,autoid:ifj_"`
+	CountryCode  string             `json:"countryCode" keel:"country_code"`
+	Code         string             `json:"code" keel:"code"`
+	Name         string             `json:"name" keel:"name"`
+	UsStateID    *pulid.ID          `json:"usStateId" keel:"us_state_id"`
+	IsIftaMember bool               `json:"isIftaMember" keel:"is_ifta_member"`
+	HasSurcharge bool               `json:"hasSurcharge" keel:"has_surcharge"`
+	SortOrder    int                `json:"sortOrder" keel:"sort_order"`
+	Status       JurisdictionStatus `json:"status" keel:"status"`
+	CreatedAt    int64              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	UsState *usstate.UsState `json:"usState,omitempty" bun:"rel:belongs-to,join:us_state_id=id" keel:"belongs:us_state_id"`
+	UsState *usstate.UsState `json:"usState,omitempty" keel:"belongs:us_state_id"`
 }
 
 func JurisdictionKey(countryCode, code string) string {
@@ -111,26 +107,10 @@ func (j *Jurisdiction) GetCreatedAt() int64 { return j.CreatedAt }
 
 func (j *Jurisdiction) GetTableName() string { return "ifta_jurisdictions" }
 
-func (j *Jurisdiction) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if j.ID.IsNil() {
-			j.ID = pulid.MustNew("ifj_")
-		}
-		if j.Status == "" {
-			j.Status = JurisdictionStatusActive
-		}
-		j.CreatedAt = now
-		j.UpdatedAt = now
-	case *bun.UpdateQuery:
-		j.UpdatedAt = now
+func (j *Jurisdiction) BeforeCreate(ctx context.Context) error {
+	if j.Status == "" {
+		j.Status = JurisdictionStatusActive
 	}
 
 	return nil
-}
-
-func (j *Jurisdiction) BeforeCreate(ctx context.Context) error {
-	return j.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

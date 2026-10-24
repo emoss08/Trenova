@@ -1,7 +1,6 @@
 package conversation
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -12,9 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -26,7 +23,6 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*QueuedMessage)(nil)
 	_ validationframework.TenantedEntity = (*QueuedMessage)(nil)
 )
 
@@ -49,26 +45,25 @@ func (r *QueuedRequest) Directed() bool {
 }
 
 type QueuedMessage struct {
-	bun.BaseModel `bun:"table:assistant_queued_messages,alias:aqm" json:"-"`
-	keel.Table    `keel:"assistant_queued_messages"`
+	keel.Table `keel:"assistant_queued_messages"`
 
-	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:aqm_"`
-	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	ThreadID       pulid.ID       `json:"threadId"       bun:"thread_id,type:VARCHAR(100),notnull" keel:"thread_id"`
-	UserID         pulid.ID       `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
-	Content        string         `json:"content"        bun:"content,type:TEXT,notnull" keel:"content"`
-	Request        *QueuedRequest `json:"request"        bun:"request,type:JSONB,notnull" keel:"request,jsonb"`
-	Position       int64          `json:"position"       bun:"position,type:BIGINT,notnull" keel:"position"`
-	Steer          bool           `json:"steer"          bun:"steer,type:BOOLEAN,notnull,default:false" keel:"steer"`
-	Version        int64          `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt      int64          `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:aqm_"`
+	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	ThreadID       pulid.ID       `json:"threadId" keel:"thread_id"`
+	UserID         pulid.ID       `json:"userId" keel:"user_id"`
+	Content        string         `json:"content" keel:"content"`
+	Request        *QueuedRequest `json:"request" keel:"request,jsonb"`
+	Position       int64          `json:"position" keel:"position"`
+	Steer          bool           `json:"steer" keel:"steer"`
+	Version        int64          `json:"version" keel:"version,version"`
+	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	User         *tenant.User         `json:"-" bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
-	Thread       *Thread              `json:"-" bun:"rel:belongs-to,join:thread_id=id" keel:"belongs:thread_id"`
+	Organization *tenant.Organization `json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	User         *tenant.User         `json:"-" keel:"belongs:user_id"`
+	Thread       *Thread              `json:"-" keel:"belongs:thread_id"`
 }
 
 func (m *QueuedMessage) Normalize() {
@@ -114,25 +109,6 @@ func ValidateQueuedContent(field, content string, multiErr *errortypes.MultiErro
 		multiErr.Add(field, errortypes.ErrInvalid,
 			fmt.Sprintf("A message can be at most %d characters", MaxQueuedContentRunes))
 	}
-}
-
-func (m *QueuedMessage) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if m.ID.IsNil() {
-			m.ID = pulid.MustNew(QueuedMessageIDPrefix)
-		}
-		if m.CreatedAt == 0 {
-			m.CreatedAt = now
-		}
-		m.UpdatedAt = now
-	case *bun.UpdateQuery:
-		m.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (m *QueuedMessage) GetID() pulid.ID { return m.ID }

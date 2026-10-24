@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -76,17 +75,10 @@ func (r *pushSubscriptionRepository) Save(
 			return entity, nil
 		}
 
-		updated, err := listquery.UpdateReturning(
-			ctx,
-			db,
-			p.Where(
-				keel.Raw("md5(?) = md5(?)", p.Endpoint, req.Endpoint),
-				p.UserID.Eq(req.TenantInfo.UserID),
-			),
-			p.P256dh.To(req.P256dh),
-			p.Auth.To(req.Auth),
-			p.UserAgent.To(req.UserAgent),
-		)
+		updated, err := p.Where(
+			keel.Raw("md5(?) = md5(?)", p.Endpoint, req.Endpoint),
+			p.UserID.Eq(req.TenantInfo.UserID),
+		).UpdateReturning(ctx, db, p.P256dh.To(req.P256dh), p.Auth.To(req.Auth), p.UserAgent.To(req.UserAgent))
 		if err != nil {
 			return nil, fmt.Errorf("save push subscription: %w", err)
 		}

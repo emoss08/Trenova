@@ -1,7 +1,6 @@
 package shipmentbrief
 
 import (
-	"context"
 	"slices"
 	"strings"
 
@@ -12,9 +11,7 @@ import (
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -87,45 +84,24 @@ func (f Facts) OpenIssues() int {
 	return f.Late + f.Uncovered + f.OpenSuggestions
 }
 
-var _ bun.BeforeAppendModelHook = (*Brief)(nil)
-
 type Brief struct {
-	bun.BaseModel `bun:"table:shipment_board_briefs,alias:sbb" json:"-"`
-	keel.Table    `keel:"shipment_board_briefs"`
+	keel.Table `keel:"shipment_board_briefs"`
 
-	ID              pulid.ID           `json:"id"              bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:sbb_"`
-	BusinessUnitID  pulid.ID           `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID           `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	BriefDate       string             `json:"briefDate"       bun:"brief_date,type:VARCHAR(10),notnull" keel:"brief_date"`
-	Generation      int                `json:"generation"      bun:"generation,type:INTEGER,notnull" keel:"generation"`
-	Trigger         Trigger            `json:"trigger"         bun:"trigger,type:VARCHAR(20),notnull" keel:"trigger"`
-	Segments        []Segment          `json:"segments"        bun:"segments,type:JSONB,notnull,default:'[]'" keel:"segments,jsonb"`
-	Wording         map[string]Wording `json:"wording"         bun:"wording,type:JSONB,notnull,default:'{}'" keel:"wording,jsonb"`
-	Facts           Facts              `json:"facts"           bun:"facts,type:JSONB,notnull,default:'{}'" keel:"facts,jsonb"`
-	OpenIssues      int                `json:"openIssues"      bun:"open_issues,type:INTEGER,notnull,default:0" keel:"open_issues"`
-	Narrated        bool               `json:"narrated"        bun:"narrated,type:BOOLEAN,notnull,default:false" keel:"narrated"`
-	ModelIdentifier string             `json:"modelIdentifier" bun:"model_identifier,type:VARCHAR(255),nullzero" keel:"model_identifier,nullzero"`
-	GeneratedAt     int64              `json:"generatedAt"     bun:"generated_at,type:BIGINT,notnull" keel:"generated_at"`
-	CreatedAt       int64              `json:"createdAt"       bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
-	UpdatedAt       int64              `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
-}
-
-func (b *Brief) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if b.ID.IsNil() {
-			b.ID = pulid.MustNew("sbb_")
-		}
-		if b.CreatedAt == 0 {
-			b.CreatedAt = now
-		}
-		b.UpdatedAt = now
-	case *bun.UpdateQuery:
-		b.UpdatedAt = now
-	}
-
-	return nil
+	ID              pulid.ID           `json:"id" keel:"id,pk,autoid:sbb_"`
+	BusinessUnitID  pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BriefDate       string             `json:"briefDate" keel:"brief_date"`
+	Generation      int                `json:"generation" keel:"generation"`
+	Trigger         Trigger            `json:"trigger" keel:"trigger"`
+	Segments        []Segment          `json:"segments" keel:"segments,jsonb"`
+	Wording         map[string]Wording `json:"wording" keel:"wording,jsonb"`
+	Facts           Facts              `json:"facts" keel:"facts,jsonb"`
+	OpenIssues      int                `json:"openIssues" keel:"open_issues"`
+	Narrated        bool               `json:"narrated" keel:"narrated"`
+	ModelIdentifier string             `json:"modelIdentifier" keel:"model_identifier,nullzero"`
+	GeneratedAt     int64              `json:"generatedAt" keel:"generated_at"`
+	CreatedAt       int64              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt       int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (b *Brief) Normalize() {

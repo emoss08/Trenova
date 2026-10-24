@@ -10,13 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -34,79 +31,75 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DetentionPolicy)(nil)
 	_ validationframework.TenantedEntity = (*DetentionPolicy)(nil)
 	_ domaintypes.PostgresSearchable     = (*DetentionPolicy)(nil)
 )
 
 type DetentionPolicy struct {
-	bun.BaseModel             `bun:"table:detention_policies,alias:dtp" json:"-"`
-	keel.Table                `keel:"detention_policies"`
-	pagination.CursorValueSet `bun:",embed"                             json:"-"`
+	keel.Table     `keel:"detention_policies"`
+	ID             pulid.ID     `json:"id" keel:"id,pk,autoid:dtp_"`
+	BusinessUnitID pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name           string       `json:"name" keel:"name"`
+	Code           string       `json:"code" keel:"code"`
+	Description    string       `json:"description" keel:"description,nullzero"`
+	Status         PolicyStatus `json:"status" keel:"status"`
 
-	ID             pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dtp_"`
-	BusinessUnitID pulid.ID     `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID     `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	Name           string       `json:"name"           bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Code           string       `json:"code"           bun:"code,type:VARCHAR(50),notnull" keel:"code"`
-	Description    string       `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Status         PolicyStatus `json:"status"         bun:"status,type:detention_policy_status_enum,notnull,default:'Draft'" keel:"status"`
+	IsOrgDefault     bool       `json:"isOrgDefault" keel:"is_org_default"`
+	Priority         int16      `json:"priority" keel:"priority"`
+	SpecificityScore int32      `json:"specificityScore" keel:"specificity_score"`
+	CustomerID       *pulid.ID  `json:"customerId" keel:"customer_id"`
+	LocationID       *pulid.ID  `json:"locationId" keel:"location_id"`
+	ShipmentTypeIDs  []pulid.ID `json:"shipmentTypeIds" keel:"shipment_type_ids,jsonb,nullzero"`
+	ServiceTypeIDs   []pulid.ID `json:"serviceTypeIds" keel:"service_type_ids,jsonb,nullzero"`
+	CommodityIDs     []pulid.ID `json:"commodityIds" keel:"commodity_ids,jsonb,nullzero"`
 
-	IsOrgDefault     bool       `json:"isOrgDefault"     bun:"is_org_default,type:BOOLEAN,notnull" keel:"is_org_default"`
-	Priority         int16      `json:"priority"         bun:"priority,type:SMALLINT,notnull" keel:"priority"`
-	SpecificityScore int32      `json:"specificityScore" bun:"specificity_score,type:INTEGER,notnull" keel:"specificity_score"`
-	CustomerID       *pulid.ID  `json:"customerId"       bun:"customer_id,type:VARCHAR(100),nullzero" keel:"customer_id"`
-	LocationID       *pulid.ID  `json:"locationId"       bun:"location_id,type:VARCHAR(100),nullzero" keel:"location_id"`
-	ShipmentTypeIDs  []pulid.ID `json:"shipmentTypeIds"  bun:"shipment_type_ids,type:JSONB,nullzero" keel:"shipment_type_ids,jsonb,nullzero"`
-	ServiceTypeIDs   []pulid.ID `json:"serviceTypeIds"   bun:"service_type_ids,type:JSONB,nullzero" keel:"service_type_ids,jsonb,nullzero"`
-	CommodityIDs     []pulid.ID `json:"commodityIds"     bun:"commodity_ids,type:JSONB,nullzero" keel:"commodity_ids,jsonb,nullzero"`
+	StopTypes                  []shipment.StopType `json:"stopTypes" keel:"stop_types,jsonb,nullzero"`
+	AppointmentStopsOnly       bool                `json:"appointmentStopsOnly" keel:"appointment_stops_only"`
+	EffectiveStartDate         *int64              `json:"effectiveStartDate" keel:"effective_start_date"`
+	EffectiveEndDate           *int64              `json:"effectiveEndDate" keel:"effective_end_date"`
+	ClockStartBasis            ClockStartBasis     `json:"clockStartBasis" keel:"clock_start_basis"`
+	LateArrivalRule            LateArrivalRule     `json:"lateArrivalRule" keel:"late_arrival_rule"`
+	LateArrivalGraceMinutes    int16               `json:"lateArrivalGraceMinutes" keel:"late_arrival_grace_minutes"`
+	BillingFreeMinutes         int32               `json:"billingFreeMinutes" keel:"billing_free_minutes"`
+	PickupFreeMinutes          *int32              `json:"pickupFreeMinutes" keel:"pickup_free_minutes"`
+	DeliveryFreeMinutes        *int32              `json:"deliveryFreeMinutes" keel:"delivery_free_minutes"`
+	PayFreeMinutes             *int32              `json:"payFreeMinutes" keel:"pay_free_minutes"`
+	MinimumBillableMinutes     int32               `json:"minimumBillableMinutes" keel:"minimum_billable_minutes"`
+	BillingIncrementMinutes    int16               `json:"billingIncrementMinutes" keel:"billing_increment_minutes"`
+	RoundingMode               RoundingMode        `json:"roundingMode" keel:"rounding_mode"`
+	RateSource                 RateSource          `json:"rateSource" keel:"rate_source"`
+	AccessorialChargeID        pulid.ID            `json:"accessorialChargeId" keel:"accessorial_charge_id"`
+	MaxBillableMinutesPerStop  *int32              `json:"maxBillableMinutesPerStop" keel:"max_billable_minutes_per_stop"`
+	MaxChargePerStop           decimal.NullDecimal `json:"maxChargePerStop" keel:"max_charge_per_stop"`
+	MaxChargePerDay            decimal.NullDecimal `json:"maxChargePerDay" keel:"max_charge_per_day"`
+	MaxChargePerShipment       decimal.NullDecimal `json:"maxChargePerShipment" keel:"max_charge_per_shipment"`
+	DayBoundaryMode            CapScope            `json:"dayBoundaryMode" keel:"day_boundary_mode"`
+	ConvertToLayoverAtMinutes  *int32              `json:"convertToLayoverAtMinutes" keel:"convert_to_layover_at_minutes"`
+	LayoverAccessorialChargeID *pulid.ID           `json:"layoverAccessorialChargeId" keel:"layover_accessorial_charge_id"`
 
-	StopTypes                  []shipment.StopType `json:"stopTypes"                  bun:"stop_types,type:JSONB,nullzero" keel:"stop_types,jsonb,nullzero"`
-	AppointmentStopsOnly       bool                `json:"appointmentStopsOnly"       bun:"appointment_stops_only,type:BOOLEAN,notnull" keel:"appointment_stops_only"`
-	EffectiveStartDate         *int64              `json:"effectiveStartDate"         bun:"effective_start_date,type:BIGINT,nullzero" keel:"effective_start_date"`
-	EffectiveEndDate           *int64              `json:"effectiveEndDate"           bun:"effective_end_date,type:BIGINT,nullzero" keel:"effective_end_date"`
-	ClockStartBasis            ClockStartBasis     `json:"clockStartBasis"            bun:"clock_start_basis,type:detention_clock_start_basis_enum,notnull,default:'LaterOfArrivalOrAppointment'" keel:"clock_start_basis"`
-	LateArrivalRule            LateArrivalRule     `json:"lateArrivalRule"            bun:"late_arrival_rule,type:detention_late_arrival_rule_enum,notnull,default:'NoEffect'" keel:"late_arrival_rule"`
-	LateArrivalGraceMinutes    int16               `json:"lateArrivalGraceMinutes"    bun:"late_arrival_grace_minutes,type:SMALLINT,notnull" keel:"late_arrival_grace_minutes"`
-	BillingFreeMinutes         int32               `json:"billingFreeMinutes"         bun:"billing_free_minutes,type:INTEGER,notnull,default:120" keel:"billing_free_minutes"`
-	PickupFreeMinutes          *int32              `json:"pickupFreeMinutes"          bun:"pickup_free_minutes,type:INTEGER,nullzero" keel:"pickup_free_minutes"`
-	DeliveryFreeMinutes        *int32              `json:"deliveryFreeMinutes"        bun:"delivery_free_minutes,type:INTEGER,nullzero" keel:"delivery_free_minutes"`
-	PayFreeMinutes             *int32              `json:"payFreeMinutes"             bun:"pay_free_minutes,type:INTEGER,nullzero" keel:"pay_free_minutes"`
-	MinimumBillableMinutes     int32               `json:"minimumBillableMinutes"     bun:"minimum_billable_minutes,type:INTEGER,notnull" keel:"minimum_billable_minutes"`
-	BillingIncrementMinutes    int16               `json:"billingIncrementMinutes"    bun:"billing_increment_minutes,type:SMALLINT,notnull,default:15" keel:"billing_increment_minutes"`
-	RoundingMode               RoundingMode        `json:"roundingMode"               bun:"rounding_mode,type:detention_rounding_mode_enum,notnull,default:'Up'" keel:"rounding_mode"`
-	RateSource                 RateSource          `json:"rateSource"                 bun:"rate_source,type:detention_rate_source_enum,notnull,default:'Accessorial'" keel:"rate_source"`
-	AccessorialChargeID        pulid.ID            `json:"accessorialChargeId"        bun:"accessorial_charge_id,type:VARCHAR(100),notnull" keel:"accessorial_charge_id"`
-	MaxBillableMinutesPerStop  *int32              `json:"maxBillableMinutesPerStop"  bun:"max_billable_minutes_per_stop,type:INTEGER,nullzero" keel:"max_billable_minutes_per_stop"`
-	MaxChargePerStop           decimal.NullDecimal `json:"maxChargePerStop"           bun:"max_charge_per_stop,type:NUMERIC(19,4),nullzero" keel:"max_charge_per_stop"`
-	MaxChargePerDay            decimal.NullDecimal `json:"maxChargePerDay"            bun:"max_charge_per_day,type:NUMERIC(19,4),nullzero" keel:"max_charge_per_day"`
-	MaxChargePerShipment       decimal.NullDecimal `json:"maxChargePerShipment"       bun:"max_charge_per_shipment,type:NUMERIC(19,4),nullzero" keel:"max_charge_per_shipment"`
-	DayBoundaryMode            CapScope            `json:"dayBoundaryMode"            bun:"day_boundary_mode,type:detention_cap_scope_enum,notnull,default:'PerStop'" keel:"day_boundary_mode"`
-	ConvertToLayoverAtMinutes  *int32              `json:"convertToLayoverAtMinutes"  bun:"convert_to_layover_at_minutes,type:INTEGER,nullzero" keel:"convert_to_layover_at_minutes"`
-	LayoverAccessorialChargeID *pulid.ID           `json:"layoverAccessorialChargeId" bun:"layover_accessorial_charge_id,type:VARCHAR(100),nullzero" keel:"layover_accessorial_charge_id"`
+	NotificationRequirement     NotificationRequirement `json:"notificationRequirement" keel:"notification_requirement"`
+	NotificationLeadMinutes     int16                   `json:"notificationLeadMinutes" keel:"notification_lead_minutes"`
+	NotificationDeadlineMinutes int16                   `json:"notificationDeadlineMinutes" keel:"notification_deadline_minutes"`
+	UnnotifiedBehavior          UnnotifiedBehavior      `json:"unnotifiedBehavior" keel:"unnotified_behavior"`
+	AutoSendNotice              bool                    `json:"autoSendNotice" keel:"auto_send_notice"`
+	AttachNoticePDF             bool                    `json:"attachNoticePdf" keel:"attach_notice_pdf"`
+	SendDepartureSummary        bool                    `json:"sendDepartureSummary" keel:"send_departure_summary"`
+	RequireApprovalOverAmount   decimal.NullDecimal     `json:"requireApprovalOverAmount" keel:"require_approval_over_amount"`
+	AutoApproveUnderAmount      decimal.NullDecimal     `json:"autoApproveUnderAmount" keel:"auto_approve_under_amount"`
+	Currency                    string                  `json:"currency" keel:"currency"`
+	Comments                    string                  `json:"comments" keel:"comments,nullzero"`
 
-	NotificationRequirement     NotificationRequirement `json:"notificationRequirement"     bun:"notification_requirement,type:detention_notification_requirement_enum,notnull,default:'None'" keel:"notification_requirement"`
-	NotificationLeadMinutes     int16                   `json:"notificationLeadMinutes"     bun:"notification_lead_minutes,type:SMALLINT,notnull,default:30" keel:"notification_lead_minutes"`
-	NotificationDeadlineMinutes int16                   `json:"notificationDeadlineMinutes" bun:"notification_deadline_minutes,type:SMALLINT,notnull" keel:"notification_deadline_minutes"`
-	UnnotifiedBehavior          UnnotifiedBehavior      `json:"unnotifiedBehavior"          bun:"unnotified_behavior,type:detention_unnotified_behavior_enum,notnull,default:'Bill'" keel:"unnotified_behavior"`
-	AutoSendNotice              bool                    `json:"autoSendNotice"              bun:"auto_send_notice,type:BOOLEAN,notnull" keel:"auto_send_notice"`
-	AttachNoticePDF             bool                    `json:"attachNoticePdf"             bun:"attach_notice_pdf,type:BOOLEAN,notnull" keel:"attach_notice_pdf"`
-	SendDepartureSummary        bool                    `json:"sendDepartureSummary"        bun:"send_departure_summary,type:BOOLEAN,notnull" keel:"send_departure_summary"`
-	RequireApprovalOverAmount   decimal.NullDecimal     `json:"requireApprovalOverAmount"   bun:"require_approval_over_amount,type:NUMERIC(19,4),nullzero" keel:"require_approval_over_amount"`
-	AutoApproveUnderAmount      decimal.NullDecimal     `json:"autoApproveUnderAmount"      bun:"auto_approve_under_amount,type:NUMERIC(19,4),nullzero" keel:"auto_approve_under_amount"`
-	Currency                    string                  `json:"currency"                    bun:"currency,type:VARCHAR(3),notnull,default:'USD'" keel:"currency"`
-	Comments                    string                  `json:"comments"                    bun:"comments,type:TEXT,nullzero" keel:"comments,nullzero"`
+	Version      int64  `json:"version" keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-" keel:"rank,computed"`
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
-
-	BusinessUnit      *tenant.BusinessUnit                 `json:"-"                           bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization      *tenant.Organization                 `json:"-"                           bun:"rel:belongs-to,join:organization_id=id"`
-	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" bun:"rel:belongs-to,join:accessorial_charge_id=id" keel:"belongs:accessorial_charge_id"`
-	Tiers             []*DetentionPolicyTier               `json:"tiers,omitempty"             bun:"rel:has-many,join:id=detention_policy_id" keel:"many:detention_policy_id"`
+	BusinessUnit      *tenant.BusinessUnit                 `json:"-"`
+	Organization      *tenant.Organization                 `json:"-"`
+	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" keel:"belongs:accessorial_charge_id"`
+	Tiers             []*DetentionPolicyTier               `json:"tiers,omitempty" keel:"many:detention_policy_id"`
 }
 
 func (p *DetentionPolicy) GetID() pulid.ID { return p.ID }
@@ -501,9 +494,66 @@ func (p *DetentionPolicy) validateScope(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (p *DetentionPolicy) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (p *DetentionPolicy) BeforeCreate(ctx context.Context) error {
+	if p.Status == "" {
+		p.Status = PolicyStatusDraft
+	}
+	if p.ClockStartBasis == "" {
+		p.ClockStartBasis = ClockStartBasisLaterOfArrivalOrAppointment
+	}
+	if p.LateArrivalRule == "" {
+		p.LateArrivalRule = LateArrivalRuleNoEffect
+	}
+	if p.BillingFreeMinutes == 0 {
+		p.BillingFreeMinutes = 120
+	}
+	if p.BillingIncrementMinutes == 0 {
+		p.BillingIncrementMinutes = 15
+	}
+	if p.RoundingMode == "" {
+		p.RoundingMode = RoundingModeUp
+	}
+	if p.RateSource == "" {
+		p.RateSource = RateSourceAccessorial
+	}
+	if p.DayBoundaryMode == "" {
+		p.DayBoundaryMode = CapScopePerStop
+	}
+	if p.NotificationRequirement == "" {
+		p.NotificationRequirement = NotificationRequirementNone
+	}
+	if p.NotificationLeadMinutes == 0 {
+		p.NotificationLeadMinutes = 30
+	}
+	if p.UnnotifiedBehavior == "" {
+		p.UnnotifiedBehavior = UnnotifiedBehaviorBill
+	}
+	if p.Currency == "" {
+		p.Currency = "USD"
+	}
+	if p.RoundingMode == RoundingModeExact {
+		p.BillingIncrementMinutes = 0
+	}
+	if p.RateSource != RateSourceTiers {
+		p.Tiers = nil
+	}
+	if p.ConvertToLayoverAtMinutes == nil {
+		p.LayoverAccessorialChargeID = nil
+	}
+	if p.IsOrgDefault {
+		p.CustomerID = nil
+		p.LocationID = nil
+		p.ShipmentTypeIDs = nil
+		p.ServiceTypeIDs = nil
+		p.CommodityIDs = nil
+		p.StopTypes = nil
+	}
+	p.SpecificityScore = p.ComputeSpecificity()
 
+	return nil
+}
+
+func (p *DetentionPolicy) BeforeUpdate(ctx context.Context) error {
 	if p.Currency == "" {
 		p.Currency = "USD"
 	}
@@ -527,49 +577,7 @@ func (p *DetentionPolicy) BeforeAppendModel(_ context.Context, query bun.Query) 
 		p.CommodityIDs = nil
 		p.StopTypes = nil
 	}
-
 	p.SpecificityScore = p.ComputeSpecificity()
 
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("dtp_")
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-
 	return nil
-}
-
-func (p *DetentionPolicy) BeforeCreate(ctx context.Context) error {
-	if p.Status == "" {
-		p.Status = PolicyStatusDraft
-	}
-	if p.ClockStartBasis == "" {
-		p.ClockStartBasis = ClockStartBasisLaterOfArrivalOrAppointment
-	}
-	if p.LateArrivalRule == "" {
-		p.LateArrivalRule = LateArrivalRuleNoEffect
-	}
-	if p.RoundingMode == "" {
-		p.RoundingMode = RoundingModeUp
-	}
-	if p.RateSource == "" {
-		p.RateSource = RateSourceAccessorial
-	}
-	if p.NotificationRequirement == "" {
-		p.NotificationRequirement = NotificationRequirementNone
-	}
-	if p.UnnotifiedBehavior == "" {
-		p.UnnotifiedBehavior = UnnotifiedBehaviorBill
-	}
-
-	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}
-
-func (p *DetentionPolicy) BeforeUpdate(ctx context.Context) error {
-	return p.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
 }

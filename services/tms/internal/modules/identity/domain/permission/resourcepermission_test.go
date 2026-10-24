@@ -4,46 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
-func TestResourcePermission_BeforeAppendModel(t *testing.T) {
+func TestResourcePermission_BeforeCreate(t *testing.T) {
 	t.Parallel()
-
-	t.Run("insert sets ID and timestamps", func(t *testing.T) {
-		t.Parallel()
-
-		rp := &ResourcePermission{
-			Operations: []Operation{OpCreate},
-		}
-		require.True(t, rp.ID.IsNil())
-
-		err := rp.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, rp.ID.IsNil())
-		assert.True(t, strings.HasPrefix(string(rp.ID), "rp_"))
-		assert.NotZero(t, rp.CreatedAt)
-		assert.NotZero(t, rp.UpdatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("rp_")
-		rp := &ResourcePermission{
-			ID:         existingID,
-			Operations: []Operation{OpRead},
-		}
-
-		err := rp.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, rp.ID)
-	})
 
 	t.Run("insert stores what was granted, once each and in order", func(t *testing.T) {
 		t.Parallel()
@@ -52,37 +18,10 @@ func TestResourcePermission_BeforeAppendModel(t *testing.T) {
 			Operations: []Operation{OpUpdate, OpApprove, OpUpdate},
 		}
 
-		err := rp.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+		err := rp.BeforeCreate(t.Context())
 		require.NoError(t, err)
 
 		assert.Equal(t, []Operation{OpApprove, OpUpdate}, rp.Operations)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		rp := &ResourcePermission{
-			Operations: []Operation{OpRead},
-		}
-
-		err := rp.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, rp.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		rp := &ResourcePermission{
-			Operations: []Operation{OpRead},
-		}
-
-		err := rp.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, rp.CreatedAt)
-		assert.NotZero(t, rp.UpdatedAt)
 	})
 
 	t.Run("update stores what was granted without widening it", func(t *testing.T) {
@@ -92,7 +31,7 @@ func TestResourcePermission_BeforeAppendModel(t *testing.T) {
 			Operations: []Operation{OpManage},
 		}
 
-		err := rp.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
+		err := rp.BeforeUpdate(t.Context())
 		require.NoError(t, err)
 
 		assert.Equal(t, []Operation{OpManage}, rp.Operations)

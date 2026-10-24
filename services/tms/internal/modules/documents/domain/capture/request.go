@@ -8,9 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -32,34 +30,33 @@ const (
 // device learns of it from its stream and fetches it, so the browser never
 // talks to anything on the person's machine.
 type CaptureRequest struct {
-	bun.BaseModel `bun:"table:capture_requests,alias:creq" json:"-"`
-	keel.Table    `keel:"capture_requests"`
+	keel.Table `keel:"capture_requests"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:creq_"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	UserID         pulid.ID           `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
-	DeviceID       pulid.ID           `json:"deviceId"       bun:"device_id,type:VARCHAR(100),notnull" keel:"device_id"`
-	Mode           RequestMode        `json:"mode"           bun:"mode,type:VARCHAR(10),notnull" keel:"mode"`
-	Status         RequestStatus      `json:"status"         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	TargetType     string             `json:"targetType"     bun:"target_type,type:VARCHAR(50),notnull" keel:"target_type"`
-	TargetID       pulid.ID           `json:"targetId"       bun:"target_id,type:VARCHAR(100),notnull" keel:"target_id"`
-	DocumentTypeID *pulid.ID          `json:"documentTypeId" bun:"document_type_id,type:VARCHAR(100),nullzero" keel:"document_type_id"`
-	ProfileID      *pulid.ID          `json:"profileId"      bun:"profile_id,type:VARCHAR(100),nullzero" keel:"profile_id"`
-	SourceName     string             `json:"sourceName"     bun:"source_name,type:VARCHAR(255),nullzero" keel:"source_name,nullzero"`
-	BatchID        *pulid.ID          `json:"batchId"        bun:"batch_id,type:VARCHAR(100),nullzero" keel:"batch_id"`
-	FailureCode    RequestFailureCode `json:"failureCode"    bun:"failure_code,type:VARCHAR(40),nullzero" keel:"failure_code,nullzero"`
-	FailureMessage string             `json:"failureMessage" bun:"failure_message,type:VARCHAR(500),nullzero" keel:"failure_message,nullzero"`
-	ExpiresAt      int64              `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull" keel:"expires_at"`
-	DeliveredAt    *int64             `json:"deliveredAt"    bun:"delivered_at,type:BIGINT,nullzero" keel:"delivered_at"`
-	CompletedAt    *int64             `json:"completedAt"    bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:creq_"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	UserID         pulid.ID           `json:"userId" keel:"user_id"`
+	DeviceID       pulid.ID           `json:"deviceId" keel:"device_id"`
+	Mode           RequestMode        `json:"mode" keel:"mode"`
+	Status         RequestStatus      `json:"status" keel:"status"`
+	TargetType     string             `json:"targetType" keel:"target_type"`
+	TargetID       pulid.ID           `json:"targetId" keel:"target_id"`
+	DocumentTypeID *pulid.ID          `json:"documentTypeId" keel:"document_type_id"`
+	ProfileID      *pulid.ID          `json:"profileId" keel:"profile_id"`
+	SourceName     string             `json:"sourceName" keel:"source_name,nullzero"`
+	BatchID        *pulid.ID          `json:"batchId" keel:"batch_id"`
+	FailureCode    RequestFailureCode `json:"failureCode" keel:"failure_code,nullzero"`
+	FailureMessage string             `json:"failureMessage" keel:"failure_message,nullzero"`
+	ExpiresAt      int64              `json:"expiresAt" keel:"expires_at"`
+	DeliveredAt    *int64             `json:"deliveredAt" keel:"delivered_at"`
+	CompletedAt    *int64             `json:"completedAt" keel:"completed_at"`
+	Version        int64              `json:"version" keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	CaptureProfile *CaptureProfile      `json:"profile,omitempty"      bun:"rel:belongs-to,join:profile_id=id,join:business_unit_id=business_unit_id,join:organization_id=organization_id" keel:"belongs:profile_id"`
-	Organization   *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	CaptureProfile *CaptureProfile      `json:"profile,omitempty" keel:"belongs:profile_id"`
+	Organization   *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 }
 
 func (r *CaptureRequest) Validate(multiErr *errortypes.MultiError) {
@@ -143,30 +140,14 @@ func (r *CaptureRequest) Transition(next RequestStatus, now int64) bool {
 	return true
 }
 
-func (r *CaptureRequest) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("creq_")
-		}
-		if r.Status == "" {
-			r.Status = RequestPending
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (r *CaptureRequest) GetID() pulid.ID      { return r.ID }
 func (r *CaptureRequest) GetCreatedAt() int64  { return r.CreatedAt }
 func (r *CaptureRequest) GetTableName() string { return "capture_requests" }
 
 func (r *CaptureRequest) BeforeCreate(ctx context.Context) error {
-	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	if r.Status == "" {
+		r.Status = RequestPending
+	}
+
+	return nil
 }

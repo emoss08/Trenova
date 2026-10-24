@@ -1,8 +1,6 @@
 package documenttemplate
 
 import (
-	"context"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -10,13 +8,10 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DocumentTemplateAssignment)(nil)
 	_ validationframework.TenantedEntity = (*DocumentTemplateAssignment)(nil)
 	_ domaintypes.PostgresSearchable     = (*DocumentTemplateAssignment)(nil)
 )
@@ -29,31 +24,30 @@ var (
 // inheriting later changes to the organization default, which is why publishing
 // shows how many customers are unaffected.
 type DocumentTemplateAssignment struct {
-	bun.BaseModel `bun:"table:document_template_assignments,alias:dta" json:"-"`
-	keel.Table    `keel:"document_template_assignments"`
+	keel.Table `keel:"document_template_assignments"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dta_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:dta_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	// Kind is denormalized from the template so resolution can filter on it without
 	// joining, and so a unique index can enforce one assignment per customer per
 	// kind. BeforeAppendModel keeps it in step with the template.
-	Kind Kind `json:"kind" bun:"kind,type:VARCHAR(100),notnull" keel:"kind"`
+	Kind Kind `json:"kind" keel:"kind"`
 
-	TemplateID pulid.ID `json:"templateId" bun:"template_id,type:VARCHAR(100),notnull" keel:"template_id"`
-	CustomerID pulid.ID `json:"customerId" bun:"customer_id,type:VARCHAR(100),notnull" keel:"customer_id"`
+	TemplateID pulid.ID `json:"templateId" keel:"template_id"`
+	CustomerID pulid.ID `json:"customerId" keel:"customer_id"`
 
-	AssignedByID *pulid.ID `json:"assignedById" bun:"assigned_by_id,type:VARCHAR(100),nullzero" keel:"assigned_by_id"`
+	AssignedByID *pulid.ID `json:"assignedById" keel:"assigned_by_id"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-"                  bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-"                  bun:"rel:belongs-to,join:organization_id=id"`
-	Template     *DocumentTemplate    `json:"template,omitempty" bun:"rel:belongs-to,join:template_id=id" keel:"belongs:template_id"`
-	Customer     *customer.Customer   `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id" keel:"belongs:customer_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+	Template     *DocumentTemplate    `json:"template,omitempty" keel:"belongs:template_id"`
+	Customer     *customer.Customer   `json:"customer,omitempty" keel:"belongs:customer_id"`
 }
 
 func (a *DocumentTemplateAssignment) GetID() pulid.ID { return a.ID }
@@ -97,23 +91,6 @@ func (a *DocumentTemplateAssignment) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&a.TemplateID, validation.Required.Error("Template is required")),
 		validation.Field(&a.CustomerID, validation.Required.Error("Customer is required")),
 	))
-}
-
-func (a *DocumentTemplateAssignment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("dta_")
-		}
-		a.CreatedAt = now
-		a.UpdatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
-	}
-
-	return nil
 }
 
 // TemplateSource says which tier of the resolution chain produced a template.

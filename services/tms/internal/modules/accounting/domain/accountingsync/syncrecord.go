@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -59,54 +58,59 @@ var (
 
 // Every document sent to the accounting system and what happened to it
 type AccountingSyncRecord struct {
-	bun.BaseModel `bun:"table:accounting_sync_records,alias:acctsr" json:"-"`
-	keel.Table    `                                                          keel:"accounting_sync_records,report=Accounting"`
+	keel.Table `                                                          keel:"accounting_sync_records,report=Accounting"`
 
-	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctsr_"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ConnectionID      pulid.ID          `json:"connectionId"      bun:"connection_id,type:VARCHAR(100),notnull" keel:"connection_id"`
-	ObjectType        SyncObjectType    `json:"objectType"        bun:"object_type,type:VARCHAR(30),notnull" keel:"object_type,label=Document Type"`
-	ObjectID          pulid.ID          `json:"objectId"          bun:"object_id,type:VARCHAR(100),notnull" keel:"object_id,label=Document ID"`
-	ObjectNumber      string            `json:"objectNumber"      bun:"object_number,type:VARCHAR(100),nullzero" keel:"object_number,nullzero,label=Document Number"`
-	Operation         SyncOperation     `json:"operation"         bun:"operation,type:VARCHAR(20),notnull" keel:"operation,label=Action"`
-	SourceEvent       SyncSourceEvent   `json:"sourceEvent"       bun:"source_event,type:VARCHAR(40),notnull" keel:"source_event,label=Queued By"`
-	IdempotencyKey    string            `json:"idempotencyKey"    bun:"idempotency_key,type:VARCHAR(200),notnull" keel:"idempotency_key,noreport"`
-	RequestID         string            `json:"requestId"         bun:"request_id,type:VARCHAR(50),notnull" keel:"request_id,noreport"`
-	Revision          int64             `json:"revision"          bun:"revision,type:BIGINT,notnull" keel:"revision,dimension"`
-	DocumentDate      *int64            `json:"documentDate"      bun:"document_date,type:BIGINT,nullzero" keel:"document_date"`
-	DependsOnRecordID pulid.ID          `json:"dependsOnRecordId" bun:"depends_on_record_id,type:VARCHAR(100),nullzero" keel:"depends_on_record_id,nullzero,noreport"`
-	Status            SyncStatus        `json:"status"            bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	AttemptCount      int               `json:"attemptCount"      bun:"attempt_count,type:INTEGER,notnull" keel:"attempt_count,label=Tries,format=count,dimension"`
-	NextAttemptAt     *int64            `json:"nextAttemptAt"     bun:"next_attempt_at,type:BIGINT,nullzero" keel:"next_attempt_at,label=Next Try"`
-	LeaseExpiresAt    *int64            `json:"-"                 bun:"lease_expires_at,type:BIGINT,nullzero" keel:"lease_expires_at,noreport"`
-	ExternalID        string            `json:"externalId"        bun:"external_id,type:VARCHAR(100),nullzero" keel:"external_id,nullzero,label=ID in the Books"`
-	ExternalDocNumber string            `json:"externalDocNumber" bun:"external_doc_number,type:VARCHAR(100),nullzero" keel:"external_doc_number,nullzero,label=Number in the Books"`
-	ExternalURL       string            `json:"externalUrl"       bun:"external_url,type:TEXT,nullzero" keel:"external_url,nullzero,label=Link in the Books"`
-	ExternalRefs      map[string]string `json:"externalRefs"      bun:"external_refs,type:JSONB,notnull" keel:"external_refs,jsonb,noreport"`
-	PayloadHash       string            `json:"payloadHash"       bun:"payload_hash,type:VARCHAR(64),nullzero" keel:"payload_hash,nullzero,noreport"`
-	Payload           map[string]any    `json:"payload"           bun:"payload,type:JSONB,nullzero" keel:"payload,jsonb,nullzero,noreport"`
-	MappingIDs        []string          `json:"mappingIds"        bun:"mapping_ids,type:TEXT[],array,notnull" keel:"mapping_ids,noreport"`
-	ErrorCategory     SyncErrorCategory `json:"errorCategory"     bun:"error_category,type:VARCHAR(30),nullzero" keel:"error_category,nullzero"`
-	ErrorCode         string            `json:"errorCode"         bun:"error_code,type:VARCHAR(50),nullzero" keel:"error_code,nullzero"`
-	ErrorMessage      string            `json:"errorMessage"      bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
-	Resolution        string            `json:"resolution"        bun:"resolution,type:TEXT,nullzero" keel:"resolution,nullzero,label=What to Do"`
-	QueuedAt          int64             `json:"queuedAt"          bun:"queued_at,type:BIGINT,notnull" keel:"queued_at"`
-	StartedAt         *int64            `json:"startedAt"         bun:"started_at,type:BIGINT,nullzero" keel:"started_at"`
-	SyncedAt          *int64            `json:"syncedAt"          bun:"synced_at,type:BIGINT,nullzero" keel:"synced_at"`
-	ReleasedByID      pulid.ID          `json:"releasedById"      bun:"released_by_id,type:VARCHAR(100),nullzero" keel:"released_by_id,nullzero"`
-	SkippedByID       pulid.ID          `json:"skippedById"       bun:"skipped_by_id,type:VARCHAR(100),nullzero" keel:"skipped_by_id,nullzero"`
-	SkippedReason     string            `json:"skippedReason"     bun:"skipped_reason,type:TEXT,nullzero" keel:"skipped_reason,nullzero,label=Skip Reason"`
-	RedatedTo         *int64            `json:"redatedTo"         bun:"redated_to,type:BIGINT,nullzero" keel:"redated_to,type=epoch"`
-	RedatedByID       pulid.ID          `json:"redatedById"       bun:"redated_by_id,type:VARCHAR(100),nullzero" keel:"redated_by_id,nullzero"`
-	Version           int64             `json:"version"           bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt         int64             `json:"createdAt"         bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                pulid.ID          `json:"id" keel:"id,pk,autoid:acctsr_"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ConnectionID      pulid.ID          `json:"connectionId" keel:"connection_id"`
+	ObjectType        SyncObjectType    `json:"objectType" keel:"object_type,label=Document Type"`
+	ObjectID          pulid.ID          `json:"objectId" keel:"object_id,label=Document ID"`
+	ObjectNumber      string            `json:"objectNumber" keel:"object_number,nullzero,label=Document Number"`
+	Operation         SyncOperation     `json:"operation" keel:"operation,label=Action"`
+	SourceEvent       SyncSourceEvent   `json:"sourceEvent" keel:"source_event,label=Queued By"`
+	IdempotencyKey    string            `json:"idempotencyKey" keel:"idempotency_key,noreport"`
+	RequestID         string            `json:"requestId" keel:"request_id,noreport"`
+	Revision          int64             `json:"revision" keel:"revision,dimension"`
+	DocumentDate      *int64            `json:"documentDate" keel:"document_date"`
+	DependsOnRecordID pulid.ID          `json:"dependsOnRecordId" keel:"depends_on_record_id,nullzero,noreport"`
+	Status            SyncStatus        `json:"status" keel:"status"`
+	AttemptCount      int               `json:"attemptCount" keel:"attempt_count,label=Tries,format=count,dimension"`
+	NextAttemptAt     *int64            `json:"nextAttemptAt" keel:"next_attempt_at,label=Next Try"`
+	LeaseExpiresAt    *int64            `json:"-" keel:"lease_expires_at,noreport"`
+	ExternalID        string            `json:"externalId" keel:"external_id,nullzero,label=ID in the Books"`
+	ExternalDocNumber string            `json:"externalDocNumber" keel:"external_doc_number,nullzero,label=Number in the Books"`
+	ExternalURL       string            `json:"externalUrl" keel:"external_url,nullzero,label=Link in the Books"`
+	ExternalRefs      map[string]string `json:"externalRefs" keel:"external_refs,jsonb,noreport"`
+	PayloadHash       string            `json:"payloadHash" keel:"payload_hash,nullzero,noreport"`
+	Payload           map[string]any    `json:"payload" keel:"payload,jsonb,nullzero,noreport"`
+	MappingIDs        []string          `json:"mappingIds" keel:"mapping_ids,noreport"`
+	ErrorCategory     SyncErrorCategory `json:"errorCategory" keel:"error_category,nullzero"`
+	ErrorCode         string            `json:"errorCode" keel:"error_code,nullzero"`
+	ErrorMessage      string            `json:"errorMessage" keel:"error_message,nullzero"`
+	Resolution        string            `json:"resolution" keel:"resolution,nullzero,label=What to Do"`
+	QueuedAt          int64             `json:"queuedAt" keel:"queued_at"`
+	StartedAt         *int64            `json:"startedAt" keel:"started_at"`
+	SyncedAt          *int64            `json:"syncedAt" keel:"synced_at"`
+	ReleasedByID      pulid.ID          `json:"releasedById" keel:"released_by_id,nullzero"`
+	SkippedByID       pulid.ID          `json:"skippedById" keel:"skipped_by_id,nullzero"`
+	SkippedReason     string            `json:"skippedReason" keel:"skipped_reason,nullzero,label=Skip Reason"`
+	RedatedTo         *int64            `json:"redatedTo" keel:"redated_to,type=epoch"`
+	RedatedByID       pulid.ID          `json:"redatedById" keel:"redated_by_id,nullzero"`
+	Version           int64             `json:"version" keel:"version,version"`
+	CreatedAt         int64             `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt         int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	SkippedBy    *tenant.User         `json:"skippedBy,omitempty"    bun:"rel:belongs-to,join:skipped_by_id=id"    keel:"belongs:skipped_by_id,noreport"`
-	ReleasedBy   *tenant.User         `json:"releasedBy,omitempty"   bun:"rel:belongs-to,join:released_by_id=id"   keel:"belongs:released_by_id,noreport"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	SkippedBy    *tenant.User         `json:"skippedBy,omitempty" keel:"belongs:skipped_by_id,noreport"`
+	ReleasedBy   *tenant.User         `json:"releasedBy,omitempty" keel:"belongs:released_by_id,noreport"`
+}
+
+func (r *AccountingSyncRecord) BeforeUpdate(_ context.Context) error {
+	r.fillCollections()
+
+	return nil
 }
 
 type SyncRecordKey struct {
@@ -208,9 +212,15 @@ func (r *AccountingSyncRecord) GetPostgresSearchConfig() domaintypes.PostgresSea
 }
 
 func (r *AccountingSyncRecord) BeforeCreate(_ context.Context) error {
+	now := timeutils.NowUnix()
+	r.fillCollections()
+	if r.QueuedAt == 0 {
+		r.QueuedAt = now
+	}
 	if r.QueuedAt == 0 {
 		r.QueuedAt = timeutils.NowUnix()
 	}
+
 	return nil
 }
 
@@ -226,25 +236,6 @@ func (r *AccountingSyncRecord) fillCollections() {
 	if r.MappingIDs == nil {
 		r.MappingIDs = []string{}
 	}
-}
-
-func (r *AccountingSyncRecord) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	r.fillCollections()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew(syncRecordIDPrefix)
-		}
-		if r.QueuedAt == 0 {
-			r.QueuedAt = now
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-	return nil
 }
 
 func (r *AccountingSyncRecord) TenantInfo() pagination.TenantInfo {
@@ -496,22 +487,21 @@ func (r *AccountingSyncRecord) NeverSent() bool {
 }
 
 type AccountingSyncAttempt struct {
-	bun.BaseModel `bun:"table:accounting_sync_attempts,alias:acctsa" json:"-"`
-	keel.Table    `keel:"accounting_sync_attempts"`
+	keel.Table `keel:"accounting_sync_attempts"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctsa_"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	SyncRecordID   pulid.ID           `json:"syncRecordId"   bun:"sync_record_id,type:VARCHAR(100),notnull" keel:"sync_record_id"`
-	AttemptNumber  int                `json:"attemptNumber"  bun:"attempt_number,type:INTEGER,notnull" keel:"attempt_number"`
-	Outcome        SyncAttemptOutcome `json:"outcome"        bun:"outcome,type:VARCHAR(20),notnull" keel:"outcome"`
-	ErrorCategory  SyncErrorCategory  `json:"errorCategory"  bun:"error_category,type:VARCHAR(30),nullzero" keel:"error_category,nullzero"`
-	ErrorCode      string             `json:"errorCode"      bun:"error_code,type:VARCHAR(50),nullzero" keel:"error_code,nullzero"`
-	ErrorMessage   string             `json:"errorMessage"   bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
-	StartedAt      int64              `json:"startedAt"      bun:"started_at,type:BIGINT,notnull" keel:"started_at"`
-	FinishedAt     int64              `json:"finishedAt"     bun:"finished_at,type:BIGINT,notnull" keel:"finished_at"`
-	DurationMs     int                `json:"durationMs"     bun:"duration_ms,type:INTEGER,notnull" keel:"duration_ms"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:acctsa_"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	SyncRecordID   pulid.ID           `json:"syncRecordId" keel:"sync_record_id"`
+	AttemptNumber  int                `json:"attemptNumber" keel:"attempt_number"`
+	Outcome        SyncAttemptOutcome `json:"outcome" keel:"outcome"`
+	ErrorCategory  SyncErrorCategory  `json:"errorCategory" keel:"error_category,nullzero"`
+	ErrorCode      string             `json:"errorCode" keel:"error_code,nullzero"`
+	ErrorMessage   string             `json:"errorMessage" keel:"error_message,nullzero"`
+	StartedAt      int64              `json:"startedAt" keel:"started_at"`
+	FinishedAt     int64              `json:"finishedAt" keel:"finished_at"`
+	DurationMs     int                `json:"durationMs" keel:"duration_ms"`
+	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
 }
 
 func (a *AccountingSyncAttempt) GetTableName() string { return "accounting_sync_attempts" }
@@ -521,16 +511,6 @@ func (a *AccountingSyncAttempt) GetID() pulid.ID { return a.ID }
 func (a *AccountingSyncAttempt) GetOrganizationID() pulid.ID { return a.OrganizationID }
 
 func (a *AccountingSyncAttempt) GetBusinessUnitID() pulid.ID { return a.BusinessUnitID }
-
-func (a *AccountingSyncAttempt) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew(syncAttemptIDPrefix)
-		}
-		a.CreatedAt = timeutils.NowUnix()
-	}
-	return nil
-}
 
 type NewSyncAttemptParams struct {
 	Record        *AccountingSyncRecord
@@ -567,27 +547,26 @@ type BackfillCursor struct {
 }
 
 type AccountingBackfill struct {
-	bun.BaseModel `bun:"table:accounting_backfills,alias:acctbf" json:"-"`
-	keel.Table    `keel:"accounting_backfills"`
+	keel.Table `keel:"accounting_backfills"`
 
-	ID                 pulid.ID         `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctbf_"`
-	BusinessUnitID     pulid.ID         `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID         `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ConnectionID       pulid.ID         `json:"connectionId"       bun:"connection_id,type:VARCHAR(100),notnull" keel:"connection_id"`
-	RangeStart         int64            `json:"rangeStart"         bun:"range_start,type:BIGINT,notnull" keel:"range_start"`
-	RangeEnd           int64            `json:"rangeEnd"           bun:"range_end,type:BIGINT,notnull" keel:"range_end"`
-	ObjectTypes        []SyncObjectType `json:"objectTypes"        bun:"object_types,type:TEXT[],array,notnull" keel:"object_types"`
-	Cursor             BackfillCursor   `json:"cursor"             bun:"cursor,type:JSONB,notnull" keel:"cursor,jsonb"`
-	Status             BackfillStatus   `json:"status"             bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	EnqueuedCount      int              `json:"enqueuedCount"      bun:"enqueued_count,type:INTEGER,notnull" keel:"enqueued_count"`
-	AlreadyQueuedCount int              `json:"alreadyQueuedCount" bun:"already_queued_count,type:INTEGER,notnull" keel:"already_queued_count"`
-	RequestedByID      pulid.ID         `json:"requestedById"      bun:"requested_by_id,type:VARCHAR(100),nullzero" keel:"requested_by_id,nullzero"`
-	StartedAt          *int64           `json:"startedAt"          bun:"started_at,type:BIGINT,nullzero" keel:"started_at"`
-	CompletedAt        *int64           `json:"completedAt"        bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
-	LastError          string           `json:"lastError"          bun:"last_error,type:TEXT,nullzero" keel:"last_error,nullzero"`
-	Version            int64            `json:"version"            bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt          int64            `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt          int64            `json:"updatedAt"          bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                 pulid.ID         `json:"id" keel:"id,pk,autoid:acctbf_"`
+	BusinessUnitID     pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ConnectionID       pulid.ID         `json:"connectionId" keel:"connection_id"`
+	RangeStart         int64            `json:"rangeStart" keel:"range_start"`
+	RangeEnd           int64            `json:"rangeEnd" keel:"range_end"`
+	ObjectTypes        []SyncObjectType `json:"objectTypes" keel:"object_types"`
+	Cursor             BackfillCursor   `json:"cursor" keel:"cursor,jsonb"`
+	Status             BackfillStatus   `json:"status" keel:"status"`
+	EnqueuedCount      int              `json:"enqueuedCount" keel:"enqueued_count"`
+	AlreadyQueuedCount int              `json:"alreadyQueuedCount" keel:"already_queued_count"`
+	RequestedByID      pulid.ID         `json:"requestedById" keel:"requested_by_id,nullzero"`
+	StartedAt          *int64           `json:"startedAt" keel:"started_at"`
+	CompletedAt        *int64           `json:"completedAt" keel:"completed_at"`
+	LastError          string           `json:"lastError" keel:"last_error,nullzero"`
+	Version            int64            `json:"version" keel:"version,version"`
+	CreatedAt          int64            `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt          int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (b *AccountingBackfill) GetTableName() string { return "accounting_backfills" }
@@ -597,21 +576,6 @@ func (b *AccountingBackfill) GetID() pulid.ID { return b.ID }
 func (b *AccountingBackfill) GetOrganizationID() pulid.ID { return b.OrganizationID }
 
 func (b *AccountingBackfill) GetBusinessUnitID() pulid.ID { return b.BusinessUnitID }
-
-func (b *AccountingBackfill) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if b.ID.IsNil() {
-			b.ID = pulid.MustNew(backfillIDPrefix)
-		}
-		b.CreatedAt = now
-		b.UpdatedAt = now
-	case *bun.UpdateQuery:
-		b.UpdatedAt = now
-	}
-	return nil
-}
 
 func (b *AccountingBackfill) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: b.OrganizationID, BuID: b.BusinessUnitID}

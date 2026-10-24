@@ -1,6 +1,7 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"maps"
 	"testing"
 
@@ -16,9 +17,9 @@ func pageAfter[T pagination.CursorEntity](
 	cursor pagination.CursorInfo,
 ) *pagination.CursorListResult[T] {
 	start := 0
-	if cursor.Cursor.ID.IsNotNil() {
+	if cursor.Cursor.Keyset != "" {
 		for idx, item := range items {
-			if item.GetID() == cursor.Cursor.ID {
+			if item.GetID().String() == cursor.Cursor.Keyset {
 				start = idx + 1
 				break
 			}
@@ -26,7 +27,7 @@ func pageAfter[T pagination.CursorEntity](
 	}
 	end := min(len(items), start+cursor.Limit+1)
 
-	return pagination.NewCursorListResult(items[start:end], cursor.Limit)
+	return pagetest.Of(items[start:end], cursor.Limit)
 }
 
 func cursorIDs[T pagination.CursorEntity](items []T) []pulid.ID {
@@ -144,7 +145,7 @@ func TestCursorScope_IgnoresLimitAndAfterAndKeyOrder(t *testing.T) {
 func TestReadCursorWindow_DecodesTheRepositoryCursor(t *testing.T) {
 	t.Parallel()
 
-	inner, err := pagination.EncodeCursor(pagination.Cursor{ID: pulid.MustNew("wrk_")})
+	inner, err := pagination.EncodeKeysetCursor(nil, pulid.MustNew("wrk_").String())
 	require.NoError(t, err)
 	params := map[string]any{"query": "ortiz"}
 	scope, err := cursorScope("worker_list", params)

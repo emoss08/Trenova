@@ -10,62 +10,58 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*FuelSurchargeProgram)(nil)
 	_ validationframework.TenantedEntity = (*FuelSurchargeProgram)(nil)
 	_ domaintypes.PostgresSearchable     = (*FuelSurchargeProgram)(nil)
 )
 
 type FuelSurchargeProgram struct {
-	bun.BaseModel `bun:"table:fuel_surcharge_programs,alias:fsp" json:"-"`
-	keel.Table    `                                                       keel:"fuel_surcharge_programs"`
+	keel.Table `                                                       keel:"fuel_surcharge_programs"`
 
-	ID                   pulid.ID             `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"                                                               keel:"id,pk,autoid:fsp_"`
-	BusinessUnitID       pulid.ID             `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                                 keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID             `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"                                                  keel:"organization_id,pk,tenant"`
-	Name                 string               `json:"name"                 bun:"name,type:VARCHAR(100),notnull"                                                                keel:"name"`
-	Code                 string               `json:"code"                 bun:"code,type:VARCHAR(50),notnull"                                                                 keel:"code"`
-	Description          string               `json:"description"          bun:"description,type:TEXT,nullzero"                                                                keel:"description,nullzero"`
-	Status               ProgramStatus        `json:"status"               bun:"status,type:fuel_surcharge_program_status_enum,notnull,default:'Active'"                       keel:"status"`
-	FuelIndexID          pulid.ID             `json:"fuelIndexId"          bun:"fuel_index_id,type:VARCHAR(100),notnull"                                                       keel:"fuel_index_id"`
-	AccessorialChargeID  pulid.ID             `json:"accessorialChargeId"  bun:"accessorial_charge_id,type:VARCHAR(100),notnull"                                               keel:"accessorial_charge_id"`
-	Method               ProgramMethod        `json:"method"               bun:"method,type:fuel_surcharge_method_kind_enum,notnull"                                           keel:"method"`
-	PegPrice             decimal.NullDecimal  `json:"pegPrice"             bun:"peg_price,type:NUMERIC(19,4),nullzero"                                                         keel:"peg_price"`
-	Increment            decimal.NullDecimal  `json:"increment"            bun:"increment,type:NUMERIC(19,4),nullzero"                                                         keel:"increment"`
-	IncrementRate        decimal.NullDecimal  `json:"incrementRate"        bun:"increment_rate,type:NUMERIC(19,4),nullzero"                                                    keel:"increment_rate"`
-	MilesPerGallon       decimal.NullDecimal  `json:"milesPerGallon"       bun:"miles_per_gallon,type:NUMERIC(9,2),nullzero"                                                   keel:"miles_per_gallon"`
-	PercentBasis         PercentBasis         `json:"percentBasis"         bun:"percent_basis,type:fuel_surcharge_percent_basis_enum,notnull,default:'Linehaul'"               keel:"percent_basis"`
-	StepRounding         StepRounding         `json:"stepRounding"         bun:"step_rounding,type:fuel_surcharge_step_rounding_enum,notnull,default:'Up'"                     keel:"step_rounding"`
-	RateRounding         RateRounding         `json:"rateRounding"         bun:"rate_rounding,type:fuel_surcharge_rate_rounding_enum,notnull,default:'HalfUp'"                 keel:"rate_rounding"`
-	RatePrecision        int16                `json:"ratePrecision"        bun:"rate_precision,type:SMALLINT,notnull,default:4"                                                keel:"rate_precision"`
-	MinAmount            decimal.NullDecimal  `json:"minAmount"            bun:"min_amount,type:NUMERIC(19,4),nullzero"                                                        keel:"min_amount"`
-	MaxAmount            decimal.NullDecimal  `json:"maxAmount"            bun:"max_amount,type:NUMERIC(19,4),nullzero"                                                        keel:"max_amount"`
-	DateBasis            DateBasis            `json:"dateBasis"            bun:"date_basis,type:fuel_surcharge_date_basis_enum,notnull,default:'PickupDate'"                   keel:"date_basis"`
-	PriceEffectiveDay    int16                `json:"priceEffectiveDay"    bun:"price_effective_day,type:SMALLINT,notnull,default:3"                                           keel:"price_effective_day"`
-	MissingPriceFallback MissingPriceFallback `json:"missingPriceFallback" bun:"missing_price_fallback,type:fuel_surcharge_fallback_enum,notnull,default:'UseLatestAvailable'" keel:"missing_price_fallback"`
-	EffectiveStartDate   *int64               `json:"effectiveStartDate"   bun:"effective_start_date,type:BIGINT,nullzero"                                                     keel:"effective_start_date"`
-	EffectiveEndDate     *int64               `json:"effectiveEndDate"     bun:"effective_end_date,type:BIGINT,nullzero"                                                       keel:"effective_end_date"`
-	ShipmentTypeIDs      []pulid.ID           `json:"shipmentTypeIds"      bun:"shipment_type_ids,type:JSONB,nullzero"                                                         keel:"shipment_type_ids,jsonb,nullzero"`
-	ServiceTypeIDs       []pulid.ID           `json:"serviceTypeIds"       bun:"service_type_ids,type:JSONB,nullzero"                                                          keel:"service_type_ids,jsonb,nullzero"`
-	TractorTypeIDs       []pulid.ID           `json:"tractorTypeIds"       bun:"tractor_type_ids,type:JSONB,nullzero"                                                          keel:"tractor_type_ids,jsonb,nullzero"`
-	TrailerTypeIDs       []pulid.ID           `json:"trailerTypeIds"       bun:"trailer_type_ids,type:JSONB,nullzero"                                                          keel:"trailer_type_ids,jsonb,nullzero"`
-	Version              int64                `json:"version"              bun:"version,type:BIGINT"                                                                           keel:"version,version"`
-	CreatedAt            int64                `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"          keel:"created_at,autocreate"`
-	UpdatedAt            int64                `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"          keel:"updated_at,autoupdate"`
-	SearchVector         string               `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly"                                                          keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                 string               `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly"                                                               keel:"rank,computed"`
+	ID                   pulid.ID             `json:"id" keel:"id,pk,autoid:fsp_"`
+	BusinessUnitID       pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name                 string               `json:"name" keel:"name"`
+	Code                 string               `json:"code" keel:"code"`
+	Description          string               `json:"description" keel:"description,nullzero"`
+	Status               ProgramStatus        `json:"status" keel:"status"`
+	FuelIndexID          pulid.ID             `json:"fuelIndexId" keel:"fuel_index_id"`
+	AccessorialChargeID  pulid.ID             `json:"accessorialChargeId" keel:"accessorial_charge_id"`
+	Method               ProgramMethod        `json:"method" keel:"method"`
+	PegPrice             decimal.NullDecimal  `json:"pegPrice" keel:"peg_price"`
+	Increment            decimal.NullDecimal  `json:"increment" keel:"increment"`
+	IncrementRate        decimal.NullDecimal  `json:"incrementRate" keel:"increment_rate"`
+	MilesPerGallon       decimal.NullDecimal  `json:"milesPerGallon" keel:"miles_per_gallon"`
+	PercentBasis         PercentBasis         `json:"percentBasis" keel:"percent_basis"`
+	StepRounding         StepRounding         `json:"stepRounding" keel:"step_rounding"`
+	RateRounding         RateRounding         `json:"rateRounding" keel:"rate_rounding"`
+	RatePrecision        int16                `json:"ratePrecision" keel:"rate_precision"`
+	MinAmount            decimal.NullDecimal  `json:"minAmount" keel:"min_amount"`
+	MaxAmount            decimal.NullDecimal  `json:"maxAmount" keel:"max_amount"`
+	DateBasis            DateBasis            `json:"dateBasis" keel:"date_basis"`
+	PriceEffectiveDay    int16                `json:"priceEffectiveDay" keel:"price_effective_day"`
+	MissingPriceFallback MissingPriceFallback `json:"missingPriceFallback" keel:"missing_price_fallback"`
+	EffectiveStartDate   *int64               `json:"effectiveStartDate" keel:"effective_start_date"`
+	EffectiveEndDate     *int64               `json:"effectiveEndDate" keel:"effective_end_date"`
+	ShipmentTypeIDs      []pulid.ID           `json:"shipmentTypeIds" keel:"shipment_type_ids,jsonb,nullzero"`
+	ServiceTypeIDs       []pulid.ID           `json:"serviceTypeIds" keel:"service_type_ids,jsonb,nullzero"`
+	TractorTypeIDs       []pulid.ID           `json:"tractorTypeIds" keel:"tractor_type_ids,jsonb,nullzero"`
+	TrailerTypeIDs       []pulid.ID           `json:"trailerTypeIds" keel:"trailer_type_ids,jsonb,nullzero"`
+	Version              int64                `json:"version" keel:"version,version"`
+	CreatedAt            int64                `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt            int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector         string               `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                 string               `json:"-" keel:"rank,computed"`
 
-	BusinessUnit      *tenant.BusinessUnit                 `json:"-"                           bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization      *tenant.Organization                 `json:"-"                           bun:"rel:belongs-to,join:organization_id=id"`
-	FuelIndex         *FuelIndex                           `json:"fuelIndex,omitempty"         bun:"rel:belongs-to,join:fuel_index_id=id"           keel:"belongs:fuel_index_id"`
-	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" bun:"rel:belongs-to,join:accessorial_charge_id=id"   keel:"belongs:accessorial_charge_id"`
-	TableRows         []*FuelSurchargeTableRow             `json:"tableRows,omitempty"         bun:"rel:has-many,join:id=fuel_surcharge_program_id" keel:"many:fuel_surcharge_program_id"`
+	BusinessUnit      *tenant.BusinessUnit                 `json:"-"`
+	Organization      *tenant.Organization                 `json:"-"`
+	FuelIndex         *FuelIndex                           `json:"fuelIndex,omitempty" keel:"belongs:fuel_index_id"`
+	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" keel:"belongs:accessorial_charge_id"`
+	TableRows         []*FuelSurchargeTableRow             `json:"tableRows,omitempty" keel:"many:fuel_surcharge_program_id"`
 }
 
 func (p *FuelSurchargeProgram) Validate(multiErr *errortypes.MultiError) {
@@ -221,26 +217,34 @@ func (p *FuelSurchargeProgram) GetPostgresSearchConfig() domaintypes.PostgresSea
 	}
 }
 
-func (p *FuelSurchargeProgram) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("fsp_")
-		}
-		p.applyDefaults()
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
+func (p *FuelSurchargeProgram) BeforeCreate(ctx context.Context) error {
+	if p.Status == "" {
+		p.Status = ProgramStatusActive
 	}
+	if p.PercentBasis == "" {
+		p.PercentBasis = PercentBasisLinehaul
+	}
+	if p.StepRounding == "" {
+		p.StepRounding = StepRoundingUp
+	}
+	if p.RateRounding == "" {
+		p.RateRounding = RateRoundingHalfUp
+	}
+	if p.RatePrecision == 0 {
+		p.RatePrecision = 4
+	}
+	if p.DateBasis == "" {
+		p.DateBasis = DateBasisPickupDate
+	}
+	if p.PriceEffectiveDay == 0 {
+		p.PriceEffectiveDay = 3
+	}
+	if p.MissingPriceFallback == "" {
+		p.MissingPriceFallback = FallbackUseLatestAvailable
+	}
+	p.applyDefaults()
 
 	return nil
-}
-
-func (p *FuelSurchargeProgram) BeforeCreate(ctx context.Context) error {
-	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (p *FuelSurchargeProgram) BeforeSave(_ context.Context) error {

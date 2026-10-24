@@ -1801,7 +1801,6 @@ func adjRunID(g *generator) string {
 
 //nolint:funlen // writes run in foreign-key order
 func (g *generator) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRows) error {
-
 	// A group's current invoice is often a credit memo or replacement written
 	// below, so the group starts at its root invoice and is re-pointed after.
 	current := make([]pulid.ID, len(rows.groupOrder))

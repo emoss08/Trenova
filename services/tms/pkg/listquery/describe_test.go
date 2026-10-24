@@ -19,7 +19,7 @@ func TestDescribe_TheFieldsAListAnswersTo(t *testing.T) {
 	assert.False(t, got.FilterableFields["loads.name"])
 
 	assert.True(t, got.SortableFields["code"])
-	assert.False(t, got.SortableFields["owner.name"], "a keyset page orders by its own columns")
+	assert.True(t, got.SortableFields["owner.name"], "a keyset page orders by a to-one relation's columns")
 
 	assert.True(t, got.EnumMap["status"])
 	assert.False(t, got.EnumMap["code"])

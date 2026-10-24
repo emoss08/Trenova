@@ -1,52 +1,29 @@
 package fuelsurcharge
 
 import (
-	"context"
 	"sort"
 	"strconv"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*FuelSurchargeTableRow)(nil)
-
 type FuelSurchargeTableRow struct {
-	bun.BaseModel `bun:"table:fuel_surcharge_table_rows,alias:fsr" json:"-"`
-	keel.Table    `keel:"fuel_surcharge_table_rows"`
+	keel.Table `keel:"fuel_surcharge_table_rows"`
 
-	ID                     pulid.ID            `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:fsr_"`
-	BusinessUnitID         pulid.ID            `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID            `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	FuelSurchargeProgramID pulid.ID            `json:"fuelSurchargeProgramId" bun:"fuel_surcharge_program_id,type:VARCHAR(100),notnull" keel:"fuel_surcharge_program_id"`
-	PriceMin               decimal.NullDecimal `json:"priceMin"               bun:"price_min,type:NUMERIC(19,4)" keel:"price_min"`
-	PriceMax               decimal.NullDecimal `json:"priceMax"               bun:"price_max,type:NUMERIC(19,4)" keel:"price_max"`
-	Value                  decimal.Decimal     `json:"value"                  bun:"value,type:NUMERIC(19,4),notnull" keel:"value"`
-	SortOrder              int32               `json:"sortOrder"              bun:"sort_order,type:INTEGER,notnull" keel:"sort_order"`
-	CreatedAt              int64               `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt              int64               `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-}
-
-func (fr *FuelSurchargeTableRow) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if fr.ID.IsNil() {
-			fr.ID = pulid.MustNew("fsr_")
-		}
-		fr.CreatedAt = now
-		fr.UpdatedAt = now
-	case *bun.UpdateQuery:
-		fr.UpdatedAt = now
-	}
-
-	return nil
+	ID                     pulid.ID            `json:"id" keel:"id,pk,autoid:fsr_"`
+	BusinessUnitID         pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
+	FuelSurchargeProgramID pulid.ID            `json:"fuelSurchargeProgramId" keel:"fuel_surcharge_program_id"`
+	PriceMin               decimal.NullDecimal `json:"priceMin" keel:"price_min"`
+	PriceMax               decimal.NullDecimal `json:"priceMax" keel:"price_max"`
+	Value                  decimal.Decimal     `json:"value" keel:"value"`
+	SortOrder              int32               `json:"sortOrder" keel:"sort_order"`
+	CreatedAt              int64               `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt              int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (fr *FuelSurchargeTableRow) Matches(price decimal.Decimal) bool {

@@ -8,41 +8,45 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*CostCategory)(nil)
 	_ validationframework.TenantedEntity = (*CostCategory)(nil)
 )
 
 var maxRatePerMile = decimal.NewFromInt(100)
 
 type CostCategory struct {
-	bun.BaseModel `bun:"table:cost_categories,alias:ccat" json:"-"`
-	keel.Table    `keel:"cost_categories"`
+	keel.Table `keel:"cost_categories"`
 
-	ID                   pulid.ID            `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:ccat_"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	CostingControlID     pulid.ID            `json:"costingControlId"     bun:"costing_control_id,type:VARCHAR(100),notnull" keel:"costing_control_id"`
-	Category             CategoryType        `json:"category"             bun:"category,type:cost_category_type_enum,notnull" keel:"category"`
-	Name                 string              `json:"name"                 bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	CostBehavior         CostBehavior        `json:"costBehavior"         bun:"cost_behavior,type:cost_behavior_enum,notnull" keel:"cost_behavior"`
-	RateSource           RateSource          `json:"rateSource"           bun:"rate_source,type:cost_rate_source_enum,notnull,default:'Benchmark'" keel:"rate_source"`
-	BenchmarkRatePerMile decimal.Decimal     `json:"benchmarkRatePerMile" bun:"benchmark_rate_per_mile,type:NUMERIC(19,6),notnull,default:0" keel:"benchmark_rate_per_mile"`
-	OverrideRatePerMile  decimal.NullDecimal `json:"overrideRatePerMile"  bun:"override_rate_per_mile,type:NUMERIC(19,6),nullzero" keel:"override_rate_per_mile"`
-	IsActive             bool                `json:"isActive"             bun:"is_active,type:BOOLEAN,notnull" keel:"is_active"`
-	SortOrder            int16               `json:"sortOrder"            bun:"sort_order,type:SMALLINT,notnull" keel:"sort_order"`
-	Version              int64               `json:"version"              bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt            int64               `json:"createdAt"            bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                   pulid.ID            `json:"id" keel:"id,pk,autoid:ccat_"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
+	CostingControlID     pulid.ID            `json:"costingControlId" keel:"costing_control_id"`
+	Category             CategoryType        `json:"category" keel:"category"`
+	Name                 string              `json:"name" keel:"name"`
+	CostBehavior         CostBehavior        `json:"costBehavior" keel:"cost_behavior"`
+	RateSource           RateSource          `json:"rateSource" keel:"rate_source"`
+	BenchmarkRatePerMile decimal.Decimal     `json:"benchmarkRatePerMile" keel:"benchmark_rate_per_mile"`
+	OverrideRatePerMile  decimal.NullDecimal `json:"overrideRatePerMile" keel:"override_rate_per_mile"`
+	IsActive             bool                `json:"isActive" keel:"is_active"`
+	SortOrder            int16               `json:"sortOrder" keel:"sort_order"`
+	Version              int64               `json:"version" keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	// Relationships
-	GLAccounts []*CostCategoryGLAccount `json:"glAccounts,omitempty" bun:"rel:has-many,join:id=cost_category_id" keel:"many:cost_category_id"`
+	GLAccounts []*CostCategoryGLAccount `json:"glAccounts,omitempty" keel:"many:cost_category_id"`
+}
+
+func (cat *CostCategory) BeforeCreate(_ context.Context) error {
+	if cat.RateSource == "" {
+		cat.RateSource = RateSourceBenchmark
+	}
+
+	return nil
 }
 
 func (cat *CostCategory) Validate(multiErr *errortypes.MultiError) {
@@ -117,21 +121,4 @@ func (cat *CostCategory) GetOrganizationID() pulid.ID {
 
 func (cat *CostCategory) GetBusinessUnitID() pulid.ID {
 	return cat.BusinessUnitID
-}
-
-func (cat *CostCategory) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if cat.ID.IsNil() {
-			cat.ID = pulid.MustNew("ccat_")
-		}
-
-		cat.CreatedAt = now
-	case *bun.UpdateQuery:
-		cat.UpdatedAt = now
-	}
-
-	return nil
 }

@@ -210,12 +210,7 @@ func (r *repository) BulkUpdateStatus(
 		r.db,
 		func(ctx context.Context) ([]*hazardousmaterial.HazardousMaterial, error) {
 			hm := hazardousmaterialdb.HazardousMaterials
-			entities, err := listquery.UpdateReturning(
-				ctx,
-				r.db.Keel(ctx),
-				hm.Where(hm.ID.In(req.HazardousMaterialIDs...)),
-				hm.Status.To(req.Status),
-			)
+			entities, err := hm.Where(hm.ID.In(req.HazardousMaterialIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), hm.Status.To(req.Status))
 			if err != nil {
 				r.l.Error("failed to bulk update hazardous material status", zap.Error(err))
 				return nil, err

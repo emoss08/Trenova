@@ -1,15 +1,11 @@
 package subscription
 
 import (
-	"context"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -18,26 +14,24 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Subscription)(nil)
 	_ validationframework.TenantedEntity = (*Subscription)(nil)
 )
 
 type Subscription struct {
-	bun.BaseModel `bun:"table:organization_subscriptions,alias:osub" json:"-"`
-	keel.Table    `keel:"organization_subscriptions"`
+	keel.Table `keel:"organization_subscriptions"`
 
-	ID                   pulid.ID `json:"id"                             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:osub_"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId"                 bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID `json:"organizationId"                 bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	PlanKey              string   `json:"planKey"                        bun:"plan_key,type:VARCHAR(50),notnull" keel:"plan_key"`
-	Status               Status   `json:"status"                         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	TrialEndsAt          int64    `json:"trialEndsAt"                    bun:"trial_ends_at,type:BIGINT,notnull" keel:"trial_ends_at"`
-	ReadOnlyUntil        int64    `json:"readOnlyUntil"                  bun:"read_only_until,type:BIGINT,notnull" keel:"read_only_until"`
-	StripeCustomerID     string   `json:"stripeCustomerId,omitempty"     bun:"stripe_customer_id,type:VARCHAR(255),nullzero" keel:"stripe_customer_id,nullzero"`
-	StripeSubscriptionID string   `json:"stripeSubscriptionId,omitempty" bun:"stripe_subscription_id,type:VARCHAR(255),nullzero" keel:"stripe_subscription_id,nullzero"`
-	Version              int64    `json:"version"                        bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt            int64    `json:"createdAt"                      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt            int64    `json:"updatedAt"                      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                   pulid.ID `json:"id" keel:"id,pk,autoid:osub_"`
+	BusinessUnitID       pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	PlanKey              string   `json:"planKey" keel:"plan_key"`
+	Status               Status   `json:"status" keel:"status"`
+	TrialEndsAt          int64    `json:"trialEndsAt" keel:"trial_ends_at"`
+	ReadOnlyUntil        int64    `json:"readOnlyUntil" keel:"read_only_until"`
+	StripeCustomerID     string   `json:"stripeCustomerId,omitempty" keel:"stripe_customer_id,nullzero"`
+	StripeSubscriptionID string   `json:"stripeSubscriptionId,omitempty" keel:"stripe_subscription_id,nullzero"`
+	Version              int64    `json:"version" keel:"version,version"`
+	CreatedAt            int64    `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt            int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (s *Subscription) Validate(multiErr *errortypes.MultiError) {
@@ -101,25 +95,6 @@ func (s *Subscription) EffectiveStatus(now int64) Status {
 	default:
 		return s.Status
 	}
-}
-
-func (s *Subscription) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("osub_")
-		}
-		if s.CreatedAt == 0 {
-			s.CreatedAt = now
-		}
-		s.UpdatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (s *Subscription) GetID() pulid.ID {

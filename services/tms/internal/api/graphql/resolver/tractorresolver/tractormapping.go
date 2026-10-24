@@ -105,7 +105,6 @@ func tractorConnectionToModel(
 		result.Items,
 		result.HasNextPage,
 		result.TotalCount,
-		result.CursorSort,
 		result,
 	)
 }
@@ -114,13 +113,11 @@ func tractorConnectionFromItems(
 	items []*tractor.Tractor,
 	hasNextPage bool,
 	totalCount *int,
-	sort []pagination.CursorSortField,
-	cursorValues pagination.CursorValueProvider,
+	cursors pagination.EdgeCursorProvider,
 ) (*gqlmodel.TractorConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		items,
-		sort,
-		cursorValues,
+		cursors,
 		func(node *tractor.Tractor, cursor string) *gqlmodel.TractorEdge {
 			return &gqlmodel.TractorEdge{
 				Node:   node,

@@ -16,11 +16,11 @@ type GetUserByIDRequest struct {
 }
 
 type UserOrganizationResult struct {
-	OrganizationID   pulid.ID `bun:"organization_id"`
-	OrganizationName string   `bun:"organization_name"`
-	BusinessUnitID   pulid.ID `bun:"business_unit_id"`
-	IsDefault        bool     `bun:"is_default"`
-	JoinedAt         int64    `bun:"joined_at"`
+	OrganizationID   pulid.ID
+	OrganizationName string
+	BusinessUnitID   pulid.ID
+	IsDefault        bool
+	JoinedAt         int64
 }
 
 type UserOrganizationResponse struct {

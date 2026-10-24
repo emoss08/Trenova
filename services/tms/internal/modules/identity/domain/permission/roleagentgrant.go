@@ -8,37 +8,20 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*RoleAgentGrant)(nil)
 
 // RoleAgentGrant lets everyone holding a role, directly or through a role
 // that inherits it, use an agent whose access is restricted to roles.
 type RoleAgentGrant struct {
-	bun.BaseModel `bun:"table:role_agent_grants,alias:rag" json:"-"`
-	keel.Table    `keel:"role_agent_grants"`
+	keel.Table `keel:"role_agent_grants"`
 
-	ID                pulid.ID `json:"id"                bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:rag_"`
-	OrganizationID    pulid.ID `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	BusinessUnitID    pulid.ID `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
-	RoleID            pulid.ID `json:"roleId"            bun:"role_id,type:VARCHAR(100),notnull" keel:"role_id"`
-	AgentDefinitionID pulid.ID `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
-	GrantedBy         pulid.ID `json:"grantedBy"         bun:"granted_by,type:VARCHAR(100),nullzero" keel:"granted_by,nullzero"`
-	GrantedAt         int64    `json:"grantedAt"         bun:"granted_at,notnull" keel:"granted_at"`
-}
-
-func (g *RoleAgentGrant) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	if _, ok := q.(*bun.InsertQuery); ok {
-		if g.ID.IsNil() {
-			g.ID = pulid.MustNew("rag_")
-		}
-		if g.GrantedAt == 0 {
-			g.GrantedAt = timeutils.NowUnix()
-		}
-	}
-
-	return nil
+	ID                pulid.ID `json:"id" keel:"id,pk,autoid:rag_"`
+	OrganizationID    pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
+	BusinessUnitID    pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	RoleID            pulid.ID `json:"roleId" keel:"role_id"`
+	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id"`
+	GrantedBy         pulid.ID `json:"grantedBy" keel:"granted_by,nullzero"`
+	GrantedAt         int64    `json:"grantedAt" keel:"granted_at"`
 }
 
 func (g *RoleAgentGrant) BeforeCreate(_ context.Context) error {

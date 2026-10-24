@@ -9,10 +9,8 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -29,45 +27,53 @@ const (
 	DefaultOverrideDurationSecond = int64(14 * 86400)
 )
 
-var _ bun.BeforeAppendModelHook = (*CarrierIntelControl)(nil)
-
 type CarrierIntelControl struct {
-	bun.BaseModel `bun:"table:carrier_intel_controls,alias:cictl" json:"-"`
-	keel.Table    `                                                        keel:"carrier_intel_controls"`
+	keel.Table `                                                        keel:"carrier_intel_controls"`
 
-	ID                      pulid.ID          `json:"id"                      bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:cictl_"`
-	BusinessUnitID          pulid.ID          `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID          pulid.ID          `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
-	PrimaryProvider         *integration.Type `json:"primaryProvider"         bun:"primary_provider,type:integration_type,nullzero"                                      keel:"primary_provider"`
-	FallbackProvider        *integration.Type `json:"fallbackProvider"        bun:"fallback_provider,type:integration_type,nullzero"                                     keel:"fallback_provider"`
-	EnrollmentPolicy        EnrollmentPolicy  `json:"enrollmentPolicy"        bun:"enrollment_policy,type:VARCHAR(20),notnull"                                           keel:"enrollment_policy"`
-	RecentUsageDays         int               `json:"recentUsageDays"         bun:"recent_usage_days,type:INTEGER,notnull"                                               keel:"recent_usage_days"`
-	IncludeOpenTenders      bool              `json:"includeOpenTenders"      bun:"include_open_tenders,type:BOOLEAN,notnull"                                            keel:"include_open_tenders"`
-	AutoEnrollOnCreate      bool              `json:"autoEnrollOnCreate"      bun:"auto_enroll_on_create,type:BOOLEAN,notnull"                                           keel:"auto_enroll_on_create"`
-	AutoUnenrollOnInactive  bool              `json:"autoUnenrollOnInactive"  bun:"auto_unenroll_on_inactive,type:BOOLEAN,notnull"                                       keel:"auto_unenroll_on_inactive"`
-	ExclusiveWatchlist      bool              `json:"exclusiveWatchlist"      bun:"exclusive_watchlist,type:BOOLEAN,notnull"                                             keel:"exclusive_watchlist"`
-	PollIntervalMinutes     int               `json:"pollIntervalMinutes"     bun:"poll_interval_minutes,type:INTEGER,notnull"                                           keel:"poll_interval_minutes"`
-	SnapshotTTLHours        int               `json:"snapshotTtlHours"        bun:"snapshot_ttl_hours,type:INTEGER,notnull"                                              keel:"snapshot_ttl_hours"`
-	FullProfileTTLDays      int               `json:"fullProfileTtlDays"      bun:"full_profile_ttl_days,type:INTEGER,notnull"                                           keel:"full_profile_ttl_days"`
-	PreTenderRefreshEnabled bool              `json:"preTenderRefreshEnabled" bun:"pretender_refresh_enabled,type:BOOLEAN,notnull"                                       keel:"pretender_refresh_enabled"`
-	PreTenderMaxAgeHours    int               `json:"preTenderMaxAgeHours"    bun:"pretender_max_age_hours,type:INTEGER,notnull"                                         keel:"pretender_max_age_hours"`
-	HardMaxAgeHours         int               `json:"hardMaxAgeHours"         bun:"hard_max_age_hours,type:INTEGER,notnull"                                              keel:"hard_max_age_hours"`
-	ConfirmBlockingChanges  bool              `json:"confirmBlockingChanges"  bun:"confirm_blocking_changes,type:BOOLEAN,notnull"                                        keel:"confirm_blocking_changes"`
-	OutagePolicy            OutagePolicy      `json:"outagePolicy"            bun:"outage_policy,type:VARCHAR(20),notnull"                                               keel:"outage_policy"`
-	AutoDisqualifyOnBlock   bool              `json:"autoDisqualifyOnBlock"   bun:"auto_disqualify_on_block,type:BOOLEAN,notnull"                                        keel:"auto_disqualify_on_block"`
-	AutoApplySafetyRating   bool              `json:"autoApplySafetyRating"   bun:"auto_apply_safety_rating,type:BOOLEAN,notnull"                                        keel:"auto_apply_safety_rating"`
-	Rules                   RuleSettings      `json:"rules"                   bun:"rules,type:JSONB,notnull"                                                             keel:"rules,jsonb"`
-	AutoSyncFields          []SyncField       `json:"autoSyncFields"          bun:"auto_sync_fields,type:JSONB,notnull"                                                  keel:"auto_sync_fields,jsonb"`
-	MonthlySpendCap         *decimal.Decimal  `json:"monthlySpendCap"         bun:"monthly_spend_cap,type:NUMERIC(19,4),nullzero"                                        keel:"monthly_spend_cap"`
-	SoftCapPercent          int               `json:"softCapPercent"          bun:"soft_cap_percent,type:INTEGER,notnull"                                                keel:"soft_cap_percent"`
-	DailyFullProfileCap     *int              `json:"dailyFullProfileCap"     bun:"daily_full_profile_cap,type:INTEGER,nullzero"                                         keel:"daily_full_profile_cap"`
-	RawRetentionDays        int               `json:"rawRetentionDays"        bun:"raw_retention_days,type:INTEGER,notnull"                                              keel:"raw_retention_days"`
-	SnapshotHistoryLimit    int               `json:"snapshotHistoryLimit"    bun:"snapshot_history_limit,type:INTEGER,notnull"                                          keel:"snapshot_history_limit"`
-	SelfMonitoringEnabled   bool              `json:"selfMonitoringEnabled"   bun:"self_monitoring_enabled,type:BOOLEAN,notnull"                                         keel:"self_monitoring_enabled"`
-	PolicyVersion           int64             `json:"policyVersion"           bun:"policy_version,type:BIGINT,notnull"                                                   keel:"policy_version"`
-	Version                 int64             `json:"version"                 bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt               int64             `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt               int64             `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                      pulid.ID          `json:"id" keel:"id,pk,autoid:cictl_"`
+	BusinessUnitID          pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
+	PrimaryProvider         *integration.Type `json:"primaryProvider" keel:"primary_provider"`
+	FallbackProvider        *integration.Type `json:"fallbackProvider" keel:"fallback_provider"`
+	EnrollmentPolicy        EnrollmentPolicy  `json:"enrollmentPolicy" keel:"enrollment_policy"`
+	RecentUsageDays         int               `json:"recentUsageDays" keel:"recent_usage_days"`
+	IncludeOpenTenders      bool              `json:"includeOpenTenders" keel:"include_open_tenders"`
+	AutoEnrollOnCreate      bool              `json:"autoEnrollOnCreate" keel:"auto_enroll_on_create"`
+	AutoUnenrollOnInactive  bool              `json:"autoUnenrollOnInactive" keel:"auto_unenroll_on_inactive"`
+	ExclusiveWatchlist      bool              `json:"exclusiveWatchlist" keel:"exclusive_watchlist"`
+	PollIntervalMinutes     int               `json:"pollIntervalMinutes" keel:"poll_interval_minutes"`
+	SnapshotTTLHours        int               `json:"snapshotTtlHours" keel:"snapshot_ttl_hours"`
+	FullProfileTTLDays      int               `json:"fullProfileTtlDays" keel:"full_profile_ttl_days"`
+	PreTenderRefreshEnabled bool              `json:"preTenderRefreshEnabled" keel:"pretender_refresh_enabled"`
+	PreTenderMaxAgeHours    int               `json:"preTenderMaxAgeHours" keel:"pretender_max_age_hours"`
+	HardMaxAgeHours         int               `json:"hardMaxAgeHours" keel:"hard_max_age_hours"`
+	ConfirmBlockingChanges  bool              `json:"confirmBlockingChanges" keel:"confirm_blocking_changes"`
+	OutagePolicy            OutagePolicy      `json:"outagePolicy" keel:"outage_policy"`
+	AutoDisqualifyOnBlock   bool              `json:"autoDisqualifyOnBlock" keel:"auto_disqualify_on_block"`
+	AutoApplySafetyRating   bool              `json:"autoApplySafetyRating" keel:"auto_apply_safety_rating"`
+	Rules                   RuleSettings      `json:"rules" keel:"rules,jsonb"`
+	AutoSyncFields          []SyncField       `json:"autoSyncFields" keel:"auto_sync_fields,jsonb"`
+	MonthlySpendCap         *decimal.Decimal  `json:"monthlySpendCap" keel:"monthly_spend_cap"`
+	SoftCapPercent          int               `json:"softCapPercent" keel:"soft_cap_percent"`
+	DailyFullProfileCap     *int              `json:"dailyFullProfileCap" keel:"daily_full_profile_cap"`
+	RawRetentionDays        int               `json:"rawRetentionDays" keel:"raw_retention_days"`
+	SnapshotHistoryLimit    int               `json:"snapshotHistoryLimit" keel:"snapshot_history_limit"`
+	SelfMonitoringEnabled   bool              `json:"selfMonitoringEnabled" keel:"self_monitoring_enabled"`
+	PolicyVersion           int64             `json:"policyVersion" keel:"policy_version"`
+	Version                 int64             `json:"version" keel:"version,version"`
+	CreatedAt               int64             `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt               int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+}
+
+func (c *CarrierIntelControl) BeforeCreate(_ context.Context) error {
+	if c.Rules == nil {
+		c.Rules = RuleSettings{}
+	}
+	if c.AutoSyncFields == nil {
+		c.AutoSyncFields = []SyncField{}
+	}
+
+	return nil
 }
 
 func NewDefaultControl(orgID, buID pulid.ID) *CarrierIntelControl {
@@ -312,37 +318,3 @@ func (c *CarrierIntelControl) GetOrganizationID() pulid.ID { return c.Organizati
 func (c *CarrierIntelControl) GetBusinessUnitID() pulid.ID { return c.BusinessUnitID }
 
 func (c *CarrierIntelControl) GetTableName() string { return "carrier_intel_controls" }
-
-func (c *CarrierIntelControl) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("cictl_")
-		}
-		if c.Rules == nil {
-			c.Rules = RuleSettings{}
-		}
-		if c.AutoSyncFields == nil {
-			c.AutoSyncFields = []SyncField{}
-		}
-		c.CreatedAt = now
-		c.UpdatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
-	}
-
-	return nil
-}
-
-func (c *CarrierIntelControl) BeforeCreate(context.Context) error {
-	if c.Rules == nil {
-		c.Rules = RuleSettings{}
-	}
-	if c.AutoSyncFields == nil {
-		c.AutoSyncFields = []SyncField{}
-	}
-
-	return nil
-}

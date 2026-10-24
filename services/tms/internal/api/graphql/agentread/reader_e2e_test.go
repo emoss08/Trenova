@@ -1,6 +1,7 @@
 package agentread_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"context"
 	"sync"
 	"testing"
@@ -44,16 +45,16 @@ func (m *manufacturers) ListConnection(
 	m.mu.Unlock()
 
 	start := 0
-	if after := req.Cursor.Cursor.ID; after.IsNotNil() {
+	if after := req.Cursor.Cursor.Keyset; after != "" {
 		for idx, row := range m.rows {
-			if row.ID == after {
+			if row.ID.String() == after {
 				start = idx + 1
 			}
 		}
 	}
 	end := min(start+req.Cursor.Limit+1, len(m.rows))
 
-	return pagination.NewCursorListResult(m.rows[start:end], req.Cursor.Limit), nil
+	return pagetest.Of(m.rows[start:end], req.Cursor.Limit), nil
 }
 
 func (m *manufacturers) requests() []*equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest {

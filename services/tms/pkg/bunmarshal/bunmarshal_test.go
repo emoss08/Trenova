@@ -10,10 +10,10 @@ func TestUnmarshalMap(t *testing.T) {
 	t.Parallel()
 
 	type testEntity struct {
-		ID             string `json:"id"             bun:"id,pk"`
-		BusinessUnitID string `json:"businessUnitId" bun:"business_unit_id"`
-		OrganizationID string `json:"organizationId" bun:"organization_id"`
-		CreatedAt      int64  `json:"createdAt"      bun:"created_at"`
+		ID             string `json:"id"`
+		BusinessUnitID string `json:"businessUnitId"`
+		OrganizationID string `json:"organizationId"`
+		CreatedAt      int64  `json:"createdAt"`
 	}
 
 	input := map[string]any{

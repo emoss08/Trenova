@@ -1,8 +1,6 @@
 package locationcategory
 
 import (
-	"context"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -11,14 +9,11 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*LocationCategory)(nil)
 	_ validationframework.TenantedEntity = (*LocationCategory)(nil)
 	_ domaintypes.PostgresSearchable     = (*LocationCategory)(nil)
 	_ pagination.CursorEntity            = (*LocationCategory)(nil)
@@ -26,30 +21,27 @@ var (
 
 // Classification of locations
 type LocationCategory struct {
-	bun.BaseModel             `bun:"table:location_categories,alias:lc" json:"-"`
-	keel.Table                `                                                  keel:"location_categories,report=Parties"`
-	pagination.CursorValueSet `bun:",embed"                             json:"-"`
+	keel.Table          `                                                  keel:"location_categories,report=Parties"`
+	ID                  pulid.ID     `json:"id" keel:"id,pk,autoid:lc_"`
+	BusinessUnitID      pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name                string       `json:"name" keel:"name"`
+	Description         string       `json:"description" keel:"description,nullzero"`
+	Type                Category     `json:"type" keel:"type"`
+	FacilityType        FacilityType `json:"facilityType" keel:"facility_type,nullzero"`
+	Color               string       `json:"color" keel:"color,nullzero"`
+	HasSecureParking    bool         `json:"hasSecureParking" keel:"has_secure_parking"`
+	RequiresAppointment bool         `json:"requiresAppointment" keel:"requires_appointment"`
+	AllowsOvernight     bool         `json:"allowsOvernight" keel:"allows_overnight"`
+	HasRestroom         bool         `json:"hasRestroom" keel:"has_restroom"`
+	Version             int64        `json:"version" keel:"version,version"`
+	CreatedAt           int64        `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt           int64        `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector        string       `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                string       `json:"-" keel:"rank,computed"`
 
-	ID                  pulid.ID     `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:lc_"`
-	BusinessUnitID      pulid.ID     `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),notnull,pk"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID     `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),notnull,pk"                                         keel:"organization_id,pk,tenant"`
-	Name                string       `json:"name"                bun:"name,type:VARCHAR(100),notnull"                                                       keel:"name"`
-	Description         string       `json:"description"         bun:"description,type:TEXT,nullzero"                                                       keel:"description,nullzero"`
-	Type                Category     `json:"type"                bun:"type,type:location_category_type,notnull"                                             keel:"type"`
-	FacilityType        FacilityType `json:"facilityType"        bun:"facility_type,type:facility_type,nullzero"                                            keel:"facility_type,nullzero"`
-	Color               string       `json:"color"               bun:"color,type:VARCHAR(10),nullzero"                                                      keel:"color,nullzero"`
-	HasSecureParking    bool         `json:"hasSecureParking"    bun:"has_secure_parking,type:BOOLEAN"                                                      keel:"has_secure_parking"`
-	RequiresAppointment bool         `json:"requiresAppointment" bun:"requires_appointment,type:BOOLEAN"                                                    keel:"requires_appointment"`
-	AllowsOvernight     bool         `json:"allowsOvernight"     bun:"allows_overnight,type:BOOLEAN"                                                        keel:"allows_overnight"`
-	HasRestroom         bool         `json:"hasRestroom"         bun:"has_restroom,type:BOOLEAN"                                                            keel:"has_restroom"`
-	Version             int64        `json:"version"             bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt           int64        `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt           int64        `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector        string       `json:"-"                   bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                string       `json:"-"                   bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
-
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
 }
 
 func (lc *LocationCategory) Validate(multiErr *errortypes.MultiError) {
@@ -69,26 +61,6 @@ func (lc *LocationCategory) Validate(multiErr *errortypes.MultiError) {
 			is.HexColor.Error("Color must be a valid hex color"),
 		),
 	))
-}
-
-func (lc *LocationCategory) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if lc.ID.IsNil() {
-			lc.ID = pulid.MustNew("lc_")
-		}
-		lc.CreatedAt = now
-	case *bun.UpdateQuery:
-		lc.UpdatedAt = now
-	}
-
-	return nil
-}
-
-func (lc *LocationCategory) BeforeCreate(ctx context.Context) error {
-	return lc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (lc *LocationCategory) GetID() pulid.ID {

@@ -1,19 +1,13 @@
 package rateagreement
 
 import (
-	"context"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*RateAgreementFuelBinding)(nil)
 
 // RateAgreementFuelBinding attaches a fuel surcharge program to a contract, and
 // lets that contract bend the program's terms.
@@ -25,30 +19,29 @@ var _ bun.BeforeAppendModelHook = (*RateAgreementFuelBinding)(nil)
 // the three overrides here, and the resolution order the engine follows is
 // agreement, then customer billing profile, then organization default.
 type RateAgreementFuelBinding struct {
-	bun.BaseModel `bun:"table:rate_agreement_fuel_bindings,alias:ragf" json:"-"`
-	keel.Table    `keel:"rate_agreement_fuel_bindings"`
+	keel.Table `keel:"rate_agreement_fuel_bindings"`
 
-	ID                     pulid.ID `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ragf_"`
-	BusinessUnitID         pulid.ID `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	RateAgreementID        pulid.ID `json:"rateAgreementId"        bun:"rate_agreement_id,type:VARCHAR(100),notnull,unique" keel:"rate_agreement_id"`
-	FuelSurchargeProgramID pulid.ID `json:"fuelSurchargeProgramId" bun:"fuel_surcharge_program_id,type:VARCHAR(100),notnull" keel:"fuel_surcharge_program_id"`
+	ID                     pulid.ID `json:"id" keel:"id,pk,autoid:ragf_"`
+	BusinessUnitID         pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	RateAgreementID        pulid.ID `json:"rateAgreementId" keel:"rate_agreement_id"`
+	FuelSurchargeProgramID pulid.ID `json:"fuelSurchargeProgramId" keel:"fuel_surcharge_program_id"`
 
 	// Waived suppresses fuel entirely for this contract. All-in rates are
 	// common enough that this needs to be a stated term rather than an omission
 	// somebody has to notice.
-	Waived bool `json:"waived" bun:"waived,type:BOOLEAN,notnull,default:false" keel:"waived"`
+	Waived bool `json:"waived" keel:"waived"`
 
-	PegPriceOverride      decimal.NullDecimal `json:"pegPriceOverride"      bun:"peg_price_override,type:NUMERIC(19,4),nullzero" keel:"peg_price_override"`
-	IncrementRateOverride decimal.NullDecimal `json:"incrementRateOverride" bun:"increment_rate_override,type:NUMERIC(19,4),nullzero" keel:"increment_rate_override"`
-	CapAmount             decimal.NullDecimal `json:"capAmount"             bun:"cap_amount,type:NUMERIC(19,4),nullzero" keel:"cap_amount"`
+	PegPriceOverride      decimal.NullDecimal `json:"pegPriceOverride" keel:"peg_price_override"`
+	IncrementRateOverride decimal.NullDecimal `json:"incrementRateOverride" keel:"increment_rate_override"`
+	CapAmount             decimal.NullDecimal `json:"capAmount" keel:"cap_amount"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Agreement *RateAgreement                      `json:"-"                 bun:"rel:belongs-to,join:rate_agreement_id=id" keel:"belongs:rate_agreement_id"`
-	Program   *fuelsurcharge.FuelSurchargeProgram `json:"program,omitempty" bun:"rel:belongs-to,join:fuel_surcharge_program_id=id" keel:"belongs:fuel_surcharge_program_id"`
+	Agreement *RateAgreement                      `json:"-" keel:"belongs:rate_agreement_id"`
+	Program   *fuelsurcharge.FuelSurchargeProgram `json:"program,omitempty" keel:"belongs:fuel_surcharge_program_id"`
 }
 
 func (ragf *RateAgreementFuelBinding) Validate(multiErr *errortypes.MultiError) {
@@ -89,26 +82,6 @@ func validateNonNegative(
 	if value.Valid && value.Decimal.IsNegative() {
 		multiErr.Add(field, errortypes.ErrInvalid, "{0} cannot be negative", label)
 	}
-}
-
-func (ragf *RateAgreementFuelBinding) BeforeAppendModel(
-	_ context.Context,
-	query bun.Query,
-) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if ragf.ID.IsNil() {
-			ragf.ID = pulid.MustNew("ragf_")
-		}
-		ragf.CreatedAt = now
-		ragf.UpdatedAt = now
-	case *bun.UpdateQuery:
-		ragf.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (ragf *RateAgreementFuelBinding) GetID() pulid.ID {

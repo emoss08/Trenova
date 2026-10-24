@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuefilterpreset/billingqueuefilterpresetdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueuefilterpresetports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -88,14 +87,7 @@ func (r *repository) Update(
 		r.db,
 		func(ctx context.Context) (*billingqueuefilterpreset.BillingQueueFilterPreset, error) {
 			p := billingqueuefilterpresetdb.BillingQueueFilterPresets
-			rows, err := listquery.UpdateReturning(
-				ctx,
-				r.db.Keel(ctx),
-				p.Where(p.ID.Eq(entity.ID), p.UserID.Eq(entity.UserID)),
-				p.Name.To(entity.Name),
-				p.Filters.To(entity.Filters),
-				p.IsDefault.To(entity.IsDefault),
-			)
+			rows, err := p.Where(p.ID.Eq(entity.ID), p.UserID.Eq(entity.UserID)).UpdateReturning(ctx, r.db.Keel(ctx), p.Name.To(entity.Name), p.Filters.To(entity.Filters), p.IsDefault.To(entity.IsDefault))
 			if err != nil {
 				r.l.Error("failed to update billing queue filter preset", zap.Error(err))
 				return nil, presetErrors.Map(err, entity.ID.String())

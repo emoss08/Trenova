@@ -96,7 +96,6 @@ func (s *TestDataSeed) createAccessorialCharges(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	charges := []accessorialcharge.AccessorialCharge{
 		{
 			ID:             pulid.MustNew("acc_"),
@@ -228,7 +227,6 @@ func (s *TestDataSeed) createEquipmentManufacturers(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	manufacturers := []equipmentmanufacturer.EquipmentManufacturer{
 		{
 			ID:             pulid.MustNew("em_"),
@@ -310,7 +308,6 @@ func (s *TestDataSeed) createEquipmentTypes(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	types := []equipmenttype.EquipmentType{
 		{
 			ID:             pulid.MustNew("et_"),
@@ -400,7 +397,6 @@ func (s *TestDataSeed) createTestTrailers(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	trailerType, err := equipmenttypedb.EquipmentTypes.AllTenants().Where(
 		equipmenttypedb.EquipmentTypes.OrganizationID.Eq(orgID),
 		equipmenttypedb.EquipmentTypes.BusinessUnitID.Eq(buID),
@@ -547,7 +543,6 @@ func (s *TestDataSeed) createTestTractors(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	equipType, err := equipmenttypedb.EquipmentTypes.AllTenants().Where(
 		equipmenttypedb.EquipmentTypes.OrganizationID.Eq(orgID),
 		equipmenttypedb.EquipmentTypes.BusinessUnitID.Eq(buID),
@@ -703,7 +698,6 @@ func (s *TestDataSeed) createTestFleetCodes(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	manager, err := userByUsername(ctx, db, "admin")
 	if err != nil {
 		return fmt.Errorf("get admin user: %w", err)
@@ -791,7 +785,6 @@ func (s *TestDataSeed) createTestShipmentTypes(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	shipmentTypes := []shipmenttype.ShipmentType{
 		{
 			ID:             pulid.MustNew("sht_"),
@@ -909,7 +902,6 @@ func (s *TestDataSeed) createTestServiceTypes(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	serviceTypes := []servicetype.ServiceType{
 		{
 			ID:             pulid.MustNew("st_"),

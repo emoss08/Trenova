@@ -9,9 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -28,46 +26,45 @@ const (
 // job. The pages are kept in the order they arrived; how they are divided
 // into documents lives on the items.
 type CaptureBatch struct {
-	bun.BaseModel `bun:"table:capture_batches,alias:cbat" json:"-"`
-	keel.Table    `keel:"capture_batches"`
+	keel.Table `keel:"capture_batches"`
 
-	ID                pulid.ID    `json:"id"                bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:cbat_"`
-	BusinessUnitID    pulid.ID    `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID    `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	UserID            pulid.ID    `json:"userId"            bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
-	DeviceID          pulid.ID    `json:"deviceId"          bun:"device_id,type:VARCHAR(100),notnull" keel:"device_id"`
-	RequestID         *pulid.ID   `json:"requestId"         bun:"request_id,type:VARCHAR(100),nullzero" keel:"request_id"`
-	ProfileID         *pulid.ID   `json:"profileId"         bun:"profile_id,type:VARCHAR(100),nullzero" keel:"profile_id"`
-	ClientKey         string      `json:"-"                 bun:"client_key,type:VARCHAR(100),notnull" keel:"client_key"`
-	Source            Source      `json:"source"            bun:"source,type:VARCHAR(10),notnull" keel:"source"`
-	Status            BatchStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	SourceName        string      `json:"sourceName"        bun:"source_name,type:VARCHAR(255),nullzero" keel:"source_name,nullzero"`
-	JobName           string      `json:"jobName"           bun:"job_name,type:VARCHAR(255),nullzero" keel:"job_name,nullzero"`
-	Settings          Settings    `json:"settings"          bun:"settings,type:JSONB,notnull,default:'{}'" keel:"settings,jsonb"`
-	TargetType        string      `json:"targetType"        bun:"target_type,type:VARCHAR(50),nullzero" keel:"target_type,nullzero"`
-	TargetID          *pulid.ID   `json:"targetId"          bun:"target_id,type:VARCHAR(100),nullzero" keel:"target_id"`
-	DocumentTypeID    *pulid.ID   `json:"documentTypeId"    bun:"document_type_id,type:VARCHAR(100),nullzero" keel:"document_type_id"`
-	ExpectedPageCount int         `json:"expectedPageCount" bun:"expected_page_count,type:INTEGER,notnull,default:0" keel:"expected_page_count"`
-	ReceivedPageCount int         `json:"receivedPageCount" bun:"received_page_count,type:INTEGER,notnull,default:0" keel:"received_page_count"`
-	ItemCount         int         `json:"itemCount"         bun:"item_count,type:INTEGER,notnull,default:0" keel:"item_count"`
-	FiledItemCount    int         `json:"filedItemCount"    bun:"filed_item_count,type:INTEGER,notnull,default:0" keel:"filed_item_count"`
-	ManifestDigest    string      `json:"-"                 bun:"manifest_digest,type:VARCHAR(64),nullzero" keel:"manifest_digest,nullzero"`
-	FailureMessage    string      `json:"failureMessage"    bun:"failure_message,type:VARCHAR(500),nullzero" keel:"failure_message,nullzero"`
-	SealedAt          *int64      `json:"sealedAt"          bun:"sealed_at,type:BIGINT,nullzero" keel:"sealed_at"`
-	ProcessedAt       *int64      `json:"processedAt"       bun:"processed_at,type:BIGINT,nullzero" keel:"processed_at"`
-	RetainUntil       int64       `json:"retainUntil"       bun:"retain_until,type:BIGINT,notnull" keel:"retain_until"`
+	ID                pulid.ID    `json:"id" keel:"id,pk,autoid:cbat_"`
+	BusinessUnitID    pulid.ID    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID    `json:"organizationId" keel:"organization_id,pk,tenant"`
+	UserID            pulid.ID    `json:"userId" keel:"user_id"`
+	DeviceID          pulid.ID    `json:"deviceId" keel:"device_id"`
+	RequestID         *pulid.ID   `json:"requestId" keel:"request_id"`
+	ProfileID         *pulid.ID   `json:"profileId" keel:"profile_id"`
+	ClientKey         string      `json:"-" keel:"client_key"`
+	Source            Source      `json:"source" keel:"source"`
+	Status            BatchStatus `json:"status" keel:"status"`
+	SourceName        string      `json:"sourceName" keel:"source_name,nullzero"`
+	JobName           string      `json:"jobName" keel:"job_name,nullzero"`
+	Settings          Settings    `json:"settings" keel:"settings,jsonb"`
+	TargetType        string      `json:"targetType" keel:"target_type,nullzero"`
+	TargetID          *pulid.ID   `json:"targetId" keel:"target_id"`
+	DocumentTypeID    *pulid.ID   `json:"documentTypeId" keel:"document_type_id"`
+	ExpectedPageCount int         `json:"expectedPageCount" keel:"expected_page_count"`
+	ReceivedPageCount int         `json:"receivedPageCount" keel:"received_page_count"`
+	ItemCount         int         `json:"itemCount" keel:"item_count"`
+	FiledItemCount    int         `json:"filedItemCount" keel:"filed_item_count"`
+	ManifestDigest    string      `json:"-" keel:"manifest_digest,nullzero"`
+	FailureMessage    string      `json:"failureMessage" keel:"failure_message,nullzero"`
+	SealedAt          *int64      `json:"sealedAt" keel:"sealed_at"`
+	ProcessedAt       *int64      `json:"processedAt" keel:"processed_at"`
+	RetainUntil       int64       `json:"retainUntil" keel:"retain_until"`
 	// RetentionRemindedAt is when the owner was told the unfiled pages are
 	// about to go. It is set once, by whichever sweep claims the reminder.
-	RetentionRemindedAt *int64         `json:"-"               bun:"retention_reminded_at,type:BIGINT,nullzero" keel:"retention_reminded_at"`
-	Version             int64          `json:"version"         bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt           int64          `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt           int64          `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	Pages               []*CapturePage `json:"pages,omitempty" bun:"rel:has-many,join:id=batch_id,join:business_unit_id=business_unit_id,join:organization_id=organization_id" keel:"many:batch_id"`
-	Items               []*CaptureItem `json:"items,omitempty" bun:"rel:has-many,join:id=batch_id,join:business_unit_id=business_unit_id,join:organization_id=organization_id" keel:"many:batch_id"`
+	RetentionRemindedAt *int64         `json:"-" keel:"retention_reminded_at"`
+	Version             int64          `json:"version" keel:"version,version"`
+	CreatedAt           int64          `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt           int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Pages               []*CapturePage `json:"pages,omitempty" keel:"many:batch_id"`
+	Items               []*CaptureItem `json:"items,omitempty" keel:"many:batch_id"`
 
-	CaptureDevice *CaptureDevice       `json:"device,omitempty"       bun:"rel:belongs-to,join:device_id=id,join:business_unit_id=business_unit_id,join:organization_id=organization_id" keel:"belongs:device_id"`
-	Organization  *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit  *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	CaptureDevice *CaptureDevice       `json:"device,omitempty" keel:"belongs:device_id"`
+	Organization  *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit  *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 }
 
 // Settings are what the device actually used, which is not always what the
@@ -162,26 +159,6 @@ func (b *CaptureBatch) SettleFiling() {
 	}
 }
 
-func (b *CaptureBatch) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if b.ID.IsNil() {
-			b.ID = pulid.MustNew("cbat_")
-		}
-		if b.Status == "" {
-			b.Status = BatchReceiving
-		}
-		b.CreatedAt = now
-		b.UpdatedAt = now
-	case *bun.UpdateQuery:
-		b.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (b *CaptureBatch) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias: "cbat",
@@ -201,5 +178,9 @@ func (b *CaptureBatch) GetCreatedAt() int64  { return b.CreatedAt }
 func (b *CaptureBatch) GetTableName() string { return "capture_batches" }
 
 func (b *CaptureBatch) BeforeCreate(ctx context.Context) error {
-	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	if b.Status == "" {
+		b.Status = BatchReceiving
+	}
+
+	return nil
 }

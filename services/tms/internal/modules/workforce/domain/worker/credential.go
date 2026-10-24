@@ -11,9 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -107,40 +105,38 @@ func EvaluateCredentialHealth(
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerCredential)(nil)
 	_ validationframework.TenantedEntity = (*WorkerCredential)(nil)
 )
 
 // Licences and certificates a worker holds, with their expiry and verification
 type WorkerCredential struct {
-	bun.BaseModel `bun:"table:worker_credentials,alias:wcred" json:"-"`
-	keel.Table    `                                                    keel:"worker_credentials,report=Parties"`
+	keel.Table `                                                    keel:"worker_credentials,report=Parties"`
 
-	ID               pulid.ID         `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:wcred_"`
-	BusinessUnitID   pulid.ID         `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID         `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
-	WorkerID         pulid.ID         `json:"workerId"         bun:"worker_id,type:VARCHAR(100),notnull"                                                  keel:"worker_id"`
-	CredentialTypeID pulid.ID         `json:"credentialTypeId" bun:"credential_type_id,type:VARCHAR(100),notnull"                                         keel:"credential_type_id"`
-	Status           CredentialStatus `json:"status"           bun:"status,type:worker_credential_status_enum,notnull,default:'Active'"                   keel:"status"`
-	Number           string           `json:"number"           bun:"number,type:VARCHAR(100),nullzero"                                                    keel:"number,nullzero"`
-	IssuingAuthority string           `json:"issuingAuthority" bun:"issuing_authority,type:VARCHAR(100),nullzero"                                         keel:"issuing_authority,nullzero"`
-	IssuedAt         *int64           `json:"issuedAt"         bun:"issued_at,type:BIGINT,nullzero"                                                       keel:"issued_at,label=Issued"`
-	ExpiresAt        *int64           `json:"expiresAt"        bun:"expires_at,type:BIGINT,nullzero"                                                      keel:"expires_at,label=Expires"`
-	DocumentID       pulid.ID         `json:"documentId"       bun:"document_id,type:VARCHAR(100),nullzero"                                               keel:"document_id,nullzero"`
-	Notes            string           `json:"notes"            bun:"notes,type:TEXT,nullzero"                                                             keel:"notes,nullzero"`
-	VerifiedByID     pulid.ID         `json:"verifiedById"     bun:"verified_by_id,type:VARCHAR(100),nullzero"                                            keel:"verified_by_id,nullzero"`
-	VerifiedAt       *int64           `json:"verifiedAt"       bun:"verified_at,type:BIGINT,nullzero"                                                     keel:"verified_at,label=Verified"`
-	ArchivedByID     pulid.ID         `json:"archivedById"     bun:"archived_by_id,type:VARCHAR(100),nullzero"                                            keel:"archived_by_id,nullzero"`
-	ArchivedAt       *int64           `json:"archivedAt"       bun:"archived_at,type:BIGINT,nullzero"                                                     keel:"archived_at"`
-	ArchiveReason    string           `json:"archiveReason"    bun:"archive_reason,type:VARCHAR(255),nullzero"                                            keel:"archive_reason,nullzero"`
-	Version          int64            `json:"version"          bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt        int64            `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt        int64            `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID               pulid.ID         `json:"id" keel:"id,pk,autoid:wcred_"`
+	BusinessUnitID   pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID         pulid.ID         `json:"workerId" keel:"worker_id"`
+	CredentialTypeID pulid.ID         `json:"credentialTypeId" keel:"credential_type_id"`
+	Status           CredentialStatus `json:"status" keel:"status"`
+	Number           string           `json:"number" keel:"number,nullzero"`
+	IssuingAuthority string           `json:"issuingAuthority" keel:"issuing_authority,nullzero"`
+	IssuedAt         *int64           `json:"issuedAt" keel:"issued_at,label=Issued"`
+	ExpiresAt        *int64           `json:"expiresAt" keel:"expires_at,label=Expires"`
+	DocumentID       pulid.ID         `json:"documentId" keel:"document_id,nullzero"`
+	Notes            string           `json:"notes" keel:"notes,nullzero"`
+	VerifiedByID     pulid.ID         `json:"verifiedById" keel:"verified_by_id,nullzero"`
+	VerifiedAt       *int64           `json:"verifiedAt" keel:"verified_at,label=Verified"`
+	ArchivedByID     pulid.ID         `json:"archivedById" keel:"archived_by_id,nullzero"`
+	ArchivedAt       *int64           `json:"archivedAt" keel:"archived_at"`
+	ArchiveReason    string           `json:"archiveReason" keel:"archive_reason,nullzero"`
+	Version          int64            `json:"version" keel:"version,version"`
+	CreatedAt        int64            `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt        int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	CredentialType *WorkerCredentialType `json:"credentialType,omitempty" bun:"rel:belongs-to,join:credential_type_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:credential_type_id"`
-	Worker         *Worker               `json:"worker,omitempty"         bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"          keel:"belongs:worker_id"`
-	Document       *document.Document    `json:"document,omitempty"       bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"        keel:"belongs:document_id,noreport"`
-	VerifiedBy     *tenant.User          `json:"verifiedBy,omitempty"     bun:"rel:belongs-to,join:verified_by_id=id"                                                                                 keel:"belongs:verified_by_id,noreport"`
+	CredentialType *WorkerCredentialType `json:"credentialType,omitempty" keel:"belongs:credential_type_id"`
+	Worker         *Worker               `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Document       *document.Document    `json:"document,omitempty" keel:"belongs:document_id,noreport"`
+	VerifiedBy     *tenant.User          `json:"verifiedBy,omitempty" keel:"belongs:verified_by_id,noreport"`
 }
 
 func (c *WorkerCredential) Validate(multiErr *errortypes.MultiError) {
@@ -231,26 +227,6 @@ func (c *WorkerCredential) GetTableName() string { return "worker_credentials" }
 func (c *WorkerCredential) GetResourceType() string { return "worker_credential" }
 
 func (c *WorkerCredential) GetResourceID() string { return c.ID.String() }
-
-func (c *WorkerCredential) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("wcred_")
-		}
-		if c.Status == "" {
-			c.Status = CredentialStatusActive
-		}
-		c.CreatedAt = now
-		c.UpdatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
-	}
-
-	return nil
-}
 
 func (c *WorkerCredential) BeforeCreate(_ context.Context) error {
 	if c.Status == "" {

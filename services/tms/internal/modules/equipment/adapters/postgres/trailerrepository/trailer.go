@@ -232,12 +232,7 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*trailer.Trailer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*trailer.Trailer, error) {
 		tr := trailerdb.Trailers
-		entities, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			tr.Where(tr.ID.In(req.TrailerIDs...)),
-			tr.Status.To(req.Status),
-		)
+		entities, err := tr.Where(tr.ID.In(req.TrailerIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), tr.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update trailer status", zap.Error(err))
 			return nil, err

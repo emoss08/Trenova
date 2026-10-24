@@ -12,12 +12,8 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*AccountingMapping)(nil)
 
 type MappingCandidate struct {
 	ExternalID string  `json:"externalId"`
@@ -48,35 +44,46 @@ func (s *MappingSignals) CandidateFingerprint() string {
 }
 
 type AccountingMapping struct {
-	bun.BaseModel `bun:"table:accounting_mappings,alias:acctm" json:"-"`
-	keel.Table    `keel:"accounting_mappings"`
+	keel.Table `keel:"accounting_mappings"`
 
-	ID              pulid.ID          `json:"id"              bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctm_"`
-	BusinessUnitID  pulid.ID          `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID          `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ConnectionID    pulid.ID          `json:"connectionId"    bun:"connection_id,type:VARCHAR(100),notnull" keel:"connection_id"`
-	TargetType      MappingTargetType `json:"targetType"      bun:"target_type,type:VARCHAR(30),notnull" keel:"target_type"`
-	TrenovaObjectID pulid.ID          `json:"trenovaObjectId" bun:"trenova_object_id,type:VARCHAR(100),nullzero" keel:"trenova_object_id,nullzero"`
-	TrenovaKey      string            `json:"trenovaKey"      bun:"trenova_key,type:VARCHAR(50),nullzero" keel:"trenova_key,nullzero"`
-	TargetLabel     string            `json:"targetLabel"     bun:"target_label,type:VARCHAR(500),notnull" keel:"target_label"`
-	SearchLabel     string            `json:"-"               bun:"search_label,type:VARCHAR(500),notnull" keel:"search_label"`
-	ProviderKind    ReferenceKind     `json:"providerKind"    bun:"provider_kind,type:VARCHAR(30),notnull" keel:"provider_kind"`
-	ExternalID      string            `json:"externalId"      bun:"external_id,type:VARCHAR(100),nullzero" keel:"external_id,nullzero"`
-	ExternalName    string            `json:"externalName"    bun:"external_name,type:VARCHAR(1000),nullzero" keel:"external_name,nullzero"`
-	State           MappingState      `json:"state"           bun:"state,type:VARCHAR(20),notnull" keel:"state"`
-	Source          MappingSource     `json:"source"          bun:"source,type:VARCHAR(30),nullzero" keel:"source,nullzero"`
-	Confidence      *float64          `json:"confidence"      bun:"confidence,type:NUMERIC(5,4),nullzero" keel:"confidence"`
-	Reason          string            `json:"reason"          bun:"reason,type:TEXT,nullzero" keel:"reason,nullzero"`
-	Signals         MappingSignals    `json:"signals"         bun:"signals,type:JSONB,notnull" keel:"signals,jsonb"`
-	ConfirmedByID   pulid.ID          `json:"confirmedById"   bun:"confirmed_by_id,type:VARCHAR(100),nullzero" keel:"confirmed_by_id,nullzero"`
-	ConfirmedAt     *int64            `json:"confirmedAt"     bun:"confirmed_at,type:BIGINT,nullzero" keel:"confirmed_at"`
-	Version         int64             `json:"version"         bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt       int64             `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt       int64             `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID              pulid.ID          `json:"id" keel:"id,pk,autoid:acctm_"`
+	BusinessUnitID  pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ConnectionID    pulid.ID          `json:"connectionId" keel:"connection_id"`
+	TargetType      MappingTargetType `json:"targetType" keel:"target_type"`
+	TrenovaObjectID pulid.ID          `json:"trenovaObjectId" keel:"trenova_object_id,nullzero"`
+	TrenovaKey      string            `json:"trenovaKey" keel:"trenova_key,nullzero"`
+	TargetLabel     string            `json:"targetLabel" keel:"target_label"`
+	SearchLabel     string            `json:"-" keel:"search_label"`
+	ProviderKind    ReferenceKind     `json:"providerKind" keel:"provider_kind"`
+	ExternalID      string            `json:"externalId" keel:"external_id,nullzero"`
+	ExternalName    string            `json:"externalName" keel:"external_name,nullzero"`
+	State           MappingState      `json:"state" keel:"state"`
+	Source          MappingSource     `json:"source" keel:"source,nullzero"`
+	Confidence      *float64          `json:"confidence" keel:"confidence"`
+	Reason          string            `json:"reason" keel:"reason,nullzero"`
+	Signals         MappingSignals    `json:"signals" keel:"signals,jsonb"`
+	ConfirmedByID   pulid.ID          `json:"confirmedById" keel:"confirmed_by_id,nullzero"`
+	ConfirmedAt     *int64            `json:"confirmedAt" keel:"confirmed_at"`
+	Version         int64             `json:"version" keel:"version,version"`
+	CreatedAt       int64             `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt       int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	ConfirmedBy  *tenant.User         `json:"confirmedBy,omitempty"  bun:"rel:belongs-to,join:confirmed_by_id=id" keel:"belongs:confirmed_by_id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	ConfirmedBy  *tenant.User         `json:"confirmedBy,omitempty" keel:"belongs:confirmed_by_id"`
+}
+
+func (m *AccountingMapping) BeforeUpdate(_ context.Context) error {
+	m.SearchLabel = stringutils.NormalizeName(m.TargetLabel)
+
+	return nil
+}
+
+func (m *AccountingMapping) BeforeCreate(_ context.Context) error {
+	m.SearchLabel = stringutils.NormalizeName(m.TargetLabel)
+
+	return nil
 }
 
 type Proposal struct {
@@ -190,24 +197,6 @@ func (m *AccountingMapping) GetPostgresSearchConfig() domaintypes.PostgresSearch
 
 func (m *AccountingMapping) BeforeSave(_ context.Context) error {
 	m.SearchLabel = stringutils.NormalizeName(m.TargetLabel)
-	return nil
-}
-
-func (m *AccountingMapping) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	m.SearchLabel = stringutils.NormalizeName(m.TargetLabel)
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if m.ID.IsNil() {
-			m.ID = pulid.MustNew("acctm_")
-		}
-		m.CreatedAt = now
-		m.UpdatedAt = now
-	case *bun.UpdateQuery:
-		m.UpdatedAt = now
-	}
-
 	return nil
 }
 

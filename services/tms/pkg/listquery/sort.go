@@ -53,7 +53,7 @@ func (p *plan) keysetOrder(
 		}
 
 		fd, ok := p.resolve(sort.Field)
-		if !ok || !fd.base {
+		if !ok {
 			return nil, nil, errortypes.NewValidationError(
 				"sort.field",
 				errortypes.ErrInvalid,
@@ -61,12 +61,11 @@ func (p *plan) keysetOrder(
 			)
 		}
 
-		col := p.baseColumn(fd.index)
-		order := col.Asc()
+		order := fd.expr.Asc()
 		if sort.Direction == dbtype.SortDirectionDesc {
-			order = col.Desc()
+			order = fd.expr.Desc()
 		}
-		if fd.col.MayBeNull() {
+		if !fd.base || fd.col.MayBeNull() {
 			order = order.NullsLast()
 		}
 

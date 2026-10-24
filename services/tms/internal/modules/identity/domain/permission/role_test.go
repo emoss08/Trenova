@@ -9,62 +9,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
-
-func TestRole_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt and UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		r := &Role{}
-		require.True(t, r.ID.IsNil())
-
-		err := r.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, r.ID.IsNil())
-		assert.True(t, strings.HasPrefix(string(r.ID), "rol_"))
-		assert.NotZero(t, r.CreatedAt)
-		assert.NotZero(t, r.UpdatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("rol_")
-		r := &Role{ID: existingID}
-
-		err := r.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, r.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		r := &Role{}
-
-		err := r.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, r.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		r := &Role{}
-
-		err := r.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, r.CreatedAt)
-		assert.NotZero(t, r.UpdatedAt)
-	})
-}
 
 func TestRole_GetID(t *testing.T) {
 	t.Parallel()

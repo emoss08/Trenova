@@ -10,9 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -28,31 +26,30 @@ const (
 // CaptureProfile is a named set of scan settings an organization offers the people
 // who scan, so a billing clerk picks "PODs" rather than a resolution.
 type CaptureProfile struct {
-	bun.BaseModel `bun:"table:capture_profiles,alias:cprf" json:"-"`
-	keel.Table    `keel:"capture_profiles"`
+	keel.Table `keel:"capture_profiles"`
 
-	ID                  pulid.ID            `json:"id"                  bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:cprf_"`
-	BusinessUnitID      pulid.ID            `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID            `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	Name                string              `json:"name"                bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Description         string              `json:"description"         bun:"description,type:VARCHAR(500),nullzero" keel:"description,nullzero"`
-	Status              ProfileStatus       `json:"status"              bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	IsDefault           bool                `json:"isDefault"           bun:"is_default,type:BOOLEAN,notnull,default:false" keel:"is_default"`
-	DPI                 int                 `json:"dpi"                 bun:"dpi,type:INTEGER,notnull" keel:"dpi"`
-	PixelType           PixelType           `json:"pixelType"           bun:"pixel_type,type:VARCHAR(20),notnull" keel:"pixel_type"`
-	Duplex              bool                `json:"duplex"              bun:"duplex,type:BOOLEAN,notnull" keel:"duplex"`
-	UseFeeder           bool                `json:"useFeeder"           bun:"use_feeder,type:BOOLEAN,notnull" keel:"use_feeder"`
-	DiscardBlankPages   bool                `json:"discardBlankPages"   bun:"discard_blank_pages,type:BOOLEAN,notnull" keel:"discard_blank_pages"`
-	JPEGQuality         int                 `json:"jpegQuality"         bun:"jpeg_quality,type:INTEGER,notnull" keel:"jpeg_quality"`
-	ShowDriverUI        bool                `json:"showDriverUi"        bun:"show_driver_ui,type:BOOLEAN,notnull,default:false" keel:"show_driver_ui"`
-	SeparatorStrategies []SeparatorStrategy `json:"separatorStrategies" bun:"separator_strategies,type:VARCHAR(30)[],notnull,default:'{}',array" keel:"separator_strategies"`
-	FixedPageCount      int                 `json:"fixedPageCount"      bun:"fixed_page_count,type:INTEGER,notnull,default:0" keel:"fixed_page_count"`
-	Version             int64               `json:"version"             bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt           int64               `json:"createdAt"           bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt           int64               `json:"updatedAt"           bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                  pulid.ID            `json:"id" keel:"id,pk,autoid:cprf_"`
+	BusinessUnitID      pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name                string              `json:"name" keel:"name"`
+	Description         string              `json:"description" keel:"description,nullzero"`
+	Status              ProfileStatus       `json:"status" keel:"status"`
+	IsDefault           bool                `json:"isDefault" keel:"is_default"`
+	DPI                 int                 `json:"dpi" keel:"dpi"`
+	PixelType           PixelType           `json:"pixelType" keel:"pixel_type"`
+	Duplex              bool                `json:"duplex" keel:"duplex"`
+	UseFeeder           bool                `json:"useFeeder" keel:"use_feeder"`
+	DiscardBlankPages   bool                `json:"discardBlankPages" keel:"discard_blank_pages"`
+	JPEGQuality         int                 `json:"jpegQuality" keel:"jpeg_quality"`
+	ShowDriverUI        bool                `json:"showDriverUi" keel:"show_driver_ui"`
+	SeparatorStrategies []SeparatorStrategy `json:"separatorStrategies" keel:"separator_strategies"`
+	FixedPageCount      int                 `json:"fixedPageCount" keel:"fixed_page_count"`
+	Version             int64               `json:"version" keel:"version,version"`
+	CreatedAt           int64               `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt           int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 }
 
 func (p *CaptureProfile) Validate(multiErr *errortypes.MultiError) {
@@ -130,24 +127,6 @@ func (p *CaptureProfile) ApplyDefaults() {
 	}
 }
 
-func (p *CaptureProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("cprf_")
-		}
-		p.ApplyDefaults()
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (p *CaptureProfile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias: "cprf",
@@ -167,5 +146,7 @@ func (p *CaptureProfile) GetCreatedAt() int64  { return p.CreatedAt }
 func (p *CaptureProfile) GetTableName() string { return "capture_profiles" }
 
 func (p *CaptureProfile) BeforeCreate(ctx context.Context) error {
-	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	p.ApplyDefaults()
+
+	return nil
 }

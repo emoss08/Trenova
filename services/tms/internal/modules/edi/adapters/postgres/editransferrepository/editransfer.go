@@ -283,13 +283,7 @@ func (r *repository) SetApprovalWorkflowRunID(
 ) (*edi.EDITransfer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		t := edidb.EDITransfers
-		rows, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			t.Where(t.ID.Eq(req.ID), tenantFilter(req.TenantInfo, directionInbound)),
-			t.ApprovalWorkflowRunID.To(req.RunID),
-			t.Version.ToExpr(t.Version),
-		)
+		rows, err := t.Where(t.ID.Eq(req.ID), tenantFilter(req.TenantInfo, directionInbound)).UpdateReturning(ctx, r.db.Keel(ctx), t.ApprovalWorkflowRunID.To(req.RunID), t.Version.ToExpr(t.Version))
 		if err != nil {
 			return nil, transferErrors.Map(err, req.ID.String())
 		}

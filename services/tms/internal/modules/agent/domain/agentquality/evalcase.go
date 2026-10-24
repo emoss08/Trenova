@@ -18,13 +18,10 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*EvalCase)(nil)
 	_ validationframework.TenantedEntity = (*EvalCase)(nil)
 	_ domaintypes.PostgresSearchable     = (*EvalCase)(nil)
 	_ pagination.CursorEntity            = (*EvalCase)(nil)
@@ -174,51 +171,69 @@ func RestrictedPlaceholder(field string) string {
 }
 
 type EvalCase struct {
-	bun.BaseModel `bun:"table:agent_eval_cases,alias:aec" json:"-"`
-	keel.Table    `keel:"agent_eval_cases"`
+	keel.Table `keel:"agent_eval_cases"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aec_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aec_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
+	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" keel:"agent_definition_id"`
+	Title             string           `json:"title" keel:"title,nullzero"`
+	Source            CaseSource       `json:"source" keel:"source"`
+	Status            CaseStatus       `json:"status" keel:"status"`
+	Trigger           agent.RunTrigger `json:"trigger" keel:"trigger"`
 
-	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
-	Title             string           `json:"title"             bun:"title,type:VARCHAR(200),nullzero" keel:"title,nullzero"`
-	Source            CaseSource       `json:"source"            bun:"source,type:VARCHAR(30),notnull" keel:"source"`
-	Status            CaseStatus       `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Candidate'" keel:"status"`
-	Trigger           agent.RunTrigger `json:"trigger"           bun:"trigger,type:VARCHAR(20),notnull" keel:"trigger"`
+	SourceRunID      *pulid.ID `json:"sourceRunId" keel:"source_run_id"`
+	SourceTurnID     *pulid.ID `json:"sourceTurnId" keel:"source_turn_id"`
+	SourceThreadID   *pulid.ID `json:"sourceThreadId" keel:"source_thread_id"`
+	SourceMessageID  *pulid.ID `json:"sourceMessageId" keel:"source_message_id"`
+	SourceProposalID *pulid.ID `json:"sourceProposalId" keel:"source_proposal_id"`
+	SourceFeedbackID *pulid.ID `json:"sourceFeedbackId" keel:"source_feedback_id"`
 
-	SourceRunID      *pulid.ID `json:"sourceRunId"      bun:"source_run_id,type:VARCHAR(100),nullzero" keel:"source_run_id"`
-	SourceTurnID     *pulid.ID `json:"sourceTurnId"     bun:"source_turn_id,type:VARCHAR(100),nullzero" keel:"source_turn_id"`
-	SourceThreadID   *pulid.ID `json:"sourceThreadId"   bun:"source_thread_id,type:VARCHAR(100),nullzero" keel:"source_thread_id"`
-	SourceMessageID  *pulid.ID `json:"sourceMessageId"  bun:"source_message_id,type:VARCHAR(100),nullzero" keel:"source_message_id"`
-	SourceProposalID *pulid.ID `json:"sourceProposalId" bun:"source_proposal_id,type:VARCHAR(100),nullzero" keel:"source_proposal_id"`
-	SourceFeedbackID *pulid.ID `json:"sourceFeedbackId" bun:"source_feedback_id,type:VARCHAR(100),nullzero" keel:"source_feedback_id"`
+	Input        string             `json:"input" keel:"input"`
+	History      []HistoryMessage   `json:"history" keel:"history,jsonb"`
+	PageContext  *agent.PageContext `json:"pageContext" keel:"page_context,jsonb"`
+	Mentions     []agent.EntityRef  `json:"mentions" keel:"mentions,jsonb"`
+	SubjectType  agent.SubjectType  `json:"subjectType" keel:"subject_type,nullzero"`
+	SubjectID    pulid.ID           `json:"subjectId" keel:"subject_id,nullzero"`
+	HeldTools    []string           `json:"heldTools" keel:"held_tools"`
+	ToolFixtures []ToolFixture      `json:"toolFixtures" keel:"tool_fixtures,jsonb"`
 
-	Input        string             `json:"input"        bun:"input,type:TEXT,notnull" keel:"input"`
-	History      []HistoryMessage   `json:"history"      bun:"history,type:JSONB,notnull,default:'[]'" keel:"history,jsonb"`
-	PageContext  *agent.PageContext `json:"pageContext"  bun:"page_context,type:JSONB,nullzero" keel:"page_context,jsonb"`
-	Mentions     []agent.EntityRef  `json:"mentions"     bun:"mentions,type:JSONB,notnull,default:'[]'" keel:"mentions,jsonb"`
-	SubjectType  agent.SubjectType  `json:"subjectType"  bun:"subject_type,type:VARCHAR(50),nullzero" keel:"subject_type,nullzero"`
-	SubjectID    pulid.ID           `json:"subjectId"    bun:"subject_id,type:VARCHAR(100),nullzero" keel:"subject_id,nullzero"`
-	HeldTools    []string           `json:"heldTools"    bun:"held_tools,type:TEXT[],array,notnull,default:'{}'" keel:"held_tools"`
-	ToolFixtures []ToolFixture      `json:"toolFixtures" bun:"tool_fixtures,type:JSONB,notnull,default:'[]'" keel:"tool_fixtures,jsonb"`
+	Expected            Expected           `json:"expected" keel:"expected,jsonb"`
+	Rubric              string             `json:"rubric" keel:"rubric,nullzero"`
+	Redaction           *Redaction         `json:"redaction" keel:"redaction,jsonb"`
+	ContentHash         string             `json:"contentHash" keel:"content_hash"`
+	CapturedFingerprint *agent.Fingerprint `json:"capturedFingerprint" keel:"captured_fingerprint,jsonb"`
+	ExpiresAt           *int64             `json:"expiresAt" keel:"expires_at"`
+	CreatedByUserID     *pulid.ID          `json:"createdByUserId" keel:"created_by_user_id"`
 
-	Expected            Expected           `json:"expected"            bun:"expected,type:JSONB,notnull" keel:"expected,jsonb"`
-	Rubric              string             `json:"rubric"              bun:"rubric,type:TEXT,nullzero" keel:"rubric,nullzero"`
-	Redaction           *Redaction         `json:"redaction"           bun:"redaction,type:JSONB,nullzero" keel:"redaction,jsonb"`
-	ContentHash         string             `json:"contentHash"         bun:"content_hash,type:VARCHAR(64),notnull" keel:"content_hash"`
-	CapturedFingerprint *agent.Fingerprint `json:"capturedFingerprint" bun:"captured_fingerprint,type:JSONB,nullzero" keel:"captured_fingerprint,jsonb"`
-	ExpiresAt           *int64             `json:"expiresAt"           bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at"`
-	CreatedByUserID     *pulid.ID          `json:"createdByUserId"     bun:"created_by_user_id,type:VARCHAR(100),nullzero" keel:"created_by_user_id"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+}
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+func (c *EvalCase) BeforeCreate(_ context.Context) error {
+	if c.Status == "" {
+		c.Status = CaseStatusCandidate
+	}
+	if c.History == nil {
+		c.History = []HistoryMessage{}
+	}
+	if c.Mentions == nil {
+		c.Mentions = []agent.EntityRef{}
+	}
+	if c.HeldTools == nil {
+		c.HeldTools = []string{}
+	}
+	if c.ToolFixtures == nil {
+		c.ToolFixtures = []ToolFixture{}
+	}
+	c.Expected.Normalize()
+
+	return nil
 }
 
 func (c *EvalCase) Validate(multiErr *errortypes.MultiError) {
@@ -443,39 +458,6 @@ func (c *EvalCase) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "source", Type: domaintypes.FieldTypeEnum},
 		},
 	}
-}
-
-func (c *EvalCase) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("aec_")
-		}
-		if c.Status == "" {
-			c.Status = CaseStatusCandidate
-		}
-		if c.History == nil {
-			c.History = []HistoryMessage{}
-		}
-		if c.Mentions == nil {
-			c.Mentions = []agent.EntityRef{}
-		}
-		if c.HeldTools == nil {
-			c.HeldTools = []string{}
-		}
-		if c.ToolFixtures == nil {
-			c.ToolFixtures = []ToolFixture{}
-		}
-		c.Expected.Normalize()
-		c.CreatedAt = now
-		c.UpdatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func FingerprintOf(

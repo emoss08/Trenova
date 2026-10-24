@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func validWorker() *Worker {
@@ -213,46 +212,6 @@ func TestWorker_GetTableName(t *testing.T) {
 
 	w := &Worker{}
 	assert.Equal(t, "workers", w.GetTableName())
-}
-
-func TestWorker_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		w := &Worker{}
-		require.True(t, w.ID.IsNil())
-
-		err := w.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, w.ID.IsNil())
-		assert.NotZero(t, w.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("wrk_")
-		w := &Worker{ID: existingID}
-
-		err := w.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, w.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		w := &Worker{}
-
-		err := w.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, w.UpdatedAt)
-	})
 }
 
 func TestWorker_FullName(t *testing.T) {

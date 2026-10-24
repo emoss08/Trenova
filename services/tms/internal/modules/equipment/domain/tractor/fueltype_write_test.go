@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 // The fuel type decides which lines of the quarterly IFTA return a tractor's
@@ -52,7 +51,7 @@ func TestTractorNormalizesFuelTypeOnWrite(t *testing.T) {
 			entity := &tractor.Tractor{FuelType: tt.given}
 			require.NoError(
 				t,
-				entity.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)),
+				entity.BeforeCreate(t.Context()),
 			)
 			require.Equal(t, tt.want, entity.FuelType)
 		})
@@ -63,7 +62,7 @@ func TestTractorNormalizesFuelTypeOnWrite(t *testing.T) {
 			entity := &tractor.Tractor{FuelType: tt.given}
 			require.NoError(
 				t,
-				entity.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil)),
+				entity.BeforeUpdate(t.Context()),
 			)
 			require.Equal(t, tt.want, entity.FuelType)
 		})

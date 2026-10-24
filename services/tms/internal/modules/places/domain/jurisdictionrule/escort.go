@@ -1,40 +1,34 @@
 package jurisdictionrule
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*EscortThreshold)(nil)
 
 // EscortThreshold is a child row rather than a fixed set of columns because the
 // escort ladder is genuinely per-jurisdiction: a first escort starts at 12'0"
 // in Nebraska, 12'1" in Florida, 14'1" in Texas on divided highways, and not
 // until 16'7" in Montana. Columns would force every state into one shape.
 type EscortThreshold struct {
-	bun.BaseModel `bun:"table:jurisdiction_escort_thresholds,alias:jet" json:"-"`
-	keel.Table    `keel:"jurisdiction_escort_thresholds"`
+	keel.Table `keel:"jurisdiction_escort_thresholds"`
 
-	ID                 pulid.ID    `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:jet_"`
-	JurisdictionRuleID pulid.ID    `json:"jurisdictionRuleId" bun:"jurisdiction_rule_id,type:VARCHAR(100),notnull" keel:"jurisdiction_rule_id"`
-	Role               EscortRole  `json:"role"               bun:"role,type:jurisdiction_escort_role_enum,notnull" keel:"role"`
-	Trigger            TriggerKind `json:"trigger"            bun:"trigger,type:jurisdiction_trigger_kind_enum,notnull" keel:"trigger"`
-	ThresholdValue     float64     `json:"thresholdValue"     bun:"threshold_value,type:NUMERIC(12,2),notnull" keel:"threshold_value"`
-	Note               string      `json:"note"               bun:"note,type:TEXT,nullzero" keel:"note,nullzero"`
+	ID                 pulid.ID    `json:"id" keel:"id,pk,autoid:jet_"`
+	JurisdictionRuleID pulid.ID    `json:"jurisdictionRuleId" keel:"jurisdiction_rule_id"`
+	Role               EscortRole  `json:"role" keel:"role"`
+	Trigger            TriggerKind `json:"trigger" keel:"trigger"`
+	ThresholdValue     float64     `json:"thresholdValue" keel:"threshold_value"`
+	Note               string      `json:"note" keel:"note,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	JurisdictionRule *JurisdictionRule `json:"-" bun:"rel:belongs-to,join:jurisdiction_rule_id=id" keel:"belongs:jurisdiction_rule_id"`
+	JurisdictionRule *JurisdictionRule `json:"-" keel:"belongs:jurisdiction_rule_id"`
 }
 
 func (e *EscortThreshold) GetID() pulid.ID { return e.ID }
@@ -74,21 +68,4 @@ func (e *EscortThreshold) Validate(multiErr *errortypes.MultiError) {
 		multiErr.Add("thresholdValue", errortypes.ErrInvalid,
 			"Threshold must be greater than zero")
 	}
-}
-
-func (e *EscortThreshold) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("jet_")
-		}
-		e.CreatedAt = now
-		e.UpdatedAt = now
-	case *bun.UpdateQuery:
-		e.UpdatedAt = now
-	}
-
-	return nil
 }

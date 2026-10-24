@@ -53,7 +53,6 @@ func (s *FiscalYearSeed) Run(ctx context.Context, sr *seed.Run) error {
 }
 
 func (s *FiscalYearSeed) ensure(ctx context.Context, db *keel.DB, fy *fiscalyear.FiscalYear) error {
-
 	if err := fiscalyeardb.FiscalYears.Create(ctx, db, fy); err != nil {
 		return fmt.Errorf("insert fiscal year %d: %w", fy.Year, err)
 	}

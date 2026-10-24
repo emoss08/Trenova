@@ -1,6 +1,7 @@
 package iftaservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"context"
 	"errors"
 	"sort"
@@ -124,7 +125,7 @@ func (f *fakeRepo) ListTaxRates(
 	for _, r := range f.rates {
 		items = append(items, r)
 	}
-	return pagination.NewCursorListResult(items, len(items)+1), nil
+	return pagetest.Of(items, len(items)+1), nil
 }
 
 func (f *fakeRepo) GetTaxRateByID(_ context.Context, id pulid.ID) (*ifta.TaxRate, error) {
@@ -191,7 +192,7 @@ func (f *fakeRepo) ListMileageEntries(
 	for _, e := range f.entries {
 		items = append(items, e)
 	}
-	return pagination.NewCursorListResult(items, len(items)+1), nil
+	return pagetest.Of(items, len(items)+1), nil
 }
 
 func (f *fakeRepo) GetMileageEntryByID(
@@ -241,7 +242,7 @@ func (f *fakeRepo) ListReturns(
 	for _, r := range f.returns {
 		items = append(items, r)
 	}
-	return pagination.NewCursorListResult(items, len(items)+1), nil
+	return pagetest.Of(items, len(items)+1), nil
 }
 
 func (f *fakeRepo) GetReturnByID(

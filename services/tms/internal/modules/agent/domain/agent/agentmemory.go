@@ -11,16 +11,12 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Memory)(nil)
 	_ validationframework.TenantedEntity = (*Memory)(nil)
 )
 
@@ -361,73 +357,81 @@ func AllMemorySubjectTypes() []MemorySubjectType {
 // into every prompt. It expires if it says so and is retired rather than
 // deleted, so what an agent was told last month can still be read.
 type Memory struct {
-	bun.BaseModel `bun:"table:agent_memories,alias:amem" json:"-"`
-	keel.Table    `keel:"agent_memories"`
+	keel.Table `keel:"agent_memories"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:amem_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:amem_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
+	Kind   MemoryKind   `json:"kind" keel:"kind"`
+	Source MemorySource `json:"source" keel:"source"`
+	Status MemoryStatus `json:"status" keel:"status"`
 
-	Kind   MemoryKind   `json:"kind"   bun:"kind,type:VARCHAR(20),notnull" keel:"kind"`
-	Source MemorySource `json:"source" bun:"source,type:VARCHAR(20),notnull" keel:"source"`
-	Status MemoryStatus `json:"status" bun:"status,type:VARCHAR(20),notnull,default:'Active'" keel:"status"`
+	SubjectType  MemorySubjectType `json:"subjectType" keel:"subject_type,nullzero"`
+	SubjectID    *pulid.ID         `json:"subjectId" keel:"subject_id"`
+	SubjectLabel string            `json:"subjectLabel" keel:"subject_label,nullzero"`
+	ToolName     string            `json:"toolName" keel:"tool_name,nullzero"`
 
-	SubjectType  MemorySubjectType `json:"subjectType"  bun:"subject_type,type:VARCHAR(30),nullzero" keel:"subject_type,nullzero"`
-	SubjectID    *pulid.ID         `json:"subjectId"    bun:"subject_id,type:VARCHAR(100),nullzero" keel:"subject_id"`
-	SubjectLabel string            `json:"subjectLabel" bun:"subject_label,type:VARCHAR(200),nullzero" keel:"subject_label,nullzero"`
-	ToolName     string            `json:"toolName"     bun:"tool_name,type:VARCHAR(100),nullzero" keel:"tool_name,nullzero"`
+	Content string `json:"content" keel:"content"`
 
-	Content string `json:"content" bun:"content,type:TEXT,notnull" keel:"content"`
-
-	AgentDefinitionID *pulid.ID   `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero" keel:"agent_definition_id"`
-	Scope             MemoryScope `json:"scope"             bun:"scope,type:VARCHAR(20),notnull,default:'Organization'" keel:"scope"`
+	AgentDefinitionID *pulid.ID   `json:"agentDefinitionId" keel:"agent_definition_id"`
+	Scope             MemoryScope `json:"scope" keel:"scope"`
 	// OwnerUserID is the person a User-scoped memory is kept for, and RoleID
 	// the role a Role-scoped one is kept for. Each is empty for every other
 	// scope.
-	OwnerUserID *pulid.ID `json:"ownerUserId" bun:"owner_user_id,type:VARCHAR(100),nullzero" keel:"owner_user_id"`
-	RoleID      *pulid.ID `json:"roleId"      bun:"role_id,type:VARCHAR(100),nullzero" keel:"role_id"`
+	OwnerUserID *pulid.ID `json:"ownerUserId" keel:"owner_user_id"`
+	RoleID      *pulid.ID `json:"roleId" keel:"role_id"`
 	// SourceThreadID is the conversation the run that recorded the memory
 	// was answering, so a list can say which conversation it came from.
-	SourceThreadID   *pulid.ID `json:"sourceThreadId"   bun:"source_thread_id,type:VARCHAR(100),nullzero" keel:"source_thread_id"`
-	Tainted          bool      `json:"tainted"          bun:"tainted,type:BOOLEAN,notnull,default:false" keel:"tainted"`
-	TaintRunID       *pulid.ID `json:"taintRunId"       bun:"taint_run_id,type:VARCHAR(100),nullzero" keel:"taint_run_id"`
-	SourceRunID      *pulid.ID `json:"sourceRunId"      bun:"source_run_id,type:VARCHAR(100),nullzero" keel:"source_run_id"`
-	SourceProposalID *pulid.ID `json:"sourceProposalId" bun:"source_proposal_id,type:VARCHAR(100),nullzero" keel:"source_proposal_id"`
-	ReflectionID     *pulid.ID `json:"reflectionId"     bun:"reflection_id,type:VARCHAR(100),nullzero" keel:"reflection_id"`
-	SupersedesID     *pulid.ID `json:"supersedesId"     bun:"supersedes_id,type:VARCHAR(100),nullzero" keel:"supersedes_id"`
-	CreatedByUserID  *pulid.ID `json:"createdByUserId"  bun:"created_by_user_id,type:VARCHAR(100),nullzero" keel:"created_by_user_id"`
-	RetiredByUserID  *pulid.ID `json:"retiredByUserId"  bun:"retired_by_user_id,type:VARCHAR(100),nullzero" keel:"retired_by_user_id"`
-	RetiredAt        *int64    `json:"retiredAt"        bun:"retired_at,type:BIGINT,nullzero" keel:"retired_at"`
+	SourceThreadID   *pulid.ID `json:"sourceThreadId" keel:"source_thread_id"`
+	Tainted          bool      `json:"tainted" keel:"tainted"`
+	TaintRunID       *pulid.ID `json:"taintRunId" keel:"taint_run_id"`
+	SourceRunID      *pulid.ID `json:"sourceRunId" keel:"source_run_id"`
+	SourceProposalID *pulid.ID `json:"sourceProposalId" keel:"source_proposal_id"`
+	ReflectionID     *pulid.ID `json:"reflectionId" keel:"reflection_id"`
+	SupersedesID     *pulid.ID `json:"supersedesId" keel:"supersedes_id"`
+	CreatedByUserID  *pulid.ID `json:"createdByUserId" keel:"created_by_user_id"`
+	RetiredByUserID  *pulid.ID `json:"retiredByUserId" keel:"retired_by_user_id"`
+	RetiredAt        *int64    `json:"retiredAt" keel:"retired_at"`
 	// ReviewedByUserID is the person who read a tainted memory and kept it,
 	// approving it as a suggestion or reviewing it in AI Control. Tainted
 	// still says where it came from; a reviewed memory taints no turn.
-	ReviewedByUserID *pulid.ID `json:"reviewedByUserId" bun:"reviewed_by_user_id,type:VARCHAR(100),nullzero" keel:"reviewed_by_user_id"`
-	ReviewedAt       *int64    `json:"reviewedAt"       bun:"reviewed_at,type:BIGINT,nullzero" keel:"reviewed_at"`
-	ExpiresAt        *int64    `json:"expiresAt"        bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at"`
+	ReviewedByUserID *pulid.ID `json:"reviewedByUserId" keel:"reviewed_by_user_id"`
+	ReviewedAt       *int64    `json:"reviewedAt" keel:"reviewed_at"`
+	ExpiresAt        *int64    `json:"expiresAt" keel:"expires_at"`
 
-	UseCount   int    `json:"useCount"   bun:"use_count,type:INTEGER,notnull,default:0" keel:"use_count"`
-	LastUsedAt *int64 `json:"lastUsedAt" bun:"last_used_at,type:BIGINT,nullzero" keel:"last_used_at"`
+	UseCount   int    `json:"useCount" keel:"use_count"`
+	LastUsedAt *int64 `json:"lastUsedAt" keel:"last_used_at"`
 
-	Evidence *MemoryEvidence `json:"evidence" bun:"evidence,type:JSONB,nullzero" keel:"evidence,jsonb"`
+	Evidence *MemoryEvidence `json:"evidence" keel:"evidence,jsonb"`
 
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
 
 	// Refreshed is set, never stored, on the memory a save returns when an
 	// active one already said the same thing for the same readers: that one
 	// was refreshed rather than a duplicate recorded beside it.
-	Refreshed bool `json:"-" bun:"-"`
+	Refreshed bool `json:"-"`
 
-	SourceTitle string `json:"-" bun:"-" keel:"source_title,computed,nullzero"`
-	RoleName    string `json:"-" bun:"-" keel:"role_name,computed,nullzero"`
+	SourceTitle string `json:"-" keel:"source_title,computed,nullzero"`
+	RoleName    string `json:"-" keel:"role_name,computed,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+}
+
+func (m *Memory) BeforeCreate(_ context.Context) error {
+	if m.Status == "" {
+		m.Status = MemoryStatusActive
+	}
+	if m.Scope == "" {
+		m.Scope = MemoryScopeOrganization
+	}
+
+	return nil
 }
 
 func (m *Memory) Validate(multiErr *errortypes.MultiError) {
@@ -707,27 +711,4 @@ func (m *Memory) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "status", Type: domaintypes.FieldTypeEnum},
 		},
 	}
-}
-
-func (m *Memory) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if m.ID.IsNil() {
-			m.ID = pulid.MustNew("amem_")
-		}
-		if m.Status == "" {
-			m.Status = MemoryStatusActive
-		}
-		if m.Scope == "" {
-			m.Scope = MemoryScopeOrganization
-		}
-		m.CreatedAt = now
-		m.UpdatedAt = now
-	case *bun.UpdateQuery:
-		m.UpdatedAt = now
-	}
-
-	return nil
 }

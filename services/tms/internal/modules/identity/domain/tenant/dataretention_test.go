@@ -1,14 +1,12 @@
 package tenant
 
 import (
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestDataRetention_Validate(t *testing.T) {
@@ -64,36 +62,6 @@ func TestDataRetention_AIAuditRetentionError_NamesTheField(t *testing.T) {
 
 	require.Len(t, multiErr.Errors, 1)
 	assert.Equal(t, "aiAuditRetentionPeriod", multiErr.Errors[0].Field)
-}
-
-func TestDataRetention_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-		dr := &DataRetention{}
-		err := dr.BeforeAppendModel(context.TODO(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-		assert.False(t, dr.ID.IsNil())
-		assert.NotZero(t, dr.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-		existingID := pulid.MustNew("dr_")
-		dr := &DataRetention{ID: existingID}
-		err := dr.BeforeAppendModel(context.TODO(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-		assert.Equal(t, existingID, dr.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-		dr := &DataRetention{}
-		err := dr.BeforeAppendModel(context.TODO(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-		assert.NotZero(t, dr.UpdatedAt)
-	})
 }
 
 func TestDataRetention_GetTableName(t *testing.T) {

@@ -9,9 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type Status string
@@ -59,44 +57,41 @@ func (v Via) IsValid() bool {
 	return false
 }
 
-var _ bun.BeforeAppendModelHook = (*RateConfirmation)(nil)
-
 type RateConfirmation struct {
-	bun.BaseModel `bun:"table:rate_confirmations,alias:ratecon" json:"-"`
-	keel.Table    `keel:"rate_confirmations"`
+	keel.Table `keel:"rate_confirmations"`
 
-	ID                  pulid.ID `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:ratecon_"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	CarrierAssignmentID pulid.ID `json:"carrierAssignmentId" bun:"carrier_assignment_id,type:VARCHAR(100),notnull" keel:"carrier_assignment_id"`
-	CarrierID           pulid.ID `json:"carrierId"           bun:"carrier_id,type:VARCHAR(100),notnull" keel:"carrier_id"`
-	ShipmentID          pulid.ID `json:"shipmentId"          bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
-	ShipmentMoveID      pulid.ID `json:"shipmentMoveId"      bun:"shipment_move_id,type:VARCHAR(100),notnull" keel:"shipment_move_id"`
+	ID                  pulid.ID `json:"id" keel:"id,pk,autoid:ratecon_"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	CarrierAssignmentID pulid.ID `json:"carrierAssignmentId" keel:"carrier_assignment_id"`
+	CarrierID           pulid.ID `json:"carrierId" keel:"carrier_id"`
+	ShipmentID          pulid.ID `json:"shipmentId" keel:"shipment_id"`
+	ShipmentMoveID      pulid.ID `json:"shipmentMoveId" keel:"shipment_move_id"`
 
-	Revision        int64          `json:"revision"        bun:"revision,type:INTEGER,notnull,default:1" keel:"revision"`
-	Status          Status         `json:"status"          bun:"status,type:VARCHAR(50),notnull,default:'Generated'" keel:"status"`
-	DocumentID      *pulid.ID      `json:"documentId"      bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id"`
-	SentAt          *int64         `json:"sentAt"          bun:"sent_at,type:BIGINT,nullzero" keel:"sent_at"`
-	SentToEmails    string         `json:"sentToEmails"    bun:"sent_to_emails,type:TEXT,nullzero" keel:"sent_to_emails,nullzero"`
-	ConfirmedAt     *int64         `json:"confirmedAt"     bun:"confirmed_at,type:BIGINT,nullzero" keel:"confirmed_at"`
-	ConfirmedByName string         `json:"confirmedByName" bun:"confirmed_by_name,type:VARCHAR(255),nullzero" keel:"confirmed_by_name,nullzero"`
-	VoidedAt        *int64         `json:"voidedAt"        bun:"voided_at,type:BIGINT,nullzero" keel:"voided_at"`
-	VoidReason      string         `json:"voidReason"      bun:"void_reason,type:TEXT,nullzero" keel:"void_reason,nullzero"`
-	PayloadSnapshot map[string]any `json:"payloadSnapshot" bun:"payload_snapshot,type:JSONB,nullzero" keel:"payload_snapshot,jsonb,nullzero"`
-	GeneratedByID   *pulid.ID      `json:"generatedById"   bun:"generated_by_id,type:VARCHAR(100),nullzero" keel:"generated_by_id"`
+	Revision        int64          `json:"revision" keel:"revision"`
+	Status          Status         `json:"status" keel:"status"`
+	DocumentID      *pulid.ID      `json:"documentId" keel:"document_id"`
+	SentAt          *int64         `json:"sentAt" keel:"sent_at"`
+	SentToEmails    string         `json:"sentToEmails" keel:"sent_to_emails,nullzero"`
+	ConfirmedAt     *int64         `json:"confirmedAt" keel:"confirmed_at"`
+	ConfirmedByName string         `json:"confirmedByName" keel:"confirmed_by_name,nullzero"`
+	VoidedAt        *int64         `json:"voidedAt" keel:"voided_at"`
+	VoidReason      string         `json:"voidReason" keel:"void_reason,nullzero"`
+	PayloadSnapshot map[string]any `json:"payloadSnapshot" keel:"payload_snapshot,jsonb,nullzero"`
+	GeneratedByID   *pulid.ID      `json:"generatedById" keel:"generated_by_id"`
 
-	GeneratedVia        Via       `json:"generatedVia"        bun:"generated_via,type:VARCHAR(50),notnull,default:'Dispatcher'" keel:"generated_via"`
-	SourceTenderOfferID *pulid.ID `json:"sourceTenderOfferId" bun:"source_tender_offer_id,type:VARCHAR(100),nullzero" keel:"source_tender_offer_id"`
-	ConfirmedVia        Via       `json:"confirmedVia"        bun:"confirmed_via,type:VARCHAR(50),nullzero" keel:"confirmed_via,nullzero"`
-	ConfirmedByTitle    string    `json:"confirmedByTitle"    bun:"confirmed_by_title,type:VARCHAR(255),nullzero" keel:"confirmed_by_title,nullzero"`
+	GeneratedVia        Via       `json:"generatedVia" keel:"generated_via"`
+	SourceTenderOfferID *pulid.ID `json:"sourceTenderOfferId" keel:"source_tender_offer_id"`
+	ConfirmedVia        Via       `json:"confirmedVia" keel:"confirmed_via,nullzero"`
+	ConfirmedByTitle    string    `json:"confirmedByTitle" keel:"confirmed_by_title,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Carrier           *carrier.Carrier            `json:"carrier,omitempty"           bun:"rel:belongs-to,join:carrier_id=id" keel:"belongs:carrier_id"`
-	CarrierAssignment *shipment.CarrierAssignment `json:"carrierAssignment,omitempty" bun:"rel:belongs-to,join:carrier_assignment_id=id" keel:"belongs:carrier_assignment_id"`
-	Shipment          *shipment.Shipment          `json:"shipment,omitempty"          bun:"rel:belongs-to,join:shipment_id=id" keel:"belongs:shipment_id"`
+	Carrier           *carrier.Carrier            `json:"carrier,omitempty" keel:"belongs:carrier_id"`
+	CarrierAssignment *shipment.CarrierAssignment `json:"carrierAssignment,omitempty" keel:"belongs:carrier_assignment_id"`
+	Shipment          *shipment.Shipment          `json:"shipment,omitempty" keel:"belongs:shipment_id"`
 }
 
 func (rc *RateConfirmation) applyDefaults() {
@@ -213,22 +208,16 @@ func (rc *RateConfirmation) GetBusinessUnitID() pulid.ID {
 	return rc.BusinessUnitID
 }
 
-func (rc *RateConfirmation) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rc.ID.IsNil() {
-			rc.ID = pulid.MustNew("ratecon_")
-		}
-		rc.CreatedAt = now
-	case *bun.UpdateQuery:
-		rc.UpdatedAt = now
+func (rc *RateConfirmation) BeforeCreate(ctx context.Context) error {
+	if rc.Revision == 0 {
+		rc.Revision = 1
+	}
+	if rc.Status == "" {
+		rc.Status = StatusGenerated
+	}
+	if rc.GeneratedVia == "" {
+		rc.GeneratedVia = ViaDispatcher
 	}
 
 	return nil
-}
-
-func (rc *RateConfirmation) BeforeCreate(ctx context.Context) error {
-	return rc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

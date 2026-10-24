@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
-	"github.com/uptrace/bun"
 )
 
 func reminderErrors(days []int32, enabled bool) []string {
@@ -40,11 +39,11 @@ func TestBillingControlStartsWithTheDefaultReminderSchedule(t *testing.T) {
 	t.Parallel()
 
 	bc := &BillingControl{}
-	assert.NoError(t, bc.BeforeAppendModel(t.Context(), &bun.InsertQuery{}))
+	assert.NoError(t, bc.BeforeCreate(t.Context()))
 	assert.Equal(t, []int32{1, 15, 30}, bc.PaymentReminderDays)
 
 	bc.PaymentReminderDays = nil
-	assert.NoError(t, bc.BeforeAppendModel(t.Context(), &bun.UpdateQuery{}))
+	assert.NoError(t, bc.BeforeUpdate(t.Context()))
 	assert.Equal(t, []int32{1, 15, 30}, bc.PaymentReminderDays,
 		"a save that leaves the schedule out keeps a usable one")
 }

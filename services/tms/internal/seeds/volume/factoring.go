@@ -2035,7 +2035,6 @@ func (g *generator) facOddRemittances(run *facRun, now int64) {
 
 //nolint:gocognit,funlen // writes follow the foreign keys in one place
 func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) error {
-
 	if len(run.docs) > 0 {
 		marks := make([]stamp, 0, len(run.docs))
 		for _, d := range run.docs {

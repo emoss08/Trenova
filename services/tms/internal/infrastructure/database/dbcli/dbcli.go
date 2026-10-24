@@ -1,37 +1,28 @@
 package dbcli
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"runtime/debug"
 	"sync"
-	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/keelcli"
 	"github.com/emoss08/keel/migrate"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/bunadopt"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/pgxdsn"
 	"github.com/emoss08/trenova/internal/seeds/reference"
 	"github.com/emoss08/trenova/internal/seeds/seedenv"
 	"github.com/emoss08/trenova/schema/migrations"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 const (
 	StampPath      = "schema/version_gen.go"
 	configPath     = "config"
-	adoptTimeout   = 2 * time.Minute
 	revisionLength = 12
-
-	sqlStateInvalidCatalog = "3D000"
 )
 
 var extensions = []string{
@@ -164,45 +155,11 @@ func DatabaseConfig(p ConfigParams) func() (keel.Config, error) {
 			return keel.Config{}, err
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), adoptTimeout)
-		defer cancel()
-		if err = adoptBunDatabase(ctx, dsn, p); err != nil {
-			return keel.Config{}, err
-		}
-
 		kc := dbpool.KeelConfig(nil, nil)
 		kc.DSN = dsn
 
 		return kc, nil
 	}
-}
-
-func adoptBunDatabase(ctx context.Context, dsn string, p ConfigParams) error {
-	conn, err := pgx.Connect(ctx, dsn)
-	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == sqlStateInvalidCatalog {
-			return nil
-		}
-		return fmt.Errorf("connect to adopt a Bun-migrated database: %w", err)
-	}
-	defer func() { _ = conn.Close(context.WithoutCancel(ctx)) }()
-
-	result, err := bunadopt.Adopt(ctx, conn, p.Migrations, p.Options)
-	if err != nil {
-		return err
-	}
-	if result.Adopted() && p.Log != nil {
-		_, _ = fmt.Fprintf(
-			p.Log,
-			"%s: adopted the database Bun migrated: recorded %d migrations up to %s as applied\n",
-			p.Name,
-			result.Recorded,
-			result.Version,
-		)
-	}
-
-	return nil
 }
 
 func buildVersion() string {

@@ -8,9 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -20,34 +18,30 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*RoutingGuide)(nil)
-	_ pagination.CursorEntity   = (*RoutingGuide)(nil)
+	_ pagination.CursorEntity = (*RoutingGuide)(nil)
 )
 
 type RoutingGuide struct {
-	bun.BaseModel             `bun:"table:routing_guides,alias:rgd" json:"-"`
-	keel.Table                `keel:"routing_guides"`
-	pagination.CursorValueSet `bun:",embed"                         json:"-"`
+	keel.Table     `keel:"routing_guides"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rg_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:rg_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	Name                  string             `json:"name" keel:"name"`
+	Description           string             `json:"description" keel:"description,nullzero"`
+	Status                domaintypes.Status `json:"status" keel:"status"`
+	OriginLocationID      *pulid.ID          `json:"originLocationId" keel:"origin_location_id"`
+	DestinationLocationID *pulid.ID          `json:"destinationLocationId" keel:"destination_location_id"`
+	OriginCity            string             `json:"originCity" keel:"origin_city,nullzero"`
+	OriginState           string             `json:"originState" keel:"origin_state,nullzero"`
+	DestinationCity       string             `json:"destinationCity" keel:"destination_city,nullzero"`
+	DestinationState      string             `json:"destinationState" keel:"destination_state,nullzero"`
+	Specificity           int16              `json:"specificity" keel:"specificity"`
+	Version               int64              `json:"version" keel:"version,version"`
+	CreatedAt             int64              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt             int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Name                  string             `json:"name"                  bun:"name,type:VARCHAR(255),notnull" keel:"name"`
-	Description           string             `json:"description"           bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Status                domaintypes.Status `json:"status"                bun:"status,type:VARCHAR(50),notnull,default:'Active'" keel:"status"`
-	OriginLocationID      *pulid.ID          `json:"originLocationId"      bun:"origin_location_id,type:VARCHAR(100),nullzero" keel:"origin_location_id"`
-	DestinationLocationID *pulid.ID          `json:"destinationLocationId" bun:"destination_location_id,type:VARCHAR(100),nullzero" keel:"destination_location_id"`
-	OriginCity            string             `json:"originCity"            bun:"origin_city,type:VARCHAR(100),nullzero" keel:"origin_city,nullzero"`
-	OriginState           string             `json:"originState"           bun:"origin_state,type:VARCHAR(2),nullzero" keel:"origin_state,nullzero"`
-	DestinationCity       string             `json:"destinationCity"       bun:"destination_city,type:VARCHAR(100),nullzero" keel:"destination_city,nullzero"`
-	DestinationState      string             `json:"destinationState"      bun:"destination_state,type:VARCHAR(2),nullzero" keel:"destination_state,nullzero"`
-	Specificity           int16              `json:"specificity"           bun:"specificity,type:SMALLINT,notnull" keel:"specificity"`
-	Version               int64              `json:"version"               bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt             int64              `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt             int64              `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-
-	Entries []*RoutingGuideEntry `json:"entries,omitempty" bun:"rel:has-many,join:id=routing_guide_id" keel:"many:routing_guide_id"`
+	Entries []*RoutingGuideEntry `json:"entries,omitempty" keel:"many:routing_guide_id"`
 }
 
 func (rg *RoutingGuide) originSpecificity() int16 {
@@ -216,22 +210,6 @@ func (rg *RoutingGuide) GetBusinessUnitID() pulid.ID {
 
 func (rg *RoutingGuide) GetVersion() int64 {
 	return rg.Version
-}
-
-func (rg *RoutingGuide) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rg.ID.IsNil() {
-			rg.ID = pulid.MustNew("rg_")
-		}
-		rg.CreatedAt = now
-	case *bun.UpdateQuery:
-		rg.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (rg *RoutingGuide) BeforeCreate(_ context.Context) error {

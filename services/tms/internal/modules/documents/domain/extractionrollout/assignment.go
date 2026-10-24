@@ -7,38 +7,33 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*RolloutAssignment)(nil)
 
 const MaxModelRunes = 255
 
 type RolloutAssignment struct {
-	bun.BaseModel `bun:"table:extraction_rollout_assignments,alias:exra" json:"-"`
-	keel.Table    `keel:"extraction_rollout_assignments"`
+	keel.Table `keel:"extraction_rollout_assignments"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:exra_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:exra_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	DocumentID          pulid.ID  `json:"documentId"          bun:"document_id,type:VARCHAR(100),notnull" keel:"document_id"`
-	ExtractedAt         int64     `json:"extractedAt"         bun:"extracted_at,type:BIGINT,notnull" keel:"extracted_at"`
-	Arm                 Arm       `json:"arm"                 bun:"arm,type:VARCHAR(20),notnull" keel:"arm"`
-	CandidateProviderID pulid.ID  `json:"candidateProviderId" bun:"candidate_provider_id,type:VARCHAR(100),notnull" keel:"candidate_provider_id"`
-	ServedProviderID    *pulid.ID `json:"servedProviderId"    bun:"served_provider_id,type:VARCHAR(100),nullzero" keel:"served_provider_id"`
-	ServedModel         string    `json:"servedModel"         bun:"served_model,type:VARCHAR(255),nullzero" keel:"served_model,nullzero"`
-	Outcome             Outcome   `json:"outcome"             bun:"outcome,type:VARCHAR(20),notnull,default:'Pending'" keel:"outcome"`
-	SettledAt           *int64    `json:"settledAt"           bun:"settled_at,type:BIGINT,nullzero" keel:"settled_at"`
+	DocumentID          pulid.ID  `json:"documentId" keel:"document_id"`
+	ExtractedAt         int64     `json:"extractedAt" keel:"extracted_at"`
+	Arm                 Arm       `json:"arm" keel:"arm"`
+	CandidateProviderID pulid.ID  `json:"candidateProviderId" keel:"candidate_provider_id"`
+	ServedProviderID    *pulid.ID `json:"servedProviderId" keel:"served_provider_id"`
+	ServedModel         string    `json:"servedModel" keel:"served_model,nullzero"`
+	Outcome             Outcome   `json:"outcome" keel:"outcome"`
+	SettledAt           *int64    `json:"settledAt" keel:"settled_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (a *RolloutAssignment) PreferredProviderID() pulid.ID {
@@ -104,25 +99,6 @@ func (a *RolloutAssignment) GetTableName() string { return "extraction_rollout_a
 func (a *RolloutAssignment) GetOrganizationID() pulid.ID { return a.OrganizationID }
 
 func (a *RolloutAssignment) GetBusinessUnitID() pulid.ID { return a.BusinessUnitID }
-
-func (a *RolloutAssignment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("exra_")
-		}
-		if a.CreatedAt == 0 {
-			a.CreatedAt = now
-		}
-		a.UpdatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
-	}
-
-	return nil
-}
 
 func (a *RolloutAssignment) BeforeCreate(_ context.Context) error {
 	if a.Outcome == "" {

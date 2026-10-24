@@ -46,29 +46,29 @@ type GetApprovalDelegationByIDRequest struct {
 // office asks for — terminal, position and department — come back in the same
 // shape so the page can lay them out identically.
 type HeadcountRow struct {
-	Key   string `bun:"key"`
-	Label string `bun:"label"`
-	Code  string `bun:"code"`
-	Color string `bun:"color"`
+	Key   string
+	Label string
+	Code  string
+	Color string
 	// Workers is the active headcount; Drivers is how many of them hold a
 	// driving position, which is the number a safety director wants.
-	Workers    int `bun:"workers"`
-	Drivers    int `bun:"drivers"`
-	Terminated int `bun:"terminated"`
+	Workers    int
+	Drivers    int
+	Terminated int
 	// Staff is how many users hold the position in this organisation. The
 	// front office is made of people who log in rather than workers, and a
 	// chart that counted only workers would show every desk empty.
-	Staff int `bun:"staff"`
+	Staff int
 }
 
 // StaffCountRow is the users holding one position, read from their
 // memberships in the organisation.
 type StaffCountRow struct {
-	PositionID pulid.ID `bun:"position_id"`
-	Title      string   `bun:"title"`
-	Code       string   `bun:"code"`
-	Department string   `bun:"department"`
-	Staff      int      `bun:"staff"`
+	PositionID pulid.ID
+	Title      string
+	Code       string
+	Department string
+	Staff      int
 }
 
 // PositionHolderKind says which roster a holder comes from.
@@ -81,12 +81,12 @@ const PositionHolderUser PositionHolderKind = "User"
 // PositionHolderRow is one person in a position, whichever roster they are
 // on: a worker on a driving title, or a user on a front-office one.
 type PositionHolderRow struct {
-	Kind   PositionHolderKind `bun:"kind"`
-	ID     pulid.ID           `bun:"id"`
-	Name   string             `bun:"name"`
-	Status string             `bun:"status"`
+	Kind   PositionHolderKind
+	ID     pulid.ID
+	Name   string
+	Status string
 	// Detail is the terminal for a worker and the email for a user.
-	Detail string `bun:"detail"`
+	Detail string
 }
 
 type SetWorkerPositionRequest struct {
@@ -104,25 +104,25 @@ type SetUserPositionRequest struct {
 // TeamMemberRow is one person on a manager's team, read from the roster cache
 // so "my team" and the roster list cannot disagree.
 type TeamMemberRow struct {
-	WorkerID      pulid.ID `bun:"worker_id"`
-	FirstName     string   `bun:"first_name"`
-	LastName      string   `bun:"last_name"`
-	Status        string   `bun:"status"`
-	FleetCodeID   pulid.ID `bun:"fleet_code_id"`
-	FleetCode     string   `bun:"fleet_code"`
-	FleetColor    string   `bun:"fleet_color"`
-	PositionID    pulid.ID `bun:"position_id"`
-	PositionTitle string   `bun:"position_title"`
-	ManagerID     pulid.ID `bun:"manager_id"`
+	WorkerID      pulid.ID
+	FirstName     string
+	LastName      string
+	Status        string
+	FleetCodeID   pulid.ID
+	FleetCode     string
+	FleetColor    string
+	PositionID    pulid.ID
+	PositionTitle string
+	ManagerID     pulid.ID
 	// Direct says the worker names this manager themselves, rather than being
 	// reached through a terminal they run. The distinction matters: a terminal
 	// manager covering forty drivers is not forty direct reports.
-	Direct           bool   `bun:"direct"`
-	ComplianceStatus string `bun:"compliance_status"`
-	TrainingHealth   string `bun:"training_health"`
-	SafetyRating     string `bun:"safety_rating"`
-	HireDate         int64  `bun:"hire_date"`
-	TerminationDate  *int64 `bun:"termination_date"`
+	Direct           bool
+	ComplianceStatus string
+	TrainingHealth   string
+	SafetyRating     string
+	HireDate         int64
+	TerminationDate  *int64
 }
 
 // TeamScopeRequest asks which workers a user answers for.

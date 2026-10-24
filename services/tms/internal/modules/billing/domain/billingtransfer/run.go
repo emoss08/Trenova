@@ -13,73 +13,51 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const MaxRunShipments = 5000
 
-var (
-	_ bun.BeforeAppendModelHook = (*BillingTransferRun)(nil)
-	_ bun.BeforeAppendModelHook = (*BillingTransferRunItem)(nil)
-)
-
 type BillingTransferRun struct {
-	bun.BaseModel `bun:"table:billing_transfer_runs,alias:btr" json:"-"`
-	keel.Table    `                                                     keel:"billing_transfer_runs"`
+	keel.Table `                                                     keel:"billing_transfer_runs"`
 
-	ID                          pulid.ID              `json:"id"                          bun:"id,pk,type:VARCHAR(100),notnull"                      keel:"id,pk,autoid:btr_"`
-	BusinessUnitID              pulid.ID              `json:"businessUnitId"              bun:"business_unit_id,pk,type:VARCHAR(100),notnull"        keel:"business_unit_id,pk,tenant"`
-	OrganizationID              pulid.ID              `json:"organizationId"              bun:"organization_id,pk,type:VARCHAR(100),notnull"         keel:"organization_id,pk,tenant"`
-	RequestedByID               pulid.ID              `json:"requestedById"               bun:"requested_by_id,type:VARCHAR(100),notnull"            keel:"requested_by_id"`
-	SourceRunID                 pulid.ID              `json:"sourceRunId"                 bun:"source_run_id,type:VARCHAR(100),nullzero"             keel:"source_run_id,nullzero"`
-	Status                      RunStatus             `json:"status"                      bun:"status,type:VARCHAR(20),notnull"                      keel:"status"`
-	Scope                       RunScope              `json:"scope"                       bun:"scope,type:VARCHAR(20),notnull"                       keel:"scope"`
-	SearchQuery                 string                `json:"searchQuery"                 bun:"search_query,type:VARCHAR(200),nullzero"              keel:"search_query,nullzero"`
-	ShipmentStatus              shipment.Status       `json:"shipmentStatus"              bun:"shipment_status,type:shipment_status_enum,nullzero"   keel:"shipment_status,nullzero"`
-	BillType                    billingqueue.BillType `json:"billType"                    bun:"bill_type,type:billing_type,notnull"                  keel:"bill_type"`
-	MarkCompletedReadyToInvoice bool                  `json:"markCompletedReadyToInvoice" bun:"mark_completed_ready_to_invoice,type:BOOLEAN,notnull" keel:"mark_completed_ready_to_invoice"`
-	TotalCount                  int                   `json:"totalCount"                  bun:"total_count,type:INTEGER,notnull"                     keel:"total_count"`
-	ProcessedCount              int                   `json:"processedCount"              bun:"processed_count,type:INTEGER,notnull"                 keel:"processed_count"`
-	TransferredCount            int                   `json:"transferredCount"            bun:"transferred_count,type:INTEGER,notnull"               keel:"transferred_count"`
-	NotTransferredCount         int                   `json:"notTransferredCount"         bun:"not_transferred_count,type:INTEGER,notnull"           keel:"not_transferred_count"`
-	SkippedCount                int                   `json:"skippedCount"                bun:"skipped_count,type:INTEGER,notnull"                   keel:"skipped_count"`
-	MarkedReadyToInvoiceCount   int                   `json:"markedReadyToInvoiceCount"   bun:"marked_ready_to_invoice_count,type:INTEGER,notnull"   keel:"marked_ready_to_invoice_count"`
-	RetryableCount              int                   `json:"retryableCount"              bun:"retryable_count,type:INTEGER,notnull"                 keel:"retryable_count"`
-	UnmatchedCount              int                   `json:"unmatchedCount"              bun:"unmatched_count,type:INTEGER,notnull"                 keel:"unmatched_count"`
-	FailureMessage              string                `json:"failureMessage"              bun:"failure_message,type:TEXT,nullzero"                   keel:"failure_message,nullzero"`
-	CancelRequestedAt           *int64                `json:"cancelRequestedAt"           bun:"cancel_requested_at,type:BIGINT,nullzero"             keel:"cancel_requested_at"`
-	CancelRequestedByID         pulid.ID              `json:"cancelRequestedById"         bun:"cancel_requested_by_id,type:VARCHAR(100),nullzero"    keel:"cancel_requested_by_id,nullzero"`
-	TemporalWorkflowID          string                `json:"temporalWorkflowId"          bun:"temporal_workflow_id,type:VARCHAR(255),nullzero"      keel:"temporal_workflow_id,nullzero"`
-	TemporalRunID               string                `json:"temporalRunId"               bun:"temporal_run_id,type:VARCHAR(255),nullzero"           keel:"temporal_run_id,nullzero"`
-	QueuedAt                    int64                 `json:"queuedAt"                    bun:"queued_at,type:BIGINT,notnull"                        keel:"queued_at"`
-	StartedAt                   *int64                `json:"startedAt"                   bun:"started_at,type:BIGINT,nullzero"                      keel:"started_at"`
-	CompletedAt                 *int64                `json:"completedAt"                 bun:"completed_at,type:BIGINT,nullzero"                    keel:"completed_at"`
-	Version                     int64                 `json:"version"                     bun:"version,type:BIGINT,notnull"                          keel:"version,version"`
-	CreatedAt                   int64                 `json:"createdAt"                   bun:"created_at,type:BIGINT,notnull"                       keel:"created_at,autocreate"`
-	UpdatedAt                   int64                 `json:"updatedAt"                   bun:"updated_at,type:BIGINT,notnull"                       keel:"updated_at,autoupdate"`
+	ID                          pulid.ID              `json:"id" keel:"id,pk,autoid:btr_"`
+	BusinessUnitID              pulid.ID              `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID              pulid.ID              `json:"organizationId" keel:"organization_id,pk,tenant"`
+	RequestedByID               pulid.ID              `json:"requestedById" keel:"requested_by_id"`
+	SourceRunID                 pulid.ID              `json:"sourceRunId" keel:"source_run_id,nullzero"`
+	Status                      RunStatus             `json:"status" keel:"status"`
+	Scope                       RunScope              `json:"scope" keel:"scope"`
+	SearchQuery                 string                `json:"searchQuery" keel:"search_query,nullzero"`
+	ShipmentStatus              shipment.Status       `json:"shipmentStatus" keel:"shipment_status,nullzero"`
+	BillType                    billingqueue.BillType `json:"billType" keel:"bill_type"`
+	MarkCompletedReadyToInvoice bool                  `json:"markCompletedReadyToInvoice" keel:"mark_completed_ready_to_invoice"`
+	TotalCount                  int                   `json:"totalCount" keel:"total_count"`
+	ProcessedCount              int                   `json:"processedCount" keel:"processed_count"`
+	TransferredCount            int                   `json:"transferredCount" keel:"transferred_count"`
+	NotTransferredCount         int                   `json:"notTransferredCount" keel:"not_transferred_count"`
+	SkippedCount                int                   `json:"skippedCount" keel:"skipped_count"`
+	MarkedReadyToInvoiceCount   int                   `json:"markedReadyToInvoiceCount" keel:"marked_ready_to_invoice_count"`
+	RetryableCount              int                   `json:"retryableCount" keel:"retryable_count"`
+	UnmatchedCount              int                   `json:"unmatchedCount" keel:"unmatched_count"`
+	FailureMessage              string                `json:"failureMessage" keel:"failure_message,nullzero"`
+	CancelRequestedAt           *int64                `json:"cancelRequestedAt" keel:"cancel_requested_at"`
+	CancelRequestedByID         pulid.ID              `json:"cancelRequestedById" keel:"cancel_requested_by_id,nullzero"`
+	TemporalWorkflowID          string                `json:"temporalWorkflowId" keel:"temporal_workflow_id,nullzero"`
+	TemporalRunID               string                `json:"temporalRunId" keel:"temporal_run_id,nullzero"`
+	QueuedAt                    int64                 `json:"queuedAt" keel:"queued_at"`
+	StartedAt                   *int64                `json:"startedAt" keel:"started_at"`
+	CompletedAt                 *int64                `json:"completedAt" keel:"completed_at"`
+	Version                     int64                 `json:"version" keel:"version,version"`
+	CreatedAt                   int64                 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt                   int64                 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	RequestedBy *tenant.User `json:"requestedBy,omitempty" bun:"rel:belongs-to,join:requested_by_id=id" keel:"belongs:requested_by_id"`
+	RequestedBy *tenant.User `json:"requestedBy,omitempty" keel:"belongs:requested_by_id"`
 }
 
 func (r *BillingTransferRun) BeforeCreate(ctx context.Context) error {
-	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}
-
-func (r *BillingTransferRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("btr_")
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-		if r.QueuedAt == 0 {
-			r.QueuedAt = now
-		}
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
+	if r.QueuedAt == 0 {
+		r.QueuedAt = now
 	}
 
 	return nil
@@ -173,52 +151,35 @@ type ValidationFailure struct {
 }
 
 type BillingTransferRunItem struct {
-	bun.BaseModel `bun:"table:billing_transfer_run_items,alias:btri" json:"-"`
-	keel.Table    `                                                           keel:"billing_transfer_run_items"`
+	keel.Table `                                                           keel:"billing_transfer_run_items"`
 
-	ID                   pulid.ID             `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"                         keel:"id,pk,autoid:btri_"`
-	BusinessUnitID       pulid.ID             `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"           keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID             `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"            keel:"organization_id,pk,tenant"`
-	RunID                pulid.ID             `json:"runId"                bun:"run_id,type:VARCHAR(100),notnull"                        keel:"run_id"`
-	ShipmentID           pulid.ID             `json:"shipmentId"           bun:"shipment_id,type:VARCHAR(100),notnull"                   keel:"shipment_id"`
-	Sequence             int                  `json:"sequence"             bun:"sequence,type:INTEGER,notnull"                           keel:"sequence"`
-	ProNumber            string               `json:"proNumber"            bun:"pro_number,type:VARCHAR(100),nullzero"                   keel:"pro_number,nullzero"`
-	Status               ItemStatus           `json:"status"               bun:"status,type:VARCHAR(20),notnull"                         keel:"status"`
-	FailureCode          FailureCode          `json:"failureCode"          bun:"failure_code,type:VARCHAR(50),nullzero"                  keel:"failure_code,nullzero"`
-	ErrorMessage         string               `json:"errorMessage"         bun:"error_message,type:TEXT,nullzero"                        keel:"error_message,nullzero"`
-	MarkedReadyToInvoice bool                 `json:"markedReadyToInvoice" bun:"marked_ready_to_invoice,type:BOOLEAN,notnull"            keel:"marked_ready_to_invoice"`
-	BillingQueueItemID   pulid.ID             `json:"billingQueueItemId"   bun:"billing_queue_item_id,type:VARCHAR(100),nullzero"        keel:"billing_queue_item_id,nullzero"`
-	BillingQueueNumber   string               `json:"billingQueueNumber"   bun:"billing_queue_number,type:VARCHAR(100),nullzero"         keel:"billing_queue_number,nullzero"`
-	BillingQueueStatus   billingqueue.Status  `json:"billingQueueStatus"   bun:"billing_queue_status,type:billing_queue_status,nullzero" keel:"billing_queue_status,nullzero"`
-	MissingRequirements  []MissingRequirement `json:"missingRequirements"  bun:"missing_requirements,type:JSONB,notnull"                 keel:"missing_requirements,jsonb"`
-	ValidationFailures   []ValidationFailure  `json:"validationFailures"   bun:"validation_failures,type:JSONB,notnull"                  keel:"validation_failures,jsonb"`
-	ProcessedAt          *int64               `json:"processedAt"          bun:"processed_at,type:BIGINT,nullzero"                       keel:"processed_at"`
-	CreatedAt            int64                `json:"createdAt"            bun:"created_at,type:BIGINT,notnull"                          keel:"created_at,autocreate"`
-	UpdatedAt            int64                `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull"                          keel:"updated_at,autoupdate"`
+	ID                   pulid.ID             `json:"id" keel:"id,pk,autoid:btri_"`
+	BusinessUnitID       pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
+	RunID                pulid.ID             `json:"runId" keel:"run_id"`
+	ShipmentID           pulid.ID             `json:"shipmentId" keel:"shipment_id"`
+	Sequence             int                  `json:"sequence" keel:"sequence"`
+	ProNumber            string               `json:"proNumber" keel:"pro_number,nullzero"`
+	Status               ItemStatus           `json:"status" keel:"status"`
+	FailureCode          FailureCode          `json:"failureCode" keel:"failure_code,nullzero"`
+	ErrorMessage         string               `json:"errorMessage" keel:"error_message,nullzero"`
+	MarkedReadyToInvoice bool                 `json:"markedReadyToInvoice" keel:"marked_ready_to_invoice"`
+	BillingQueueItemID   pulid.ID             `json:"billingQueueItemId" keel:"billing_queue_item_id,nullzero"`
+	BillingQueueNumber   string               `json:"billingQueueNumber" keel:"billing_queue_number,nullzero"`
+	BillingQueueStatus   billingqueue.Status  `json:"billingQueueStatus" keel:"billing_queue_status,nullzero"`
+	MissingRequirements  []MissingRequirement `json:"missingRequirements" keel:"missing_requirements,jsonb"`
+	ValidationFailures   []ValidationFailure  `json:"validationFailures" keel:"validation_failures,jsonb"`
+	ProcessedAt          *int64               `json:"processedAt" keel:"processed_at"`
+	CreatedAt            int64                `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt            int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (i *BillingTransferRunItem) BeforeCreate(ctx context.Context) error {
-	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}
-
-func (i *BillingTransferRunItem) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if i.ID.IsNil() {
-			i.ID = pulid.MustNew("btri_")
-		}
-		if i.MissingRequirements == nil {
-			i.MissingRequirements = []MissingRequirement{}
-		}
-		if i.ValidationFailures == nil {
-			i.ValidationFailures = []ValidationFailure{}
-		}
-		i.CreatedAt = now
-		i.UpdatedAt = now
-	case *bun.UpdateQuery:
-		i.UpdatedAt = now
+	if i.MissingRequirements == nil {
+		i.MissingRequirements = []MissingRequirement{}
+	}
+	if i.ValidationFailures == nil {
+		i.ValidationFailures = []ValidationFailure{}
 	}
 
 	return nil

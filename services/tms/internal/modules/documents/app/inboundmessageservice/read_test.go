@@ -1,6 +1,7 @@
 package inboundmessageservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"context"
 	"testing"
 
@@ -27,7 +28,7 @@ func (s *readStubMessageRepo) ListCursor(
 ) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
 	s.listed = req
 
-	return pagination.NewCursorListResultWithTotalCount(
+	return pagetest.OfTotal(
 		[]*inboundmessage.InboundMessage{}, 25, nil,
 	), nil
 }

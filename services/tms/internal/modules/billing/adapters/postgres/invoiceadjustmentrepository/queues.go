@@ -66,7 +66,6 @@ func (r *repository) ListApprovalQueue(
 				Items:       items,
 				HasNextPage: page.HasNextPage,
 				TotalCount:  page.TotalCount,
-				CursorSort:  page.CursorSort,
 				EdgeCursors: page.EdgeCursors,
 			}, nil
 		},

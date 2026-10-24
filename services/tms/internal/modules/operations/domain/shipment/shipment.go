@@ -22,10 +22,8 @@ import (
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -72,94 +70,93 @@ type FreightLine struct {
 
 // Freight shipments and their lifecycle state
 type Shipment struct {
-	bun.BaseModel `json:"-" bun:"table:shipments,alias:sp"`
-	keel.Table    `                                        keel:"shipments,report=Operations"`
+	keel.Table `                                        keel:"shipments,report=Operations"`
 
-	ID                        pulid.ID              `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"                                          keel:"id,pk,autoid:shp_"`
-	BusinessUnitID            pulid.ID              `json:"businessUnitId"             bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                            keel:"business_unit_id,pk,tenant"`
-	OrganizationID            pulid.ID              `json:"organizationId"             bun:"organization_id,type:VARCHAR(100),pk,notnull"                             keel:"organization_id,pk,tenant"`
-	ServiceTypeID             pulid.ID              `json:"serviceTypeId"              bun:"service_type_id,type:VARCHAR(100),notnull"                                keel:"service_type_id"`
-	ShipmentTypeID            pulid.ID              `json:"shipmentTypeId"             bun:"shipment_type_id,type:VARCHAR(100),nullzero"                              keel:"shipment_type_id,nullzero"`
-	CustomerID                pulid.ID              `json:"customerId"                 bun:"customer_id,type:VARCHAR(100),notnull"                                    keel:"customer_id"`
-	TractorTypeID             pulid.ID              `json:"tractorTypeId"              bun:"tractor_type_id,type:VARCHAR(100),nullzero"                               keel:"tractor_type_id,nullzero"`
-	TrailerTypeID             pulid.ID              `json:"trailerTypeId"              bun:"trailer_type_id,type:VARCHAR(100),nullzero"                               keel:"trailer_type_id,nullzero"`
-	OwnerID                   pulid.ID              `json:"ownerId"                    bun:"owner_id,type:VARCHAR(100),nullzero"                                      keel:"owner_id,nullzero"`
-	EnteredByID               pulid.ID              `json:"enteredById"                bun:"entered_by_id,type:VARCHAR(100),nullzero"                                 keel:"entered_by_id,nullzero"`
-	CanceledByID              pulid.ID              `json:"canceledById"               bun:"canceled_by_id,type:VARCHAR(100),nullzero"                                keel:"canceled_by_id,nullzero"`
-	FormulaTemplateID         pulid.ID              `json:"formulaTemplateId"          bun:"formula_template_id,type:VARCHAR(100)"                                    keel:"formula_template_id,nullzero"`
-	ConsolidationGroupID      pulid.ID              `json:"consolidationGroupId"       bun:"consolidation_group_id,type:VARCHAR(100),nullzero"                        keel:"consolidation_group_id,nullzero"`
-	OrderID                   pulid.ID              `json:"orderId"                    bun:"order_id,type:VARCHAR(100),nullzero"                                      keel:"order_id,nullzero"`
-	Status                    Status                `json:"status"                     bun:"status,type:shipment_status_enum,notnull,default:'New'"                   keel:"status"`
-	StageRank                 int16                 `json:"stageRank"                  bun:"stage_rank,type:SMALLINT,notnull,scanonly"                                keel:"stage_rank,readonly,noreport"`
-	TenderStatus              *TenderStatus         `json:"tenderStatus"               bun:"tender_status,type:shipment_tender_status_enum,nullzero"                  keel:"tender_status"`
-	EntryMethod               EntryMethod           `json:"entryMethod"                bun:"entry_method,type:shipment_entry_method_enum,notnull,default:'Manual'"    keel:"entry_method"`
-	ProNumber                 string                `json:"proNumber"                  bun:"pro_number,type:VARCHAR(100),notnull"                                     keel:"pro_number"`
-	BOL                       string                `json:"bol"                        bun:"bol,type:VARCHAR(100),nullzero"                                           keel:"bol,nullzero"`
-	ExternalReference         string                `json:"externalReference"          bun:"external_reference,type:VARCHAR(100),nullzero"                            keel:"external_reference,nullzero,label=Customer Reference"`
-	IdempotencyKey            string                `json:"-"                          bun:"idempotency_key,type:VARCHAR(64),nullzero"                                keel:"idempotency_key,nullzero,noreport"`
-	CancelReason              string                `json:"cancelReason"               bun:"cancel_reason,type:VARCHAR(100),nullzero"                                 keel:"cancel_reason,nullzero"`
-	OtherChargeAmount         decimal.NullDecimal   `json:"otherChargeAmount"          bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"                 keel:"other_charge_amount,label=Accessorial Charges,format=money"`
-	FreightChargeAmount       decimal.NullDecimal   `json:"freightChargeAmount"        bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"               keel:"freight_charge_amount,label=Freight Charge,format=money"`
-	TariffInputs              tarifftypes.Inputs    `json:"tariffInputs"               bun:"tariff_inputs,type:JSONB,notnull,default:'{}'"                            keel:"tariff_inputs,jsonb"`
-	FreightLines              []FreightLine         `json:"freightLines"               bun:"freight_lines,type:JSONB,notnull,default:'[]'"                            keel:"freight_lines,jsonb"`
-	TotalChargeAmount         decimal.NullDecimal   `json:"totalChargeAmount"          bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"                 keel:"total_charge_amount,label=Total Charge,format=money"`
-	Pieces                    *int64                `json:"pieces"                     bun:"pieces,type:INTEGER,nullzero"                                             keel:"pieces,format=count"`
-	Weight                    *int64                `json:"weight"                     bun:"weight,type:INTEGER,nullzero"                                             keel:"weight,format=weight"`
-	EnvelopeLengthFeet        *float64              `json:"envelopeLengthFeet"         bun:"envelope_length_feet,type:NUMERIC(10,2),nullzero"                         keel:"envelope_length_feet"`
-	EnvelopeWidthFeet         *float64              `json:"envelopeWidthFeet"          bun:"envelope_width_feet,type:NUMERIC(10,2),nullzero"                          keel:"envelope_width_feet"`
-	EnvelopeHeightFeet        *float64              `json:"envelopeHeightFeet"         bun:"envelope_height_feet,type:NUMERIC(10,2),nullzero"                         keel:"envelope_height_feet"`
-	EnvelopeOverallHeightFeet *float64              `json:"envelopeOverallHeightFeet"  bun:"envelope_overall_height_feet,type:NUMERIC(10,2),nullzero"                 keel:"envelope_overall_height_feet"`
-	TemperatureMin            *int16                `json:"temperatureMin"             bun:"temperature_min,type:temperature_fahrenheit,nullzero"                     keel:"temperature_min,dimension"`
-	TemperatureMax            *int16                `json:"temperatureMax"             bun:"temperature_max,type:temperature_fahrenheit,nullzero"                     keel:"temperature_max,dimension"`
-	ActualDeliveryDate        *int64                `json:"actualDeliveryDate"         bun:"actual_delivery_date,type:BIGINT,nullzero"                                keel:"actual_delivery_date,label=Delivery Date"`
-	ActualShipDate            *int64                `json:"actualShipDate"             bun:"actual_ship_date,type:BIGINT,nullzero"                                    keel:"actual_ship_date,label=Ship Date"`
-	CanceledAt                *int64                `json:"canceledAt"                 bun:"canceled_at,type:BIGINT,nullzero"                                         keel:"canceled_at"`
-	BillingTransferStatus     BillingTransferStatus `json:"billingTransferStatus"      bun:"billing_transfer_status,type:VARCHAR(50),nullzero"                        keel:"billing_transfer_status,nullzero"`
-	TransferredToBillingAt    *int64                `json:"transferredToBillingAt"     bun:"transferred_to_billing_at,type:BIGINT,nullzero"                           keel:"transferred_to_billing_at"`
-	MarkedReadyToBillAt       *int64                `json:"markedReadyToBillAt"        bun:"marked_ready_to_bill_at,type:BIGINT,nullzero"                             keel:"marked_ready_to_bill_at,label=Ready to Bill At"`
-	BilledAt                  *int64                `json:"billedAt"                   bun:"billed_at,type:BIGINT,nullzero"                                           keel:"billed_at"`
-	FuelSurchargeLocked       bool                  `json:"fuelSurchargeLocked"        bun:"fuel_surcharge_locked,type:BOOLEAN,notnull"                               keel:"fuel_surcharge_locked"`
-	RatingDetail              *RatingDetail         `json:"ratingDetail"               bun:"rating_detail,type:JSONB,nullzero"                                        keel:"rating_detail,jsonb"`
-	RateQuoteID               *pulid.ID             `json:"rateQuoteId"                bun:"rate_quote_id,type:VARCHAR(100),nullzero"                                 keel:"rate_quote_id"`
-	RateAgreementID           *pulid.ID             `json:"rateAgreementId"            bun:"rate_agreement_id,type:VARCHAR(100),nullzero"                             keel:"rate_agreement_id"`
-	RateAgreementRuleID       *pulid.ID             `json:"rateAgreementRuleId"        bun:"rate_agreement_rule_id,type:VARCHAR(100),nullzero"                        keel:"rate_agreement_rule_id"`
-	RateOverrideAmount        decimal.NullDecimal   `json:"rateOverrideAmount"         bun:"rate_override_amount,type:NUMERIC(19,4),nullzero"                         keel:"rate_override_amount"`
-	RateOverrideReason        string                `json:"rateOverrideReason"         bun:"rate_override_reason,type:TEXT,nullzero"                                  keel:"rate_override_reason,nullzero"`
-	RateOverrideByID          *pulid.ID             `json:"rateOverrideById"           bun:"rate_override_by_id,type:VARCHAR(100),nullzero"                           keel:"rate_override_by_id"`
-	RateOverrideAt            *int64                `json:"rateOverrideAt"             bun:"rate_override_at,type:BIGINT,nullzero"                                    keel:"rate_override_at"`
-	RateLocked                bool                  `json:"rateLocked"                 bun:"rate_locked,type:BOOLEAN,notnull"                                         keel:"rate_locked"`
-	AutoRated                 bool                  `json:"autoRated"                  bun:"auto_rated,type:BOOLEAN,notnull"                                          keel:"auto_rated"`
-	AutoRatedAt               *int64                `json:"autoRatedAt"                bun:"auto_rated_at,type:BIGINT,nullzero"                                       keel:"auto_rated_at"`
-	BillToCustomerID          *pulid.ID             `json:"billToCustomerId"           bun:"bill_to_customer_id,type:VARCHAR(100),nullzero"                           keel:"bill_to_customer_id"`
-	FreightTerms              FreightTerms          `json:"freightTerms"               bun:"freight_terms,type:shipment_freight_terms_enum,notnull,default:'Prepaid'" keel:"freight_terms"`
-	SourceDocumentID          string                `json:"sourceDocumentId,omitempty" bun:"-"`
-	PreviousCustomerID        pulid.ID              `json:"-"                          bun:"-"`
+	ID                        pulid.ID              `json:"id" keel:"id,pk,autoid:shp_"`
+	BusinessUnitID            pulid.ID              `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID            pulid.ID              `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ServiceTypeID             pulid.ID              `json:"serviceTypeId" keel:"service_type_id"`
+	ShipmentTypeID            pulid.ID              `json:"shipmentTypeId" keel:"shipment_type_id,nullzero"`
+	CustomerID                pulid.ID              `json:"customerId" keel:"customer_id"`
+	TractorTypeID             pulid.ID              `json:"tractorTypeId" keel:"tractor_type_id,nullzero"`
+	TrailerTypeID             pulid.ID              `json:"trailerTypeId" keel:"trailer_type_id,nullzero"`
+	OwnerID                   pulid.ID              `json:"ownerId" keel:"owner_id,nullzero"`
+	EnteredByID               pulid.ID              `json:"enteredById" keel:"entered_by_id,nullzero"`
+	CanceledByID              pulid.ID              `json:"canceledById" keel:"canceled_by_id,nullzero"`
+	FormulaTemplateID         pulid.ID              `json:"formulaTemplateId" keel:"formula_template_id,nullzero"`
+	ConsolidationGroupID      pulid.ID              `json:"consolidationGroupId" keel:"consolidation_group_id,nullzero"`
+	OrderID                   pulid.ID              `json:"orderId" keel:"order_id,nullzero"`
+	Status                    Status                `json:"status" keel:"status"`
+	StageRank                 int16                 `json:"stageRank" keel:"stage_rank,readonly,noreport"`
+	TenderStatus              *TenderStatus         `json:"tenderStatus" keel:"tender_status"`
+	EntryMethod               EntryMethod           `json:"entryMethod" keel:"entry_method"`
+	ProNumber                 string                `json:"proNumber" keel:"pro_number"`
+	BOL                       string                `json:"bol" keel:"bol,nullzero"`
+	ExternalReference         string                `json:"externalReference" keel:"external_reference,nullzero,label=Customer Reference"`
+	IdempotencyKey            string                `json:"-" keel:"idempotency_key,nullzero,noreport"`
+	CancelReason              string                `json:"cancelReason" keel:"cancel_reason,nullzero"`
+	OtherChargeAmount         decimal.NullDecimal   `json:"otherChargeAmount" keel:"other_charge_amount,label=Accessorial Charges,format=money"`
+	FreightChargeAmount       decimal.NullDecimal   `json:"freightChargeAmount" keel:"freight_charge_amount,label=Freight Charge,format=money"`
+	TariffInputs              tarifftypes.Inputs    `json:"tariffInputs" keel:"tariff_inputs,jsonb"`
+	FreightLines              []FreightLine         `json:"freightLines" keel:"freight_lines,jsonb"`
+	TotalChargeAmount         decimal.NullDecimal   `json:"totalChargeAmount" keel:"total_charge_amount,label=Total Charge,format=money"`
+	Pieces                    *int64                `json:"pieces" keel:"pieces,format=count"`
+	Weight                    *int64                `json:"weight" keel:"weight,format=weight"`
+	EnvelopeLengthFeet        *float64              `json:"envelopeLengthFeet" keel:"envelope_length_feet"`
+	EnvelopeWidthFeet         *float64              `json:"envelopeWidthFeet" keel:"envelope_width_feet"`
+	EnvelopeHeightFeet        *float64              `json:"envelopeHeightFeet" keel:"envelope_height_feet"`
+	EnvelopeOverallHeightFeet *float64              `json:"envelopeOverallHeightFeet" keel:"envelope_overall_height_feet"`
+	TemperatureMin            *int16                `json:"temperatureMin" keel:"temperature_min,dimension"`
+	TemperatureMax            *int16                `json:"temperatureMax" keel:"temperature_max,dimension"`
+	ActualDeliveryDate        *int64                `json:"actualDeliveryDate" keel:"actual_delivery_date,label=Delivery Date"`
+	ActualShipDate            *int64                `json:"actualShipDate" keel:"actual_ship_date,label=Ship Date"`
+	CanceledAt                *int64                `json:"canceledAt" keel:"canceled_at"`
+	BillingTransferStatus     BillingTransferStatus `json:"billingTransferStatus" keel:"billing_transfer_status,nullzero"`
+	TransferredToBillingAt    *int64                `json:"transferredToBillingAt" keel:"transferred_to_billing_at"`
+	MarkedReadyToBillAt       *int64                `json:"markedReadyToBillAt" keel:"marked_ready_to_bill_at,label=Ready to Bill At"`
+	BilledAt                  *int64                `json:"billedAt" keel:"billed_at"`
+	FuelSurchargeLocked       bool                  `json:"fuelSurchargeLocked" keel:"fuel_surcharge_locked"`
+	RatingDetail              *RatingDetail         `json:"ratingDetail" keel:"rating_detail,jsonb"`
+	RateQuoteID               *pulid.ID             `json:"rateQuoteId" keel:"rate_quote_id"`
+	RateAgreementID           *pulid.ID             `json:"rateAgreementId" keel:"rate_agreement_id"`
+	RateAgreementRuleID       *pulid.ID             `json:"rateAgreementRuleId" keel:"rate_agreement_rule_id"`
+	RateOverrideAmount        decimal.NullDecimal   `json:"rateOverrideAmount" keel:"rate_override_amount"`
+	RateOverrideReason        string                `json:"rateOverrideReason" keel:"rate_override_reason,nullzero"`
+	RateOverrideByID          *pulid.ID             `json:"rateOverrideById" keel:"rate_override_by_id"`
+	RateOverrideAt            *int64                `json:"rateOverrideAt" keel:"rate_override_at"`
+	RateLocked                bool                  `json:"rateLocked" keel:"rate_locked"`
+	AutoRated                 bool                  `json:"autoRated" keel:"auto_rated"`
+	AutoRatedAt               *int64                `json:"autoRatedAt" keel:"auto_rated_at"`
+	BillToCustomerID          *pulid.ID             `json:"billToCustomerId" keel:"bill_to_customer_id"`
+	FreightTerms              FreightTerms          `json:"freightTerms" keel:"freight_terms"`
+	SourceDocumentID          string                `json:"sourceDocumentId,omitempty"`
+	PreviousCustomerID        pulid.ID              `json:"-"`
 
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-" keel:"rank,computed"`
+	Version      int64  `json:"version" keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit      *tenant.BusinessUnit             `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization      *tenant.Organization             `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`
-	ShipmentType      *shipmenttype.ShipmentType       `json:"shipmentType,omitempty"      bun:"rel:belongs-to,join:shipment_type_id=id"    keel:"belongs:shipment_type_id"`
-	ServiceType       *servicetype.ServiceType         `json:"serviceType,omitempty"       bun:"rel:belongs-to,join:service_type_id=id"     keel:"belongs:service_type_id"`
-	Customer          *customer.Customer               `json:"customer,omitempty"          bun:"rel:belongs-to,join:customer_id=id"         keel:"belongs:customer_id"`
-	BillToCustomer    *customer.Customer               `json:"billToCustomer,omitempty"    bun:"rel:belongs-to,join:bill_to_customer_id=id" keel:"belongs:bill_to_customer_id"`
-	TractorType       *equipmenttype.EquipmentType     `json:"tractorType,omitempty"       bun:"rel:belongs-to,join:tractor_type_id=id"     keel:"belongs:tractor_type_id,label=Tractor Equipment Type"`
-	TrailerType       *equipmenttype.EquipmentType     `json:"trailerType,omitempty"       bun:"rel:belongs-to,join:trailer_type_id=id"     keel:"belongs:trailer_type_id,label=Trailer Equipment Type"`
-	CanceledBy        *tenant.User                     `json:"canceledBy,omitempty"        bun:"rel:belongs-to,join:canceled_by_id=id"      keel:"belongs:canceled_by_id,noreport"`
-	Owner             *tenant.User                     `json:"owner,omitempty"             bun:"rel:belongs-to,join:owner_id=id"            keel:"belongs:owner_id,noreport"`
-	EnteredBy         *tenant.User                     `json:"enteredBy,omitempty"         bun:"rel:belongs-to,join:entered_by_id=id"       keel:"belongs:entered_by_id,noreport"`
-	FormulaTemplate   *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty"   bun:"rel:belongs-to,join:formula_template_id=id" keel:"belongs:formula_template_id,noreport"`
-	Moves             []*ShipmentMove                  `json:"moves,omitempty"             bun:"rel:has-many,join:id=shipment_id"           keel:"many:shipment_id"`
-	Commodities       []*ShipmentCommodity             `json:"commodities,omitempty"       bun:"rel:has-many,join:id=shipment_id"           keel:"many:shipment_id"`
-	AdditionalCharges []*AdditionalCharge              `json:"additionalCharges,omitempty" bun:"rel:has-many,join:id=shipment_id"           keel:"many:shipment_id,noreport"`
-	ChargeAllocations []*ChargeAllocation              `json:"chargeAllocations,omitempty" bun:"rel:has-many,join:id=shipment_id"           keel:"many:shipment_id,noreport"`
-	Comments          []*ShipmentComment               `json:"comments,omitempty"          bun:"rel:has-many,join:id=shipment_id"           keel:"many:shipment_id,noreport"`
-	OriginStop        *Stop                            `json:"originStop,omitempty"        bun:"-"                                          keel:"pick:moves.stops,first=moves.sequence|stops.sequence"`
-	DestinationStop   *Stop                            `json:"destinationStop,omitempty"   bun:"-"                                          keel:"pick:moves.stops,last=moves.sequence|stops.sequence"`
+	BusinessUnit      *tenant.BusinessUnit             `json:"businessUnit,omitempty"`
+	Organization      *tenant.Organization             `json:"organization,omitempty"`
+	ShipmentType      *shipmenttype.ShipmentType       `json:"shipmentType,omitempty" keel:"belongs:shipment_type_id"`
+	ServiceType       *servicetype.ServiceType         `json:"serviceType,omitempty" keel:"belongs:service_type_id"`
+	Customer          *customer.Customer               `json:"customer,omitempty" keel:"belongs:customer_id"`
+	BillToCustomer    *customer.Customer               `json:"billToCustomer,omitempty" keel:"belongs:bill_to_customer_id"`
+	TractorType       *equipmenttype.EquipmentType     `json:"tractorType,omitempty" keel:"belongs:tractor_type_id,label=Tractor Equipment Type"`
+	TrailerType       *equipmenttype.EquipmentType     `json:"trailerType,omitempty" keel:"belongs:trailer_type_id,label=Trailer Equipment Type"`
+	CanceledBy        *tenant.User                     `json:"canceledBy,omitempty" keel:"belongs:canceled_by_id,noreport"`
+	Owner             *tenant.User                     `json:"owner,omitempty" keel:"belongs:owner_id,noreport"`
+	EnteredBy         *tenant.User                     `json:"enteredBy,omitempty" keel:"belongs:entered_by_id,noreport"`
+	FormulaTemplate   *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty" keel:"belongs:formula_template_id,noreport"`
+	Moves             []*ShipmentMove                  `json:"moves,omitempty" keel:"many:shipment_id"`
+	Commodities       []*ShipmentCommodity             `json:"commodities,omitempty" keel:"many:shipment_id"`
+	AdditionalCharges []*AdditionalCharge              `json:"additionalCharges,omitempty" keel:"many:shipment_id,noreport"`
+	ChargeAllocations []*ChargeAllocation              `json:"chargeAllocations,omitempty" keel:"many:shipment_id,noreport"`
+	Comments          []*ShipmentComment               `json:"comments,omitempty" keel:"many:shipment_id,noreport"`
+	OriginStop        *Stop                            `json:"originStop,omitempty" keel:"pick:moves.stops,first=moves.sequence|stops.sequence"`
+	DestinationStop   *Stop                            `json:"destinationStop,omitempty" keel:"pick:moves.stops,last=moves.sequence|stops.sequence"`
 }
 
 // PayerID is the customer the shipment's charges default to. An explicit
@@ -709,39 +706,28 @@ func (s *Shipment) IsNew() bool {
 	return s.Status == StatusNew
 }
 
-func (s *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (s *Shipment) BeforeCreate(ctx context.Context) error {
+	if s.Status == "" {
+		s.Status = StatusNew
+	}
+	if s.EntryMethod == "" {
+		s.EntryMethod = EntryMethodManual
+	}
+	if s.FreightTerms == "" {
+		s.FreightTerms = FreightTermsPrepaid
+	}
+	s.OtherChargeAmount = zeroWhenUnset(s.OtherChargeAmount)
+	s.FreightChargeAmount = zeroWhenUnset(s.FreightChargeAmount)
+	s.TotalChargeAmount = zeroWhenUnset(s.TotalChargeAmount)
 	s.TariffInputs = s.TariffInputs.OrEmpty()
 	if s.FreightLines == nil {
 		s.FreightLines = []FreightLine{}
 	}
 	s.ExternalReference = strings.TrimSpace(s.ExternalReference)
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		s.ApplyEntryMethodDefault(nil)
-		s.ApplyFreightTermsDefault(nil)
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("shp_")
-		}
-
-		s.CreatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
-	}
+	s.ApplyEntryMethodDefault(nil)
+	s.ApplyFreightTermsDefault(nil)
 
 	return nil
-}
-
-func (s *Shipment) BeforeCreate(ctx context.Context) error {
-	if s.Status == "" {
-		s.Status = StatusNew
-	}
-	s.OtherChargeAmount = zeroWhenUnset(s.OtherChargeAmount)
-	s.FreightChargeAmount = zeroWhenUnset(s.FreightChargeAmount)
-	s.TotalChargeAmount = zeroWhenUnset(s.TotalChargeAmount)
-
-	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func zeroWhenUnset(amount decimal.NullDecimal) decimal.NullDecimal {
@@ -753,7 +739,13 @@ func zeroWhenUnset(amount decimal.NullDecimal) decimal.NullDecimal {
 }
 
 func (s *Shipment) BeforeUpdate(ctx context.Context) error {
-	return s.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
+	s.TariffInputs = s.TariffInputs.OrEmpty()
+	if s.FreightLines == nil {
+		s.FreightLines = []FreightLine{}
+	}
+	s.ExternalReference = strings.TrimSpace(s.ExternalReference)
+
+	return nil
 }
 
 const MaxExternalReferenceLength = 100

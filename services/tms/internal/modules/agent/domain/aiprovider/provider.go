@@ -16,13 +16,11 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -58,72 +56,69 @@ var maxMonthlyCap = decimal.RequireFromString("9999999999.99")
 // for anything that reaches the ledger — which is why this is a row per endpoint
 // rather than a credential keyed by vendor.
 type Provider struct {
-	bun.BaseModel `bun:"table:ai_providers,alias:aiprv" json:"-"`
-	keel.Table    `keel:"ai_providers"`
+	keel.Table `keel:"ai_providers"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aiprv_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aiprv_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-
-	Name        string `json:"name"        bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Description string `json:"description" bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Kind        Kind   `json:"kind"        bun:"kind,type:VARCHAR(50),notnull" keel:"kind"`
+	Name        string `json:"name" keel:"name"`
+	Description string `json:"description" keel:"description,nullzero"`
+	Kind        Kind   `json:"kind" keel:"kind"`
 
 	// BaseURL is the endpoint root, without the protocol-specific path. Empty
 	// falls back to Kind.DefaultBaseURL.
-	BaseURL string `json:"baseUrl" bun:"base_url,type:TEXT,nullzero" keel:"base_url,nullzero"`
+	BaseURL string `json:"baseUrl" keel:"base_url,nullzero"`
 	// Model is free text on purpose. Self-hosted deployments name models whatever
 	// they like ("llama3.3:70b", "qwen2.5-coder:32b"), so no closed set can hold.
-	Model string `json:"model" bun:"model,type:VARCHAR(200),notnull" keel:"model"`
+	Model string `json:"model" keel:"model"`
 
 	// APIKey holds the credential encrypted at rest. It is cleared before the
 	// entity leaves the service layer.
-	APIKey string `json:"-" bun:"api_key,type:TEXT,nullzero" keel:"api_key,nullzero"`
+	APIKey string `json:"-" keel:"api_key,nullzero"`
 
 	// AllowPrivateNetwork lets this provider reach a loopback or RFC 1918 address.
 	// It exists because a self-hosted model is normally unreachable otherwise, and
 	// it is deliberately per-provider so enabling it for an internal GPU box does
 	// not widen egress for every other provider.
-	AllowPrivateNetwork bool `json:"allowPrivateNetwork" bun:"allow_private_network,type:BOOLEAN,notnull" keel:"allow_private_network"`
+	AllowPrivateNetwork bool `json:"allowPrivateNetwork" keel:"allow_private_network"`
 
-	StructuredOutputMode StructuredOutputMode `json:"structuredOutputMode" bun:"structured_output_mode,type:VARCHAR(50),notnull" keel:"structured_output_mode"`
-	MaxTokens            int                  `json:"maxTokens"            bun:"max_tokens,type:INTEGER,notnull" keel:"max_tokens"`
+	StructuredOutputMode StructuredOutputMode `json:"structuredOutputMode" keel:"structured_output_mode"`
+	MaxTokens            int                  `json:"maxTokens" keel:"max_tokens"`
 	// ContextWindowTokens is the model's context window, in tokens, when the
 	// operator knows it better than the model id does: a self-hosted model
 	// served with a shorter context than its family's, or an id nothing here
 	// can place. Nil reads the window off the model id.
-	ContextWindowTokens *int `json:"contextWindow" bun:"context_window,type:INTEGER,nullzero" keel:"context_window"`
+	ContextWindowTokens *int `json:"contextWindow" keel:"context_window"`
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
-	ReasoningEffort ReasoningEffort `json:"reasoningEffort" bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'" keel:"reasoning_effort,nullzero"`
+	ReasoningEffort ReasoningEffort `json:"reasoningEffort" keel:"reasoning_effort,nullzero"`
 	// ThinkingStyle says how a Claude model behind an id the adapter cannot
 	// read takes thinking. Auto reads the id.
-	ThinkingStyle ThinkingStyle `json:"thinkingStyle" bun:"thinking_style,type:VARCHAR(50),notnull,nullzero,default:'Auto'" keel:"thinking_style,nullzero"`
+	ThinkingStyle ThinkingStyle `json:"thinkingStyle" keel:"thinking_style,nullzero"`
 	// Platform is the service an Anthropic Messages provider reaches Claude
 	// through, and PlatformSettings what that service needs besides the
 	// credential. Every other kind is called directly.
-	Platform         Platform          `json:"platform"         bun:"platform,type:VARCHAR(50),notnull,nullzero,default:'Direct'" keel:"platform,nullzero"`
-	PlatformSettings *PlatformSettings `json:"platformSettings" bun:"platform_settings,type:JSONB,nullzero" keel:"platform_settings,jsonb"`
+	Platform         Platform          `json:"platform" keel:"platform,nullzero"`
+	PlatformSettings *PlatformSettings `json:"platformSettings" keel:"platform_settings,jsonb"`
 
 	// AdvisorEnabled has every chat call routed to this provider declare
 	// Anthropic's advisor tool, so the model consults AdvisorModel (empty is
 	// DefaultAdvisorModel) mid-reply. Off by default: each consultation is
 	// billed at the advisor's price.
-	AdvisorEnabled bool   `json:"advisorEnabled" bun:"advisor_enabled,type:BOOLEAN,notnull,default:false" keel:"advisor_enabled"`
-	AdvisorModel   string `json:"advisorModel"   bun:"advisor_model,type:VARCHAR(200),nullzero" keel:"advisor_model,nullzero"`
+	AdvisorEnabled bool   `json:"advisorEnabled" keel:"advisor_enabled"`
+	AdvisorModel   string `json:"advisorModel" keel:"advisor_model,nullzero"`
 	// AdvisorRefusal is the API's refusal of that advisor for this model,
 	// recorded by the router on the first call it refused. It is cleared when
 	// the advisor, the model or the platform changes.
-	AdvisorRefusal *AdvisorRefusal `json:"advisorRefusal" bun:"advisor_refusal,type:JSONB,nullzero" keel:"advisor_refusal,jsonb"`
+	AdvisorRefusal *AdvisorRefusal `json:"advisorRefusal" keel:"advisor_refusal,jsonb"`
 	// Scripts lets this provider's model answer with a read-only script
 	// (code mode), and ScriptWrites lets those scripts prepare writes, proposed
 	// as one batch for a person. Both are off by default, and both still need
 	// the organization's own opt-in: the plan capability, the E2B extension's
 	// "Read-only scripts" setting and the code_mode permission.
-	Scripts      bool `json:"scripts"      bun:"code_mode_scripts,type:BOOLEAN,notnull" keel:"code_mode_scripts"`
-	ScriptWrites bool `json:"scriptWrites" bun:"code_mode_writes,type:BOOLEAN,notnull" keel:"code_mode_writes"`
+	Scripts      bool `json:"scripts" keel:"code_mode_scripts"`
+	ScriptWrites bool `json:"scriptWrites" keel:"code_mode_writes"`
 
 	// ExtraBody is merged into the request an OpenAI-compatible endpoint
 	// receives, for the fields that are the server's own rather than the
@@ -142,14 +137,14 @@ type Provider struct {
 	// or off, or replace the tools and schema a caller asked for. What is
 	// left to it is sampling, vendor switches, and the fields this system
 	// has no opinion about.
-	ExtraBody map[string]any `json:"extraBody" bun:"extra_body,type:JSONB,nullzero" keel:"extra_body,jsonb,nullzero"`
+	ExtraBody map[string]any `json:"extraBody" keel:"extra_body,jsonb,nullzero"`
 
 	// InputCostPerMillion and OutputCostPerMillion are what the provider
 	// charges, in USD per million tokens, entered by the operator from the
 	// provider's price list. Both nil means the cost of a call is unknown and
 	// is reported as such, never as zero.
-	InputCostPerMillion  *decimal.Decimal `json:"inputCostPerMillion"  bun:"input_cost_per_million,type:NUMERIC(12,6),nullzero" keel:"input_cost_per_million"`
-	OutputCostPerMillion *decimal.Decimal `json:"outputCostPerMillion" bun:"output_cost_per_million,type:NUMERIC(12,6),nullzero" keel:"output_cost_per_million"`
+	InputCostPerMillion  *decimal.Decimal `json:"inputCostPerMillion" keel:"input_cost_per_million"`
+	OutputCostPerMillion *decimal.Decimal `json:"outputCostPerMillion" keel:"output_cost_per_million"`
 
 	// CacheReadCostPerMillion and CacheWriteCostPerMillion price the prompt
 	// tokens a provider served from its cache and the ones it wrote to it.
@@ -157,79 +152,62 @@ type Provider struct {
 	// CacheReadMultiple and CacheWriteMultiple): most of a Desk turn's prompt is
 	// read from the cache, so pricing it as fresh input overstated an OpenAI
 	// call and leaving it out understated an Anthropic one.
-	CacheReadCostPerMillion  *decimal.Decimal `json:"cacheReadCostPerMillion"  bun:"cache_read_cost_per_million,type:NUMERIC(12,6),nullzero" keel:"cache_read_cost_per_million"`
-	CacheWriteCostPerMillion *decimal.Decimal `json:"cacheWriteCostPerMillion" bun:"cache_write_cost_per_million,type:NUMERIC(12,6),nullzero" keel:"cache_write_cost_per_million"`
+	CacheReadCostPerMillion  *decimal.Decimal `json:"cacheReadCostPerMillion" keel:"cache_read_cost_per_million"`
+	CacheWriteCostPerMillion *decimal.Decimal `json:"cacheWriteCostPerMillion" keel:"cache_write_cost_per_million"`
 
 	// Tasks are the units of work this provider may serve. Priority orders the
 	// candidates for a task, lowest first, which gives fallback chains without a
 	// second table.
-	Tasks    []Task `json:"tasks"    bun:"tasks,type:TEXT[],array,nullzero" keel:"tasks,nullzero"`
-	Priority int    `json:"priority" bun:"priority,type:INTEGER,notnull" keel:"priority"`
+	Tasks    []Task `json:"tasks" keel:"tasks,nullzero"`
+	Priority int    `json:"priority" keel:"priority"`
 
-	EmbeddingDimensions *int                `json:"embeddingDimensions" bun:"embedding_dimensions,type:INTEGER,nullzero" keel:"embedding_dimensions"`
-	EmbeddingInputStyle EmbeddingInputStyle `json:"embeddingInputStyle" bun:"embedding_input_style,type:VARCHAR(50),notnull,default:'None'" keel:"embedding_input_style"`
+	EmbeddingDimensions *int                `json:"embeddingDimensions" keel:"embedding_dimensions"`
+	EmbeddingInputStyle EmbeddingInputStyle `json:"embeddingInputStyle" keel:"embedding_input_style"`
 
 	// Trusted marks a provider an administrator vouches for. A task that can drive
 	// a financial mutation will not route to an untrusted provider.
-	Trusted bool `json:"trusted" bun:"trusted,type:BOOLEAN,notnull" keel:"trusted"`
-	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull" keel:"enabled"`
+	Trusted bool `json:"trusted" keel:"trusted"`
+	Enabled bool `json:"enabled" keel:"enabled"`
 
 	// LastTest is the outcome of the most recent live probe, kept so the
 	// configuration UI can show whether an endpoint was ever reachable without
 	// probing it again on every page load.
-	LastTest *TestOutcome `json:"lastTest" bun:"last_test,type:JSONB,nullzero" keel:"last_test,jsonb"`
+	LastTest *TestOutcome `json:"lastTest" keel:"last_test,jsonb"`
 
 	// TimeoutSeconds bounds one call to this provider. A call that runs past
 	// it is this provider's failure, and the task moves to the next one.
-	TimeoutSeconds int `json:"timeoutSeconds" bun:"timeout_seconds,type:INTEGER,notnull,nullzero,default:60" keel:"timeout_seconds,nullzero"`
+	TimeoutSeconds int `json:"timeoutSeconds" keel:"timeout_seconds,nullzero"`
 	// MaxConcurrent is how many calls this provider takes at once across
 	// every server. Past it, work moves to the next provider.
-	MaxConcurrent int `json:"maxConcurrent" bun:"max_concurrent,type:INTEGER,notnull,nullzero,default:8" keel:"max_concurrent,nullzero"`
+	MaxConcurrent int `json:"maxConcurrent" keel:"max_concurrent,nullzero"`
 	// MonthlyCapUSD is the most this provider may spend in a UTC calendar
 	// month, over the calls that carried a price. Nil means no cap.
-	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd" bun:"monthly_cap_usd,type:NUMERIC(12,2),nullzero" keel:"monthly_cap_usd"`
-	OnCap         CapAction        `json:"onCap"         bun:"on_cap,type:VARCHAR(10),notnull,nullzero,default:'Next'" keel:"on_cap,nullzero"`
+	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd" keel:"monthly_cap_usd"`
+	OnCap         CapAction        `json:"onCap" keel:"on_cap,nullzero"`
 
 	// APIKeyPrefix and APIKeyLastFour are the only parts of the key kept in
 	// the clear: enough to tell two keys apart, never enough to use one.
-	APIKeyPrefix     string   `json:"apiKeyPrefix"     bun:"api_key_prefix,type:VARCHAR(20),nullzero" keel:"api_key_prefix,nullzero"`
-	APIKeyLastFour   string   `json:"apiKeyLastFour"   bun:"api_key_last_four,type:VARCHAR(4),nullzero" keel:"api_key_last_four,nullzero"`
-	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt"    bun:"api_key_added_at,type:BIGINT,nullzero" keel:"api_key_added_at"`
-	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById"  bun:"api_key_added_by_id,type:VARCHAR(100),nullzero" keel:"api_key_added_by_id,nullzero"`
-	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt" bun:"api_key_last_used_at,type:BIGINT,nullzero" keel:"api_key_last_used_at"`
+	APIKeyPrefix     string   `json:"apiKeyPrefix" keel:"api_key_prefix,nullzero"`
+	APIKeyLastFour   string   `json:"apiKeyLastFour" keel:"api_key_last_four,nullzero"`
+	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt" keel:"api_key_added_at"`
+	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById" keel:"api_key_added_by_id,nullzero"`
+	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt" keel:"api_key_last_used_at"`
 	// PreviousAPIKey is the key a rotation replaced, encrypted like APIKey,
 	// kept until RotationExpiresAt so calls refused with the new key can
 	// still be served while the change reaches the vendor.
-	PreviousAPIKey    string `json:"-"                 bun:"previous_api_key,type:TEXT,nullzero" keel:"previous_api_key,nullzero"`
-	RotationExpiresAt *int64 `json:"rotationExpiresAt" bun:"rotation_expires_at,type:BIGINT,nullzero" keel:"rotation_expires_at"`
+	PreviousAPIKey    string `json:"-" keel:"previous_api_key,nullzero"`
+	RotationExpiresAt *int64 `json:"rotationExpiresAt" keel:"rotation_expires_at"`
 
 	// HasAPIKey is set on the redacted copy so a client can tell a credential is
 	// stored without the secret making the trip.
-	HasAPIKey bool `json:"hasApiKey" bun:"-"`
+	HasAPIKey bool `json:"hasApiKey"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-}
-
-func (p *Provider) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("aiprv_")
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-
-	return nil
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
 }
 
 func (p *Provider) BeforeCreate(_ context.Context) error {
@@ -246,13 +224,19 @@ func (p *Provider) BeforeCreate(_ context.Context) error {
 		p.EmbeddingInputStyle = EmbeddingInputStyleNone
 	}
 	if p.TimeoutSeconds == 0 {
+		p.TimeoutSeconds = 60
+	}
+	if p.MaxConcurrent == 0 {
+		p.MaxConcurrent = 8
+	}
+	if p.OnCap == "" {
+		p.OnCap = CapActionNext
+	}
+	if p.TimeoutSeconds == 0 {
 		p.TimeoutSeconds = DefaultTimeoutSeconds
 	}
 	if p.MaxConcurrent == 0 {
 		p.MaxConcurrent = DefaultMaxConcurrent
-	}
-	if p.OnCap == "" {
-		p.OnCap = CapActionNext
 	}
 
 	return nil

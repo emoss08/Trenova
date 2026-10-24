@@ -13,9 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -24,7 +22,6 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*FormulaLibrary)(nil)
 	_ validationframework.TenantedEntity = (*FormulaLibrary)(nil)
 	_ domaintypes.PostgresSearchable     = (*FormulaLibrary)(nil)
 )
@@ -40,34 +37,41 @@ var keywords = []string{
 }
 
 type FormulaLibrary struct {
-	bun.BaseModel `bun:"table:formula_libraries,alias:flib" json:"-"`
-	keel.Table    `                                                  keel:"formula_libraries"`
+	keel.Table `                                                  keel:"formula_libraries"`
 
-	ID                   pulid.ID               `json:"id"                   bun:"id,pk,type:VARCHAR(100)"                                                           keel:"id,pk,autoid:fl_"`
-	OrganizationID       pulid.ID               `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"                                      keel:"organization_id,pk,tenant"`
-	BusinessUnitID       pulid.ID               `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                     keel:"business_unit_id,pk,tenant"`
-	Name                 string                 `json:"name"                 bun:"name,type:VARCHAR(64),notnull"                                                     keel:"name"`
-	Description          string                 `json:"description"          bun:"description,type:TEXT"                                                             keel:"description,nullzero"`
-	Source               string                 `json:"source"               bun:"source,type:TEXT,notnull"                                                          keel:"source"`
-	Imports              []tarifftypes.Import   `json:"imports"              bun:"imports,type:JSONB,notnull,default:'[]'"                                           keel:"imports,jsonb"`
-	TestCount            int32                  `json:"testCount"            bun:"test_count,type:INTEGER,notnull,default:0"                                         keel:"test_count"`
-	Status               formulatemplate.Status `json:"status"               bun:"status,type:formula_template_status_enum,notnull,default:'Draft'"                  keel:"status"`
-	SubmittedByID        *pulid.ID              `json:"submittedById"        bun:"submitted_by_id,type:VARCHAR(100)"                                                 keel:"submitted_by_id"`
-	SubmittedAt          *int64                 `json:"submittedAt"          bun:"submitted_at,type:BIGINT"                                                          keel:"submitted_at"`
-	ApprovedByID         *pulid.ID              `json:"approvedById"         bun:"approved_by_id,type:VARCHAR(100)"                                                  keel:"approved_by_id"`
-	ApprovedAt           *int64                 `json:"approvedAt"           bun:"approved_at,type:BIGINT"                                                           keel:"approved_at"`
-	ReviewComment        string                 `json:"reviewComment"        bun:"review_comment,type:TEXT"                                                          keel:"review_comment,nullzero"`
-	SearchVector         string                 `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly"                                              keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                 string                 `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly"                                                   keel:"rank,computed"`
-	Version              int64                  `json:"version"              bun:"version,type:BIGINT"                                                               keel:"version,version"`
-	SourceLibraryID      *pulid.ID              `json:"sourceLibraryId"      bun:"source_library_id,type:VARCHAR(100)"                                               keel:"source_library_id"`
-	SourceVersionNumber  *int64                 `json:"sourceVersionNumber"  bun:"source_version_number,type:BIGINT"                                                 keel:"source_version_number"`
-	CurrentVersionNumber int64                  `json:"currentVersionNumber" bun:"current_version_number,type:BIGINT,notnull,default:1"                              keel:"current_version_number"`
-	CreatedAt            int64                  `json:"createdAt"            bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt            int64                  `json:"updatedAt"            bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                   pulid.ID               `json:"id" keel:"id,pk,autoid:fl_"`
+	OrganizationID       pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	Name                 string                 `json:"name" keel:"name"`
+	Description          string                 `json:"description" keel:"description,nullzero"`
+	Source               string                 `json:"source" keel:"source"`
+	Imports              []tarifftypes.Import   `json:"imports" keel:"imports,jsonb"`
+	TestCount            int32                  `json:"testCount" keel:"test_count"`
+	Status               formulatemplate.Status `json:"status" keel:"status"`
+	SubmittedByID        *pulid.ID              `json:"submittedById" keel:"submitted_by_id"`
+	SubmittedAt          *int64                 `json:"submittedAt" keel:"submitted_at"`
+	ApprovedByID         *pulid.ID              `json:"approvedById" keel:"approved_by_id"`
+	ApprovedAt           *int64                 `json:"approvedAt" keel:"approved_at"`
+	ReviewComment        string                 `json:"reviewComment" keel:"review_comment,nullzero"`
+	SearchVector         string                 `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                 string                 `json:"-" keel:"rank,computed"`
+	Version              int64                  `json:"version" keel:"version,version"`
+	SourceLibraryID      *pulid.ID              `json:"sourceLibraryId" keel:"source_library_id"`
+	SourceVersionNumber  *int64                 `json:"sourceVersionNumber" keel:"source_version_number"`
+	CurrentVersionNumber int64                  `json:"currentVersionNumber" keel:"current_version_number"`
+	CreatedAt            int64                  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt            int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+}
+
+func (fl *FormulaLibrary) BeforeUpdate(_ context.Context) error {
+	if fl.Imports == nil {
+		fl.Imports = []tarifftypes.Import{}
+	}
+
+	return nil
 }
 
 func Path(name string) string {
@@ -128,30 +132,18 @@ func (fl *FormulaLibrary) HasMaterialChange(other *FormulaLibrary) bool {
 		!tarifftypes.ImportsEqual(fl.Imports, other.Imports)
 }
 
-func (fl *FormulaLibrary) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if fl.ID.IsNil() {
-			fl.ID = pulid.MustNew("fl_")
-		}
-		if fl.Imports == nil {
-			fl.Imports = []tarifftypes.Import{}
-		}
-		fl.CreatedAt = now
-	case *bun.UpdateQuery:
-		if fl.Imports == nil {
-			fl.Imports = []tarifftypes.Import{}
-		}
-		fl.UpdatedAt = now
+func (fl *FormulaLibrary) BeforeCreate(ctx context.Context) error {
+	if fl.Status == "" {
+		fl.Status = formulatemplate.StatusDraft
+	}
+	if fl.CurrentVersionNumber == 0 {
+		fl.CurrentVersionNumber = 1
+	}
+	if fl.Imports == nil {
+		fl.Imports = []tarifftypes.Import{}
 	}
 
 	return nil
-}
-
-func (fl *FormulaLibrary) BeforeCreate(ctx context.Context) error {
-	return fl.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (fl *FormulaLibrary) BeforeSave(_ context.Context) error {

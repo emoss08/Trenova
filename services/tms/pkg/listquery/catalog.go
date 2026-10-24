@@ -1,7 +1,6 @@
 package listquery
 
 import (
-	"reflect"
 	"slices"
 	"strings"
 	"sync"
@@ -40,11 +39,10 @@ var catalogs = struct {
 }{m: make(map[*schema.Table]*catalog)}
 
 func catalogFor[T any](table *schema.Table) *catalog {
-	return catalogOf(reflect.TypeFor[T](), table, searchConfigOf[T])
+	return catalogOf(table, searchConfigOf[T])
 }
 
 func catalogOf(
-	model reflect.Type,
 	table *schema.Table,
 	config func() *domaintypes.PostgresSearchConfig,
 ) *catalog {
@@ -55,7 +53,7 @@ func catalogOf(
 		return c
 	}
 
-	c = buildCatalog(model, table, config())
+	c = buildCatalog(table, config())
 
 	catalogs.Lock()
 	defer catalogs.Unlock()
@@ -78,13 +76,12 @@ func searchConfigOf[T any]() *domaintypes.PostgresSearchConfig {
 }
 
 func buildCatalog(
-	model reflect.Type,
 	table *schema.Table,
 	config *domaintypes.PostgresSearchConfig,
 ) *catalog {
 	c := &catalog{
 		table:     table,
-		fields:    columnsByJSON(model, table),
+		fields:    columnsByJSON(table),
 		relations: make(map[string]relation),
 		vector:    -1,
 	}
@@ -101,7 +98,7 @@ func buildCatalog(
 		return c
 	}
 
-	c.relations = queryableRelations(model, table, config.Relationships)
+	c.relations = queryableRelations(table, config.Relationships)
 	if config.UseSearchVector {
 		c.vector = vectorColumn(table, config.SearchVectorColumn)
 	}
@@ -131,7 +128,6 @@ func vectorColumn(table *schema.Table, name string) int32 {
 }
 
 func queryableRelations(
-	model reflect.Type,
 	table *schema.Table,
 	defs []*domaintypes.RelationshipDefintion,
 ) map[string]relation {
@@ -147,53 +143,40 @@ func queryableRelations(
 		return out
 	}
 
-	for jsonName, field := range jsonFields(model) {
-		_, byJSON := allowed[strings.ToLower(jsonName)]
-		_, byField := allowed[strings.ToLower(field.Name)]
-		if !byJSON && !byField {
+	for i := range table.Relations {
+		rel := &table.Relations[i]
+		if rel.JSON == "" || rel.Target == nil {
+			continue
+		}
+		_, byJSON := allowed[strings.ToLower(rel.JSON)]
+		_, byName := allowed[strings.ToLower(rel.Name)]
+		if !byJSON && !byName {
 			continue
 		}
 
-		index := table.Relation(field.Name)
-		if index < 0 || table.Relations[index].Target == nil {
-			continue
-		}
-
-		rel := &table.Relations[index]
-		out[jsonName] = relation{
-			index:  index,
+		out[rel.JSON] = relation{
+			index:  int32(i),
 			name:   rel.Name,
 			kind:   rel.Kind,
 			target: rel.Target,
-			fields: columnsByJSON(structOf(field.Type), rel.Target),
+			fields: columnsByJSON(rel.Target),
 		}
 	}
 
 	return out
 }
 
-func columnsByJSON(model reflect.Type, table *schema.Table) map[string]int32 {
-	fields := jsonFields(model)
-	out := make(map[string]int32, len(fields))
-	for jsonName, field := range fields {
-		index := columnByField(table, field.Name)
-		if index < 0 || !filterable(&table.Columns[index]) {
+func columnsByJSON(table *schema.Table) map[string]int32 {
+	out := make(map[string]int32, len(table.Columns))
+	for i := range table.Columns {
+		col := &table.Columns[i]
+		if col.JSON == "" || !filterable(col) {
 			continue
 		}
-		out[jsonName] = index
+		out[col.JSON] = int32(i)
 	}
 
 	return out
-}
-
-func columnByField(table *schema.Table, field string) int32 {
-	for i := range table.Columns {
-		if table.Columns[i].Field == field {
-			return int32(i)
-		}
-	}
-
-	return -1
 }
 
 func filterable(col *schema.Column) bool {
@@ -221,48 +204,6 @@ func filterable(col *schema.Column) bool {
 	default:
 		return false
 	}
-}
-
-func jsonFields(model reflect.Type) map[string]reflect.StructField {
-	model = structOf(model)
-	if model == nil {
-		return nil
-	}
-
-	out := make(map[string]reflect.StructField, model.NumField())
-	for field := range model.Fields() {
-		if !field.IsExported() || field.Anonymous {
-			continue
-		}
-
-		name := jsonName(field.Tag.Get("json"))
-		if name == "" {
-			continue
-		}
-		out[name] = field
-	}
-
-	return out
-}
-
-func jsonName(tag string) string {
-	if tag == "" || tag == "-" {
-		return ""
-	}
-
-	name, _, _ := strings.Cut(tag, ",")
-	return name
-}
-
-func structOf(t reflect.Type) reflect.Type {
-	for t != nil && (t.Kind() == reflect.Pointer || t.Kind() == reflect.Slice) {
-		t = t.Elem()
-	}
-	if t == nil || t.Kind() != reflect.Struct {
-		return nil
-	}
-
-	return t
 }
 
 func (c *catalog) relation(name string) (relation, bool) {

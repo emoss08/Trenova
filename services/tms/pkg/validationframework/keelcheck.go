@@ -161,12 +161,9 @@ func existsIn(ctx context.Context, conn KeelDB, q *keel.DynQuery) (bool, error) 
 
 	var exists bool
 	err := conn.RunScoped(ctx, true, func(ctx context.Context) error {
-		res, err := q.Run(ctx, conn.Keel(ctx))
-		if err != nil {
-			return err
-		}
-		exists = res.Rows > 0
-		return nil
+		var err error
+		exists, err = q.Exists(ctx, conn.Keel(ctx))
+		return err
 	})
 
 	return exists, err

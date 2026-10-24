@@ -1,46 +1,28 @@
 package report
 
 import (
-	"context"
-
 	"github.com/emoss08/keel/analytics/ir"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*ReportDefinitionRevision)(nil)
-
 type ReportDefinitionRevision struct {
-	bun.BaseModel `bun:"table:report_definition_revisions,alias:rdr" json:"-"`
-	keel.Table    `                                                           keel:"report_definition_revisions"`
+	keel.Table `                                                           keel:"report_definition_revisions"`
 
-	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100)"                                                           keel:"id,pk,autoid:rdr_"`
-	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                     keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"                                      keel:"organization_id,pk,tenant"`
-	DefinitionID   pulid.ID       `json:"definitionId"   bun:"definition_id,type:VARCHAR(100),notnull"                                           keel:"definition_id"`
-	RevisionNumber int64          `json:"revisionNumber" bun:"revision_number,type:BIGINT,notnull"                                               keel:"revision_number"`
-	CatalogVersion string         `json:"catalogVersion" bun:"catalog_version,type:VARCHAR(80),notnull"                                          keel:"catalog_version"`
-	Definition     *ir.Definition `json:"definition"     bun:"definition,type:JSONB,notnull"                                                     keel:"definition,jsonb"`
-	CreatedByID    pulid.ID       `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),notnull"                                           keel:"created_by_id"`
-	CreatedAt      int64          `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:rdr_"`
+	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
+	DefinitionID   pulid.ID       `json:"definitionId" keel:"definition_id"`
+	RevisionNumber int64          `json:"revisionNumber" keel:"revision_number"`
+	CatalogVersion string         `json:"catalogVersion" keel:"catalog_version"`
+	Definition     *ir.Definition `json:"definition" keel:"definition,jsonb"`
+	CreatedByID    pulid.ID       `json:"createdById" keel:"created_by_id"`
+	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
 
-	ReportDefinition *ReportDefinition `json:"reportDefinition,omitempty" bun:"rel:belongs-to,join:definition_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:definition_id"`
-}
-
-func (rdr *ReportDefinitionRevision) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if rdr.ID.IsNil() {
-			rdr.ID = pulid.MustNew("rdr_")
-		}
-		rdr.CreatedAt = timeutils.NowUnix()
-	}
-
-	return nil
+	ReportDefinition *ReportDefinition `json:"reportDefinition,omitempty" keel:"belongs:definition_id"`
 }
 
 func (rdr *ReportDefinitionRevision) GetID() pulid.ID { return rdr.ID }

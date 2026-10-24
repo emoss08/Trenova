@@ -3,6 +3,7 @@ package aituneuprepository
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/pkg/listquery"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -32,14 +33,6 @@ type repository struct {
 
 func New(p Params) aituneupports.AITuneUpRepository {
 	return &repository{db: p.DB}
-}
-
-func optionalInt64(col keel.Int64Col, value *int64) keel.Assignment {
-	if value == nil {
-		return col.ToNull()
-	}
-
-	return col.To(*value)
 }
 
 func (r *repository) List(
@@ -125,9 +118,9 @@ func refresh(ctx context.Context, db *keel.DB, tuneUp *aituneup.TuneUp) error {
 		t.Task.To(tuneUp.Task),
 		t.Evidence.To(tuneUp.Evidence),
 		t.Status.To(tuneUp.Status),
-		optionalInt64(t.DismissedUntil, tuneUp.DismissedUntil),
+		listquery.OptionalInt64(t.DismissedUntil, tuneUp.DismissedUntil),
 		t.DecidedByID.To(tuneUp.DecidedByID),
-		optionalInt64(t.DecidedAt, tuneUp.DecidedAt),
+		listquery.OptionalInt64(t.DecidedAt, tuneUp.DecidedAt),
 		t.ComputedAt.To(tuneUp.ComputedAt),
 	)
 	if err != nil {
@@ -145,7 +138,7 @@ func (r *repository) Decide(
 		updated, err := t.Where(t.ID.Eq(req.ID), t.Version.Eq(req.Version)).
 			UpdateReturning(ctx, r.db.Keel(ctx),
 				t.Status.To(req.Status),
-				optionalInt64(t.DismissedUntil, req.DismissedUntil),
+				listquery.OptionalInt64(t.DismissedUntil, req.DismissedUntil),
 				t.DecidedByID.To(req.DecidedByID),
 				t.DecidedAt.To(req.DecidedAt),
 			)

@@ -4,6 +4,7 @@ package accountingsyncrepository
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/pkg/listquery"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -275,7 +276,7 @@ func (r *connectionRepository) StoreTokens(
 			r.db.Keel(ctx),
 			ac.AccessTokenExpiresAt.To(req.AccessTokenExpiresAt),
 			ac.RefreshTokenExpiresAt.To(req.RefreshTokenExpiresAt),
-			int64OrNull(ac.LastRefreshedAt, req.RefreshedAt),
+			listquery.OptionalInt64(ac.LastRefreshedAt, req.RefreshedAt),
 			ac.UpdatedAt.To(req.At),
 			stringOrNull(ac.AccessTokenCiphertext, req.AccessTokenCiphertext),
 			stringOrNull(ac.RefreshTokenCiphertext, req.RefreshTokenCiphertext),
@@ -444,11 +445,4 @@ func stringOrNull(col keel.StringCol, value string) keel.Assignment {
 		return col.ToNull()
 	}
 	return col.To(value)
-}
-
-func int64OrNull(col keel.Int64Col, value *int64) keel.Assignment {
-	if value == nil {
-		return col.ToNull()
-	}
-	return col.To(*value)
 }

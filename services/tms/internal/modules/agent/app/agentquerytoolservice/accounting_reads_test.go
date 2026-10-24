@@ -49,7 +49,7 @@ func accountingGet(t *testing.T, name string, reader agentports.GraphQLReader,
 }
 
 // nextPage is a real connection cursor, as the root hands one back.
-var nextPage, _ = pagination.EncodeCursor(pagination.Cursor{ID: pulid.MustNew("acct_")})
+var nextPage, _ = pagination.EncodeKeysetCursor(nil, pulid.MustNew("acct_").String())
 
 func connectionPage(root string, nodes ...map[string]any) map[string]any {
 	edges := make([]any, 0, len(nodes))

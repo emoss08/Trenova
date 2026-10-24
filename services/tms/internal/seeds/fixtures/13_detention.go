@@ -1141,7 +1141,6 @@ func (s *DetentionSeed) createDetentionBook(
 	refs *detentionRefs,
 	policies map[string]*detention.DetentionPolicy,
 ) error {
-
 	candidates := make([]*detention.DetentionPolicy, 0, len(policies))
 	for _, policy := range policies {
 		candidates = append(candidates, policy)

@@ -1,7 +1,6 @@
 package email
 
 import (
-	"context"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -11,40 +10,36 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Profile)(nil)
 	_ validationframework.TenantedEntity = (*Profile)(nil)
 	_ domaintypes.PostgresSearchable     = (*Profile)(nil)
 )
 
 type Profile struct {
-	bun.BaseModel `bun:"table:email_profiles,alias:ep" json:"-"`
-	keel.Table    `                                             keel:"email_profiles"`
+	keel.Table `                                             keel:"email_profiles"`
 
-	ID             pulid.ID      `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:emlprof_"`
-	BusinessUnitID pulid.ID      `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID      `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
-	Name           string        `json:"name"           bun:"name,type:VARCHAR(255),notnull"                                                       keel:"name"`
-	Description    string        `json:"description"    bun:"description,type:TEXT,nullzero"                                                       keel:"description,nullzero"`
-	SenderName     string        `json:"senderName"     bun:"from_name,type:VARCHAR(255),notnull"                                                  keel:"from_name,nullzero"`
-	SenderEmail    string        `json:"senderEmail"    bun:"from_address,type:VARCHAR(255),notnull"                                               keel:"from_address"`
-	ReplyToEmail   string        `json:"replyToEmail"   bun:"reply_to,type:VARCHAR(255),nullzero"                                                  keel:"reply_to,nullzero"`
-	Provider       Provider      `json:"provider"       bun:"provider_type,type:email_provider_type_enum,notnull"                                  keel:"provider_type"`
-	AuthType       AuthType      `json:"-"              bun:"auth_type,type:email_auth_type_enum,notnull"                                          keel:"auth_type"`
-	EncryptionType Encryption    `json:"-"              bun:"encryption_type,type:email_encryption_type_enum,notnull"                              keel:"encryption_type"`
-	Status         ProfileStatus `json:"status"         bun:"status,type:status_enum,notnull"                                                      keel:"status,nullzero"`
-	Version        int64         `json:"version"        bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
-	CreatedAt      int64         `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64         `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector   string        `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	ID             pulid.ID      `json:"id" keel:"id,pk,autoid:emlprof_"`
+	BusinessUnitID pulid.ID      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID      `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name           string        `json:"name" keel:"name"`
+	Description    string        `json:"description" keel:"description,nullzero"`
+	SenderName     string        `json:"senderName" keel:"from_name,nullzero"`
+	SenderEmail    string        `json:"senderEmail" keel:"from_address"`
+	ReplyToEmail   string        `json:"replyToEmail" keel:"reply_to,nullzero"`
+	Provider       Provider      `json:"provider" keel:"provider_type"`
+	AuthType       AuthType      `json:"-" keel:"auth_type"`
+	EncryptionType Encryption    `json:"-" keel:"encryption_type"`
+	Status         ProfileStatus `json:"status" keel:"status,nullzero"`
+	Version        int64         `json:"version" keel:"version,version"`
+	CreatedAt      int64         `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64         `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector   string        `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (p *Profile) Validate(multiErr *errortypes.MultiError) {
@@ -135,47 +130,18 @@ func (p *Profile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	}
 }
 
-func (p *Profile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("emlprof_")
-		}
-		p.CreatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-	return nil
-}
-
 type ProfileAssignment struct {
-	bun.BaseModel `bun:"table:email_profile_assignments,alias:epa" json:"-"`
-	keel.Table    `                                                         keel:"email_profile_assignments"`
+	keel.Table `                                                         keel:"email_profile_assignments"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:emlassn_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
-	Purpose        Purpose  `json:"purpose"        bun:"purpose,type:email_purpose_enum,notnull"                                              keel:"purpose"`
-	ProfileID      pulid.ID `json:"profileId"      bun:"profile_id,type:VARCHAR(100),notnull"                                                 keel:"profile_id"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:emlassn_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Purpose        Purpose  `json:"purpose" keel:"purpose"`
+	ProfileID      pulid.ID `json:"profileId" keel:"profile_id"`
+	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Profile *Profile `json:"profile,omitempty" bun:"rel:belongs-to,join:profile_id=id" keel:"belongs:profile_id"`
-}
-
-func (a *ProfileAssignment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("emlassn_")
-		}
-		a.CreatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
-	}
-	return nil
+	Profile *Profile `json:"profile,omitempty" keel:"belongs:profile_id"`
 }
 
 func (a *ProfileAssignment) Validate(multiErr *errortypes.MultiError) {

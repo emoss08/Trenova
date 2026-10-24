@@ -10,44 +10,54 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*TCASubscription)(nil)
 	_ validationframework.TenantedEntity = (*TCASubscription)(nil)
 	_ domaintypes.PostgresSearchable     = (*TCASubscription)(nil)
 )
 
 type TCASubscription struct {
-	bun.BaseModel `bun:"table:tca_subscriptions,alias:tcas" json:"-"`
-	keel.Table    `                                                  keel:"tca_subscriptions"`
+	keel.Table `                                                  keel:"tca_subscriptions"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)"                                                           keel:"id,pk,autoid:tcas_"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"                                      keel:"organization_id,pk,tenant"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                     keel:"business_unit_id,pk,tenant"`
-	UserID         pulid.ID           `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"                                                 keel:"user_id"`
-	Name           string             `json:"name"           bun:"name,type:VARCHAR(255),notnull"                                                    keel:"name"`
-	TableName      string             `json:"tableName"      bun:"table_name,type:VARCHAR(100),notnull"                                              keel:"table_name"`
-	RecordID       *string            `json:"recordId"       bun:"record_id,type:VARCHAR(100)"                                                       keel:"record_id"`
-	EventTypes     []string           `json:"eventTypes"     bun:"event_types,type:JSONB,notnull"                                                    keel:"event_types,jsonb"`
-	Conditions     []Condition        `json:"conditions"     bun:"conditions,type:JSONB,notnull,default:'[]'"                                        keel:"conditions,jsonb"`
-	ConditionMatch string             `json:"conditionMatch" bun:"condition_match,type:VARCHAR(10),notnull,default:'all'"                            keel:"condition_match"`
-	WatchedColumns []string           `json:"watchedColumns" bun:"watched_columns,type:JSONB,notnull,default:'[]'"                                   keel:"watched_columns,jsonb"`
-	CustomTitle    string             `json:"customTitle"    bun:"custom_title,type:VARCHAR(500),notnull,default:''"                                 keel:"custom_title"`
-	CustomMessage  string             `json:"customMessage"  bun:"custom_message,type:TEXT,notnull,default:''"                                       keel:"custom_message"`
-	Topic          string             `json:"topic"          bun:"topic,type:VARCHAR(100),notnull,default:''"                                        keel:"topic"`
-	Priority       string             `json:"priority"       bun:"priority,type:VARCHAR(20),notnull,default:'medium'"                                keel:"priority"`
-	Status         SubscriptionStatus `json:"status"         bun:"status,type:tca_subscription_status_enum,notnull,default:'Active'"                 keel:"status"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT"                                                               keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:tcas_"`
+	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	UserID         pulid.ID           `json:"userId" keel:"user_id"`
+	Name           string             `json:"name" keel:"name"`
+	TableName      string             `json:"tableName" keel:"table_name"`
+	RecordID       *string            `json:"recordId" keel:"record_id"`
+	EventTypes     []string           `json:"eventTypes" keel:"event_types,jsonb"`
+	Conditions     []Condition        `json:"conditions" keel:"conditions,jsonb"`
+	ConditionMatch string             `json:"conditionMatch" keel:"condition_match"`
+	WatchedColumns []string           `json:"watchedColumns" keel:"watched_columns,jsonb"`
+	CustomTitle    string             `json:"customTitle" keel:"custom_title"`
+	CustomMessage  string             `json:"customMessage" keel:"custom_message"`
+	Topic          string             `json:"topic" keel:"topic"`
+	Priority       string             `json:"priority" keel:"priority"`
+	Status         SubscriptionStatus `json:"status" keel:"status"`
+	Version        int64              `json:"version" keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id"          keel:"belongs:user_id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	User         *tenant.User         `json:"user,omitempty" keel:"belongs:user_id"`
+}
+
+func (s *TCASubscription) BeforeCreate(_ context.Context) error {
+	if s.ConditionMatch == "" {
+		s.ConditionMatch = "all"
+	}
+	if s.Priority == "" {
+		s.Priority = "medium"
+	}
+	if s.Status == "" {
+		s.Status = SubscriptionStatusActive
+	}
+
+	return nil
 }
 
 func (s *TCASubscription) Validate(multiErr *errortypes.MultiError) {
@@ -96,22 +106,6 @@ func (s *TCASubscription) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (s *TCASubscription) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("tcas_")
-		}
-		s.CreatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (s *TCASubscription) GetID() pulid.ID {
 	return s.ID
 }
@@ -141,18 +135,4 @@ func (s *TCASubscription) GetPostgresSearchConfig() domaintypes.PostgresSearchCo
 			{Name: "status", Type: domaintypes.FieldTypeEnum},
 		},
 	}
-}
-
-func (s *TCASubscription) BeforeCreate(context.Context) error {
-	if s.ConditionMatch == "" {
-		s.ConditionMatch = "all"
-	}
-	if s.Priority == "" {
-		s.Priority = "medium"
-	}
-	if s.Status == "" {
-		s.Status = SubscriptionStatusActive
-	}
-
-	return nil
 }

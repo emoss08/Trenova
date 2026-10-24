@@ -10,9 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 func HoldSeverityValues() []HoldSeverity {
@@ -24,40 +22,44 @@ func HoldSeverityValues() []HoldSeverity {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*HoldReason)(nil)
 	_ validationframework.TenantedEntity = (*HoldReason)(nil)
 	_ domaintypes.PostgresSearchable     = (*HoldReason)(nil)
 	_ pagination.CursorEntity            = (*HoldReason)(nil)
 )
 
 type HoldReason struct {
-	bun.BaseModel             `bun:"table:hold_reasons,alias:hr" json:"-"`
-	keel.Table                `                                           keel:"hold_reasons"`
-	pagination.CursorValueSet `bun:",embed"                      json:"-"`
-
-	ID                       pulid.ID       `json:"id"                       bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:hr_"`
-	BusinessUnitID           pulid.ID       `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,tenant"`
-	OrganizationID           pulid.ID       `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
-	Type                     HoldType       `json:"type"                     bun:"type,type:hold_type_enum,notnull"                                                     keel:"type"`
-	Code                     string         `json:"code"                     bun:"code,type:VARCHAR(64),notnull"                                                        keel:"code"`
-	Label                    string         `json:"label"                    bun:"label,type:VARCHAR(100),notnull"                                                      keel:"label"`
-	Description              string         `json:"description"              bun:"description,type:TEXT,nullzero"                                                       keel:"description,nullzero"`
-	Active                   bool           `json:"active"                   bun:"active,type:BOOLEAN,notnull"                                                          keel:"active"`
-	DefaultSeverity          HoldSeverity   `json:"defaultSeverity"          bun:"default_severity,type:hold_severity_enum,notnull"                                     keel:"default_severity"`
-	DefaultBlocksDispatch    bool           `json:"defaultBlocksDispatch"    bun:"default_blocks_dispatch,type:BOOLEAN,notnull"                                         keel:"default_blocks_dispatch"`
-	DefaultBlocksDelivery    bool           `json:"defaultBlocksDelivery"    bun:"default_blocks_delivery,type:BOOLEAN,notnull"                                         keel:"default_blocks_delivery"`
-	DefaultBlocksBilling     bool           `json:"defaultBlocksBilling"     bun:"default_blocks_billing,type:BOOLEAN,notnull"                                          keel:"default_blocks_billing"`
-	DefaultVisibleToCustomer bool           `json:"defaultVisibleToCustomer" bun:"default_visible_to_customer,type:BOOLEAN,notnull"                                     keel:"default_visible_to_customer"`
-	SortOrder                int32          `json:"sortOrder"                bun:"sort_order,type:INTEGER,notnull,default:100"                                          keel:"sort_order"`
-	ExternalMap              map[string]any `json:"externalMap"              bun:"external_map,type:JSONB,nullzero"                                                     keel:"external_map,jsonb,nullzero"`
-	Version                  int64          `json:"version"                  bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt                int64          `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt                int64          `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector             string         `json:"-"                        bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	keel.Table               `                                           keel:"hold_reasons"`
+	ID                       pulid.ID       `json:"id" keel:"id,pk,autoid:hr_"`
+	BusinessUnitID           pulid.ID       `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	OrganizationID           pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Type                     HoldType       `json:"type" keel:"type"`
+	Code                     string         `json:"code" keel:"code"`
+	Label                    string         `json:"label" keel:"label"`
+	Description              string         `json:"description" keel:"description,nullzero"`
+	Active                   bool           `json:"active" keel:"active"`
+	DefaultSeverity          HoldSeverity   `json:"defaultSeverity" keel:"default_severity"`
+	DefaultBlocksDispatch    bool           `json:"defaultBlocksDispatch" keel:"default_blocks_dispatch"`
+	DefaultBlocksDelivery    bool           `json:"defaultBlocksDelivery" keel:"default_blocks_delivery"`
+	DefaultBlocksBilling     bool           `json:"defaultBlocksBilling" keel:"default_blocks_billing"`
+	DefaultVisibleToCustomer bool           `json:"defaultVisibleToCustomer" keel:"default_visible_to_customer"`
+	SortOrder                int32          `json:"sortOrder" keel:"sort_order"`
+	ExternalMap              map[string]any `json:"externalMap" keel:"external_map,jsonb,nullzero"`
+	Version                  int64          `json:"version" keel:"version,version"`
+	CreatedAt                int64          `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt                int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector             string         `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
 
 	// Relationships
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+}
+
+func (hr *HoldReason) BeforeCreate(_ context.Context) error {
+	if hr.SortOrder == 0 {
+		hr.SortOrder = 100
+	}
+
+	return nil
 }
 
 func (hr *HoldReason) Validate(multiErr *errortypes.MultiError) {
@@ -120,20 +122,4 @@ func (hr *HoldReason) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 			},
 		},
 	}
-}
-
-func (hr *HoldReason) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if hr.ID.IsNil() {
-			hr.ID = pulid.MustNew("hr_")
-		}
-		hr.CreatedAt = now
-	case *bun.UpdateQuery:
-		hr.UpdatedAt = now
-	}
-
-	return nil
 }

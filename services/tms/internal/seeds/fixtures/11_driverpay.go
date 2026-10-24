@@ -988,7 +988,6 @@ func (s *DriverPaySeed) ensurePayAdvances(
 	refs *payRefs,
 	workers map[string]*worker.Worker,
 ) error {
-
 	now := timeutils.NowUnix()
 	day := int64(86400)
 
@@ -1514,7 +1513,6 @@ func (s *DriverPaySeed) createSettlementData(
 	deductions map[string]*driverpay.RecurringDeduction,
 	moves []paidMove,
 ) error {
-
 	bounds, err := s.resolvePeriod(ctx, db, refs)
 	if err != nil {
 		return err

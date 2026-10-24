@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestDocument_GetTableName(t *testing.T) {
@@ -38,72 +37,6 @@ func TestDocument_GetBusinessUnitID(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	d := &Document{BusinessUnitID: buID}
 	assert.Equal(t, buID, d.GetBusinessUnitID())
-}
-
-func TestDocument_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID CreatedAt and UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		d := &Document{}
-		require.True(t, d.ID.IsNil())
-
-		err := d.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, d.ID.IsNil())
-		assert.NotZero(t, d.CreatedAt)
-		assert.NotZero(t, d.UpdatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("doc_")
-		d := &Document{ID: existingID}
-
-		err := d.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, d.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		d := &Document{}
-
-		err := d.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, d.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		d := &Document{}
-
-		err := d.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, d.CreatedAt)
-		assert.NotZero(t, d.UpdatedAt)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		d := &Document{}
-
-		err := d.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, d.ID.IsNil())
-		assert.Zero(t, d.CreatedAt)
-		assert.Zero(t, d.UpdatedAt)
-	})
 }
 
 func TestStatus_IsValid(t *testing.T) {

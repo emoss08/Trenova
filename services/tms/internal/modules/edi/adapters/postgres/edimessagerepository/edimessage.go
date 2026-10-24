@@ -386,7 +386,7 @@ func updateOne(
 	sets []keel.Assignment,
 ) (*edi.EDIMessage, error) {
 	m := edidb.EDIMessages
-	rows, err := listquery.UpdateReturning(ctx, db, m.Where(m.ID.Eq(id)), sets...)
+	rows, err := m.Where(m.ID.Eq(id)).UpdateReturning(ctx, db, sets...)
 	if err != nil {
 		return nil, messageErrors.Map(err, id.String())
 	}

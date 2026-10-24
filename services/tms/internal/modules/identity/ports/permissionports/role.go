@@ -19,12 +19,12 @@ type ImpactedUser struct {
 // PermittedUser is an active user who holds an operation on a resource in an
 // organization, through any role they are assigned or that role's parents.
 type PermittedUser struct {
-	UserID        pulid.ID `bun:"user_id"`
-	Name          string   `bun:"name"`
-	Username      string   `bun:"username"`
-	EmailAddress  string   `bun:"email_address"`
-	ProfilePicURL string   `bun:"profile_pic_url"`
-	Locale        string   `bun:"locale"`
+	UserID        pulid.ID
+	Name          string
+	Username      string
+	EmailAddress  string
+	ProfilePicURL string
+	Locale        string
 }
 
 type ListUsersWithPermissionRequest struct {
@@ -74,9 +74,9 @@ type DeleteRoleRequest struct {
 }
 
 type OrphanedAssignment struct {
-	UserID         pulid.ID `bun:"user_id"`
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	UserID         pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 type RoleRepository interface {

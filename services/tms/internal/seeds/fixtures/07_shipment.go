@@ -82,7 +82,6 @@ func (s *ShipmentSeed) createCustomers(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	ilState, err := stateByAbbreviation(ctx, db, "IL")
 	if err != nil {
 		return fmt.Errorf("get IL state: %w", err)
@@ -244,7 +243,6 @@ func (s *ShipmentSeed) createCommodities(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	commodities := []commodity.Commodity{
 		{
 			ID:             pulid.MustNew("com_"),
@@ -330,7 +328,6 @@ func (s *ShipmentSeed) createShipments(
 	sr *seed.Run,
 	orgID, buID pulid.ID,
 ) error {
-
 	locs, err := s.getLocations(ctx, db, orgID, buID)
 	if err != nil {
 		return err

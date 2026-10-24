@@ -9,9 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -130,36 +128,34 @@ func (s PayrollExportStatus) IsValid() bool {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*TimeClockEntry)(nil)
 	_ validationframework.TenantedEntity = (*TimeClockEntry)(nil)
 )
 
 // TimeClockEntry is one period of work.
 type TimeClockEntry struct {
-	bun.BaseModel `bun:"table:time_clock_entries,alias:tce" json:"-"`
-	keel.Table    `                                                  keel:"time_clock_entries"`
+	keel.Table `                                                  keel:"time_clock_entries"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:tce_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"           keel:"worker_id"`
-	TimesheetID    pulid.ID `json:"timesheetId"    bun:"timesheet_id,type:VARCHAR(100),nullzero"       keel:"timesheet_id,nullzero"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tce_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	TimesheetID    pulid.ID `json:"timesheetId" keel:"timesheet_id,nullzero"`
 
-	Source TimeEntrySource `json:"source"       bun:"source,type:time_entry_source_enum,notnull,default:'Clock'" keel:"source"`
+	Source TimeEntrySource `json:"source" keel:"source"`
 	// ClockedOutAt of nil means the worker is still on the clock.
-	ClockedInAt  int64    `json:"clockedInAt"  bun:"clocked_in_at,type:BIGINT,notnull"                          keel:"clocked_in_at"`
-	ClockedOutAt *int64   `json:"clockedOutAt" bun:"clocked_out_at,type:BIGINT,nullzero"                        keel:"clocked_out_at"`
-	BreakMinutes int32    `json:"breakMinutes" bun:"break_minutes,type:INTEGER,notnull"                         keel:"break_minutes"`
-	PayCodeID    pulid.ID `json:"payCodeId"    bun:"pay_code_id,type:VARCHAR(100),nullzero"                     keel:"pay_code_id,nullzero"`
-	Note         string   `json:"note"         bun:"note,type:VARCHAR(500),nullzero"                            keel:"note,nullzero"`
-	EditedByID   pulid.ID `json:"editedById"   bun:"edited_by_id,type:VARCHAR(100),nullzero"                    keel:"edited_by_id,nullzero"`
-	EditReason   string   `json:"editReason"   bun:"edit_reason,type:VARCHAR(500),nullzero"                     keel:"edit_reason,nullzero"`
+	ClockedInAt  int64    `json:"clockedInAt" keel:"clocked_in_at"`
+	ClockedOutAt *int64   `json:"clockedOutAt" keel:"clocked_out_at"`
+	BreakMinutes int32    `json:"breakMinutes" keel:"break_minutes"`
+	PayCodeID    pulid.ID `json:"payCodeId" keel:"pay_code_id,nullzero"`
+	Note         string   `json:"note" keel:"note,nullzero"`
+	EditedByID   pulid.ID `json:"editedById" keel:"edited_by_id,nullzero"`
+	EditReason   string   `json:"editReason" keel:"edit_reason,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker *Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Worker *Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
 }
 
 // IsOpen reports whether the worker is still on the clock.
@@ -251,26 +247,6 @@ func (e *TimeClockEntry) GetResourceType() string { return "time_clock_entry" }
 
 func (e *TimeClockEntry) GetResourceID() string { return e.ID.String() }
 
-func (e *TimeClockEntry) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("tce_")
-		}
-		if e.Source == "" {
-			e.Source = TimeEntrySourceClock
-		}
-		e.CreatedAt = now
-		e.UpdatedAt = now
-	case *bun.UpdateQuery:
-		e.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (e *TimeClockEntry) BeforeCreate(_ context.Context) error {
 	if e.Source == "" {
 		e.Source = TimeEntrySourceClock
@@ -280,7 +256,6 @@ func (e *TimeClockEntry) BeforeCreate(_ context.Context) error {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Timesheet)(nil)
 	_ validationframework.TenantedEntity = (*Timesheet)(nil)
 )
 
@@ -291,40 +266,39 @@ var (
 // the decision — what a manager approved and what payroll paid from — and
 // recomputing it later would change a signed-off wage record.
 type Timesheet struct {
-	bun.BaseModel `bun:"table:timesheets,alias:tsh" json:"-"`
-	keel.Table    `                                          keel:"timesheets"`
+	keel.Table `                                          keel:"timesheets"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:tsh_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"           keel:"worker_id"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tsh_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
 
-	Status      TimesheetStatus `json:"status"      bun:"status,type:timesheet_status_enum,notnull,default:'Open'" keel:"status"`
-	PeriodStart int64           `json:"periodStart" bun:"period_start,type:BIGINT,notnull"                         keel:"period_start"`
-	PeriodEnd   int64           `json:"periodEnd"   bun:"period_end,type:BIGINT,notnull"                           keel:"period_end"`
+	Status      TimesheetStatus `json:"status" keel:"status"`
+	PeriodStart int64           `json:"periodStart" keel:"period_start"`
+	PeriodEnd   int64           `json:"periodEnd" keel:"period_end"`
 
-	RegularMinutes   int32 `json:"regularMinutes"           bun:"regular_minutes,type:INTEGER,notnull"                         keel:"regular_minutes"`
-	OvertimeMinutes  int32 `json:"overtimeMinutes"          bun:"overtime_minutes,type:INTEGER,notnull"                        keel:"overtime_minutes"`
-	PaidLeaveMinutes int32 `json:"paidLeaveMinutes"         bun:"paid_leave_minutes,type:INTEGER,notnull"                      keel:"paid_leave_minutes"`
-	EntryCount       int32 `json:"entryCount"               bun:"entry_count,type:INTEGER,notnull"                             keel:"entry_count"`
+	RegularMinutes   int32 `json:"regularMinutes" keel:"regular_minutes"`
+	OvertimeMinutes  int32 `json:"overtimeMinutes" keel:"overtime_minutes"`
+	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" keel:"paid_leave_minutes"`
+	EntryCount       int32 `json:"entryCount" keel:"entry_count"`
 	// OvertimeThresholdMinutes is copied onto the sheet rather than read from a
 	// setting, so changing the rule next quarter cannot restate a week that was
 	// already approved.
-	OvertimeThresholdMinutes int32 `json:"overtimeThresholdMinutes" bun:"overtime_threshold_minutes,type:INTEGER,notnull,default:2400" keel:"overtime_threshold_minutes"`
+	OvertimeThresholdMinutes int32 `json:"overtimeThresholdMinutes" keel:"overtime_threshold_minutes"`
 
-	SubmittedAt     *int64   `json:"submittedAt"     bun:"submitted_at,type:BIGINT,nullzero"            keel:"submitted_at"`
-	SubmittedByID   pulid.ID `json:"submittedById"   bun:"submitted_by_id,type:VARCHAR(100),nullzero"   keel:"submitted_by_id,nullzero"`
-	ApprovedAt      *int64   `json:"approvedAt"      bun:"approved_at,type:BIGINT,nullzero"             keel:"approved_at"`
-	ApprovedByID    pulid.ID `json:"approvedById"    bun:"approved_by_id,type:VARCHAR(100),nullzero"    keel:"approved_by_id,nullzero"`
-	DecisionNote    string   `json:"decisionNote"    bun:"decision_note,type:VARCHAR(500),nullzero"     keel:"decision_note,nullzero"`
-	PayrollExportID pulid.ID `json:"payrollExportId" bun:"payroll_export_id,type:VARCHAR(100),nullzero" keel:"payroll_export_id,nullzero"`
+	SubmittedAt     *int64   `json:"submittedAt" keel:"submitted_at"`
+	SubmittedByID   pulid.ID `json:"submittedById" keel:"submitted_by_id,nullzero"`
+	ApprovedAt      *int64   `json:"approvedAt" keel:"approved_at"`
+	ApprovedByID    pulid.ID `json:"approvedById" keel:"approved_by_id,nullzero"`
+	DecisionNote    string   `json:"decisionNote" keel:"decision_note,nullzero"`
+	PayrollExportID pulid.ID `json:"payrollExportId" keel:"payroll_export_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker  *Worker           `json:"worker,omitempty"  bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
-	Entries []*TimeClockEntry `json:"entries,omitempty" bun:"-"`
+	Worker  *Worker           `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Entries []*TimeClockEntry `json:"entries,omitempty"`
 }
 
 // TotalMinutes is everything the week is worth.
@@ -416,29 +390,6 @@ func (t *Timesheet) GetResourceType() string { return "timesheet" }
 
 func (t *Timesheet) GetResourceID() string { return t.ID.String() }
 
-func (t *Timesheet) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("tsh_")
-		}
-		if t.Status == "" {
-			t.Status = TimesheetOpen
-		}
-		if t.OvertimeThresholdMinutes <= 0 {
-			t.OvertimeThresholdMinutes = defaultOvertimeThreshold
-		}
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (t *Timesheet) BeforeCreate(_ context.Context) error {
 	if t.Status == "" {
 		t.Status = TimesheetOpen
@@ -446,12 +397,14 @@ func (t *Timesheet) BeforeCreate(_ context.Context) error {
 	if t.OvertimeThresholdMinutes <= 0 {
 		t.OvertimeThresholdMinutes = defaultOvertimeThreshold
 	}
+	if t.OvertimeThresholdMinutes == 0 {
+		t.OvertimeThresholdMinutes = 2400
+	}
 
 	return nil
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*PayrollExport)(nil)
 	_ validationframework.TenantedEntity = (*PayrollExport)(nil)
 )
 
@@ -459,31 +412,30 @@ var (
 // carries the export it went out on, so a period cannot be sent twice without
 // somebody voiding the first run.
 type PayrollExport struct {
-	bun.BaseModel `bun:"table:payroll_exports,alias:pxb" json:"-"`
-	keel.Table    `                                               keel:"payroll_exports"`
+	keel.Table `                                               keel:"payroll_exports"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:pxb_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:pxb_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Status      PayrollExportStatus `json:"status"      bun:"status,type:payroll_export_status_enum,notnull,default:'Draft'" keel:"status"`
-	PeriodStart int64               `json:"periodStart" bun:"period_start,type:BIGINT,notnull"                               keel:"period_start"`
-	PeriodEnd   int64               `json:"periodEnd"   bun:"period_end,type:BIGINT,notnull"                                 keel:"period_end"`
+	Status      PayrollExportStatus `json:"status" keel:"status"`
+	PeriodStart int64               `json:"periodStart" keel:"period_start"`
+	PeriodEnd   int64               `json:"periodEnd" keel:"period_end"`
 
-	TimesheetCount   int32 `json:"timesheetCount"   bun:"timesheet_count,type:INTEGER,notnull"    keel:"timesheet_count"`
-	RegularMinutes   int32 `json:"regularMinutes"   bun:"regular_minutes,type:INTEGER,notnull"    keel:"regular_minutes"`
-	OvertimeMinutes  int32 `json:"overtimeMinutes"  bun:"overtime_minutes,type:INTEGER,notnull"   keel:"overtime_minutes"`
-	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" bun:"paid_leave_minutes,type:INTEGER,notnull" keel:"paid_leave_minutes"`
+	TimesheetCount   int32 `json:"timesheetCount" keel:"timesheet_count"`
+	RegularMinutes   int32 `json:"regularMinutes" keel:"regular_minutes"`
+	OvertimeMinutes  int32 `json:"overtimeMinutes" keel:"overtime_minutes"`
+	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" keel:"paid_leave_minutes"`
 
-	GeneratedAt   *int64   `json:"generatedAt"   bun:"generated_at,type:BIGINT,nullzero"          keel:"generated_at"`
-	GeneratedByID pulid.ID `json:"generatedById" bun:"generated_by_id,type:VARCHAR(100),nullzero" keel:"generated_by_id,nullzero"`
-	VoidedAt      *int64   `json:"voidedAt"      bun:"voided_at,type:BIGINT,nullzero"             keel:"voided_at"`
-	VoidReason    string   `json:"voidReason"    bun:"void_reason,type:VARCHAR(500),nullzero"     keel:"void_reason,nullzero"`
-	Note          string   `json:"note"          bun:"note,type:VARCHAR(500),nullzero"            keel:"note,nullzero"`
+	GeneratedAt   *int64   `json:"generatedAt" keel:"generated_at"`
+	GeneratedByID pulid.ID `json:"generatedById" keel:"generated_by_id,nullzero"`
+	VoidedAt      *int64   `json:"voidedAt" keel:"voided_at"`
+	VoidReason    string   `json:"voidReason" keel:"void_reason,nullzero"`
+	Note          string   `json:"note" keel:"note,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (p *PayrollExport) Validate(multiErr *errortypes.MultiError) {
@@ -521,26 +473,6 @@ func (p *PayrollExport) GetTableName() string { return "payroll_exports" }
 func (p *PayrollExport) GetResourceType() string { return "payroll_export" }
 
 func (p *PayrollExport) GetResourceID() string { return p.ID.String() }
-
-func (p *PayrollExport) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("pxb_")
-		}
-		if p.Status == "" {
-			p.Status = PayrollExportDraft
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-
-	return nil
-}
 
 func (p *PayrollExport) BeforeCreate(_ context.Context) error {
 	if p.Status == "" {

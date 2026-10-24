@@ -5,8 +5,6 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -29,30 +27,29 @@ const (
 // know, and must not be able to choose, which organization it will belong to:
 // that is decided by who approves it and where they are signed in.
 type CapturePairing struct {
-	bun.BaseModel `bun:"table:capture_pairings,alias:cpair" json:"-"`
-	keel.Table    `keel:"capture_pairings"`
+	keel.Table `keel:"capture_pairings"`
 
-	ID             pulid.ID      `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:cpair_"`
-	DeviceCodeHash string        `json:"-"              bun:"device_code_hash,type:VARCHAR(128),notnull" keel:"device_code_hash"`
-	UserCode       string        `json:"userCode"       bun:"user_code,type:VARCHAR(16),notnull" keel:"user_code"`
-	Status         PairingStatus `json:"status"         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	MachineName    string        `json:"machineName"    bun:"machine_name,type:VARCHAR(255),notnull" keel:"machine_name"`
-	WindowsUser    string        `json:"windowsUser"    bun:"windows_user,type:VARCHAR(255),nullzero" keel:"windows_user,nullzero"`
-	AgentVersion   string        `json:"agentVersion"   bun:"agent_version,type:VARCHAR(50),notnull" keel:"agent_version"`
-	Architecture   Architecture  `json:"architecture"   bun:"architecture,type:VARCHAR(10),notnull" keel:"architecture"`
-	OSVersion      string        `json:"osVersion"      bun:"os_version,type:VARCHAR(100),nullzero" keel:"os_version,nullzero"`
-	ClientIP       string        `json:"clientIp"       bun:"client_ip,type:VARCHAR(64),nullzero" keel:"client_ip,nullzero"`
-	OrganizationID *pulid.ID     `json:"organizationId" bun:"organization_id,type:VARCHAR(100),nullzero" keel:"organization_id"`
-	BusinessUnitID *pulid.ID     `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),nullzero" keel:"business_unit_id"`
-	ApprovedByID   *pulid.ID     `json:"approvedById"   bun:"approved_by_id,type:VARCHAR(100),nullzero" keel:"approved_by_id"`
-	DeviceName     string        `json:"deviceName"     bun:"device_name,type:VARCHAR(100),nullzero" keel:"device_name,nullzero"`
-	DeviceID       *pulid.ID     `json:"deviceId"       bun:"device_id,type:VARCHAR(100),nullzero" keel:"device_id"`
-	LastPolledAt   *int64        `json:"-"              bun:"last_polled_at,type:BIGINT,nullzero" keel:"last_polled_at"`
-	ExpiresAt      int64         `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull" keel:"expires_at"`
-	DecidedAt      *int64        `json:"decidedAt"      bun:"decided_at,type:BIGINT,nullzero" keel:"decided_at"`
-	Version        int64         `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt      int64         `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64         `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID      `json:"id" keel:"id,pk,autoid:cpair_"`
+	DeviceCodeHash string        `json:"-" keel:"device_code_hash"`
+	UserCode       string        `json:"userCode" keel:"user_code"`
+	Status         PairingStatus `json:"status" keel:"status"`
+	MachineName    string        `json:"machineName" keel:"machine_name"`
+	WindowsUser    string        `json:"windowsUser" keel:"windows_user,nullzero"`
+	AgentVersion   string        `json:"agentVersion" keel:"agent_version"`
+	Architecture   Architecture  `json:"architecture" keel:"architecture"`
+	OSVersion      string        `json:"osVersion" keel:"os_version,nullzero"`
+	ClientIP       string        `json:"clientIp" keel:"client_ip,nullzero"`
+	OrganizationID *pulid.ID     `json:"organizationId" keel:"organization_id"`
+	BusinessUnitID *pulid.ID     `json:"businessUnitId" keel:"business_unit_id"`
+	ApprovedByID   *pulid.ID     `json:"approvedById" keel:"approved_by_id"`
+	DeviceName     string        `json:"deviceName" keel:"device_name,nullzero"`
+	DeviceID       *pulid.ID     `json:"deviceId" keel:"device_id"`
+	LastPolledAt   *int64        `json:"-" keel:"last_polled_at"`
+	ExpiresAt      int64         `json:"expiresAt" keel:"expires_at"`
+	DecidedAt      *int64        `json:"decidedAt" keel:"decided_at"`
+	Version        int64         `json:"version" keel:"version,version"`
+	CreatedAt      int64         `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64         `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 // IsExpired reports whether the code can no longer be approved or exchanged.
@@ -67,30 +64,14 @@ func (p *CapturePairing) PolledTooSoon(now int64) bool {
 	return p.LastPolledAt != nil && now-*p.LastPolledAt < PairingPollIntervalSeconds
 }
 
-func (p *CapturePairing) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("cpair_")
-		}
-		if p.Status == "" {
-			p.Status = PairingPending
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (p *CapturePairing) GetID() pulid.ID      { return p.ID }
 func (p *CapturePairing) GetCreatedAt() int64  { return p.CreatedAt }
 func (p *CapturePairing) GetTableName() string { return "capture_pairings" }
 
 func (p *CapturePairing) BeforeCreate(ctx context.Context) error {
-	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	if p.Status == "" {
+		p.Status = PairingPending
+	}
+
+	return nil
 }

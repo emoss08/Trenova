@@ -7,36 +7,38 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 // Service level classification
 type ServiceType struct {
-	bun.BaseModel `bun:"table:service_types,alias:st" json:"-"`
-	keel.Table    `                                            keel:"service_types,report=Configuration"`
+	keel.Table `                                            keel:"service_types,report=Configuration"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:st_"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Status         domaintypes.Status `json:"status" keel:"status"`
+	Code           string             `json:"code" keel:"code"`
+	Description    string             `json:"description" keel:"description,nullzero"`
+	Color          string             `json:"color" keel:"color,nullzero"`
+	Version        int64              `json:"version" keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector   string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string             `json:"-" keel:"rank,computed"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"                                          keel:"id,pk,autoid:st_"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                            keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"                             keel:"organization_id,pk,tenant"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"                         keel:"status"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(10),notnull"                                            keel:"code"`
-	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"                                           keel:"description,nullzero"`
-	Color          string             `json:"color"          bun:"color,type:VARCHAR(10)"                                                   keel:"color,nullzero"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT"                                                      keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"                                     keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"                                          keel:"rank,computed"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+}
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+func (st *ServiceType) BeforeCreate(_ context.Context) error {
+	if st.Status == "" {
+		st.Status = domaintypes.StatusActive
+	}
+
+	return nil
 }
 
 func (st *ServiceType) Validate(multiErr *errortypes.MultiError) {
@@ -83,21 +85,4 @@ func (st *ServiceType) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 			},
 		},
 	}
-}
-
-func (st *ServiceType) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if st.ID.IsNil() {
-			st.ID = pulid.MustNew("st_")
-		}
-
-		st.CreatedAt = now
-	case *bun.UpdateQuery:
-		st.UpdatedAt = now
-	}
-
-	return nil
 }

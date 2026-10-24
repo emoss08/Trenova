@@ -384,11 +384,6 @@ tasks:
     cmds:
       - go tool keel gen -check {{.KEEL_GEN_ARGS}}
 
-  generate-columns:
-    desc: Generate Bun column constants from domain entities
-    cmds:
-      - go generate ./internal/infrastructure/database/colgen/...
-
   generate-write-coverage:
     desc: Regenerate docs/engineering/agent-write-coverage.md from writecoverage.yml, the schema, the routes and the agent tools
     cmds:

@@ -8,12 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*ShadowSettings)(nil)
 
 const (
 	DefaultSamplePercent = 10
@@ -25,25 +21,24 @@ const (
 )
 
 type ShadowSettings struct {
-	bun.BaseModel `bun:"table:extraction_shadow_settings,alias:exss" json:"-"`
-	keel.Table    `keel:"extraction_shadow_settings"`
+	keel.Table `keel:"extraction_shadow_settings"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:exss_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:exss_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Enabled       bool      `json:"enabled"       bun:"enabled,type:BOOLEAN,notnull,default:false" keel:"enabled"`
-	ProviderID    *pulid.ID `json:"providerId"    bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id"`
-	SamplePercent int       `json:"samplePercent" bun:"sample_percent,type:INTEGER,notnull,default:10" keel:"sample_percent"`
-	DailyLimit    int       `json:"dailyLimit"    bun:"daily_limit,type:INTEGER,notnull,default:200" keel:"daily_limit"`
+	Enabled       bool      `json:"enabled" keel:"enabled"`
+	ProviderID    *pulid.ID `json:"providerId" keel:"provider_id"`
+	SamplePercent int       `json:"samplePercent" keel:"sample_percent"`
+	DailyLimit    int       `json:"dailyLimit" keel:"daily_limit"`
 
-	UpdatedByID *pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero" keel:"updated_by_id"`
-	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
-	CreatedAt   int64     `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt   int64     `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	UpdatedByID *pulid.ID `json:"updatedById" keel:"updated_by_id"`
+	Version     int64     `json:"version" keel:"version,version"`
+	CreatedAt   int64     `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt   int64     `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func DefaultSettings(orgID, buID pulid.ID) *ShadowSettings {
@@ -102,26 +97,13 @@ func (s *ShadowSettings) GetOrganizationID() pulid.ID { return s.OrganizationID 
 
 func (s *ShadowSettings) GetBusinessUnitID() pulid.ID { return s.BusinessUnitID }
 
-func (s *ShadowSettings) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("exss_")
-		}
-		if s.CreatedAt == 0 {
-			s.CreatedAt = now
-		}
-		s.UpdatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (s *ShadowSettings) BeforeCreate(_ context.Context) error {
+	if s.SamplePercent == 0 {
+		s.SamplePercent = 10
+	}
+	if s.DailyLimit == 0 {
+		s.DailyLimit = 200
+	}
 	if s.SamplePercent == 0 {
 		s.SamplePercent = DefaultSamplePercent
 	}

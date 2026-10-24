@@ -211,7 +211,6 @@ func (l *seedLane) pickupDay(loc *time.Location) string {
 }
 
 func ensureExceptionHoldReason(ctx context.Context, db *keel.DB, org *tenant.Organization) error {
-
 	reason := &holdreason.HoldReason{
 		OrganizationID: org.ID,
 		BusinessUnitID: org.BusinessUnitID,

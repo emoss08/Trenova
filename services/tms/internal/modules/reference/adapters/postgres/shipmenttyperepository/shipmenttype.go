@@ -177,12 +177,7 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*shipmenttype.ShipmentType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipmenttype.ShipmentType, error) {
 		st := shipmenttypedb.ShipmentTypes
-		entities, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			st.Where(st.ID.In(req.ShipmentTypeIDs...)),
-			st.Status.To(req.Status),
-		)
+		entities, err := st.Where(st.ID.In(req.ShipmentTypeIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), st.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update shipment type status", zap.Error(err))
 			return nil, err

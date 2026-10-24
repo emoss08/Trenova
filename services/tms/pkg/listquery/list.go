@@ -54,7 +54,7 @@ func Connection[T any](
 	var page keel.Page[T]
 	var total int64
 	items := []keel.BatchItem{
-		keel.PageInto(rows, keel.After(after.Keyset, limit+after.Skip), &page),
+		keel.PageInto(rows, keel.After(after, limit), &page),
 	}
 	if req.Cursor.IncludeTotalCount {
 		items = append(items, keel.CountInto(counted, &total))
@@ -63,7 +63,7 @@ func Connection[T any](
 		return nil, err
 	}
 
-	return connectionResult(&page, &after, shape, totalOf(req.Cursor.IncludeTotalCount, total))
+	return connectionResult(&page, shape, totalOf(req.Cursor.IncludeTotalCount, total))
 }
 
 func connectionOrder[T any](
@@ -171,41 +171,30 @@ func shapeRows[T any](q *keel.Query[T], req *Request[T]) (*keel.Query[T], error)
 func keysetAfter(
 	cursor *pagination.CursorInfo,
 	shape []pagination.CursorSortField,
-) (pagination.Cursor, error) {
+) (string, error) {
 	if cursor.After == "" {
-		return pagination.Cursor{}, nil
+		return "", nil
 	}
 
-	if !cursor.Cursor.IsKeyset() || !cursor.Cursor.MatchesSort(shape) {
-		return pagination.Cursor{}, errortypes.NewValidationError(
+	if !cursor.Cursor.MatchesSort(shape) {
+		return "", errortypes.NewValidationError(
 			"after",
 			errortypes.ErrInvalid,
 			"Cursor sort does not match request sort",
 		)
 	}
 
-	return cursor.Cursor, nil
+	return cursor.Cursor.Keyset, nil
 }
 
 func connectionResult[T any](
 	page *keel.Page[T],
-	after *pagination.Cursor,
 	shape []pagination.CursorSortField,
 	total *int,
 ) (*pagination.CursorListResult[*T], error) {
-	items := page.Items
-	if after.Skip > 0 {
-		items = items[min(after.Skip, len(items)):]
-	}
-
-	cursors := make([]string, len(items))
-	for i := range items {
-		keyset, skip := after.Keyset, after.Skip+i+1
-		if i == len(items)-1 && page.Next != "" {
-			keyset, skip = page.Next, 0
-		}
-
-		cursor, err := pagination.EncodeKeysetCursor(shape, keyset, skip)
+	cursors := make([]string, len(page.Items))
+	for i := range page.Items {
+		cursor, err := pagination.EncodeKeysetCursor(shape, page.CursorAt(i))
 		if err != nil {
 			return nil, err
 		}
@@ -213,10 +202,9 @@ func connectionResult[T any](
 	}
 
 	return &pagination.CursorListResult[*T]{
-		Items:       items,
+		Items:       page.Items,
 		HasNextPage: page.Next != "",
 		TotalCount:  total,
-		CursorSort:  shape,
 		EdgeCursors: cursors,
 	}, nil
 }

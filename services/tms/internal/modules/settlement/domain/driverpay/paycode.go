@@ -11,13 +11,10 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*PayCode)(nil)
 	_ pagination.CursorEntity            = (*PayCode)(nil)
 	_ validationframework.TenantedEntity = (*PayCode)(nil)
 
@@ -44,27 +41,26 @@ func (d PayCodeDirection) IsValid() bool {
 
 // Earning and deduction codes and the GL accounts they post to
 type PayCode struct {
-	bun.BaseModel `bun:"table:pay_codes,alias:payc" json:"-"`
-	keel.Table    `                                          keel:"pay_codes,report=Payroll"`
+	keel.Table `                                          keel:"pay_codes,report=Payroll"`
 
-	ID                    pulid.ID           `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:payc_"`
-	BusinessUnitID        pulid.ID           `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID           `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
-	Status                domaintypes.Status `json:"status"                bun:"status,type:status_enum,notnull,default:'Active'"                                     keel:"status"`
-	Direction             PayCodeDirection   `json:"direction"             bun:"direction,type:VARCHAR(20),notnull"                                                   keel:"direction"`
-	Code                  string             `json:"code"                  bun:"code,type:VARCHAR(20),notnull"                                                        keel:"code"`
-	Name                  string             `json:"name"                  bun:"name,type:VARCHAR(100),notnull"                                                       keel:"name"`
-	Description           string             `json:"description"           bun:"description,type:TEXT,nullzero"                                                       keel:"description,nullzero"`
-	Taxable               bool               `json:"taxable"               bun:"taxable,type:BOOLEAN,notnull"                                                         keel:"taxable"`
-	CountsTowardGuarantee bool               `json:"countsTowardGuarantee" bun:"counts_toward_guarantee,type:BOOLEAN,notnull"                                         keel:"counts_toward_guarantee"`
-	GLAccountID           *pulid.ID          `json:"glAccountId"           bun:"gl_account_id,type:VARCHAR(100),nullzero"                                             keel:"gl_account_id"`
-	DefaultAmountMinor    *int64             `json:"defaultAmountMinor"    bun:"default_amount_minor,type:BIGINT,nullzero"                                            keel:"default_amount_minor,label=Default Amount (Minor)"`
-	IsSystem              bool               `json:"isSystem"              bun:"is_system,type:BOOLEAN,notnull"                                                       keel:"is_system,label=System Code"`
-	Version               int64              `json:"version"               bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
-	CreatedAt             int64              `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt             int64              `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                    pulid.ID           `json:"id" keel:"id,pk,autoid:payc_"`
+	BusinessUnitID        pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Status                domaintypes.Status `json:"status" keel:"status"`
+	Direction             PayCodeDirection   `json:"direction" keel:"direction"`
+	Code                  string             `json:"code" keel:"code"`
+	Name                  string             `json:"name" keel:"name"`
+	Description           string             `json:"description" keel:"description,nullzero"`
+	Taxable               bool               `json:"taxable" keel:"taxable"`
+	CountsTowardGuarantee bool               `json:"countsTowardGuarantee" keel:"counts_toward_guarantee"`
+	GLAccountID           *pulid.ID          `json:"glAccountId" keel:"gl_account_id"`
+	DefaultAmountMinor    *int64             `json:"defaultAmountMinor" keel:"default_amount_minor,label=Default Amount (Minor)"`
+	IsSystem              bool               `json:"isSystem" keel:"is_system,label=System Code"`
+	Version               int64              `json:"version" keel:"version,version"`
+	CreatedAt             int64              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt             int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	GLAccount *glaccount.GLAccount `json:"glAccount,omitempty" bun:"rel:belongs-to,join:gl_account_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:gl_account_id"`
+	GLAccount *glaccount.GLAccount `json:"glAccount,omitempty" keel:"belongs:gl_account_id"`
 }
 
 func (p *PayCode) Validate(multiErr *errortypes.MultiError) {
@@ -131,22 +127,12 @@ func (p *PayCode) GetBusinessUnitID() pulid.ID { return p.BusinessUnitID }
 
 func (p *PayCode) GetTableName() string { return "pay_codes" }
 
-func (p *PayCode) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("payc_")
-		}
-		p.CreatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-	return nil
-}
-
 func (p *PayCode) BeforeCreate(ctx context.Context) error {
-	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	if p.Status == "" {
+		p.Status = domaintypes.StatusActive
+	}
+
+	return nil
 }
 
 type SystemPayCode struct {

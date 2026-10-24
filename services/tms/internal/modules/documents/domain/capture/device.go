@@ -9,9 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -30,36 +28,35 @@ const (
 // the one it replaced is kept: presenting a replaced token means two parties
 // hold the device's credential, and the only safe answer is to revoke it.
 type CaptureDevice struct {
-	bun.BaseModel `bun:"table:capture_devices,alias:cdev" json:"-"`
-	keel.Table    `keel:"capture_devices"`
+	keel.Table `keel:"capture_devices"`
 
-	ID                   pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:cdev_"`
-	BusinessUnitID       pulid.ID     `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID     `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	UserID               pulid.ID     `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
-	Name                 string       `json:"name"           bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	MachineName          string       `json:"machineName"    bun:"machine_name,type:VARCHAR(255),notnull" keel:"machine_name"`
-	WindowsUser          string       `json:"windowsUser"    bun:"windows_user,type:VARCHAR(255),nullzero" keel:"windows_user,nullzero"`
-	AgentVersion         string       `json:"agentVersion"   bun:"agent_version,type:VARCHAR(50),notnull" keel:"agent_version"`
-	Architecture         Architecture `json:"architecture"   bun:"architecture,type:VARCHAR(10),notnull" keel:"architecture"`
-	OSVersion            string       `json:"osVersion"      bun:"os_version,type:VARCHAR(100),nullzero" keel:"os_version,nullzero"`
-	Status               DeviceStatus `json:"status"         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	RefreshTokenHash     string       `json:"-"              bun:"refresh_token_hash,type:VARCHAR(128),notnull" keel:"refresh_token_hash"`
-	PreviousRefreshHash  string       `json:"-"              bun:"previous_refresh_hash,type:VARCHAR(128),nullzero" keel:"previous_refresh_hash,nullzero"`
-	AccessTokenHash      string       `json:"-"              bun:"access_token_hash,type:VARCHAR(128),notnull" keel:"access_token_hash"`
-	AccessTokenExpiresAt int64        `json:"-"              bun:"access_token_expires_at,type:BIGINT,notnull" keel:"access_token_expires_at"`
-	Sources              []SourceInfo `json:"sources"        bun:"sources,type:JSONB,notnull,default:'[]'" keel:"sources,jsonb"`
-	LastSeenAt           *int64       `json:"lastSeenAt"     bun:"last_seen_at,type:BIGINT,nullzero" keel:"last_seen_at"`
-	LastIP               string       `json:"lastIp"         bun:"last_ip,type:VARCHAR(64),nullzero" keel:"last_ip,nullzero"`
-	RevokedAt            *int64       `json:"revokedAt"      bun:"revoked_at,type:BIGINT,nullzero" keel:"revoked_at"`
-	RevokedByID          *pulid.ID    `json:"revokedById"    bun:"revoked_by_id,type:VARCHAR(100),nullzero" keel:"revoked_by_id"`
-	RevokedReason        string       `json:"revokedReason"  bun:"revoked_reason,type:VARCHAR(255),nullzero" keel:"revoked_reason,nullzero"`
-	Version              int64        `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt            int64        `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt            int64        `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                   pulid.ID     `json:"id" keel:"id,pk,autoid:cdev_"`
+	BusinessUnitID       pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
+	UserID               pulid.ID     `json:"userId" keel:"user_id"`
+	Name                 string       `json:"name" keel:"name"`
+	MachineName          string       `json:"machineName" keel:"machine_name"`
+	WindowsUser          string       `json:"windowsUser" keel:"windows_user,nullzero"`
+	AgentVersion         string       `json:"agentVersion" keel:"agent_version"`
+	Architecture         Architecture `json:"architecture" keel:"architecture"`
+	OSVersion            string       `json:"osVersion" keel:"os_version,nullzero"`
+	Status               DeviceStatus `json:"status" keel:"status"`
+	RefreshTokenHash     string       `json:"-" keel:"refresh_token_hash"`
+	PreviousRefreshHash  string       `json:"-" keel:"previous_refresh_hash,nullzero"`
+	AccessTokenHash      string       `json:"-" keel:"access_token_hash"`
+	AccessTokenExpiresAt int64        `json:"-" keel:"access_token_expires_at"`
+	Sources              []SourceInfo `json:"sources" keel:"sources,jsonb"`
+	LastSeenAt           *int64       `json:"lastSeenAt" keel:"last_seen_at"`
+	LastIP               string       `json:"lastIp" keel:"last_ip,nullzero"`
+	RevokedAt            *int64       `json:"revokedAt" keel:"revoked_at"`
+	RevokedByID          *pulid.ID    `json:"revokedById" keel:"revoked_by_id"`
+	RevokedReason        string       `json:"revokedReason" keel:"revoked_reason,nullzero"`
+	Version              int64        `json:"version" keel:"version,version"`
+	CreatedAt            int64        `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt            int64        `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 }
 
 // SourceInfo is one scanner the companion can reach, as it last reported it.
@@ -135,29 +132,6 @@ func (d *CaptureDevice) Revoke(by *pulid.ID, reason string, now int64) {
 // device so the unique indexes on the columns still hold.
 const revokedTokenMarker = "revoked:"
 
-func (d *CaptureDevice) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("cdev_")
-		}
-		if d.Status == "" {
-			d.Status = DeviceActive
-		}
-		if d.Sources == nil {
-			d.Sources = []SourceInfo{}
-		}
-		d.CreatedAt = now
-		d.UpdatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (d *CaptureDevice) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias: "cdev",
@@ -182,5 +156,12 @@ func (d *CaptureDevice) GetCreatedAt() int64  { return d.CreatedAt }
 func (d *CaptureDevice) GetTableName() string { return "capture_devices" }
 
 func (d *CaptureDevice) BeforeCreate(ctx context.Context) error {
-	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	if d.Status == "" {
+		d.Status = DeviceActive
+	}
+	if d.Sources == nil {
+		d.Sources = []SourceInfo{}
+	}
+
+	return nil
 }

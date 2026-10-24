@@ -9,9 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var _ domaintypes.PostgresSearchable = (*EDICommunicationProfile)(nil)
@@ -22,34 +20,52 @@ type CommunicationProfileSecretState struct {
 }
 
 type EDICommunicationProfile struct {
-	bun.BaseModel `json:"-" bun:"table:edi_communication_profiles,alias:ecp"`
-	keel.Table    `keel:"edi_communication_profiles"`
+	keel.Table `keel:"edi_communication_profiles"`
 
-	ID                pulid.ID                          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edicp_"`
-	BusinessUnitID    pulid.ID                          `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID                          `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	EDIConnectionID   pulid.ID                          `json:"ediConnectionId"   bun:"edi_connection_id,type:VARCHAR(100),nullzero" keel:"edi_connection_id,nullzero"`
-	EDIPartnerID      pulid.ID                          `json:"ediPartnerId"      bun:"edi_partner_id,type:VARCHAR(100),nullzero" keel:"edi_partner_id,nullzero"`
-	Method            ConnectionMethod                  `json:"method"            bun:"method,type:edi_connection_method_enum,notnull" keel:"method"`
-	Status            domaintypes.Status                `json:"status"            bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
-	Name              string                            `json:"name"              bun:"name,type:VARCHAR(200),notnull" keel:"name"`
-	Description       string                            `json:"description"       bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Config            map[string]any                    `json:"config"            bun:"config,type:JSONB,notnull,default:'{}'" keel:"config,jsonb"`
-	EncryptedSecrets  map[string]string                 `json:"-"                 bun:"encrypted_secrets,type:JSONB,notnull,default:'{}'" keel:"encrypted_secrets,jsonb"`
-	SecretState       []CommunicationProfileSecretState `json:"secretState"       bun:"-"`
-	LastPollAttemptAt *int64                            `json:"lastPollAttemptAt" bun:"last_poll_attempt_at,type:BIGINT,nullzero" keel:"last_poll_attempt_at"`
-	LastPollSuccessAt *int64                            `json:"lastPollSuccessAt" bun:"last_poll_success_at,type:BIGINT,nullzero" keel:"last_poll_success_at"`
-	LastPollError     string                            `json:"lastPollError"     bun:"last_poll_error,type:TEXT,nullzero" keel:"last_poll_error,nullzero"`
-	SearchVector      string                            `json:"-"                 bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank              string                            `json:"-"                 bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
-	Version           int64                             `json:"version"           bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt         int64                             `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt         int64                             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                pulid.ID                          `json:"id" keel:"id,pk,autoid:edicp_"`
+	BusinessUnitID    pulid.ID                          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID                          `json:"organizationId" keel:"organization_id,pk,tenant"`
+	EDIConnectionID   pulid.ID                          `json:"ediConnectionId" keel:"edi_connection_id,nullzero"`
+	EDIPartnerID      pulid.ID                          `json:"ediPartnerId" keel:"edi_partner_id,nullzero"`
+	Method            ConnectionMethod                  `json:"method" keel:"method"`
+	Status            domaintypes.Status                `json:"status" keel:"status"`
+	Name              string                            `json:"name" keel:"name"`
+	Description       string                            `json:"description" keel:"description,nullzero"`
+	Config            map[string]any                    `json:"config" keel:"config,jsonb"`
+	EncryptedSecrets  map[string]string                 `json:"-" keel:"encrypted_secrets,jsonb"`
+	SecretState       []CommunicationProfileSecretState `json:"secretState"`
+	LastPollAttemptAt *int64                            `json:"lastPollAttemptAt" keel:"last_poll_attempt_at"`
+	LastPollSuccessAt *int64                            `json:"lastPollSuccessAt" keel:"last_poll_success_at"`
+	LastPollError     string                            `json:"lastPollError" keel:"last_poll_error,nullzero"`
+	SearchVector      string                            `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank              string                            `json:"-" keel:"rank,computed"`
+	Version           int64                             `json:"version" keel:"version,version"`
+	CreatedAt         int64                             `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt         int64                             `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Connection   *EDIConnection       `json:"connection,omitempty"   bun:"rel:belongs-to,join:edi_connection_id=id" keel:"belongs:edi_connection_id"`
-	Partner      *EDIPartner          `json:"partner,omitempty"      bun:"rel:belongs-to,join:edi_partner_id=id" keel:"belongs:edi_partner_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	Connection   *EDIConnection       `json:"connection,omitempty" keel:"belongs:edi_connection_id"`
+	Partner      *EDIPartner          `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
+}
+
+func (p *EDICommunicationProfile) BeforeUpdate(ctx context.Context) error {
+	if err := p.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *EDICommunicationProfile) BeforeCreate(ctx context.Context) error {
+	if err := p.BeforeSave(ctx); err != nil {
+		return err
+	}
+	if p.Status == "" {
+		p.Status = domaintypes.StatusActive
+	}
+
+	return nil
 }
 
 func (p *EDICommunicationProfile) BeforeSave(_ context.Context) error {
@@ -59,24 +75,6 @@ func (p *EDICommunicationProfile) BeforeSave(_ context.Context) error {
 	if p.EncryptedSecrets == nil {
 		p.EncryptedSecrets = map[string]string{}
 	}
-	return nil
-}
-
-func (p *EDICommunicationProfile) BeforeAppendModel(ctx context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	if err := p.BeforeSave(ctx); err != nil {
-		return err
-	}
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("edicp_")
-		}
-		p.CreatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-
 	return nil
 }
 

@@ -3,7 +3,6 @@ package customertracking
 import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 // Notification is one status email a customer is owed. The row is the ledger:
@@ -12,30 +11,29 @@ import (
 // and the email is sent under the row's id as its idempotency key, so a retry
 // never sends a second copy.
 type Notification struct {
-	bun.BaseModel `bun:"table:customer_status_notifications,alias:csn" json:"-"`
-	keel.Table    `keel:"customer_status_notifications"`
+	keel.Table `keel:"customer_status_notifications"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	ShipmentID     pulid.ID           `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
-	CustomerID     pulid.ID           `json:"customerId"     bun:"customer_id,type:VARCHAR(100),notnull" keel:"customer_id"`
-	Event          Event              `json:"event"          bun:"event,type:VARCHAR(20),notnull" keel:"event"`
-	SubjectKey     string             `json:"subjectKey"     bun:"subject_key,type:VARCHAR(100),notnull,default:''" keel:"subject_key"`
-	StopID         pulid.ID           `json:"stopId"         bun:"stop_id,type:VARCHAR(100),nullzero" keel:"stop_id,nullzero"`
-	OccurredAt     int64              `json:"occurredAt"     bun:"occurred_at,type:BIGINT,notnull" keel:"occurred_at"`
-	EstimatedAt    *int64             `json:"estimatedAt"    bun:"estimated_at,type:BIGINT,nullzero" keel:"estimated_at"`
-	Status         NotificationStatus `json:"status"         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	SkipReason     SkipReason         `json:"skipReason"     bun:"skip_reason,type:VARCHAR(30),nullzero" keel:"skip_reason,nullzero"`
-	Recipients     []string           `json:"recipients"     bun:"recipients,array,notnull" keel:"recipients"`
-	LinkID         pulid.ID           `json:"linkId"         bun:"link_id,type:VARCHAR(100),nullzero" keel:"link_id,nullzero"`
-	EmailMessageID pulid.ID           `json:"emailMessageId" bun:"email_message_id,type:VARCHAR(100),nullzero" keel:"email_message_id,nullzero"`
-	Attempts       int16              `json:"attempts"       bun:"attempts,type:SMALLINT,notnull,default:0" keel:"attempts"`
-	LastError      string             `json:"lastError"      bun:"last_error,type:VARCHAR(1000),nullzero" keel:"last_error,nullzero"`
-	NextAttemptAt  int64              `json:"nextAttemptAt"  bun:"next_attempt_at,type:BIGINT,notnull" keel:"next_attempt_at"`
-	SentAt         *int64             `json:"sentAt"         bun:"sent_at,type:BIGINT,nullzero" keel:"sent_at"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull" keel:"created_at"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull" keel:"updated_at"`
+	ID             pulid.ID           `json:"id" keel:"id,pk"`
+	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	ShipmentID     pulid.ID           `json:"shipmentId" keel:"shipment_id"`
+	CustomerID     pulid.ID           `json:"customerId" keel:"customer_id"`
+	Event          Event              `json:"event" keel:"event"`
+	SubjectKey     string             `json:"subjectKey" keel:"subject_key"`
+	StopID         pulid.ID           `json:"stopId" keel:"stop_id,nullzero"`
+	OccurredAt     int64              `json:"occurredAt" keel:"occurred_at"`
+	EstimatedAt    *int64             `json:"estimatedAt" keel:"estimated_at"`
+	Status         NotificationStatus `json:"status" keel:"status"`
+	SkipReason     SkipReason         `json:"skipReason" keel:"skip_reason,nullzero"`
+	Recipients     []string           `json:"recipients" keel:"recipients"`
+	LinkID         pulid.ID           `json:"linkId" keel:"link_id,nullzero"`
+	EmailMessageID pulid.ID           `json:"emailMessageId" keel:"email_message_id,nullzero"`
+	Attempts       int16              `json:"attempts" keel:"attempts"`
+	LastError      string             `json:"lastError" keel:"last_error,nullzero"`
+	NextAttemptAt  int64              `json:"nextAttemptAt" keel:"next_attempt_at"`
+	SentAt         *int64             `json:"sentAt" keel:"sent_at"`
+	CreatedAt      int64              `json:"createdAt" keel:"created_at"`
+	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at"`
 }
 
 func NewNotificationID() pulid.ID {

@@ -63,20 +63,20 @@ type GetShiftSwapByIDRequest struct {
 // RotaWorkerRow is one worker's roster line: who they are, where they work,
 // and which shift pattern they are on for the week being drawn.
 type RotaWorkerRow struct {
-	WorkerID         pulid.ID `bun:"worker_id"`
-	FirstName        string   `bun:"first_name"`
-	LastName         string   `bun:"last_name"`
-	FleetCode        string   `bun:"fleet_code"`
-	FleetColor       string   `bun:"fleet_color"`
-	ShiftTemplateID  pulid.ID `bun:"shift_template_id"`
-	CycleOffsetWeeks int16    `bun:"cycle_offset_weeks"`
+	WorkerID         pulid.ID
+	FirstName        string
+	LastName         string
+	FleetCode        string
+	FleetColor       string
+	ShiftTemplateID  pulid.ID
+	CycleOffsetWeeks int16
 }
 
 // RotaDayRow is a count of something on one worker's one day.
 type RotaDayRow struct {
-	WorkerID pulid.ID `bun:"worker_id"`
-	DayStart int64    `bun:"day_start"`
-	Count    int      `bun:"count"`
+	WorkerID pulid.ID
+	DayStart int64
+	Count    int
 }
 
 // RotaRangeRow is a span that overrides the pattern — time off, or a leave
@@ -86,9 +86,9 @@ type RotaDayRow struct {
 //
 // EndsAt of zero means an open-ended span, which covers the rest of the week.
 type RotaRangeRow struct {
-	WorkerID pulid.ID `bun:"worker_id"`
-	StartsAt int64    `bun:"starts_at"`
-	EndsAt   int64    `bun:"ends_at"`
+	WorkerID pulid.ID
+	StartsAt int64
+	EndsAt   int64
 }
 
 // RotaQuery scopes the week being drawn.

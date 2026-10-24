@@ -12,9 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -24,41 +22,59 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*ReportDefinition)(nil)
 	_ validationframework.TenantedEntity = (*ReportDefinition)(nil)
 )
 
 // Saved report definitions
 type ReportDefinition struct {
-	bun.BaseModel `bun:"table:report_definitions,alias:rdef" json:"-"`
-	keel.Table    `                                                   keel:"report_definitions,report=Reporting,label=Report"`
+	keel.Table `                                                   keel:"report_definitions,report=Reporting,label=Report"`
 
-	ID              pulid.ID         `json:"id"              bun:"id,pk,type:VARCHAR(100)"                                                           keel:"id,pk,autoid:rd_"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                     keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID         `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"                                      keel:"organization_id,pk,tenant"`
-	Name            string           `json:"name"            bun:"name,type:VARCHAR(255),notnull"                                                    keel:"name"`
-	Description     string           `json:"description"     bun:"description,type:TEXT,nullzero"                                                    keel:"description,nullzero"`
-	Category        string           `json:"category"        bun:"category,type:VARCHAR(100),nullzero"                                               keel:"category,nullzero"`
-	Tags            []string         `json:"tags"            bun:"tags,type:TEXT[],array,nullzero"                                                   keel:"tags,nullzero,noreport"`
-	Kind            DefinitionKind   `json:"kind"            bun:"kind,type:VARCHAR(20),notnull,default:'custom'"                                    keel:"kind"`
-	CannedKey       string           `json:"cannedKey"       bun:"canned_key,type:VARCHAR(100),nullzero"                                             keel:"canned_key,nullzero,label=Canned Report Key"`
-	CannedVersion   string           `json:"cannedVersion"   bun:"canned_version,type:VARCHAR(20),nullzero"                                          keel:"canned_version,nullzero,noreport"`
-	OwnerID         pulid.ID         `json:"ownerId"         bun:"owner_id,type:VARCHAR(100),notnull"                                                keel:"owner_id"`
-	Visibility      Visibility       `json:"visibility"      bun:"visibility,type:VARCHAR(20),notnull,default:'private'"                             keel:"visibility"`
-	Status          DefinitionStatus `json:"status"          bun:"status,type:VARCHAR(20),notnull,default:'draft'"                                   keel:"status"`
-	Diagnostics     []string         `json:"diagnostics"     bun:"diagnostics,type:TEXT[],array,nullzero"                                            keel:"diagnostics,nullzero,noreport"`
-	CatalogVersion  string           `json:"catalogVersion"  bun:"catalog_version,type:VARCHAR(80),notnull"                                          keel:"catalog_version,noreport"`
-	Definition      *ir.Definition   `json:"definition"      bun:"definition,type:JSONB,notnull"                                                     keel:"definition,jsonb,noreport"`
-	DefaultFormat   Format           `json:"defaultFormat"   bun:"default_format,type:VARCHAR(10),notnull,default:'csv'"                             keel:"default_format"`
-	CurrentRevision int64            `json:"currentRevision" bun:"current_revision,type:BIGINT,notnull,default:1"                                    keel:"current_revision,label=Revision,format=count,dimension"`
-	LastRunAt       int64            `json:"lastRunAt"       bun:"last_run_at,type:BIGINT,nullzero"                                                  keel:"last_run_at,nullzero"`
-	Version         int64            `json:"version"         bun:"version,type:BIGINT"                                                               keel:"version,version,noreport"`
-	CreatedAt       int64            `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt       int64            `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate,noreport"`
+	ID              pulid.ID         `json:"id" keel:"id,pk,autoid:rd_"`
+	BusinessUnitID  pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name            string           `json:"name" keel:"name"`
+	Description     string           `json:"description" keel:"description,nullzero"`
+	Category        string           `json:"category" keel:"category,nullzero"`
+	Tags            []string         `json:"tags" keel:"tags,nullzero,noreport"`
+	Kind            DefinitionKind   `json:"kind" keel:"kind"`
+	CannedKey       string           `json:"cannedKey" keel:"canned_key,nullzero,label=Canned Report Key"`
+	CannedVersion   string           `json:"cannedVersion" keel:"canned_version,nullzero,noreport"`
+	OwnerID         pulid.ID         `json:"ownerId" keel:"owner_id"`
+	Visibility      Visibility       `json:"visibility" keel:"visibility"`
+	Status          DefinitionStatus `json:"status" keel:"status"`
+	Diagnostics     []string         `json:"diagnostics" keel:"diagnostics,nullzero,noreport"`
+	CatalogVersion  string           `json:"catalogVersion" keel:"catalog_version,noreport"`
+	Definition      *ir.Definition   `json:"definition" keel:"definition,jsonb,noreport"`
+	DefaultFormat   Format           `json:"defaultFormat" keel:"default_format"`
+	CurrentRevision int64            `json:"currentRevision" keel:"current_revision,label=Revision,format=count,dimension"`
+	LastRunAt       int64            `json:"lastRunAt" keel:"last_run_at,nullzero"`
+	Version         int64            `json:"version" keel:"version,version,noreport"`
+	CreatedAt       int64            `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt       int64            `json:"updatedAt" keel:"updated_at,autoupdate,noreport"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Owner        *tenant.User         `json:"owner,omitempty"        bun:"rel:belongs-to,join:owner_id=id"         keel:"belongs:owner_id,noreport"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Owner        *tenant.User         `json:"owner,omitempty" keel:"belongs:owner_id,noreport"`
+}
+
+func (rd *ReportDefinition) BeforeCreate(_ context.Context) error {
+	if rd.Kind == "" {
+		rd.Kind = DefinitionKindCustom
+	}
+	if rd.Visibility == "" {
+		rd.Visibility = VisibilityPrivate
+	}
+	if rd.Status == "" {
+		rd.Status = DefinitionStatusDraft
+	}
+	if rd.DefaultFormat == "" {
+		rd.DefaultFormat = FormatCSV
+	}
+	if rd.CurrentRevision == 0 {
+		rd.CurrentRevision = 1
+	}
+
+	return nil
 }
 
 func (rd *ReportDefinition) Validate(multiErr *errortypes.MultiError) {
@@ -120,22 +136,6 @@ func (rd *ReportDefinition) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-func (rd *ReportDefinition) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rd.ID.IsNil() {
-			rd.ID = pulid.MustNew("rd_")
-		}
-		rd.CreatedAt = now
-	case *bun.UpdateQuery:
-		rd.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (rd *ReportDefinition) GetCreatedAt() int64 { return rd.CreatedAt }
 
 func (rd *ReportDefinition) GetID() pulid.ID { return rd.ID }
@@ -155,24 +155,4 @@ func (rd *ReportDefinition) GetPostgresSearchConfig() domaintypes.PostgresSearch
 			{Name: "category", Type: domaintypes.FieldTypeText},
 		},
 	}
-}
-
-func (rd *ReportDefinition) BeforeCreate(context.Context) error {
-	if rd.Kind == "" {
-		rd.Kind = DefinitionKindCustom
-	}
-	if rd.Visibility == "" {
-		rd.Visibility = VisibilityPrivate
-	}
-	if rd.Status == "" {
-		rd.Status = DefinitionStatusDraft
-	}
-	if rd.DefaultFormat == "" {
-		rd.DefaultFormat = FormatCSV
-	}
-	if rd.CurrentRevision == 0 {
-		rd.CurrentRevision = 1
-	}
-
-	return nil
 }

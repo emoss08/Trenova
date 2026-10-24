@@ -9,43 +9,46 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*CarrierMonitoringEnrollment)(nil)
-
 type CarrierMonitoringEnrollment struct {
-	bun.BaseModel `bun:"table:carrier_monitoring_enrollments,alias:cienr" json:"-"`
-	keel.Table    `                                                                keel:"carrier_monitoring_enrollments"`
+	keel.Table `                                                                keel:"carrier_monitoring_enrollments"`
 
-	ID              pulid.ID         `json:"id"              bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:cienr_"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID         `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
-	SubjectType     SubjectType      `json:"subjectType"     bun:"subject_type,type:VARCHAR(20),notnull"                                                keel:"subject_type"`
-	SubjectID       string           `json:"subjectId"       bun:"subject_id,type:VARCHAR(100),notnull"                                                 keel:"subject_id"`
-	CarrierID       pulid.ID         `json:"carrierId"       bun:"carrier_id,type:VARCHAR(100),nullzero"                                                keel:"carrier_id,nullzero"`
-	SubjectName     string           `json:"subjectName"     bun:"subject_name,type:VARCHAR(255),nullzero"                                              keel:"subject_name,nullzero"`
-	DOTNumber       string           `json:"dotNumber"       bun:"dot_number,type:VARCHAR(12),notnull"                                                  keel:"dot_number"`
-	DocketNumber    string           `json:"docketNumber"    bun:"docket_number,type:VARCHAR(12),nullzero"                                              keel:"docket_number,nullzero"`
-	Provider        integration.Type `json:"provider"        bun:"provider,type:integration_type,notnull"                                               keel:"provider"`
-	ProviderRef     string           `json:"providerRef"     bun:"provider_ref,type:VARCHAR(64),nullzero"                                               keel:"provider_ref,nullzero"`
-	Mode            EnrollmentMode   `json:"mode"            bun:"mode,type:VARCHAR(20),notnull"                                                        keel:"mode"`
-	DesiredState    DesiredState     `json:"desiredState"    bun:"desired_state,type:VARCHAR(20),notnull"                                               keel:"desired_state"`
-	VendorState     VendorState      `json:"vendorState"     bun:"vendor_state,type:VARCHAR(20),notnull"                                                keel:"vendor_state"`
-	Reason          EnrollmentReason `json:"reason"          bun:"reason,type:VARCHAR(30),notnull"                                                      keel:"reason"`
-	OwnedByTrenova  bool             `json:"ownedByTrenova"  bun:"owned_by_trenova,type:BOOLEAN,notnull"                                                keel:"owned_by_trenova"`
-	EnrolledAt      *int64           `json:"enrolledAt"      bun:"enrolled_at,type:BIGINT,nullzero"                                                     keel:"enrolled_at"`
-	UnenrolledAt    *int64           `json:"unenrolledAt"    bun:"unenrolled_at,type:BIGINT,nullzero"                                                   keel:"unenrolled_at"`
-	LastSyncedAt    *int64           `json:"lastSyncedAt"    bun:"last_synced_at,type:BIGINT,nullzero"                                                  keel:"last_synced_at"`
-	LastConfirmedAt *int64           `json:"lastConfirmedAt" bun:"last_confirmed_at,type:BIGINT,nullzero"                                               keel:"last_confirmed_at"`
-	LastUsedAt      *int64           `json:"lastUsedAt"      bun:"last_used_at,type:BIGINT,nullzero"                                                    keel:"last_used_at"`
-	FailureCount    int              `json:"failureCount"    bun:"failure_count,type:INTEGER,notnull"                                                   keel:"failure_count"`
-	LastError       string           `json:"lastError"       bun:"last_error,type:TEXT,nullzero"                                                        keel:"last_error,nullzero"`
-	Version         int64            `json:"version"         bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt       int64            `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt       int64            `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID              pulid.ID         `json:"id" keel:"id,pk,autoid:cienr_"`
+	BusinessUnitID  pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	SubjectType     SubjectType      `json:"subjectType" keel:"subject_type"`
+	SubjectID       string           `json:"subjectId" keel:"subject_id"`
+	CarrierID       pulid.ID         `json:"carrierId" keel:"carrier_id,nullzero"`
+	SubjectName     string           `json:"subjectName" keel:"subject_name,nullzero"`
+	DOTNumber       string           `json:"dotNumber" keel:"dot_number"`
+	DocketNumber    string           `json:"docketNumber" keel:"docket_number,nullzero"`
+	Provider        integration.Type `json:"provider" keel:"provider"`
+	ProviderRef     string           `json:"providerRef" keel:"provider_ref,nullzero"`
+	Mode            EnrollmentMode   `json:"mode" keel:"mode"`
+	DesiredState    DesiredState     `json:"desiredState" keel:"desired_state"`
+	VendorState     VendorState      `json:"vendorState" keel:"vendor_state"`
+	Reason          EnrollmentReason `json:"reason" keel:"reason"`
+	OwnedByTrenova  bool             `json:"ownedByTrenova" keel:"owned_by_trenova"`
+	EnrolledAt      *int64           `json:"enrolledAt" keel:"enrolled_at"`
+	UnenrolledAt    *int64           `json:"unenrolledAt" keel:"unenrolled_at"`
+	LastSyncedAt    *int64           `json:"lastSyncedAt" keel:"last_synced_at"`
+	LastConfirmedAt *int64           `json:"lastConfirmedAt" keel:"last_confirmed_at"`
+	LastUsedAt      *int64           `json:"lastUsedAt" keel:"last_used_at"`
+	FailureCount    int              `json:"failureCount" keel:"failure_count"`
+	LastError       string           `json:"lastError" keel:"last_error,nullzero"`
+	Version         int64            `json:"version" keel:"version,version"`
+	CreatedAt       int64            `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt       int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+}
+
+func (e *CarrierMonitoringEnrollment) BeforeCreate(_ context.Context) error {
+	if e.VendorState == "" {
+		e.VendorState = VendorStateUnknown
+	}
+
+	return nil
 }
 
 func (e *CarrierMonitoringEnrollment) Validate(multiErr *errortypes.MultiError) {
@@ -178,34 +181,6 @@ func (e *CarrierMonitoringEnrollment) GetPostgresSearchConfig() domaintypes.Post
 	}
 }
 
-func (e *CarrierMonitoringEnrollment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("cienr_")
-		}
-		if e.VendorState == "" {
-			e.VendorState = VendorStateUnknown
-		}
-		e.CreatedAt = now
-		e.UpdatedAt = now
-	case *bun.UpdateQuery:
-		e.UpdatedAt = now
-	}
-
-	return nil
-}
-
-func (e *CarrierMonitoringEnrollment) BeforeCreate(context.Context) error {
-	if e.VendorState == "" {
-		e.VendorState = VendorStateUnknown
-	}
-
-	return nil
-}
-
 type FeedCursor struct {
 	DateMin string `json:"dateMin,omitempty"`
 	Page    int    `json:"page,omitempty"`
@@ -213,21 +188,20 @@ type FeedCursor struct {
 }
 
 type CarrierIntelFeedState struct {
-	bun.BaseModel `bun:"table:carrier_intel_feed_states,alias:cifeed" json:"-"`
-	keel.Table    `                                                            keel:"carrier_intel_feed_states"`
+	keel.Table `                                                            keel:"carrier_intel_feed_states"`
 
-	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"  keel:"organization_id,pk,tenant"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	Provider       integration.Type `json:"provider"       bun:"provider,type:integration_type,pk,notnull"     keel:"provider,pk"`
-	FeedType       FeedType         `json:"feedType"       bun:"feed_type,type:VARCHAR(32),pk,notnull"         keel:"feed_type,pk"`
-	Cursor         FeedCursor       `json:"cursor"         bun:"cursor,type:JSONB,notnull"                     keel:"cursor,jsonb"`
-	LastPolledAt   *int64           `json:"lastPolledAt"   bun:"last_polled_at,type:BIGINT,nullzero"           keel:"last_polled_at"`
-	LastSuccessAt  *int64           `json:"lastSuccessAt"  bun:"last_success_at,type:BIGINT,nullzero"          keel:"last_success_at"`
-	NextPollAfter  *int64           `json:"nextPollAfter"  bun:"next_poll_after,type:BIGINT,nullzero"          keel:"next_poll_after"`
-	PausedReason   FeedPauseReason  `json:"pausedReason"   bun:"paused_reason,type:VARCHAR(30),nullzero"       keel:"paused_reason,nullzero"`
-	PausedAt       *int64           `json:"pausedAt"       bun:"paused_at,type:BIGINT,nullzero"                keel:"paused_at"`
-	FailureCount   int              `json:"failureCount"   bun:"failure_count,type:INTEGER,notnull"            keel:"failure_count"`
-	LastError      string           `json:"lastError"      bun:"last_error,type:TEXT,nullzero"                 keel:"last_error,nullzero"`
+	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	Provider       integration.Type `json:"provider" keel:"provider,pk"`
+	FeedType       FeedType         `json:"feedType" keel:"feed_type,pk"`
+	Cursor         FeedCursor       `json:"cursor" keel:"cursor,jsonb"`
+	LastPolledAt   *int64           `json:"lastPolledAt" keel:"last_polled_at"`
+	LastSuccessAt  *int64           `json:"lastSuccessAt" keel:"last_success_at"`
+	NextPollAfter  *int64           `json:"nextPollAfter" keel:"next_poll_after"`
+	PausedReason   FeedPauseReason  `json:"pausedReason" keel:"paused_reason,nullzero"`
+	PausedAt       *int64           `json:"pausedAt" keel:"paused_at"`
+	FailureCount   int              `json:"failureCount" keel:"failure_count"`
+	LastError      string           `json:"lastError" keel:"last_error,nullzero"`
 }
 
 func (f *CarrierIntelFeedState) IsPaused() bool {

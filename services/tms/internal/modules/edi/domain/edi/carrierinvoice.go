@@ -9,10 +9,8 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 type CarrierInvoiceReconciliationStatus string
@@ -39,41 +37,59 @@ func (s CarrierInvoiceReconciliationStatus) NeedsAttention() bool {
 }
 
 type CarrierInvoice struct {
-	bun.BaseModel `json:"-" bun:"table:edi_carrier_invoices,alias:ecinv"`
-	keel.Table    `keel:"edi_carrier_invoices"`
+	keel.Table `keel:"edi_carrier_invoices"`
 
-	ID                   pulid.ID                           `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edici_"`
-	BusinessUnitID       pulid.ID                           `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID                           `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	EDIPartnerID         pulid.ID                           `json:"ediPartnerId"         bun:"edi_partner_id,type:VARCHAR(100),notnull" keel:"edi_partner_id"`
-	InboundMessageID     pulid.ID                           `json:"inboundMessageId"     bun:"inbound_message_id,type:VARCHAR(100),notnull" keel:"inbound_message_id"`
-	ShipmentID           pulid.ID                           `json:"shipmentId"           bun:"shipment_id,type:VARCHAR(100),nullzero" keel:"shipment_id,nullzero"`
-	TenderRecipientID    pulid.ID                           `json:"tenderRecipientId"    bun:"tender_recipient_id,type:VARCHAR(100),nullzero" keel:"tender_recipient_id,nullzero"`
-	CustomerID           pulid.ID                           `json:"customerId"           bun:"customer_id,type:VARCHAR(100),nullzero" keel:"customer_id,nullzero"`
-	CarrierID            pulid.ID                           `json:"carrierId"            bun:"carrier_id,type:VARCHAR(100),nullzero" keel:"carrier_id,nullzero"`
-	InvoiceNumber        string                             `json:"invoiceNumber"        bun:"invoice_number,type:VARCHAR(100),notnull" keel:"invoice_number"`
-	InvoiceNumberKey     string                             `json:"-"                    bun:"invoice_number_key,type:VARCHAR(100),notnull" keel:"invoice_number_key"`
-	DuplicateOfID        pulid.ID                           `json:"duplicateOfId"        bun:"duplicate_of_id,type:VARCHAR(100),nullzero" keel:"duplicate_of_id,nullzero"`
-	InvoiceDate          *int64                             `json:"invoiceDate"          bun:"invoice_date,type:BIGINT,nullzero" keel:"invoice_date"`
-	DeliveryDate         *int64                             `json:"deliveryDate"         bun:"delivery_date,type:BIGINT,nullzero" keel:"delivery_date"`
-	ShipmentReference    string                             `json:"shipmentReference"    bun:"shipment_reference,type:VARCHAR(100),nullzero" keel:"shipment_reference,nullzero"`
-	BOL                  string                             `json:"bol"                  bun:"bol,type:VARCHAR(100),nullzero" keel:"bol,nullzero"`
-	ProNumber            string                             `json:"proNumber"            bun:"pro_number,type:VARCHAR(100),nullzero" keel:"pro_number,nullzero"`
-	BillToName           string                             `json:"billToName"           bun:"bill_to_name,type:VARCHAR(200),nullzero" keel:"bill_to_name,nullzero"`
-	BillToSourceID       pulid.ID                           `json:"billToSourceId"       bun:"bill_to_source_id,type:VARCHAR(100),nullzero" keel:"bill_to_source_id,nullzero"`
-	CurrencyCode         string                             `json:"currencyCode"         bun:"currency_code,type:VARCHAR(3),nullzero" keel:"currency_code,nullzero"`
-	TotalAmount          decimal.NullDecimal                `json:"totalAmount"          bun:"total_amount,type:NUMERIC(19,4),nullzero" keel:"total_amount"`
-	ExpectedAmount       decimal.NullDecimal                `json:"expectedAmount"       bun:"expected_amount,type:NUMERIC(19,4),nullzero" keel:"expected_amount"`
-	VarianceAmount       decimal.NullDecimal                `json:"varianceAmount"       bun:"variance_amount,type:NUMERIC(19,4),nullzero" keel:"variance_amount"`
-	LineCharges          []FreightInvoiceCharge             `json:"lineCharges"          bun:"line_charges,type:JSONB,notnull,default:'[]'" keel:"line_charges,jsonb"`
-	ReferenceNumbers     map[string]string                  `json:"referenceNumbers"     bun:"reference_numbers,type:JSONB,notnull,default:'{}'" keel:"reference_numbers,jsonb"`
-	ReconciliationStatus CarrierInvoiceReconciliationStatus `json:"reconciliationStatus" bun:"reconciliation_status,type:edi_carrier_invoice_reconciliation_status_enum,notnull,default:'Unmatched'" keel:"reconciliation_status"`
-	ReconciliationNotes  string                             `json:"reconciliationNotes"  bun:"reconciliation_notes,type:TEXT,nullzero" keel:"reconciliation_notes,nullzero"`
-	Version              int64                              `json:"version"              bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt            int64                              `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt            int64                              `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                   pulid.ID                           `json:"id" keel:"id,pk,autoid:edici_"`
+	BusinessUnitID       pulid.ID                           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID                           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	EDIPartnerID         pulid.ID                           `json:"ediPartnerId" keel:"edi_partner_id"`
+	InboundMessageID     pulid.ID                           `json:"inboundMessageId" keel:"inbound_message_id"`
+	ShipmentID           pulid.ID                           `json:"shipmentId" keel:"shipment_id,nullzero"`
+	TenderRecipientID    pulid.ID                           `json:"tenderRecipientId" keel:"tender_recipient_id,nullzero"`
+	CustomerID           pulid.ID                           `json:"customerId" keel:"customer_id,nullzero"`
+	CarrierID            pulid.ID                           `json:"carrierId" keel:"carrier_id,nullzero"`
+	InvoiceNumber        string                             `json:"invoiceNumber" keel:"invoice_number"`
+	InvoiceNumberKey     string                             `json:"-" keel:"invoice_number_key"`
+	DuplicateOfID        pulid.ID                           `json:"duplicateOfId" keel:"duplicate_of_id,nullzero"`
+	InvoiceDate          *int64                             `json:"invoiceDate" keel:"invoice_date"`
+	DeliveryDate         *int64                             `json:"deliveryDate" keel:"delivery_date"`
+	ShipmentReference    string                             `json:"shipmentReference" keel:"shipment_reference,nullzero"`
+	BOL                  string                             `json:"bol" keel:"bol,nullzero"`
+	ProNumber            string                             `json:"proNumber" keel:"pro_number,nullzero"`
+	BillToName           string                             `json:"billToName" keel:"bill_to_name,nullzero"`
+	BillToSourceID       pulid.ID                           `json:"billToSourceId" keel:"bill_to_source_id,nullzero"`
+	CurrencyCode         string                             `json:"currencyCode" keel:"currency_code,nullzero"`
+	TotalAmount          decimal.NullDecimal                `json:"totalAmount" keel:"total_amount"`
+	ExpectedAmount       decimal.NullDecimal                `json:"expectedAmount" keel:"expected_amount"`
+	VarianceAmount       decimal.NullDecimal                `json:"varianceAmount" keel:"variance_amount"`
+	LineCharges          []FreightInvoiceCharge             `json:"lineCharges" keel:"line_charges,jsonb"`
+	ReferenceNumbers     map[string]string                  `json:"referenceNumbers" keel:"reference_numbers,jsonb"`
+	ReconciliationStatus CarrierInvoiceReconciliationStatus `json:"reconciliationStatus" keel:"reconciliation_status"`
+	ReconciliationNotes  string                             `json:"reconciliationNotes" keel:"reconciliation_notes,nullzero"`
+	Version              int64                              `json:"version" keel:"version,version"`
+	CreatedAt            int64                              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt            int64                              `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Partner *EDIPartner `json:"partner,omitempty" bun:"rel:belongs-to,join:edi_partner_id=id" keel:"belongs:edi_partner_id"`
+	Partner *EDIPartner `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
+}
+
+func (i *CarrierInvoice) BeforeUpdate(ctx context.Context) error {
+	if err := i.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (i *CarrierInvoice) BeforeCreate(ctx context.Context) error {
+	if err := i.BeforeSave(ctx); err != nil {
+		return err
+	}
+	if i.ReconciliationStatus == "" {
+		i.ReconciliationStatus = CarrierInvoiceReconciliationStatusUnmatched
+	}
+
+	return nil
 }
 
 func (i *CarrierInvoice) GetID() pulid.ID {
@@ -127,23 +143,6 @@ func (i *CarrierInvoice) BeforeSave(_ context.Context) error {
 		i.ReconciliationStatus = CarrierInvoiceReconciliationStatusUnmatched
 	}
 	i.InvoiceNumberKey = InvoiceNumberKey(i.InvoiceNumber)
-	return nil
-}
-
-func (i *CarrierInvoice) BeforeAppendModel(ctx context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	if err := i.BeforeSave(ctx); err != nil {
-		return err
-	}
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if i.ID.IsNil() {
-			i.ID = pulid.MustNew("edici_")
-		}
-		i.CreatedAt = now
-	case *bun.UpdateQuery:
-		i.UpdatedAt = now
-	}
 	return nil
 }
 

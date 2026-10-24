@@ -793,14 +793,10 @@ func TestShipmentHandler_ListComments_CursorSortValidationError(t *testing.T) {
 	commentService := shipmentportsmock.NewMockShipmentCommentService(t)
 	shipmentID := pulid.MustNew("shp_")
 	commentID := pulid.MustNew("shc_")
-	encodedCursor, err := pagination.EncodeCursor(pagination.Cursor{
-		ID: commentID,
-		Sort: []pagination.CursorSortField{
-			{Field: "createdAt", Direction: "asc"},
-			{Field: "id", Direction: "desc"},
-		},
-		Values: []any{int64(1), commentID.String()},
-	})
+	encodedCursor, err := pagination.EncodeKeysetCursor([]pagination.CursorSortField{
+		{Field: "createdAt", Direction: "asc"},
+		{Field: "id", Direction: "desc"},
+	}, commentID.String())
 	require.NoError(t, err)
 
 	commentService.EXPECT().
@@ -809,7 +805,7 @@ func TestShipmentHandler_ListComments_CursorSortValidationError(t *testing.T) {
 				req.Filter.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.Filter.TenantInfo.BuID == testutil.TestBuID &&
 				req.Cursor.After == encodedCursor &&
-				req.Cursor.Cursor.ID == commentID
+				req.Cursor.Cursor.Keyset == commentID.String()
 		})).
 		Return(nil, errortypes.NewValidationError(
 			"after",

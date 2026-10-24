@@ -6,25 +6,23 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type WorkerHOSViolation struct {
-	bun.BaseModel `bun:"table:worker_hos_violations,alias:whv" json:"-"`
-	keel.Table    `keel:"worker_hos_violations"`
+	keel.Table `keel:"worker_hos_violations"`
 
-	OrganizationID   pulid.ID `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	BusinessUnitID   pulid.ID `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	WorkerID         pulid.ID `json:"workerId"         bun:"worker_id,pk,type:VARCHAR(100),notnull" keel:"worker_id,pk"`
-	ViolationType    string   `json:"violationType"    bun:"violation_type,pk,type:VARCHAR(64),notnull" keel:"violation_type,pk"`
-	ViolationStartAt int64    `json:"violationStartAt" bun:"violation_start_at,pk,type:BIGINT,notnull" keel:"violation_start_at,pk"`
-	Description      string   `json:"description"      bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	DurationMs       int64    `json:"durationMs"       bun:"duration_ms,type:BIGINT,notnull" keel:"duration_ms"`
-	DayStartAt       *int64   `json:"dayStartAt"       bun:"day_start_at,type:BIGINT,nullzero" keel:"day_start_at"`
-	DayEndAt         *int64   `json:"dayEndAt"         bun:"day_end_at,type:BIGINT,nullzero" keel:"day_end_at"`
-	DetectedAt       int64    `json:"detectedAt"       bun:"detected_at,type:BIGINT,notnull" keel:"detected_at"`
+	OrganizationID   pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID   pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	WorkerID         pulid.ID `json:"workerId" keel:"worker_id,pk"`
+	ViolationType    string   `json:"violationType" keel:"violation_type,pk"`
+	ViolationStartAt int64    `json:"violationStartAt" keel:"violation_start_at,pk"`
+	Description      string   `json:"description" keel:"description,nullzero"`
+	DurationMs       int64    `json:"durationMs" keel:"duration_ms"`
+	DayStartAt       *int64   `json:"dayStartAt" keel:"day_start_at"`
+	DayEndAt         *int64   `json:"dayEndAt" keel:"day_end_at"`
+	DetectedAt       int64    `json:"detectedAt" keel:"detected_at"`
 
-	Worker *worker.Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Worker *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
 }
 
 func (v *WorkerHOSViolation) Validate(multiErr *errortypes.MultiError) {

@@ -8,9 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -39,69 +37,42 @@ func SummaryPayloadKeys() []string {
 // decision. The artifact holds what to show; approving, rejecting and
 // changing happen on the proposal, so there is one place a decision lives.
 type Artifact struct {
-	bun.BaseModel `bun:"table:assistant_artifacts,alias:aart" json:"-"`
-	keel.Table    `keel:"assistant_artifacts"`
+	keel.Table `keel:"assistant_artifacts"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:art_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:art_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ThreadID   pulid.ID `json:"threadId"   bun:"thread_id,type:VARCHAR(100),notnull" keel:"thread_id"`
-	MessageID  pulid.ID `json:"messageId"  bun:"message_id,type:VARCHAR(100),nullzero" keel:"message_id,nullzero"`
-	RunID      pulid.ID `json:"runId"      bun:"run_id,type:VARCHAR(100),nullzero" keel:"run_id,nullzero"`
-	ProposalID pulid.ID `json:"proposalId" bun:"proposal_id,type:VARCHAR(100),nullzero" keel:"proposal_id,nullzero"`
-	PlanID     pulid.ID `json:"planId"     bun:"plan_id,type:VARCHAR(100),nullzero" keel:"plan_id,nullzero"`
+	ThreadID   pulid.ID `json:"threadId" keel:"thread_id"`
+	MessageID  pulid.ID `json:"messageId" keel:"message_id,nullzero"`
+	RunID      pulid.ID `json:"runId" keel:"run_id,nullzero"`
+	ProposalID pulid.ID `json:"proposalId" keel:"proposal_id,nullzero"`
+	PlanID     pulid.ID `json:"planId" keel:"plan_id,nullzero"`
 
-	Kind   Kind   `json:"kind"   bun:"kind,type:VARCHAR(40),notnull" keel:"kind"`
-	Status Status `json:"status" bun:"status,type:VARCHAR(20),notnull,default:'Ready'" keel:"status"`
-	Title  string `json:"title"  bun:"title,type:VARCHAR(200),notnull" keel:"title"`
+	Kind   Kind   `json:"kind" keel:"kind"`
+	Status Status `json:"status" keel:"status"`
+	Title  string `json:"title" keel:"title"`
 	// Payload is kind-specific and bounded; each kind's shape is declared
 	// with the mapper that produces it.
-	Payload map[string]any `json:"payload" bun:"payload,type:JSONB,notnull,default:'{}'" keel:"payload,jsonb"`
+	Payload map[string]any `json:"payload" keel:"payload,jsonb"`
 	// SourceToolCallID ties the artifact to the tool call that produced it,
 	// so a retried turn updates the artifact rather than adding a second.
-	SourceToolCallID string `json:"sourceToolCallId" bun:"source_tool_call_id,type:VARCHAR(200),notnull,default:''" keel:"source_tool_call_id"`
-	Pinned           bool   `json:"pinned"           bun:"pinned,type:BOOLEAN,notnull,default:false" keel:"pinned"`
+	SourceToolCallID string `json:"sourceToolCallId" keel:"source_tool_call_id"`
+	Pinned           bool   `json:"pinned" keel:"pinned"`
 
-	LineageKey string   `json:"lineageKey" bun:"lineage_key,type:VARCHAR(64),notnull,default:''" keel:"lineage_key"`
-	LineageID  pulid.ID `json:"lineageId"  bun:"lineage_id,type:VARCHAR(100),nullzero" keel:"lineage_id,nullzero"`
-	LineageSeq int      `json:"lineageSeq" bun:"lineage_seq,type:INTEGER,notnull,default:1" keel:"lineage_seq"`
+	LineageKey string   `json:"lineageKey" keel:"lineage_key"`
+	LineageID  pulid.ID `json:"lineageId" keel:"lineage_id,nullzero"`
+	LineageSeq int      `json:"lineageSeq" keel:"lineage_seq"`
 	// Slug names the lineage in a link, the same for every version of it and
 	// unique among the conversation's artifacts.
-	Slug string `json:"slug" bun:"slug,type:VARCHAR(80),notnull,default:''" keel:"slug"`
+	Slug string `json:"slug" keel:"slug"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
-}
-
-func (a *Artifact) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("art_")
-		}
-		if a.Status == "" {
-			a.Status = StatusReady
-		}
-		if a.Payload == nil {
-			a.Payload = map[string]any{}
-		}
-		if a.LineageSeq == 0 {
-			a.LineageSeq = 1
-		}
-		a.CreatedAt = now
-		a.UpdatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
-	}
-
-	return nil
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (a *Artifact) BeforeCreate(_ context.Context) error {

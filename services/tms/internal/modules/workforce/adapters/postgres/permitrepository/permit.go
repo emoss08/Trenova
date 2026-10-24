@@ -247,14 +247,7 @@ func (r *repository) WaiveRequirement(
 ) (*permit.Requirement, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permit.Requirement, error) {
 		rq := permitdb.Requirements
-		rows, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			rq.Where(rq.ID.Eq(req.RequirementID)),
-			rq.Status.To(permit.RequirementWaived),
-			rq.WaivedByID.To(req.WaivedByID),
-			rq.WaiverReason.To(req.Reason),
-		)
+		rows, err := rq.Where(rq.ID.Eq(req.RequirementID)).UpdateReturning(ctx, r.db.Keel(ctx), rq.Status.To(permit.RequirementWaived), rq.WaivedByID.To(req.WaivedByID), rq.WaiverReason.To(req.Reason))
 		if err != nil {
 			r.l.Error("failed to waive permit requirement", zap.Error(err))
 			return nil, requirementErrors.Map(err, req.RequirementID.String())

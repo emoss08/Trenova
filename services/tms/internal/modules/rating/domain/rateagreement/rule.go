@@ -12,13 +12,9 @@ import (
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*RateAgreementRule)(nil)
 
 const (
 	maxLabelLength = 150
@@ -29,78 +25,86 @@ const (
 
 // The lane, applicability and price of one line of a contract
 type RateAgreementRule struct {
-	bun.BaseModel `bun:"table:rate_agreement_rules,alias:ragr" json:"-"`
-	keel.Table    `                                                     keel:"rate_agreement_rules,report=Billing,label=Lane Rule"`
+	keel.Table `                                                     keel:"rate_agreement_rules,report=Billing,label=Lane Rule"`
 
-	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:ragr_"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
-	RateAgreementID pulid.ID `json:"rateAgreementId" bun:"rate_agreement_id,type:VARCHAR(100),notnull"   keel:"rate_agreement_id"`
+	ID              pulid.ID `json:"id" keel:"id,pk,autoid:ragr_"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	RateAgreementID pulid.ID `json:"rateAgreementId" keel:"rate_agreement_id"`
 
-	PartyType PartyType  `json:"partyType" bun:"party_type,type:rate_agreement_party_type_enum,notnull"               keel:"party_type"`
-	PartyID   pulid.ID   `json:"partyId"   bun:"party_id,type:VARCHAR(100),notnull"                                   keel:"party_id"`
-	Label     string     `json:"label"     bun:"label,type:VARCHAR(150),nullzero"                                     keel:"label,nullzero"`
-	Status    RuleStatus `json:"status"    bun:"status,type:rate_agreement_rule_status_enum,notnull,default:'Active'" keel:"status"`
+	PartyType PartyType  `json:"partyType" keel:"party_type"`
+	PartyID   pulid.ID   `json:"partyId" keel:"party_id"`
+	Label     string     `json:"label" keel:"label,nullzero"`
+	Status    RuleStatus `json:"status" keel:"status"`
 
-	OriginScopeType  rategeo.ScopeType `json:"originScopeType"  bun:"origin_scope_type,type:rate_geo_scope_type_enum,notnull" keel:"origin_scope_type,label=Origin Scope"`
-	OriginScopeValue string            `json:"originScopeValue" bun:"origin_scope_value,type:VARCHAR(120),nullzero"           keel:"origin_scope_value,nullzero"`
-	OriginCity       string            `json:"originCity"       bun:"origin_city,type:VARCHAR(100),nullzero"                  keel:"origin_city,nullzero"`
+	OriginScopeType  rategeo.ScopeType `json:"originScopeType" keel:"origin_scope_type,label=Origin Scope"`
+	OriginScopeValue string            `json:"originScopeValue" keel:"origin_scope_value,nullzero"`
+	OriginCity       string            `json:"originCity" keel:"origin_city,nullzero"`
 
-	DestinationScopeType  rategeo.ScopeType `json:"destinationScopeType"  bun:"destination_scope_type,type:rate_geo_scope_type_enum,notnull" keel:"destination_scope_type,label=Destination Scope"`
-	DestinationScopeValue string            `json:"destinationScopeValue" bun:"destination_scope_value,type:VARCHAR(120),nullzero"           keel:"destination_scope_value,nullzero"`
-	DestinationCity       string            `json:"destinationCity"       bun:"destination_city,type:VARCHAR(100),nullzero"                  keel:"destination_city,nullzero"`
+	DestinationScopeType  rategeo.ScopeType `json:"destinationScopeType" keel:"destination_scope_type,label=Destination Scope"`
+	DestinationScopeValue string            `json:"destinationScopeValue" keel:"destination_scope_value,nullzero"`
+	DestinationCity       string            `json:"destinationCity" keel:"destination_city,nullzero"`
 
-	LaneKey   string    `json:"laneKey"   bun:"lane_key,type:VARCHAR(255),notnull"                                         keel:"lane_key"`
-	Direction Direction `json:"direction" bun:"direction,type:rate_agreement_direction_enum,notnull,default:'Directional'" keel:"direction"`
+	LaneKey   string    `json:"laneKey" keel:"lane_key"`
+	Direction Direction `json:"direction" keel:"direction"`
 
-	OriginRadiusMeters      *float64       `json:"originRadiusMeters"      bun:"origin_radius_meters,type:DOUBLE PRECISION,nullzero"      keel:"origin_radius_meters"`
-	DestinationRadiusMeters *float64       `json:"destinationRadiusMeters" bun:"destination_radius_meters,type:DOUBLE PRECISION,nullzero" keel:"destination_radius_meters"`
-	OriginLatitude          *float64       `json:"originLatitude"          bun:"origin_latitude,type:FLOAT,nullzero"                      keel:"origin_latitude"`
-	OriginLongitude         *float64       `json:"originLongitude"         bun:"origin_longitude,type:FLOAT,nullzero"                     keel:"origin_longitude"`
-	DestinationLatitude     *float64       `json:"destinationLatitude"     bun:"destination_latitude,type:FLOAT,nullzero"                 keel:"destination_latitude"`
-	DestinationLongitude    *float64       `json:"destinationLongitude"    bun:"destination_longitude,type:FLOAT,nullzero"                keel:"destination_longitude"`
-	OriginCenter            *postgis.Point `json:"-"                       bun:"origin_center,type:geography,scanonly"                    keel:"origin_center,readonly"`
-	DestinationCenter       *postgis.Point `json:"-"                       bun:"destination_center,type:geography,scanonly"               keel:"destination_center,readonly"`
+	OriginRadiusMeters      *float64       `json:"originRadiusMeters" keel:"origin_radius_meters"`
+	DestinationRadiusMeters *float64       `json:"destinationRadiusMeters" keel:"destination_radius_meters"`
+	OriginLatitude          *float64       `json:"originLatitude" keel:"origin_latitude"`
+	OriginLongitude         *float64       `json:"originLongitude" keel:"origin_longitude"`
+	DestinationLatitude     *float64       `json:"destinationLatitude" keel:"destination_latitude"`
+	DestinationLongitude    *float64       `json:"destinationLongitude" keel:"destination_longitude"`
+	OriginCenter            *postgis.Point `json:"-" keel:"origin_center,readonly"`
+	DestinationCenter       *postgis.Point `json:"-" keel:"destination_center,readonly"`
 
-	ServiceTypeIDs   []pulid.ID                   `json:"serviceTypeIds"   bun:"service_type_ids,type:JSONB,nullzero"  keel:"service_type_ids,jsonb,nullzero"`
-	ShipmentTypeIDs  []pulid.ID                   `json:"shipmentTypeIds"  bun:"shipment_type_ids,type:JSONB,nullzero" keel:"shipment_type_ids,jsonb,nullzero"`
-	TractorTypeIDs   []pulid.ID                   `json:"tractorTypeIds"   bun:"tractor_type_ids,type:JSONB,nullzero"  keel:"tractor_type_ids,jsonb,nullzero"`
-	TrailerTypeIDs   []pulid.ID                   `json:"trailerTypeIds"   bun:"trailer_type_ids,type:JSONB,nullzero"  keel:"trailer_type_ids,jsonb,nullzero"`
-	CommodityIDs     []pulid.ID                   `json:"commodityIds"     bun:"commodity_ids,type:JSONB,nullzero"     keel:"commodity_ids,jsonb,nullzero"`
-	FreightClasses   []commodity.FreightClass     `json:"freightClasses"   bun:"freight_classes,type:JSONB,nullzero"   keel:"freight_classes,jsonb,nullzero"`
-	ServiceModels    []modeprofile.ServiceModel   `json:"serviceModels"    bun:"service_models,type:JSONB,nullzero"    keel:"service_models,jsonb,nullzero"`
-	EquipmentClasses []modeprofile.EquipmentClass `json:"equipmentClasses" bun:"equipment_classes,type:JSONB,nullzero" keel:"equipment_classes,jsonb,nullzero"`
+	ServiceTypeIDs   []pulid.ID                   `json:"serviceTypeIds" keel:"service_type_ids,jsonb,nullzero"`
+	ShipmentTypeIDs  []pulid.ID                   `json:"shipmentTypeIds" keel:"shipment_type_ids,jsonb,nullzero"`
+	TractorTypeIDs   []pulid.ID                   `json:"tractorTypeIds" keel:"tractor_type_ids,jsonb,nullzero"`
+	TrailerTypeIDs   []pulid.ID                   `json:"trailerTypeIds" keel:"trailer_type_ids,jsonb,nullzero"`
+	CommodityIDs     []pulid.ID                   `json:"commodityIds" keel:"commodity_ids,jsonb,nullzero"`
+	FreightClasses   []commodity.FreightClass     `json:"freightClasses" keel:"freight_classes,jsonb,nullzero"`
+	ServiceModels    []modeprofile.ServiceModel   `json:"serviceModels" keel:"service_models,jsonb,nullzero"`
+	EquipmentClasses []modeprofile.EquipmentClass `json:"equipmentClasses" keel:"equipment_classes,jsonb,nullzero"`
 
-	MinWeight   decimal.NullDecimal `json:"minWeight"   bun:"min_weight,type:NUMERIC(12,2),nullzero"   keel:"min_weight"`
-	MaxWeight   decimal.NullDecimal `json:"maxWeight"   bun:"max_weight,type:NUMERIC(12,2),nullzero"   keel:"max_weight"`
-	MinDistance decimal.NullDecimal `json:"minDistance" bun:"min_distance,type:NUMERIC(12,2),nullzero" keel:"min_distance"`
-	MaxDistance decimal.NullDecimal `json:"maxDistance" bun:"max_distance,type:NUMERIC(12,2),nullzero" keel:"max_distance"`
-	MinStops    *int16              `json:"minStops"    bun:"min_stops,type:SMALLINT,nullzero"         keel:"min_stops,dimension"`
-	MaxStops    *int16              `json:"maxStops"    bun:"max_stops,type:SMALLINT,nullzero"         keel:"max_stops,dimension"`
+	MinWeight   decimal.NullDecimal `json:"minWeight" keel:"min_weight"`
+	MaxWeight   decimal.NullDecimal `json:"maxWeight" keel:"max_weight"`
+	MinDistance decimal.NullDecimal `json:"minDistance" keel:"min_distance"`
+	MaxDistance decimal.NullDecimal `json:"maxDistance" keel:"max_distance"`
+	MinStops    *int16              `json:"minStops" keel:"min_stops,dimension"`
+	MaxStops    *int16              `json:"maxStops" keel:"max_stops,dimension"`
 
-	DaysOfWeek      int16 `json:"daysOfWeek"      bun:"days_of_week,type:SMALLINT,notnull,default:0"         keel:"days_of_week,dimension"`
-	HazmatOnly      bool  `json:"hazmatOnly"      bun:"hazmat_only,type:BOOLEAN,notnull,default:false"       keel:"hazmat_only"`
-	TempControlOnly bool  `json:"tempControlOnly" bun:"temp_control_only,type:BOOLEAN,notnull,default:false" keel:"temp_control_only"`
+	DaysOfWeek      int16 `json:"daysOfWeek" keel:"days_of_week,dimension"`
+	HazmatOnly      bool  `json:"hazmatOnly" keel:"hazmat_only"`
+	TempControlOnly bool  `json:"tempControlOnly" keel:"temp_control_only"`
 
-	FormulaTemplateID pulid.ID           `json:"formulaTemplateId" bun:"formula_template_id,type:VARCHAR(100),notnull" keel:"formula_template_id"`
-	Inputs            tarifftypes.Inputs `json:"inputs"            bun:"inputs,type:JSONB,notnull,default:'{}'"        keel:"inputs,jsonb"`
-	Currency          string             `json:"currency"          bun:"currency,type:VARCHAR(3),nullzero"             keel:"currency,nullzero"`
+	FormulaTemplateID pulid.ID           `json:"formulaTemplateId" keel:"formula_template_id"`
+	Inputs            tarifftypes.Inputs `json:"inputs" keel:"inputs,jsonb"`
+	Currency          string             `json:"currency" keel:"currency,nullzero"`
 
-	Priority         int16 `json:"priority"         bun:"priority,type:SMALLINT,notnull,default:0"         keel:"priority,dimension"`
-	SpecificityScore int32 `json:"specificityScore" bun:"specificity_score,type:INTEGER,notnull,default:0" keel:"specificity_score,dimension"`
+	Priority         int16 `json:"priority" keel:"priority,dimension"`
+	SpecificityScore int32 `json:"specificityScore" keel:"specificity_score,dimension"`
 
-	EffectiveFrom     int64     `json:"effectiveFrom"     bun:"effective_from,type:BIGINT,notnull"              keel:"effective_from,type=epoch"`
-	EffectiveTo       *int64    `json:"effectiveTo"       bun:"effective_to,type:BIGINT,nullzero"               keel:"effective_to,type=epoch"`
-	SupersedesRuleID  *pulid.ID `json:"supersedesRuleId"  bun:"supersedes_rule_id,type:VARCHAR(100),nullzero"   keel:"supersedes_rule_id"`
-	SourceImportRowID *pulid.ID `json:"sourceImportRowId" bun:"source_import_row_id,type:VARCHAR(100),nullzero" keel:"source_import_row_id"`
+	EffectiveFrom     int64     `json:"effectiveFrom" keel:"effective_from,type=epoch"`
+	EffectiveTo       *int64    `json:"effectiveTo" keel:"effective_to,type=epoch"`
+	SupersedesRuleID  *pulid.ID `json:"supersedesRuleId" keel:"supersedes_rule_id"`
+	SourceImportRowID *pulid.ID `json:"sourceImportRowId" keel:"source_import_row_id"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Agreement *RateAgreement `json:"-" bun:"rel:belongs-to,join:rate_agreement_id=id" keel:"belongs:rate_agreement_id"`
+	Agreement *RateAgreement `json:"-" keel:"belongs:rate_agreement_id"`
 
 	lane laneState
+}
+
+func (rar *RateAgreementRule) BeforeUpdate(_ context.Context) error {
+	rar.applyDefaults()
+	if rar.LaneKey == "" {
+		return ErrLaneNotApplied
+	}
+
+	return nil
 }
 
 // OriginScope and DestinationScope read the two ends back as the geography
@@ -399,30 +403,19 @@ func validateDecimalRange(
 	}
 }
 
-func (rar *RateAgreementRule) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (rar *RateAgreementRule) BeforeCreate(ctx context.Context) error {
+	if rar.Status == "" {
+		rar.Status = RuleStatusActive
+	}
+	if rar.Direction == "" {
+		rar.Direction = DirectionDirectional
+	}
 	rar.applyDefaults()
 	if rar.LaneKey == "" {
 		return ErrLaneNotApplied
 	}
 
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rar.ID.IsNil() {
-			rar.ID = pulid.MustNew("ragr_")
-		}
-		rar.CreatedAt = now
-		rar.UpdatedAt = now
-	case *bun.UpdateQuery:
-		rar.UpdatedAt = now
-	}
-
 	return nil
-}
-
-func (rar *RateAgreementRule) BeforeCreate(ctx context.Context) error {
-	return rar.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (rar *RateAgreementRule) GetID() pulid.ID {

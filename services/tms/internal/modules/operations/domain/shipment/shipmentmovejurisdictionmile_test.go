@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func validJurisdictionMile() *ShipmentMoveJurisdictionMile {
@@ -213,11 +212,11 @@ func TestShipmentMoveJurisdictionMile_DistanceInMiles(t *testing.T) {
 	assert.InDelta(t, 1.0, lowercase.DistanceInMiles(), 0.000001)
 }
 
-func TestShipmentMoveJurisdictionMile_BeforeAppendModelDefaults(t *testing.T) {
+func TestShipmentMoveJurisdictionMile_BeforeCreateDefaults(t *testing.T) {
 	t.Parallel()
 
 	row := &ShipmentMoveJurisdictionMile{}
-	require.NoError(t, row.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
+	require.NoError(t, row.BeforeCreate(t.Context()))
 
 	assert.False(t, row.ID.IsNil())
 	assert.Equal(t, JurisdictionMileSourceRouteCalculation, row.Source)
@@ -231,7 +230,7 @@ func TestShipmentMoveJurisdictionMile_BeforeAppendModelDefaults(t *testing.T) {
 		DistanceUnits: JurisdictionDistanceUnitsKilometers,
 		CalculatedAt:  42,
 	}
-	require.NoError(t, explicit.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
+	require.NoError(t, explicit.BeforeCreate(t.Context()))
 	assert.Equal(t, JurisdictionMileSourceManual, explicit.Source)
 	assert.Equal(t, JurisdictionDistanceUnitsKilometers, explicit.DistanceUnits)
 	assert.Equal(t, int64(42), explicit.CalculatedAt)

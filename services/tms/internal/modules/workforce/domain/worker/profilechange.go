@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var ErrInvalidProfileChangeStatus = errors.New("invalid profile change status")
@@ -182,7 +181,6 @@ func DiffContact(current, wanted ContactSnapshot) []FieldChange {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerProfileChangeRequest)(nil)
 	_ validationframework.TenantedEntity = (*WorkerProfileChangeRequest)(nil)
 )
 
@@ -192,27 +190,26 @@ var (
 // exactly what is being asked and an approval applies exactly that — not
 // whatever else happened to be on the form.
 type WorkerProfileChangeRequest struct {
-	bun.BaseModel `bun:"table:worker_profile_change_requests,alias:wpcr" json:"-"`
-	keel.Table    `                                                               keel:"worker_profile_change_requests"`
+	keel.Table `                                                               keel:"worker_profile_change_requests"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:wpcr_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"           keel:"worker_id"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wpcr_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
 
-	Status       ProfileChangeStatus `json:"status"       bun:"status,type:profile_change_status_enum,notnull,default:'Pending'" keel:"status"`
-	Changes      []FieldChange       `json:"changes"      bun:"changes,type:JSONB,notnull"                                       keel:"changes,jsonb"`
-	Note         string              `json:"note"         bun:"note,type:VARCHAR(500),nullzero"                                  keel:"note,nullzero"`
-	SubmittedAt  int64               `json:"submittedAt"  bun:"submitted_at,type:BIGINT,notnull"                                 keel:"submitted_at"`
-	DecidedAt    *int64              `json:"decidedAt"    bun:"decided_at,type:BIGINT,nullzero"                                  keel:"decided_at"`
-	DecidedByID  pulid.ID            `json:"decidedById"  bun:"decided_by_id,type:VARCHAR(100),nullzero"                         keel:"decided_by_id,nullzero"`
-	DecisionNote string              `json:"decisionNote" bun:"decision_note,type:VARCHAR(500),nullzero"                         keel:"decision_note,nullzero"`
+	Status       ProfileChangeStatus `json:"status" keel:"status"`
+	Changes      []FieldChange       `json:"changes" keel:"changes,jsonb"`
+	Note         string              `json:"note" keel:"note,nullzero"`
+	SubmittedAt  int64               `json:"submittedAt" keel:"submitted_at"`
+	DecidedAt    *int64              `json:"decidedAt" keel:"decided_at"`
+	DecidedByID  pulid.ID            `json:"decidedById" keel:"decided_by_id,nullzero"`
+	DecisionNote string              `json:"decisionNote" keel:"decision_note,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker *Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Worker *Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
 }
 
 func (r *WorkerProfileChangeRequest) Validate(multiErr *errortypes.MultiError) {
@@ -328,29 +325,6 @@ func (r *WorkerProfileChangeRequest) GetResourceType() string { return "profile_
 
 func (r *WorkerProfileChangeRequest) GetResourceID() string { return r.ID.String() }
 
-func (r *WorkerProfileChangeRequest) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("wpcr_")
-		}
-		if r.Status == "" {
-			r.Status = ProfileChangePending
-		}
-		if r.SubmittedAt <= 0 {
-			r.SubmittedAt = now
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (r *WorkerProfileChangeRequest) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
 	if r.Status == "" {
@@ -359,6 +333,7 @@ func (r *WorkerProfileChangeRequest) BeforeCreate(_ context.Context) error {
 	if r.SubmittedAt <= 0 {
 		r.SubmittedAt = now
 	}
+	now := timeutils.NowUnix()
 
 	return nil
 }

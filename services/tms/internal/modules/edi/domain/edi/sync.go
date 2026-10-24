@@ -8,9 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type ShipmentSyncPolicy string
@@ -67,52 +65,94 @@ const (
 )
 
 type ShipmentLink struct {
-	bun.BaseModel `json:"-" bun:"table:edi_shipment_links,alias:esl"`
-	keel.Table    `keel:"edi_shipment_links"`
+	keel.Table `keel:"edi_shipment_links"`
 
-	ID                   pulid.ID           `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edislink_"`
-	BusinessUnitID       pulid.ID           `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	SourceOrganizationID pulid.ID           `json:"sourceOrganizationId" bun:"source_organization_id,type:VARCHAR(100),notnull" keel:"source_organization_id"`
-	TargetOrganizationID pulid.ID           `json:"targetOrganizationId" bun:"target_organization_id,type:VARCHAR(100),notnull" keel:"target_organization_id"`
-	SourceShipmentID     pulid.ID           `json:"sourceShipmentId"     bun:"source_shipment_id,type:VARCHAR(100),notnull" keel:"source_shipment_id"`
-	TargetShipmentID     pulid.ID           `json:"targetShipmentId"     bun:"target_shipment_id,type:VARCHAR(100),notnull" keel:"target_shipment_id"`
-	TenderTransferID     pulid.ID           `json:"tenderTransferId"     bun:"tender_transfer_id,type:VARCHAR(100),notnull" keel:"tender_transfer_id"`
-	OriginatingMessageID pulid.ID           `json:"originatingMessageId" bun:"originating_message_id,type:VARCHAR(100),nullzero" keel:"originating_message_id,nullzero"`
-	SyncPolicy           ShipmentSyncPolicy `json:"syncPolicy"           bun:"sync_policy,type:edi_shipment_sync_policy_enum,notnull,default:'AutoOperational'" keel:"sync_policy"`
-	FieldOwnership       map[string]string  `json:"fieldOwnership"       bun:"field_ownership,type:JSONB,notnull,default:'{}'" keel:"field_ownership,jsonb"`
-	Status               ShipmentLinkStatus `json:"status"               bun:"status,type:edi_shipment_link_status_enum,notnull,default:'Active'" keel:"status"`
-	Version              int64              `json:"version"              bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt            int64              `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt            int64              `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                   pulid.ID           `json:"id" keel:"id,pk,autoid:edislink_"`
+	BusinessUnitID       pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	SourceOrganizationID pulid.ID           `json:"sourceOrganizationId" keel:"source_organization_id"`
+	TargetOrganizationID pulid.ID           `json:"targetOrganizationId" keel:"target_organization_id"`
+	SourceShipmentID     pulid.ID           `json:"sourceShipmentId" keel:"source_shipment_id"`
+	TargetShipmentID     pulid.ID           `json:"targetShipmentId" keel:"target_shipment_id"`
+	TenderTransferID     pulid.ID           `json:"tenderTransferId" keel:"tender_transfer_id"`
+	OriginatingMessageID pulid.ID           `json:"originatingMessageId" keel:"originating_message_id,nullzero"`
+	SyncPolicy           ShipmentSyncPolicy `json:"syncPolicy" keel:"sync_policy"`
+	FieldOwnership       map[string]string  `json:"fieldOwnership" keel:"field_ownership,jsonb"`
+	Status               ShipmentLinkStatus `json:"status" keel:"status"`
+	Version              int64              `json:"version" keel:"version,version"`
+	CreatedAt            int64              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt            int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+}
+
+func (l *ShipmentLink) BeforeUpdate(ctx context.Context) error {
+	if err := l.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (l *ShipmentLink) BeforeCreate(ctx context.Context) error {
+	if err := l.BeforeSave(ctx); err != nil {
+		return err
+	}
+	if l.SyncPolicy == "" {
+		l.SyncPolicy = ShipmentSyncPolicyAutoOperational
+	}
+	if l.Status == "" {
+		l.Status = ShipmentLinkStatusActive
+	}
+
+	return nil
 }
 
 type TransferChange struct {
-	bun.BaseModel `json:"-" bun:"table:edi_transfer_changes,alias:etc"`
-	keel.Table    `keel:"edi_transfer_changes"`
+	keel.Table `keel:"edi_transfer_changes"`
 
-	ID                    pulid.ID                     `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:editc_"`
-	BusinessUnitID        pulid.ID                     `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	ShipmentLinkID        pulid.ID                     `json:"shipmentLinkId"        bun:"shipment_link_id,type:VARCHAR(100),notnull" keel:"shipment_link_id"`
-	Direction             TransferChangeDirection      `json:"direction"             bun:"direction,type:edi_transfer_change_direction_enum,notnull" keel:"direction"`
-	ChangeType            string                       `json:"changeType"            bun:"change_type,type:VARCHAR(100),notnull" keel:"change_type"`
-	Status                TransferChangeStatus         `json:"status"                bun:"status,type:edi_transfer_change_status_enum,notnull,default:'PendingReview'" keel:"status"`
-	ConflictStatus        TransferChangeConflictStatus `json:"conflictStatus"        bun:"conflict_status,type:edi_transfer_change_conflict_status_enum,notnull,default:'None'" keel:"conflict_status"`
-	ConflictReason        string                       `json:"conflictReason"        bun:"conflict_reason,type:TEXT,nullzero" keel:"conflict_reason,nullzero"`
-	IdempotencyKey        string                       `json:"idempotencyKey"        bun:"idempotency_key,type:VARCHAR(255),notnull" keel:"idempotency_key"`
-	SourceShipmentVersion int64                        `json:"sourceShipmentVersion" bun:"source_shipment_version,type:BIGINT,notnull" keel:"source_shipment_version"`
-	TargetShipmentVersion int64                        `json:"targetShipmentVersion" bun:"target_shipment_version,type:BIGINT,notnull" keel:"target_shipment_version"`
-	Payload               map[string]any               `json:"payload"               bun:"payload,type:JSONB,notnull,default:'{}'" keel:"payload,jsonb"`
-	Diff                  map[string]any               `json:"diff"                  bun:"diff,type:JSONB,notnull,default:'{}'" keel:"diff,jsonb"`
-	ReviewedByID          pulid.ID                     `json:"reviewedById"          bun:"reviewed_by_id,type:VARCHAR(100),nullzero" keel:"reviewed_by_id,nullzero"`
-	ReviewedAt            *int64                       `json:"reviewedAt"            bun:"reviewed_at,type:BIGINT,nullzero" keel:"reviewed_at"`
-	AppliedByID           pulid.ID                     `json:"appliedById"           bun:"applied_by_id,type:VARCHAR(100),nullzero" keel:"applied_by_id,nullzero"`
-	AppliedAt             *int64                       `json:"appliedAt"             bun:"applied_at,type:BIGINT,nullzero" keel:"applied_at"`
-	FailureReason         string                       `json:"failureReason"         bun:"failure_reason,type:TEXT,nullzero" keel:"failure_reason,nullzero"`
-	SearchVector          string                       `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                  string                       `json:"-"                     bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
-	Version               int64                        `json:"version"               bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt             int64                        `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt             int64                        `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                    pulid.ID                     `json:"id" keel:"id,pk,autoid:editc_"`
+	BusinessUnitID        pulid.ID                     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	ShipmentLinkID        pulid.ID                     `json:"shipmentLinkId" keel:"shipment_link_id"`
+	Direction             TransferChangeDirection      `json:"direction" keel:"direction"`
+	ChangeType            string                       `json:"changeType" keel:"change_type"`
+	Status                TransferChangeStatus         `json:"status" keel:"status"`
+	ConflictStatus        TransferChangeConflictStatus `json:"conflictStatus" keel:"conflict_status"`
+	ConflictReason        string                       `json:"conflictReason" keel:"conflict_reason,nullzero"`
+	IdempotencyKey        string                       `json:"idempotencyKey" keel:"idempotency_key"`
+	SourceShipmentVersion int64                        `json:"sourceShipmentVersion" keel:"source_shipment_version"`
+	TargetShipmentVersion int64                        `json:"targetShipmentVersion" keel:"target_shipment_version"`
+	Payload               map[string]any               `json:"payload" keel:"payload,jsonb"`
+	Diff                  map[string]any               `json:"diff" keel:"diff,jsonb"`
+	ReviewedByID          pulid.ID                     `json:"reviewedById" keel:"reviewed_by_id,nullzero"`
+	ReviewedAt            *int64                       `json:"reviewedAt" keel:"reviewed_at"`
+	AppliedByID           pulid.ID                     `json:"appliedById" keel:"applied_by_id,nullzero"`
+	AppliedAt             *int64                       `json:"appliedAt" keel:"applied_at"`
+	FailureReason         string                       `json:"failureReason" keel:"failure_reason,nullzero"`
+	SearchVector          string                       `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                  string                       `json:"-" keel:"rank,computed"`
+	Version               int64                        `json:"version" keel:"version,version"`
+	CreatedAt             int64                        `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt             int64                        `json:"updatedAt" keel:"updated_at,autoupdate"`
+}
+
+func (c *TransferChange) BeforeUpdate(ctx context.Context) error {
+	if err := c.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *TransferChange) BeforeCreate(ctx context.Context) error {
+	if err := c.BeforeSave(ctx); err != nil {
+		return err
+	}
+	if c.Status == "" {
+		c.Status = TransferChangeStatusPendingReview
+	}
+	if c.ConflictStatus == "" {
+		c.ConflictStatus = TransferChangeConflictNone
+	}
+
+	return nil
 }
 
 func (l *ShipmentLink) BeforeSave(_ context.Context) error {
@@ -124,23 +164,6 @@ func (l *ShipmentLink) BeforeSave(_ context.Context) error {
 	}
 	if l.FieldOwnership == nil {
 		l.FieldOwnership = DefaultShipmentFieldOwnership()
-	}
-	return nil
-}
-
-func (l *ShipmentLink) BeforeAppendModel(ctx context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	if err := l.BeforeSave(ctx); err != nil {
-		return err
-	}
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if l.ID.IsNil() {
-			l.ID = pulid.MustNew("edislink_")
-		}
-		l.CreatedAt = now
-	case *bun.UpdateQuery:
-		l.UpdatedAt = now
 	}
 	return nil
 }
@@ -157,23 +180,6 @@ func (c *TransferChange) BeforeSave(_ context.Context) error {
 	}
 	if c.ConflictStatus == "" {
 		c.ConflictStatus = TransferChangeConflictNone
-	}
-	return nil
-}
-
-func (c *TransferChange) BeforeAppendModel(ctx context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	if err := c.BeforeSave(ctx); err != nil {
-		return err
-	}
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("editc_")
-		}
-		c.CreatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
 	}
 	return nil
 }

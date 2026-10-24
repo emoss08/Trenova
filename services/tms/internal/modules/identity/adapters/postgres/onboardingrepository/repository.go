@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding/onboardingdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -79,20 +78,11 @@ func (r *repository) Complete(
 			completedAt = o.CompletedAt.To(*entity.CompletedAt)
 		}
 
-		rows, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			o.Where(
-				o.ID.Eq(entity.ID),
-				o.Version.Eq(entity.Version),
-				o.Status.Eq(onboarding.StatusPending),
-			),
-			o.Status.To(entity.Status),
-			o.OperationType.To(entity.OperationType),
-			o.SampleDataLoaded.To(entity.SampleDataLoaded),
-			completedAt,
-			o.CompletedByID.To(entity.CompletedByID),
-		)
+		rows, err := o.Where(
+			o.ID.Eq(entity.ID),
+			o.Version.Eq(entity.Version),
+			o.Status.Eq(onboarding.StatusPending),
+		).UpdateReturning(ctx, r.db.Keel(ctx), o.Status.To(entity.Status), o.OperationType.To(entity.OperationType), o.SampleDataLoaded.To(entity.SampleDataLoaded), completedAt, o.CompletedByID.To(entity.CompletedByID))
 		if err != nil {
 			r.l.Error("failed to complete onboarding",
 				zap.String("onboardingId", entity.ID.String()),

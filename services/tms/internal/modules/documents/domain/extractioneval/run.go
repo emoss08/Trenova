@@ -12,14 +12,11 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook      = (*ExtractionRun)(nil)
 	_ pagination.CursorEntity        = (*ExtractionRun)(nil)
 	_ domaintypes.PostgresSearchable = (*ExtractionRun)(nil)
 )
@@ -38,55 +35,54 @@ func RunWorkflowID(runID pulid.ID) string {
 }
 
 type ExtractionRun struct {
-	bun.BaseModel `bun:"table:extraction_eval_runs,alias:eer" json:"-"`
-	keel.Table    `keel:"extraction_eval_runs"`
+	keel.Table `keel:"extraction_eval_runs"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:eer_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:eer_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Task          aicorrection.Task `json:"task"          bun:"task,type:VARCHAR(50),notnull" keel:"task"`
-	Status        RunStatus         `json:"status"        bun:"status,type:VARCHAR(20),notnull,default:'Queued'" keel:"status"`
-	ProviderID    pulid.ID          `json:"providerId"    bun:"provider_id,type:VARCHAR(100),notnull" keel:"provider_id"`
-	ProviderName  string            `json:"providerName"  bun:"provider_name,type:VARCHAR(100),notnull" keel:"provider_name"`
-	ProviderModel string            `json:"providerModel" bun:"provider_model,type:VARCHAR(255),nullzero" keel:"provider_model,nullzero"`
-	ServedModel   string            `json:"servedModel"   bun:"served_model,type:VARCHAR(255),nullzero" keel:"served_model,nullzero"`
-	CaseLimit     int               `json:"caseLimit"     bun:"case_limit,type:INTEGER,notnull" keel:"case_limit"`
+	Task          aicorrection.Task `json:"task" keel:"task"`
+	Status        RunStatus         `json:"status" keel:"status"`
+	ProviderID    pulid.ID          `json:"providerId" keel:"provider_id"`
+	ProviderName  string            `json:"providerName" keel:"provider_name"`
+	ProviderModel string            `json:"providerModel" keel:"provider_model,nullzero"`
+	ServedModel   string            `json:"servedModel" keel:"served_model,nullzero"`
+	CaseLimit     int               `json:"caseLimit" keel:"case_limit"`
 
-	CasesTotal     int `json:"casesTotal"     bun:"cases_total,type:INTEGER,notnull,default:0" keel:"cases_total"`
-	CasesCompleted int `json:"casesCompleted" bun:"cases_completed,type:INTEGER,notnull,default:0" keel:"cases_completed"`
-	CasesFailed    int `json:"casesFailed"    bun:"cases_failed,type:INTEGER,notnull,default:0" keel:"cases_failed"`
-	CasesSkipped   int `json:"casesSkipped"   bun:"cases_skipped,type:INTEGER,notnull,default:0" keel:"cases_skipped"`
+	CasesTotal     int `json:"casesTotal" keel:"cases_total"`
+	CasesCompleted int `json:"casesCompleted" keel:"cases_completed"`
+	CasesFailed    int `json:"casesFailed" keel:"cases_failed"`
+	CasesSkipped   int `json:"casesSkipped" keel:"cases_skipped"`
 
-	ScoredCount      int     `json:"scoredCount"      bun:"scored_count,type:INTEGER,notnull,default:0" keel:"scored_count"`
-	CorrectCount     int     `json:"correctCount"     bun:"correct_count,type:INTEGER,notnull,default:0" keel:"correct_count"`
-	CorrectedCount   int     `json:"correctedCount"   bun:"corrected_count,type:INTEGER,notnull,default:0" keel:"corrected_count"`
-	MissedCount      int     `json:"missedCount"      bun:"missed_count,type:INTEGER,notnull,default:0" keel:"missed_count"`
-	UnconfirmedCount int     `json:"unconfirmedCount" bun:"unconfirmed_count,type:INTEGER,notnull,default:0" keel:"unconfirmed_count"`
-	UnscoredCount    int     `json:"unscoredCount"    bun:"unscored_count,type:INTEGER,notnull,default:0" keel:"unscored_count"`
-	Accuracy         float64 `json:"accuracy"         bun:"accuracy,type:DOUBLE PRECISION,notnull,default:0" keel:"accuracy"`
+	ScoredCount      int     `json:"scoredCount" keel:"scored_count"`
+	CorrectCount     int     `json:"correctCount" keel:"correct_count"`
+	CorrectedCount   int     `json:"correctedCount" keel:"corrected_count"`
+	MissedCount      int     `json:"missedCount" keel:"missed_count"`
+	UnconfirmedCount int     `json:"unconfirmedCount" keel:"unconfirmed_count"`
+	UnscoredCount    int     `json:"unscoredCount" keel:"unscored_count"`
+	Accuracy         float64 `json:"accuracy" keel:"accuracy"`
 
-	FieldAccuracy []aicorrection.FieldAccuracy `json:"fieldAccuracy" bun:"field_accuracy,type:JSONB,notnull,default:'[]'" keel:"field_accuracy,jsonb"`
+	FieldAccuracy []aicorrection.FieldAccuracy `json:"fieldAccuracy" keel:"field_accuracy,jsonb"`
 
-	CostUSD      decimal.Decimal `json:"costUsd"      bun:"cost_usd,type:NUMERIC(14,6),notnull,default:0" keel:"cost_usd"`
-	InputTokens  int64           `json:"inputTokens"  bun:"input_tokens,type:BIGINT,notnull,default:0" keel:"input_tokens"`
-	OutputTokens int64           `json:"outputTokens" bun:"output_tokens,type:BIGINT,notnull,default:0" keel:"output_tokens"`
-	AvgLatencyMs int64           `json:"avgLatencyMs" bun:"avg_latency_ms,type:BIGINT,notnull,default:0" keel:"avg_latency_ms"`
+	CostUSD      decimal.Decimal `json:"costUsd" keel:"cost_usd"`
+	InputTokens  int64           `json:"inputTokens" keel:"input_tokens"`
+	OutputTokens int64           `json:"outputTokens" keel:"output_tokens"`
+	AvgLatencyMs int64           `json:"avgLatencyMs" keel:"avg_latency_ms"`
 
-	StopReason     string `json:"stopReason"     bun:"stop_reason,type:TEXT,nullzero" keel:"stop_reason,nullzero"`
-	FailureMessage string `json:"failureMessage" bun:"failure_message,type:TEXT,nullzero" keel:"failure_message,nullzero"`
+	StopReason     string `json:"stopReason" keel:"stop_reason,nullzero"`
+	FailureMessage string `json:"failureMessage" keel:"failure_message,nullzero"`
 
-	RequestedByID pulid.ID `json:"requestedById" bun:"requested_by_id,type:VARCHAR(100),notnull" keel:"requested_by_id"`
-	WorkflowID    string   `json:"workflowId"    bun:"workflow_id,type:VARCHAR(255),nullzero" keel:"workflow_id,nullzero"`
-	StartedAt     *int64   `json:"startedAt"     bun:"started_at,type:BIGINT,nullzero" keel:"started_at"`
-	FinishedAt    *int64   `json:"finishedAt"    bun:"finished_at,type:BIGINT,nullzero" keel:"finished_at"`
+	RequestedByID pulid.ID `json:"requestedById" keel:"requested_by_id"`
+	WorkflowID    string   `json:"workflowId" keel:"workflow_id,nullzero"`
+	StartedAt     *int64   `json:"startedAt" keel:"started_at"`
+	FinishedAt    *int64   `json:"finishedAt" keel:"finished_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (r *ExtractionRun) Validate(multiErr *errortypes.MultiError) {
@@ -193,25 +189,6 @@ func (r *ExtractionRun) GetPostgresSearchConfig() domaintypes.PostgresSearchConf
 			{Name: "status", Type: domaintypes.FieldTypeEnum},
 		},
 	}
-}
-
-func (r *ExtractionRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("eer_")
-		}
-		if r.CreatedAt == 0 {
-			r.CreatedAt = now
-		}
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (r *ExtractionRun) BeforeCreate(_ context.Context) error {

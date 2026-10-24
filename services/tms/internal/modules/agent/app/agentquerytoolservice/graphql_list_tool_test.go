@@ -1,6 +1,7 @@
 package agentquerytoolservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"context"
 	"errors"
 	"slices"
@@ -114,9 +115,9 @@ func (m *manufacturerRows) ListConnection(
 
 	rows := m.matching(req.Filter)
 	start := 0
-	if after := req.Cursor.Cursor.ID; after.IsNotNil() {
+	if after := req.Cursor.Cursor.Keyset; after != "" {
 		for idx, row := range rows {
-			if row.ID == after {
+			if row.ID.String() == after {
 				start = idx + 1
 			}
 		}
@@ -124,10 +125,10 @@ func (m *manufacturerRows) ListConnection(
 	end := min(start+req.Cursor.Limit+1, len(rows))
 	if req.Cursor.IncludeTotalCount {
 		total := len(rows)
-		return pagination.NewCursorListResultWithTotalCount(rows[start:end], req.Cursor.Limit, &total), nil
+		return pagetest.OfTotal(rows[start:end], req.Cursor.Limit, &total), nil
 	}
 
-	return pagination.NewCursorListResult(rows[start:end], req.Cursor.Limit), nil
+	return pagetest.Of(rows[start:end], req.Cursor.Limit), nil
 }
 
 func (m *manufacturerRows) lastConnection() *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest {

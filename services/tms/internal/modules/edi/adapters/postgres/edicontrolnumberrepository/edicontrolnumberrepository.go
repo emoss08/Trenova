@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -113,12 +112,7 @@ func (r *repository) ResetControlNumber(
 			documentTypeID: req.DocumentTypeID,
 			kind:           req.Kind,
 		}
-		rows, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			es.Where(key.where()...),
-			es.NextValue.To(req.NextValue),
-		)
+		rows, err := es.Where(key.where()...).UpdateReturning(ctx, r.db.Keel(ctx), es.NextValue.To(req.NextValue))
 		if err != nil {
 			return nil, sequenceErrors.Map(err, string(req.Kind))
 		}

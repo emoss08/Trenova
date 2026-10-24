@@ -1,41 +1,15 @@
 package tenant
 
 import (
-	"context"
 
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
 	defaultFunctionalCurrency = "USD"
 	defaultUserLocale         = "en"
 )
-
-func (u *User) BeforeCreate(ctx context.Context) error {
-	if err := u.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil)); err != nil {
-		return err
-	}
-	if u.Status == "" {
-		u.Status = domaintypes.StatusActive
-	}
-	if u.TimeFormat == "" {
-		u.TimeFormat = domaintypes.TimeFormat12Hour
-	}
-	if u.Locale == "" {
-		u.Locale = defaultUserLocale
-	}
-	if u.AvatarStyle == "" {
-		u.AvatarStyle = AvatarStyleAuto
-	}
-	if u.AvailabilityStatus == "" {
-		u.AvailabilityStatus = AvailabilityAvailable
-	}
-
-	return nil
-}
 
 func NewDefaultAccountingControl(orgID, buID pulid.ID) *AccountingControl {
 	return &AccountingControl{

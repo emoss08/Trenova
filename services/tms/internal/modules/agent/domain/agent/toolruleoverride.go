@@ -1,14 +1,11 @@
 package agent
 
 import (
-	"context"
 	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -17,41 +14,24 @@ const (
 )
 
 type ToolRuleOverride struct {
-	bun.BaseModel `bun:"table:agent_tool_rule_overrides,alias:atro" json:"-"`
-	keel.Table    `keel:"agent_tool_rule_overrides"`
+	keel.Table `keel:"agent_tool_rule_overrides"`
 
-	ID             pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:atro_"`
-	BusinessUnitID pulid.ID     `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID     `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ToolName       string       `json:"toolName"       bun:"tool_name,type:VARCHAR(100),notnull" keel:"tool_name"`
-	MaxTier        AutonomyTier `json:"maxTier"        bun:"max_tier,type:VARCHAR(30),nullzero" keel:"max_tier,nullzero"`
-	ReadsExternal  ExternalRead `json:"readsExternal"  bun:"reads_external,type:VARCHAR(20),nullzero" keel:"reads_external,nullzero"`
-	Reason         string       `json:"reason"         bun:"reason,type:TEXT,notnull" keel:"reason"`
-	UpdatedByID    pulid.ID     `json:"updatedById"    bun:"updated_by_id,type:VARCHAR(100),nullzero" keel:"updated_by_id,nullzero"`
-	Version        int64        `json:"version"        bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
-	CreatedAt      int64        `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64        `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID     `json:"id" keel:"id,pk,autoid:atro_"`
+	BusinessUnitID pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ToolName       string       `json:"toolName" keel:"tool_name"`
+	MaxTier        AutonomyTier `json:"maxTier" keel:"max_tier,nullzero"`
+	ReadsExternal  ExternalRead `json:"readsExternal" keel:"reads_external,nullzero"`
+	Reason         string       `json:"reason" keel:"reason"`
+	UpdatedByID    pulid.ID     `json:"updatedById" keel:"updated_by_id,nullzero"`
+	Version        int64        `json:"version" keel:"version,version"`
+	CreatedAt      int64        `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64        `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (o *ToolRuleOverride) GetID() pulid.ID { return o.ID }
 
 func (o *ToolRuleOverride) GetTableName() string { return "agent_tool_rule_overrides" }
-
-func (o *ToolRuleOverride) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if o.ID.IsNil() {
-			o.ID = pulid.MustNew(ToolRuleOverrideIDPrefix)
-		}
-		o.CreatedAt = now
-		o.UpdatedAt = now
-	case *bun.UpdateQuery:
-		o.UpdatedAt = now
-	}
-
-	return nil
-}
 
 func (o *ToolRuleOverride) Empty() bool {
 	return o == nil || (o.MaxTier == "" && o.ReadsExternal == "")

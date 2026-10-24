@@ -1,7 +1,6 @@
 package distanceoverride
 
 import (
-	"context"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -13,43 +12,37 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DistanceOverride)(nil)
 	_ validationframework.TenantedEntity = (*DistanceOverride)(nil)
 	_ domaintypes.PostgresSearchable     = (*DistanceOverride)(nil)
 	_ pagination.CursorEntity            = (*DistanceOverride)(nil)
 )
 
 type DistanceOverride struct {
-	bun.BaseModel             `bun:"table:distance_overrides,alias:diso" json:"-"`
-	keel.Table                `keel:"distance_overrides"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
-
-	ID                    pulid.ID `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:do_"`
-	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	OriginLocationID      pulid.ID `json:"originLocationId"      bun:"origin_location_id,type:VARCHAR(100),notnull" keel:"origin_location_id"`
-	DestinationLocationID pulid.ID `json:"destinationLocationId" bun:"destination_location_id,type:VARCHAR(100),notnull" keel:"destination_location_id"`
-	CustomerID            pulid.ID `json:"customerId"            bun:"customer_id,type:VARCHAR(100),nullzero" keel:"customer_id,nullzero"`
-	Distance              float64  `json:"distance"              bun:"distance,type:FLOAT,notnull" keel:"distance"`
-	RouteSignature        string   `json:"-"                     bun:"route_signature,type:TEXT,notnull" keel:"route_signature"`
-	Version               int64    `json:"version"               bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt             int64    `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt             int64    `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector          string   `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	keel.Table            `keel:"distance_overrides"`
+	ID                    pulid.ID `json:"id" keel:"id,pk,autoid:do_"`
+	BusinessUnitID        pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	OriginLocationID      pulid.ID `json:"originLocationId" keel:"origin_location_id"`
+	DestinationLocationID pulid.ID `json:"destinationLocationId" keel:"destination_location_id"`
+	CustomerID            pulid.ID `json:"customerId" keel:"customer_id,nullzero"`
+	Distance              float64  `json:"distance" keel:"distance"`
+	RouteSignature        string   `json:"-" keel:"route_signature"`
+	Version               int64    `json:"version" keel:"version,version"`
+	CreatedAt             int64    `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt             int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector          string   `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
 
 	// Relationships
-	BusinessUnit        *tenant.BusinessUnit    `json:"-"                             bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization        *tenant.Organization    `json:"-"                             bun:"rel:belongs-to,join:organization_id=id"`
-	OriginLocation      *location.Location      `json:"originLocation,omitempty"      bun:"rel:belongs-to,join:origin_location_id=id" keel:"belongs:origin_location_id"`
-	DestinationLocation *location.Location      `json:"destinationLocation,omitempty" bun:"rel:belongs-to,join:destination_location_id=id" keel:"belongs:destination_location_id"`
-	Customer            *customer.Customer      `json:"customer,omitempty"            bun:"rel:belongs-to,join:customer_id=id" keel:"belongs:customer_id"`
-	IntermediateStops   []*DistanceOverrideStop `json:"intermediateStops,omitempty"   bun:"rel:has-many,join:id=distance_override_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:distance_override_id"`
+	BusinessUnit        *tenant.BusinessUnit    `json:"-"`
+	Organization        *tenant.Organization    `json:"-"`
+	OriginLocation      *location.Location      `json:"originLocation,omitempty" keel:"belongs:origin_location_id"`
+	DestinationLocation *location.Location      `json:"destinationLocation,omitempty" keel:"belongs:destination_location_id"`
+	Customer            *customer.Customer      `json:"customer,omitempty" keel:"belongs:customer_id"`
+	IntermediateStops   []*DistanceOverrideStop `json:"intermediateStops,omitempty" keel:"many:distance_override_id"`
 }
 
 func (d *DistanceOverride) Validate(multiErr *errortypes.MultiError) {
@@ -102,26 +95,6 @@ func (d *DistanceOverride) GetPostgresSearchConfig() domaintypes.PostgresSearchC
 			{Name: "distance", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 		},
 	}
-}
-
-func (d *DistanceOverride) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("do_")
-		}
-		d.CreatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-
-	return nil
-}
-
-func (d *DistanceOverride) BeforeCreate(ctx context.Context) error {
-	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (d *DistanceOverride) BuildRouteSignature() string {

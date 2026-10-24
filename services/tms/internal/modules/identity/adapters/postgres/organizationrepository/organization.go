@@ -268,12 +268,7 @@ func (r *repository) ClearLogoURL(
 ) (*tenant.Organization, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.Organization, error) {
 		o := tenantdb.Organizations
-		rows, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			o.Where(o.ID.Eq(orgID), o.Version.Eq(version)),
-			o.LogoURL.To(""),
-		)
+		rows, err := o.Where(o.ID.Eq(orgID), o.Version.Eq(version)).UpdateReturning(ctx, r.db.Keel(ctx), o.LogoURL.To(""))
 		if err != nil {
 			r.l.Error(
 				"failed to clear organization logo URL",

@@ -8,40 +8,26 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*UserRoleAssignment)(nil)
-
 type UserRoleAssignment struct {
-	bun.BaseModel `bun:"table:user_role_assignments,alias:ura" json:"-"`
-	keel.Table    `keel:"user_role_assignments"`
+	keel.Table `keel:"user_role_assignments"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ura_"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	RoleID         pulid.ID `json:"roleId"         bun:"role_id,type:VARCHAR(100),notnull" keel:"role_id"`
-	ExpiresAt      *int64   `json:"expiresAt"      bun:"expires_at" keel:"expires_at"`
-	AssignedBy     pulid.ID `json:"assignedBy"     bun:"assigned_by,type:VARCHAR(100)" keel:"assigned_by,nullzero"`
-	AssignedAt     int64    `json:"assignedAt"     bun:"assigned_at,notnull" keel:"assigned_at"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ura_"`
+	UserID         pulid.ID `json:"userId" keel:"user_id"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
+	RoleID         pulid.ID `json:"roleId" keel:"role_id"`
+	ExpiresAt      *int64   `json:"expiresAt" keel:"expires_at"`
+	AssignedBy     pulid.ID `json:"assignedBy" keel:"assigned_by,nullzero"`
+	AssignedAt     int64    `json:"assignedAt" keel:"assigned_at"`
 
-	Role *Role `json:"role,omitempty" bun:"rel:belongs-to,join:role_id=id" keel:"belongs:role_id"`
-}
-
-func (ura *UserRoleAssignment) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	switch q.(type) { //nolint:gocritic // this is fine
-	case *bun.InsertQuery:
-		if ura.ID.IsNil() {
-			ura.ID = pulid.MustNew("ura_")
-		}
-		ura.AssignedAt = timeutils.NowUnix()
-	}
-
-	return nil
+	Role *Role `json:"role,omitempty" keel:"belongs:role_id"`
 }
 
 func (ura *UserRoleAssignment) BeforeCreate(ctx context.Context) error {
-	return ura.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	ura.AssignedAt = timeutils.NowUnix()
+
+	return nil
 }
 
 func (ura *UserRoleAssignment) GetCreatedAt() int64 {

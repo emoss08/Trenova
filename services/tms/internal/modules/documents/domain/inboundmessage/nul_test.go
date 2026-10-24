@@ -5,10 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
-func TestBeforeAppendModelStripsNULFromMailFields(t *testing.T) {
+func TestBeforeCreateStripsNULFromMailFields(t *testing.T) {
 	t.Parallel()
 
 	msg := &InboundMessage{
@@ -19,7 +18,7 @@ func TestBeforeAppendModelStripsNULFromMailFields(t *testing.T) {
 		TextBody:    "See\x00 attached.",
 		FailureText: "bad\x00 part",
 	}
-	require.NoError(t, msg.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
+	require.NoError(t, msg.BeforeCreate(t.Context()))
 	assert.Equal(t, "<ab@example.com>", msg.MessageID)
 	assert.Equal(t, "<cd@example.com>", msg.InReplyTo)
 	assert.Equal(t, "Dock Office", msg.FromName)

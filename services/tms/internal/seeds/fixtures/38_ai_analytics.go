@@ -539,7 +539,6 @@ func (s *AIAnalyticsSeed) ensureBackupProvider(
 	sr *seed.Run,
 	refs *analyticsSeedRefs,
 ) error {
-
 	provider := &aiprovider.Provider{
 		OrganizationID: refs.org,
 		BusinessUnitID: refs.bu,

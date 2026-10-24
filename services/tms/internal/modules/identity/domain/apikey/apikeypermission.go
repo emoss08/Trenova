@@ -8,40 +8,33 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type Permission struct {
-	bun.BaseModel `bun:"table:api_key_permissions,alias:akp" json:"-"`
-	keel.Table    `keel:"api_key_permissions"`
+	keel.Table `keel:"api_key_permissions"`
 
-	ID             pulid.ID               `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:akp_"`
-	APIKeyID       pulid.ID               `json:"apiKeyId"       bun:"api_key_id,type:VARCHAR(100),notnull" keel:"api_key_id"`
-	BusinessUnitID pulid.ID               `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
-	OrganizationID pulid.ID               `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	Resource       string                 `json:"resource"       bun:"resource,type:VARCHAR(100),notnull" keel:"resource"`
-	Operations     []permission.Operation `json:"operations"     bun:"operations,type:TEXT[],array,notnull" keel:"operations"`
-	DataScope      permission.DataScope   `json:"dataScope"      bun:"data_scope,type:VARCHAR(20),notnull,default:'organization'" keel:"data_scope"`
-	CreatedAt      int64                  `json:"createdAt"      bun:"created_at,notnull" keel:"created_at,autocreate"`
-	UpdatedAt      int64                  `json:"updatedAt"      bun:"updated_at,notnull" keel:"updated_at,autoupdate"`
+	ID             pulid.ID               `json:"id" keel:"id,pk,autoid:akp_"`
+	APIKeyID       pulid.ID               `json:"apiKeyId" keel:"api_key_id"`
+	BusinessUnitID pulid.ID               `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	OrganizationID pulid.ID               `json:"organizationId" keel:"organization_id,tenant"`
+	Resource       string                 `json:"resource" keel:"resource"`
+	Operations     []permission.Operation `json:"operations" keel:"operations"`
+	DataScope      permission.DataScope   `json:"dataScope" keel:"data_scope"`
+	CreatedAt      int64                  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
-func (p *Permission) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (p *Permission) BeforeUpdate(_ context.Context) error {
+	p.Operations = permission.Normalize(p.Operations)
 
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("akp_")
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-		p.Operations = permission.Normalize(p.Operations)
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-		p.Operations = permission.Normalize(p.Operations)
+	return nil
+}
+
+func (p *Permission) BeforeCreate(_ context.Context) error {
+	p.Operations = permission.Normalize(p.Operations)
+	if p.DataScope == "" {
+		p.DataScope = permission.DataScopeOrganization
 	}
 
 	return nil

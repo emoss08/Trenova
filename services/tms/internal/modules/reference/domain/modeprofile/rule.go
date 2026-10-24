@@ -9,38 +9,49 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*CapabilityRule)(nil)
 	_ validationframework.TenantedEntity = (*CapabilityRule)(nil)
 )
 
 type CapabilityRule struct {
-	bun.BaseModel `bun:"table:mode_profile_capability_rules,alias:mpr" json:"-"`
-	keel.Table    `                                                             keel:"mode_profile_capability_rules"`
+	keel.Table `                                                             keel:"mode_profile_capability_rules"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:mpr_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
-	ModeProfileID  pulid.ID `json:"modeProfileId"  bun:"mode_profile_id,type:VARCHAR(100),notnull"     keel:"mode_profile_id"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:mpr_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ModeProfileID  pulid.ID `json:"modeProfileId" keel:"mode_profile_id"`
 
-	RuleKey     RuleKey                 `json:"ruleKey"     bun:"rule_key,type:VARCHAR(100),notnull"                              keel:"rule_key"`
-	Capability  Capability              `json:"capability"  bun:"capability,type:VARCHAR(100),notnull"                            keel:"capability"`
-	Enforcement tenant.EnforcementLevel `json:"enforcement" bun:"enforcement,type:enforcement_level_enum,notnull,default:'Block'" keel:"enforcement"`
-	Enabled     bool                    `json:"enabled"     bun:"enabled,type:BOOLEAN,notnull"                                    keel:"enabled"`
-	Parameters  map[string]any          `json:"parameters"  bun:"parameters,type:JSONB,nullzero"                                  keel:"parameters,jsonb,nullzero"`
+	RuleKey     RuleKey                 `json:"ruleKey" keel:"rule_key"`
+	Capability  Capability              `json:"capability" keel:"capability"`
+	Enforcement tenant.EnforcementLevel `json:"enforcement" keel:"enforcement"`
+	Enabled     bool                    `json:"enabled" keel:"enabled"`
+	Parameters  map[string]any          `json:"parameters" keel:"parameters,jsonb,nullzero"`
 
-	OverrideReason string `json:"overrideReason" bun:"override_reason,type:TEXT,nullzero" keel:"override_reason,nullzero"`
+	OverrideReason string `json:"overrideReason" keel:"override_reason,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Profile *Profile `json:"-" bun:"rel:belongs-to,join:mode_profile_id=id" keel:"belongs:mode_profile_id"`
+	Profile *Profile `json:"-" keel:"belongs:mode_profile_id"`
+}
+
+func (r *CapabilityRule) BeforeUpdate(_ context.Context) error {
+	r.applyDefaults()
+
+	return nil
+}
+
+func (r *CapabilityRule) BeforeCreate(_ context.Context) error {
+	r.applyDefaults()
+	if r.Enforcement == "" {
+		r.Enforcement = tenant.EnforcementLevelBlock
+	}
+
+	return nil
 }
 
 func (r *CapabilityRule) GetID() pulid.ID { return r.ID }
@@ -196,24 +207,6 @@ func (r *CapabilityRule) validateOverrideReason(multiErr *errortypes.MultiError)
 			string(def.DefaultEnforcement),
 		)
 	}
-}
-
-func (r *CapabilityRule) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	r.applyDefaults()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("mpr_")
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (r *CapabilityRule) applyDefaults() {

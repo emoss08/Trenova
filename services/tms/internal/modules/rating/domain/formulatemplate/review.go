@@ -1,7 +1,6 @@
 package formulatemplate
 
 import (
-	"context"
 	"unicode/utf8"
 
 	"github.com/emoss08/keel"
@@ -9,12 +8,8 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*Review)(nil)
 
 // ReviewDecision is one step of a review round.
 type ReviewDecision string
@@ -67,24 +62,23 @@ const MaxReviewerNoteLength = 4000
 // Review is one entry in a template's review history: who did what, in which
 // round, against which approved version, and what they said about it.
 type Review struct {
-	bun.BaseModel `bun:"table:formula_template_reviews,alias:ftr" json:"-"`
-	keel.Table    `keel:"formula_template_reviews"`
+	keel.Table `keel:"formula_template_reviews"`
 
-	ID                  pulid.ID       `json:"id"                  bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ftr_"`
-	TemplateID          pulid.ID       `json:"templateId"          bun:"template_id,type:VARCHAR(100),notnull" keel:"template_id"`
-	OrganizationID      pulid.ID       `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	BusinessUnitID      pulid.ID       `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
-	Round               int32          `json:"round"               bun:"round,type:SMALLINT,notnull" keel:"round"`
-	Decision            ReviewDecision `json:"decision"            bun:"decision,type:formula_template_review_decision_enum,notnull" keel:"decision"`
-	ActorID             *pulid.ID      `json:"actorId"             bun:"actor_id,type:VARCHAR(100),nullzero" keel:"actor_id"`
-	Comment             string         `json:"comment"             bun:"comment,type:TEXT,nullzero" keel:"comment,nullzero"`
-	BaseVersionNumber   int64          `json:"baseVersionNumber"   bun:"base_version_number,type:BIGINT,notnull,default:0" keel:"base_version_number"`
-	RequestedReviewerID *pulid.ID      `json:"requestedReviewerId" bun:"requested_reviewer_id,type:VARCHAR(100),nullzero" keel:"requested_reviewer_id"`
-	ReviewerNote        string         `json:"reviewerNote"        bun:"reviewer_note,type:TEXT,nullzero" keel:"reviewer_note,nullzero"`
-	CreatedAt           int64          `json:"createdAt"           bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	ID                  pulid.ID       `json:"id" keel:"id,pk,autoid:ftr_"`
+	TemplateID          pulid.ID       `json:"templateId" keel:"template_id"`
+	OrganizationID      pulid.ID       `json:"organizationId" keel:"organization_id,tenant"`
+	BusinessUnitID      pulid.ID       `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	Round               int32          `json:"round" keel:"round"`
+	Decision            ReviewDecision `json:"decision" keel:"decision"`
+	ActorID             *pulid.ID      `json:"actorId" keel:"actor_id"`
+	Comment             string         `json:"comment" keel:"comment,nullzero"`
+	BaseVersionNumber   int64          `json:"baseVersionNumber" keel:"base_version_number"`
+	RequestedReviewerID *pulid.ID      `json:"requestedReviewerId" keel:"requested_reviewer_id"`
+	ReviewerNote        string         `json:"reviewerNote" keel:"reviewer_note,nullzero"`
+	CreatedAt           int64          `json:"createdAt" keel:"created_at,autocreate"`
 
-	Actor             *tenant.User `json:"actor,omitempty"   bun:"rel:belongs-to,join:actor_id=id" keel:"belongs:actor_id"`
-	RequestedReviewer *tenant.User `json:"requestedReviewer" bun:"rel:belongs-to,join:requested_reviewer_id=id" keel:"belongs:requested_reviewer_id"`
+	Actor             *tenant.User `json:"actor,omitempty" keel:"belongs:actor_id"`
+	RequestedReviewer *tenant.User `json:"requestedReviewer" keel:"belongs:requested_reviewer_id"`
 }
 
 func (r *Review) Validate(multiErr *errortypes.MultiError) {
@@ -112,18 +106,6 @@ func (r *Review) Validate(multiErr *errortypes.MultiError) {
 			"Every decision but expiry names who made it",
 		)
 	}
-}
-
-func (r *Review) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("ftr_")
-		}
-		if r.CreatedAt == 0 {
-			r.CreatedAt = timeutils.NowUnix()
-		}
-	}
-	return nil
 }
 
 // NextRound says which round a new submission belongs to, given the latest

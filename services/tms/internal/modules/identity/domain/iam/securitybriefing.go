@@ -84,18 +84,18 @@ type SecuritySessionPolicy struct {
 }
 
 type SecurityMemberSummary struct {
-	Active             int64 `json:"active"             bun:"active"`
-	Locked             int64 `json:"locked"             bun:"locked"`
-	NeverSignedIn      int64 `json:"neverSignedIn"      bun:"never_signed_in"`
-	Dormant            int64 `json:"dormant"            bun:"dormant"`
-	MustChangePassword int64 `json:"mustChangePassword" bun:"must_change_password"`
+	Active             int64 `json:"active"`
+	Locked             int64 `json:"locked"`
+	NeverSignedIn      int64 `json:"neverSignedIn"`
+	Dormant            int64 `json:"dormant"`
+	MustChangePassword int64 `json:"mustChangePassword"`
 }
 
 type SecurityMemberRef struct {
-	UserID       pulid.ID `json:"userId"       bun:"user_id"`
-	Name         string   `json:"name"         bun:"name"`
-	EmailAddress string   `json:"emailAddress" bun:"email_address"`
-	LastLoginAt  *int64   `json:"lastLoginAt"  bun:"last_login_at"`
+	UserID       pulid.ID `json:"userId"`
+	Name         string   `json:"name"`
+	EmailAddress string   `json:"emailAddress"`
+	LastLoginAt  *int64   `json:"lastLoginAt"`
 }
 
 type SecurityMFACoverage struct {
@@ -113,10 +113,10 @@ type SecuritySignInSummary struct {
 }
 
 type SecurityAPIKeySummary struct {
-	Active        int64 `json:"active"        bun:"active"`
-	WithoutExpiry int64 `json:"withoutExpiry" bun:"without_expiry"`
-	Unused        int64 `json:"unused"        bun:"unused"`
-	ExpiringSoon  int64 `json:"expiringSoon"  bun:"expiring_soon"`
+	Active        int64 `json:"active"`
+	WithoutExpiry int64 `json:"withoutExpiry"`
+	Unused        int64 `json:"unused"`
+	ExpiringSoon  int64 `json:"expiringSoon"`
 }
 
 type SecuritySSOSummary struct {

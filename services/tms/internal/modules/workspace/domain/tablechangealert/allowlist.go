@@ -1,51 +1,29 @@
 package tablechangealert
 
 import (
-	"context"
 	"regexp"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*TCAAllowlistedTable)(nil)
-
 type TCAAllowlistedTable struct {
-	bun.BaseModel `bun:"table:tca_allowlisted_tables,alias:tcaw" json:"-"`
-	keel.Table    `                                                       keel:"tca_allowlisted_tables"`
+	keel.Table `                                                       keel:"tca_allowlisted_tables"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"                                                           keel:"id,pk,autoid:tcaw_"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"                                      keel:"organization_id,pk,tenant"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                     keel:"business_unit_id,pk,tenant"`
-	TableName      string   `json:"tableName"      bun:"table_name,type:VARCHAR(100),notnull"                                              keel:"table_name"`
-	DisplayName    string   `json:"displayName"    bun:"display_name,type:VARCHAR(255),notnull"                                            keel:"display_name"`
-	Enabled        bool     `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull"                                                      keel:"enabled"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tcaw_"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	TableName      string   `json:"tableName" keel:"table_name"`
+	DisplayName    string   `json:"displayName" keel:"display_name"`
+	Enabled        bool     `json:"enabled" keel:"enabled"`
+	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-}
-
-func (a *TCAAllowlistedTable) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("tcaw_")
-		}
-		a.CreatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
-	}
-
-	return nil
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 }
 
 func (a *TCAAllowlistedTable) GetID() pulid.ID {

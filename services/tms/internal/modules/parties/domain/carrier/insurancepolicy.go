@@ -1,41 +1,34 @@
 package carrier
 
 import (
-	"context"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*CarrierInsurancePolicy)(nil)
-
 type CarrierInsurancePolicy struct {
-	bun.BaseModel `bun:"table:carrier_insurance_policies,alias:carins" json:"-"`
-	keel.Table    `                                                             keel:"carrier_insurance_policies"`
+	keel.Table `                                                             keel:"carrier_insurance_policies"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"               keel:"id,pk,autoid:carins_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"  keel:"organization_id,pk,tenant"`
-	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull"          keel:"carrier_id"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:carins_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	CarrierID      pulid.ID `json:"carrierId" keel:"carrier_id"`
 
-	PolicyType     InsurancePolicyType `json:"policyType"     bun:"policy_type,type:VARCHAR(50),notnull"                                     keel:"policy_type"`
-	PolicyNumber   string              `json:"policyNumber"   bun:"policy_number,type:VARCHAR(100),notnull"                                  keel:"policy_number"`
-	ProviderName   string              `json:"providerName"   bun:"provider_name,type:VARCHAR(255),notnull"                                  keel:"provider_name"`
-	CoverageAmount decimal.Decimal     `json:"coverageAmount" bun:"coverage_amount,type:NUMERIC(19,4),notnull"                               keel:"coverage_amount"`
-	EffectiveDate  int64               `json:"effectiveDate"  bun:"effective_date,type:BIGINT,notnull"                                       keel:"effective_date"`
-	ExpirationDate int64               `json:"expirationDate" bun:"expiration_date,type:BIGINT,notnull"                                      keel:"expiration_date"`
-	IsVerified     bool                `json:"isVerified"     bun:"is_verified,type:BOOLEAN,notnull,default:false"                           keel:"is_verified"`
-	Version        int64               `json:"version"        bun:"version,type:BIGINT"                                                      keel:"version,version"`
-	CreatedAt      int64               `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	PolicyType     InsurancePolicyType `json:"policyType" keel:"policy_type"`
+	PolicyNumber   string              `json:"policyNumber" keel:"policy_number"`
+	ProviderName   string              `json:"providerName" keel:"provider_name"`
+	CoverageAmount decimal.Decimal     `json:"coverageAmount" keel:"coverage_amount"`
+	EffectiveDate  int64               `json:"effectiveDate" keel:"effective_date"`
+	ExpirationDate int64               `json:"expirationDate" keel:"expiration_date"`
+	IsVerified     bool                `json:"isVerified" keel:"is_verified"`
+	Version        int64               `json:"version" keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Carrier *Carrier `json:"carrier,omitempty" bun:"rel:belongs-to,join:carrier_id=id" keel:"belongs:carrier_id"`
+	Carrier *Carrier `json:"carrier,omitempty" keel:"belongs:carrier_id"`
 }
 
 func (cip *CarrierInsurancePolicy) Validate(multiErr *errortypes.MultiError) {
@@ -102,21 +95,4 @@ func (cip *CarrierInsurancePolicy) GetOrganizationID() pulid.ID {
 
 func (cip *CarrierInsurancePolicy) GetBusinessUnitID() pulid.ID {
 	return cip.BusinessUnitID
-}
-
-func (cip *CarrierInsurancePolicy) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if cip.ID.IsNil() {
-			cip.ID = pulid.MustNew("carins_")
-		}
-
-		cip.CreatedAt = now
-	case *bun.UpdateQuery:
-		cip.UpdatedAt = now
-	}
-
-	return nil
 }

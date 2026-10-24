@@ -502,12 +502,7 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*carrier.Carrier, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*carrier.Carrier, error) {
 		c := carrierdb.Carriers
-		entities, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			c.Where(c.ID.In(req.CarrierIDs...)),
-			c.Status.To(req.Status),
-		)
+		entities, err := c.Where(c.ID.In(req.CarrierIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), c.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update carrier status", zap.Error(err))
 			return nil, err

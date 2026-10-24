@@ -7,8 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const maxActivityTextLength = 500
@@ -60,46 +58,36 @@ const (
 )
 
 type Activity struct {
-	bun.BaseModel `bun:"table:inbound_message_activities,alias:iact" json:"-"`
-	keel.Table    `keel:"inbound_message_activities"`
+	keel.Table `keel:"inbound_message_activities"`
 
-	ID                 pulid.ID                      `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:iact_"`
-	BusinessUnitID     pulid.ID                      `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID                      `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	MessageID          pulid.ID                      `json:"messageId"          bun:"message_id,type:VARCHAR(100),notnull" keel:"message_id"`
-	Kind               ActivityKind                  `json:"kind"               bun:"kind,type:VARCHAR(30),notnull" keel:"kind"`
-	ActorKind          ActorKind                     `json:"actorKind"          bun:"actor_kind,type:VARCHAR(20),notnull" keel:"actor_kind"`
-	ActorID            pulid.ID                      `json:"actorId"            bun:"actor_id,type:VARCHAR(100),nullzero" keel:"actor_id,nullzero"`
-	Subject            string                        `json:"subject"            bun:"subject,type:VARCHAR(500),nullzero" keel:"subject,nullzero"`
-	Detail             string                        `json:"detail"             bun:"detail,type:VARCHAR(500),nullzero" keel:"detail,nullzero"`
-	Until              int64                         `json:"until"              bun:"until,type:BIGINT,nullzero" keel:"until,nullzero"`
-	FromClassification inboundmessage.Classification `json:"fromClassification" bun:"from_classification,type:VARCHAR(30),nullzero" keel:"from_classification,nullzero"`
-	ToClassification   inboundmessage.Classification `json:"toClassification"   bun:"to_classification,type:VARCHAR(30),nullzero" keel:"to_classification,nullzero"`
-	RecordID           pulid.ID                      `json:"recordId"           bun:"record_id,type:VARCHAR(100),nullzero" keel:"record_id,nullzero"`
-	CreatedAt          int64                         `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	ID                 pulid.ID                      `json:"id" keel:"id,pk,autoid:iact_"`
+	BusinessUnitID     pulid.ID                      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID                      `json:"organizationId" keel:"organization_id,pk,tenant"`
+	MessageID          pulid.ID                      `json:"messageId" keel:"message_id"`
+	Kind               ActivityKind                  `json:"kind" keel:"kind"`
+	ActorKind          ActorKind                     `json:"actorKind" keel:"actor_kind"`
+	ActorID            pulid.ID                      `json:"actorId" keel:"actor_id,nullzero"`
+	Subject            string                        `json:"subject" keel:"subject,nullzero"`
+	Detail             string                        `json:"detail" keel:"detail,nullzero"`
+	Until              int64                         `json:"until" keel:"until,nullzero"`
+	FromClassification inboundmessage.Classification `json:"fromClassification" keel:"from_classification,nullzero"`
+	ToClassification   inboundmessage.Classification `json:"toClassification" keel:"to_classification,nullzero"`
+	RecordID           pulid.ID                      `json:"recordId" keel:"record_id,nullzero"`
+	CreatedAt          int64                         `json:"createdAt" keel:"created_at,autocreate"`
 }
 
-func (a *Activity) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (a *Activity) BeforeCreate(ctx context.Context) error {
 	a.Subject = stringutils.TruncateRunes(stringutils.StripNUL(a.Subject), maxActivityTextLength)
 	a.Detail = stringutils.TruncateRunes(stringutils.StripNUL(a.Detail), maxActivityTextLength)
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("iact_")
-		}
-		if a.CreatedAt == 0 {
-			a.CreatedAt = timeutils.NowUnix()
-		}
-	}
 
 	return nil
 }
 
-func (a *Activity) BeforeCreate(ctx context.Context) error {
-	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}
-
 func (a *Activity) BeforeUpdate(ctx context.Context) error {
-	return a.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
+	a.Subject = stringutils.TruncateRunes(stringutils.StripNUL(a.Subject), maxActivityTextLength)
+	a.Detail = stringutils.TruncateRunes(stringutils.StripNUL(a.Detail), maxActivityTextLength)
+
+	return nil
 }
 
 func (a *Activity) GetID() pulid.ID      { return a.ID }

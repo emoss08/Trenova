@@ -1177,7 +1177,6 @@ func (fs *fuelSeeder) finishRuns() *fuelImport {
 }
 
 func (fs *fuelSeeder) writeFuel(ctx context.Context, tx *keel.DB, imp *fuelImport) error {
-
 	if err := insertRows(ctx, tx, fuelpurchasedb.FuelCards.Handle, fs.cards); err != nil {
 		return fmt.Errorf("insert fuel cards: %w", err)
 	}

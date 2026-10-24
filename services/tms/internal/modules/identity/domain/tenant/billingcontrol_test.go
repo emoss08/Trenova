@@ -8,7 +8,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func newValidBillingControl() *BillingControl {
@@ -77,36 +76,6 @@ func TestBillingControl_Validate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestBillingControl_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-		bc := &BillingControl{}
-		err := bc.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-		assert.False(t, bc.ID.IsNil())
-		assert.NotZero(t, bc.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-		existingID := pulid.MustNew("bc_")
-		bc := &BillingControl{ID: existingID}
-		err := bc.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-		assert.Equal(t, existingID, bc.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-		bc := &BillingControl{}
-		err := bc.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-		assert.NotZero(t, bc.UpdatedAt)
-	})
 }
 
 func TestBillingControl_Getters(t *testing.T) {

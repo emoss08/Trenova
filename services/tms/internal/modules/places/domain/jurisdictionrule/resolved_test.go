@@ -280,7 +280,7 @@ func TestSeededDataIsUnverifiedByDefault(t *testing.T) {
 	t.Parallel()
 
 	rule := new(jurisdictionrule.JurisdictionRule)
-	require.NoError(t, rule.BeforeAppendModel(t.Context(), nil))
+	require.NoError(t, rule.BeforeCreate(t.Context()))
 
 	assert.Equal(t, jurisdictionrule.VerificationUnverified, rule.VerificationState)
 	assert.False(t, rule.VerificationState.IsTrusted())

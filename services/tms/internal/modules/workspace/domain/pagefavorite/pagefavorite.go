@@ -1,7 +1,6 @@
 package pagefavorite
 
 import (
-	"context"
 	"regexp"
 
 	"github.com/emoss08/keel"
@@ -9,9 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -24,43 +21,25 @@ const (
 var pageURLPattern = regexp.MustCompile(`^/\S*$`)
 
 var (
-	_ bun.BeforeAppendModelHook          = (*PageFavorite)(nil)
 	_ validationframework.TenantedEntity = (*PageFavorite)(nil)
 )
 
 type PageFavorite struct {
-	bun.BaseModel `bun:"table:page_favorites,alias:pf" json:"-"`
-	keel.Table    `keel:"page_favorites"`
+	keel.Table `keel:"page_favorites"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:pf_"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,tenant"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,tenant"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
-	PageURL        string   `json:"pageUrl"        bun:"page_url,type:VARCHAR(500),notnull" keel:"page_url"`
-	PageTitle      string   `json:"pageTitle"      bun:"page_title,type:VARCHAR(255),notnull" keel:"page_title"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:pf_"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	UserID         pulid.ID `json:"userId" keel:"user_id"`
+	PageURL        string   `json:"pageUrl" keel:"page_url"`
+	PageTitle      string   `json:"pageTitle" keel:"page_title"`
+	Version        int64    `json:"version" keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
-}
-
-func (pf *PageFavorite) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if pf.ID.IsNil() {
-			pf.ID = pulid.MustNew("pf_")
-		}
-		pf.CreatedAt = now
-	case *bun.UpdateQuery:
-		pf.UpdatedAt = now
-	}
-
-	return nil
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	User         *tenant.User         `json:"user,omitempty" keel:"belongs:user_id"`
 }
 
 func (pf *PageFavorite) GetID() pulid.ID {

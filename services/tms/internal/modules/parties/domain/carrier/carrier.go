@@ -12,10 +12,8 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -24,69 +22,90 @@ var (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Carrier)(nil)
 	_ validationframework.TenantedEntity = (*Carrier)(nil)
 	_ domaintypes.PostgresSearchable     = (*Carrier)(nil)
 )
 
 // External carriers that cover brokered freight
 type Carrier struct {
-	bun.BaseModel `bun:"table:carriers,alias:carr" json:"-"`
-	keel.Table    `                                         keel:"carriers,report=Parties"`
+	keel.Table `                                         keel:"carriers,report=Parties"`
 
-	ID             pulid.ID  `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"               keel:"id,pk,autoid:car_"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"  keel:"organization_id,pk,tenant"`
-	StateID        *pulid.ID `json:"stateId"        bun:"state_id,type:VARCHAR(100),nullzero"           keel:"state_id"`
-	RemitStateID   *pulid.ID `json:"remitStateId"   bun:"remit_state_id,type:VARCHAR(100),nullzero"     keel:"remit_state_id"`
+	ID             pulid.ID  `json:"id" keel:"id,pk,autoid:car_"`
+	BusinessUnitID pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
+	StateID        *pulid.ID `json:"stateId" keel:"state_id"`
+	RemitStateID   *pulid.ID `json:"remitStateId" keel:"remit_state_id"`
 
-	Status              Status           `json:"status"              bun:"status,type:VARCHAR(50),notnull,default:'Active'"                         keel:"status"`
-	Code                string           `json:"code"                bun:"code,type:VARCHAR(10),notnull"                                            keel:"code"`
-	Name                string           `json:"name"                bun:"name,type:VARCHAR(255),notnull"                                           keel:"name"`
-	DBAName             string           `json:"dbaName"             bun:"dba_name,type:VARCHAR(255),nullzero"                                      keel:"dba_name,nullzero"`
-	CarrierType         Type             `json:"carrierType"         bun:"carrier_type,type:VARCHAR(50),notnull,default:'Common'"                   keel:"carrier_type"`
-	DOTNumber           string           `json:"dotNumber"           bun:"dot_number,type:VARCHAR(12),nullzero"                                     keel:"dot_number,nullzero"`
-	MCNumber            string           `json:"mcNumber"            bun:"mc_number,type:VARCHAR(12),nullzero"                                      keel:"mc_number,nullzero"`
-	SCAC                string           `json:"scac"                bun:"scac,type:VARCHAR(4),nullzero"                                            keel:"scac,nullzero"`
-	ComplianceStatus    ComplianceStatus `json:"complianceStatus"    bun:"compliance_status,type:VARCHAR(50),notnull,default:'Pending'"             keel:"compliance_status"`
-	SafetyRating        SafetyRating     `json:"safetyRating"        bun:"safety_rating,type:VARCHAR(50),notnull,default:'NotRated'"                keel:"safety_rating"`
-	QualifiedAt         *int64           `json:"qualifiedAt"         bun:"qualified_at,type:BIGINT,nullzero"                                        keel:"qualified_at"`
-	DisqualifiedReason  string           `json:"disqualifiedReason"  bun:"disqualified_reason,type:TEXT,nullzero"                                   keel:"disqualified_reason,nullzero"`
-	TaxID               string           `json:"taxId"               bun:"tax_id,type:VARCHAR(20),nullzero"                                         keel:"tax_id,nullzero"`
-	TaxIDType           *TaxIDType       `json:"taxIdType"           bun:"tax_id_type,type:VARCHAR(10),nullzero"                                    keel:"tax_id_type"`
-	W9OnFile            bool             `json:"w9OnFile"            bun:"w9_on_file,type:BOOLEAN,notnull,default:false"                            keel:"w9_on_file,label=W-9 On File"`
-	Is1099Eligible      bool             `json:"is1099Eligible"      bun:"is_1099_eligible,type:BOOLEAN,notnull,default:false"                      keel:"is_1099_eligible,label=1099 Eligible"`
-	PaymentMethod       PaymentMethod    `json:"paymentMethod"       bun:"payment_method,type:VARCHAR(50),notnull,default:'Check'"                  keel:"payment_method"`
-	PaymentTermDays     int              `json:"paymentTermDays"     bun:"payment_term_days,type:INTEGER,notnull,default:30"                        keel:"payment_term_days,dimension"`
-	RemitToName         string           `json:"remitToName"         bun:"remit_to_name,type:VARCHAR(255),nullzero"                                 keel:"remit_to_name,nullzero"`
-	RemitAddressLine1   string           `json:"remitAddressLine1"   bun:"remit_address_line_1,type:VARCHAR(150),nullzero"                          keel:"remit_address_line_1,nullzero"`
-	RemitAddressLine2   string           `json:"remitAddressLine2"   bun:"remit_address_line_2,type:VARCHAR(150),nullzero"                          keel:"remit_address_line_2,nullzero"`
-	RemitCity           string           `json:"remitCity"           bun:"remit_city,type:VARCHAR(100),nullzero"                                    keel:"remit_city,nullzero"`
-	RemitPostalCode     string           `json:"remitPostalCode"     bun:"remit_postal_code,type:VARCHAR(10),nullzero"                              keel:"remit_postal_code,nullzero"`
-	AddressLine1        string           `json:"addressLine1"        bun:"address_line_1,type:VARCHAR(150),nullzero"                                keel:"address_line_1,nullzero"`
-	AddressLine2        string           `json:"addressLine2"        bun:"address_line_2,type:VARCHAR(150),nullzero"                                keel:"address_line_2,nullzero"`
-	City                string           `json:"city"                bun:"city,type:VARCHAR(100),nullzero"                                          keel:"city,nullzero"`
-	PostalCode          string           `json:"postalCode"          bun:"postal_code,type:VARCHAR(10),nullzero"                                    keel:"postal_code,nullzero"`
-	Phone               string           `json:"phone"               bun:"phone,type:VARCHAR(20),nullzero"                                          keel:"phone,nullzero"`
-	Email               string           `json:"email"               bun:"email,type:VARCHAR(255),nullzero"                                         keel:"email,nullzero"`
-	ExternalID          string           `json:"externalId"          bun:"external_id,type:TEXT,nullzero"                                           keel:"external_id,nullzero"`
-	Notes               string           `json:"notes"               bun:"notes,type:TEXT,nullzero"                                                 keel:"notes,nullzero"`
-	IntelRiskLevel      string           `json:"intelRiskLevel"      bun:"intel_risk_level,type:VARCHAR(20),nullzero"                               keel:"intel_risk_level,nullzero"`
-	IntelReviewRequired bool             `json:"intelReviewRequired" bun:"intel_review_required,type:BOOLEAN,notnull"                               keel:"intel_review_required"`
-	IntelBlockingCount  int              `json:"intelBlockingCount"  bun:"intel_blocking_count,type:INTEGER,notnull"                                keel:"intel_blocking_count"`
-	SearchVector        string           `json:"-"                   bun:"search_vector,type:TSVECTOR,scanonly"                                     keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                string           `json:"-"                   bun:"rank,type:VARCHAR(100),scanonly"                                          keel:"rank,computed"`
-	Version             int64            `json:"version"             bun:"version,type:BIGINT"                                                      keel:"version,version"`
-	CreatedAt           int64            `json:"createdAt"           bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt           int64            `json:"updatedAt"           bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Status              Status           `json:"status" keel:"status"`
+	Code                string           `json:"code" keel:"code"`
+	Name                string           `json:"name" keel:"name"`
+	DBAName             string           `json:"dbaName" keel:"dba_name,nullzero"`
+	CarrierType         Type             `json:"carrierType" keel:"carrier_type"`
+	DOTNumber           string           `json:"dotNumber" keel:"dot_number,nullzero"`
+	MCNumber            string           `json:"mcNumber" keel:"mc_number,nullzero"`
+	SCAC                string           `json:"scac" keel:"scac,nullzero"`
+	ComplianceStatus    ComplianceStatus `json:"complianceStatus" keel:"compliance_status"`
+	SafetyRating        SafetyRating     `json:"safetyRating" keel:"safety_rating"`
+	QualifiedAt         *int64           `json:"qualifiedAt" keel:"qualified_at"`
+	DisqualifiedReason  string           `json:"disqualifiedReason" keel:"disqualified_reason,nullzero"`
+	TaxID               string           `json:"taxId" keel:"tax_id,nullzero"`
+	TaxIDType           *TaxIDType       `json:"taxIdType" keel:"tax_id_type"`
+	W9OnFile            bool             `json:"w9OnFile" keel:"w9_on_file,label=W-9 On File"`
+	Is1099Eligible      bool             `json:"is1099Eligible" keel:"is_1099_eligible,label=1099 Eligible"`
+	PaymentMethod       PaymentMethod    `json:"paymentMethod" keel:"payment_method"`
+	PaymentTermDays     int              `json:"paymentTermDays" keel:"payment_term_days,dimension"`
+	RemitToName         string           `json:"remitToName" keel:"remit_to_name,nullzero"`
+	RemitAddressLine1   string           `json:"remitAddressLine1" keel:"remit_address_line_1,nullzero"`
+	RemitAddressLine2   string           `json:"remitAddressLine2" keel:"remit_address_line_2,nullzero"`
+	RemitCity           string           `json:"remitCity" keel:"remit_city,nullzero"`
+	RemitPostalCode     string           `json:"remitPostalCode" keel:"remit_postal_code,nullzero"`
+	AddressLine1        string           `json:"addressLine1" keel:"address_line_1,nullzero"`
+	AddressLine2        string           `json:"addressLine2" keel:"address_line_2,nullzero"`
+	City                string           `json:"city" keel:"city,nullzero"`
+	PostalCode          string           `json:"postalCode" keel:"postal_code,nullzero"`
+	Phone               string           `json:"phone" keel:"phone,nullzero"`
+	Email               string           `json:"email" keel:"email,nullzero"`
+	ExternalID          string           `json:"externalId" keel:"external_id,nullzero"`
+	Notes               string           `json:"notes" keel:"notes,nullzero"`
+	IntelRiskLevel      string           `json:"intelRiskLevel" keel:"intel_risk_level,nullzero"`
+	IntelReviewRequired bool             `json:"intelReviewRequired" keel:"intel_review_required"`
+	IntelBlockingCount  int              `json:"intelBlockingCount" keel:"intel_blocking_count"`
+	SearchVector        string           `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                string           `json:"-" keel:"rank,computed"`
+	Version             int64            `json:"version" keel:"version,version"`
+	CreatedAt           int64            `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt           int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit      *tenant.BusinessUnit      `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization      *tenant.Organization      `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`
-	State             *usstate.UsState          `json:"state,omitempty"             bun:"rel:belongs-to,join:state_id=id"         keel:"belongs:state_id,noreport"`
-	RemitState        *usstate.UsState          `json:"remitState,omitempty"        bun:"rel:belongs-to,join:remit_state_id=id"   keel:"belongs:remit_state_id,noreport"`
-	Contacts          []*CarrierContact         `json:"contacts,omitempty"          bun:"rel:has-many,join:id=carrier_id"         keel:"many:carrier_id,noreport"`
-	InsurancePolicies []*CarrierInsurancePolicy `json:"insurancePolicies,omitempty" bun:"rel:has-many,join:id=carrier_id"         keel:"many:carrier_id,noreport"`
-	EDIChannels       []*CarrierEDIChannel      `json:"ediChannels,omitempty"       bun:"rel:has-many,join:id=carrier_id"         keel:"many:carrier_id,noreport"`
+	BusinessUnit      *tenant.BusinessUnit      `json:"businessUnit,omitempty"`
+	Organization      *tenant.Organization      `json:"organization,omitempty"`
+	State             *usstate.UsState          `json:"state,omitempty" keel:"belongs:state_id,noreport"`
+	RemitState        *usstate.UsState          `json:"remitState,omitempty" keel:"belongs:remit_state_id,noreport"`
+	Contacts          []*CarrierContact         `json:"contacts,omitempty" keel:"many:carrier_id,noreport"`
+	InsurancePolicies []*CarrierInsurancePolicy `json:"insurancePolicies,omitempty" keel:"many:carrier_id,noreport"`
+	EDIChannels       []*CarrierEDIChannel      `json:"ediChannels,omitempty" keel:"many:carrier_id,noreport"`
+}
+
+func (c *Carrier) BeforeCreate(_ context.Context) error {
+	if c.Status == "" {
+		c.Status = StatusActive
+	}
+	if c.CarrierType == "" {
+		c.CarrierType = TypeCommon
+	}
+	if c.ComplianceStatus == "" {
+		c.ComplianceStatus = ComplianceStatusPending
+	}
+	if c.SafetyRating == "" {
+		c.SafetyRating = SafetyRatingNotRated
+	}
+	if c.PaymentMethod == "" {
+		c.PaymentMethod = PaymentMethodCheck
+	}
+	if c.PaymentTermDays == 0 {
+		c.PaymentTermDays = 30
+	}
+
+	return nil
 }
 
 func (c *Carrier) applyDefaults() {
@@ -273,46 +292,6 @@ func (c *Carrier) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "scac", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
 		},
 	}
-}
-
-func (c *Carrier) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("car_")
-		}
-
-		c.CreatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
-	}
-
-	return nil
-}
-
-func (c *Carrier) BeforeCreate(context.Context) error {
-	if c.Status == "" {
-		c.Status = StatusActive
-	}
-	if c.CarrierType == "" {
-		c.CarrierType = TypeCommon
-	}
-	if c.ComplianceStatus == "" {
-		c.ComplianceStatus = ComplianceStatusPending
-	}
-	if c.SafetyRating == "" {
-		c.SafetyRating = SafetyRatingNotRated
-	}
-	if c.PaymentMethod == "" {
-		c.PaymentMethod = PaymentMethodCheck
-	}
-	if c.PaymentTermDays == 0 {
-		c.PaymentTermDays = 30
-	}
-
-	return nil
 }
 
 func (c *Carrier) SamePartyDetails(other *Carrier) bool {

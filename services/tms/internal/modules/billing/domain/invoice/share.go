@@ -1,16 +1,13 @@
 package invoice
 
 import (
-	"context"
 	"unicode/utf8"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -37,28 +34,25 @@ func (t ShareTab) IsValid() bool {
 	}
 }
 
-var _ bun.BeforeAppendModelHook = (*InvoiceShare)(nil)
-
 type InvoiceShare struct {
-	bun.BaseModel `bun:"table:invoice_shares,alias:invsh" json:"-"`
-	keel.Table    `keel:"invoice_shares"`
+	keel.Table `keel:"invoice_shares"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:invsh_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	InvoiceID      pulid.ID `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull" keel:"invoice_id"`
-	SharedWithID   pulid.ID `json:"sharedWithId"   bun:"shared_with_id,type:VARCHAR(100),notnull" keel:"shared_with_id"`
-	SharedByID     pulid.ID `json:"sharedById"     bun:"shared_by_id,type:VARCHAR(100),notnull" keel:"shared_by_id"`
-	Note           string   `json:"note"           bun:"note,type:TEXT,nullzero" keel:"note,nullzero"`
-	Tab            ShareTab `json:"tab"            bun:"tab,type:VARCHAR(20),notnull" keel:"tab"`
-	ShareCount     int      `json:"shareCount"     bun:"share_count,type:INTEGER,notnull" keel:"share_count"`
-	FirstSharedAt  int64    `json:"firstSharedAt"  bun:"first_shared_at,type:BIGINT,notnull" keel:"first_shared_at"`
-	LastSharedAt   int64    `json:"lastSharedAt"   bun:"last_shared_at,type:BIGINT,notnull" keel:"last_shared_at"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:invsh_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	InvoiceID      pulid.ID `json:"invoiceId" keel:"invoice_id"`
+	SharedWithID   pulid.ID `json:"sharedWithId" keel:"shared_with_id"`
+	SharedByID     pulid.ID `json:"sharedById" keel:"shared_by_id"`
+	Note           string   `json:"note" keel:"note,nullzero"`
+	Tab            ShareTab `json:"tab" keel:"tab"`
+	ShareCount     int      `json:"shareCount" keel:"share_count"`
+	FirstSharedAt  int64    `json:"firstSharedAt" keel:"first_shared_at"`
+	LastSharedAt   int64    `json:"lastSharedAt" keel:"last_shared_at"`
+	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	SharedWith *tenant.User `json:"sharedWith,omitempty" bun:"rel:belongs-to,join:shared_with_id=id" keel:"belongs:shared_with_id"`
-	SharedBy   *tenant.User `json:"sharedBy,omitempty"   bun:"rel:belongs-to,join:shared_by_id=id" keel:"belongs:shared_by_id"`
+	SharedWith *tenant.User `json:"sharedWith,omitempty" keel:"belongs:shared_with_id"`
+	SharedBy   *tenant.User `json:"sharedBy,omitempty" keel:"belongs:shared_by_id"`
 }
 
 func (s *InvoiceShare) Validate(multiErr *errortypes.MultiError) {
@@ -94,23 +88,4 @@ func (s *InvoiceShare) Validate(multiErr *errortypes.MultiError) {
 	if s.SharedWithID.IsNotNil() && s.SharedWithID == s.SharedByID {
 		multiErr.Add("userIds", errortypes.ErrInvalid, "You cannot share an invoice with yourself")
 	}
-}
-
-func (s *InvoiceShare) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("invsh_")
-		}
-		if s.CreatedAt == 0 {
-			s.CreatedAt = now
-		}
-		s.UpdatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
-	}
-
-	return nil
 }

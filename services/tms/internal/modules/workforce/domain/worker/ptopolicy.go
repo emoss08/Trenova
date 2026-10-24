@@ -13,10 +13,8 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -123,39 +121,45 @@ type PTOAccrualTier struct {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*PTOPolicy)(nil)
 	_ domaintypes.PostgresSearchable     = (*PTOPolicy)(nil)
 	_ pagination.CursorEntity            = (*PTOPolicy)(nil)
 	_ validationframework.TenantedEntity = (*PTOPolicy)(nil)
-	_ bun.BeforeAppendModelHook          = (*PTOPolicyRule)(nil)
 )
 
 type PTOPolicy struct {
-	bun.BaseModel             `bun:"table:pto_policies,alias:ptop" json:"-"`
-	keel.Table                `                                             keel:"pto_policies"`
-	pagination.CursorValueSet `bun:",embed"                        json:"-"`
+	keel.Table        `                                             keel:"pto_policies"`
+	ID                pulid.ID        `json:"id" keel:"id,pk,autoid:ptop_"`
+	BusinessUnitID    pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name              string          `json:"name" keel:"name"`
+	Code              string          `json:"code" keel:"code"`
+	Description       string          `json:"description" keel:"description,nullzero"`
+	Status            PTOPolicyStatus `json:"status" keel:"status"`
+	IsDefault         bool            `json:"isDefault" keel:"is_default"`
+	YearBasis         PTOYearBasis    `json:"yearBasis" keel:"year_basis"`
+	CountWeekends     bool            `json:"countWeekends" keel:"count_weekends"`
+	WaitingPeriodDays int32           `json:"waitingPeriodDays" keel:"waiting_period_days"`
+	RequiresApproval  bool            `json:"requiresApproval" keel:"requires_approval"`
+	EnforceBalance    bool            `json:"enforceBalance" keel:"enforce_balance"`
+	AllowNegative     bool            `json:"allowNegative" keel:"allow_negative"`
+	NegativeFloorDays decimal.Decimal `json:"negativeFloorDays" keel:"negative_floor_days"`
+	Version           int64           `json:"version" keel:"version,version"`
+	CreatedAt         int64           `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt         int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector      string          `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
 
-	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:ptop_"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
-	Name              string          `json:"name"              bun:"name,type:VARCHAR(100),notnull"                                                       keel:"name"`
-	Code              string          `json:"code"              bun:"code,type:VARCHAR(50),notnull"                                                        keel:"code"`
-	Description       string          `json:"description"       bun:"description,type:TEXT,nullzero"                                                       keel:"description,nullzero"`
-	Status            PTOPolicyStatus `json:"status"            bun:"status,type:pto_policy_status_enum,notnull,default:'Draft'"                           keel:"status"`
-	IsDefault         bool            `json:"isDefault"         bun:"is_default,type:BOOLEAN,notnull"                                                      keel:"is_default"`
-	YearBasis         PTOYearBasis    `json:"yearBasis"         bun:"year_basis,type:pto_year_basis_enum,notnull,default:'CalendarYear'"                   keel:"year_basis"`
-	CountWeekends     bool            `json:"countWeekends"     bun:"count_weekends,type:BOOLEAN,notnull"                                                  keel:"count_weekends"`
-	WaitingPeriodDays int32           `json:"waitingPeriodDays" bun:"waiting_period_days,type:INTEGER,notnull"                                             keel:"waiting_period_days"`
-	RequiresApproval  bool            `json:"requiresApproval"  bun:"requires_approval,type:BOOLEAN,notnull"                                               keel:"requires_approval"`
-	EnforceBalance    bool            `json:"enforceBalance"    bun:"enforce_balance,type:BOOLEAN,notnull"                                                 keel:"enforce_balance"`
-	AllowNegative     bool            `json:"allowNegative"     bun:"allow_negative,type:BOOLEAN,notnull"                                                  keel:"allow_negative"`
-	NegativeFloorDays decimal.Decimal `json:"negativeFloorDays" bun:"negative_floor_days,type:NUMERIC(6,2),notnull,default:0"                              keel:"negative_floor_days"`
-	Version           int64           `json:"version"           bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt         int64           `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt         int64           `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector      string          `json:"-"                 bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
+	Rules []*PTOPolicyRule `json:"rules,omitempty" keel:"many:pto_policy_id"`
+}
 
-	Rules []*PTOPolicyRule `json:"rules,omitempty" bun:"rel:has-many,join:id=pto_policy_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:pto_policy_id"`
+func (p *PTOPolicy) BeforeCreate(_ context.Context) error {
+	if p.Status == "" {
+		p.Status = PTOPolicyStatusDraft
+	}
+	if p.YearBasis == "" {
+		p.YearBasis = PTOYearBasisCalendarYear
+	}
+
+	return nil
 }
 
 func (p *PTOPolicy) Validate(multiErr *errortypes.MultiError) {
@@ -268,42 +272,24 @@ func (p *PTOPolicy) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	}
 }
 
-func (p *PTOPolicy) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("ptop_")
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-
-	return nil
-}
-
 type PTOPolicyRule struct {
-	bun.BaseModel `bun:"table:pto_policy_rules,alias:ptpr" json:"-"`
-	keel.Table    `                                                 keel:"pto_policy_rules"`
+	keel.Table `                                                 keel:"pto_policy_rules"`
 
-	ID                  pulid.ID             `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:ptpr_"`
-	BusinessUnitID      pulid.ID             `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID             `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
-	PTOPolicyID         pulid.ID             `json:"ptoPolicyId"         bun:"pto_policy_id,type:VARCHAR(100),notnull"                                              keel:"pto_policy_id"`
-	PTOType             PTOType              `json:"ptoType"             bun:"pto_type,type:worker_pto_type_enum,notnull"                                           keel:"pto_type"`
-	AccrualMethod       PTOAccrualMethod     `json:"accrualMethod"       bun:"accrual_method,type:pto_accrual_method_enum,notnull,default:'None'"                   keel:"accrual_method"`
-	AccrualAmountDays   decimal.Decimal      `json:"accrualAmountDays"   bun:"accrual_amount_days,type:NUMERIC(6,2),notnull,default:0"                              keel:"accrual_amount_days"`
-	MaxBalanceDays      decimal.NullDecimal  `json:"maxBalanceDays"      bun:"max_balance_days,type:NUMERIC(6,2),nullzero"                                          keel:"max_balance_days"`
-	CarryoverCapDays    decimal.NullDecimal  `json:"carryoverCapDays"    bun:"carryover_cap_days,type:NUMERIC(6,2),nullzero"                                        keel:"carryover_cap_days"`
-	CarryoverExpiryDays int32                `json:"carryoverExpiryDays" bun:"carryover_expiry_days,type:INTEGER,notnull"                                           keel:"carryover_expiry_days"`
-	Tiers               []PTOAccrualTier     `json:"tiers"               bun:"tiers,type:JSONB,notnull,default:'[]'"                                                keel:"tiers,jsonb"`
-	OnTermination       PTOTerminationAction `json:"onTermination"       bun:"on_termination,type:pto_termination_action_enum,notnull,default:'Forfeit'"            keel:"on_termination"`
-	SortOrder           int32                `json:"sortOrder"           bun:"sort_order,type:INTEGER,notnull"                                                      keel:"sort_order"`
-	CreatedAt           int64                `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt           int64                `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                  pulid.ID             `json:"id" keel:"id,pk,autoid:ptpr_"`
+	BusinessUnitID      pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
+	PTOPolicyID         pulid.ID             `json:"ptoPolicyId" keel:"pto_policy_id"`
+	PTOType             PTOType              `json:"ptoType" keel:"pto_type"`
+	AccrualMethod       PTOAccrualMethod     `json:"accrualMethod" keel:"accrual_method"`
+	AccrualAmountDays   decimal.Decimal      `json:"accrualAmountDays" keel:"accrual_amount_days"`
+	MaxBalanceDays      decimal.NullDecimal  `json:"maxBalanceDays" keel:"max_balance_days"`
+	CarryoverCapDays    decimal.NullDecimal  `json:"carryoverCapDays" keel:"carryover_cap_days"`
+	CarryoverExpiryDays int32                `json:"carryoverExpiryDays" keel:"carryover_expiry_days"`
+	Tiers               []PTOAccrualTier     `json:"tiers" keel:"tiers,jsonb"`
+	OnTermination       PTOTerminationAction `json:"onTermination" keel:"on_termination"`
+	SortOrder           int32                `json:"sortOrder" keel:"sort_order"`
+	CreatedAt           int64                `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt           int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (r *PTOPolicyRule) Validate(multiErr *errortypes.MultiError) {
@@ -470,38 +456,15 @@ func TenureMonths(hireDate, asOf int64, loc *time.Location) int32 {
 	return int32(months) //nolint:gosec // months of service fit comfortably
 }
 
-func (r *PTOPolicyRule) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("ptpr_")
-		}
-		if r.Tiers == nil {
-			r.Tiers = []PTOAccrualTier{}
-		}
-		if r.OnTermination == "" {
-			r.OnTermination = PTOTerminationForfeit
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		if r.Tiers == nil {
-			r.Tiers = []PTOAccrualTier{}
-		}
-		r.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (r *PTOPolicyRule) BeforeCreate(_ context.Context) error {
 	if r.Tiers == nil {
 		r.Tiers = []PTOAccrualTier{}
 	}
 	if r.OnTermination == "" {
 		r.OnTermination = PTOTerminationForfeit
+	}
+	if r.AccrualMethod == "" {
+		r.AccrualMethod = PTOAccrualMethodNone
 	}
 
 	return nil

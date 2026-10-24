@@ -7,54 +7,61 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*AccountingReferenceObject)(nil)
-
 type AccountingReferenceObject struct {
-	bun.BaseModel `bun:"table:accounting_reference_objects,alias:acctro" json:"-"`
-	keel.Table    `keel:"accounting_reference_objects"`
+	keel.Table `keel:"accounting_reference_objects"`
 
-	ID                      pulid.ID      `json:"id"                      bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctro_"`
-	BusinessUnitID          pulid.ID      `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID          pulid.ID      `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ConnectionID            pulid.ID      `json:"connectionId"            bun:"connection_id,type:VARCHAR(100),notnull" keel:"connection_id"`
-	Kind                    ReferenceKind `json:"kind"                    bun:"kind,type:VARCHAR(30),notnull" keel:"kind"`
-	ExternalID              string        `json:"externalId"              bun:"external_id,type:VARCHAR(100),notnull" keel:"external_id"`
-	Name                    string        `json:"name"                    bun:"name,type:VARCHAR(500),notnull" keel:"name"`
-	SearchName              string        `json:"-"                       bun:"search_name,type:VARCHAR(500),notnull" keel:"search_name"`
-	FullyQualifiedName      string        `json:"fullyQualifiedName"      bun:"fully_qualified_name,type:VARCHAR(1000),nullzero" keel:"fully_qualified_name,nullzero"`
-	Number                  string        `json:"number"                  bun:"number,type:VARCHAR(100),nullzero" keel:"number,nullzero"`
-	Description             string        `json:"description"             bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Classification          string        `json:"classification"          bun:"classification,type:VARCHAR(50),nullzero" keel:"classification,nullzero"`
-	AccountType             string        `json:"accountType"             bun:"account_type,type:VARCHAR(100),nullzero" keel:"account_type,nullzero"`
-	AccountSubType          string        `json:"accountSubType"          bun:"account_sub_type,type:VARCHAR(100),nullzero" keel:"account_sub_type,nullzero"`
-	AccountClass            AccountClass  `json:"accountClass"            bun:"account_class,type:VARCHAR(30),nullzero" keel:"account_class,nullzero"`
-	ItemType                string        `json:"itemType"                bun:"item_type,type:VARCHAR(50),nullzero" keel:"item_type,nullzero"`
-	SubType                 string        `json:"subType"                 bun:"sub_type,type:VARCHAR(50),nullzero" keel:"sub_type,nullzero"`
-	ParentExternalID        string        `json:"parentExternalId"        bun:"parent_external_id,type:VARCHAR(100),nullzero" keel:"parent_external_id,nullzero"`
-	Active                  bool          `json:"active"                  bun:"active,type:BOOLEAN,notnull" keel:"active"`
-	CurrencyCode            string        `json:"currencyCode"            bun:"currency_code,type:VARCHAR(3),nullzero" keel:"currency_code,nullzero"`
-	SyncToken               string        `json:"-"                       bun:"sync_token,type:VARCHAR(50),nullzero" keel:"sync_token,nullzero"`
-	CompanyName             string        `json:"companyName"             bun:"company_name,type:VARCHAR(500),nullzero" keel:"company_name,nullzero"`
-	Email                   string        `json:"email"                   bun:"email,type:VARCHAR(320),nullzero" keel:"email,nullzero"`
-	AddressLine1            string        `json:"addressLine1"            bun:"address_line1,type:VARCHAR(500),nullzero" keel:"address_line1,nullzero"`
-	City                    string        `json:"city"                    bun:"city,type:VARCHAR(255),nullzero" keel:"city,nullzero"`
-	State                   string        `json:"state"                   bun:"state,type:VARCHAR(100),nullzero" keel:"state,nullzero"`
-	PostalCode              string        `json:"postalCode"              bun:"postal_code,type:VARCHAR(30),nullzero" keel:"postal_code,nullzero"`
-	IncomeAccountExternalID string        `json:"incomeAccountExternalId" bun:"income_account_external_id,type:VARCHAR(100),nullzero" keel:"income_account_external_id,nullzero"`
-	DueDays                 *int          `json:"dueDays"                 bun:"due_days,type:INTEGER,nullzero" keel:"due_days"`
-	Is1099                  bool          `json:"is1099"                  bun:"is_1099,type:BOOLEAN,notnull" keel:"is_1099"`
-	ProviderUpdatedAt       *int64        `json:"providerUpdatedAt"       bun:"provider_updated_at,type:BIGINT,nullzero" keel:"provider_updated_at"`
-	LastSeenAt              int64         `json:"lastSeenAt"              bun:"last_seen_at,type:BIGINT,notnull" keel:"last_seen_at"`
-	RemovedAt               *int64        `json:"removedAt"               bun:"removed_at,type:BIGINT,nullzero" keel:"removed_at"`
-	CreatedAt               int64         `json:"createdAt"               bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt               int64         `json:"updatedAt"               bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                      pulid.ID      `json:"id" keel:"id,pk,autoid:acctro_"`
+	BusinessUnitID          pulid.ID      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID      `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ConnectionID            pulid.ID      `json:"connectionId" keel:"connection_id"`
+	Kind                    ReferenceKind `json:"kind" keel:"kind"`
+	ExternalID              string        `json:"externalId" keel:"external_id"`
+	Name                    string        `json:"name" keel:"name"`
+	SearchName              string        `json:"-" keel:"search_name"`
+	FullyQualifiedName      string        `json:"fullyQualifiedName" keel:"fully_qualified_name,nullzero"`
+	Number                  string        `json:"number" keel:"number,nullzero"`
+	Description             string        `json:"description" keel:"description,nullzero"`
+	Classification          string        `json:"classification" keel:"classification,nullzero"`
+	AccountType             string        `json:"accountType" keel:"account_type,nullzero"`
+	AccountSubType          string        `json:"accountSubType" keel:"account_sub_type,nullzero"`
+	AccountClass            AccountClass  `json:"accountClass" keel:"account_class,nullzero"`
+	ItemType                string        `json:"itemType" keel:"item_type,nullzero"`
+	SubType                 string        `json:"subType" keel:"sub_type,nullzero"`
+	ParentExternalID        string        `json:"parentExternalId" keel:"parent_external_id,nullzero"`
+	Active                  bool          `json:"active" keel:"active"`
+	CurrencyCode            string        `json:"currencyCode" keel:"currency_code,nullzero"`
+	SyncToken               string        `json:"-" keel:"sync_token,nullzero"`
+	CompanyName             string        `json:"companyName" keel:"company_name,nullzero"`
+	Email                   string        `json:"email" keel:"email,nullzero"`
+	AddressLine1            string        `json:"addressLine1" keel:"address_line1,nullzero"`
+	City                    string        `json:"city" keel:"city,nullzero"`
+	State                   string        `json:"state" keel:"state,nullzero"`
+	PostalCode              string        `json:"postalCode" keel:"postal_code,nullzero"`
+	IncomeAccountExternalID string        `json:"incomeAccountExternalId" keel:"income_account_external_id,nullzero"`
+	DueDays                 *int          `json:"dueDays" keel:"due_days"`
+	Is1099                  bool          `json:"is1099" keel:"is_1099"`
+	ProviderUpdatedAt       *int64        `json:"providerUpdatedAt" keel:"provider_updated_at"`
+	LastSeenAt              int64         `json:"lastSeenAt" keel:"last_seen_at"`
+	RemovedAt               *int64        `json:"removedAt" keel:"removed_at"`
+	CreatedAt               int64         `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt               int64         `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+}
+
+func (r *AccountingReferenceObject) BeforeUpdate(_ context.Context) error {
+	r.SearchName = stringutils.NormalizeName(r.Name)
+
+	return nil
+}
+
+func (r *AccountingReferenceObject) BeforeCreate(_ context.Context) error {
+	r.SearchName = stringutils.NormalizeName(r.Name)
+
+	return nil
 }
 
 func (r *AccountingReferenceObject) GetTableName() string { return "accounting_reference_objects" }
@@ -67,24 +74,6 @@ func (r *AccountingReferenceObject) GetBusinessUnitID() pulid.ID { return r.Busi
 
 func (r *AccountingReferenceObject) BeforeSave(_ context.Context) error {
 	r.SearchName = stringutils.NormalizeName(r.Name)
-	return nil
-}
-
-func (r *AccountingReferenceObject) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	r.SearchName = stringutils.NormalizeName(r.Name)
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("acctro_")
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-
 	return nil
 }
 

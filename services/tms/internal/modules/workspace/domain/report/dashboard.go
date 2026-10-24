@@ -13,13 +13,10 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Dashboard)(nil)
 	_ validationframework.TenantedEntity = (*Dashboard)(nil)
 )
 
@@ -119,26 +116,33 @@ func (l *DashboardLayout) Tile(id string) (*DashboardTile, bool) {
 }
 
 type Dashboard struct {
-	bun.BaseModel `bun:"table:report_dashboards,alias:rdash" json:"-"`
-	keel.Table    `                                                   keel:"report_dashboards"`
+	keel.Table `                                                   keel:"report_dashboards"`
 
-	ID             pulid.ID         `json:"id"             bun:"id,pk,type:VARCHAR(100)"                                                           keel:"id,pk,autoid:rdb_"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                     keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"                                      keel:"organization_id,pk,tenant"`
-	Name           string           `json:"name"           bun:"name,type:VARCHAR(255),notnull"                                                    keel:"name"`
-	Description    string           `json:"description"    bun:"description,type:TEXT,nullzero"                                                    keel:"description,nullzero"`
-	Category       string           `json:"category"       bun:"category,type:VARCHAR(100),nullzero"                                               keel:"category,nullzero"`
-	Tags           []string         `json:"tags"           bun:"tags,type:TEXT[],array,nullzero"                                                   keel:"tags,nullzero"`
-	OwnerID        pulid.ID         `json:"ownerId"        bun:"owner_id,type:VARCHAR(100),notnull"                                                keel:"owner_id"`
-	Visibility     Visibility       `json:"visibility"     bun:"visibility,type:VARCHAR(20),notnull,default:'private'"                             keel:"visibility"`
-	Layout         *DashboardLayout `json:"layout"         bun:"layout,type:JSONB,notnull"                                                         keel:"layout,jsonb"`
-	Version        int64            `json:"version"        bun:"version,type:BIGINT"                                                               keel:"version,version"`
-	CreatedAt      int64            `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64            `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID         `json:"id" keel:"id,pk,autoid:rdb_"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name           string           `json:"name" keel:"name"`
+	Description    string           `json:"description" keel:"description,nullzero"`
+	Category       string           `json:"category" keel:"category,nullzero"`
+	Tags           []string         `json:"tags" keel:"tags,nullzero"`
+	OwnerID        pulid.ID         `json:"ownerId" keel:"owner_id"`
+	Visibility     Visibility       `json:"visibility" keel:"visibility"`
+	Layout         *DashboardLayout `json:"layout" keel:"layout,jsonb"`
+	Version        int64            `json:"version" keel:"version,version"`
+	CreatedAt      int64            `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Owner        *tenant.User         `json:"owner,omitempty"        bun:"rel:belongs-to,join:owner_id=id"         keel:"belongs:owner_id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Owner        *tenant.User         `json:"owner,omitempty" keel:"belongs:owner_id"`
+}
+
+func (d *Dashboard) BeforeCreate(_ context.Context) error {
+	if d.Visibility == "" {
+		d.Visibility = VisibilityPrivate
+	}
+
+	return nil
 }
 
 func (d *Dashboard) Validate(multiErr *errortypes.MultiError) {
@@ -305,22 +309,6 @@ func validateDashboardParams(multiErr *errortypes.MultiError, params []ir.Parame
 	}
 }
 
-func (d *Dashboard) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("rdb_")
-		}
-		d.CreatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (d *Dashboard) GetCreatedAt() int64 { return d.CreatedAt }
 
 func (d *Dashboard) GetID() pulid.ID { return d.ID }
@@ -340,12 +328,4 @@ func (d *Dashboard) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "category", Type: domaintypes.FieldTypeText},
 		},
 	}
-}
-
-func (d *Dashboard) BeforeCreate(context.Context) error {
-	if d.Visibility == "" {
-		d.Visibility = VisibilityPrivate
-	}
-
-	return nil
 }

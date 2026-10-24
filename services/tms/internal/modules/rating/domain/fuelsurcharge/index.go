@@ -10,41 +10,37 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*FuelIndex)(nil)
 	_ validationframework.TenantedEntity = (*FuelIndex)(nil)
 	_ domaintypes.PostgresSearchable     = (*FuelIndex)(nil)
 )
 
 type FuelIndex struct {
-	bun.BaseModel `bun:"table:fuel_indices,alias:fidx" json:"-"`
-	keel.Table    `                                             keel:"fuel_indices"`
+	keel.Table `                                             keel:"fuel_indices"`
 
-	ID             pulid.ID    `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:fidx_"`
-	BusinessUnitID pulid.ID    `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID    `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
-	Name           string      `json:"name"           bun:"name,type:VARCHAR(100),notnull"                                                       keel:"name"`
-	Code           string      `json:"code"           bun:"code,type:VARCHAR(50),notnull"                                                        keel:"code"`
-	Description    string      `json:"description"    bun:"description,type:TEXT,nullzero"                                                       keel:"description,nullzero"`
-	Source         IndexSource `json:"source"         bun:"source,type:fuel_index_source_enum,notnull"                                           keel:"source"`
-	FuelType       FuelType    `json:"fuelType"       bun:"fuel_type,type:fuel_type_enum,notnull,default:'Diesel'"                               keel:"fuel_type"`
-	Region         string      `json:"region"         bun:"region,type:VARCHAR(100),nullzero"                                                    keel:"region,nullzero"`
-	EIASeriesID    string      `json:"eiaSeriesId"    bun:"eia_series_id,type:VARCHAR(64),nullzero"                                              keel:"eia_series_id,nullzero"`
-	Currency       string      `json:"currency"       bun:"currency,type:VARCHAR(3),notnull,default:'USD'"                                       keel:"currency"`
-	IsActive       bool        `json:"isActive"       bun:"is_active,type:BOOLEAN,notnull"                                                       keel:"is_active"`
-	Version        int64       `json:"version"        bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt      int64       `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64       `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector   string      `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"                                                 keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string      `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"                                                      keel:"rank,computed"`
+	ID             pulid.ID    `json:"id" keel:"id,pk,autoid:fidx_"`
+	BusinessUnitID pulid.ID    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID    `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name           string      `json:"name" keel:"name"`
+	Code           string      `json:"code" keel:"code"`
+	Description    string      `json:"description" keel:"description,nullzero"`
+	Source         IndexSource `json:"source" keel:"source"`
+	FuelType       FuelType    `json:"fuelType" keel:"fuel_type"`
+	Region         string      `json:"region" keel:"region,nullzero"`
+	EIASeriesID    string      `json:"eiaSeriesId" keel:"eia_series_id,nullzero"`
+	Currency       string      `json:"currency" keel:"currency"`
+	IsActive       bool        `json:"isActive" keel:"is_active"`
+	Version        int64       `json:"version" keel:"version,version"`
+	CreatedAt      int64       `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64       `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector   string      `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string      `json:"-" keel:"rank,computed"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (fi *FuelIndex) Validate(multiErr *errortypes.MultiError) {
@@ -127,28 +123,15 @@ func (fi *FuelIndex) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 	}
 }
 
-func (fi *FuelIndex) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if fi.ID.IsNil() {
-			fi.ID = pulid.MustNew("fidx_")
-		}
-		if fi.FuelType == "" {
-			fi.FuelType = FuelTypeDiesel
-		}
-		fi.CreatedAt = now
-		fi.UpdatedAt = now
-	case *bun.UpdateQuery:
-		fi.UpdatedAt = now
+func (fi *FuelIndex) BeforeCreate(ctx context.Context) error {
+	if fi.FuelType == "" {
+		fi.FuelType = FuelTypeDiesel
+	}
+	if fi.Currency == "" {
+		fi.Currency = "USD"
 	}
 
 	return nil
-}
-
-func (fi *FuelIndex) BeforeCreate(ctx context.Context) error {
-	return fi.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (fi *FuelIndex) BeforeSave(_ context.Context) error {

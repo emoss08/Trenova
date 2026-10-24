@@ -177,12 +177,7 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*servicetype.ServiceType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*servicetype.ServiceType, error) {
 		st := servicetypedb.ServiceTypes
-		entities, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			st.Where(st.ID.In(req.ServiceTypeIDs...)),
-			st.Status.To(req.Status),
-		)
+		entities, err := st.Where(st.ID.In(req.ServiceTypeIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), st.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update service type status", zap.Error(err))
 			return nil, err

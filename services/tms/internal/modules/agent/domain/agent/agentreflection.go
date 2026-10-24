@@ -9,17 +9,13 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Reflection)(nil)
 	_ validationframework.TenantedEntity = (*Reflection)(nil)
 )
 
@@ -219,43 +215,54 @@ func (c ReflectionChange) Kept() bool {
 }
 
 type Reflection struct {
-	bun.BaseModel `bun:"table:agent_reflections,alias:arfl" json:"-"`
-	keel.Table    `keel:"agent_reflections"`
+	keel.Table `keel:"agent_reflections"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:arfl_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:arfl_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
+	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" keel:"agent_definition_id"`
+	SubjectType       ReflectionSubject `json:"subjectType" keel:"subject_type"`
+	ThreadID          *pulid.ID         `json:"threadId" keel:"thread_id"`
+	RunID             *pulid.ID         `json:"runId" keel:"run_id"`
+	UserID            *pulid.ID         `json:"userId" keel:"user_id"`
+	FromSequence      int               `json:"fromSequence" keel:"from_sequence"`
+	ThroughSequence   int               `json:"throughSequence" keel:"through_sequence"`
 
-	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
-	SubjectType       ReflectionSubject `json:"subjectType"       bun:"subject_type,type:VARCHAR(20),notnull" keel:"subject_type"`
-	ThreadID          *pulid.ID         `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero" keel:"thread_id"`
-	RunID             *pulid.ID         `json:"runId"             bun:"run_id,type:VARCHAR(100),nullzero" keel:"run_id"`
-	UserID            *pulid.ID         `json:"userId"            bun:"user_id,type:VARCHAR(100),nullzero" keel:"user_id"`
-	FromSequence      int               `json:"fromSequence"      bun:"from_sequence,type:INTEGER,notnull,default:0" keel:"from_sequence"`
-	ThroughSequence   int               `json:"throughSequence"   bun:"through_sequence,type:INTEGER,notnull,default:0" keel:"through_sequence"`
+	Status     ReflectionStatus   `json:"status" keel:"status"`
+	SkipReason ReflectionSkip     `json:"skipReason" keel:"skip_reason,nullzero"`
+	Signals    ReflectionSignals  `json:"signals" keel:"signals,jsonb"`
+	Changes    []ReflectionChange `json:"changes" keel:"changes,jsonb"`
+	Notes      string             `json:"notes" keel:"notes,nullzero"`
+	Tainted    bool               `json:"tainted" keel:"tainted"`
 
-	Status     ReflectionStatus   `json:"status"     bun:"status,type:VARCHAR(20),notnull,default:'Running'" keel:"status"`
-	SkipReason ReflectionSkip     `json:"skipReason" bun:"skip_reason,type:VARCHAR(30),nullzero" keel:"skip_reason,nullzero"`
-	Signals    ReflectionSignals  `json:"signals"    bun:"signals,type:JSONB,notnull,default:'[]'" keel:"signals,jsonb"`
-	Changes    []ReflectionChange `json:"changes"    bun:"changes,type:JSONB,notnull,default:'[]'" keel:"changes,jsonb"`
-	Notes      string             `json:"notes"      bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	Tainted    bool               `json:"tainted"    bun:"tainted,type:BOOLEAN,notnull,default:false" keel:"tainted"`
+	Model        string   `json:"model" keel:"model,nullzero"`
+	ProviderID   pulid.ID `json:"providerId" keel:"provider_id,nullzero"`
+	InputTokens  int      `json:"inputTokens" keel:"input_tokens"`
+	OutputTokens int      `json:"outputTokens" keel:"output_tokens"`
+	ErrorMessage string   `json:"errorMessage" keel:"error_message,nullzero"`
+	FinishedAt   *int64   `json:"finishedAt" keel:"finished_at"`
 
-	Model        string   `json:"model"        bun:"model,type:VARCHAR(200),nullzero" keel:"model,nullzero"`
-	ProviderID   pulid.ID `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id,nullzero"`
-	InputTokens  int      `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0" keel:"input_tokens"`
-	OutputTokens int      `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0" keel:"output_tokens"`
-	ErrorMessage string   `json:"errorMessage" bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
-	FinishedAt   *int64   `json:"finishedAt"   bun:"finished_at,type:BIGINT,nullzero" keel:"finished_at"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+}
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+func (r *Reflection) BeforeCreate(_ context.Context) error {
+	if r.Status == "" {
+		r.Status = ReflectionStatusRunning
+	}
+	if r.Signals == nil {
+		r.Signals = ReflectionSignals{}
+	}
+	if r.Changes == nil {
+		r.Changes = []ReflectionChange{}
+	}
+
+	return nil
 }
 
 func (r *Reflection) Validate(multiErr *errortypes.MultiError) {
@@ -357,30 +364,4 @@ func (r *Reflection) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 			{Name: "subject_type", Type: domaintypes.FieldTypeEnum},
 		},
 	}
-}
-
-func (r *Reflection) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("arfl_")
-		}
-		if r.Status == "" {
-			r.Status = ReflectionStatusRunning
-		}
-		if r.Signals == nil {
-			r.Signals = ReflectionSignals{}
-		}
-		if r.Changes == nil {
-			r.Changes = []ReflectionChange{}
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-
-	return nil
 }

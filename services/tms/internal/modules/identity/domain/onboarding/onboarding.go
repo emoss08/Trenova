@@ -1,8 +1,6 @@
 package onboarding
 
 import (
-	"context"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -10,29 +8,26 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Onboarding)(nil)
 	_ validationframework.TenantedEntity = (*Onboarding)(nil)
 )
 
 type Onboarding struct {
-	bun.BaseModel `bun:"table:organization_onboarding,alias:oonb" json:"-"`
-	keel.Table    `keel:"organization_onboarding"`
+	keel.Table `keel:"organization_onboarding"`
 
-	ID               pulid.ID             `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:oonb_"`
-	BusinessUnitID   pulid.ID             `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID             `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	Status           Status               `json:"status"                  bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	OperationType    tenant.OperationType `json:"operationType,omitempty" bun:"operation_type,type:VARCHAR(20),nullzero" keel:"operation_type,nullzero"`
-	SampleDataLoaded bool                 `json:"sampleDataLoaded"        bun:"sample_data_loaded,type:BOOLEAN,notnull" keel:"sample_data_loaded"`
-	CompletedAt      *int64               `json:"completedAt"             bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
-	CompletedByID    pulid.ID             `json:"completedById,omitempty" bun:"completed_by_id,type:VARCHAR(100),nullzero" keel:"completed_by_id,nullzero"`
-	Version          int64                `json:"version"                 bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt        int64                `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt        int64                `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID               pulid.ID             `json:"id" keel:"id,pk,autoid:oonb_"`
+	BusinessUnitID   pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Status           Status               `json:"status" keel:"status"`
+	OperationType    tenant.OperationType `json:"operationType,omitempty" keel:"operation_type,nullzero"`
+	SampleDataLoaded bool                 `json:"sampleDataLoaded" keel:"sample_data_loaded"`
+	CompletedAt      *int64               `json:"completedAt" keel:"completed_at"`
+	CompletedByID    pulid.ID             `json:"completedById,omitempty" keel:"completed_by_id,nullzero"`
+	Version          int64                `json:"version" keel:"version,version"`
+	CreatedAt        int64                `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt        int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 type CompleteParams struct {
@@ -109,25 +104,6 @@ func (o *Onboarding) Validate(multiErr *errortypes.MultiError) {
 			validation.When(completed, validation.Required.Error("Completed by is required")),
 		),
 	))
-}
-
-func (o *Onboarding) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if o.ID.IsNil() {
-			o.ID = pulid.MustNew("oonb_")
-		}
-		if o.CreatedAt == 0 {
-			o.CreatedAt = now
-		}
-		o.UpdatedAt = now
-	case *bun.UpdateQuery:
-		o.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (o *Onboarding) GetID() pulid.ID {

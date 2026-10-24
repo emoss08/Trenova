@@ -9,26 +9,14 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*IdentityProvider)(nil)
-	_ bun.BeforeAppendModelHook          = (*ExternalIdentity)(nil)
-	_ bun.BeforeAppendModelHook          = (*MFAAuthenticator)(nil)
-	_ bun.BeforeAppendModelHook          = (*AuthEvent)(nil)
-	_ bun.BeforeAppendModelHook          = (*RiskDecision)(nil)
-	_ bun.BeforeAppendModelHook          = (*SCIMDirectory)(nil)
-	_ bun.BeforeAppendModelHook          = (*SCIMToken)(nil)
-	_ bun.BeforeAppendModelHook          = (*SCIMGroupRoleMapping)(nil)
-	_ bun.BeforeAppendModelHook          = (*ProvisioningAuditRecord)(nil)
-	_ bun.BeforeAppendModelHook          = (*AccessPolicy)(nil)
 	_ validationframework.TenantedEntity = (*AccessPolicy)(nil)
 	_ domaintypes.PostgresSearchable     = (*AuthEvent)(nil)
 	_ domaintypes.PostgresSearchable     = (*RiskDecision)(nil)
@@ -37,34 +25,45 @@ var (
 )
 
 type IdentityProvider struct {
-	bun.BaseModel `bun:"table:identity_providers,alias:idp" json:"-"`
-	keel.Table    `keel:"identity_providers"`
+	keel.Table `keel:"identity_providers"`
 
-	ID                  pulid.ID                 `json:"id"                    bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:idp_"`
-	OrganizationID      pulid.ID                 `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	BusinessUnitID      pulid.ID                 `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
-	Name                string                   `json:"name"                  bun:"name,type:VARCHAR(120),notnull" keel:"name"`
-	Slug                string                   `json:"slug"                  bun:"slug,type:VARCHAR(80),notnull" keel:"slug"`
-	Protocol            IdentityProviderProtocol `json:"protocol"              bun:"protocol,type:iam_identity_provider_protocol_enum,notnull" keel:"protocol"`
-	Enabled             bool                     `json:"enabled"               bun:"enabled,notnull" keel:"enabled"`
-	EnforceSSO          bool                     `json:"enforceSso"            bun:"enforce_sso,notnull" keel:"enforce_sso"`
-	AutoProvision       bool                     `json:"autoProvision"         bun:"auto_provision,notnull" keel:"auto_provision"`
-	AllowFederatedMFA   bool                     `json:"allowFederatedMfa"     bun:"allow_federated_mfa,notnull" keel:"allow_federated_mfa"`
-	FederatedMFAACRs    []string                 `json:"federatedMfaAcrValues" bun:"federated_mfa_acr_values,array,notnull" keel:"federated_mfa_acr_values"`
-	AllowedDomains      []string                 `json:"allowedDomains"        bun:"allowed_domains,array" keel:"allowed_domains"`
-	AttributeMap        map[string]string        `json:"attributeMap"          bun:"attribute_map,type:JSONB,notnull" keel:"attribute_map,jsonb"`
-	OIDCIssuerURL       string                   `json:"oidcIssuerUrl"         bun:"oidc_issuer_url,type:VARCHAR(500)" keel:"oidc_issuer_url,nullzero"`
-	OIDCClientID        string                   `json:"oidcClientId"          bun:"oidc_client_id,type:VARCHAR(255)" keel:"oidc_client_id,nullzero"`
-	OIDCClientSecret    string                   `json:"-"                     bun:"oidc_client_secret,type:TEXT" keel:"oidc_client_secret,nullzero"`
-	OIDCRedirectURL     string                   `json:"oidcRedirectUrl"       bun:"oidc_redirect_url,type:VARCHAR(500)" keel:"oidc_redirect_url,nullzero"`
-	OIDCScopes          []string                 `json:"oidcScopes"            bun:"oidc_scopes,array" keel:"oidc_scopes"`
-	SAMLEntityID        string                   `json:"samlEntityId"          bun:"saml_entity_id,type:VARCHAR(500)" keel:"saml_entity_id,nullzero"`
-	SAMLSSOURL          string                   `json:"samlSsoUrl"            bun:"saml_sso_url,type:VARCHAR(500)" keel:"saml_sso_url,nullzero"`
-	SAMLX509Certificate string                   `json:"-"                     bun:"saml_x509_certificate,type:TEXT" keel:"saml_x509_certificate,nullzero"`
-	SAMLMetadataXML     string                   `json:"-"                     bun:"saml_metadata_xml,type:TEXT" keel:"saml_metadata_xml,nullzero"`
-	Version             int64                    `json:"version"               bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt           int64                    `json:"createdAt"             bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt           int64                    `json:"updatedAt"             bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                  pulid.ID                 `json:"id" keel:"id,pk,autoid:idp_"`
+	OrganizationID      pulid.ID                 `json:"organizationId" keel:"organization_id,tenant"`
+	BusinessUnitID      pulid.ID                 `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	Name                string                   `json:"name" keel:"name"`
+	Slug                string                   `json:"slug" keel:"slug"`
+	Protocol            IdentityProviderProtocol `json:"protocol" keel:"protocol"`
+	Enabled             bool                     `json:"enabled" keel:"enabled"`
+	EnforceSSO          bool                     `json:"enforceSso" keel:"enforce_sso"`
+	AutoProvision       bool                     `json:"autoProvision" keel:"auto_provision"`
+	AllowFederatedMFA   bool                     `json:"allowFederatedMfa" keel:"allow_federated_mfa"`
+	FederatedMFAACRs    []string                 `json:"federatedMfaAcrValues" keel:"federated_mfa_acr_values"`
+	AllowedDomains      []string                 `json:"allowedDomains" keel:"allowed_domains"`
+	AttributeMap        map[string]string        `json:"attributeMap" keel:"attribute_map,jsonb"`
+	OIDCIssuerURL       string                   `json:"oidcIssuerUrl" keel:"oidc_issuer_url,nullzero"`
+	OIDCClientID        string                   `json:"oidcClientId" keel:"oidc_client_id,nullzero"`
+	OIDCClientSecret    string                   `json:"-" keel:"oidc_client_secret,nullzero"`
+	OIDCRedirectURL     string                   `json:"oidcRedirectUrl" keel:"oidc_redirect_url,nullzero"`
+	OIDCScopes          []string                 `json:"oidcScopes" keel:"oidc_scopes"`
+	SAMLEntityID        string                   `json:"samlEntityId" keel:"saml_entity_id,nullzero"`
+	SAMLSSOURL          string                   `json:"samlSsoUrl" keel:"saml_sso_url,nullzero"`
+	SAMLX509Certificate string                   `json:"-" keel:"saml_x509_certificate,nullzero"`
+	SAMLMetadataXML     string                   `json:"-" keel:"saml_metadata_xml,nullzero"`
+	Version             int64                    `json:"version" keel:"version,version"`
+	CreatedAt           int64                    `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt           int64                    `json:"updatedAt" keel:"updated_at,autoupdate"`
+}
+
+func (p *IdentityProvider) BeforeUpdate(_ context.Context) error {
+	p.setCollectionDefaults()
+
+	return nil
+}
+
+func (p *IdentityProvider) BeforeCreate(_ context.Context) error {
+	p.setCollectionDefaults()
+
+	return nil
 }
 
 func (p *IdentityProvider) Validate(multiErr *errortypes.MultiError) {
@@ -106,22 +105,6 @@ const (
 	maxFederatedMFAACRLength = 255
 )
 
-func (p *IdentityProvider) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	now := timeutils.NowUnix()
-	switch q.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("idp_")
-		}
-		p.setCollectionDefaults()
-		p.CreatedAt = now
-	case *bun.UpdateQuery:
-		p.setCollectionDefaults()
-		p.UpdatedAt = now
-	}
-	return nil
-}
-
 func (p *IdentityProvider) BeforeSave(_ context.Context) error {
 	p.setCollectionDefaults()
 	return nil
@@ -147,244 +130,215 @@ func defaultIdentityProviderOIDCScopes() []string {
 }
 
 type ExternalIdentity struct {
-	bun.BaseModel `bun:"table:external_identities,alias:extid" json:"-"`
-	keel.Table    `keel:"external_identities"`
+	keel.Table `keel:"external_identities"`
 
-	pagination.CursorValueSet `bun:",embed" json:"-"`
-
-	ID                 pulid.ID          `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ext_"`
-	UserID             pulid.ID          `json:"userId"             bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
-	OrganizationID     pulid.ID          `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	BusinessUnitID     pulid.ID          `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
-	IdentityProviderID pulid.ID          `json:"identityProviderId" bun:"identity_provider_id,type:VARCHAR(100),notnull" keel:"identity_provider_id"`
-	ExternalSubject    string            `json:"externalSubject"    bun:"external_subject,type:VARCHAR(255),notnull" keel:"external_subject"`
-	ExternalUsername   string            `json:"externalUsername"   bun:"external_username,type:VARCHAR(255)" keel:"external_username,nullzero"`
-	ExternalEmail      string            `json:"externalEmail"      bun:"external_email,type:VARCHAR(255)" keel:"external_email,nullzero"`
-	RawClaims          map[string]string `json:"rawClaims"          bun:"raw_claims,type:JSONB,notnull" keel:"raw_claims,jsonb"`
-	LastLoginAt        int64             `json:"lastLoginAt"        bun:"last_login_at" keel:"last_login_at,nullzero"`
-	CreatedAt          int64             `json:"createdAt"          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt          int64             `json:"updatedAt"          bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                 pulid.ID          `json:"id" keel:"id,pk,autoid:ext_"`
+	UserID             pulid.ID          `json:"userId" keel:"user_id"`
+	OrganizationID     pulid.ID          `json:"organizationId" keel:"organization_id,tenant"`
+	BusinessUnitID     pulid.ID          `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	IdentityProviderID pulid.ID          `json:"identityProviderId" keel:"identity_provider_id"`
+	ExternalSubject    string            `json:"externalSubject" keel:"external_subject"`
+	ExternalUsername   string            `json:"externalUsername" keel:"external_username,nullzero"`
+	ExternalEmail      string            `json:"externalEmail" keel:"external_email,nullzero"`
+	RawClaims          map[string]string `json:"rawClaims" keel:"raw_claims,jsonb"`
+	LastLoginAt        int64             `json:"lastLoginAt" keel:"last_login_at,nullzero"`
+	CreatedAt          int64             `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt          int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
-func (e *ExternalIdentity) BeforeAppendModel(_ context.Context, q bun.Query) error {
+func (e *ExternalIdentity) BeforeUpdate(_ context.Context) error {
 	if e.RawClaims == nil {
 		e.RawClaims = map[string]string{}
 	}
-	setIAMTimestamps(iamTimestampParams{
-		Query:     q,
-		ID:        &e.ID,
-		IDPrefix:  "ext_",
-		CreatedAt: &e.CreatedAt,
-		UpdatedAt: &e.UpdatedAt,
-	})
+
+	return nil
+}
+
+func (e *ExternalIdentity) BeforeCreate(_ context.Context) error {
+	if e.RawClaims == nil {
+		e.RawClaims = map[string]string{}
+	}
+
 	return nil
 }
 
 type MFAAuthenticator struct {
-	bun.BaseModel `bun:"table:mfa_authenticators,alias:mfa" json:"-"`
-	keel.Table    `keel:"mfa_authenticators"`
+	keel.Table `keel:"mfa_authenticators"`
 
-	pagination.CursorValueSet `bun:",embed" json:"-"`
-
-	ID             pulid.ID             `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:mfa_"`
-	UserID         pulid.ID             `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
-	OrganizationID pulid.ID             `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	Type           MFAAuthenticatorType `json:"type"           bun:"type,type:iam_mfa_authenticator_type_enum,notnull" keel:"type"`
-	Name           string               `json:"name"           bun:"name,type:VARCHAR(120),notnull" keel:"name"`
-	CredentialID   string               `json:"credentialId"   bun:"credential_id,type:VARCHAR(512)" keel:"credential_id,nullzero"`
-	SecretCipher   string               `json:"-"              bun:"secret_cipher,type:TEXT" keel:"secret_cipher,nullzero"`
-	Enabled        bool                 `json:"enabled"        bun:"enabled,notnull" keel:"enabled"`
-	VerifiedAt     int64                `json:"verifiedAt"     bun:"verified_at" keel:"verified_at,nullzero"`
-	LastUsedAt     int64                `json:"lastUsedAt"     bun:"last_used_at" keel:"last_used_at,nullzero"`
-	LastUsedStep   int64                `json:"-"              bun:"last_used_step,notnull,default:0" keel:"last_used_step"`
-	CreatedAt      int64                `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64                `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-}
-
-func (a *MFAAuthenticator) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(iamTimestampParams{
-		Query:     q,
-		ID:        &a.ID,
-		IDPrefix:  "mfa_",
-		CreatedAt: &a.CreatedAt,
-		UpdatedAt: &a.UpdatedAt,
-	})
-	return nil
+	ID             pulid.ID             `json:"id" keel:"id,pk,autoid:mfa_"`
+	UserID         pulid.ID             `json:"userId" keel:"user_id"`
+	OrganizationID pulid.ID             `json:"organizationId" keel:"organization_id,tenant"`
+	Type           MFAAuthenticatorType `json:"type" keel:"type"`
+	Name           string               `json:"name" keel:"name"`
+	CredentialID   string               `json:"credentialId" keel:"credential_id,nullzero"`
+	SecretCipher   string               `json:"-" keel:"secret_cipher,nullzero"`
+	Enabled        bool                 `json:"enabled" keel:"enabled"`
+	VerifiedAt     int64                `json:"verifiedAt" keel:"verified_at,nullzero"`
+	LastUsedAt     int64                `json:"lastUsedAt" keel:"last_used_at,nullzero"`
+	LastUsedStep   int64                `json:"-" keel:"last_used_step"`
+	CreatedAt      int64                `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 type AuthEvent struct {
-	bun.BaseModel `bun:"table:auth_events,alias:ae" json:"-"`
-	keel.Table    `keel:"auth_events"`
+	keel.Table `keel:"auth_events"`
 
-	pagination.CursorValueSet `bun:",embed" json:"-"`
-
-	ID                 pulid.ID         `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:aue_"`
-	UserID             pulid.ID         `json:"userId"             bun:"user_id,type:VARCHAR(100)" keel:"user_id,nullzero"`
-	OrganizationID     pulid.ID         `json:"organizationId"     bun:"organization_id,type:VARCHAR(100)" keel:"organization_id,nullzero"`
-	BusinessUnitID     pulid.ID         `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100)" keel:"business_unit_id,nullzero"`
-	IdentityProviderID pulid.ID         `json:"identityProviderId" bun:"identity_provider_id,type:VARCHAR(100)" keel:"identity_provider_id,nullzero"`
-	Provider           string           `json:"provider"           bun:"provider,type:VARCHAR(120),notnull" keel:"provider"`
-	Outcome            AuthEventOutcome `json:"outcome"            bun:"outcome,type:iam_auth_event_outcome_enum,notnull" keel:"outcome"`
-	IPAddress          string           `json:"ipAddress"          bun:"ip_address,type:INET,nullzero" keel:"ip_address,nullzero"`
-	UserAgent          string           `json:"userAgent"          bun:"user_agent,type:TEXT,nullzero" keel:"user_agent,nullzero"`
-	AuthenticatorAAL   int              `json:"authenticatorAal"   bun:"authenticator_aal,notnull,default:1" keel:"authenticator_aal"`
-	FederationFAL      int              `json:"federationFal"      bun:"federation_fal,notnull,default:1" keel:"federation_fal"`
-	MFAState           string           `json:"mfaState"           bun:"mfa_state,type:VARCHAR(80)" keel:"mfa_state,nullzero"`
-	RiskOutcome        RiskOutcome      `json:"riskOutcome"        bun:"risk_outcome,type:iam_risk_outcome_enum,notnull,default:'allow'" keel:"risk_outcome"`
-	RiskSignals        []string         `json:"riskSignals"        bun:"risk_signals,array" keel:"risk_signals"`
-	ErrorCode          string           `json:"errorCode"          bun:"error_code,type:VARCHAR(120)" keel:"error_code,nullzero"`
-	OccurredAt         int64            `json:"occurredAt"         bun:"occurred_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"occurred_at"`
-	CreatedAt          int64            `json:"createdAt"          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	ID                 pulid.ID         `json:"id" keel:"id,pk,autoid:aue_"`
+	UserID             pulid.ID         `json:"userId" keel:"user_id,nullzero"`
+	OrganizationID     pulid.ID         `json:"organizationId" keel:"organization_id,nullzero"`
+	BusinessUnitID     pulid.ID         `json:"businessUnitId" keel:"business_unit_id,nullzero"`
+	IdentityProviderID pulid.ID         `json:"identityProviderId" keel:"identity_provider_id,nullzero"`
+	Provider           string           `json:"provider" keel:"provider"`
+	Outcome            AuthEventOutcome `json:"outcome" keel:"outcome"`
+	IPAddress          string           `json:"ipAddress" keel:"ip_address,nullzero"`
+	UserAgent          string           `json:"userAgent" keel:"user_agent,nullzero"`
+	AuthenticatorAAL   int              `json:"authenticatorAal" keel:"authenticator_aal"`
+	FederationFAL      int              `json:"federationFal" keel:"federation_fal"`
+	MFAState           string           `json:"mfaState" keel:"mfa_state,nullzero"`
+	RiskOutcome        RiskOutcome      `json:"riskOutcome" keel:"risk_outcome"`
+	RiskSignals        []string         `json:"riskSignals" keel:"risk_signals"`
+	ErrorCode          string           `json:"errorCode" keel:"error_code,nullzero"`
+	OccurredAt         int64            `json:"occurredAt" keel:"occurred_at"`
+	CreatedAt          int64            `json:"createdAt" keel:"created_at,autocreate"`
 }
 
-func (e *AuthEvent) BeforeAppendModel(_ context.Context, q bun.Query) error {
+func (e *AuthEvent) BeforeUpdate(_ context.Context) error {
 	if e.RiskSignals == nil {
 		e.RiskSignals = []string{}
 	}
-	setIAMTimestamps(iamTimestampParams{
-		Query:     q,
-		ID:        &e.ID,
-		IDPrefix:  "aue_",
-		CreatedAt: &e.CreatedAt,
-	})
 	if e.OccurredAt == 0 {
 		e.OccurredAt = e.CreatedAt
 	}
+
 	return nil
 }
 
 func (e *AuthEvent) BeforeCreate(_ context.Context) error {
+	if e.RiskSignals == nil {
+		e.RiskSignals = []string{}
+	}
+	if e.OccurredAt == 0 {
+		e.OccurredAt = e.CreatedAt
+	}
+	if e.AuthenticatorAAL == 0 {
+		e.AuthenticatorAAL = 1
+	}
+	if e.FederationFAL == 0 {
+		e.FederationFAL = 1
+	}
+	if e.RiskOutcome == "" {
+		e.RiskOutcome = RiskOutcomeAllow
+	}
 	if e.OccurredAt == 0 {
 		e.OccurredAt = timeutils.NowUnix()
 	}
+
 	return nil
 }
 
 type RiskDecision struct {
-	bun.BaseModel `bun:"table:risk_decisions,alias:rd" json:"-"`
-	keel.Table    `keel:"risk_decisions"`
+	keel.Table `keel:"risk_decisions"`
 
-	pagination.CursorValueSet `bun:",embed" json:"-"`
-
-	ID             pulid.ID    `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:rsk_"`
-	UserID         pulid.ID    `json:"userId"         bun:"user_id,type:VARCHAR(100)" keel:"user_id,nullzero"`
-	OrganizationID pulid.ID    `json:"organizationId" bun:"organization_id,type:VARCHAR(100)" keel:"organization_id,nullzero"`
-	BusinessUnitID pulid.ID    `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100)" keel:"business_unit_id,nullzero"`
-	Outcome        RiskOutcome `json:"outcome"        bun:"outcome,type:iam_risk_outcome_enum,notnull" keel:"outcome"`
-	Signals        []string    `json:"signals"        bun:"signals,array" keel:"signals"`
-	Reason         string      `json:"reason"         bun:"reason,type:TEXT" keel:"reason,nullzero"`
-	CreatedAt      int64       `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	ID             pulid.ID    `json:"id" keel:"id,pk,autoid:rsk_"`
+	UserID         pulid.ID    `json:"userId" keel:"user_id,nullzero"`
+	OrganizationID pulid.ID    `json:"organizationId" keel:"organization_id,nullzero"`
+	BusinessUnitID pulid.ID    `json:"businessUnitId" keel:"business_unit_id,nullzero"`
+	Outcome        RiskOutcome `json:"outcome" keel:"outcome"`
+	Signals        []string    `json:"signals" keel:"signals"`
+	Reason         string      `json:"reason" keel:"reason,nullzero"`
+	CreatedAt      int64       `json:"createdAt" keel:"created_at,autocreate"`
 }
 
-func (d *RiskDecision) BeforeAppendModel(_ context.Context, q bun.Query) error {
+func (d *RiskDecision) BeforeUpdate(_ context.Context) error {
 	if d.Signals == nil {
 		d.Signals = []string{}
 	}
-	setIAMTimestamps(iamTimestampParams{
-		Query:     q,
-		ID:        &d.ID,
-		IDPrefix:  "rsk_",
-		CreatedAt: &d.CreatedAt,
-	})
+
+	return nil
+}
+
+func (d *RiskDecision) BeforeCreate(_ context.Context) error {
+	if d.Signals == nil {
+		d.Signals = []string{}
+	}
+
 	return nil
 }
 
 type SCIMDirectory struct {
-	bun.BaseModel `bun:"table:scim_directories,alias:sd" json:"-"`
-	keel.Table    `keel:"scim_directories"`
+	keel.Table `keel:"scim_directories"`
 
-	pagination.CursorValueSet `bun:",embed" json:"-"`
-
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:scd_"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
-	TenantSlug     string   `json:"tenantSlug"     bun:"tenant_slug,type:VARCHAR(100),notnull" keel:"tenant_slug"`
-	Enabled        bool     `json:"enabled"        bun:"enabled,notnull" keel:"enabled"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-}
-
-func (d *SCIMDirectory) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(iamTimestampParams{
-		Query:     q,
-		ID:        &d.ID,
-		IDPrefix:  "scd_",
-		CreatedAt: &d.CreatedAt,
-		UpdatedAt: &d.UpdatedAt,
-	})
-	return nil
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:scd_"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	TenantSlug     string   `json:"tenantSlug" keel:"tenant_slug"`
+	Enabled        bool     `json:"enabled" keel:"enabled"`
+	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 type SCIMToken struct {
-	bun.BaseModel `bun:"table:scim_tokens,alias:st" json:"-"`
-	keel.Table    `keel:"scim_tokens"`
+	keel.Table `keel:"scim_tokens"`
 
-	ID             pulid.ID        `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:sct_"`
-	OrganizationID pulid.ID        `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	DirectoryID    pulid.ID        `json:"directoryId"    bun:"directory_id,type:VARCHAR(100),notnull" keel:"directory_id"`
-	Name           string          `json:"name"           bun:"name,type:VARCHAR(120),notnull" keel:"name"`
-	Prefix         string          `json:"prefix"         bun:"prefix,type:VARCHAR(24),notnull" keel:"prefix"`
-	TokenHash      string          `json:"-"              bun:"token_hash,type:VARCHAR(128),notnull" keel:"token_hash"`
-	Status         SCIMTokenStatus `json:"status"         bun:"status,type:iam_scim_token_status_enum,notnull" keel:"status"`
-	LastUsedAt     int64           `json:"lastUsedAt"     bun:"last_used_at" keel:"last_used_at,nullzero"`
-	ExpiresAt      int64           `json:"expiresAt"      bun:"expires_at" keel:"expires_at,nullzero"`
-	CreatedAt      int64           `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-}
-
-func (t *SCIMToken) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(iamTimestampParams{
-		Query:     q,
-		ID:        &t.ID,
-		IDPrefix:  "sct_",
-		CreatedAt: &t.CreatedAt,
-		UpdatedAt: &t.UpdatedAt,
-	})
-	return nil
+	ID             pulid.ID        `json:"id" keel:"id,pk,autoid:sct_"`
+	OrganizationID pulid.ID        `json:"organizationId" keel:"organization_id,tenant"`
+	DirectoryID    pulid.ID        `json:"directoryId" keel:"directory_id"`
+	Name           string          `json:"name" keel:"name"`
+	Prefix         string          `json:"prefix" keel:"prefix"`
+	TokenHash      string          `json:"-" keel:"token_hash"`
+	Status         SCIMTokenStatus `json:"status" keel:"status"`
+	LastUsedAt     int64           `json:"lastUsedAt" keel:"last_used_at,nullzero"`
+	ExpiresAt      int64           `json:"expiresAt" keel:"expires_at,nullzero"`
+	CreatedAt      int64           `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 type ProvisioningAuditRecord struct {
-	bun.BaseModel `bun:"table:provisioning_audit_records,alias:par" json:"-"`
-	keel.Table    `keel:"provisioning_audit_records"`
+	keel.Table `keel:"provisioning_audit_records"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:par_"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	DirectoryID    pulid.ID           `json:"directoryId"    bun:"directory_id,type:VARCHAR(100),notnull" keel:"directory_id"`
-	Action         ProvisioningAction `json:"action"         bun:"action,type:iam_provisioning_action_enum,notnull" keel:"action"`
-	ResourceType   string             `json:"resourceType"   bun:"resource_type,type:VARCHAR(80),notnull" keel:"resource_type"`
-	ExternalID     string             `json:"externalId"     bun:"external_id,type:VARCHAR(255)" keel:"external_id,nullzero"`
-	ResourceID     pulid.ID           `json:"resourceId"     bun:"resource_id,type:VARCHAR(100)" keel:"resource_id,nullzero"`
-	Status         string             `json:"status"         bun:"status,type:VARCHAR(80),notnull" keel:"status"`
-	ErrorMessage   string             `json:"errorMessage"   bun:"error_message,type:TEXT" keel:"error_message,nullzero"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-}
-
-func (r *ProvisioningAuditRecord) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(iamTimestampParams{
-		Query:     q,
-		ID:        &r.ID,
-		IDPrefix:  "par_",
-		CreatedAt: &r.CreatedAt,
-	})
-	return nil
+	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:par_"`
+	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,tenant"`
+	DirectoryID    pulid.ID           `json:"directoryId" keel:"directory_id"`
+	Action         ProvisioningAction `json:"action" keel:"action"`
+	ResourceType   string             `json:"resourceType" keel:"resource_type"`
+	ExternalID     string             `json:"externalId" keel:"external_id,nullzero"`
+	ResourceID     pulid.ID           `json:"resourceId" keel:"resource_id,nullzero"`
+	Status         string             `json:"status" keel:"status"`
+	ErrorMessage   string             `json:"errorMessage" keel:"error_message,nullzero"`
+	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
 }
 
 type AccessPolicy struct {
-	bun.BaseModel `bun:"table:access_policies,alias:ap" json:"-"`
-	keel.Table    `keel:"access_policies"`
+	keel.Table `keel:"access_policies"`
 
-	ID             pulid.ID          `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:pol_"`
-	OrganizationID pulid.ID          `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	BusinessUnitID pulid.ID          `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
-	Name           string            `json:"name"           bun:"name,type:VARCHAR(120),notnull" keel:"name"`
-	Resource       string            `json:"resource"       bun:"resource,type:VARCHAR(120),notnull" keel:"resource"`
-	Operation      string            `json:"operation"      bun:"operation,type:VARCHAR(80),notnull" keel:"operation"`
-	Effect         PolicyEffect      `json:"effect"         bun:"effect,type:iam_policy_effect_enum,notnull" keel:"effect"`
-	Priority       int               `json:"priority"       bun:"priority,notnull" keel:"priority"`
-	Conditions     map[string]string `json:"conditions"     bun:"conditions,type:JSONB,notnull" keel:"conditions,jsonb"`
-	Enabled        bool              `json:"enabled"        bun:"enabled,notnull" keel:"enabled"`
-	CreatedAt      int64             `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64             `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID          `json:"id" keel:"id,pk,autoid:pol_"`
+	OrganizationID pulid.ID          `json:"organizationId" keel:"organization_id,tenant"`
+	BusinessUnitID pulid.ID          `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	Name           string            `json:"name" keel:"name"`
+	Resource       string            `json:"resource" keel:"resource"`
+	Operation      string            `json:"operation" keel:"operation"`
+	Effect         PolicyEffect      `json:"effect" keel:"effect"`
+	Priority       int               `json:"priority" keel:"priority"`
+	Conditions     map[string]string `json:"conditions" keel:"conditions,jsonb"`
+	Enabled        bool              `json:"enabled" keel:"enabled"`
+	CreatedAt      int64             `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+}
+
+func (p *AccessPolicy) BeforeUpdate(_ context.Context) error {
+	if p.Conditions == nil {
+		p.Conditions = map[string]string{}
+	}
+
+	return nil
+}
+
+func (p *AccessPolicy) BeforeCreate(_ context.Context) error {
+	if p.Conditions == nil {
+		p.Conditions = map[string]string{}
+	}
+
+	return nil
 }
 
 func (p *AccessPolicy) Validate(multiErr *errortypes.MultiError) {
@@ -404,20 +358,6 @@ func (p *AccessPolicy) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(err)
 }
 
-func (p *AccessPolicy) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	if p.Conditions == nil {
-		p.Conditions = map[string]string{}
-	}
-	setIAMTimestamps(iamTimestampParams{
-		Query:     q,
-		ID:        &p.ID,
-		IDPrefix:  "pol_",
-		CreatedAt: &p.CreatedAt,
-		UpdatedAt: &p.UpdatedAt,
-	})
-	return nil
-}
-
 func (p *AccessPolicy) GetID() pulid.ID {
 	return p.ID
 }
@@ -432,29 +372,6 @@ func (p *AccessPolicy) GetBusinessUnitID() pulid.ID {
 
 func (p *AccessPolicy) GetTableName() string {
 	return "access_policies"
-}
-
-type iamTimestampParams struct {
-	Query     bun.Query
-	ID        *pulid.ID
-	IDPrefix  string
-	CreatedAt *int64
-	UpdatedAt *int64
-}
-
-func setIAMTimestamps(p iamTimestampParams) {
-	now := timeutils.NowUnix()
-	switch p.Query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			*p.ID = pulid.MustNew(p.IDPrefix)
-		}
-		*p.CreatedAt = now
-	case *bun.UpdateQuery:
-		if p.UpdatedAt != nil {
-			*p.UpdatedAt = now
-		}
-	}
 }
 
 func (i *ExternalIdentity) Validate(multiErr *errortypes.MultiError) {

@@ -11,57 +11,45 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*Event)(nil)
-
 type Event struct {
-	bun.BaseModel `bun:"table:shipment_events,alias:se"`
-	keel.Table    `keel:"shipment_events"`
+	keel.Table `keel:"shipment_events"`
 
-	ID             pulid.ID `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:se_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId"             bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
-	MoveID         pulid.ID `json:"moveId,omitempty"       bun:"move_id,type:VARCHAR(100),nullzero" keel:"move_id,nullzero"`
-	StopID         pulid.ID `json:"stopId,omitempty"       bun:"stop_id,type:VARCHAR(100),nullzero" keel:"stop_id,nullzero"`
-	AssignmentID   pulid.ID `json:"assignmentId,omitempty" bun:"assignment_id,type:VARCHAR(100),nullzero" keel:"assignment_id,nullzero"`
-	CommentID      pulid.ID `json:"commentId,omitempty"    bun:"comment_id,type:VARCHAR(100),nullzero" keel:"comment_id,nullzero"`
-	HoldID         pulid.ID `json:"holdId,omitempty"       bun:"hold_id,type:VARCHAR(100),nullzero" keel:"hold_id,nullzero"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:se_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ShipmentID     pulid.ID `json:"shipmentId" keel:"shipment_id"`
+	MoveID         pulid.ID `json:"moveId,omitempty" keel:"move_id,nullzero"`
+	StopID         pulid.ID `json:"stopId,omitempty" keel:"stop_id,nullzero"`
+	AssignmentID   pulid.ID `json:"assignmentId,omitempty" keel:"assignment_id,nullzero"`
+	CommentID      pulid.ID `json:"commentId,omitempty" keel:"comment_id,nullzero"`
+	HoldID         pulid.ID `json:"holdId,omitempty" keel:"hold_id,nullzero"`
 
-	Type       Type      `json:"type"              bun:"type,type:VARCHAR(50),notnull" keel:"type"`
-	Severity   Severity  `json:"severity"          bun:"severity,type:VARCHAR(20),notnull,default:'muted'" keel:"severity"`
-	ActorType  ActorType `json:"actorType"         bun:"actor_type,type:VARCHAR(20),notnull" keel:"actor_type"`
-	ActorID    pulid.ID  `json:"actorId,omitempty" bun:"actor_id,type:VARCHAR(100),nullzero" keel:"actor_id,nullzero"`
-	ActorLabel string    `json:"actorLabel"        bun:"actor_label,type:VARCHAR(100)" keel:"actor_label,nullzero"`
-	Summary    string    `json:"summary"           bun:"summary,type:TEXT,notnull" keel:"summary"`
+	Type       Type      `json:"type" keel:"type"`
+	Severity   Severity  `json:"severity" keel:"severity"`
+	ActorType  ActorType `json:"actorType" keel:"actor_type"`
+	ActorID    pulid.ID  `json:"actorId,omitempty" keel:"actor_id,nullzero"`
+	ActorLabel string    `json:"actorLabel" keel:"actor_label,nullzero"`
+	Summary    string    `json:"summary" keel:"summary"`
 
-	Metadata      map[string]any `json:"metadata,omitempty"      bun:"metadata,type:JSONB,default:'{}'" keel:"metadata,jsonb"`
-	OccurredAt    int64          `json:"occurredAt"              bun:"occurred_at,type:BIGINT,notnull" keel:"occurred_at"`
-	CorrelationID string         `json:"correlationId,omitempty" bun:"correlation_id,type:VARCHAR(100)" keel:"correlation_id,nullzero"`
+	Metadata      map[string]any `json:"metadata,omitempty" keel:"metadata,jsonb"`
+	OccurredAt    int64          `json:"occurredAt" keel:"occurred_at"`
+	CorrelationID string         `json:"correlationId,omitempty" keel:"correlation_id,nullzero"`
 
-	Actor    *tenant.User       `json:"actor,omitempty"    bun:"rel:belongs-to,join:actor_id=id" keel:"belongs:actor_id"`
-	Shipment *shipment.Shipment `json:"shipment,omitempty" bun:"rel:belongs-to,join:shipment_id=id" keel:"belongs:shipment_id"`
-}
-
-func (e *Event) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("se_")
-		}
-		if e.OccurredAt == 0 {
-			e.OccurredAt = timeutils.NowUnix()
-		}
-		if e.Severity == "" {
-			e.Severity = SeverityMuted
-		}
-	}
-	return nil
+	Actor    *tenant.User       `json:"actor,omitempty" keel:"belongs:actor_id"`
+	Shipment *shipment.Shipment `json:"shipment,omitempty" keel:"belongs:shipment_id"`
 }
 
 func (e *Event) BeforeCreate(ctx context.Context) error {
-	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	if e.Severity == "" {
+		e.Severity = SeverityMuted
+	}
+	if e.OccurredAt == 0 {
+		e.OccurredAt = timeutils.NowUnix()
+	}
+
+	return nil
 }
 
 func (e *Event) GetID() pulid.ID {

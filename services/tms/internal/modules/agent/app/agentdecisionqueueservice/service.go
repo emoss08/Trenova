@@ -473,16 +473,16 @@ func decisionErrorMessage(err error) string {
 }
 
 func encodeCursor(entry agentports.PendingDecisionEntry) (string, error) {
-	return pagination.EncodeCursor(pagination.Cursor{CreatedAt: entry.CreatedAt, ID: entry.ID})
+	return pagination.EncodePositionCursor(pagination.PositionCursor{At: entry.CreatedAt, ID: entry.ID})
 }
 
 func decodeCursor(encoded string) (agentports.PendingDecisionCursor, error) {
-	cursor, err := pagination.DecodeCursor(encoded)
+	cursor, err := pagination.DecodePositionCursor(encoded)
 	if err != nil {
 		return agentports.PendingDecisionCursor{}, err
 	}
 
-	return agentports.PendingDecisionCursor{CreatedAt: cursor.CreatedAt, ID: cursor.ID}, nil
+	return agentports.PendingDecisionCursor{CreatedAt: cursor.At, ID: cursor.ID}, nil
 }
 
 func (s *Service) DecideManyOwn(

@@ -1,6 +1,7 @@
 package agentquerytoolservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"context"
 	"slices"
 	"sync"
@@ -72,7 +73,7 @@ func (r *ledgerEntries) ListConnection(
 ) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
 	r.seen.record(toolLedgerEntries, req.Filter)
 
-	return pagination.NewCursorListResult([]*journalentry.JournalEntry{{
+	return pagetest.Of([]*journalentry.JournalEntry{{
 		ID: pulid.MustNew("je_"), EntryNumber: "JE-7", EntryDate: ledgerAccountingDay,
 		AccountingDate: ledgerAccountingDay, EntryType: journalentry.EntryTypeStandard,
 		Status: journalentry.StatusPosted, Description: "Fuel", ReferenceType: "Invoice",
@@ -96,7 +97,7 @@ func (r *ledgerPeriods) ListConnection(
 	r.seen.record(toolLedgerPeriods, req.Filter)
 	reopened := ledgerAccountingDay
 
-	return pagination.NewCursorListResult([]*fiscalperiod.FiscalPeriod{{
+	return pagetest.Of([]*fiscalperiod.FiscalPeriod{{
 		ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_"), Name: "March 2026",
 		PeriodNumber: 3, PeriodType: fiscalperiod.PeriodTypeMonth,
 		Status: fiscalperiod.StatusOpen, StartDate: ledgerAccountingDay,
@@ -117,7 +118,7 @@ func (r *ledgerJournals) ListConnection(
 ) (*pagination.CursorListResult[*manualjournal.Request], error) {
 	r.seen.record(toolLedgerJournals, req.Filter)
 
-	return pagination.NewCursorListResult([]*manualjournal.Request{{
+	return pagetest.Of([]*manualjournal.Request{{
 		ID: pulid.MustNew("mjr_"), RequestNumber: "MJ-3", Status: manualjournal.StatusApproved,
 		Description: "Accrue fuel", Reason: "Month end accrual", CurrencyCode: "USD",
 		AccountingDate: ledgerAccountingDay, RequestedFiscalPeriodID: pulid.MustNew("fp_"),
@@ -138,7 +139,7 @@ func (r *ledgerReversals) ListConnection(
 ) (*pagination.CursorListResult[*journalreversal.Reversal], error) {
 	r.seen.record(toolLedgerReversals, req.Filter)
 
-	return pagination.NewCursorListResult([]*journalreversal.Reversal{{
+	return pagetest.Of([]*journalreversal.Reversal{{
 		ID: pulid.MustNew("jrev_"), Status: journalreversal.StatusApproved,
 		OriginalJournalEntryID: pulid.MustNew("je_"), RequestedAccountingDate: ledgerAccountingDay,
 		ResolvedFiscalPeriodID: pulid.MustNew("fp_"), ReasonCode: "WrongPeriod",

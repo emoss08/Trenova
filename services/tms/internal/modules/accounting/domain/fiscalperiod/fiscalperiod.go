@@ -10,13 +10,10 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*FiscalPeriod)(nil)
 	_ validationframework.TenantedEntity = (*FiscalPeriod)(nil)
 	_ domaintypes.PostgresSearchable     = (*FiscalPeriod)(nil)
 )
@@ -27,49 +24,48 @@ var (
 
 // Accounting periods, their status, and their close and reopen history
 type FiscalPeriod struct {
-	bun.BaseModel `bun:"table:fiscal_periods,alias:fp" json:"-"`
-	keel.Table    `                                             keel:"fiscal_periods,report=Accounting"`
+	keel.Table `                                             keel:"fiscal_periods,report=Accounting"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"               keel:"id,pk,autoid:fp_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"  keel:"organization_id,pk,tenant"`
-	FiscalYearID   pulid.ID `json:"fiscalYearId"   bun:"fiscal_year_id,type:VARCHAR(100),notnull"      keel:"fiscal_year_id"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:fp_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	FiscalYearID   pulid.ID `json:"fiscalYearId" keel:"fiscal_year_id"`
 
 	// ---------------------------------------------------------------
 	// Core Identity
 	// ---------------------------------------------------------------
 
-	PeriodNumber int `json:"periodNumber" bun:"period_number,type:INT,notnull" keel:"period_number,label=Period,dimension"`
+	PeriodNumber int `json:"periodNumber" keel:"period_number,label=Period,dimension"`
 
-	PeriodType PeriodType `json:"periodType" bun:"period_type,type:period_type_enum,notnull,default:'Month'" keel:"period_type"`
+	PeriodType PeriodType `json:"periodType" keel:"period_type"`
 
-	Status Status `json:"status" bun:"status,type:period_status_enum,notnull,default:'Inactive'" keel:"status"`
+	Status Status `json:"status" keel:"status"`
 
-	Name string `json:"name" bun:"name,type:VARCHAR(100),notnull" keel:"name,label=Period Name"`
+	Name string `json:"name" keel:"name,label=Period Name"`
 
-	StartDate int64 `json:"startDate" bun:"start_date,type:BIGINT,notnull" keel:"start_date,label=Starts"`
+	StartDate int64 `json:"startDate" keel:"start_date,label=Starts"`
 
-	EndDate int64 `json:"endDate" bun:"end_date,type:BIGINT,notnull" keel:"end_date,label=Ends"`
+	EndDate int64 `json:"endDate" keel:"end_date,label=Ends"`
 
 	// ---------------------------------------------------------------
 	// Period Controls
 	// ---------------------------------------------------------------
 
-	IsAdjusting bool `json:"isAdjusting" bun:"is_adjusting,type:BOOLEAN" keel:"is_adjusting,label=Adjusting Period"`
+	IsAdjusting bool `json:"isAdjusting" keel:"is_adjusting,label=Adjusting Period"`
 
-	AllowAdjustingEntries bool `json:"allowAdjustingEntries" bun:"allow_adjusting_entries,type:BOOLEAN" keel:"allow_adjusting_entries,label=Allows Adjusting Entries"`
+	AllowAdjustingEntries bool `json:"allowAdjustingEntries" keel:"allow_adjusting_entries,label=Allows Adjusting Entries"`
 
-	AdjustmentDeadline *int64 `json:"adjustmentDeadline" bun:"adjustment_deadline,type:BIGINT,nullzero" keel:"adjustment_deadline,type=epoch"`
+	AdjustmentDeadline *int64 `json:"adjustmentDeadline" keel:"adjustment_deadline,type=epoch"`
 
 	// ---------------------------------------------------------------
 	// Close Tracking
 	// ---------------------------------------------------------------
 
-	LockedAt   *int64   `json:"lockedAt"   bun:"locked_at,type:BIGINT,nullzero"          keel:"locked_at"`
-	LockedByID pulid.ID `json:"lockedById" bun:"locked_by_id,type:VARCHAR(100),nullzero" keel:"locked_by_id,nullzero"`
+	LockedAt   *int64   `json:"lockedAt" keel:"locked_at"`
+	LockedByID pulid.ID `json:"lockedById" keel:"locked_by_id,nullzero"`
 
-	ClosedAt   *int64   `json:"closedAt"   bun:"closed_at,type:BIGINT,nullzero"          keel:"closed_at"`
-	ClosedByID pulid.ID `json:"closedById" bun:"closed_by_id,type:VARCHAR(100),nullzero" keel:"closed_by_id,nullzero"`
+	ClosedAt   *int64   `json:"closedAt" keel:"closed_at"`
+	ClosedByID pulid.ID `json:"closedById" keel:"closed_by_id,nullzero"`
 
 	// ---------------------------------------------------------------
 	// Reopen Tracking
@@ -79,21 +75,32 @@ type FiscalPeriod struct {
 	// having to dig through system logs.
 	// ---------------------------------------------------------------
 
-	ReopenedAt   *int64   `json:"reopenedAt"   bun:"reopened_at,type:BIGINT,nullzero"          keel:"reopened_at"`
-	ReopenedByID pulid.ID `json:"reopenedById" bun:"reopened_by_id,type:VARCHAR(100),nullzero" keel:"reopened_by_id,nullzero"`
-	ReopenReason string   `json:"reopenReason" bun:"reopen_reason,type:TEXT,nullzero"          keel:"reopen_reason,nullzero"`
+	ReopenedAt   *int64   `json:"reopenedAt" keel:"reopened_at"`
+	ReopenedByID pulid.ID `json:"reopenedById" keel:"reopened_by_id,nullzero"`
+	ReopenReason string   `json:"reopenReason" keel:"reopen_reason,nullzero"`
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"                                                      keel:"version,version"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"                                     keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"                                          keel:"rank,computed"`
+	Version      int64  `json:"version" keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-" keel:"rank,computed"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	ClosedBy     *tenant.User         `json:"closedBy,omitempty"     bun:"rel:belongs-to,join:closed_by_id=id"     keel:"belongs:closed_by_id,noreport"`
-	LockedBy     *tenant.User         `json:"lockedBy,omitempty"     bun:"rel:belongs-to,join:locked_by_id=id"     keel:"belongs:locked_by_id,noreport"`
-	ReopenedBy   *tenant.User         `json:"reopenedBy,omitempty"   bun:"rel:belongs-to,join:reopened_by_id=id"   keel:"belongs:reopened_by_id,noreport"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	ClosedBy     *tenant.User         `json:"closedBy,omitempty" keel:"belongs:closed_by_id,noreport"`
+	LockedBy     *tenant.User         `json:"lockedBy,omitempty" keel:"belongs:locked_by_id,noreport"`
+	ReopenedBy   *tenant.User         `json:"reopenedBy,omitempty" keel:"belongs:reopened_by_id,noreport"`
+}
+
+func (fp *FiscalPeriod) BeforeCreate(_ context.Context) error {
+	if fp.PeriodType == "" {
+		fp.PeriodType = PeriodTypeMonth
+	}
+	if fp.Status == "" {
+		fp.Status = StatusInactive
+	}
+
+	return nil
 }
 
 func (fp *FiscalPeriod) Validate(multiErr *errortypes.MultiError) {
@@ -192,21 +199,4 @@ func (fp *FiscalPeriod) GetPostgresSearchConfig() domaintypes.PostgresSearchConf
 			},
 		},
 	}
-}
-
-func (fp *FiscalPeriod) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if fp.ID.IsNil() {
-			fp.ID = pulid.MustNew("fp_")
-		}
-
-		fp.CreatedAt = now
-	case *bun.UpdateQuery:
-		fp.UpdatedAt = now
-	}
-
-	return nil
 }

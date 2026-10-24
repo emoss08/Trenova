@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -41,8 +40,6 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*InstanceBootstrap)(nil)
-
 	statePattern      = regexp.MustCompile(`^[A-Z]{2}$`)
 	postalCodePattern = regexp.MustCompile(`^\d{5}(-\d{4})?$`)
 	scacPattern       = regexp.MustCompile(`^[A-Z]{4}$`)
@@ -178,30 +175,20 @@ func (i *Inputs) IdentityDifferences(other *Inputs) []string {
 }
 
 type InstanceBootstrap struct {
-	bun.BaseModel `bun:"table:instance_bootstraps,alias:ibs" json:"-"`
-	keel.Table    `keel:"instance_bootstraps"`
+	keel.Table `keel:"instance_bootstraps"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ibs_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
-	AdminUserID    pulid.ID `json:"adminUserId"    bun:"admin_user_id,type:VARCHAR(100),nullzero" keel:"admin_user_id,nullzero"`
-	Inputs         Inputs   `json:"inputs"         bun:"inputs,type:JSONB,notnull" keel:"inputs,jsonb"`
-	CompletedAt    int64    `json:"completedAt"    bun:"completed_at,type:BIGINT,notnull" keel:"completed_at"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ibs_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
+	AdminUserID    pulid.ID `json:"adminUserId" keel:"admin_user_id,nullzero"`
+	Inputs         Inputs   `json:"inputs" keel:"inputs,jsonb"`
+	CompletedAt    int64    `json:"completedAt" keel:"completed_at"`
+	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
 }
 
-func (r *InstanceBootstrap) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	if _, ok := q.(*bun.InsertQuery); !ok {
-		return nil
-	}
-
-	if r.ID.IsNil() {
-		r.ID = pulid.MustNew(IDPrefix)
-	}
+func (r *InstanceBootstrap) BeforeUpdate(_ context.Context) error {
+	return nil
 	now := timeutils.NowUnix()
-	if r.CreatedAt == 0 {
-		r.CreatedAt = now
-	}
 	if r.CompletedAt == 0 {
 		r.CompletedAt = now
 	}
@@ -210,6 +197,10 @@ func (r *InstanceBootstrap) BeforeAppendModel(_ context.Context, q bun.Query) er
 }
 
 func (r *InstanceBootstrap) BeforeCreate(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if r.CompletedAt == 0 {
+		r.CompletedAt = now
+	}
 	if r.CompletedAt == 0 {
 		r.CompletedAt = timeutils.NowUnix()
 	}

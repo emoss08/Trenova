@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -40,35 +39,33 @@ func (s JurisdictionMileSource) IsValid() bool {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*ShipmentMoveJurisdictionMile)(nil)
 	_ validationframework.TenantedEntity = (*ShipmentMoveJurisdictionMile)(nil)
 )
 
 type ShipmentMoveJurisdictionMile struct {
-	bun.BaseModel `json:"-" bun:"table:shipment_move_jurisdiction_miles,alias:smjm"`
-	keel.Table    `keel:"shipment_move_jurisdiction_miles"`
+	keel.Table `keel:"shipment_move_jurisdiction_miles"`
 
-	ID                pulid.ID               `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:smjm_"`
-	BusinessUnitID    pulid.ID               `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID               `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ShipmentMoveID    pulid.ID               `json:"shipmentMoveId"    bun:"shipment_move_id,type:VARCHAR(100),notnull" keel:"shipment_move_id"`
-	ShipmentID        pulid.ID               `json:"shipmentId"        bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
-	CountryCode       string                 `json:"countryCode"       bun:"country_code,type:VARCHAR(2),notnull" keel:"country_code"`
-	JurisdictionCode  string                 `json:"jurisdictionCode"  bun:"jurisdiction_code,type:VARCHAR(5),notnull" keel:"jurisdiction_code"`
-	Sequence          int                    `json:"sequence"          bun:"sequence,type:INTEGER,notnull" keel:"sequence"`
-	Distance          float64                `json:"distance"          bun:"distance,type:FLOAT,notnull" keel:"distance"`
-	DistanceUnits     string                 `json:"distanceUnits"     bun:"distance_units,type:VARCHAR(50),notnull" keel:"distance_units"`
-	TollDistance      *float64               `json:"tollDistance"      bun:"toll_distance,type:FLOAT,nullzero" keel:"toll_distance"`
-	FerryDistance     *float64               `json:"ferryDistance"     bun:"ferry_distance,type:FLOAT,nullzero" keel:"ferry_distance"`
-	Loaded            bool                   `json:"loaded"            bun:"loaded,type:BOOLEAN,notnull" keel:"loaded"`
-	Source            JurisdictionMileSource `json:"source"            bun:"source,type:VARCHAR(50),notnull" keel:"source"`
-	Provider          string                 `json:"provider"          bun:"provider,type:VARCHAR(50),nullzero" keel:"provider,nullzero"`
-	DataVersion       string                 `json:"dataVersion"       bun:"data_version,type:VARCHAR(50),nullzero" keel:"data_version,nullzero"`
-	DistanceProfileID pulid.ID               `json:"distanceProfileId" bun:"distance_profile_id,type:VARCHAR(100),nullzero" keel:"distance_profile_id,nullzero"`
-	CalculatedAt      int64                  `json:"calculatedAt"      bun:"calculated_at,type:BIGINT,notnull" keel:"calculated_at"`
-	Version           int64                  `json:"version"           bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt         int64                  `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt         int64                  `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                pulid.ID               `json:"id" keel:"id,pk,autoid:smjm_"`
+	BusinessUnitID    pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ShipmentMoveID    pulid.ID               `json:"shipmentMoveId" keel:"shipment_move_id"`
+	ShipmentID        pulid.ID               `json:"shipmentId" keel:"shipment_id"`
+	CountryCode       string                 `json:"countryCode" keel:"country_code"`
+	JurisdictionCode  string                 `json:"jurisdictionCode" keel:"jurisdiction_code"`
+	Sequence          int                    `json:"sequence" keel:"sequence"`
+	Distance          float64                `json:"distance" keel:"distance"`
+	DistanceUnits     string                 `json:"distanceUnits" keel:"distance_units"`
+	TollDistance      *float64               `json:"tollDistance" keel:"toll_distance"`
+	FerryDistance     *float64               `json:"ferryDistance" keel:"ferry_distance"`
+	Loaded            bool                   `json:"loaded" keel:"loaded"`
+	Source            JurisdictionMileSource `json:"source" keel:"source"`
+	Provider          string                 `json:"provider" keel:"provider,nullzero"`
+	DataVersion       string                 `json:"dataVersion" keel:"data_version,nullzero"`
+	DistanceProfileID pulid.ID               `json:"distanceProfileId" keel:"distance_profile_id,nullzero"`
+	CalculatedAt      int64                  `json:"calculatedAt" keel:"calculated_at"`
+	Version           int64                  `json:"version" keel:"version,version"`
+	CreatedAt         int64                  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt         int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (m *ShipmentMoveJurisdictionMile) Validate(multiErr *errortypes.MultiError) {
@@ -153,32 +150,17 @@ func (m *ShipmentMoveJurisdictionMile) GetTableName() string {
 	return "shipment_move_jurisdiction_miles"
 }
 
-func (m *ShipmentMoveJurisdictionMile) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (m *ShipmentMoveJurisdictionMile) BeforeCreate(ctx context.Context) error {
 	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if m.ID.IsNil() {
-			m.ID = pulid.MustNew("smjm_")
-		}
-		if m.Source == "" {
-			m.Source = JurisdictionMileSourceRouteCalculation
-		}
-		if m.DistanceUnits == "" {
-			m.DistanceUnits = JurisdictionDistanceUnitsMiles
-		}
-		if m.CalculatedAt == 0 {
-			m.CalculatedAt = now
-		}
-		m.CreatedAt = now
-		m.UpdatedAt = now
-	case *bun.UpdateQuery:
-		m.UpdatedAt = now
+	if m.Source == "" {
+		m.Source = JurisdictionMileSourceRouteCalculation
+	}
+	if m.DistanceUnits == "" {
+		m.DistanceUnits = JurisdictionDistanceUnitsMiles
+	}
+	if m.CalculatedAt == 0 {
+		m.CalculatedAt = now
 	}
 
 	return nil
-}
-
-func (m *ShipmentMoveJurisdictionMile) BeforeCreate(ctx context.Context) error {
-	return m.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

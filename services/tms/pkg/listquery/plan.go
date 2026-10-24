@@ -8,9 +8,8 @@ import (
 )
 
 type plan struct {
-	cat   *catalog
-	ref   *keel.Ref
-	paths *keel.DynQuery
+	cat *catalog
+	ref *keel.Ref
 }
 
 type field struct {
@@ -59,7 +58,7 @@ func (p *plan) resolve(name string) (field, bool) {
 	}
 
 	col := &rel.target.Columns[index]
-	expr := p.relationPaths().Path(rel.name, col.Name)
+	expr := keel.ResolvePath(p, rel.name, col.Name)
 	if expr.Err() != nil {
 		return field{}, false
 	}
@@ -67,12 +66,8 @@ func (p *plan) resolve(name string) (field, bool) {
 	return field{expr: expr, col: col, index: index}, true
 }
 
-func (p *plan) relationPaths() *keel.DynQuery {
-	if p.paths == nil {
-		p.paths = keel.DynFrom(p.cat.table)
-	}
-
-	return p.paths
+func (p *plan) TableRef() *keel.Ref {
+	return p.ref
 }
 
 func (f field) enum() bool {

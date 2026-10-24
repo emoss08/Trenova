@@ -308,8 +308,6 @@ func (r *QueryResolver) InboundMessages(ctx context.Context, input gqlmodel.Inbo
 		return nil, err
 	}
 	req.Cursor = cursor
-	req.Filter.Cursor = cursor
-	req.Filter.UseCursor = true
 
 	result, err := r.InboundMessageService.List(ctx, req)
 	if err != nil {

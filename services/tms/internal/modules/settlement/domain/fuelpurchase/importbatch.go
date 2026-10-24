@@ -14,15 +14,12 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const maxImportFileNameLength = 255
 
 var (
-	_ bun.BeforeAppendModelHook          = (*ImportBatch)(nil)
 	_ domaintypes.PostgresSearchable     = (*ImportBatch)(nil)
 	_ pagination.CursorEntity            = (*ImportBatch)(nil)
 	_ validationframework.TenantedEntity = (*ImportBatch)(nil)
@@ -43,52 +40,51 @@ type ImportSummary struct {
 }
 
 type ImportBatch struct {
-	bun.BaseModel `bun:"table:fuel_purchase_import_batches,alias:fpib" json:"-"`
-	keel.Table    `keel:"fuel_purchase_import_batches"`
+	keel.Table `keel:"fuel_purchase_import_batches"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:fpib_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:fpib_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Provider      CardProvider `json:"provider"      bun:"provider,type:fuel_card_provider_enum,notnull" keel:"provider"`
-	Origin        ImportOrigin `json:"origin"        bun:"origin,type:fuel_import_origin_enum,notnull" keel:"origin"`
-	FeedReference string       `json:"feedReference" bun:"feed_reference,type:VARCHAR(255),nullzero" keel:"feed_reference,nullzero"`
-	DocumentID    *pulid.ID    `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id"`
-	FileName      string       `json:"fileName"      bun:"file_name,type:VARCHAR(255),nullzero" keel:"file_name,nullzero"`
-	SourceFormat  SourceFormat `json:"sourceFormat"  bun:"source_format,type:fuel_import_format_enum,nullzero" keel:"source_format,nullzero"`
-	Status        ImportStatus `json:"status"        bun:"status,type:fuel_import_status_enum,notnull,default:'Pending'" keel:"status"`
+	Provider      CardProvider `json:"provider" keel:"provider"`
+	Origin        ImportOrigin `json:"origin" keel:"origin"`
+	FeedReference string       `json:"feedReference" keel:"feed_reference,nullzero"`
+	DocumentID    *pulid.ID    `json:"documentId" keel:"document_id"`
+	FileName      string       `json:"fileName" keel:"file_name,nullzero"`
+	SourceFormat  SourceFormat `json:"sourceFormat" keel:"source_format,nullzero"`
+	Status        ImportStatus `json:"status" keel:"status"`
 
-	DefaultFuelType   domaintypes.IFTAFuelType `json:"defaultFuelType"   bun:"default_fuel_type,type:ifta_fuel_type_enum,nullzero" keel:"default_fuel_type,nullzero"`
-	DefaultFuelCardID *pulid.ID                `json:"defaultFuelCardId" bun:"default_fuel_card_id,type:VARCHAR(100),nullzero" keel:"default_fuel_card_id"`
-	DefaultCurrency   string                   `json:"defaultCurrency"   bun:"default_currency,type:VARCHAR(3),notnull,default:'USD'" keel:"default_currency"`
+	DefaultFuelType   domaintypes.IFTAFuelType `json:"defaultFuelType" keel:"default_fuel_type,nullzero"`
+	DefaultFuelCardID *pulid.ID                `json:"defaultFuelCardId" keel:"default_fuel_card_id"`
+	DefaultCurrency   string                   `json:"defaultCurrency" keel:"default_currency"`
 
-	Mapping         map[string]int `json:"mapping"         bun:"mapping,type:JSONB,nullzero" keel:"mapping,jsonb,nullzero"`
-	UnmappedHeaders []string       `json:"unmappedHeaders" bun:"unmapped_headers,type:JSONB,nullzero" keel:"unmapped_headers,jsonb,nullzero"`
-	Summary         *ImportSummary `json:"summary"         bun:"summary,type:JSONB,nullzero" keel:"summary,jsonb"`
+	Mapping         map[string]int `json:"mapping" keel:"mapping,jsonb,nullzero"`
+	UnmappedHeaders []string       `json:"unmappedHeaders" keel:"unmapped_headers,jsonb,nullzero"`
+	Summary         *ImportSummary `json:"summary" keel:"summary,jsonb"`
 
-	RowCount       int `json:"rowCount"       bun:"row_count,type:INTEGER,notnull,default:0" keel:"row_count"`
-	ErrorCount     int `json:"errorCount"     bun:"error_count,type:INTEGER,notnull,default:0" keel:"error_count"`
-	CommittedCount int `json:"committedCount" bun:"committed_count,type:INTEGER,notnull,default:0" keel:"committed_count"`
+	RowCount       int `json:"rowCount" keel:"row_count"`
+	ErrorCount     int `json:"errorCount" keel:"error_count"`
+	CommittedCount int `json:"committedCount" keel:"committed_count"`
 
-	Error string `json:"error" bun:"error,type:TEXT,nullzero" keel:"error,nullzero"`
+	Error string `json:"error" keel:"error,nullzero"`
 
-	UploadedByID  pulid.ID `json:"uploadedById"  bun:"uploaded_by_id,type:VARCHAR(100),nullzero" keel:"uploaded_by_id,nullzero"`
-	StagedAt      *int64   `json:"stagedAt"      bun:"staged_at,type:BIGINT,nullzero" keel:"staged_at"`
-	CommittedAt   *int64   `json:"committedAt"   bun:"committed_at,type:BIGINT,nullzero" keel:"committed_at"`
-	CommittedByID pulid.ID `json:"committedById" bun:"committed_by_id,type:VARCHAR(100),nullzero" keel:"committed_by_id,nullzero"`
+	UploadedByID  pulid.ID `json:"uploadedById" keel:"uploaded_by_id,nullzero"`
+	StagedAt      *int64   `json:"stagedAt" keel:"staged_at"`
+	CommittedAt   *int64   `json:"committedAt" keel:"committed_at"`
+	CommittedByID pulid.ID `json:"committedById" keel:"committed_by_id,nullzero"`
 
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-" keel:"rank,computed"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Document        *document.Document `json:"document,omitempty"        bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
-	DefaultFuelCard *FuelCard          `json:"defaultFuelCard,omitempty" bun:"rel:belongs-to,join:default_fuel_card_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:default_fuel_card_id"`
-	UploadedBy      *tenant.User       `json:"uploadedBy,omitempty"      bun:"rel:belongs-to,join:uploaded_by_id=id" keel:"belongs:uploaded_by_id"`
-	CommittedBy     *tenant.User       `json:"committedBy,omitempty"     bun:"rel:belongs-to,join:committed_by_id=id" keel:"belongs:committed_by_id"`
-	Rows            []*ImportRow       `json:"rows,omitempty"            bun:"rel:has-many,join:id=import_batch_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:import_batch_id"`
+	Document        *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
+	DefaultFuelCard *FuelCard          `json:"defaultFuelCard,omitempty" keel:"belongs:default_fuel_card_id"`
+	UploadedBy      *tenant.User       `json:"uploadedBy,omitempty" keel:"belongs:uploaded_by_id"`
+	CommittedBy     *tenant.User       `json:"committedBy,omitempty" keel:"belongs:committed_by_id"`
+	Rows            []*ImportRow       `json:"rows,omitempty" keel:"many:import_batch_id"`
 }
 
 func (b *ImportBatch) Normalize() {
@@ -238,29 +234,16 @@ func (b *ImportBatch) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 	}
 }
 
-func (b *ImportBatch) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if b.ID.IsNil() {
-			b.ID = pulid.MustNew("fpib_")
-		}
-		if b.Status == "" {
-			b.Status = ImportStatusPending
-		}
-		if b.DefaultCurrency == "" {
-			b.DefaultCurrency = money.DefaultCurrencyCode
-		}
-		b.CreatedAt = now
-		b.UpdatedAt = now
-	case *bun.UpdateQuery:
-		b.UpdatedAt = now
+func (b *ImportBatch) BeforeCreate(ctx context.Context) error {
+	if b.Status == "" {
+		b.Status = ImportStatusPending
+	}
+	if b.DefaultCurrency == "" {
+		b.DefaultCurrency = "USD"
+	}
+	if b.DefaultCurrency == "" {
+		b.DefaultCurrency = money.DefaultCurrencyCode
 	}
 
 	return nil
-}
-
-func (b *ImportBatch) BeforeCreate(ctx context.Context) error {
-	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

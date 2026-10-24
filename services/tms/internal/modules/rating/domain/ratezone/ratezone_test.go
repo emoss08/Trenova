@@ -68,10 +68,10 @@ func TestStampMembers_ValidationRefusesUnkeyableAndRepeatedPlaces(t *testing.T) 
 	assert.NotContains(t, fields, "members[1].scopeValue")
 }
 
-func TestBeforeAppendModel_RefusesAMemberThatWasNeverKeyed(t *testing.T) {
+func TestBeforeCreate_RefusesAMemberThatWasNeverKeyed(t *testing.T) {
 	t.Parallel()
 
 	member := &ratezone.RateZoneMember{ScopeType: rategeo.ScopeTypeState, ScopeValue: "ust_ga"}
 
-	require.ErrorIs(t, member.BeforeAppendModel(t.Context(), nil), ratezone.ErrMatchKeyNotApplied)
+	require.ErrorIs(t, member.BeforeCreate(t.Context()), ratezone.ErrMatchKeyNotApplied)
 }

@@ -10,9 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var ErrInvalidHolidayKind = errors.New("invalid holiday kind")
@@ -36,7 +34,6 @@ func (k HolidayKind) IsValid() bool {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*OrgHoliday)(nil)
 	_ validationframework.TenantedEntity = (*OrgHoliday)(nil)
 )
 
@@ -44,20 +41,27 @@ var (
 // is stored as midnight UTC of the calendar day so it compares the same way
 // regardless of the organisation's timezone.
 type OrgHoliday struct {
-	bun.BaseModel `bun:"table:org_holidays,alias:ohol" json:"-"`
-	keel.Table    `                                             keel:"org_holidays"`
+	keel.Table `                                             keel:"org_holidays"`
 
-	ID             pulid.ID    `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:ohol_"`
-	BusinessUnitID pulid.ID    `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                        keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID    `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
-	Name           string      `json:"name"           bun:"name,type:VARCHAR(100),notnull"                                                       keel:"name"`
-	HolidayDate    int64       `json:"holidayDate"    bun:"holiday_date,type:BIGINT,notnull"                                                     keel:"holiday_date"`
-	Kind           HolidayKind `json:"kind"           bun:"kind,type:org_holiday_kind_enum,notnull,default:'Holiday'"                            keel:"kind"`
-	RecursAnnually bool        `json:"recursAnnually" bun:"recurs_annually,type:BOOLEAN,notnull"                                                 keel:"recurs_annually"`
-	Description    string      `json:"description"    bun:"description,type:TEXT,nullzero"                                                       keel:"description,nullzero"`
-	Version        int64       `json:"version"        bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt      int64       `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64       `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID             pulid.ID    `json:"id" keel:"id,pk,autoid:ohol_"`
+	BusinessUnitID pulid.ID    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID    `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name           string      `json:"name" keel:"name"`
+	HolidayDate    int64       `json:"holidayDate" keel:"holiday_date"`
+	Kind           HolidayKind `json:"kind" keel:"kind"`
+	RecursAnnually bool        `json:"recursAnnually" keel:"recurs_annually"`
+	Description    string      `json:"description" keel:"description,nullzero"`
+	Version        int64       `json:"version" keel:"version,version"`
+	CreatedAt      int64       `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64       `json:"updatedAt" keel:"updated_at,autoupdate"`
+}
+
+func (h *OrgHoliday) BeforeCreate(_ context.Context) error {
+	if h.Kind == "" {
+		h.Kind = HolidayKindHoliday
+	}
+
+	return nil
 }
 
 func (h *OrgHoliday) Validate(multiErr *errortypes.MultiError) {
@@ -100,23 +104,6 @@ func (h *OrgHoliday) GetTableName() string { return "org_holidays" }
 func (h *OrgHoliday) GetResourceType() string { return "org_holiday" }
 
 func (h *OrgHoliday) GetResourceID() string { return h.ID.String() }
-
-func (h *OrgHoliday) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if h.ID.IsNil() {
-			h.ID = pulid.MustNew("ohol_")
-		}
-		h.CreatedAt = now
-		h.UpdatedAt = now
-	case *bun.UpdateQuery:
-		h.UpdatedAt = now
-	}
-
-	return nil
-}
 
 // HolidayCalendar answers "is this local calendar day a holiday / a blackout"
 // for the day walk in ComputePTODays and the blackout check on requests.

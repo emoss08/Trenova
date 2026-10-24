@@ -9,8 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const maxSubscriptionErrorLength = 2000
@@ -52,32 +50,37 @@ func WebhookSubscriptionSystems() []integration.Type {
 	return systems
 }
 
-var _ bun.BeforeAppendModelHook = (*AccountingWebhookSubscription)(nil)
-
 type AccountingWebhookSubscription struct {
-	bun.BaseModel `bun:"table:accounting_webhook_subscriptions,alias:acctwhs" json:"-"`
-	keel.Table    `keel:"accounting_webhook_subscriptions"`
+	keel.Table `keel:"accounting_webhook_subscriptions"`
 
-	ID                     pulid.ID                  `json:"id"                     bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctwhs_"`
-	BusinessUnitID         pulid.ID                  `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID                  `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	ConnectionID           pulid.ID                  `json:"connectionId"           bun:"connection_id,type:VARCHAR(100),notnull" keel:"connection_id"`
-	IntegrationType        integration.Type          `json:"integrationType"        bun:"integration_type,type:VARCHAR(50),notnull" keel:"integration_type"`
-	Resource               string                    `json:"resource"               bun:"resource,type:VARCHAR(100),notnull" keel:"resource"`
-	ExternalSubscriptionID string                    `json:"externalSubscriptionId" bun:"external_subscription_id,type:VARCHAR(100),nullzero" keel:"external_subscription_id,nullzero"`
-	NotificationURL        string                    `json:"notificationUrl"        bun:"notification_url,type:TEXT,nullzero" keel:"notification_url,nullzero"`
-	ClientStateCiphertext  string                    `json:"-"                      bun:"client_state_ciphertext,type:TEXT,nullzero" keel:"client_state_ciphertext,nullzero"`
-	ETag                   string                    `json:"-"                      bun:"etag,type:VARCHAR(200),nullzero" keel:"etag,nullzero"`
-	Status                 WebhookSubscriptionStatus `json:"status"                 bun:"status,type:VARCHAR(20),notnull,default:'Pending'" keel:"status"`
-	ExpiresAt              *int64                    `json:"expiresAt"              bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at"`
-	LastAttemptAt          *int64                    `json:"lastAttemptAt"          bun:"last_attempt_at,type:BIGINT,nullzero" keel:"last_attempt_at"`
-	LastError              string                    `json:"lastError"              bun:"last_error,type:TEXT,nullzero" keel:"last_error,nullzero"`
-	Version                int64                     `json:"version"                bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt              int64                     `json:"createdAt"              bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt              int64                     `json:"updatedAt"              bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                     pulid.ID                  `json:"id" keel:"id,pk,autoid:acctwhs_"`
+	BusinessUnitID         pulid.ID                  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID                  `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ConnectionID           pulid.ID                  `json:"connectionId" keel:"connection_id"`
+	IntegrationType        integration.Type          `json:"integrationType" keel:"integration_type"`
+	Resource               string                    `json:"resource" keel:"resource"`
+	ExternalSubscriptionID string                    `json:"externalSubscriptionId" keel:"external_subscription_id,nullzero"`
+	NotificationURL        string                    `json:"notificationUrl" keel:"notification_url,nullzero"`
+	ClientStateCiphertext  string                    `json:"-" keel:"client_state_ciphertext,nullzero"`
+	ETag                   string                    `json:"-" keel:"etag,nullzero"`
+	Status                 WebhookSubscriptionStatus `json:"status" keel:"status"`
+	ExpiresAt              *int64                    `json:"expiresAt" keel:"expires_at"`
+	LastAttemptAt          *int64                    `json:"lastAttemptAt" keel:"last_attempt_at"`
+	LastError              string                    `json:"lastError" keel:"last_error,nullzero"`
+	Version                int64                     `json:"version" keel:"version,version"`
+	CreatedAt              int64                     `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt              int64                     `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+}
+
+func (s *AccountingWebhookSubscription) BeforeCreate(_ context.Context) error {
+	if s.Status == "" {
+		s.Status = WebhookSubscriptionPending
+	}
+
+	return nil
 }
 
 type WebhookSubscriptionGrant struct {
@@ -146,23 +149,3 @@ func (s *AccountingWebhookSubscription) GetID() pulid.ID { return s.ID }
 func (s *AccountingWebhookSubscription) GetOrganizationID() pulid.ID { return s.OrganizationID }
 
 func (s *AccountingWebhookSubscription) GetBusinessUnitID() pulid.ID { return s.BusinessUnitID }
-
-func (s *AccountingWebhookSubscription) BeforeAppendModel(
-	_ context.Context,
-	query bun.Query,
-) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("acctwhs_")
-		}
-		s.CreatedAt = now
-		s.UpdatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
-	}
-
-	return nil
-}

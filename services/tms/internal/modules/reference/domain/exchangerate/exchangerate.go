@@ -2,6 +2,7 @@ package exchangerate
 
 import (
 	"context"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"time"
 
 	"github.com/emoss08/keel"
@@ -11,12 +12,9 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*ExchangeRate)(nil)
-	_ bun.BeforeAppendModelHook          = (*SettlementQuote)(nil)
 	_ validationframework.TenantedEntity = (*ExchangeRate)(nil)
 	_ validationframework.TenantedEntity = (*SettlementQuote)(nil)
 )
@@ -34,27 +32,52 @@ const (
 )
 
 type ExchangeRate struct {
-	bun.BaseModel `bun:"table:exchange_rates,alias:er" json:"-"`
-	keel.Table    `keel:"exchange_rates"`
+	keel.Table `keel:"exchange_rates"`
 
-	ID                 pulid.ID        `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:fxr_"`
-	BusinessUnitID     pulid.ID        `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID        `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	Provider           Provider        `json:"provider"           bun:"provider,type:VARCHAR(32),notnull" keel:"provider"`
-	FromCurrency       string          `json:"fromCurrency"       bun:"from_currency,type:VARCHAR(3),notnull" keel:"from_currency"`
-	ToCurrency         string          `json:"toCurrency"         bun:"to_currency,type:VARCHAR(3),notnull" keel:"to_currency"`
-	RateType           RateType        `json:"rateType"           bun:"rate_type,type:VARCHAR(16),notnull" keel:"rate_type"`
-	Bid                decimal.Decimal `json:"bid"                bun:"bid,type:NUMERIC(24,12),notnull" keel:"bid"`
-	Ask                decimal.Decimal `json:"ask"                bun:"ask,type:NUMERIC(24,12),notnull" keel:"ask"`
-	Mid                decimal.Decimal `json:"mid"                bun:"mid,type:NUMERIC(24,12),notnull" keel:"mid"`
-	SelectedRate       decimal.Decimal `json:"selectedRate"       bun:"selected_rate,type:NUMERIC(24,12),notnull" keel:"selected_rate"`
-	Date               string          `json:"date"               bun:"date,type:DATE,notnull" keel:"date"`
-	SourceTimestamp    time.Time       `json:"sourceTimestamp"    bun:"source_timestamp,type:TIMESTAMPTZ,notnull" keel:"source_timestamp"`
-	FetchedAt          time.Time       `json:"fetchedAt"          bun:"fetched_at,type:TIMESTAMPTZ,notnull,default:current_timestamp" keel:"fetched_at"`
-	SettlementEligible bool            `json:"settlementEligible" bun:"settlement_eligible,type:BOOLEAN,notnull" keel:"settlement_eligible"`
+	ID                 pulid.ID        `json:"id" keel:"id,pk,autoid:fxr_"`
+	BusinessUnitID     pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Provider           Provider        `json:"provider" keel:"provider"`
+	FromCurrency       string          `json:"fromCurrency" keel:"from_currency"`
+	ToCurrency         string          `json:"toCurrency" keel:"to_currency"`
+	RateType           RateType        `json:"rateType" keel:"rate_type"`
+	Bid                decimal.Decimal `json:"bid" keel:"bid"`
+	Ask                decimal.Decimal `json:"ask" keel:"ask"`
+	Mid                decimal.Decimal `json:"mid" keel:"mid"`
+	SelectedRate       decimal.Decimal `json:"selectedRate" keel:"selected_rate"`
+	Date               string          `json:"date" keel:"date"`
+	SourceTimestamp    time.Time       `json:"sourceTimestamp" keel:"source_timestamp"`
+	FetchedAt          time.Time       `json:"fetchedAt" keel:"fetched_at"`
+	SettlementEligible bool            `json:"settlementEligible" keel:"settlement_eligible"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+}
+
+func (e *ExchangeRate) BeforeUpdate(_ context.Context) error {
+	now := time.Now().UTC()
+	e.FetchedAt = now
+
+	return nil
+}
+
+func (e *ExchangeRate) BeforeCreate(_ context.Context) error {
+	now := time.Now().UTC()
+	if e.Provider == "" {
+		e.Provider = ProviderOANDA
+	}
+	if e.RateType == "" {
+		e.RateType = RateTypeMid
+	}
+	if e.SourceTimestamp.IsZero() {
+		e.SourceTimestamp = now
+	}
+	e.FetchedAt = now
+	if e.FetchedAt.IsZero() {
+		e.FetchedAt = timeutils.Now()
+	}
+
+	return nil
 }
 
 func (e *ExchangeRate) Validate(multiErr *errortypes.MultiError) {
@@ -99,51 +122,72 @@ func (e *ExchangeRate) GetBusinessUnitID() pulid.ID {
 	return e.BusinessUnitID
 }
 
-func (e *ExchangeRate) BeforeAppendModel(_ context.Context, query bun.Query) error {
+type SettlementQuote struct {
+	keel.Table `keel:"exchange_rate_settlement_quotes"`
+
+	ID              pulid.ID        `json:"id" keel:"id,pk,autoid:fxq_"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Provider        Provider        `json:"provider" keel:"provider"`
+	FromCurrency    string          `json:"fromCurrency" keel:"from_currency"`
+	ToCurrency      string          `json:"toCurrency" keel:"to_currency"`
+	Amount          decimal.Decimal `json:"amount" keel:"amount"`
+	Rate            decimal.Decimal `json:"rate" keel:"rate"`
+	ConvertedAmount decimal.Decimal `json:"convertedAmount" keel:"converted_amount"`
+	RateType        RateType        `json:"rateType" keel:"rate_type"`
+	SourceTimestamp time.Time       `json:"sourceTimestamp" keel:"source_timestamp"`
+	FetchedAt       time.Time       `json:"fetchedAt" keel:"fetched_at"`
+	ExpiresAt       time.Time       `json:"expiresAt" keel:"expires_at"`
+
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+}
+
+func (q *SettlementQuote) BeforeUpdate(_ context.Context) error {
 	now := time.Now().UTC()
 
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("fxr_")
-		}
-		if e.Provider == "" {
-			e.Provider = ProviderOANDA
-		}
-		if e.RateType == "" {
-			e.RateType = RateTypeMid
-		}
-		if e.SourceTimestamp.IsZero() {
-			e.SourceTimestamp = now
-		}
-		e.FetchedAt = now
-	case *bun.UpdateQuery:
-		e.FetchedAt = now
+	return nil
+	if q.Provider == "" {
+		q.Provider = ProviderOANDA
+	}
+	if q.RateType == "" {
+		q.RateType = RateTypeMid
+	}
+	if q.SourceTimestamp.IsZero() {
+		q.SourceTimestamp = now
+	}
+	if q.FetchedAt.IsZero() {
+		q.FetchedAt = now
+	}
+	if q.ExpiresAt.IsZero() {
+		q.ExpiresAt = q.FetchedAt.Add(15 * time.Minute)
 	}
 
 	return nil
 }
 
-type SettlementQuote struct {
-	bun.BaseModel `bun:"table:exchange_rate_settlement_quotes,alias:fxq" json:"-"`
-	keel.Table    `keel:"exchange_rate_settlement_quotes"`
+func (q *SettlementQuote) BeforeCreate(_ context.Context) error {
+	now := time.Now().UTC()
+	if q.Provider == "" {
+		q.Provider = ProviderOANDA
+	}
+	if q.RateType == "" {
+		q.RateType = RateTypeMid
+	}
+	if q.SourceTimestamp.IsZero() {
+		q.SourceTimestamp = now
+	}
+	if q.FetchedAt.IsZero() {
+		q.FetchedAt = now
+	}
+	if q.ExpiresAt.IsZero() {
+		q.ExpiresAt = q.FetchedAt.Add(15 * time.Minute)
+	}
+	if q.FetchedAt.IsZero() {
+		q.FetchedAt = timeutils.Now()
+	}
 
-	ID              pulid.ID        `json:"id"              bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:fxq_"`
-	BusinessUnitID  pulid.ID        `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID        `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	Provider        Provider        `json:"provider"        bun:"provider,type:VARCHAR(32),notnull" keel:"provider"`
-	FromCurrency    string          `json:"fromCurrency"    bun:"from_currency,type:VARCHAR(3),notnull" keel:"from_currency"`
-	ToCurrency      string          `json:"toCurrency"      bun:"to_currency,type:VARCHAR(3),notnull" keel:"to_currency"`
-	Amount          decimal.Decimal `json:"amount"          bun:"amount,type:NUMERIC(24,8),notnull" keel:"amount"`
-	Rate            decimal.Decimal `json:"rate"            bun:"rate,type:NUMERIC(24,12),notnull" keel:"rate"`
-	ConvertedAmount decimal.Decimal `json:"convertedAmount" bun:"converted_amount,type:NUMERIC(24,8),notnull" keel:"converted_amount"`
-	RateType        RateType        `json:"rateType"        bun:"rate_type,type:VARCHAR(16),notnull" keel:"rate_type"`
-	SourceTimestamp time.Time       `json:"sourceTimestamp" bun:"source_timestamp,type:TIMESTAMPTZ,notnull" keel:"source_timestamp"`
-	FetchedAt       time.Time       `json:"fetchedAt"       bun:"fetched_at,type:TIMESTAMPTZ,notnull,default:current_timestamp" keel:"fetched_at"`
-	ExpiresAt       time.Time       `json:"expiresAt"       bun:"expires_at,type:TIMESTAMPTZ,notnull" keel:"expires_at"`
-
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	return nil
 }
 
 func (q *SettlementQuote) Validate(multiErr *errortypes.MultiError) {
@@ -185,33 +229,4 @@ func (q *SettlementQuote) GetOrganizationID() pulid.ID {
 
 func (q *SettlementQuote) GetBusinessUnitID() pulid.ID {
 	return q.BusinessUnitID
-}
-
-func (q *SettlementQuote) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := time.Now().UTC()
-
-	if _, ok := query.(*bun.InsertQuery); !ok {
-		return nil
-	}
-
-	if q.ID.IsNil() {
-		q.ID = pulid.MustNew("fxq_")
-	}
-	if q.Provider == "" {
-		q.Provider = ProviderOANDA
-	}
-	if q.RateType == "" {
-		q.RateType = RateTypeMid
-	}
-	if q.SourceTimestamp.IsZero() {
-		q.SourceTimestamp = now
-	}
-	if q.FetchedAt.IsZero() {
-		q.FetchedAt = now
-	}
-	if q.ExpiresAt.IsZero() {
-		q.ExpiresAt = q.FetchedAt.Add(15 * time.Minute)
-	}
-
-	return nil
 }

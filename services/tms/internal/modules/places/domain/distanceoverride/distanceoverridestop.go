@@ -6,20 +6,18 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type DistanceOverrideStop struct {
-	bun.BaseModel `bun:"table:distance_override_stops,alias:dios" json:"-"`
-	keel.Table    `keel:"distance_override_stops"`
+	keel.Table `keel:"distance_override_stops"`
 
-	DistanceOverrideID pulid.ID `json:"-"          bun:"distance_override_id,type:VARCHAR(100),pk,notnull" keel:"distance_override_id,pk"`
-	BusinessUnitID     pulid.ID `json:"-"          bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID `json:"-"          bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	StopOrder          int      `json:"-"          bun:"stop_order,type:INTEGER,pk,notnull" keel:"stop_order,pk"`
-	LocationID         pulid.ID `json:"locationId" bun:"location_id,type:VARCHAR(100),notnull" keel:"location_id"`
+	DistanceOverrideID pulid.ID `json:"-" keel:"distance_override_id,pk"`
+	BusinessUnitID     pulid.ID `json:"-" keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID `json:"-" keel:"organization_id,pk,tenant"`
+	StopOrder          int      `json:"-" keel:"stop_order,pk"`
+	LocationID         pulid.ID `json:"locationId" keel:"location_id"`
 
-	Location *location.Location `json:"location,omitempty" bun:"rel:belongs-to,join:location_id=id" keel:"belongs:location_id"`
+	Location *location.Location `json:"location,omitempty" keel:"belongs:location_id"`
 }
 
 func (s *DistanceOverrideStop) Validate(multiErr *errortypes.MultiError) {

@@ -555,6 +555,37 @@ func TestKeysetOrder_NullableColumnsSortTheirNullsLast(t *testing.T) {
 	assert.Equal(t, "id", shape[len(shape)-1].Field)
 }
 
+func TestKeysetOrder_OrdersByARelationsColumn(t *testing.T) {
+	t.Parallel()
+
+	p := newPlan(testTrucks.Query())
+	orders, shape, err := p.keysetOrder([]domaintypes.SortField{
+		{Field: "owner.name", Direction: dbtype.SortDirectionAsc},
+	})
+	require.NoError(t, err)
+
+	q := testTrucks.Query().Order(orders...).Limit(10)
+	sql, _ := render(t, q)
+
+	assert.Contains(t, sql, `LEFT JOIN "test_owners" ow`)
+	assert.Contains(t, sql, `ORDER BY ow."name" ASC NULLS LAST, t."id" ASC LIMIT 10`)
+	assert.Equal(t, []pagination.CursorSortField{
+		{Field: "owner.name", Direction: "asc"},
+		{Field: "id", Direction: "asc"},
+	}, shape)
+}
+
+func TestConnectionResult_AnEmptyPageHasNoCursors(t *testing.T) {
+	t.Parallel()
+
+	result, err := connectionResult(&keel.Page[testTruck]{}, nil, nil)
+	require.NoError(t, err)
+
+	assert.Empty(t, result.Items)
+	assert.Empty(t, result.EdgeCursors)
+	assert.False(t, result.HasNextPage)
+}
+
 func TestKeysetOrder_RefusesWhatAKeysetCannotOrderBy(t *testing.T) {
 	t.Parallel()
 
@@ -563,11 +594,6 @@ func TestKeysetOrder_RefusesWhatAKeysetCannotOrderBy(t *testing.T) {
 		sort  domaintypes.SortField
 		field string
 	}{
-		{
-			"a relation path",
-			domaintypes.SortField{Field: "owner.name", Direction: dbtype.SortDirectionAsc},
-			"sort.field",
-		},
 		{
 			"an unknown field",
 			domaintypes.SortField{Field: "nope", Direction: dbtype.SortDirectionAsc},
@@ -652,94 +678,26 @@ func TestKeysetAfter_RefusesACursorOfAnotherSort(t *testing.T) {
 		{Field: "createdAt", Direction: "desc"},
 		{Field: "id", Direction: "desc"},
 	}
-	encoded, err := pagination.EncodeKeysetCursor(shape, "abc", 0)
+	encoded, err := pagination.EncodeKeysetCursor(shape, "abc")
 	require.NoError(t, err)
 	info, err := pagination.NewCursorInfo(20, encoded)
 	require.NoError(t, err)
 
 	after, err := keysetAfter(&info, shape)
 	require.NoError(t, err)
-	assert.Equal(t, "abc", after.Keyset)
+	assert.Equal(t, "abc", after)
 
 	_, err = keysetAfter(&info, []pagination.CursorSortField{{Field: "code", Direction: "asc"}})
 	require.Error(t, err)
 
 	none, err := keysetAfter(&pagination.CursorInfo{Limit: 20}, shape)
 	require.NoError(t, err)
-	assert.False(t, none.IsKeyset())
+	assert.Empty(t, none)
 }
 
-func TestConnectionResult_GivesEveryEdgeACursor(t *testing.T) {
-	t.Parallel()
 
-	shape := []pagination.CursorSortField{{Field: "id", Direction: "desc"}}
-	rows := []*testTruck{{ID: "a"}, {ID: "b"}, {ID: "c"}}
 
-	result, err := connectionResult(
-		&keel.Page[testTruck]{Items: rows, Next: "next"},
-		&pagination.Cursor{},
-		shape,
-		nil,
-	)
-	require.NoError(t, err)
 
-	assert.True(t, result.HasNextPage)
-	require.Len(t, result.EdgeCursors, 3)
-	cursors := decodeAll(t, result.EdgeCursors)
-	assert.Equal(t, pagination.Cursor{Sort: shape, Skip: 1}, cursors[0])
-	assert.Equal(t, pagination.Cursor{Sort: shape, Skip: 2}, cursors[1])
-	assert.Equal(t, pagination.Cursor{Sort: shape, Keyset: "next"}, cursors[2])
-
-	next, err := result.NextCursor()
-	require.NoError(t, err)
-	assert.Equal(t, result.EdgeCursors[2], next)
-}
-
-func TestConnectionResult_AfterASkipCursorDropsTheSkippedRows(t *testing.T) {
-	t.Parallel()
-
-	shape := []pagination.CursorSortField{{Field: "id", Direction: "desc"}}
-	rows := []*testTruck{{ID: "a"}, {ID: "b"}, {ID: "c"}, {ID: "d"}}
-	after := pagination.Cursor{Sort: shape, Keyset: "prev", Skip: 2}
-
-	result, err := connectionResult(&keel.Page[testTruck]{Items: rows}, &after, shape, new(int))
-	require.NoError(t, err)
-
-	assert.False(t, result.HasNextPage)
-	assert.Equal(t, []*testTruck{{ID: "c"}, {ID: "d"}}, result.Items)
-	cursors := decodeAll(t, result.EdgeCursors)
-	assert.Equal(t, pagination.Cursor{Sort: shape, Keyset: "prev", Skip: 3}, cursors[0])
-	assert.Equal(t, pagination.Cursor{Sort: shape, Keyset: "prev", Skip: 4}, cursors[1])
-	require.NotNil(t, result.TotalCount)
-}
-
-func TestConnectionResult_ASkipPastThePageIsEmpty(t *testing.T) {
-	t.Parallel()
-
-	result, err := connectionResult(
-		&keel.Page[testTruck]{Items: []*testTruck{{ID: "a"}}},
-		&pagination.Cursor{Skip: 3},
-		nil,
-		nil,
-	)
-	require.NoError(t, err)
-
-	assert.Empty(t, result.Items)
-	assert.Empty(t, result.EdgeCursors)
-}
-
-func decodeAll(t *testing.T, encoded []string) []pagination.Cursor {
-	t.Helper()
-
-	out := make([]pagination.Cursor, 0, len(encoded))
-	for _, e := range encoded {
-		c, err := pagination.DecodeCursor(e)
-		require.NoError(t, err)
-		out = append(out, c)
-	}
-
-	return out
-}
 
 func TestCatalog_ResolvesJSONNamesThroughTheSchema(t *testing.T) {
 	t.Parallel()

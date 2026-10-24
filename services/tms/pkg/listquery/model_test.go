@@ -102,9 +102,25 @@ func tenantColumns() []schema.Column {
 	}
 }
 
+var testJSONNames = map[string]string{
+	"ID":             "id",
+	"OrganizationID": "organizationId",
+	"BusinessUnitID": "businessUnitId",
+	"OwnerID":        "ownerId",
+	"Code":           "code",
+	"Status":         "status",
+	"Year":           "year",
+	"Weight":         "weight",
+	"Description":    "description",
+	"Active":         "active",
+	"CreatedAt":      "createdAt",
+	"Name":           "name",
+}
+
 func quoted(cols []schema.Column) []schema.Column {
 	for i := range cols {
 		cols[i].Quoted = schema.Quote(cols[i].Name)
+		cols[i].JSON = testJSONNames[cols[i].Field]
 	}
 
 	return cols
@@ -172,6 +188,7 @@ func newTrucksTable(name, alias string, owners *schema.Table) *schema.Table {
 		Relations: []schema.Relation{
 			{
 				Name:   "Owner",
+				JSON:   "owner",
 				Alias:  "ow",
 				Kind:   schema.BelongsTo,
 				Target: owners,
@@ -180,6 +197,7 @@ func newTrucksTable(name, alias string, owners *schema.Table) *schema.Table {
 			},
 			{
 				Name:   "Loads",
+				JSON:   "loads",
 				Alias:  "ld",
 				Kind:   schema.HasMany,
 				Target: owners,

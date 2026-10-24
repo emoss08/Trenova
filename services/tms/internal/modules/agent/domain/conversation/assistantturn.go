@@ -12,11 +12,9 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*AssistantTurn)(nil)
 	_ validationframework.TenantedEntity = (*AssistantTurn)(nil)
 )
 
@@ -112,42 +110,56 @@ func (s AssistantTurnStatus) Terminal() bool {
 // between telling them the answer is in the conversation and leaving them
 // watching a connection that will never say anything again.
 type AssistantTurn struct {
-	bun.BaseModel `bun:"table:assistant_turns,alias:atrn" json:"-"`
-	keel.Table    `keel:"assistant_turns"`
+	keel.Table `keel:"assistant_turns"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:atrn_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:atrn_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ThreadID pulid.ID `json:"threadId" bun:"thread_id,type:VARCHAR(100),notnull" keel:"thread_id"`
-	UserID   pulid.ID `json:"userId"   bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	ThreadID pulid.ID `json:"threadId" keel:"thread_id"`
+	UserID   pulid.ID `json:"userId" keel:"user_id"`
 	// RunID points at the agent run opened for this turn, which happens only
 	// when it proposed a change somebody has to decide on.
-	RunID pulid.ID `json:"runId" bun:"run_id,type:VARCHAR(100),nullzero" keel:"run_id,nullzero"`
+	RunID pulid.ID `json:"runId" keel:"run_id,nullzero"`
 	// WorkflowID is the durable execution carrying the turn, empty until its
 	// start is recorded. ExecutionID answers for a turn either way.
-	WorkflowID string `json:"workflowId" bun:"workflow_id,type:VARCHAR(255),nullzero" keel:"workflow_id,nullzero"`
+	WorkflowID string `json:"workflowId" keel:"workflow_id,nullzero"`
 
 	// Origin and Input say what the turn answers, so a reader who rejoins a
 	// reply already being written can show it under the right heading: the
 	// person's question, or the decision it follows up.
-	Origin AssistantTurnOrigin `json:"origin" bun:"origin,type:VARCHAR(30),notnull,default:'Person'" keel:"origin"`
-	Input  string              `json:"input"  bun:"input,type:TEXT,nullzero" keel:"input,nullzero"`
+	Origin AssistantTurnOrigin `json:"origin" keel:"origin"`
+	Input  string              `json:"input" keel:"input,nullzero"`
 
-	Status       AssistantTurnStatus `json:"status"       bun:"status,type:VARCHAR(20),notnull,default:'Pending'" keel:"status"`
-	ErrorMessage string              `json:"errorMessage" bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
-	StartedAt    int64               `json:"startedAt"    bun:"started_at,type:BIGINT,nullzero" keel:"started_at,nullzero"`
-	CompletedAt  *int64              `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
-	Fingerprint  *agent.Fingerprint  `json:"fingerprint"  bun:"fingerprint,type:JSONB,nullzero" keel:"fingerprint,jsonb"`
+	Status       AssistantTurnStatus `json:"status" keel:"status"`
+	ErrorMessage string              `json:"errorMessage" keel:"error_message,nullzero"`
+	StartedAt    int64               `json:"startedAt" keel:"started_at,nullzero"`
+	CompletedAt  *int64              `json:"completedAt" keel:"completed_at"`
+	Fingerprint  *agent.Fingerprint  `json:"fingerprint" keel:"fingerprint,jsonb"`
 	// TraceID is the turn's trace.
-	TraceID string `json:"traceId" bun:"trace_id,type:VARCHAR(32),nullzero" keel:"trace_id,nullzero"`
+	TraceID string `json:"traceId" keel:"trace_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+}
+
+func (t *AssistantTurn) BeforeCreate(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if t.Status == "" {
+		t.Status = AssistantTurnStatusPending
+	}
+	if t.Origin == "" {
+		t.Origin = AssistantTurnOriginPerson
+	}
+	if t.StartedAt == 0 {
+		t.StartedAt = now
+	}
+
+	return nil
 }
 
 func (t *AssistantTurn) Validate(multiErr *errortypes.MultiError) {
@@ -201,30 +213,4 @@ func (t *AssistantTurn) GetBusinessUnitID() pulid.ID {
 
 func (t *AssistantTurn) GetTableName() string {
 	return "assistant_turns"
-}
-
-func (t *AssistantTurn) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("atrn_")
-		}
-		if t.Status == "" {
-			t.Status = AssistantTurnStatusPending
-		}
-		if t.Origin == "" {
-			t.Origin = AssistantTurnOriginPerson
-		}
-		if t.StartedAt == 0 {
-			t.StartedAt = now
-		}
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
-
-	return nil
 }

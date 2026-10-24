@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 // defaultGeneratedMimeType matches the column default, so a record validated
@@ -96,7 +95,6 @@ func DeliveryMethodFromString(v string) (DeliveryMethod, error) {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*GeneratedDocument)(nil)
 	_ validationframework.TenantedEntity = (*GeneratedDocument)(nil)
 	_ domaintypes.PostgresSearchable     = (*GeneratedDocument)(nil)
 )
@@ -110,61 +108,81 @@ var (
 // asked. The foreign key is RESTRICT so a version with output attributed to it
 // cannot be deleted out from under the record.
 type GeneratedDocument struct {
-	bun.BaseModel `bun:"table:generated_documents,alias:gd" json:"-"`
-	keel.Table    `keel:"generated_documents"`
+	keel.Table `keel:"generated_documents"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:gd_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:gd_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Kind Kind `json:"kind" bun:"kind,type:VARCHAR(100),notnull" keel:"kind"`
+	Kind Kind `json:"kind" keel:"kind"`
 
 	// TemplateID and TemplateVersionID are nil when the built-in rendered, since a
 	// built-in has no database row. ContentHash still identifies the exact content.
-	TemplateID        *pulid.ID `json:"templateId"        bun:"template_id,type:VARCHAR(100),nullzero" keel:"template_id"`
-	TemplateVersionID *pulid.ID `json:"templateVersionId" bun:"template_version_id,type:VARCHAR(100),nullzero" keel:"template_version_id"`
+	TemplateID        *pulid.ID `json:"templateId" keel:"template_id"`
+	TemplateVersionID *pulid.ID `json:"templateVersionId" keel:"template_version_id"`
 
 	// DocumentID links to the stored document row the bytes were uploaded as, so a
 	// generated artifact is reachable from the normal document surfaces.
-	DocumentID *pulid.ID `json:"documentId" bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id"`
+	DocumentID *pulid.ID `json:"documentId" keel:"document_id"`
 
-	ReferenceType string   `json:"referenceType" bun:"reference_type,type:VARCHAR(50),notnull" keel:"reference_type"`
-	ReferenceID   pulid.ID `json:"referenceId"   bun:"reference_id,type:VARCHAR(100),notnull" keel:"reference_id"`
+	ReferenceType string   `json:"referenceType" keel:"reference_type"`
+	ReferenceID   pulid.ID `json:"referenceId" keel:"reference_id"`
 
-	FileName string `json:"fileName" bun:"file_name,type:VARCHAR(255),notnull" keel:"file_name"`
-	FilePath string `json:"filePath" bun:"file_path,type:VARCHAR(500),nullzero" keel:"file_path,nullzero"`
-	FileSize int64  `json:"fileSize" bun:"file_size,type:BIGINT,notnull" keel:"file_size"`
-	MimeType string `json:"mimeType" bun:"mime_type,type:VARCHAR(100),notnull,default:'application/pdf'" keel:"mime_type"`
-	Checksum string `json:"checksum" bun:"checksum,type:VARCHAR(64),nullzero" keel:"checksum,nullzero"`
+	FileName string `json:"fileName" keel:"file_name"`
+	FilePath string `json:"filePath" keel:"file_path,nullzero"`
+	FileSize int64  `json:"fileSize" keel:"file_size"`
+	MimeType string `json:"mimeType" keel:"mime_type"`
+	Checksum string `json:"checksum" keel:"checksum,nullzero"`
 
 	// ContentHash is the template content that produced this, which survives even
 	// when the version row does not.
-	ContentHash string `json:"contentHash" bun:"content_hash,type:VARCHAR(64),nullzero" keel:"content_hash,nullzero"`
+	ContentHash string `json:"contentHash" keel:"content_hash,nullzero"`
 
 	// Warnings records what the render dropped — a blocked image, an exceeded asset
 	// budget — so an omission is never silent.
-	Warnings []GeneratedDocumentWarning `json:"warnings" bun:"warnings,type:JSONB,nullzero" keel:"warnings,jsonb,nullzero"`
+	Warnings []GeneratedDocumentWarning `json:"warnings" keel:"warnings,jsonb,nullzero"`
 
-	Status        GenerationStatus `json:"status"        bun:"status,type:generated_document_status_enum,notnull,default:'Pending'" keel:"status"`
-	ErrorMessage  string           `json:"errorMessage"  bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
-	GeneratedAt   *int64           `json:"generatedAt"   bun:"generated_at,type:BIGINT,nullzero" keel:"generated_at"`
-	GeneratedByID *pulid.ID        `json:"generatedById" bun:"generated_by_id,type:VARCHAR(100),nullzero" keel:"generated_by_id"`
+	Status        GenerationStatus `json:"status" keel:"status"`
+	ErrorMessage  string           `json:"errorMessage" keel:"error_message,nullzero"`
+	GeneratedAt   *int64           `json:"generatedAt" keel:"generated_at"`
+	GeneratedByID *pulid.ID        `json:"generatedById" keel:"generated_by_id"`
 
-	DeliveryMethod DeliveryMethod `json:"deliveryMethod" bun:"delivery_method,type:generated_document_delivery_enum,notnull,default:'None'" keel:"delivery_method"`
-	DeliveredAt    *int64         `json:"deliveredAt"    bun:"delivered_at,type:BIGINT,nullzero" keel:"delivered_at"`
-	DeliveredTo    string         `json:"deliveredTo"    bun:"delivered_to,type:VARCHAR(255),nullzero" keel:"delivered_to,nullzero"`
+	DeliveryMethod DeliveryMethod `json:"deliveryMethod" keel:"delivery_method"`
+	DeliveredAt    *int64         `json:"deliveredAt" keel:"delivered_at"`
+	DeliveredTo    string         `json:"deliveredTo" keel:"delivered_to,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-" keel:"rank,computed"`
 
-	BusinessUnit    *tenant.BusinessUnit     `json:"-"                         bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization    *tenant.Organization     `json:"-"                         bun:"rel:belongs-to,join:organization_id=id"`
-	Template        *DocumentTemplate        `json:"template,omitempty"        bun:"rel:belongs-to,join:template_id=id" keel:"belongs:template_id"`
-	TemplateVersion *DocumentTemplateVersion `json:"templateVersion,omitempty" bun:"rel:belongs-to,join:template_version_id=id" keel:"belongs:template_version_id"`
+	BusinessUnit    *tenant.BusinessUnit     `json:"-"`
+	Organization    *tenant.Organization     `json:"-"`
+	Template        *DocumentTemplate        `json:"template,omitempty" keel:"belongs:template_id"`
+	TemplateVersion *DocumentTemplateVersion `json:"templateVersion,omitempty" keel:"belongs:template_version_id"`
+}
+
+func (g *GeneratedDocument) BeforeUpdate(_ context.Context) error {
+	g.Normalize()
+
+	return nil
+}
+
+func (g *GeneratedDocument) BeforeCreate(_ context.Context) error {
+	g.Normalize()
+	if g.MimeType == "" {
+		g.MimeType = "application/pdf"
+	}
+	if g.Status == "" {
+		g.Status = GenerationStatusPending
+	}
+	if g.DeliveryMethod == "" {
+		g.DeliveryMethod = DeliveryMethodNone
+	}
+
+	return nil
 }
 
 // GeneratedDocumentWarning is one non-fatal problem from a render.
@@ -351,24 +369,5 @@ func (g *GeneratedDocument) Normalize() {
 
 func (g *GeneratedDocument) BeforeSave(_ context.Context) error {
 	g.Normalize()
-	return nil
-}
-
-func (g *GeneratedDocument) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	g.Normalize()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if g.ID.IsNil() {
-			g.ID = pulid.MustNew("gd_")
-		}
-		g.CreatedAt = now
-		g.UpdatedAt = now
-	case *bun.UpdateQuery:
-		g.UpdatedAt = now
-	}
-
 	return nil
 }

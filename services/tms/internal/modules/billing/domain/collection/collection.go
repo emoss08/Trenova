@@ -10,9 +10,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 // ActivityKind is what one entry in a customer's collections history records.
@@ -51,29 +49,26 @@ func (k ActivityKind) IsContact() bool {
 // MaxSummaryLength bounds a logged note.
 const MaxSummaryLength = 4000
 
-var _ bun.BeforeAppendModelHook = (*Activity)(nil)
-
 // Activity is one entry in a customer's collections history. Entries are
 // written once and never changed, so the history is what happened.
 type Activity struct {
-	bun.BaseModel `bun:"table:collection_activities,alias:cact" json:"-"`
-	keel.Table    `keel:"collection_activities"`
+	keel.Table `keel:"collection_activities"`
 
-	ID                  pulid.ID     `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:cact_"`
-	OrganizationID      pulid.ID     `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	BusinessUnitID      pulid.ID     `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	CustomerID          pulid.ID     `json:"customerId"          bun:"customer_id,type:VARCHAR(100),notnull" keel:"customer_id"`
-	Kind                ActivityKind `json:"kind"                bun:"kind,type:VARCHAR(30),notnull" keel:"kind"`
-	Summary             string       `json:"summary"             bun:"summary,type:TEXT,nullzero" keel:"summary,nullzero"`
-	ContactName         string       `json:"contactName"         bun:"contact_name,type:VARCHAR(200),nullzero" keel:"contact_name,nullzero"`
-	InvoiceID           pulid.ID     `json:"invoiceId"           bun:"invoice_id,type:VARCHAR(100),nullzero" keel:"invoice_id,nullzero"`
-	PromisedAmountMinor *int64       `json:"promisedAmountMinor" bun:"promised_amount_minor,type:BIGINT,nullzero" keel:"promised_amount_minor"`
-	PromisedOn          *int64       `json:"promisedOn"          bun:"promised_on,type:BIGINT,nullzero" keel:"promised_on"`
-	CurrencyCode        string       `json:"currencyCode"        bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'" keel:"currency_code"`
-	FollowUpOn          *int64       `json:"followUpOn"          bun:"follow_up_on,type:BIGINT,nullzero" keel:"follow_up_on"`
-	CollectorID         pulid.ID     `json:"collectorId"         bun:"collector_id,type:VARCHAR(100),nullzero" keel:"collector_id,nullzero"`
-	CreatedByID         pulid.ID     `json:"createdById"         bun:"created_by_id,type:VARCHAR(100),notnull" keel:"created_by_id"`
-	CreatedAt           int64        `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	ID                  pulid.ID     `json:"id" keel:"id,pk,autoid:cact_"`
+	OrganizationID      pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	CustomerID          pulid.ID     `json:"customerId" keel:"customer_id"`
+	Kind                ActivityKind `json:"kind" keel:"kind"`
+	Summary             string       `json:"summary" keel:"summary,nullzero"`
+	ContactName         string       `json:"contactName" keel:"contact_name,nullzero"`
+	InvoiceID           pulid.ID     `json:"invoiceId" keel:"invoice_id,nullzero"`
+	PromisedAmountMinor *int64       `json:"promisedAmountMinor" keel:"promised_amount_minor"`
+	PromisedOn          *int64       `json:"promisedOn" keel:"promised_on"`
+	CurrencyCode        string       `json:"currencyCode" keel:"currency_code"`
+	FollowUpOn          *int64       `json:"followUpOn" keel:"follow_up_on"`
+	CollectorID         pulid.ID     `json:"collectorId" keel:"collector_id,nullzero"`
+	CreatedByID         pulid.ID     `json:"createdById" keel:"created_by_id"`
+	CreatedAt           int64        `json:"createdAt" keel:"created_at,autocreate"`
 }
 
 func (a *Activity) GetID() pulid.ID             { return a.ID }
@@ -131,57 +126,27 @@ func (a *Activity) IsPromise() bool {
 	return a.Kind == ActivityPromiseToPay && a.PromisedAmountMinor != nil && a.PromisedOn != nil
 }
 
-func (a *Activity) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("cact_")
-		}
-		if a.CreatedAt == 0 {
-			a.CreatedAt = timeutils.NowUnix()
-		}
+func (a *Activity) BeforeCreate(ctx context.Context) error {
+	if a.CurrencyCode == "" {
+		a.CurrencyCode = "USD"
 	}
+
 	return nil
 }
-
-func (a *Activity) BeforeCreate(ctx context.Context) error {
-	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}
-
-var _ bun.BeforeAppendModelHook = (*Account)(nil)
 
 // Account is a customer as collections works it: its collector, its next
 // follow-up, and the promise to pay standing against its balance.
 type Account struct {
-	bun.BaseModel `bun:"table:collection_accounts,alias:cacc" json:"-"`
-	keel.Table    `keel:"collection_accounts"`
+	keel.Table `keel:"collection_accounts"`
 
-	ID                pulid.ID `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:cacc_"`
-	OrganizationID    pulid.ID `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	BusinessUnitID    pulid.ID `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	CustomerID        pulid.ID `json:"customerId"        bun:"customer_id,type:VARCHAR(100),notnull" keel:"customer_id"`
-	CollectorID       pulid.ID `json:"collectorId"       bun:"collector_id,type:VARCHAR(100),nullzero" keel:"collector_id,nullzero"`
-	NextFollowUpOn    *int64   `json:"nextFollowUpOn"    bun:"next_follow_up_on,type:BIGINT,nullzero" keel:"next_follow_up_on"`
-	PromiseActivityID pulid.ID `json:"promiseActivityId" bun:"promise_activity_id,type:VARCHAR(100),nullzero" keel:"promise_activity_id,nullzero"`
-	Version           int64    `json:"version"           bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt         int64    `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt         int64    `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-}
-
-func (a *Account) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("cacc_")
-		}
-		a.CreatedAt = now
-		a.UpdatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
-	}
-	return nil
-}
-
-func (a *Account) BeforeCreate(ctx context.Context) error {
-	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+	ID                pulid.ID `json:"id" keel:"id,pk,autoid:cacc_"`
+	OrganizationID    pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	CustomerID        pulid.ID `json:"customerId" keel:"customer_id"`
+	CollectorID       pulid.ID `json:"collectorId" keel:"collector_id,nullzero"`
+	NextFollowUpOn    *int64   `json:"nextFollowUpOn" keel:"next_follow_up_on"`
+	PromiseActivityID pulid.ID `json:"promiseActivityId" keel:"promise_activity_id,nullzero"`
+	Version           int64    `json:"version" keel:"version,version"`
+	CreatedAt         int64    `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt         int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
 }

@@ -12,9 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -128,44 +126,57 @@ func AllCoverageTiers() []CoverageTier {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*BenefitPlan)(nil)
 	_ validationframework.TenantedEntity = (*BenefitPlan)(nil)
 )
 
 // BenefitPlan is what a carrier offers, for one plan year.
 type BenefitPlan struct {
-	bun.BaseModel `bun:"table:benefit_plans,alias:bplan" json:"-"`
-	keel.Table    `keel:"benefit_plans"`
+	keel.Table `keel:"benefit_plans"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:bplan_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:bplan_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Status       domaintypes.Status `json:"status"       bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
-	Code         string             `json:"code"         bun:"code,type:VARCHAR(20),notnull" keel:"code"`
-	Name         string             `json:"name"         bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Description  string             `json:"description"  bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	PlanType     BenefitPlanType    `json:"planType"     bun:"plan_type,type:benefit_plan_type_enum,notnull,default:'Medical'" keel:"plan_type"`
-	Carrier      string             `json:"carrier"      bun:"carrier,type:VARCHAR(150),nullzero" keel:"carrier,nullzero"`
-	PolicyNumber string             `json:"policyNumber" bun:"policy_number,type:VARCHAR(100),nullzero" keel:"policy_number,nullzero"`
+	Status       domaintypes.Status `json:"status" keel:"status"`
+	Code         string             `json:"code" keel:"code"`
+	Name         string             `json:"name" keel:"name"`
+	Description  string             `json:"description" keel:"description,nullzero"`
+	PlanType     BenefitPlanType    `json:"planType" keel:"plan_type"`
+	Carrier      string             `json:"carrier" keel:"carrier,nullzero"`
+	PolicyNumber string             `json:"policyNumber" keel:"policy_number,nullzero"`
 	// PayCodeID is what a contribution shows up as on a settlement. Required
 	// rather than optional: a deduction nobody can categorise is a deduction
 	// nobody can explain.
-	PayCodeID pulid.ID `json:"payCodeId" bun:"pay_code_id,type:VARCHAR(100),notnull" keel:"pay_code_id"`
-	PlanYear  int16    `json:"planYear"  bun:"plan_year,type:SMALLINT,notnull" keel:"plan_year"`
+	PayCodeID pulid.ID `json:"payCodeId" keel:"pay_code_id"`
+	PlanYear  int16    `json:"planYear" keel:"plan_year"`
 
-	EmployeeCostMinor int64 `json:"employeeCostMinor" bun:"employee_cost_minor,type:BIGINT,notnull" keel:"employee_cost_minor"`
+	EmployeeCostMinor int64 `json:"employeeCostMinor" keel:"employee_cost_minor"`
 	// EmployerCostMinor is never deducted. It is carried so a
 	// total-compensation statement can show what the job is actually worth.
-	EmployerCostMinor int64  `json:"employerCostMinor" bun:"employer_cost_minor,type:BIGINT,notnull" keel:"employer_cost_minor"`
-	CurrencyCode      string `json:"currencyCode"      bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'" keel:"currency_code"`
-	WaitingPeriodDays int32  `json:"waitingPeriodDays" bun:"waiting_period_days,type:INTEGER,notnull" keel:"waiting_period_days"`
+	EmployerCostMinor int64  `json:"employerCostMinor" keel:"employer_cost_minor"`
+	CurrencyCode      string `json:"currencyCode" keel:"currency_code"`
+	WaitingPeriodDays int32  `json:"waitingPeriodDays" keel:"waiting_period_days"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	PayCode *PayCode `json:"payCode,omitempty" bun:"rel:belongs-to,join:pay_code_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:pay_code_id"`
+	PayCode *PayCode `json:"payCode,omitempty" keel:"belongs:pay_code_id"`
+}
+
+func (p *BenefitPlan) BeforeCreate(_ context.Context) error {
+	p.applyDefaults()
+	if p.Status == "" {
+		p.Status = domaintypes.StatusActive
+	}
+	if p.PlanType == "" {
+		p.PlanType = BenefitPlanMedical
+	}
+	if p.CurrencyCode == "" {
+		p.CurrencyCode = "USD"
+	}
+
+	return nil
 }
 
 func (p *BenefitPlan) Validate(multiErr *errortypes.MultiError) {
@@ -248,29 +259,6 @@ func (p *BenefitPlan) GetResourceType() string { return "benefit_plan" }
 
 func (p *BenefitPlan) GetResourceID() string { return p.ID.String() }
 
-func (p *BenefitPlan) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("bplan_")
-		}
-		p.applyDefaults()
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
-
-	return nil
-}
-
-func (p *BenefitPlan) BeforeCreate(context.Context) error {
-	p.applyDefaults()
-	return nil
-}
-
 func (p *BenefitPlan) applyDefaults() {
 	if p.Status == "" {
 		p.Status = domaintypes.StatusActive
@@ -284,7 +272,6 @@ func (p *BenefitPlan) applyDefaults() {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerBenefitEnrollment)(nil)
 	_ validationframework.TenantedEntity = (*WorkerBenefitEnrollment)(nil)
 )
 
@@ -292,40 +279,51 @@ var (
 // is taken through a recurring deduction rather than a second mechanism, so it
 // inherits the cap, the pause and the reversal on a voided settlement.
 type WorkerBenefitEnrollment struct {
-	bun.BaseModel `bun:"table:worker_benefit_enrollments,alias:wben" json:"-"`
-	keel.Table    `keel:"worker_benefit_enrollments"`
+	keel.Table `keel:"worker_benefit_enrollments"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wben_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
-	BenefitPlanID  pulid.ID `json:"benefitPlanId"  bun:"benefit_plan_id,type:VARCHAR(100),notnull" keel:"benefit_plan_id"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wben_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	BenefitPlanID  pulid.ID `json:"benefitPlanId" keel:"benefit_plan_id"`
 
-	Status       BenefitEnrollmentStatus `json:"status"       bun:"status,type:benefit_enrollment_status_enum,notnull,default:'Pending'" keel:"status"`
-	CoverageTier CoverageTier            `json:"coverageTier" bun:"coverage_tier,type:benefit_coverage_tier_enum,notnull,default:'Employee'" keel:"coverage_tier"`
+	Status       BenefitEnrollmentStatus `json:"status" keel:"status"`
+	CoverageTier CoverageTier            `json:"coverageTier" keel:"coverage_tier"`
 
-	EffectiveFrom int64  `json:"effectiveFrom" bun:"effective_from,type:BIGINT,notnull" keel:"effective_from"`
-	EffectiveTo   *int64 `json:"effectiveTo"   bun:"effective_to,type:BIGINT,nullzero" keel:"effective_to"`
+	EffectiveFrom int64  `json:"effectiveFrom" keel:"effective_from"`
+	EffectiveTo   *int64 `json:"effectiveTo" keel:"effective_to"`
 
 	// EmployeeCostMinor and EmployerCostMinor are copied from the plan and the
 	// tier when the enrollment is made, rather than read through. A plan
 	// repriced next year must not silently restate what somebody was charged
 	// this year.
-	EmployeeCostMinor int64 `json:"employeeCostMinor" bun:"employee_cost_minor,type:BIGINT,notnull" keel:"employee_cost_minor"`
-	EmployerCostMinor int64 `json:"employerCostMinor" bun:"employer_cost_minor,type:BIGINT,notnull" keel:"employer_cost_minor"`
+	EmployeeCostMinor int64 `json:"employeeCostMinor" keel:"employee_cost_minor"`
+	EmployerCostMinor int64 `json:"employerCostMinor" keel:"employer_cost_minor"`
 
-	RecurringDeductionID pulid.ID `json:"recurringDeductionId" bun:"recurring_deduction_id,type:VARCHAR(100),nullzero" keel:"recurring_deduction_id,nullzero"`
-	WaivedReason         string   `json:"waivedReason"         bun:"waived_reason,type:VARCHAR(255),nullzero" keel:"waived_reason,nullzero"`
-	Notes                string   `json:"notes"                bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
-	EnrolledByID         pulid.ID `json:"enrolledById"         bun:"enrolled_by_id,type:VARCHAR(100),nullzero" keel:"enrolled_by_id,nullzero"`
+	RecurringDeductionID pulid.ID `json:"recurringDeductionId" keel:"recurring_deduction_id,nullzero"`
+	WaivedReason         string   `json:"waivedReason" keel:"waived_reason,nullzero"`
+	Notes                string   `json:"notes" keel:"notes,nullzero"`
+	EnrolledByID         pulid.ID `json:"enrolledById" keel:"enrolled_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker      *worker.Worker      `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
-	BenefitPlan *BenefitPlan        `json:"benefitPlan,omitempty" bun:"rel:belongs-to,join:benefit_plan_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:benefit_plan_id"`
-	Deduction   *RecurringDeduction `json:"deduction,omitempty"   bun:"rel:belongs-to,join:recurring_deduction_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:recurring_deduction_id"`
+	Worker      *worker.Worker      `json:"worker,omitempty" keel:"belongs:worker_id"`
+	BenefitPlan *BenefitPlan        `json:"benefitPlan,omitempty" keel:"belongs:benefit_plan_id"`
+	Deduction   *RecurringDeduction `json:"deduction,omitempty" keel:"belongs:recurring_deduction_id"`
+}
+
+func (e *WorkerBenefitEnrollment) BeforeCreate(_ context.Context) error {
+	e.applyDefaults()
+	if e.Status == "" {
+		e.Status = EnrollmentPending
+	}
+	if e.CoverageTier == "" {
+		e.CoverageTier = TierEmployee
+	}
+
+	return nil
 }
 
 func (e *WorkerBenefitEnrollment) Validate(multiErr *errortypes.MultiError) {
@@ -394,29 +392,6 @@ func (e *WorkerBenefitEnrollment) GetTableName() string { return "worker_benefit
 func (e *WorkerBenefitEnrollment) GetResourceType() string { return "worker_benefit_enrollment" }
 
 func (e *WorkerBenefitEnrollment) GetResourceID() string { return e.ID.String() }
-
-func (e *WorkerBenefitEnrollment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("wben_")
-		}
-		e.applyDefaults()
-		e.CreatedAt = now
-		e.UpdatedAt = now
-	case *bun.UpdateQuery:
-		e.UpdatedAt = now
-	}
-
-	return nil
-}
-
-func (e *WorkerBenefitEnrollment) BeforeCreate(context.Context) error {
-	e.applyDefaults()
-	return nil
-}
 
 func (e *WorkerBenefitEnrollment) applyDefaults() {
 	if e.Status == "" {

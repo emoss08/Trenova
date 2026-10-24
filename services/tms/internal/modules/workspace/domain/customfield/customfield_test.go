@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestCustomFieldDefinition_Validate_Success(t *testing.T) {
@@ -234,7 +233,7 @@ func TestCustomFieldDefinition_Validate_UnsupportedResourceType(t *testing.T) {
 	assert.True(t, hasErrorForField(multiErr, "resourceType"))
 }
 
-func TestCustomFieldDefinition_BeforeAppendModel_Insert(t *testing.T) {
+func TestCustomFieldDefinition_BeforeCreate(t *testing.T) {
 	t.Parallel()
 
 	def := &CustomFieldDefinition{
@@ -244,38 +243,10 @@ func TestCustomFieldDefinition_BeforeAppendModel_Insert(t *testing.T) {
 		FieldType:    FieldTypeText,
 	}
 
-	query := (*bun.InsertQuery)(nil)
-	err := def.BeforeAppendModel(t.Context(), query)
-
-	require.NoError(t, err)
-	assert.False(t, def.ID.IsNil())
-	assert.Equal(t, "cfd_", def.ID.Prefix())
-	assert.NotZero(t, def.CreatedAt)
-	assert.NotZero(t, def.UpdatedAt)
-	assert.Equal(t, def.CreatedAt, def.UpdatedAt)
+	require.NoError(t, def.BeforeCreate(t.Context()))
 	assert.NotNil(t, def.Options)
 }
 
-func TestCustomFieldDefinition_BeforeAppendModel_Update(t *testing.T) {
-	t.Parallel()
-
-	def := &CustomFieldDefinition{
-		ID:           pulid.MustNew("cfd_"),
-		ResourceType: "trailer",
-		Name:         "custom_field",
-		Label:        "Custom Field",
-		FieldType:    FieldTypeText,
-		CreatedAt:    1000,
-		UpdatedAt:    1000,
-	}
-
-	query := (*bun.UpdateQuery)(nil)
-	err := def.BeforeAppendModel(t.Context(), query)
-
-	require.NoError(t, err)
-	assert.Equal(t, int64(1000), def.CreatedAt)
-	assert.NotEqual(t, int64(1000), def.UpdatedAt)
-}
 
 func TestCustomFieldDefinition_GetID(t *testing.T) {
 	t.Parallel()

@@ -13,13 +13,10 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Feedback)(nil)
 	_ validationframework.TenantedEntity = (*Feedback)(nil)
 	_ pagination.CursorEntity            = (*Feedback)(nil)
 	_ domaintypes.PostgresSearchable     = (*Feedback)(nil)
@@ -32,48 +29,45 @@ const (
 )
 
 type Feedback struct {
-	bun.BaseModel `bun:"table:ai_feedback,alias:aifb" json:"-"`
-	keel.Table    `keel:"ai_feedback"`
+	keel.Table `keel:"ai_feedback"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aifb_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aifb_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	UserID     pulid.ID   `json:"userId" keel:"user_id"`
+	TargetType TargetType `json:"targetType" keel:"target_type"`
+	TargetID   pulid.ID   `json:"targetId" keel:"target_id"`
+	TargetPart string     `json:"targetPart" keel:"target_part"`
 
-	UserID     pulid.ID   `json:"userId"     bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
-	TargetType TargetType `json:"targetType" bun:"target_type,type:VARCHAR(30),notnull" keel:"target_type"`
-	TargetID   pulid.ID   `json:"targetId"   bun:"target_id,type:VARCHAR(100),notnull" keel:"target_id"`
-	TargetPart string     `json:"targetPart" bun:"target_part,type:VARCHAR(100),notnull,default:''" keel:"target_part"`
+	ThreadID *pulid.ID `json:"threadId" keel:"thread_id"`
+	TurnID   *pulid.ID `json:"turnId" keel:"turn_id"`
+	RunID    *pulid.ID `json:"runId" keel:"run_id"`
 
-	ThreadID *pulid.ID `json:"threadId" bun:"thread_id,type:VARCHAR(100),nullzero" keel:"thread_id"`
-	TurnID   *pulid.ID `json:"turnId"   bun:"turn_id,type:VARCHAR(100),nullzero" keel:"turn_id"`
-	RunID    *pulid.ID `json:"runId"    bun:"run_id,type:VARCHAR(100),nullzero" keel:"run_id"`
+	AgentDefinitionID *pulid.ID         `json:"agentDefinitionId" keel:"agent_definition_id"`
+	DefinitionVersion *int64            `json:"definitionVersion" keel:"definition_version"`
+	DetectorKey       string            `json:"detectorKey" keel:"detector_key,nullzero"`
+	Task              string            `json:"task" keel:"task,nullzero"`
+	Model             string            `json:"model" keel:"model,nullzero"`
+	ProviderID        *pulid.ID         `json:"providerId" keel:"provider_id"`
+	PromptHash        string            `json:"promptHash" keel:"prompt_hash,nullzero"`
+	ToolSpecHash      string            `json:"toolSpecHash" keel:"tool_spec_hash,nullzero"`
+	FingerprintSource FingerprintSource `json:"fingerprintSource" keel:"fingerprint_source"`
 
-	AgentDefinitionID *pulid.ID         `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero" keel:"agent_definition_id"`
-	DefinitionVersion *int64            `json:"definitionVersion" bun:"definition_version,type:BIGINT,nullzero" keel:"definition_version"`
-	DetectorKey       string            `json:"detectorKey"       bun:"detector_key,type:VARCHAR(100),nullzero" keel:"detector_key,nullzero"`
-	Task              string            `json:"task"              bun:"task,type:VARCHAR(100),nullzero" keel:"task,nullzero"`
-	Model             string            `json:"model"             bun:"model,type:VARCHAR(255),nullzero" keel:"model,nullzero"`
-	ProviderID        *pulid.ID         `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id"`
-	PromptHash        string            `json:"promptHash"        bun:"prompt_hash,type:VARCHAR(64),nullzero" keel:"prompt_hash,nullzero"`
-	ToolSpecHash      string            `json:"toolSpecHash"      bun:"tool_spec_hash,type:VARCHAR(64),nullzero" keel:"tool_spec_hash,nullzero"`
-	FingerprintSource FingerprintSource `json:"fingerprintSource" bun:"fingerprint_source,type:VARCHAR(20),notnull" keel:"fingerprint_source"`
+	Rating  Rating   `json:"rating" keel:"rating"`
+	Reasons []Reason `json:"reasons" keel:"reasons"`
+	Comment string   `json:"comment" keel:"comment,nullzero"`
 
-	Rating  Rating   `json:"rating"  bun:"rating,type:SMALLINT,notnull" keel:"rating"`
-	Reasons []Reason `json:"reasons" bun:"reasons,type:TEXT[],array,notnull,default:'{}'" keel:"reasons"`
-	Comment string   `json:"comment" bun:"comment,type:TEXT,nullzero" keel:"comment,nullzero"`
+	TurnSnapshot *TurnSnapshot `json:"turnSnapshot" keel:"turn_snapshot,jsonb"`
+	PatternKey   string        `json:"patternKey" keel:"pattern_key"`
+	EvalCaseID   *pulid.ID     `json:"evalCaseId" keel:"eval_case_id"`
 
-	TurnSnapshot *TurnSnapshot `json:"turnSnapshot" bun:"turn_snapshot,type:JSONB,nullzero" keel:"turn_snapshot,jsonb"`
-	PatternKey   string        `json:"patternKey"   bun:"pattern_key,type:VARCHAR(64),notnull" keel:"pattern_key"`
-	EvalCaseID   *pulid.ID     `json:"evalCaseId"   bun:"eval_case_id,type:VARCHAR(100),nullzero" keel:"eval_case_id"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (f *Feedback) Validate(multiErr *errortypes.MultiError) {
@@ -169,25 +163,6 @@ func (f *Feedback) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "target_type", Type: domaintypes.FieldTypeEnum},
 		},
 	}
-}
-
-func (f *Feedback) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if f.ID.IsNil() {
-			f.ID = pulid.MustNew("aifb_")
-		}
-		if f.CreatedAt == 0 {
-			f.CreatedAt = now
-		}
-		f.UpdatedAt = now
-	case *bun.UpdateQuery:
-		f.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (f *Feedback) BeforeCreate(_ context.Context) error {

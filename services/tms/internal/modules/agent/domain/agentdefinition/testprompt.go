@@ -1,15 +1,12 @@
 package agentdefinition
 
 import (
-	"context"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -24,16 +21,15 @@ const (
 // TestPrompt is a message kept with an agent for trying it again after an
 // edit, so a change can be checked against the same questions each time.
 type TestPrompt struct {
-	bun.BaseModel `bun:"table:agent_test_prompts,alias:agtp" json:"-"`
-	keel.Table    `keel:"agent_test_prompts"`
+	keel.Table `keel:"agent_test_prompts"`
 
-	ID                pulid.ID  `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:agtp_"`
-	BusinessUnitID    pulid.ID  `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID  `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	AgentDefinitionID pulid.ID  `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
-	Prompt            string    `json:"prompt"            bun:"prompt,type:TEXT,notnull" keel:"prompt"`
-	CreatedByID       *pulid.ID `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id"`
-	CreatedAt         int64     `json:"createdAt"         bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	ID                pulid.ID  `json:"id" keel:"id,pk,autoid:agtp_"`
+	BusinessUnitID    pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
+	AgentDefinitionID pulid.ID  `json:"agentDefinitionId" keel:"agent_definition_id"`
+	Prompt            string    `json:"prompt" keel:"prompt"`
+	CreatedByID       *pulid.ID `json:"createdById" keel:"created_by_id"`
+	CreatedAt         int64     `json:"createdAt" keel:"created_at,autocreate"`
 }
 
 // Validate trims the prompt and checks it is something to send.
@@ -45,15 +41,4 @@ func (p *TestPrompt) Validate(multiErr *errortypes.MultiError) {
 	case utf8.RuneCountInString(p.Prompt) > MaxTestPromptRunes:
 		multiErr.Add("prompt", errortypes.ErrInvalidLength, "A prompt cannot be longer than 2000 characters")
 	}
-}
-
-func (p *TestPrompt) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew(TestPromptIDPrefix)
-		}
-		p.CreatedAt = timeutils.NowUnix()
-	}
-
-	return nil
 }

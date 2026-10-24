@@ -11,10 +11,8 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -220,55 +218,53 @@ func ResultForConcentration(concentration decimal.Decimal) DOTTestResult {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerDOTTest)(nil)
 	_ validationframework.TenantedEntity = (*WorkerDOTTest)(nil)
 )
 
 type WorkerDOTTest struct {
-	bun.BaseModel `bun:"table:worker_dot_tests,alias:wdot" json:"-"`
-	keel.Table    `                                                 keel:"worker_dot_tests"`
+	keel.Table `                                                 keel:"worker_dot_tests"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"               keel:"id,pk,autoid:wdot_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"  keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"           keel:"worker_id"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wdot_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
 
-	TestType  DOTTestType      `json:"testType"  bun:"test_type,type:dot_test_type_enum,notnull"                    keel:"test_type"`
-	Substance DOTTestSubstance `json:"substance" bun:"substance,type:dot_test_substance_enum,notnull"               keel:"substance"`
-	Status    DOTTestStatus    `json:"status"    bun:"status,type:dot_test_status_enum,notnull,default:'Scheduled'" keel:"status"`
-	Result    DOTTestResult    `json:"result"    bun:"result,type:dot_test_result_enum,notnull,default:'Pending'"   keel:"result"`
-	IsDOT     bool             `json:"isDot"     bun:"is_dot,type:BOOLEAN,notnull"                                  keel:"is_dot"`
-	Reason    string           `json:"reason"    bun:"reason,type:TEXT,nullzero"                                    keel:"reason,nullzero"`
+	TestType  DOTTestType      `json:"testType" keel:"test_type"`
+	Substance DOTTestSubstance `json:"substance" keel:"substance"`
+	Status    DOTTestStatus    `json:"status" keel:"status"`
+	Result    DOTTestResult    `json:"result" keel:"result"`
+	IsDOT     bool             `json:"isDot" keel:"is_dot"`
+	Reason    string           `json:"reason" keel:"reason,nullzero"`
 
-	ScheduledAt *int64 `json:"scheduledAt" bun:"scheduled_at,type:BIGINT,nullzero" keel:"scheduled_at"`
-	CollectedAt *int64 `json:"collectedAt" bun:"collected_at,type:BIGINT,nullzero" keel:"collected_at"`
-	ResultAt    *int64 `json:"resultAt"    bun:"result_at,type:BIGINT,nullzero"    keel:"result_at"`
+	ScheduledAt *int64 `json:"scheduledAt" keel:"scheduled_at"`
+	CollectedAt *int64 `json:"collectedAt" keel:"collected_at"`
+	ResultAt    *int64 `json:"resultAt" keel:"result_at"`
 
-	CollectionSite string `json:"collectionSite" bun:"collection_site,type:VARCHAR(150),nullzero" keel:"collection_site,nullzero"`
-	CollectorName  string `json:"collectorName"  bun:"collector_name,type:VARCHAR(100),nullzero"  keel:"collector_name,nullzero"`
-	SpecimenID     string `json:"specimenId"     bun:"specimen_id,type:VARCHAR(100),nullzero"     keel:"specimen_id,nullzero"`
-	LabName        string `json:"labName"        bun:"lab_name,type:VARCHAR(100),nullzero"        keel:"lab_name,nullzero"`
-	MROName        string `json:"mroName"        bun:"mro_name,type:VARCHAR(100),nullzero"        keel:"mro_name,nullzero"`
-	MROVerifiedAt  *int64 `json:"mroVerifiedAt"  bun:"mro_verified_at,type:BIGINT,nullzero"       keel:"mro_verified_at"`
+	CollectionSite string `json:"collectionSite" keel:"collection_site,nullzero"`
+	CollectorName  string `json:"collectorName" keel:"collector_name,nullzero"`
+	SpecimenID     string `json:"specimenId" keel:"specimen_id,nullzero"`
+	LabName        string `json:"labName" keel:"lab_name,nullzero"`
+	MROName        string `json:"mroName" keel:"mro_name,nullzero"`
+	MROVerifiedAt  *int64 `json:"mroVerifiedAt" keel:"mro_verified_at"`
 
-	AlcoholConcentration *decimal.Decimal `json:"alcoholConcentration" bun:"alcohol_concentration,type:NUMERIC(4,3),nullzero" keel:"alcohol_concentration"`
+	AlcoholConcentration *decimal.Decimal `json:"alcoholConcentration" keel:"alcohol_concentration"`
 
-	SafetyEventID pulid.ID `json:"safetyEventId" bun:"safety_event_id,type:VARCHAR(100),nullzero" keel:"safety_event_id,nullzero"`
-	DrawEntryID   pulid.ID `json:"drawEntryId"   bun:"draw_entry_id,type:VARCHAR(100),nullzero"   keel:"draw_entry_id,nullzero"`
-	DocumentID    pulid.ID `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero"     keel:"document_id,nullzero"`
-	Notes         string   `json:"notes"         bun:"notes,type:TEXT,nullzero"                   keel:"notes,nullzero"`
-	OrderedByID   pulid.ID `json:"orderedById"   bun:"ordered_by_id,type:VARCHAR(100),nullzero"   keel:"ordered_by_id,nullzero"`
-	RecordedByID  pulid.ID `json:"recordedById"  bun:"recorded_by_id,type:VARCHAR(100),nullzero"  keel:"recorded_by_id,nullzero"`
+	SafetyEventID pulid.ID `json:"safetyEventId" keel:"safety_event_id,nullzero"`
+	DrawEntryID   pulid.ID `json:"drawEntryId" keel:"draw_entry_id,nullzero"`
+	DocumentID    pulid.ID `json:"documentId" keel:"document_id,nullzero"`
+	Notes         string   `json:"notes" keel:"notes,nullzero"`
+	OrderedByID   pulid.ID `json:"orderedById" keel:"ordered_by_id,nullzero"`
+	RecordedByID  pulid.ID `json:"recordedById" keel:"recorded_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"                                                                  keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker      *Worker            `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"       keel:"belongs:worker_id"`
-	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" bun:"rel:belongs-to,join:safety_event_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:safety_event_id"`
-	Document    *document.Document `json:"document,omitempty"    bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"     keel:"belongs:document_id"`
-	OrderedBy   *tenant.User       `json:"orderedBy,omitempty"   bun:"rel:belongs-to,join:ordered_by_id=id"                                                                               keel:"belongs:ordered_by_id"`
-	RecordedBy  *tenant.User       `json:"recordedBy,omitempty"  bun:"rel:belongs-to,join:recorded_by_id=id"                                                                              keel:"belongs:recorded_by_id"`
+	Worker      *Worker            `json:"worker,omitempty" keel:"belongs:worker_id"`
+	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" keel:"belongs:safety_event_id"`
+	Document    *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
+	OrderedBy   *tenant.User       `json:"orderedBy,omitempty" keel:"belongs:ordered_by_id"`
+	RecordedBy  *tenant.User       `json:"recordedBy,omitempty" keel:"belongs:recorded_by_id"`
 }
 
 func (t *WorkerDOTTest) Validate(multiErr *errortypes.MultiError) {
@@ -437,29 +433,6 @@ func (t *WorkerDOTTest) GetTableName() string { return "worker_dot_tests" }
 func (t *WorkerDOTTest) GetResourceType() string { return "worker_dot_test" }
 
 func (t *WorkerDOTTest) GetResourceID() string { return t.ID.String() }
-
-func (t *WorkerDOTTest) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("wdot_")
-		}
-		if t.Status == "" {
-			t.Status = DOTTestStatusScheduled
-		}
-		if t.Result == "" {
-			t.Result = DOTResultPending
-		}
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
-
-	return nil
-}
 
 func (t *WorkerDOTTest) BeforeCreate(_ context.Context) error {
 	if t.Status == "" {

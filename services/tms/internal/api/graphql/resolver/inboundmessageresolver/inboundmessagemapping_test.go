@@ -1,6 +1,7 @@
 package inboundmessageresolver
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -32,7 +33,7 @@ func TestInboundMessageConnectionCursorsCarryTheArrivalSort(t *testing.T) {
 		{Field: "receivedAt", Direction: "desc"},
 		{Field: "id", Direction: "desc"},
 	}
-	result := pagination.NewCursorListResultWithTotalCount(
+	result := pagetest.OfTotal(
 		[]*inboundmessage.InboundMessage{first, second, {ID: pulid.MustNew("imsg_")}}, 2, nil,
 	).WithCursorSort(sort)
 	require.NoError(t, result.WithCursorValues([][]any{

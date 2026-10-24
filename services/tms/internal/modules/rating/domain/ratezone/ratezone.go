@@ -18,13 +18,10 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*RateZone)(nil)
 	_ validationframework.TenantedEntity = (*RateZone)(nil)
 	_ domaintypes.PostgresSearchable     = (*RateZone)(nil)
 )
@@ -36,26 +33,25 @@ const (
 )
 
 type RateZone struct {
-	bun.BaseModel `bun:"table:rate_zones,alias:rzn" json:"-"`
-	keel.Table    `keel:"rate_zones"`
+	keel.Table `keel:"rate_zones"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rzn_"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(50),notnull" keel:"code"`
-	Name           string             `json:"name"           bun:"name,type:VARCHAR(100),notnull" keel:"name"`
-	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
-	Kind           ZoneKind           `json:"kind"           bun:"kind,type:rate_zone_kind_enum,notnull,default:'Custom'" keel:"kind"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
-	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:rzn_"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Code           string             `json:"code" keel:"code"`
+	Name           string             `json:"name" keel:"name"`
+	Description    string             `json:"description" keel:"description,nullzero"`
+	Kind           ZoneKind           `json:"kind" keel:"kind"`
+	Status         domaintypes.Status `json:"status" keel:"status"`
+	Version        int64              `json:"version" keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector   string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string             `json:"-" keel:"rank,computed"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-"                 bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-"                 bun:"rel:belongs-to,join:organization_id=id"`
-	Members      []*RateZoneMember    `json:"members,omitempty" bun:"rel:has-many,join:id=rate_zone_id" keel:"many:rate_zone_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+	Members      []*RateZoneMember    `json:"members,omitempty" keel:"many:rate_zone_id"`
 }
 
 // applyDefaults fills in the values the database would have defaulted, so a
@@ -171,25 +167,15 @@ func (rz *RateZone) validateMembers(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (rz *RateZone) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rz.ID.IsNil() {
-			rz.ID = pulid.MustNew("rzn_")
-		}
-		rz.CreatedAt = now
-		rz.UpdatedAt = now
-	case *bun.UpdateQuery:
-		rz.UpdatedAt = now
+func (rz *RateZone) BeforeCreate(ctx context.Context) error {
+	if rz.Kind == "" {
+		rz.Kind = ZoneKindCustom
+	}
+	if rz.Status == "" {
+		rz.Status = domaintypes.StatusActive
 	}
 
 	return nil
-}
-
-func (rz *RateZone) BeforeCreate(ctx context.Context) error {
-	return rz.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (rz *RateZone) GetID() pulid.ID {

@@ -828,12 +828,7 @@ func (r *repository) syncInvoiceSendStatus(
 		invoice.LatestSendAttempts(attempts),
 	)
 	inv := invoicedb.Invoices
-	rows, err := listquery.UpdateReturning(ctx, db, inv.Where(inv.ID.Eq(invoiceID)),
-		inv.SendStatus.To(status),
-		inv.SentAt.ToExpr(keel.Val(sentAt)),
-		inv.LastSendError.To(lastError),
-		inv.Version.ToExpr(inv.Version),
-	)
+	rows, err := inv.Where(inv.ID.Eq(invoiceID)).UpdateReturning(ctx, db, inv.SendStatus.To(status), inv.SentAt.ToExpr(keel.Val(sentAt)), inv.LastSendError.To(lastError), inv.Version.ToExpr(inv.Version))
 	if err != nil {
 		return nil, invoiceErrors.Map(err, invoiceID.String())
 	}

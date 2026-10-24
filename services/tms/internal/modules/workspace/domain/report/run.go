@@ -11,10 +11,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*ReportRun)(nil)
 
 type RunError struct {
 	Code    string `json:"code"`
@@ -24,61 +21,59 @@ type RunError struct {
 
 // Execution history for reports, schedules, and exports
 type ReportRun struct {
-	bun.BaseModel `bun:"table:report_runs,alias:rrun" json:"-"`
-	keel.Table    `                                            keel:"report_runs,report=Reporting"`
+	keel.Table `                                            keel:"report_runs,report=Reporting"`
 
-	ID                 pulid.ID       `json:"id"                 bun:"id,pk,type:VARCHAR(100)"                                                           keel:"id,pk,autoid:rrun_"`
-	BusinessUnitID     pulid.ID       `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"                                     keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID       `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"                                      keel:"organization_id,pk,tenant"`
-	DefinitionID       pulid.ID       `json:"definitionId"       bun:"definition_id,type:VARCHAR(100),nullzero"                                          keel:"definition_id,nullzero"`
-	RevisionID         pulid.ID       `json:"revisionId"         bun:"revision_id,type:VARCHAR(100),nullzero"                                            keel:"revision_id,nullzero,noreport"`
-	CannedKey          string         `json:"cannedKey"          bun:"canned_key,type:VARCHAR(100),nullzero"                                             keel:"canned_key,nullzero,label=Canned Report Key"`
-	CannedVersion      string         `json:"cannedVersion"      bun:"canned_version,type:VARCHAR(20),nullzero"                                          keel:"canned_version,nullzero,noreport"`
-	ScheduleID         pulid.ID       `json:"scheduleId"         bun:"schedule_id,type:VARCHAR(100),nullzero"                                            keel:"schedule_id,nullzero"`
-	RequestedByID      pulid.ID       `json:"requestedById"      bun:"requested_by_id,type:VARCHAR(100),notnull"                                         keel:"requested_by_id"`
-	Trigger            RunTrigger     `json:"trigger"            bun:"trigger,type:VARCHAR(20),notnull,default:'manual'"                                 keel:"trigger"`
-	Params             map[string]any `json:"params"             bun:"params,type:JSONB,nullzero"                                                        keel:"params,jsonb,nullzero,noreport"`
-	Format             Format         `json:"format"             bun:"format,type:VARCHAR(10),notnull"                                                   keel:"format"`
-	Status             RunStatus      `json:"status"             bun:"status,type:VARCHAR(20),notnull,default:'queued'"                                  keel:"status"`
-	RowCount           int64          `json:"rowCount"           bun:"row_count,type:BIGINT,nullzero"                                                    keel:"row_count,nullzero,label=Rows,format=count"`
-	ByteSize           int64          `json:"byteSize"           bun:"byte_size,type:BIGINT,nullzero"                                                    keel:"byte_size,nullzero,label=Size (bytes),format=count"`
-	DurationMs         int64          `json:"durationMs"         bun:"duration_ms,type:BIGINT,nullzero"                                                  keel:"duration_ms,nullzero,label=Duration (ms),format=count"`
-	Truncated          bool           `json:"truncated"          bun:"truncated,type:BOOLEAN,notnull"                                                    keel:"truncated"`
-	Error              *RunError      `json:"error"              bun:"error,type:JSONB,nullzero"                                                         keel:"error,jsonb,noreport"`
-	ArtifactKey        string         `json:"artifactKey"        bun:"artifact_key,type:VARCHAR(512),nullzero"                                           keel:"artifact_key,nullzero,noreport"`
-	RowsKey            string         `json:"rowsKey"            bun:"rows_key,type:VARCHAR(512),nullzero"                                               keel:"rows_key,nullzero"`
-	ArtifactExpiresAt  int64          `json:"artifactExpiresAt"  bun:"artifact_expires_at,type:BIGINT,nullzero"                                          keel:"artifact_expires_at,nullzero,noreport"`
-	CacheHit           bool           `json:"cacheHit"           bun:"cache_hit,type:BOOLEAN,notnull"                                                    keel:"cache_hit"`
-	TemporalWorkflowID string         `json:"temporalWorkflowId" bun:"temporal_workflow_id,type:VARCHAR(255),nullzero"                                   keel:"temporal_workflow_id,nullzero,noreport"`
-	TemporalRunID      string         `json:"temporalRunId"      bun:"temporal_run_id,type:VARCHAR(255),nullzero"                                        keel:"temporal_run_id,nullzero,noreport"`
-	QueuedAt           int64          `json:"queuedAt"           bun:"queued_at,type:BIGINT,nullzero"                                                    keel:"queued_at,nullzero"`
-	StartedAt          int64          `json:"startedAt"          bun:"started_at,type:BIGINT,nullzero"                                                   keel:"started_at,nullzero"`
-	CompletedAt        int64          `json:"completedAt"        bun:"completed_at,type:BIGINT,nullzero"                                                 keel:"completed_at,nullzero"`
-	Version            int64          `json:"version"            bun:"version,type:BIGINT"                                                               keel:"version,version,noreport"`
-	CreatedAt          int64          `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt          int64          `json:"updatedAt"          bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate,noreport"`
+	ID                 pulid.ID       `json:"id" keel:"id,pk,autoid:rrun_"`
+	BusinessUnitID     pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
+	DefinitionID       pulid.ID       `json:"definitionId" keel:"definition_id,nullzero"`
+	RevisionID         pulid.ID       `json:"revisionId" keel:"revision_id,nullzero,noreport"`
+	CannedKey          string         `json:"cannedKey" keel:"canned_key,nullzero,label=Canned Report Key"`
+	CannedVersion      string         `json:"cannedVersion" keel:"canned_version,nullzero,noreport"`
+	ScheduleID         pulid.ID       `json:"scheduleId" keel:"schedule_id,nullzero"`
+	RequestedByID      pulid.ID       `json:"requestedById" keel:"requested_by_id"`
+	Trigger            RunTrigger     `json:"trigger" keel:"trigger"`
+	Params             map[string]any `json:"params" keel:"params,jsonb,nullzero,noreport"`
+	Format             Format         `json:"format" keel:"format"`
+	Status             RunStatus      `json:"status" keel:"status"`
+	RowCount           int64          `json:"rowCount" keel:"row_count,nullzero,label=Rows,format=count"`
+	ByteSize           int64          `json:"byteSize" keel:"byte_size,nullzero,label=Size (bytes),format=count"`
+	DurationMs         int64          `json:"durationMs" keel:"duration_ms,nullzero,label=Duration (ms),format=count"`
+	Truncated          bool           `json:"truncated" keel:"truncated"`
+	Error              *RunError      `json:"error" keel:"error,jsonb,noreport"`
+	ArtifactKey        string         `json:"artifactKey" keel:"artifact_key,nullzero,noreport"`
+	RowsKey            string         `json:"rowsKey" keel:"rows_key,nullzero"`
+	ArtifactExpiresAt  int64          `json:"artifactExpiresAt" keel:"artifact_expires_at,nullzero,noreport"`
+	CacheHit           bool           `json:"cacheHit" keel:"cache_hit"`
+	TemporalWorkflowID string         `json:"temporalWorkflowId" keel:"temporal_workflow_id,nullzero,noreport"`
+	TemporalRunID      string         `json:"temporalRunId" keel:"temporal_run_id,nullzero,noreport"`
+	QueuedAt           int64          `json:"queuedAt" keel:"queued_at,nullzero"`
+	StartedAt          int64          `json:"startedAt" keel:"started_at,nullzero"`
+	CompletedAt        int64          `json:"completedAt" keel:"completed_at,nullzero"`
+	Version            int64          `json:"version" keel:"version,version,noreport"`
+	CreatedAt          int64          `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt          int64          `json:"updatedAt" keel:"updated_at,autoupdate,noreport"`
 
-	Organization     *tenant.Organization      `json:"organization,omitempty"     bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit     *tenant.BusinessUnit      `json:"businessUnit,omitempty"     bun:"rel:belongs-to,join:business_unit_id=id"`
-	RequestedBy      *tenant.User              `json:"requestedBy,omitempty"      bun:"rel:belongs-to,join:requested_by_id=id"                                                                           keel:"belongs:requested_by_id,noreport"`
-	ReportDefinition *ReportDefinition         `json:"reportDefinition,omitempty" bun:"rel:belongs-to,join:definition_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:definition_id,label=Report"`
-	Revision         *ReportDefinitionRevision `json:"revision,omitempty"         bun:"rel:belongs-to,join:revision_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"   keel:"belongs:revision_id,noreport"`
+	Organization     *tenant.Organization      `json:"organization,omitempty"`
+	BusinessUnit     *tenant.BusinessUnit      `json:"businessUnit,omitempty"`
+	RequestedBy      *tenant.User              `json:"requestedBy,omitempty" keel:"belongs:requested_by_id,noreport"`
+	ReportDefinition *ReportDefinition         `json:"reportDefinition,omitempty" keel:"belongs:definition_id,label=Report"`
+	Revision         *ReportDefinitionRevision `json:"revision,omitempty" keel:"belongs:revision_id,noreport"`
 }
 
-func (rr *ReportRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (rr *ReportRun) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rr.ID.IsNil() {
-			rr.ID = pulid.MustNew("rrun_")
-		}
-		rr.CreatedAt = now
-		if rr.QueuedAt == 0 {
-			rr.QueuedAt = now
-		}
-	case *bun.UpdateQuery:
-		rr.UpdatedAt = now
+	if rr.QueuedAt == 0 {
+		rr.QueuedAt = now
+	}
+	if rr.Trigger == "" {
+		rr.Trigger = RunTriggerManual
+	}
+	if rr.Status == "" {
+		rr.Status = RunStatusQueued
+	}
+	if rr.QueuedAt == 0 {
+		rr.QueuedAt = rr.CreatedAt
 	}
 
 	return nil
@@ -178,17 +173,3 @@ const (
 	maxArtifactKeyLength      = 512
 	maxTemporalFieldLength    = 255
 )
-
-func (rr *ReportRun) BeforeCreate(context.Context) error {
-	if rr.Trigger == "" {
-		rr.Trigger = RunTriggerManual
-	}
-	if rr.Status == "" {
-		rr.Status = RunStatusQueued
-	}
-	if rr.QueuedAt == 0 {
-		rr.QueuedAt = rr.CreatedAt
-	}
-
-	return nil
-}

@@ -7,10 +7,8 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -37,35 +35,34 @@ func (s ReplyStatus) IsValid() bool {
 }
 
 type Reply struct {
-	bun.BaseModel `bun:"table:inbound_replies,alias:irpl" json:"-"`
-	keel.Table    `keel:"inbound_replies"`
+	keel.Table `keel:"inbound_replies"`
 
-	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:irpl_"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
-	MessageID         pulid.ID          `json:"messageId"         bun:"message_id,type:VARCHAR(100),notnull" keel:"message_id"`
-	MailboxID         pulid.ID          `json:"mailboxId"         bun:"mailbox_id,type:VARCHAR(100),notnull" keel:"mailbox_id"`
-	ThreadKey         string            `json:"threadKey"         bun:"thread_key,type:VARCHAR(500),notnull" keel:"thread_key"`
-	Status            ReplyStatus       `json:"status"            bun:"status,type:VARCHAR(20),notnull" keel:"status"`
-	FromAddress       string            `json:"fromAddress"       bun:"from_address,type:VARCHAR(255),notnull" keel:"from_address"`
-	ToAddress         string            `json:"toAddress"         bun:"to_address,type:VARCHAR(255),notnull" keel:"to_address"`
-	CcAddresses       []string          `json:"ccAddresses"       bun:"cc_addresses,type:JSONB,nullzero" keel:"cc_addresses,jsonb,nullzero"`
-	Subject           string            `json:"subject"           bun:"subject,type:VARCHAR(500),notnull" keel:"subject"`
-	Body              string            `json:"body"              bun:"body,type:TEXT,notnull" keel:"body"`
-	DraftedByNova     bool              `json:"draftedByNova"     bun:"drafted_by_nova,type:BOOLEAN,notnull,default:false" keel:"drafted_by_nova"`
-	TemplateID        pulid.ID          `json:"templateId"        bun:"template_id,type:VARCHAR(100),nullzero" keel:"template_id,nullzero"`
-	MessageKey        string            `json:"messageKey"        bun:"message_key,type:VARCHAR(500),nullzero" keel:"message_key,nullzero"`
-	ProviderMessageID string            `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(255),nullzero" keel:"provider_message_id,nullzero"`
-	FailureText       string            `json:"failureText"       bun:"failure_text,type:TEXT,nullzero" keel:"failure_text,nullzero"`
-	SuggestedAddress  string            `json:"suggestedAddress"  bun:"suggested_address,type:VARCHAR(255),nullzero" keel:"suggested_address,nullzero"`
-	Attachments       []ReplyAttachment `json:"attachments"       bun:"attachments,type:JSONB,nullzero" keel:"attachments,jsonb,nullzero"`
-	IdempotencyKey    string            `json:"-"                 bun:"idempotency_key,type:VARCHAR(255),nullzero" keel:"idempotency_key,nullzero"`
-	CreatedByID       pulid.ID          `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
-	SentByID          pulid.ID          `json:"sentById"          bun:"sent_by_id,type:VARCHAR(100),nullzero" keel:"sent_by_id,nullzero"`
-	SentAt            int64             `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero" keel:"sent_at,nullzero"`
-	Version           int64             `json:"version"           bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt         int64             `json:"createdAt"         bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                pulid.ID          `json:"id" keel:"id,pk,autoid:irpl_"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
+	MessageID         pulid.ID          `json:"messageId" keel:"message_id"`
+	MailboxID         pulid.ID          `json:"mailboxId" keel:"mailbox_id"`
+	ThreadKey         string            `json:"threadKey" keel:"thread_key"`
+	Status            ReplyStatus       `json:"status" keel:"status"`
+	FromAddress       string            `json:"fromAddress" keel:"from_address"`
+	ToAddress         string            `json:"toAddress" keel:"to_address"`
+	CcAddresses       []string          `json:"ccAddresses" keel:"cc_addresses,jsonb,nullzero"`
+	Subject           string            `json:"subject" keel:"subject"`
+	Body              string            `json:"body" keel:"body"`
+	DraftedByNova     bool              `json:"draftedByNova" keel:"drafted_by_nova"`
+	TemplateID        pulid.ID          `json:"templateId" keel:"template_id,nullzero"`
+	MessageKey        string            `json:"messageKey" keel:"message_key,nullzero"`
+	ProviderMessageID string            `json:"providerMessageId" keel:"provider_message_id,nullzero"`
+	FailureText       string            `json:"failureText" keel:"failure_text,nullzero"`
+	SuggestedAddress  string            `json:"suggestedAddress" keel:"suggested_address,nullzero"`
+	Attachments       []ReplyAttachment `json:"attachments" keel:"attachments,jsonb,nullzero"`
+	IdempotencyKey    string            `json:"-" keel:"idempotency_key,nullzero"`
+	CreatedByID       pulid.ID          `json:"createdById" keel:"created_by_id,nullzero"`
+	SentByID          pulid.ID          `json:"sentById" keel:"sent_by_id,nullzero"`
+	SentAt            int64             `json:"sentAt" keel:"sent_at,nullzero"`
+	Version           int64             `json:"version" keel:"version,version"`
+	CreatedAt         int64             `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt         int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (r *Reply) Validate(multiErr *errortypes.MultiError) {
@@ -134,35 +131,23 @@ func (r *Reply) Sent() bool {
 	return r.Status == ReplySent
 }
 
-func (r *Reply) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (r *Reply) BeforeCreate(ctx context.Context) error {
 	r.Subject = stringutils.StripNUL(r.Subject)
 	r.Body = stringutils.StripNUL(r.Body)
 	r.FailureText = stringutils.StripNUL(r.FailureText)
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("irpl_")
-		}
-		if r.Status == "" {
-			r.Status = ReplyDraft
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
+	if r.Status == "" {
+		r.Status = ReplyDraft
 	}
 
 	return nil
 }
 
-func (r *Reply) BeforeCreate(ctx context.Context) error {
-	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
-}
-
 func (r *Reply) BeforeUpdate(ctx context.Context) error {
-	return r.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
+	r.Subject = stringutils.StripNUL(r.Subject)
+	r.Body = stringutils.StripNUL(r.Body)
+	r.FailureText = stringutils.StripNUL(r.FailureText)
+
+	return nil
 }
 
 func (r *Reply) GetID() pulid.ID      { return r.ID }

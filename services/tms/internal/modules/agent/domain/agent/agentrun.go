@@ -11,65 +11,59 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*AgentRun)(nil)
 	_ validationframework.TenantedEntity = (*AgentRun)(nil)
 	_ pagination.CursorEntity            = (*AgentRun)(nil)
 	_ domaintypes.PostgresSearchable     = (*AgentRun)(nil)
 )
 
 type AgentRun struct {
-	bun.BaseModel `bun:"table:agent_runs,alias:ar" json:"-"`
-	keel.Table    `keel:"agent_runs"`
+	keel.Table `keel:"agent_runs"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ar_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ar_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
+	AgentDefinitionID pulid.ID     `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
+	Trigger           RunTrigger   `json:"trigger" keel:"trigger"`
+	Summary           string       `json:"summary" keel:"summary,nullzero"`
+	AgentType         Type         `json:"agentType" keel:"agent_type"`
+	SubjectType       SubjectType  `json:"subjectType" keel:"subject_type"`
+	SubjectID         pulid.ID     `json:"subjectId" keel:"subject_id"`
+	Status            RunStatus    `json:"status" keel:"status"`
+	WorkflowID        string       `json:"workflowId" keel:"workflow_id,nullzero"`
+	ModelIdentifier   string       `json:"modelIdentifier" keel:"model_identifier,nullzero"`
+	PromptVersion     string       `json:"promptVersion" keel:"prompt_version"`
+	InputContextHash  string       `json:"inputContextHash" keel:"input_context_hash"`
+	StartedAt         int64        `json:"startedAt" keel:"started_at,nullzero"`
+	CompletedAt       *int64       `json:"completedAt" keel:"completed_at"`
+	ErrorMessage      string       `json:"errorMessage" keel:"error_message,nullzero"`
+	Tainted           bool         `json:"tainted" keel:"tainted"`
+	Taint             *RunTaint    `json:"taint" keel:"taint,jsonb"`
+	TaintedAt         *int64       `json:"taintedAt" keel:"tainted_at"`
+	Fingerprint       *Fingerprint `json:"fingerprint" keel:"fingerprint,jsonb"`
 
-	AgentDefinitionID pulid.ID     `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero" keel:"agent_definition_id,nullzero"`
-	Trigger           RunTrigger   `json:"trigger"           bun:"trigger,type:VARCHAR(20),notnull,default:'Manual'" keel:"trigger"`
-	Summary           string       `json:"summary"           bun:"summary,type:TEXT,nullzero" keel:"summary,nullzero"`
-	AgentType         Type         `json:"agentType"         bun:"agent_type,type:agent_type_enum,notnull" keel:"agent_type"`
-	SubjectType       SubjectType  `json:"subjectType"       bun:"subject_type,type:agent_subject_type_enum,notnull" keel:"subject_type"`
-	SubjectID         pulid.ID     `json:"subjectId"         bun:"subject_id,type:VARCHAR(100),notnull" keel:"subject_id"`
-	Status            RunStatus    `json:"status"            bun:"status,type:agent_run_status_enum,notnull,default:'Pending'" keel:"status"`
-	WorkflowID        string       `json:"workflowId"        bun:"workflow_id,type:VARCHAR(255),nullzero" keel:"workflow_id,nullzero"`
-	ModelIdentifier   string       `json:"modelIdentifier"   bun:"model_identifier,type:VARCHAR(255),nullzero" keel:"model_identifier,nullzero"`
-	PromptVersion     string       `json:"promptVersion"     bun:"prompt_version,type:VARCHAR(100),notnull" keel:"prompt_version"`
-	InputContextHash  string       `json:"inputContextHash"  bun:"input_context_hash,type:VARCHAR(64),notnull" keel:"input_context_hash"`
-	StartedAt         int64        `json:"startedAt"         bun:"started_at,type:BIGINT,nullzero" keel:"started_at,nullzero"`
-	CompletedAt       *int64       `json:"completedAt"       bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
-	ErrorMessage      string       `json:"errorMessage"      bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
-	Tainted           bool         `json:"tainted"           bun:"tainted,type:BOOLEAN,notnull,default:false" keel:"tainted"`
-	Taint             *RunTaint    `json:"taint"             bun:"taint,type:JSONB,nullzero" keel:"taint,jsonb"`
-	TaintedAt         *int64       `json:"taintedAt"         bun:"tainted_at,type:BIGINT,nullzero" keel:"tainted_at"`
-	Fingerprint       *Fingerprint `json:"fingerprint"       bun:"fingerprint,type:JSONB,nullzero" keel:"fingerprint,jsonb"`
-
-	Transcript *RunTranscript `json:"-" bun:"transcript,type:JSONB,nullzero" keel:"transcript,jsonb"`
+	Transcript *RunTranscript `json:"-" keel:"transcript,jsonb"`
 
 	// TraceID is the run's trace. TurnID is the conversation turn a run was
 	// opened for. ParentOwnerKind, ParentOwnerID and DelegateCallID are set on
 	// a delegate's run: the run or turn that handed it the task, and the call
 	// that did.
-	TraceID         string       `json:"traceId"         bun:"trace_id,type:VARCHAR(32),nullzero" keel:"trace_id,nullzero"`
-	TurnID          pulid.ID     `json:"turnId"          bun:"turn_id,type:VARCHAR(100),nullzero" keel:"turn_id,nullzero"`
-	ParentOwnerKind RunOwnerKind `json:"parentOwnerKind" bun:"parent_owner_kind,type:VARCHAR(20),nullzero" keel:"parent_owner_kind,nullzero"`
-	ParentOwnerID   pulid.ID     `json:"parentOwnerId"   bun:"parent_owner_id,type:VARCHAR(100),nullzero" keel:"parent_owner_id,nullzero"`
-	DelegateCallID  string       `json:"delegateCallId"  bun:"delegate_call_id,type:VARCHAR(200),nullzero" keel:"delegate_call_id,nullzero"`
+	TraceID         string       `json:"traceId" keel:"trace_id,nullzero"`
+	TurnID          pulid.ID     `json:"turnId" keel:"turn_id,nullzero"`
+	ParentOwnerKind RunOwnerKind `json:"parentOwnerKind" keel:"parent_owner_kind,nullzero"`
+	ParentOwnerID   pulid.ID     `json:"parentOwnerId" keel:"parent_owner_id,nullzero"`
+	DelegateCallID  string       `json:"delegateCallId" keel:"delegate_call_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version   int64 `json:"version" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (r *AgentRun) Validate(multiErr *errortypes.MultiError) {
@@ -188,26 +182,13 @@ func (r *AgentRun) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	}
 }
 
-func (r *AgentRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("ar_")
-		}
-		if r.Trigger == "" {
-			r.Trigger = RunTriggerManual
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
+func (r *AgentRun) BeforeCreate(ctx context.Context) error {
+	if r.Trigger == "" {
+		r.Trigger = RunTriggerManual
+	}
+	if r.Status == "" {
+		r.Status = RunStatusPending
 	}
 
 	return nil
-}
-
-func (r *AgentRun) BeforeCreate(ctx context.Context) error {
-	return r.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }

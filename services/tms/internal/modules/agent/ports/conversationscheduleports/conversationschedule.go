@@ -48,9 +48,9 @@ type ListConversationSchedulesRequest struct {
 // conversation its answers post into, read in the same query, so a list
 // across conversations can say where each one goes.
 type ListedConversationSchedule struct {
-	conversationschedule.Schedule `bun:",extend"`
+	conversationschedule.Schedule
 
-	ThreadTitle string `json:"threadTitle" bun:"thread_title,scanonly"`
+	ThreadTitle string `json:"threadTitle"`
 }
 
 // CountConversationSchedulesRequest counts one person's schedules, in one

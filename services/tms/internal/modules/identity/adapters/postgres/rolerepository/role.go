@@ -662,12 +662,7 @@ func (r *repository) UpdateResourcePermission(
 			sets = append(sets, p.UpdatedAt.To(timeutils.NowUnix()))
 		}
 
-		rows, err := listquery.UpdateReturning(
-			ctx,
-			r.db.Keel(ctx),
-			p.Where(p.ID.Eq(rp.ID), p.RoleID.Eq(rp.RoleID)),
-			sets...,
-		)
+		rows, err := p.Where(p.ID.Eq(rp.ID), p.RoleID.Eq(rp.RoleID)).UpdateReturning(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			r.l.Error(
 				"failed to update resource permission",

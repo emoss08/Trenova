@@ -1,7 +1,6 @@
 package listquery
 
 import (
-	"reflect"
 
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -15,7 +14,7 @@ func Describe(
 		return nil
 	}
 
-	c := catalogOf(reflect.TypeOf(model), table, func() *domaintypes.PostgresSearchConfig {
+	c := catalogOf(table, func() *domaintypes.PostgresSearchConfig {
 		config := model.GetPostgresSearchConfig()
 		return &config
 	})
@@ -50,6 +49,7 @@ func describeColumn(
 	base bool,
 ) {
 	out.FilterableFields[name] = true
+	out.SortableFields[name] = true
 	if len(col.Enum) > 0 {
 		out.EnumMap[name] = true
 	}
@@ -57,7 +57,6 @@ func describeColumn(
 		return
 	}
 
-	out.SortableFields[name] = true
 	out.FieldMap[name] = col.Name
 	if !col.MayBeNull() {
 		out.NonNullableFields[name] = true

@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var _ domaintypes.PostgresSearchable = (*EDIConnection)(nil)
@@ -36,40 +35,47 @@ type ConnectionPartnerConfig struct {
 }
 
 type EDIConnection struct {
-	bun.BaseModel `json:"-" bun:"table:edi_connections,alias:ec"`
-	keel.Table    `keel:"edi_connections"`
+	keel.Table `keel:"edi_connections"`
 
-	ID                   pulid.ID                `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edic_"`
-	BusinessUnitID       pulid.ID                `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
-	SourceOrganizationID pulid.ID                `json:"sourceOrganizationId" bun:"source_organization_id,type:VARCHAR(100),notnull" keel:"source_organization_id"`
-	TargetOrganizationID pulid.ID                `json:"targetOrganizationId" bun:"target_organization_id,type:VARCHAR(100),notnull" keel:"target_organization_id"`
-	SourcePartnerID      pulid.ID                `json:"sourcePartnerId"      bun:"source_partner_id,type:VARCHAR(100),nullzero" keel:"source_partner_id,nullzero"`
-	TargetPartnerID      pulid.ID                `json:"targetPartnerId"      bun:"target_partner_id,type:VARCHAR(100),nullzero" keel:"target_partner_id,nullzero"`
-	Method               ConnectionMethod        `json:"method"               bun:"method,type:edi_connection_method_enum,notnull" keel:"method"`
-	Status               ConnectionStatus        `json:"status"               bun:"status,type:edi_connection_status_enum,notnull,default:'PendingAcceptance'" keel:"status"`
-	Capabilities         ConnectionCapabilities  `json:"capabilities"         bun:"capabilities,type:JSONB,notnull,default:'{}'" keel:"capabilities,jsonb"`
-	SourcePartnerConfig  ConnectionPartnerConfig `json:"sourcePartnerConfig"  bun:"source_partner_config,type:JSONB,notnull,default:'{}'" keel:"source_partner_config,jsonb"`
-	TargetPartnerConfig  ConnectionPartnerConfig `json:"targetPartnerConfig"  bun:"target_partner_config,type:JSONB,notnull,default:'{}'" keel:"target_partner_config,jsonb"`
-	RequestedByID        pulid.ID                `json:"requestedById"        bun:"requested_by_id,type:VARCHAR(100),nullzero" keel:"requested_by_id,nullzero"`
-	RequestedAt          int64                   `json:"requestedAt"          bun:"requested_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"requested_at"`
-	AcceptedByID         pulid.ID                `json:"acceptedById"         bun:"accepted_by_id,type:VARCHAR(100),nullzero" keel:"accepted_by_id,nullzero"`
-	AcceptedAt           *int64                  `json:"acceptedAt"           bun:"accepted_at,type:BIGINT,nullzero" keel:"accepted_at"`
-	RejectedByID         pulid.ID                `json:"rejectedById"         bun:"rejected_by_id,type:VARCHAR(100),nullzero" keel:"rejected_by_id,nullzero"`
-	RejectedAt           *int64                  `json:"rejectedAt"           bun:"rejected_at,type:BIGINT,nullzero" keel:"rejected_at"`
-	RejectionReason      string                  `json:"rejectionReason"      bun:"rejection_reason,type:TEXT,nullzero" keel:"rejection_reason,nullzero"`
-	SuspendedByID        pulid.ID                `json:"suspendedById"        bun:"suspended_by_id,type:VARCHAR(100),nullzero" keel:"suspended_by_id,nullzero"`
-	SuspendedAt          *int64                  `json:"suspendedAt"          bun:"suspended_at,type:BIGINT,nullzero" keel:"suspended_at"`
-	RevokedByID          pulid.ID                `json:"revokedById"          bun:"revoked_by_id,type:VARCHAR(100),nullzero" keel:"revoked_by_id,nullzero"`
-	RevokedAt            *int64                  `json:"revokedAt"            bun:"revoked_at,type:BIGINT,nullzero" keel:"revoked_at"`
-	Version              int64                   `json:"version"              bun:"version,type:BIGINT,notnull" keel:"version,version"`
-	CreatedAt            int64                   `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
-	UpdatedAt            int64                   `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	ID                   pulid.ID                `json:"id" keel:"id,pk,autoid:edic_"`
+	BusinessUnitID       pulid.ID                `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	SourceOrganizationID pulid.ID                `json:"sourceOrganizationId" keel:"source_organization_id"`
+	TargetOrganizationID pulid.ID                `json:"targetOrganizationId" keel:"target_organization_id"`
+	SourcePartnerID      pulid.ID                `json:"sourcePartnerId" keel:"source_partner_id,nullzero"`
+	TargetPartnerID      pulid.ID                `json:"targetPartnerId" keel:"target_partner_id,nullzero"`
+	Method               ConnectionMethod        `json:"method" keel:"method"`
+	Status               ConnectionStatus        `json:"status" keel:"status"`
+	Capabilities         ConnectionCapabilities  `json:"capabilities" keel:"capabilities,jsonb"`
+	SourcePartnerConfig  ConnectionPartnerConfig `json:"sourcePartnerConfig" keel:"source_partner_config,jsonb"`
+	TargetPartnerConfig  ConnectionPartnerConfig `json:"targetPartnerConfig" keel:"target_partner_config,jsonb"`
+	RequestedByID        pulid.ID                `json:"requestedById" keel:"requested_by_id,nullzero"`
+	RequestedAt          int64                   `json:"requestedAt" keel:"requested_at"`
+	AcceptedByID         pulid.ID                `json:"acceptedById" keel:"accepted_by_id,nullzero"`
+	AcceptedAt           *int64                  `json:"acceptedAt" keel:"accepted_at"`
+	RejectedByID         pulid.ID                `json:"rejectedById" keel:"rejected_by_id,nullzero"`
+	RejectedAt           *int64                  `json:"rejectedAt" keel:"rejected_at"`
+	RejectionReason      string                  `json:"rejectionReason" keel:"rejection_reason,nullzero"`
+	SuspendedByID        pulid.ID                `json:"suspendedById" keel:"suspended_by_id,nullzero"`
+	SuspendedAt          *int64                  `json:"suspendedAt" keel:"suspended_at"`
+	RevokedByID          pulid.ID                `json:"revokedById" keel:"revoked_by_id,nullzero"`
+	RevokedAt            *int64                  `json:"revokedAt" keel:"revoked_at"`
+	Version              int64                   `json:"version" keel:"version,version"`
+	CreatedAt            int64                   `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt            int64                   `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit       *tenant.BusinessUnit `json:"businessUnit,omitempty"       bun:"rel:belongs-to,join:business_unit_id=id"`
-	SourceOrganization *tenant.Organization `json:"sourceOrganization,omitempty" bun:"rel:belongs-to,join:source_organization_id=id" keel:"belongs:source_organization_id"`
-	TargetOrganization *tenant.Organization `json:"targetOrganization,omitempty" bun:"rel:belongs-to,join:target_organization_id=id" keel:"belongs:target_organization_id"`
-	SourcePartner      *EDIPartner          `json:"sourcePartner,omitempty"      bun:"rel:belongs-to,join:source_partner_id=id" keel:"belongs:source_partner_id"`
-	TargetPartner      *EDIPartner          `json:"targetPartner,omitempty"      bun:"rel:belongs-to,join:target_partner_id=id" keel:"belongs:target_partner_id"`
+	BusinessUnit       *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	SourceOrganization *tenant.Organization `json:"sourceOrganization,omitempty" keel:"belongs:source_organization_id"`
+	TargetOrganization *tenant.Organization `json:"targetOrganization,omitempty" keel:"belongs:target_organization_id"`
+	SourcePartner      *EDIPartner          `json:"sourcePartner,omitempty" keel:"belongs:source_partner_id"`
+	TargetPartner      *EDIPartner          `json:"targetPartner,omitempty" keel:"belongs:target_partner_id"`
+}
+
+func (c *EDIConnection) BeforeUpdate(ctx context.Context) error {
+	if err := c.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *EDIConnection) BeforeSave(_ context.Context) error {
@@ -89,29 +95,19 @@ func (c *EDIConnection) BeforeSave(_ context.Context) error {
 	return nil
 }
 
-func (c *EDIConnection) BeforeCreate(_ context.Context) error {
-	if c.RequestedAt == 0 {
-		c.RequestedAt = timeutils.NowUnix()
-	}
-	return nil
-}
-
-func (c *EDIConnection) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+func (c *EDIConnection) BeforeCreate(ctx context.Context) error {
 	now := timeutils.NowUnix()
 	if err := c.BeforeSave(ctx); err != nil {
 		return err
 	}
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("edic_")
-		}
-		c.CreatedAt = now
-		if c.RequestedAt == 0 {
-			c.RequestedAt = now
-		}
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
+	if c.RequestedAt == 0 {
+		c.RequestedAt = now
+	}
+	if c.Status == "" {
+		c.Status = ConnectionStatusPendingAcceptance
+	}
+	if c.RequestedAt == 0 {
+		c.RequestedAt = timeutils.NowUnix()
 	}
 
 	return nil
