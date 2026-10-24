@@ -52,8 +52,15 @@ func EntityCursorEdges[TNode pagination.CursorEntity, TEdge any](
 	cursorValues pagination.CursorValueProvider,
 	build func(TNode, string) TEdge,
 ) ([]TEdge, error) {
+	edgeCursors, _ := cursorValues.(pagination.EdgeCursorProvider)
 	edges := make([]TEdge, len(items))
 	for i, item := range items {
+		if edgeCursors != nil {
+			if cursor, ok := edgeCursors.EdgeCursorAt(i); ok {
+				edges[i] = build(item, cursor)
+				continue
+			}
+		}
 		cursor, err := EncodeConnectionCursor(item, sort, CursorValuesAt(cursorValues, i))
 		if err != nil {
 			return nil, err
