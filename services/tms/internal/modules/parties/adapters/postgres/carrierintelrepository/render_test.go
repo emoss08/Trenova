@@ -1,198 +1,117 @@
 package carrierintelrepository
 
 import (
-	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
+	"github.com/emoss08/keel"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-func renderDB() *bun.DB {
-	return bun.NewDB(nil, pgdialect.New())
-}
-
-func testTenant() pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-}
-
-func TestUpdateCarrierSummaryLeavesVersionAndUpdatedAtAlone(t *testing.T) {
+func TestCarrierSummaryUpdateOnlyTouchesChangedCarriers(t *testing.T) {
 	t.Parallel()
 
-	sql := buildCarrierSummaryUpdate(renderDB(), &carrierintelports.UpdateCarrierIntelSummaryRequest{
-		TenantInfo:     testTenant(),
+	q, sets := carrierSummaryUpdate(&carrierintelports.UpdateCarrierIntelSummaryRequest{
 		CarrierID:      pulid.MustNew("car_"),
 		RiskLevel:      string(carrierintel.RiskLevelHigh),
 		ReviewRequired: true,
 		BlockingCount:  2,
-	}).String()
+	})
+	sql, args := keeltest.Render(t, q)
 
-	assert.NotContains(t, sql, "version", sql)
-	assert.NotContains(t, sql, "updated_at", sql)
-	assert.Contains(t, sql, "intel_risk_level = 'High'", sql)
-	assert.Contains(t, sql, "IS DISTINCT FROM 'High'", sql)
-	assert.Contains(t, sql, "IS DISTINCT FROM TRUE", sql)
-	assert.Contains(t, sql, "IS DISTINCT FROM 2", sql)
-}
-
-func TestUpdateCarrierSummaryClearsAnEmptyRiskLevel(t *testing.T) {
-	t.Parallel()
-
-	sql := buildCarrierSummaryUpdate(renderDB(), &carrierintelports.UpdateCarrierIntelSummaryRequest{
-		TenantInfo: testTenant(),
-		CarrierID:  pulid.MustNew("car_"),
-	}).String()
-
-	assert.Contains(t, sql, "intel_risk_level = NULL", sql)
-	assert.Contains(t, sql, "IS DISTINCT FROM NULL", sql)
-}
-
-func TestInsertIgnoreDuplicateEventsTargetsTheFingerprintIndex(t *testing.T) {
-	t.Parallel()
-
-	tenantInfo := testTenant()
-	rows := []*carrierintel.CarrierIntelEvent{{
-		ID:             pulid.MustNew("cievt_"),
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		SubjectType:    carrierintel.SubjectTypeCarrier,
-		SubjectID:      "car_1",
-		DOTNumber:      "1234567",
-		Category:       carrierintel.Section("Authority"),
-		Severity:       carrierintel.SeverityHigh,
-		Summary:        "Authority revoked",
-		DetectedAt:     1,
-		Fingerprint:    "abc",
-		Status:         carrierintel.EventStatusOpen,
-	}}
-
-	sql := buildInsertIgnoreDuplicateEvents(renderDB(), &rows).String()
-
-	assert.Contains(
-		t,
-		sql,
-		"ON CONFLICT (organization_id, business_unit_id, provider, subject_type, subject_id, fingerprint) DO NOTHING",
-		sql,
-	)
-	assert.Contains(t, sql, "RETURNING *", sql)
-}
-
-func TestDefaultControlInsertWritesFalseBooleans(t *testing.T) {
-	t.Parallel()
-
-	cols := carrierintelcol.CarrierIntelControlColumns
-	falseColumns := []string{
-		cols.IncludeOpenTenders.Bare(),
-		cols.ExclusiveWatchlist.Bare(),
-		cols.PreTenderRefreshEnabled.Bare(),
-		cols.AutoDisqualifyOnBlock.Bare(),
-	}
-
-	full := buildDefaultControlInsert(renderDB(), testTenant()).String()
-	assert.Contains(t, full, "ON CONFLICT (organization_id, business_unit_id) DO NOTHING", full)
-
-	sql := buildDefaultControlInsert(renderDB(), testTenant()).Column(falseColumns...).String()
-	start := strings.LastIndex(sql, "VALUES (")
-	require.NotEqual(t, -1, start, sql)
-	end := strings.Index(sql[start:], ")")
-	require.NotEqual(t, -1, end, sql)
-
-	values := strings.Split(sql[start+len("VALUES ("):start+end], ", ")
-	require.Len(t, values, len(falseColumns), sql)
-	for i, value := range values {
-		assert.Equal(t, "FALSE", strings.ToUpper(value), "%s: %s", falseColumns[i], sql)
-	}
+	assert.Contains(t, sql, `"intel_risk_level" IS DISTINCT FROM`, sql)
+	assert.Contains(t, sql, `"intel_review_required" IS DISTINCT FROM`, sql)
+	assert.Contains(t, sql, `"intel_blocking_count" IS DISTINCT FROM`, sql)
+	assert.Contains(t, args, string(carrierintel.RiskLevelHigh))
+	assert.Contains(t, args, true)
+	assert.Len(t, sets, 5)
 }
 
 func TestPruneHistoryDeletesOnlyRankedNonCurrentSnapshots(t *testing.T) {
 	t.Parallel()
 
-	sql := buildPruneHistoryDelete(renderDB(), testTenant(), 12).String()
+	sql, args := keeltest.Render(t, pruneHistoryQuery(12))
 
+	assert.Contains(t, sql, `WITH "ranked"`, sql)
 	assert.Contains(
 		t,
 		sql,
-		"row_number() OVER (PARTITION BY cisnap.subject_type, cisnap.subject_id",
+		`row_number() OVER (PARTITION BY "history"."subject_type", "history"."subject_id"`,
 		sql,
 	)
-	assert.Contains(t, sql, "ranked.rn > 12", sql)
-	assert.Contains(t, sql, "cisnap.is_current = FALSE", sql)
-}
-
-func TestEnrollmentUpsertBumpsTheExistingRowVersion(t *testing.T) {
-	t.Parallel()
-
-	tenantInfo := testTenant()
-	rows := []*carrierintel.CarrierMonitoringEnrollment{{
-		ID:             pulid.MustNew("cienr_"),
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		SubjectType:    carrierintel.SubjectTypeCarrier,
-		SubjectID:      "car_1",
-		DOTNumber:      "1234567",
-		Mode:           carrierintel.EnrollmentModeNative,
-		DesiredState:   carrierintel.DesiredStateEnrolled,
-		VendorState:    carrierintel.VendorStateUnknown,
-	}}
-
-	sql := buildEnrollmentUpsert(renderDB(), &rows).String()
-
-	assert.Contains(
-		t,
-		sql,
-		"ON CONFLICT (organization_id, business_unit_id, provider, subject_type, subject_id) DO UPDATE",
-		sql,
-	)
-	assert.Contains(t, sql, "version = cienr.version + 1", sql)
-	assert.Contains(t, sql, "desired_state = EXCLUDED.desired_state", sql)
-}
-
-func TestRawPayloadInsertStoresAJSONDocumentNotAString(t *testing.T) {
-	t.Parallel()
-
-	tenantInfo := testTenant()
-	sql := renderDB().NewInsert().Model(&carrierintel.CarrierIntelRawPayload{
-		ID:             pulid.MustNew("ciraw_"),
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		Endpoint:       "profile",
-		DOTNumber:      "265752",
-		Payload:        jsonutils.RawJSON(`{"dot_number":"265752","dba_flag":true}`),
-	}).String()
-
-	assert.Contains(t, sql, `'{"dot_number":"265752","dba_flag":true}'`, sql)
-	assert.NotContains(t, sql, `\"dot_number\"`, sql)
+	assert.Contains(t, sql, `"is_current" IS FALSE`, sql)
+	assert.Contains(t, args, 12)
 }
 
 func TestEventFiltersBoundTheDetectedWindowOnlyWhenAsked(t *testing.T) {
 	t.Parallel()
 
-	repo := &eventRepository{}
-	bounded := repo.applyEventFilters(
-		renderDB().NewSelect().Model((*carrierintel.CarrierIntelEvent)(nil)),
-		&carrierintelports.ListCarrierIntelEventsRequest{
+	e := carrierinteldb.CarrierIntelEvents
+	bounded, args := keeltest.Render(
+		t,
+		e.Where(eventFilters(&carrierintelports.ListCarrierIntelEventsRequest{
 			DetectedFrom: 1_790_000_000,
 			DetectedTo:   1_790_604_799,
-		},
-	).String()
+		})...),
+	)
 
-	assert.Contains(t, bounded, "cievt.detected_at >= 1790000000", bounded)
-	assert.Contains(t, bounded, "cievt.detected_at <= 1790604799", bounded)
+	assert.Contains(t, bounded, `"detected_at" >=`, bounded)
+	assert.Contains(t, bounded, `"detected_at" <=`, bounded)
+	assert.Contains(t, args, int64(1_790_000_000))
+	assert.Contains(t, args, int64(1_790_604_799))
 
-	open := repo.applyEventFilters(
-		renderDB().NewSelect().Model((*carrierintel.CarrierIntelEvent)(nil)),
-		&carrierintelports.ListCarrierIntelEventsRequest{},
-	).String()
+	open, _ := keeltest.Render(
+		t,
+		e.Where(eventFilters(&carrierintelports.ListCarrierIntelEventsRequest{})...),
+	)
 
-	assert.NotContains(t, open, "detected_at >=", open)
-	assert.NotContains(t, open, "detected_at <=", open)
+	assert.NotContains(t, open, `"detected_at" >=`, open)
+	assert.NotContains(t, open, `"detected_at" <=`, open)
+}
+
+func TestEventFiltersCombineStatusesAndSubject(t *testing.T) {
+	t.Parallel()
+
+	e := carrierinteldb.CarrierIntelEvents
+	sql, args := keeltest.Render(
+		t,
+		e.Where(eventFilters(&carrierintelports.ListCarrierIntelEventsRequest{
+			OpenOnly:    true,
+			SubjectType: carrierintel.SubjectTypeCarrier,
+			SubjectID:   "car_1",
+		})...),
+	)
+
+	assert.Contains(t, sql, `"status" = ANY(`, sql)
+	assert.Contains(t, sql, `"subject_type" =`, sql)
+	assert.Contains(t, sql, `"subject_id" =`, sql)
+	assert.Contains(t, args, "car_1")
+}
+
+func TestDigestOrdersBySeverityRank(t *testing.T) {
+	t.Parallel()
+
+	e := carrierinteldb.CarrierIntelEvents
+	sql, args := keeltest.Render(t, e.Query().Order(keel.Asc(eventSeverityRank())).Limit(1))
+
+	assert.Contains(t, sql, "CASE", sql)
+	for _, severity := range eventSeverityOrder {
+		assert.Contains(t, args, string(severity))
+	}
+}
+
+func TestPendingSyncCoversEnrolAndUnenrol(t *testing.T) {
+	t.Parallel()
+
+	en := carrierinteldb.CarrierMonitoringEnrollments
+	sql, args := keeltest.Render(t, en.Where(pendingSyncPredicate()))
+
+	assert.Contains(t, sql, " OR ", sql)
+	assert.Contains(t, args, carrierintel.DesiredStateEnrolled)
+	assert.Contains(t, args, carrierintel.DesiredStateNotEnrolled)
 }

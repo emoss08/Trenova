@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,12 +27,13 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	checker := validationframework.NewKeelChecker(p.DB, customerdb.CustomersSchema())
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*customer.Customer]().
 			WithModelName("Customer").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
+			WithUniquenessChecker(checker).
+			WithReferenceChecker(checker).
 			WithUniqueField(
 				"code",
 				"code",
@@ -41,7 +44,7 @@ func NewValidator(p ValidatorParams) *Validator {
 				"stateId",
 				"State does not exist",
 				func(c *customer.Customer) pulid.ID { return c.StateID },
-				validationframework.NewUSStateReferenceCheck(p.DB),
+				validationframework.KeelReferenceCheck(p.DB, usstatedb.UsStatesSchema()),
 			).
 			WithCustomRule(
 				validationframework.

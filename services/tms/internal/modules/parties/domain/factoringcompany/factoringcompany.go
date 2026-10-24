@@ -37,9 +37,8 @@ var (
 
 // Factors that buy customer invoices and the remittance details invoices carry to them
 type FactoringCompany struct {
-	bun.BaseModel             `bun:"table:factoring_companies,alias:fac" json:"-"`
-	keel.Table                `                                                   keel:"factoring_companies,report=Parties"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	bun.BaseModel `bun:"table:factoring_companies,alias:fac" json:"-"`
+	keel.Table    `                                                   keel:"factoring_companies,report=Parties"`
 
 	ID                     pulid.ID           `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:fac_"`
 	BusinessUnitID         pulid.ID           `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
@@ -241,6 +240,17 @@ func (f *FactoringCompany) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
-func (f *FactoringCompany) BeforeCreate(ctx context.Context) error {
-	return f.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (f *FactoringCompany) BeforeCreate(context.Context) error {
+	if f.Status == "" {
+		f.Status = domaintypes.StatusActive
+	}
+
+	return nil
+}
+
+func (f *FactoringCompany) BeforeSave(context.Context) error {
+	f.Code = strings.ToUpper(strings.TrimSpace(f.Code))
+	f.Email = strings.TrimSpace(f.Email)
+
+	return nil
 }

@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -34,7 +33,7 @@ type Params struct {
 	AuditService auditports.AuditService
 	Realtime     agentports.RealtimeService
 	Transformer  accessorialchargeports.DataTransformer
-	DB           kernelports.DBConnection                   `optional:"true"`
+	DB           kernelports.Transactor                     `optional:"true"`
 	Sync         accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 	Credit       customerports.CreditReviewer               `optional:"true"`
 }
@@ -47,7 +46,7 @@ type Service struct {
 	auditService auditports.AuditService
 	realtime     agentports.RealtimeService
 	transformer  accessorialchargeports.DataTransformer
-	db           kernelports.DBConnection
+	db           kernelports.Transactor
 	sync         accountingsyncports.AccountingSyncEnqueuer
 	credit       customerports.CreditReviewer
 }
@@ -77,7 +76,7 @@ func (s *Service) updateAndQueueSync(
 	}
 
 	var updated *customer.Customer
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		if updated, txErr = s.repo.Update(txCtx, entity); txErr != nil {
 			return txErr

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -34,8 +33,6 @@ var (
 type Carrier struct {
 	bun.BaseModel `bun:"table:carriers,alias:carr" json:"-"`
 	keel.Table    `                                         keel:"carriers,report=Parties"`
-
-	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID  `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"               keel:"id,pk,autoid:car_"`
 	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
@@ -295,8 +292,27 @@ func (c *Carrier) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
-func (c *Carrier) BeforeCreate(ctx context.Context) error {
-	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (c *Carrier) BeforeCreate(context.Context) error {
+	if c.Status == "" {
+		c.Status = StatusActive
+	}
+	if c.CarrierType == "" {
+		c.CarrierType = TypeCommon
+	}
+	if c.ComplianceStatus == "" {
+		c.ComplianceStatus = ComplianceStatusPending
+	}
+	if c.SafetyRating == "" {
+		c.SafetyRating = SafetyRatingNotRated
+	}
+	if c.PaymentMethod == "" {
+		c.PaymentMethod = PaymentMethodCheck
+	}
+	if c.PaymentTermDays == 0 {
+		c.PaymentTermDays = 30
+	}
+
+	return nil
 }
 
 func (c *Carrier) SamePartyDetails(other *Carrier) bool {

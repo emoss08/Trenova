@@ -92,6 +92,7 @@ var customersTable = schema.Table{
 	Value:        valueCustomer,
 	Attach:       attachCustomer,
 	BeforeCreate: beforeCreateCustomer,
+	BeforeSave:   beforeSaveCustomer,
 }
 
 var customersRef = keel.Ref{Table: &customersTable}
@@ -443,6 +444,10 @@ func beforeCreateCustomer(ctx context.Context, p unsafe.Pointer) error {
 	return (*customer.Customer)(p).BeforeCreate(ctx)
 }
 
+func beforeSaveCustomer(ctx context.Context, p unsafe.Pointer) error {
+	return (*customer.Customer)(p).BeforeSave(ctx)
+}
+
 // customerBillingProfilesTable is the schema of customer.CustomerBillingProfile.
 var customerBillingProfilesTable = schema.Table{
 	Name:   "customer_billing_profiles",
@@ -521,23 +526,25 @@ var customerBillingProfilesTable = schema.Table{
 		{Name: "FuelSurchargeProgram", Alias: "fsp", Kind: schema.BelongsTo, Local: []int32{55}, Remote: []int32{0}, Label: `Fuel Surcharge Program`, JSON: `fuelSurchargeProgram`},
 		{Name: "FactoringCompany", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{56}, Remote: []int32{0}, Label: `Factoring Company`, JSON: `factoringCompany`},
 	},
-	PK:         []int32{0, 1, 2, 3},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59},
-	Update:     []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 59},
-	Returning:  nil,
-	Version:    57,
-	AutoID:     0,
-	AutoCreate: 58,
-	AutoUpdate: 59,
-	IDPrefix:   "cbp_",
-	New:        newCustomerBillingProfile,
-	NewN:       newNCustomerBillingProfile,
-	Size:       unsafe.Sizeof(customer.CustomerBillingProfile{}),
-	Ptr:        ptrCustomerBillingProfile,
-	Value:      valueCustomerBillingProfile,
-	Attach:     attachCustomerBillingProfile,
+	PK:           []int32{0, 1, 2, 3},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59},
+	Update:       []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 59},
+	Returning:    nil,
+	Version:      57,
+	AutoID:       0,
+	AutoCreate:   58,
+	AutoUpdate:   59,
+	IDPrefix:     "cbp_",
+	New:          newCustomerBillingProfile,
+	NewN:         newNCustomerBillingProfile,
+	Size:         unsafe.Sizeof(customer.CustomerBillingProfile{}),
+	Ptr:          ptrCustomerBillingProfile,
+	Value:        valueCustomerBillingProfile,
+	Attach:       attachCustomerBillingProfile,
+	BeforeCreate: beforeCreateCustomerBillingProfile,
+	BeforeSave:   beforeSaveCustomerBillingProfile,
 }
 
 var customerBillingProfilesRef = keel.Ref{Table: &customerBillingProfilesTable}
@@ -1101,6 +1108,14 @@ func attachCustomerBillingProfile(p unsafe.Pointer, rel int32, child unsafe.Poin
 	}
 }
 
+func beforeCreateCustomerBillingProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*customer.CustomerBillingProfile)(p).BeforeCreate(ctx)
+}
+
+func beforeSaveCustomerBillingProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*customer.CustomerBillingProfile)(p).BeforeSave(ctx)
+}
+
 // customerBillingProfileDocumentTypesTable is the schema of customer.CustomerBillingProfileDocumentType.
 var customerBillingProfileDocumentTypesTable = schema.Table{
 	Name:   "customer_billing_profile_document_types",
@@ -1262,23 +1277,22 @@ var customerEmailProfilesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:           []int32{0, 1, 2, 3},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:       []int32{4, 5, 6, 7, 8, 9, 10, 11, 14},
-	Returning:    nil,
-	Version:      12,
-	AutoID:       0,
-	AutoCreate:   13,
-	AutoUpdate:   14,
-	IDPrefix:     "cem_",
-	New:          newCustomerEmailProfile,
-	NewN:         newNCustomerEmailProfile,
-	Size:         unsafe.Sizeof(customer.CustomerEmailProfile{}),
-	Ptr:          ptrCustomerEmailProfile,
-	Value:        valueCustomerEmailProfile,
-	BeforeCreate: beforeCreateCustomerEmailProfile,
+	PK:         []int32{0, 1, 2, 3},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:     []int32{4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:  nil,
+	Version:    12,
+	AutoID:     0,
+	AutoCreate: 13,
+	AutoUpdate: 14,
+	IDPrefix:   "cem_",
+	New:        newCustomerEmailProfile,
+	NewN:       newNCustomerEmailProfile,
+	Size:       unsafe.Sizeof(customer.CustomerEmailProfile{}),
+	Ptr:        ptrCustomerEmailProfile,
+	Value:      valueCustomerEmailProfile,
 }
 
 var customerEmailProfilesRef = keel.Ref{Table: &customerEmailProfilesTable}
@@ -1456,10 +1470,6 @@ func valueCustomerEmailProfile(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
-}
-
-func beforeCreateCustomerEmailProfile(ctx context.Context, p unsafe.Pointer) error {
-	return (*customer.CustomerEmailProfile)(p).BeforeCreate(ctx)
 }
 
 func init() {

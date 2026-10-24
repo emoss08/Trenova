@@ -25,31 +25,31 @@ var _ bun.BeforeAppendModelHook = (*CarrierEquipmentVerification)(nil)
 
 type CarrierEquipmentVerification struct {
 	bun.BaseModel `bun:"table:carrier_equipment_verifications,alias:ceqv" json:"-"`
-	keel.Table    `keel:"carrier_equipment_verifications"`
+	keel.Table    `                                                                keel:"carrier_equipment_verifications"`
 
-	ID                  pulid.ID           `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:ceqv_"`
-	BusinessUnitID      pulid.ID           `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID           `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	CarrierAssignmentID pulid.ID           `json:"carrierAssignmentId" bun:"carrier_assignment_id,type:VARCHAR(100),notnull" keel:"carrier_assignment_id"`
-	ShipmentMoveID      pulid.ID           `json:"shipmentMoveId"      bun:"shipment_move_id,type:VARCHAR(100),nullzero" keel:"shipment_move_id,nullzero"`
-	CarrierID           pulid.ID           `json:"carrierId"           bun:"carrier_id,type:VARCHAR(100),notnull" keel:"carrier_id"`
-	ExpectedDOTNumber   string             `json:"expectedDotNumber"   bun:"expected_dot_number,type:VARCHAR(12),nullzero" keel:"expected_dot_number,nullzero"`
-	UnitType            UnitType           `json:"unitType"            bun:"unit_type,type:VARCHAR(20),notnull" keel:"unit_type"`
-	VIN                 string             `json:"vin"                 bun:"vin,type:VARCHAR(17),nullzero" keel:"vin,nullzero"`
-	PlateNumber         string             `json:"plateNumber"         bun:"plate_number,type:VARCHAR(15),nullzero" keel:"plate_number,nullzero"`
-	PlateState          string             `json:"plateState"          bun:"plate_state,type:VARCHAR(2),nullzero" keel:"plate_state,nullzero"`
-	UnitNumber          string             `json:"unitNumber"          bun:"unit_number,type:VARCHAR(50),nullzero" keel:"unit_number,nullzero"`
-	Result              VerificationResult `json:"result"              bun:"result,type:VARCHAR(20),notnull" keel:"result"`
-	MatchedDOTNumbers   []string           `json:"matchedDotNumbers"   bun:"matched_dot_numbers,type:TEXT[],array" keel:"matched_dot_numbers"`
-	MatchedLegalName    string             `json:"matchedLegalName"    bun:"matched_legal_name,type:VARCHAR(255),nullzero" keel:"matched_legal_name,nullzero"`
-	Detail              *Equipment         `json:"detail"              bun:"detail,type:JSONB,nullzero" keel:"detail,jsonb"`
-	MismatchReason      string             `json:"mismatchReason"      bun:"mismatch_reason,type:TEXT,nullzero" keel:"mismatch_reason,nullzero"`
-	Provider            integration.Type   `json:"provider"            bun:"provider,type:integration_type,nullzero" keel:"provider,nullzero"`
-	VerifiedByID        pulid.ID           `json:"verifiedById"        bun:"verified_by_id,type:VARCHAR(100),notnull" keel:"verified_by_id"`
-	VerifiedAt          int64              `json:"verifiedAt"          bun:"verified_at,type:BIGINT,notnull" keel:"verified_at"`
-	OverrideByID        pulid.ID           `json:"overrideById"        bun:"override_by_id,type:VARCHAR(100),nullzero" keel:"override_by_id,nullzero"`
-	OverrideReason      string             `json:"overrideReason"      bun:"override_reason,type:TEXT,nullzero" keel:"override_reason,nullzero"`
-	OverriddenAt        *int64             `json:"overriddenAt"        bun:"overridden_at,type:BIGINT,nullzero" keel:"overridden_at"`
+	ID                  pulid.ID           `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"                                                      keel:"id,pk,autoid:ceqv_"`
+	BusinessUnitID      pulid.ID           `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID           `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         keel:"organization_id,pk,tenant"`
+	CarrierAssignmentID pulid.ID           `json:"carrierAssignmentId" bun:"carrier_assignment_id,type:VARCHAR(100),notnull"                                      keel:"carrier_assignment_id"`
+	ShipmentMoveID      pulid.ID           `json:"shipmentMoveId"      bun:"shipment_move_id,type:VARCHAR(100),nullzero"                                          keel:"shipment_move_id,nullzero"`
+	CarrierID           pulid.ID           `json:"carrierId"           bun:"carrier_id,type:VARCHAR(100),notnull"                                                 keel:"carrier_id"`
+	ExpectedDOTNumber   string             `json:"expectedDotNumber"   bun:"expected_dot_number,type:VARCHAR(12),nullzero"                                        keel:"expected_dot_number,nullzero"`
+	UnitType            UnitType           `json:"unitType"            bun:"unit_type,type:VARCHAR(20),notnull"                                                   keel:"unit_type"`
+	VIN                 string             `json:"vin"                 bun:"vin,type:VARCHAR(17),nullzero"                                                        keel:"vin,nullzero"`
+	PlateNumber         string             `json:"plateNumber"         bun:"plate_number,type:VARCHAR(15),nullzero"                                               keel:"plate_number,nullzero"`
+	PlateState          string             `json:"plateState"          bun:"plate_state,type:VARCHAR(2),nullzero"                                                 keel:"plate_state,nullzero"`
+	UnitNumber          string             `json:"unitNumber"          bun:"unit_number,type:VARCHAR(50),nullzero"                                                keel:"unit_number,nullzero"`
+	Result              VerificationResult `json:"result"              bun:"result,type:VARCHAR(20),notnull"                                                      keel:"result"`
+	MatchedDOTNumbers   []string           `json:"matchedDotNumbers"   bun:"matched_dot_numbers,type:TEXT[],array"                                                keel:"matched_dot_numbers"`
+	MatchedLegalName    string             `json:"matchedLegalName"    bun:"matched_legal_name,type:VARCHAR(255),nullzero"                                        keel:"matched_legal_name,nullzero"`
+	Detail              *Equipment         `json:"detail"              bun:"detail,type:JSONB,nullzero"                                                           keel:"detail,jsonb"`
+	MismatchReason      string             `json:"mismatchReason"      bun:"mismatch_reason,type:TEXT,nullzero"                                                   keel:"mismatch_reason,nullzero"`
+	Provider            integration.Type   `json:"provider"            bun:"provider,type:integration_type,nullzero"                                              keel:"provider,nullzero"`
+	VerifiedByID        pulid.ID           `json:"verifiedById"        bun:"verified_by_id,type:VARCHAR(100),notnull"                                             keel:"verified_by_id"`
+	VerifiedAt          int64              `json:"verifiedAt"          bun:"verified_at,type:BIGINT,notnull"                                                      keel:"verified_at"`
+	OverrideByID        pulid.ID           `json:"overrideById"        bun:"override_by_id,type:VARCHAR(100),nullzero"                                            keel:"override_by_id,nullzero"`
+	OverrideReason      string             `json:"overrideReason"      bun:"override_reason,type:TEXT,nullzero"                                                   keel:"override_reason,nullzero"`
+	OverriddenAt        *int64             `json:"overriddenAt"        bun:"overridden_at,type:BIGINT,nullzero"                                                   keel:"overridden_at"`
 	CreatedAt           int64              `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt           int64              `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
@@ -160,6 +160,14 @@ func (v *CarrierEquipmentVerification) BeforeAppendModel(_ context.Context, quer
 		v.UpdatedAt = now
 	case *bun.UpdateQuery:
 		v.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (v *CarrierEquipmentVerification) BeforeCreate(context.Context) error {
+	if v.VerifiedAt == 0 {
+		v.VerifiedAt = v.CreatedAt
 	}
 
 	return nil

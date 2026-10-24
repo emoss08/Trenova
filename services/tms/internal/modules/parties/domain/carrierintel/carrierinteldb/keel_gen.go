@@ -49,22 +49,23 @@ var carrierEquipmentVerificationsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "ceqv_",
-	New:        newCarrierEquipmentVerification,
-	NewN:       newNCarrierEquipmentVerification,
-	Size:       unsafe.Sizeof(carrierintel.CarrierEquipmentVerification{}),
-	Ptr:        ptrCarrierEquipmentVerification,
-	Value:      valueCarrierEquipmentVerification,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "ceqv_",
+	New:          newCarrierEquipmentVerification,
+	NewN:         newNCarrierEquipmentVerification,
+	Size:         unsafe.Sizeof(carrierintel.CarrierEquipmentVerification{}),
+	Ptr:          ptrCarrierEquipmentVerification,
+	Value:        valueCarrierEquipmentVerification,
+	BeforeCreate: beforeCreateCarrierEquipmentVerification,
 }
 
 var carrierEquipmentVerificationsRef = keel.Ref{Table: &carrierEquipmentVerificationsTable}
@@ -338,6 +339,10 @@ func valueCarrierEquipmentVerification(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCarrierEquipmentVerification(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrierintel.CarrierEquipmentVerification)(p).BeforeCreate(ctx)
+}
+
 // carrierIntelControlsTable is the schema of carrierintel.CarrierIntelControl.
 var carrierIntelControlsTable = schema.Table{
 	Name:   "carrier_intel_controls",
@@ -381,22 +386,23 @@ var carrierIntelControlsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32},
-	Returning:  nil,
-	Version:    30,
-	AutoID:     0,
-	AutoCreate: 31,
-	AutoUpdate: 32,
-	IDPrefix:   "cictl_",
-	New:        newCarrierIntelControl,
-	NewN:       newNCarrierIntelControl,
-	Size:       unsafe.Sizeof(carrierintel.CarrierIntelControl{}),
-	Ptr:        ptrCarrierIntelControl,
-	Value:      valueCarrierIntelControl,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32},
+	Returning:    nil,
+	Version:      30,
+	AutoID:       0,
+	AutoCreate:   31,
+	AutoUpdate:   32,
+	IDPrefix:     "cictl_",
+	New:          newCarrierIntelControl,
+	NewN:         newNCarrierIntelControl,
+	Size:         unsafe.Sizeof(carrierintel.CarrierIntelControl{}),
+	Ptr:          ptrCarrierIntelControl,
+	Value:        valueCarrierIntelControl,
+	BeforeCreate: beforeCreateCarrierIntelControl,
 }
 
 var carrierIntelControlsRef = keel.Ref{Table: &carrierIntelControlsTable}
@@ -702,6 +708,10 @@ func valueCarrierIntelControl(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCarrierIntelControl(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrierintel.CarrierIntelControl)(p).BeforeCreate(ctx)
+}
+
 // carrierIntelEventsTable is the schema of carrierintel.CarrierIntelEvent.
 var carrierIntelEventsTable = schema.Table{
 	Name:   "carrier_intel_events",
@@ -745,22 +755,23 @@ var carrierIntelEventsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32},
-	Returning:  nil,
-	Version:    30,
-	AutoID:     0,
-	AutoCreate: 31,
-	AutoUpdate: 32,
-	IDPrefix:   "cievt_",
-	New:        newCarrierIntelEvent,
-	NewN:       newNCarrierIntelEvent,
-	Size:       unsafe.Sizeof(carrierintel.CarrierIntelEvent{}),
-	Ptr:        ptrCarrierIntelEvent,
-	Value:      valueCarrierIntelEvent,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32},
+	Returning:    nil,
+	Version:      30,
+	AutoID:       0,
+	AutoCreate:   31,
+	AutoUpdate:   32,
+	IDPrefix:     "cievt_",
+	New:          newCarrierIntelEvent,
+	NewN:         newNCarrierIntelEvent,
+	Size:         unsafe.Sizeof(carrierintel.CarrierIntelEvent{}),
+	Ptr:          ptrCarrierIntelEvent,
+	Value:        valueCarrierIntelEvent,
+	BeforeCreate: beforeCreateCarrierIntelEvent,
 }
 
 var carrierIntelEventsRef = keel.Ref{Table: &carrierIntelEventsTable}
@@ -1094,6 +1105,10 @@ func valueCarrierIntelEvent(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateCarrierIntelEvent(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrierintel.CarrierIntelEvent)(p).BeforeCreate(ctx)
 }
 
 // carrierIntelFeedStatesTable is the schema of carrierintel.CarrierIntelFeedState.
@@ -1519,22 +1534,23 @@ var carrierIntelRawPayloadsTable = schema.Table{
 		{Name: "expires_at", Quoted: `"expires_at"`, Field: "ExpiresAt", Kind: schema.KindInt64, Flags: 0, Label: `Expires At`, JSON: `expiresAt`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: -1,
-	IDPrefix:   "ciraw_",
-	New:        newCarrierIntelRawPayload,
-	NewN:       newNCarrierIntelRawPayload,
-	Size:       unsafe.Sizeof(carrierintel.CarrierIntelRawPayload{}),
-	Ptr:        ptrCarrierIntelRawPayload,
-	Value:      valueCarrierIntelRawPayload,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   10,
+	AutoUpdate:   -1,
+	IDPrefix:     "ciraw_",
+	New:          newCarrierIntelRawPayload,
+	NewN:         newNCarrierIntelRawPayload,
+	Size:         unsafe.Sizeof(carrierintel.CarrierIntelRawPayload{}),
+	Ptr:          ptrCarrierIntelRawPayload,
+	Value:        valueCarrierIntelRawPayload,
+	BeforeCreate: beforeCreateCarrierIntelRawPayload,
 }
 
 var carrierIntelRawPayloadsRef = keel.Ref{Table: &carrierIntelRawPayloadsTable}
@@ -1674,6 +1690,10 @@ func valueCarrierIntelRawPayload(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCarrierIntelRawPayload(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrierintel.CarrierIntelRawPayload)(p).BeforeCreate(ctx)
+}
+
 // carrierIntelSnapshotsTable is the schema of carrierintel.CarrierIntelSnapshot.
 var carrierIntelSnapshotsTable = schema.Table{
 	Name:   "carrier_intel_snapshots",
@@ -1717,22 +1737,23 @@ var carrierIntelSnapshotsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 31,
-	AutoUpdate: 32,
-	IDPrefix:   "cisnap_",
-	New:        newCarrierIntelSnapshot,
-	NewN:       newNCarrierIntelSnapshot,
-	Size:       unsafe.Sizeof(carrierintel.CarrierIntelSnapshot{}),
-	Ptr:        ptrCarrierIntelSnapshot,
-	Value:      valueCarrierIntelSnapshot,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   31,
+	AutoUpdate:   32,
+	IDPrefix:     "cisnap_",
+	New:          newCarrierIntelSnapshot,
+	NewN:         newNCarrierIntelSnapshot,
+	Size:         unsafe.Sizeof(carrierintel.CarrierIntelSnapshot{}),
+	Ptr:          ptrCarrierIntelSnapshot,
+	Value:        valueCarrierIntelSnapshot,
+	BeforeCreate: beforeCreateCarrierIntelSnapshot,
 }
 
 var carrierIntelSnapshotsRef = keel.Ref{Table: &carrierIntelSnapshotsTable}
@@ -2059,6 +2080,10 @@ func valueCarrierIntelSnapshot(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCarrierIntelSnapshot(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrierintel.CarrierIntelSnapshot)(p).BeforeCreate(ctx)
+}
+
 // carrierIntelUsageDailiesTable is the schema of carrierintel.CarrierIntelUsageDaily.
 var carrierIntelUsageDailiesTable = schema.Table{
 	Name:   "carrier_intel_usage_daily",
@@ -2228,24 +2253,25 @@ var carrierIntelUsageRecordsTable = schema.Table{
 		{Name: "initiated_by_type", Quoted: `"initiated_by_type"`, Field: "InitiatedByType", Kind: schema.KindString, Flags: 0, Label: `Initiated By Type`, JSON: `initiatedByType`},
 		{Name: "initiated_by_id", Quoted: `"initiated_by_id"`, Field: "InitiatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Initiated By ID`, JSON: `initiatedById`},
 		{Name: "workflow_id", Quoted: `"workflow_id"`, Field: "WorkflowID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Workflow ID`, JSON: `workflowId`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: -1,
-	IDPrefix:   "ciuse_",
-	New:        newCarrierIntelUsageRecord,
-	NewN:       newNCarrierIntelUsageRecord,
-	Size:       unsafe.Sizeof(carrierintel.CarrierIntelUsageRecord{}),
-	Ptr:        ptrCarrierIntelUsageRecord,
-	Value:      valueCarrierIntelUsageRecord,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "ciuse_",
+	New:          newCarrierIntelUsageRecord,
+	NewN:         newNCarrierIntelUsageRecord,
+	Size:         unsafe.Sizeof(carrierintel.CarrierIntelUsageRecord{}),
+	Ptr:          ptrCarrierIntelUsageRecord,
+	Value:        valueCarrierIntelUsageRecord,
+	BeforeCreate: beforeCreateCarrierIntelUsageRecord,
 }
 
 var carrierIntelUsageRecordsRef = keel.Ref{Table: &carrierIntelUsageRecordsTable}
@@ -2457,6 +2483,10 @@ func valueCarrierIntelUsageRecord(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateCarrierIntelUsageRecord(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrierintel.CarrierIntelUsageRecord)(p).BeforeCreate(ctx)
+}
+
 // carrierMonitoringEnrollmentsTable is the schema of carrierintel.CarrierMonitoringEnrollment.
 var carrierMonitoringEnrollmentsTable = schema.Table{
 	Name:   "carrier_monitoring_enrollments",
@@ -2493,22 +2523,23 @@ var carrierMonitoringEnrollmentsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
-	Returning:  nil,
-	Version:    23,
-	AutoID:     0,
-	AutoCreate: 24,
-	AutoUpdate: 25,
-	IDPrefix:   "cienr_",
-	New:        newCarrierMonitoringEnrollment,
-	NewN:       newNCarrierMonitoringEnrollment,
-	Size:       unsafe.Sizeof(carrierintel.CarrierMonitoringEnrollment{}),
-	Ptr:        ptrCarrierMonitoringEnrollment,
-	Value:      valueCarrierMonitoringEnrollment,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
+	Returning:    nil,
+	Version:      23,
+	AutoID:       0,
+	AutoCreate:   24,
+	AutoUpdate:   25,
+	IDPrefix:     "cienr_",
+	New:          newCarrierMonitoringEnrollment,
+	NewN:         newNCarrierMonitoringEnrollment,
+	Size:         unsafe.Sizeof(carrierintel.CarrierMonitoringEnrollment{}),
+	Ptr:          ptrCarrierMonitoringEnrollment,
+	Value:        valueCarrierMonitoringEnrollment,
+	BeforeCreate: beforeCreateCarrierMonitoringEnrollment,
 }
 
 var carrierMonitoringEnrollmentsRef = keel.Ref{Table: &carrierMonitoringEnrollmentsTable}
@@ -2775,6 +2806,10 @@ func valueCarrierMonitoringEnrollment(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateCarrierMonitoringEnrollment(ctx context.Context, p unsafe.Pointer) error {
+	return (*carrierintel.CarrierMonitoringEnrollment)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

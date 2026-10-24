@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/addressutils"
@@ -33,8 +32,6 @@ var (
 type Customer struct {
 	bun.BaseModel `bun:"table:customers,alias:cus" json:"-"`
 	keel.Table    `                                         keel:"customers,report=Parties"`
-
-	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                      pulid.ID               `json:"id"                      bun:"id,type:VARCHAR(100),pk,notnull"                                          keel:"id,pk,autoid:cus_"`
 	BusinessUnitID          pulid.ID               `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                            keel:"business_unit_id,pk,tenant"`
@@ -310,8 +307,23 @@ func (c *Customer) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
-func (c *Customer) BeforeCreate(ctx context.Context) error {
-	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (c *Customer) BeforeCreate(context.Context) error {
+	if c.Status == "" {
+		c.Status = domaintypes.StatusActive
+	}
+	if c.ConsolidationPriority == 0 {
+		c.ConsolidationPriority = 1
+	}
+
+	return nil
+}
+
+func (c *Customer) BeforeSave(context.Context) error {
+	if !c.StatusUpdatePreference.IsValid() {
+		c.StatusUpdatePreference = StatusUpdateNone
+	}
+
+	return nil
 }
 
 func (c *Customer) SamePartyDetails(other *Customer) bool {

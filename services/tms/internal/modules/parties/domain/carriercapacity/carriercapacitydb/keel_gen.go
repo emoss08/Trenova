@@ -59,23 +59,24 @@ var postingsTable = schema.Table{
 		{Name: "DestinationState", Alias: "ds", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Destination State`, JSON: `destinationState`},
 		{Name: "EquipmentType", Alias: "et", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Equipment Type`, JSON: `equipmentType`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "ccp_",
-	New:        newPosting,
-	NewN:       newNPosting,
-	Size:       unsafe.Sizeof(carriercapacity.Posting{}),
-	Ptr:        ptrPosting,
-	Value:      valuePosting,
-	Attach:     attachPosting,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "ccp_",
+	New:          newPosting,
+	NewN:         newNPosting,
+	Size:         unsafe.Sizeof(carriercapacity.Posting{}),
+	Ptr:          ptrPosting,
+	Value:        valuePosting,
+	Attach:       attachPosting,
+	BeforeCreate: beforeCreatePosting,
 }
 
 var postingsRef = keel.Ref{Table: &postingsTable}
@@ -334,6 +335,10 @@ func attachPosting(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 4:
 		r.EquipmentType = (*equipmenttype.EquipmentType)(child)
 	}
+}
+
+func beforeCreatePosting(ctx context.Context, p unsafe.Pointer) error {
+	return (*carriercapacity.Posting)(p).BeforeCreate(ctx)
 }
 
 func init() {

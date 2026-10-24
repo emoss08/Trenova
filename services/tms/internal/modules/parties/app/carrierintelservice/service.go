@@ -41,7 +41,7 @@ type Params struct {
 
 	Logger         *zap.Logger
 	Config         *config.Config
-	DB             kernelports.DBConnection
+	DB             kernelports.Transactor
 	Integrations   *integrationservice.Service
 	Connectors     []carrierintelports.CarrierIntelConnector `group:"carrierIntelConnectors"`
 	Limiter        restx.Limiter                             `                               name:"carrierIntelLimiter"`
@@ -64,16 +64,16 @@ type Params struct {
 	Realtime       agentports.RealtimeService
 	// Watchtower puts a change on a carrier's authority, insurance or
 	// safety record on the feed and takes it off once it is resolved.
-	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `                                                          optional:"true"`
 	// Publisher wakes whichever agent covers carrier risk on a finding the
 	// tower would show a person.
-	Publisher agentports.AgentEventPublisher `optional:"true"`
-	Plans     platformplanports.PlanService  `optional:"true"`
+	Publisher agentports.AgentEventPublisher `                                                          optional:"true"`
+	Plans     platformplanports.PlanService  `                                                          optional:"true"`
 }
 
 type Service struct {
 	l               *zap.Logger
-	db              kernelports.DBConnection
+	db              kernelports.Transactor
 	integrations    IntegrationConfigReader
 	connectors      map[integration.Type]carrierintelports.CarrierIntelConnector
 	limiter         restx.Limiter

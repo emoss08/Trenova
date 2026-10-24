@@ -3,17 +3,15 @@ package carriercapacityrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercapacitycol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -23,6 +21,27 @@ const (
 	defaultOpenList = 500
 	maxOpenList     = 2000
 )
+
+var postingErrors = dberror.Mapping{
+	Entity: entityName,
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_carrier_capacity_postings_carrier",
+			Field:   "carrierId",
+			Message: "Carrier does not exist in your organization",
+		},
+		{
+			Name:    "fk_carrier_capacity_postings_origin_location",
+			Field:   "originLocationId",
+			Message: "Origin location does not exist in your organization",
+		},
+		{
+			Name:    "fk_carrier_capacity_postings_equipment_type",
+			Field:   "equipmentTypeId",
+			Message: "Equipment type does not exist in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -40,29 +59,31 @@ func New(p Params) carriercapacityports.CarrierCapacityPostingRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.carrier-capacity-posting-repository")}
 }
 
-func withPostingRelations(q *bun.SelectQuery) *bun.SelectQuery {
-	rel := carriercapacitycol.PostingRelations
+func postingLoads() []keel.Loader {
+	p := carriercapacitydb.Postings
 
-	return q.
-		Relation(rel.Carrier).
-		Relation(rel.OriginLocation).
-		Relation(rel.OriginState).
-		Relation(rel.DestinationState).
-		Relation(rel.EquipmentType)
+	return []keel.Loader{
+		p.Carrier(),
+		p.OriginLocation(),
+		p.OriginState(),
+		p.DestinationState(),
+		p.EquipmentType(),
+	}
 }
 
-func applyListOptions(
-	q *bun.SelectQuery,
-	req *carriercapacityports.ListCarrierCapacityPostingsRequest,
-) *bun.SelectQuery {
-	cols := carriercapacitycol.PostingColumns
-	if req.CarrierID.IsNotNil() {
-		q = q.Where(cols.CarrierID.Eq(), req.CarrierID)
+func withPostingLoads(
+	q *keel.Query[carriercapacity.Posting],
+) *keel.Query[carriercapacity.Posting] {
+	return q.Load(postingLoads()...)
+}
+
+func listOptions(req *carriercapacityports.ListCarrierCapacityPostingsRequest) []keel.Pred {
+	p := carriercapacitydb.Postings
+
+	return []keel.Pred{
+		keel.When(req.CarrierID.IsNotNil(), p.CarrierID.Eq(req.CarrierID)),
+		keel.When(req.OpenAt > 0, p.AvailableTo.Gte(req.OpenAt)),
 	}
-	if req.OpenAt > 0 {
-		q = q.Where(cols.AvailableTo.Gte(), req.OpenAt)
-	}
-	return q
 }
 
 func (r *repository) List(
@@ -73,33 +94,23 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*carriercapacity.Posting], error) {
-			cols := carriercapacitycol.PostingColumns
-			entities := make([]*carriercapacity.Posting, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).NewSelect().
-				Model(&entities).
-				Apply(withPostingRelations).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFilters(
-						sq,
-						carriercapacitycol.PostingTable.Alias,
-						req.Filter,
-						(*carriercapacity.Posting)(nil),
-					)
-					return applyListOptions(sq, req).
-						Limit(int64(req.Filter.Pagination.SafeLimit())).
-						Offset(int64(req.Filter.Pagination.SafeOffset())).
-						Order(cols.AvailableFrom.OrderAsc(), cols.ID.OrderAsc())
-				}).
-				ScanAndCount(ctx)
+			p := carriercapacitydb.Postings
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				p.Where(listOptions(req)...),
+				&listquery.Request[carriercapacity.Posting]{
+					Filter: req.Filter,
+					Shape:  withPostingLoads,
+					Then:   []keel.Order{p.AvailableFrom.Asc(), p.ID.Asc()},
+				},
+			)
 			if err != nil {
 				r.l.Error("failed to list carrier capacity postings", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*carriercapacity.Posting]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -112,53 +123,14 @@ func (r *repository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*carriercapacity.Posting], error) {
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*carriercapacity.Posting)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyListOptions(querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							carriercapacitycol.PostingTable.Alias,
-							req.Filter,
-							(*carriercapacity.Posting)(nil),
-						), req)
-					}).
-					Count(ctx)
-				if err != nil {
-					r.l.Error("failed to count carrier capacity postings", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*carriercapacity.Posting]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*carriercapacity.Posting) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(carriercapacitycol.PostingTable.All()).
-							Apply(withPostingRelations)
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, aErr := querybuilder.ApplyCursorFilters(
-							sq,
-							carriercapacitycol.PostingTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*carriercapacity.Posting)(nil),
-						)
-						if aErr != nil {
-							return sq, aErr
-						}
-						return applyListOptions(sq, req), nil
-					},
+				r.db.Keel(ctx),
+				carriercapacitydb.Postings.Where(listOptions(req)...),
+				&listquery.Request[carriercapacity.Posting]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withPostingLoads,
 				},
 			)
 			if err != nil {
@@ -176,17 +148,10 @@ func (r *repository) GetByID(
 	req *carriercapacityports.GetCarrierCapacityPostingRequest,
 ) (*carriercapacity.Posting, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriercapacity.Posting, error) {
-		entity := new(carriercapacity.Posting)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Apply(withPostingRelations).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriercapacitycol.PostingScopeTenant(sq, req.TenantInfo).
-					Where(carriercapacitycol.PostingColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		p := carriercapacitydb.Postings
+		entity, err := p.Where(p.ID.Eq(req.ID)).Load(postingLoads()...).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, entityName)
+			return nil, postingErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -198,12 +163,9 @@ func (r *repository) Create(
 	entity *carriercapacity.Posting,
 ) (*carriercapacity.Posting, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carriercapacity.Posting, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := carriercapacitydb.Postings.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create carrier capacity posting", zap.Error(err))
-			return nil, err
+			return nil, postingErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -215,24 +177,9 @@ func (r *repository) Update(
 	entity *carriercapacity.Posting,
 ) (*carriercapacity.Posting, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carriercapacity.Posting, error) {
-		cols := carriercapacitycol.PostingColumns
-		previous := entity.Version
-		entity.Version++
-
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), previous).
-			ExcludeColumn(cols.CreatedAt.Bare()).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := carriercapacitydb.Postings.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update carrier capacity posting", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(result, entityName, entity.ID.String()); err != nil {
-			return nil, err
+			return nil, postingErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -244,21 +191,15 @@ func (r *repository) Delete(
 	req *carriercapacityports.DeleteCarrierCapacityPostingRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := carriercapacitycol.PostingColumns
-		result, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*carriercapacity.Posting)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return carriercapacitycol.PostingScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Version.Eq(), req.Version)
-			}).
-			Exec(ctx)
+		p := carriercapacitydb.Postings
+		affected, err := p.Where(p.ID.Eq(req.ID), p.Version.Eq(req.Version)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to delete carrier capacity posting", zap.Error(err))
 			return err
 		}
 
-		return dberror.CheckRowsAffected(result, entityName, req.ID.String())
+		return dberror.CheckAffected(affected, entityName, req.ID.String())
 	})
 }
 
@@ -267,32 +208,25 @@ func (r *repository) ListOpen(
 	req *carriercapacityports.ListOpenCarrierCapacityRequest,
 ) ([]*carriercapacity.Posting, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriercapacity.Posting, error) {
-		cols := carriercapacitycol.PostingColumns
+		p := carriercapacitydb.Postings
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultOpenList
 		}
 		limit = min(limit, maxOpenList)
 
-		through := req.Through
-		if through < req.OpenAt {
-			through = req.OpenAt
-		}
+		through := max(req.Through, req.OpenAt)
 
-		entities := make([]*carriercapacity.Posting, 0, 32)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Apply(withPostingRelations).
-			Apply(carriercapacitycol.PostingApplyTenant(req.TenantInfo)).
-			Where(cols.AvailableTo.Gte(), req.OpenAt).
-			Where(cols.AvailableFrom.Lte(), through).
-			Order(cols.AvailableFrom.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(int64(limit))
-		if len(req.CarrierIDs) > 0 {
-			q = q.Where(cols.CarrierID.In(), bun.List(req.CarrierIDs))
-		}
-
-		if err := q.Scan(ctx); err != nil {
+		entities, err := p.Where(
+			p.AvailableTo.Gte(req.OpenAt),
+			p.AvailableFrom.Lte(through),
+			keel.When(len(req.CarrierIDs) > 0, p.CarrierID.In(req.CarrierIDs...)),
+		).
+			Load(postingLoads()...).
+			Order(p.AvailableFrom.Asc(), p.ID.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list open carrier capacity", zap.Error(err))
 			return nil, err
 		}

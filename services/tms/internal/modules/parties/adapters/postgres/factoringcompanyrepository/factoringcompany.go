@@ -5,23 +5,34 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/emailutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const maxFactorsByEmail = 20
+
+var factoringCompanyErrors = dberror.Mapping{
+	Entity: "FactoringCompany",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_factoring_companies_code",
+			Field:   "code",
+			Message: "A factoring company with this code already exists in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -42,21 +53,6 @@ func New(p Params) factoringcompanyports.FactoringCompanyRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *factoringcompanyports.ListFactoringCompanyRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		factoringcompanycol.FactoringCompanyTable.Alias,
-		req.Filter,
-		(*factoringcompany.FactoringCompany)(nil),
-	)
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *factoringcompanyports.ListFactoringCompanyRequest,
@@ -65,118 +61,42 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*factoringcompany.FactoringCompany], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				factoringcompanydb.FactoringCompanies.Query(),
+				&listquery.Request[factoringcompany.FactoringCompany]{Filter: req.Filter},
 			)
-
-			entities := make(
-				[]*factoringcompany.FactoringCompany,
-				0,
-				req.Filter.Pagination.SafeLimit(),
-			)
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count factoring companies", zap.Error(err))
+				r.l.Error("failed to list factoring companies", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*factoringcompany.FactoringCompany]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *factoringcompanyports.ListFactoringCompanyConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		factoringcompanycol.FactoringCompanyTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*factoringcompany.FactoringCompany)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *factoringcompanyports.ListFactoringCompanyConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		factoringcompanycol.FactoringCompanyTable.Alias,
-		req.Filter,
-		(*factoringcompany.FactoringCompany)(nil),
-	)
-}
-
-func applyFactoringCompanyColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(factoringcompanycol.FactoringCompanyTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *factoringcompanyports.ListFactoringCompanyConnectionRequest,
 ) (*pagination.CursorListResult[*factoringcompany.FactoringCompany], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*factoringcompany.FactoringCompany], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*factoringcompany.FactoringCompany)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count factoring companies", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*factoringcompany.FactoringCompany]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*factoringcompany.FactoringCompany) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyFactoringCompanyColumns(sq, req.FactoringCompanyColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				factoringcompanydb.FactoringCompanies.Query(),
+				&listquery.Request[factoringcompany.FactoringCompany]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.FactoringCompanyColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan factoring companies", zap.Error(err))
+				r.l.Error("failed to list factoring company connection", zap.Error(err))
 				return nil, err
 			}
 
@@ -193,18 +113,15 @@ func (r *repository) GetByIDs(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*factoringcompany.FactoringCompany, error) {
-			entities := make([]*factoringcompany.FactoringCompany, 0, len(req.IDs))
 			if len(req.IDs) == 0 {
-				return entities, nil
+				return []*factoringcompany.FactoringCompany{}, nil
 			}
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcompanycol.FactoringCompanyScopeTenant(sq, req.TenantInfo).
-						Where(factoringcompanycol.FactoringCompanyColumns.ID.In(), bun.List(req.IDs))
-				}).
-				Scan(ctx); err != nil {
+
+			f := factoringcompanydb.FactoringCompanies
+			entities, err := f.Where(f.ID.In(req.IDs...)).
+				Limit(len(req.IDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, fmt.Errorf("get factoring companies by ids: %w", err)
 			}
 
@@ -221,27 +138,20 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*factoringcompany.FactoringCompany, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByID"),
-				zap.String("id", req.ID.String()),
-			)
+			f := factoringcompanydb.FactoringCompanies
+			q := f.Where(f.ID.Eq(req.ID))
+			if req.IncludeState {
+				q = q.Load(f.State())
+			}
 
-			entity := new(factoringcompany.FactoringCompany)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = factoringcompanycol.FactoringCompanyScopeTenant(sq, req.TenantInfo).
-						Where(factoringcompanycol.FactoringCompanyColumns.ID.Eq(), req.ID)
-					if req.IncludeState {
-						sq = sq.Relation("State")
-					}
-					return sq
-				}).
-				Scan(ctx)
+			entity, err := q.One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get factoring company", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "FactoringCompany")
+				r.l.Error(
+					"failed to get factoring company",
+					zap.String("id", req.ID.String()),
+					zap.Error(err),
+				)
+				return nil, factoringCompanyErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -257,17 +167,10 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*factoringcompany.FactoringCompany, error) {
-			log := r.l.With(
-				zap.String("operation", "Create"),
-			)
-
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				log.Error("failed to create factoring company", zap.Error(err))
-				return nil, err
+			err := factoringcompanydb.FactoringCompanies.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
+				r.l.Error("failed to create factoring company", zap.Error(err))
+				return nil, factoringCompanyErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -283,33 +186,14 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*factoringcompany.FactoringCompany, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				ExcludeColumn(factoringcompanycol.FactoringCompanyColumns.CreatedAt.Bare()).
-				WherePK().
-				Where("version = ?", ov).
-				Returning("*").
-				Exec(ctx)
+			err := factoringcompanydb.FactoringCompanies.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				log.Error("failed to update factoring company", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"FactoringCompany",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				r.l.Error(
+					"failed to update factoring company",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
+				)
+				return nil, factoringCompanyErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -321,33 +205,21 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *factoringcompanyports.FactoringCompanySelectOptionsRequest,
 ) (*pagination.ListResult[*factoringcompany.FactoringCompany], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*factoringcompany.FactoringCompany], error) {
-			cols := factoringcompanycol.FactoringCompanyColumns
-			return dbhelper.SelectOptions[*factoringcompany.FactoringCompany](
+			f := factoringcompanydb.FactoringCompanies
+			q := f.Pick(f.ID, f.Code, f.Name, f.City, f.Status).
+				Where(f.Status.Eq(domaintypes.StatusActive))
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					Columns: []string{
-						cols.ID.Bare(),
-						cols.Code.Bare(),
-						cols.Name.Bare(),
-						cols.City.Bare(),
-						cols.Status.Bare(),
-					},
-					OrgColumn: cols.OrganizationID.Qualified(),
-					BuColumn:  cols.BusinessUnitID.Qualified(),
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-					},
-					EntityName: "FactoringCompany",
-					SearchColumns: []string{
-						cols.Code.Qualified(),
-						cols.Name.Qualified(),
-					},
+				func(s string) keel.Pred {
+					return keel.Or(f.Code.ContainsFold(s), f.Name.ContainsFold(s))
 				},
 			)
 		},
@@ -359,23 +231,16 @@ func (r *repository) CountAssignedCustomers(
 	req factoringcompanyports.CountAssignedCustomersRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := customercol.CustomerBillingProfileColumns
-		count, err := customercol.CustomerBillingProfileScopeTenant(
-			r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*customer.CustomerBillingProfile)(nil)),
-			req.TenantInfo,
-		).
-			Where(cols.FactoringCompanyID.Eq(), req.FactoringCompanyID).
-			Count(ctx)
+		cbp := customerdb.CustomerBillingProfiles
+		count, err := cbp.Where(cbp.FactoringCompanyID.Eq(req.FactoringCompanyID)).
+			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("count customers assigned to a factoring company: %w", err)
 		}
+
 		return int(count), nil
 	})
 }
-
-const maxFactorsByEmail = 20
 
 func (r *repository) FindByEmail(
 	ctx context.Context,
@@ -390,25 +255,23 @@ func (r *repository) FindByEmail(
 	if address == "" || domain == "" {
 		return found, nil
 	}
+
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*factoringcompanyports.FactoringCompaniesByEmail, error) {
-			cols := factoringcompanycol.FactoringCompanyColumns
-			entities := make([]*factoringcompany.FactoringCompany, 0, maxFactorsByEmail)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcompanycol.FactoringCompanyScopeTenant(sq, req.TenantInfo).
-						Where(cols.Status.Eq(), domaintypes.StatusActive).
-						Where("split_part(lower("+cols.Email.Qualified()+"), '@', 2) = ?", domain)
-				}).
-				OrderExpr(cols.ID.Qualified()).
+			f := factoringcompanydb.FactoringCompanies
+			entities, err := f.Where(
+				f.Status.Eq(domaintypes.StatusActive),
+				keel.Raw("split_part(lower(?), '@', 2) = ?", f.Email, domain),
+			).
+				Order(f.ID.Asc()).
 				Limit(maxFactorsByEmail).
-				Scan(ctx); err != nil {
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, fmt.Errorf("find factoring companies by email: %w", err)
 			}
+
 			for _, entity := range entities {
 				if strings.EqualFold(strings.TrimSpace(entity.Email), address) {
 					found.Exact = append(found.Exact, entity)
@@ -416,6 +279,7 @@ func (r *repository) FindByEmail(
 				}
 				found.ByDomain = append(found.ByDomain, entity)
 			}
+
 			return found, nil
 		},
 	)

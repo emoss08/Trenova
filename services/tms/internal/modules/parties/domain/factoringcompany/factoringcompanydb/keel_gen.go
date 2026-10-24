@@ -69,6 +69,7 @@ var factoringCompaniesTable = schema.Table{
 	Value:        valueFactoringCompany,
 	Attach:       attachFactoringCompany,
 	BeforeCreate: beforeCreateFactoringCompany,
+	BeforeSave:   beforeSaveFactoringCompany,
 }
 
 var factoringCompaniesRef = keel.Ref{Table: &factoringCompaniesTable}
@@ -305,6 +306,10 @@ func attachFactoringCompany(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateFactoringCompany(ctx context.Context, p unsafe.Pointer) error {
 	return (*factoringcompany.FactoringCompany)(p).BeforeCreate(ctx)
+}
+
+func beforeSaveFactoringCompany(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoringcompany.FactoringCompany)(p).BeforeSave(ctx)
 }
 
 func init() {

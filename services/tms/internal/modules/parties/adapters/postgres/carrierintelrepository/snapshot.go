@@ -4,22 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -31,11 +27,7 @@ const (
 	defaultReviewQueueLimit     = 100
 	maxReviewQueueLimit         = 1000
 	snapshotEntityName          = "CarrierIntelSnapshot"
-	rankedSnapshotAlias         = "ranked"
-	rankedSnapshotRankName      = "rn"
 )
-
-var rankedSnapshotRank = buncolgen.NewColumn(rankedSnapshotRankName, rankedSnapshotAlias)
 
 type snapshotRepository struct {
 	db *postgres.Connection
@@ -51,29 +43,23 @@ func NewSnapshotRepository(p Params) carrierintelports.CarrierIntelSnapshotRepos
 
 func (r *snapshotRepository) GetCurrent(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	subject carrierintelports.CarrierIntelSubjectRef,
 ) (*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierIntelSnapshot, error) {
-			cols := carrierintelcol.CarrierIntelSnapshotColumns
-			entity := new(carrierintel.CarrierIntelSnapshot)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
-						Where(cols.SubjectType.Eq(), subject.SubjectType).
-						Where(cols.SubjectID.Eq(), subject.SubjectID).
-						Where(cols.IsCurrent.IsTrue())
-				}).
-				Scan(ctx)
+			s := carrierinteldb.CarrierIntelSnapshots
+			entity, err := s.Where(
+				s.SubjectType.Eq(subject.SubjectType),
+				s.SubjectID.Eq(subject.SubjectID),
+				s.IsCurrent.IsTrue(),
+			).One(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
+				return nil, nil //nolint:nilnil // nil snapshot represents a subject that was never looked up
+			}
 			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, nil //nolint:nilnil // nil snapshot represents a subject that was never looked up
-				}
 				r.l.Error("failed to get current carrier intel snapshot", zap.Error(err))
 				return nil, fmt.Errorf("get current carrier intel snapshot: %w", err)
 			}
@@ -85,7 +71,7 @@ func (r *snapshotRepository) GetCurrent(
 
 func (r *snapshotRepository) GetCurrentByCarrierIDs(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	carrierIDs []pulid.ID,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(
@@ -96,17 +82,9 @@ func (r *snapshotRepository) GetCurrentByCarrierIDs(
 				return []*carrierintel.CarrierIntelSnapshot{}, nil
 			}
 
-			cols := carrierintelcol.CarrierIntelSnapshotColumns
-			entities := make([]*carrierintel.CarrierIntelSnapshot, 0, len(carrierIDs))
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
-						Where(cols.IsCurrent.IsTrue()).
-						Where(cols.CarrierID.In(), bun.List(carrierIDs))
-				}).
-				Scan(ctx)
+			s := carrierinteldb.CarrierIntelSnapshots
+			entities, err := s.Where(s.IsCurrent.IsTrue(), s.CarrierID.In(carrierIDs...)).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error(
 					"failed to get current carrier intel snapshots by carrier",
@@ -122,7 +100,7 @@ func (r *snapshotRepository) GetCurrentByCarrierIDs(
 
 func (r *snapshotRepository) GetCurrentBySubjectIDs(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	subjectType carrierintel.SubjectType,
 	subjectIDs []string,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
@@ -134,18 +112,12 @@ func (r *snapshotRepository) GetCurrentBySubjectIDs(
 				return []*carrierintel.CarrierIntelSnapshot{}, nil
 			}
 
-			cols := carrierintelcol.CarrierIntelSnapshotColumns
-			entities := make([]*carrierintel.CarrierIntelSnapshot, 0, len(subjectIDs))
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
-						Where(cols.IsCurrent.IsTrue()).
-						Where(cols.SubjectType.Eq(), subjectType).
-						Where(cols.SubjectID.In(), bun.List(subjectIDs))
-				}).
-				Scan(ctx)
+			s := carrierinteldb.CarrierIntelSnapshots
+			entities, err := s.Where(
+				s.IsCurrent.IsTrue(),
+				s.SubjectType.Eq(subjectType),
+				s.SubjectID.In(subjectIDs...),
+			).All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error(
 					"failed to get current carrier intel snapshots by subject",
@@ -161,7 +133,7 @@ func (r *snapshotRepository) GetCurrentBySubjectIDs(
 
 func (r *snapshotRepository) GetLatestFullByDOT(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	dotNumber string,
 	since int64,
 ) (*carrierintel.CarrierIntelSnapshot, error) {
@@ -169,24 +141,18 @@ func (r *snapshotRepository) GetLatestFullByDOT(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierIntelSnapshot, error) {
-			cols := carrierintelcol.CarrierIntelSnapshotColumns
-			entity := new(carrierintel.CarrierIntelSnapshot)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
-						Where(cols.DOTNumber.Eq(), dotNumber).
-						Where(cols.Depth.Eq(), carrierintel.LookupDepthFull).
-						Where(cols.DepthFetchedAt.Gte(), since)
-				}).
-				Order(cols.DepthFetchedAt.OrderDesc()).
-				Limit(1).
-				Scan(ctx)
+			s := carrierinteldb.CarrierIntelSnapshots
+			entity, err := s.Where(
+				s.DOTNumber.Eq(dotNumber),
+				s.Depth.Eq(carrierintel.LookupDepthFull),
+				s.DepthFetchedAt.Gte(since),
+			).
+				Order(s.DepthFetchedAt.Desc()).
+				First(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
+				return nil, nil //nolint:nilnil // nil snapshot means no fresh full profile exists
+			}
 			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, nil //nolint:nilnil // nil snapshot means no fresh full profile exists
-				}
 				r.l.Error("failed to get latest full carrier intel snapshot", zap.Error(err))
 				return nil, fmt.Errorf("get latest full carrier intel snapshot: %w", err)
 			}
@@ -204,25 +170,20 @@ func (r *snapshotRepository) ListHistory(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintel.CarrierIntelSnapshot, error) {
-			cols := carrierintelcol.CarrierIntelSnapshotColumns
+			s := carrierinteldb.CarrierIntelSnapshots
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultSnapshotHistoryLimit),
 				1,
 				maxSnapshotHistoryLimit,
 			)
 
-			entities := make([]*carrierintel.CarrierIntelSnapshot, 0, limit)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, req.TenantInfo).
-						Where(cols.SubjectType.Eq(), req.SubjectType).
-						Where(cols.SubjectID.Eq(), req.SubjectID)
-				}).
-				Order(cols.FetchedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Limit(int64(limit)).
-				Scan(ctx)
+			entities, err := s.Where(
+				s.SubjectType.Eq(req.SubjectType),
+				s.SubjectID.Eq(req.SubjectID),
+			).
+				Order(s.FetchedAt.Desc(), s.ID.Desc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list carrier intel snapshot history", zap.Error(err))
 				return nil, fmt.Errorf("list carrier intel snapshot history: %w", err)
@@ -241,42 +202,22 @@ func (r *snapshotRepository) InsertCurrent(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierIntelSnapshot, error) {
-			cols := carrierintelcol.CarrierIntelSnapshotColumns
-			tenantInfo := pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
+			s := carrierinteldb.CarrierIntelSnapshots
+			db := r.db.Keel(ctx)
+
+			_, err := s.Where(
+				s.SubjectType.Eq(entity.SubjectType),
+				s.SubjectID.Eq(entity.SubjectID),
+				s.IsCurrent.IsTrue(),
+			).Update(ctx, db, s.IsCurrent.To(false))
+			if err != nil {
+				err = fmt.Errorf("retire current carrier intel snapshot: %w", err)
+			} else {
+				entity.IsCurrent = true
+				if err = s.Create(ctx, db, entity); err != nil {
+					err = fmt.Errorf("insert carrier intel snapshot: %w", err)
+				}
 			}
-
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, _ bun.Tx) error {
-					dba := r.db.DBForContext(c)
-					if _, uErr := dba.NewUpdate().
-						Model((*carrierintel.CarrierIntelSnapshot)(nil)).
-						Set(cols.IsCurrent.Set(), false).
-						Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-						WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-							return carrierintelcol.CarrierIntelSnapshotScopeTenantUpdate(uq, tenantInfo).
-								Where(cols.SubjectType.Eq(), entity.SubjectType).
-								Where(cols.SubjectID.Eq(), entity.SubjectID).
-								Where(cols.IsCurrent.IsTrue())
-						}).
-						Exec(c); uErr != nil {
-						return fmt.Errorf("retire current carrier intel snapshot: %w", uErr)
-					}
-
-					entity.IsCurrent = true
-					if _, iErr := dba.NewInsert().
-						Model(entity).
-						Returning("*").
-						Exec(c); iErr != nil {
-						return fmt.Errorf("insert carrier intel snapshot: %w", iErr)
-					}
-
-					return nil
-				},
-			)
 			if err != nil {
 				r.l.Error("failed to insert current carrier intel snapshot", zap.Error(err))
 				return nil, dberror.MapRetryableTransactionError(
@@ -295,24 +236,21 @@ func (r *snapshotRepository) UpdateEvaluation(
 	entity *carrierintel.CarrierIntelSnapshot,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := carrierintelcol.CarrierIntelSnapshotColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Column(
-				cols.Findings.Bare(),
-				cols.BlockingCodes.Bare(),
-				cols.AdvisoryCodes.Bare(),
-				cols.RiskLevel.Bare(),
-				cols.ReviewState.Bare(),
-				cols.PolicyVersion.Bare(),
-				cols.ConfirmedAt.Bare(),
-				cols.FetchedDepth.Bare(),
-				cols.DepthFetchedAt.Bare(),
-				cols.UpdatedAt.Bare(),
-			).
-			WherePK().
-			Exec(ctx)
+		s := carrierinteldb.CarrierIntelSnapshots
+		err := s.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			s.Findings,
+			s.BlockingCodes,
+			s.AdvisoryCodes,
+			s.RiskLevel,
+			s.ReviewState,
+			s.PolicyVersion,
+			s.ConfirmedAt,
+			s.FetchedDepth,
+			s.DepthFetchedAt,
+		)
 		if err != nil {
 			r.l.Error("failed to update carrier intel snapshot evaluation", zap.Error(err))
 			return fmt.Errorf("update carrier intel snapshot evaluation: %w", err)
@@ -324,7 +262,7 @@ func (r *snapshotRepository) UpdateEvaluation(
 
 func (r *snapshotRepository) TouchConfirmed(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	snapshotIDs []pulid.ID,
 	confirmedAt int64,
 ) error {
@@ -333,16 +271,13 @@ func (r *snapshotRepository) TouchConfirmed(
 			return nil
 		}
 
-		cols := carrierintelcol.CarrierIntelSnapshotColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*carrierintel.CarrierIntelSnapshot)(nil)).
-			Set(cols.ConfirmedAt.Set(), confirmedAt).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return carrierintelcol.CarrierIntelSnapshotScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.ID.In(), bun.List(snapshotIDs))
-			}).
-			Exec(ctx)
+		s := carrierinteldb.CarrierIntelSnapshots
+		_, err := s.Where(s.ID.In(snapshotIDs...)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			s.ConfirmedAt.To(confirmedAt),
+			s.UpdatedAt.ToExpr(s.UpdatedAt),
+		)
 		if err != nil {
 			r.l.Error("failed to touch carrier intel snapshots", zap.Error(err))
 			return fmt.Errorf("touch carrier intel snapshots: %w", err)
@@ -357,34 +292,27 @@ func (r *snapshotRepository) MarkReviewed(
 	req *carrierintelports.MarkSnapshotReviewedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := carrierintelcol.CarrierIntelSnapshotColumns
-		var note any
-		if req.Note != "" {
-			note = req.Note
-		}
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*carrierintel.CarrierIntelSnapshot)(nil)).
-			Set(cols.ReviewState.Set(), carrierintel.ReviewStateReviewed).
-			Set(cols.ReviewedByID.Set(), req.UserID).
-			Set(cols.ReviewedAt.Set(), req.ReviewedAt).
-			Set(cols.ReviewNote.Set(), note).
-			Set(cols.UpdatedAt.Set(), req.ReviewedAt).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return carrierintelcol.CarrierIntelSnapshotScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.SubjectType.Eq(), req.SubjectType).
-					Where(cols.SubjectID.Eq(), req.SubjectID).
-					Where(cols.IsCurrent.IsTrue())
-			}).
-			Exec(ctx)
+		s := carrierinteldb.CarrierIntelSnapshots
+		affected, err := s.Where(
+			s.SubjectType.Eq(req.SubjectType),
+			s.SubjectID.Eq(req.SubjectID),
+			s.IsCurrent.IsTrue(),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			s.ReviewState.To(carrierintel.ReviewStateReviewed),
+			s.ReviewedByID.To(req.UserID),
+			s.ReviewedAt.To(req.ReviewedAt),
+			s.ReviewNote.To(req.Note),
+			s.UpdatedAt.To(req.ReviewedAt),
+		)
 		if err != nil {
 			r.l.Error("failed to mark carrier intel snapshot reviewed", zap.Error(err))
 			return fmt.Errorf("mark carrier intel snapshot reviewed: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(
-			results,
+		return dberror.CheckAffected(
+			affected,
 			snapshotEntityName,
 			carrierintel.SubjectKey(req.SubjectType, req.SubjectID),
 		)
@@ -399,33 +327,26 @@ func (r *snapshotRepository) ListForRecompute(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintel.CarrierIntelSnapshot, error) {
-			cols := carrierintelcol.CarrierIntelSnapshotColumns
+			s := carrierinteldb.CarrierIntelSnapshots
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultRecomputeLimit),
 				1,
 				maxRecomputeLimit,
 			)
-			versionPredicate := cols.PolicyVersion.Lt()
+			version := s.PolicyVersion.Lt(req.BelowVersion)
 			if req.IncludeUpToDateAt {
-				versionPredicate = cols.PolicyVersion.Lte()
+				version = s.PolicyVersion.Lte(req.BelowVersion)
 			}
 
-			entities := make([]*carrierintel.CarrierIntelSnapshot, 0, limit)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, req.TenantInfo).
-						Where(cols.IsCurrent.IsTrue()).
-						Where(versionPredicate, req.BelowVersion)
-				}).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(limit))
-			if !req.AfterID.IsNil() {
-				q = q.Where(cols.ID.Gt(), req.AfterID)
-			}
-
-			if err := q.Scan(ctx); err != nil {
+			entities, err := s.Where(
+				s.IsCurrent.IsTrue(),
+				version,
+				keel.When(!req.AfterID.IsNil(), s.ID.Gt(req.AfterID)),
+			).
+				Order(s.ID.Asc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to list carrier intel snapshots for recompute", zap.Error(err))
 				return nil, fmt.Errorf("list carrier intel snapshots for recompute: %w", err)
 			}
@@ -443,25 +364,20 @@ func (r *snapshotRepository) ListReviewQueue(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintel.CarrierIntelSnapshot, error) {
-			cols := carrierintelcol.CarrierIntelSnapshotColumns
+			s := carrierinteldb.CarrierIntelSnapshots
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultReviewQueueLimit),
 				1,
 				maxReviewQueueLimit,
 			)
 
-			entities := make([]*carrierintel.CarrierIntelSnapshot, 0, limit)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, req.TenantInfo).
-						Where(cols.IsCurrent.IsTrue()).
-						Where(cols.ReviewState.Eq(), carrierintel.ReviewStateNeedsReview)
-				}).
-				Order(cols.FetchedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Limit(int64(limit)).
-				Scan(ctx)
+			entities, err := s.Where(
+				s.IsCurrent.IsTrue(),
+				s.ReviewState.Eq(carrierintel.ReviewStateNeedsReview),
+			).
+				Order(s.FetchedAt.Desc(), s.ID.Desc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list carrier intel review queue", zap.Error(err))
 				return nil, fmt.Errorf("list carrier intel review queue: %w", err)
@@ -472,98 +388,56 @@ func (r *snapshotRepository) ListReviewQueue(
 	)
 }
 
-func buildPruneHistoryDelete(
-	db bun.IDB,
-	tenantInfo pagination.TenantInfo,
-	keep int,
-) *bun.DeleteQuery {
-	cols := carrierintelcol.CarrierIntelSnapshotColumns
+func pruneHistoryQuery(keep int) *keel.Query[carrierintel.CarrierIntelSnapshot] {
+	s := carrierinteldb.CarrierIntelSnapshots
+	h := s.As("history")
+	ranked := keel.CTE("ranked", []string{"id", "rn"}, h.Pick(
+		h.ID,
+		keel.RowNumber().
+			Over([]keel.Expr{h.SubjectType, h.SubjectID}, h.FetchedAt.Desc(), h.ID.Desc()),
+	).Where(h.IsCurrent.IsFalse()))
 
-	ranked := db.NewSelect().
-		Model((*carrierintel.CarrierIntelSnapshot)(nil)).
-		Column(cols.ID.Bare()).
-		ColumnExpr(
-			buncolgen.Expr(
-				"row_number() OVER (PARTITION BY {0}, {1} ORDER BY {2} DESC, {3} DESC) AS ?",
-				cols.SubjectType,
-				cols.SubjectID,
-				cols.FetchedAt,
-				cols.ID,
-			),
-			bun.Ident(rankedSnapshotRankName),
-		).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
-				Where(cols.IsCurrent.IsFalse())
-		})
-
-	stale := db.NewSelect().
-		TableExpr("(?) AS ?", ranked, bun.Ident(rankedSnapshotAlias)).
-		ColumnExpr(cols.ID.WithAlias(rankedSnapshotAlias).Qualified()).
-		Where(rankedSnapshotRank.Gt(), keep)
-
-	return db.NewDelete().
-		Model((*carrierintel.CarrierIntelSnapshot)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return carrierintelcol.CarrierIntelSnapshotScopeTenantDelete(dq, tenantInfo).
-				Where(cols.IsCurrent.IsFalse()).
-				Where(cols.ID.In(), stale)
-		})
+	return s.With(ranked).
+		Join(ranked, ranked.Col("id").EqCol(s.ID)).
+		Where(s.IsCurrent.IsFalse(), ranked.Col("rn").Gt(keep))
 }
 
 func (r *snapshotRepository) PruneHistory(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	keep int,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		result, err := buildPruneHistoryDelete(r.db.DBForContext(ctx), tenantInfo, max(keep, 0)).
-			Exec(ctx)
+		affected, err := pruneHistoryQuery(max(keep, 0)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to prune carrier intel snapshot history", zap.Error(err))
 			return 0, fmt.Errorf("prune carrier intel snapshot history: %w", err)
-		}
-
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("prune carrier intel snapshot history rows affected: %w", err)
 		}
 
 		return int(affected), nil
 	})
 }
 
-func buildCarrierSummaryUpdate(
-	db bun.IDB,
+func carrierSummaryUpdate(
 	req *carrierintelports.UpdateCarrierIntelSummaryRequest,
-) *bun.UpdateQuery {
-	cols := carriercol.CarrierColumns
-	var riskLevel any
-	if req.RiskLevel != "" {
-		riskLevel = req.RiskLevel
-	}
+) (*keel.Query[carrier.Carrier], []keel.Assignment) {
+	c := carrierdb.Carriers
+	q := c.Where(
+		c.ID.Eq(req.CarrierID),
+		keel.Or(
+			c.IntelRiskLevel.IsDistinctFrom(req.RiskLevel),
+			keel.Raw("? IS DISTINCT FROM ?", c.IntelReviewRequired, req.ReviewRequired),
+			c.IntelBlockingCount.IsDistinctFrom(int64(req.BlockingCount)),
+		),
+	)
 
-	return db.NewUpdate().
-		Model((*carrier.Carrier)(nil)).
-		Set(cols.IntelRiskLevel.Set(), riskLevel).
-		Set(cols.IntelReviewRequired.Set(), req.ReviewRequired).
-		Set(cols.IntelBlockingCount.Set(), req.BlockingCount).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return carriercol.CarrierScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.CarrierID).
-				WhereGroup(" AND ", func(inner *bun.UpdateQuery) *bun.UpdateQuery {
-					return inner.
-						Where(cols.IntelRiskLevel.Expr("{} IS DISTINCT FROM ?"), riskLevel).
-						WhereOr(
-							cols.IntelReviewRequired.Expr("{} IS DISTINCT FROM ?"),
-							req.ReviewRequired,
-						).
-						WhereOr(
-							cols.IntelBlockingCount.Expr("{} IS DISTINCT FROM ?"),
-							req.BlockingCount,
-						)
-				})
-		})
+	return q, []keel.Assignment{
+		c.IntelRiskLevel.To(req.RiskLevel),
+		c.IntelReviewRequired.To(req.ReviewRequired),
+		c.IntelBlockingCount.To(int64(req.BlockingCount)),
+		c.Version.ToExpr(c.Version),
+		c.UpdatedAt.ToExpr(c.UpdatedAt),
+	}
 }
 
 func (r *snapshotRepository) UpdateCarrierSummary(
@@ -571,7 +445,8 @@ func (r *snapshotRepository) UpdateCarrierSummary(
 	req *carrierintelports.UpdateCarrierIntelSummaryRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := buildCarrierSummaryUpdate(r.db.DBForContext(ctx), req).Exec(ctx); err != nil {
+		q, sets := carrierSummaryUpdate(req)
+		if _, err := q.Update(ctx, r.db.Keel(ctx), sets...); err != nil {
 			r.l.Error("failed to update carrier intel summary", zap.Error(err))
 			return fmt.Errorf("update carrier intel summary: %w", err)
 		}

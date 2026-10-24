@@ -16,20 +16,20 @@ var _ bun.BeforeAppendModelHook = (*CarrierContact)(nil)
 
 type CarrierContact struct {
 	bun.BaseModel `bun:"table:carrier_contacts,alias:carc" json:"-"`
-	keel.Table    `keel:"carrier_contacts"`
+	keel.Table    `                                                 keel:"carrier_contacts"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:carc_"`
+	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"               keel:"id,pk,autoid:carc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
-	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull" keel:"carrier_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"  keel:"organization_id,pk,tenant"`
+	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull"          keel:"carrier_id"`
 
-	Name                      string `json:"name"                      bun:"name,type:VARCHAR(255),notnull" keel:"name"`
-	Title                     string `json:"title"                     bun:"title,type:VARCHAR(100),nullzero" keel:"title,nullzero"`
-	Email                     string `json:"email"                     bun:"email,type:VARCHAR(255),nullzero" keel:"email,nullzero"`
-	Phone                     string `json:"phone"                     bun:"phone,type:VARCHAR(20),nullzero" keel:"phone,nullzero"`
-	IsPrimary                 bool   `json:"isPrimary"                 bun:"is_primary,type:BOOLEAN,notnull,default:false" keel:"is_primary"`
-	ReceivesRateConfirmations bool   `json:"receivesRateConfirmations" bun:"receives_rate_confirmations,type:BOOLEAN,notnull,default:false" keel:"receives_rate_confirmations"`
-	Version                   int64  `json:"version"                   bun:"version,type:BIGINT" keel:"version,version"`
+	Name                      string `json:"name"                      bun:"name,type:VARCHAR(255),notnull"                                           keel:"name"`
+	Title                     string `json:"title"                     bun:"title,type:VARCHAR(100),nullzero"                                         keel:"title,nullzero"`
+	Email                     string `json:"email"                     bun:"email,type:VARCHAR(255),nullzero"                                         keel:"email,nullzero"`
+	Phone                     string `json:"phone"                     bun:"phone,type:VARCHAR(20),nullzero"                                          keel:"phone,nullzero"`
+	IsPrimary                 bool   `json:"isPrimary"                 bun:"is_primary,type:BOOLEAN,notnull,default:false"                            keel:"is_primary"`
+	ReceivesRateConfirmations bool   `json:"receivesRateConfirmations" bun:"receives_rate_confirmations,type:BOOLEAN,notnull,default:false"           keel:"receives_rate_confirmations"`
+	Version                   int64  `json:"version"                   bun:"version,type:BIGINT"                                                      keel:"version,version"`
 	CreatedAt                 int64  `json:"createdAt"                 bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 	UpdatedAt                 int64  `json:"updatedAt"                 bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
@@ -94,8 +94,4 @@ func (cc *CarrierContact) BeforeAppendModel(_ context.Context, query bun.Query) 
 	}
 
 	return nil
-}
-
-func (cc *CarrierContact) BeforeCreate(ctx context.Context) error {
-	return cc.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
