@@ -38,8 +38,8 @@ var dbRLSGenerateKeyCmd = &cobra.Command{
 	Use:   "generate-key",
 	Short: "Generate a scope signing key for database.rls",
 	Long: `Print a new random key id and key for database.rls.scopeKeyId and
-database.rls.scopeKey. Store the key as a secret; the next "trenova db reconcile"
-installs it.`,
+database.rls.scopeKey. Store the key as a secret; the next "trenova-db up" installs
+it.`,
 	RunE: runRLSGenerateKey,
 }
 
