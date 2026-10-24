@@ -133,13 +133,15 @@ func (s *Service) ApproveFrom(
 				template *formulatemplate.FormulaTemplate,
 				r *ApprovalActionRequest,
 			) error {
-				if template.SubmittedByID != nil &&
-					*template.SubmittedByID == r.TenantInfo.UserID {
-					return errortypes.NewValidationError(
+				if err := r.RefuseOwn(
+					template.SubmittedByID != nil && *template.SubmittedByID == r.TenantInfo.UserID,
+					errortypes.NewValidationError(
 						"approvedById",
 						errortypes.ErrInvalid,
 						"A template cannot be approved by its submitter",
-					)
+					),
+				); err != nil {
+					return err
 				}
 
 				if formulatemplate.SubmissionIsStale(
@@ -149,7 +151,7 @@ func (s *Service) ApproveFrom(
 					return staleSubmissionError()
 				}
 
-				if err := s.refuseRevisionAuthor(vCtx, template, r.TenantInfo); err != nil {
+				if err := s.refuseRevisionAuthor(vCtx, template, r); err != nil {
 					return err
 				}
 
@@ -249,8 +251,9 @@ func (s *Service) approvalContent(
 func (s *Service) refuseRevisionAuthor(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
-	tenantInfo pagination.TenantInfo,
+	req *ApprovalActionRequest,
 ) error {
+	tenantInfo := req.TenantInfo
 	var baseVersion int64
 	latest, err := s.reviewRepo.Latest(ctx, template.ID, tenantInfo)
 	if err != nil {
@@ -272,15 +275,14 @@ func (s *Service) refuseRevisionAuthor(
 		return err
 	}
 
-	if slices.Contains(authors, tenantInfo.UserID) {
-		return errortypes.NewValidationError(
+	return req.RefuseOwn(
+		slices.Contains(authors, tenantInfo.UserID),
+		errortypes.NewValidationError(
 			"approvedById",
 			errortypes.ErrInvalid,
 			"You authored part of this revision, so another reviewer must approve it",
-		)
-	}
-
-	return nil
+		),
+	)
 }
 
 func (s *Service) Reject(

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -170,14 +170,14 @@ func TestConvertedLists_RefuseAQueryOverWithheldFields(t *testing.T) {
 		{tool: "worker_list_time_off", withheld: "reason", restricted: true},
 		{tool: "ledger_list_manual_journals", withheld: "reason", restricted: true},
 		{tool: "ledger_list_journal_reversals", withheld: "reasonText", restricted: true},
-		{tool: "fuel_list_cards", withheld: "externalCardId", restricted: false},
 		{tool: "settlement_list_driver_expenses", withheld: "description", restricted: true},
 		{tool: "settlement_list_advances", withheld: "notes", restricted: true},
-		{tool: "settlement_list_escrow_accounts", withheld: "balanceMinor", restricted: true},
 		{tool: "receivable_list_customer_payments", withheld: "memo", restricted: true},
 		{tool: "inbox_list_email_profiles", withheld: "host", restricted: true},
 		{tool: "report_list_table_change_alerts", withheld: "name", restricted: true},
 		{tool: "factoring_list_noas"},
+		{tool: "fuel_list_cards"},
+		{tool: "settlement_list_escrow_accounts"},
 		{tool: "accounting_list_sync_records", args: map[string]any{"system": "Xero"}},
 		{tool: "accounting_list_mapping_gaps", args: map[string]any{"system": "Xero"}},
 		{tool: "customer_list"},
@@ -222,4 +222,45 @@ func TestConvertedLists_RefuseAQueryOverWithheldFields(t *testing.T) {
 				"a Confidential field is never matched for anyone")
 		})
 	}
+}
+
+// An escrow account's query matches its status and currency, both Internal,
+// and none of its money: the balance, target and interest rate the builder
+// once fell back to are not searched, so a query reads at Internal.
+func TestEscrowAccounts_SearchTheirStatusAndCurrencyOnly(t *testing.T) {
+	t.Parallel()
+
+	spec := keyedSpec(t, "settlement_list_escrow_accounts")
+	built, err := newGraphQLReadTool(spec, &keyedReader{}, &mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+	list, ok := built.(*graphQLListTool)
+	require.True(t, ok)
+	assert.Equal(t, []string{"status", "currencyCode"}, list.searched)
+	for _, money := range []string{
+		"balanceMinor", "targetAmountMinor", "annualInterestRate",
+	} {
+		assert.NotContains(t, list.searched, money)
+	}
+}
+
+// A fuel card's query matches its label and last four digits, both Internal,
+// and not the card provider's own id, which is Confidential and which the
+// card's search vector no longer holds: a query reads at Internal.
+func TestFuelCards_SearchTheirLabelAndLastFourOnly(t *testing.T) {
+	t.Parallel()
+
+	spec := keyedSpec(t, "fuel_list_cards")
+	built, err := newGraphQLReadTool(spec, &keyedReader{}, &mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+	list, ok := built.(*graphQLListTool)
+	require.True(t, ok)
+	assert.Equal(t, []string{"label", "lastFour"}, list.searched)
+	registry := fieldsensitivity.DefaultRegistry()
+	for _, field := range list.searched {
+		assert.True(t, fieldsensitivity.Visible(registry, permission.ResourceFuelCard, field,
+			permission.SensitivityInternal), field)
+	}
+	assert.NotContains(t, list.searched, "externalCardId")
+	assert.NotContains(t, searchVectors(t)["fuel_cards"], "external_card_id",
+		"the vector the migrations build no longer matches the provider's id")
 }

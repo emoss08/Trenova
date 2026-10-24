@@ -90,6 +90,7 @@
   "What this axis is called in the grid — leave blank to use the kind": "Cómo se llama este eje en la cuadrícula; déjelo en blanco para usar el tipo",
   "What this tariff is called out loud": "Cómo se llama esta tarifa de viva voz",
   "Where this tariff came from, so the next person knows what they are amending": "De dónde procede esta tarifa, para que la siguiente persona sepa qué está modificando",
+  "You submitted this draft, so another reviewer has to publish it": "Usted envió este borrador, así que otro revisor debe publicarlo",
   "Zone-to-zone base rates by weight break, published July 2025": "Tarifas base de zona a zona por tramo de peso, publicadas en julio de 2025",
   "v{0}, draft changed": "v{0}, borrador modificado",
   "{0, plural, one {# cell is not a number} other {# cells are not numbers}}.": "{0, plural, one {# celda no es un número} other {# celdas no son números}}.",

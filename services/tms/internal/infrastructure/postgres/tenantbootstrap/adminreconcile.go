@@ -13,9 +13,10 @@ import (
 )
 
 type AdminReconcileResult struct {
-	RolesChecked   int
-	GrantsAdded    int
-	GrantsExtended int
+	RolesChecked         int
+	GrantsAdded          int
+	GrantsExtended       int
+	ChangedOrganizations []pulid.ID
 }
 
 type adminGrantPlan struct {
@@ -33,19 +34,24 @@ func ReconcileAdminRoles(
 	}
 
 	roleCols := permissioncol.RoleColumns
-	roleIDs := make([]pulid.ID, 0)
+	roles := make([]*permission.Role, 0)
 	if err := db.NewSelect().
-		Model((*permission.Role)(nil)).
-		Column(roleCols.ID.Bare()).
+		Model(&roles).
+		Column(roleCols.ID.Bare(), roleCols.OrganizationID.Bare()).
 		Where(roleCols.IsSystem.IsTrue()).
 		Where(roleCols.Name.Eq(), AdministratorRoleName).
-		Scan(ctx, &roleIDs); err != nil {
+		Scan(ctx); err != nil {
 		return nil, fmt.Errorf("list administrator roles: %w", err)
 	}
 
-	result := &AdminReconcileResult{RolesChecked: len(roleIDs)}
-	if len(roleIDs) == 0 {
+	result := &AdminReconcileResult{RolesChecked: len(roles)}
+	if len(roles) == 0 {
 		return result, nil
+	}
+
+	roleIDs := make([]pulid.ID, 0, len(roles))
+	for _, role := range roles {
+		roleIDs = append(roleIDs, role.ID)
 	}
 
 	existing := make([]*permission.ResourcePermission, 0)
@@ -62,8 +68,12 @@ func ReconcileAdminRoles(
 	}
 
 	now := timeutils.NowUnix()
-	for _, roleID := range roleIDs {
+	for _, role := range roles {
+		roleID := role.ID
 		plan := planAdminGrants(registry, roleID, byRole[roleID], now)
+		if len(plan.add) == 0 && len(plan.extend) == 0 {
+			continue
+		}
 		if len(plan.add) > 0 {
 			if _, err := db.NewInsert().Model(&plan.add).Exec(ctx); err != nil {
 				return nil, fmt.Errorf("grant new resources to role %s: %w", roleID, err)
@@ -83,6 +93,9 @@ func ReconcileAdminRoles(
 		}
 		result.GrantsAdded += len(plan.add)
 		result.GrantsExtended += len(plan.extend)
+		if !slices.Contains(result.ChangedOrganizations, role.OrganizationID) {
+			result.ChangedOrganizations = append(result.ChangedOrganizations, role.OrganizationID)
+		}
 	}
 
 	return result, nil

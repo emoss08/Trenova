@@ -2,6 +2,7 @@ package approvalworkflow_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -19,9 +20,10 @@ type record struct {
 }
 
 type store struct {
-	stored  *record
-	saves   int
-	audited int
+	stored   *record
+	saves    int
+	audited  int
+	comments []string
 }
 
 func (s *store) engine() approvalworkflow.Engine[*record, string] {
@@ -44,8 +46,9 @@ func (s *store) engine() approvalworkflow.Engine[*record, string] {
 
 			return &copied
 		},
-		Audit: func(_, _ *record, _ permission.Operation, _ *approvalworkflow.Request, _ string) {
+		Audit: func(_, _ *record, _ permission.Operation, _ *approvalworkflow.Request, comment string) {
 			s.audited++
+			s.comments = append(s.comments, comment)
 		},
 		Now: func() int64 { return 42 },
 	}
@@ -103,4 +106,53 @@ func TestApply_SavesThePlannedChange(t *testing.T) {
 	assert.Equal(t, "InReview", updated.Status)
 	assert.Equal(t, 1, s.saves)
 	assert.Equal(t, 1, s.audited)
+}
+
+func approveOwn(own bool) approvalworkflow.Transition[*record, string] {
+	transition := submit()
+	transition.AuditComment = "Record approved"
+	transition.Validate = func(_ context.Context, _ *record, req *approvalworkflow.Request) error {
+		return req.RefuseOwn(own, errors.New("another reviewer must approve it"))
+	}
+	return transition
+}
+
+func TestApply_RefusesTheAuthorsOwnRevisionWithoutApproveOwn(t *testing.T) {
+	t.Parallel()
+
+	loaded := &record{ID: pulid.MustNew("rec_"), Status: "Draft"}
+	s := &store{stored: loaded}
+	req := &approvalworkflow.Request{EntityID: loaded.ID}
+
+	_, err := s.engine().Apply(t.Context(), req, approveOwn(true))
+	require.EqualError(t, err, "another reviewer must approve it")
+	assert.Zero(t, s.saves)
+	assert.False(t, req.ApprovedOwn)
+}
+
+func TestApply_LetsApproveOwnApproveTheAuthorsRevisionAndSaysSo(t *testing.T) {
+	t.Parallel()
+
+	loaded := &record{ID: pulid.MustNew("rec_"), Status: "Draft"}
+	s := &store{stored: loaded}
+	req := &approvalworkflow.Request{EntityID: loaded.ID, MayApproveOwn: true}
+
+	updated, err := s.engine().Apply(t.Context(), req, approveOwn(true))
+	require.NoError(t, err)
+	assert.Equal(t, "InReview", updated.Status)
+	assert.True(t, req.ApprovedOwn)
+	assert.Equal(t, []string{"Record approved by its author, without a second reviewer"}, s.comments)
+}
+
+func TestApply_KeepsTheCommentWhenSomeoneElseApproves(t *testing.T) {
+	t.Parallel()
+
+	loaded := &record{ID: pulid.MustNew("rec_"), Status: "Draft"}
+	s := &store{stored: loaded}
+	req := &approvalworkflow.Request{EntityID: loaded.ID, MayApproveOwn: true}
+
+	_, err := s.engine().Apply(t.Context(), req, approveOwn(false))
+	require.NoError(t, err)
+	assert.False(t, req.ApprovedOwn)
+	assert.Equal(t, []string{"Record approved"}, s.comments)
 }

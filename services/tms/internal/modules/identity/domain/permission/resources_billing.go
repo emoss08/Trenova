@@ -728,6 +728,11 @@ func (r *Registry) registerBillingResources() {
 				DisplayName: "Reject",
 				Description: "Reject formula templates under review",
 			},
+			OperationDefinition{
+				Operation:   OpApproveOwn,
+				DisplayName: "Approve own changes",
+				Description: "Approve a formula template revision you submitted or edited, without a second reviewer",
+			},
 		),
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -762,6 +767,11 @@ func (r *Registry) registerBillingResources() {
 				Operation:   OpArchive,
 				DisplayName: "Archive",
 				Description: "Archive formula libraries so no new template imports them",
+			},
+			OperationDefinition{
+				Operation:   OpApproveOwn,
+				DisplayName: "Approve own changes",
+				Description: "Approve a formula library revision you submitted or edited, without a second reviewer",
 			},
 		),
 		DefaultSensitivity: SensitivityInternal,

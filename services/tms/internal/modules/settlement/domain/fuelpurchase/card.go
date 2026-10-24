@@ -191,11 +191,6 @@ func (c *FuelCard) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "label", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 			{Name: "last_four", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
-			{
-				Name:   "external_card_id",
-				Type:   domaintypes.FieldTypeText,
-				Weight: domaintypes.SearchWeightB,
-			},
 		},
 	}
 }

@@ -90,6 +90,7 @@
   "What this axis is called in the grid — leave blank to use the kind": "此轴在表格中的名称 — 留空则使用其种类",
   "What this tariff is called out loud": "此费率的口语称呼",
   "Where this tariff came from, so the next person knows what they are amending": "此费率的来源，让下一位修改者知道自己在改什么",
+  "You submitted this draft, so another reviewer has to publish it": "此草稿由您送审，因此必须由其他审查人员发布",
   "Zone-to-zone base rates by weight break, published July 2025": "依重量级距的区域对区域基本费率，2025 年 7 月公布",
   "v{0}, draft changed": "v{0}，草稿已更改",
   "{0, plural, one {# cell is not a number} other {# cells are not numbers}}.": "{0, plural, other {# 个单元格不是数字}}。",

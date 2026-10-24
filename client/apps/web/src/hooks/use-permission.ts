@@ -1,3 +1,4 @@
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, type OperationType, Resource } from "@trenova/shared/types/permission";
 import { useCallback, useEffect } from "react";
@@ -10,6 +11,34 @@ export function usePermission(resource: string, operation: OperationType) {
     allowed: hasPermission(resource, operation),
     isLoading: !manifest,
   };
+}
+
+export type ReviewApproval = {
+  /** The person may approve this record now. */
+  allowed: boolean;
+  /**
+   * The person may approve records like it, but submitted this one and cannot approve their own
+   * changes, so a second reviewer has to: show the action disabled and say why.
+   */
+  needsSecondReviewer: boolean;
+};
+
+/**
+ * Whether the person may approve a record under review. The two-person rule keeps a submitter
+ * from approving their own submission unless they hold the resource's approve-own permission.
+ * The server also refuses someone who edited the revision without submitting it.
+ */
+export function useReviewApproval(
+  resource: string,
+  submittedById: string | null | undefined,
+): ReviewApproval {
+  const { allowed: canApprove } = usePermission(resource, Operation.Approve);
+  const { allowed: canApproveOwn } = usePermission(resource, Operation.ApproveOwn);
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const own = Boolean(userId && submittedById && submittedById === userId);
+  const needsSecondReviewer = canApprove && own && !canApproveOwn;
+
+  return { allowed: canApprove && !needsSecondReviewer, needsSecondReviewer };
 }
 
 /**

@@ -31,6 +31,30 @@ type Request struct {
 	TenantInfo pagination.TenantInfo
 	EntityID   pulid.ID
 	Comment    string
+	// MayApproveOwn says the caller holds the resource's approve-own permission, so a
+	// transition's two-person rule lets them approve a revision they submitted or authored.
+	MayApproveOwn bool
+	// ApprovedOwn is set by a transition's Validate when it let the caller approve their own
+	// revision; the audit comment then says no second reviewer saw it.
+	ApprovedOwn bool
+}
+
+// OwnApprovalNote is added to a transition's audit comment when its caller approved a revision
+// they submitted or authored.
+const OwnApprovalNote = " by its author, without a second reviewer"
+
+// RefuseOwn applies a two-person rule to a transition: when the caller is the revision's own
+// submitter or author (own), it refuses with refusal unless the caller may approve their own,
+// in which case it records that they did.
+func (r *Request) RefuseOwn(own bool, refusal error) error {
+	if !own {
+		return nil
+	}
+	if !r.MayApproveOwn {
+		return refusal
+	}
+	r.ApprovedOwn = true
+	return nil
 }
 
 // Transition describes one legal step of a review cycle.
@@ -139,7 +163,11 @@ func (e Engine[T, S]) Apply(
 	}
 
 	if e.Audit != nil {
-		e.Audit(updated, original, transition.PermissionOp, req, transition.AuditComment)
+		comment := transition.AuditComment
+		if req.ApprovedOwn {
+			comment += OwnApprovalNote
+		}
+		e.Audit(updated, original, transition.PermissionOp, req, comment)
 	}
 
 	return updated, nil

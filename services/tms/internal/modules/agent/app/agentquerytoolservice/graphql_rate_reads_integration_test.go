@@ -30,7 +30,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -195,8 +194,8 @@ func seedRateMatrix(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, l
 	bu, org := tenant.Actor.BusinessUnitID, tenant.Actor.OrganizationID
 	matrix := &ratematrix.RateMatrix{
 		ID: pulid.MustNew("rmx_"), OrganizationID: org, BusinessUnitID: bu,
-		Code: "LTL-" + label, Name: "LTL " + label, Status: domaintypes.StatusActive,
-		ValueType: ratematrix.ValueTypeMoney,
+		Code: "LTL-" + label, Name: "LTL " + label, Status: formulatemplate.StatusActive,
+		ValueType: ratematrix.ValueTypeMoney, DraftCellCount: seededMatrixCells,
 	}
 	_, err := admin.NewInsert().Model(matrix).Exec(ctx)
 	require.NoError(t, err)
@@ -367,6 +366,26 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 		cell, _ := cells[0].(map[string]any)
 		assert.Len(t, cell["keys"], 2, "a cell's keys run along the matrix's two axes")
 		assert.Equal(t, []any{"", "0 to 500"}, cell["ranges"])
+		assert.NotContains(t, cell, "value", "a cell's value is Restricted, withheld at Internal")
+		assert.Contains(t, first["withheldByAccess"], "cells.value")
+
+		restrictedEngine := &tcaRestrictedRole{}
+		reached, err := agentquerytoolservice.ConvertedGetTool("rate_get_matrix",
+			agentreadtest.NewReader(t, agentreadtest.Options{
+				Engine: restrictedEngine, Resolvers: resolvers,
+			}), restrictedEngine)
+		require.NoError(t, err)
+		shown, err := reached.Query(mine.ctx, &agentports.QueryToolParams{
+			OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
+			Actor: actor, Timezone: "America/Chicago",
+			Params:            map[string]any{"rateMatrixId": ours},
+			DataAccessCeiling: permission.SensitivityRestricted, RunID: pulid.MustNew("ar_"),
+		})
+		require.NoError(t, err)
+		shownCells, _ := asMap(t, shown)["cells"].([]any)
+		require.NotEmpty(t, shownCells)
+		assert.Equal(t, "2.15", shownCells[0].(map[string]any)["value"],
+			"a reader whose access reaches Restricted sees the value")
 
 		rest := callTool(t, mine.ctx, get, actor, map[string]any{
 			"rateMatrixId": ours, "cellOffset": first["nextCellOffset"],

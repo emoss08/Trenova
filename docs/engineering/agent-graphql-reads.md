@@ -903,12 +903,14 @@ exactly when a field it matches is above Internal.
 | `ledger_list_journal_reversals` | the `reasonText` (with the reason code) | below Restricted |
 | `settlement_list_driver_expenses` | the driver's `description` | below Restricted |
 | `settlement_list_advances` | the advance's `notes` (with its reference) | below Restricted |
-| `settlement_list_escrow_accounts` | every filterable field, the balance, target and interest rate among them, since its configuration names no column | below Restricted |
 | `receivable_list_customer_payments` | the payment's `memo` (with its reference number) | below Restricted |
 | `inbox_list_email_profiles` | the profile's SMTP `host` (with its name, sender address and description) | below Restricted |
 | `report_list_table_change_alerts` | the alert's `name` and `tableName` | below Restricted |
-| `fuel_list_cards` | the card provider's own `externalCardId` (with the label and last four) | always: the id is Confidential |
 
+`settlement_list_escrow_accounts` matches an account's `status` and `currencyCode`, both
+Internal, so it is not refused. Its configuration named no column, so the builder fell back to
+every filterable field, money among them, and a query failed in the database (`operator does not
+exist: bigint ~~* unknown`); it now names `status` and `currency_code`.
 `factoring_list_noas` matches who a notice was sent to, which is Internal, so it is not refused;
 its configuration named the column `sentTo`, which Postgres read as `sentto`, so its query failed,
 and now names `sent_to`. `inbox_list_email_profiles`'s configuration now names the columns its
@@ -916,6 +918,13 @@ vector matches (`host` and `description`, not `from_name`). The two accounting l
 `searches` (a sync record's number and the accounting system's document number; a mapping's
 Trenova label), all Internal, and `inbox_list_capture_batches` is in `searchedElsewhere`: it matches
 only linked records' Internal values.
+
+`fuel_list_cards` matches a card's `label` and `lastFour`, both Internal, so it is not refused.
+Its search vector also held the card provider's own id (`externalCardId`, Confidential), which
+refused every query at every access; by the owner's decision migration `20261231010520` rebuilds
+the vector without it (`20261231010525` recreates its index concurrently), and the configuration
+names the two columns left. The cards screen searches the same vector, so it now finds a card by
+its label or last four only.
 
 The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
 returned every other column at any tier; at a person's role ceiling below Internal each converted

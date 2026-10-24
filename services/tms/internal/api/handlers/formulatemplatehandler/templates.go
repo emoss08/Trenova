@@ -323,19 +323,17 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	mayApprove, err := h.permEngine.Check(
-		c.Request.Context(),
-		middleware.BuildPermissionCheckRequest(
-			authCtx,
-			permission.ResourceFormulaTemplate.String(),
-			permission.OpApprove,
-		),
+	mayApprove, err := middleware.Allows(
+		c,
+		h.permEngine,
+		permission.ResourceFormulaTemplate,
+		permission.OpApprove,
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	req.MayArchiveInUse = mayApprove.Allowed
+	req.MayArchiveInUse = mayApprove
 
 	results, err := h.service.BulkUpdateStatus(c.Request.Context(), req)
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
@@ -27,19 +28,22 @@ type Params struct {
 	Service              *ratematrixservice.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	PermissionEngine     permissionports.PermissionEngine
 }
 
 type Handler struct {
-	service *ratematrixservice.Service
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service    *ratematrixservice.Service
+	eh         *helpers.ErrorHandler
+	pm         *middleware.PermissionMiddleware
+	permEngine permissionports.PermissionEngine
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:    p.Service,
+		eh:         p.ErrorHandler,
+		pm:         p.PermissionMiddleware,
+		permEngine: p.PermissionEngine,
 	}
 }
 
@@ -166,6 +170,7 @@ func (h *Handler) handleApprovalAction(
 		ctx context.Context,
 		req *ratematrixservice.ApprovalActionRequest,
 	) (*ratematrix.RateMatrix, error),
+	mayApproveOwn bool,
 ) {
 	authCtx := authctx.GetAuthContext(c)
 	matrixID, err := h.matrixID(c)
@@ -180,9 +185,10 @@ func (h *Handler) handleApprovalAction(
 	}
 
 	updated, err := action(c.Request.Context(), &ratematrixservice.ApprovalActionRequest{
-		TenantInfo: tenantOf(authCtx),
-		EntityID:   matrixID,
-		Comment:    req.Comment,
+		TenantInfo:    tenantOf(authCtx),
+		EntityID:      matrixID,
+		Comment:       req.Comment,
+		MayApproveOwn: mayApproveOwn,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -209,7 +215,17 @@ func (h *Handler) handleApprovalAction(
 // @Security BearerAuth
 // @Router /rate-matrices/{rateMatrixID}/approve [post]
 func (h *Handler) approve(c *gin.Context) {
-	h.handleApprovalAction(c, h.service.Approve)
+	mayApproveOwn, err := middleware.Allows(
+		c,
+		h.permEngine,
+		permission.ResourceRateMatrix,
+		permission.OpApproveOwn,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	h.handleApprovalAction(c, h.service.Approve, mayApproveOwn)
 }
 
 // @Summary Reject a rate matrix draft
@@ -229,7 +245,7 @@ func (h *Handler) approve(c *gin.Context) {
 // @Security BearerAuth
 // @Router /rate-matrices/{rateMatrixID}/reject [post]
 func (h *Handler) reject(c *gin.Context) {
-	h.handleApprovalAction(c, h.service.Reject)
+	h.handleApprovalAction(c, h.service.Reject, false)
 }
 
 // @Summary Request changes to a rate matrix draft
@@ -249,7 +265,7 @@ func (h *Handler) reject(c *gin.Context) {
 // @Security BearerAuth
 // @Router /rate-matrices/{rateMatrixID}/request-changes [post]
 func (h *Handler) requestChanges(c *gin.Context) {
-	h.handleApprovalAction(c, h.service.RequestChanges)
+	h.handleApprovalAction(c, h.service.RequestChanges, false)
 }
 
 // @Summary Archive a rate matrix

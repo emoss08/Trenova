@@ -1,4 +1,4 @@
-import { usePermission } from "@/hooks/use-permission";
+import { usePermission, useReviewApproval } from "@/hooks/use-permission";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -322,7 +322,7 @@ export function StudioTopBar({
   const { control } = useFormContext();
   const name = (useWatch({ control, name: "name" }) as string | undefined)?.trim() ?? "";
   const { allowed: canSubmit } = usePermission(Resource.FormulaTemplate, Operation.Submit);
-  const { allowed: canApprove } = usePermission(Resource.FormulaTemplate, Operation.Approve);
+  const approval = useReviewApproval(Resource.FormulaTemplate, template?.submittedById);
   const { allowed: canReject } = usePermission(Resource.FormulaTemplate, Operation.Reject);
 
   const status = template?.status;
@@ -377,7 +377,7 @@ export function StudioTopBar({
       )}
       {mode === "edit" && status === "InReview" && (
         <>
-          {canApprove && (
+          {approval.allowed && (
             <Button
               type="button"
               variant="outline"
@@ -389,6 +389,23 @@ export function StudioTopBar({
               <CheckIcon className="text-success size-3.5" />
               {t("Approve")}
             </Button>
+          )}
+          {approval.needsSecondReviewer && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span>
+                    <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled>
+                      <CheckIcon className="size-3.5" />
+                      {t("Approve")}
+                    </Button>
+                  </span>
+                }
+              />
+              <TooltipContent>
+                {t("You submitted this, so another reviewer has to approve it")}
+              </TooltipContent>
+            </Tooltip>
           )}
           {canReject && (
             <Button
