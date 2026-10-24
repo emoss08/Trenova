@@ -219,7 +219,7 @@ func newScriptHarness(
 	rt.codeMode = codemode.Gate{}
 	rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true})
 
-	names := []string{codemode.ToolRunScript}
+	names := make([]string, 0, len(reads)+len(actions))
 	for _, tool := range reads {
 		names = append(names, tool.Name())
 	}
@@ -699,4 +699,45 @@ func TestScriptIndexListsOnlyHeldReadsAScriptMayCall(t *testing.T) {
 	encoded, err := sonic.Marshal(broker.Index())
 	require.NoError(t, err)
 	assert.False(t, strings.Contains(string(encoded), codemode.ToolRunScript))
+}
+
+func TestEveryAgentThatHoldsAReadHoldsTheScriptTool(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("shipment_list", map[string]any{}, nil)
+	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	require.NotContains(t, h.req.Definition.ToolNames, codemode.ToolRunScript)
+
+	assert.Contains(t, h.rt.heldTools(h.req.Definition), codemode.ToolRunScript,
+		"no agent is configured with it; holding a tool for its work is enough")
+	assert.True(t, h.rt.OpenTurn(t.Context(), h.req).tools.offers(codemode.ToolRunScript))
+	assert.False(t, h.run(t.Context(), read(1, "shipment_list", nil)).Failed)
+
+	switchedOff := *h.req.Definition
+	switchedOff.DisabledToolNames = []string{codemode.ToolRunScript}
+	assert.NotContains(t, h.rt.heldTools(&switchedOff), codemode.ToolRunScript,
+		"an administrator may switch it off for one agent")
+
+	noReads := testDefinition()
+	assert.NotContains(t, h.rt.heldTools(noReads), codemode.ToolRunScript,
+		"an agent with only the core tools has nothing to script")
+}
+
+func TestATurnThatNarrowsItsToolsStillCarriesTheScriptTool(t *testing.T) {
+	t.Parallel()
+
+	service, names := wideRuntime(t)
+	registry, ok := service.queryTools.(*stubQueryRegistry)
+	require.True(t, ok)
+	registry.Tools = append(registry.Tools, &stubScriptTool{})
+
+	set := service.newToolSet(t.Context(), toolSetRequest{
+		definition: testDefinition(names...),
+		actor:      testActor(),
+		input:      "for every customer with open loads, the count and the earliest pickup",
+	})
+
+	require.True(t, set.disclosed)
+	assert.True(t, set.offers(codemode.ToolRunScript),
+		"a fan-out question shows itself only after the first read, so the tool is there from the start")
 }

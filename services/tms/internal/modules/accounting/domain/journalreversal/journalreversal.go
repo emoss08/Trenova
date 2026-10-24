@@ -2,6 +2,7 @@ package journalreversal
 
 import (
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -51,6 +52,9 @@ type Reversal struct {
 	CreatedAt               int64    `json:"createdAt"               bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
 	UpdatedAt               int64    `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 	Version                 int64    `json:"version"                 bun:"version,type:BIGINT,notnull" keel:"version,version"`
+
+	OriginalJournalEntry *journalentry.JournalEntry `json:"originalJournalEntry,omitempty" bun:"rel:belongs-to,join:original_journal_entry_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:original_journal_entry_id"`
+	ReversalJournalEntry *journalentry.JournalEntry `json:"reversalJournalEntry,omitempty" bun:"rel:belongs-to,join:reversal_journal_entry_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:reversal_journal_entry_id"`
 }
 
 func (r *Reversal) GetID() pulid.ID {
@@ -80,6 +84,9 @@ func (r *Reversal) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightB,
 			},
+		},
+		Relationships: []*domaintypes.RelationshipDefintion{
+			{Field: "originalJournalEntry", Queryable: true},
 		},
 	}
 }

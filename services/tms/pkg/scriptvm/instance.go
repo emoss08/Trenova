@@ -8,6 +8,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/sys"
@@ -32,9 +33,9 @@ func coarseNanotime(origin time.Time) sys.Nanotime {
 	}
 }
 
-func coarseWalltime() (int64, int32) {
+func coarseWalltime() (sec int64, nsec int32) {
 	now := time.Now().Truncate(ClockResolution)
-	return now.Unix(), int32(now.Nanosecond())
+	return now.Unix(), intutils.SafeToInt32(now.Nanosecond())
 }
 
 var (

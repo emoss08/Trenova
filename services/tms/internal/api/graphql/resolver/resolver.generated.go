@@ -1001,6 +1001,7 @@ func FromServices(s *Services) *Resolver {
 		FiscalPeriodRepo:             s.FiscalPeriodRepo,
 		EmailService:                 s.EmailService,
 		DistanceProfileService:       s.DistanceProfileService,
+		JournalEntryService:          s.JournalEntryService,
 		ServiceFailureReasonCodeSvc:  s.ServiceFailureReasonCodeSvc,
 		AiProviderService:            s.AiProviderService,
 		CaptureService:               s.CaptureService,

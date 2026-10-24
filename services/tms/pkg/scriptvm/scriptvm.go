@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
@@ -103,6 +104,7 @@ type Options struct {
 
 type Runtime struct {
 	load      func() (*compiled, error)
+	loaded    atomic.Pointer[compiled]
 	logger    *zap.Logger
 	slots     chan struct{}
 	queueWait time.Duration
@@ -157,8 +159,8 @@ func (r *Runtime) Warm() error {
 }
 
 func (r *Runtime) Close(ctx context.Context) error {
-	c, err := r.load()
-	if err != nil {
+	c := r.loaded.Load()
+	if c == nil {
 		return nil
 	}
 	return c.close(ctx)
@@ -209,10 +211,7 @@ func (r *Runtime) drive(
 		}
 		reply, hostErr := host.Call(ctx, step.Function, []byte(step.Payload))
 		if hostErr != nil {
-			if ctx.Err() != nil {
-				return wallOutcome(), nil
-			}
-			return nil, errors.Join(ErrHost, hostErr)
+			return hostFailed(ctx, hostErr)
 		}
 		request, err = resumeRequest(reply)
 		if err != nil {
@@ -236,6 +235,15 @@ func (r *Runtime) stopped(ctx context.Context, in *instance, err error) *Outcome
 				Value: "the interpreter stopped while running the script",
 			},
 		}
+	}
+}
+
+func hostFailed(ctx context.Context, err error) (*Outcome, error) {
+	select {
+	case <-ctx.Done():
+		return wallOutcome(), nil
+	default:
+		return nil, errors.Join(ErrHost, err)
 	}
 }
 

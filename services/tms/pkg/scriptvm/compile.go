@@ -97,7 +97,9 @@ func (r *Runtime) compile() (*compiled, error) {
 	}
 	r.logger.Debug("script module compiled",
 		zap.String("cacheDir", dir), zap.Duration("took", time.Since(started)))
-	return &compiled{runtime: runtime, module: module, cache: cache}, nil
+	c := &compiled{runtime: runtime, module: module, cache: cache}
+	r.loaded.Store(c)
+	return c, nil
 }
 
 func checkABI(module wazero.CompiledModule) error {

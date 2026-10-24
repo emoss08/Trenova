@@ -22644,7 +22644,11 @@ type JournalReversal {
   businessUnitId: ID!
   organizationId: ID!
   originalJournalEntryId: ID!
+  "The entry this reversal undoes."
+  originalJournalEntry: JournalEntry!
   reversalJournalEntryId: ID
+  "The entry that posted this reversal; null until it posts."
+  reversalJournalEntry: JournalEntry
   postedBatchId: ID
   status: JournalReversalStatus!
   requestedAccountingDate: Timestamp!
@@ -26010,6 +26014,7 @@ extend type Query {
   GL_ACCOUNT
   IFTA_FUEL_TYPE
   HAZARDOUS_MATERIAL
+  JOURNAL_ENTRY
   LOCATION
   LOCATION_CATEGORY
   ORDER

@@ -64,10 +64,10 @@ mod tests {
 
     #[test]
     fn many_attempts_do_not_overflow() {
-        let mut backoff = Backoff::new(Duration::from_secs(1), Duration::from_secs(300));
+        let mut backoff = Backoff::new(Duration::from_secs(1), Duration::from_mins(5));
         for _ in 0..100 {
             backoff.next_delay();
         }
-        assert_eq!(backoff.ceiling(), Duration::from_secs(300));
+        assert_eq!(backoff.ceiling(), Duration::from_mins(5));
     }
 }

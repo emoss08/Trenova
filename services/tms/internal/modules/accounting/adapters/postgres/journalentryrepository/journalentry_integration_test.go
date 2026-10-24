@@ -210,3 +210,97 @@ func TestGetByIDStaysInsideTheTenant(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err))
 }
+
+func TestReversibleSelectOptionsListOnlyPostedEntriesNotYetReversedNewestFirst(t *testing.T) {
+	f := newJournalEntryFixture(t)
+	ctx := f.db.A.Ctx
+	je := journalentrydb.JournalEntries
+
+	entry := func(number string, status journalentry.Status, at int64, posted bool) *journalentry.JournalEntry {
+		e := &journalentry.JournalEntry{
+			BatchID:        f.invoice.BatchID,
+			FiscalYearID:   f.invoice.FiscalYearID,
+			FiscalPeriodID: f.period,
+			EntryNumber:    number,
+			EntryDate:      at,
+			EntryType:      journalentry.EntryTypeStandard,
+			AccountingDate: at,
+			Status:         status,
+			IsPosted:       posted,
+			ReferenceType:  "ManualJournalPosted",
+			ReferenceID:    pulid.MustNew("mjr_").String(),
+			Description:    "Manual journal",
+			TotalDebit:     100,
+			TotalCredit:    100,
+			CreatedByID:    f.db.A.Info.UserID,
+		}
+		require.NoError(t, je.Create(ctx, f.db.Admin, e))
+		return e
+	}
+
+	day := int64(86400)
+	entry("JE-REV-510", journalentry.StatusPosted, f.entryAt, true)
+	entry("JE-REV-520", journalentry.StatusPosted, f.entryAt+day, true)
+	entry("JE-REV-530", journalentry.StatusPending, f.entryAt+2*day, false)
+	reversed := entry("JE-REV-540", journalentry.StatusReversed, f.entryAt+3*day, true)
+	reversal := &journalentry.JournalEntry{
+		BatchID:        f.invoice.BatchID,
+		FiscalYearID:   f.invoice.FiscalYearID,
+		FiscalPeriodID: f.period,
+		EntryNumber:    "JE-REV-550",
+		EntryDate:      f.entryAt + 4*day,
+		EntryType:      journalentry.EntryTypeStandard,
+		AccountingDate: f.entryAt + 4*day,
+		Status:         journalentry.StatusPosted,
+		IsPosted:       true,
+		IsReversal:     true,
+		ReversalOfID:   reversed.ID,
+		ReferenceType:  "ManualJournalPosted",
+		ReferenceID:    pulid.MustNew("mjr_").String(),
+		Description:    "Manual journal",
+		TotalDebit:     100,
+		TotalCredit:    100,
+		CreatedByID:    f.db.A.Info.UserID,
+	}
+	require.NoError(t, je.Create(ctx, f.db.Admin, reversal))
+	_, err := je.Where(je.ID.Eq(reversed.ID)).Update(ctx, f.db.Admin, je.ReversedByID.To(reversal.ID))
+	require.NoError(t, err)
+
+	numbers := func(query string, reversibleOnly bool) []string {
+		result, listErr := f.repo.SelectOptions(ctx, &journalentryports.JournalEntrySelectOptionsRequest{
+			SelectQueryRequest: &pagination.SelectQueryRequest{
+				TenantInfo: f.db.A.Info,
+				Pagination: pagination.Info{Limit: 10},
+				Query:      query,
+			},
+			ReversibleOnly: reversibleOnly,
+		})
+		require.NoError(t, listErr)
+		got := make([]string, 0, len(result.Items))
+		for _, item := range result.Items {
+			got = append(got, item.EntryNumber)
+		}
+		return got
+	}
+
+	assert.Equal(t, []string{"JE-REV-520", "JE-REV-510"}, numbers("je-rev-5", true))
+	assert.Equal(t, []string{"JE-REV-510"}, numbers("510", true))
+	assert.Equal(t,
+		[]string{"JE-REV-550", "JE-REV-540", "JE-REV-530", "JE-REV-520", "JE-REV-510"},
+		numbers("je-rev-5", false),
+	)
+
+	got, err := f.repo.GetByIDs(ctx, journalentryports.GetJournalEntriesByIDsRequest{
+		TenantInfo: f.db.A.Info,
+		IDs:        []pulid.ID{reversed.ID, reversal.ID},
+	})
+	require.NoError(t, err)
+	assert.Len(t, got, 2)
+
+	got, err = f.repo.GetByIDs(f.db.B.Ctx, journalentryports.GetJournalEntriesByIDsRequest{
+		TenantInfo: f.db.B.Info,
+		IDs:        []pulid.ID{reversed.ID},
+	})
+	require.NoError(t, err)
+	assert.Empty(t, got, "another tenant reads none of the entries")
+}

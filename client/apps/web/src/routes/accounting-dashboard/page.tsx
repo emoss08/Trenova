@@ -1,13 +1,13 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { PageInsightsCard } from "@/components/insights/page-insights";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Button } from "@trenova/shared/components/ui/button";
 import { usePermission } from "@/hooks/use-permission";
 import { receivablesHaveActivity } from "@/lib/ar-dashboard";
 import { ar } from "@/lib/queries/ar";
-import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { CoinsHandIcon } from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Link } from "react-router";
 import { AccountingBriefing } from "./_components/accounting-briefing";
 import { AccountingDashboardEmpty } from "./_components/accounting-dashboard-empty";
@@ -23,9 +23,6 @@ export function AccountingDashboardPage() {
   const t = useT();
 
   const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
-  // The cards each draw their own zeros for a quiet book; only a tenant that
-  // has never invoiced gets the sketch instead, decided from the KPI strip's
-  // own query.
   const { data: kpis } = useQuery(ar.dashboardKpis());
   const neverInvoiced = kpis !== undefined && !receivablesHaveActivity(kpis.overview);
 

@@ -11,10 +11,11 @@
 #   PDFium     bblanchon/pdfium-binaries chromium/7881 (the build pdfium-render 0.9.4 binds),
 #              BSD-3-Clause (PDFium) and MIT (the build scripts); the tarball's SHA-256 is
 #              checked below, per architecture.
-#   libheif    Debian trixie 1.23.4-1~deb13u1, LGPL-3.0, linked dynamically (the worker opens
+#   libheif    Debian trixie 1.19.8-1+deb13u1, LGPL-3.0, linked dynamically (the worker opens
 #              it at run time, so the library can be replaced); its HEVC plugin and libde265
-#              1.0.15-1+deb13u2 (LGPL-3.0). apt checks each package's SHA-256 against the
-#              signed Release files.
+#              1.0.15-1+deb13u2 (LGPL-3.0), and its AV1 plugin and dav1d 1.5.1-1
+#              (BSD-2-Clause), which trixie's libheif1 depends on. apt checks each package's
+#              SHA-256 against the signed Release files.
 #   libwebp    compiled into the binary by libwebp-sys 0.14.4 from the upstream sources that
 #              crate vendors (BSD-3-Clause); Cargo.lock pins the crate's checksum.
 #   fonts      Liberation 2.1.5 (SIL OFL 1.1), metric-compatible stand-ins for the base fonts
@@ -57,9 +58,11 @@ FROM debian:${DEBIAN_RELEASE}-slim AS runtime-base
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-      libheif1=1.23.4-1~deb13u1 \
-      libheif-plugin-libde265=1.23.4-1~deb13u1 \
+      libheif1=1.19.8-1+deb13u1 \
+      libheif-plugin-libde265=1.19.8-1+deb13u1 \
       libde265-0=1.0.15-1+deb13u2 \
+      libheif-plugin-dav1d=1.19.8-1+deb13u1 \
+      libdav1d7=1.5.1-1 \
       fonts-liberation2=1:2.1.5-3; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 COPY --from=natives /out/ /
@@ -68,6 +71,8 @@ FROM chef AS builder
 ARG CARGO_BUILD_JOBS=4
 ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
 COPY --from=planner /src/recipe.json recipe.json
+# The recipe keeps the workspace's [patch.crates-io], but not the vendored crate it points at.
+COPY vendor/ vendor/
 RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     cargo chef cook --release --locked -p trenova-imaging --recipe-path recipe.json
 COPY . .
@@ -83,7 +88,8 @@ ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-      libheif1=1.23.4-1~deb13u1 libheif-plugin-libde265=1.23.4-1~deb13u1 libde265-0=1.0.15-1+deb13u2 \
+      libheif1=1.19.8-1+deb13u1 libheif-plugin-libde265=1.19.8-1+deb13u1 libde265-0=1.0.15-1+deb13u2 \
+      libheif-plugin-dav1d=1.19.8-1+deb13u1 libdav1d7=1.5.1-1 \
       fonts-liberation2=1:2.1.5-3; \
     rm -rf /var/lib/apt/lists/*
 COPY --from=natives /out/ /

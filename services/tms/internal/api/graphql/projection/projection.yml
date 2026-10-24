@@ -43,6 +43,9 @@ aliases:
   InvoiceDispute:
     openedBy: openedById
     resolvedBy: resolvedById
+  JournalReversal:
+    originalJournalEntry: originalJournalEntryId
+    reversalJournalEntry: reversalJournalEntryId
   DriverSettlement:
     submittedBy: submittedById
     approvedBy: approvedById

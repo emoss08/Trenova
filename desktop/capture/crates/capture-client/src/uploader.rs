@@ -143,7 +143,7 @@ impl Uploader {
     }
 
     pub async fn run(self, cancel: CancellationToken) {
-        let mut backoff = Backoff::new(Duration::from_secs(2), Duration::from_secs(300));
+        let mut backoff = Backoff::new(Duration::from_secs(2), Duration::from_mins(5));
         loop {
             let pause = self.pass().await;
             if let Ok(summary) = blocking(&self.spool, Spool::summary).await {

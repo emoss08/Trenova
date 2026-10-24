@@ -169,6 +169,19 @@ var ReversalInsertableColumns = []string{
 	"version",
 }
 
+// ReversalRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(ReversalRelations.OriginalJournalEntry)
+//	// Bun eager-loads the OriginalJournalEntry association via a separate query
+var ReversalRelations = struct {
+	OriginalJournalEntry string
+	ReversalJournalEntry string
+}{
+	OriginalJournalEntry: "OriginalJournalEntry",
+	ReversalJournalEntry: "ReversalJournalEntry",
+}
+
 // ReversalScopeTenant restricts a query to a single tenant by adding:
 //
 //	WHERE jr.organization_id = ? AND jr.business_unit_id = ?

@@ -32,7 +32,7 @@ use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 use crate::tray::Tray;
 
 /// How long to wait before trying again after capture is paused.
-const RECHECK_AFTER: Duration = Duration::from_secs(600);
+const RECHECK_AFTER: Duration = Duration::from_mins(10);
 /// How long the connection stays lost before the person is told: long
 /// enough that a network blip, or the server restarting, passes unremarked.
 const OFFLINE_NOTICE_AFTER: Duration = Duration::from_secs(90);

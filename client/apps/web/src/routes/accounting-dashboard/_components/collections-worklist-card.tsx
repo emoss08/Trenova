@@ -1,13 +1,14 @@
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { defineLabels } from "@trenova/shared/i18n/labels";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { SectionPanel, SectionPanelLink } from "@/components/section-panel";
 import type { ARWorklistItem } from "@/lib/graphql/accounts-receivable";
 import { ar } from "@/lib/queries/ar";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { Link } from "react-router";
 import { PANEL_LIST_HEIGHT, PanelQuiet, RowsBodySkeleton } from "./dashboard-panel";
 
@@ -60,13 +61,15 @@ export function CollectionsWorklistCard({ className }: { className?: string }) {
           {t("Nothing needs attention right now")}
         </PanelQuiet>
       ) : (
-        <ul className={cn("divide-border-subtle divide-y overflow-y-auto", PANEL_LIST_HEIGHT)}>
-          {rows.map((item) => (
-            <li key={item.invoiceId}>
-              <WorklistRow item={item} />
-            </li>
-          ))}
-        </ul>
+        <ScrollArea maskVariant="card">
+          <ul className={cn("divide-border-subtle divide-y", PANEL_LIST_HEIGHT)}>
+            {rows.map((item) => (
+              <li key={item.invoiceId}>
+                <WorklistRow item={item} />
+              </li>
+            ))}
+          </ul>
+        </ScrollArea>
       )}
     </SectionPanel>
   );

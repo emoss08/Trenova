@@ -27,8 +27,9 @@ accounting date, **Reference type**, **Reference**, whether it **Is reversal**, 
 Keywords: reverse JE, undo posting, back out entry
 1. Open [Journal reversals](/accounting/journal-reversals).
 2. Select **New journal reversal**.
-3. Enter the **Original journal entry ID** of the posted entry and the **Requested accounting date**
-   the reversal should post on.
+3. In **Original journal entry**, search by entry number and choose the posted entry, then enter
+   the **Requested accounting date** the reversal should post on. Only posted entries that are not
+   themselves reversals and have not already been reversed are offered.
 4. Enter a **Reason code** (for example ERROR or DUPLICATE) and a detailed **Reason**.
 5. Select **Create reversal**.
 
@@ -54,8 +55,8 @@ Keywords: withdraw reversal
 ### Look at the original journal entry
 Keywords: view journal entry, JE detail, entry lines
 1. Open [Journal reversals](/accounting/journal-reversals).
-2. Select the ID in the **Original journal entry** column. The journal entry page opens with its
-   details and **Line items**.
+2. Select the entry number in the **Original journal entry** column. The journal entry page opens
+   with its details and **Line items**.
 3. On the journal entry page, select the **Reference** link to open the record that produced the
    entry, or select **Back** to return.
 

@@ -251,6 +251,14 @@ func TestAScriptWaitingForASlotGivesUpWithItsContext(t *testing.T) {
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
+func TestClosingARuntimeThatRanNothingCompilesNothing(t *testing.T) {
+	t.Parallel()
+
+	rt := New(Options{})
+	require.NoError(t, rt.Close(t.Context()))
+	assert.Nil(t, rt.loaded.Load(), "Close loaded the module")
+}
+
 func TestTheClockAScriptSeesMovesInWholeMilliseconds(t *testing.T) {
 	t.Parallel()
 

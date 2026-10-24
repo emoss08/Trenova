@@ -1050,7 +1050,7 @@ impl Agent {
             }
             return;
         }
-        let waiting = self.spool.summary().map(|s| s.pages_waiting).unwrap_or(0);
+        let waiting = self.spool.summary().map_or(0, |s| s.pages_waiting);
         if waiting > 0 && current.is_some() {
             self.notify(
                 Severity::Warning,

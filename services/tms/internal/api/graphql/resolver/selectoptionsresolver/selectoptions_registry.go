@@ -110,6 +110,9 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		gqlmodel.SelectOptionResourceGlAccount: {
 			Resolve: r.resolveGLAccountSelectOptions,
 		},
+		gqlmodel.SelectOptionResourceJournalEntry: {
+			Resolve: r.resolveJournalEntrySelectOptions,
+		},
 		gqlmodel.SelectOptionResourceIFTAFuelType: {
 			Resolve:  r.resolveIFTAFuelTypeSelectOptions,
 			parseIDs: base.ParseCatalogIDs,

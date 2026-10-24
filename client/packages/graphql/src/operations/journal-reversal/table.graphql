@@ -3,7 +3,13 @@ fragment JournalReversalTableRowFields on JournalReversal {
   businessUnitId
   organizationId
   originalJournalEntryId
+  originalJournalEntry {
+    ...JournalEntryReference
+  }
   reversalJournalEntryId
+  reversalJournalEntry {
+    ...JournalEntryReference
+  }
   postedBatchId
   status
   requestedAccountingDate

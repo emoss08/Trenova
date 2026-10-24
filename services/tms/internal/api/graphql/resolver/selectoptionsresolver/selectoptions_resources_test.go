@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -247,4 +248,32 @@ func TestSelectOptionInt16Filter(t *testing.T) {
 	)
 	assert.Equal(t, int16(0), selectOptionInt16Filter(map[string]any{"planYear": true}, "planYear"))
 	assert.Equal(t, int16(0), selectOptionInt16Filter(map[string]any{}, "planYear"))
+}
+
+func TestJournalEntrySelectOptionItem_NamesTheEntryByNumberAndCarriesOnlyItsReferenceView(t *testing.T) {
+	t.Parallel()
+
+	entity := &journalentry.JournalEntry{
+		ID:             pulid.MustNew("je_"),
+		EntryNumber:    "JE-2026-000418",
+		EntryType:      journalentry.EntryType("Standard"),
+		Status:         journalentry.StatusPosted,
+		AccountingDate: 1792065600,
+		Description:    "Fuel accrual for October",
+		TotalDebit:     125000,
+		TotalCredit:    125000,
+		CreatedAt:      1792000000,
+	}
+
+	item := journalEntrySelectOptionItem(entity)
+
+	assert.Equal(t, entity.ID.String(), item.option.ID)
+	assert.Equal(t, "JE-2026-000418", item.option.Label)
+	assert.Nil(t, item.option.Description)
+	assert.Equal(t, map[string]any{
+		"entryType":      "Standard",
+		"status":         "Posted",
+		"accountingDate": int64(1792065600),
+	}, item.option.Meta)
+	assert.Equal(t, int64(1792000000), item.cursor.CreatedAt)
 }

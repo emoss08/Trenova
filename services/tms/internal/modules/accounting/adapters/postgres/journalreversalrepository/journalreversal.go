@@ -35,6 +35,13 @@ func New(p Params) journalreversalports.JournalReversalRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-reversal-repository")}
 }
 
+func withEntries(
+	q *keel.Query[journalreversal.Reversal],
+) *keel.Query[journalreversal.Reversal] {
+	jr := journalreversaldb.Reversals
+	return q.Load(jr.OriginalJournalEntry(), jr.ReversalJournalEntry())
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *journalreversalports.ListJournalReversalsRequest,
@@ -50,6 +57,7 @@ func (r *repository) List(
 				jr.Query(),
 				&listquery.Request[journalreversal.Reversal]{
 					Filter: req.Filter,
+					Shape:  withEntries,
 					Then:   []keel.Order{jr.CreatedAt.Desc()},
 				},
 			)
@@ -72,6 +80,7 @@ func (r *repository) ListConnection(
 				&listquery.Request[journalreversal.Reversal]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
+					Shape:  withEntries,
 				},
 			)
 			if err != nil {
@@ -94,7 +103,8 @@ func (r *repository) GetByID(
 }
 
 func (r *repository) get(ctx context.Context, id pulid.ID) (*journalreversal.Reversal, error) {
-	entity, err := journalreversaldb.Reversals.Get(ctx, r.db.Keel(ctx), id)
+	jr := journalreversaldb.Reversals
+	entity, err := withEntries(jr.Where(jr.ID.Eq(id))).One(ctx, r.db.Keel(ctx))
 	if err != nil {
 		return nil, reversalErrors.Map(err, id.String())
 	}
@@ -108,10 +118,10 @@ func (r *repository) ListByJournalEntry(
 ) ([]*journalreversal.Reversal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*journalreversal.Reversal, error) {
 		jr := journalreversaldb.Reversals
-		return jr.Where(keel.Or(
+		return withEntries(jr.Where(keel.Or(
 			jr.OriginalJournalEntryID.Eq(req.JournalEntryID),
 			jr.ReversalJournalEntryID.Eq(req.JournalEntryID),
-		)).
+		))).
 			Order(jr.CreatedAt.Desc(), jr.ID.Desc()).
 			All(ctx, r.db.Keel(ctx))
 	})

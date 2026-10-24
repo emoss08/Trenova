@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { CarrierAutocompleteField } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -6,6 +5,7 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { carrierRateMethodChoices, offerTtlChoices, tenderChannelChoices } from "@/lib/choices";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
 import {
   emptyRoutingGuideEntry,
@@ -147,7 +147,7 @@ export function RoutingGuideEntryEditor() {
                 description={t("How the offer reaches the carrier.")}
               />
             </FormControl>
-            <FormControl>
+            <FormControl cols="full">
               <SwitchField
                 control={control}
                 name={`entries.${index}.useContractRate`}

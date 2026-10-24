@@ -28,6 +28,16 @@ type ListJournalEntryConnectionRequest struct {
 	Cursor pagination.CursorInfo    `json:"-"`
 }
 
+type GetJournalEntriesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	IDs        []pulid.ID            `json:"ids"`
+}
+
+type JournalEntrySelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"selectQueryRequest"`
+	ReversibleOnly     bool                           `json:"reversibleOnly"`
+}
+
 type MarkJournalEntryReversedRequest struct {
 	OriginalEntryID pulid.ID `json:"originalEntryId"`
 	ReversalEntryID pulid.ID `json:"reversalEntryId"`
@@ -48,5 +58,13 @@ type JournalEntryRepository interface {
 		req *ListJournalEntryConnectionRequest,
 	) (*pagination.CursorListResult[*journalentry.JournalEntry], error)
 	GetByID(ctx context.Context, req GetJournalEntryByIDRequest) (*journalentry.JournalEntry, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetJournalEntriesByIDsRequest,
+	) ([]*journalentry.JournalEntry, error)
+	SelectOptions(
+		ctx context.Context,
+		req *JournalEntrySelectOptionsRequest,
+	) (*pagination.ListResult[*journalentry.JournalEntry], error)
 	MarkReversed(ctx context.Context, req MarkJournalEntryReversedRequest) error
 }

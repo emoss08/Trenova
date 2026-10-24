@@ -5,6 +5,7 @@ package selectoptionsresolver
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	accounttypeservice "github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
+	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	fiscalperiodports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	fiscalyearports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
@@ -99,6 +100,7 @@ type Deps struct {
 	FiscalPeriodRepo             fiscalperiodports.FiscalPeriodRepository
 	EmailService                 *emailservice.Service
 	DistanceProfileService       *distanceprofileservice.Service
+	JournalEntryService          *journalentryservice.Service
 	ServiceFailureReasonCodeSvc  servicefailureports.ServiceFailureReasonCodeService
 	AiProviderService            agentports.AIProviderService
 	CaptureService               *captureservice.Service

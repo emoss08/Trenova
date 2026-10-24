@@ -340,6 +340,10 @@ func (h *host) outcome(
 		} else {
 			outcome.Status = scriptports.Stopped
 		}
+	case scriptvm.StatusFailed:
+		outcome.Status = scriptports.Failed
+		outcome.Failure = scriptFailure
+		outcome.Error = nil
 	default:
 		outcome.Status = scriptports.Failed
 		outcome.Failure = scriptFailure
@@ -365,6 +369,8 @@ func limitOf(limit scriptvm.Limit) codemode.Limit {
 		return codemode.LimitMemory
 	case scriptvm.LimitCalls:
 		return codemode.LimitCalls
+	case scriptvm.LimitNone:
+		return codemode.LimitNone
 	default:
 		return codemode.LimitNone
 	}

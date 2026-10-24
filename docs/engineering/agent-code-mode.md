@@ -193,9 +193,20 @@ fans out inside itself. **Search terms:** "for each", "every one of", "reconcile
 
 **What was decided while building:**
 
-- The design's `Follows` rule (load whenever a list tool loads) is not used. The tool is offered
-  only while the gate is open, and then like any other tool: preselected by the task frame's
-  need, or found by `find_tools`.
+- **Who holds it.** No agent is configured with the tool. Every agent that holds a tool for its
+  work (anything beyond the core tools) holds it too (`agentruntime.heldTools`, `withScripts`),
+  unless an administrator switched it off for that agent (`DisabledToolNames`). When the E2B
+  extension ran scripts it granted the tool; moving scripts in-house first dropped that grant,
+  and no agent was offered a script until this rule replaced it.
+- **When it loads.** Whenever the gate is open, on every turn, a narrowed one included: the
+  turn opens with it rather than waiting for `find_tools`. Whether a question needs many reads
+  shows only once the first result says how many rows there are, after the turn's tools are
+  fixed, and a model that has just read one page of 568 does not search for a scripting tool;
+  it offers to page through the rest.
+- **What the prompt says.** An agent that holds it gets `scriptRule` beside the calculation rule
+  (`agentdefinition.trenovaRules`): a question across many records is one script that reads
+  every page, run in that turn, and the counts it prints are a tool's figures. Like the analysis
+  rule, it depends only on whether the tool is held, so the cached prompt stays put.
 - The design's Desk artifact is not built in 5a. A script's output is the model's to read and
   answer from, and a table worth a card is `report_analyze_data`'s work.
 

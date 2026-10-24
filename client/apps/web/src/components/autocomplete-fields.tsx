@@ -15,7 +15,7 @@ import {
   selectOptionMetaNumber,
   selectOptionMetaString,
 } from "@/lib/select-option-meta";
-import { formatRange } from "@trenova/shared/lib/date";
+import { formatRange, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Document } from "@trenova/shared/types/document";
 import type { SelectOption as StaticSelectOption } from "@trenova/shared/types/fields";
@@ -203,6 +203,11 @@ const fiscalPeriodSelectOptionsGraphQL = {
 
 const glAccountSelectOptionsGraphQL = {
   resource: "GL_ACCOUNT",
+} satisfies GraphQLSelectOptionsConfig;
+
+const reversibleJournalEntrySelectOptionsGraphQL = {
+  resource: "JOURNAL_ENTRY",
+  filters: { reversible: true },
 } satisfies GraphQLSelectOptionsConfig;
 
 const fuelSurchargeProgramSelectOptionsGraphQL = {
@@ -1044,6 +1049,30 @@ export function GLAccountAutocompleteField<T extends FieldValues>({
               {t(option.description)}
             </span>
           )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+/** Posted journal entries that are neither reversals nor already reversed, newest first. */
+export function ReversibleJournalEntryAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={reversibleJournalEntrySelectOptionsGraphQL}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="font-mono">{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {formatUnixDateMedium(selectOptionMetaNumber(option, "accountingDate"), {
+              fallback: "",
+            })}
+          </span>
         </div>
       )}
       {...props}

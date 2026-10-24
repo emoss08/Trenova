@@ -3,6 +3,7 @@ package journalentryrepository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -144,7 +145,63 @@ func (r *repository) GetByID(
 	})
 }
 
-//
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req journalentryports.GetJournalEntriesByIDsRequest,
+) ([]*journalentry.JournalEntry, error) {
+	if len(req.IDs) == 0 {
+		return []*journalentry.JournalEntry{}, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*journalentry.JournalEntry, error) {
+		je := journalentrydb.JournalEntries
+		entries, err := je.Where(je.ID.In(req.IDs...)).Limit(len(req.IDs)).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("get journal entries by ids: %w", err)
+		}
+
+		return entries, nil
+	})
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *journalentryports.JournalEntrySelectOptionsRequest,
+) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+			je := journalentrydb.JournalEntries
+			q := je.Pick(
+				je.ID,
+				je.FiscalPeriodID,
+				je.EntryNumber,
+				je.EntryType,
+				je.Status,
+				je.AccountingDate,
+				je.CreatedAt,
+			).Order(je.AccountingDate.Desc(), je.ID.Desc())
+			if req.ReversibleOnly {
+				q = q.Where(
+					je.Status.Eq(journalentry.StatusPosted),
+					je.IsPosted.IsTrue(),
+					je.IsReversal.IsFalse(),
+					je.ReversedByID.IsNull(),
+				)
+			}
+
+			return listquery.SelectOptions(
+				ctx,
+				r.db.Keel(ctx),
+				q,
+				req.SelectQueryRequest,
+				func(s string) keel.Pred { return je.EntryNumber.Lower().Contains(strings.ToLower(s)) },
+			)
+		},
+	)
+}
+
 //nolint:gocritic // repository contract uses value request types
 func (r *repository) MarkReversed(
 	ctx context.Context,

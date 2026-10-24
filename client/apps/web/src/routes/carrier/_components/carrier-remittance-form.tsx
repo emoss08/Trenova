@@ -1,10 +1,10 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { carrierPaymentMethodChoices } from "@/lib/choices";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { Carrier } from "@trenova/shared/types/carrier";
 import { useFormContext } from "react-hook-form";
 
@@ -104,7 +104,7 @@ export function CarrierRemittanceForm() {
               clearable
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <InputField
               control={control}
               name="remitPostalCode"

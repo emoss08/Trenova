@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { ReversibleJournalEntryAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
@@ -31,13 +32,14 @@ export function JournalReversalForm({ entryNumber }: { entryNumber?: string } = 
         <FormGroup cols={fixed ? 1 : 2}>
           {!fixed && (
             <FormControl>
-              <InputField
+              <ReversibleJournalEntryAutocompleteField
                 control={control}
                 name="originalJournalEntryId"
-                label={t("Original journal entry ID")}
+                label={t("Original journal entry")}
                 rules={{ required: true }}
-                placeholder={t("Enter the journal entry ID to reverse")}
-                description={t("The ID of the posted journal entry you want to reverse.")}
+                placeholder={t("Search by entry number")}
+                description={t("The posted journal entry you want to reverse.")}
+                noResultsMessage={t("No posted entries are waiting to be reversed")}
               />
             </FormControl>
           )}
