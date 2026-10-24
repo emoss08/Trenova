@@ -27,6 +27,7 @@ type searchColumn struct {
 type catalog struct {
 	table     *schema.Table
 	fields    map[string]int32
+	computed  map[string]int32
 	relations map[string]relation
 	vector    int32
 	search    []searchColumn
@@ -82,6 +83,7 @@ func buildCatalog(
 	c := &catalog{
 		table:     table,
 		fields:    columnsByJSON(table),
+		computed:  make(map[string]int32),
 		relations: make(map[string]relation),
 		vector:    -1,
 	}
@@ -99,6 +101,7 @@ func buildCatalog(
 	}
 
 	c.relations = queryableRelations(table, config.Relationships)
+	c.computed = computedFields(table, config.ComputedFilters)
 	if config.UseSearchVector {
 		c.vector = vectorColumn(table, config.SearchVectorColumn)
 	}
@@ -179,12 +182,31 @@ func columnsByJSON(table *schema.Table) map[string]int32 {
 	return out
 }
 
+func computedFields(table *schema.Table, names []string) map[string]int32 {
+	out := make(map[string]int32, len(names))
+	for i := range table.Columns {
+		col := &table.Columns[i]
+		if col.JSON == "" || col.Stored() || !slices.Contains(names, col.JSON) {
+			continue
+		}
+		if filterableKind(col.Kind) {
+			out[col.JSON] = int32(i)
+		}
+	}
+
+	return out
+}
+
 func filterable(col *schema.Column) bool {
 	if !col.Stored() || col.Flags.Has(schema.FlagNoSelect) {
 		return false
 	}
 
-	switch col.Kind {
+	return filterableKind(col.Kind)
+}
+
+func filterableKind(kind schema.Kind) bool {
+	switch kind {
 	case schema.KindTSVector,
 		schema.KindJSON,
 		schema.KindBytes,

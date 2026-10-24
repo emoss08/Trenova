@@ -11,12 +11,13 @@ import (
 )
 
 type Request[T any] struct {
-	Filter  *pagination.QueryOptions
-	Cursor  pagination.CursorInfo
-	Columns []string
-	Shape   func(*keel.Query[T]) *keel.Query[T]
-	Then    []keel.Order
-	Keyset  *Keyset
+	Filter   *pagination.QueryOptions
+	Cursor   pagination.CursorInfo
+	Columns  []string
+	Shape    func(*keel.Query[T]) *keel.Query[T]
+	Then     []keel.Order
+	Keyset   *Keyset
+	Computed map[string]keel.Expr
 }
 
 type Keyset struct {
@@ -30,7 +31,7 @@ func Connection[T any](
 	q *keel.Query[T],
 	req *Request[T],
 ) (*pagination.CursorListResult[*T], error) {
-	p := newPlan(q)
+	p := newPlan(q, req.Computed)
 	q.Where(p.where(req.Filter)...)
 
 	orders, shape, err := connectionOrder(p, req)
@@ -83,7 +84,7 @@ func List[T any](
 	q *keel.Query[T],
 	req *Request[T],
 ) (*pagination.ListResult[*T], error) {
-	p := newPlan(q)
+	p := newPlan(q, req.Computed)
 	q.Where(p.where(req.Filter)...)
 
 	counted := q.Clone()
@@ -246,5 +247,5 @@ func cursorLimit(filter *pagination.QueryOptions, cursor *pagination.CursorInfo)
 }
 
 func Filter[T any](q *keel.Query[T], filter *pagination.QueryOptions) *keel.Query[T] {
-	return q.Where(newPlan(q).where(filter)...)
+	return q.Where(newPlan(q, nil).where(filter)...)
 }

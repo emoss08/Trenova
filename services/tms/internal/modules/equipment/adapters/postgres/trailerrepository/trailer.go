@@ -97,6 +97,9 @@ func (r *repository) List(
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.TrailerColumns,
+					Computed: map[string]keel.Expr{
+						lastKnownLocationFilter: lastknownlocation.LocationID(trailerdb.Trailers.ID, equipmentcontinuity.EquipmentTypeTrailer),
+					},
 					Shape: func(q *keel.Query[trailer.Trailer]) *keel.Query[trailer.Trailer] {
 						return withLastKnownLocation(q.Load(loads...), &req.TrailerRelationIncludes)
 					},
@@ -315,6 +318,8 @@ func trailerLoads(includes *trailerports.TrailerRelationIncludes) ([]keel.Loader
 
 	return loads.Result()
 }
+
+const lastKnownLocationFilter = "lastKnownLocationId"
 
 func withLastKnownLocation(
 	q *keel.Query[trailer.Trailer],

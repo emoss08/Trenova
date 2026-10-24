@@ -5,12 +5,13 @@ package documentpacketrulerepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/documenttyperepository"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
+	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/documenttyperepository"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -90,13 +91,11 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 	assert.Equal(t, 99, updated.DisplayOrder)
 	assert.Equal(t, 10, updated.ExpirationWarningDays)
 
+	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	otherTenantListed, err := repo.ListByResourceType(
-		ctx,
+		dbscope.WithTenant(ctx, stranger.DBTenant()),
 		&documentpacketruleports.ListDocumentPacketRulesByResourceRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: pulid.MustNew("org_"),
-				BuID:  pulid.MustNew("bu_"),
-			},
+			TenantInfo:   stranger,
 			ResourceType: "Worker",
 		},
 	)

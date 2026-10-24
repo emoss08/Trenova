@@ -5,10 +5,11 @@ package capturerepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,6 +27,7 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	p := Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}
 	orgID, buID, userID := data.Organization.ID, data.BusinessUnit.ID, data.User.ID
 	ti := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
@@ -211,8 +213,9 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 	require.NoError(t, sheets.CreateMany(ctx, []*capture.CaptureCoverSheet{cs}))
 	_, err = sheets.GetByTokenHash(ctx, captureports.GetCaptureCoverSheetByTokenRequest{TenantInfo: ti, TokenHash: cs.TokenHash})
 	require.NoError(t, err)
-	_, err = sheets.GetByTokenHash(ctx, captureports.GetCaptureCoverSheetByTokenRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: buID}, TokenHash: cs.TokenHash})
+	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: buID}
+	_, err = sheets.GetByTokenHash(dbscope.WithTenant(ctx, stranger.DBTenant()),
+		captureports.GetCaptureCoverSheetByTokenRequest{TenantInfo: stranger, TokenHash: cs.TokenHash})
 	assert.True(t, errortypes.IsNotFoundError(err), "another tenant cannot resolve the sheet")
 	require.NoError(t, sheets.MarkUsed(ctx, captureports.MarkCaptureCoverSheetUsedRequest{ID: cs.ID, TenantInfo: ti, UsedAt: 3}))
 	used, err := sheets.GetByID(ctx, captureports.GetCaptureCoverSheetByIDRequest{ID: cs.ID, TenantInfo: ti})

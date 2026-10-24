@@ -102,6 +102,9 @@ func (r *repository) List(
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.TractorColumns,
+					Computed: map[string]keel.Expr{
+						lastKnownLocationFilter: lastknownlocation.LocationID(tractordb.Tractors.ID, equipmentcontinuity.EquipmentTypeTractor),
+					},
 					Shape: func(q *keel.Query[tractor.Tractor]) *keel.Query[tractor.Tractor] {
 						return withLastKnownLocation(q.Load(loads...), &req.TractorRelationIncludes)
 					},
@@ -339,6 +342,8 @@ func tractorLoads(includes *tractorports.TractorRelationIncludes) ([]keel.Loader
 
 	return loads.Result()
 }
+
+const lastKnownLocationFilter = "lastKnownLocationId"
 
 func withLastKnownLocation(
 	q *keel.Query[tractor.Tractor],

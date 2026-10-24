@@ -179,6 +179,7 @@ func (t *Trailer) GetResourceID() string {
 func (t *Trailer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "tr",
+		ComputedFilters: []string{"lastKnownLocationId"},
 		UseSearchVector: true,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},

@@ -52,6 +52,7 @@ type PostgresSearchConfig struct {
 	TableAlias         string
 	SearchableFields   []SearchableField
 	Relationships      []*RelationshipDefintion
+	ComputedFilters    []string
 	UseSearchVector    bool   // whether to use "search_vector" column for text search
 	SearchVectorColumn string // name of the search vector column
 }

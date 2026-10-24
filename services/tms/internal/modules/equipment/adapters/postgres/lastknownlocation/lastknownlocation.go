@@ -8,6 +8,7 @@ import (
 
 const (
 	alias        = "lkc"
+	filterAlias  = "lkf"
 	nameSQL      = "(SELECT l.name FROM locations l WHERE l.id = ? AND l.organization_id = ? AND l.business_unit_id = ?)"
 	latitudeSQL  = "(SELECT l.latitude FROM locations l WHERE l.id = ? AND l.organization_id = ? AND l.business_unit_id = ?)"
 	longitudeSQL = "(SELECT l.longitude FROM locations l WHERE l.id = ? AND l.organization_id = ? AND l.business_unit_id = ?)"
@@ -49,4 +50,9 @@ func Of(ec *equipmentcontinuitydb.EquipmentContinuitiesTable, tenant Tenant) Fie
 		Latitude:   keel.Raw(latitudeSQL, current, tenant.OrganizationID, tenant.BusinessUnitID),
 		Longitude:  keel.Raw(longitudeSQL, current, tenant.OrganizationID, tenant.BusinessUnitID),
 	}
+}
+
+func LocationID(equipmentID keel.Expr, kind equipmentcontinuity.EquipmentType) keel.Expr {
+	ec := equipmentcontinuitydb.EquipmentContinuities.As(filterAlias)
+	return keel.Scalar(ec.Pick(ec.CurrentLocationID).Where(Current(ec, equipmentID, kind)...).Limit(1))
 }

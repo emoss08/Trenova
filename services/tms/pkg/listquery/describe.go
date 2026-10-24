@@ -29,6 +29,9 @@ func Describe(
 	for name, index := range c.fields {
 		describeColumn(out, name, &table.Columns[index], true)
 	}
+	for name, index := range c.computed {
+		describeColumn(out, name, &table.Columns[index], false)
+	}
 	for relName, rel := range c.relations {
 		if !rel.toOne() {
 			continue

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,7 +23,7 @@ func filtered(t *testing.T, filter *pagination.QueryOptions) (string, []any) {
 	t.Helper()
 
 	q := testTrucks.Query()
-	p := newPlan(q)
+	p := newPlan(q, nil)
 	q.Where(p.where(filter)...).Limit(10)
 
 	return render(t, q)
@@ -326,7 +327,7 @@ func TestFilters_ARelationThatIsNotQueryableIsSkipped(t *testing.T) {
 	t.Parallel()
 
 	q := testPlainTrucks.Query()
-	p := newPlan(q)
+	p := newPlan(q, nil)
 	q.Where(p.where(filters(domaintypes.FieldFilter{
 		Field:    "owner.name",
 		Operator: dbtype.OpEqual,
@@ -452,7 +453,7 @@ func TestSearch_ConfiguredFieldsWithoutAVector(t *testing.T) {
 	t.Parallel()
 
 	q := testPlainTrucks.Query()
-	p := newPlan(q)
+	p := newPlan(q, nil)
 	q.Where(p.where(&pagination.QueryOptions{Query: "12"})...).Limit(10)
 
 	sql, args := render(t, q)
@@ -462,7 +463,7 @@ func TestSearch_ConfiguredFieldsWithoutAVector(t *testing.T) {
 	assert.Equal(t, []any{"org_1", "bu_1", "%12%", "%12%", "12"}, args)
 
 	q = testPlainTrucks.Query()
-	p = newPlan(q)
+	p = newPlan(q, nil)
 	q.Where(p.where(&pagination.QueryOptions{Query: "acme"})...).Limit(10)
 
 	sql, args = render(t, q)
@@ -491,7 +492,7 @@ func TestSearch_AModelWithoutConfigurationSearchesItsTextColumns(t *testing.T) {
 		Ref: &keel.Ref{Table: newTrucksTable("test_bare_trucks", "bt", testOwners)},
 	}
 	q := h.Query()
-	p := newPlan(q)
+	p := newPlan(q, nil)
 	q.Where(p.where(&pagination.QueryOptions{Query: "x"})...).Limit(10)
 
 	sql, _ := render(t, q)
@@ -505,7 +506,7 @@ func TestOrders_RequestSortsInOrder(t *testing.T) {
 	t.Parallel()
 
 	q := testTrucks.Query()
-	p := newPlan(q)
+	p := newPlan(q, nil)
 	q.Order(p.orders([]domaintypes.SortField{
 		{Field: "code", Direction: dbtype.SortDirectionAsc},
 		{Field: "nope", Direction: dbtype.SortDirectionAsc},
@@ -521,7 +522,7 @@ func TestOrders_RequestSortsInOrder(t *testing.T) {
 func TestKeysetOrder_DefaultsToNewestFirst(t *testing.T) {
 	t.Parallel()
 
-	p := newPlan(testTrucks.Query())
+	p := newPlan(testTrucks.Query(), nil)
 	orders, shape, err := p.keysetOrder(nil)
 	require.NoError(t, err)
 
@@ -538,7 +539,7 @@ func TestKeysetOrder_DefaultsToNewestFirst(t *testing.T) {
 func TestKeysetOrder_NullableColumnsSortTheirNullsLast(t *testing.T) {
 	t.Parallel()
 
-	p := newPlan(testTrucks.Query())
+	p := newPlan(testTrucks.Query(), nil)
 	orders, shape, err := p.keysetOrder([]domaintypes.SortField{
 		{Field: "year", Direction: dbtype.SortDirectionAsc},
 		{Field: "description", Direction: dbtype.SortDirectionDesc},
@@ -559,7 +560,7 @@ func TestKeysetOrder_NullableColumnsSortTheirNullsLast(t *testing.T) {
 func TestKeysetOrder_OrdersByARelationsColumn(t *testing.T) {
 	t.Parallel()
 
-	p := newPlan(testTrucks.Query())
+	p := newPlan(testTrucks.Query(), nil)
 	orders, shape, err := p.keysetOrder([]domaintypes.SortField{
 		{Field: "owner.name", Direction: dbtype.SortDirectionAsc},
 	})
@@ -611,7 +612,7 @@ func TestKeysetOrder_RefusesWhatAKeysetCannotOrderBy(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, _, err := newPlan(testTrucks.Query()).keysetOrder([]domaintypes.SortField{tc.sort})
+			_, _, err := newPlan(testTrucks.Query(), nil).keysetOrder([]domaintypes.SortField{tc.sort})
 
 			var validation *errortypes.Error
 			require.ErrorAs(t, err, &validation)
@@ -717,4 +718,34 @@ func TestCatalog_ResolvesJSONNamesThroughTheSchema(t *testing.T) {
 	loads, ok := cat.relation("loads")
 	require.True(t, ok)
 	assert.True(t, loads.countable())
+}
+
+func TestComputedFilters_ResolveOnlyWithTheRepositorysExpression(t *testing.T) {
+	t.Parallel()
+
+	table := newTrucksTable("test_seen_trucks", "st", testOwners)
+	table.Columns = append(table.Columns, schema.Column{
+		Name:   "last_seen_id",
+		Quoted: schema.Quote("last_seen_id"),
+		Field:  "LastSeenID",
+		JSON:   "lastSeenId",
+		Kind:   schema.KindString,
+		Flags:  schema.FlagComputed | schema.FlagNullable,
+	})
+	config := &domaintypes.PostgresSearchConfig{ComputedFilters: []string{"lastSeenId"}}
+	cat := buildCatalog(table, config)
+	ref := &keel.Ref{Table: table}
+
+	_, ok := (&plan{cat: cat, ref: ref}).resolve("lastSeenId")
+	assert.False(t, ok, "a computed field without its expression is not filterable")
+
+	p := &plan{cat: cat, ref: ref, computed: map[string]keel.Expr{"lastSeenId": keel.Raw("'loc_1'")}}
+	fd, ok := p.resolve("lastSeenId")
+	require.True(t, ok)
+	assert.False(t, fd.base)
+	assert.Equal(t, "last_seen_id", fd.col.Name)
+
+	_, ok = (&plan{cat: buildCatalog(table, &domaintypes.PostgresSearchConfig{}), ref: ref,
+		computed: p.computed}).resolve("lastSeenId")
+	assert.False(t, ok, "a computed field the entity does not list stays unfilterable")
 }

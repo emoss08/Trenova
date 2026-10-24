@@ -8,8 +8,9 @@ import (
 )
 
 type plan struct {
-	cat *catalog
-	ref *keel.Ref
+	cat      *catalog
+	ref      *keel.Ref
+	computed map[string]keel.Expr
 }
 
 type field struct {
@@ -19,9 +20,9 @@ type field struct {
 	index int32
 }
 
-func newPlan[T any](q *keel.Query[T]) *plan {
+func newPlan[T any](q *keel.Query[T], computed map[string]keel.Expr) *plan {
 	ref := q.TableRef()
-	return &plan{cat: catalogFor[T](ref.Table), ref: ref}
+	return &plan{cat: catalogFor[T](ref.Table), ref: ref, computed: computed}
 }
 
 func (p *plan) baseColumn(index int32) keel.Col {
@@ -33,7 +34,7 @@ func (p *plan) resolve(name string) (field, bool) {
 	if !nested {
 		index, ok := p.cat.fields[name]
 		if !ok {
-			return field{}, false
+			return p.resolveComputed(name)
 		}
 		return field{
 			expr:  keel.DynOf(p.baseColumn(index)),
@@ -64,6 +65,19 @@ func (p *plan) resolve(name string) (field, bool) {
 	}
 
 	return field{expr: expr, col: col, index: index}, true
+}
+
+func (p *plan) resolveComputed(name string) (field, bool) {
+	index, ok := p.cat.computed[name]
+	if !ok {
+		return field{}, false
+	}
+	expr, ok := p.computed[name]
+	if !ok || expr == nil {
+		return field{}, false
+	}
+
+	return field{expr: keel.DynOf(expr), col: &p.cat.table.Columns[index], index: index}, true
 }
 
 func (p *plan) TableRef() *keel.Ref {
