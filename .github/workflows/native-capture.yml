@@ -126,7 +126,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         if: inputs.version != ''
         with:
-          toolchain: 1.94.0
+          toolchain: 1.96.1
 
       - name: Decide
         id: decide
@@ -202,7 +202,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.94.0
+          toolchain: 1.96.1
           components: rustfmt, clippy
           targets: x86_64-pc-windows-msvc, i686-pc-windows-msvc
 
@@ -257,7 +257,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.94.0
+          toolchain: 1.96.1
           components: rustfmt, clippy
           targets: x86_64-pc-windows-msvc, i686-pc-windows-msvc
 

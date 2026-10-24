@@ -1151,7 +1151,7 @@ mod tests {
             parse_grpc_timeout("1500m"),
             Some(Duration::from_millis(1500))
         );
-        assert_eq!(parse_grpc_timeout("2M"), Some(Duration::from_secs(120)));
+        assert_eq!(parse_grpc_timeout("2M"), Some(Duration::from_mins(2)));
         assert_eq!(parse_grpc_timeout("123456789S"), None);
         assert_eq!(parse_grpc_timeout("S"), None);
         assert_eq!(parse_grpc_timeout("10x"), None);

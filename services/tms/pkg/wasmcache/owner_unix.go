@@ -1,6 +1,6 @@
 //go:build unix
 
-package rules
+package wasmcache
 
 import (
 	"io/fs"

@@ -355,7 +355,7 @@ func TestTheDefaultRuntimeAnswers(t *testing.T) {
 	assert.True(t, bytes.HasPrefix(raw, []byte(`{"version":"`)), string(raw))
 }
 
-func TestTheCompilationCacheIsKeyedByTheModuleAndPrivate(t *testing.T) {
+func TestTheCompilationCacheIsUnderTheModulesSum(t *testing.T) {
 	base := t.TempDir()
 	t.Setenv(CacheDirEnv, base)
 
@@ -363,19 +363,6 @@ func TestTheCompilationCacheIsKeyedByTheModuleAndPrivate(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, cache.Close(t.Context()))
 	assert.Equal(t, filepath.Join(base, moduleSum()), dir)
-
-	info, err := os.Stat(dir)
-	require.NoError(t, err)
-	assert.Equal(t, os.FileMode(cacheDirPerms), info.Mode().Perm())
-
-	shared := filepath.Join(t.TempDir(), "shared")
-	require.NoError(t, os.Mkdir(shared, 0o700))
-	require.NoError(t, os.Chmod(shared, 0o777))
-	t.Setenv(CacheDirEnv, shared)
-	cache, _, err = compilationCache(moduleSum())
-	require.ErrorIs(t, err, errUnsafeCacheDir)
-	require.NotNil(t, cache)
-	require.NoError(t, cache.Close(t.Context()))
 }
 
 func TestOperationLabelsAreBounded(t *testing.T) {

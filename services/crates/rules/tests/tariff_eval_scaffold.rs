@@ -6,9 +6,9 @@ fn scaffold(input: &Value) -> Value {
     let raw = serde_json::value::to_raw_value(input).unwrap_or_else(|_| {
         serde_json::value::RawValue::from_string(String::from("{}")).unwrap_or_default()
     });
-    trenova_rules::tariff::eval::ops::scaffold_test(&raw)
-        .map(|output| serde_json::from_str(output.get()).unwrap_or(Value::Null))
-        .unwrap_or(Value::Null)
+    trenova_rules::tariff::eval::ops::scaffold_test(&raw).map_or(Value::Null, |output| {
+        serde_json::from_str(output.get()).unwrap_or(Value::Null)
+    })
 }
 
 fn call(op: &str, input: &Value) -> Value {
