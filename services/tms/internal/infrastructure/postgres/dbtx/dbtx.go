@@ -3,12 +3,17 @@ package dbtx
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/uptrace/bun"
 )
 
 type scopedTransactor interface {
 	ScopedTransactions() bool
+}
+
+type keelConnection interface {
+	Keel(ctx context.Context) *keel.DB
 }
 
 func Read[T any](
@@ -135,6 +140,12 @@ func Savepoint(
 	conn kernelports.DBConnection,
 	fn func(context.Context) error,
 ) error {
+	if kc, ok := conn.(keelConnection); ok {
+		if db := kc.Keel(ctx); db != nil && keel.InTx(ctx, db) {
+			return keel.Savepoint(ctx, db, fn)
+		}
+	}
+
 	tx, ok := conn.DBForContext(ctx).(bun.Tx)
 	if !ok {
 		return fn(ctx)

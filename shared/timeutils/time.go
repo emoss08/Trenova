@@ -22,12 +22,16 @@ func IsPlausibleInstant(seconds int64) bool {
 	return seconds >= earliestPlausibleInstant && seconds <= latestPlausibleInstant
 }
 
+func Now() time.Time {
+	return time.Now()
+}
+
 func NowUnix() int64 {
-	return time.Now().Unix()
+	return Now().Unix()
 }
 
 func NowUnixMilli() int64 {
-	return time.Now().UnixMilli()
+	return Now().UnixMilli()
 }
 
 func CeilSeconds(d time.Duration) int {

@@ -2148,7 +2148,7 @@ func (c *Config) postgresDSN(user, password string) string {
 		Path:   "/" + c.Database.Name,
 		RawQuery: "sslmode=" + url.QueryEscape(c.Database.SSLMode) +
 			"&application_name=" + url.QueryEscape(c.App.Name) +
-			"&dial_timeout=10s",
+			"&connect_timeout=10",
 	}
 
 	return dsn.String()

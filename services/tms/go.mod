@@ -337,5 +337,6 @@ replace (
 
 tool (
 	github.com/99designs/gqlgen
+	github.com/emoss08/keel/cmd/keel
 	github.com/fe3dback/go-arch-lint
 )

@@ -75,11 +75,12 @@ and still break production or the build.
   `domain`, `ports` and `<name>contract` packages (`archlint`). Public code never imports
   `internal/cloud`.
 - **Tenancy.** Repository methods run in `dbtx.Read`/`dbtx.Write` and query through
-  `DBForContext(ctx)`, never `.DB()`. `trenova-db` runs `SELECT trenova_rls.reconcile()` after
-  every migration run, which protects a table with non-null `organization_id` and
-  `business_unit_id`; any other shape calls `trenova_rls.apply_policy` or joins
-  `trenova_rls.global_tables` in its migration. Cross-tenant code declares `dbscope.WithSystem` and
-  is listed in `rlslint`'s allowlist.
+  `DBForContext(ctx)` (Bun) or `Keel(ctx)` (keel), never `.DB()`; while Bun remains, start
+  transactions with `dbtx`, never `keel.Write` ([keel-migration.md](docs/engineering/backend/keel-migration.md)).
+  `trenova-db` runs `SELECT trenova_rls.reconcile()` after every migration run, which protects a
+  table with non-null `organization_id` and `business_unit_id`; any other shape calls
+  `trenova_rls.apply_policy` or joins `trenova_rls.global_tables` in its migration. Cross-tenant
+  code declares `dbscope.WithSystem` and is listed in `rlslint`'s allowlist.
 - **Columns** come from `pkg/buncolgen` helpers, never hand-written names.
 - **Authorization.** Every root resolver and route reaches a permission check or is listed with a
   reason in `authzlint`; every new write has an agent tool, exemption or `pending` entry in
