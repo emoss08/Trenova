@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
-	"github.com/uptrace/bun"
 )
 
 // NewMockChargeAllocationRepository creates a new instance of MockChargeAllocationRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -75,7 +74,7 @@ type MockChargeAllocationRepository_ClearInvoice_Call struct {
 
 // ClearInvoice is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ClearChargeAllocationsInvoiceRequest
+//   - req *shipmentports.ClearChargeAllocationsInvoiceRequest
 func (_e *MockChargeAllocationRepository_Expecter) ClearInvoice(ctx any, req any) *MockChargeAllocationRepository_ClearInvoice_Call {
 	return &MockChargeAllocationRepository_ClearInvoice_Call{Call: _e.mock.On("ClearInvoice", ctx, req)}
 }
@@ -98,8 +97,8 @@ func (_c *MockChargeAllocationRepository_ClearInvoice_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockChargeAllocationRepository_ClearInvoice_Call) Return(v0 int64, err error) *MockChargeAllocationRepository_ClearInvoice_Call {
-	_c.Call.Return(v0, err)
+func (_c *MockChargeAllocationRepository_ClearInvoice_Call) Return(n int64, err error) *MockChargeAllocationRepository_ClearInvoice_Call {
+	_c.Call.Return(n, err)
 	return _c
 }
 
@@ -143,7 +142,7 @@ type MockChargeAllocationRepository_ListByOrderChargeIDs_Call struct {
 
 // ListByOrderChargeIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListChargeAllocationsByOrderChargeIDsRequest
+//   - req *shipmentports.ListChargeAllocationsByOrderChargeIDsRequest
 func (_e *MockChargeAllocationRepository_Expecter) ListByOrderChargeIDs(ctx any, req any) *MockChargeAllocationRepository_ListByOrderChargeIDs_Call {
 	return &MockChargeAllocationRepository_ListByOrderChargeIDs_Call{Call: _e.mock.On("ListByOrderChargeIDs", ctx, req)}
 }
@@ -166,8 +165,8 @@ func (_c *MockChargeAllocationRepository_ListByOrderChargeIDs_Call) Run(run func
 	return _c
 }
 
-func (_c *MockChargeAllocationRepository_ListByOrderChargeIDs_Call) Return(v0 map[pulid.ID][]*shipment.ChargeAllocation, err error) *MockChargeAllocationRepository_ListByOrderChargeIDs_Call {
-	_c.Call.Return(v0, err)
+func (_c *MockChargeAllocationRepository_ListByOrderChargeIDs_Call) Return(iDToChargeAllocations map[pulid.ID][]*shipment.ChargeAllocation, err error) *MockChargeAllocationRepository_ListByOrderChargeIDs_Call {
+	_c.Call.Return(iDToChargeAllocations, err)
 	return _c
 }
 
@@ -211,7 +210,7 @@ type MockChargeAllocationRepository_ListByShipmentIDs_Call struct {
 
 // ListByShipmentIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListChargeAllocationsByShipmentIDsRequest
+//   - req *shipmentports.ListChargeAllocationsByShipmentIDsRequest
 func (_e *MockChargeAllocationRepository_Expecter) ListByShipmentIDs(ctx any, req any) *MockChargeAllocationRepository_ListByShipmentIDs_Call {
 	return &MockChargeAllocationRepository_ListByShipmentIDs_Call{Call: _e.mock.On("ListByShipmentIDs", ctx, req)}
 }
@@ -234,8 +233,8 @@ func (_c *MockChargeAllocationRepository_ListByShipmentIDs_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockChargeAllocationRepository_ListByShipmentIDs_Call) Return(v0 map[pulid.ID][]*shipment.ChargeAllocation, err error) *MockChargeAllocationRepository_ListByShipmentIDs_Call {
-	_c.Call.Return(v0, err)
+func (_c *MockChargeAllocationRepository_ListByShipmentIDs_Call) Return(iDToChargeAllocations map[pulid.ID][]*shipment.ChargeAllocation, err error) *MockChargeAllocationRepository_ListByShipmentIDs_Call {
+	_c.Call.Return(iDToChargeAllocations, err)
 	return _c
 }
 
@@ -308,8 +307,8 @@ func (_c *MockChargeAllocationRepository_LockedIDs_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockChargeAllocationRepository_LockedIDs_Call) Return(v0 map[pulid.ID]struct{}, err error) *MockChargeAllocationRepository_LockedIDs_Call {
-	_c.Call.Return(v0, err)
+func (_c *MockChargeAllocationRepository_LockedIDs_Call) Return(iDToVal map[pulid.ID]struct{}, err error) *MockChargeAllocationRepository_LockedIDs_Call {
+	_c.Call.Return(iDToVal, err)
 	return _c
 }
 
@@ -351,7 +350,7 @@ type MockChargeAllocationRepository_MarkInvoiced_Call struct {
 
 // MarkInvoiced is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.MarkChargeAllocationsInvoicedRequest
+//   - req *shipmentports.MarkChargeAllocationsInvoicedRequest
 func (_e *MockChargeAllocationRepository_Expecter) MarkInvoiced(ctx any, req any) *MockChargeAllocationRepository_MarkInvoiced_Call {
 	return &MockChargeAllocationRepository_MarkInvoiced_Call{Call: _e.mock.On("MarkInvoiced", ctx, req)}
 }
@@ -374,8 +373,8 @@ func (_c *MockChargeAllocationRepository_MarkInvoiced_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockChargeAllocationRepository_MarkInvoiced_Call) Return(v0 int64, err error) *MockChargeAllocationRepository_MarkInvoiced_Call {
-	_c.Call.Return(v0, err)
+func (_c *MockChargeAllocationRepository_MarkInvoiced_Call) Return(n int64, err error) *MockChargeAllocationRepository_MarkInvoiced_Call {
+	_c.Call.Return(n, err)
 	return _c
 }
 
@@ -385,19 +384,16 @@ func (_c *MockChargeAllocationRepository_MarkInvoiced_Call) RunAndReturn(run fun
 }
 
 // RefreshQueueSnapshots provides a mock function for the type MockChargeAllocationRepository
-func (_mock *MockChargeAllocationRepository) RefreshQueueSnapshots(ctx context.Context, tx bun.IDB, tenantInfo pagination.TenantInfo, shipmentID pulid.ID) error {
-	ret := _mock.Called(ctx, tx, tenantInfo, shipmentID)
+func (_mock *MockChargeAllocationRepository) RefreshQueueSnapshots(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID) error {
+	ret := _mock.Called(ctx, tenantInfo, shipmentID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefreshQueueSnapshots")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bun.IDB, pagination.TenantInfo, pulid.ID) error); ok {
-		return returnFunc(ctx, tx, tenantInfo, shipmentID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bun.IDB, pagination.TenantInfo, pulid.ID) error); ok {
-		r0 = returnFunc(ctx, tx, tenantInfo, shipmentID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
+		r0 = returnFunc(ctx, tenantInfo, shipmentID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -411,36 +407,30 @@ type MockChargeAllocationRepository_RefreshQueueSnapshots_Call struct {
 
 // RefreshQueueSnapshots is a helper method to define mock.On call
 //   - ctx context.Context
-//   - tx bun.IDB
 //   - tenantInfo pagination.TenantInfo
 //   - shipmentID pulid.ID
-func (_e *MockChargeAllocationRepository_Expecter) RefreshQueueSnapshots(ctx any, tx any, tenantInfo any, shipmentID any) *MockChargeAllocationRepository_RefreshQueueSnapshots_Call {
-	return &MockChargeAllocationRepository_RefreshQueueSnapshots_Call{Call: _e.mock.On("RefreshQueueSnapshots", ctx, tx, tenantInfo, shipmentID)}
+func (_e *MockChargeAllocationRepository_Expecter) RefreshQueueSnapshots(ctx any, tenantInfo any, shipmentID any) *MockChargeAllocationRepository_RefreshQueueSnapshots_Call {
+	return &MockChargeAllocationRepository_RefreshQueueSnapshots_Call{Call: _e.mock.On("RefreshQueueSnapshots", ctx, tenantInfo, shipmentID)}
 }
 
-func (_c *MockChargeAllocationRepository_RefreshQueueSnapshots_Call) Run(run func(ctx context.Context, tx bun.IDB, tenantInfo pagination.TenantInfo, shipmentID pulid.ID)) *MockChargeAllocationRepository_RefreshQueueSnapshots_Call {
+func (_c *MockChargeAllocationRepository_RefreshQueueSnapshots_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID)) *MockChargeAllocationRepository_RefreshQueueSnapshots_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 bun.IDB
+		var arg1 pagination.TenantInfo
 		if args[1] != nil {
-			arg1 = args[1].(bun.IDB)
+			arg1 = args[1].(pagination.TenantInfo)
 		}
-		var arg2 pagination.TenantInfo
+		var arg2 pulid.ID
 		if args[2] != nil {
-			arg2 = args[2].(pagination.TenantInfo)
-		}
-		var arg3 pulid.ID
-		if args[3] != nil {
-			arg3 = args[3].(pulid.ID)
+			arg2 = args[2].(pulid.ID)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -451,25 +441,22 @@ func (_c *MockChargeAllocationRepository_RefreshQueueSnapshots_Call) Return(err 
 	return _c
 }
 
-func (_c *MockChargeAllocationRepository_RefreshQueueSnapshots_Call) RunAndReturn(run func(ctx context.Context, tx bun.IDB, tenantInfo pagination.TenantInfo, shipmentID pulid.ID) error) *MockChargeAllocationRepository_RefreshQueueSnapshots_Call {
+func (_c *MockChargeAllocationRepository_RefreshQueueSnapshots_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID) error) *MockChargeAllocationRepository_RefreshQueueSnapshots_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SyncForOrderCharge provides a mock function for the type MockChargeAllocationRepository
-func (_mock *MockChargeAllocationRepository) SyncForOrderCharge(ctx context.Context, tx bun.IDB, req *shipmentports.SyncOrderChargeAllocationsRequest) error {
-	ret := _mock.Called(ctx, tx, req)
+func (_mock *MockChargeAllocationRepository) SyncForOrderCharge(ctx context.Context, req *shipmentports.SyncOrderChargeAllocationsRequest) error {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SyncForOrderCharge")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bun.IDB, *shipmentports.SyncOrderChargeAllocationsRequest) error); ok {
-		return returnFunc(ctx, tx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bun.IDB, *shipmentports.SyncOrderChargeAllocationsRequest) error); ok {
-		r0 = returnFunc(ctx, tx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentports.SyncOrderChargeAllocationsRequest) error); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -483,30 +470,24 @@ type MockChargeAllocationRepository_SyncForOrderCharge_Call struct {
 
 // SyncForOrderCharge is a helper method to define mock.On call
 //   - ctx context.Context
-//   - tx bun.IDB
-//   - req *repositories.SyncOrderChargeAllocationsRequest
-func (_e *MockChargeAllocationRepository_Expecter) SyncForOrderCharge(ctx any, tx any, req any) *MockChargeAllocationRepository_SyncForOrderCharge_Call {
-	return &MockChargeAllocationRepository_SyncForOrderCharge_Call{Call: _e.mock.On("SyncForOrderCharge", ctx, tx, req)}
+//   - req *shipmentports.SyncOrderChargeAllocationsRequest
+func (_e *MockChargeAllocationRepository_Expecter) SyncForOrderCharge(ctx any, req any) *MockChargeAllocationRepository_SyncForOrderCharge_Call {
+	return &MockChargeAllocationRepository_SyncForOrderCharge_Call{Call: _e.mock.On("SyncForOrderCharge", ctx, req)}
 }
 
-func (_c *MockChargeAllocationRepository_SyncForOrderCharge_Call) Run(run func(ctx context.Context, tx bun.IDB, req *shipmentports.SyncOrderChargeAllocationsRequest)) *MockChargeAllocationRepository_SyncForOrderCharge_Call {
+func (_c *MockChargeAllocationRepository_SyncForOrderCharge_Call) Run(run func(ctx context.Context, req *shipmentports.SyncOrderChargeAllocationsRequest)) *MockChargeAllocationRepository_SyncForOrderCharge_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 bun.IDB
+		var arg1 *shipmentports.SyncOrderChargeAllocationsRequest
 		if args[1] != nil {
-			arg1 = args[1].(bun.IDB)
-		}
-		var arg2 *shipmentports.SyncOrderChargeAllocationsRequest
-		if args[2] != nil {
-			arg2 = args[2].(*shipmentports.SyncOrderChargeAllocationsRequest)
+			arg1 = args[1].(*shipmentports.SyncOrderChargeAllocationsRequest)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -517,25 +498,22 @@ func (_c *MockChargeAllocationRepository_SyncForOrderCharge_Call) Return(err err
 	return _c
 }
 
-func (_c *MockChargeAllocationRepository_SyncForOrderCharge_Call) RunAndReturn(run func(ctx context.Context, tx bun.IDB, req *shipmentports.SyncOrderChargeAllocationsRequest) error) *MockChargeAllocationRepository_SyncForOrderCharge_Call {
+func (_c *MockChargeAllocationRepository_SyncForOrderCharge_Call) RunAndReturn(run func(ctx context.Context, req *shipmentports.SyncOrderChargeAllocationsRequest) error) *MockChargeAllocationRepository_SyncForOrderCharge_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SyncForShipment provides a mock function for the type MockChargeAllocationRepository
-func (_mock *MockChargeAllocationRepository) SyncForShipment(ctx context.Context, tx bun.IDB, entity *shipment.Shipment) error {
-	ret := _mock.Called(ctx, tx, entity)
+func (_mock *MockChargeAllocationRepository) SyncForShipment(ctx context.Context, entity *shipment.Shipment) error {
+	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SyncForShipment")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bun.IDB, *shipment.Shipment) error); ok {
-		return returnFunc(ctx, tx, entity)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bun.IDB, *shipment.Shipment) error); ok {
-		r0 = returnFunc(ctx, tx, entity)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) error); ok {
+		r0 = returnFunc(ctx, entity)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -549,30 +527,24 @@ type MockChargeAllocationRepository_SyncForShipment_Call struct {
 
 // SyncForShipment is a helper method to define mock.On call
 //   - ctx context.Context
-//   - tx bun.IDB
 //   - entity *shipment.Shipment
-func (_e *MockChargeAllocationRepository_Expecter) SyncForShipment(ctx any, tx any, entity any) *MockChargeAllocationRepository_SyncForShipment_Call {
-	return &MockChargeAllocationRepository_SyncForShipment_Call{Call: _e.mock.On("SyncForShipment", ctx, tx, entity)}
+func (_e *MockChargeAllocationRepository_Expecter) SyncForShipment(ctx any, entity any) *MockChargeAllocationRepository_SyncForShipment_Call {
+	return &MockChargeAllocationRepository_SyncForShipment_Call{Call: _e.mock.On("SyncForShipment", ctx, entity)}
 }
 
-func (_c *MockChargeAllocationRepository_SyncForShipment_Call) Run(run func(ctx context.Context, tx bun.IDB, entity *shipment.Shipment)) *MockChargeAllocationRepository_SyncForShipment_Call {
+func (_c *MockChargeAllocationRepository_SyncForShipment_Call) Run(run func(ctx context.Context, entity *shipment.Shipment)) *MockChargeAllocationRepository_SyncForShipment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 bun.IDB
+		var arg1 *shipment.Shipment
 		if args[1] != nil {
-			arg1 = args[1].(bun.IDB)
-		}
-		var arg2 *shipment.Shipment
-		if args[2] != nil {
-			arg2 = args[2].(*shipment.Shipment)
+			arg1 = args[1].(*shipment.Shipment)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -583,7 +555,7 @@ func (_c *MockChargeAllocationRepository_SyncForShipment_Call) Return(err error)
 	return _c
 }
 
-func (_c *MockChargeAllocationRepository_SyncForShipment_Call) RunAndReturn(run func(ctx context.Context, tx bun.IDB, entity *shipment.Shipment) error) *MockChargeAllocationRepository_SyncForShipment_Call {
+func (_c *MockChargeAllocationRepository_SyncForShipment_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.Shipment) error) *MockChargeAllocationRepository_SyncForShipment_Call {
 	_c.Call.Return(run)
 	return _c
 }

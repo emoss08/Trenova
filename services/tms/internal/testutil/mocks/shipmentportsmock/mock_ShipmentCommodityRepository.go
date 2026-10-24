@@ -9,7 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	mock "github.com/stretchr/testify/mock"
-	"github.com/uptrace/bun"
 )
 
 // NewMockShipmentCommodityRepository creates a new instance of MockShipmentCommodityRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -40,16 +39,16 @@ func (_m *MockShipmentCommodityRepository) EXPECT() *MockShipmentCommodityReposi
 }
 
 // SyncForShipment provides a mock function for the type MockShipmentCommodityRepository
-func (_mock *MockShipmentCommodityRepository) SyncForShipment(ctx context.Context, tx bun.IDB, entity *shipment.Shipment) error {
-	ret := _mock.Called(ctx, tx, entity)
+func (_mock *MockShipmentCommodityRepository) SyncForShipment(ctx context.Context, entity *shipment.Shipment) error {
+	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SyncForShipment")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bun.IDB, *shipment.Shipment) error); ok {
-		r0 = returnFunc(ctx, tx, entity)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) error); ok {
+		r0 = returnFunc(ctx, entity)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,30 +62,24 @@ type MockShipmentCommodityRepository_SyncForShipment_Call struct {
 
 // SyncForShipment is a helper method to define mock.On call
 //   - ctx context.Context
-//   - tx bun.IDB
 //   - entity *shipment.Shipment
-func (_e *MockShipmentCommodityRepository_Expecter) SyncForShipment(ctx any, tx any, entity any) *MockShipmentCommodityRepository_SyncForShipment_Call {
-	return &MockShipmentCommodityRepository_SyncForShipment_Call{Call: _e.mock.On("SyncForShipment", ctx, tx, entity)}
+func (_e *MockShipmentCommodityRepository_Expecter) SyncForShipment(ctx any, entity any) *MockShipmentCommodityRepository_SyncForShipment_Call {
+	return &MockShipmentCommodityRepository_SyncForShipment_Call{Call: _e.mock.On("SyncForShipment", ctx, entity)}
 }
 
-func (_c *MockShipmentCommodityRepository_SyncForShipment_Call) Run(run func(ctx context.Context, tx bun.IDB, entity *shipment.Shipment)) *MockShipmentCommodityRepository_SyncForShipment_Call {
+func (_c *MockShipmentCommodityRepository_SyncForShipment_Call) Run(run func(ctx context.Context, entity *shipment.Shipment)) *MockShipmentCommodityRepository_SyncForShipment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 bun.IDB
+		var arg1 *shipment.Shipment
 		if args[1] != nil {
-			arg1 = args[1].(bun.IDB)
-		}
-		var arg2 *shipment.Shipment
-		if args[2] != nil {
-			arg2 = args[2].(*shipment.Shipment)
+			arg1 = args[1].(*shipment.Shipment)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -97,7 +90,7 @@ func (_c *MockShipmentCommodityRepository_SyncForShipment_Call) Return(err error
 	return _c
 }
 
-func (_c *MockShipmentCommodityRepository_SyncForShipment_Call) RunAndReturn(run func(ctx context.Context, tx bun.IDB, entity *shipment.Shipment) error) *MockShipmentCommodityRepository_SyncForShipment_Call {
+func (_c *MockShipmentCommodityRepository_SyncForShipment_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.Shipment) error) *MockShipmentCommodityRepository_SyncForShipment_Call {
 	_c.Call.Return(run)
 	return _c
 }
