@@ -2,23 +2,26 @@ package aifeedbackrepository
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const maxExchangeMessages = 200
+
+var (
+	answerErrors       = dberror.Mapping{Entity: "Answer"}
+	conversationErrors = dberror.Mapping{Entity: "Conversation"}
+)
 
 type SourceParams struct {
 	fx.In
@@ -47,37 +50,23 @@ func (r *sourceRepository) GetMessageContext(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*aifeedbackports.AIFeedbackMessageContext, error) {
-			dba := r.db.DBForContext(ctx)
-			msgCols := conversationcol.MessageColumns
-
-			message := new(conversation.Message)
-			if err := dba.NewSelect().
-				Model(message).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
-						Where(msgCols.ID.Eq(), req.MessageID)
-				}).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "Answer")
+			db := r.db.Keel(ctx)
+			message, err := conversationdb.Messages.Get(ctx, db, req.MessageID)
+			if err != nil {
+				return nil, answerErrors.Map(err, req.MessageID.String())
 			}
 
-			thread := new(conversation.Thread)
-			if err := dba.NewSelect().
-				Model(thread).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
-						Where(conversationcol.ThreadColumns.ID.Eq(), message.ThreadID)
-				}).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "Conversation")
+			thread, err := conversationdb.Threads.Get(ctx, db, message.ThreadID)
+			if err != nil {
+				return nil, conversationErrors.Map(err, message.ThreadID.String())
 			}
 
-			exchange, err := r.exchange(ctx, req, message)
+			exchange, err := r.exchange(ctx, message)
 			if err != nil {
 				return nil, err
 			}
 
-			turn, err := r.turn(ctx, req, message)
+			turn, err := r.turn(ctx, message)
 			if err != nil {
 				return nil, err
 			}
@@ -94,27 +83,22 @@ func (r *sourceRepository) GetMessageContext(
 
 func (r *sourceRepository) exchange(
 	ctx context.Context,
-	req aifeedbackports.GetAIFeedbackMessageRequest,
 	message *conversation.Message,
 ) ([]conversation.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
-		cols := conversationcol.MessageColumns
-		dba := r.db.DBForContext(ctx)
-		rows := make([]conversation.Message, 0)
+		m := conversationdb.Messages
+		db := r.db.Keel(ctx)
 
 		if message.Delegated() {
-			err := dba.NewSelect().
-				Model(&rows).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
-						Where(cols.ThreadID.Eq(), message.ThreadID).
-						Where(cols.Kind.Eq(), conversation.MessageKindDelegated).
-						Where(cols.DelegateCallID.Eq(), message.DelegateCallID).
-						Where(cols.Sequence.Lte(), message.Sequence)
-				}).
-				OrderExpr(cols.Sequence.OrderDesc()).
+			rows, err := m.Where(
+				m.ThreadID.Eq(message.ThreadID),
+				m.Kind.Eq(conversation.MessageKindDelegated),
+				m.DelegateCallID.Eq(message.DelegateCallID),
+				m.Sequence.Lte(int64(message.Sequence)),
+			).
+				Order(m.Sequence.Desc()).
 				Limit(maxExchangeMessages).
-				Scan(ctx)
+				List(ctx, db)
 			if err != nil {
 				return nil, fmt.Errorf("read delegated exchange: %w", err)
 			}
@@ -122,34 +106,31 @@ func (r *sourceRepository) exchange(
 			return chronological(rows), nil
 		}
 
-		var start sql.NullInt64
-		err := dba.NewSelect().
-			Model((*conversation.Message)(nil)).
-			ColumnExpr(buncolgen.Max(cols.Sequence, "start_sequence")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), message.ThreadID).
-					Where(cols.Role.Eq(), conversation.RoleUser).
-					Where(cols.Kind.NotEq(), conversation.MessageKindDelegated).
-					Where(cols.Sequence.Lt(), message.Sequence)
-			}).
-			Scan(ctx, &start)
+		start, err := keel.IntoOne[*int64](ctx, db, m.
+			Where(
+				m.ThreadID.Eq(message.ThreadID),
+				m.Role.Eq(conversation.RoleUser),
+				m.Kind.Ne(conversation.MessageKindDelegated),
+				m.Sequence.Lt(int64(message.Sequence)),
+			).
+			Pick(m.Sequence.Max()))
 		if err != nil {
 			return nil, fmt.Errorf("find the question an answer replies to: %w", err)
 		}
+		var from int64
+		if start != nil {
+			from = *start
+		}
 
-		err = dba.NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), message.ThreadID).
-					Where(cols.Kind.NotEq(), conversation.MessageKindDelegated).
-					Where(cols.Sequence.Gte(), start.Int64).
-					Where(cols.Sequence.Lte(), message.Sequence)
-			}).
-			OrderExpr(cols.Sequence.OrderDesc()).
+		rows, err := m.Where(
+			m.ThreadID.Eq(message.ThreadID),
+			m.Kind.Ne(conversation.MessageKindDelegated),
+			m.Sequence.Gte(from),
+			m.Sequence.Lte(int64(message.Sequence)),
+		).
+			Order(m.Sequence.Desc()).
 			Limit(maxExchangeMessages).
-			Scan(ctx)
+			List(ctx, db)
 		if err != nil {
 			return nil, fmt.Errorf("read exchange: %w", err)
 		}
@@ -158,38 +139,28 @@ func (r *sourceRepository) exchange(
 	})
 }
 
-func chronological(rows []conversation.Message) []conversation.Message {
-	for left, right := 0, len(rows)-1; left < right; left, right = left+1, right-1 {
-		rows[left], rows[right] = rows[right], rows[left]
+func chronological(rows []*conversation.Message) []conversation.Message {
+	out := make([]conversation.Message, 0, len(rows))
+	for index := len(rows) - 1; index >= 0; index-- {
+		out = append(out, *rows[index])
 	}
 
-	return rows
+	return out
 }
 
 func (r *sourceRepository) turn(
 	ctx context.Context,
-	req aifeedbackports.GetAIFeedbackMessageRequest,
 	message *conversation.Message,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
-		cols := conversationcol.AssistantTurnColumns
-		turn := new(conversation.AssistantTurn)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(turn).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.AssistantTurnScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), message.ThreadID).
-					Where(cols.CreatedAt.Lte(), message.CreatedAt)
-			}).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		t := conversationdb.AssistantTurns
+		turn, err := t.Where(t.ThreadID.Eq(message.ThreadID), t.CreatedAt.Lte(message.CreatedAt)).
+			Order(t.CreatedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
+		if errors.Is(err, keel.ErrNotFound) {
+			return nil, nil
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil
-			}
 			r.l.Warn("failed to find the turn behind an answer", zap.Error(err))
 
 			return nil, fmt.Errorf("find the turn behind an answer: %w", err)

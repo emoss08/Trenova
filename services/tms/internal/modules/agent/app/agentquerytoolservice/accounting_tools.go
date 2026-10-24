@@ -8,6 +8,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -22,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -819,7 +822,7 @@ func newListGLAccountsTool(
 			"type and status, with its balances when your data access reaches them. Use " +
 			"it to name the account a journal line posts to or to find an account by code.",
 		resource: permission.ResourceGeneralLedgerAccount,
-		config:   querybuilder.GetFieldConfiguration((*glaccount.GLAccount)(nil)),
+		config:   listquery.Describe((*glaccount.GLAccount)(nil), glaccountdb.GLAccountsSchema()),
 		fields: []listField{
 			{Name: paramStatus, Kind: filterEnum, Values: statusValues},
 			{Name: "accountCode", Kind: filterText, Sortable: true},
@@ -905,7 +908,7 @@ func newListFiscalPeriodsTool(
 			"close by, with their dates and whether each is open, locked or closed. " +
 			"ledger_get_fiscal_close_blockers says what stops one from closing.",
 		resource: permission.ResourceFiscalPeriod,
-		config:   querybuilder.GetFieldConfiguration((*fiscalperiod.FiscalPeriod)(nil)),
+		config:   listquery.Describe((*fiscalperiod.FiscalPeriod)(nil), fiscalperioddb.FiscalPeriodsSchema()),
 		fields: []listField{
 			{
 				Name: paramStatus,

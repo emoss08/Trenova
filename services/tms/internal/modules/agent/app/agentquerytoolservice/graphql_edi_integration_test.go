@@ -5,6 +5,8 @@ package agentquerytoolservice_test
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
@@ -30,7 +32,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -50,7 +51,7 @@ type ediTenant struct {
 
 func writeEDIRows(
 	t *testing.T,
-	admin *bun.DB,
+	admin *keel.DB,
 	tenant *agentreadtest.Tenant,
 	label string,
 ) *ediTenant {
@@ -58,9 +59,9 @@ func writeEDIRows(
 
 	ctx := t.Context()
 	org, bu := tenant.Actor.OrganizationID, tenant.Actor.BusinessUnitID
-	insert := func(model any) {
+	ctx = tenant.Ctx(ctx)
+	must := func(err error) {
 		t.Helper()
-		_, err := admin.NewInsert().Model(model).Exec(ctx)
 		require.NoError(t, err)
 	}
 	now := timeutils.NowUnix()
@@ -76,7 +77,7 @@ func writeEDIRows(
 			ContactEmail:      "edi@" + label + ".example",
 			EnabledForInbound: true, Settings: map[string]any{},
 		}
-		insert(partner)
+		must(edidb.EDIPartners.Create(ctx, admin, partner))
 		partners = append(partners, partner)
 		out.partners = append(out.partners, partner.ID.String())
 	}
@@ -87,7 +88,7 @@ func writeEDIRows(
 		Name: "SFTP " + label, Config: map[string]any{"host": "sftp." + label + ".example"},
 		EncryptedSecrets: map[string]string{},
 	}
-	insert(profile)
+	must(edidb.EDICommunicationProfiles.Create(ctx, admin, profile))
 
 	var files []*edi.EDIInboundFile
 	for idx := range 3 {
@@ -104,7 +105,7 @@ func writeEDIRows(
 		if idx == 0 {
 			file.Status = edi.InboundFileStatusQuarantined
 		}
-		insert(file)
+		must(edidb.EDIInboundFiles.Create(ctx, admin, file))
 		files = append(files, file)
 		out.files = append(out.files, file.ID.String())
 	}
@@ -128,7 +129,7 @@ func writeEDIRows(
 		if idx == 0 {
 			message.DeliveryStatus = edi.MessageDeliveryStatusDeadLettered
 		}
-		insert(message)
+		must(edidb.EDIMessages.Create(ctx, admin, message))
 		messages = append(messages, message)
 		out.messages = append(out.messages, message.ID.String())
 	}
@@ -150,7 +151,7 @@ func writeEDIRows(
 			MappingSnapshot: []edi.MappingResolution{},
 			SubmittedAt:     now - int64(idx),
 		}
-		insert(transfer)
+		must(edidb.EDITransfers.Create(ctx, admin, transfer))
 		out.transfers = append(out.transfers, transfer.ID.String())
 	}
 
@@ -164,7 +165,7 @@ func writeEDIRows(
 			LineCharges:          []edi.FreightInvoiceCharge{},
 			ReferenceNumbers:     map[string]string{},
 		}
-		insert(invoice)
+		must(edidb.CarrierInvoices.Create(ctx, admin, invoice))
 		out.invoices = append(out.invoices, invoice.ID.String())
 	}
 

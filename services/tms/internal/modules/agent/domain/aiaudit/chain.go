@@ -121,3 +121,11 @@ func (s *AIAuditProjectorState) BeforeAppendModel(_ context.Context, query bun.Q
 
 	return nil
 }
+
+func (s *AIAuditSeal) BeforeCreate(_ context.Context) error {
+	if s.SealedAt == 0 {
+		s.SealedAt = timeutils.NowUnix()
+	}
+
+	return nil
+}

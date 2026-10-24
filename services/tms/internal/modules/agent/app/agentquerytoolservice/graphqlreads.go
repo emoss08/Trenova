@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -424,7 +423,7 @@ func (r *graphQLRead) typedParams() []graphQLParam {
 	if r.Entity == nil {
 		return nil
 	}
-	config := querybuilder.GetFieldConfiguration(r.Entity())
+	config := entityFields(r.Entity())
 	params := make([]graphQLParam, 0, len(r.Fields))
 	for idx := range r.Fields {
 		field := &r.Fields[idx]
@@ -448,9 +447,8 @@ func (r *graphQLRead) typedParams() []graphQLParam {
 
 // configuredSearch are the record fields a table input's free-text query
 // matches, read from the record's search configuration as the repository's
-// query builder reads it (querybuilder.ApplyCursorFilters): its searchable
-// columns, or, when it names none, every filterable field that is not an
-// enum. A column is named by the record field it is stored in, which is how
+// list query reads it (listquery): its searchable columns, or, when it names
+// none, every filterable field of the record itself that is not an enum. A column is named by the record field it is stored in, which is how
 // its sensitivity is declared, not by the column's own name, which an enum
 // column is also filed under. A column of a joined record (customer.name)
 // is never matched by the configuration's search, so it is not read.
@@ -459,10 +457,15 @@ func (r *graphQLRead) configuredSearch() []string {
 		return nil
 	}
 	entity := r.Entity()
-	config := querybuilder.GetFieldConfiguration(entity)
+	config := entityFields(entity)
 	searchable := entity.GetPostgresSearchConfig().SearchableFields
 	if len(searchable) == 0 {
-		fields := querybuilder.ExtractSearchFields(config)
+		fields := make([]string, 0, len(config.FieldMap))
+		for field := range config.FieldMap {
+			if !config.EnumMap[field] {
+				fields = append(fields, field)
+			}
+		}
 		slices.Sort(fields)
 
 		return fields
@@ -565,7 +568,7 @@ func (r *graphQLRead) sortable() []string {
 	if r.Entity == nil {
 		return nil
 	}
-	config := querybuilder.GetFieldConfiguration(r.Entity())
+	config := entityFields(r.Entity())
 	out := make([]string, 0, len(r.Fields))
 	for _, field := range r.Fields {
 		if _, skip := unfilteredFields[field.Name]; skip || field.List {

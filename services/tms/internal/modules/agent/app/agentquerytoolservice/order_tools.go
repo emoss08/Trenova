@@ -3,13 +3,15 @@ package agentquerytoolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/shopspring/decimal"
 )
 
@@ -85,7 +87,7 @@ func newListOrdersTool(
 			"shipments and their charges under a customer's order number, PO or BOL. " +
 			"order_get opens one with its shipments and charges.",
 		resource: permission.ResourceOrder,
-		config:   querybuilder.GetFieldConfiguration((*order.Order)(nil)),
+		config:   listquery.Describe((*order.Order)(nil), orderdb.OrdersSchema()),
 		fields: []listField{
 			{
 				Name:   paramStatus,

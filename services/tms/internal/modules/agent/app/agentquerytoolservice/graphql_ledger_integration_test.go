@@ -5,13 +5,19 @@ package agentquerytoolservice_test
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal/journalreversaldb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/glaccountrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalentryrepository"
@@ -46,7 +52,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -98,19 +103,12 @@ func ledgerResolvers(conn *postgres.Connection) agentread.ResolverParams {
 				accountingcontrolrepository.Params{DB: conn, Logger: logger}),
 			Users: userrepository.New(userrepository.Params{DB: conn, Logger: logger}),
 			Customers: customerrepository.New(customerrepository.Params{
-				DB: conn, Logger: logger, M2MSync: m2msync.NewSyncer(m2msync.SyncerParams{Logger: logger}),
+				DB: conn, Logger: logger,
 			}),
 			Locations: locationrepository.New(locationrepository.Params{DB: conn, Logger: logger}),
 			Ledger:    ledger,
 		}),
 	}
-}
-
-func insertRow(t *testing.T, ctx context.Context, db bun.IDB, model any) {
-	t.Helper()
-
-	_, err := db.NewInsert().Model(model).Exec(ctx)
-	require.NoError(t, err)
 }
 
 // writeBooks writes a tenant's books through the admin connection: a
@@ -119,7 +117,7 @@ func insertRow(t *testing.T, ctx context.Context, db bun.IDB, model any) {
 // line on the first entry and the first journal so a card has an account.
 //
 //nolint:funlen // one tenant's books, written in the order the keys need
-func writeBooks(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label string) *ledgerBooks {
+func writeBooks(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, label string) *ledgerBooks {
 	t.Helper()
 
 	ctx := t.Context()
@@ -135,9 +133,13 @@ func writeBooks(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label
 		marked: make(map[string][]string),
 	}
 
-	var periods []*fiscalperiod.FiscalPeriod
-	require.NoError(t, admin.NewSelect().Model(&periods).
-		Where("organization_id = ?", org).Where("business_unit_id = ?", bu).Scan(ctx))
+	writeCtx := tenant.Ctx(ctx)
+	must := func(err error) {
+		t.Helper()
+		require.NoError(t, err)
+	}
+	periods, err := fiscalperioddb.FiscalPeriods.Query().All(writeCtx, admin)
+	require.NoError(t, err)
 	for _, period := range periods {
 		books.rows[toolLedgerPeriods] = append(books.rows[toolLedgerPeriods], period.ID.String())
 		if period.Status == fiscalperiod.StatusOpen {
@@ -146,9 +148,9 @@ func writeBooks(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label
 		}
 	}
 
-	_, err := admin.ExecContext(ctx,
-		"INSERT INTO accounting_controls (id, organization_id, business_unit_id) VALUES (?, ?, ?)",
-		pulid.MustNew("ac_"), org, bu)
+	_, err = keel.Exec(ctx, admin,
+		"INSERT INTO accounting_controls (id, organization_id, business_unit_id) VALUES ($1, $2, $3)",
+		pulid.MustNew("ac_").String(), org.String(), bu.String())
 	require.NoError(t, err)
 
 	kind := &accounttype.AccountType{
@@ -156,19 +158,19 @@ func writeBooks(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label
 		Code: "EXP" + label, Name: "Expense " + label, Category: accounttype.CategoryExpense,
 		Status: domaintypes.StatusActive,
 	}
-	insertRow(t, ctx, admin, kind)
+	must(accounttypedb.AccountTypes.Create(writeCtx, admin, kind))
 	account := &glaccount.GLAccount{
 		ID: pulid.MustNew("gla_"), OrganizationID: org, BusinessUnitID: bu,
 		AccountTypeID: kind.ID, AccountCode: "5100" + label, Name: "Fuel expense " + label,
 		Status: domaintypes.StatusActive,
 	}
-	insertRow(t, ctx, admin, account)
+	must(glaccountdb.GLAccounts.Create(writeCtx, admin, account))
 	batch := &journalentry.JournalBatch{
 		ID: pulid.MustNew("jb_"), OrganizationID: org, BusinessUnitID: bu,
 		BatchNumber: "JB-" + label, BatchType: "System", Status: "Posted", Description: "Batch",
 		AccountingDate: day, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, CreatedByID: user,
 	}
-	insertRow(t, ctx, admin, batch)
+	must(journalentrydb.JournalBatches.Create(writeCtx, admin, batch))
 
 	for idx := range ledgerRowsPerTenant {
 		marked := idx == ledgerRowsPerTenant-1
@@ -185,7 +187,7 @@ func writeBooks(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label
 			TotalDebit: 5000, TotalCredit: 5000, ReversalReason: "Booked to the wrong period",
 			CreatedByID: user,
 		}
-		insertRow(t, ctx, admin, entry)
+		must(journalentrydb.JournalEntries.Create(writeCtx, admin, entry))
 		books.rows[toolLedgerEntries] = append(books.rows[toolLedgerEntries], entry.ID.String())
 		if marked {
 			books.marked[toolLedgerEntries] = append(books.marked[toolLedgerEntries],
@@ -193,11 +195,11 @@ func writeBooks(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label
 		}
 		if idx == 0 {
 			books.entry = entry.ID.String()
-			insertRow(t, ctx, admin, &journalentry.JournalEntryLine{
+			must(journalentrydb.JournalEntryLines.Create(writeCtx, admin, &journalentry.JournalEntryLine{
 				ID: pulid.MustNew("jel_"), OrganizationID: org, BusinessUnitID: bu,
 				JournalEntryID: entry.ID, GLAccountID: account.ID, LineNumber: 1,
 				Description: "Diesel", DebitAmount: 5000, NetAmount: 5000,
-			})
+			}))
 		}
 
 		journalStatus := manualjournal.StatusDraft
@@ -211,7 +213,7 @@ func writeBooks(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label
 			RequestedFiscalYearID: fy.ID, RequestedFiscalPeriodID: fp.ID, CurrencyCode: "USD",
 			TotalDebit: 900, TotalCredit: 900, CreatedByID: user,
 		}
-		insertRow(t, ctx, admin, journal)
+		must(manualjournaldb.Requests.Create(writeCtx, admin, journal))
 		books.rows[toolLedgerJournals] = append(books.rows[toolLedgerJournals], journal.ID.String())
 		if marked {
 			books.marked[toolLedgerJournals] = append(books.marked[toolLedgerJournals],
@@ -219,11 +221,11 @@ func writeBooks(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label
 		}
 		if idx == 0 {
 			books.manual = journal.ID.String()
-			insertRow(t, ctx, admin, &manualjournal.Line{
+			must(manualjournaldb.Lines.Create(writeCtx, admin, &manualjournal.Line{
 				ID: pulid.MustNew("mjrl_"), OrganizationID: org, BusinessUnitID: bu,
 				ManualJournalRequestID: journal.ID, LineNumber: 1, GLAccountID: account.ID,
 				Description: "Accrued fuel", DebitAmount: 900,
-			})
+			}))
 		}
 
 		reversalStatus := journalreversal.StatusRequested
@@ -236,7 +238,7 @@ func writeBooks(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label
 			RequestedAccountingDate: day, ResolvedFiscalYearID: fy.ID, ResolvedFiscalPeriodID: fp.ID,
 			ReasonCode: "WrongPeriod", ReasonText: "Booked to February", RequestedByID: user,
 		}
-		insertRow(t, ctx, admin, reversal)
+		must(journalreversaldb.Reversals.Create(writeCtx, admin, reversal))
 		books.rows[toolLedgerReversals] = append(books.rows[toolLedgerReversals],
 			reversal.ID.String())
 		if marked {

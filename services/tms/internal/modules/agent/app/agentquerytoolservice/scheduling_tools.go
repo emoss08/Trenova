@@ -3,12 +3,14 @@ package agentquerytoolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -78,7 +80,7 @@ func newListRecurringShipmentsTool(
 			"the id with shipment_update_recurring, shipment_set_recurring_status or " +
 			"shipment_generate_recurring.",
 		resource: permission.ResourceRecurringShipment,
-		config:   querybuilder.GetFieldConfiguration((*recurringshipment.RecurringShipment)(nil)),
+		config:   listquery.Describe((*recurringshipment.RecurringShipment)(nil), recurringshipmentdb.RecurringShipmentsSchema()),
 		fields: []listField{
 			{
 				Name:   paramStatus,

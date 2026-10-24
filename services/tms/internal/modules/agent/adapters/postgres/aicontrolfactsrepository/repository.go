@@ -4,22 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/aiusagecol"
-	"github.com/emoss08/trenova/pkg/dbhelper"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentroster"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -49,72 +44,55 @@ func (r *repository) AgentCounts(
 	req *agentrosterports.AgentCountsRequest,
 ) (aicontrolsummary.AgentCounts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (aicontrolsummary.AgentCounts, error) {
-		db := r.db.DBForContext(ctx)
-		defCols := agentdefinitioncol.DefinitionColumns
-		runCols := agentcol.AgentRunColumns
-		propCols := agentcol.AgentProposalColumns
-		var counts aicontrolsummary.AgentCounts
+		d := agentdefinitiondb.Definitions
+		run := agentdb.AgentRuns
+		p := agentdb.AgentProposals
+		shadowRun := agentdb.AgentRuns.As("shadow_run")
 
-		definitions := func() *bun.SelectQuery {
-			return db.NewSelect().
-				Model((*agentdefinition.Definition)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo)
-				})
-		}
-
-		var err error
-		if counts.Total, err = dbhelper.Count(ctx, definitions()); err != nil {
-			return counts, fmt.Errorf("count agents: %w", err)
-		}
-		if counts.On, err = dbhelper.Count(
-			ctx,
-			definitions().Where(defCols.Enabled.IsTrue()),
-		); err != nil {
-			return counts, fmt.Errorf("count agents on: %w", err)
-		}
-		if counts.Shadow, err = dbhelper.Count(ctx, definitions().
-			Where(defCols.Enabled.IsTrue()).
-			Where(defCols.ShadowMode.IsTrue())); err != nil {
-			return counts, fmt.Errorf("count agents in shadow: %w", err)
-		}
-		if counts.Working, err = dbhelper.Count(ctx, db.NewSelect().
-			Model((*agent.AgentRun)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo)
-			}).
-			Where(runCols.Status.In(), bun.List(workingStatuses))); err != nil {
-			return counts, fmt.Errorf("count working runs: %w", err)
-		}
-		if counts.Waiting, err = dbhelper.Count(ctx, db.NewSelect().
-			Model((*agent.AgentProposal)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo)
-			}).
-			Where(propCols.Status.Eq(), agent.ProposalStatusPending)); err != nil {
-			return counts, fmt.Errorf("count waiting proposals: %w", err)
-		}
-		if counts.ShadowRecorded, err = dbhelper.Count(ctx, db.NewSelect().
-			Model((*agent.AgentProposal)(nil)).
-			Join("JOIN agent_runs AS ar ON "+runCols.ID.Qualified()+" = "+propCols.RunID.Qualified()+
-				" AND "+runCols.OrganizationID.Qualified()+" = "+propCols.OrganizationID.Qualified()+
-				" AND "+runCols.BusinessUnitID.Qualified()+" = "+propCols.BusinessUnitID.Qualified()).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo)
-			}).
-			Where(runCols.Status.Eq(), agent.RunStatusShadowCompleted).
-			Where(runCols.CreatedAt.Gte(), req.ShadowSince)); err != nil {
-			return counts, fmt.Errorf("count shadow recordings: %w", err)
+		var (
+			agents                           definitionCounts
+			working, waiting, shadowRecorded int64
+		)
+		err := keel.Batch(ctx, r.db.Keel(ctx),
+			keel.IntoValue(d.Pick(
+				keel.Count(),
+				keel.Count().Filter(d.Enabled.IsTrue()),
+				keel.Count().Filter(keel.And(d.Enabled.IsTrue(), d.ShadowMode.IsTrue())),
+			), &agents),
+			keel.CountInto(run.Where(run.Status.In(workingStatuses...)), &working),
+			keel.CountInto(p.Where(p.Status.Eq(agent.ProposalStatusPending)), &waiting),
+			keel.CountInto(p.
+				Join(shadowRun, shadowRun.ID.EqCol(p.RunID)).
+				Where(
+					shadowRun.Status.Eq(agent.RunStatusShadowCompleted),
+					shadowRun.CreatedAt.Gte(req.ShadowSince),
+				), &shadowRecorded),
+		)
+		if err != nil {
+			return aicontrolsummary.AgentCounts{}, fmt.Errorf("count agents: %w", err)
 		}
 
-		return counts, nil
+		return aicontrolsummary.AgentCounts{
+			Total:          int(agents.Total),
+			On:             int(agents.On),
+			Shadow:         int(agents.Shadow),
+			Working:        int(working),
+			Waiting:        int(waiting),
+			ShadowRecorded: int(shadowRecorded),
+		}, nil
 	})
 }
 
+type definitionCounts struct {
+	Total  int64
+	On     int64
+	Shadow int64
+}
+
 type failureRow struct {
-	ProviderID    string `bun:"provider_id"`
-	FailedCalls   int    `bun:"failed_calls"`
-	LastFailureAt int64  `bun:"last_failure_at"`
+	ProviderID    string
+	FailedCalls   int
+	LastFailureAt int64
 }
 
 func (r *repository) ProviderFailures(
@@ -125,23 +103,14 @@ func (r *repository) ProviderFailures(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]agentrosterports.ProviderFailureCount, error) {
-			cols := aiusagecol.AIUsageRecordColumns
-			var rows []failureRow
-			err := r.db.DBForContext(ctx).NewSelect().
-				Model((*aiusage.AIUsageRecord)(nil)).
-				ColumnExpr(cols.ProviderID.Qualified()+" AS provider_id").
-				ColumnExpr("COUNT(*) FILTER (WHERE NOT "+cols.Succeeded.Qualified()+") AS failed_calls").
-				ColumnExpr("COALESCE(MAX("+cols.CreatedAt.Qualified()+") FILTER (WHERE NOT "+
-					cols.Succeeded.Qualified()+"), 0) AS last_failure_at").
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return aiusagecol.AIUsageRecordScopeTenant(sq, req.TenantInfo)
-				}).
-				Where(cols.CreatedAt.Gte(), req.Since).
-				Where(cols.ProviderID.IsNotNull()).
-				GroupExpr(cols.ProviderID.Qualified()).
-				Having("COALESCE(MAX("+cols.CreatedAt.Qualified()+") FILTER (WHERE NOT "+cols.Succeeded.Qualified()+"), 0) > "+
-					"COALESCE(MAX("+cols.CreatedAt.Qualified()+") FILTER (WHERE "+cols.Succeeded.Qualified()+"), 0)").
-				Scan(ctx, &rows)
+			u := aiusagedb.AIUsageRecords
+			lastFailure := keel.Raw("COALESCE(MAX(?) FILTER (WHERE NOT ?), 0)", u.CreatedAt, u.Succeeded)
+			lastSuccess := keel.Raw("COALESCE(MAX(?) FILTER (WHERE ?), 0)", u.CreatedAt, u.Succeeded)
+			rows, err := keel.Into[failureRow](ctx, r.db.Keel(ctx), u.
+				Where(u.CreatedAt.Gte(req.Since), u.ProviderID.IsNotNull()).
+				Group(u.ProviderID).
+				Having(keel.Raw("? > ?", lastFailure, lastSuccess)).
+				Pick(u.ProviderID, keel.Count().Filter(u.Succeeded.IsFalse()), lastFailure))
 			if err != nil {
 				return nil, fmt.Errorf("list failing providers: %w", err)
 			}
@@ -164,18 +133,18 @@ func (r *repository) ProviderFailures(
 }
 
 type rosterRunRow struct {
-	AgentID string `bun:"agent_id"`
-	Day     int    `bun:"day"`
-	Runs    int    `bun:"runs"`
+	AgentID string
+	Day     int
+	Runs    int
 }
 
 type rosterDecisionRow struct {
-	AgentID  string `bun:"agent_id"`
-	Approved int    `bun:"approved"`
-	Modified int    `bun:"modified"`
-	Rejected int    `bun:"rejected"`
-	Failed   int    `bun:"failed"`
-	Shadow   int    `bun:"shadow"`
+	AgentID  string
+	Approved int
+	Modified int
+	Rejected int
+	Failed   int
+	Shadow   int
 }
 
 func (r *repository) AgentRoster(
@@ -183,51 +152,38 @@ func (r *repository) AgentRoster(
 	req *agentrosterports.AgentRosterRequest,
 ) ([]*agentroster.Stat, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentroster.Stat, error) {
-		db := r.db.DBForContext(ctx)
-		runCols := agentcol.AgentRunColumns
-		propCols := agentcol.AgentProposalColumns
+		run := agentdb.AgentRuns
+		p := agentdb.AgentProposals
+		decidedRun := agentdb.AgentRuns.As("decided_run")
 
-		var runs []rosterRunRow
-		err := db.NewSelect().
-			Model((*agent.AgentRun)(nil)).
-			ColumnExpr(runCols.AgentDefinitionID.Qualified()+" AS agent_id").
-			ColumnExpr("FLOOR(("+runCols.CreatedAt.Qualified()+" - ?) / 86400)::int AS day", req.RunsSince).
-			ColumnExpr(buncolgen.Count("runs")).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo)
-			}).
-			Where(runCols.AgentDefinitionID.IsNotNull()).
-			Where(runCols.CreatedAt.Gte(), req.RunsSince).
-			GroupExpr("1, 2").
-			Scan(ctx, &runs)
+		var (
+			runs      []rosterRunRow
+			decisions []rosterDecisionRow
+		)
+		err := keel.Batch(ctx, r.db.Keel(ctx),
+			keel.IntoSlice(run.
+				Where(run.AgentDefinitionID.IsNotNull(), run.CreatedAt.Gte(req.RunsSince)).
+				Group(keel.Raw("1"), keel.Raw("2")).
+				Pick(
+					run.AgentDefinitionID,
+					keel.Raw("FLOOR((? - ?) / 86400)::int", run.CreatedAt, req.RunsSince),
+					keel.Count(),
+				), &runs),
+			keel.IntoSlice(p.
+				Join(decidedRun, decidedRun.ID.EqCol(p.RunID)).
+				Where(decidedRun.AgentDefinitionID.IsNotNull(), p.CreatedAt.Gte(req.DecisionsSince)).
+				Group(decidedRun.AgentDefinitionID).
+				Pick(
+					decidedRun.AgentDefinitionID,
+					keel.Count().Filter(p.Status.Eq(agent.ProposalStatusAccepted)),
+					keel.Count().Filter(p.Status.Eq(agent.ProposalStatusModified)),
+					keel.Count().Filter(p.Status.Eq(agent.ProposalStatusRejected)),
+					keel.Count().Filter(p.Status.Eq(agent.ProposalStatusExecutionFailed)),
+					keel.Count().Filter(decidedRun.Status.Eq(agent.RunStatusShadowCompleted)),
+				), &decisions),
+		)
 		if err != nil {
-			return nil, fmt.Errorf("count agent runs by day: %w", err)
-		}
-
-		var decisions []rosterDecisionRow
-		err = db.NewSelect().
-			Model((*agent.AgentProposal)(nil)).
-			Join("JOIN agent_runs AS ar ON "+runCols.ID.Qualified()+" = "+propCols.RunID.Qualified()+
-				" AND "+runCols.OrganizationID.Qualified()+" = "+propCols.OrganizationID.Qualified()+
-				" AND "+runCols.BusinessUnitID.Qualified()+" = "+propCols.BusinessUnitID.Qualified()).
-			ColumnExpr(runCols.AgentDefinitionID.Qualified()+" AS agent_id").
-			ColumnExpr(buncolgen.CountFilter("approved", propCols.Status.Eq()), agent.ProposalStatusAccepted).
-			ColumnExpr(buncolgen.CountFilter("modified", propCols.Status.Eq()), agent.ProposalStatusModified).
-			ColumnExpr(buncolgen.CountFilter("rejected", propCols.Status.Eq()), agent.ProposalStatusRejected).
-			ColumnExpr(
-				buncolgen.CountFilter("failed", propCols.Status.Eq()),
-				agent.ProposalStatusExecutionFailed,
-			).
-			ColumnExpr(buncolgen.CountFilter("shadow", runCols.Status.Eq()), agent.RunStatusShadowCompleted).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo)
-			}).
-			Where(runCols.AgentDefinitionID.IsNotNull()).
-			Where(propCols.CreatedAt.Gte(), req.DecisionsSince).
-			GroupExpr(runCols.AgentDefinitionID.Qualified()).
-			Scan(ctx, &decisions)
-		if err != nil {
-			return nil, fmt.Errorf("count agent decisions: %w", err)
+			return nil, fmt.Errorf("count agent runs and decisions: %w", err)
 		}
 
 		return assembleRoster(runs, decisions), nil

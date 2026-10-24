@@ -5,6 +5,14 @@ package agentquerytoolservice_test
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"slices"
 	"sync"
 	"testing"
@@ -48,7 +56,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -59,14 +66,14 @@ import (
 // every read goes through the RLS connection.
 type operationsWorld struct {
 	t     *testing.T
-	admin *bun.DB
+	admin *keel.DB
 
 	mu       sync.Mutex
 	fixtures map[pulid.ID]*testutil.ShipmentIntegrationFixture
 	sources  map[pulid.ID]*testutil.ShipmentGraph
 }
 
-func newOperationsWorld(t *testing.T, admin *bun.DB) *operationsWorld {
+func newOperationsWorld(t *testing.T, admin *keel.DB) *operationsWorld {
 	t.Helper()
 
 	return &operationsWorld{
@@ -131,12 +138,6 @@ func (w *operationsWorld) source(tenant *agentreadtest.Tenant) *testutil.Shipmen
 	return graph
 }
 
-func (w *operationsWorld) insert(ctx context.Context, model any) error {
-	_, err := w.admin.NewInsert().Model(model).Exec(ctx)
-
-	return err
-}
-
 func (w *operationsWorld) writeOrder(
 	ctx context.Context,
 	tenant *agentreadtest.Tenant,
@@ -159,14 +160,14 @@ func (w *operationsWorld) writeOrder(
 		CurrencyCode:   "USD",
 		TotalAmount:    decimal.NewNullDecimal(decimal.NewFromInt(1200)),
 	}
-	if err := w.insert(ctx, row); err != nil {
+	ctx = tenant.Ctx(ctx)
+	if err := orderdb.Orders.Create(ctx, w.admin, row); err != nil {
 		return pulid.Nil, err
 	}
 	graph := w.shipment(tenant, "O"+label)
-	if _, err := w.admin.NewUpdate().Model((*shipment.Shipment)(nil)).
-		Set("order_id = ?", row.ID).
-		Where("id = ?", graph.Shipment.ID).
-		Exec(ctx); err != nil {
+	shipments := shipmentdb.Shipments
+	if _, err := shipments.Where(shipments.ID.Eq(graph.Shipment.ID)).
+		Update(ctx, w.admin, shipments.OrderID.To(row.ID)); err != nil {
 		return pulid.Nil, err
 	}
 
@@ -198,7 +199,7 @@ func (w *operationsWorld) writeSeries(
 		AutoGenerate:     true,
 	}
 
-	return row.ID, w.insert(ctx, row)
+	return row.ID, recurringshipmentdb.RecurringShipments.Create(tenant.Ctx(ctx), w.admin, row)
 }
 
 func (w *operationsWorld) writeReasonCode(
@@ -219,7 +220,7 @@ func (w *operationsWorld) writeReasonCode(
 		SortOrder:      100,
 	}
 
-	return row.ID, w.insert(ctx, row)
+	return row.ID, servicefailuredb.ReasonCodes.Create(tenant.Ctx(ctx), w.admin, row)
 }
 
 func (w *operationsWorld) writeFailure(
@@ -259,7 +260,7 @@ func (w *operationsWorld) writeFailure(
 		row.ResolvedByID = &tenant.Actor.UserID
 	}
 
-	return row.ID, w.insert(ctx, row)
+	return row.ID, servicefailuredb.ServiceFailures.Create(tenant.Ctx(ctx), w.admin, row)
 }
 
 // writeOccurrence writes a detention clock still running at the shipment's
@@ -306,7 +307,7 @@ func (w *operationsWorld) writeOccurrence(
 		row.RequiresApproval = true
 	}
 
-	return row.ID, w.insert(ctx, row)
+	return row.ID, detentiondb.DetentionOccurrences.Create(tenant.Ctx(ctx), w.admin, row)
 }
 
 // writeTender writes a live tender on the move with a declined offer and one
@@ -318,11 +319,12 @@ func (w *operationsWorld) writeTender(
 	label string,
 ) (pulid.ID, error) {
 	bu, org := tenant.Actor.BusinessUnitID, tenant.Actor.OrganizationID
+	ctx = tenant.Ctx(ctx)
 	hauler := &carrier.Carrier{
 		ID: pulid.MustNew("car_"), BusinessUnitID: bu, OrganizationID: org,
 		Status: carrier.StatusActive, Code: "C" + label, Name: "Carrier " + label,
 	}
-	if err := w.insert(ctx, hauler); err != nil {
+	if err := carrierdb.Carriers.Create(ctx, w.admin, hauler); err != nil {
 		return pulid.Nil, err
 	}
 	row := &tender.Tender{
@@ -330,7 +332,7 @@ func (w *operationsWorld) writeTender(
 		ShipmentID: shipmentID, ShipmentMoveID: moveID,
 		Mode: tender.ModeWaterfall, Status: tender.StatusActive, CurrentRank: 2,
 	}
-	if err := w.insert(ctx, row); err != nil {
+	if err := tenderdb.Tenders.Create(ctx, w.admin, row); err != nil {
 		return pulid.Nil, err
 	}
 	offers := []*tender.TenderOffer{
@@ -349,7 +351,7 @@ func (w *operationsWorld) writeTender(
 		},
 	}
 
-	return row.ID, w.insert(ctx, &offers)
+	return row.ID, tenderdb.TenderOffers.CreateMany(ctx, w.admin, offers)
 }
 
 // operationsServices are the operations resolvers' services over the RLS

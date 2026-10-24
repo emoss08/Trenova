@@ -202,7 +202,7 @@ func (r *repository) ListOpenByThreads(
 				w.ThreadID.In(req.ThreadIDs...),
 			).
 			Order(w.CreatedAt.Asc()).
-			Limit(len(req.ThreadIDs) * agentwait.MaxOpenPerOwner).
+			Limit(len(req.ThreadIDs)*agentwait.MaxOpenPerOwner).
 			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read the conversations' open waits: %w", err)

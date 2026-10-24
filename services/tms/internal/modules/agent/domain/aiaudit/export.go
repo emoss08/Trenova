@@ -206,3 +206,14 @@ func (x *AIAuditExport) BeforeAppendModel(_ context.Context, query bun.Query) er
 
 	return nil
 }
+
+func (x *AIAuditExport) BeforeCreate(_ context.Context) error {
+	if x.Status == "" {
+		x.Status = ExportStatusPending
+	}
+	if x.Filters == nil {
+		x.Filters = &ExportFilter{}
+	}
+
+	return nil
+}

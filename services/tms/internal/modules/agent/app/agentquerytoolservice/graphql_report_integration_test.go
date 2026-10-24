@@ -4,6 +4,8 @@ package agentquerytoolservice_test
 
 import (
 	"context"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"strings"
 	"testing"
 
@@ -27,7 +29,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx/fxtest"
 	"go.uber.org/zap"
 )
@@ -47,7 +48,7 @@ type reportTenant struct {
 
 func writeReportRows(
 	t *testing.T,
-	admin *bun.DB,
+	admin *keel.DB,
 	tenant *agentreadtest.Tenant,
 	label string,
 ) *reportTenant {
@@ -57,20 +58,18 @@ func writeReportRows(
 	org, bu := tenant.Actor.OrganizationID, tenant.Actor.BusinessUnitID
 	reader := tenant.Actor.UserID
 
-	tx, err := admin.BeginTx(ctx, nil)
-	require.NoError(t, err)
 	colleague := seedtest.NewUser(org, bu).
 		WithUsername("colleague_"+strings.ToLower(label)+org.String()[4:12]).
 		WithEmail("colleague_"+strings.ToLower(label)+org.String()[4:12]+"@example.com").
-		Build(t, ctx, tx).ID
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, admin).ID
 
 	definition := pulid.MustNew("rdef_")
-	_, err = admin.ExecContext(ctx, `INSERT INTO report_definitions
+	_, err := keel.Exec(ctx, admin, `INSERT INTO report_definitions
 		(id, business_unit_id, organization_id, name, owner_id, catalog_version, definition)
-		VALUES (?, ?, ?, ?, ?, 'test', '{}'::jsonb)`,
-		definition, bu, org, "Volume "+label, reader)
+		VALUES ($1, $2, $3, $4, $5, 'test', '{}'::jsonb)`,
+		definition.String(), bu.String(), org.String(), "Volume "+label, reader.String())
 	require.NoError(t, err)
+	writeCtx := tenant.Ctx(ctx)
 
 	now := timeutils.NowUnix()
 	run := func(by pulid.ID, status report.RunStatus, rowsKey string, defined bool, age int64) string {
@@ -90,10 +89,9 @@ func writeReportRows(
 			entity.CannedKey = "shipment-volume-by-status"
 			entity.CannedVersion = "1.0.0"
 		}
-		_, insertErr := admin.NewInsert().Model(entity).Exec(ctx)
-		require.NoError(t, insertErr)
-		_, insertErr = admin.ExecContext(ctx,
-			"UPDATE report_runs SET created_at = ? WHERE id = ?", now-age, entity.ID)
+		require.NoError(t, reportdb.ReportRuns.Create(writeCtx, admin, entity))
+		_, insertErr := keel.Exec(ctx, admin,
+			"UPDATE report_runs SET created_at = $1 WHERE id = $2", now-age, entity.ID.String())
 		require.NoError(t, insertErr)
 
 		return entity.ID.String()
@@ -124,8 +122,7 @@ func writeReportRows(
 			RunAsID:        runAs,
 			NextRunAt:      now + 3600,
 		}
-		_, insertErr := admin.NewInsert().Model(entity).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, reportdb.ReportSchedules.Create(writeCtx, admin, entity))
 
 		return entity.ID.String()
 	}

@@ -4,12 +4,13 @@ package agentquerytoolservice_test
 
 import (
 	"context"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringrepository"
@@ -40,7 +41,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -64,7 +64,7 @@ func newFactoringRepos(conn *postgres.Connection) *factoringRepos {
 
 	return &factoringRepos{
 		customers: customerrepository.New(customerrepository.Params{
-			DB: conn, Logger: logger, M2MSync: m2msync.NewSyncer(m2msync.SyncerParams{Logger: logger}),
+			DB: conn, Logger: logger,
 		}),
 		factors: factoringcompanyrepository.New(
 			factoringcompanyrepository.Params{DB: conn, Logger: logger}),
@@ -133,7 +133,7 @@ type factoringTenant struct {
 func writeFactoringRows(
 	t *testing.T,
 	repos *factoringRepos,
-	admin *bun.DB,
+	admin *keel.DB,
 	tenant *agentreadtest.Tenant,
 	label string,
 ) *factoringTenant {
@@ -226,7 +226,7 @@ func writeFactoringRows(
 func postFactoredInvoice(
 	t *testing.T,
 	ctx context.Context,
-	admin *bun.DB,
+	admin *keel.DB,
 	repos *factoringRepos,
 	tenant *agentreadtest.Tenant,
 	customerID, factorID pulid.ID,
@@ -236,9 +236,10 @@ func postFactoredInvoice(
 
 	org, bu := tenant.Actor.OrganizationID, tenant.Actor.BusinessUnitID
 	orderID := pulid.MustNew("ord_")
-	_, err := admin.ExecContext(t.Context(), `INSERT INTO orders
+	_, err := keel.Exec(t.Context(), admin, `INSERT INTO orders
 		(id, business_unit_id, organization_id, customer_id, order_number)
-		VALUES (?, ?, ?, ?, ?)`, orderID, bu, org, customerID, "ORD-"+suffix+orderID.String()[4:10])
+		VALUES ($1, $2, $3, $4, $5)`, orderID.String(), bu.String(), org.String(), customerID.String(),
+		"ORD-"+suffix+orderID.String()[4:10])
 	require.NoError(t, err)
 	number := "INV-" + suffix + orderID.String()[4:10]
 	queue := &billingqueue.BillingQueueItem{
@@ -246,8 +247,7 @@ func postFactoredInvoice(
 		BillToCustomerID: customerID, Number: number, Status: billingqueue.StatusPosted,
 		BillType: billingqueue.BillTypeInvoice,
 	}
-	_, err = admin.NewInsert().Model(queue).Exec(t.Context())
-	require.NoError(t, err)
+	require.NoError(t, billingqueuedb.BillingQueueItems.Create(tenant.Ctx(t.Context()), admin, queue))
 
 	amount := decimal.New(100_00, -2)
 	posted := timeutils.NowUnix()

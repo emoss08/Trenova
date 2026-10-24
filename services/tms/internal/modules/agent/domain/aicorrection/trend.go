@@ -20,11 +20,11 @@ const (
 )
 
 type WeekTotal struct {
-	ProviderID  pulid.ID `bun:"provider_id"`
-	WeekStart   int64    `bun:"week_start"`
-	Corrections int      `bun:"corrections"`
-	Scored      int      `bun:"scored"`
-	Correct     int      `bun:"correct"`
+	ProviderID  pulid.ID
+	WeekStart   int64
+	Corrections int
+	Scored      int
+	Correct     int
 }
 
 type WeekAccuracy struct {

@@ -104,8 +104,18 @@ func (a *Artifact) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
-func (a *Artifact) BeforeCreate(ctx context.Context) error {
-	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (a *Artifact) BeforeCreate(_ context.Context) error {
+	if a.Status == "" {
+		a.Status = StatusReady
+	}
+	if a.Payload == nil {
+		a.Payload = map[string]any{}
+	}
+	if a.LineageSeq == 0 {
+		a.LineageSeq = 1
+	}
+
+	return nil
 }
 
 func (a *Artifact) GetID() pulid.ID { return a.ID }

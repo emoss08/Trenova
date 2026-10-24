@@ -7,18 +7,20 @@ import (
 	"os"
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -26,7 +28,7 @@ const expectVectorEnv = "TRENOVA_TEST_EXPECT_VECTOR"
 
 type harness struct {
 	ctx    context.Context
-	db     *bun.DB
+	db     *keel.DB
 	dsn    string
 	conn   *postgres.Connection
 	repo   agentports.AIRetrievalRepository
@@ -44,7 +46,7 @@ func newHarness(t *testing.T) *harness {
 	conn := postgres.NewTestConnection(db)
 
 	return &harness{
-		ctx:    ctx,
+		ctx:    data.Ctx(ctx),
 		db:     db,
 		dsn:    dsn,
 		conn:   conn,
@@ -102,7 +104,7 @@ func (h *harness) replace(
 ) agentports.ReplaceEmbeddingChunksResult {
 	t.Helper()
 
-	result, err := h.repo.ReplaceChunks(h.ctx, &agentports.ReplaceEmbeddingChunksRequest{
+	result, err := h.repo.ReplaceChunks(h.as(tenant), &agentports.ReplaceEmbeddingChunksRequest{
 		Source: agentports.AIRetrievalSourceRef{
 			TenantInfo: tenant,
 			SourceType: sourceType,
@@ -117,6 +119,10 @@ func (h *harness) replace(
 	return result
 }
 
+func (h *harness) as(tenant pagination.TenantInfo) context.Context {
+	return dbscope.WithTenant(h.ctx, tenant.DBTenant())
+}
+
 func (h *harness) insertMemory(t *testing.T, content string) *agent.Memory {
 	t.Helper()
 
@@ -128,8 +134,7 @@ func (h *harness) insertMemory(t *testing.T, content string) *agent.Memory {
 		Status:         agent.MemoryStatusActive,
 		Content:        content,
 	}
-	_, err := h.db.NewInsert().Model(memory).Exec(h.ctx)
-	require.NoError(t, err)
+	require.NoError(t, agentdb.Memories.Create(h.ctx, h.db, memory))
 
 	return memory
 }
@@ -150,8 +155,7 @@ func (h *harness) insertDocument(t *testing.T) *document.Document {
 		ResourceType:   "Shipment",
 		UploadedByID:   h.data.User.ID,
 	}
-	_, err := h.db.NewInsert().Model(entity).Exec(h.ctx)
-	require.NoError(t, err)
+	require.NoError(t, documentdb.Documents.Create(h.ctx, h.db, entity))
 
 	return entity
 }
@@ -159,15 +163,13 @@ func (h *harness) insertDocument(t *testing.T) *document.Document {
 func (h *harness) countEmbeddings(t *testing.T, sourceID pulid.ID, modelKey string) int {
 	t.Helper()
 
-	cols := airetrievalcol.EmbeddingColumns
-	q := h.db.NewSelect().
-		Model((*airetrieval.Embedding)(nil)).
-		Where(cols.SourceID.Eq(), sourceID)
+	e := airetrievaldb.Embeddings
+	q := e.Where(e.SourceID.Eq(sourceID))
 	if modelKey != "" {
-		q = q.Where(cols.ModelKey.Eq(), modelKey)
+		q.Where(e.ModelKey.Eq(modelKey))
 	}
 
-	count, err := q.Count(h.ctx)
+	count, err := q.Count(h.ctx, h.db)
 	require.NoError(t, err)
 
 	return int(count)
@@ -176,15 +178,13 @@ func (h *harness) countEmbeddings(t *testing.T, sourceID pulid.ID, modelKey stri
 func (h *harness) countIndexEntries(t *testing.T, sourceID pulid.ID, modelKey string) int {
 	t.Helper()
 
-	cols := airetrievalcol.IndexEntryColumns
-	q := h.db.NewSelect().
-		Model((*airetrieval.IndexEntry)(nil)).
-		Where(cols.SourceID.Eq(), sourceID)
+	e := airetrievaldb.IndexEntries
+	q := e.Where(e.SourceID.Eq(sourceID))
 	if modelKey != "" {
-		q = q.Where(cols.ModelKey.Eq(), modelKey)
+		q.Where(e.ModelKey.Eq(modelKey))
 	}
 
-	count, err := q.Count(h.ctx)
+	count, err := q.Count(h.ctx, h.db)
 	require.NoError(t, err)
 
 	return int(count)

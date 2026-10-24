@@ -6,10 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -36,20 +34,14 @@ func (r *advisorRecorder) RecordAdvisorRefusal(
 	req *agentports.RecordAdvisorRefusalRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := aiprovidercol.ProviderColumns
+		p := aiproviderdb.Providers
 		refusal := req.Refusal
 
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*aiprovider.Provider)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.AdvisorEnabled.Eq(), true).
-					Where(cols.Model.Eq(), refusal.Model)
-			}).
-			Set(cols.AdvisorRefusal.Set(), &refusal).
-			Exec(ctx); err != nil {
+		if _, err := p.Where(
+			p.ID.Eq(req.ID),
+			p.AdvisorEnabled.IsTrue(),
+			p.Model.Eq(refusal.Model),
+		).Update(ctx, r.db.Keel(ctx), append(untouched(), p.AdvisorRefusal.To(&refusal))...); err != nil {
 			return fmt.Errorf("record ai provider advisor refusal: %w", err)
 		}
 

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"github.com/emoss08/keel"
 	"os"
 	"slices"
 	"strings"
@@ -31,7 +32,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -53,7 +53,7 @@ type evalSuites struct {
 
 type evalHarness struct {
 	ctx      context.Context
-	db       *bun.DB
+	db       *keel.DB
 	conn     *postgres.Connection
 	repo     agentports.AIRetrievalRepository
 	sources  agentports.RetrievalSourceRepository

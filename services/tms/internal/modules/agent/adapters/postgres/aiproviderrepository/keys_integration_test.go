@@ -21,6 +21,7 @@ func TestRebindSealedKeyReplacesOnlyTheKeyItWasHanded(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	providers := New(Params{DB: conn, Logger: zap.NewNop()})
 	keys := NewKeyRepository(KeyParams{DB: conn})

@@ -4,48 +4,23 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/assert"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-func renderDB() *bun.DB {
-	return bun.NewDB(nil, pgdialect.New())
-}
-
 /*
-ai_providers.tasks is text[], and bun renders a bare Go slice argument as JSON.
-That made every routed call fail at the database:
-
-	malformed array literal: "["AssistantChat"]" (SQLSTATE=22P02)
-
-It is the whole router, not one feature: ListForTask is how any task finds a
-provider, so an agent run, an assistant turn and an extraction all died the same
-way. Rendering the query is the only way to catch it without a live PostgreSQL,
-since a Go slice and a pgdialect.Array are the same type to the compiler.
+ai_providers.tasks is text[]: a task has to reach PostgreSQL as an array, not
+as JSON, or every routed call fails at the database with a malformed array
+literal. ListForTask is how any task finds a provider, so an agent run, an
+assistant turn and an extraction all depend on it.
 */
-func TestListForTaskSendsAPostgresArrayNotJSON(t *testing.T) {
+func TestListForTaskSendsTheTaskAsATextArray(t *testing.T) {
 	t.Parallel()
 
-	entities := make([]*aiprovider.Provider, 0, 1)
-	sql := buildProvidersForTaskQuery(
-		renderDB(),
-		&entities,
-		agentports.ListAIProvidersForTaskRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: pulid.MustNew("org_"),
-				BuID:  pulid.MustNew("bu_"),
-			},
-			Task: aiprovider.TaskAssistantChat,
-		},
-	).String()
+	sql, args := keeltest.Render(t, providersForTaskQuery(aiprovider.TaskAssistantChat))
 
-	assert.Contains(t, sql, `'{"AssistantChat"}'`, sql)
-	assert.NotContains(t, sql, `["AssistantChat"]`,
-		"a JSON array is what PostgreSQL rejects as a malformed array literal")
+	assert.Contains(t, sql, `."tasks" @> $`, sql)
+	assert.Contains(t, args, []string{string(aiprovider.TaskAssistantChat)})
 }
 
 // The GIN index on tasks only serves containment, so the predicate has to stay
@@ -53,21 +28,11 @@ func TestListForTaskSendsAPostgresArrayNotJSON(t *testing.T) {
 func TestListForTaskUsesTheContainmentOperator(t *testing.T) {
 	t.Parallel()
 
-	entities := make([]*aiprovider.Provider, 0, 1)
-	sql := buildProvidersForTaskQuery(
-		renderDB(),
-		&entities,
-		agentports.ListAIProvidersForTaskRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: pulid.MustNew("org_"),
-				BuID:  pulid.MustNew("bu_"),
-			},
-			Task: aiprovider.TaskAssistantChat,
-		},
-	).String()
+	sql, _ := keeltest.Render(t, providersForTaskQuery(aiprovider.TaskAssistantChat))
 
 	assert.Contains(t, sql, "@>", sql)
-	assert.Contains(t, sql, "enabled", sql)
+	assert.NotContains(t, sql, "ANY(", sql)
+	assert.Contains(t, sql, `."enabled" IS TRUE`, sql)
 }
 
 // A picker of providers offers only those that are on and serve the task, so a
@@ -75,23 +40,18 @@ func TestListForTaskUsesTheContainmentOperator(t *testing.T) {
 func TestSelectOptionsFilterKeepsEnabledProvidersThatServeTheTask(t *testing.T) {
 	t.Parallel()
 
-	entities := make([]*aiprovider.Provider, 0, 1)
-	sql := applySelectOptionsFilter(
-		renderDB().NewSelect().Model(&entities),
-		aiprovider.TaskAssistantChat,
-	).String()
+	sql, _ := keeltest.Render(t, selectOptionsQuery(aiprovider.TaskAssistantChat))
 
-	assert.Contains(t, sql, `aiprv.enabled = TRUE`, sql)
-	assert.Contains(t, sql, `aiprv.tasks @> '{"AssistantChat"}'::text[]`, sql)
-	assert.Contains(t, sql, `ORDER BY "aiprv"."priority" ASC`, sql)
+	assert.Contains(t, sql, `."enabled" IS TRUE`, sql)
+	assert.Contains(t, sql, `."tasks" @> $`, sql)
+	assert.Contains(t, sql, `."priority" ASC`, sql)
 }
 
 func TestSelectOptionsFilterWithoutATaskKeepsEveryEnabledProvider(t *testing.T) {
 	t.Parallel()
 
-	entities := make([]*aiprovider.Provider, 0, 1)
-	sql := applySelectOptionsFilter(renderDB().NewSelect().Model(&entities), "").String()
+	sql, _ := keeltest.Render(t, selectOptionsQuery(""))
 
-	assert.Contains(t, sql, `aiprv.enabled = TRUE`, sql)
+	assert.Contains(t, sql, `."enabled" IS TRUE`, sql)
 	assert.NotContains(t, sql, "@>", sql)
 }

@@ -7,43 +7,44 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type tenantRow struct {
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
-func seededTenant(t *testing.T) (context.Context, *bun.DB, pagination.TenantInfo) {
+func seededTenant(t *testing.T) (context.Context, *keel.DB, pagination.TenantInfo) {
 	t.Helper()
 
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	cols := agentdefinitioncol.DefinitionColumns
-	var row tenantRow
-	require.NoError(t, db.NewSelect().
-		TableExpr(agentdefinitioncol.DefinitionTable.As(agentdefinitioncol.DefinitionTable.Alias)).
-		Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
-		Limit(1).
-		Scan(ctx, &row))
+	d := agentdefinitiondb.Definitions
+	row, err := keel.IntoOne[tenantRow](
+		dbscope.WithSystem(ctx, "test"),
+		db,
+		d.AllTenants().Pick(d.OrganizationID, d.BusinessUnitID).Limit(1),
+	)
+	require.NoError(t, err)
 
-	return ctx, db, pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
+	info := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
+
+	return dbscope.WithTenant(ctx, info.DBTenant()), db, info
 }
 
 func TestProviderTotals_BucketCorrectionsByProviderAndWeek(t *testing.T) {
@@ -175,9 +176,10 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 		require.NoError(t, err)
 	}
 
+	everyTenant := dbscope.WithSystem(ctx, "test")
 	count := func(capPerOrganization int) int {
 		t.Helper()
-		total, err := repo.CountTrainable(ctx, &aicorrectionports.CountTrainableAICorrectionsRequest{
+		total, err := repo.CountTrainable(everyTenant, &aicorrectionports.CountTrainableAICorrectionsRequest{
 			Task:               aicorrection.TaskShipmentDraftExtraction,
 			CapturedFrom:       from,
 			CapturedTo:         to,
@@ -189,7 +191,7 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	weekly := func() []aicorrection.WeekTotal {
 		t.Helper()
 		totals, err := repo.WeeklyTrainableTotalsByProvider(
-			ctx,
+			everyTenant,
 			&aicorrectionports.WeeklyTrainableAICorrectionTotalsRequest{
 				Task:  aicorrection.TaskShipmentDraftExtraction,
 				Since: from,
@@ -202,24 +204,16 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	assert.Zero(t, count(100), "an organization without consent has nothing to train on")
 	assert.Empty(t, weekly())
 
-	controls := tenantcol.AgentControlColumns
-	_, err := db.NewInsert().
-		Model(&tenant.AgentControl{
-			ID:                pulid.MustNew("agc_"),
+	controls := tenantdb.AgentControls
+	updated, err := controls.Query().Update(ctx, db, controls.AITrainingConsent.To(true))
+	require.NoError(t, err)
+	if updated == 0 {
+		require.NoError(t, controls.Create(ctx, db, &tenant.AgentControl{
 			OrganizationID:    tenantInfo.OrgID,
 			BusinessUnitID:    tenantInfo.BuID,
 			AITrainingConsent: true,
-		}).
-		Column(
-			controls.ID.Bare(),
-			controls.OrganizationID.Bare(),
-			controls.BusinessUnitID.Bare(),
-			controls.AITrainingConsent.Bare(),
-		).
-		On("CONFLICT (organization_id, business_unit_id) DO UPDATE").
-		Set(controls.AITrainingConsent.SetExcluded()).
-		Exec(ctx)
-	require.NoError(t, err)
+		}))
+	}
 
 	assert.Equal(t, 3, count(100),
 		"only scored corrections with a document, inside the window, are trainable")
@@ -256,7 +250,7 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 		ProviderID: provider, WeekStart: monday, Corrections: 2, Scored: 12, Correct: 12,
 	}, totals[0])
 
-	_, err = repo.CountTrainable(ctx, &aicorrectionports.CountTrainableAICorrectionsRequest{
+	_, err = repo.CountTrainable(everyTenant, &aicorrectionports.CountTrainableAICorrectionsRequest{
 		Task:         aicorrection.TaskShipmentDraftExtraction,
 		CapturedFrom: from,
 		CapturedTo:   to,

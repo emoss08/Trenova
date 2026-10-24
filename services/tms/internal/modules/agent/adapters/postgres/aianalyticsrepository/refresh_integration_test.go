@@ -6,12 +6,17 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,26 +25,31 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-func seededTenant(ctx context.Context, t *testing.T, db *bun.DB) pagination.TenantInfo {
+func seededTenant(
+	ctx context.Context,
+	t *testing.T,
+	db *keel.DB,
+) (context.Context, pagination.TenantInfo) {
 	t.Helper()
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 
-	return pagination.TenantInfo{
-		OrgID:  data.Organization.ID,
-		BuID:   data.BusinessUnit.ID,
-		UserID: data.User.ID,
-	}
+	return data.Ctx(ctx), data.Info()
 }
 
-func insert(ctx context.Context, t *testing.T, db *bun.DB, models ...any) {
+func insert[T any](ctx context.Context, t *testing.T, db *keel.DB, h keel.Handle[T], rows ...*T) {
 	t.Helper()
-	for _, model := range models {
-		_, err := db.NewInsert().Model(model).Exec(ctx)
+	require.NoError(t, h.CreateMany(ctx, db, rows))
+}
+
+func backdateUsage(ctx context.Context, t *testing.T, db *keel.DB, rows ...*aiusage.AIUsageRecord) {
+	t.Helper()
+	u := aiusagedb.AIUsageRecords
+	for _, row := range rows {
+		_, err := u.Where(u.ID.Eq(row.ID)).Update(ctx, db, u.CreatedAt.To(row.CreatedAt))
 		require.NoError(t, err)
 	}
 }
@@ -48,7 +58,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	tenant := seededTenant(ctx, t, db)
+	ctx, tenant := seededTenant(ctx, t, db)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	now := floorHour(timeutils.NowUnix()) - 1800
 	vllm := pulid.MustNew("aiprv_")
@@ -86,20 +96,20 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		Origin: conversation.AssistantTurnOriginCompaction, Status: conversation.AssistantTurnStatusCompleted,
 		Fingerprint: &agent.Fingerprint{Model: "gpt-5.1-mini"},
 	}
-	insert(ctx, t, db, thread)
+	insert(ctx, t, db, conversationdb.Threads.Handle, thread)
 	turn.ThreadID, compaction.ThreadID = thread.ID, thread.ID
-	insert(ctx, t, db, run, stopped, turn, compaction)
-	_, err := db.NewInsert().Model(&agent.AgentException{
+	insert(ctx, t, db, agentdb.AgentRuns.Handle, run, stopped)
+	insert(ctx, t, db, conversationdb.AssistantTurns.Handle, turn, compaction)
+	insert(ctx, t, db, agentdb.AgentExceptions.Handle, &agent.AgentException{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, RunID: stopped.ID,
 		Category: agent.CategoryUnableToDiagnose, SubjectType: agent.SubjectShipment,
 		SubjectID: stopped.SubjectID, AttemptSummary: "could not", Evidence: []agent.EvidenceRef{},
-	}).Exec(ctx)
-	require.NoError(t, err)
+	})
 
 	cost := decimal.RequireFromString("0.0123")
 	firstToken := int64(450)
-	insert(ctx, t, db,
-		&aiusage.AIUsageRecord{
+	usage := []*aiusage.AIUsageRecord{
+		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: vllm,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "meta-llama/Llama-3.3-70B-Instruct",
 			Task: aiprovider.TaskBillingDiagnosis, Surface: aiusage.SurfaceBackground,
@@ -107,7 +117,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 			LatencyMs: 300, TraceID: "aaaabbbbccccddddeeeeffff00001111",
 			OwnerKind: agent.RunOwnerAgentRun, OwnerID: run.ID, CreatedAt: now - 25,
 		},
-		&aiusage.AIUsageRecord{
+		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: groq,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "llama-3.3-70b-versatile",
 			Task: aiprovider.TaskBillingDiagnosis, Surface: aiusage.SurfaceBackground,
@@ -115,20 +125,22 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 			Failover: true, TraceID: "aaaabbbbccccddddeeeeffff00001111",
 			OwnerKind: agent.RunOwnerAgentRun, OwnerID: run.ID, CreatedAt: now - 20,
 		},
-		&aiusage.AIUsageRecord{
+		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: groq,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "qwen2.5:14b",
 			Task: aiprovider.TaskDocumentClassification, Surface: aiusage.SurfaceStructured,
 			Succeeded: true, LatencyMs: 400, CreatedAt: now - 5,
 		},
-		&aiusage.AIUsageRecord{
+		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: groq,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "nomic-embed-text",
 			Task: aiprovider.TaskEmbedding, Surface: aiusage.SurfaceIndexing,
 			Succeeded: true, LatencyMs: 40, CreatedAt: now - 5,
 		},
-	)
-	insert(ctx, t, db,
+	}
+	insert(ctx, t, db, aiusagedb.AIUsageRecords.Handle, usage...)
+	backdateUsage(ctx, t, db, usage...)
+	insert(ctx, t, db, agentdb.AgentRunSteps.Handle,
 		&agent.AgentRunStep{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			OwnerKind: string(
@@ -297,12 +309,12 @@ func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t 
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	tenant := seededTenant(ctx, t, db)
+	ctx, tenant := seededTenant(ctx, t, db)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	now := timeutils.NowUnix()
 
-	insert(ctx, t, db,
-		&aiusage.AIUsageRecord{
+	usage := []*aiusage.AIUsageRecord{
+		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			ProviderID: pulid.MustNew("aiprv_"), ProviderKind: aiprovider.KindAnthropicMessages,
 			Model: "claude-haiku-5-5", Task: aiprovider.TaskDocumentClassification,
@@ -310,7 +322,7 @@ func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t 
 			InputTokens: 120, CacheReadTokens: 900, CacheWriteTokens: 60, OutputTokens: 40,
 			CreatedAt: now - 5,
 		},
-		&aiusage.AIUsageRecord{
+		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			ProviderID: pulid.MustNew("aiprv_"), ProviderKind: aiprovider.KindOpenAIResponses,
 			Model: "gpt-6-luna", Task: aiprovider.TaskDocumentClassification,
@@ -318,7 +330,9 @@ func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t 
 			InputTokens: 1000, CacheReadTokens: 800, OutputTokens: 40,
 			CreatedAt: now - 5,
 		},
-	)
+	}
+	insert(ctx, t, db, aiusagedb.AIUsageRecords.Handle, usage...)
+	backdateUsage(ctx, t, db, usage...)
 
 	_, err := repo.RefreshUnits(ctx, aianalyticsports.RefreshRequest{
 		TenantInfo: tenant,
@@ -328,27 +342,18 @@ func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t 
 	})
 	require.NoError(t, err)
 
-	var rows []struct {
-		Model      string `bun:"model"`
-		Input      int64  `bun:"input_tokens"`
-		CacheRead  int64  `bun:"cache_read_tokens"`
-		CacheWrite int64  `bun:"cache_write_tokens"`
-	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("ai_work_units").
-		Column("model", "input_tokens", "cache_read_tokens", "cache_write_tokens").
-		Where("organization_id = ? AND business_unit_id = ?", tenant.OrgID, tenant.BuID).
-		Order("model").
-		Scan(ctx, &rows))
+	w := aianalyticsdb.WorkUnits
+	rows, err := w.Order(w.Model.Asc()).All(ctx, db)
+	require.NoError(t, err)
 	require.Len(t, rows, 2)
 
 	assert.Equal(t, "claude-haiku-5-5", rows[0].Model)
-	assert.Equal(t, int64(120), rows[0].Input,
+	assert.Equal(t, int64(120), rows[0].InputTokens,
 		"Anthropic reports input without the cache, whether or not its provider row still exists")
-	assert.Equal(t, int64(900), rows[0].CacheRead)
-	assert.Equal(t, int64(60), rows[0].CacheWrite)
+	assert.Equal(t, int64(900), rows[0].CacheReadTokens)
+	assert.Equal(t, int64(60), rows[0].CacheWriteTokens)
 
 	assert.Equal(t, "gpt-6-luna", rows[1].Model)
-	assert.Equal(t, int64(200), rows[1].Input, "OpenAI's input includes the cache read")
-	assert.Equal(t, int64(800), rows[1].CacheRead)
+	assert.Equal(t, int64(200), rows[1].InputTokens, "OpenAI's input includes the cache read")
+	assert.Equal(t, int64(800), rows[1].CacheReadTokens)
 }

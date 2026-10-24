@@ -221,3 +221,20 @@ func (e *AIAuditEvent) BeforeAppendModel(_ context.Context, query bun.Query) err
 
 	return nil
 }
+
+func (e *AIAuditEvent) BeforeCreate(_ context.Context) error {
+	if e.RecordedAt == 0 {
+		e.RecordedAt = timeutils.NowUnix()
+	}
+	if e.HeldBy == nil {
+		e.HeldBy = []string{}
+	}
+	if e.RedactedPaths == nil {
+		e.RedactedPaths = []string{}
+	}
+	if e.Purpose == "" {
+		e.Purpose = PurposeLive
+	}
+
+	return nil
+}

@@ -3,6 +3,7 @@
 package agentquerytoolservice_test
 
 import (
+	"github.com/emoss08/keel"
 	"context"
 	"fmt"
 	"slices"
@@ -14,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
@@ -109,7 +109,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -192,7 +191,7 @@ func boolFilter(field string, value bool) (typed, old map[string]any) {
 //nolint:funlen // one entry per converted list
 func convertedListCases(
 	conn *postgres.Connection,
-	admin *bun.DB,
+	admin *keel.DB,
 ) ([]referenceCase, agentread.ResolverParams) {
 	logger := zap.NewNop()
 	equipmentTypes := equipmenttyperepository.New(equipmenttyperepository.Params{DB: conn, Logger: logger})
@@ -206,7 +205,7 @@ func convertedListCases(
 	categories := locationcategoryrepository.New(locationcategoryrepository.Params{DB: conn, Logger: logger})
 	holdReasons := holdreasonrepository.New(holdreasonrepository.Params{DB: conn, Logger: logger})
 	customers := customerrepository.New(customerrepository.Params{
-		DB: conn, Logger: logger, M2MSync: m2msync.NewSyncer(m2msync.SyncerParams{Logger: logger}),
+		DB: conn, Logger: logger,
 	})
 	locations := locationrepository.New(locationrepository.Params{DB: conn, Logger: logger})
 	carriers := carrierrepository.New(carrierrepository.Params{DB: conn, Logger: logger})

@@ -258,6 +258,10 @@ func (c *Correction) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
-func (c *Correction) BeforeCreate(ctx context.Context) error {
-	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (c *Correction) BeforeCreate(_ context.Context) error {
+	if c.CapturedAt == 0 {
+		c.CapturedAt = timeutils.NowUnix()
+	}
+
+	return nil
 }

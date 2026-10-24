@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun/invoicerundb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
@@ -18,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -475,7 +477,7 @@ func newListInvoiceRunsTool(
 			"billing period, by status, number or period. Open one with invoice_get_run to " +
 			"see its groups and items.",
 		resource: permission.ResourceInvoiceRun,
-		config:   querybuilder.GetFieldConfiguration((*invoicerun.InvoiceRun)(nil)),
+		config:   listquery.Describe((*invoicerun.InvoiceRun)(nil), invoicerundb.InvoiceRunsSchema()),
 		fields: []listField{
 			{
 				Name: paramStatus,

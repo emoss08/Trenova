@@ -3,12 +3,14 @@ package agentquerytoolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
@@ -75,7 +77,7 @@ func newListCarrierCapacityPostingsTool(
 			"after today for offers still open.",
 		searchTerms: []string{"carrier capacity", "available trucks", "truck postings"},
 		resource:    permission.ResourceCarrierCapacityPosting,
-		config:      querybuilder.GetFieldConfiguration((*carriercapacity.Posting)(nil)),
+		config:      listquery.Describe((*carriercapacity.Posting)(nil), carriercapacitydb.PostingsSchema()),
 		fields: []listField{
 			{Name: "carrierId", Kind: filterText},
 			{Name: "originLocationId", Kind: filterText},

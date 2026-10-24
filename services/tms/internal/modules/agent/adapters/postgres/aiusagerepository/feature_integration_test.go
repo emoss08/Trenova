@@ -5,14 +5,14 @@ package aiusagerepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,21 +23,22 @@ import (
 )
 
 type tenantRow struct {
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	cols := agentdefinitioncol.DefinitionColumns
-	var tenant tenantRow
-	require.NoError(t, db.NewSelect().
-		TableExpr(agentdefinitioncol.DefinitionTable.As(agentdefinitioncol.DefinitionTable.Alias)).
-		Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
-		Limit(1).
-		Scan(ctx, &tenant))
+	d := agentdefinitiondb.Definitions
+	tenant, err := keel.IntoOne[tenantRow](dbscope.WithSystem(ctx, "test"), db,
+		d.AllTenants().Pick(d.OrganizationID, d.BusinessUnitID).Limit(1))
+	require.NoError(t, err)
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: tenant.OrganizationID,
+		BusinessUnitID: tenant.BusinessUnitID,
+	})
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	since := timeutils.NowUnix() - 60

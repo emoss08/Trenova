@@ -292,22 +292,23 @@ var aIAuditEventsTable = schema.Table{
 		{Name: "hash_version", Quoted: `"hash_version"`, Field: "HashVersion", Kind: schema.KindInt16, Flags: 0, Label: `Hash Version`, JSON: `hashVersion`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 72,
-	AutoUpdate: -1,
-	IDPrefix:   "aiae_",
-	New:        newAIAuditEvent,
-	NewN:       newNAIAuditEvent,
-	Size:       unsafe.Sizeof(aiaudit.AIAuditEvent{}),
-	Ptr:        ptrAIAuditEvent,
-	Value:      valueAIAuditEvent,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   72,
+	AutoUpdate:   -1,
+	IDPrefix:     "aiae_",
+	New:          newAIAuditEvent,
+	NewN:         newNAIAuditEvent,
+	Size:         unsafe.Sizeof(aiaudit.AIAuditEvent{}),
+	Ptr:          ptrAIAuditEvent,
+	Value:        valueAIAuditEvent,
+	BeforeCreate: beforeCreateAIAuditEvent,
 }
 
 var aIAuditEventsRef = keel.Ref{Table: &aIAuditEventsTable}
@@ -1014,6 +1015,10 @@ func valueAIAuditEvent(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateAIAuditEvent(ctx context.Context, p unsafe.Pointer) error {
+	return (*aiaudit.AIAuditEvent)(p).BeforeCreate(ctx)
+}
+
 // aIAuditExportsTable is the schema of aiaudit.AIAuditExport.
 var aIAuditExportsTable = schema.Table{
 	Name:   "ai_audit_exports",
@@ -1051,22 +1056,23 @@ var aIAuditExportsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
-	Returning:  nil,
-	Version:    23,
-	AutoID:     0,
-	AutoCreate: 24,
-	AutoUpdate: 25,
-	IDPrefix:   "aiax_",
-	New:        newAIAuditExport,
-	NewN:       newNAIAuditExport,
-	Size:       unsafe.Sizeof(aiaudit.AIAuditExport{}),
-	Ptr:        ptrAIAuditExport,
-	Value:      valueAIAuditExport,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
+	Returning:    nil,
+	Version:      23,
+	AutoID:       0,
+	AutoCreate:   24,
+	AutoUpdate:   25,
+	IDPrefix:     "aiax_",
+	New:          newAIAuditExport,
+	NewN:         newNAIAuditExport,
+	Size:         unsafe.Sizeof(aiaudit.AIAuditExport{}),
+	Ptr:          ptrAIAuditExport,
+	Value:        valueAIAuditExport,
+	BeforeCreate: beforeCreateAIAuditExport,
 }
 
 var aIAuditExportsRef = keel.Ref{Table: &aIAuditExportsTable}
@@ -1336,6 +1342,10 @@ func valueAIAuditExport(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateAIAuditExport(ctx context.Context, p unsafe.Pointer) error {
+	return (*aiaudit.AIAuditExport)(p).BeforeCreate(ctx)
+}
+
 // aIAuditProjectorStatesTable is the schema of aiaudit.AIAuditProjectorState.
 var aIAuditProjectorStatesTable = schema.Table{
 	Name:   "ai_audit_projector_state",
@@ -1470,22 +1480,23 @@ var aIAuditSealsTable = schema.Table{
 		{Name: "row_count", Quoted: `"row_count"`, Field: "RowCount", Kind: schema.KindInt64, Flags: 0, Label: `Row Count`, JSON: `rowCount`},
 		{Name: "sealed_at", Quoted: `"sealed_at"`, Field: "SealedAt", Kind: schema.KindInt64, Flags: 0, Label: `Sealed At`, JSON: `sealedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{0, 1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Update:     []int32{3, 4, 5, 6, 7},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newAIAuditSeal,
-	NewN:       newNAIAuditSeal,
-	Size:       unsafe.Sizeof(aiaudit.AIAuditSeal{}),
-	Ptr:        ptrAIAuditSeal,
-	Value:      valueAIAuditSeal,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{0, 1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:       []int32{3, 4, 5, 6, 7},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newAIAuditSeal,
+	NewN:         newNAIAuditSeal,
+	Size:         unsafe.Sizeof(aiaudit.AIAuditSeal{}),
+	Ptr:          ptrAIAuditSeal,
+	Value:        valueAIAuditSeal,
+	BeforeCreate: beforeCreateAIAuditSeal,
 }
 
 var aIAuditSealsRef = keel.Ref{Table: &aIAuditSealsTable}
@@ -1597,6 +1608,10 @@ func valueAIAuditSeal(p unsafe.Pointer, c int32) any {
 		return r.SealedAt
 	}
 	return nil
+}
+
+func beforeCreateAIAuditSeal(ctx context.Context, p unsafe.Pointer) error {
+	return (*aiaudit.AIAuditSeal)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

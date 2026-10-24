@@ -4,6 +4,8 @@ package agentquerytoolservice_test
 
 import (
 	"context"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert/tablechangealertdb"
 	"strings"
 	"testing"
 
@@ -25,7 +27,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -39,7 +40,7 @@ type alertTenant struct {
 
 func writeAlertRows(
 	t *testing.T,
-	admin *bun.DB,
+	admin *keel.DB,
 	tenant *agentreadtest.Tenant,
 	label string,
 ) *alertTenant {
@@ -48,13 +49,11 @@ func writeAlertRows(
 	ctx := t.Context()
 	org, bu := tenant.Actor.OrganizationID, tenant.Actor.BusinessUnitID
 
-	tx, err := admin.BeginTx(ctx, nil)
-	require.NoError(t, err)
 	colleague := seedtest.NewUser(org, bu).
 		WithUsername("watcher_"+strings.ToLower(label)+org.String()[4:12]).
 		WithEmail("watcher_"+strings.ToLower(label)+org.String()[4:12]+"@example.com").
-		Build(t, ctx, tx).ID
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, admin).ID
+	writeCtx := tenant.Ctx(ctx)
 
 	alert := func(owner pulid.ID, name, table string, status tablechangealert.SubscriptionStatus) string {
 		entity := &tablechangealert.TCASubscription{
@@ -76,8 +75,7 @@ func writeAlertRows(
 			Priority:       "medium",
 			Status:         status,
 		}
-		_, insertErr := admin.NewInsert().Model(entity).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, tablechangealertdb.TCASubscriptions.Create(writeCtx, admin, entity))
 
 		return entity.ID.String()
 	}

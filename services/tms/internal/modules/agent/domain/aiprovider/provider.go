@@ -232,8 +232,30 @@ func (p *Provider) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
-func (p *Provider) BeforeCreate(ctx context.Context) error {
-	return p.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+func (p *Provider) BeforeCreate(_ context.Context) error {
+	if p.ReasoningEffort == "" {
+		p.ReasoningEffort = ReasoningOff
+	}
+	if p.ThinkingStyle == "" {
+		p.ThinkingStyle = ThinkingStyleAuto
+	}
+	if p.Platform == "" {
+		p.Platform = PlatformDirect
+	}
+	if p.EmbeddingInputStyle == "" {
+		p.EmbeddingInputStyle = EmbeddingInputStyleNone
+	}
+	if p.TimeoutSeconds == 0 {
+		p.TimeoutSeconds = DefaultTimeoutSeconds
+	}
+	if p.MaxConcurrent == 0 {
+		p.MaxConcurrent = DefaultMaxConcurrent
+	}
+	if p.OnCap == "" {
+		p.OnCap = CapActionNext
+	}
+
+	return nil
 }
 
 // TestOutcome is what a live probe of the endpoint revealed, recorded on the

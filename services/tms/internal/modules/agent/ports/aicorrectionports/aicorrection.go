@@ -56,9 +56,9 @@ type TotalAICorrectionsByProviderRequest struct {
 }
 
 type AICorrectionProviderTotal struct {
-	Candidate bool `bun:"candidate"`
-	Scored    int  `bun:"scored"`
-	Correct   int  `bun:"correct"`
+	Candidate bool
+	Scored    int
+	Correct   int
 }
 
 type WeeklyAICorrectionTotalsRequest struct {

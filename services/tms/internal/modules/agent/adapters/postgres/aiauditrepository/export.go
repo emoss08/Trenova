@@ -4,20 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit/aiauditdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var exportErrors = dberror.Mapping{Entity: "AI audit export"}
 
 type exportRepository struct {
 	db *postgres.Connection
@@ -36,14 +35,10 @@ func (r *exportRepository) Create(
 	export *aiaudit.AIAuditExport,
 ) (*aiaudit.AIAuditExport, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditExport, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(export).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := aiauditdb.AIAuditExports.Create(ctx, r.db.Keel(ctx), export); err != nil {
 			r.l.Error("failed to create AI audit export", zap.Error(err))
 
-			return nil, fmt.Errorf("create AI audit export: %w", err)
+			return nil, exportErrors.Map(err, export.ID.String())
 		}
 
 		return export, nil
@@ -57,28 +52,11 @@ func (r *exportRepository) Update(
 	export *aiaudit.AIAuditExport,
 ) (*aiaudit.AIAuditExport, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditExport, error) {
-		cols := aiauditcol.AIAuditExportColumns
-		previous := export.Version
-		export.Version++
-
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(export).
-			WherePK().
-			Where(cols.Version.Eq(), previous).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			export.Version = previous
+		if err := aiauditdb.AIAuditExports.Save(ctx, r.db.Keel(ctx), export); err != nil {
 			r.l.Error("failed to update AI audit export",
 				zap.String("exportId", export.ID.String()), zap.Error(err))
 
-			return nil, fmt.Errorf("update AI audit export: %w", err)
-		}
-
-		if err = dberror.CheckRowsAffected(res, "AI audit export", export.ID.String()); err != nil {
-			export.Version = previous
-
-			return nil, err
+			return nil, exportErrors.Map(err, export.ID.String())
 		}
 
 		return export, nil
@@ -90,16 +68,9 @@ func (r *exportRepository) GetByID(
 	req aiauditports.GetAIAuditExportRequest,
 ) (*aiaudit.AIAuditExport, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditExport, error) {
-		entity := new(aiaudit.AIAuditExport)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return aiauditcol.AIAuditExportScopeTenant(sq, req.TenantInfo).
-					Where(aiauditcol.AIAuditExportColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := aiauditdb.AIAuditExports.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AI audit export")
+			return nil, exportErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -110,49 +81,17 @@ func (r *exportRepository) ListConnection(
 	ctx context.Context,
 	req *aiauditports.ListAIAuditExportsRequest,
 ) (*pagination.CursorListResult[*aiaudit.AIAuditExport], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*aiaudit.AIAuditExport], error) {
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*aiaudit.AIAuditExport)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							aiauditcol.AIAuditExportTable.Alias,
-							req.Filter,
-							(*aiaudit.AIAuditExport)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count AI audit exports: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*aiaudit.AIAuditExport]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*aiaudit.AIAuditExport) *bun.SelectQuery {
-						return dba.NewSelect().Model(entities)
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							aiauditcol.AIAuditExportTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*aiaudit.AIAuditExport)(nil),
-						)
-					},
+				r.db.Keel(ctx),
+				aiauditdb.AIAuditExports.Query(),
+				&listquery.Request[aiaudit.AIAuditExport]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
 				},
 			)
 			if err != nil {
@@ -175,17 +114,17 @@ func (r *exportRepository) ListExpired(
 ) ([]*aiaudit.AIAuditExport, error) {
 	ctx = dbscope.WithSystem(ctx, "list expired AI audit exports across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditExport, error) {
-		cols := aiauditcol.AIAuditExportColumns
-		rows := make([]*aiaudit.AIAuditExport, 0, limit)
-
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			Where(cols.ArtifactKey.IsNotNull()).
-			Where(cols.ArtifactExpiresAt.Lte(), before).
-			Where(cols.Status.Eq(), aiaudit.ExportStatusSucceeded).
-			Order(cols.ArtifactExpiresAt.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
+		x := aiauditdb.AIAuditExports
+		rows, err := x.AllTenants().
+			Where(
+				x.ArtifactKey.Ne(""),
+				x.ArtifactExpiresAt.Lte(before),
+				x.Status.Eq(aiaudit.ExportStatusSucceeded),
+			).
+			Order(x.ArtifactExpiresAt.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list expired AI audit exports: %w", err)
 		}
 
@@ -202,19 +141,16 @@ func (r *exportRepository) ListStale(
 ) ([]*aiaudit.AIAuditExport, error) {
 	ctx = dbscope.WithSystem(ctx, "list stale AI audit exports across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditExport, error) {
-		cols := aiauditcol.AIAuditExportColumns
-		rows := make([]*aiaudit.AIAuditExport, 0, limit)
-
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			Where(cols.Status.In(), bun.List([]aiaudit.ExportStatus{
-				aiaudit.ExportStatusPending,
-				aiaudit.ExportStatusRunning,
-			})).
-			Where(cols.UpdatedAt.Lt(), updatedBefore).
-			Order(cols.UpdatedAt.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
+		x := aiauditdb.AIAuditExports
+		rows, err := x.AllTenants().
+			Where(
+				x.Status.In(aiaudit.ExportStatusPending, aiaudit.ExportStatusRunning),
+				x.UpdatedAt.Lt(updatedBefore),
+			).
+			Order(x.UpdatedAt.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list stale AI audit exports: %w", err)
 		}
 

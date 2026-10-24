@@ -5,6 +5,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -18,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -100,7 +102,7 @@ func buildBillingQueueList(
 		summary: "List billing queue items, the shipments waiting on a biller. Open one with " +
 			"billing_get_queue_item before deciding it; Posted items need status Posted.",
 		resource: permission.ResourceBillingQueue,
-		config:   querybuilder.GetFieldConfiguration((*billingqueue.BillingQueueItem)(nil)),
+		config:   listquery.Describe((*billingqueue.BillingQueueItem)(nil), billingqueuedb.BillingQueueItemsSchema()),
 		fields: []listField{
 			{
 				Name:   paramStatus,

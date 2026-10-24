@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -13,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -86,7 +88,7 @@ func agentRunListSpec() listSpec {
 			"worked on, and whether it failed, waits on a decision or is running. " +
 			"agent_get_run reads one.",
 		resource: permission.ResourceAgentRun,
-		config:   querybuilder.GetFieldConfiguration((*agent.AgentRun)(nil)),
+		config:   listquery.Describe((*agent.AgentRun)(nil), agentdb.AgentRunsSchema()),
 		fields: []listField{
 			{
 				Name: agentRunFieldStatus,

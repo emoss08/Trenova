@@ -4,14 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -34,21 +31,16 @@ func (r *keyRepository) RecordFingerprint(
 	req agentports.RecordAIProviderKeyFingerprintRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := aiprovidercol.ProviderColumns
-
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*aiprovider.Provider)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.APIKey.IsNotNull()).
-					Where(cols.APIKeyPrefix.IsNull()).
-					Where(cols.APIKeyLastFour.IsNull())
-			}).
-			Set(cols.APIKeyPrefix.Set(), stringutils.Ptr(req.Prefix)).
-			Set(cols.APIKeyLastFour.Set(), stringutils.Ptr(req.LastFour)).
-			Exec(ctx); err != nil {
+		p := aiproviderdb.Providers
+		if _, err := p.Where(
+			p.ID.Eq(req.ID),
+			p.APIKey.IsNotNull(),
+			p.APIKeyPrefix.IsNull(),
+			p.APIKeyLastFour.IsNull(),
+		).Update(ctx, r.db.Keel(ctx), append(untouched(),
+			p.APIKeyPrefix.To(req.Prefix),
+			p.APIKeyLastFour.To(req.LastFour),
+		)...); err != nil {
 			return fmt.Errorf("record ai provider key fingerprint: %w", err)
 		}
 
@@ -61,22 +53,14 @@ func (r *keyRepository) TouchUsed(
 	req agentports.TouchAIProviderKeyRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := aiprovidercol.ProviderColumns
-
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*aiprovider.Provider)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.APIKey.IsNotNull()).
-					WhereGroup(" AND ", func(inner *bun.UpdateQuery) *bun.UpdateQuery {
-						return inner.Where(cols.APIKeyLastUsedAt.IsNull()).
-							WhereOr(cols.APIKeyLastUsedAt.Lt(), req.UsedAt)
-					})
-			}).
-			Set(cols.APIKeyLastUsedAt.Set(), req.UsedAt).
-			Exec(ctx); err != nil {
+		p := aiproviderdb.Providers
+		if _, err := p.Where(
+			p.ID.Eq(req.ID),
+			p.APIKey.IsNotNull(),
+			keel.Or(p.APIKeyLastUsedAt.IsNull(), p.APIKeyLastUsedAt.Lt(req.UsedAt)),
+		).Update(ctx, r.db.Keel(ctx), append(untouched(),
+			p.APIKeyLastUsedAt.To(req.UsedAt),
+		)...); err != nil {
 			return fmt.Errorf("record ai provider key use: %w", err)
 		}
 
@@ -89,26 +73,16 @@ func (r *keyRepository) ClearExpiredPrevious(
 	req agentports.ClearExpiredAIProviderKeysRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := aiprovidercol.ProviderColumns
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*aiprovider.Provider)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.RotationExpiresAt.IsNotNull()).
-					Where(cols.RotationExpiresAt.Lte(), req.Now)
-			}).
-			Set(cols.PreviousAPIKey.SetNull()).
-			Set(cols.RotationExpiresAt.SetNull()).
-			Exec(ctx)
+		p := aiproviderdb.Providers
+		affected, err := p.Where(
+			p.RotationExpiresAt.IsNotNull(),
+			p.RotationExpiresAt.Lte(req.Now),
+		).Update(ctx, r.db.Keel(ctx), append(untouched(),
+			p.PreviousAPIKey.ToNull(),
+			p.RotationExpiresAt.ToNull(),
+		)...)
 		if err != nil {
 			return 0, fmt.Errorf("clear expired ai provider keys: %w", err)
-		}
-
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("count cleared ai provider keys: %w", err)
 		}
 
 		return int(affected), nil
@@ -120,22 +94,14 @@ func (r *keyRepository) RebindSealedKey(
 	req *agentports.RebindAIProviderKeyRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := aiprovidercol.ProviderColumns
-		column := cols.APIKey
+		p := aiproviderdb.Providers
+		column := p.APIKey
 		if req.Previous {
-			column = cols.PreviousAPIKey
+			column = p.PreviousAPIKey
 		}
 
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*aiprovider.Provider)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(column.Eq(), req.Expected)
-			}).
-			Set(column.Set(), req.Replacement).
-			Exec(ctx); err != nil {
+		if _, err := p.Where(p.ID.Eq(req.ID), column.Eq(req.Expected)).
+			Update(ctx, r.db.Keel(ctx), append(untouched(), column.To(req.Replacement))...); err != nil {
 			return fmt.Errorf("rebind ai provider key: %w", err)
 		}
 

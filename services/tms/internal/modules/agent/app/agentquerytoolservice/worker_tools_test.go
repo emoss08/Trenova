@@ -63,8 +63,8 @@ called the name search with no query, was told the parameter "must be a
 non-empty string", searched for the literal word "driver" instead, matched
 nobody, and told the customer their system had no drivers in it.
 
-The repository never needed the term. ApplyCursorFilters only applies a text
-search when Query is non-empty (pkg/querybuilder/cursor_sort.go), so an empty
+The repository never needed the term. listquery only applies a text
+search when Query is non-empty (pkg/listquery/search.go), so an empty
 one already means "everything, newest first".
 */
 func TestListWorkers_ListsTheRosterWithoutAQuery(t *testing.T) {
