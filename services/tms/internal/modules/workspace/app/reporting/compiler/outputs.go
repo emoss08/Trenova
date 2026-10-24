@@ -160,7 +160,7 @@ func (e *emitter) dimensionExpr(
 	}
 
 	return sqlExpr{
-		text: "EXTRACT(EPOCH FROM date_trunc(?, to_timestamp(" + col + ") AT TIME ZONE ?))::bigint",
+		text: "EXTRACT(EPOCH FROM date_trunc(?, to_timestamp(" + col + "), ?))::bigint",
 		args: []any{string(grouping.bucket), e.loc.String()},
 	}, nil
 }

@@ -178,7 +178,11 @@ func newRequest(def *report.Definition) *reportports.ReportCompileRequest {
 	}
 }
 
-func mustCompile(t *testing.T, c *Compiler, def *report.Definition) *reportports.CompiledReportQuery {
+func mustCompile(
+	t *testing.T,
+	c *Compiler,
+	def *report.Definition,
+) *reportports.CompiledReportQuery {
 	t.Helper()
 	compiled, err := c.Compile(context.Background(), newRequest(def))
 	require.NoError(t, err)
@@ -380,7 +384,7 @@ func TestCompileDateBucketAndRelativeFilter(t *testing.T) {
 		},
 	})
 
-	bucketExpr := "EXTRACT(EPOCH FROM date_trunc(?, to_timestamp(t0.created_at) AT TIME ZONE ?))::bigint"
+	bucketExpr := "EXTRACT(EPOCH FROM date_trunc(?, to_timestamp(t0.created_at), ?))::bigint"
 	want := "SELECT " + bucketExpr + " AS c0, COUNT(t0.id) AS c1 " +
 		"FROM shipments AS t0 " +
 		"WHERE t0.organization_id = ? AND t0.business_unit_id = ? AND " +

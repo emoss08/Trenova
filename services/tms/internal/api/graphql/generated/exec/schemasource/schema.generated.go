@@ -25095,6 +25095,7 @@ type ReportPreview {
   rows: Any!
   totals: Any
   truncated: Boolean!
+  timezone: String!
 }
 
 # --- IR inputs ---------------------------------------------------------------

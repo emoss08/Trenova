@@ -71,6 +71,8 @@ type ReportChartProps = {
   className?: string;
   /** Enables click-to-filter on the category axis. */
   categorySelect?: CategorySelect;
+  /** The zone the result's dates (date buckets above all) are written in: the result's own. */
+  timeZone?: string;
 };
 
 type ChartPoint = Record<string, unknown>;
@@ -102,6 +104,7 @@ function buildPoints(
   columns: ChartColumn[],
   rows: unknown[][],
   indexes: Map<string, number>,
+  timeZone: string | undefined,
 ): ChartPoint[] {
   const labelIndex = chart.xColumnId ? indexes.get(chart.xColumnId) : undefined;
   const labelColumn = labelIndex === undefined ? undefined : columns[labelIndex];
@@ -113,6 +116,7 @@ function buildPoints(
           rules,
           labelColumn,
           rows.map((row) => row[labelIndex]),
+          timeZone,
         );
 
   const points = rows.map((row, rowIndex) => {
@@ -178,6 +182,7 @@ function buildFormatters(
   chart: ReportChartSpec,
   columns: ChartColumn[],
   points: ChartPoint[],
+  timeZone: string | undefined,
 ): ChartFormatters {
   const byId = new Map(columns.map((column) => [column.id, column]));
   const primary = chart.seriesIds?.[0];
@@ -186,23 +191,25 @@ function buildFormatters(
   const series = new Map(
     (chart.seriesIds ?? []).map((seriesId) => [
       seriesId,
-      createValueFormatter(rules, byId.get(seriesId) ?? NO_COLUMN, valuesOf(seriesId)),
+      createValueFormatter(rules, byId.get(seriesId) ?? NO_COLUMN, valuesOf(seriesId), timeZone),
     ]),
   );
   const axis = createValueFormatter(
     rules,
     compactColumn(primary ? byId.get(primary) : undefined) ?? NO_COLUMN,
     valuesOf(primary),
+    timeZone,
   );
   const xAxis = createValueFormatter(
     rules,
     compactColumn(chart.xColumnId ? byId.get(chart.xColumnId) : undefined) ?? NO_COLUMN,
     chart.type === "scatter" ? valuesOf("x") : [],
+    timeZone,
   );
 
   return {
     value: (seriesId, value) =>
-      (series.get(seriesId) ?? createValueFormatter(rules, NO_COLUMN))(value),
+      (series.get(seriesId) ?? createValueFormatter(rules, NO_COLUMN, [], timeZone))(value),
     label: (seriesId) => byId.get(seriesId)?.label ?? seriesId,
     axis,
     xAxis,
@@ -327,6 +334,7 @@ function KpiTile({
   rows,
   indexes,
   className,
+  timeZone,
 }: ReportChartProps & { indexes: Map<string, number> }) {
   const t = useT();
   const rules = useRules();
@@ -359,7 +367,8 @@ function KpiTile({
     <div className={cn("flex h-full flex-col justify-center gap-1 p-4", className)}>
       <p className="text-xs text-muted-foreground font-medium">{chart.title || column.label}</p>
       <p className="text-2xl font-semibold tracking-tight tabular-nums">
-        {reportCellText(formatReportRow(rules, [column], [value])[0], column.display) || "—"}
+        {reportCellText(formatReportRow(rules, [column], [value])[0], column.display, timeZone) ||
+          "—"}
       </p>
       {delta !== null && (
         <p
@@ -414,16 +423,16 @@ function FormattedReportChart(props: ReportChartProps) {
   const t = useT();
   const rules = useRules();
 
-  const { chart, columns, rows, className, categorySelect } = props;
+  const { chart, columns, rows, className, categorySelect, timeZone } = props;
   const indexes = useMemo(() => columnIndexMap(columns), [columns]);
   const points = useMemo(
-    () => buildPoints(rules, chart, columns, rows, indexes),
-    [rules, chart, columns, rows, indexes],
+    () => buildPoints(rules, chart, columns, rows, indexes, timeZone),
+    [rules, chart, columns, rows, indexes, timeZone],
   );
   const config = useMemo(() => chartConfig(chart, columns), [chart, columns]);
   const format = useMemo(
-    () => buildFormatters(rules, chart, columns, points),
-    [rules, chart, columns, points],
+    () => buildFormatters(rules, chart, columns, points, timeZone),
+    [rules, chart, columns, points, timeZone],
   );
   const target = goalValue(chart, rows, indexes);
   const seriesIds = chart.seriesIds ?? [];

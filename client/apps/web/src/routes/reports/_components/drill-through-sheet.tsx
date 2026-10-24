@@ -105,6 +105,7 @@ export function DrillThroughSheet({
                 <ResultGrid
                   columns={drill.data?.columns ?? []}
                   rows={rows}
+                  timeZone={drill.data?.timezone}
                   density="compact"
                   emptyMessage={t("No records matched this cell.")}
                 />

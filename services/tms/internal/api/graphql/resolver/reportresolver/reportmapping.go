@@ -910,6 +910,7 @@ func reportPreviewToModel(result *reportingservice.PreviewResult) *gqlmodel.Repo
 		Columns:   columns,
 		Rows:      rows,
 		Truncated: result.Truncated,
+		Timezone:  result.Timezone,
 	}
 	if result.Totals != nil {
 		preview.Totals = encodeReportRow(result.Totals)

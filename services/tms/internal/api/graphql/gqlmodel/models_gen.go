@@ -7759,6 +7759,7 @@ type ReportPreview struct {
 	Rows      any                    `json:"rows"`
 	Totals    any                    `json:"totals,omitempty"`
 	Truncated bool                   `json:"truncated"`
+	Timezone  string                 `json:"timezone"`
 }
 
 type ReportPreviewColumn struct {

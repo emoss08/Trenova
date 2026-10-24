@@ -174,9 +174,6 @@ func drillDimensionFilters(
 	}}, nil
 }
 
-// bucketRange inverts the compiler's date_trunc bucketing. The emitted bucket
-// value is the truncated local wall clock read as a UTC epoch, so it is read
-// back as UTC and reinterpreted in the organization's zone.
 func bucketRange(
 	bucket report.DateBucket,
 	value any,
@@ -187,11 +184,7 @@ func bucketRange(
 		return 0, 0, err
 	}
 
-	wall := time.Unix(seconds, 0).UTC()
-	local := time.Date(
-		wall.Year(), wall.Month(), wall.Day(),
-		wall.Hour(), wall.Minute(), wall.Second(), 0, loc,
-	)
+	local := time.Unix(seconds, 0).In(loc)
 
 	switch bucket {
 	case report.DateBucketDay:

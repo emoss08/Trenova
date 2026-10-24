@@ -73,6 +73,7 @@ type PreviewResult struct {
 	Rows      []reportports.ReportRow
 	Totals    reportports.ReportRow
 	Truncated bool
+	Timezone  string
 }
 
 func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*PreviewResult, error) {
@@ -111,11 +112,12 @@ func (s *Service) runPreview(
 	if req.export {
 		compile = s.compiler.Compile
 	}
+	timezone := s.orgTimezone(ctx, req.TenantInfo)
 	compiled, err := compile(ctx, &reportports.ReportCompileRequest{
 		Definition:  req.Definition,
 		Tenant:      req.TenantInfo,
 		Params:      req.Params,
-		OrgTimezone: s.orgTimezone(ctx, req.TenantInfo),
+		OrgTimezone: timezone,
 		NowUnix:     timeutils.NowUnix(),
 	})
 	if err != nil {
@@ -159,5 +161,6 @@ func (s *Service) runPreview(
 		Rows:      rows,
 		Totals:    totals,
 		Truncated: reader.Truncated(),
+		Timezone:  timezone,
 	}, nil
 }

@@ -149,6 +149,7 @@ export function DashboardTileBody({
       <ResultGrid
         columns={columns}
         rows={rows}
+        timeZone={data.data?.timezone}
         totals={totals}
         density="compact"
         emptyMessage={t("No rows.")}
@@ -171,6 +172,7 @@ export function DashboardTileBody({
       chart={chart}
       columns={columns}
       rows={rows}
+      timeZone={data.data?.timezone}
       className="min-h-0 flex-1"
       categorySelect={categorySelect}
     />

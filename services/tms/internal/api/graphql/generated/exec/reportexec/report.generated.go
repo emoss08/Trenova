@@ -1673,6 +1673,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
+			{
+				Name:     "timezone",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPreview)
+					return obj.Timezone, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
 		}},
 		{Object: "ReportPreviewColumn", Fields: []*gqlexec.Field{
 			{

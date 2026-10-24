@@ -39,6 +39,7 @@ export function createReportPages(
   rules: RulesRuntime,
   columns: readonly ReportCellColumn[],
   rows: readonly (readonly unknown[])[],
+  timeZone?: string,
   pageRows: number = REPORT_PAGE_ROWS,
 ): ReportPages {
   const pages = new Map<number, ReportCell[][]>();
@@ -65,7 +66,7 @@ export function createReportPages(
   return {
     cell,
     text: (rowIndex, columnIndex) =>
-      reportCellText(cell(rowIndex, columnIndex), columns[columnIndex]?.display),
+      reportCellText(cell(rowIndex, columnIndex), columns[columnIndex]?.display, timeZone),
   };
 }
 
@@ -95,6 +96,7 @@ export function createValueFormatter(
   rules: RulesRuntime,
   column: ReportCellColumn,
   known: readonly unknown[] = [],
+  timeZone?: string,
 ): (value: unknown) => string {
   const cache = new Map<unknown, string>();
   const valueType = cellValueType(column);
@@ -106,7 +108,7 @@ export function createValueFormatter(
       { display: column.display, valueType, values: missing },
     ]);
     missing.forEach((value, index) => {
-      cache.set(value, reportCellText(cells[index], column.display));
+      cache.set(value, reportCellText(cells[index], column.display, timeZone));
     });
   };
 

@@ -257,6 +257,7 @@ export function ExploreView({
               chart={activeChart}
               columns={columns}
               rows={rows}
+              timeZone={preview.data?.timezone}
               className="min-h-0 flex-1"
             />
           </div>
@@ -264,6 +265,7 @@ export function ExploreView({
           <ResultGrid
             columns={columns}
             rows={rows}
+            timeZone={preview.data?.timezone}
             totals={totals}
             loading={preview.isFetching}
             hiddenColumnIds={hidden}

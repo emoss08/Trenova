@@ -142,6 +142,7 @@ export function PreviewGrid({
             chart={activeChart}
             columns={preview.columns}
             rows={rows}
+            timeZone={preview.timezone}
             className="min-h-0 flex-1"
           />
         </div>
@@ -149,6 +150,7 @@ export function PreviewGrid({
         <ResultGrid
           columns={preview.columns}
           rows={rows}
+          timeZone={preview.timezone}
           totals={totals}
           loading={loading}
           sort={sort}
