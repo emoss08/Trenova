@@ -75,8 +75,8 @@ type Worker struct {
 	UpdatedAt             int64              `json:"updatedAt"                   bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 	CustomFields          map[string]any     `json:"customFields,omitempty"      bun:"-"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"                                                                        keel:"belongs:business_unit_id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"                                                                         keel:"belongs:organization_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"                                                                        keel:"belongs:business_unit_id,noreport"`
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"                                                                         keel:"belongs:organization_id,noreport"`
 	State        *usstate.UsState     `json:"state,omitempty"        bun:"rel:belongs-to,join:state_id=id"                                                                                keel:"belongs:state_id,noreport"`
 	FleetCode    *fleetcode.FleetCode `json:"fleetCode,omitempty"    bun:"rel:belongs-to,join:fleet_code_id=id"                                                                           keel:"belongs:fleet_code_id"`
 	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"                                                                              keel:"belongs:manager_id,noreport"`

@@ -166,6 +166,8 @@ var shipmentCopyPlan = map[string]fieldPlan{
 	"Owner":           {intentionallyDropped, "relation, hydrated on read"},
 	"EnteredBy":       {intentionallyDropped, "relation, hydrated on read"},
 	"FormulaTemplate": {intentionallyDropped, "relation, hydrated on read"},
+	"OriginStop":      {intentionallyDropped, "relation, picked from the copy's own stops on read"},
+	"DestinationStop": {intentionallyDropped, "relation, picked from the copy's own stops on read"},
 	"Comments":        {intentionallyDropped, "comments belong to the original shipment"},
 }
 
@@ -280,8 +282,20 @@ func TestCopyShipmentGraph_HonorsFieldPlan(t *testing.T) {
 	}
 }
 
+var keelRelationKinds = []string{"belongs:", "one:", "many:", "m2m:", "pick:"}
+
 func isRelationField(field reflect.StructField) bool {
-	return strings.HasPrefix(field.Tag.Get("bun"), "rel:")
+	if strings.HasPrefix(field.Tag.Get("bun"), "rel:") {
+		return true
+	}
+	keelTag := field.Tag.Get("keel")
+	for _, kind := range keelRelationKinds {
+		if strings.HasPrefix(keelTag, kind) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func fillScalarFields(t *testing.T, target reflect.Value) {
