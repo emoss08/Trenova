@@ -36,22 +36,23 @@ var documentPacketRulesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:  nil,
-	Version:    10,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "dpr_",
-	New:        newDocumentPacketRule,
-	NewN:       newNDocumentPacketRule,
-	Size:       unsafe.Sizeof(documentpacketrule.DocumentPacketRule{}),
-	Ptr:        ptrDocumentPacketRule,
-	Value:      valueDocumentPacketRule,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:    nil,
+	Version:      10,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   12,
+	IDPrefix:     "dpr_",
+	New:          newDocumentPacketRule,
+	NewN:         newNDocumentPacketRule,
+	Size:         unsafe.Sizeof(documentpacketrule.DocumentPacketRule{}),
+	Ptr:          ptrDocumentPacketRule,
+	Value:        valueDocumentPacketRule,
+	BeforeCreate: beforeCreateDocumentPacketRule,
 }
 
 var documentPacketRulesRef = keel.Ref{Table: &documentPacketRulesTable}
@@ -197,6 +198,10 @@ func valueDocumentPacketRule(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateDocumentPacketRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentpacketrule.DocumentPacketRule)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

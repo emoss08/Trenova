@@ -34,8 +34,8 @@ type Projection struct {
 	DetectedKind        string   `json:"detectedKind"        bun:"detected_kind,type:VARCHAR(100),nullzero" keel:"detected_kind,nullzero"`
 	ShipmentDraftStatus string   `json:"shipmentDraftStatus" bun:"shipment_draft_status,type:VARCHAR(100),notnull" keel:"shipment_draft_status"`
 	ContentText         string   `json:"contentText"         bun:"content_text,type:TEXT,nullzero" keel:"content_text,nullzero"`
-	CreatedAt           int64    `json:"createdAt"           bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
-	UpdatedAt           int64    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
+	CreatedAt           int64    `json:"createdAt"           bun:"created_at,type:BIGINT,notnull" keel:"created_at"`
+	UpdatedAt           int64    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull" keel:"updated_at"`
 }
 
 func Build(doc *document.Document, contentText string) *Projection {
@@ -65,10 +65,7 @@ func Build(doc *document.Document, contentText string) *Projection {
 }
 
 func (p *Projection) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	p.FileName = stringutils.StripNUL(p.FileName)
-	p.OriginalName = stringutils.StripNUL(p.OriginalName)
-	p.Description = stringutils.StripNUL(p.Description)
-	p.ContentText = stringutils.StripNUL(p.ContentText)
+	p.stripNUL()
 
 	now := timeutils.NowUnix()
 
@@ -85,6 +82,30 @@ func (p *Projection) BeforeAppendModel(_ context.Context, query bun.Query) error
 	}
 
 	return nil
+}
+
+func (p *Projection) BeforeCreate(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if p.CreatedAt == 0 {
+		p.CreatedAt = now
+	}
+	if p.UpdatedAt == 0 {
+		p.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (p *Projection) BeforeSave(_ context.Context) error {
+	p.stripNUL()
+	return nil
+}
+
+func (p *Projection) stripNUL() {
+	p.FileName = stringutils.StripNUL(p.FileName)
+	p.OriginalName = stringutils.StripNUL(p.OriginalName)
+	p.Description = stringutils.StripNUL(p.Description)
+	p.ContentText = stringutils.StripNUL(p.ContentText)
 }
 
 func (p *Projection) Validate(multiErr *errortypes.MultiError) {

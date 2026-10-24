@@ -66,8 +66,7 @@ type Content struct {
 }
 
 func (c *Content) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	c.ContentText = stringutils.StripNUL(c.ContentText)
-	c.FailureMessage = stringutils.StripNUL(c.FailureMessage)
+	c.stripNUL()
 
 	now := timeutils.NowUnix()
 
@@ -90,6 +89,16 @@ func (c *Content) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 func (c *Content) BeforeCreate(ctx context.Context) error {
 	return c.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
+func (c *Content) BeforeUpdate(_ context.Context) error {
+	c.stripNUL()
+	return nil
+}
+
+func (c *Content) stripNUL() {
+	c.ContentText = stringutils.StripNUL(c.ContentText)
+	c.FailureMessage = stringutils.StripNUL(c.FailureMessage)
 }
 
 func (c *Content) Validate(multiErr *errortypes.MultiError) {

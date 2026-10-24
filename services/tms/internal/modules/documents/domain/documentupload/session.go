@@ -62,28 +62,47 @@ func (s *DocumentUploadSession) BeforeAppendModel(_ context.Context, query bun.Q
 		if s.ID.IsNil() {
 			s.ID = pulid.MustNew("dus_")
 		}
-		if s.ProcessingProfile == "" {
-			s.ProcessingProfile = document.ProcessingProfileNone
-		}
-		if s.CryptoMode == "" {
-			s.CryptoMode = "blob_v1"
-		}
-		if s.CryptoVersion == 0 {
-			s.CryptoVersion = 2
-		}
+		s.applyDefaults(now)
 		s.CreatedAt = now
 		s.UpdatedAt = now
-		if s.LastActivityAt == 0 {
-			s.LastActivityAt = now
-		}
 	case *bun.UpdateQuery:
 		s.UpdatedAt = now
-		if s.LastActivityAt == 0 {
-			s.LastActivityAt = now
-		}
+		s.touch(now)
 	}
 
 	return nil
+}
+
+func (s *DocumentUploadSession) BeforeCreate(_ context.Context) error {
+	s.applyDefaults(timeutils.NowUnix())
+	return nil
+}
+
+func (s *DocumentUploadSession) BeforeUpdate(_ context.Context) error {
+	s.touch(timeutils.NowUnix())
+	return nil
+}
+
+func (s *DocumentUploadSession) applyDefaults(now int64) {
+	if s.ProcessingProfile == "" {
+		s.ProcessingProfile = document.ProcessingProfileNone
+	}
+	if s.CryptoMode == "" {
+		s.CryptoMode = "blob_v1"
+	}
+	if s.CryptoVersion == 0 {
+		s.CryptoVersion = 2
+	}
+	if s.Status == "" {
+		s.Status = StatusInitiated
+	}
+	s.touch(now)
+}
+
+func (s *DocumentUploadSession) touch(now int64) {
+	if s.LastActivityAt == 0 {
+		s.LastActivityAt = now
+	}
 }
 
 func (s *DocumentUploadSession) GetTableName() string {

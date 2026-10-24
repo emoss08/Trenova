@@ -56,22 +56,24 @@ var documentUploadSessionsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
-	Returning:  nil,
-	Version:    29,
-	AutoID:     0,
-	AutoCreate: 30,
-	AutoUpdate: 31,
-	IDPrefix:   "dus_",
-	New:        newDocumentUploadSession,
-	NewN:       newNDocumentUploadSession,
-	Size:       unsafe.Sizeof(documentupload.DocumentUploadSession{}),
-	Ptr:        ptrDocumentUploadSession,
-	Value:      valueDocumentUploadSession,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
+	Returning:    nil,
+	Version:      29,
+	AutoID:       0,
+	AutoCreate:   30,
+	AutoUpdate:   31,
+	IDPrefix:     "dus_",
+	New:          newDocumentUploadSession,
+	NewN:         newNDocumentUploadSession,
+	Size:         unsafe.Sizeof(documentupload.DocumentUploadSession{}),
+	Ptr:          ptrDocumentUploadSession,
+	Value:        valueDocumentUploadSession,
+	BeforeCreate: beforeCreateDocumentUploadSession,
+	BeforeUpdate: beforeUpdateDocumentUploadSession,
 }
 
 var documentUploadSessionsRef = keel.Ref{Table: &documentUploadSessionsTable}
@@ -383,6 +385,14 @@ func valueDocumentUploadSession(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateDocumentUploadSession(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentupload.DocumentUploadSession)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateDocumentUploadSession(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentupload.DocumentUploadSession)(p).BeforeUpdate(ctx)
 }
 
 var enumDocumentProcessingProfile = [...]schema.EnumValue{

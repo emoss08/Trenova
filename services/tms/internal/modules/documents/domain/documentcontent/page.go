@@ -37,8 +37,7 @@ type Page struct {
 }
 
 func (p *Page) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	p.ExtractedText = stringutils.StripNUL(p.ExtractedText)
-	p.Markdown = stringutils.StripNUL(p.Markdown)
+	p.stripNUL()
 
 	now := timeutils.NowUnix()
 
@@ -54,6 +53,16 @@ func (p *Page) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (p *Page) BeforeSave(_ context.Context) error {
+	p.stripNUL()
+	return nil
+}
+
+func (p *Page) stripNUL() {
+	p.ExtractedText = stringutils.StripNUL(p.ExtractedText)
+	p.Markdown = stringutils.StripNUL(p.Markdown)
 }
 
 func (p *Page) Validate(multiErr *errortypes.MultiError) {

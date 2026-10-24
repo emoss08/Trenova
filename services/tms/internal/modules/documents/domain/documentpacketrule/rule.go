@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -49,11 +48,11 @@ var (
 	_ validationframework.TenantedEntity = (*DocumentPacketRule)(nil)
 )
 
+const defaultExpirationWarningDays = 30
+
 type DocumentPacketRule struct {
 	bun.BaseModel `bun:"table:document_packet_rules,alias:dpr" json:"-"`
 	keel.Table    `keel:"document_packet_rules"`
-
-	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                    pulid.ID `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dpr_"`
 	OrganizationID        pulid.ID `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
@@ -115,9 +114,7 @@ func (r *DocumentPacketRule) BeforeAppendModel(_ context.Context, query bun.Quer
 			r.ID = pulid.MustNew("dpr_")
 		}
 
-		if r.ExpirationWarningDays == 0 {
-			r.ExpirationWarningDays = 30
-		}
+		r.applyDefaults()
 
 		r.CreatedAt = now
 		r.UpdatedAt = now
@@ -151,5 +148,16 @@ func (r *DocumentPacketRule) GetPostgresSearchConfig() domaintypes.PostgresSearc
 				Queryable:    true,
 			},
 		},
+	}
+}
+
+func (r *DocumentPacketRule) BeforeCreate(_ context.Context) error {
+	r.applyDefaults()
+	return nil
+}
+
+func (r *DocumentPacketRule) applyDefaults() {
+	if r.ExpirationWarningDays == 0 {
+		r.ExpirationWarningDays = defaultExpirationWarningDays
 	}
 }

@@ -61,6 +61,7 @@ var contentsTable = schema.Table{
 	Ptr:          ptrContent,
 	Value:        valueContent,
 	BeforeCreate: beforeCreateContent,
+	BeforeUpdate: beforeUpdateContent,
 }
 
 var contentsRef = keel.Ref{Table: &contentsTable}
@@ -296,6 +297,10 @@ func beforeCreateContent(ctx context.Context, p unsafe.Pointer) error {
 	return (*documentcontent.Content)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateContent(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentcontent.Content)(p).BeforeUpdate(ctx)
+}
+
 // pagesTable is the schema of documentcontent.Page.
 var pagesTable = schema.Table{
 	Name:   "document_content_pages",
@@ -339,6 +344,7 @@ var pagesTable = schema.Table{
 	Size:       unsafe.Sizeof(documentcontent.Page{}),
 	Ptr:        ptrPage,
 	Value:      valuePage,
+	BeforeSave: beforeSavePage,
 }
 
 var pagesRef = keel.Ref{Table: &pagesTable}
@@ -517,6 +523,10 @@ func valuePage(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeSavePage(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentcontent.Page)(p).BeforeSave(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

@@ -321,6 +321,13 @@ func (d *Document) BeforeAppendModel(_ context.Context, query bun.Query) error {
 }
 
 func (d *Document) BeforeCreate(ctx context.Context) error {
+	if d.Status == "" {
+		d.Status = StatusActive
+	}
+	if d.SignatureStatus == "" {
+		d.SignatureStatus = SignatureStatusUnknown
+	}
+
 	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
