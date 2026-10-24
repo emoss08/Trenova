@@ -19407,7 +19407,15 @@ func init() {
 				Column: "original_journal_entry_id",
 			},
 			{
+				Name:   "originalJournalEntry",
+				Column: "original_journal_entry_id",
+			},
+			{
 				Name:   "reversalJournalEntryId",
+				Column: "reversal_journal_entry_id",
+			},
+			{
+				Name:   "reversalJournalEntry",
 				Column: "reversal_journal_entry_id",
 			},
 			{
