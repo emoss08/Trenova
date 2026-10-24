@@ -953,4 +953,3 @@ func TestTenantedValidator_WithCustomEngineConfig(t *testing.T) {
 
 	assert.Equal(t, cfg, validator.engineConfig)
 }
-

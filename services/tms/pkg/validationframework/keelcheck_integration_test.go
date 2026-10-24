@@ -1,14 +1,16 @@
 //go:build integration
 
-package validationframework
+package validationframework_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	vf "github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -93,13 +95,13 @@ func insertCheckItem(t *testing.T, conn checkConn, tenant checkTenant, id pulid.
 
 func TestKeelChecker_CheckUniqueness_Integration(t *testing.T) {
 	conn, a, b := setupCheckDB(t)
-	items, _, _ := checkTables()
-	checker := NewKeelChecker(conn, items)
+	items, _, _ := integrationTables()
+	checker := vf.NewKeelChecker(conn, items)
 
 	existing := pulid.MustNew("ci_")
 	insertCheckItem(t, conn, a, existing, "CODE001")
 
-	unique := func(tenant checkTenant, req *UniquenessRequest) bool {
+	unique := func(tenant checkTenant, req *vf.UniquenessRequest) bool {
 		t.Helper()
 		req.TableName = "check_items"
 		req.OrganizationID = tenant.orgID
@@ -109,37 +111,37 @@ func TestKeelChecker_CheckUniqueness_Integration(t *testing.T) {
 		return exists
 	}
 
-	assert.False(t, unique(a, &UniquenessRequest{Fields: []FieldCheck{{Column: "code", Value: "CODE002"}}}))
-	assert.True(t, unique(a, &UniquenessRequest{Fields: []FieldCheck{{Column: "code", Value: "CODE001"}}}))
-	assert.True(t, unique(a, &UniquenessRequest{Fields: []FieldCheck{{Column: "code", Value: "code001"}}}),
+	assert.False(t, unique(a, &vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "CODE002"}}}))
+	assert.True(t, unique(a, &vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "CODE001"}}}))
+	assert.True(t, unique(a, &vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "code001"}}}),
 		"a case-insensitive check matches another case")
-	assert.False(t, unique(a, &UniquenessRequest{
-		Fields: []FieldCheck{{Column: "code", Value: "code001", CaseSensitive: true}},
+	assert.False(t, unique(a, &vf.UniquenessRequest{
+		Fields: []vf.FieldCheck{{Column: "code", Value: "code001", CaseSensitive: true}},
 	}))
-	assert.True(t, unique(a, &UniquenessRequest{
-		Fields: []FieldCheck{{Column: "code", Value: "CODE001", CaseSensitive: true}},
+	assert.True(t, unique(a, &vf.UniquenessRequest{
+		Fields: []vf.FieldCheck{{Column: "code", Value: "CODE001", CaseSensitive: true}},
 	}))
-	assert.False(t, unique(a, &UniquenessRequest{
+	assert.False(t, unique(a, &vf.UniquenessRequest{
 		ExcludeID: existing,
-		Fields:    []FieldCheck{{Column: "code", Value: "CODE001"}},
+		Fields:    []vf.FieldCheck{{Column: "code", Value: "CODE001"}},
 	}), "an update excludes the row itself")
-	assert.True(t, unique(a, &UniquenessRequest{
+	assert.True(t, unique(a, &vf.UniquenessRequest{
 		ExcludeID: pulid.MustNew("ci_"),
-		Fields:    []FieldCheck{{Column: "code", Value: "CODE001"}},
+		Fields:    []vf.FieldCheck{{Column: "code", Value: "CODE001"}},
 	}))
-	assert.False(t, unique(b, &UniquenessRequest{Fields: []FieldCheck{{Column: "code", Value: "CODE001"}}}),
+	assert.False(t, unique(b, &vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "CODE001"}}}),
 		"another tenant's row is not a conflict")
-	assert.False(t, unique(a, &UniquenessRequest{
-		Fields:      []FieldCheck{{Column: "code", Value: "CODE001"}},
-		ScopeFields: []FieldCheck{{Column: "id", Value: "ci_other", CaseSensitive: true}},
+	assert.False(t, unique(a, &vf.UniquenessRequest{
+		Fields:      []vf.FieldCheck{{Column: "code", Value: "CODE001"}},
+		ScopeFields: []vf.FieldCheck{{Column: "id", Value: "ci_other", CaseSensitive: true}},
 	}), "every field must match")
 
 	system := dbscope.WithSystem(t.Context(), "uniqueness check test")
-	exists, err := checker.CheckUniqueness(system, &UniquenessRequest{
+	exists, err := checker.CheckUniqueness(system, &vf.UniquenessRequest{
 		TableName:      "check_items",
 		OrganizationID: b.orgID,
 		BusinessUnitID: b.buID,
-		Fields:         []FieldCheck{{Column: "code", Value: "CODE001"}},
+		Fields:         []vf.FieldCheck{{Column: "code", Value: "CODE001"}},
 	})
 	require.NoError(t, err)
 	assert.False(t, exists, "a system-scope check filters the named tenant")
@@ -147,8 +149,8 @@ func TestKeelChecker_CheckUniqueness_Integration(t *testing.T) {
 
 func TestKeelChecker_CheckReference_Integration(t *testing.T) {
 	conn, a, b := setupCheckDB(t)
-	items, _, states := checkTables()
-	checker := NewKeelChecker(conn, items)
+	items, _, states := integrationTables()
+	checker := vf.NewKeelChecker(conn, items)
 
 	kind := pulid.MustNew("ck_")
 	_, err := keel.Exec(t.Context(), conn.db,
@@ -158,7 +160,7 @@ func TestKeelChecker_CheckReference_Integration(t *testing.T) {
 
 	reference := func(tenant checkTenant, table string, id pulid.ID) bool {
 		t.Helper()
-		exists, refErr := checker.CheckReference(tenant.ctx, &ReferenceRequest{
+		exists, refErr := checker.CheckReference(tenant.ctx, &vf.ReferenceRequest{
 			TableName:      table,
 			OrganizationID: tenant.orgID,
 			BusinessUnitID: tenant.buID,
@@ -172,16 +174,72 @@ func TestKeelChecker_CheckReference_Integration(t *testing.T) {
 	assert.False(t, reference(a, "check_kinds", pulid.MustNew("ck_")))
 	assert.False(t, reference(b, "check_kinds", kind), "another tenant's row is not a reference")
 
-	_, err = checker.CheckReference(a.ctx, &ReferenceRequest{ID: kind})
+	_, err = checker.CheckReference(a.ctx, &vf.ReferenceRequest{ID: kind})
 	require.Error(t, err)
-	_, err = checker.CheckReference(a.ctx, &ReferenceRequest{TableName: "check_kinds"})
+	_, err = checker.CheckReference(a.ctx, &vf.ReferenceRequest{TableName: "check_kinds"})
 	require.Error(t, err)
 
 	state := pulid.MustNew("st_")
 	_, err = keel.Exec(t.Context(), conn.db, "INSERT INTO check_states (id) VALUES ($1)", state.String())
 	require.NoError(t, err)
 
-	exists, err := KeelReferenceCheck(conn, states)(b.ctx, b.orgID, b.buID, state)
+	exists, err := vf.KeelReferenceCheck(conn, states)(b.ctx, b.orgID, b.buID, state)
 	require.NoError(t, err)
 	assert.True(t, exists, "a global table answers every tenant")
+}
+
+func integrationTable(name, alias string, extra ...schema.Column) *schema.Table {
+	cols := append([]schema.Column{
+		{Name: "id", Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK},
+		{
+			Name:  "organization_id",
+			Field: "OrganizationID",
+			Kind:  schema.KindString,
+			Flags: schema.FlagPK | schema.FlagTenant,
+		},
+		{
+			Name:  "business_unit_id",
+			Field: "BusinessUnitID",
+			Kind:  schema.KindString,
+			Flags: schema.FlagPK | schema.FlagTenant,
+		},
+	}, extra...)
+	for i := range cols {
+		cols[i].Quoted = schema.Quote(cols[i].Name)
+	}
+
+	t := &schema.Table{Name: name, Quoted: schema.Quote(name), Alias: alias, Columns: cols}
+	schema.Derive(t)
+
+	return t
+}
+
+func integrationTables() (*schema.Table, *schema.Table, *schema.Table) {
+	kinds := integrationTable("check_kinds", "ck")
+	states := &schema.Table{
+		Name:   "check_states",
+		Quoted: schema.Quote("check_states"),
+		Alias:  "cs",
+		Columns: []schema.Column{
+			{Name: "id", Quoted: schema.Quote("id"), Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK},
+		},
+	}
+	schema.Derive(states)
+
+	items := integrationTable("check_items", "ci",
+		schema.Column{Name: "code", Field: "Code", Kind: schema.KindString},
+		schema.Column{Name: "kind_id", Field: "KindID", Kind: schema.KindString},
+	)
+	items.Relations = []schema.Relation{
+		{
+			Name:   "Kind",
+			Alias:  "k",
+			Kind:   schema.BelongsTo,
+			Target: kinds,
+			Local:  []int32{4},
+			Remote: []int32{0},
+		},
+	}
+
+	return items, kinds, states
 }
