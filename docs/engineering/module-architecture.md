@@ -254,8 +254,9 @@ as the Temporal runtime, `m2msync`, and the storage and search clients.
 
 1. Domain: `internal/modules/<module>/domain/<entity>/`. It imports only its own module's and
    lower modules' domain packages and `pkg`.
-2. Write the migration, and follow [row-level-security.md](row-level-security.md) for a tenant
-   table.
+2. Write the migration in `schema/migrations` (`task db-create-migration`, then `task db-stamp`;
+   "Migrations" in [data-access.md](backend/data-access.md)), and follow
+   [row-level-security.md](row-level-security.md) for a tenant table.
 3. Regenerate the column helpers with `task generate-columns`. The generator reads every
    `internal/modules/*/domain/*` package and writes one package per domain package,
    `pkg/buncolgen/<domain>col`. Repositories import that package (`shipmentcol.ShipmentColumns`),

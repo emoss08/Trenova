@@ -2666,8 +2666,8 @@ DROP TABLE IF EXISTS "shipment_import_chat_turns";
 DROP TABLE IF EXISTS "shipment_import_chat_conversations";
 ```
 
-That statement is kept here rather than in `postgres/migrations`, because the
-migrator embeds every `*.sql` file in that directory and would run it at once.
+That statement is kept here rather than in `schema/migrations`, because
+trenova-db embeds every `*.sql` file in that directory and would run it at once.
 Ship it as `20261231006570_drop_shipment_import_chat` when the release has
 gone out, and delete `shipmentimportchat`, its
 repository and cache, and the history route in the same change.

@@ -56,7 +56,8 @@ change-data-capture pipeline, is a separate project; its routing is `deploy/gtc/
 
 From `services/tms/`: `task run-watch` (API, hot reload), `task test`, `task test-integration`
 (Docker), `task lint`, `task gqlgen` (never `go tool gqlgen generate`), `task gqlschema-diff`,
-`task db-migrate`, `task db-seed`, `task db-reset`, `task docker-up`, `task quick-start`.
+`task db-migrate` (`trenova-devdb up`, then `trenova db reconcile`), `task db-seed`, `task db-reset`,
+`task db-create-migration name=…`, `task db-stamp`, `task docker-up`, `task quick-start`.
 One test: `GOFLAGS=-tags=nomsgpack go test -run TestName ./path/...`.
 
 From `client/`: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`; scope with
@@ -74,9 +75,11 @@ and still break production or the build.
   `domain`, `ports` and `<name>contract` packages (`archlint`). Public code never imports
   `internal/cloud`.
 - **Tenancy.** Repository methods run in `dbtx.Read`/`dbtx.Write` and query through
-  `DBForContext(ctx)`, never `.DB()`. A new tenant table's migration ends with
-  `SELECT trenova_rls.reconcile();`. Cross-tenant code declares `dbscope.WithSystem` and is listed
-  in `rlslint`'s allowlist.
+  `DBForContext(ctx)`, never `.DB()`. `trenova-db` runs `SELECT trenova_rls.reconcile()` after
+  every migration run, which protects a table with non-null `organization_id` and
+  `business_unit_id`; any other shape calls `trenova_rls.apply_policy` or joins
+  `trenova_rls.global_tables` in its migration. Cross-tenant code declares `dbscope.WithSystem` and
+  is listed in `rlslint`'s allowlist.
 - **Columns** come from `pkg/buncolgen` helpers, never hand-written names.
 - **Authorization.** Every root resolver and route reaches a permission check or is listed with a
   reason in `authzlint`; every new write has an agent tool, exemption or `pending` entry in
@@ -87,6 +90,9 @@ and still break production or the build.
 - **Go style.** [Uber Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md);
   no comments; `sonic`, never `encoding/json`; `errortypes` for errors the caller sees; a params
   struct past three or four parameters; `goimports` and `golines`.
+- **Migrations** are keel files in `services/tms/schema/migrations`, applied by `trenova-db`
+  (`cmd/db`); add one with `task db-create-migration` and run `task db-stamp` in the same change.
+  See "Migrations" in [data-access.md](docs/engineering/backend/data-access.md).
 - **Generated code.** Before changing a GraphQL schema, removing a column or editing
   user-facing text, read [generated-artifacts.md](docs/engineering/generated-artifacts.md).
 - **The TMS does no document or image computation in process**; it calls the imaging worker

@@ -69,20 +69,51 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
 
 ## Migrations
 
-`internal/infrastructure/postgres/migrations/`, `YYYYMMDDHHMMSS_snake_name.tx.up.sql` and
-`.tx.down.sql`, statements separated by `--bun:split`. A new table
-(`20261231009920_agent_web_watches.tx.up.sql` is the model):
+Migrations are [keel](https://github.com/emoss08/keel) files in `schema/migrations/`, one per
+change, `<version>_<snake_name>.sql`; `task db-create-migration name=add_holds [kind=notx]` writes
+one with the version from the clock (older files number versions within a day as counters, which
+keel accepts). A transactional file runs whole, in one transaction with its row in
+`keel_migrations`, so it needs no separators. There are no down migrations: fix forward with a new
+migration, and rebuild a development database with `task db-reset`. `trenova-db up` (`cmd/db`) is
+the deploy step that applies them, `trenova-devdb up` (`cmd/devdb`, `task db-migrate`) the
+development one; each migration waits at most 5s for a lock and is retried, and after a run that
+applied anything `SELECT trenova_rls.reconcile()` runs once, so a new migration does not call it
+(the files written before keel still do). A new table (`20261231009920_agent_web_watches.sql` is
+the model, less its closing `reconcile()`):
 
 - composite primary key `pk_<table>` on `(id, organization_id, business_unit_id)`, named `fk_`
   and `ck_` constraints, `version BIGINT NOT NULL DEFAULT 0`, Unix-second `BIGINT` timestamps;
 - an index for every query path the repository runs, tenant columns leading, partial where the
   query is (`WHERE status = 'Active'`), named `idx_<table>_<purpose>`;
-- ends with `SELECT trenova_rls.reconcile();`.
+- non-null `organization_id` and `business_unit_id`, which the run's `reconcile()` protects; any
+  other shape calls `trenova_rls.apply_policy` or joins `trenova_rls.global_tables` in the same
+  migration ([row-level-security.md](../row-level-security.md)).
 
-An index on an existing table goes in its own non-transactional `.up.sql` with
-`CREATE INDEX CONCURRENTLY IF NOT EXISTS`, as does `ALTER TYPE … ADD VALUE`. Pre-launch, reshape
-a table freely; write the migration that gets there directly, with no dual-write or backfill
-phase for the old shape.
+An index on an existing table goes in its own file that starts with `--keel:notx`, one
+`CREATE INDEX CONCURRENTLY IF NOT EXISTS` (or `DROP INDEX CONCURRENTLY IF EXISTS`) per
+`--keel:split` part, as does `ALTER TYPE … ADD VALUE`. Pre-launch, reshape a table freely; write
+the migration that gets there directly, with no dual-write or backfill phase for the old shape.
+
+- **Stamp.** `task db-stamp` rewrites `schema/version_gen.go`; commit it with the migration. The API
+  and worker link only that constant and wait at startup (`postgres/schemaversion`, at most 10
+  minutes) until the database has applied it, so a server never runs against a schema behind it.
+  CI and `dbcli.TestTheSchemaStampIsCurrent` fail a stale stamp.
+- **Order and edits.** A migration older than the newest applied one is refused, and so is an
+  applied migration whose file changed; CI's base-branch check (`migrate check -base-dir`) fails
+  both on the pull request. Give the migration a newer version, or write a new one.
+- **Lint.** `task db-lint` runs keel's rules and Trenova's (`schema/migrations/lint.go`:
+  `bun-directive`, `reconcile-automatic`, `notx-idempotent`, `tenant-rls`) over pending migrations;
+  `TestMigrationsSinceTheMoveToKeelPassLint` fails CI on an error finding in a new migration.
+  `--keel:lint_ignore rule` at the top of a file skips a rule, with the reason in the PR.
+- **Tests.** `seedtest` copies every test database from a keel template (`migrate.Template`, key
+  `seedtest.TemplateKey` joined to the migrations' fingerprint), built once per server. A test of
+  a migration's content reads it with `migrations.File("<version>_<name>")` or the `Set`.
+- **Editions** add migration sources through `edition.Edition.Migrations`, merged into one version
+  line; the db binaries read them, the server binaries never link them
+  ([editions.md](../editions.md)).
+- **Bun-migrated databases** are adopted on `trenova-db`'s first connection
+  (`database/bunadopt`): every version in `bun_migrations` is recorded in `keel_migrations`, and a
+  database Bun left gaps in is refused with the missing migrations named.
 
 ## Caching
 

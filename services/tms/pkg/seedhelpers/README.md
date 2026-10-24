@@ -444,8 +444,8 @@ trenova db seed-check
 # Clean up orphaned history entries
 trenova db seed-clean
 
-# Show migrations and seeds
-trenova db status
+# Show seeds (migrations: trenova-devdb migrate status)
+trenova db seed status
 ```
 
 ### Development
@@ -798,7 +798,7 @@ expression: "hasHazmat ? hazmatFee : 0"
 
 **Solution:**
 ```bash
-trenova db migrate
+task db-migrate
 ```
 
 ## Examples

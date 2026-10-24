@@ -31,7 +31,8 @@ PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
 | Scope on a context (`WithTenant`, `WithSystem`, `TenantOf`) | `pkg/dbscope` |
 | Per-method transaction helpers | `internal/infrastructure/postgres/dbtx` |
 | Signing, driver wrapper, system pool, startup checks | `internal/infrastructure/postgres/{rlsscope,scopeddriver,connection_rls}.go` |
-| Key install, policy reconcile, role provisioning | `internal/infrastructure/postgres/rlsprovision.go`, `trenova db rls` |
+| Key install, policy reconcile, role provisioning | `internal/infrastructure/postgres/rlsprovision.go`, `trenova db rls`, `trenova db reconcile` |
+| Policy reconcile after every migration run | `migrations.Options` (`schema/migrations`): `trenova-db` runs `SELECT trenova_rls.reconcile()` once a run applied anything |
 | Roles, scope schema and every policy | migration `20261231007040_row_level_security` |
 | HTTP binding | `pkg/authctx` (`SetSessionAuthContext`, `SetAPIKeyContext`, `SetCaptureDeviceContext`) |
 | Temporal binding | `internal/infrastructure/temporaljobs/interceptors/tenantscope.go` |
@@ -45,7 +46,7 @@ PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
 | `trenova_rls_bypass` | no | no (`USING (true)`) | group; the system and migrator roles are members |
 | `database.user` | yes | yes | API, worker, reporting pool |
 | `database.system.user` | yes | no | only contexts declared with `dbscope.WithSystem` |
-| `database.migrator.user` | yes | no | migrations, seeds, key install; owns the tables |
+| `database.migrator.user` | yes | no | `trenova-db`, seeds, key install; owns the tables |
 
 The bypass is a role, never a setting a session can change. Every table is
 `FORCE ROW LEVEL SECURITY`, so even the owner is held to the policies unless it is
@@ -61,7 +62,7 @@ The scope is not a plain organization id. It is
 `SECURITY DEFINER` function that alone can read `trenova_rls.scope_keys`. A SQL
 injection that runs `SET trenova.scope = …` cannot name another tenant without
 the key. The key is installed as HMAC pads, never in the clear, by
-`trenova db migrate`; rotate it by configuring a new `scopeKeyId`, deploying, and
+`trenova db reconcile`; rotate it by configuring a new `scopeKeyId`, deploying, and
 `trenova db rls retire-key <old>` once nothing signs with the old one.
 
 `SET LOCAL` keeps the scope to the transaction, which is what PgBouncer's
@@ -122,9 +123,9 @@ func (r *repository) GetByID(ctx context.Context, req GetRequest) (*thing.Thing,
   `NewBunReferenceCheckerScoped(conn)` / `NewUSStateReferenceCheck(conn)`.
 
 **A new tenant table** needs nothing when it has non-null `organization_id` and
-`business_unit_id`: end the migration with `SELECT trenova_rls.reconcile();`, and
-`trenova db migrate` reconciles again afterwards. Any other shape (nullable
-tenant, two parties, owned through a parent) calls
+`business_unit_id`: `trenova-db` runs `SELECT trenova_rls.reconcile()` after every run that
+applied a migration, so the migration does not call it (`task db-lint` warns when one does).
+Any other shape (nullable tenant, two parties, owned through a parent) calls
 `trenova_rls.apply_policy('public.t', '<read expr>', '<write expr>')` with
 expressions that consult `trenova_rls.org_id()` / `bu_id()` / `user_id()`. A table
 with no tenant data is added to `trenova_rls.global_tables` with its reason. A table
@@ -230,7 +231,7 @@ mode, so switch roles and enforcement together.
 1. `trenova db rls generate-key`; store the key; set `database.rls.scopeKeyId`,
    `database.rls.scopeKey` and `mode: observe`, and set `database.migrator` to
    the role that owns the tables. Leave `database.user` as it is.
-2. `trenova db migrate` installs the key and reconciles policies and grants.
+2. `trenova-db up` reconciles policies and grants, and `trenova db reconcile` installs the key.
    Every role that already held table privileges, the current application role
    included, becomes a member of `trenova_rls_bypass`, so nothing is refused yet.
 3. Create the login roles. `provision-roles` reads the application role from

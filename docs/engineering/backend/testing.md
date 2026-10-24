@@ -21,7 +21,13 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
 
 - `//go:build integration`, an external `_test` package, `seedtest.SetupTestDB(t)`
   (testcontainers, or `TRENOVA_TEST_POSTGRES_DSN`), then `seedtest.SeedFullTestData` and the
-  fixtures in `internal/testutil` (`stopeta_integration_test.go` is the model).
+  fixtures in `internal/testutil` (`stopeta_integration_test.go` is the model). Each test gets a
+  fresh database copied from a keel template of the migrations (`migrate.Template`), which the
+  first test on a server builds and every later one reuses until a migration changes; its
+  `*bun.DB` runs on pgx's `database/sql` driver.
+- A migration that rewrites data gets a test that runs its file against rows it must change and
+  rows it must leave: `migrations.File("<version>_<name>")` returns the SQL
+  (`formula_template_backfill_integration_test.go`).
 - A repository method, a migration, an RLS policy or a lock gets an integration test: the database
   is what is being tested. Include a second tenant and assert it sees nothing.
 - The imaging worker runs from its image through `internal/testutil/imagingtest`; unit tests use
