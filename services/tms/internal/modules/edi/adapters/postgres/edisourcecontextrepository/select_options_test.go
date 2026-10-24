@@ -28,6 +28,10 @@ func TestFieldsQuery_AppliesTheSchemaSearchAndFieldFilters(t *testing.T) {
 
 	sql, args := keeltest.Render(t, q)
 
-	assert.Equal(t, "", sql)
-	assert.Equal(t, []any{}, args)
+	assert.Contains(t, sql, `FROM "edi_source_context_fields" escf LEFT JOIN "edi_source_context_schemas" s ON s."id" = escf."schema_id"`)
+	assert.Contains(t, sql, `escf."repeated" = $6 AND escf."path" LIKE $7`)
+	assert.Contains(t, sql, `ORDER BY escf."path" ASC, escf."repeat_path" ASC LIMIT 20`)
+	assert.Contains(t, args, "shipment.%")
+	assert.Contains(t, args, "%city%")
+	assert.Contains(t, args, true)
 }

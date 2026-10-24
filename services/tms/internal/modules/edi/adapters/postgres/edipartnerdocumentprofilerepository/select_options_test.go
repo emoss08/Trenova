@@ -24,6 +24,9 @@ func TestProfileOptionsQuery_AppliesTheFiltersAndSearch(t *testing.T) {
 
 	sql, args := keeltest.Render(t, q)
 
-	assert.Equal(t, "", sql)
-	assert.Equal(t, []any{}, args)
+	assert.Contains(t, sql, `LEFT JOIN "edi_document_types" dt ON dt."id" = epdp."document_type_id"`)
+	assert.Contains(t, sql, `epdp."edi_partner_id" = $6 AND (epdp."name" ILIKE $7 OR p."code" ILIKE $8 OR p."name" ILIKE $9 OR dt."name" ILIKE $10)`)
+	assert.Contains(t, sql, `ORDER BY epdp."name" ASC LIMIT 10`)
+	assert.Contains(t, args, "edip_1")
+	assert.Contains(t, args, "%profile%")
 }

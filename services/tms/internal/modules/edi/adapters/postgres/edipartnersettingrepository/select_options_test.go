@@ -33,8 +33,13 @@ func TestFieldsQuery_AppliesTheSchemaSearchAndFieldFilters(t *testing.T) {
 
 	sql, args := keeltest.Render(t, q)
 
-	assert.Equal(t, "", sql)
-	assert.Equal(t, []any{}, args)
+	assert.Contains(t, sql, `FROM "edi_partner_setting_fields" epsf LEFT JOIN "edi_partner_setting_schemas" s ON s."id" = epsf."schema_id"`)
+	assert.Contains(t, sql, `epsf."path" LIKE $6 AND epsf."group_key" = $7 AND epsf."required" = $8 AND epsf."secret" = $9`)
+	assert.Contains(t, sql, `ORDER BY epsf."display_order" ASC, epsf."path" ASC LIMIT 20`)
+	assert.Contains(t, args, "carrier.%")
+	assert.Contains(t, args, "%scac%")
+	assert.Contains(t, args, true)
+	assert.Contains(t, args, false)
 }
 
 func TestActiveSchemaQuery_PrefersTheTenantAndDocumentTypeSchema(t *testing.T) {
@@ -51,8 +56,13 @@ func TestActiveSchemaQuery_PrefersTheTenantAndDocumentTypeSchema(t *testing.T) {
 
 	sql, args := keeltest.Render(t, q)
 
-	assert.Equal(t, "", sql)
-	assert.Equal(t, []any{}, args)
+	assert.Contains(t, sql, `((epss."organization_id" = $6 AND epss."business_unit_id" = $7) OR (epss."organization_id" IS NULL AND epss."business_unit_id" IS NULL))`)
+	assert.Contains(t, sql, `(epss."document_type_id" = $8 OR epss."document_type_id" IS NULL)`)
+	assert.Contains(t, sql, `ORDER BY epss."organization_id" IS NOT NULL DESC, epss."schema_version" DESC, epss."document_type_id" IS NOT NULL DESC LIMIT 1`)
+	assert.Contains(t, args, "org_1")
+	assert.Contains(t, args, "bu_1")
+	assert.Contains(t, args, "edidt_1")
+	assert.Contains(t, args, "004010")
 }
 
 func TestPartnerSettingSeedMigrationUsesPublicPaths(t *testing.T) {

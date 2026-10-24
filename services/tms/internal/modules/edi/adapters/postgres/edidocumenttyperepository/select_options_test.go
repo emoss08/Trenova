@@ -20,6 +20,8 @@ func TestDocumentTypeOptionsQuery_AppliesTheFiltersAndSearch(t *testing.T) {
 
 	sql, args := keeltest.Render(t, q)
 
-	assert.Equal(t, "", sql)
-	assert.Equal(t, []any{}, args)
+	assert.Contains(t, sql, `FROM "edi_document_types" edt WHERE edt."transaction_set" = $1 AND edt."direction" = $2 AND edt."status" = $3`)
+	assert.Contains(t, sql, `(edt."code" ILIKE $4 OR edt."name" ILIKE $5 OR edt."default_version" ILIKE $6) ORDER BY edt."code" ASC LIMIT 10`)
+	assert.Contains(t, args, "204")
+	assert.Contains(t, args, "%204%")
 }
