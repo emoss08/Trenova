@@ -8,8 +8,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/pkg/dbhelper"
-	"github.com/uptrace/bun"
+	"github.com/jackc/pgx/v5"
 )
 
 var (
@@ -96,28 +95,22 @@ WHERE trenova_rls.scope_keys.inner_pad IS DISTINCT FROM EXCLUDED.inner_pad
 	OR trenova_rls.scope_keys.outer_pad IS DISTINCT FROM EXCLUDED.outer_pad
 	OR trenova_rls.scope_keys.retired_at IS NOT NULL`
 
-func RetireRLSScopeKey(ctx context.Context, db bun.IDB, keyID string) (bool, error) {
+func RetireRLSScopeKey(ctx context.Context, db *keel.DB, keyID string) (bool, error) {
 	if !scopeKeyIDPattern.MatchString(keyID) {
 		return false, ErrInvalidScopeKey
 	}
 
-	res, err := db.NewRaw(
-		`UPDATE trenova_rls.scope_keys
-		SET retired_at = `+dbhelper.NowEpoch+`
-		WHERE key_id = ? AND retired_at IS NULL`,
-		keyID,
-	).Exec(ctx)
+	rows, err := keel.Exec(ctx, db, retireScopeKeySQL, keyID)
 	if err != nil {
 		return false, fmt.Errorf("retire row-level security scope key %q: %w", keyID, err)
 	}
 
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-
 	return rows > 0, nil
 }
+
+const retireScopeKeySQL = `UPDATE trenova_rls.scope_keys
+SET retired_at = extract(epoch from current_timestamp)::bigint
+WHERE key_id = $1 AND retired_at IS NULL`
 
 type RLSLoginRole struct {
 	User     string
@@ -131,7 +124,7 @@ type ProvisionRLSRolesParams struct {
 
 func ProvisionRLSRoles(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	params ProvisionRLSRolesParams,
 ) ([]string, error) {
 	app := strings.TrimSpace(params.App.User)
@@ -163,15 +156,10 @@ func ProvisionRLSRoles(
 		{name: system, verifier: systemVerifier, member: rlsOverrideRole, excluded: rlsTenantRole},
 	}
 
-	err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err = keel.Write(ctx, db, func(ctx context.Context) error {
 		for _, role := range roles {
-			if _, execErr := tx.NewRaw(
-				provisionLoginRoleSQL,
-				role.name,
-				role.verifier,
-				role.member,
-				role.excluded,
-			).Exec(ctx); execErr != nil {
+			if execErr := provisionLoginRole(ctx, db, role.name, role.verifier, role.member,
+				role.excluded); execErr != nil {
 				return fmt.Errorf("provision database role %q: %w", role.name, execErr)
 			}
 		}
@@ -185,30 +173,57 @@ func ProvisionRLSRoles(
 	return []string{app, system}, nil
 }
 
-const provisionLoginRoleSQL = `
-DO $provision$
-DECLARE
-	role_name text := ?;
-	role_verifier text := ?;
-	member_of text := ?;
-	excluded_from text := ?;
-	attributes text := 'LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS INHERIT';
-BEGIN
-	IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
-		EXECUTE format('ALTER ROLE %I %s PASSWORD %L', role_name, attributes, role_verifier);
-	ELSE
-		EXECUTE format('CREATE ROLE %I %s PASSWORD %L', role_name, attributes, role_verifier);
-	END IF;
+const loginRoleAttributes = "LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS INHERIT"
 
-	IF pg_has_role(role_name, excluded_from, 'MEMBER') THEN
-		EXECUTE format('REVOKE %I FROM %I', excluded_from, role_name);
-	END IF;
+func provisionLoginRole(ctx context.Context, db *keel.DB, name, verifier, member, excluded string) error {
+	exists, err := keel.QueryValue[bool](ctx, db,
+		"SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $1)", name)
+	if err != nil {
+		return err
+	}
 
-	IF NOT pg_has_role(role_name, member_of, 'MEMBER') THEN
-		EXECUTE format('GRANT %I TO %I', member_of, role_name);
-	END IF;
-END
-$provision$`
+	verb := "CREATE"
+	if exists {
+		verb = "ALTER"
+	}
+	if err = execFormatted(ctx, db,
+		"SELECT format('%s ROLE %I %s PASSWORD %L', $1::text, $2::text, $3::text, $4::text)",
+		verb, name, loginRoleAttributes, verifier); err != nil {
+		return err
+	}
+
+	excludedMember, err := keel.QueryValue[bool](ctx, db,
+		"SELECT pg_has_role($1, $2, 'MEMBER')", name, excluded)
+	if err != nil {
+		return err
+	}
+	if excludedMember {
+		if err = execFormatted(ctx, db, "SELECT format('REVOKE %I FROM %I', $1::text, $2::text)",
+			excluded, name); err != nil {
+			return err
+		}
+	}
+
+	isMember, err := keel.QueryValue[bool](ctx, db, "SELECT pg_has_role($1, $2, 'MEMBER')", name, member)
+	if err != nil {
+		return err
+	}
+	if isMember {
+		return nil
+	}
+
+	return execFormatted(ctx, db, "SELECT format('GRANT %I TO %I', $1::text, $2::text)", member, name)
+}
+
+func execFormatted(ctx context.Context, db *keel.DB, format string, args ...any) error {
+	statement, err := keel.QueryValue[string](ctx, db, format, args...)
+	if err != nil {
+		return err
+	}
+
+	_, err = keel.Exec(ctx, db, statement)
+	return err
+}
 
 type RLSStatus struct {
 	ActiveKeys        []string
@@ -217,28 +232,29 @@ type RLSStatus struct {
 	UnprotectedTables []string
 }
 
-func ReadRLSStatus(ctx context.Context, db bun.IDB) (*RLSStatus, error) {
+func ReadRLSStatus(ctx context.Context, db *keel.DB) (*RLSStatus, error) {
 	status := new(RLSStatus)
 
-	if err := db.NewRaw(
-		`SELECT key_id FROM trenova_rls.scope_keys WHERE retired_at IS NULL ORDER BY created_at`,
-	).Scan(ctx, &status.ActiveKeys); err != nil {
+	keys, err := keel.QueryAll(ctx, db, pgx.RowTo[string],
+		`SELECT key_id FROM trenova_rls.scope_keys WHERE retired_at IS NULL ORDER BY created_at`)
+	if err != nil {
 		return nil, fmt.Errorf("read row-level security scope keys: %w", err)
 	}
+	status.ActiveKeys = keys
 
-	if err := db.NewRaw(
-		`SELECT
+	if err = keel.QueryRows(ctx, db, func(row pgx.CollectableRow) error {
+		return row.Scan(&status.ProtectedTables, &status.GlobalTables)
+	}, `SELECT
 			count(*) FILTER (WHERE c.relrowsecurity AND c.relforcerowsecurity),
 			count(*) FILTER (WHERE g.table_name IS NOT NULL)
 		FROM pg_class c
 		JOIN pg_namespace n ON n.oid = c.relnamespace
 		LEFT JOIN trenova_rls.global_tables g ON g.table_name = c.relname
-		WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p')`,
-	).Scan(ctx, &status.ProtectedTables, &status.GlobalTables); err != nil {
+		WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p')`); err != nil {
 		return nil, fmt.Errorf("count row-level security tables: %w", err)
 	}
 
-	if err := db.NewRaw(
+	unprotected, err := keel.QueryAll(ctx, db, pgx.RowTo[string],
 		`SELECT c.relname
 		FROM pg_class c
 		JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -246,10 +262,11 @@ func ReadRLSStatus(ctx context.Context, db bun.IDB) (*RLSStatus, error) {
 			AND c.relkind IN ('r', 'p')
 			AND NOT (c.relrowsecurity AND c.relforcerowsecurity)
 			AND NOT EXISTS (SELECT 1 FROM trenova_rls.global_tables g WHERE g.table_name = c.relname)
-		ORDER BY c.relname`,
-	).Scan(ctx, &status.UnprotectedTables); err != nil {
+		ORDER BY c.relname`)
+	if err != nil {
 		return nil, fmt.Errorf("list tables without row-level security: %w", err)
 	}
+	status.UnprotectedTables = unprotected
 
 	return status, nil
 }

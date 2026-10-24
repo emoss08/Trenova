@@ -335,12 +335,13 @@ func (c *Connection) shutdown(ctx context.Context) error {
 	return nil
 }
 
-func WrapDB(db *bun.DB) *Connection {
-	registerModels(db)
-	return &Connection{db: db, tenantKeel: dbpool.KeelOf(db.DB)}
+func WrapDB(db *keel.DB) *Connection {
+	bunDB := dbpool.BunOver(db)
+	registerModels(bunDB)
+	return &Connection{db: bunDB, tenantKeel: db}
 }
 
-func NewTestConnection(db *bun.DB) *Connection {
+func NewTestConnection(db *keel.DB) *Connection {
 	return WrapDB(db)
 }
 

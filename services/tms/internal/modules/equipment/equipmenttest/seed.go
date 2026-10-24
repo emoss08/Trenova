@@ -8,7 +8,6 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -42,7 +41,7 @@ func NewDatabase(t *testing.T) *Database {
 
 	return &Database{
 		Conn:  dbtest.NewRLSConnection(t, admin, dsn),
-		Admin: dbpool.KeelOf(admin.DB),
+		Admin: admin,
 		A:     tenantOf(t, a.Organization.ID, a.BusinessUnit.ID, a.User.ID),
 		B:     tenantOf(t, b.Organization.ID, b.BusinessUnit.ID, b.User.ID),
 	}
@@ -56,7 +55,7 @@ func NewDevelopmentDatabase(t *testing.T) *Database {
 
 	db := &Database{
 		Conn:  dbtest.NewRLSConnection(t, admin, dsn),
-		Admin: dbpool.KeelOf(admin.DB),
+		Admin: admin,
 	}
 
 	var orgID, buID string

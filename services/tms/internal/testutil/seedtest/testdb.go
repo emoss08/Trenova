@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/migrate"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/schema/migrations"
@@ -17,7 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -72,40 +72,6 @@ func (e *seedEnvironment) key(kind Template) (string, error) {
 	return key, nil
 }
 
-type TestDB struct {
-	DB *bun.DB
-	Tx bun.Tx
-	t  *testing.T
-}
-
-func NewTestDB(t *testing.T, db *bun.DB) *TestDB {
-	t.Helper()
-
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err, "failed to begin test transaction")
-
-	return &TestDB{
-		DB: db,
-		Tx: tx,
-		t:  t,
-	}
-}
-
-func (tdb *TestDB) Rollback() {
-	tdb.t.Helper()
-	require.NoError(tdb.t, tdb.Tx.Rollback(), "failed to rollback test transaction")
-}
-
-func (tdb *TestDB) Commit() {
-	tdb.t.Helper()
-	require.NoError(tdb.t, tdb.Tx.Commit(), "failed to commit test transaction")
-}
-
-func (tdb *TestDB) Context() context.Context {
-	return context.Background()
-}
-
 func chdirToServiceRoot(t *testing.T) {
 	t.Helper()
 
@@ -133,7 +99,7 @@ func chdirToServiceRoot(t *testing.T) {
 	t.Fatal("could not find TMS service root directory")
 }
 
-func openBunDB(dsn string, maxOpen int) (*bun.DB, error) {
+func openDB(dsn string, maxOpen int) (*keel.DB, error) {
 	pool, err := dbpool.Open(context.Background(), &dbpool.Options{
 		DSN:             dsn,
 		MaxConns:        maxOpen,
@@ -144,7 +110,7 @@ func openBunDB(dsn string, maxOpen int) (*bun.DB, error) {
 		return nil, fmt.Errorf("open test database: %w", err)
 	}
 
-	return pool.Bun, nil
+	return pool.Keel, nil
 }
 
 // resolveAdminDSN returns a DSN for a Postgres server to run the suite against.
@@ -264,7 +230,7 @@ func getSharedSeedEnv() (*seedEnvironment, error) {
 	return sharedSeedEnv, sharedSeedErr
 }
 
-func SetupTestDB(t *testing.T) (context.Context, *bun.DB, func()) {
+func SetupTestDB(t *testing.T) (context.Context, *keel.DB, func()) {
 	t.Helper()
 
 	ctx, db, _, cleanup := SetupTestDBWithDSN(t)
@@ -272,13 +238,13 @@ func SetupTestDB(t *testing.T) (context.Context, *bun.DB, func()) {
 	return ctx, db, cleanup
 }
 
-func SetupTestDBWithDSN(t *testing.T) (context.Context, *bun.DB, string, func()) {
+func SetupTestDBWithDSN(t *testing.T) (context.Context, *keel.DB, string, func()) {
 	t.Helper()
 
 	return SetupFromTemplate(t, referenceTemplate)
 }
 
-func SetupFromTemplate(t *testing.T, kind Template) (context.Context, *bun.DB, string, func()) {
+func SetupFromTemplate(t *testing.T, kind Template) (context.Context, *keel.DB, string, func()) {
 	t.Helper()
 
 	chdirToServiceRoot(t)
@@ -295,9 +261,9 @@ func SetupFromTemplate(t *testing.T, kind Template) (context.Context, *bun.DB, s
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
-	db, err := openBunDB(dsn, 2)
+	db, err := openDB(dsn, 4)
 	if err == nil {
-		err = db.PingContext(ctx)
+		err = db.Ping(ctx)
 	}
 	if err != nil {
 		cancel()
@@ -306,9 +272,7 @@ func SetupFromTemplate(t *testing.T, kind Template) (context.Context, *bun.DB, s
 	}
 
 	cleanup := func() {
-		if closeErr := db.Close(); closeErr != nil {
-			require.NoError(t, closeErr, "failed to close isolated test database")
-		}
+		db.Close()
 		dropDatabase(t, drop, dsn)
 		cancel()
 	}
@@ -339,13 +303,4 @@ func redactDSN(dsn string) string {
 	}
 
 	return cfg.Database
-}
-
-func BeginTx(t *testing.T, ctx context.Context, db *bun.DB) (context.Context, bun.Tx) {
-	t.Helper()
-
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err, "failed to begin transaction")
-
-	return ctx, tx
 }

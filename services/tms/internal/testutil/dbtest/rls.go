@@ -10,19 +10,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx/fxtest"
 	"go.uber.org/zap/zaptest"
 )
 
 const rlsTestScopeKeyID = "ktest"
 
-func NewRLSConnection(t *testing.T, admin *bun.DB, dsn string) *postgres.Connection {
+func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connection {
 	t.Helper()
 
 	ctx := t.Context()
@@ -39,7 +38,7 @@ func NewRLSConnection(t *testing.T, admin *bun.DB, dsn string) *postgres.Connect
 	t.Cleanup(func() {
 		dropCtx := context.WithoutCancel(ctx)
 		for _, role := range []string{appRole, systemRole} {
-			_, _ = admin.ExecContext(dropCtx, fmt.Sprintf("DROP ROLE IF EXISTS %q", role))
+			_, _ = keel.Exec(dropCtx, admin, fmt.Sprintf("DROP ROLE IF EXISTS %q", role))
 		}
 	})
 
@@ -67,7 +66,7 @@ func NewRLSConnection(t *testing.T, admin *bun.DB, dsn string) *postgres.Connect
 		},
 	}
 
-	_, err = postgres.ProvisionRLS(ctx, dbpool.KeelOf(admin.DB), cfg)
+	_, err = postgres.ProvisionRLS(ctx, admin, cfg)
 	require.NoError(t, err)
 
 	lifecycle := fxtest.NewLifecycle(t)

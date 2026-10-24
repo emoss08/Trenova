@@ -121,3 +121,7 @@ func systemOf(ctx context.Context) (string, bool) {
 func newID(prefix string) string {
 	return pulid.MustNew(prefix).String()
 }
+
+func BunOver(db *keel.DB) *bun.DB {
+	return bun.NewDB(openSQL(db, nil), pgdialect.New())
+}
