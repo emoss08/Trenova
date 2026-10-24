@@ -136,11 +136,3 @@ func RegisterEntities() []any {
 		&factoring.InvoiceState{},
 	}
 }
-
-func RegisterManyToManyEntities() []any {
-	return []any{
-		&customer.CustomerBillingProfileDocumentType{},
-		&permission.RoleConstraintRole{},
-		&factoring.AgreementDocumentType{},
-	}
-}

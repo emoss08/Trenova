@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/migrate"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/schemaversion"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -56,14 +57,14 @@ func TestRequireWaitsForTheDeployJob(t *testing.T) {
 	ctx, db, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
-	_, err := db.ExecContext(ctx, `DELETE FROM keel_migrations WHERE version = ?`, schema.Version)
+	_, err := keel.Exec(ctx, db, `DELETE FROM keel_migrations WHERE version = $1`, schema.Version)
 	require.NoError(t, err)
 
 	go func() {
 		time.Sleep(time.Second)
-		_, _ = db.ExecContext(context.Background(),
+		_, _ = keel.Exec(context.Background(), db,
 			`INSERT INTO keel_migrations (version, name, source, kind, checksum)
-			 VALUES (?, 'catch_up', 'core', 'versioned', '')`, schema.Version)
+			 VALUES ($1, 'catch_up', 'core', 'versioned', '')`, schema.Version)
 	}()
 
 	waitCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

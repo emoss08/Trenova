@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -27,16 +26,9 @@ func TestUpdate_SavesAnAgentWithNoAccentIconOrTemplate(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var row tierDefinitionRow
-	require.NoError(t, db.NewSelect().
-		Table("agent_definitions").
-		Column("id", "organization_id", "business_unit_id").
-		Where("system_key IS NULL").
-		Limit(1).
-		Scan(ctx, &row))
-
+	row := findDefinitions(t, ctx, db, "system_key IS NULL", 1)[0]
+	ctx, tenant := row.tenant(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
-	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
 
 	definition, err := repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         row.ID,
@@ -64,15 +56,9 @@ func TestUpdate_SavesBudgetsLimitsAndSimulation(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var row tierDefinitionRow
-	require.NoError(t, db.NewSelect().
-		Table("agent_definitions").
-		Column("id", "organization_id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &row))
-
+	row := findDefinitions(t, ctx, db, "TRUE", 1)[0]
+	ctx, tenant := row.tenant(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
-	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
 	request := agentdefinitionports.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
 
 	definition, err := repo.GetByID(ctx, request)
@@ -108,16 +94,9 @@ func TestUpdate_SavesTheDataAccessCeiling(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var row tierDefinitionRow
-	require.NoError(t, db.NewSelect().
-		Table("agent_definitions").
-		Column("id", "organization_id", "business_unit_id").
-		Where("trigger_mode <> 'Chat'").
-		Limit(1).
-		Scan(ctx, &row))
-
+	row := findDefinitions(t, ctx, db, "trigger_mode <> 'Chat'", 1)[0]
+	ctx, tenant := row.tenant(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
-	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
 	request := agentdefinitionports.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
 
 	definition, err := repo.GetByID(ctx, request)

@@ -8,11 +8,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/enveloperepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/enveloperewrapservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration/integrationdb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,6 +40,7 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	old := keyring(t, oldKey)
 
@@ -49,7 +53,7 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 		encryptionservice.AIProviderCredentialAAD(tenant.OrgID, tenant.BuID, providerID),
 	)
 	require.NoError(t, err)
-	_, err = db.NewInsert().Model(&aiprovider.Provider{
+	err = aiproviderdb.Providers.Create(ctx, db, &aiprovider.Provider{
 		ID:                   providerID,
 		OrganizationID:       tenant.OrgID,
 		BusinessUnitID:       tenant.BuID,
@@ -68,7 +72,7 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 		APIKey:               legacyAPIKey,
 		PreviousAPIKey:       previousAPIKey,
 		RotationExpiresAt:    &rotationExpiresAt,
-	}).Exec(ctx)
+	})
 	require.NoError(t, err)
 
 	mfaAAD := encryptionservice.AAD{
@@ -79,7 +83,7 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 	totp, err := old.EncryptStringWithAAD("JBSWY3DPEHPK3PXP", mfaAAD)
 	require.NoError(t, err)
 	authenticatorID := pulid.MustNew("mfa_")
-	_, err = db.NewInsert().Model(&iam.MFAAuthenticator{
+	err = iamdb.MFAAuthenticators.Create(ctx, db, &iam.MFAAuthenticator{
 		ID:             authenticatorID,
 		UserID:         data.User.ID,
 		OrganizationID: tenant.OrgID,
@@ -87,7 +91,7 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 		Name:           "Authenticator app",
 		SecretCipher:   totp,
 		Enabled:        true,
-	}).Exec(ctx)
+	})
 	require.NoError(t, err)
 
 	mapsKey, err := old.EncryptString("maps-key")
@@ -120,7 +124,7 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 			Configuration:  map[string]any{"apiKey": carrierLegacyKey},
 		},
 	}
-	_, err = db.NewInsert().Model(&integrations).Exec(ctx)
+	err = integrationdb.Integrations.CreateMany(ctx, db, integrations)
 	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
@@ -146,8 +150,9 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 	}, nonZero(rewrapped))
 
 	newOnly := keyring(t, newKey)
-	stored := new(aiprovider.Provider)
-	require.NoError(t, db.NewSelect().Model(stored).Where("aiprv.id = ?", providerID).Scan(ctx))
+	providers := aiproviderdb.Providers
+	stored, err := providers.Where(providers.ID.Eq(providerID)).One(ctx, db)
+	require.NoError(t, err)
 	bound := encryptionservice.AIProviderCredentialAAD(tenant.OrgID, tenant.BuID, providerID)
 	apiKey, err := newOnly.DecryptStringWithAAD(stored.APIKey, bound)
 	require.NoError(t, err)
@@ -156,21 +161,16 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "sk-previous", previous)
 
-	authenticator := new(iam.MFAAuthenticator)
-	require.NoError(t, db.NewSelect().
-		Model(authenticator).
-		Where("mfa.id = ?", authenticatorID).
-		Scan(ctx))
+	authenticators := iamdb.MFAAuthenticators
+	authenticator, err := authenticators.Where(authenticators.ID.Eq(authenticatorID)).One(ctx, db)
+	require.NoError(t, err)
 	secret, err := newOnly.DecryptStringWithAAD(authenticator.SecretCipher, mfaAAD)
 	require.NoError(t, err)
 	assert.Equal(t, "JBSWY3DPEHPK3PXP", secret)
 
 	byType := map[integration.Type]*integration.Integration{}
-	loaded := make([]*integration.Integration, 0, 2)
-	require.NoError(t, db.NewSelect().
-		Model(&loaded).
-		Where("integ.organization_id = ?", tenant.OrgID).
-		Scan(ctx))
+	loaded, err := integrationdb.Integrations.Query().All(ctx, db)
+	require.NoError(t, err)
 	for _, row := range loaded {
 		byType[row.Type] = row
 	}

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -44,8 +45,7 @@ func TestFleetCodeRepository_Throughput(t *testing.T) {
 		Code:           "BENCH",
 		Description:    "Throughput",
 	}
-	_, err := admin.NewInsert().Model(entity).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, fleetcodedb.FleetCodes.Create(data.Ctx(ctx), admin, entity))
 
 	repo := New(Params{DB: dbtest.NewRLSConnection(t, admin, dsn), Logger: zap.NewNop()})
 	scoped := dbscope.WithTenant(t.Context(), dbscope.Tenant{
