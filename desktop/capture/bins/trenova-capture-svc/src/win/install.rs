@@ -80,7 +80,7 @@ pub fn install_service() -> io::Result<()> {
     };
     service
         .update_failure_actions(ServiceFailureActions {
-            reset_period: ServiceFailureResetPeriod::After(Duration::from_secs(86_400)),
+            reset_period: ServiceFailureResetPeriod::After(Duration::from_hours(24)),
             reboot_msg: None,
             command: None,
             actions: Some(vec![restart(5), restart(30), restart(120)]),

@@ -22,8 +22,8 @@ use tokio_util::sync::CancellationToken;
 pub const POLL: Duration = Duration::from_secs(2);
 /// How often leftovers of interrupted writes are cleared, and how old they
 /// must be.
-const SWEEP_EVERY: Duration = Duration::from_secs(3600);
-const SWEEP_AFTER: Duration = Duration::from_secs(86_400);
+const SWEEP_EVERY: Duration = Duration::from_hours(1);
+const SWEEP_AFTER: Duration = Duration::from_hours(24);
 /// The name the batch's source carries in Trenova.
 pub const PRINTER_SOURCE_NAME: &str = "Trenova printer";
 

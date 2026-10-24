@@ -22,7 +22,7 @@ use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 /// Users (`RP` is `SERVICE_START`).
 const SERVICE_SDDL: &str = "D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)\
     (A;;CCLCSWLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)(A;;CCLCSWRPLOCRRC;;;AU)";
-const STOP_TIMEOUT: Duration = Duration::from_secs(60);
+const STOP_TIMEOUT: Duration = Duration::from_mins(1);
 /// `ERROR_SERVICE_DOES_NOT_EXIST`.
 const NO_SUCH_SERVICE: i32 = 1060;
 

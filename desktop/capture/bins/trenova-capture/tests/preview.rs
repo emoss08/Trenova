@@ -122,14 +122,14 @@ fn busy() -> Snapshot {
         label: "fi-8170".into(),
         pages: 2,
         link: "https://tms.acme-freight.com/intake?batch=cbat_1".into(),
-        at: SystemTime::now() - Duration::from_secs(300),
+        at: SystemTime::now() - Duration::from_mins(5),
         requested: false,
     });
     snapshot.recent.push_front(RecentBatch {
         label: "fi-8170".into(),
         pages: 11,
         link: "https://tms.acme-freight.com/intake?batch=cbat_2".into(),
-        at: SystemTime::now() - Duration::from_secs(60),
+        at: SystemTime::now() - Duration::from_mins(1),
         requested: true,
     });
     snapshot.messages.push_front(Message {
@@ -140,7 +140,7 @@ fn busy() -> Snapshot {
             link: None,
             routine: false,
         },
-        at: SystemTime::now() - Duration::from_secs(720),
+        at: SystemTime::now() - Duration::from_mins(12),
     });
     snapshot.printer_missing = true;
     snapshot

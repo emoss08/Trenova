@@ -19,7 +19,7 @@ use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 
 /// How often a signed-in agent looks for a release.
-pub const CHECK_EVERY: Duration = Duration::from_secs(6 * 3600);
+pub const CHECK_EVERY: Duration = Duration::from_hours(6);
 
 /// Starts the updater service, which does the installing.
 pub trait UpdateStarter: Send + Sync {

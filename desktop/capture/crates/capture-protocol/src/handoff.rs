@@ -516,7 +516,7 @@ mod tests {
             .expect("delivers");
         fs::write(dir.path().join("0000000000002-1-0.pdf.part"), b"half").expect("writes");
         fs::write(dir.path().join("0000000000003-1-0.pdf"), b"orphan").expect("writes");
-        assert_eq!(inbox.sweep(Duration::from_secs(3600)).expect("sweeps"), 0);
+        assert_eq!(inbox.sweep(Duration::from_hours(1)).expect("sweeps"), 0);
         assert_eq!(inbox.sweep(Duration::ZERO).expect("sweeps"), 2);
         assert_eq!(inbox.read(&job).expect("kept"), b"%PDF-1.7");
         assert!(

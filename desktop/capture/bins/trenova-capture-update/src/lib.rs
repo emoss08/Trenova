@@ -28,7 +28,7 @@ pub const SERVICE_NAME: &str = "TrenovaCaptureUpdater";
 pub const SERVICE_DISPLAY_NAME: &str = "Trenova Capture updater";
 pub const SERVICE_DESCRIPTION: &str = "Installs new releases of Trenova Capture after verifying them. Started by Trenova Capture when an update is due.";
 /// How long a fetch or download may take.
-pub const NETWORK_TIMEOUT: Duration = Duration::from_secs(600);
+pub const NETWORK_TIMEOUT: Duration = Duration::from_mins(10);
 const MAX_URL_LENGTH: usize = 2048;
 
 #[derive(Debug, thiserror::Error)]

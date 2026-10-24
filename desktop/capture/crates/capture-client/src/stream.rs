@@ -20,7 +20,7 @@ use crate::sse::SseParser;
 
 /// Heartbeats come every 15 seconds; four missed means the connection is
 /// dead even if the socket has not noticed.
-const IDLE_TIMEOUT: Duration = Duration::from_secs(60);
+const IDLE_TIMEOUT: Duration = Duration::from_mins(1);
 /// A stream the server closed on purpose is reopened after about this long.
 const ROTATE_DELAY: Duration = Duration::from_secs(1);
 
@@ -52,7 +52,7 @@ enum Ending {
 /// Keeps the stream open until cancelled, revoked or blocked, reporting what
 /// happens on `events`.
 pub async fn run(api: Arc<Api>, events: mpsc::Sender<DeviceEvent>, cancel: CancellationToken) {
-    let mut backoff = Backoff::new(Duration::from_secs(1), Duration::from_secs(60));
+    let mut backoff = Backoff::new(Duration::from_secs(1), Duration::from_mins(1));
     let mut last_id: Option<String> = None;
 
     loop {

@@ -510,7 +510,7 @@ fn start_from(setup: Setup) -> Running {
                 .unwrap_or_else(PoisonError::into_inner)
                 .push(path.to_path_buf());
         }),
-        recheck_after: Duration::from_secs(600),
+        recheck_after: Duration::from_mins(10),
         updater: Arc::clone(&updater) as Arc<dyn UpdateStarter>,
         release_key: Some(release_key()),
         windows_build: 22631,
