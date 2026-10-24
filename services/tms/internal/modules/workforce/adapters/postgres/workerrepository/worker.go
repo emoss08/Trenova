@@ -125,7 +125,7 @@ func ownerOperatorFilter(now int64) keel.Pred {
 			w.BusinessUnitID,
 			now,
 			now,
-			driverpay.PayeeClassificationOwnerOperator,
+			string(driverpay.PayeeClassificationOwnerOperator),
 		),
 	)
 }
