@@ -1,0 +1,241 @@
+package listquery
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+)
+
+type Request[T any] struct {
+	Filter  *pagination.QueryOptions
+	Cursor  pagination.CursorInfo
+	Columns []string
+	Shape   func(*keel.Query[T]) *keel.Query[T]
+	Then    []keel.Order
+}
+
+func Connection[T any](
+	ctx context.Context,
+	db *keel.DB,
+	q *keel.Query[T],
+	req *Request[T],
+) (*pagination.CursorListResult[*T], error) {
+	p := newPlan(q)
+	q.Where(p.where(req.Filter)...)
+
+	orders, shape, err := p.keysetOrder(sortsOf(req.Filter))
+	if err != nil {
+		return nil, err
+	}
+
+	after, err := keysetAfter(&req.Cursor, shape)
+	if err != nil {
+		return nil, err
+	}
+
+	counted := q.Clone()
+	rows, err := shapeRows(q, req)
+	if err != nil {
+		return nil, err
+	}
+	rows.Order(orders...)
+
+	limit := cursorLimit(req.Filter, &req.Cursor)
+	var page keel.Page[T]
+	var total int64
+	items := []keel.BatchItem{
+		keel.PageInto(rows, keel.After(after.Keyset, limit+after.Skip), &page),
+	}
+	if req.Cursor.IncludeTotalCount {
+		items = append(items, keel.CountInto(counted, &total))
+	}
+	if err = keel.Batch(ctx, db, items...); err != nil {
+		return nil, err
+	}
+
+	return connectionResult(&page, &after, shape, totalOf(req.Cursor.IncludeTotalCount, total))
+}
+
+func List[T any](
+	ctx context.Context,
+	db *keel.DB,
+	q *keel.Query[T],
+	req *Request[T],
+) (*pagination.ListResult[*T], error) {
+	p := newPlan(q)
+	q.Where(p.where(req.Filter)...)
+
+	counted := q.Clone()
+	rows, err := shapeRows(q, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Filter != nil {
+		if rank := p.rank(req.Filter.Query); rank != nil {
+			rows.Order(keel.Desc(rank).NullsLast())
+		}
+	}
+	rows.Order(p.orders(sortsOf(req.Filter))...)
+	rows.Order(req.Then...)
+
+	info := paginationOf(req.Filter)
+	rows.Limit(info.SafeLimit()).Offset(info.SafeOffset())
+
+	return listAndCount(ctx, db, rows, counted)
+}
+
+func SelectOptions[T any](
+	ctx context.Context,
+	db *keel.DB,
+	q *keel.Query[T],
+	req *pagination.SelectQueryRequest,
+	search func(query string) keel.Pred,
+) (*pagination.ListResult[*T], error) {
+	if req.Query != "" && search != nil {
+		q.Where(search(req.Query))
+	}
+
+	counted := q.Clone()
+	q.Limit(req.Pagination.SafeLimit()).Offset(req.Pagination.SafeOffset())
+
+	return listAndCount(ctx, db, q, counted)
+}
+
+func listAndCount[T any](
+	ctx context.Context,
+	db *keel.DB,
+	rows, counted *keel.Query[T],
+) (*pagination.ListResult[*T], error) {
+	var items []*T
+	var total int64
+	err := keel.Batch(ctx, db, keel.ListInto(rows, &items), keel.CountInto(counted, &total))
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagination.ListResult[*T]{Items: items, Total: int(total)}, nil
+}
+
+func Pick[T any](q *keel.Query[T], columns []string) (*keel.Query[T], error) {
+	if len(columns) == 0 {
+		return q, nil
+	}
+
+	table := q.TableRef().Table
+	picks := make([]keel.Expr, 0, len(columns))
+	for _, name := range columns {
+		index := table.Column(name)
+		if index < 0 || !table.Columns[index].Stored() {
+			return nil, fmt.Errorf("listquery: %s has no column %q", table.Name, name)
+		}
+		picks = append(picks, keel.Col{Ref: q.TableRef(), Index: index})
+	}
+
+	return q.Pick(picks...), nil
+}
+
+func shapeRows[T any](q *keel.Query[T], req *Request[T]) (*keel.Query[T], error) {
+	rows, err := Pick(q, req.Columns)
+	if err != nil {
+		return nil, err
+	}
+	if req.Shape != nil {
+		rows = req.Shape(rows)
+	}
+
+	return rows, nil
+}
+
+func keysetAfter(
+	cursor *pagination.CursorInfo,
+	shape []pagination.CursorSortField,
+) (pagination.Cursor, error) {
+	if cursor.After == "" {
+		return pagination.Cursor{}, nil
+	}
+
+	if !cursor.Cursor.IsKeyset() || !cursor.Cursor.MatchesSort(shape) {
+		return pagination.Cursor{}, errortypes.NewValidationError(
+			"after",
+			errortypes.ErrInvalid,
+			"Cursor sort does not match request sort",
+		)
+	}
+
+	return cursor.Cursor, nil
+}
+
+func connectionResult[T any](
+	page *keel.Page[T],
+	after *pagination.Cursor,
+	shape []pagination.CursorSortField,
+	total *int,
+) (*pagination.CursorListResult[*T], error) {
+	items := page.Items
+	if after.Skip > 0 {
+		items = items[min(after.Skip, len(items)):]
+	}
+
+	cursors := make([]string, len(items))
+	for i := range items {
+		keyset, skip := after.Keyset, after.Skip+i+1
+		if i == len(items)-1 && page.Next != "" {
+			keyset, skip = page.Next, 0
+		}
+
+		cursor, err := pagination.EncodeKeysetCursor(shape, keyset, skip)
+		if err != nil {
+			return nil, err
+		}
+		cursors[i] = cursor
+	}
+
+	return &pagination.CursorListResult[*T]{
+		Items:       items,
+		HasNextPage: page.Next != "",
+		TotalCount:  total,
+		CursorSort:  shape,
+		EdgeCursors: cursors,
+	}, nil
+}
+
+func totalOf(include bool, total int64) *int {
+	if !include {
+		return nil
+	}
+
+	n := int(total)
+	return &n
+}
+
+func sortsOf(filter *pagination.QueryOptions) []domaintypes.SortField {
+	if filter == nil {
+		return nil
+	}
+
+	return filter.Sort
+}
+
+func paginationOf(filter *pagination.QueryOptions) pagination.Info {
+	if filter == nil {
+		return pagination.Info{}
+	}
+
+	return filter.Pagination
+}
+
+func cursorLimit(filter *pagination.QueryOptions, cursor *pagination.CursorInfo) int {
+	if cursor.Limit > 0 {
+		return cursor.Limit
+	}
+	if filter != nil {
+		return filter.Pagination.SafeLimit()
+	}
+
+	return pagination.DefaultLimit
+}

@@ -1,63 +1,94 @@
 package trailerrepository
 
 import (
-	"database/sql"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
-	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
-func newTrailerQueryTestDB() *bun.DB {
-	return bun.NewDB(&sql.DB{}, pgdialect.New())
+func renderTrailers(t *testing.T, includes trailerports.TrailerRelationIncludes) (string, []any) {
+	t.Helper()
+
+	q, err := trailerQuery(&includes)
+	require.NoError(t, err)
+
+	return keeltest.Render(t, q.Limit(10))
 }
 
-func TestApplyTrailerListCountFilters_SkipsCursorPredicateAndSort(t *testing.T) {
+func TestTrailerQuery_ReadsTheSelectedColumns(t *testing.T) {
 	t.Parallel()
 
-	entities := make([]*trailer.Trailer, 0)
-	repo := &repository{l: zap.NewNop()}
-	filter := &pagination.QueryOptions{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: pulid.MustNew("org_"),
-			BuID:  pulid.MustNew("bu_"),
-		},
-		FieldFilters: []domaintypes.FieldFilter{
-			{Field: "code", Operator: dbtype.OpContains, Value: "TRL"},
-		},
-		Sort: []domaintypes.SortField{
-			{Field: "code", Direction: dbtype.SortDirectionAsc},
-		},
-		Cursor: pagination.CursorInfo{
-			After: "cursor-page-2",
-			Cursor: pagination.Cursor{
-				ID:        pulid.MustNew("trl_"),
-				CreatedAt: 1710000000000,
-			},
-		},
-		UseCursor: true,
-	}
-
-	query := newTrailerQueryTestDB().
-		NewSelect().
-		Model(&entities)
-	result := repo.applyListCountFilters(query, &trailerports.ListTrailersRequest{
-		Filter: filter,
-		Status: string(domaintypes.EquipmentStatusAvailable),
+	sql, _ := renderTrailers(t, trailerports.TrailerRelationIncludes{
+		TrailerColumns: []string{"id", "code"},
 	})
 
-	sql := result.String()
-	assert.Contains(t, sql, `"tr"."code" ILIKE`)
-	assert.Contains(t, sql, `tr.status = 'Available'`)
-	assert.NotContains(t, sql, "ORDER BY")
-	assert.NotContains(t, sql, `"tr"."created_at" <`)
-	assert.NotContains(t, sql, `"tr"."id" <`)
+	assert.Contains(
+		t,
+		sql,
+		`SELECT t."id", t."code", t."business_unit_id", t."organization_id" FROM "trailers" t`,
+	)
+}
+
+func TestTrailerQuery_ReadsTheLocationsCoordinates(t *testing.T) {
+	t.Parallel()
+
+	sql, args := renderTrailers(
+		t,
+		trailerports.TrailerRelationIncludes{IncludeLastKnownLocation: true},
+	)
+
+	assert.Contains(t, sql, "SELECT l.latitude FROM locations l")
+	assert.Contains(t, sql, "SELECT l.longitude FROM locations l")
+	assert.Contains(
+		t,
+		sql,
+		`LEFT JOIN LATERAL (SELECT lkc2."current_location_id" FROM "equipment_continuity" lkc2`,
+	)
+	assert.Contains(t, args, "Trailer")
+}
+
+func TestTrailerQuery_LeavesTheLocationOutWhenUnselected(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := renderTrailers(t, trailerports.TrailerRelationIncludes{})
+
+	assert.NotContains(t, sql, "equipment_continuity")
+}
+
+func TestTrailerQuery_LoadsTheOwnerOperatorOnlyWhenAsked(t *testing.T) {
+	t.Parallel()
+
+	with, _ := renderTrailers(t, trailerports.TrailerRelationIncludes{IncludeOwnerWorker: true})
+	without, _ := renderTrailers(t, trailerports.TrailerRelationIncludes{})
+
+	assert.Contains(t, with, `LEFT JOIN "workers" ow ON ow."id" = t."owner_worker_id"`)
+	assert.NotContains(t, without, `"workers"`)
+}
+
+func TestTrailerQuery_TheFleetManagerLoadsThroughTheFleetCode(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := renderTrailers(t, trailerports.TrailerRelationIncludes{IncludeFleetManager: true})
+
+	assert.Contains(t, sql, `LEFT JOIN "fleet_codes" fc ON fc."id" = t."fleet_code_id"`)
+	assert.Contains(t, sql, `LEFT JOIN "users" m ON m."id" = fc."manager_id"`)
+}
+
+func TestTrailerStatusFilter(t *testing.T) {
+	t.Parallel()
+
+	repo := &repository{l: zap.NewNop()}
+
+	assert.Nil(t, repo.statusFilter(""))
+	assert.Nil(t, repo.statusFilter("Sideways"))
+
+	sql, _ := keeltest.Render(t, trailerdb.Trailers.
+		Where(repo.statusFilter(string(domaintypes.EquipmentStatusAvailable))).Limit(1))
+	assert.Contains(t, sql, `AND t."status" = $3 LIMIT 1`)
 }

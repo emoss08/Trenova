@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -58,8 +60,8 @@ var tractorsTable = schema.Table{
 		{Name: "lessor_name", Quoted: `"lessor_name"`, Field: "LessorName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Lessor Name`},
 		{Name: "lease_reference", Quoted: `"lease_reference"`, Field: "LeaseReference", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Lease Reference`},
 		{Name: "lease_end_date", Quoted: `"lease_end_date"`, Field: "LeaseEndDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Lease End Date`},
-		{Name: "last_known_location_id", Quoted: `"last_known_location_id"`, Field: "LastKnownLocationID", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Last Known Location ID`},
-		{Name: "last_known_location_name", Quoted: `"last_known_location_name"`, Field: "LastKnownLocationName", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Last Known Location Name`},
+		{Name: "last_known_location_id", Quoted: `"last_known_location_id"`, Field: "LastKnownLocationID", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Last Known Location ID`},
+		{Name: "last_known_location_name", Quoted: `"last_known_location_name"`, Field: "LastKnownLocationName", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Last Known Location Name`},
 		{Name: "last_known_location_latitude", Quoted: `"last_known_location_latitude"`, Field: "LastKnownLocationLatitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Latitude`},
 		{Name: "last_known_location_longitude", Quoted: `"last_known_location_longitude"`, Field: "LastKnownLocationLongitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Longitude`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`},
@@ -67,6 +69,8 @@ var tractorsTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
 	Relations: []schema.Relation{
+		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`},
+		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`},
 		{Name: "EquipmentType", Alias: "et", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Equipment Type`},
 		{Name: "EquipmentManufacturer", Alias: "em", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Equipment Manufacturer`},
 		{Name: "FleetCode", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Fleet Code`},
@@ -220,39 +224,49 @@ func (t *TractorsTable) As(alias string) *TractorsTable {
 	return keel.Alias(t.Ref, alias, BuildTractors)
 }
 
+// BusinessUnit is the belongs relation.
+func (t *TractorsTable) BusinessUnit() *tenantdb.BusinessUnitsTable {
+	return keel.Path(t.Ref, 0, tenantdb.BuildBusinessUnits)
+}
+
+// Organization is the belongs relation.
+func (t *TractorsTable) Organization() *tenantdb.OrganizationsTable {
+	return keel.Path(t.Ref, 1, tenantdb.BuildOrganizations)
+}
+
 // EquipmentType is the belongs relation.
 func (t *TractorsTable) EquipmentType() *equipmenttypedb.EquipmentTypesTable {
-	return keel.Path(t.Ref, 0, equipmenttypedb.BuildEquipmentTypes)
+	return keel.Path(t.Ref, 2, equipmenttypedb.BuildEquipmentTypes)
 }
 
 // EquipmentManufacturer is the belongs relation.
 func (t *TractorsTable) EquipmentManufacturer() *equipmentmanufacturerdb.EquipmentManufacturersTable {
-	return keel.Path(t.Ref, 1, equipmentmanufacturerdb.BuildEquipmentManufacturers)
+	return keel.Path(t.Ref, 3, equipmentmanufacturerdb.BuildEquipmentManufacturers)
 }
 
 // FleetCode is the belongs relation.
 func (t *TractorsTable) FleetCode() *fleetcodedb.FleetCodesTable {
-	return keel.Path(t.Ref, 2, fleetcodedb.BuildFleetCodes)
+	return keel.Path(t.Ref, 4, fleetcodedb.BuildFleetCodes)
 }
 
 // State is the belongs relation.
 func (t *TractorsTable) State() *usstatedb.UsStatesTable {
-	return keel.Path(t.Ref, 3, usstatedb.BuildUsStates)
+	return keel.Path(t.Ref, 5, usstatedb.BuildUsStates)
 }
 
 // PrimaryWorker is the belongs relation.
 func (t *TractorsTable) PrimaryWorker() *workerdb.WorkersTable {
-	return keel.Path(t.Ref, 4, workerdb.BuildWorkers)
+	return keel.Path(t.Ref, 6, workerdb.BuildWorkers)
 }
 
 // SecondaryWorker is the belongs relation.
 func (t *TractorsTable) SecondaryWorker() *workerdb.WorkersTable {
-	return keel.Path(t.Ref, 5, workerdb.BuildWorkers)
+	return keel.Path(t.Ref, 7, workerdb.BuildWorkers)
 }
 
 // OwnerWorker is the belongs relation.
 func (t *TractorsTable) OwnerWorker() *workerdb.WorkersTable {
-	return keel.Path(t.Ref, 6, workerdb.BuildWorkers)
+	return keel.Path(t.Ref, 8, workerdb.BuildWorkers)
 }
 
 // Get returns the tractors row with the given key, or keel.ErrNotFound.
@@ -440,8 +454,14 @@ func valueTractor(p unsafe.Pointer, c int32) any {
 		}
 		return *r.LeaseEndDate
 	case 26:
+		if r.LastKnownLocationID == "" {
+			return nil
+		}
 		return string(r.LastKnownLocationID)
 	case 27:
+		if r.LastKnownLocationName == "" {
+			return nil
+		}
 		return r.LastKnownLocationName
 	case 28:
 		if r.LastKnownLocationLatitude == nil {
@@ -467,30 +487,36 @@ func attachTractor(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	r := (*tractor.Tractor)(p)
 	switch rel {
 	case 0:
-		r.EquipmentType = (*equipmenttype.EquipmentType)(child)
+		r.BusinessUnit = (*tenant.BusinessUnit)(child)
 	case 1:
-		r.EquipmentManufacturer = (*equipmentmanufacturer.EquipmentManufacturer)(child)
+		r.Organization = (*tenant.Organization)(child)
 	case 2:
-		r.FleetCode = (*fleetcode.FleetCode)(child)
+		r.EquipmentType = (*equipmenttype.EquipmentType)(child)
 	case 3:
-		r.State = (*usstate.UsState)(child)
+		r.EquipmentManufacturer = (*equipmentmanufacturer.EquipmentManufacturer)(child)
 	case 4:
-		r.PrimaryWorker = (*worker.Worker)(child)
+		r.FleetCode = (*fleetcode.FleetCode)(child)
 	case 5:
-		r.SecondaryWorker = (*worker.Worker)(child)
+		r.State = (*usstate.UsState)(child)
 	case 6:
+		r.PrimaryWorker = (*worker.Worker)(child)
+	case 7:
+		r.SecondaryWorker = (*worker.Worker)(child)
+	case 8:
 		r.OwnerWorker = (*worker.Worker)(child)
 	}
 }
 
 func init() {
-	tractorsTable.Relations[0].Target = equipmenttypedb.EquipmentTypesSchema()
-	tractorsTable.Relations[1].Target = equipmentmanufacturerdb.EquipmentManufacturersSchema()
-	tractorsTable.Relations[2].Target = fleetcodedb.FleetCodesSchema()
-	tractorsTable.Relations[3].Target = usstatedb.UsStatesSchema()
-	tractorsTable.Relations[4].Target = workerdb.WorkersSchema()
-	tractorsTable.Relations[5].Target = workerdb.WorkersSchema()
+	tractorsTable.Relations[0].Target = tenantdb.BusinessUnitsSchema()
+	tractorsTable.Relations[1].Target = tenantdb.OrganizationsSchema()
+	tractorsTable.Relations[2].Target = equipmenttypedb.EquipmentTypesSchema()
+	tractorsTable.Relations[3].Target = equipmentmanufacturerdb.EquipmentManufacturersSchema()
+	tractorsTable.Relations[4].Target = fleetcodedb.FleetCodesSchema()
+	tractorsTable.Relations[5].Target = usstatedb.UsStatesSchema()
 	tractorsTable.Relations[6].Target = workerdb.WorkersSchema()
+	tractorsTable.Relations[7].Target = workerdb.WorkersSchema()
+	tractorsTable.Relations[8].Target = workerdb.WorkersSchema()
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

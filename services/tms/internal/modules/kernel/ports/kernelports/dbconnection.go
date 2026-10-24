@@ -14,6 +14,10 @@ type TxOptions struct {
 	LockTimeout time.Duration
 }
 
+type Transactor interface {
+	Transact(ctx context.Context, opts TxOptions, fn func(context.Context) error) error
+}
+
 type DBConnection interface {
 	DB() *bun.DB
 	DBForContext(ctx context.Context) bun.IDB

@@ -110,6 +110,10 @@ generic duplicate conflict at the edge.
 
 ## What converted repository code does
 
+[keel-conversion.md](keel-conversion.md) is the playbook, pattern by pattern, with the equipment
+module as the converted reference.
+
+
 - Builds on generated keel handles; its method bodies run in `dbtx.Read`/`Write` and pass
   `r.db.Keel(ctx)` to every terminal.
 - Writes versioned rows with `Save`, which checks the version, and maps errors through a

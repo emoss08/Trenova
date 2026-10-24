@@ -3,22 +3,30 @@ package equipmentmanufacturerrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var manufacturerErrors = dberror.Mapping{
+	Entity: "EquipmentManufacturer",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "idx_equipment_manu_name",
+			Field:   "name",
+			Message: "Equipment manufacturer with this name already exists in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -39,25 +47,6 @@ func New(p Params) equipmentmanufacturerports.EquipmentManufacturerRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *equipmentmanufacturerports.ListEquipmentManufacturersRequest,
-) *bun.SelectQuery {
-	cols := equipmentmanufacturercol.EquipmentManufacturerColumns
-	q = querybuilder.ApplyFilters(
-		q,
-		equipmentmanufacturercol.EquipmentManufacturerTable.Alias,
-		req.Filter,
-		(*equipmentmanufacturer.EquipmentManufacturer)(nil),
-	)
-
-	q = q.Apply(equipmentmanufacturercol.EquipmentManufacturerApplyTenant(req.Filter.TenantInfo)).
-		Order(cols.CreatedAt.OrderDesc())
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *equipmentmanufacturerports.ListEquipmentManufacturersRequest,
@@ -66,124 +55,39 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
-			)
-
-			entities := make(
-				[]*equipmentmanufacturer.EquipmentManufacturer,
-				0,
-				req.Filter.Pagination.SafeLimit(),
-			)
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
+			em := equipmentmanufacturerdb.EquipmentManufacturers
+			result, err := listquery.List(ctx, r.db.Keel(ctx), em.Query(),
+				&listquery.Request[equipmentmanufacturer.EquipmentManufacturer]{
+					Filter: req.Filter,
+					Then:   []keel.Order{em.CreatedAt.Desc()},
+				})
 			if err != nil {
-				log.Error("failed to scan and count equipment manufacturers", zap.Error(err))
+				r.l.Error("failed to list equipment manufacturers", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		equipmentmanufacturercol.EquipmentManufacturerTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*equipmentmanufacturer.EquipmentManufacturer)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		equipmentmanufacturercol.EquipmentManufacturerTable.Alias,
-		req.Filter,
-		(*equipmentmanufacturer.EquipmentManufacturer)(nil),
-	)
-}
-
-func applyEquipmentManufacturerColumns(
-	q *bun.SelectQuery,
-	columns []string,
-) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(equipmentmanufacturercol.EquipmentManufacturerTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest,
 ) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*equipmentmanufacturer.EquipmentManufacturer)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count equipment manufacturers", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
-				ctx,
-				dbhelper.CursorListParams[*equipmentmanufacturer.EquipmentManufacturer]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*equipmentmanufacturer.EquipmentManufacturer) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyEquipmentManufacturerColumns(
-									sq,
-									req.EquipmentManufacturerColumns,
-								)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
+			em := equipmentmanufacturerdb.EquipmentManufacturers
+			result, err := listquery.Connection(ctx, r.db.Keel(ctx), em.Query(),
+				&listquery.Request[equipmentmanufacturer.EquipmentManufacturer]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.EquipmentManufacturerColumns,
 				})
 			if err != nil {
-				log.Error("failed to scan equipment manufacturers", zap.Error(err))
+				r.l.Error("failed to list equipment manufacturers", zap.Error(err))
 				return nil, err
 			}
 
@@ -200,18 +104,15 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*equipmentmanufacturer.EquipmentManufacturer, error) {
-			log := r.l.With(
-				zap.String("operation", "Create"),
-				zap.String("name", entity.Name),
+			err := equipmentmanufacturerdb.EquipmentManufacturers.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
 			)
-
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				log.Error("failed to create equipment manufacturer", zap.Error(err))
-				return nil, err
+			if err != nil {
+				r.l.Error("failed to create equipment manufacturer",
+					zap.String("name", entity.Name), zap.Error(err))
+				return nil, manufacturerErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -227,33 +128,11 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*equipmentmanufacturer.EquipmentManufacturer, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
-			ov := entity.Version
-			entity.Version++
-			cols := equipmentmanufacturercol.EquipmentManufacturerColumns
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).WherePK().
-				Where(cols.Version.Eq(), ov).
-				OmitZero().
-				Returning("*").
-				Exec(ctx)
+			err := equipmentmanufacturerdb.EquipmentManufacturers.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				log.Error("failed to update equipment manufacturer", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"EquipmentManufacturer",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				r.l.Error("failed to update equipment manufacturer",
+					zap.String("id", entity.ID.String()), zap.Error(err))
+				return nil, manufacturerErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -269,24 +148,13 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*equipmentmanufacturer.EquipmentManufacturer, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByID"),
-				zap.String("id", req.ID.String()),
+			entity, err := equipmentmanufacturerdb.EquipmentManufacturers.Get(
+				ctx,
+				r.db.Keel(ctx),
+				req.ID,
 			)
-
-			entity := new(equipmentmanufacturer.EquipmentManufacturer)
-			cols := equipmentmanufacturercol.EquipmentManufacturerColumns
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return equipmentmanufacturercol.EquipmentManufacturerScopeTenant(sq, req.TenantInfo).
-						Where(cols.ID.Eq(), req.ID)
-				}).
-				Scan(ctx)
 			if err != nil {
-				log.Error("failed to get equipment manufacturer", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "EquipmentManufacturer")
+				return nil, manufacturerErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -302,27 +170,17 @@ func (r *repository) GetByIDs(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByIDs"),
-				zap.Any("request", req),
-			)
+			if len(req.EquipmentManufacturerIDs) == 0 {
+				return []*equipmentmanufacturer.EquipmentManufacturer{}, nil
+			}
 
-			entities := make(
-				[]*equipmentmanufacturer.EquipmentManufacturer,
-				0,
-				len(req.EquipmentManufacturerIDs),
-			)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return equipmentmanufacturercol.EquipmentManufacturerScopeTenant(sq, req.TenantInfo).
-						Where(equipmentmanufacturercol.EquipmentManufacturerColumns.ID.In(), bun.List(req.EquipmentManufacturerIDs))
-				}).
-				Scan(ctx)
+			em := equipmentmanufacturerdb.EquipmentManufacturers
+			entities, err := em.Where(em.ID.In(req.EquipmentManufacturerIDs...)).
+				Limit(len(req.EquipmentManufacturerIDs)).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get equipment manufacturers", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "EquipmentManufacturer")
+				r.l.Error("failed to get equipment manufacturers", zap.Error(err))
+				return nil, err
 			}
 
 			return entities, nil
@@ -334,33 +192,17 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
-			cols := equipmentmanufacturercol.EquipmentManufacturerColumns
+			em := equipmentmanufacturerdb.EquipmentManufacturers
+			q := em.Pick(em.ID, em.CreatedAt, em.Name, em.Description, em.Status).
+				Where(em.Status.Eq(domaintypes.StatusActive))
 
-			return dbhelper.SelectOptions[*equipmentmanufacturer.EquipmentManufacturer](
-				ctx,
-				r.db.DBForContext(ctx),
-				req,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.CreatedAt,
-						cols.Name,
-						cols.Description,
-						cols.Status,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-					},
-					EntityName:       "EquipmentManufacturer",
-					SearchColumnRefs: []buncolgen.Column{cols.Name, cols.Description},
-				},
-			)
+			return listquery.SelectOptions(ctx, r.db.Keel(ctx), q, req, func(s string) keel.Pred {
+				return keel.Or(em.Name.ContainsFold(s), em.Description.ContainsFold(s))
+			})
 		},
 	)
 }
@@ -373,33 +215,20 @@ func (r *repository) BulkUpdateStatus(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
-			log := r.l.With(
-				zap.String("operation", "BulkUpdateStatus"),
-				zap.Any("request", req),
+			em := equipmentmanufacturerdb.EquipmentManufacturers
+			entities, err := listquery.UpdateReturning(
+				ctx,
+				r.db.Keel(ctx),
+				em.Where(em.ID.In(req.EquipmentManufacturerIDs...)),
+				em.Status.To(req.Status),
 			)
-
-			entities := make(
-				[]*equipmentmanufacturer.EquipmentManufacturer,
-				0,
-				len(req.EquipmentManufacturerIDs),
-			)
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(&entities).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return equipmentmanufacturercol.EquipmentManufacturerScopeTenantUpdate(uq, req.TenantInfo).
-						Where(equipmentmanufacturercol.EquipmentManufacturerColumns.ID.In(), bun.List(req.EquipmentManufacturerIDs))
-				}).
-				Set(equipmentmanufacturercol.EquipmentManufacturerColumns.Status.Set(), req.Status).
-				Returning("*").
-				Exec(ctx)
 			if err != nil {
-				log.Error("failed to bulk update equipment manufacturer status", zap.Error(err))
+				r.l.Error("failed to bulk update equipment manufacturer status", zap.Error(err))
 				return nil, err
 			}
 
-			if err = dberror.CheckBulkRowsAffected(
-				results,
+			if err = dberror.CheckBulkAffected(
+				int64(len(entities)),
 				"EquipmentManufacturer",
 				req.EquipmentManufacturerIDs,
 			); err != nil {

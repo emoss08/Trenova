@@ -172,7 +172,9 @@ func writeCursorResponse[T any](
 		cursorInfo.After != "" ||
 		len(result.CursorSort) > 0 ||
 		len(result.CursorValues) > 0
-	if shouldEncodeCursor && len(items) > 0 {
+	if edge, ok := result.EdgeCursorAt(len(items) - 1); ok {
+		endCursor = edge
+	} else if shouldEncodeCursor && len(items) > 0 {
 		lastIndex := len(items) - 1
 		encoded, encodeErr := encodeItemCursor(
 			items[lastIndex],

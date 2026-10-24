@@ -42,6 +42,8 @@ var fleetCodesTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
 	Relations: []schema.Relation{
+		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`},
+		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`},
 		{Name: "Manager", Alias: "m", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Manager`},
 	},
 	PK:         []int32{0, 1, 2},
@@ -138,9 +140,19 @@ func (t *FleetCodesTable) As(alias string) *FleetCodesTable {
 	return keel.Alias(t.Ref, alias, BuildFleetCodes)
 }
 
+// BusinessUnit is the belongs relation.
+func (t *FleetCodesTable) BusinessUnit() *tenantdb.BusinessUnitsTable {
+	return keel.Path(t.Ref, 0, tenantdb.BuildBusinessUnits)
+}
+
+// Organization is the belongs relation.
+func (t *FleetCodesTable) Organization() *tenantdb.OrganizationsTable {
+	return keel.Path(t.Ref, 1, tenantdb.BuildOrganizations)
+}
+
 // Manager is the belongs relation.
 func (t *FleetCodesTable) Manager() *tenantdb.UsersTable {
-	return keel.Path(t.Ref, 0, tenantdb.BuildUsers)
+	return keel.Path(t.Ref, 2, tenantdb.BuildUsers)
 }
 
 // Get returns the fleet_codes row with the given key, or keel.ErrNotFound.
@@ -251,12 +263,18 @@ func attachFleetCode(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	r := (*fleetcode.FleetCode)(p)
 	switch rel {
 	case 0:
+		r.BusinessUnit = (*tenant.BusinessUnit)(child)
+	case 1:
+		r.Organization = (*tenant.Organization)(child)
+	case 2:
 		r.Manager = (*tenant.User)(child)
 	}
 }
 
 func init() {
-	fleetCodesTable.Relations[0].Target = tenantdb.UsersSchema()
+	fleetCodesTable.Relations[0].Target = tenantdb.BusinessUnitsSchema()
+	fleetCodesTable.Relations[1].Target = tenantdb.OrganizationsSchema()
+	fleetCodesTable.Relations[2].Target = tenantdb.UsersSchema()
 }
 
 var enumDomaintypesStatus = [...]schema.EnumValue{

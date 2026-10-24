@@ -4664,6 +4664,8 @@ var workersTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`},
 	},
 	Relations: []schema.Relation{
+		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`},
+		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`},
 		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `State`},
 		{Name: "FleetCode", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Fleet Code`},
 		{Name: "Manager", Alias: "m", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Manager`},
@@ -4818,36 +4820,46 @@ func WorkersSchema() *schema.Table { return &workersTable }
 // As returns a handle that references workers under its own alias.
 func (t *WorkersTable) As(alias string) *WorkersTable { return keel.Alias(t.Ref, alias, BuildWorkers) }
 
+// BusinessUnit is the belongs relation.
+func (t *WorkersTable) BusinessUnit() *tenantdb.BusinessUnitsTable {
+	return keel.Path(t.Ref, 0, tenantdb.BuildBusinessUnits)
+}
+
+// Organization is the belongs relation.
+func (t *WorkersTable) Organization() *tenantdb.OrganizationsTable {
+	return keel.Path(t.Ref, 1, tenantdb.BuildOrganizations)
+}
+
 // State is the belongs relation.
 func (t *WorkersTable) State() *usstatedb.UsStatesTable {
-	return keel.Path(t.Ref, 0, usstatedb.BuildUsStates)
+	return keel.Path(t.Ref, 2, usstatedb.BuildUsStates)
 }
 
 // FleetCode is the belongs relation.
 func (t *WorkersTable) FleetCode() *fleetcodedb.FleetCodesTable {
-	return keel.Path(t.Ref, 1, fleetcodedb.BuildFleetCodes)
+	return keel.Path(t.Ref, 3, fleetcodedb.BuildFleetCodes)
 }
 
 // Manager is the belongs relation.
 func (t *WorkersTable) Manager() *tenantdb.UsersTable {
-	return keel.Path(t.Ref, 2, tenantdb.BuildUsers)
+	return keel.Path(t.Ref, 4, tenantdb.BuildUsers)
 }
 
 // Position is the belongs relation.
-func (t *WorkersTable) Position() *JobPositionsTable { return keel.Path(t.Ref, 3, BuildJobPositions) }
+func (t *WorkersTable) Position() *JobPositionsTable { return keel.Path(t.Ref, 5, BuildJobPositions) }
 
 // PortalUser is the belongs relation.
 func (t *WorkersTable) PortalUser() *tenantdb.UsersTable {
-	return keel.Path(t.Ref, 4, tenantdb.BuildUsers)
+	return keel.Path(t.Ref, 6, tenantdb.BuildUsers)
 }
 
 // Profile is the one relation.
 func (t *WorkersTable) Profile() *WorkerProfilesTable {
-	return keel.Path(t.Ref, 5, BuildWorkerProfiles)
+	return keel.Path(t.Ref, 7, BuildWorkerProfiles)
 }
 
 // PTO is the many relation.
-func (t *WorkersTable) PTO() *WorkerPTOsTable { return keel.Path(t.Ref, 6, BuildWorkerPTOs) }
+func (t *WorkersTable) PTO() *WorkerPTOsTable { return keel.Path(t.Ref, 8, BuildWorkerPTOs) }
 
 // Get returns the workers row with the given key, or keel.ErrNotFound.
 func (t *WorkersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*worker.Worker, error) {
@@ -5053,18 +5065,22 @@ func attachWorker(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	r := (*worker.Worker)(p)
 	switch rel {
 	case 0:
-		r.State = (*usstate.UsState)(child)
+		r.BusinessUnit = (*tenant.BusinessUnit)(child)
 	case 1:
-		r.FleetCode = (*fleetcode.FleetCode)(child)
+		r.Organization = (*tenant.Organization)(child)
 	case 2:
-		r.Manager = (*tenant.User)(child)
+		r.State = (*usstate.UsState)(child)
 	case 3:
-		r.Position = (*worker.JobPosition)(child)
+		r.FleetCode = (*fleetcode.FleetCode)(child)
 	case 4:
-		r.PortalUser = (*tenant.User)(child)
+		r.Manager = (*tenant.User)(child)
 	case 5:
-		r.Profile = (*worker.WorkerProfile)(child)
+		r.Position = (*worker.JobPosition)(child)
 	case 6:
+		r.PortalUser = (*tenant.User)(child)
+	case 7:
+		r.Profile = (*worker.WorkerProfile)(child)
+	case 8:
 		r.PTO = append(r.PTO, (*worker.WorkerPTO)(child))
 	}
 }
@@ -13701,13 +13717,15 @@ func init() {
 	shiftSwapRequestsTable.Relations[1].Target = WorkersSchema()
 	timeClockEntriesTable.Relations[0].Target = WorkersSchema()
 	timesheetsTable.Relations[0].Target = WorkersSchema()
-	workersTable.Relations[0].Target = usstatedb.UsStatesSchema()
-	workersTable.Relations[1].Target = fleetcodedb.FleetCodesSchema()
-	workersTable.Relations[2].Target = tenantdb.UsersSchema()
-	workersTable.Relations[3].Target = JobPositionsSchema()
+	workersTable.Relations[0].Target = tenantdb.BusinessUnitsSchema()
+	workersTable.Relations[1].Target = tenantdb.OrganizationsSchema()
+	workersTable.Relations[2].Target = usstatedb.UsStatesSchema()
+	workersTable.Relations[3].Target = fleetcodedb.FleetCodesSchema()
 	workersTable.Relations[4].Target = tenantdb.UsersSchema()
-	workersTable.Relations[5].Target = WorkerProfilesSchema()
-	workersTable.Relations[6].Target = WorkerPTOsSchema()
+	workersTable.Relations[5].Target = JobPositionsSchema()
+	workersTable.Relations[6].Target = tenantdb.UsersSchema()
+	workersTable.Relations[7].Target = WorkerProfilesSchema()
+	workersTable.Relations[8].Target = WorkerPTOsSchema()
 	workerChecklistsTable.Relations[0].Target = WorkerChecklistItemsSchema()
 	workerChecklistsTable.Relations[1].Target = WorkersSchema()
 	workerChecklistsTable.Relations[2].Target = WorkerChecklistTemplatesSchema()

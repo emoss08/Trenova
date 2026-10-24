@@ -26,6 +26,8 @@ type Cursor struct {
 	Sort      []CursorSortField `json:"sort,omitempty"`
 	Values    []any             `json:"values,omitempty"`
 	ID        pulid.ID          `json:"id"`
+	Keyset    string            `json:"keyset,omitempty"`
+	Skip      int               `json:"skip,omitempty"`
 }
 
 type CursorEntity interface {
@@ -104,6 +106,9 @@ func DecodeCursor(encoded string) (Cursor, error) {
 	if err = sonic.Unmarshal(bytes, &cursor); err != nil {
 		return Cursor{}, fmt.Errorf("unmarshal cursor: %w", err)
 	}
+	if cursor.IsKeyset() {
+		return cursor, validateKeysetCursor(&cursor)
+	}
 	if cursor.ID.IsNil() {
 		return Cursor{}, errors.New("cursor id is required")
 	}
@@ -160,6 +165,7 @@ type CursorListResult[T any] struct {
 	TotalCount   *int
 	CursorSort   []CursorSortField
 	CursorValues [][]any
+	EdgeCursors  []string
 }
 
 func NewCursorListResult[T any](items []T, limit int) *CursorListResult[T] {
@@ -202,12 +208,24 @@ func (r *CursorListResult[T]) CursorValuesAt(index int) ([]any, bool) {
 	return cursorValuesAt(r.CursorValues, index)
 }
 
+func (r *CursorListResult[T]) EdgeCursorAt(index int) (string, bool) {
+	if index < 0 || index >= len(r.EdgeCursors) {
+		return "", false
+	}
+
+	return r.EdgeCursors[index], true
+}
+
 func (r *CursorListResult[T]) NextCursor() (string, error) {
 	if !r.HasNextPage || len(r.Items) == 0 {
 		return "", nil
 	}
 
 	last := len(r.Items) - 1
+	if cursor, ok := r.EdgeCursorAt(last); ok {
+		return cursor, nil
+	}
+
 	return encodeItemCursor(r.Items[last], r.CursorSort, r.CursorValues, last)
 }
 

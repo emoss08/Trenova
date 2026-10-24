@@ -22,3 +22,11 @@ func (NopConnection) WithTx(
 ) error {
 	return fn(ctx, bun.Tx{})
 }
+
+func (NopConnection) Transact(
+	ctx context.Context,
+	_ kernelports.TxOptions,
+	fn func(context.Context) error,
+) error {
+	return fn(ctx)
+}
