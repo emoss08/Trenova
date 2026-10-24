@@ -142,8 +142,11 @@ func (r *PDFRenderer) Render(
 		RequestedBy: req.Meta.RequestedBy,
 		Notice:      truncationNotice,
 	}
-	for name, value := range req.Meta.Params {
-		data.Params = append(data.Params, pdfParam{Name: name, Value: fmt.Sprint(value)})
+	for _, name := range orderedParamNames(&req.Meta) {
+		data.Params = append(
+			data.Params,
+			pdfParam{Name: name, Value: fmt.Sprint(req.Meta.Params[name])},
+		)
 	}
 	for i := range schema {
 		data.Headers = append(data.Headers, schema[i].Label)

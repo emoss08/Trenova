@@ -101,6 +101,7 @@ type ReportRunMeta struct {
 	Timezone        string
 	RequestedBy     string
 	Params          map[string]any
+	ParamOrder      []string
 }
 
 type ReportRenderRequest struct {

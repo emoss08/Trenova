@@ -233,6 +233,7 @@ func (a *Activities) PrepareRunActivity(
 		Title:          title,
 		Description:    description,
 		Params:         run.Params,
+		ParamOrder:     definition.ParameterNames(),
 		OrgTimezone:    org.Timezone,
 		RequestedBy:    requestedBy,
 		Locale:         locale,
@@ -556,6 +557,7 @@ func (a *Activities) renderToStorage(
 		Timezone:        prepared.OrgTimezone,
 		RequestedBy:     prepared.RequestedBy,
 		Params:          prepared.Params,
+		ParamOrder:      prepared.ParamOrder,
 	}
 	objectMetadata := map[string]string{
 		"organization-id": prepared.OrganizationID.String(),

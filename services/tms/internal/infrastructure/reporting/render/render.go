@@ -62,6 +62,32 @@ var Module = fx.Module("report-renderers",
 	),
 )
 
+func orderedParamNames(meta *reportports.ReportRunMeta) []string {
+	if len(meta.Params) == 0 {
+		return nil
+	}
+
+	names := make([]string, 0, len(meta.Params))
+	listed := make(map[string]struct{}, len(meta.Params))
+	for _, name := range meta.ParamOrder {
+		if _, ok := meta.Params[name]; !ok {
+			continue
+		}
+		if _, seen := listed[name]; seen {
+			continue
+		}
+		listed[name] = struct{}{}
+		names = append(names, name)
+	}
+	for _, name := range sortedKeys(meta.Params) {
+		if _, seen := listed[name]; !seen {
+			names = append(names, name)
+		}
+	}
+
+	return names
+}
+
 func metaLocation(meta *reportports.ReportRunMeta) *time.Location {
 	if meta.Timezone == "" {
 		return time.UTC

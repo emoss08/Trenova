@@ -391,6 +391,69 @@ func (c *capturingPDFRenderer) Healthy(_ context.Context) error { return nil }
 
 func (c *capturingPDFRenderer) Enabled() bool { return true }
 
+func orderedParamsMeta() reportports.ReportRunMeta {
+	meta := testMeta()
+	meta.Params = map[string]any{
+		"status":   "InTransit",
+		"customer": "ACME",
+		"region":   "South",
+		"adhoc":    "x",
+		"zebra":    "z",
+	}
+	meta.ParamOrder = []string{"status", "region", "customer"}
+	return meta
+}
+
+func TestXLSXRendererListsParametersInDefinitionOrder(t *testing.T) {
+	for range 5 {
+		var buf bytes.Buffer
+		_, err := NewXLSX().Render(t.Context(), &reportports.ReportRenderRequest{
+			Dataset: &fakeReader{schema: testSchema(), rows: testRows()},
+			Sink:    &buf,
+			Meta:    orderedParamsMeta(),
+		})
+		require.NoError(t, err)
+
+		file, err := excelize.OpenReader(bytes.NewReader(buf.Bytes()))
+		require.NoError(t, err)
+		rows, err := file.GetRows("Report")
+		require.NoError(t, err)
+		require.NoError(t, file.Close())
+
+		var names []string
+		for _, row := range rows {
+			if len(row) > 0 && strings.HasPrefix(row[0], "Parameter: ") {
+				names = append(names, strings.TrimPrefix(row[0], "Parameter: "))
+			}
+		}
+		assert.Equal(t, []string{"status", "region", "customer", "adhoc", "zebra"}, names)
+	}
+}
+
+func TestPDFRendererListsParametersInDefinitionOrder(t *testing.T) {
+	for range 5 {
+		backend := &capturingPDFRenderer{}
+		renderer := NewPDF(PDFParams{Config: &config.Config{}, Renderer: backend, Logger: zapNop()})
+
+		var buf bytes.Buffer
+		_, err := renderer.Render(t.Context(), &reportports.ReportRenderRequest{
+			Dataset: &fakeReader{schema: testSchema(), rows: testRows()},
+			Sink:    &buf,
+			Meta:    orderedParamsMeta(),
+		})
+		require.NoError(t, err)
+
+		html := backend.got.HTML
+		positions := make([]int, 0, 5)
+		for _, name := range []string{"status", "region", "customer", "adhoc", "zebra"} {
+			at := strings.Index(html, "<span>"+name+":")
+			require.GreaterOrEqual(t, at, 0, name)
+			positions = append(positions, at)
+		}
+		assert.IsIncreasing(t, positions)
+	}
+}
+
 func TestPDFRendererRowCap(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.Reporting.PDFMaxRows = 2

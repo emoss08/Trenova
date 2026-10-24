@@ -288,8 +288,8 @@ func (r *XLSXRenderer) writeInfoSheet(
 		{"Generated At", generatedAt},
 		{"Requested By", req.Meta.RequestedBy},
 	}
-	for name, value := range req.Meta.Params {
-		rows = append(rows, []any{"Parameter: " + name, fmt.Sprint(value)})
+	for _, name := range orderedParamNames(&req.Meta) {
+		rows = append(rows, []any{"Parameter: " + name, fmt.Sprint(req.Meta.Params[name])})
 	}
 
 	for i, row := range rows {
