@@ -16,8 +16,8 @@ func DocumentTypeCodes() []string {
 
 func ServiceFailureReasonCodes() []string {
 	codes := make([]string, 0, len(defaultServiceFailureReasonCodes))
-	for _, def := range defaultServiceFailureReasonCodes {
-		codes = append(codes, def.code)
+	for i := range defaultServiceFailureReasonCodes {
+		codes = append(codes, defaultServiceFailureReasonCodes[i].code)
 	}
 
 	return codes

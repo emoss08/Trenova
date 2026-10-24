@@ -42,18 +42,18 @@ func CreateSystemAgentDefinitions(ctx context.Context, db *keel.DB, scope Scope)
 
 		definition.ApplyDefaults()
 		if definition.TriggerMode == agentdefinition.TriggerScheduled {
-			next, err := definition.ComputeNextRun(now)
-			if err != nil {
+			next, nextErr := definition.ComputeNextRun(now)
+			if nextErr != nil {
 				return created, fmt.Errorf(
 					"schedule system agent %s: %w",
 					definition.SystemKey,
-					err,
+					nextErr,
 				)
 			}
 			definition.NextRunAt = &next
 		}
 
-		if err := d.Create(ctx, db, definition); err != nil {
+		if err = d.Create(ctx, db, definition); err != nil {
 			return created, fmt.Errorf("insert system agent %s: %w", definition.SystemKey, err)
 		}
 		created++

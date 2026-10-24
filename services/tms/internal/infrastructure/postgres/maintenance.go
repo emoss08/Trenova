@@ -31,7 +31,7 @@ func OpenMaintenanceDB(ctx context.Context, cfg *config.Config) (*bun.DB, error)
 
 	db := pool.Bun
 	if cfg.App.Debug {
-		db.AddQueryHook(bundebug.NewQueryHook(bundebug.FromEnv("BUNDEBUG")))
+		db = db.WithQueryHook(bundebug.NewQueryHook(bundebug.FromEnv("BUNDEBUG")))
 	}
 	db.RegisterModel(domainregistry.RegisterManyToManyEntities()...)
 	db.RegisterModel(domainregistry.RegisterEntities()...)
