@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -44,18 +45,19 @@ var (
 // regardless of the organisation's timezone.
 type OrgHoliday struct {
 	bun.BaseModel `bun:"table:org_holidays,alias:ohol" json:"-"`
+	keel.Table    `keel:"org_holidays"`
 
-	ID             pulid.ID    `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID    `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID    `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Name           string      `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	HolidayDate    int64       `json:"holidayDate"    bun:"holiday_date,type:BIGINT,notnull"`
-	Kind           HolidayKind `json:"kind"           bun:"kind,type:org_holiday_kind_enum,notnull,default:'Holiday'"`
-	RecursAnnually bool        `json:"recursAnnually" bun:"recurs_annually,type:BOOLEAN,notnull"`
-	Description    string      `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Version        int64       `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64       `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64       `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID    `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ohol_"`
+	BusinessUnitID pulid.ID    `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID    `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Name           string      `json:"name"           bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	HolidayDate    int64       `json:"holidayDate"    bun:"holiday_date,type:BIGINT,notnull" keel:"holiday_date"`
+	Kind           HolidayKind `json:"kind"           bun:"kind,type:org_holiday_kind_enum,notnull,default:'Holiday'" keel:"kind"`
+	RecursAnnually bool        `json:"recursAnnually" bun:"recurs_annually,type:BOOLEAN,notnull" keel:"recurs_annually"`
+	Description    string      `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Version        int64       `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64       `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64       `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (h *OrgHoliday) Validate(multiErr *errortypes.MultiError) {

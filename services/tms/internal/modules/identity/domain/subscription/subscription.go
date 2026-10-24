@@ -3,6 +3,7 @@ package subscription
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,19 +24,20 @@ var (
 
 type Subscription struct {
 	bun.BaseModel `bun:"table:organization_subscriptions,alias:osub" json:"-"`
+	keel.Table    `keel:"organization_subscriptions"`
 
-	ID                   pulid.ID `json:"id"                             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId"                 bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID `json:"organizationId"                 bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	PlanKey              string   `json:"planKey"                        bun:"plan_key,type:VARCHAR(50),notnull"`
-	Status               Status   `json:"status"                         bun:"status,type:VARCHAR(20),notnull"`
-	TrialEndsAt          int64    `json:"trialEndsAt"                    bun:"trial_ends_at,type:BIGINT,notnull"`
-	ReadOnlyUntil        int64    `json:"readOnlyUntil"                  bun:"read_only_until,type:BIGINT,notnull"`
-	StripeCustomerID     string   `json:"stripeCustomerId,omitempty"     bun:"stripe_customer_id,type:VARCHAR(255),nullzero"`
-	StripeSubscriptionID string   `json:"stripeSubscriptionId,omitempty" bun:"stripe_subscription_id,type:VARCHAR(255),nullzero"`
-	Version              int64    `json:"version"                        bun:"version,type:BIGINT,notnull"`
-	CreatedAt            int64    `json:"createdAt"                      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64    `json:"updatedAt"                      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID `json:"id"                             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:osub_"`
+	BusinessUnitID       pulid.ID `json:"businessUnitId"                 bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID `json:"organizationId"                 bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	PlanKey              string   `json:"planKey"                        bun:"plan_key,type:VARCHAR(50),notnull" keel:"plan_key"`
+	Status               Status   `json:"status"                         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	TrialEndsAt          int64    `json:"trialEndsAt"                    bun:"trial_ends_at,type:BIGINT,notnull" keel:"trial_ends_at"`
+	ReadOnlyUntil        int64    `json:"readOnlyUntil"                  bun:"read_only_until,type:BIGINT,notnull" keel:"read_only_until"`
+	StripeCustomerID     string   `json:"stripeCustomerId,omitempty"     bun:"stripe_customer_id,type:VARCHAR(255),nullzero" keel:"stripe_customer_id,nullzero"`
+	StripeSubscriptionID string   `json:"stripeSubscriptionId,omitempty" bun:"stripe_subscription_id,type:VARCHAR(255),nullzero" keel:"stripe_subscription_id,nullzero"`
+	Version              int64    `json:"version"                        bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt            int64    `json:"createdAt"                      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt            int64    `json:"updatedAt"                      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (s *Subscription) Validate(multiErr *errortypes.MultiError) {

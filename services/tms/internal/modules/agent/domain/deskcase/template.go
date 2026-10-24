@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -176,23 +177,24 @@ func (t *TemplateItems) Scan(src any) error {
 // default applies.
 type ChecklistTemplate struct {
 	bun.BaseModel `bun:"table:case_checklist_templates,alias:cct" json:"-"`
+	keel.Table    `keel:"case_checklist_templates"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:cct_"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 
-	Kind       ChecklistKind `json:"kind"       bun:"kind,type:VARCHAR(30),notnull"`
-	CustomerID pulid.ID      `json:"customerId" bun:"customer_id,type:VARCHAR(100),nullzero"`
-	Items      TemplateItems `json:"items"      bun:"items,type:JSONB,notnull"`
+	Kind       ChecklistKind `json:"kind"       bun:"kind,type:VARCHAR(30),notnull" keel:"kind"`
+	CustomerID pulid.ID      `json:"customerId" bun:"customer_id,type:VARCHAR(100),nullzero" keel:"customer_id,nullzero"`
+	Items      TemplateItems `json:"items"      bun:"items,type:JSONB,notnull" keel:"items,jsonb"`
 
-	UpdatedByID pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version     int64    `json:"version"     bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt   int64    `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt   int64    `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedByID pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero" keel:"updated_by_id,nullzero"`
+	Version     int64    `json:"version"     bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt   int64    `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt   int64    `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	// CustomerName is read with the template for the settings list; never
 	// stored.
-	CustomerName string `json:"customerName,omitempty" bun:"customer_name,scanonly"`
+	CustomerName string `json:"customerName,omitempty" bun:"customer_name,scanonly" keel:"customer_name,computed"`
 }
 
 func (t *ChecklistTemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -436,19 +438,20 @@ func (t *ChecklistTemplate) DocumentTypeIDs() []pulid.ID {
 // belongs to the record, so everyone working a case about it sees it.
 type ChecklistTick struct {
 	bun.BaseModel `bun:"table:case_checklist_ticks,alias:cctk" json:"-"`
+	keel.Table    `keel:"case_checklist_ticks"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:cctk_"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
 
-	SubjectType string   `json:"subjectType" bun:"subject_type,type:VARCHAR(50),notnull"`
-	SubjectID   pulid.ID `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),notnull"`
-	ItemKey     ItemKey  `json:"itemKey"     bun:"item_key,type:VARCHAR(50),notnull"`
-	TickedByID  pulid.ID `json:"tickedById"  bun:"ticked_by_id,type:VARCHAR(100),notnull"`
-	TickedAt    int64    `json:"tickedAt"    bun:"ticked_at,type:BIGINT,notnull"`
+	SubjectType string   `json:"subjectType" bun:"subject_type,type:VARCHAR(50),notnull" keel:"subject_type"`
+	SubjectID   pulid.ID `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),notnull" keel:"subject_id"`
+	ItemKey     ItemKey  `json:"itemKey"     bun:"item_key,type:VARCHAR(50),notnull" keel:"item_key"`
+	TickedByID  pulid.ID `json:"tickedById"  bun:"ticked_by_id,type:VARCHAR(100),notnull" keel:"ticked_by_id"`
+	TickedAt    int64    `json:"tickedAt"    bun:"ticked_at,type:BIGINT,notnull" keel:"ticked_at"`
 
 	// TickedByName is read with the tick; never stored.
-	TickedByName string `json:"tickedByName,omitempty" bun:"ticked_by_name,scanonly"`
+	TickedByName string `json:"tickedByName,omitempty" bun:"ticked_by_name,scanonly" keel:"ticked_by_name,computed"`
 }
 
 func (t *ChecklistTick) BeforeAppendModel(_ context.Context, query bun.Query) error {

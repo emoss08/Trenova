@@ -3,6 +3,7 @@ package homelayout
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,23 +25,24 @@ var (
 // point, and a locked preset stays exactly as authored.
 type Preset struct {
 	bun.BaseModel             `bun:"table:home_layout_presets,alias:hlp" json:"-"`
+	keel.Table                `keel:"home_layout_presets"`
 	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
-	ID                 pulid.ID                      `json:"id"                 bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID     pulid.ID                      `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID                      `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Name               string                        `json:"name"               bun:"name,type:VARCHAR(255),notnull"`
-	Description        string                        `json:"description"        bun:"description,type:TEXT,nullzero"`
-	Layout             *Layout                       `json:"layout"             bun:"layout,type:JSONB,notnull"`
-	RoleIDs            []pulid.ID                    `json:"roleIds"            bun:"role_ids,type:TEXT[],array,nullzero"`
-	CoreResponsibility permission.CoreResponsibility `json:"coreResponsibility" bun:"core_responsibility,type:VARCHAR(50),nullzero"`
-	IsOrgDefault       bool                          `json:"isOrgDefault"       bun:"is_org_default,type:BOOLEAN,notnull"`
-	Locked             bool                          `json:"locked"             bun:"locked,type:BOOLEAN,notnull"`
-	Priority           int                           `json:"priority"           bun:"priority,type:INTEGER,notnull"`
-	CreatedBy          pulid.ID                      `json:"createdBy"          bun:"created_by,type:VARCHAR(100),nullzero"`
-	Version            int64                         `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64                         `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64                         `json:"updatedAt"          bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                 pulid.ID                      `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:hlp_"`
+	BusinessUnitID     pulid.ID                      `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID                      `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Name               string                        `json:"name"               bun:"name,type:VARCHAR(255),notnull" keel:"name"`
+	Description        string                        `json:"description"        bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Layout             *Layout                       `json:"layout"             bun:"layout,type:JSONB,notnull" keel:"layout,jsonb"`
+	RoleIDs            []pulid.ID                    `json:"roleIds"            bun:"role_ids,type:TEXT[],array,nullzero" keel:"role_ids,nullzero"`
+	CoreResponsibility permission.CoreResponsibility `json:"coreResponsibility" bun:"core_responsibility,type:VARCHAR(50),nullzero" keel:"core_responsibility,nullzero"`
+	IsOrgDefault       bool                          `json:"isOrgDefault"       bun:"is_org_default,type:BOOLEAN,notnull" keel:"is_org_default"`
+	Locked             bool                          `json:"locked"             bun:"locked,type:BOOLEAN,notnull" keel:"locked"`
+	Priority           int                           `json:"priority"           bun:"priority,type:INTEGER,notnull" keel:"priority"`
+	CreatedBy          pulid.ID                      `json:"createdBy"          bun:"created_by,type:VARCHAR(100),nullzero" keel:"created_by,nullzero"`
+	Version            int64                         `json:"version"            bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt          int64                         `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt          int64                         `json:"updatedAt"          bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`

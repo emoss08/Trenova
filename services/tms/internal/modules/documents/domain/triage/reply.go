@@ -3,6 +3,7 @@ package triage
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -37,33 +38,34 @@ func (s ReplyStatus) IsValid() bool {
 
 type Reply struct {
 	bun.BaseModel `bun:"table:inbound_replies,alias:irpl" json:"-"`
+	keel.Table    `keel:"inbound_replies"`
 
-	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	MessageID         pulid.ID          `json:"messageId"         bun:"message_id,type:VARCHAR(100),notnull"`
-	MailboxID         pulid.ID          `json:"mailboxId"         bun:"mailbox_id,type:VARCHAR(100),notnull"`
-	ThreadKey         string            `json:"threadKey"         bun:"thread_key,type:VARCHAR(500),notnull"`
-	Status            ReplyStatus       `json:"status"            bun:"status,type:VARCHAR(20),notnull"`
-	FromAddress       string            `json:"fromAddress"       bun:"from_address,type:VARCHAR(255),notnull"`
-	ToAddress         string            `json:"toAddress"         bun:"to_address,type:VARCHAR(255),notnull"`
-	CcAddresses       []string          `json:"ccAddresses"       bun:"cc_addresses,type:JSONB,nullzero"`
-	Subject           string            `json:"subject"           bun:"subject,type:VARCHAR(500),notnull"`
-	Body              string            `json:"body"              bun:"body,type:TEXT,notnull"`
-	DraftedByNova     bool              `json:"draftedByNova"     bun:"drafted_by_nova,type:BOOLEAN,notnull,default:false"`
-	TemplateID        pulid.ID          `json:"templateId"        bun:"template_id,type:VARCHAR(100),nullzero"`
-	MessageKey        string            `json:"messageKey"        bun:"message_key,type:VARCHAR(500),nullzero"`
-	ProviderMessageID string            `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(255),nullzero"`
-	FailureText       string            `json:"failureText"       bun:"failure_text,type:TEXT,nullzero"`
-	SuggestedAddress  string            `json:"suggestedAddress"  bun:"suggested_address,type:VARCHAR(255),nullzero"`
-	Attachments       []ReplyAttachment `json:"attachments"       bun:"attachments,type:JSONB,nullzero"`
-	IdempotencyKey    string            `json:"-"                 bun:"idempotency_key,type:VARCHAR(255),nullzero"`
-	CreatedByID       pulid.ID          `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	SentByID          pulid.ID          `json:"sentById"          bun:"sent_by_id,type:VARCHAR(100),nullzero"`
-	SentAt            int64             `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero"`
-	Version           int64             `json:"version"           bun:"version,type:BIGINT"`
-	CreatedAt         int64             `json:"createdAt"         bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:irpl_"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	MessageID         pulid.ID          `json:"messageId"         bun:"message_id,type:VARCHAR(100),notnull" keel:"message_id"`
+	MailboxID         pulid.ID          `json:"mailboxId"         bun:"mailbox_id,type:VARCHAR(100),notnull" keel:"mailbox_id"`
+	ThreadKey         string            `json:"threadKey"         bun:"thread_key,type:VARCHAR(500),notnull" keel:"thread_key"`
+	Status            ReplyStatus       `json:"status"            bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	FromAddress       string            `json:"fromAddress"       bun:"from_address,type:VARCHAR(255),notnull" keel:"from_address"`
+	ToAddress         string            `json:"toAddress"         bun:"to_address,type:VARCHAR(255),notnull" keel:"to_address"`
+	CcAddresses       []string          `json:"ccAddresses"       bun:"cc_addresses,type:JSONB,nullzero" keel:"cc_addresses,jsonb,nullzero"`
+	Subject           string            `json:"subject"           bun:"subject,type:VARCHAR(500),notnull" keel:"subject"`
+	Body              string            `json:"body"              bun:"body,type:TEXT,notnull" keel:"body"`
+	DraftedByNova     bool              `json:"draftedByNova"     bun:"drafted_by_nova,type:BOOLEAN,notnull,default:false" keel:"drafted_by_nova"`
+	TemplateID        pulid.ID          `json:"templateId"        bun:"template_id,type:VARCHAR(100),nullzero" keel:"template_id,nullzero"`
+	MessageKey        string            `json:"messageKey"        bun:"message_key,type:VARCHAR(500),nullzero" keel:"message_key,nullzero"`
+	ProviderMessageID string            `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(255),nullzero" keel:"provider_message_id,nullzero"`
+	FailureText       string            `json:"failureText"       bun:"failure_text,type:TEXT,nullzero" keel:"failure_text,nullzero"`
+	SuggestedAddress  string            `json:"suggestedAddress"  bun:"suggested_address,type:VARCHAR(255),nullzero" keel:"suggested_address,nullzero"`
+	Attachments       []ReplyAttachment `json:"attachments"       bun:"attachments,type:JSONB,nullzero" keel:"attachments,jsonb,nullzero"`
+	IdempotencyKey    string            `json:"-"                 bun:"idempotency_key,type:VARCHAR(255),nullzero" keel:"idempotency_key,nullzero"`
+	CreatedByID       pulid.ID          `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
+	SentByID          pulid.ID          `json:"sentById"          bun:"sent_by_id,type:VARCHAR(100),nullzero" keel:"sent_by_id,nullzero"`
+	SentAt            int64             `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero" keel:"sent_at,nullzero"`
+	Version           int64             `json:"version"           bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt         int64             `json:"createdAt"         bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (r *Reply) Validate(multiErr *errortypes.MultiError) {

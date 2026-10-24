@@ -3,6 +3,7 @@ package accountingsync
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,22 +15,23 @@ var _ bun.BeforeAppendModelHook = (*AccountingPendingCertificate)(nil)
 
 type AccountingPendingCertificate struct {
 	bun.BaseModel `bun:"table:accounting_pending_certificates,alias:acctpc" json:"-"`
+	keel.Table    `keel:"accounting_pending_certificates"`
 
-	ID                   pulid.ID         `json:"id"              bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID       pulid.ID         `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID         `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	IntegrationType      integration.Type `json:"integrationType" bun:"integration_type,type:VARCHAR(50),notnull"`
-	PrivateKeyCiphertext string           `json:"-"               bun:"private_key_ciphertext,type:TEXT,notnull"`
-	CertificatePEM       string           `json:"certificatePem"  bun:"certificate_pem,type:TEXT,notnull"`
-	ExpiresAt            int64            `json:"expiresAt"       bun:"expires_at,type:BIGINT,notnull"`
-	PreparedByID         pulid.ID         `json:"preparedById"    bun:"prepared_by_id,type:VARCHAR(100),notnull"`
-	PreparedAt           int64            `json:"preparedAt"      bun:"prepared_at,type:BIGINT,notnull"`
-	CreatedAt            int64            `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64            `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID         `json:"id"              bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctpc_"`
+	BusinessUnitID       pulid.ID         `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID         `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	IntegrationType      integration.Type `json:"integrationType" bun:"integration_type,type:VARCHAR(50),notnull" keel:"integration_type"`
+	PrivateKeyCiphertext string           `json:"-"               bun:"private_key_ciphertext,type:TEXT,notnull" keel:"private_key_ciphertext"`
+	CertificatePEM       string           `json:"certificatePem"  bun:"certificate_pem,type:TEXT,notnull" keel:"certificate_pem"`
+	ExpiresAt            int64            `json:"expiresAt"       bun:"expires_at,type:BIGINT,notnull" keel:"expires_at"`
+	PreparedByID         pulid.ID         `json:"preparedById"    bun:"prepared_by_id,type:VARCHAR(100),notnull" keel:"prepared_by_id"`
+	PreparedAt           int64            `json:"preparedAt"      bun:"prepared_at,type:BIGINT,notnull" keel:"prepared_at"`
+	CreatedAt            int64            `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt            int64            `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	PreparedBy   *tenant.User         `json:"preparedBy,omitempty"   bun:"rel:belongs-to,join:prepared_by_id=id"`
+	PreparedBy   *tenant.User         `json:"preparedBy,omitempty"   bun:"rel:belongs-to,join:prepared_by_id=id" keel:"belongs:prepared_by_id"`
 }
 
 func (c *AccountingPendingCertificate) GetTableName() string {

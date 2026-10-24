@@ -3,6 +3,7 @@ package iam
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -21,23 +22,24 @@ var (
 
 type SCIMGroupRoleMapping struct {
 	bun.BaseModel             `bun:"table:scim_group_role_mappings,alias:sgrm" json:"-"`
+	keel.Table                `keel:"scim_group_role_mappings"`
 	pagination.CursorValueSet `bun:",embed"                                    json:"-"`
 
-	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	DirectoryID     pulid.ID `json:"directoryId"     bun:"directory_id,type:VARCHAR(100),notnull"`
-	ExternalGroupID string   `json:"externalGroupId" bun:"external_group_id,type:VARCHAR(255),notnull"`
-	DisplayName     string   `json:"displayName"     bun:"display_name,type:VARCHAR(255),notnull"`
-	RoleID          pulid.ID `json:"roleId"          bun:"role_id,type:VARCHAR(100),notnull"`
+	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:sgr_"`
+	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),notnull,pk" keel:"organization_id,pk,tenant"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),notnull,pk" keel:"business_unit_id,pk,tenant"`
+	DirectoryID     pulid.ID `json:"directoryId"     bun:"directory_id,type:VARCHAR(100),notnull" keel:"directory_id"`
+	ExternalGroupID string   `json:"externalGroupId" bun:"external_group_id,type:VARCHAR(255),notnull" keel:"external_group_id"`
+	DisplayName     string   `json:"displayName"     bun:"display_name,type:VARCHAR(255),notnull" keel:"display_name"`
+	RoleID          pulid.ID `json:"roleId"          bun:"role_id,type:VARCHAR(100),notnull" keel:"role_id"`
 
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Role *permission.Role `json:"role,omitempty" bun:"rel:belongs-to,join:role_id=id"`
+	Role *permission.Role `json:"role,omitempty" bun:"rel:belongs-to,join:role_id=id" keel:"belongs:role_id"`
 }
 
 func (m *SCIMGroupRoleMapping) Validate(multiErr *errortypes.MultiError) {

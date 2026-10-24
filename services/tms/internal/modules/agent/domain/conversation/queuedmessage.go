@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -49,24 +50,25 @@ func (r *QueuedRequest) Directed() bool {
 
 type QueuedMessage struct {
 	bun.BaseModel `bun:"table:assistant_queued_messages,alias:aqm" json:"-"`
+	keel.Table    `keel:"assistant_queued_messages"`
 
-	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	ThreadID       pulid.ID       `json:"threadId"       bun:"thread_id,type:VARCHAR(100),notnull"`
-	UserID         pulid.ID       `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	Content        string         `json:"content"        bun:"content,type:TEXT,notnull"`
-	Request        *QueuedRequest `json:"request"        bun:"request,type:JSONB,notnull"`
-	Position       int64          `json:"position"       bun:"position,type:BIGINT,notnull"`
-	Steer          bool           `json:"steer"          bun:"steer,type:BOOLEAN,notnull,default:false"`
-	Version        int64          `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64          `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	ThreadID       pulid.ID       `json:"threadId"       bun:"thread_id,type:VARCHAR(100),notnull" keel:"thread_id"`
+	UserID         pulid.ID       `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	Content        string         `json:"content"        bun:"content,type:TEXT,notnull" keel:"content"`
+	Request        *QueuedRequest `json:"request"        bun:"request,type:JSONB,notnull" keel:"request,jsonb"`
+	Position       int64          `json:"position"       bun:"position,type:BIGINT,notnull" keel:"position"`
+	Steer          bool           `json:"steer"          bun:"steer,type:BOOLEAN,notnull,default:false" keel:"steer"`
+	Version        int64          `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64          `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	User         *tenant.User         `json:"-" bun:"rel:belongs-to,join:user_id=id"`
-	Thread       *Thread              `json:"-" bun:"rel:belongs-to,join:thread_id=id"`
+	User         *tenant.User         `json:"-" bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
+	Thread       *Thread              `json:"-" bun:"rel:belongs-to,join:thread_id=id" keel:"belongs:thread_id"`
 }
 
 func (m *QueuedMessage) Normalize() {

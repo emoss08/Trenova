@@ -3,6 +3,7 @@ package fleetcode
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,29 +23,30 @@ var (
 
 type FleetCode struct {
 	bun.BaseModel `bun:"table:fleet_codes,alias:fc" json:"-"`
+	keel.Table    `keel:"fleet_codes"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	ManagerID      pulid.ID           `json:"managerId"      bun:"manager_id,type:VARCHAR(100),notnull"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(10),notnull"`
-	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
-	RevenueGoal    *float64           `json:"revenueGoal"    bun:"revenue_goal,type:NUMERIC(10,2),nullzero"`
-	DeadheadGoal   *float64           `json:"deadheadGoal"   bun:"deadhead_goal,type:NUMERIC(10,2),nullzero"`
-	MileageGoal    *float64           `json:"mileageGoal"    bun:"mileage_goal,type:NUMERIC(10,2),nullzero"`
-	Color          string             `json:"color"          bun:"color,type:VARCHAR(10),nullzero"`
-	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:fc_"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk" keel:"organization_id,pk,tenant"`
+	ManagerID      pulid.ID           `json:"managerId"      bun:"manager_id,type:VARCHAR(100),notnull" keel:"manager_id"`
+	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
+	Code           string             `json:"code"           bun:"code,type:VARCHAR(10),notnull" keel:"code"`
+	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	RevenueGoal    *float64           `json:"revenueGoal"    bun:"revenue_goal,type:NUMERIC(10,2),nullzero" keel:"revenue_goal"`
+	DeadheadGoal   *float64           `json:"deadheadGoal"   bun:"deadhead_goal,type:NUMERIC(10,2),nullzero" keel:"deadhead_goal"`
+	MileageGoal    *float64           `json:"mileageGoal"    bun:"mileage_goal,type:NUMERIC(10,2),nullzero" keel:"mileage_goal"`
+	Color          string             `json:"color"          bun:"color,type:VARCHAR(10),nullzero" keel:"color,nullzero"`
+	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	Version        int64              `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"`
+	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id" keel:"belongs:manager_id"`
 }
 
 func (fc *FleetCode) Validate(multiErr *errortypes.MultiError) {

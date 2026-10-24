@@ -4,6 +4,7 @@ import (
 	"context"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,23 +41,24 @@ var _ bun.BeforeAppendModelHook = (*InvoiceShare)(nil)
 
 type InvoiceShare struct {
 	bun.BaseModel `bun:"table:invoice_shares,alias:invsh" json:"-"`
+	keel.Table    `keel:"invoice_shares"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	InvoiceID      pulid.ID `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull"`
-	SharedWithID   pulid.ID `json:"sharedWithId"   bun:"shared_with_id,type:VARCHAR(100),notnull"`
-	SharedByID     pulid.ID `json:"sharedById"     bun:"shared_by_id,type:VARCHAR(100),notnull"`
-	Note           string   `json:"note"           bun:"note,type:TEXT,nullzero"`
-	Tab            ShareTab `json:"tab"            bun:"tab,type:VARCHAR(20),notnull"`
-	ShareCount     int      `json:"shareCount"     bun:"share_count,type:INTEGER,notnull"`
-	FirstSharedAt  int64    `json:"firstSharedAt"  bun:"first_shared_at,type:BIGINT,notnull"`
-	LastSharedAt   int64    `json:"lastSharedAt"   bun:"last_shared_at,type:BIGINT,notnull"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:invsh_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	InvoiceID      pulid.ID `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull" keel:"invoice_id"`
+	SharedWithID   pulid.ID `json:"sharedWithId"   bun:"shared_with_id,type:VARCHAR(100),notnull" keel:"shared_with_id"`
+	SharedByID     pulid.ID `json:"sharedById"     bun:"shared_by_id,type:VARCHAR(100),notnull" keel:"shared_by_id"`
+	Note           string   `json:"note"           bun:"note,type:TEXT,nullzero" keel:"note,nullzero"`
+	Tab            ShareTab `json:"tab"            bun:"tab,type:VARCHAR(20),notnull" keel:"tab"`
+	ShareCount     int      `json:"shareCount"     bun:"share_count,type:INTEGER,notnull" keel:"share_count"`
+	FirstSharedAt  int64    `json:"firstSharedAt"  bun:"first_shared_at,type:BIGINT,notnull" keel:"first_shared_at"`
+	LastSharedAt   int64    `json:"lastSharedAt"   bun:"last_shared_at,type:BIGINT,notnull" keel:"last_shared_at"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 
-	SharedWith *tenant.User `json:"sharedWith,omitempty" bun:"rel:belongs-to,join:shared_with_id=id"`
-	SharedBy   *tenant.User `json:"sharedBy,omitempty"   bun:"rel:belongs-to,join:shared_by_id=id"`
+	SharedWith *tenant.User `json:"sharedWith,omitempty" bun:"rel:belongs-to,join:shared_with_id=id" keel:"belongs:shared_with_id"`
+	SharedBy   *tenant.User `json:"sharedBy,omitempty"   bun:"rel:belongs-to,join:shared_by_id=id" keel:"belongs:shared_by_id"`
 }
 
 func (s *InvoiceShare) Validate(multiErr *errortypes.MultiError) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,27 +23,28 @@ var (
 
 type CostingControl struct {
 	bun.BaseModel `bun:"table:costing_controls,alias:cstc" json:"-"`
+	keel.Table    `keel:"costing_controls"`
 
-	ID                   pulid.ID            `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	FuelIndexID          *pulid.ID           `json:"fuelIndexId"          bun:"fuel_index_id,type:VARCHAR(100),nullzero"`
-	UseLiveFuelPrice     bool                `json:"useLiveFuelPrice"     bun:"use_live_fuel_price,type:BOOLEAN,notnull"`
-	MilesPerGallon       decimal.Decimal     `json:"milesPerGallon"       bun:"miles_per_gallon,type:NUMERIC(6,2),notnull,default:6.5"`
-	IncludeDeadheadMiles bool                `json:"includeDeadheadMiles" bun:"include_deadhead_miles,type:BOOLEAN,notnull"`
-	GLActualsEnabled     bool                `json:"glActualsEnabled"     bun:"gl_actuals_enabled,type:BOOLEAN,notnull"`
-	GLRollingMonths      int16               `json:"glRollingMonths"      bun:"gl_rolling_months,type:SMALLINT,notnull,default:3"`
-	PlannedMonthlyMiles  *int64              `json:"plannedMonthlyMiles"  bun:"planned_monthly_miles,type:BIGINT,nullzero"`
-	TargetMarginPercent  decimal.NullDecimal `json:"targetMarginPercent"  bun:"target_margin_percent,type:NUMERIC(6,3),nullzero"`
-	Version              int64               `json:"version"              bun:"version,type:BIGINT"`
-	CreatedAt            int64               `json:"createdAt"            bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID            `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:cstc_"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	FuelIndexID          *pulid.ID           `json:"fuelIndexId"          bun:"fuel_index_id,type:VARCHAR(100),nullzero" keel:"fuel_index_id"`
+	UseLiveFuelPrice     bool                `json:"useLiveFuelPrice"     bun:"use_live_fuel_price,type:BOOLEAN,notnull" keel:"use_live_fuel_price"`
+	MilesPerGallon       decimal.Decimal     `json:"milesPerGallon"       bun:"miles_per_gallon,type:NUMERIC(6,2),notnull,default:6.5" keel:"miles_per_gallon"`
+	IncludeDeadheadMiles bool                `json:"includeDeadheadMiles" bun:"include_deadhead_miles,type:BOOLEAN,notnull" keel:"include_deadhead_miles"`
+	GLActualsEnabled     bool                `json:"glActualsEnabled"     bun:"gl_actuals_enabled,type:BOOLEAN,notnull" keel:"gl_actuals_enabled"`
+	GLRollingMonths      int16               `json:"glRollingMonths"      bun:"gl_rolling_months,type:SMALLINT,notnull,default:3" keel:"gl_rolling_months"`
+	PlannedMonthlyMiles  *int64              `json:"plannedMonthlyMiles"  bun:"planned_monthly_miles,type:BIGINT,nullzero" keel:"planned_monthly_miles"`
+	TargetMarginPercent  decimal.NullDecimal `json:"targetMarginPercent"  bun:"target_margin_percent,type:NUMERIC(6,3),nullzero" keel:"target_margin_percent"`
+	Version              int64               `json:"version"              bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"            bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	// Relationships
-	FuelIndex    *fuelsurcharge.FuelIndex `json:"fuelIndex,omitempty"    bun:"rel:belongs-to,join:fuel_index_id=id"`
+	FuelIndex    *fuelsurcharge.FuelIndex `json:"fuelIndex,omitempty"    bun:"rel:belongs-to,join:fuel_index_id=id" keel:"belongs:fuel_index_id"`
 	BusinessUnit *tenant.BusinessUnit     `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization     `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Categories   []*CostCategory          `json:"categories,omitempty"   bun:"rel:has-many,join:id=costing_control_id"`
+	Categories   []*CostCategory          `json:"categories,omitempty"   bun:"rel:has-many,join:id=costing_control_id" keel:"many:costing_control_id"`
 }
 
 func (cc *CostingControl) Validate(multiErr *errortypes.MultiError) {

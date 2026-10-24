@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -136,39 +137,40 @@ func (s AnalysisRunStatus) Finished() bool {
 
 type AnalysisRun struct {
 	bun.BaseModel `bun:"table:agent_analysis_runs,alias:aanr" json:"-"`
+	keel.Table    `keel:"agent_analysis_runs"`
 
-	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ExtensionType     Type              `json:"extensionType"     bun:"extension_type,type:VARCHAR(50),notnull"`
-	Status            AnalysisRunStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull"`
-	Title             string            `json:"title"             bun:"title,type:VARCHAR(80),notnull,default:''"`
-	Purpose           string            `json:"purpose"           bun:"purpose,type:VARCHAR(500),notnull,default:''"`
-	Code              string            `json:"code"              bun:"code,type:TEXT,notnull"`
-	Datasets          []AnalysisDataset `json:"datasets"          bun:"datasets,type:JSONB,notnull,default:'[]'::jsonb"`
-	Stdout            string            `json:"stdout"            bun:"stdout,type:TEXT,notnull,default:''"`
-	Stderr            string            `json:"stderr"            bun:"stderr,type:TEXT,notnull,default:''"`
-	Results           []string          `json:"results"           bun:"results,type:JSONB,notnull,default:'[]'::jsonb"`
-	Tables            []AnalysisTable   `json:"tables"            bun:"tables,type:JSONB,notnull,default:'[]'::jsonb"`
-	Figures           []AnalysisFigure  `json:"figures"           bun:"figures,type:JSONB,notnull,default:'[]'::jsonb"`
-	Layout            []AnalysisBlock   `json:"layout"            bun:"layout,type:JSONB,notnull,default:'[]'::jsonb"`
-	ErrorName         string            `json:"errorName"         bun:"error_name,type:VARCHAR(200),notnull,default:''"`
-	ErrorValue        string            `json:"errorValue"        bun:"error_value,type:TEXT,notnull,default:''"`
-	Traceback         string            `json:"traceback"         bun:"traceback,type:TEXT,notnull,default:''"`
-	ChartCount        int               `json:"chartCount"        bun:"chart_count,type:INTEGER,notnull,default:0"`
-	Failure           string            `json:"failure"           bun:"failure,type:TEXT,notnull,default:''"`
-	VendorSandboxID   string            `json:"-"                 bun:"vendor_sandbox_id,type:VARCHAR(100),notnull,default:''"`
-	DurationMs        int64             `json:"durationMs"        bun:"duration_ms,type:BIGINT,notnull,default:0"`
-	CostUSD           decimal.Decimal   `json:"costUsd"           bun:"cost_usd,type:NUMERIC(19,6),notnull,default:0"`
-	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
-	AgentRunID        pulid.ID          `json:"agentRunId"        bun:"agent_run_id,type:VARCHAR(100),nullzero"`
-	ThreadID          pulid.ID          `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero"`
-	RequestedByID     pulid.ID          `json:"requestedById"     bun:"requested_by_id,type:VARCHAR(100),nullzero"`
-	StartedAt         int64             `json:"startedAt"         bun:"started_at,type:BIGINT,notnull"`
-	FinishedAt        *int64            `json:"finishedAt"        bun:"finished_at,type:BIGINT,nullzero"`
-	Version           int64             `json:"version"           bun:"version,type:BIGINT,notnull"`
-	CreatedAt         int64             `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ExtensionType     Type              `json:"extensionType"     bun:"extension_type,type:VARCHAR(50),notnull" keel:"extension_type"`
+	Status            AnalysisRunStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	Title             string            `json:"title"             bun:"title,type:VARCHAR(80),notnull,default:''" keel:"title"`
+	Purpose           string            `json:"purpose"           bun:"purpose,type:VARCHAR(500),notnull,default:''" keel:"purpose"`
+	Code              string            `json:"code"              bun:"code,type:TEXT,notnull" keel:"code"`
+	Datasets          []AnalysisDataset `json:"datasets"          bun:"datasets,type:JSONB,notnull,default:'[]'::jsonb" keel:"datasets,jsonb"`
+	Stdout            string            `json:"stdout"            bun:"stdout,type:TEXT,notnull,default:''" keel:"stdout"`
+	Stderr            string            `json:"stderr"            bun:"stderr,type:TEXT,notnull,default:''" keel:"stderr"`
+	Results           []string          `json:"results"           bun:"results,type:JSONB,notnull,default:'[]'::jsonb" keel:"results,jsonb"`
+	Tables            []AnalysisTable   `json:"tables"            bun:"tables,type:JSONB,notnull,default:'[]'::jsonb" keel:"tables,jsonb"`
+	Figures           []AnalysisFigure  `json:"figures"           bun:"figures,type:JSONB,notnull,default:'[]'::jsonb" keel:"figures,jsonb"`
+	Layout            []AnalysisBlock   `json:"layout"            bun:"layout,type:JSONB,notnull,default:'[]'::jsonb" keel:"layout,jsonb"`
+	ErrorName         string            `json:"errorName"         bun:"error_name,type:VARCHAR(200),notnull,default:''" keel:"error_name"`
+	ErrorValue        string            `json:"errorValue"        bun:"error_value,type:TEXT,notnull,default:''" keel:"error_value"`
+	Traceback         string            `json:"traceback"         bun:"traceback,type:TEXT,notnull,default:''" keel:"traceback"`
+	ChartCount        int               `json:"chartCount"        bun:"chart_count,type:INTEGER,notnull,default:0" keel:"chart_count"`
+	Failure           string            `json:"failure"           bun:"failure,type:TEXT,notnull,default:''" keel:"failure"`
+	VendorSandboxID   string            `json:"-"                 bun:"vendor_sandbox_id,type:VARCHAR(100),notnull,default:''" keel:"vendor_sandbox_id"`
+	DurationMs        int64             `json:"durationMs"        bun:"duration_ms,type:BIGINT,notnull,default:0" keel:"duration_ms"`
+	CostUSD           decimal.Decimal   `json:"costUsd"           bun:"cost_usd,type:NUMERIC(19,6),notnull,default:0" keel:"cost_usd"`
+	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero" keel:"agent_definition_id,nullzero"`
+	AgentRunID        pulid.ID          `json:"agentRunId"        bun:"agent_run_id,type:VARCHAR(100),nullzero" keel:"agent_run_id,nullzero"`
+	ThreadID          pulid.ID          `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero" keel:"thread_id,nullzero"`
+	RequestedByID     pulid.ID          `json:"requestedById"     bun:"requested_by_id,type:VARCHAR(100),nullzero" keel:"requested_by_id,nullzero"`
+	StartedAt         int64             `json:"startedAt"         bun:"started_at,type:BIGINT,notnull" keel:"started_at"`
+	FinishedAt        *int64            `json:"finishedAt"        bun:"finished_at,type:BIGINT,nullzero" keel:"finished_at"`
+	Version           int64             `json:"version"           bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt         int64             `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (r *AnalysisRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -253,14 +255,15 @@ func boundedResults(results []string) []string {
 // person sees it beside the reply and in the history.
 type AnalysisChart struct {
 	bun.BaseModel `bun:"table:agent_analysis_charts,alias:aanc" json:"-"`
+	keel.Table    `keel:"agent_analysis_charts"`
 
-	RunID          pulid.ID `json:"runId"          bun:"run_id,pk,type:VARCHAR(100),notnull"`
-	Position       int      `json:"position"       bun:"position,pk,type:INTEGER,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Title          string   `json:"title"          bun:"title,type:VARCHAR(200),notnull,default:''"`
-	Image          []byte   `json:"-"              bun:"image,type:BYTEA,notnull"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	RunID          pulid.ID `json:"runId"          bun:"run_id,pk,type:VARCHAR(100),notnull" keel:"run_id,pk"`
+	Position       int      `json:"position"       bun:"position,pk,type:INTEGER,notnull" keel:"position,pk"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Title          string   `json:"title"          bun:"title,type:VARCHAR(200),notnull,default:''" keel:"title"`
+	Image          []byte   `json:"-"              bun:"image,type:BYTEA,notnull" keel:"image"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
 func (c *AnalysisChart) BeforeAppendModel(_ context.Context, query bun.Query) error {

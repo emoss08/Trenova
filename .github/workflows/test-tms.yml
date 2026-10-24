@@ -419,6 +419,15 @@ jobs:
             exit 1
           fi
 
+      - name: keel tables
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          if ! go tool keel gen -check -kinds pkg/keelkinds -tables internal/keeltables ./internal/modules/.../domain/...; then
+            echo "::error::keel table packages are stale - run 'task keel-gen' in services/tms and commit"
+            exit 1
+          fi
+
       - name: Report catalog
         working-directory: ./services/tms
         run: |

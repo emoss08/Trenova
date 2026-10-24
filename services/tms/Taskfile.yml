@@ -373,6 +373,16 @@ tasks:
         git archive "{{.BASE_REF}}" "{{.SCHEMA_DIR}}" | tar -x -C "$BASE_DIR"
         go run ./internal/api/graphql/schemadiff/cmd -base "$BASE_DIR/{{.SCHEMA_DIR}}" -head "{{.SCHEMA_DIR}}"
 
+  keel-gen:
+    desc: Generate the keel table packages from the domain models' keel tags
+    cmds:
+      - go tool keel gen -kinds pkg/keelkinds -tables internal/keeltables ./internal/modules/.../domain/...
+
+  keel-gen-check:
+    desc: Verify the generated keel table packages are up to date
+    cmds:
+      - go tool keel gen -check -kinds pkg/keelkinds -tables internal/keeltables ./internal/modules/.../domain/...
+
   generate-columns:
     desc: Generate Bun column constants from domain entities
     cmds:

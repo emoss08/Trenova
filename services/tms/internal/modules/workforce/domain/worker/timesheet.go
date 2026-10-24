@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -136,28 +137,29 @@ var (
 // TimeClockEntry is one period of work.
 type TimeClockEntry struct {
 	bun.BaseModel `bun:"table:time_clock_entries,alias:tce" json:"-"`
+	keel.Table    `keel:"time_clock_entries"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
-	TimesheetID    pulid.ID `json:"timesheetId"    bun:"timesheet_id,type:VARCHAR(100),nullzero"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:tce_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	TimesheetID    pulid.ID `json:"timesheetId"    bun:"timesheet_id,type:VARCHAR(100),nullzero" keel:"timesheet_id,nullzero"`
 
-	Source TimeEntrySource `json:"source" bun:"source,type:time_entry_source_enum,notnull,default:'Clock'"`
+	Source TimeEntrySource `json:"source" bun:"source,type:time_entry_source_enum,notnull,default:'Clock'" keel:"source"`
 	// ClockedOutAt of nil means the worker is still on the clock.
-	ClockedInAt  int64    `json:"clockedInAt"  bun:"clocked_in_at,type:BIGINT,notnull"`
-	ClockedOutAt *int64   `json:"clockedOutAt" bun:"clocked_out_at,type:BIGINT,nullzero"`
-	BreakMinutes int32    `json:"breakMinutes" bun:"break_minutes,type:INTEGER,notnull"`
-	PayCodeID    pulid.ID `json:"payCodeId"    bun:"pay_code_id,type:VARCHAR(100),nullzero"`
-	Note         string   `json:"note"         bun:"note,type:VARCHAR(500),nullzero"`
-	EditedByID   pulid.ID `json:"editedById"   bun:"edited_by_id,type:VARCHAR(100),nullzero"`
-	EditReason   string   `json:"editReason"   bun:"edit_reason,type:VARCHAR(500),nullzero"`
+	ClockedInAt  int64    `json:"clockedInAt"  bun:"clocked_in_at,type:BIGINT,notnull" keel:"clocked_in_at"`
+	ClockedOutAt *int64   `json:"clockedOutAt" bun:"clocked_out_at,type:BIGINT,nullzero" keel:"clocked_out_at"`
+	BreakMinutes int32    `json:"breakMinutes" bun:"break_minutes,type:INTEGER,notnull" keel:"break_minutes"`
+	PayCodeID    pulid.ID `json:"payCodeId"    bun:"pay_code_id,type:VARCHAR(100),nullzero" keel:"pay_code_id,nullzero"`
+	Note         string   `json:"note"         bun:"note,type:VARCHAR(500),nullzero" keel:"note,nullzero"`
+	EditedByID   pulid.ID `json:"editedById"   bun:"edited_by_id,type:VARCHAR(100),nullzero" keel:"edited_by_id,nullzero"`
+	EditReason   string   `json:"editReason"   bun:"edit_reason,type:VARCHAR(500),nullzero" keel:"edit_reason,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker *Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Worker *Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
 }
 
 // IsOpen reports whether the worker is still on the clock.
@@ -282,37 +284,38 @@ var (
 // recomputing it later would change a signed-off wage record.
 type Timesheet struct {
 	bun.BaseModel `bun:"table:timesheets,alias:tsh" json:"-"`
+	keel.Table    `keel:"timesheets"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:tsh_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
 
-	Status      TimesheetStatus `json:"status"      bun:"status,type:timesheet_status_enum,notnull,default:'Open'"`
-	PeriodStart int64           `json:"periodStart" bun:"period_start,type:BIGINT,notnull"`
-	PeriodEnd   int64           `json:"periodEnd"   bun:"period_end,type:BIGINT,notnull"`
+	Status      TimesheetStatus `json:"status"      bun:"status,type:timesheet_status_enum,notnull,default:'Open'" keel:"status"`
+	PeriodStart int64           `json:"periodStart" bun:"period_start,type:BIGINT,notnull" keel:"period_start"`
+	PeriodEnd   int64           `json:"periodEnd"   bun:"period_end,type:BIGINT,notnull" keel:"period_end"`
 
-	RegularMinutes   int32 `json:"regularMinutes"   bun:"regular_minutes,type:INTEGER,notnull"`
-	OvertimeMinutes  int32 `json:"overtimeMinutes"  bun:"overtime_minutes,type:INTEGER,notnull"`
-	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" bun:"paid_leave_minutes,type:INTEGER,notnull"`
-	EntryCount       int32 `json:"entryCount"       bun:"entry_count,type:INTEGER,notnull"`
+	RegularMinutes   int32 `json:"regularMinutes"   bun:"regular_minutes,type:INTEGER,notnull" keel:"regular_minutes"`
+	OvertimeMinutes  int32 `json:"overtimeMinutes"  bun:"overtime_minutes,type:INTEGER,notnull" keel:"overtime_minutes"`
+	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" bun:"paid_leave_minutes,type:INTEGER,notnull" keel:"paid_leave_minutes"`
+	EntryCount       int32 `json:"entryCount"       bun:"entry_count,type:INTEGER,notnull" keel:"entry_count"`
 	// OvertimeThresholdMinutes is copied onto the sheet rather than read from a
 	// setting, so changing the rule next quarter cannot restate a week that was
 	// already approved.
-	OvertimeThresholdMinutes int32 `json:"overtimeThresholdMinutes" bun:"overtime_threshold_minutes,type:INTEGER,notnull,default:2400"`
+	OvertimeThresholdMinutes int32 `json:"overtimeThresholdMinutes" bun:"overtime_threshold_minutes,type:INTEGER,notnull,default:2400" keel:"overtime_threshold_minutes"`
 
-	SubmittedAt     *int64   `json:"submittedAt"     bun:"submitted_at,type:BIGINT,nullzero"`
-	SubmittedByID   pulid.ID `json:"submittedById"   bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt      *int64   `json:"approvedAt"      bun:"approved_at,type:BIGINT,nullzero"`
-	ApprovedByID    pulid.ID `json:"approvedById"    bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	DecisionNote    string   `json:"decisionNote"    bun:"decision_note,type:VARCHAR(500),nullzero"`
-	PayrollExportID pulid.ID `json:"payrollExportId" bun:"payroll_export_id,type:VARCHAR(100),nullzero"`
+	SubmittedAt     *int64   `json:"submittedAt"     bun:"submitted_at,type:BIGINT,nullzero" keel:"submitted_at"`
+	SubmittedByID   pulid.ID `json:"submittedById"   bun:"submitted_by_id,type:VARCHAR(100),nullzero" keel:"submitted_by_id,nullzero"`
+	ApprovedAt      *int64   `json:"approvedAt"      bun:"approved_at,type:BIGINT,nullzero" keel:"approved_at"`
+	ApprovedByID    pulid.ID `json:"approvedById"    bun:"approved_by_id,type:VARCHAR(100),nullzero" keel:"approved_by_id,nullzero"`
+	DecisionNote    string   `json:"decisionNote"    bun:"decision_note,type:VARCHAR(500),nullzero" keel:"decision_note,nullzero"`
+	PayrollExportID pulid.ID `json:"payrollExportId" bun:"payroll_export_id,type:VARCHAR(100),nullzero" keel:"payroll_export_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker  *Worker           `json:"worker,omitempty"  bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Worker  *Worker           `json:"worker,omitempty"  bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
 	Entries []*TimeClockEntry `json:"entries,omitempty" bun:"-"`
 }
 
@@ -438,29 +441,30 @@ var (
 // somebody voiding the first run.
 type PayrollExport struct {
 	bun.BaseModel `bun:"table:payroll_exports,alias:pxb" json:"-"`
+	keel.Table    `keel:"payroll_exports"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:pxb_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	Status      PayrollExportStatus `json:"status"      bun:"status,type:payroll_export_status_enum,notnull,default:'Draft'"`
-	PeriodStart int64               `json:"periodStart" bun:"period_start,type:BIGINT,notnull"`
-	PeriodEnd   int64               `json:"periodEnd"   bun:"period_end,type:BIGINT,notnull"`
+	Status      PayrollExportStatus `json:"status"      bun:"status,type:payroll_export_status_enum,notnull,default:'Draft'" keel:"status"`
+	PeriodStart int64               `json:"periodStart" bun:"period_start,type:BIGINT,notnull" keel:"period_start"`
+	PeriodEnd   int64               `json:"periodEnd"   bun:"period_end,type:BIGINT,notnull" keel:"period_end"`
 
-	TimesheetCount   int32 `json:"timesheetCount"   bun:"timesheet_count,type:INTEGER,notnull"`
-	RegularMinutes   int32 `json:"regularMinutes"   bun:"regular_minutes,type:INTEGER,notnull"`
-	OvertimeMinutes  int32 `json:"overtimeMinutes"  bun:"overtime_minutes,type:INTEGER,notnull"`
-	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" bun:"paid_leave_minutes,type:INTEGER,notnull"`
+	TimesheetCount   int32 `json:"timesheetCount"   bun:"timesheet_count,type:INTEGER,notnull" keel:"timesheet_count"`
+	RegularMinutes   int32 `json:"regularMinutes"   bun:"regular_minutes,type:INTEGER,notnull" keel:"regular_minutes"`
+	OvertimeMinutes  int32 `json:"overtimeMinutes"  bun:"overtime_minutes,type:INTEGER,notnull" keel:"overtime_minutes"`
+	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" bun:"paid_leave_minutes,type:INTEGER,notnull" keel:"paid_leave_minutes"`
 
-	GeneratedAt   *int64   `json:"generatedAt"   bun:"generated_at,type:BIGINT,nullzero"`
-	GeneratedByID pulid.ID `json:"generatedById" bun:"generated_by_id,type:VARCHAR(100),nullzero"`
-	VoidedAt      *int64   `json:"voidedAt"      bun:"voided_at,type:BIGINT,nullzero"`
-	VoidReason    string   `json:"voidReason"    bun:"void_reason,type:VARCHAR(500),nullzero"`
-	Note          string   `json:"note"          bun:"note,type:VARCHAR(500),nullzero"`
+	GeneratedAt   *int64   `json:"generatedAt"   bun:"generated_at,type:BIGINT,nullzero" keel:"generated_at"`
+	GeneratedByID pulid.ID `json:"generatedById" bun:"generated_by_id,type:VARCHAR(100),nullzero" keel:"generated_by_id,nullzero"`
+	VoidedAt      *int64   `json:"voidedAt"      bun:"voided_at,type:BIGINT,nullzero" keel:"voided_at"`
+	VoidReason    string   `json:"voidReason"    bun:"void_reason,type:VARCHAR(500),nullzero" keel:"void_reason,nullzero"`
+	Note          string   `json:"note"          bun:"note,type:VARCHAR(500),nullzero" keel:"note,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (p *PayrollExport) Validate(multiErr *errortypes.MultiError) {

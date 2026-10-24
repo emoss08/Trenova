@@ -3,6 +3,7 @@ package capture
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,33 +19,34 @@ const maxSuggestionReasonLength = 500
 // away.
 type CaptureItem struct {
 	bun.BaseModel `bun:"table:capture_items,alias:citm" json:"-"`
+	keel.Table    `keel:"capture_items"`
 
-	ID                   pulid.ID         `json:"id"                   bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID       pulid.ID         `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID         `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BatchID              pulid.ID         `json:"batchId"              bun:"batch_id,type:VARCHAR(100),notnull"`
-	Position             int              `json:"position"             bun:"position,type:INTEGER,notnull"`
-	Status               ItemStatus       `json:"status"               bun:"status,type:VARCHAR(20),notnull"`
-	PageIDs              []pulid.ID       `json:"pageIds"              bun:"page_ids,type:TEXT[],array,notnull"`
-	SuggestedType        string           `json:"suggestedType"        bun:"suggested_type,type:VARCHAR(50),nullzero"`
-	SuggestedID          *pulid.ID        `json:"suggestedId"          bun:"suggested_id,type:VARCHAR(100),nullzero"`
-	SuggestedDocTypeID   *pulid.ID        `json:"suggestedDocTypeId"   bun:"suggested_doc_type_id,type:VARCHAR(100),nullzero"`
-	SuggestionSource     SuggestionSource `json:"suggestionSource"     bun:"suggestion_source,type:VARCHAR(20),nullzero"`
-	SuggestionConfidence *float64         `json:"suggestionConfidence" bun:"suggestion_confidence,type:NUMERIC(4,3),nullzero"`
-	SuggestionReason     string           `json:"suggestionReason"     bun:"suggestion_reason,type:VARCHAR(500),nullzero"`
-	CoverSheetID         *pulid.ID        `json:"coverSheetId"         bun:"cover_sheet_id,type:VARCHAR(100),nullzero"`
-	DetectedKind         string           `json:"detectedKind"         bun:"detected_kind,type:VARCHAR(50),nullzero"`
-	FiledType            string           `json:"filedType"            bun:"filed_type,type:VARCHAR(50),nullzero"`
-	FiledID              *pulid.ID        `json:"filedId"              bun:"filed_id,type:VARCHAR(100),nullzero"`
-	FiledDocTypeID       *pulid.ID        `json:"filedDocTypeId"       bun:"filed_doc_type_id,type:VARCHAR(100),nullzero"`
-	DocumentID           *pulid.ID        `json:"documentId"           bun:"document_id,type:VARCHAR(100),nullzero"`
-	UploadSessionID      *pulid.ID        `json:"-"                    bun:"upload_session_id,type:VARCHAR(100),nullzero"`
-	FiledByID            *pulid.ID        `json:"filedById"            bun:"filed_by_id,type:VARCHAR(100),nullzero"`
-	FiledAt              *int64           `json:"filedAt"              bun:"filed_at,type:BIGINT,nullzero"`
-	FailureMessage       string           `json:"failureMessage"       bun:"failure_message,type:VARCHAR(500),nullzero"`
-	Version              int64            `json:"version"              bun:"version,type:BIGINT"`
-	CreatedAt            int64            `json:"createdAt"            bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64            `json:"updatedAt"            bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID         `json:"id"                   bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:citm_"`
+	BusinessUnitID       pulid.ID         `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID         `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BatchID              pulid.ID         `json:"batchId"              bun:"batch_id,type:VARCHAR(100),notnull" keel:"batch_id"`
+	Position             int              `json:"position"             bun:"position,type:INTEGER,notnull" keel:"position"`
+	Status               ItemStatus       `json:"status"               bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	PageIDs              []pulid.ID       `json:"pageIds"              bun:"page_ids,type:TEXT[],array,notnull" keel:"page_ids"`
+	SuggestedType        string           `json:"suggestedType"        bun:"suggested_type,type:VARCHAR(50),nullzero" keel:"suggested_type,nullzero"`
+	SuggestedID          *pulid.ID        `json:"suggestedId"          bun:"suggested_id,type:VARCHAR(100),nullzero" keel:"suggested_id"`
+	SuggestedDocTypeID   *pulid.ID        `json:"suggestedDocTypeId"   bun:"suggested_doc_type_id,type:VARCHAR(100),nullzero" keel:"suggested_doc_type_id"`
+	SuggestionSource     SuggestionSource `json:"suggestionSource"     bun:"suggestion_source,type:VARCHAR(20),nullzero" keel:"suggestion_source,nullzero"`
+	SuggestionConfidence *float64         `json:"suggestionConfidence" bun:"suggestion_confidence,type:NUMERIC(4,3),nullzero" keel:"suggestion_confidence"`
+	SuggestionReason     string           `json:"suggestionReason"     bun:"suggestion_reason,type:VARCHAR(500),nullzero" keel:"suggestion_reason,nullzero"`
+	CoverSheetID         *pulid.ID        `json:"coverSheetId"         bun:"cover_sheet_id,type:VARCHAR(100),nullzero" keel:"cover_sheet_id"`
+	DetectedKind         string           `json:"detectedKind"         bun:"detected_kind,type:VARCHAR(50),nullzero" keel:"detected_kind,nullzero"`
+	FiledType            string           `json:"filedType"            bun:"filed_type,type:VARCHAR(50),nullzero" keel:"filed_type,nullzero"`
+	FiledID              *pulid.ID        `json:"filedId"              bun:"filed_id,type:VARCHAR(100),nullzero" keel:"filed_id"`
+	FiledDocTypeID       *pulid.ID        `json:"filedDocTypeId"       bun:"filed_doc_type_id,type:VARCHAR(100),nullzero" keel:"filed_doc_type_id"`
+	DocumentID           *pulid.ID        `json:"documentId"           bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id"`
+	UploadSessionID      *pulid.ID        `json:"-"                    bun:"upload_session_id,type:VARCHAR(100),nullzero" keel:"upload_session_id"`
+	FiledByID            *pulid.ID        `json:"filedById"            bun:"filed_by_id,type:VARCHAR(100),nullzero" keel:"filed_by_id"`
+	FiledAt              *int64           `json:"filedAt"              bun:"filed_at,type:BIGINT,nullzero" keel:"filed_at"`
+	FailureMessage       string           `json:"failureMessage"       bun:"failure_message,type:VARCHAR(500),nullzero" keel:"failure_message,nullzero"`
+	Version              int64            `json:"version"              bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt            int64            `json:"createdAt"            bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt            int64            `json:"updatedAt"            bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (i *CaptureItem) Validate(multiErr *errortypes.MultiError) {

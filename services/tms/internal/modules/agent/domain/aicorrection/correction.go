@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -94,42 +95,43 @@ func TallyResults(results []FieldResult) Tally {
 
 type Correction struct {
 	bun.BaseModel `bun:"table:ai_corrections,alias:aicr" json:"-"`
+	keel.Table    `keel:"ai_corrections"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:aicr_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	Task         Task        `json:"task"         bun:"task,type:VARCHAR(50),notnull"`
-	SourceType   SourceType  `json:"sourceType"   bun:"source_type,type:VARCHAR(50),notnull"`
-	SourceID     pulid.ID    `json:"sourceId"     bun:"source_id,type:VARCHAR(100),notnull"`
-	DocumentID   *pulid.ID   `json:"documentId"   bun:"document_id,type:VARCHAR(100),nullzero"`
-	SubjectType  SubjectType `json:"subjectType"  bun:"subject_type,type:VARCHAR(50),notnull"`
-	SubjectID    pulid.ID    `json:"subjectId"    bun:"subject_id,type:VARCHAR(100),notnull"`
-	CapturedByID pulid.ID    `json:"capturedById" bun:"captured_by_id,type:VARCHAR(100),notnull"`
+	Task         Task        `json:"task"         bun:"task,type:VARCHAR(50),notnull" keel:"task"`
+	SourceType   SourceType  `json:"sourceType"   bun:"source_type,type:VARCHAR(50),notnull" keel:"source_type"`
+	SourceID     pulid.ID    `json:"sourceId"     bun:"source_id,type:VARCHAR(100),notnull" keel:"source_id"`
+	DocumentID   *pulid.ID   `json:"documentId"   bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id"`
+	SubjectType  SubjectType `json:"subjectType"  bun:"subject_type,type:VARCHAR(50),notnull" keel:"subject_type"`
+	SubjectID    pulid.ID    `json:"subjectId"    bun:"subject_id,type:VARCHAR(100),notnull" keel:"subject_id"`
+	CapturedByID pulid.ID    `json:"capturedById" bun:"captured_by_id,type:VARCHAR(100),notnull" keel:"captured_by_id"`
 
-	DocumentKind         string    `json:"documentKind"         bun:"document_kind,type:VARCHAR(100),nullzero"`
-	DocumentFingerprint  string    `json:"documentFingerprint"  bun:"document_fingerprint,type:VARCHAR(255),nullzero"`
-	ExtractionModel      string    `json:"extractionModel"      bun:"extraction_model,type:VARCHAR(255),nullzero"`
-	ExtractionProviderID *pulid.ID `json:"extractionProviderId" bun:"extraction_provider_id,type:VARCHAR(100),nullzero"`
-	PredictedConfidence  float64   `json:"predictedConfidence"  bun:"predicted_confidence,type:DOUBLE PRECISION,notnull,default:0"`
+	DocumentKind         string    `json:"documentKind"         bun:"document_kind,type:VARCHAR(100),nullzero" keel:"document_kind,nullzero"`
+	DocumentFingerprint  string    `json:"documentFingerprint"  bun:"document_fingerprint,type:VARCHAR(255),nullzero" keel:"document_fingerprint,nullzero"`
+	ExtractionModel      string    `json:"extractionModel"      bun:"extraction_model,type:VARCHAR(255),nullzero" keel:"extraction_model,nullzero"`
+	ExtractionProviderID *pulid.ID `json:"extractionProviderId" bun:"extraction_provider_id,type:VARCHAR(100),nullzero" keel:"extraction_provider_id"`
+	PredictedConfidence  float64   `json:"predictedConfidence"  bun:"predicted_confidence,type:DOUBLE PRECISION,notnull,default:0" keel:"predicted_confidence"`
 
-	Predicted    *Snapshot     `json:"predicted"    bun:"predicted,type:JSONB,notnull"`
-	Confirmed    *Snapshot     `json:"confirmed"    bun:"confirmed,type:JSONB,notnull"`
-	FieldResults []FieldResult `json:"fieldResults" bun:"field_results,type:JSONB,notnull"`
+	Predicted    *Snapshot     `json:"predicted"    bun:"predicted,type:JSONB,notnull" keel:"predicted,jsonb"`
+	Confirmed    *Snapshot     `json:"confirmed"    bun:"confirmed,type:JSONB,notnull" keel:"confirmed,jsonb"`
+	FieldResults []FieldResult `json:"fieldResults" bun:"field_results,type:JSONB,notnull" keel:"field_results,jsonb"`
 
-	ScoredCount      int `json:"scoredCount"      bun:"scored_count,type:INTEGER,notnull,default:0"`
-	CorrectCount     int `json:"correctCount"     bun:"correct_count,type:INTEGER,notnull,default:0"`
-	CorrectedCount   int `json:"correctedCount"   bun:"corrected_count,type:INTEGER,notnull,default:0"`
-	MissedCount      int `json:"missedCount"      bun:"missed_count,type:INTEGER,notnull,default:0"`
-	UnconfirmedCount int `json:"unconfirmedCount" bun:"unconfirmed_count,type:INTEGER,notnull,default:0"`
-	UnscoredCount    int `json:"unscoredCount"    bun:"unscored_count,type:INTEGER,notnull,default:0"`
+	ScoredCount      int `json:"scoredCount"      bun:"scored_count,type:INTEGER,notnull,default:0" keel:"scored_count"`
+	CorrectCount     int `json:"correctCount"     bun:"correct_count,type:INTEGER,notnull,default:0" keel:"correct_count"`
+	CorrectedCount   int `json:"correctedCount"   bun:"corrected_count,type:INTEGER,notnull,default:0" keel:"corrected_count"`
+	MissedCount      int `json:"missedCount"      bun:"missed_count,type:INTEGER,notnull,default:0" keel:"missed_count"`
+	UnconfirmedCount int `json:"unconfirmedCount" bun:"unconfirmed_count,type:INTEGER,notnull,default:0" keel:"unconfirmed_count"`
+	UnscoredCount    int `json:"unscoredCount"    bun:"unscored_count,type:INTEGER,notnull,default:0" keel:"unscored_count"`
 
-	CapturedAt int64 `json:"capturedAt" bun:"captured_at,type:BIGINT,notnull"`
-	Version    int64 `json:"version"    bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt  int64 `json:"createdAt"  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt  int64 `json:"updatedAt"  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CapturedAt int64 `json:"capturedAt" bun:"captured_at,type:BIGINT,notnull" keel:"captured_at"`
+	Version    int64 `json:"version"    bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt  int64 `json:"createdAt"  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt  int64 `json:"updatedAt"  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

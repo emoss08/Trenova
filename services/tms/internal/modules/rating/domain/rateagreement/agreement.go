@@ -14,6 +14,7 @@ package rateagreement
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -46,64 +47,65 @@ const (
 
 type RateAgreement struct {
 	bun.BaseModel             `bun:"table:rate_agreements,alias:rag" json:"-"`
+	keel.Table                `keel:"rate_agreements"`
 	pagination.CursorValueSet `bun:",embed"                          json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rag_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	PartyType  PartyType `json:"partyType"  bun:"party_type,type:rate_agreement_party_type_enum,notnull"`
-	CustomerID *pulid.ID `json:"customerId" bun:"customer_id,type:VARCHAR(100),nullzero"`
-	CarrierID  *pulid.ID `json:"carrierId"  bun:"carrier_id,type:VARCHAR(100),nullzero"`
+	PartyType  PartyType `json:"partyType"  bun:"party_type,type:rate_agreement_party_type_enum,notnull" keel:"party_type"`
+	CustomerID *pulid.ID `json:"customerId" bun:"customer_id,type:VARCHAR(100),nullzero" keel:"customer_id"`
+	CarrierID  *pulid.ID `json:"carrierId"  bun:"carrier_id,type:VARCHAR(100),nullzero" keel:"carrier_id"`
 
-	Code          string        `json:"code"          bun:"code,type:VARCHAR(50),notnull"`
-	Name          string        `json:"name"          bun:"name,type:VARCHAR(150),notnull"`
-	Description   string        `json:"description"   bun:"description,type:TEXT,nullzero"`
-	AgreementType AgreementType `json:"agreementType" bun:"agreement_type,type:rate_agreement_type_enum,notnull,default:'Contract'"`
-	Status        Status        `json:"status"        bun:"status,type:rate_agreement_status_enum,notnull,default:'Draft'"`
-	ContractRef   string        `json:"contractRef"   bun:"contract_ref,type:VARCHAR(100),nullzero"`
-	DocumentID    *pulid.ID     `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero"`
+	Code          string        `json:"code"          bun:"code,type:VARCHAR(50),notnull" keel:"code"`
+	Name          string        `json:"name"          bun:"name,type:VARCHAR(150),notnull" keel:"name"`
+	Description   string        `json:"description"   bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	AgreementType AgreementType `json:"agreementType" bun:"agreement_type,type:rate_agreement_type_enum,notnull,default:'Contract'" keel:"agreement_type"`
+	Status        Status        `json:"status"        bun:"status,type:rate_agreement_status_enum,notnull,default:'Draft'" keel:"status"`
+	ContractRef   string        `json:"contractRef"   bun:"contract_ref,type:VARCHAR(100),nullzero" keel:"contract_ref,nullzero"`
+	DocumentID    *pulid.ID     `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id"`
 
-	Priority          int16  `json:"priority"          bun:"priority,type:SMALLINT,notnull,default:0"`
-	EffectiveFrom     int64  `json:"effectiveFrom"     bun:"effective_from,type:BIGINT,notnull"`
-	EffectiveTo       *int64 `json:"effectiveTo"       bun:"effective_to,type:BIGINT,nullzero"`
-	AutoRenew         bool   `json:"autoRenew"         bun:"auto_renew,type:BOOLEAN,notnull,default:false"`
-	RenewalNoticeDays int16  `json:"renewalNoticeDays" bun:"renewal_notice_days,type:SMALLINT,notnull,default:30"`
+	Priority          int16  `json:"priority"          bun:"priority,type:SMALLINT,notnull,default:0" keel:"priority"`
+	EffectiveFrom     int64  `json:"effectiveFrom"     bun:"effective_from,type:BIGINT,notnull" keel:"effective_from"`
+	EffectiveTo       *int64 `json:"effectiveTo"       bun:"effective_to,type:BIGINT,nullzero" keel:"effective_to"`
+	AutoRenew         bool   `json:"autoRenew"         bun:"auto_renew,type:BOOLEAN,notnull,default:false" keel:"auto_renew"`
+	RenewalNoticeDays int16  `json:"renewalNoticeDays" bun:"renewal_notice_days,type:SMALLINT,notnull,default:30" keel:"renewal_notice_days"`
 
-	Currency string             `json:"currency" bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
-	Inputs   tarifftypes.Inputs `json:"inputs"   bun:"inputs,type:JSONB,notnull,default:'{}'"`
+	Currency string             `json:"currency" bun:"currency,type:VARCHAR(3),notnull,default:'USD'" keel:"currency"`
+	Inputs   tarifftypes.Inputs `json:"inputs"   bun:"inputs,type:JSONB,notnull,default:'{}'" keel:"inputs,jsonb"`
 
 	// BillToCustomerID redirects invoicing on a customer agreement. It is only
 	// meaningful on the sell side and a check constraint keeps it there.
-	BillToCustomerID *pulid.ID `json:"billToCustomerId" bun:"bill_to_customer_id,type:VARCHAR(100),nullzero"`
+	BillToCustomerID *pulid.ID `json:"billToCustomerId" bun:"bill_to_customer_id,type:VARCHAR(100),nullzero" keel:"bill_to_customer_id"`
 
 	// MarginFloorPercent and MaxPayPercentOfSell are the buy side guardrails a
 	// brokerage sets against a carrier, and are likewise constrained to it.
-	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent"  bun:"margin_floor_percent,type:NUMERIC(9,4),nullzero"`
-	MaxPayPercentOfSell decimal.NullDecimal `json:"maxPayPercentOfSell" bun:"max_pay_percent_of_sell,type:NUMERIC(9,4),nullzero"`
+	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent"  bun:"margin_floor_percent,type:NUMERIC(9,4),nullzero" keel:"margin_floor_percent"`
+	MaxPayPercentOfSell decimal.NullDecimal `json:"maxPayPercentOfSell" bun:"max_pay_percent_of_sell,type:NUMERIC(9,4),nullzero" keel:"max_pay_percent_of_sell"`
 
-	SubmittedByID *pulid.ID `json:"submittedById" bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
-	SubmittedAt   *int64    `json:"submittedAt"   bun:"submitted_at,type:BIGINT,nullzero"`
-	ApprovedByID  *pulid.ID `json:"approvedById"  bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt    *int64    `json:"approvedAt"    bun:"approved_at,type:BIGINT,nullzero"`
-	ReviewComment string    `json:"reviewComment" bun:"review_comment,type:TEXT,nullzero"`
+	SubmittedByID *pulid.ID `json:"submittedById" bun:"submitted_by_id,type:VARCHAR(100),nullzero" keel:"submitted_by_id"`
+	SubmittedAt   *int64    `json:"submittedAt"   bun:"submitted_at,type:BIGINT,nullzero" keel:"submitted_at"`
+	ApprovedByID  *pulid.ID `json:"approvedById"  bun:"approved_by_id,type:VARCHAR(100),nullzero" keel:"approved_by_id"`
+	ApprovedAt    *int64    `json:"approvedAt"    bun:"approved_at,type:BIGINT,nullzero" keel:"approved_at"`
+	ReviewComment string    `json:"reviewComment" bun:"review_comment,type:TEXT,nullzero" keel:"review_comment,nullzero"`
 
-	CurrentVersionNumber int64  `json:"currentVersionNumber" bun:"current_version_number,type:BIGINT,notnull,default:1"`
-	Version              int64  `json:"version"              bun:"version,type:BIGINT"`
-	CreatedAt            int64  `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64  `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector         string `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                 string `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly"`
+	CurrentVersionNumber int64  `json:"currentVersionNumber" bun:"current_version_number,type:BIGINT,notnull,default:1" keel:"current_version_number"`
+	Version              int64  `json:"version"              bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt            int64  `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt            int64  `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector         string `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                 string `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"                  bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"                  bun:"rel:belongs-to,join:organization_id=id"`
-	Customer     *customer.Customer   `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id"`
-	Carrier      *carrier.Carrier     `json:"carrier,omitempty"  bun:"rel:belongs-to,join:carrier_id=id"`
+	Customer     *customer.Customer   `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id" keel:"belongs:customer_id"`
+	Carrier      *carrier.Carrier     `json:"carrier,omitempty"  bun:"rel:belongs-to,join:carrier_id=id" keel:"belongs:carrier_id"`
 
-	Rules        []*RateAgreementRule        `json:"rules,omitempty"        bun:"rel:has-many,join:id=rate_agreement_id"`
-	Accessorials []*RateAgreementAccessorial `json:"accessorials,omitempty" bun:"rel:has-many,join:id=rate_agreement_id"`
-	Versions     []*RateAgreementVersion     `json:"versions,omitempty"     bun:"rel:has-many,join:id=rate_agreement_id"`
-	FuelBinding  *RateAgreementFuelBinding   `json:"fuelBinding,omitempty"  bun:"rel:has-one,join:id=rate_agreement_id"`
+	Rules        []*RateAgreementRule        `json:"rules,omitempty"        bun:"rel:has-many,join:id=rate_agreement_id" keel:"many:rate_agreement_id"`
+	Accessorials []*RateAgreementAccessorial `json:"accessorials,omitempty" bun:"rel:has-many,join:id=rate_agreement_id" keel:"many:rate_agreement_id"`
+	Versions     []*RateAgreementVersion     `json:"versions,omitempty"     bun:"rel:has-many,join:id=rate_agreement_id" keel:"many:rate_agreement_id"`
+	FuelBinding  *RateAgreementFuelBinding   `json:"fuelBinding,omitempty"  bun:"rel:has-one,join:id=rate_agreement_id" keel:"one:rate_agreement_id"`
 }
 
 // PartyID is whichever of the customer or carrier this agreement is with.

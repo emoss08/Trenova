@@ -3,6 +3,7 @@ package documentaiextraction
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -22,29 +23,30 @@ const (
 
 type Extraction struct {
 	bun.BaseModel `bun:"table:document_ai_extractions,alias:dae" json:"-"`
+	keel.Table    `keel:"document_ai_extractions"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	DocumentID     pulid.ID `json:"documentId"     bun:"document_id,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	ExtractedAt    int64    `json:"extractedAt"    bun:"extracted_at,type:BIGINT,notnull"`
-	RequestHash    string   `json:"requestHash"    bun:"request_hash,type:VARCHAR(64),notnull"`
-	WorkflowID     string   `json:"workflowId"     bun:"workflow_id,type:VARCHAR(255),notnull"`
-	WorkflowRunID  string   `json:"workflowRunId"  bun:"workflow_run_id,type:VARCHAR(255),notnull"`
-	ActivityID     string   `json:"activityId"     bun:"activity_id,type:VARCHAR(255),notnull"`
-	ResponseID     string   `json:"responseId"     bun:"response_id,type:VARCHAR(255),nullzero"`
-	ProviderID     pulid.ID `json:"providerId"     bun:"provider_id,type:VARCHAR(100),nullzero"`
-	Model          string   `json:"model"          bun:"model,type:VARCHAR(100),nullzero"`
-	Status         Status   `json:"status"         bun:"status,type:VARCHAR(32),notnull,default:'Pending'"`
-	FailureCode    string   `json:"failureCode"    bun:"failure_code,type:VARCHAR(100),nullzero"`
-	FailureMessage string   `json:"failureMessage" bun:"failure_message,type:TEXT,nullzero"`
-	SubmittedAt    *int64   `json:"submittedAt"    bun:"submitted_at,type:BIGINT,nullzero"`
-	LastPolledAt   *int64   `json:"lastPolledAt"   bun:"last_polled_at,type:BIGINT,nullzero"`
-	CompletedAt    *int64   `json:"completedAt"    bun:"completed_at,type:BIGINT,nullzero"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT,notnull"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dax_"`
+	DocumentID     pulid.ID `json:"documentId"     bun:"document_id,type:VARCHAR(100),notnull" keel:"document_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	ExtractedAt    int64    `json:"extractedAt"    bun:"extracted_at,type:BIGINT,notnull" keel:"extracted_at"`
+	RequestHash    string   `json:"requestHash"    bun:"request_hash,type:VARCHAR(64),notnull" keel:"request_hash"`
+	WorkflowID     string   `json:"workflowId"     bun:"workflow_id,type:VARCHAR(255),notnull" keel:"workflow_id"`
+	WorkflowRunID  string   `json:"workflowRunId"  bun:"workflow_run_id,type:VARCHAR(255),notnull" keel:"workflow_run_id"`
+	ActivityID     string   `json:"activityId"     bun:"activity_id,type:VARCHAR(255),notnull" keel:"activity_id"`
+	ResponseID     string   `json:"responseId"     bun:"response_id,type:VARCHAR(255),nullzero" keel:"response_id,nullzero"`
+	ProviderID     pulid.ID `json:"providerId"     bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id,nullzero"`
+	Model          string   `json:"model"          bun:"model,type:VARCHAR(100),nullzero" keel:"model,nullzero"`
+	Status         Status   `json:"status"         bun:"status,type:VARCHAR(32),notnull,default:'Pending'" keel:"status"`
+	FailureCode    string   `json:"failureCode"    bun:"failure_code,type:VARCHAR(100),nullzero" keel:"failure_code,nullzero"`
+	FailureMessage string   `json:"failureMessage" bun:"failure_message,type:TEXT,nullzero" keel:"failure_message,nullzero"`
+	SubmittedAt    *int64   `json:"submittedAt"    bun:"submitted_at,type:BIGINT,nullzero" keel:"submitted_at"`
+	LastPolledAt   *int64   `json:"lastPolledAt"   bun:"last_polled_at,type:BIGINT,nullzero" keel:"last_polled_at"`
+	CompletedAt    *int64   `json:"completedAt"    bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
+	Version        int64    `json:"version"        bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (e *Extraction) BeforeAppendModel(_ context.Context, query bun.Query) error {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,29 +30,30 @@ var indexingBudgetRule = domainvalidation.BudgetUSD(MaxMonthlyIndexingBudgetUSD,
 
 type Settings struct {
 	bun.BaseModel `bun:"table:ai_retrieval_settings,alias:airs" json:"-"`
+	keel.Table    `keel:"ai_retrieval_settings"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:airs_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	MemoryEnabled          bool `json:"memoryEnabled"          bun:"memory_enabled,type:BOOLEAN,notnull"`
-	DocumentsEnabled       bool `json:"documentsEnabled"       bun:"documents_enabled,type:BOOLEAN,notnull"`
-	InboundMessagesEnabled bool `json:"inboundMessagesEnabled" bun:"inbound_messages_enabled,type:BOOLEAN,notnull"`
+	MemoryEnabled          bool `json:"memoryEnabled"          bun:"memory_enabled,type:BOOLEAN,notnull" keel:"memory_enabled"`
+	DocumentsEnabled       bool `json:"documentsEnabled"       bun:"documents_enabled,type:BOOLEAN,notnull" keel:"documents_enabled"`
+	InboundMessagesEnabled bool `json:"inboundMessagesEnabled" bun:"inbound_messages_enabled,type:BOOLEAN,notnull" keel:"inbound_messages_enabled"`
 
-	MonthlyIndexingBudgetUSD decimal.Decimal `json:"monthlyIndexingBudgetUsd" bun:"monthly_indexing_budget_usd,type:NUMERIC(14,2),notnull"`
+	MonthlyIndexingBudgetUSD decimal.Decimal `json:"monthlyIndexingBudgetUsd" bun:"monthly_indexing_budget_usd,type:NUMERIC(14,2),notnull" keel:"monthly_indexing_budget_usd"`
 
-	Paused       bool        `json:"paused"       bun:"paused,type:BOOLEAN,notnull,default:false"`
-	PausedReason PauseReason `json:"pausedReason" bun:"paused_reason,type:VARCHAR(20),nullzero"`
-	PausedAt     *int64      `json:"pausedAt"     bun:"paused_at,type:BIGINT,nullzero"`
+	Paused       bool        `json:"paused"       bun:"paused,type:BOOLEAN,notnull,default:false" keel:"paused"`
+	PausedReason PauseReason `json:"pausedReason" bun:"paused_reason,type:VARCHAR(20),nullzero" keel:"paused_reason,nullzero"`
+	PausedAt     *int64      `json:"pausedAt"     bun:"paused_at,type:BIGINT,nullzero" keel:"paused_at"`
 
-	ActiveModelKey    string `json:"activeModelKey"    bun:"active_model_key,type:VARCHAR(300),nullzero"`
-	Dimensions        int    `json:"dimensions"        bun:"dimensions,type:INTEGER,nullzero"`
-	PendingModelKey   string `json:"pendingModelKey"   bun:"pending_model_key,type:VARCHAR(300),nullzero"`
-	PendingDimensions int    `json:"pendingDimensions" bun:"pending_dimensions,type:INTEGER,nullzero"`
+	ActiveModelKey    string `json:"activeModelKey"    bun:"active_model_key,type:VARCHAR(300),nullzero" keel:"active_model_key,nullzero"`
+	Dimensions        int    `json:"dimensions"        bun:"dimensions,type:INTEGER,nullzero" keel:"dimensions,nullzero"`
+	PendingModelKey   string `json:"pendingModelKey"   bun:"pending_model_key,type:VARCHAR(300),nullzero" keel:"pending_model_key,nullzero"`
+	PendingDimensions int    `json:"pendingDimensions" bun:"pending_dimensions,type:INTEGER,nullzero" keel:"pending_dimensions,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

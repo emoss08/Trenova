@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,21 +52,22 @@ var _ bun.BeforeAppendModelHook = (*Brief)(nil)
 
 type Brief struct {
 	bun.BaseModel `bun:"table:accounting_briefs,alias:acb" json:"-"`
+	keel.Table    `keel:"accounting_briefs"`
 
-	ID              pulid.ID  `json:"id"              bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID  pulid.ID  `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID  pulid.ID  `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BriefDate       string    `json:"briefDate"       bun:"brief_date,type:VARCHAR(10),notnull"`
-	Generation      int       `json:"generation"      bun:"generation,type:INTEGER,notnull"`
-	Trigger         Trigger   `json:"trigger"         bun:"trigger,type:VARCHAR(20),notnull"`
-	Segments        []Segment `json:"segments"        bun:"segments,type:JSONB,notnull,default:'[]'"`
-	Facts           Facts     `json:"facts"           bun:"facts,type:JSONB,notnull,default:'{}'"`
-	Narrated        bool      `json:"narrated"        bun:"narrated,type:BOOLEAN,notnull,default:false"`
-	ModelIdentifier string    `json:"modelIdentifier" bun:"model_identifier,type:VARCHAR(255),nullzero"`
-	GeneratedAt     int64     `json:"generatedAt"     bun:"generated_at,type:BIGINT,notnull"`
-	VerifiedAt      int64     `json:"verifiedAt"      bun:"verified_at,type:BIGINT,notnull"`
-	CreatedAt       int64     `json:"createdAt"       bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt       int64     `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull"`
+	ID              pulid.ID  `json:"id"              bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:acb_"`
+	BusinessUnitID  pulid.ID  `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID  `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BriefDate       string    `json:"briefDate"       bun:"brief_date,type:VARCHAR(10),notnull" keel:"brief_date"`
+	Generation      int       `json:"generation"      bun:"generation,type:INTEGER,notnull" keel:"generation"`
+	Trigger         Trigger   `json:"trigger"         bun:"trigger,type:VARCHAR(20),notnull" keel:"trigger"`
+	Segments        []Segment `json:"segments"        bun:"segments,type:JSONB,notnull,default:'[]'" keel:"segments,jsonb"`
+	Facts           Facts     `json:"facts"           bun:"facts,type:JSONB,notnull,default:'{}'" keel:"facts,jsonb"`
+	Narrated        bool      `json:"narrated"        bun:"narrated,type:BOOLEAN,notnull,default:false" keel:"narrated"`
+	ModelIdentifier string    `json:"modelIdentifier" bun:"model_identifier,type:VARCHAR(255),nullzero" keel:"model_identifier,nullzero"`
+	GeneratedAt     int64     `json:"generatedAt"     bun:"generated_at,type:BIGINT,notnull" keel:"generated_at"`
+	VerifiedAt      int64     `json:"verifiedAt"      bun:"verified_at,type:BIGINT,notnull" keel:"verified_at"`
+	CreatedAt       int64     `json:"createdAt"       bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt       int64     `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 }
 
 func (b *Brief) BeforeAppendModel(_ context.Context, query bun.Query) error {

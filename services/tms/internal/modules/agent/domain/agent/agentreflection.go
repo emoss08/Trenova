@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -219,38 +220,39 @@ func (c ReflectionChange) Kept() bool {
 
 type Reflection struct {
 	bun.BaseModel `bun:"table:agent_reflections,alias:arfl" json:"-"`
+	keel.Table    `keel:"agent_reflections"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:arfl_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull"`
-	SubjectType       ReflectionSubject `json:"subjectType"       bun:"subject_type,type:VARCHAR(20),notnull"`
-	ThreadID          *pulid.ID         `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero"`
-	RunID             *pulid.ID         `json:"runId"             bun:"run_id,type:VARCHAR(100),nullzero"`
-	UserID            *pulid.ID         `json:"userId"            bun:"user_id,type:VARCHAR(100),nullzero"`
-	FromSequence      int               `json:"fromSequence"      bun:"from_sequence,type:INTEGER,notnull,default:0"`
-	ThroughSequence   int               `json:"throughSequence"   bun:"through_sequence,type:INTEGER,notnull,default:0"`
+	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
+	SubjectType       ReflectionSubject `json:"subjectType"       bun:"subject_type,type:VARCHAR(20),notnull" keel:"subject_type"`
+	ThreadID          *pulid.ID         `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero" keel:"thread_id"`
+	RunID             *pulid.ID         `json:"runId"             bun:"run_id,type:VARCHAR(100),nullzero" keel:"run_id"`
+	UserID            *pulid.ID         `json:"userId"            bun:"user_id,type:VARCHAR(100),nullzero" keel:"user_id"`
+	FromSequence      int               `json:"fromSequence"      bun:"from_sequence,type:INTEGER,notnull,default:0" keel:"from_sequence"`
+	ThroughSequence   int               `json:"throughSequence"   bun:"through_sequence,type:INTEGER,notnull,default:0" keel:"through_sequence"`
 
-	Status     ReflectionStatus   `json:"status"     bun:"status,type:VARCHAR(20),notnull,default:'Running'"`
-	SkipReason ReflectionSkip     `json:"skipReason" bun:"skip_reason,type:VARCHAR(30),nullzero"`
-	Signals    ReflectionSignals  `json:"signals"    bun:"signals,type:JSONB,notnull,default:'[]'"`
-	Changes    []ReflectionChange `json:"changes"    bun:"changes,type:JSONB,notnull,default:'[]'"`
-	Notes      string             `json:"notes"      bun:"notes,type:TEXT,nullzero"`
-	Tainted    bool               `json:"tainted"    bun:"tainted,type:BOOLEAN,notnull,default:false"`
+	Status     ReflectionStatus   `json:"status"     bun:"status,type:VARCHAR(20),notnull,default:'Running'" keel:"status"`
+	SkipReason ReflectionSkip     `json:"skipReason" bun:"skip_reason,type:VARCHAR(30),nullzero" keel:"skip_reason,nullzero"`
+	Signals    ReflectionSignals  `json:"signals"    bun:"signals,type:JSONB,notnull,default:'[]'" keel:"signals,jsonb"`
+	Changes    []ReflectionChange `json:"changes"    bun:"changes,type:JSONB,notnull,default:'[]'" keel:"changes,jsonb"`
+	Notes      string             `json:"notes"      bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	Tainted    bool               `json:"tainted"    bun:"tainted,type:BOOLEAN,notnull,default:false" keel:"tainted"`
 
-	Model        string   `json:"model"        bun:"model,type:VARCHAR(200),nullzero"`
-	ProviderID   pulid.ID `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
-	InputTokens  int      `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
-	OutputTokens int      `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
-	ErrorMessage string   `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
-	FinishedAt   *int64   `json:"finishedAt"   bun:"finished_at,type:BIGINT,nullzero"`
+	Model        string   `json:"model"        bun:"model,type:VARCHAR(200),nullzero" keel:"model,nullzero"`
+	ProviderID   pulid.ID `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id,nullzero"`
+	InputTokens  int      `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0" keel:"input_tokens"`
+	OutputTokens int      `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0" keel:"output_tokens"`
+	ErrorMessage string   `json:"errorMessage" bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
+	FinishedAt   *int64   `json:"finishedAt"   bun:"finished_at,type:BIGINT,nullzero" keel:"finished_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

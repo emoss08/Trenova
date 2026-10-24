@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,33 +26,34 @@ const OrganizationIDPrefix = "org_"
 
 type Organization struct {
 	bun.BaseModel `bun:"table:organizations,alias:org" json:"-"`
+	keel.Table    `keel:"organizations"`
 
-	ID                     pulid.ID  `json:"id"                     bun:"id,pk,type:VARCHAR(100)"`
-	StateID                pulid.ID  `json:"stateId"                bun:"state_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID  `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	Name                   string    `json:"name"                   bun:"name,type:VARCHAR(100),notnull"`
-	LoginSlug              string    `json:"loginSlug"              bun:"login_slug,type:VARCHAR(100)"`
-	ScacCode               string    `json:"scacCode"               bun:"scac_code,type:VARCHAR(4),notnull"`
-	DOTNumber              string    `json:"dotNumber"              bun:"dot_number,type:VARCHAR(8),notnull"`
-	LogoURL                string    `json:"logoUrl"                bun:"logo_url,type:VARCHAR(255)"`
-	BucketName             string    `json:"bucketName"             bun:"bucket_name,type:VARCHAR(63),notnull"`
-	AddressLine1           string    `json:"addressLine1"           bun:"address_line1,type:VARCHAR(150),notnull"`
-	AddressLine2           string    `json:"addressLine2"           bun:"address_line2,type:VARCHAR(150)"`
-	City                   string    `json:"city"                   bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode             string    `json:"postalCode"             bun:"postal_code,type:us_postal_code,notnull"`
-	Timezone               string    `json:"timezone"               bun:"timezone,type:VARCHAR(100),notnull,default:'America/New_York'"`
-	Locale                 string    `json:"locale"                 bun:"locale,type:VARCHAR(10),notnull,default:'en'"`
-	TaxID                  string    `json:"taxId"                  bun:"tax_id,type:VARCHAR(50)"`
-	BrokerageEnabled       bool      `json:"brokerageEnabled"       bun:"brokerage_enabled,type:BOOLEAN,notnull"`
-	AssetOperationsEnabled bool      `json:"assetOperationsEnabled" bun:"asset_operations_enabled,type:BOOLEAN,notnull"`
-	Metadata               *Metadata `json:"-"                      bun:"metadata,type:JSONB"`
-	Version                int64     `json:"version"                bun:"version,type:BIGINT"`
-	CreatedAt              int64     `json:"createdAt"              bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64     `json:"updatedAt"              bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID  `json:"id"                     bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	StateID                pulid.ID  `json:"stateId"                bun:"state_id,type:VARCHAR(100),notnull" keel:"state_id"`
+	BusinessUnitID         pulid.ID  `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	Name                   string    `json:"name"                   bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	LoginSlug              string    `json:"loginSlug"              bun:"login_slug,type:VARCHAR(100)" keel:"login_slug,nullzero"`
+	ScacCode               string    `json:"scacCode"               bun:"scac_code,type:VARCHAR(4),notnull" keel:"scac_code"`
+	DOTNumber              string    `json:"dotNumber"              bun:"dot_number,type:VARCHAR(8),notnull" keel:"dot_number"`
+	LogoURL                string    `json:"logoUrl"                bun:"logo_url,type:VARCHAR(255)" keel:"logo_url,nullzero"`
+	BucketName             string    `json:"bucketName"             bun:"bucket_name,type:VARCHAR(63),notnull" keel:"bucket_name"`
+	AddressLine1           string    `json:"addressLine1"           bun:"address_line1,type:VARCHAR(150),notnull" keel:"address_line1"`
+	AddressLine2           string    `json:"addressLine2"           bun:"address_line2,type:VARCHAR(150)" keel:"address_line2,nullzero"`
+	City                   string    `json:"city"                   bun:"city,type:VARCHAR(100),notnull" keel:"city"`
+	PostalCode             string    `json:"postalCode"             bun:"postal_code,type:us_postal_code,notnull" keel:"postal_code"`
+	Timezone               string    `json:"timezone"               bun:"timezone,type:VARCHAR(100),notnull,default:'America/New_York'" keel:"timezone"`
+	Locale                 string    `json:"locale"                 bun:"locale,type:VARCHAR(10),notnull,default:'en'" keel:"locale"`
+	TaxID                  string    `json:"taxId"                  bun:"tax_id,type:VARCHAR(50)" keel:"tax_id,nullzero"`
+	BrokerageEnabled       bool      `json:"brokerageEnabled"       bun:"brokerage_enabled,type:BOOLEAN,notnull" keel:"brokerage_enabled"`
+	AssetOperationsEnabled bool      `json:"assetOperationsEnabled" bun:"asset_operations_enabled,type:BOOLEAN,notnull" keel:"asset_operations_enabled"`
+	Metadata               *Metadata `json:"-"                      bun:"metadata,type:JSONB" keel:"metadata,jsonb"`
+	Version                int64     `json:"version"                bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt              int64     `json:"createdAt"              bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt              int64     `json:"updatedAt"              bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	// Relationships
-	State        *usstate.UsState `json:"state"        bun:"rel:belongs-to,join:state_id=id"`
-	BusinessUnit *BusinessUnit    `json:"businessUnit" bun:"rel:belongs-to,join:business_unit_id=id"`
+	State        *usstate.UsState `json:"state"        bun:"rel:belongs-to,join:state_id=id" keel:"belongs:state_id"`
+	BusinessUnit *BusinessUnit    `json:"businessUnit" bun:"rel:belongs-to,join:business_unit_id=id" keel:"belongs:business_unit_id"`
 }
 
 func (o *Organization) Validate(multiErr *errortypes.MultiError) {

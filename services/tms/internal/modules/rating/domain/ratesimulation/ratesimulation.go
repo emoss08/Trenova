@@ -14,6 +14,7 @@ package ratesimulation
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -44,62 +45,63 @@ const (
 // RateSimulation is one replay of an agreement against historical shipments.
 type RateSimulation struct {
 	bun.BaseModel             `bun:"table:rate_simulations,alias:rsim" json:"-"`
+	keel.Table                `keel:"rate_simulations"`
 	pagination.CursorValueSet `bun:",embed"                            json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rsim_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
 	// RateAgreementID is the contract being replayed. It is usually a draft:
 	// the point is to see what it would do before anybody signs it.
-	RateAgreementID pulid.ID `json:"rateAgreementId" bun:"rate_agreement_id,type:VARCHAR(100),notnull"`
+	RateAgreementID pulid.ID `json:"rateAgreementId" bun:"rate_agreement_id,type:VARCHAR(100),notnull" keel:"rate_agreement_id"`
 
-	Name        string `json:"name"        bun:"name,type:VARCHAR(150),notnull"`
-	Description string `json:"description" bun:"description,type:TEXT,nullzero"`
+	Name        string `json:"name"        bun:"name,type:VARCHAR(150),notnull" keel:"name"`
+	Description string `json:"description" bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
 
-	Status Status `json:"status" bun:"status,type:rate_simulation_status_enum,notnull,default:'Pending'"`
+	Status Status `json:"status" bun:"status,type:rate_simulation_status_enum,notnull,default:'Pending'" keel:"status"`
 
 	// PartyType says which side is being simulated. A carrier contract replay
 	// answers "what would this cost us", which is the same machinery pointed
 	// the other way.
-	PartyType rateagreement.PartyType `json:"partyType" bun:"party_type,type:rate_agreement_party_type_enum,notnull,default:'Customer'"`
+	PartyType rateagreement.PartyType `json:"partyType" bun:"party_type,type:rate_agreement_party_type_enum,notnull,default:'Customer'" keel:"party_type"`
 
 	// SampleFrom and SampleTo bound the shipments replayed, by their own ship
 	// dates. Half open, matching every other window in the rating system: a
 	// shipment on SampleTo belongs to the next period.
-	SampleFrom int64 `json:"sampleFrom" bun:"sample_from,type:BIGINT,notnull"`
-	SampleTo   int64 `json:"sampleTo"   bun:"sample_to,type:BIGINT,notnull"`
+	SampleFrom int64 `json:"sampleFrom" bun:"sample_from,type:BIGINT,notnull" keel:"sample_from"`
+	SampleTo   int64 `json:"sampleTo"   bun:"sample_to,type:BIGINT,notnull" keel:"sample_to"`
 
 	// SampleLimit caps how many shipments are replayed. Zero means every
 	// shipment in the window.
-	SampleLimit int `json:"sampleLimit" bun:"sample_limit,type:INTEGER,notnull,default:0"`
+	SampleLimit int `json:"sampleLimit" bun:"sample_limit,type:INTEGER,notnull,default:0" keel:"sample_limit"`
 
 	// Summary is what the run came to, written once at the end.
-	Summary *ratesimulation.Summary `json:"summary" bun:"summary,type:JSONB,nullzero"`
+	Summary *ratesimulation.Summary `json:"summary" bun:"summary,type:JSONB,nullzero" keel:"summary,jsonb"`
 
 	// RuleCoverage says what happened to each of the agreement's rules. It is
 	// the half of the answer the revenue total cannot give: which lanes never
 	// fired, and which fired but always lost.
-	RuleCoverage []*RuleCoverage `json:"ruleCoverage" bun:"rule_coverage,type:JSONB,nullzero"`
+	RuleCoverage []*RuleCoverage `json:"ruleCoverage" bun:"rule_coverage,type:JSONB,nullzero" keel:"rule_coverage,jsonb,nullzero"`
 
-	Error string `json:"error" bun:"error,type:TEXT,nullzero"`
+	Error string `json:"error" bun:"error,type:TEXT,nullzero" keel:"error,nullzero"`
 
-	StartedAt   *int64    `json:"startedAt"   bun:"started_at,type:BIGINT,nullzero"`
-	CompletedAt *int64    `json:"completedAt" bun:"completed_at,type:BIGINT,nullzero"`
-	RequestedBy *pulid.ID `json:"requestedBy" bun:"requested_by_id,type:VARCHAR(100),nullzero"`
+	StartedAt   *int64    `json:"startedAt"   bun:"started_at,type:BIGINT,nullzero" keel:"started_at"`
+	CompletedAt *int64    `json:"completedAt" bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
+	RequestedBy *pulid.ID `json:"requestedBy" bun:"requested_by_id,type:VARCHAR(100),nullzero" keel:"requested_by_id"`
 
 	// WorkflowID is the Temporal run driving this simulation, so a stuck run can
 	// be found and cancelled.
-	WorkflowID string `json:"workflowId" bun:"workflow_id,type:VARCHAR(255),nullzero"`
+	WorkflowID string `json:"workflowId" bun:"workflow_id,type:VARCHAR(255),nullzero" keel:"workflow_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit         `json:"-"                   bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization         `json:"-"                   bun:"rel:belongs-to,join:organization_id=id"`
-	Agreement    *rateagreement.RateAgreement `json:"agreement,omitempty" bun:"rel:belongs-to,join:rate_agreement_id=id"`
-	Results      []*RateSimulationResult      `json:"results,omitempty"   bun:"rel:has-many,join:id=rate_simulation_id"`
+	Agreement    *rateagreement.RateAgreement `json:"agreement,omitempty" bun:"rel:belongs-to,join:rate_agreement_id=id" keel:"belongs:rate_agreement_id"`
+	Results      []*RateSimulationResult      `json:"results,omitempty"   bun:"rel:has-many,join:id=rate_simulation_id" keel:"many:rate_simulation_id"`
 }
 
 // RuleCoverage is what happened to one rule across a whole simulation.

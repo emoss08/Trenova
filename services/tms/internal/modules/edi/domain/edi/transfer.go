@@ -3,6 +3,7 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -100,41 +101,42 @@ type MappingResolution struct {
 
 type EDITransfer struct {
 	bun.BaseModel             `json:"-" bun:"table:edi_load_tender_transfers,alias:eltt"`
+	keel.Table                `keel:"edi_load_tender_transfers"`
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID                    pulid.ID            `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"`
-	SourceOrganizationID  pulid.ID            `json:"sourceOrganizationId"  bun:"source_organization_id,type:VARCHAR(100),notnull"`
-	SourceBusinessUnitID  pulid.ID            `json:"sourceBusinessUnitId"  bun:"source_business_unit_id,type:VARCHAR(100),notnull"`
-	TargetOrganizationID  pulid.ID            `json:"targetOrganizationId"  bun:"target_organization_id,type:VARCHAR(100),notnull"`
-	TargetBusinessUnitID  pulid.ID            `json:"targetBusinessUnitId"  bun:"target_business_unit_id,type:VARCHAR(100),notnull"`
-	SourcePartnerID       pulid.ID            `json:"sourcePartnerId"       bun:"source_partner_id,type:VARCHAR(100),notnull"`
-	TargetPartnerID       pulid.ID            `json:"targetPartnerId"       bun:"target_partner_id,type:VARCHAR(100),notnull"`
-	SourceShipmentID      pulid.ID            `json:"sourceShipmentId"      bun:"source_shipment_id,type:VARCHAR(100),nullzero"`
-	TargetShipmentID      pulid.ID            `json:"targetShipmentId"      bun:"target_shipment_id,type:VARCHAR(100),nullzero"`
-	InboundMessageID      pulid.ID            `json:"inboundMessageId"      bun:"inbound_message_id,type:VARCHAR(100),nullzero"`
-	Status                TransferStatus      `json:"status"                bun:"status,type:edi_load_tender_transfer_status_enum,notnull"`
-	TenderPayload         LoadTenderPayload   `json:"tenderPayload"         bun:"tender_payload,type:JSONB,notnull"`
-	MappingSnapshot       []MappingResolution `json:"mappingSnapshot"       bun:"mapping_snapshot,type:JSONB,notnull,default:'[]'"`
-	RejectionReason       string              `json:"rejectionReason"       bun:"rejection_reason,type:TEXT,nullzero"`
-	FailureReason         string              `json:"failureReason"         bun:"failure_reason,type:TEXT,nullzero"`
-	ApprovalWorkflowID    string              `json:"approvalWorkflowId"    bun:"approval_workflow_id,type:VARCHAR(255),nullzero"`
-	ApprovalWorkflowRunID string              `json:"approvalWorkflowRunId" bun:"approval_workflow_run_id,type:VARCHAR(255),nullzero"`
-	SubmittedByID         pulid.ID            `json:"submittedById"         bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
-	SubmittedAt           int64               `json:"submittedAt"           bun:"submitted_at,type:BIGINT,notnull"`
-	ApprovedByID          pulid.ID            `json:"approvedById"          bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt            *int64              `json:"approvedAt"            bun:"approved_at,type:BIGINT,nullzero"`
-	ProcessingStartedAt   *int64              `json:"processingStartedAt"   bun:"processing_started_at,type:BIGINT,nullzero"`
-	ProcessedAt           *int64              `json:"processedAt"           bun:"processed_at,type:BIGINT,nullzero"`
-	RejectedByID          pulid.ID            `json:"rejectedById"          bun:"rejected_by_id,type:VARCHAR(100),nullzero"`
-	RejectedAt            *int64              `json:"rejectedAt"            bun:"rejected_at,type:BIGINT,nullzero"`
-	CanceledByID          pulid.ID            `json:"canceledById"          bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
-	CanceledAt            *int64              `json:"canceledAt"            bun:"canceled_at,type:BIGINT,nullzero"`
-	Version               int64               `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt             int64               `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                    pulid.ID            `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:edilt_"`
+	SourceOrganizationID  pulid.ID            `json:"sourceOrganizationId"  bun:"source_organization_id,type:VARCHAR(100),notnull" keel:"source_organization_id"`
+	SourceBusinessUnitID  pulid.ID            `json:"sourceBusinessUnitId"  bun:"source_business_unit_id,type:VARCHAR(100),notnull" keel:"source_business_unit_id"`
+	TargetOrganizationID  pulid.ID            `json:"targetOrganizationId"  bun:"target_organization_id,type:VARCHAR(100),notnull" keel:"target_organization_id"`
+	TargetBusinessUnitID  pulid.ID            `json:"targetBusinessUnitId"  bun:"target_business_unit_id,type:VARCHAR(100),notnull" keel:"target_business_unit_id"`
+	SourcePartnerID       pulid.ID            `json:"sourcePartnerId"       bun:"source_partner_id,type:VARCHAR(100),notnull" keel:"source_partner_id"`
+	TargetPartnerID       pulid.ID            `json:"targetPartnerId"       bun:"target_partner_id,type:VARCHAR(100),notnull" keel:"target_partner_id"`
+	SourceShipmentID      pulid.ID            `json:"sourceShipmentId"      bun:"source_shipment_id,type:VARCHAR(100),nullzero" keel:"source_shipment_id,nullzero"`
+	TargetShipmentID      pulid.ID            `json:"targetShipmentId"      bun:"target_shipment_id,type:VARCHAR(100),nullzero" keel:"target_shipment_id,nullzero"`
+	InboundMessageID      pulid.ID            `json:"inboundMessageId"      bun:"inbound_message_id,type:VARCHAR(100),nullzero" keel:"inbound_message_id,nullzero"`
+	Status                TransferStatus      `json:"status"                bun:"status,type:edi_load_tender_transfer_status_enum,notnull" keel:"status"`
+	TenderPayload         LoadTenderPayload   `json:"tenderPayload"         bun:"tender_payload,type:JSONB,notnull" keel:"tender_payload,jsonb"`
+	MappingSnapshot       []MappingResolution `json:"mappingSnapshot"       bun:"mapping_snapshot,type:JSONB,notnull,default:'[]'" keel:"mapping_snapshot,jsonb"`
+	RejectionReason       string              `json:"rejectionReason"       bun:"rejection_reason,type:TEXT,nullzero" keel:"rejection_reason,nullzero"`
+	FailureReason         string              `json:"failureReason"         bun:"failure_reason,type:TEXT,nullzero" keel:"failure_reason,nullzero"`
+	ApprovalWorkflowID    string              `json:"approvalWorkflowId"    bun:"approval_workflow_id,type:VARCHAR(255),nullzero" keel:"approval_workflow_id,nullzero"`
+	ApprovalWorkflowRunID string              `json:"approvalWorkflowRunId" bun:"approval_workflow_run_id,type:VARCHAR(255),nullzero" keel:"approval_workflow_run_id,nullzero"`
+	SubmittedByID         pulid.ID            `json:"submittedById"         bun:"submitted_by_id,type:VARCHAR(100),nullzero" keel:"submitted_by_id,nullzero"`
+	SubmittedAt           int64               `json:"submittedAt"           bun:"submitted_at,type:BIGINT,notnull" keel:"submitted_at"`
+	ApprovedByID          pulid.ID            `json:"approvedById"          bun:"approved_by_id,type:VARCHAR(100),nullzero" keel:"approved_by_id,nullzero"`
+	ApprovedAt            *int64              `json:"approvedAt"            bun:"approved_at,type:BIGINT,nullzero" keel:"approved_at"`
+	ProcessingStartedAt   *int64              `json:"processingStartedAt"   bun:"processing_started_at,type:BIGINT,nullzero" keel:"processing_started_at"`
+	ProcessedAt           *int64              `json:"processedAt"           bun:"processed_at,type:BIGINT,nullzero" keel:"processed_at"`
+	RejectedByID          pulid.ID            `json:"rejectedById"          bun:"rejected_by_id,type:VARCHAR(100),nullzero" keel:"rejected_by_id,nullzero"`
+	RejectedAt            *int64              `json:"rejectedAt"            bun:"rejected_at,type:BIGINT,nullzero" keel:"rejected_at"`
+	CanceledByID          pulid.ID            `json:"canceledById"          bun:"canceled_by_id,type:VARCHAR(100),nullzero" keel:"canceled_by_id,nullzero"`
+	CanceledAt            *int64              `json:"canceledAt"            bun:"canceled_at,type:BIGINT,nullzero" keel:"canceled_at"`
+	Version               int64               `json:"version"               bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt             int64               `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt             int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	SourcePartner *EDIPartner `json:"sourcePartner,omitempty" bun:"rel:belongs-to,join:source_partner_id=id"`
-	TargetPartner *EDIPartner `json:"targetPartner,omitempty" bun:"rel:belongs-to,join:target_partner_id=id"`
+	SourcePartner *EDIPartner `json:"sourcePartner,omitempty" bun:"rel:belongs-to,join:source_partner_id=id" keel:"belongs:source_partner_id"`
+	TargetPartner *EDIPartner `json:"targetPartner,omitempty" bun:"rel:belongs-to,join:target_partner_id=id" keel:"belongs:target_partner_id"`
 }
 
 func (t *EDITransfer) BeforeAppendModel(_ context.Context, query bun.Query) error {

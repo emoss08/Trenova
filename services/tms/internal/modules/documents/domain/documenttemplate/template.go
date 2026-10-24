@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -45,42 +46,43 @@ var (
 // administrator edit without changing what customers are currently receiving.
 type DocumentTemplate struct {
 	bun.BaseModel             `bun:"table:document_templates,alias:dtpl" json:"-"`
+	keel.Table                `keel:"document_templates"`
 	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dtpl_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
 	// Kind names an entry in the Go registry. It is a plain string in the database
 	// so adding a kind never needs a migration.
-	Kind Kind `json:"kind" bun:"kind,type:VARCHAR(100),notnull"`
+	Kind Kind `json:"kind" bun:"kind,type:VARCHAR(100),notnull" keel:"kind"`
 
-	Code        string `json:"code"        bun:"code,type:VARCHAR(50),notnull"`
-	Name        string `json:"name"        bun:"name,type:VARCHAR(200),notnull"`
-	Description string `json:"description" bun:"description,type:TEXT,nullzero"`
+	Code        string `json:"code"        bun:"code,type:VARCHAR(50),notnull" keel:"code"`
+	Name        string `json:"name"        bun:"name,type:VARCHAR(200),notnull" keel:"name"`
+	Description string `json:"description" bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
 
 	// IsOrgDefault marks the template every customer without an assignment gets.
 	// A partial unique index enforces one per kind.
-	IsOrgDefault bool `json:"isOrgDefault" bun:"is_org_default,type:BOOLEAN,notnull"`
+	IsOrgDefault bool `json:"isOrgDefault" bun:"is_org_default,type:BOOLEAN,notnull" keel:"is_org_default"`
 
 	// ActiveVersionID is what renders. Nil means the template has only drafts and
 	// resolution therefore falls through to the built-in.
-	ActiveVersionID *pulid.ID `json:"activeVersionId" bun:"active_version_id,type:VARCHAR(100),nullzero"`
+	ActiveVersionID *pulid.ID `json:"activeVersionId" bun:"active_version_id,type:VARCHAR(100),nullzero" keel:"active_version_id"`
 
-	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull"`
-	CreatedAt   int64     `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt   int64     `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	CreatedByID *pulid.ID `json:"createdById" bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	UpdatedByID *pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero"`
+	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt   int64     `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt   int64     `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	CreatedByID *pulid.ID `json:"createdById" bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id"`
+	UpdatedByID *pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero" keel:"updated_by_id"`
 
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
 
 	BusinessUnit  *tenant.BusinessUnit          `json:"-"                       bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization  *tenant.Organization          `json:"-"                       bun:"rel:belongs-to,join:organization_id=id"`
-	ActiveVersion *DocumentTemplateVersion      `json:"activeVersion,omitempty" bun:"rel:belongs-to,join:active_version_id=id"`
-	Versions      []*DocumentTemplateVersion    `json:"versions,omitempty"      bun:"rel:has-many,join:id=template_id"`
-	Assignments   []*DocumentTemplateAssignment `json:"assignments,omitempty"   bun:"rel:has-many,join:id=template_id"`
+	ActiveVersion *DocumentTemplateVersion      `json:"activeVersion,omitempty" bun:"rel:belongs-to,join:active_version_id=id" keel:"belongs:active_version_id"`
+	Versions      []*DocumentTemplateVersion    `json:"versions,omitempty"      bun:"rel:has-many,join:id=template_id" keel:"many:template_id"`
+	Assignments   []*DocumentTemplateAssignment `json:"assignments,omitempty"   bun:"rel:has-many,join:id=template_id" keel:"many:template_id"`
 }
 
 func (t *DocumentTemplate) GetID() pulid.ID { return t.ID }

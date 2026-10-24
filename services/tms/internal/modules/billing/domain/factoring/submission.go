@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
@@ -34,79 +35,81 @@ var (
 
 type Submission struct {
 	bun.BaseModel             `bun:"table:factoring_submissions,alias:facsub" json:"-"`
+	keel.Table                `keel:"factoring_submissions"`
 	pagination.CursorValueSet `bun:",embed"                                   json:"-"`
 
-	ID                    pulid.ID         `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID        pulid.ID         `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID        pulid.ID         `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	Number                string           `json:"number"                bun:"number,type:VARCHAR(100),notnull"`
-	FactoringCompanyID    pulid.ID         `json:"factoringCompanyId"    bun:"factoring_company_id,type:VARCHAR(100),notnull"`
-	AgreementID           pulid.ID         `json:"agreementId"           bun:"agreement_id,type:VARCHAR(100),notnull"`
-	Status                SubmissionStatus `json:"status"                bun:"status,type:VARCHAR(20),notnull,default:'Sending'"`
-	CurrencyCode          string           `json:"currencyCode"          bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	InvoiceCount          int              `json:"invoiceCount"          bun:"invoice_count,type:INTEGER,notnull"`
-	FaceMinor             int64            `json:"faceMinor"             bun:"face_minor,type:BIGINT,notnull"`
-	ExpectedAdvanceMinor  int64            `json:"expectedAdvanceMinor"  bun:"expected_advance_minor,type:BIGINT,notnull"`
-	ExpectedFeeMinor      int64            `json:"expectedFeeMinor"      bun:"expected_fee_minor,type:BIGINT,notnull"`
-	ExpectedReserveMinor  int64            `json:"expectedReserveMinor"  bun:"expected_reserve_minor,type:BIGINT,notnull"`
-	SchedulePDFDocumentID pulid.ID         `json:"schedulePdfDocumentId" bun:"schedule_pdf_document_id,type:VARCHAR(100),nullzero"`
-	ScheduleCSVDocumentID pulid.ID         `json:"scheduleCsvDocumentId" bun:"schedule_csv_document_id,type:VARCHAR(100),nullzero"`
-	TransportMethod       TransportMethod  `json:"transportMethod"       bun:"transport_method,type:VARCHAR(20),notnull"`
-	TransportTarget       string           `json:"transportTarget"       bun:"transport_target,type:VARCHAR(1000),notnull"`
-	TransportReference    string           `json:"transportReference"    bun:"transport_reference,type:TEXT,nullzero"`
-	SendAttemptGroup      int              `json:"sendAttemptGroup"      bun:"send_attempt_group,type:INTEGER,notnull,default:1"`
-	Attempts              int              `json:"attempts"              bun:"attempts,type:INTEGER,notnull,default:0"`
-	LastError             string           `json:"lastError"             bun:"last_error,type:TEXT,nullzero"`
-	IdempotencyKey        string           `json:"-"                     bun:"idempotency_key,type:VARCHAR(200),notnull"`
-	SentAt                *int64           `json:"sentAt"                bun:"sent_at,type:BIGINT,nullzero"`
-	FailedAt              *int64           `json:"failedAt"              bun:"failed_at,type:BIGINT,nullzero"`
-	CancelledAt           *int64           `json:"cancelledAt"           bun:"cancelled_at,type:BIGINT,nullzero"`
-	CancelReason          string           `json:"cancelReason"          bun:"cancel_reason,type:VARCHAR(500),nullzero"`
-	FundedAt              *int64           `json:"fundedAt"              bun:"funded_at,type:BIGINT,nullzero"`
-	SubmittedByID         pulid.ID         `json:"submittedById"         bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
-	AgentRunID            pulid.ID         `json:"agentRunId"            bun:"agent_run_id,type:VARCHAR(100),nullzero"`
-	Version               int64            `json:"version"               bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt             int64            `json:"createdAt"             bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt             int64            `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull"`
+	ID                    pulid.ID         `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:facsub_"`
+	OrganizationID        pulid.ID         `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID         `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	Number                string           `json:"number"                bun:"number,type:VARCHAR(100),notnull" keel:"number"`
+	FactoringCompanyID    pulid.ID         `json:"factoringCompanyId"    bun:"factoring_company_id,type:VARCHAR(100),notnull" keel:"factoring_company_id"`
+	AgreementID           pulid.ID         `json:"agreementId"           bun:"agreement_id,type:VARCHAR(100),notnull" keel:"agreement_id"`
+	Status                SubmissionStatus `json:"status"                bun:"status,type:VARCHAR(20),notnull,default:'Sending'" keel:"status"`
+	CurrencyCode          string           `json:"currencyCode"          bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'" keel:"currency_code"`
+	InvoiceCount          int              `json:"invoiceCount"          bun:"invoice_count,type:INTEGER,notnull" keel:"invoice_count"`
+	FaceMinor             int64            `json:"faceMinor"             bun:"face_minor,type:BIGINT,notnull" keel:"face_minor"`
+	ExpectedAdvanceMinor  int64            `json:"expectedAdvanceMinor"  bun:"expected_advance_minor,type:BIGINT,notnull" keel:"expected_advance_minor"`
+	ExpectedFeeMinor      int64            `json:"expectedFeeMinor"      bun:"expected_fee_minor,type:BIGINT,notnull" keel:"expected_fee_minor"`
+	ExpectedReserveMinor  int64            `json:"expectedReserveMinor"  bun:"expected_reserve_minor,type:BIGINT,notnull" keel:"expected_reserve_minor"`
+	SchedulePDFDocumentID pulid.ID         `json:"schedulePdfDocumentId" bun:"schedule_pdf_document_id,type:VARCHAR(100),nullzero" keel:"schedule_pdf_document_id,nullzero"`
+	ScheduleCSVDocumentID pulid.ID         `json:"scheduleCsvDocumentId" bun:"schedule_csv_document_id,type:VARCHAR(100),nullzero" keel:"schedule_csv_document_id,nullzero"`
+	TransportMethod       TransportMethod  `json:"transportMethod"       bun:"transport_method,type:VARCHAR(20),notnull" keel:"transport_method"`
+	TransportTarget       string           `json:"transportTarget"       bun:"transport_target,type:VARCHAR(1000),notnull" keel:"transport_target"`
+	TransportReference    string           `json:"transportReference"    bun:"transport_reference,type:TEXT,nullzero" keel:"transport_reference,nullzero"`
+	SendAttemptGroup      int              `json:"sendAttemptGroup"      bun:"send_attempt_group,type:INTEGER,notnull,default:1" keel:"send_attempt_group"`
+	Attempts              int              `json:"attempts"              bun:"attempts,type:INTEGER,notnull,default:0" keel:"attempts"`
+	LastError             string           `json:"lastError"             bun:"last_error,type:TEXT,nullzero" keel:"last_error,nullzero"`
+	IdempotencyKey        string           `json:"-"                     bun:"idempotency_key,type:VARCHAR(200),notnull" keel:"idempotency_key"`
+	SentAt                *int64           `json:"sentAt"                bun:"sent_at,type:BIGINT,nullzero" keel:"sent_at"`
+	FailedAt              *int64           `json:"failedAt"              bun:"failed_at,type:BIGINT,nullzero" keel:"failed_at"`
+	CancelledAt           *int64           `json:"cancelledAt"           bun:"cancelled_at,type:BIGINT,nullzero" keel:"cancelled_at"`
+	CancelReason          string           `json:"cancelReason"          bun:"cancel_reason,type:VARCHAR(500),nullzero" keel:"cancel_reason,nullzero"`
+	FundedAt              *int64           `json:"fundedAt"              bun:"funded_at,type:BIGINT,nullzero" keel:"funded_at"`
+	SubmittedByID         pulid.ID         `json:"submittedById"         bun:"submitted_by_id,type:VARCHAR(100),nullzero" keel:"submitted_by_id,nullzero"`
+	AgentRunID            pulid.ID         `json:"agentRunId"            bun:"agent_run_id,type:VARCHAR(100),nullzero" keel:"agent_run_id,nullzero"`
+	Version               int64            `json:"version"               bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt             int64            `json:"createdAt"             bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt             int64            `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 
-	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Agreement        *Agreement                         `json:"agreement,omitempty"        bun:"rel:belongs-to,join:agreement_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Items            []*SubmissionItem                  `json:"items,omitempty"            bun:"rel:has-many,join:id=submission_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:factoring_company_id"`
+	Agreement        *Agreement                         `json:"agreement,omitempty"        bun:"rel:belongs-to,join:agreement_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:agreement_id"`
+	Items            []*SubmissionItem                  `json:"items,omitempty"            bun:"rel:has-many,join:id=submission_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:submission_id"`
 }
 
 type SubmissionItem struct {
 	bun.BaseModel `bun:"table:factoring_submission_items,alias:facsit" json:"-"`
+	keel.Table    `keel:"factoring_submission_items"`
 
-	ID                   pulid.ID             `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID             `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID             `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	SubmissionID         pulid.ID             `json:"submissionId"         bun:"submission_id,type:VARCHAR(100),notnull"`
-	InvoiceID            pulid.ID             `json:"invoiceId"            bun:"invoice_id,type:VARCHAR(100),notnull"`
-	InvoiceNumber        string               `json:"invoiceNumber"        bun:"invoice_number,type:VARCHAR(100),notnull"`
-	CustomerID           pulid.ID             `json:"customerId"           bun:"customer_id,type:VARCHAR(100),notnull"`
-	Position             int                  `json:"position"             bun:"position,type:INTEGER,notnull"`
-	FaceMinor            int64                `json:"faceMinor"            bun:"face_minor,type:BIGINT,notnull"`
-	ExpectedAdvanceMinor int64                `json:"expectedAdvanceMinor" bun:"expected_advance_minor,type:BIGINT,notnull"`
-	ExpectedFeeMinor     int64                `json:"expectedFeeMinor"     bun:"expected_fee_minor,type:BIGINT,notnull"`
-	ExpectedReserveMinor int64                `json:"expectedReserveMinor" bun:"expected_reserve_minor,type:BIGINT,notnull"`
-	ExpectedDays         int                  `json:"expectedDays"         bun:"expected_days,type:INTEGER,notnull"`
-	PacketDocumentID     pulid.ID             `json:"packetDocumentId"     bun:"packet_document_id,type:VARCHAR(100),nullzero"`
-	Status               SubmissionItemStatus `json:"status"               bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
-	ReleasedAt           *int64               `json:"releasedAt"           bun:"released_at,type:BIGINT,nullzero"`
-	FundedOn             *int64               `json:"fundedOn"             bun:"funded_on,type:BIGINT,nullzero"`
-	AdvanceMinor         *int64               `json:"advanceMinor"         bun:"advance_minor,type:BIGINT,nullzero"`
-	FeeMinor             *int64               `json:"feeMinor"             bun:"fee_minor,type:BIGINT,nullzero"`
-	ReserveMinor         *int64               `json:"reserveMinor"         bun:"reserve_minor,type:BIGINT,nullzero"`
-	RejectionReason      string               `json:"rejectionReason"      bun:"rejection_reason,type:VARCHAR(500),nullzero"`
-	SettledOn            *int64               `json:"settledOn"            bun:"settled_on,type:BIGINT,nullzero"`
-	ChargedBackOn        *int64               `json:"chargedBackOn"        bun:"charged_back_on,type:BIGINT,nullzero"`
-	ChargebackReason     string               `json:"chargebackReason"     bun:"chargeback_reason,type:VARCHAR(500),nullzero"`
-	ChargebackWarnedAt   *int64               `json:"chargebackWarnedAt"   bun:"chargeback_warned_at,type:BIGINT,nullzero"`
-	CreatedAt            int64                `json:"createdAt"            bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt            int64                `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull"`
+	ID                   pulid.ID             `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:facsit_"`
+	OrganizationID       pulid.ID             `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID             `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	SubmissionID         pulid.ID             `json:"submissionId"         bun:"submission_id,type:VARCHAR(100),notnull" keel:"submission_id"`
+	InvoiceID            pulid.ID             `json:"invoiceId"            bun:"invoice_id,type:VARCHAR(100),notnull" keel:"invoice_id"`
+	InvoiceNumber        string               `json:"invoiceNumber"        bun:"invoice_number,type:VARCHAR(100),notnull" keel:"invoice_number"`
+	CustomerID           pulid.ID             `json:"customerId"           bun:"customer_id,type:VARCHAR(100),notnull" keel:"customer_id"`
+	Position             int                  `json:"position"             bun:"position,type:INTEGER,notnull" keel:"position"`
+	FaceMinor            int64                `json:"faceMinor"            bun:"face_minor,type:BIGINT,notnull" keel:"face_minor"`
+	ExpectedAdvanceMinor int64                `json:"expectedAdvanceMinor" bun:"expected_advance_minor,type:BIGINT,notnull" keel:"expected_advance_minor"`
+	ExpectedFeeMinor     int64                `json:"expectedFeeMinor"     bun:"expected_fee_minor,type:BIGINT,notnull" keel:"expected_fee_minor"`
+	ExpectedReserveMinor int64                `json:"expectedReserveMinor" bun:"expected_reserve_minor,type:BIGINT,notnull" keel:"expected_reserve_minor"`
+	ExpectedDays         int                  `json:"expectedDays"         bun:"expected_days,type:INTEGER,notnull" keel:"expected_days"`
+	PacketDocumentID     pulid.ID             `json:"packetDocumentId"     bun:"packet_document_id,type:VARCHAR(100),nullzero" keel:"packet_document_id,nullzero"`
+	Status               SubmissionItemStatus `json:"status"               bun:"status,type:VARCHAR(20),notnull,default:'Pending'" keel:"status"`
+	ReleasedAt           *int64               `json:"releasedAt"           bun:"released_at,type:BIGINT,nullzero" keel:"released_at"`
+	FundedOn             *int64               `json:"fundedOn"             bun:"funded_on,type:BIGINT,nullzero" keel:"funded_on"`
+	AdvanceMinor         *int64               `json:"advanceMinor"         bun:"advance_minor,type:BIGINT,nullzero" keel:"advance_minor"`
+	FeeMinor             *int64               `json:"feeMinor"             bun:"fee_minor,type:BIGINT,nullzero" keel:"fee_minor"`
+	ReserveMinor         *int64               `json:"reserveMinor"         bun:"reserve_minor,type:BIGINT,nullzero" keel:"reserve_minor"`
+	RejectionReason      string               `json:"rejectionReason"      bun:"rejection_reason,type:VARCHAR(500),nullzero" keel:"rejection_reason,nullzero"`
+	SettledOn            *int64               `json:"settledOn"            bun:"settled_on,type:BIGINT,nullzero" keel:"settled_on"`
+	ChargedBackOn        *int64               `json:"chargedBackOn"        bun:"charged_back_on,type:BIGINT,nullzero" keel:"charged_back_on"`
+	ChargebackReason     string               `json:"chargebackReason"     bun:"chargeback_reason,type:VARCHAR(500),nullzero" keel:"chargeback_reason,nullzero"`
+	ChargebackWarnedAt   *int64               `json:"chargebackWarnedAt"   bun:"chargeback_warned_at,type:BIGINT,nullzero" keel:"chargeback_warned_at"`
+	CreatedAt            int64                `json:"createdAt"            bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt            int64                `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 
-	Invoice  *invoice.Invoice   `json:"invoice,omitempty"  bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Customer *customer.Customer `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Invoice  *invoice.Invoice   `json:"invoice,omitempty"  bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:invoice_id"`
+	Customer *customer.Customer `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:customer_id"`
 }
 
 func (s *Submission) Validate(multiErr *errortypes.MultiError) {

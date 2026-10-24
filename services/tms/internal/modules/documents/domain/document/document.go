@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -213,61 +214,62 @@ func SupportsPreview(fileType string) bool {
 
 type Document struct {
 	bun.BaseModel `bun:"table:documents,alias:doc" json:"-"`
+	keel.Table    `keel:"documents"`
 
-	ID                    pulid.ID            `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID        pulid.ID            `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	BusinessUnitID        pulid.ID            `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	LineageID             pulid.ID            `json:"lineageId"             bun:"lineage_id,type:VARCHAR(100),notnull"`
-	VersionNumber         int64               `json:"versionNumber"         bun:"version_number,type:BIGINT,notnull,default:1"`
-	IsCurrentVersion      bool                `json:"isCurrentVersion"      bun:"is_current_version,type:BOOLEAN,notnull"`
-	FileName              string              `json:"fileName"              bun:"file_name,type:VARCHAR(255),notnull"`
-	OriginalName          string              `json:"originalName"          bun:"original_name,type:VARCHAR(255),notnull"`
-	FileSize              int64               `json:"fileSize"              bun:"file_size,type:BIGINT,notnull"`
-	FileType              string              `json:"fileType"              bun:"file_type,type:VARCHAR(100),notnull"`
-	StoragePath           string              `json:"storagePath"           bun:"storage_path,type:VARCHAR(500),notnull"`
-	ChecksumSHA256        string              `json:"checksumSha256"        bun:"checksum_sha256,type:VARCHAR(64),nullzero"`
-	StorageVersionID      string              `json:"storageVersionId"      bun:"storage_version_id,type:VARCHAR(255),nullzero"`
-	StorageRetentionMode  string              `json:"storageRetentionMode"  bun:"storage_retention_mode,type:VARCHAR(50),nullzero"`
-	StorageRetentionUntil *int64              `json:"storageRetentionUntil" bun:"storage_retention_until,type:BIGINT,nullzero"`
-	StorageLegalHold      bool                `json:"storageLegalHold"      bun:"storage_legal_hold,type:BOOLEAN,notnull"`
-	CryptoMode            string              `json:"cryptoMode"            bun:"crypto_mode,type:VARCHAR(32),notnull,default:'blob_v1'"`
-	CryptoVersion         int16               `json:"cryptoVersion"         bun:"crypto_version,type:SMALLINT,notnull,default:2"`
-	Status                Status              `json:"status"                bun:"status,type:document_status_enum,notnull,default:'Active'"`
-	Description           string              `json:"description"           bun:"description,type:TEXT,nullzero"`
-	ResourceID            string              `json:"resourceId"            bun:"resource_id,type:VARCHAR(100),notnull"`
-	ResourceType          string              `json:"resourceType"          bun:"resource_type,type:VARCHAR(100),notnull"`
-	ProcessingProfile     ProcessingProfile   `json:"processingProfile"     bun:"processing_profile,type:VARCHAR(64),notnull,default:'none'"`
-	ExpirationDate        *int64              `json:"expirationDate"        bun:"expiration_date,type:BIGINT,nullzero"`
-	Tags                  []string            `json:"tags"                  bun:"tags,type:VARCHAR(100)[],default:'{}'"`
-	IsPublic              bool                `json:"isPublic"              bun:"is_public,type:BOOLEAN,notnull"`
-	UploadedByID          pulid.ID            `json:"uploadedById"          bun:"uploaded_by_id,type:VARCHAR(100),notnull"`
-	ApprovedByID          pulid.ID            `json:"approvedById"          bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt            *int64              `json:"approvedAt"            bun:"approved_at,type:BIGINT,nullzero"`
-	RejectedByID          pulid.ID            `json:"rejectedById"          bun:"rejected_by_id,type:VARCHAR(100),nullzero"`
-	RejectedAt            *int64              `json:"rejectedAt"            bun:"rejected_at,type:BIGINT,nullzero"`
-	RejectionReason       string              `json:"rejectionReason"       bun:"rejection_reason,type:TEXT,nullzero"`
-	PreviewStoragePath    string              `json:"previewStoragePath"    bun:"preview_storage_path,type:VARCHAR(500),nullzero"`
-	PreviewStatus         PreviewStatus       `json:"previewStatus"         bun:"preview_status,type:document_preview_status_enum,notnull,nullzero,default:'Unsupported'"`
-	ContentStatus         ContentStatus       `json:"contentStatus"         bun:"content_status,type:document_content_status_enum,notnull,nullzero,default:'Pending'"`
-	ContentError          string              `json:"contentError"          bun:"content_error,type:TEXT,nullzero"`
-	DetectedKind          string              `json:"detectedKind"          bun:"detected_kind,type:VARCHAR(100),nullzero"`
-	HasExtractedText      bool                `json:"hasExtractedText"      bun:"has_extracted_text,type:BOOLEAN,notnull"`
-	ShipmentDraftStatus   ShipmentDraftStatus `json:"shipmentDraftStatus"   bun:"shipment_draft_status,type:document_shipment_draft_status_enum,notnull,nullzero,default:'Unavailable'"`
-	DocumentTypeID        *pulid.ID           `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),nullzero"`
-	SignatureStatus       SignatureStatus     `json:"signatureStatus"       bun:"signature_status,type:VARCHAR(20),notnull,nullzero,default:'Unknown'"`
-	SignedAt              *int64              `json:"signedAt"              bun:"signed_at,type:BIGINT,nullzero"`
-	SignatureSource       SignatureSource     `json:"signatureSource"       bun:"signature_source,type:VARCHAR(20),nullzero"`
-	SignatureUpdatedByID  pulid.ID            `json:"signatureUpdatedById"  bun:"signature_updated_by_id,type:VARCHAR(100),nullzero"`
-	SignatureUpdatedAt    *int64              `json:"signatureUpdatedAt"    bun:"signature_updated_at,type:BIGINT,nullzero"`
-	SearchVector          string              `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                  string              `json:"-"                     bun:"rank,type:VARCHAR(100),scanonly"`
-	Version               int64               `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt             int64               `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                    pulid.ID            `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:doc_"`
+	OrganizationID        pulid.ID            `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),notnull,pk" keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID            `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull,pk" keel:"business_unit_id,pk,tenant"`
+	LineageID             pulid.ID            `json:"lineageId"             bun:"lineage_id,type:VARCHAR(100),notnull" keel:"lineage_id"`
+	VersionNumber         int64               `json:"versionNumber"         bun:"version_number,type:BIGINT,notnull,default:1" keel:"version_number"`
+	IsCurrentVersion      bool                `json:"isCurrentVersion"      bun:"is_current_version,type:BOOLEAN,notnull" keel:"is_current_version"`
+	FileName              string              `json:"fileName"              bun:"file_name,type:VARCHAR(255),notnull" keel:"file_name"`
+	OriginalName          string              `json:"originalName"          bun:"original_name,type:VARCHAR(255),notnull" keel:"original_name"`
+	FileSize              int64               `json:"fileSize"              bun:"file_size,type:BIGINT,notnull" keel:"file_size"`
+	FileType              string              `json:"fileType"              bun:"file_type,type:VARCHAR(100),notnull" keel:"file_type"`
+	StoragePath           string              `json:"storagePath"           bun:"storage_path,type:VARCHAR(500),notnull" keel:"storage_path"`
+	ChecksumSHA256        string              `json:"checksumSha256"        bun:"checksum_sha256,type:VARCHAR(64),nullzero" keel:"checksum_sha256,nullzero"`
+	StorageVersionID      string              `json:"storageVersionId"      bun:"storage_version_id,type:VARCHAR(255),nullzero" keel:"storage_version_id,nullzero"`
+	StorageRetentionMode  string              `json:"storageRetentionMode"  bun:"storage_retention_mode,type:VARCHAR(50),nullzero" keel:"storage_retention_mode,nullzero"`
+	StorageRetentionUntil *int64              `json:"storageRetentionUntil" bun:"storage_retention_until,type:BIGINT,nullzero" keel:"storage_retention_until"`
+	StorageLegalHold      bool                `json:"storageLegalHold"      bun:"storage_legal_hold,type:BOOLEAN,notnull" keel:"storage_legal_hold"`
+	CryptoMode            string              `json:"cryptoMode"            bun:"crypto_mode,type:VARCHAR(32),notnull,default:'blob_v1'" keel:"crypto_mode"`
+	CryptoVersion         int16               `json:"cryptoVersion"         bun:"crypto_version,type:SMALLINT,notnull,default:2" keel:"crypto_version"`
+	Status                Status              `json:"status"                bun:"status,type:document_status_enum,notnull,default:'Active'" keel:"status"`
+	Description           string              `json:"description"           bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	ResourceID            string              `json:"resourceId"            bun:"resource_id,type:VARCHAR(100),notnull" keel:"resource_id"`
+	ResourceType          string              `json:"resourceType"          bun:"resource_type,type:VARCHAR(100),notnull" keel:"resource_type"`
+	ProcessingProfile     ProcessingProfile   `json:"processingProfile"     bun:"processing_profile,type:VARCHAR(64),notnull,default:'none'" keel:"processing_profile"`
+	ExpirationDate        *int64              `json:"expirationDate"        bun:"expiration_date,type:BIGINT,nullzero" keel:"expiration_date"`
+	Tags                  []string            `json:"tags"                  bun:"tags,type:VARCHAR(100)[],default:'{}'" keel:"tags"`
+	IsPublic              bool                `json:"isPublic"              bun:"is_public,type:BOOLEAN,notnull" keel:"is_public"`
+	UploadedByID          pulid.ID            `json:"uploadedById"          bun:"uploaded_by_id,type:VARCHAR(100),notnull" keel:"uploaded_by_id"`
+	ApprovedByID          pulid.ID            `json:"approvedById"          bun:"approved_by_id,type:VARCHAR(100),nullzero" keel:"approved_by_id,nullzero"`
+	ApprovedAt            *int64              `json:"approvedAt"            bun:"approved_at,type:BIGINT,nullzero" keel:"approved_at"`
+	RejectedByID          pulid.ID            `json:"rejectedById"          bun:"rejected_by_id,type:VARCHAR(100),nullzero" keel:"rejected_by_id,nullzero"`
+	RejectedAt            *int64              `json:"rejectedAt"            bun:"rejected_at,type:BIGINT,nullzero" keel:"rejected_at"`
+	RejectionReason       string              `json:"rejectionReason"       bun:"rejection_reason,type:TEXT,nullzero" keel:"rejection_reason,nullzero"`
+	PreviewStoragePath    string              `json:"previewStoragePath"    bun:"preview_storage_path,type:VARCHAR(500),nullzero" keel:"preview_storage_path,nullzero"`
+	PreviewStatus         PreviewStatus       `json:"previewStatus"         bun:"preview_status,type:document_preview_status_enum,notnull,nullzero,default:'Unsupported'" keel:"preview_status,nullzero"`
+	ContentStatus         ContentStatus       `json:"contentStatus"         bun:"content_status,type:document_content_status_enum,notnull,nullzero,default:'Pending'" keel:"content_status,nullzero"`
+	ContentError          string              `json:"contentError"          bun:"content_error,type:TEXT,nullzero" keel:"content_error,nullzero"`
+	DetectedKind          string              `json:"detectedKind"          bun:"detected_kind,type:VARCHAR(100),nullzero" keel:"detected_kind,nullzero"`
+	HasExtractedText      bool                `json:"hasExtractedText"      bun:"has_extracted_text,type:BOOLEAN,notnull" keel:"has_extracted_text"`
+	ShipmentDraftStatus   ShipmentDraftStatus `json:"shipmentDraftStatus"   bun:"shipment_draft_status,type:document_shipment_draft_status_enum,notnull,nullzero,default:'Unavailable'" keel:"shipment_draft_status,nullzero"`
+	DocumentTypeID        *pulid.ID           `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),nullzero" keel:"document_type_id"`
+	SignatureStatus       SignatureStatus     `json:"signatureStatus"       bun:"signature_status,type:VARCHAR(20),notnull,nullzero,default:'Unknown'" keel:"signature_status,nullzero"`
+	SignedAt              *int64              `json:"signedAt"              bun:"signed_at,type:BIGINT,nullzero" keel:"signed_at"`
+	SignatureSource       SignatureSource     `json:"signatureSource"       bun:"signature_source,type:VARCHAR(20),nullzero" keel:"signature_source,nullzero"`
+	SignatureUpdatedByID  pulid.ID            `json:"signatureUpdatedById"  bun:"signature_updated_by_id,type:VARCHAR(100),nullzero" keel:"signature_updated_by_id,nullzero"`
+	SignatureUpdatedAt    *int64              `json:"signatureUpdatedAt"    bun:"signature_updated_at,type:BIGINT,nullzero" keel:"signature_updated_at"`
+	SearchVector          string              `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                  string              `json:"-"                     bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	Version               int64               `json:"version"               bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt             int64               `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt             int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit       `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization       `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	DocumentType *documenttype.DocumentType `json:"documentType,omitempty" bun:"rel:belongs-to,join:document_type_id=id"`
+	DocumentType *documenttype.DocumentType `json:"documentType,omitempty" bun:"rel:belongs-to,join:document_type_id=id" keel:"belongs:document_type_id"`
 }
 
 func (d *Document) BeforeAppendModel(_ context.Context, query bun.Query) error {

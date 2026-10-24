@@ -3,6 +3,7 @@ package carriersettlement
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -26,76 +27,78 @@ var (
 
 type CarrierSettlement struct {
 	bun.BaseModel             `bun:"table:carrier_settlements,alias:carstl" json:"-"`
+	keel.Table                `keel:"carrier_settlements"`
 	pagination.CursorValueSet `bun:",embed"                                 json:"-"`
 
-	ID                     pulid.ID            `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID            `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID         pulid.ID            `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	CarrierID              pulid.ID            `json:"carrierId"              bun:"carrier_id,type:VARCHAR(100),notnull"`
-	BatchID                *pulid.ID           `json:"batchId"                bun:"batch_id,type:VARCHAR(100),nullzero"`
-	SettlementNumber       string              `json:"settlementNumber"       bun:"settlement_number,type:VARCHAR(100),notnull"`
-	Status                 Status              `json:"status"                 bun:"status,type:VARCHAR(50),notnull,default:'Draft'"`
-	PeriodStart            int64               `json:"periodStart"            bun:"period_start,type:BIGINT,notnull"`
-	PeriodEnd              int64               `json:"periodEnd"              bun:"period_end,type:BIGINT,notnull"`
-	PayDate                int64               `json:"payDate"                bun:"pay_date,type:BIGINT,notnull"`
-	GrossCostMinor         int64               `json:"grossCostMinor"         bun:"gross_cost_minor,type:BIGINT,notnull,default:0"`
-	AdjustmentsMinor       int64               `json:"adjustmentsMinor"       bun:"adjustments_minor,type:BIGINT,notnull,default:0"`
-	NetPayableMinor        int64               `json:"netPayableMinor"        bun:"net_payable_minor,type:BIGINT,notnull,default:0"`
-	ShipmentCount          int                 `json:"shipmentCount"          bun:"shipment_count,type:INTEGER,notnull,default:0"`
-	CurrencyCode           string              `json:"currencyCode"           bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	ExchangeRate           decimal.NullDecimal `json:"exchangeRate"           bun:"exchange_rate,type:NUMERIC(24,12),nullzero"`
-	ExchangeRateDate       *int64              `json:"exchangeRateDate"       bun:"exchange_rate_date,type:BIGINT,nullzero"`
-	Notes                  string              `json:"notes"                  bun:"notes,type:TEXT,nullzero"`
-	SubmittedByID          pulid.ID            `json:"submittedById"          bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
-	SubmittedAt            *int64              `json:"submittedAt"            bun:"submitted_at,type:BIGINT,nullzero"`
-	ApprovedByID           pulid.ID            `json:"approvedById"           bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt             *int64              `json:"approvedAt"             bun:"approved_at,type:BIGINT,nullzero"`
-	PostedByID             pulid.ID            `json:"postedById"             bun:"posted_by_id,type:VARCHAR(100),nullzero"`
-	PostedAt               *int64              `json:"postedAt"               bun:"posted_at,type:BIGINT,nullzero"`
-	PostedJournalBatchID   *pulid.ID           `json:"postedJournalBatchId"   bun:"posted_journal_batch_id,type:VARCHAR(100),nullzero"`
-	PostedExpenseAccountID *pulid.ID           `json:"postedExpenseAccountId" bun:"posted_expense_account_id,type:VARCHAR(100),nullzero"`
-	PostedAPAccountID      *pulid.ID           `json:"postedApAccountId"      bun:"posted_ap_account_id,type:VARCHAR(100),nullzero"`
-	PaidAt                 *int64              `json:"paidAt"                 bun:"paid_at,type:BIGINT,nullzero"`
-	PaidByID               pulid.ID            `json:"paidById"               bun:"paid_by_id,type:VARCHAR(100),nullzero"`
-	PaymentMethod          string              `json:"paymentMethod"          bun:"payment_method,type:VARCHAR(50),nullzero"`
-	PaymentReference       string              `json:"paymentReference"       bun:"payment_reference,type:VARCHAR(100),nullzero"`
-	PaidJournalBatchID     *pulid.ID           `json:"paidJournalBatchId"     bun:"paid_journal_batch_id,type:VARCHAR(100),nullzero"`
-	PaidExchangeRate       decimal.NullDecimal `json:"paidExchangeRate"       bun:"paid_exchange_rate,type:NUMERIC(24,12),nullzero"`
-	PaidExchangeRateDate   *int64              `json:"paidExchangeRateDate"   bun:"paid_exchange_rate_date,type:BIGINT,nullzero"`
-	VoidedByID             pulid.ID            `json:"voidedById"             bun:"voided_by_id,type:VARCHAR(100),nullzero"`
-	VoidedAt               *int64              `json:"voidedAt"               bun:"voided_at,type:BIGINT,nullzero"`
-	VoidReason             string              `json:"voidReason"             bun:"void_reason,type:TEXT,nullzero"`
-	VoidJournalBatchID     *pulid.ID           `json:"voidJournalBatchId"     bun:"void_journal_batch_id,type:VARCHAR(100),nullzero"`
-	Version                int64               `json:"version"                bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt              int64               `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64               `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID            `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:carstl_"`
+	BusinessUnitID         pulid.ID            `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID            `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	CarrierID              pulid.ID            `json:"carrierId"              bun:"carrier_id,type:VARCHAR(100),notnull" keel:"carrier_id"`
+	BatchID                *pulid.ID           `json:"batchId"                bun:"batch_id,type:VARCHAR(100),nullzero" keel:"batch_id"`
+	SettlementNumber       string              `json:"settlementNumber"       bun:"settlement_number,type:VARCHAR(100),notnull" keel:"settlement_number"`
+	Status                 Status              `json:"status"                 bun:"status,type:VARCHAR(50),notnull,default:'Draft'" keel:"status"`
+	PeriodStart            int64               `json:"periodStart"            bun:"period_start,type:BIGINT,notnull" keel:"period_start"`
+	PeriodEnd              int64               `json:"periodEnd"              bun:"period_end,type:BIGINT,notnull" keel:"period_end"`
+	PayDate                int64               `json:"payDate"                bun:"pay_date,type:BIGINT,notnull" keel:"pay_date"`
+	GrossCostMinor         int64               `json:"grossCostMinor"         bun:"gross_cost_minor,type:BIGINT,notnull,default:0" keel:"gross_cost_minor"`
+	AdjustmentsMinor       int64               `json:"adjustmentsMinor"       bun:"adjustments_minor,type:BIGINT,notnull,default:0" keel:"adjustments_minor"`
+	NetPayableMinor        int64               `json:"netPayableMinor"        bun:"net_payable_minor,type:BIGINT,notnull,default:0" keel:"net_payable_minor"`
+	ShipmentCount          int                 `json:"shipmentCount"          bun:"shipment_count,type:INTEGER,notnull,default:0" keel:"shipment_count"`
+	CurrencyCode           string              `json:"currencyCode"           bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'" keel:"currency_code"`
+	ExchangeRate           decimal.NullDecimal `json:"exchangeRate"           bun:"exchange_rate,type:NUMERIC(24,12),nullzero" keel:"exchange_rate"`
+	ExchangeRateDate       *int64              `json:"exchangeRateDate"       bun:"exchange_rate_date,type:BIGINT,nullzero" keel:"exchange_rate_date"`
+	Notes                  string              `json:"notes"                  bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	SubmittedByID          pulid.ID            `json:"submittedById"          bun:"submitted_by_id,type:VARCHAR(100),nullzero" keel:"submitted_by_id,nullzero"`
+	SubmittedAt            *int64              `json:"submittedAt"            bun:"submitted_at,type:BIGINT,nullzero" keel:"submitted_at"`
+	ApprovedByID           pulid.ID            `json:"approvedById"           bun:"approved_by_id,type:VARCHAR(100),nullzero" keel:"approved_by_id,nullzero"`
+	ApprovedAt             *int64              `json:"approvedAt"             bun:"approved_at,type:BIGINT,nullzero" keel:"approved_at"`
+	PostedByID             pulid.ID            `json:"postedById"             bun:"posted_by_id,type:VARCHAR(100),nullzero" keel:"posted_by_id,nullzero"`
+	PostedAt               *int64              `json:"postedAt"               bun:"posted_at,type:BIGINT,nullzero" keel:"posted_at"`
+	PostedJournalBatchID   *pulid.ID           `json:"postedJournalBatchId"   bun:"posted_journal_batch_id,type:VARCHAR(100),nullzero" keel:"posted_journal_batch_id"`
+	PostedExpenseAccountID *pulid.ID           `json:"postedExpenseAccountId" bun:"posted_expense_account_id,type:VARCHAR(100),nullzero" keel:"posted_expense_account_id"`
+	PostedAPAccountID      *pulid.ID           `json:"postedApAccountId"      bun:"posted_ap_account_id,type:VARCHAR(100),nullzero" keel:"posted_ap_account_id"`
+	PaidAt                 *int64              `json:"paidAt"                 bun:"paid_at,type:BIGINT,nullzero" keel:"paid_at"`
+	PaidByID               pulid.ID            `json:"paidById"               bun:"paid_by_id,type:VARCHAR(100),nullzero" keel:"paid_by_id,nullzero"`
+	PaymentMethod          string              `json:"paymentMethod"          bun:"payment_method,type:VARCHAR(50),nullzero" keel:"payment_method,nullzero"`
+	PaymentReference       string              `json:"paymentReference"       bun:"payment_reference,type:VARCHAR(100),nullzero" keel:"payment_reference,nullzero"`
+	PaidJournalBatchID     *pulid.ID           `json:"paidJournalBatchId"     bun:"paid_journal_batch_id,type:VARCHAR(100),nullzero" keel:"paid_journal_batch_id"`
+	PaidExchangeRate       decimal.NullDecimal `json:"paidExchangeRate"       bun:"paid_exchange_rate,type:NUMERIC(24,12),nullzero" keel:"paid_exchange_rate"`
+	PaidExchangeRateDate   *int64              `json:"paidExchangeRateDate"   bun:"paid_exchange_rate_date,type:BIGINT,nullzero" keel:"paid_exchange_rate_date"`
+	VoidedByID             pulid.ID            `json:"voidedById"             bun:"voided_by_id,type:VARCHAR(100),nullzero" keel:"voided_by_id,nullzero"`
+	VoidedAt               *int64              `json:"voidedAt"               bun:"voided_at,type:BIGINT,nullzero" keel:"voided_at"`
+	VoidReason             string              `json:"voidReason"             bun:"void_reason,type:TEXT,nullzero" keel:"void_reason,nullzero"`
+	VoidJournalBatchID     *pulid.ID           `json:"voidJournalBatchId"     bun:"void_journal_batch_id,type:VARCHAR(100),nullzero" keel:"void_journal_batch_id"`
+	Version                int64               `json:"version"                bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt              int64               `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt              int64               `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit     `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization     `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Carrier      *carrier.Carrier         `json:"carrier,omitempty"      bun:"rel:belongs-to,join:carrier_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Batch        *CarrierSettlementBatch  `json:"batch,omitempty"        bun:"rel:belongs-to,join:batch_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Lines        []*CarrierSettlementLine `json:"lines,omitempty"        bun:"rel:has-many,join:id=settlement_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Carrier      *carrier.Carrier         `json:"carrier,omitempty"      bun:"rel:belongs-to,join:carrier_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:carrier_id"`
+	Batch        *CarrierSettlementBatch  `json:"batch,omitempty"        bun:"rel:belongs-to,join:batch_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:batch_id"`
+	Lines        []*CarrierSettlementLine `json:"lines,omitempty"        bun:"rel:has-many,join:id=settlement_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:settlement_id"`
 }
 
 type CarrierSettlementLine struct {
 	bun.BaseModel `bun:"table:carrier_settlement_lines,alias:carstll" json:"-"`
+	keel.Table    `keel:"carrier_settlement_lines"`
 
-	ID             pulid.ID      `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID      `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID      `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	SettlementID   pulid.ID      `json:"settlementId"   bun:"settlement_id,type:VARCHAR(100),notnull"`
-	LineNumber     int           `json:"lineNumber"     bun:"line_number,type:INTEGER,notnull"`
-	EventType      CostEventType `json:"eventType"      bun:"event_type,type:VARCHAR(50),notnull"`
-	Description    string        `json:"description"    bun:"description,type:VARCHAR(255),notnull"`
-	AmountMinor    int64         `json:"amountMinor"    bun:"amount_minor,type:BIGINT,notnull"`
-	CostEventID    *pulid.ID     `json:"costEventId"    bun:"cost_event_id,type:VARCHAR(100),nullzero"`
-	GLAccountID    *pulid.ID     `json:"glAccountId"    bun:"gl_account_id,type:VARCHAR(100),nullzero"`
-	ShipmentID     *pulid.ID     `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	MoveID         *pulid.ID     `json:"moveId"         bun:"move_id,type:VARCHAR(100),nullzero"`
-	ProNumber      string        `json:"proNumber"      bun:"pro_number,type:VARCHAR(100),nullzero"`
-	AddedByAgent   bool          `json:"addedByAgent"   bun:"added_by_agent,type:BOOLEAN,notnull,default:false"`
-	CreatedAt      int64         `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64         `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID      `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:carstll_"`
+	BusinessUnitID pulid.ID      `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID      `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	SettlementID   pulid.ID      `json:"settlementId"   bun:"settlement_id,type:VARCHAR(100),notnull" keel:"settlement_id"`
+	LineNumber     int           `json:"lineNumber"     bun:"line_number,type:INTEGER,notnull" keel:"line_number"`
+	EventType      CostEventType `json:"eventType"      bun:"event_type,type:VARCHAR(50),notnull" keel:"event_type"`
+	Description    string        `json:"description"    bun:"description,type:VARCHAR(255),notnull" keel:"description"`
+	AmountMinor    int64         `json:"amountMinor"    bun:"amount_minor,type:BIGINT,notnull" keel:"amount_minor"`
+	CostEventID    *pulid.ID     `json:"costEventId"    bun:"cost_event_id,type:VARCHAR(100),nullzero" keel:"cost_event_id"`
+	GLAccountID    *pulid.ID     `json:"glAccountId"    bun:"gl_account_id,type:VARCHAR(100),nullzero" keel:"gl_account_id"`
+	ShipmentID     *pulid.ID     `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),nullzero" keel:"shipment_id"`
+	MoveID         *pulid.ID     `json:"moveId"         bun:"move_id,type:VARCHAR(100),nullzero" keel:"move_id"`
+	ProNumber      string        `json:"proNumber"      bun:"pro_number,type:VARCHAR(100),nullzero" keel:"pro_number,nullzero"`
+	AddedByAgent   bool          `json:"addedByAgent"   bun:"added_by_agent,type:BOOLEAN,notnull,default:false" keel:"added_by_agent"`
+	CreatedAt      int64         `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64         `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (s *CarrierSettlement) Validate(multiErr *errortypes.MultiError) {

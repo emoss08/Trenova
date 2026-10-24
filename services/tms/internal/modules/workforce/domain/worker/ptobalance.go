@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -19,25 +20,26 @@ var (
 
 type WorkerPTOBalance struct {
 	bun.BaseModel `bun:"table:worker_pto_balances,alias:wpb" json:"-"`
+	keel.Table    `keel:"worker_pto_balances"`
 
-	ID                   pulid.ID        `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID        `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID        `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID             pulid.ID        `json:"workerId"             bun:"worker_id,type:VARCHAR(100),notnull"`
-	PTOType              PTOType         `json:"ptoType"              bun:"pto_type,type:worker_pto_type_enum,notnull"`
-	BalanceDays          decimal.Decimal `json:"balanceDays"          bun:"balance_days,type:NUMERIC(8,2),notnull,default:0"`
-	AccruedYTDDays       decimal.Decimal `json:"accruedYtdDays"       bun:"accrued_ytd_days,type:NUMERIC(8,2),notnull,default:0"`
-	UsedYTDDays          decimal.Decimal `json:"usedYtdDays"          bun:"used_ytd_days,type:NUMERIC(8,2),notnull,default:0"`
-	CarriedDays          decimal.Decimal `json:"carriedDays"          bun:"carried_days,type:NUMERIC(8,2),notnull,default:0"`
-	EntryCount           int64           `json:"entryCount"           bun:"entry_count,type:BIGINT,notnull"`
-	LastAccrualPeriodKey string          `json:"lastAccrualPeriodKey" bun:"last_accrual_period_key,type:VARCHAR(64),nullzero"`
-	LastRolloverKey      string          `json:"lastRolloverKey"      bun:"last_rollover_key,type:VARCHAR(64),nullzero"`
-	YearStartedAt        *int64          `json:"yearStartedAt"        bun:"year_started_at,type:BIGINT,nullzero"`
-	Version              int64           `json:"version"              bun:"version,type:BIGINT"`
-	CreatedAt            int64           `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64           `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID        `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wpb_"`
+	BusinessUnitID       pulid.ID        `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID        `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	WorkerID             pulid.ID        `json:"workerId"             bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	PTOType              PTOType         `json:"ptoType"              bun:"pto_type,type:worker_pto_type_enum,notnull" keel:"pto_type"`
+	BalanceDays          decimal.Decimal `json:"balanceDays"          bun:"balance_days,type:NUMERIC(8,2),notnull,default:0" keel:"balance_days"`
+	AccruedYTDDays       decimal.Decimal `json:"accruedYtdDays"       bun:"accrued_ytd_days,type:NUMERIC(8,2),notnull,default:0" keel:"accrued_ytd_days"`
+	UsedYTDDays          decimal.Decimal `json:"usedYtdDays"          bun:"used_ytd_days,type:NUMERIC(8,2),notnull,default:0" keel:"used_ytd_days"`
+	CarriedDays          decimal.Decimal `json:"carriedDays"          bun:"carried_days,type:NUMERIC(8,2),notnull,default:0" keel:"carried_days"`
+	EntryCount           int64           `json:"entryCount"           bun:"entry_count,type:BIGINT,notnull" keel:"entry_count"`
+	LastAccrualPeriodKey string          `json:"lastAccrualPeriodKey" bun:"last_accrual_period_key,type:VARCHAR(64),nullzero" keel:"last_accrual_period_key,nullzero"`
+	LastRolloverKey      string          `json:"lastRolloverKey"      bun:"last_rollover_key,type:VARCHAR(64),nullzero" keel:"last_rollover_key,nullzero"`
+	YearStartedAt        *int64          `json:"yearStartedAt"        bun:"year_started_at,type:BIGINT,nullzero" keel:"year_started_at"`
+	Version              int64           `json:"version"              bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt            int64           `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt            int64           `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker *Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Worker *Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
 }
 
 func (b *WorkerPTOBalance) Validate(multiErr *errortypes.MultiError) {

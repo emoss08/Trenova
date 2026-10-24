@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -168,44 +169,45 @@ var (
 
 type WorkerDOTViolation struct {
 	bun.BaseModel `bun:"table:worker_dot_violations,alias:wdotv" json:"-"`
+	keel.Table    `keel:"worker_dot_violations"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wdotv_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
 
-	ViolationType DOTViolationType   `json:"violationType" bun:"violation_type,type:dot_violation_type_enum,notnull"`
-	Status        DOTViolationStatus `json:"status"        bun:"status,type:dot_violation_status_enum,notnull,default:'Open'"`
-	OccurredAt    int64              `json:"occurredAt"    bun:"occurred_at,type:BIGINT,notnull"`
+	ViolationType DOTViolationType   `json:"violationType" bun:"violation_type,type:dot_violation_type_enum,notnull" keel:"violation_type"`
+	Status        DOTViolationStatus `json:"status"        bun:"status,type:dot_violation_status_enum,notnull,default:'Open'" keel:"status"`
+	OccurredAt    int64              `json:"occurredAt"    bun:"occurred_at,type:BIGINT,notnull" keel:"occurred_at"`
 
-	SourceTestID              pulid.ID `json:"sourceTestId"              bun:"source_test_id,type:VARCHAR(100),nullzero"`
-	ReportedToClearinghouseAt *int64   `json:"reportedToClearinghouseAt" bun:"reported_to_clearinghouse_at,type:BIGINT,nullzero"`
+	SourceTestID              pulid.ID `json:"sourceTestId"              bun:"source_test_id,type:VARCHAR(100),nullzero" keel:"source_test_id,nullzero"`
+	ReportedToClearinghouseAt *int64   `json:"reportedToClearinghouseAt" bun:"reported_to_clearinghouse_at,type:BIGINT,nullzero" keel:"reported_to_clearinghouse_at"`
 
-	SAPName                  string `json:"sapName"                  bun:"sap_name,type:VARCHAR(100),nullzero"`
-	SAPReferredAt            *int64 `json:"sapReferredAt"            bun:"sap_referred_at,type:BIGINT,nullzero"`
-	SAPEvaluationCompletedAt *int64 `json:"sapEvaluationCompletedAt" bun:"sap_evaluation_completed_at,type:BIGINT,nullzero"`
+	SAPName                  string `json:"sapName"                  bun:"sap_name,type:VARCHAR(100),nullzero" keel:"sap_name,nullzero"`
+	SAPReferredAt            *int64 `json:"sapReferredAt"            bun:"sap_referred_at,type:BIGINT,nullzero" keel:"sap_referred_at"`
+	SAPEvaluationCompletedAt *int64 `json:"sapEvaluationCompletedAt" bun:"sap_evaluation_completed_at,type:BIGINT,nullzero" keel:"sap_evaluation_completed_at"`
 
-	RTDTestID      pulid.ID `json:"rtdTestId"      bun:"rtd_test_id,type:VARCHAR(100),nullzero"`
-	RTDCompletedAt *int64   `json:"rtdCompletedAt" bun:"rtd_completed_at,type:BIGINT,nullzero"`
+	RTDTestID      pulid.ID `json:"rtdTestId"      bun:"rtd_test_id,type:VARCHAR(100),nullzero" keel:"rtd_test_id,nullzero"`
+	RTDCompletedAt *int64   `json:"rtdCompletedAt" bun:"rtd_completed_at,type:BIGINT,nullzero" keel:"rtd_completed_at"`
 
-	FollowUpTestCount      int32  `json:"followUpTestCount"      bun:"follow_up_test_count,type:INTEGER,notnull"`
-	FollowUpTestsCompleted int32  `json:"followUpTestsCompleted" bun:"follow_up_tests_completed,type:INTEGER,notnull"`
-	FollowUpEndsAt         *int64 `json:"followUpEndsAt"         bun:"follow_up_ends_at,type:BIGINT,nullzero"`
+	FollowUpTestCount      int32  `json:"followUpTestCount"      bun:"follow_up_test_count,type:INTEGER,notnull" keel:"follow_up_test_count"`
+	FollowUpTestsCompleted int32  `json:"followUpTestsCompleted" bun:"follow_up_tests_completed,type:INTEGER,notnull" keel:"follow_up_tests_completed"`
+	FollowUpEndsAt         *int64 `json:"followUpEndsAt"         bun:"follow_up_ends_at,type:BIGINT,nullzero" keel:"follow_up_ends_at"`
 
-	ResolvedAt   *int64   `json:"resolvedAt"   bun:"resolved_at,type:BIGINT,nullzero"`
-	DocumentID   pulid.ID `json:"documentId"   bun:"document_id,type:VARCHAR(100),nullzero"`
-	Notes        string   `json:"notes"        bun:"notes,type:TEXT,nullzero"`
-	RecordedByID pulid.ID `json:"recordedById" bun:"recorded_by_id,type:VARCHAR(100),nullzero"`
+	ResolvedAt   *int64   `json:"resolvedAt"   bun:"resolved_at,type:BIGINT,nullzero" keel:"resolved_at"`
+	DocumentID   pulid.ID `json:"documentId"   bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id,nullzero"`
+	Notes        string   `json:"notes"        bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	RecordedByID pulid.ID `json:"recordedById" bun:"recorded_by_id,type:VARCHAR(100),nullzero" keel:"recorded_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker     *Worker            `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	SourceTest *WorkerDOTTest     `json:"sourceTest,omitempty" bun:"rel:belongs-to,join:source_test_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	RTDTest    *WorkerDOTTest     `json:"rtdTest,omitempty"    bun:"rel:belongs-to,join:rtd_test_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document   *document.Document `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	RecordedBy *tenant.User       `json:"recordedBy,omitempty" bun:"rel:belongs-to,join:recorded_by_id=id"`
+	Worker     *Worker            `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	SourceTest *WorkerDOTTest     `json:"sourceTest,omitempty" bun:"rel:belongs-to,join:source_test_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:source_test_id"`
+	RTDTest    *WorkerDOTTest     `json:"rtdTest,omitempty"    bun:"rel:belongs-to,join:rtd_test_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:rtd_test_id"`
+	Document   *document.Document `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
+	RecordedBy *tenant.User       `json:"recordedBy,omitempty" bun:"rel:belongs-to,join:recorded_by_id=id" keel:"belongs:recorded_by_id"`
 }
 
 func (v *WorkerDOTViolation) Validate(multiErr *errortypes.MultiError) {

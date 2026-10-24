@@ -320,7 +320,7 @@ func (g *generator) mdVaryBillingProfile(profile *customer.CustomerBillingProfil
 	if g.fake.chance(0.1) {
 		profile.ApplyLateCharges = true
 		profile.LateChargeRate = decimal.NullDecimal{Decimal: decimal.NewFromFloat(1.5), Valid: true}
-		profile.GracePeriodDays = int8(g.fake.between(5, 15))
+		profile.GracePeriodDays = int16(g.fake.between(5, 15))
 	}
 	if g.fake.chance(0.05) {
 		profile.TaxExempt = true

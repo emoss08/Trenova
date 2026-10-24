@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -29,20 +30,21 @@ var (
 
 type PageFavorite struct {
 	bun.BaseModel `bun:"table:page_favorites,alias:pf" json:"-"`
+	keel.Table    `keel:"page_favorites"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	PageURL        string   `json:"pageUrl"        bun:"page_url,type:VARCHAR(500),notnull"`
-	PageTitle      string   `json:"pageTitle"      bun:"page_title,type:VARCHAR(255),notnull"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:pf_"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,tenant"`
+	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	PageURL        string   `json:"pageUrl"        bun:"page_url,type:VARCHAR(500),notnull" keel:"page_url"`
+	PageTitle      string   `json:"pageTitle"      bun:"page_title,type:VARCHAR(255),notnull" keel:"page_title"`
+	Version        int64    `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id"`
+	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
 }
 
 func (pf *PageFavorite) BeforeAppendModel(_ context.Context, query bun.Query) error {

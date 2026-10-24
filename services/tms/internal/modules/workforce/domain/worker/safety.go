@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -201,40 +202,41 @@ var (
 
 type WorkerSafetyEvent struct {
 	bun.BaseModel `bun:"table:worker_safety_events,alias:wsev" json:"-"`
+	keel.Table    `keel:"worker_safety_events"`
 
-	ID               pulid.ID            `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID            `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID            `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID         pulid.ID            `json:"workerId"         bun:"worker_id,type:VARCHAR(100),notnull"`
-	Kind             SafetyEventKind     `json:"kind"             bun:"kind,type:safety_event_kind_enum,notnull"`
-	Severity         SafetySeverity      `json:"severity"         bun:"severity,type:safety_severity_enum,notnull,default:'Minor'"`
-	Status           SafetyEventStatus   `json:"status"           bun:"status,type:safety_event_status_enum,notnull,default:'Open'"`
-	OccurredAt       int64               `json:"occurredAt"       bun:"occurred_at,type:BIGINT,notnull"`
-	Location         string              `json:"location"         bun:"location,type:VARCHAR(255),nullzero"`
-	Description      string              `json:"description"      bun:"description,type:TEXT,notnull"`
-	Preventable      bool                `json:"preventable"      bun:"preventable,type:BOOLEAN,notnull"`
-	Points           int32               `json:"points"           bun:"points,type:INTEGER,notnull"`
-	PointsExpireAt   *int64              `json:"pointsExpireAt"   bun:"points_expire_at,type:BIGINT,nullzero"`
-	ReferenceNumber  string              `json:"referenceNumber"  bun:"reference_number,type:VARCHAR(100),nullzero"`
-	ShipmentID       pulid.ID            `json:"shipmentId"       bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	InspectionLevel  *int16              `json:"inspectionLevel"  bun:"inspection_level,type:SMALLINT,nullzero"`
-	InspectionResult InspectionResult    `json:"inspectionResult" bun:"inspection_result,type:inspection_result_enum,nullzero"`
-	OutOfService     bool                `json:"outOfService"     bun:"out_of_service,type:BOOLEAN,notnull"`
-	FineAmount       decimal.NullDecimal `json:"fineAmount"       bun:"fine_amount,type:NUMERIC(12,2),nullzero"`
-	CostAmount       decimal.NullDecimal `json:"costAmount"       bun:"cost_amount,type:NUMERIC(12,2),nullzero"`
-	DocumentID       pulid.ID            `json:"documentId"       bun:"document_id,type:VARCHAR(100),nullzero"`
-	RecordedByID     pulid.ID            `json:"recordedById"     bun:"recorded_by_id,type:VARCHAR(100),nullzero"`
-	ClosedByID       pulid.ID            `json:"closedById"       bun:"closed_by_id,type:VARCHAR(100),nullzero"`
-	ClosedAt         *int64              `json:"closedAt"         bun:"closed_at,type:BIGINT,nullzero"`
-	Resolution       string              `json:"resolution"       bun:"resolution,type:TEXT,nullzero"`
-	Version          int64               `json:"version"          bun:"version,type:BIGINT"`
-	CreatedAt        int64               `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64               `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID            `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wsev_"`
+	BusinessUnitID   pulid.ID            `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID            `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	WorkerID         pulid.ID            `json:"workerId"         bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	Kind             SafetyEventKind     `json:"kind"             bun:"kind,type:safety_event_kind_enum,notnull" keel:"kind"`
+	Severity         SafetySeverity      `json:"severity"         bun:"severity,type:safety_severity_enum,notnull,default:'Minor'" keel:"severity"`
+	Status           SafetyEventStatus   `json:"status"           bun:"status,type:safety_event_status_enum,notnull,default:'Open'" keel:"status"`
+	OccurredAt       int64               `json:"occurredAt"       bun:"occurred_at,type:BIGINT,notnull" keel:"occurred_at"`
+	Location         string              `json:"location"         bun:"location,type:VARCHAR(255),nullzero" keel:"location,nullzero"`
+	Description      string              `json:"description"      bun:"description,type:TEXT,notnull" keel:"description"`
+	Preventable      bool                `json:"preventable"      bun:"preventable,type:BOOLEAN,notnull" keel:"preventable"`
+	Points           int32               `json:"points"           bun:"points,type:INTEGER,notnull" keel:"points"`
+	PointsExpireAt   *int64              `json:"pointsExpireAt"   bun:"points_expire_at,type:BIGINT,nullzero" keel:"points_expire_at"`
+	ReferenceNumber  string              `json:"referenceNumber"  bun:"reference_number,type:VARCHAR(100),nullzero" keel:"reference_number,nullzero"`
+	ShipmentID       pulid.ID            `json:"shipmentId"       bun:"shipment_id,type:VARCHAR(100),nullzero" keel:"shipment_id,nullzero"`
+	InspectionLevel  *int16              `json:"inspectionLevel"  bun:"inspection_level,type:SMALLINT,nullzero" keel:"inspection_level"`
+	InspectionResult InspectionResult    `json:"inspectionResult" bun:"inspection_result,type:inspection_result_enum,nullzero" keel:"inspection_result,nullzero"`
+	OutOfService     bool                `json:"outOfService"     bun:"out_of_service,type:BOOLEAN,notnull" keel:"out_of_service"`
+	FineAmount       decimal.NullDecimal `json:"fineAmount"       bun:"fine_amount,type:NUMERIC(12,2),nullzero" keel:"fine_amount"`
+	CostAmount       decimal.NullDecimal `json:"costAmount"       bun:"cost_amount,type:NUMERIC(12,2),nullzero" keel:"cost_amount"`
+	DocumentID       pulid.ID            `json:"documentId"       bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id,nullzero"`
+	RecordedByID     pulid.ID            `json:"recordedById"     bun:"recorded_by_id,type:VARCHAR(100),nullzero" keel:"recorded_by_id,nullzero"`
+	ClosedByID       pulid.ID            `json:"closedById"       bun:"closed_by_id,type:VARCHAR(100),nullzero" keel:"closed_by_id,nullzero"`
+	ClosedAt         *int64              `json:"closedAt"         bun:"closed_at,type:BIGINT,nullzero" keel:"closed_at"`
+	Resolution       string              `json:"resolution"       bun:"resolution,type:TEXT,nullzero" keel:"resolution,nullzero"`
+	Version          int64               `json:"version"          bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt        int64               `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64               `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker     *Worker            `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document   *document.Document `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	RecordedBy *tenant.User       `json:"recordedBy,omitempty" bun:"rel:belongs-to,join:recorded_by_id=id"`
-	ClosedBy   *tenant.User       `json:"closedBy,omitempty"   bun:"rel:belongs-to,join:closed_by_id=id"`
+	Worker     *Worker            `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Document   *document.Document `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
+	RecordedBy *tenant.User       `json:"recordedBy,omitempty" bun:"rel:belongs-to,join:recorded_by_id=id" keel:"belongs:recorded_by_id"`
+	ClosedBy   *tenant.User       `json:"closedBy,omitempty"   bun:"rel:belongs-to,join:closed_by_id=id" keel:"belongs:closed_by_id"`
 }
 
 func (e *WorkerSafetyEvent) Validate(multiErr *errortypes.MultiError) {

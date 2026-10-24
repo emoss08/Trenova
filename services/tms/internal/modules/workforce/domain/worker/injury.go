@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -289,52 +290,53 @@ var (
 // a record.
 type WorkerInjury struct {
 	bun.BaseModel `bun:"table:worker_injuries,alias:winj" json:"-"`
+	keel.Table    `keel:"worker_injuries"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:winj_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
 
 	// CaseNumber restarts each calendar year, which is how the 300 log reads.
-	CaseNumber int32 `json:"caseNumber" bun:"case_number,type:INTEGER,notnull"`
-	CaseYear   int16 `json:"caseYear"   bun:"case_year,type:SMALLINT,notnull"`
+	CaseNumber int32 `json:"caseNumber" bun:"case_number,type:INTEGER,notnull" keel:"case_number"`
+	CaseYear   int16 `json:"caseYear"   bun:"case_year,type:SMALLINT,notnull" keel:"case_year"`
 
-	Classification OSHACaseClassification `json:"classification" bun:"classification,type:osha_case_classification_enum,notnull,default:'NotRecordable'"`
-	IllnessType    OSHAIllnessType        `json:"illnessType"    bun:"illness_type,type:osha_illness_type_enum,notnull,default:'Injury'"`
-	Treatment      InjuryTreatment        `json:"treatment"      bun:"treatment,type:injury_treatment_enum,notnull,default:'None'"`
-	Status         InjuryCaseStatus       `json:"status"         bun:"status,type:injury_case_status_enum,notnull,default:'Open'"`
+	Classification OSHACaseClassification `json:"classification" bun:"classification,type:osha_case_classification_enum,notnull,default:'NotRecordable'" keel:"classification"`
+	IllnessType    OSHAIllnessType        `json:"illnessType"    bun:"illness_type,type:osha_illness_type_enum,notnull,default:'Injury'" keel:"illness_type"`
+	Treatment      InjuryTreatment        `json:"treatment"      bun:"treatment,type:injury_treatment_enum,notnull,default:'None'" keel:"treatment"`
+	Status         InjuryCaseStatus       `json:"status"         bun:"status,type:injury_case_status_enum,notnull,default:'Open'" keel:"status"`
 
-	OccurredAt       int64  `json:"occurredAt"       bun:"occurred_at,type:BIGINT,notnull"`
-	ReportedAt       *int64 `json:"reportedAt"       bun:"reported_at,type:BIGINT,nullzero"`
-	ReturnedToWorkAt *int64 `json:"returnedToWorkAt" bun:"returned_to_work_at,type:BIGINT,nullzero"`
+	OccurredAt       int64  `json:"occurredAt"       bun:"occurred_at,type:BIGINT,notnull" keel:"occurred_at"`
+	ReportedAt       *int64 `json:"reportedAt"       bun:"reported_at,type:BIGINT,nullzero" keel:"reported_at"`
+	ReturnedToWorkAt *int64 `json:"returnedToWorkAt" bun:"returned_to_work_at,type:BIGINT,nullzero" keel:"returned_to_work_at"`
 
-	Location       string `json:"location"       bun:"location,type:VARCHAR(255),nullzero"`
-	Description    string `json:"description"    bun:"description,type:TEXT,notnull"`
-	BodyPart       string `json:"bodyPart"       bun:"body_part,type:VARCHAR(100),nullzero"`
-	HarmfulAgent   string `json:"harmfulAgent"   bun:"harmful_agent,type:VARCHAR(255),nullzero"`
-	DaysAway       int32  `json:"daysAway"       bun:"days_away,type:INTEGER,notnull"`
-	DaysRestricted int32  `json:"daysRestricted" bun:"days_restricted,type:INTEGER,notnull"`
-	PrivacyCase    bool   `json:"privacyCase"    bun:"privacy_case,type:BOOLEAN,notnull"`
+	Location       string `json:"location"       bun:"location,type:VARCHAR(255),nullzero" keel:"location,nullzero"`
+	Description    string `json:"description"    bun:"description,type:TEXT,notnull" keel:"description"`
+	BodyPart       string `json:"bodyPart"       bun:"body_part,type:VARCHAR(100),nullzero" keel:"body_part,nullzero"`
+	HarmfulAgent   string `json:"harmfulAgent"   bun:"harmful_agent,type:VARCHAR(255),nullzero" keel:"harmful_agent,nullzero"`
+	DaysAway       int32  `json:"daysAway"       bun:"days_away,type:INTEGER,notnull" keel:"days_away"`
+	DaysRestricted int32  `json:"daysRestricted" bun:"days_restricted,type:INTEGER,notnull" keel:"days_restricted"`
+	PrivacyCase    bool   `json:"privacyCase"    bun:"privacy_case,type:BOOLEAN,notnull" keel:"privacy_case"`
 
-	ClaimStatus   WorkersCompClaimStatus `json:"claimStatus"   bun:"claim_status,type:workers_comp_claim_status_enum,notnull,default:'NotFiled'"`
-	ClaimNumber   string                 `json:"claimNumber"   bun:"claim_number,type:VARCHAR(100),nullzero"`
-	ClaimCarrier  string                 `json:"claimCarrier"  bun:"claim_carrier,type:VARCHAR(150),nullzero"`
-	ClaimFiledAt  *int64                 `json:"claimFiledAt"  bun:"claim_filed_at,type:BIGINT,nullzero"`
-	ClaimClosedAt *int64                 `json:"claimClosedAt" bun:"claim_closed_at,type:BIGINT,nullzero"`
+	ClaimStatus   WorkersCompClaimStatus `json:"claimStatus"   bun:"claim_status,type:workers_comp_claim_status_enum,notnull,default:'NotFiled'" keel:"claim_status"`
+	ClaimNumber   string                 `json:"claimNumber"   bun:"claim_number,type:VARCHAR(100),nullzero" keel:"claim_number,nullzero"`
+	ClaimCarrier  string                 `json:"claimCarrier"  bun:"claim_carrier,type:VARCHAR(150),nullzero" keel:"claim_carrier,nullzero"`
+	ClaimFiledAt  *int64                 `json:"claimFiledAt"  bun:"claim_filed_at,type:BIGINT,nullzero" keel:"claim_filed_at"`
+	ClaimClosedAt *int64                 `json:"claimClosedAt" bun:"claim_closed_at,type:BIGINT,nullzero" keel:"claim_closed_at"`
 
-	SafetyEventID pulid.ID `json:"safetyEventId" bun:"safety_event_id,type:VARCHAR(100),nullzero"`
-	DocumentID    pulid.ID `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero"`
-	Notes         string   `json:"notes"         bun:"notes,type:TEXT,nullzero"`
-	RecordedByID  pulid.ID `json:"recordedById"  bun:"recorded_by_id,type:VARCHAR(100),nullzero"`
+	SafetyEventID pulid.ID `json:"safetyEventId" bun:"safety_event_id,type:VARCHAR(100),nullzero" keel:"safety_event_id,nullzero"`
+	DocumentID    pulid.ID `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id,nullzero"`
+	Notes         string   `json:"notes"         bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	RecordedByID  pulid.ID `json:"recordedById"  bun:"recorded_by_id,type:VARCHAR(100),nullzero" keel:"recorded_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker      *Worker            `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" bun:"rel:belongs-to,join:safety_event_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document    *document.Document `json:"document,omitempty"    bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	RecordedBy  *tenant.User       `json:"recordedBy,omitempty"  bun:"rel:belongs-to,join:recorded_by_id=id"`
+	Worker      *Worker            `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" bun:"rel:belongs-to,join:safety_event_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:safety_event_id"`
+	Document    *document.Document `json:"document,omitempty"    bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
+	RecordedBy  *tenant.User       `json:"recordedBy,omitempty"  bun:"rel:belongs-to,join:recorded_by_id=id" keel:"belongs:recorded_by_id"`
 }
 
 func (i *WorkerInjury) Validate(multiErr *errortypes.MultiError) {

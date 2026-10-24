@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,33 +29,34 @@ const MaxViewNameLength = 120
 // so a definition edit reaches every view of it at once.
 type ReportView struct {
 	bun.BaseModel `bun:"table:report_views,alias:rview" json:"-"`
+	keel.Table    `keel:"report_views"`
 
-	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	DefinitionID   pulid.ID       `json:"definitionId"   bun:"definition_id,type:VARCHAR(100),notnull"`
-	OwnerID        pulid.ID       `json:"ownerId"        bun:"owner_id,type:VARCHAR(100),notnull"`
-	Name           string         `json:"name"           bun:"name,type:VARCHAR(120),notnull"`
-	Description    string         `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Params         map[string]any `json:"params"         bun:"params,type:JSONB,nullzero"`
+	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:rview_"`
+	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	DefinitionID   pulid.ID       `json:"definitionId"   bun:"definition_id,type:VARCHAR(100),notnull" keel:"definition_id"`
+	OwnerID        pulid.ID       `json:"ownerId"        bun:"owner_id,type:VARCHAR(100),notnull" keel:"owner_id"`
+	Name           string         `json:"name"           bun:"name,type:VARCHAR(120),notnull" keel:"name"`
+	Description    string         `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Params         map[string]any `json:"params"         bun:"params,type:JSONB,nullzero" keel:"params,jsonb,nullzero"`
 	// Shared publishes the view to everyone who can read the report. A private
 	// view stays with its owner, which is what keeps one person's working set
 	// out of everybody else's list.
-	Shared bool `json:"shared" bun:"shared,type:BOOLEAN,notnull"`
+	Shared bool `json:"shared" bun:"shared,type:BOOLEAN,notnull" keel:"shared"`
 	// Pinned is per-owner ordering intent: a pinned view sorts to the front of
 	// the picker so the one someone opens daily is never buried.
-	Pinned    bool   `json:"pinned"    bun:"pinned,type:BOOLEAN,notnull"`
-	Format    Format `json:"format"    bun:"format,type:VARCHAR(10),nullzero"`
-	LastRunAt int64  `json:"lastRunAt" bun:"last_run_at,type:BIGINT,nullzero"`
-	RunCount  int64  `json:"runCount"  bun:"run_count,type:BIGINT,notnull"`
-	Version   int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64  `json:"createdAt" bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64  `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Pinned    bool   `json:"pinned"    bun:"pinned,type:BOOLEAN,notnull" keel:"pinned"`
+	Format    Format `json:"format"    bun:"format,type:VARCHAR(10),nullzero" keel:"format,nullzero"`
+	LastRunAt int64  `json:"lastRunAt" bun:"last_run_at,type:BIGINT,nullzero" keel:"last_run_at,nullzero"`
+	RunCount  int64  `json:"runCount"  bun:"run_count,type:BIGINT,notnull" keel:"run_count"`
+	Version   int64  `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64  `json:"createdAt" bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64  `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization     *tenant.Organization `json:"organization,omitempty"     bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit     *tenant.BusinessUnit `json:"businessUnit,omitempty"     bun:"rel:belongs-to,join:business_unit_id=id"`
-	Owner            *tenant.User         `json:"owner,omitempty"            bun:"rel:belongs-to,join:owner_id=id"`
-	ReportDefinition *ReportDefinition    `json:"reportDefinition,omitempty" bun:"rel:belongs-to,join:definition_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Owner            *tenant.User         `json:"owner,omitempty"            bun:"rel:belongs-to,join:owner_id=id" keel:"belongs:owner_id"`
+	ReportDefinition *ReportDefinition    `json:"reportDefinition,omitempty" bun:"rel:belongs-to,join:definition_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:definition_id"`
 }
 
 func (rv *ReportView) Validate(multiErr *errortypes.MultiError) {

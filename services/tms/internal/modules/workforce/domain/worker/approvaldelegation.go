@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -58,32 +59,33 @@ var (
 // nobody hands over nothing, which is the correct outcome rather than a bug.
 type ApprovalDelegation struct {
 	bun.BaseModel `bun:"table:approval_delegations,alias:apdl" json:"-"`
+	keel.Table    `keel:"approval_delegations"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:apdl_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	DelegatorID pulid.ID      `json:"delegatorId" bun:"delegator_id,type:VARCHAR(100),notnull"`
-	DelegateID  pulid.ID      `json:"delegateId"  bun:"delegate_id,type:VARCHAR(100),notnull"`
-	Scope       ApprovalScope `json:"scope"       bun:"scope,type:approval_scope_enum,notnull,default:'All'"`
+	DelegatorID pulid.ID      `json:"delegatorId" bun:"delegator_id,type:VARCHAR(100),notnull" keel:"delegator_id"`
+	DelegateID  pulid.ID      `json:"delegateId"  bun:"delegate_id,type:VARCHAR(100),notnull" keel:"delegate_id"`
+	Scope       ApprovalScope `json:"scope"       bun:"scope,type:approval_scope_enum,notnull,default:'All'" keel:"scope"`
 
-	StartsAt int64  `json:"startsAt" bun:"starts_at,type:BIGINT,notnull"`
-	EndsAt   *int64 `json:"endsAt"   bun:"ends_at,type:BIGINT,nullzero"`
-	Reason   string `json:"reason"   bun:"reason,type:VARCHAR(255),nullzero"`
+	StartsAt int64  `json:"startsAt" bun:"starts_at,type:BIGINT,notnull" keel:"starts_at"`
+	EndsAt   *int64 `json:"endsAt"   bun:"ends_at,type:BIGINT,nullzero" keel:"ends_at"`
+	Reason   string `json:"reason"   bun:"reason,type:VARCHAR(255),nullzero" keel:"reason,nullzero"`
 
 	// RevokedAt is set when a delegation is called back before its window ends.
 	// It is kept rather than deleted so an approval made under it can still be
 	// explained afterwards.
-	RevokedAt   *int64   `json:"revokedAt"   bun:"revoked_at,type:BIGINT,nullzero"`
-	RevokedByID pulid.ID `json:"revokedById" bun:"revoked_by_id,type:VARCHAR(100),nullzero"`
-	CreatedByID pulid.ID `json:"createdById" bun:"created_by_id,type:VARCHAR(100),nullzero"`
+	RevokedAt   *int64   `json:"revokedAt"   bun:"revoked_at,type:BIGINT,nullzero" keel:"revoked_at"`
+	RevokedByID pulid.ID `json:"revokedById" bun:"revoked_by_id,type:VARCHAR(100),nullzero" keel:"revoked_by_id,nullzero"`
+	CreatedByID pulid.ID `json:"createdById" bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Delegator *tenant.User `json:"delegator,omitempty" bun:"rel:belongs-to,join:delegator_id=id"`
-	Delegate  *tenant.User `json:"delegate,omitempty"  bun:"rel:belongs-to,join:delegate_id=id"`
+	Delegator *tenant.User `json:"delegator,omitempty" bun:"rel:belongs-to,join:delegator_id=id" keel:"belongs:delegator_id"`
+	Delegate  *tenant.User `json:"delegate,omitempty"  bun:"rel:belongs-to,join:delegate_id=id" keel:"belongs:delegate_id"`
 }
 
 func (d *ApprovalDelegation) Validate(multiErr *errortypes.MultiError) {

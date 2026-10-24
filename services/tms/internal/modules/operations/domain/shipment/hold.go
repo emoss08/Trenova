@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -15,33 +16,34 @@ import (
 
 type ShipmentHold struct {
 	bun.BaseModel `bun:"table:shipment_holds,alias:shh" json:"-"`
+	keel.Table    `keel:"shipment_holds"`
 
-	ID                pulid.ID                `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	ShipmentID        pulid.ID                `json:"shipmentId"        bun:"shipment_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID                `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID                `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	HoldReasonID      *pulid.ID               `json:"holdReasonId"      bun:"hold_reason_id,type:VARCHAR(100),nullzero"`
-	Type              holdreason.HoldType     `json:"type"              bun:"type,type:hold_type_enum,notnull"`
-	Severity          holdreason.HoldSeverity `json:"severity"          bun:"severity,type:hold_severity_enum,notnull,default:'Advisory'"`
-	ReasonCode        string                  `json:"reasonCode"        bun:"reason_code,type:VARCHAR(100),nullzero"`
-	Notes             string                  `json:"notes"             bun:"notes,type:TEXT,nullzero"`
-	Source            HoldSource              `json:"source"            bun:"source,type:hold_source_enum,notnull,default:'User'"`
-	BlocksDispatch    bool                    `json:"blocksDispatch"    bun:"blocks_dispatch,type:BOOLEAN,notnull"`
-	BlocksDelivery    bool                    `json:"blocksDelivery"    bun:"blocks_delivery,type:BOOLEAN,notnull"`
-	BlocksBilling     bool                    `json:"blocksBilling"     bun:"blocks_billing,type:BOOLEAN,notnull"`
-	VisibleToCustomer bool                    `json:"visibleToCustomer" bun:"visible_to_customer,type:BOOLEAN,notnull"`
-	StartedAt         int64                   `json:"startedAt"         bun:"started_at,type:BIGINT,notnull"`
-	CreatedAt         int64                   `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64                   `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	Version           int64                   `json:"version"           bun:"version,type:BIGINT,notnull"`
-	ReleasedAt        *int64                  `json:"releasedAt"        bun:"released_at,type:BIGINT,nullzero"`
-	CreatedByID       *pulid.ID               `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	ReleasedByID      *pulid.ID               `json:"releasedById"      bun:"released_by_id,type:VARCHAR(100),nullzero"`
+	ID                pulid.ID                `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:shh_"`
+	ShipmentID        pulid.ID                `json:"shipmentId"        bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
+	BusinessUnitID    pulid.ID                `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID                `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	HoldReasonID      *pulid.ID               `json:"holdReasonId"      bun:"hold_reason_id,type:VARCHAR(100),nullzero" keel:"hold_reason_id"`
+	Type              holdreason.HoldType     `json:"type"              bun:"type,type:hold_type_enum,notnull" keel:"type"`
+	Severity          holdreason.HoldSeverity `json:"severity"          bun:"severity,type:hold_severity_enum,notnull,default:'Advisory'" keel:"severity"`
+	ReasonCode        string                  `json:"reasonCode"        bun:"reason_code,type:VARCHAR(100),nullzero" keel:"reason_code,nullzero"`
+	Notes             string                  `json:"notes"             bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	Source            HoldSource              `json:"source"            bun:"source,type:hold_source_enum,notnull,default:'User'" keel:"source"`
+	BlocksDispatch    bool                    `json:"blocksDispatch"    bun:"blocks_dispatch,type:BOOLEAN,notnull" keel:"blocks_dispatch"`
+	BlocksDelivery    bool                    `json:"blocksDelivery"    bun:"blocks_delivery,type:BOOLEAN,notnull" keel:"blocks_delivery"`
+	BlocksBilling     bool                    `json:"blocksBilling"     bun:"blocks_billing,type:BOOLEAN,notnull" keel:"blocks_billing"`
+	VisibleToCustomer bool                    `json:"visibleToCustomer" bun:"visible_to_customer,type:BOOLEAN,notnull" keel:"visible_to_customer"`
+	StartedAt         int64                   `json:"startedAt"         bun:"started_at,type:BIGINT,notnull" keel:"started_at"`
+	CreatedAt         int64                   `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt         int64                   `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Version           int64                   `json:"version"           bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	ReleasedAt        *int64                  `json:"releasedAt"        bun:"released_at,type:BIGINT,nullzero" keel:"released_at"`
+	CreatedByID       *pulid.ID               `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id"`
+	ReleasedByID      *pulid.ID               `json:"releasedById"      bun:"released_by_id,type:VARCHAR(100),nullzero" keel:"released_by_id"`
 
-	HoldReason   *holdreason.HoldReason `json:"holdReason,omitempty" bun:"rel:belongs-to,join:hold_reason_id=id,join:organization_id=organization_id"`
-	CreatedBy    *tenant.User           `json:"createdBy,omitempty"  bun:"rel:belongs-to,join:created_by_id=id"`
-	ReleasedBy   *tenant.User           `json:"releasedBy,omitempty" bun:"rel:belongs-to,join:released_by_id=id"`
-	Shipment     *Shipment              `json:"-"                    bun:"rel:belongs-to,join:shipment_id=id"`
+	HoldReason   *holdreason.HoldReason `json:"holdReason,omitempty" bun:"rel:belongs-to,join:hold_reason_id=id,join:organization_id=organization_id" keel:"belongs:hold_reason_id"`
+	CreatedBy    *tenant.User           `json:"createdBy,omitempty"  bun:"rel:belongs-to,join:created_by_id=id" keel:"belongs:created_by_id"`
+	ReleasedBy   *tenant.User           `json:"releasedBy,omitempty" bun:"rel:belongs-to,join:released_by_id=id" keel:"belongs:released_by_id"`
+	Shipment     *Shipment              `json:"-"                    bun:"rel:belongs-to,join:shipment_id=id" keel:"belongs:shipment_id"`
 	BusinessUnit *tenant.BusinessUnit   `json:"-"                    bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization   `json:"-"                    bun:"rel:belongs-to,join:organization_id=id"`
 }

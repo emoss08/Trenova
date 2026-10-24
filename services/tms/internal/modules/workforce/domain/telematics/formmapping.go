@@ -1,6 +1,7 @@
 package telematics
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,37 +43,39 @@ var StopFieldTargets = map[string]struct{}{
 
 type FormMapping struct {
 	bun.BaseModel `bun:"table:telematics_form_mappings,alias:tfmap" json:"-"`
+	keel.Table    `keel:"telematics_form_mappings"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	Provider       string   `json:"provider"       bun:"provider,type:VARCHAR(32),notnull,default:'Samsara'"`
-	TemplateID     string   `json:"templateId"     bun:"template_id,type:TEXT,notnull"`
-	TemplateName   string   `json:"templateName"   bun:"template_name,type:TEXT,nullzero"`
-	Name           string   `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
-	Description    string   `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Enabled        bool     `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	Provider       string   `json:"provider"       bun:"provider,type:VARCHAR(32),notnull,default:'Samsara'" keel:"provider"`
+	TemplateID     string   `json:"templateId"     bun:"template_id,type:TEXT,notnull" keel:"template_id"`
+	TemplateName   string   `json:"templateName"   bun:"template_name,type:TEXT,nullzero" keel:"template_name,nullzero"`
+	Name           string   `json:"name"           bun:"name,type:VARCHAR(200),notnull" keel:"name"`
+	Description    string   `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Enabled        bool     `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull" keel:"enabled"`
+	Version        int64    `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
 
-	Items []*FormMappingItem `json:"items,omitempty" bun:"rel:has-many,join:id=mapping_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Items []*FormMappingItem `json:"items,omitempty" bun:"rel:has-many,join:id=mapping_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:mapping_id"`
 }
 
 type FormMappingItem struct {
 	bun.BaseModel `bun:"table:telematics_form_mapping_items,alias:tfmi" json:"-"`
+	keel.Table    `keel:"telematics_form_mapping_items"`
 
-	ID                   pulid.ID              `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID              `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID              `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	MappingID            pulid.ID              `json:"mappingId"            bun:"mapping_id,type:VARCHAR(100),notnull"`
-	SourceFieldLabel     string                `json:"sourceFieldLabel"     bun:"source_field_label,type:TEXT,notnull"`
-	TargetKind           FormMappingTargetKind `json:"targetKind"           bun:"target_kind,type:VARCHAR(32),notnull"`
-	TargetField          string                `json:"targetField"          bun:"target_field,type:VARCHAR(64),nullzero"`
-	TargetCustomFieldKey string                `json:"targetCustomFieldKey" bun:"target_custom_field_key,type:VARCHAR(100),nullzero"`
-	CreatedAt            int64                 `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID              `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	OrganizationID       pulid.ID              `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID              `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	MappingID            pulid.ID              `json:"mappingId"            bun:"mapping_id,type:VARCHAR(100),notnull" keel:"mapping_id"`
+	SourceFieldLabel     string                `json:"sourceFieldLabel"     bun:"source_field_label,type:TEXT,notnull" keel:"source_field_label"`
+	TargetKind           FormMappingTargetKind `json:"targetKind"           bun:"target_kind,type:VARCHAR(32),notnull" keel:"target_kind"`
+	TargetField          string                `json:"targetField"          bun:"target_field,type:VARCHAR(64),nullzero" keel:"target_field,nullzero"`
+	TargetCustomFieldKey string                `json:"targetCustomFieldKey" bun:"target_custom_field_key,type:VARCHAR(100),nullzero" keel:"target_custom_field_key,nullzero"`
+	CreatedAt            int64                 `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
 }
 
 func NewFormMappingID() pulid.ID {

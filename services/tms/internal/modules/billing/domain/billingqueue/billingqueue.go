@@ -3,6 +3,7 @@ package billingqueue
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -26,50 +27,51 @@ var (
 
 type BillingQueueItem struct {
 	bun.BaseModel `bun:"table:billing_queue_items,alias:bqi" json:"-"`
+	keel.Table    `keel:"billing_queue_items"`
 
-	ID                        pulid.ID             `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID            pulid.ID             `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID            pulid.ID             `json:"businessUnitId"            bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	ShipmentID                pulid.ID             `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	OrderID                   pulid.ID             `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"`
-	BillToCustomerID          pulid.ID             `json:"billToCustomerId"          bun:"bill_to_customer_id,type:VARCHAR(100),notnull"`
-	AllocatedTotalAmount      decimal.Decimal      `json:"allocatedTotalAmount"      bun:"allocated_total_amount,type:NUMERIC(19,4),notnull,default:0"`
-	AllocatedTotalAmountMinor int64                `json:"allocatedTotalAmountMinor" bun:"allocated_total_amount_minor,type:BIGINT,notnull"`
-	AssignedBillerID          *pulid.ID            `json:"assignedBillerId"          bun:"assigned_biller_id,type:VARCHAR(100),nullzero"`
-	Number                    string               `json:"number"                    bun:"number,type:VARCHAR(100),nullzero"`
-	Status                    Status               `json:"status"                    bun:"status,type:billing_queue_status,notnull,default:'ReadyForReview'"`
-	BillType                  BillType             `json:"billType"                  bun:"bill_type,type:billing_type,notnull,default:'Invoice'"`
-	ExceptionReasonCode       *ExceptionReasonCode `json:"exceptionReasonCode"       bun:"exception_reason_code,type:VARCHAR(50),nullzero"`
-	ReviewNotes               string               `json:"reviewNotes"               bun:"review_notes,type:TEXT,nullzero"`
-	ExceptionNotes            string               `json:"exceptionNotes"            bun:"exception_notes,type:TEXT,nullzero"`
-	ReviewStartedAt           *int64               `json:"reviewStartedAt"           bun:"review_started_at,type:BIGINT,nullzero"`
-	ReviewCompletedAt         *int64               `json:"reviewCompletedAt"         bun:"review_completed_at,type:BIGINT,nullzero"`
-	CanceledByID              *pulid.ID            `json:"canceledById"              bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
-	CanceledAt                *int64               `json:"canceledAt"                bun:"canceled_at,type:BIGINT,nullzero"`
-	CancelReason              string               `json:"cancelReason"              bun:"cancel_reason,type:VARCHAR(100),nullzero"`
-	HoldReasonCode            *HoldReasonCode      `json:"holdReasonCode"            bun:"hold_reason_code,type:VARCHAR(30),nullzero"`
-	HeldAt                    *int64               `json:"heldAt"                    bun:"held_at,type:BIGINT,nullzero"`
-	HeldByID                  *pulid.ID            `json:"heldById"                  bun:"held_by_id,type:VARCHAR(100),nullzero"`
-	StatusBeforeHold          *Status              `json:"statusBeforeHold"          bun:"status_before_hold,type:billing_queue_status,nullzero"`
-	IsAdjustmentOrigin        bool                 `json:"isAdjustmentOrigin"        bun:"is_adjustment_origin,type:BOOLEAN,notnull"`
-	InvoiceID                 pulid.ID             `json:"invoiceId"                 bun:"invoice_id,type:VARCHAR(100),nullzero"`
-	SourceInvoiceID           *pulid.ID            `json:"sourceInvoiceId"           bun:"source_invoice_id,type:VARCHAR(100),nullzero"`
-	SourceInvoiceAdjustmentID *pulid.ID            `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
-	SourceCreditMemoInvoiceID *pulid.ID            `json:"sourceCreditMemoInvoiceId" bun:"source_credit_memo_invoice_id,type:VARCHAR(100),nullzero"`
-	CorrectionGroupID         *pulid.ID            `json:"correctionGroupId"         bun:"correction_group_id,type:VARCHAR(100),nullzero"`
-	RebillStrategy            string               `json:"rebillStrategy"            bun:"rebill_strategy,type:VARCHAR(50),nullzero"`
-	RequiresReplacementReview bool                 `json:"requiresReplacementReview" bun:"requires_replacement_review,type:BOOLEAN,notnull"`
-	RerateVariancePercent     decimal.Decimal      `json:"rerateVariancePercent"     bun:"rerate_variance_percent,type:NUMERIC(9,6),notnull,default:0"`
-	AdjustmentContext         map[string]any       `json:"adjustmentContext"         bun:"adjustment_context,type:JSONB,notnull,default:'{}'"`
-	Version                   int64                `json:"version"                   bun:"version,type:BIGINT,notnull"`
-	CreatedAt                 int64                `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                 int64                `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector              string               `json:"-"                         bun:"search_vector,type:TSVECTOR,scanonly"`
+	ID                        pulid.ID             `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:bqi_"`
+	OrganizationID            pulid.ID             `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID            pulid.ID             `json:"businessUnitId"            bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	ShipmentID                pulid.ID             `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),nullzero" keel:"shipment_id,nullzero"`
+	OrderID                   pulid.ID             `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero" keel:"order_id,nullzero"`
+	BillToCustomerID          pulid.ID             `json:"billToCustomerId"          bun:"bill_to_customer_id,type:VARCHAR(100),notnull" keel:"bill_to_customer_id"`
+	AllocatedTotalAmount      decimal.Decimal      `json:"allocatedTotalAmount"      bun:"allocated_total_amount,type:NUMERIC(19,4),notnull,default:0" keel:"allocated_total_amount"`
+	AllocatedTotalAmountMinor int64                `json:"allocatedTotalAmountMinor" bun:"allocated_total_amount_minor,type:BIGINT,notnull" keel:"allocated_total_amount_minor"`
+	AssignedBillerID          *pulid.ID            `json:"assignedBillerId"          bun:"assigned_biller_id,type:VARCHAR(100),nullzero" keel:"assigned_biller_id"`
+	Number                    string               `json:"number"                    bun:"number,type:VARCHAR(100),nullzero" keel:"number,nullzero"`
+	Status                    Status               `json:"status"                    bun:"status,type:billing_queue_status,notnull,default:'ReadyForReview'" keel:"status"`
+	BillType                  BillType             `json:"billType"                  bun:"bill_type,type:billing_type,notnull,default:'Invoice'" keel:"bill_type"`
+	ExceptionReasonCode       *ExceptionReasonCode `json:"exceptionReasonCode"       bun:"exception_reason_code,type:VARCHAR(50),nullzero" keel:"exception_reason_code"`
+	ReviewNotes               string               `json:"reviewNotes"               bun:"review_notes,type:TEXT,nullzero" keel:"review_notes,nullzero"`
+	ExceptionNotes            string               `json:"exceptionNotes"            bun:"exception_notes,type:TEXT,nullzero" keel:"exception_notes,nullzero"`
+	ReviewStartedAt           *int64               `json:"reviewStartedAt"           bun:"review_started_at,type:BIGINT,nullzero" keel:"review_started_at"`
+	ReviewCompletedAt         *int64               `json:"reviewCompletedAt"         bun:"review_completed_at,type:BIGINT,nullzero" keel:"review_completed_at"`
+	CanceledByID              *pulid.ID            `json:"canceledById"              bun:"canceled_by_id,type:VARCHAR(100),nullzero" keel:"canceled_by_id"`
+	CanceledAt                *int64               `json:"canceledAt"                bun:"canceled_at,type:BIGINT,nullzero" keel:"canceled_at"`
+	CancelReason              string               `json:"cancelReason"              bun:"cancel_reason,type:VARCHAR(100),nullzero" keel:"cancel_reason,nullzero"`
+	HoldReasonCode            *HoldReasonCode      `json:"holdReasonCode"            bun:"hold_reason_code,type:VARCHAR(30),nullzero" keel:"hold_reason_code"`
+	HeldAt                    *int64               `json:"heldAt"                    bun:"held_at,type:BIGINT,nullzero" keel:"held_at"`
+	HeldByID                  *pulid.ID            `json:"heldById"                  bun:"held_by_id,type:VARCHAR(100),nullzero" keel:"held_by_id"`
+	StatusBeforeHold          *Status              `json:"statusBeforeHold"          bun:"status_before_hold,type:billing_queue_status,nullzero" keel:"status_before_hold"`
+	IsAdjustmentOrigin        bool                 `json:"isAdjustmentOrigin"        bun:"is_adjustment_origin,type:BOOLEAN,notnull" keel:"is_adjustment_origin"`
+	InvoiceID                 pulid.ID             `json:"invoiceId"                 bun:"invoice_id,type:VARCHAR(100),nullzero" keel:"invoice_id,nullzero"`
+	SourceInvoiceID           *pulid.ID            `json:"sourceInvoiceId"           bun:"source_invoice_id,type:VARCHAR(100),nullzero" keel:"source_invoice_id"`
+	SourceInvoiceAdjustmentID *pulid.ID            `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero" keel:"source_invoice_adjustment_id"`
+	SourceCreditMemoInvoiceID *pulid.ID            `json:"sourceCreditMemoInvoiceId" bun:"source_credit_memo_invoice_id,type:VARCHAR(100),nullzero" keel:"source_credit_memo_invoice_id"`
+	CorrectionGroupID         *pulid.ID            `json:"correctionGroupId"         bun:"correction_group_id,type:VARCHAR(100),nullzero" keel:"correction_group_id"`
+	RebillStrategy            string               `json:"rebillStrategy"            bun:"rebill_strategy,type:VARCHAR(50),nullzero" keel:"rebill_strategy,nullzero"`
+	RequiresReplacementReview bool                 `json:"requiresReplacementReview" bun:"requires_replacement_review,type:BOOLEAN,notnull" keel:"requires_replacement_review"`
+	RerateVariancePercent     decimal.Decimal      `json:"rerateVariancePercent"     bun:"rerate_variance_percent,type:NUMERIC(9,6),notnull,default:0" keel:"rerate_variance_percent"`
+	AdjustmentContext         map[string]any       `json:"adjustmentContext"         bun:"adjustment_context,type:JSONB,notnull,default:'{}'" keel:"adjustment_context,jsonb"`
+	Version                   int64                `json:"version"                   bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt                 int64                `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt                 int64                `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector              string               `json:"-"                         bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
 
-	Shipment       *shipment.Shipment `json:"shipment,omitempty"       bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	BillToCustomer *customer.Customer `json:"billToCustomer,omitempty" bun:"rel:belongs-to,join:bill_to_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	AssignedBiller *tenant.User       `json:"assignedBiller,omitempty" bun:"rel:belongs-to,join:assigned_biller_id=id"`
-	CanceledBy     *tenant.User       `json:"canceledBy,omitempty"     bun:"rel:belongs-to,join:canceled_by_id=id"`
+	Shipment       *shipment.Shipment `json:"shipment,omitempty"       bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:shipment_id"`
+	BillToCustomer *customer.Customer `json:"billToCustomer,omitempty" bun:"rel:belongs-to,join:bill_to_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:bill_to_customer_id"`
+	AssignedBiller *tenant.User       `json:"assignedBiller,omitempty" bun:"rel:belongs-to,join:assigned_biller_id=id" keel:"belongs:assigned_biller_id"`
+	CanceledBy     *tenant.User       `json:"canceledBy,omitempty"     bun:"rel:belongs-to,join:canceled_by_id=id" keel:"belongs:canceled_by_id"`
 
 	// PayerShare is this item's payer's part of the shipment's charges, filled
 	// when the item is read with its shipment details.
@@ -84,7 +86,7 @@ type BillingQueueItem struct {
 
 	// PONumber is the customer's purchase order, from the item's order. It is
 	// read with the item rather than stored on it.
-	PONumber string `json:"poNumber,omitempty" bun:"po_number,scanonly"`
+	PONumber string `json:"poNumber,omitempty" bun:"po_number,scanonly" keel:"po_number,computed"`
 
 	// Review is everything a biller reads to decide the item, filled when the
 	// item is read with its shipment details.

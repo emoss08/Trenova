@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -24,29 +25,30 @@ var (
 
 type AgentException struct {
 	bun.BaseModel `bun:"table:agent_exceptions,alias:ax" json:"-"`
+	keel.Table    `keel:"agent_exceptions"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ax_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	RunID           pulid.ID          `json:"runId"           bun:"run_id,type:VARCHAR(100),notnull"`
-	Category        ExceptionCategory `json:"category"        bun:"category,type:agent_exception_category_enum,notnull"`
-	Severity        Severity          `json:"severity"        bun:"severity,type:agent_severity_enum,notnull,default:'Medium'"`
-	SubjectType     SubjectType       `json:"subjectType"     bun:"subject_type,type:agent_subject_type_enum,notnull"`
-	SubjectID       pulid.ID          `json:"subjectId"       bun:"subject_id,type:VARCHAR(100),notnull"`
-	AttemptSummary  string            `json:"attemptSummary"  bun:"attempt_summary,type:TEXT,notnull"`
-	Evidence        []EvidenceRef     `json:"evidence"        bun:"evidence,type:JSONB,notnull,default:'[]'"`
-	BlastRadius     int               `json:"blastRadius"     bun:"blast_radius,type:INTEGER,notnull"`
-	ResolutionState ResolutionState   `json:"resolutionState" bun:"resolution_state,type:agent_resolution_state_enum,notnull,default:'Open'"`
-	ResolutionNotes string            `json:"resolutionNotes" bun:"resolution_notes,type:TEXT,nullzero"`
+	RunID           pulid.ID          `json:"runId"           bun:"run_id,type:VARCHAR(100),notnull" keel:"run_id"`
+	Category        ExceptionCategory `json:"category"        bun:"category,type:agent_exception_category_enum,notnull" keel:"category"`
+	Severity        Severity          `json:"severity"        bun:"severity,type:agent_severity_enum,notnull,default:'Medium'" keel:"severity"`
+	SubjectType     SubjectType       `json:"subjectType"     bun:"subject_type,type:agent_subject_type_enum,notnull" keel:"subject_type"`
+	SubjectID       pulid.ID          `json:"subjectId"       bun:"subject_id,type:VARCHAR(100),notnull" keel:"subject_id"`
+	AttemptSummary  string            `json:"attemptSummary"  bun:"attempt_summary,type:TEXT,notnull" keel:"attempt_summary"`
+	Evidence        []EvidenceRef     `json:"evidence"        bun:"evidence,type:JSONB,notnull,default:'[]'" keel:"evidence,jsonb"`
+	BlastRadius     int               `json:"blastRadius"     bun:"blast_radius,type:INTEGER,notnull" keel:"blast_radius"`
+	ResolutionState ResolutionState   `json:"resolutionState" bun:"resolution_state,type:agent_resolution_state_enum,notnull,default:'Open'" keel:"resolution_state"`
+	ResolutionNotes string            `json:"resolutionNotes" bun:"resolution_notes,type:TEXT,nullzero" keel:"resolution_notes,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Run          *AgentRun            `bun:"rel:belongs-to,join:run_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" json:"-"`
+	Run          *AgentRun            `bun:"rel:belongs-to,join:run_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" json:"-" keel:"belongs:run_id"`
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"                                                                   json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"                                                                    json:"-"`
 }

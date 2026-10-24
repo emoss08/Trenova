@@ -3,6 +3,7 @@ package jurisdictionrule
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -38,43 +39,44 @@ var _ bun.BeforeAppendModelHook = (*JurisdictionRule)(nil)
 // own, stricter posture through JurisdictionOverride instead of editing this.
 type JurisdictionRule struct {
 	bun.BaseModel `bun:"table:jurisdiction_rules,alias:jr" json:"-"`
+	keel.Table    `keel:"jurisdiction_rules"`
 
-	ID      pulid.ID `json:"id"      bun:"id,pk,type:VARCHAR(100),notnull"`
-	StateID pulid.ID `json:"stateId" bun:"state_id,type:VARCHAR(100),notnull"`
-	Status  Status   `json:"status"  bun:"status,type:jurisdiction_rule_status_enum,notnull,default:'Active'"`
+	ID      pulid.ID `json:"id"      bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:jr_"`
+	StateID pulid.ID `json:"stateId" bun:"state_id,type:VARCHAR(100),notnull" keel:"state_id"`
+	Status  Status   `json:"status"  bun:"status,type:jurisdiction_rule_status_enum,notnull,default:'Active'" keel:"status"`
 
-	MaxWidthFeet    float64 `json:"maxWidthFeet"    bun:"max_width_feet,type:NUMERIC(10,2),notnull"`
-	MaxHeightFeet   float64 `json:"maxHeightFeet"   bun:"max_height_feet,type:NUMERIC(10,2),notnull"`
-	MaxLengthFeet   float64 `json:"maxLengthFeet"   bun:"max_length_feet,type:NUMERIC(10,2),notnull"`
-	MaxWeightPounds int64   `json:"maxWeightPounds" bun:"max_weight_pounds,type:BIGINT,notnull"`
+	MaxWidthFeet    float64 `json:"maxWidthFeet"    bun:"max_width_feet,type:NUMERIC(10,2),notnull" keel:"max_width_feet"`
+	MaxHeightFeet   float64 `json:"maxHeightFeet"   bun:"max_height_feet,type:NUMERIC(10,2),notnull" keel:"max_height_feet"`
+	MaxLengthFeet   float64 `json:"maxLengthFeet"   bun:"max_length_feet,type:NUMERIC(10,2),notnull" keel:"max_length_feet"`
+	MaxWeightPounds int64   `json:"maxWeightPounds" bun:"max_weight_pounds,type:BIGINT,notnull" keel:"max_weight_pounds"`
 
-	SuperloadWidthFeet    *float64 `json:"superloadWidthFeet"    bun:"superload_width_feet,type:NUMERIC(10,2),nullzero"`
-	SuperloadWeightPounds *int64   `json:"superloadWeightPounds" bun:"superload_weight_pounds,type:BIGINT,nullzero"`
+	SuperloadWidthFeet    *float64 `json:"superloadWidthFeet"    bun:"superload_width_feet,type:NUMERIC(10,2),nullzero" keel:"superload_width_feet"`
+	SuperloadWeightPounds *int64   `json:"superloadWeightPounds" bun:"superload_weight_pounds,type:BIGINT,nullzero" keel:"superload_weight_pounds"`
 
-	DaylightOnly       bool `json:"daylightOnly"       bun:"daylight_only,type:BOOLEAN,notnull,default:false"`
-	RushHourRestricted bool `json:"rushHourRestricted" bun:"rush_hour_restricted,type:BOOLEAN,notnull,default:false"`
-	WeekendRestricted  bool `json:"weekendRestricted"  bun:"weekend_restricted,type:BOOLEAN,notnull,default:false"`
-	HolidayRestricted  bool `json:"holidayRestricted"  bun:"holiday_restricted,type:BOOLEAN,notnull"`
+	DaylightOnly       bool `json:"daylightOnly"       bun:"daylight_only,type:BOOLEAN,notnull,default:false" keel:"daylight_only"`
+	RushHourRestricted bool `json:"rushHourRestricted" bun:"rush_hour_restricted,type:BOOLEAN,notnull,default:false" keel:"rush_hour_restricted"`
+	WeekendRestricted  bool `json:"weekendRestricted"  bun:"weekend_restricted,type:BOOLEAN,notnull,default:false" keel:"weekend_restricted"`
+	HolidayRestricted  bool `json:"holidayRestricted"  bun:"holiday_restricted,type:BOOLEAN,notnull" keel:"holiday_restricted"`
 
-	PermitLeadTimeDays int16               `json:"permitLeadTimeDays" bun:"permit_lead_time_days,type:SMALLINT,notnull,default:1"`
-	PermitValidityDays int16               `json:"permitValidityDays" bun:"permit_validity_days,type:SMALLINT,notnull,default:5"`
-	PermitBaseFee      decimal.NullDecimal `json:"permitBaseFee"      bun:"permit_base_fee,type:NUMERIC(19,4),nullzero"`
-	PermitPerMileFee   decimal.NullDecimal `json:"permitPerMileFee"   bun:"permit_per_mile_fee,type:NUMERIC(19,4),nullzero"`
+	PermitLeadTimeDays int16               `json:"permitLeadTimeDays" bun:"permit_lead_time_days,type:SMALLINT,notnull,default:1" keel:"permit_lead_time_days"`
+	PermitValidityDays int16               `json:"permitValidityDays" bun:"permit_validity_days,type:SMALLINT,notnull,default:5" keel:"permit_validity_days"`
+	PermitBaseFee      decimal.NullDecimal `json:"permitBaseFee"      bun:"permit_base_fee,type:NUMERIC(19,4),nullzero" keel:"permit_base_fee"`
+	PermitPerMileFee   decimal.NullDecimal `json:"permitPerMileFee"   bun:"permit_per_mile_fee,type:NUMERIC(19,4),nullzero" keel:"permit_per_mile_fee"`
 
-	SourceNote        string            `json:"sourceNote"        bun:"source_note,type:TEXT,nullzero"`
-	SourceURL         string            `json:"sourceUrl"         bun:"source_url,type:TEXT,nullzero"`
-	VerificationState VerificationState `json:"verificationState" bun:"verification_state,type:jurisdiction_verification_state_enum,notnull,default:'Unverified'"`
-	VerifiedAt        *int64            `json:"verifiedAt"        bun:"verified_at,type:BIGINT,nullzero"`
+	SourceNote        string            `json:"sourceNote"        bun:"source_note,type:TEXT,nullzero" keel:"source_note,nullzero"`
+	SourceURL         string            `json:"sourceUrl"         bun:"source_url,type:TEXT,nullzero" keel:"source_url,nullzero"`
+	VerificationState VerificationState `json:"verificationState" bun:"verification_state,type:jurisdiction_verification_state_enum,notnull,default:'Unverified'" keel:"verification_state"`
+	VerifiedAt        *int64            `json:"verifiedAt"        bun:"verified_at,type:BIGINT,nullzero" keel:"verified_at"`
 
-	EffectiveStartDate *int64 `json:"effectiveStartDate" bun:"effective_start_date,type:BIGINT,nullzero"`
-	EffectiveEndDate   *int64 `json:"effectiveEndDate"   bun:"effective_end_date,type:BIGINT,nullzero"`
+	EffectiveStartDate *int64 `json:"effectiveStartDate" bun:"effective_start_date,type:BIGINT,nullzero" keel:"effective_start_date"`
+	EffectiveEndDate   *int64 `json:"effectiveEndDate"   bun:"effective_end_date,type:BIGINT,nullzero" keel:"effective_end_date"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	State            *usstate.UsState   `json:"state,omitempty"            bun:"rel:belongs-to,join:state_id=id"`
-	EscortThresholds []*EscortThreshold `json:"escortThresholds,omitempty" bun:"rel:has-many,join:id=jurisdiction_rule_id"`
+	State            *usstate.UsState   `json:"state,omitempty"            bun:"rel:belongs-to,join:state_id=id" keel:"belongs:state_id"`
+	EscortThresholds []*EscortThreshold `json:"escortThresholds,omitempty" bun:"rel:has-many,join:id=jurisdiction_rule_id" keel:"many:jurisdiction_rule_id"`
 }
 
 func (r *JurisdictionRule) GetID() pulid.ID { return r.ID }

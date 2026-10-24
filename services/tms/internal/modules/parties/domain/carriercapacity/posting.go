@@ -3,6 +3,7 @@ package carriercapacity
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -36,37 +37,38 @@ var (
 
 type Posting struct {
 	bun.BaseModel             `bun:"table:carrier_capacity_postings,alias:ccp" json:"-"`
+	keel.Table                `keel:"carrier_capacity_postings"`
 	pagination.CursorValueSet `bun:",embed"                                    json:"-"`
 
-	ID                 pulid.ID            `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID     pulid.ID            `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID     pulid.ID            `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	CarrierID          pulid.ID            `json:"carrierId"          bun:"carrier_id,type:VARCHAR(100),notnull"`
-	OriginLocationID   *pulid.ID           `json:"originLocationId"   bun:"origin_location_id,type:VARCHAR(100),nullzero"`
-	OriginStateID      *pulid.ID           `json:"originStateId"      bun:"origin_state_id,type:VARCHAR(100),nullzero"`
-	OriginRadiusMiles  *int                `json:"originRadiusMiles"  bun:"origin_radius_miles,type:INTEGER,nullzero"`
-	DestinationStateID *pulid.ID           `json:"destinationStateId" bun:"destination_state_id,type:VARCHAR(100),nullzero"`
-	EquipmentTypeID    *pulid.ID           `json:"equipmentTypeId"    bun:"equipment_type_id,type:VARCHAR(100),nullzero"`
-	AvailableFrom      int64               `json:"availableFrom"      bun:"available_from,type:BIGINT,notnull"`
-	AvailableTo        int64               `json:"availableTo"        bun:"available_to,type:BIGINT,notnull"`
-	TruckCount         int                 `json:"truckCount"         bun:"truck_count,type:INTEGER,notnull,default:1"`
-	RateMethod         RateMethod          `json:"rateMethod"         bun:"rate_method,type:VARCHAR(20),notnull,default:'PerMile'"`
-	Rate               decimal.NullDecimal `json:"rate"               bun:"rate,type:NUMERIC(19,4),nullzero"`
-	Source             Source              `json:"source"             bun:"source,type:VARCHAR(20),notnull,default:'Manual'"`
-	Notes              string              `json:"notes"              bun:"notes,type:TEXT,nullzero"`
-	SearchVector       string              `json:"-"                  bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank               string              `json:"-"                  bun:"rank,type:VARCHAR(100),scanonly"`
-	Version            int64               `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64               `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64               `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                 pulid.ID            `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:ccp_"`
+	BusinessUnitID     pulid.ID            `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID            `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	CarrierID          pulid.ID            `json:"carrierId"          bun:"carrier_id,type:VARCHAR(100),notnull" keel:"carrier_id"`
+	OriginLocationID   *pulid.ID           `json:"originLocationId"   bun:"origin_location_id,type:VARCHAR(100),nullzero" keel:"origin_location_id"`
+	OriginStateID      *pulid.ID           `json:"originStateId"      bun:"origin_state_id,type:VARCHAR(100),nullzero" keel:"origin_state_id"`
+	OriginRadiusMiles  *int                `json:"originRadiusMiles"  bun:"origin_radius_miles,type:INTEGER,nullzero" keel:"origin_radius_miles"`
+	DestinationStateID *pulid.ID           `json:"destinationStateId" bun:"destination_state_id,type:VARCHAR(100),nullzero" keel:"destination_state_id"`
+	EquipmentTypeID    *pulid.ID           `json:"equipmentTypeId"    bun:"equipment_type_id,type:VARCHAR(100),nullzero" keel:"equipment_type_id"`
+	AvailableFrom      int64               `json:"availableFrom"      bun:"available_from,type:BIGINT,notnull" keel:"available_from"`
+	AvailableTo        int64               `json:"availableTo"        bun:"available_to,type:BIGINT,notnull" keel:"available_to"`
+	TruckCount         int                 `json:"truckCount"         bun:"truck_count,type:INTEGER,notnull,default:1" keel:"truck_count"`
+	RateMethod         RateMethod          `json:"rateMethod"         bun:"rate_method,type:VARCHAR(20),notnull,default:'PerMile'" keel:"rate_method"`
+	Rate               decimal.NullDecimal `json:"rate"               bun:"rate,type:NUMERIC(19,4),nullzero" keel:"rate"`
+	Source             Source              `json:"source"             bun:"source,type:VARCHAR(20),notnull,default:'Manual'" keel:"source"`
+	Notes              string              `json:"notes"              bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	SearchVector       string              `json:"-"                  bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank               string              `json:"-"                  bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	Version            int64               `json:"version"            bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt          int64               `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt          int64               `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit     *tenant.BusinessUnit         `json:"businessUnit,omitempty"     bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization     *tenant.Organization         `json:"organization,omitempty"     bun:"rel:belongs-to,join:organization_id=id"`
-	Carrier          *carrier.Carrier             `json:"carrier,omitempty"          bun:"rel:belongs-to,join:carrier_id=id"`
-	OriginLocation   *location.Location           `json:"originLocation,omitempty"   bun:"rel:belongs-to,join:origin_location_id=id"`
-	OriginState      *usstate.UsState             `json:"originState,omitempty"      bun:"rel:belongs-to,join:origin_state_id=id"`
-	DestinationState *usstate.UsState             `json:"destinationState,omitempty" bun:"rel:belongs-to,join:destination_state_id=id"`
-	EquipmentType    *equipmenttype.EquipmentType `json:"equipmentType,omitempty"    bun:"rel:belongs-to,join:equipment_type_id=id"`
+	Carrier          *carrier.Carrier             `json:"carrier,omitempty"          bun:"rel:belongs-to,join:carrier_id=id" keel:"belongs:carrier_id"`
+	OriginLocation   *location.Location           `json:"originLocation,omitempty"   bun:"rel:belongs-to,join:origin_location_id=id" keel:"belongs:origin_location_id"`
+	OriginState      *usstate.UsState             `json:"originState,omitempty"      bun:"rel:belongs-to,join:origin_state_id=id" keel:"belongs:origin_state_id"`
+	DestinationState *usstate.UsState             `json:"destinationState,omitempty" bun:"rel:belongs-to,join:destination_state_id=id" keel:"belongs:destination_state_id"`
+	EquipmentType    *equipmenttype.EquipmentType `json:"equipmentType,omitempty"    bun:"rel:belongs-to,join:equipment_type_id=id" keel:"belongs:equipment_type_id"`
 }
 
 func (p *Posting) Validate(multiErr *errortypes.MultiError) {

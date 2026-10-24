@@ -3,6 +3,7 @@ package shipmentevent
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -17,30 +18,31 @@ var _ bun.BeforeAppendModelHook = (*Event)(nil)
 
 type Event struct {
 	bun.BaseModel `bun:"table:shipment_events,alias:se"`
+	keel.Table    `keel:"shipment_events"`
 
-	ID             pulid.ID `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ShipmentID     pulid.ID `json:"shipmentId"             bun:"shipment_id,type:VARCHAR(100),notnull"`
-	MoveID         pulid.ID `json:"moveId,omitempty"       bun:"move_id,type:VARCHAR(100),nullzero"`
-	StopID         pulid.ID `json:"stopId,omitempty"       bun:"stop_id,type:VARCHAR(100),nullzero"`
-	AssignmentID   pulid.ID `json:"assignmentId,omitempty" bun:"assignment_id,type:VARCHAR(100),nullzero"`
-	CommentID      pulid.ID `json:"commentId,omitempty"    bun:"comment_id,type:VARCHAR(100),nullzero"`
-	HoldID         pulid.ID `json:"holdId,omitempty"       bun:"hold_id,type:VARCHAR(100),nullzero"`
+	ID             pulid.ID `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:se_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ShipmentID     pulid.ID `json:"shipmentId"             bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
+	MoveID         pulid.ID `json:"moveId,omitempty"       bun:"move_id,type:VARCHAR(100),nullzero" keel:"move_id,nullzero"`
+	StopID         pulid.ID `json:"stopId,omitempty"       bun:"stop_id,type:VARCHAR(100),nullzero" keel:"stop_id,nullzero"`
+	AssignmentID   pulid.ID `json:"assignmentId,omitempty" bun:"assignment_id,type:VARCHAR(100),nullzero" keel:"assignment_id,nullzero"`
+	CommentID      pulid.ID `json:"commentId,omitempty"    bun:"comment_id,type:VARCHAR(100),nullzero" keel:"comment_id,nullzero"`
+	HoldID         pulid.ID `json:"holdId,omitempty"       bun:"hold_id,type:VARCHAR(100),nullzero" keel:"hold_id,nullzero"`
 
-	Type       Type      `json:"type"              bun:"type,type:VARCHAR(50),notnull"`
-	Severity   Severity  `json:"severity"          bun:"severity,type:VARCHAR(20),notnull,default:'muted'"`
-	ActorType  ActorType `json:"actorType"         bun:"actor_type,type:VARCHAR(20),notnull"`
-	ActorID    pulid.ID  `json:"actorId,omitempty" bun:"actor_id,type:VARCHAR(100),nullzero"`
-	ActorLabel string    `json:"actorLabel"        bun:"actor_label,type:VARCHAR(100)"`
-	Summary    string    `json:"summary"           bun:"summary,type:TEXT,notnull"`
+	Type       Type      `json:"type"              bun:"type,type:VARCHAR(50),notnull" keel:"type"`
+	Severity   Severity  `json:"severity"          bun:"severity,type:VARCHAR(20),notnull,default:'muted'" keel:"severity"`
+	ActorType  ActorType `json:"actorType"         bun:"actor_type,type:VARCHAR(20),notnull" keel:"actor_type"`
+	ActorID    pulid.ID  `json:"actorId,omitempty" bun:"actor_id,type:VARCHAR(100),nullzero" keel:"actor_id,nullzero"`
+	ActorLabel string    `json:"actorLabel"        bun:"actor_label,type:VARCHAR(100)" keel:"actor_label,nullzero"`
+	Summary    string    `json:"summary"           bun:"summary,type:TEXT,notnull" keel:"summary"`
 
-	Metadata      map[string]any `json:"metadata,omitempty"      bun:"metadata,type:JSONB,default:'{}'"`
-	OccurredAt    int64          `json:"occurredAt"              bun:"occurred_at,type:BIGINT,notnull"`
-	CorrelationID string         `json:"correlationId,omitempty" bun:"correlation_id,type:VARCHAR(100)"`
+	Metadata      map[string]any `json:"metadata,omitempty"      bun:"metadata,type:JSONB,default:'{}'" keel:"metadata,jsonb"`
+	OccurredAt    int64          `json:"occurredAt"              bun:"occurred_at,type:BIGINT,notnull" keel:"occurred_at"`
+	CorrelationID string         `json:"correlationId,omitempty" bun:"correlation_id,type:VARCHAR(100)" keel:"correlation_id,nullzero"`
 
-	Actor    *tenant.User       `json:"actor,omitempty"    bun:"rel:belongs-to,join:actor_id=id"`
-	Shipment *shipment.Shipment `json:"shipment,omitempty" bun:"rel:belongs-to,join:shipment_id=id"`
+	Actor    *tenant.User       `json:"actor,omitempty"    bun:"rel:belongs-to,join:actor_id=id" keel:"belongs:actor_id"`
+	Shipment *shipment.Shipment `json:"shipment,omitempty" bun:"rel:belongs-to,join:shipment_id=id" keel:"belongs:shipment_id"`
 }
 
 func (e *Event) BeforeAppendModel(_ context.Context, query bun.Query) error {

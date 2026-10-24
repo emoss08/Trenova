@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,18 +29,19 @@ var (
 
 type RuleSet struct {
 	bun.BaseModel `bun:"table:document_parsing_rule_sets,alias:dprs" json:"-"`
+	keel.Table    `keel:"document_parsing_rule_sets"`
 
-	ID                 pulid.ID     `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID     pulid.ID     `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID     pulid.ID     `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	Name               string       `json:"name"               bun:"name,type:VARCHAR(255),notnull"`
-	Description        string       `json:"description"        bun:"description,type:TEXT,nullzero"`
-	DocumentKind       DocumentKind `json:"documentKind"       bun:"document_kind,type:VARCHAR(100),notnull"`
-	Priority           int          `json:"priority"           bun:"priority,type:INTEGER,notnull,default:100"`
-	PublishedVersionID *pulid.ID    `json:"publishedVersionId" bun:"published_version_id,type:VARCHAR(100),nullzero"`
-	Version            int64        `json:"version"            bun:"version,type:BIGINT,notnull"`
-	CreatedAt          int64        `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64        `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                 pulid.ID     `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dprs_"`
+	OrganizationID     pulid.ID     `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID     `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	Name               string       `json:"name"               bun:"name,type:VARCHAR(255),notnull" keel:"name"`
+	Description        string       `json:"description"        bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	DocumentKind       DocumentKind `json:"documentKind"       bun:"document_kind,type:VARCHAR(100),notnull" keel:"document_kind"`
+	Priority           int          `json:"priority"           bun:"priority,type:INTEGER,notnull,default:100" keel:"priority"`
+	PublishedVersionID *pulid.ID    `json:"publishedVersionId" bun:"published_version_id,type:VARCHAR(100),nullzero" keel:"published_version_id"`
+	Version            int64        `json:"version"            bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt          int64        `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt          int64        `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (r *RuleSet) Validate(multiErr *errortypes.MultiError) {
@@ -87,24 +89,25 @@ func (r *RuleSet) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 type RuleVersion struct {
 	bun.BaseModel `bun:"table:document_parsing_rule_versions,alias:dprv" json:"-"`
+	keel.Table    `keel:"document_parsing_rule_versions"`
 
-	ID                pulid.ID       `json:"id"                bun:"id,type:VARCHAR(100),pk,notnull"`
-	RuleSetID         pulid.ID       `json:"ruleSetId"         bun:"rule_set_id,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID       `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID    pulid.ID       `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	VersionNumber     int            `json:"versionNumber"     bun:"version_number,type:INTEGER,notnull"`
-	Status            VersionStatus  `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Draft'"`
-	Label             string         `json:"label"             bun:"label,type:VARCHAR(255),nullzero"`
-	ParserMode        ParserMode     `json:"parserMode"        bun:"parser_mode,type:VARCHAR(50),notnull,default:'merge_with_base'"`
-	MatchConfig       MatchConfig    `json:"matchConfig"       bun:"match_config,type:JSONB,notnull,default:'{}'"`
-	RuleDocument      RuleDocument   `json:"ruleDocument"      bun:"rule_document,type:JSONB,notnull,default:'{}'"`
-	ValidationSummary map[string]any `json:"validationSummary" bun:"validation_summary,type:JSONB,notnull,default:'{}'"`
-	PublishedAt       *int64         `json:"publishedAt"       bun:"published_at,type:BIGINT,nullzero"`
-	PublishedByID     *pulid.ID      `json:"publishedById"     bun:"published_by_id,type:VARCHAR(100),nullzero"`
-	Version           int64          `json:"version"           bun:"version,type:BIGINT,notnull"`
-	CreatedAt         int64          `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64          `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	RuleSet           *RuleSet       `json:"ruleSet,omitempty" bun:"rel:belongs-to,join:rule_set_id=id"`
+	ID                pulid.ID       `json:"id"                bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dprv_"`
+	RuleSetID         pulid.ID       `json:"ruleSetId"         bun:"rule_set_id,type:VARCHAR(100),notnull" keel:"rule_set_id"`
+	OrganizationID    pulid.ID       `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID       `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	VersionNumber     int            `json:"versionNumber"     bun:"version_number,type:INTEGER,notnull" keel:"version_number"`
+	Status            VersionStatus  `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Draft'" keel:"status"`
+	Label             string         `json:"label"             bun:"label,type:VARCHAR(255),nullzero" keel:"label,nullzero"`
+	ParserMode        ParserMode     `json:"parserMode"        bun:"parser_mode,type:VARCHAR(50),notnull,default:'merge_with_base'" keel:"parser_mode"`
+	MatchConfig       MatchConfig    `json:"matchConfig"       bun:"match_config,type:JSONB,notnull,default:'{}'" keel:"match_config,jsonb"`
+	RuleDocument      RuleDocument   `json:"ruleDocument"      bun:"rule_document,type:JSONB,notnull,default:'{}'" keel:"rule_document,jsonb"`
+	ValidationSummary map[string]any `json:"validationSummary" bun:"validation_summary,type:JSONB,notnull,default:'{}'" keel:"validation_summary,jsonb"`
+	PublishedAt       *int64         `json:"publishedAt"       bun:"published_at,type:BIGINT,nullzero" keel:"published_at"`
+	PublishedByID     *pulid.ID      `json:"publishedById"     bun:"published_by_id,type:VARCHAR(100),nullzero" keel:"published_by_id"`
+	Version           int64          `json:"version"           bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt         int64          `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt         int64          `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	RuleSet           *RuleSet       `json:"ruleSet,omitempty" bun:"rel:belongs-to,join:rule_set_id=id" keel:"belongs:rule_set_id"`
 }
 
 func (r *RuleVersion) Validate(multiErr *errortypes.MultiError) {
@@ -179,21 +182,22 @@ func (r *RuleVersion) BeforeAppendModel(_ context.Context, query bun.Query) erro
 
 type Fixture struct {
 	bun.BaseModel `bun:"table:document_parsing_rule_fixtures,alias:dprf" json:"-"`
+	keel.Table    `keel:"document_parsing_rule_fixtures"`
 
-	ID                  pulid.ID          `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
-	RuleSetID           pulid.ID          `json:"ruleSetId"           bun:"rule_set_id,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID          `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID      pulid.ID          `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	Name                string            `json:"name"                bun:"name,type:VARCHAR(255),notnull"`
-	Description         string            `json:"description"         bun:"description,type:TEXT,nullzero"`
-	FileName            string            `json:"fileName"            bun:"file_name,type:VARCHAR(255),nullzero"`
-	ProviderFingerprint string            `json:"providerFingerprint" bun:"provider_fingerprint,type:VARCHAR(100),nullzero"`
-	TextSnapshot        string            `json:"textSnapshot"        bun:"text_snapshot,type:TEXT,notnull"`
-	PageSnapshots       []PageSnapshot    `json:"pageSnapshots"       bun:"page_snapshots,type:JSONB,notnull,default:'[]'"`
-	Assertions          FixtureAssertions `json:"assertions"          bun:"assertions,type:JSONB,notnull,default:'{}'"`
-	Version             int64             `json:"version"             bun:"version,type:BIGINT,notnull"`
-	CreatedAt           int64             `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64             `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID          `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dprf_"`
+	RuleSetID           pulid.ID          `json:"ruleSetId"           bun:"rule_set_id,type:VARCHAR(100),notnull" keel:"rule_set_id"`
+	OrganizationID      pulid.ID          `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID          `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	Name                string            `json:"name"                bun:"name,type:VARCHAR(255),notnull" keel:"name"`
+	Description         string            `json:"description"         bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	FileName            string            `json:"fileName"            bun:"file_name,type:VARCHAR(255),nullzero" keel:"file_name,nullzero"`
+	ProviderFingerprint string            `json:"providerFingerprint" bun:"provider_fingerprint,type:VARCHAR(100),nullzero" keel:"provider_fingerprint,nullzero"`
+	TextSnapshot        string            `json:"textSnapshot"        bun:"text_snapshot,type:TEXT,notnull" keel:"text_snapshot"`
+	PageSnapshots       []PageSnapshot    `json:"pageSnapshots"       bun:"page_snapshots,type:JSONB,notnull,default:'[]'" keel:"page_snapshots,jsonb"`
+	Assertions          FixtureAssertions `json:"assertions"          bun:"assertions,type:JSONB,notnull,default:'{}'" keel:"assertions,jsonb"`
+	Version             int64             `json:"version"             bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt           int64             `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt           int64             `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (f *Fixture) Validate(multiErr *errortypes.MultiError) {

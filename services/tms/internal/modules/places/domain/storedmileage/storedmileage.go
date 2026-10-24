@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -54,38 +55,39 @@ type JurisdictionDistance struct {
 
 type StoredMileage struct {
 	bun.BaseModel             `bun:"table:stored_mileages,alias:smg" json:"-"`
+	keel.Table                `keel:"stored_mileages"`
 	pagination.CursorValueSet `bun:",embed"                          json:"-"`
 
-	ID                    pulid.ID               `json:"id"                              bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID        pulid.ID               `json:"businessUnitId"                  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID        pulid.ID               `json:"organizationId"                  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Status                string                 `json:"status"                          bun:"status,type:VARCHAR(20),notnull"`
-	OriginKey             StopKey                `json:"originKey"                       bun:"origin_key,type:JSONB,notnull"`
-	DestinationKey        StopKey                `json:"destinationKey"                  bun:"destination_key,type:JSONB,notnull"`
-	IntermediateKeys      []StopKey              `json:"intermediateKeys"                bun:"intermediate_keys,type:JSONB,nullzero"`
-	RouteSignature        string                 `json:"routeSignature"                  bun:"route_signature,type:TEXT,notnull"`
-	RouteHash             string                 `json:"routeHash"                       bun:"route_hash,type:VARCHAR(64),notnull"`
-	Distance              float64                `json:"distance"                        bun:"distance,type:FLOAT,notnull"`
-	DistanceUnits         string                 `json:"distanceUnits"                   bun:"distance_units,type:VARCHAR(50),notnull"`
-	Provider              string                 `json:"provider"                        bun:"provider,type:VARCHAR(50),notnull"`
-	Source                string                 `json:"source"                          bun:"source,type:VARCHAR(50),notnull"`
-	RoutingType           string                 `json:"routingType"                     bun:"routing_type,type:VARCHAR(50),notnull"`
-	Method                string                 `json:"method"                          bun:"method,type:VARCHAR(50),notnull"`
-	LocationGranularity   string                 `json:"locationGranularity"             bun:"location_granularity,type:VARCHAR(50),notnull"`
-	DataVersion           string                 `json:"dataVersion"                     bun:"data_version,type:VARCHAR(50),notnull"`
-	DistanceProfileID     pulid.ID               `json:"distanceProfileId"               bun:"distance_profile_id,type:VARCHAR(100),notnull"`
-	DistanceProfileName   string                 `json:"distanceProfileName"             bun:"distance_profile_name,type:VARCHAR(100),nullzero"`
-	Hazmat                bool                   `json:"hazmat"                          bun:"hazmat,type:BOOLEAN,notnull"`
-	HazmatTypes           []string               `json:"hazmatTypes"                     bun:"hazmat_types,array,type:TEXT[],nullzero"`
-	HazmatSignature       string                 `json:"hazmatSignature"                 bun:"hazmat_signature,type:TEXT,notnull"`
-	ProviderMetadata      map[string]any         `json:"providerMetadata"                bun:"provider_metadata,type:JSONB,nullzero"`
-	JurisdictionDistances []JurisdictionDistance `json:"jurisdictionDistances,omitempty" bun:"jurisdiction_distances,type:JSONB,nullzero"`
-	HitCount              int64                  `json:"hitCount"                        bun:"hit_count,type:BIGINT,notnull"`
-	LastUsedAt            *int64                 `json:"lastUsedAt"                      bun:"last_used_at,type:BIGINT,nullzero"`
-	LastCalculatedAt      int64                  `json:"lastCalculatedAt"                bun:"last_calculated_at,type:BIGINT,notnull"`
-	Version               int64                  `json:"version"                         bun:"version,type:BIGINT,notnull"`
-	CreatedAt             int64                  `json:"createdAt"                       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64                  `json:"updatedAt"                       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                    pulid.ID               `json:"id"                              bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:smg_"`
+	BusinessUnitID        pulid.ID               `json:"businessUnitId"                  bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID               `json:"organizationId"                  bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	Status                string                 `json:"status"                          bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	OriginKey             StopKey                `json:"originKey"                       bun:"origin_key,type:JSONB,notnull" keel:"origin_key,jsonb"`
+	DestinationKey        StopKey                `json:"destinationKey"                  bun:"destination_key,type:JSONB,notnull" keel:"destination_key,jsonb"`
+	IntermediateKeys      []StopKey              `json:"intermediateKeys"                bun:"intermediate_keys,type:JSONB,nullzero" keel:"intermediate_keys,jsonb,nullzero"`
+	RouteSignature        string                 `json:"routeSignature"                  bun:"route_signature,type:TEXT,notnull" keel:"route_signature"`
+	RouteHash             string                 `json:"routeHash"                       bun:"route_hash,type:VARCHAR(64),notnull" keel:"route_hash"`
+	Distance              float64                `json:"distance"                        bun:"distance,type:FLOAT,notnull" keel:"distance"`
+	DistanceUnits         string                 `json:"distanceUnits"                   bun:"distance_units,type:VARCHAR(50),notnull" keel:"distance_units"`
+	Provider              string                 `json:"provider"                        bun:"provider,type:VARCHAR(50),notnull" keel:"provider"`
+	Source                string                 `json:"source"                          bun:"source,type:VARCHAR(50),notnull" keel:"source"`
+	RoutingType           string                 `json:"routingType"                     bun:"routing_type,type:VARCHAR(50),notnull" keel:"routing_type"`
+	Method                string                 `json:"method"                          bun:"method,type:VARCHAR(50),notnull" keel:"method"`
+	LocationGranularity   string                 `json:"locationGranularity"             bun:"location_granularity,type:VARCHAR(50),notnull" keel:"location_granularity"`
+	DataVersion           string                 `json:"dataVersion"                     bun:"data_version,type:VARCHAR(50),notnull" keel:"data_version"`
+	DistanceProfileID     pulid.ID               `json:"distanceProfileId"               bun:"distance_profile_id,type:VARCHAR(100),notnull" keel:"distance_profile_id"`
+	DistanceProfileName   string                 `json:"distanceProfileName"             bun:"distance_profile_name,type:VARCHAR(100),nullzero" keel:"distance_profile_name,nullzero"`
+	Hazmat                bool                   `json:"hazmat"                          bun:"hazmat,type:BOOLEAN,notnull" keel:"hazmat"`
+	HazmatTypes           []string               `json:"hazmatTypes"                     bun:"hazmat_types,array,type:TEXT[],nullzero" keel:"hazmat_types,nullzero"`
+	HazmatSignature       string                 `json:"hazmatSignature"                 bun:"hazmat_signature,type:TEXT,notnull" keel:"hazmat_signature"`
+	ProviderMetadata      map[string]any         `json:"providerMetadata"                bun:"provider_metadata,type:JSONB,nullzero" keel:"provider_metadata,jsonb,nullzero"`
+	JurisdictionDistances []JurisdictionDistance `json:"jurisdictionDistances,omitempty" bun:"jurisdiction_distances,type:JSONB,nullzero" keel:"jurisdiction_distances,jsonb,nullzero"`
+	HitCount              int64                  `json:"hitCount"                        bun:"hit_count,type:BIGINT,notnull" keel:"hit_count"`
+	LastUsedAt            *int64                 `json:"lastUsedAt"                      bun:"last_used_at,type:BIGINT,nullzero" keel:"last_used_at"`
+	LastCalculatedAt      int64                  `json:"lastCalculatedAt"                bun:"last_calculated_at,type:BIGINT,notnull" keel:"last_calculated_at"`
+	Version               int64                  `json:"version"                         bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt             int64                  `json:"createdAt"                       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt             int64                  `json:"updatedAt"                       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 	SearchVector          string                 `json:"-"                               bun:"search_vector,type:TSVECTOR,scanonly"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`

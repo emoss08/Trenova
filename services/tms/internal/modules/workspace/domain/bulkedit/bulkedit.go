@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -61,31 +62,32 @@ type Target struct {
 
 type BulkEdit struct {
 	bun.BaseModel `bun:"table:bulk_edits,alias:bke" json:"-"`
+	keel.Table    `keel:"bulk_edits"`
 
-	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	UserID         pulid.ID  `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	Resource       string    `json:"resource"       bun:"resource,type:VARCHAR(100),notnull"`
-	Field          string    `json:"field"          bun:"field,type:VARCHAR(100),notnull"`
-	Value          string    `json:"value"          bun:"value,type:VARCHAR(200),notnull"`
-	Selection      Selection `json:"selection"      bun:"selection,type:JSONB,notnull"`
-	Targets        []Target  `json:"targets"        bun:"targets,type:JSONB,notnull"`
-	Status         Status    `json:"status"         bun:"status,type:VARCHAR(20),notnull"`
-	TotalCount     int       `json:"totalCount"     bun:"total_count,type:INTEGER,notnull"`
-	ChangedCount   int       `json:"changedCount"   bun:"changed_count,type:INTEGER,notnull"`
-	FailedCount    int       `json:"failedCount"    bun:"failed_count,type:INTEGER,notnull"`
-	ProcessedCount int       `json:"processedCount" bun:"processed_count,type:INTEGER,notnull"`
-	FailureMessage string    `json:"failureMessage" bun:"failure_message,type:TEXT,notnull"`
-	CompletedAt    *int64    `json:"completedAt"    bun:"completed_at,type:BIGINT,nullzero"`
-	UndoneAt       *int64    `json:"undoneAt"       bun:"undone_at,type:BIGINT,nullzero"`
-	Version        int64     `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64     `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64     `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:bke_"`
+	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	UserID         pulid.ID  `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	Resource       string    `json:"resource"       bun:"resource,type:VARCHAR(100),notnull" keel:"resource"`
+	Field          string    `json:"field"          bun:"field,type:VARCHAR(100),notnull" keel:"field"`
+	Value          string    `json:"value"          bun:"value,type:VARCHAR(200),notnull" keel:"value"`
+	Selection      Selection `json:"selection"      bun:"selection,type:JSONB,notnull" keel:"selection,jsonb"`
+	Targets        []Target  `json:"targets"        bun:"targets,type:JSONB,notnull" keel:"targets,jsonb"`
+	Status         Status    `json:"status"         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	TotalCount     int       `json:"totalCount"     bun:"total_count,type:INTEGER,notnull" keel:"total_count"`
+	ChangedCount   int       `json:"changedCount"   bun:"changed_count,type:INTEGER,notnull" keel:"changed_count"`
+	FailedCount    int       `json:"failedCount"    bun:"failed_count,type:INTEGER,notnull" keel:"failed_count"`
+	ProcessedCount int       `json:"processedCount" bun:"processed_count,type:INTEGER,notnull" keel:"processed_count"`
+	FailureMessage string    `json:"failureMessage" bun:"failure_message,type:TEXT,notnull" keel:"failure_message"`
+	CompletedAt    *int64    `json:"completedAt"    bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
+	UndoneAt       *int64    `json:"undoneAt"       bun:"undone_at,type:BIGINT,nullzero" keel:"undone_at"`
+	Version        int64     `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64     `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64     `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id"`
+	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
 }
 
 var (

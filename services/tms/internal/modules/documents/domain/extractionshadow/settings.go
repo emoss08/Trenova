@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,20 +26,21 @@ const (
 
 type ShadowSettings struct {
 	bun.BaseModel `bun:"table:extraction_shadow_settings,alias:exss" json:"-"`
+	keel.Table    `keel:"extraction_shadow_settings"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:exss_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	Enabled       bool      `json:"enabled"       bun:"enabled,type:BOOLEAN,notnull,default:false"`
-	ProviderID    *pulid.ID `json:"providerId"    bun:"provider_id,type:VARCHAR(100),nullzero"`
-	SamplePercent int       `json:"samplePercent" bun:"sample_percent,type:INTEGER,notnull,default:10"`
-	DailyLimit    int       `json:"dailyLimit"    bun:"daily_limit,type:INTEGER,notnull,default:200"`
+	Enabled       bool      `json:"enabled"       bun:"enabled,type:BOOLEAN,notnull,default:false" keel:"enabled"`
+	ProviderID    *pulid.ID `json:"providerId"    bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id"`
+	SamplePercent int       `json:"samplePercent" bun:"sample_percent,type:INTEGER,notnull,default:10" keel:"sample_percent"`
+	DailyLimit    int       `json:"dailyLimit"    bun:"daily_limit,type:INTEGER,notnull,default:200" keel:"daily_limit"`
 
-	UpdatedByID *pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt   int64     `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt   int64     `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedByID *pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero" keel:"updated_by_id"`
+	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt   int64     `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt   int64     `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

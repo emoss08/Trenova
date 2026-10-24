@@ -3,6 +3,7 @@ package glbalance
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
@@ -21,23 +22,24 @@ var _ bun.BeforeAppendModelHook = (*GLAccountPeriodBalance)(nil)
 // it implements neither GetID nor GetCreatedAt and is not cursor-paginated.
 type GLAccountPeriodBalance struct {
 	bun.BaseModel `bun:"table:gl_account_balances_by_period,alias:gb" json:"-"`
+	keel.Table    `keel:"gl_account_balances_by_period"`
 
-	OrganizationID     pulid.ID `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	GLAccountID        pulid.ID `json:"glAccountId"        bun:"gl_account_id,pk,type:VARCHAR(100),notnull"`
-	FiscalYearID       pulid.ID `json:"fiscalYearId"       bun:"fiscal_year_id,pk,type:VARCHAR(100),notnull"`
-	FiscalPeriodID     pulid.ID `json:"fiscalPeriodId"     bun:"fiscal_period_id,pk,type:VARCHAR(100),notnull"`
-	PeriodDebitMinor   int64    `json:"periodDebitMinor"   bun:"period_debit_minor,type:BIGINT,notnull"`
-	PeriodCreditMinor  int64    `json:"periodCreditMinor"  bun:"period_credit_minor,type:BIGINT,notnull"`
-	NetChangeMinor     int64    `json:"netChangeMinor"     bun:"net_change_minor,type:BIGINT,notnull"`
-	LastJournalEntryID pulid.ID `json:"lastJournalEntryId" bun:"last_journal_entry_id,type:VARCHAR(100),nullzero"`
-	CreatedAt          int64    `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64    `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	OrganizationID     pulid.ID `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	GLAccountID        pulid.ID `json:"glAccountId"        bun:"gl_account_id,pk,type:VARCHAR(100),notnull" keel:"gl_account_id,pk"`
+	FiscalYearID       pulid.ID `json:"fiscalYearId"       bun:"fiscal_year_id,pk,type:VARCHAR(100),notnull" keel:"fiscal_year_id,pk"`
+	FiscalPeriodID     pulid.ID `json:"fiscalPeriodId"     bun:"fiscal_period_id,pk,type:VARCHAR(100),notnull" keel:"fiscal_period_id,pk"`
+	PeriodDebitMinor   int64    `json:"periodDebitMinor"   bun:"period_debit_minor,type:BIGINT,notnull" keel:"period_debit_minor"`
+	PeriodCreditMinor  int64    `json:"periodCreditMinor"  bun:"period_credit_minor,type:BIGINT,notnull" keel:"period_credit_minor"`
+	NetChangeMinor     int64    `json:"netChangeMinor"     bun:"net_change_minor,type:BIGINT,notnull" keel:"net_change_minor"`
+	LastJournalEntryID pulid.ID `json:"lastJournalEntryId" bun:"last_journal_entry_id,type:VARCHAR(100),nullzero" keel:"last_journal_entry_id,nullzero"`
+	CreatedAt          int64    `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt          int64    `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	GLAccount        *glaccount.GLAccount       `json:"glAccount,omitempty"        bun:"rel:belongs-to,join:gl_account_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	FiscalYear       *fiscalyear.FiscalYear     `json:"fiscalYear,omitempty"       bun:"rel:belongs-to,join:fiscal_year_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	FiscalPeriod     *fiscalperiod.FiscalPeriod `json:"fiscalPeriod,omitempty"     bun:"rel:belongs-to,join:fiscal_period_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	LastJournalEntry *journalentry.JournalEntry `json:"lastJournalEntry,omitempty" bun:"rel:belongs-to,join:last_journal_entry_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	GLAccount        *glaccount.GLAccount       `json:"glAccount,omitempty"        bun:"rel:belongs-to,join:gl_account_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:gl_account_id"`
+	FiscalYear       *fiscalyear.FiscalYear     `json:"fiscalYear,omitempty"       bun:"rel:belongs-to,join:fiscal_year_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:fiscal_year_id"`
+	FiscalPeriod     *fiscalperiod.FiscalPeriod `json:"fiscalPeriod,omitempty"     bun:"rel:belongs-to,join:fiscal_period_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:fiscal_period_id"`
+	LastJournalEntry *journalentry.JournalEntry `json:"lastJournalEntry,omitempty" bun:"rel:belongs-to,join:last_journal_entry_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:last_journal_entry_id"`
 }
 
 func (b *GLAccountPeriodBalance) Validate(multiErr *errortypes.MultiError) {

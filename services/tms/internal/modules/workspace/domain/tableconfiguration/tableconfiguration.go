@@ -3,6 +3,7 @@ package tableconfiguration
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -49,28 +50,29 @@ type TableConfig struct {
 
 type TableConfiguration struct {
 	bun.BaseModel             `bun:"table:table_configurations,alias:tc" json:"-"`
+	keel.Table                `keel:"table_configurations"`
 	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
-	ID             pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID pulid.ID     `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID     `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	UserID         pulid.ID     `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	Name           string       `json:"name"           bun:"name,type:VARCHAR(255),notnull"`
-	Description    string       `json:"description"    bun:"description,type:TEXT"`
-	Resource       string       `json:"resource"       bun:"resource,type:VARCHAR(100),notnull"`
-	TableConfig    *TableConfig `json:"tableConfig"    bun:"table_config,type:JSONB,notnull"`
-	Visibility     Visibility   `json:"visibility"     bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'"`
-	SearchVector   string       `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank           string       `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
-	IsDefault      bool         `json:"isDefault"      bun:"is_default,type:BOOLEAN,notnull"`
-	IsOrgDefault   bool         `json:"isOrgDefault"   bun:"is_org_default,type:BOOLEAN,notnull"`
-	Version        int64        `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64        `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64        `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:tc_"`
+	OrganizationID pulid.ID     `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID     `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	UserID         pulid.ID     `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	Name           string       `json:"name"           bun:"name,type:VARCHAR(255),notnull" keel:"name"`
+	Description    string       `json:"description"    bun:"description,type:TEXT" keel:"description,nullzero"`
+	Resource       string       `json:"resource"       bun:"resource,type:VARCHAR(100),notnull" keel:"resource"`
+	TableConfig    *TableConfig `json:"tableConfig"    bun:"table_config,type:JSONB,notnull" keel:"table_config,jsonb"`
+	Visibility     Visibility   `json:"visibility"     bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'" keel:"visibility"`
+	SearchVector   string       `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string       `json:"-"              bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	IsDefault      bool         `json:"isDefault"      bun:"is_default,type:BOOLEAN,notnull" keel:"is_default"`
+	IsOrgDefault   bool         `json:"isOrgDefault"   bun:"is_org_default,type:BOOLEAN,notnull" keel:"is_org_default"`
+	Version        int64        `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64        `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64        `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id"`
+	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id" keel:"belongs:user_id"`
 }
 
 func (tc *TableConfiguration) Validate(multiErr *errortypes.MultiError) {

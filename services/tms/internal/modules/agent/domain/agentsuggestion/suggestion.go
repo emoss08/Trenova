@@ -3,6 +3,7 @@ package agentsuggestion
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,20 +21,21 @@ var (
 
 type Suggestion struct {
 	bun.BaseModel `bun:"table:agent_suggestions,alias:agsg" json:"-"`
+	keel.Table    `keel:"agent_suggestions"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:agsg_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	UserID           pulid.ID  `json:"userId"           bun:"user_id,type:VARCHAR(100),notnull"`
-	SuggestedAgentID pulid.ID  `json:"suggestedAgentId" bun:"suggested_agent_id,type:VARCHAR(100),notnull"`
-	CurrentAgentID   *pulid.ID `json:"currentAgentId"   bun:"current_agent_id,type:VARCHAR(100),nullzero"`
-	Surface          Surface   `json:"surface"          bun:"surface,type:VARCHAR(20),notnull"`
-	Outcome          Outcome   `json:"outcome"          bun:"outcome,type:VARCHAR(20),notnull"`
+	UserID           pulid.ID  `json:"userId"           bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	SuggestedAgentID pulid.ID  `json:"suggestedAgentId" bun:"suggested_agent_id,type:VARCHAR(100),notnull" keel:"suggested_agent_id"`
+	CurrentAgentID   *pulid.ID `json:"currentAgentId"   bun:"current_agent_id,type:VARCHAR(100),nullzero" keel:"current_agent_id"`
+	Surface          Surface   `json:"surface"          bun:"surface,type:VARCHAR(20),notnull" keel:"surface"`
+	Outcome          Outcome   `json:"outcome"          bun:"outcome,type:VARCHAR(20),notnull" keel:"outcome"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

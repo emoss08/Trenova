@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -30,20 +31,21 @@ var (
 
 type Jurisdiction struct {
 	bun.BaseModel `bun:"table:ifta_jurisdictions,alias:ifj" json:"-"`
+	keel.Table    `keel:"ifta_jurisdictions"`
 
-	ID           pulid.ID           `json:"id"           bun:"id,pk,type:VARCHAR(100),notnull"`
-	CountryCode  string             `json:"countryCode"  bun:"country_code,type:CHAR(2),notnull"`
-	Code         string             `json:"code"         bun:"code,type:VARCHAR(2),notnull"`
-	Name         string             `json:"name"         bun:"name,type:VARCHAR(100),notnull"`
-	UsStateID    *pulid.ID          `json:"usStateId"    bun:"us_state_id,type:VARCHAR(100),nullzero"`
-	IsIftaMember bool               `json:"isIftaMember" bun:"is_ifta_member,type:BOOLEAN,notnull"`
-	HasSurcharge bool               `json:"hasSurcharge" bun:"has_surcharge,type:BOOLEAN,notnull"`
-	SortOrder    int                `json:"sortOrder"    bun:"sort_order,type:INTEGER,notnull,default:0"`
-	Status       JurisdictionStatus `json:"status"       bun:"status,type:ifta_jurisdiction_status_enum,notnull,default:'Active'"`
-	CreatedAt    int64              `json:"createdAt"    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64              `json:"updatedAt"    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID           pulid.ID           `json:"id"           bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ifj_"`
+	CountryCode  string             `json:"countryCode"  bun:"country_code,type:CHAR(2),notnull" keel:"country_code"`
+	Code         string             `json:"code"         bun:"code,type:VARCHAR(2),notnull" keel:"code"`
+	Name         string             `json:"name"         bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	UsStateID    *pulid.ID          `json:"usStateId"    bun:"us_state_id,type:VARCHAR(100),nullzero" keel:"us_state_id"`
+	IsIftaMember bool               `json:"isIftaMember" bun:"is_ifta_member,type:BOOLEAN,notnull" keel:"is_ifta_member"`
+	HasSurcharge bool               `json:"hasSurcharge" bun:"has_surcharge,type:BOOLEAN,notnull" keel:"has_surcharge"`
+	SortOrder    int                `json:"sortOrder"    bun:"sort_order,type:INTEGER,notnull,default:0" keel:"sort_order"`
+	Status       JurisdictionStatus `json:"status"       bun:"status,type:ifta_jurisdiction_status_enum,notnull,default:'Active'" keel:"status"`
+	CreatedAt    int64              `json:"createdAt"    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt    int64              `json:"updatedAt"    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	UsState *usstate.UsState `json:"usState,omitempty" bun:"rel:belongs-to,join:us_state_id=id"`
+	UsState *usstate.UsState `json:"usState,omitempty" bun:"rel:belongs-to,join:us_state_id=id" keel:"belongs:us_state_id"`
 }
 
 func JurisdictionKey(countryCode, code string) string {

@@ -23,7 +23,7 @@ const autoCancelReason = "Automatically canceled by shipment control"
 func (r *repository) GetAutoCancelableShipments(
 	ctx context.Context,
 	req *shipmentports.GetAutoCancelableShipmentsRequest,
-	thresholdDays int8,
+	thresholdDays int16,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
 		return r.getAutoCancelableShipments(
@@ -40,7 +40,7 @@ func (r *repository) GetAutoCancelableShipments(
 func (r *repository) AutoCancelShipments(
 	ctx context.Context,
 	req *shipmentports.AutoCancelShipmentsRequest,
-	thresholdDays int8,
+	thresholdDays int16,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
 		currentTime := timeutils.NowUnix()
@@ -255,7 +255,7 @@ func (r *repository) getAutoCancelableShipments(
 	ctx context.Context,
 	dba bun.IDB,
 	tenantInfo pagination.TenantInfo,
-	thresholdDays int8,
+	thresholdDays int16,
 	currentTime int64,
 	limit int,
 ) ([]*shipment.Shipment, error) {

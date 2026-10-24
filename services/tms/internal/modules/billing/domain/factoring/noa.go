@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -30,29 +31,30 @@ var _ bun.BeforeAppendModelHook = (*Noa)(nil)
 
 type Noa struct {
 	bun.BaseModel             `bun:"table:factoring_noas,alias:facnoa" json:"-"`
+	keel.Table                `keel:"factoring_noas"`
 	pagination.CursorValueSet `bun:",embed"                            json:"-"`
 
-	ID                 pulid.ID  `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID  `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID  `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CustomerID         pulid.ID  `json:"customerId"         bun:"customer_id,type:VARCHAR(100),notnull"`
-	FactoringCompanyID pulid.ID  `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),notnull"`
-	Status             NoaStatus `json:"status"             bun:"status,type:VARCHAR(20),notnull,default:'Draft'"`
-	SentAt             *int64    `json:"sentAt"             bun:"sent_at,type:BIGINT,nullzero"`
-	SentTo             string    `json:"sentTo"             bun:"sent_to,type:VARCHAR(320),nullzero"`
-	AcknowledgedAt     *int64    `json:"acknowledgedAt"     bun:"acknowledged_at,type:BIGINT,nullzero"`
-	SignedDocumentID   pulid.ID  `json:"signedDocumentId"   bun:"signed_document_id,type:VARCHAR(100),nullzero"`
-	ExpiresAt          *int64    `json:"expiresAt"          bun:"expires_at,type:BIGINT,nullzero"`
-	ExpiryWarnedAt     *int64    `json:"expiryWarnedAt"     bun:"expiry_warned_at,type:BIGINT,nullzero"`
-	ReleasedAt         *int64    `json:"releasedAt"         bun:"released_at,type:BIGINT,nullzero"`
-	ReleaseReason      string    `json:"releaseReason"      bun:"release_reason,type:VARCHAR(500),nullzero"`
-	Notes              string    `json:"notes"              bun:"notes,type:TEXT,nullzero"`
-	Version            int64     `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt          int64     `json:"createdAt"          bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt          int64     `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull"`
+	ID                 pulid.ID  `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:facnoa_"`
+	OrganizationID     pulid.ID  `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID  `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	CustomerID         pulid.ID  `json:"customerId"         bun:"customer_id,type:VARCHAR(100),notnull" keel:"customer_id"`
+	FactoringCompanyID pulid.ID  `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),notnull" keel:"factoring_company_id"`
+	Status             NoaStatus `json:"status"             bun:"status,type:VARCHAR(20),notnull,default:'Draft'" keel:"status"`
+	SentAt             *int64    `json:"sentAt"             bun:"sent_at,type:BIGINT,nullzero" keel:"sent_at"`
+	SentTo             string    `json:"sentTo"             bun:"sent_to,type:VARCHAR(320),nullzero" keel:"sent_to,nullzero"`
+	AcknowledgedAt     *int64    `json:"acknowledgedAt"     bun:"acknowledged_at,type:BIGINT,nullzero" keel:"acknowledged_at"`
+	SignedDocumentID   pulid.ID  `json:"signedDocumentId"   bun:"signed_document_id,type:VARCHAR(100),nullzero" keel:"signed_document_id,nullzero"`
+	ExpiresAt          *int64    `json:"expiresAt"          bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at"`
+	ExpiryWarnedAt     *int64    `json:"expiryWarnedAt"     bun:"expiry_warned_at,type:BIGINT,nullzero" keel:"expiry_warned_at"`
+	ReleasedAt         *int64    `json:"releasedAt"         bun:"released_at,type:BIGINT,nullzero" keel:"released_at"`
+	ReleaseReason      string    `json:"releaseReason"      bun:"release_reason,type:VARCHAR(500),nullzero" keel:"release_reason,nullzero"`
+	Notes              string    `json:"notes"              bun:"notes,type:TEXT,nullzero" keel:"notes,nullzero"`
+	Version            int64     `json:"version"            bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt          int64     `json:"createdAt"          bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt          int64     `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 
-	Customer         *customer.Customer                 `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Customer         *customer.Customer                 `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:customer_id"`
+	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:factoring_company_id"`
 }
 
 func (n *Noa) Validate(multiErr *errortypes.MultiError) {

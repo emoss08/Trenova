@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -183,29 +184,30 @@ var (
 
 type WorkerCredentialType struct {
 	bun.BaseModel             `bun:"table:worker_credential_types,alias:wct" json:"-"`
+	keel.Table                `keel:"worker_credential_types"`
 	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
 
-	ID                     pulid.ID               `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID         pulid.ID               `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Code                   string                 `json:"code"                   bun:"code,type:VARCHAR(50),notnull"`
-	Name                   string                 `json:"name"                   bun:"name,type:VARCHAR(100),notnull"`
-	Description            string                 `json:"description"            bun:"description,type:TEXT,nullzero"`
-	Category               CredentialCategory     `json:"category"               bun:"category,type:worker_credential_category_enum,notnull,default:'Other'"`
-	Status                 domaintypes.Status     `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'"`
-	IsRequired             bool                   `json:"isRequired"             bun:"is_required,type:BOOLEAN,notnull"`
-	RequiredForDriverTypes []DriverType           `json:"requiredForDriverTypes" bun:"required_for_driver_types,type:JSONB,notnull,default:'[]'"`
-	RenewalWindowDays      int32                  `json:"renewalWindowDays"      bun:"renewal_window_days,type:INTEGER,notnull,default:30"`
-	ValidityMonths         *int32                 `json:"validityMonths"         bun:"validity_months,type:INTEGER,nullzero"`
-	RequiresNumber         bool                   `json:"requiresNumber"         bun:"requires_number,type:BOOLEAN,notnull"`
-	RequiresDocument       bool                   `json:"requiresDocument"       bun:"requires_document,type:BOOLEAN,notnull"`
-	ProfileField           CredentialProfileField `json:"profileField"           bun:"profile_field,type:VARCHAR(40),nullzero"`
-	IsSystem               bool                   `json:"isSystem"               bun:"is_system,type:BOOLEAN,notnull"`
-	SortOrder              int32                  `json:"sortOrder"              bun:"sort_order,type:INTEGER,notnull"`
-	Version                int64                  `json:"version"                bun:"version,type:BIGINT"`
-	CreatedAt              int64                  `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64                  `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector           string                 `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
+	ID                     pulid.ID               `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wct_"`
+	BusinessUnitID         pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID               `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Code                   string                 `json:"code"                   bun:"code,type:VARCHAR(50),notnull" keel:"code"`
+	Name                   string                 `json:"name"                   bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Description            string                 `json:"description"            bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Category               CredentialCategory     `json:"category"               bun:"category,type:worker_credential_category_enum,notnull,default:'Other'" keel:"category"`
+	Status                 domaintypes.Status     `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
+	IsRequired             bool                   `json:"isRequired"             bun:"is_required,type:BOOLEAN,notnull" keel:"is_required"`
+	RequiredForDriverTypes []DriverType           `json:"requiredForDriverTypes" bun:"required_for_driver_types,type:JSONB,notnull,default:'[]'" keel:"required_for_driver_types,jsonb"`
+	RenewalWindowDays      int32                  `json:"renewalWindowDays"      bun:"renewal_window_days,type:INTEGER,notnull,default:30" keel:"renewal_window_days"`
+	ValidityMonths         *int32                 `json:"validityMonths"         bun:"validity_months,type:INTEGER,nullzero" keel:"validity_months"`
+	RequiresNumber         bool                   `json:"requiresNumber"         bun:"requires_number,type:BOOLEAN,notnull" keel:"requires_number"`
+	RequiresDocument       bool                   `json:"requiresDocument"       bun:"requires_document,type:BOOLEAN,notnull" keel:"requires_document"`
+	ProfileField           CredentialProfileField `json:"profileField"           bun:"profile_field,type:VARCHAR(40),nullzero" keel:"profile_field,nullzero"`
+	IsSystem               bool                   `json:"isSystem"               bun:"is_system,type:BOOLEAN,notnull" keel:"is_system"`
+	SortOrder              int32                  `json:"sortOrder"              bun:"sort_order,type:INTEGER,notnull" keel:"sort_order"`
+	Version                int64                  `json:"version"                bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt              int64                  `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt              int64                  `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector           string                 `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
 }
 
 func (t *WorkerCredentialType) Validate(multiErr *errortypes.MultiError) {

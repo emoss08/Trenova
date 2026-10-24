@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -208,17 +209,18 @@ const (
 
 type Event struct {
 	bun.BaseModel `bun:"table:watchtower_item_events,alias:wtie" json:"-"`
+	keel.Table    `keel:"watchtower_item_events"`
 
-	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ItemID         pulid.ID  `json:"itemId"         bun:"item_id,type:VARCHAR(100),notnull"`
-	Kind           EventKind `json:"kind"           bun:"kind,type:VARCHAR(30),notnull"`
-	ActorID        pulid.ID  `json:"actorId"        bun:"actor_id,type:VARCHAR(100),nullzero"`
-	FromValue      string    `json:"fromValue"      bun:"from_value,type:VARCHAR(200),nullzero"`
-	ToValue        string    `json:"toValue"        bun:"to_value,type:VARCHAR(200),nullzero"`
-	Note           string    `json:"note"           bun:"note,type:TEXT,nullzero"`
-	CreatedAt      int64     `json:"createdAt"      bun:"created_at,type:BIGINT,notnull"`
+	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wte_"`
+	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ItemID         pulid.ID  `json:"itemId"         bun:"item_id,type:VARCHAR(100),notnull" keel:"item_id"`
+	Kind           EventKind `json:"kind"           bun:"kind,type:VARCHAR(30),notnull" keel:"kind"`
+	ActorID        pulid.ID  `json:"actorId"        bun:"actor_id,type:VARCHAR(100),nullzero" keel:"actor_id,nullzero"`
+	FromValue      string    `json:"fromValue"      bun:"from_value,type:VARCHAR(200),nullzero" keel:"from_value,nullzero"`
+	ToValue        string    `json:"toValue"        bun:"to_value,type:VARCHAR(200),nullzero" keel:"to_value,nullzero"`
+	Note           string    `json:"note"           bun:"note,type:TEXT,nullzero" keel:"note,nullzero"`
+	CreatedAt      int64     `json:"createdAt"      bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
 }
 
 func NewEvent(item *Item, kind EventKind, actorID pulid.ID) *Event {

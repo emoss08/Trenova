@@ -1,8 +1,8 @@
 package shipmentstate
 
-const DefaultAutoCancelThresholdDays int8 = 30
+const DefaultAutoCancelThresholdDays int16 = 30
 
-func ResolveAutoCancelThresholdDays(thresholdDays int8) int8 {
+func ResolveAutoCancelThresholdDays(thresholdDays int16) int16 {
 	if thresholdDays <= 0 {
 		return DefaultAutoCancelThresholdDays
 	}

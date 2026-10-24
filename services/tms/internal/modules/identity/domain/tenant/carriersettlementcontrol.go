@@ -3,6 +3,7 @@ package tenant
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,27 +19,28 @@ var (
 
 type CarrierSettlementControl struct {
 	bun.BaseModel `bun:"table:carrier_settlement_controls,alias:carstlc" json:"-"`
+	keel.Table    `keel:"carrier_settlement_controls"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:carstlc_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	PayTrigger                              PayTrigger         `json:"payTrigger"                              bun:"pay_trigger,type:VARCHAR(50),notnull,default:'ShipmentDelivered'"`
-	PayPeriodFrequency                      PayPeriodFrequency `json:"payPeriodFrequency"                      bun:"pay_period_frequency,type:VARCHAR(50),notnull,default:'Weekly'"`
-	PeriodEndDayOfWeek                      int                `json:"periodEndDayOfWeek"                      bun:"period_end_day_of_week,type:INTEGER,notnull,default:6"`
-	PayDelayDays                            int                `json:"payDelayDays"                            bun:"pay_delay_days,type:INTEGER,notnull,default:5"`
-	AutoGenerateBatches                     bool               `json:"autoGenerateBatches"                     bun:"auto_generate_batches,type:BOOLEAN,notnull,default:false"`
-	AutoPostOnApprove                       bool               `json:"autoPostOnApprove"                       bun:"auto_post_on_approve,type:BOOLEAN,notnull,default:false"`
-	VarianceToleranceMinor                  int64              `json:"varianceToleranceMinor"                  bun:"variance_tolerance_minor,type:BIGINT,notnull,default:0"`
-	AutoMatchInboundInvoices                bool               `json:"autoMatchInboundInvoices"                bun:"auto_match_inbound_invoices,type:BOOLEAN,notnull,default:false"`
-	AutoAcceptWithinTolerance               bool               `json:"autoAcceptWithinTolerance"               bun:"auto_accept_within_tolerance,type:BOOLEAN,notnull,default:false"`
-	HoldUntilInvoiceMatched                 bool               `json:"holdUntilInvoiceMatched"                 bun:"hold_until_invoice_matched,type:BOOLEAN,notnull,default:false"`
-	DefaultAPAccountID                      *pulid.ID          `json:"defaultApAccountId"                      bun:"default_ap_account_id,type:VARCHAR(100),nullzero"`
-	DefaultPurchasedTransportationAccountID *pulid.ID          `json:"defaultPurchasedTransportationAccountId" bun:"default_purchased_transportation_account_id,type:VARCHAR(100),nullzero"`
+	PayTrigger                              PayTrigger         `json:"payTrigger"                              bun:"pay_trigger,type:VARCHAR(50),notnull,default:'ShipmentDelivered'" keel:"pay_trigger"`
+	PayPeriodFrequency                      PayPeriodFrequency `json:"payPeriodFrequency"                      bun:"pay_period_frequency,type:VARCHAR(50),notnull,default:'Weekly'" keel:"pay_period_frequency"`
+	PeriodEndDayOfWeek                      int                `json:"periodEndDayOfWeek"                      bun:"period_end_day_of_week,type:INTEGER,notnull,default:6" keel:"period_end_day_of_week"`
+	PayDelayDays                            int                `json:"payDelayDays"                            bun:"pay_delay_days,type:INTEGER,notnull,default:5" keel:"pay_delay_days"`
+	AutoGenerateBatches                     bool               `json:"autoGenerateBatches"                     bun:"auto_generate_batches,type:BOOLEAN,notnull,default:false" keel:"auto_generate_batches"`
+	AutoPostOnApprove                       bool               `json:"autoPostOnApprove"                       bun:"auto_post_on_approve,type:BOOLEAN,notnull,default:false" keel:"auto_post_on_approve"`
+	VarianceToleranceMinor                  int64              `json:"varianceToleranceMinor"                  bun:"variance_tolerance_minor,type:BIGINT,notnull,default:0" keel:"variance_tolerance_minor"`
+	AutoMatchInboundInvoices                bool               `json:"autoMatchInboundInvoices"                bun:"auto_match_inbound_invoices,type:BOOLEAN,notnull,default:false" keel:"auto_match_inbound_invoices"`
+	AutoAcceptWithinTolerance               bool               `json:"autoAcceptWithinTolerance"               bun:"auto_accept_within_tolerance,type:BOOLEAN,notnull,default:false" keel:"auto_accept_within_tolerance"`
+	HoldUntilInvoiceMatched                 bool               `json:"holdUntilInvoiceMatched"                 bun:"hold_until_invoice_matched,type:BOOLEAN,notnull,default:false" keel:"hold_until_invoice_matched"`
+	DefaultAPAccountID                      *pulid.ID          `json:"defaultApAccountId"                      bun:"default_ap_account_id,type:VARCHAR(100),nullzero" keel:"default_ap_account_id"`
+	DefaultPurchasedTransportationAccountID *pulid.ID          `json:"defaultPurchasedTransportationAccountId" bun:"default_purchased_transportation_account_id,type:VARCHAR(100),nullzero" keel:"default_purchased_transportation_account_id"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -24,27 +25,28 @@ import (
 // the assistant is being used, and it is only useful if it survives the request.
 type Message struct {
 	bun.BaseModel `bun:"table:assistant_messages,alias:amsg" json:"-"`
+	keel.Table    `keel:"assistant_messages"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:amsg_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	ThreadID pulid.ID `json:"threadId" bun:"thread_id,type:VARCHAR(100),notnull"`
+	ThreadID pulid.ID `json:"threadId" bun:"thread_id,type:VARCHAR(100),notnull" keel:"thread_id"`
 	// Sequence orders messages within a thread without relying on a timestamp,
 	// which can collide inside a single fast tool loop.
-	Sequence int  `json:"sequence" bun:"sequence,type:INTEGER,notnull"`
-	Role     Role `json:"role"     bun:"role,type:VARCHAR(50),notnull"`
+	Sequence int  `json:"sequence" bun:"sequence,type:INTEGER,notnull" keel:"sequence"`
+	Role     Role `json:"role"     bun:"role,type:VARCHAR(50),notnull" keel:"role"`
 	// Kind is Message for everything but the note that starts the turn after
 	// a decision and the steps of another agent the turn handed work to; see
 	// MessageKind.
-	Kind MessageKind `json:"kind" bun:"kind,type:VARCHAR(50),notnull,default:'Message'"`
+	Kind MessageKind `json:"kind" bun:"kind,type:VARCHAR(50),notnull,default:'Message'" keel:"kind"`
 	// AgentDefinitionID and DelegateCallID mark a step another agent took on
 	// a task this conversation's agent handed it: which agent, and the
 	// delegate_task call it answers. Both are empty on the conversation's own
 	// messages. AgentName, AgentIcon and AgentAccent are the agent's name
 	// and mark as the thread is served.
-	AgentDefinitionID pulid.ID `json:"agentId,omitempty"        bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
-	DelegateCallID    string   `json:"delegateCallId,omitempty" bun:"delegate_call_id,type:VARCHAR(200),nullzero"`
+	AgentDefinitionID pulid.ID `json:"agentId,omitempty"        bun:"agent_definition_id,type:VARCHAR(100),nullzero" keel:"agent_definition_id,nullzero"`
+	DelegateCallID    string   `json:"delegateCallId,omitempty" bun:"delegate_call_id,type:VARCHAR(200),nullzero" keel:"delegate_call_id,nullzero"`
 	AgentName         string   `json:"agentName,omitempty"      bun:"-"`
 	AgentIcon         string   `json:"agentIcon,omitempty"      bun:"-"`
 	AgentAccent       string   `json:"agentAccent,omitempty"    bun:"-"`
@@ -53,96 +55,96 @@ type Message struct {
 	// out, kept on that call's result: how it ended, what the other agent
 	// answered, made, left waiting and published. Nil on every other message
 	// and on a call refused before anybody was asked.
-	DelegateReport *DelegateReport `json:"delegateReport,omitempty" bun:"delegate_report,type:JSONB,nullzero"`
+	DelegateReport *DelegateReport `json:"delegateReport,omitempty" bun:"delegate_report,type:JSONB,nullzero" keel:"delegate_report,jsonb"`
 
 	// ScheduleID is the conversation schedule a Schedule message made. The
 	// schedule may since have been deleted; the card then says so.
-	ScheduleID pulid.ID `json:"scheduleId,omitempty" bun:"schedule_id,type:VARCHAR(100),nullzero"`
+	ScheduleID pulid.ID `json:"scheduleId,omitempty" bun:"schedule_id,type:VARCHAR(100),nullzero" keel:"schedule_id,nullzero"`
 	// Handoff is what a hand-off carried, on the card it left in the
 	// conversation handed off and on the brief that opens the new one. Nil
 	// on every other message.
-	Handoff *Handoff `json:"handoff,omitempty" bun:"handoff,type:JSONB,nullzero"`
+	Handoff *Handoff `json:"handoff,omitempty" bun:"handoff,type:JSONB,nullzero" keel:"handoff,jsonb"`
 
-	Content string `json:"content" bun:"content,type:TEXT,nullzero"`
+	Content string `json:"content" bun:"content,type:TEXT,nullzero" keel:"content,nullzero"`
 
 	// WorldChanges are the records a WorldChange notice reported changed.
 	// Nil on every other message.
-	WorldChanges []WorldChange `json:"worldChanges,omitempty" bun:"world_changes,type:JSONB,nullzero"`
+	WorldChanges []WorldChange `json:"worldChanges,omitempty" bun:"world_changes,type:JSONB,nullzero" keel:"world_changes,jsonb,nullzero"`
 
 	// Compaction says what a compaction summary stands in for. Nil on every
 	// other message.
-	Compaction *Compaction `json:"compaction,omitempty" bun:"compaction,type:JSONB,nullzero"`
+	Compaction *Compaction `json:"compaction,omitempty" bun:"compaction,type:JSONB,nullzero" keel:"compaction,jsonb"`
 
 	// ToolCalls is what an assistant turn asked for, stored as the normalized
 	// shape rather than any one provider's wire format.
-	ToolCalls []ToolCallRecord `json:"toolCalls" bun:"tool_calls,type:jsonb,nullzero"`
+	ToolCalls []ToolCallRecord `json:"toolCalls" bun:"tool_calls,type:jsonb,nullzero" keel:"tool_calls,jsonb,nullzero"`
 	// ToolCallID and ToolName tie a Tool-role message to the call it answers.
-	ToolCallID  string           `json:"toolCallId"            bun:"tool_call_id,type:VARCHAR(200),nullzero"`
-	ToolName    string           `json:"toolName"              bun:"tool_name,type:VARCHAR(200),nullzero"`
-	ToolFailed  bool             `json:"toolFailed"            bun:"tool_failed,type:BOOLEAN,notnull,default:false"`
-	ToolVerdict string           `json:"toolVerdict,omitempty" bun:"tool_verdict,type:VARCHAR(50),nullzero"`
+	ToolCallID  string           `json:"toolCallId"            bun:"tool_call_id,type:VARCHAR(200),nullzero" keel:"tool_call_id,nullzero"`
+	ToolName    string           `json:"toolName"              bun:"tool_name,type:VARCHAR(200),nullzero" keel:"tool_name,nullzero"`
+	ToolFailed  bool             `json:"toolFailed"            bun:"tool_failed,type:BOOLEAN,notnull,default:false" keel:"tool_failed"`
+	ToolVerdict string           `json:"toolVerdict,omitempty" bun:"tool_verdict,type:VARCHAR(50),nullzero" keel:"tool_verdict,nullzero"`
 	ToolEffect  agent.ToolEffect `json:"effect,omitempty"      bun:"-"`
-	ToolSummary string           `json:"summary,omitempty"     bun:"tool_summary,type:TEXT,nullzero"`
-	FoundTools  []string         `json:"foundTools,omitempty"  bun:"found_tools,type:JSONB,nullzero"`
+	ToolSummary string           `json:"summary,omitempty"     bun:"tool_summary,type:TEXT,nullzero" keel:"tool_summary,nullzero"`
+	FoundTools  []string         `json:"foundTools,omitempty"  bun:"found_tools,type:JSONB,nullzero" keel:"found_tools,jsonb,nullzero"`
 	// HandOffAgents are the person's other agents a find_tools answer named
 	// as holding what this agent could not call, set only on that call's
 	// result, so the Desk's hand-off menu offers them first.
-	HandOffAgents []pulid.ID `json:"handOffAgents,omitempty" bun:"hand_off_agents,type:JSONB,nullzero"`
+	HandOffAgents []pulid.ID `json:"handOffAgents,omitempty" bun:"hand_off_agents,type:JSONB,nullzero" keel:"hand_off_agents,jsonb,nullzero"`
 
 	// ScopeStage, ScopeCategory and ScopeReason record the guard's verdict on a
 	// user turn, or on an assistant turn the output guard refused.
-	ScopeStage    string `json:"scopeStage"    bun:"scope_stage,type:VARCHAR(50),nullzero"`
-	ScopeCategory string `json:"scopeCategory" bun:"scope_category,type:VARCHAR(50),nullzero"`
-	ScopeReason   string `json:"scopeReason"   bun:"scope_reason,type:VARCHAR(50),nullzero"`
-	Refused       bool   `json:"refused"       bun:"refused,type:BOOLEAN,notnull,default:false"`
+	ScopeStage    string `json:"scopeStage"    bun:"scope_stage,type:VARCHAR(50),nullzero" keel:"scope_stage,nullzero"`
+	ScopeCategory string `json:"scopeCategory" bun:"scope_category,type:VARCHAR(50),nullzero" keel:"scope_category,nullzero"`
+	ScopeReason   string `json:"scopeReason"   bun:"scope_reason,type:VARCHAR(50),nullzero" keel:"scope_reason,nullzero"`
+	Refused       bool   `json:"refused"       bun:"refused,type:BOOLEAN,notnull,default:false" keel:"refused"`
 
 	// PageContext is what the person was looking at when they sent a user
 	// turn, kept so an answer can be reviewed against the page it was about.
-	PageContext *agent.PageContext `json:"pageContext" bun:"page_context,type:JSONB,nullzero"`
+	PageContext *agent.PageContext `json:"pageContext" bun:"page_context,type:JSONB,nullzero" keel:"page_context,jsonb"`
 
 	// Attachments are the files the person handed over with a user turn, and
 	// Mentions the records they named. Both are kept on the turn so an
 	// answer can be read against what it was given.
-	Attachments []MessageAttachment `json:"attachments" bun:"attachments,type:JSONB,nullzero"`
-	Mentions    []agent.EntityRef   `json:"mentions"    bun:"mentions,type:JSONB,nullzero"`
+	Attachments []MessageAttachment `json:"attachments" bun:"attachments,type:JSONB,nullzero" keel:"attachments,jsonb,nullzero"`
+	Mentions    []agent.EntityRef   `json:"mentions"    bun:"mentions,type:JSONB,nullzero" keel:"mentions,jsonb,nullzero"`
 
 	// Reasoning is what the model thought before it answered, as much as the
 	// provider lets through, plus whatever the provider needs handed back to
 	// continue the same line of thought on the next call. Nil when the model
 	// did not reason out loud or the provider was not asked to let it.
-	Reasoning *ReasoningTrace `json:"reasoning" bun:"reasoning,type:JSONB,nullzero"`
+	Reasoning *ReasoningTrace `json:"reasoning" bun:"reasoning,type:JSONB,nullzero" keel:"reasoning,jsonb"`
 
-	Model string `json:"model" bun:"model,type:VARCHAR(200),nullzero"`
+	Model string `json:"model" bun:"model,type:VARCHAR(200),nullzero" keel:"model,nullzero"`
 	// Truncated says the provider stopped partway through this reply, and
 	// FallbackFrom names the provider asked first when another one answered.
-	Truncated    bool              `json:"truncated,omitempty"    bun:"truncated,type:BOOLEAN,notnull,default:false"`
-	FallbackFrom *ProviderFallback `json:"fallbackFrom,omitempty" bun:"fallback_from,type:JSONB,nullzero"`
+	Truncated    bool              `json:"truncated,omitempty"    bun:"truncated,type:BOOLEAN,notnull,default:false" keel:"truncated"`
+	FallbackFrom *ProviderFallback `json:"fallbackFrom,omitempty" bun:"fallback_from,type:JSONB,nullzero" keel:"fallback_from,jsonb"`
 	// Failure says why the reply did not finish, for a reply that is only a
 	// closing note: the models that were asked, or that it was stopped.
-	Failure      *ReplyFailure `json:"failure,omitempty" bun:"failure,type:JSONB,nullzero"`
-	ProviderID   pulid.ID      `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero"`
-	InputTokens  int           `json:"inputTokens"       bun:"input_tokens,type:INTEGER,notnull,default:0"`
-	OutputTokens int           `json:"outputTokens"      bun:"output_tokens,type:INTEGER,notnull,default:0"`
+	Failure      *ReplyFailure `json:"failure,omitempty" bun:"failure,type:JSONB,nullzero" keel:"failure,jsonb"`
+	ProviderID   pulid.ID      `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero" keel:"provider_id,nullzero"`
+	InputTokens  int           `json:"inputTokens"       bun:"input_tokens,type:INTEGER,notnull,default:0" keel:"input_tokens"`
+	OutputTokens int           `json:"outputTokens"      bun:"output_tokens,type:INTEGER,notnull,default:0" keel:"output_tokens"`
 	// ProviderMessageID is the provider's own id for this reply, which the
 	// next call to the same provider names when it asks the Claude API why
 	// its prompt cache missed.
-	ProviderMessageID string `json:"providerMessageId,omitempty" bun:"provider_message_id,type:VARCHAR(200),nullzero"`
+	ProviderMessageID string `json:"providerMessageId,omitempty" bun:"provider_message_id,type:VARCHAR(200),nullzero" keel:"provider_message_id,nullzero"`
 	// LatencyMs is how long the model took to answer this turn; CostUSD is
 	// what it cost at the provider's price, nil where no price is configured.
-	LatencyMs int64            `json:"latencyMs" bun:"latency_ms,type:BIGINT,nullzero"`
-	CostUSD   *decimal.Decimal `json:"costUsd"   bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
+	LatencyMs int64            `json:"latencyMs" bun:"latency_ms,type:BIGINT,nullzero" keel:"latency_ms,nullzero"`
+	CostUSD   *decimal.Decimal `json:"costUsd"   bun:"cost_usd,type:NUMERIC(14,6),nullzero" keel:"cost_usd"`
 
 	// UsedMemoryIDs are the memories the turn this reply ends used, and
 	// SavedMemories what it kept or offered to keep; both only on a turn's
 	// last reply. Memories is each of them as the reader may see it, filled
 	// as the thread is served.
-	UsedMemoryIDs []pulid.ID    `json:"usedMemoryIds,omitempty" bun:"used_memory_ids,type:JSONB,nullzero"`
-	SavedMemories []SavedMemory `json:"savedMemories,omitempty" bun:"saved_memories,type:JSONB,nullzero"`
+	UsedMemoryIDs []pulid.ID    `json:"usedMemoryIds,omitempty" bun:"used_memory_ids,type:JSONB,nullzero" keel:"used_memory_ids,jsonb,nullzero"`
+	SavedMemories []SavedMemory `json:"savedMemories,omitempty" bun:"saved_memories,type:JSONB,nullzero" keel:"saved_memories,jsonb,nullzero"`
 	Memories      []MemoryNote  `json:"memories,omitempty"      bun:"-"`
 
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	Thread *Thread `json:"thread,omitempty" bun:"rel:belongs-to,join:thread_id=id"`
+	Thread *Thread `json:"thread,omitempty" bun:"rel:belongs-to,join:thread_id=id" keel:"belongs:thread_id"`
 }
 
 // WorldChange is a record that changed elsewhere while a reply was being

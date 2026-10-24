@@ -3,6 +3,7 @@ package ratematrix
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,25 +22,26 @@ var _ bun.BeforeAppendModelHook = (*RateMatrixDimension)(nil)
 // merely present.
 type RateMatrixDimension struct {
 	bun.BaseModel `bun:"table:rate_matrix_dimensions,alias:rmd" json:"-"`
+	keel.Table    `keel:"rate_matrix_dimensions"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	RateMatrixID   pulid.ID `json:"rateMatrixId"   bun:"rate_matrix_id,type:VARCHAR(100),notnull"`
-	VersionNumber  int64    `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull,default:0"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rmd_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	RateMatrixID   pulid.ID `json:"rateMatrixId"   bun:"rate_matrix_id,type:VARCHAR(100),notnull" keel:"rate_matrix_id"`
+	VersionNumber  int64    `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull,default:0" keel:"version_number"`
 
-	Position  int16         `json:"position"  bun:"position,type:SMALLINT,notnull"`
-	Kind      DimensionKind `json:"kind"      bun:"kind,type:rate_matrix_dimension_kind_enum,notnull"`
-	MatchMode MatchMode     `json:"matchMode" bun:"match_mode,type:rate_matrix_match_mode_enum,notnull"`
-	Label     string        `json:"label"     bun:"label,type:VARCHAR(100),nullzero"`
+	Position  int16         `json:"position"  bun:"position,type:SMALLINT,notnull" keel:"position"`
+	Kind      DimensionKind `json:"kind"      bun:"kind,type:rate_matrix_dimension_kind_enum,notnull" keel:"kind"`
+	MatchMode MatchMode     `json:"matchMode" bun:"match_mode,type:rate_matrix_match_mode_enum,notnull" keel:"match_mode"`
+	Label     string        `json:"label"     bun:"label,type:VARCHAR(100),nullzero" keel:"label,nullzero"`
 
-	KeyNormalization KeyNormalization `json:"keyNormalization" bun:"key_normalization,type:rate_matrix_key_normalization_enum,notnull,default:'None'"`
-	RangeOverflow    RangeOverflow    `json:"rangeOverflow"    bun:"range_overflow,type:rate_matrix_range_overflow_enum,notnull,default:'Error'"`
+	KeyNormalization KeyNormalization `json:"keyNormalization" bun:"key_normalization,type:rate_matrix_key_normalization_enum,notnull,default:'None'" keel:"key_normalization"`
+	RangeOverflow    RangeOverflow    `json:"rangeOverflow"    bun:"range_overflow,type:rate_matrix_range_overflow_enum,notnull,default:'Error'" keel:"range_overflow"`
 
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	RateMatrix *RateMatrix `json:"-" bun:"rel:belongs-to,join:rate_matrix_id=id"`
+	RateMatrix *RateMatrix `json:"-" bun:"rel:belongs-to,join:rate_matrix_id=id" keel:"belongs:rate_matrix_id"`
 }
 
 func (rmd *RateMatrixDimension) Validate(multiErr *errortypes.MultiError) {

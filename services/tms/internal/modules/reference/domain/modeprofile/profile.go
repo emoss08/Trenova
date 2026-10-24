@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -31,41 +32,42 @@ var (
 
 type Profile struct {
 	bun.BaseModel             `bun:"table:mode_profiles,alias:mpf" json:"-"`
+	keel.Table                `keel:"mode_profiles"`
 	pagination.CursorValueSet `bun:",embed"                        json:"-"`
 
-	ID             pulid.ID      `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID      `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID      `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Name           string        `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	Code           string        `json:"code"           bun:"code,type:VARCHAR(50),notnull"`
-	Description    string        `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Status         ProfileStatus `json:"status"         bun:"status,type:mode_profile_status_enum,notnull,default:'Draft'"`
+	ID             pulid.ID      `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:mpf_"`
+	BusinessUnitID pulid.ID      `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID      `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Name           string        `json:"name"           bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Code           string        `json:"code"           bun:"code,type:VARCHAR(50),notnull" keel:"code"`
+	Description    string        `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Status         ProfileStatus `json:"status"         bun:"status,type:mode_profile_status_enum,notnull,default:'Draft'" keel:"status"`
 
-	ServiceModel   ServiceModel   `json:"serviceModel"   bun:"service_model,type:mode_profile_service_model_enum,notnull"`
-	EquipmentClass EquipmentClass `json:"equipmentClass" bun:"equipment_class,type:mode_profile_equipment_class_enum,notnull"`
-	ExecutionParty ExecutionParty `json:"executionParty" bun:"execution_party,type:mode_profile_execution_party_enum,notnull,default:'CompanyAsset'"`
-	Capabilities   []Capability   `json:"capabilities"   bun:"capabilities,type:JSONB,nullzero"`
+	ServiceModel   ServiceModel   `json:"serviceModel"   bun:"service_model,type:mode_profile_service_model_enum,notnull" keel:"service_model"`
+	EquipmentClass EquipmentClass `json:"equipmentClass" bun:"equipment_class,type:mode_profile_equipment_class_enum,notnull" keel:"equipment_class"`
+	ExecutionParty ExecutionParty `json:"executionParty" bun:"execution_party,type:mode_profile_execution_party_enum,notnull,default:'CompanyAsset'" keel:"execution_party"`
+	Capabilities   []Capability   `json:"capabilities"   bun:"capabilities,type:JSONB,nullzero" keel:"capabilities,jsonb,nullzero"`
 
-	IsOrgDefault     bool       `json:"isOrgDefault"     bun:"is_org_default,type:BOOLEAN,notnull,default:false"`
-	Priority         int16      `json:"priority"         bun:"priority,type:SMALLINT,notnull,default:0"`
-	SpecificityScore int32      `json:"specificityScore" bun:"specificity_score,type:INTEGER,notnull,default:0"`
-	CustomerID       *pulid.ID  `json:"customerId"       bun:"customer_id,type:VARCHAR(100),nullzero"`
-	ShipmentTypeIDs  []pulid.ID `json:"shipmentTypeIds"  bun:"shipment_type_ids,type:JSONB,nullzero"`
-	ServiceTypeIDs   []pulid.ID `json:"serviceTypeIds"   bun:"service_type_ids,type:JSONB,nullzero"`
-	EquipmentTypeIDs []pulid.ID `json:"equipmentTypeIds" bun:"equipment_type_ids,type:JSONB,nullzero"`
+	IsOrgDefault     bool       `json:"isOrgDefault"     bun:"is_org_default,type:BOOLEAN,notnull,default:false" keel:"is_org_default"`
+	Priority         int16      `json:"priority"         bun:"priority,type:SMALLINT,notnull,default:0" keel:"priority"`
+	SpecificityScore int32      `json:"specificityScore" bun:"specificity_score,type:INTEGER,notnull,default:0" keel:"specificity_score"`
+	CustomerID       *pulid.ID  `json:"customerId"       bun:"customer_id,type:VARCHAR(100),nullzero" keel:"customer_id"`
+	ShipmentTypeIDs  []pulid.ID `json:"shipmentTypeIds"  bun:"shipment_type_ids,type:JSONB,nullzero" keel:"shipment_type_ids,jsonb,nullzero"`
+	ServiceTypeIDs   []pulid.ID `json:"serviceTypeIds"   bun:"service_type_ids,type:JSONB,nullzero" keel:"service_type_ids,jsonb,nullzero"`
+	EquipmentTypeIDs []pulid.ID `json:"equipmentTypeIds" bun:"equipment_type_ids,type:JSONB,nullzero" keel:"equipment_type_ids,jsonb,nullzero"`
 
-	EffectiveStartDate *int64 `json:"effectiveStartDate" bun:"effective_start_date,type:BIGINT,nullzero"`
-	EffectiveEndDate   *int64 `json:"effectiveEndDate"   bun:"effective_end_date,type:BIGINT,nullzero"`
+	EffectiveStartDate *int64 `json:"effectiveStartDate" bun:"effective_start_date,type:BIGINT,nullzero" keel:"effective_start_date"`
+	EffectiveEndDate   *int64 `json:"effectiveEndDate"   bun:"effective_end_date,type:BIGINT,nullzero" keel:"effective_end_date"`
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"               bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"               bun:"rel:belongs-to,join:organization_id=id"`
-	Rules        []*CapabilityRule    `json:"rules,omitempty" bun:"rel:has-many,join:id=mode_profile_id"`
+	Rules        []*CapabilityRule    `json:"rules,omitempty" bun:"rel:has-many,join:id=mode_profile_id" keel:"many:mode_profile_id"`
 }
 
 func (p *Profile) GetID() pulid.ID { return p.ID }

@@ -3,6 +3,7 @@ package onboarding
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -19,18 +20,19 @@ var (
 
 type Onboarding struct {
 	bun.BaseModel `bun:"table:organization_onboarding,alias:oonb" json:"-"`
+	keel.Table    `keel:"organization_onboarding"`
 
-	ID               pulid.ID             `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID             `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID             `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Status           Status               `json:"status"                  bun:"status,type:VARCHAR(20),notnull"`
-	OperationType    tenant.OperationType `json:"operationType,omitempty" bun:"operation_type,type:VARCHAR(20),nullzero"`
-	SampleDataLoaded bool                 `json:"sampleDataLoaded"        bun:"sample_data_loaded,type:BOOLEAN,notnull"`
-	CompletedAt      *int64               `json:"completedAt"             bun:"completed_at,type:BIGINT,nullzero"`
-	CompletedByID    pulid.ID             `json:"completedById,omitempty" bun:"completed_by_id,type:VARCHAR(100),nullzero"`
-	Version          int64                `json:"version"                 bun:"version,type:BIGINT,notnull"`
-	CreatedAt        int64                `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64                `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID             `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:oonb_"`
+	BusinessUnitID   pulid.ID             `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID             `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Status           Status               `json:"status"                  bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	OperationType    tenant.OperationType `json:"operationType,omitempty" bun:"operation_type,type:VARCHAR(20),nullzero" keel:"operation_type,nullzero"`
+	SampleDataLoaded bool                 `json:"sampleDataLoaded"        bun:"sample_data_loaded,type:BOOLEAN,notnull" keel:"sample_data_loaded"`
+	CompletedAt      *int64               `json:"completedAt"             bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
+	CompletedByID    pulid.ID             `json:"completedById,omitempty" bun:"completed_by_id,type:VARCHAR(100),nullzero" keel:"completed_by_id,nullzero"`
+	Version          int64                `json:"version"                 bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt        int64                `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64                `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 type CompleteParams struct {

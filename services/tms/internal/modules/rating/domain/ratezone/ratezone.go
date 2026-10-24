@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -37,25 +38,26 @@ const (
 
 type RateZone struct {
 	bun.BaseModel             `bun:"table:rate_zones,alias:rzn" json:"-"`
+	keel.Table                `keel:"rate_zones"`
 	pagination.CursorValueSet `bun:",embed"                     json:"-"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(50),notnull"`
-	Name           string             `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Kind           ZoneKind           `json:"kind"           bun:"kind,type:rate_zone_kind_enum,notnull,default:'Custom'"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
+	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:rzn_"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Code           string             `json:"code"           bun:"code,type:VARCHAR(50),notnull" keel:"code"`
+	Name           string             `json:"name"           bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Kind           ZoneKind           `json:"kind"           bun:"kind,type:rate_zone_kind_enum,notnull,default:'Custom'" keel:"kind"`
+	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
+	Version        int64              `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"                 bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"                 bun:"rel:belongs-to,join:organization_id=id"`
-	Members      []*RateZoneMember    `json:"members,omitempty" bun:"rel:has-many,join:id=rate_zone_id"`
+	Members      []*RateZoneMember    `json:"members,omitempty" bun:"rel:has-many,join:id=rate_zone_id" keel:"many:rate_zone_id"`
 }
 
 // applyDefaults fills in the values the database would have defaulted, so a

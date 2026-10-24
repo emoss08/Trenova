@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,12 +28,13 @@ var (
 
 type FiscalPeriod struct {
 	bun.BaseModel             `bun:"table:fiscal_periods,alias:fp" json:"-"`
+	keel.Table                `keel:"fiscal_periods"`
 	pagination.CursorValueSet `bun:",embed"                        json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	FiscalYearID   pulid.ID `json:"fiscalYearId"   bun:"fiscal_year_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:fp_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	FiscalYearID   pulid.ID `json:"fiscalYearId"   bun:"fiscal_year_id,type:VARCHAR(100),notnull" keel:"fiscal_year_id"`
 
 	// ---------------------------------------------------------------
 	// Core Identity
@@ -41,30 +43,30 @@ type FiscalPeriod struct {
 	// PeriodNumber is the ordinal position within the fiscal year (1–12 for
 	// monthly, 1–4 for quarterly, 1–13 for weekly/4-4-5, 13+ for adjusting).
 	// Adjusting periods (Period 13/14) use numbers above the regular count.
-	PeriodNumber int `json:"periodNumber" bun:"period_number,type:INT,notnull"`
+	PeriodNumber int `json:"periodNumber" bun:"period_number,type:INT,notnull" keel:"period_number"`
 
 	// PeriodType indicates what kind of period this is. Most carriers use
 	// Month. Week is for 4-4-5 calendars. Adjusting is for Period 13
 	// year-end adjustment periods.
-	PeriodType PeriodType `json:"periodType" bun:"period_type,type:period_type_enum,notnull,default:'Month'"`
+	PeriodType PeriodType `json:"periodType" bun:"period_type,type:period_type_enum,notnull,default:'Month'" keel:"period_type"`
 
 	// Status tracks the period's position in its lifecycle.
 	// Inactive → Open → Locked → Closed → PermanentlyClosed.
-	Status Status `json:"status" bun:"status,type:period_status_enum,notnull,default:'Inactive'"`
+	Status Status `json:"status" bun:"status,type:period_status_enum,notnull,default:'Inactive'" keel:"status"`
 
 	// Name is the display name (e.g. "January 2026", "P1-2026", "Q1 2026",
 	// "Adjusting Period 2026").
-	Name string `json:"name" bun:"name,type:VARCHAR(100),notnull"`
+	Name string `json:"name" bun:"name,type:VARCHAR(100),notnull" keel:"name"`
 
 	// StartDate is the first day of the period as a Unix epoch timestamp.
 	// For adjusting periods, this matches the start date of the final
 	// operating period — they overlap intentionally.
-	StartDate int64 `json:"startDate" bun:"start_date,type:BIGINT,notnull"`
+	StartDate int64 `json:"startDate" bun:"start_date,type:BIGINT,notnull" keel:"start_date"`
 
 	// EndDate is the last day of the period as a Unix epoch timestamp.
 	// For adjusting periods, this matches the end date of the final
 	// operating period.
-	EndDate int64 `json:"endDate" bun:"end_date,type:BIGINT,notnull"`
+	EndDate int64 `json:"endDate" bun:"end_date,type:BIGINT,notnull" keel:"end_date"`
 
 	// ---------------------------------------------------------------
 	// Period Controls
@@ -78,7 +80,7 @@ type FiscalPeriod struct {
 	// Oracle's gl_period_statuses table has an adjustment_period_flag column
 	// that serves exactly this purpose. D365 identifies Period 13 as a
 	// "Closing" transaction type.
-	IsAdjusting bool `json:"isAdjusting" bun:"is_adjusting,type:BOOLEAN"`
+	IsAdjusting bool `json:"isAdjusting" bun:"is_adjusting,type:BOOLEAN" keel:"is_adjusting"`
 
 	// AllowAdjustingEntries controls whether adjusting journal entries can
 	// be posted to this specific period. During year-end close, the controller
@@ -95,7 +97,7 @@ type FiscalPeriod struct {
 	// 3. Controller enables AllowAdjustingEntries on Period 12 (and/or Period 13)
 	// 4. Auditors post their adjustments to the designated period(s)
 	// 5. Once audit is complete, periods are closed and eventually permanently closed
-	AllowAdjustingEntries bool `json:"allowAdjustingEntries" bun:"allow_adjusting_entries,type:BOOLEAN"`
+	AllowAdjustingEntries bool `json:"allowAdjustingEntries" bun:"allow_adjusting_entries,type:BOOLEAN" keel:"allow_adjusting_entries"`
 
 	// AdjustmentDeadline is the cutoff timestamp for posting adjusting entries
 	// to this period. After this deadline, adjusting entries are rejected even
@@ -104,7 +106,7 @@ type FiscalPeriod struct {
 	// This gives the controller fine-grained control: "you have until February 15th
 	// to get your December adjustments in." After that, they close the period
 	// without having to chase people down.
-	AdjustmentDeadline *int64 `json:"adjustmentDeadline" bun:"adjustment_deadline,type:BIGINT,nullzero"`
+	AdjustmentDeadline *int64 `json:"adjustmentDeadline" bun:"adjustment_deadline,type:BIGINT,nullzero" keel:"adjustment_deadline"`
 
 	// ---------------------------------------------------------------
 	// Close Tracking
@@ -113,13 +115,13 @@ type FiscalPeriod struct {
 	// LockedAt records when the period was soft-closed (moved to Locked status).
 	// This is the timestamp when subledger postings were cut off but manual
 	// JEs were still allowed.
-	LockedAt   *int64   `json:"lockedAt"   bun:"locked_at,type:BIGINT,nullzero"`
-	LockedByID pulid.ID `json:"lockedById" bun:"locked_by_id,type:VARCHAR(100),nullzero"`
+	LockedAt   *int64   `json:"lockedAt"   bun:"locked_at,type:BIGINT,nullzero" keel:"locked_at"`
+	LockedByID pulid.ID `json:"lockedById" bun:"locked_by_id,type:VARCHAR(100),nullzero" keel:"locked_by_id,nullzero"`
 
 	// ClosedAt records when the period was hard-closed (moved to Closed status).
 	// This is the timestamp when all posting was blocked.
-	ClosedAt   *int64   `json:"closedAt"   bun:"closed_at,type:BIGINT,nullzero"`
-	ClosedByID pulid.ID `json:"closedById" bun:"closed_by_id,type:VARCHAR(100),nullzero"`
+	ClosedAt   *int64   `json:"closedAt"   bun:"closed_at,type:BIGINT,nullzero" keel:"closed_at"`
+	ClosedByID pulid.ID `json:"closedById" bun:"closed_by_id,type:VARCHAR(100),nullzero" keel:"closed_by_id,nullzero"`
 
 	// ---------------------------------------------------------------
 	// Reopen Tracking
@@ -129,22 +131,22 @@ type FiscalPeriod struct {
 	// having to dig through system logs.
 	// ---------------------------------------------------------------
 
-	ReopenedAt   *int64   `json:"reopenedAt"   bun:"reopened_at,type:BIGINT,nullzero"`
-	ReopenedByID pulid.ID `json:"reopenedById" bun:"reopened_by_id,type:VARCHAR(100),nullzero"`
-	ReopenReason string   `json:"reopenReason" bun:"reopen_reason,type:TEXT,nullzero"`
+	ReopenedAt   *int64   `json:"reopenedAt"   bun:"reopened_at,type:BIGINT,nullzero" keel:"reopened_at"`
+	ReopenedByID pulid.ID `json:"reopenedById" bun:"reopened_by_id,type:VARCHAR(100),nullzero" keel:"reopened_by_id,nullzero"`
+	ReopenReason string   `json:"reopenReason" bun:"reopen_reason,type:TEXT,nullzero" keel:"reopen_reason,nullzero"`
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
 
 	// Relationships
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	ClosedBy     *tenant.User         `json:"closedBy,omitempty"     bun:"rel:belongs-to,join:closed_by_id=id"`
-	LockedBy     *tenant.User         `json:"lockedBy,omitempty"     bun:"rel:belongs-to,join:locked_by_id=id"`
-	ReopenedBy   *tenant.User         `json:"reopenedBy,omitempty"   bun:"rel:belongs-to,join:reopened_by_id=id"`
+	ClosedBy     *tenant.User         `json:"closedBy,omitempty"     bun:"rel:belongs-to,join:closed_by_id=id" keel:"belongs:closed_by_id"`
+	LockedBy     *tenant.User         `json:"lockedBy,omitempty"     bun:"rel:belongs-to,join:locked_by_id=id" keel:"belongs:locked_by_id"`
+	ReopenedBy   *tenant.User         `json:"reopenedBy,omitempty"   bun:"rel:belongs-to,join:reopened_by_id=id" keel:"belongs:reopened_by_id"`
 }
 
 func (fp *FiscalPeriod) Validate(multiErr *errortypes.MultiError) {

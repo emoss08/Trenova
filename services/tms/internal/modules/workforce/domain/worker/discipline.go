@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -126,35 +127,36 @@ var (
 
 type WorkerDisciplinaryAction struct {
 	bun.BaseModel `bun:"table:worker_disciplinary_actions,alias:wdac" json:"-"`
+	keel.Table    `keel:"worker_disciplinary_actions"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID           `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
-	Level          DisciplinaryLevel  `json:"level"          bun:"level,type:disciplinary_level_enum,notnull"`
-	Status         DisciplinaryStatus `json:"status"         bun:"status,type:disciplinary_status_enum,notnull,default:'Active'"`
-	Reason         string             `json:"reason"         bun:"reason,type:TEXT,notnull"`
-	Details        string             `json:"details"        bun:"details,type:TEXT,nullzero"`
-	OccurredAt     *int64             `json:"occurredAt"     bun:"occurred_at,type:BIGINT,nullzero"`
-	IssuedAt       int64              `json:"issuedAt"       bun:"issued_at,type:BIGINT,notnull"`
-	ExpiresAt      *int64             `json:"expiresAt"      bun:"expires_at,type:BIGINT,nullzero"`
-	SuspensionDays *int32             `json:"suspensionDays" bun:"suspension_days,type:INTEGER,nullzero"`
-	SafetyEventID  pulid.ID           `json:"safetyEventId"  bun:"safety_event_id,type:VARCHAR(100),nullzero"`
-	DocumentID     pulid.ID           `json:"documentId"     bun:"document_id,type:VARCHAR(100),nullzero"`
-	IssuedByID     pulid.ID           `json:"issuedById"     bun:"issued_by_id,type:VARCHAR(100),nullzero"`
-	AcknowledgedAt *int64             `json:"acknowledgedAt" bun:"acknowledged_at,type:BIGINT,nullzero"`
-	WorkerComment  string             `json:"workerComment"  bun:"worker_comment,type:TEXT,nullzero"`
-	RescindedAt    *int64             `json:"rescindedAt"    bun:"rescinded_at,type:BIGINT,nullzero"`
-	RescindedByID  pulid.ID           `json:"rescindedById"  bun:"rescinded_by_id,type:VARCHAR(100),nullzero"`
-	RescindReason  string             `json:"rescindReason"  bun:"rescind_reason,type:VARCHAR(255),nullzero"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wdac_"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID           `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	Level          DisciplinaryLevel  `json:"level"          bun:"level,type:disciplinary_level_enum,notnull" keel:"level"`
+	Status         DisciplinaryStatus `json:"status"         bun:"status,type:disciplinary_status_enum,notnull,default:'Active'" keel:"status"`
+	Reason         string             `json:"reason"         bun:"reason,type:TEXT,notnull" keel:"reason"`
+	Details        string             `json:"details"        bun:"details,type:TEXT,nullzero" keel:"details,nullzero"`
+	OccurredAt     *int64             `json:"occurredAt"     bun:"occurred_at,type:BIGINT,nullzero" keel:"occurred_at"`
+	IssuedAt       int64              `json:"issuedAt"       bun:"issued_at,type:BIGINT,notnull" keel:"issued_at"`
+	ExpiresAt      *int64             `json:"expiresAt"      bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at"`
+	SuspensionDays *int32             `json:"suspensionDays" bun:"suspension_days,type:INTEGER,nullzero" keel:"suspension_days"`
+	SafetyEventID  pulid.ID           `json:"safetyEventId"  bun:"safety_event_id,type:VARCHAR(100),nullzero" keel:"safety_event_id,nullzero"`
+	DocumentID     pulid.ID           `json:"documentId"     bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id,nullzero"`
+	IssuedByID     pulid.ID           `json:"issuedById"     bun:"issued_by_id,type:VARCHAR(100),nullzero" keel:"issued_by_id,nullzero"`
+	AcknowledgedAt *int64             `json:"acknowledgedAt" bun:"acknowledged_at,type:BIGINT,nullzero" keel:"acknowledged_at"`
+	WorkerComment  string             `json:"workerComment"  bun:"worker_comment,type:TEXT,nullzero" keel:"worker_comment,nullzero"`
+	RescindedAt    *int64             `json:"rescindedAt"    bun:"rescinded_at,type:BIGINT,nullzero" keel:"rescinded_at"`
+	RescindedByID  pulid.ID           `json:"rescindedById"  bun:"rescinded_by_id,type:VARCHAR(100),nullzero" keel:"rescinded_by_id,nullzero"`
+	RescindReason  string             `json:"rescindReason"  bun:"rescind_reason,type:VARCHAR(255),nullzero" keel:"rescind_reason,nullzero"`
+	Version        int64              `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker      *Worker            `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" bun:"rel:belongs-to,join:safety_event_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document    *document.Document `json:"document,omitempty"    bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	IssuedBy    *tenant.User       `json:"issuedBy,omitempty"    bun:"rel:belongs-to,join:issued_by_id=id"`
+	Worker      *Worker            `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" bun:"rel:belongs-to,join:safety_event_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:safety_event_id"`
+	Document    *document.Document `json:"document,omitempty"    bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
+	IssuedBy    *tenant.User       `json:"issuedBy,omitempty"    bun:"rel:belongs-to,join:issued_by_id=id" keel:"belongs:issued_by_id"`
 }
 
 func (a *WorkerDisciplinaryAction) Validate(multiErr *errortypes.MultiError) {
@@ -333,23 +335,24 @@ var (
 
 type WorkerRecognition struct {
 	bun.BaseModel `bun:"table:worker_recognitions,alias:wrec" json:"-"`
+	keel.Table    `keel:"worker_recognitions"`
 
-	ID              pulid.ID        `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID        `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID  pulid.ID        `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID        pulid.ID        `json:"workerId"        bun:"worker_id,type:VARCHAR(100),notnull"`
-	Kind            RecognitionKind `json:"kind"            bun:"kind,type:recognition_kind_enum,notnull,default:'Other'"`
-	Title           string          `json:"title"           bun:"title,type:VARCHAR(120),notnull"`
-	Message         string          `json:"message"         bun:"message,type:TEXT,nullzero"`
-	OccurredAt      int64           `json:"occurredAt"      bun:"occurred_at,type:BIGINT,notnull"`
-	AwardedByID     pulid.ID        `json:"awardedById"     bun:"awarded_by_id,type:VARCHAR(100),nullzero"`
-	VisibleToWorker bool            `json:"visibleToWorker" bun:"visible_to_worker,type:BOOLEAN,notnull"`
-	Version         int64           `json:"version"         bun:"version,type:BIGINT"`
-	CreatedAt       int64           `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt       int64           `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID              pulid.ID        `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:wrec_"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID        `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	WorkerID        pulid.ID        `json:"workerId"        bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	Kind            RecognitionKind `json:"kind"            bun:"kind,type:recognition_kind_enum,notnull,default:'Other'" keel:"kind"`
+	Title           string          `json:"title"           bun:"title,type:VARCHAR(120),notnull" keel:"title"`
+	Message         string          `json:"message"         bun:"message,type:TEXT,nullzero" keel:"message,nullzero"`
+	OccurredAt      int64           `json:"occurredAt"      bun:"occurred_at,type:BIGINT,notnull" keel:"occurred_at"`
+	AwardedByID     pulid.ID        `json:"awardedById"     bun:"awarded_by_id,type:VARCHAR(100),nullzero" keel:"awarded_by_id,nullzero"`
+	VisibleToWorker bool            `json:"visibleToWorker" bun:"visible_to_worker,type:BOOLEAN,notnull" keel:"visible_to_worker"`
+	Version         int64           `json:"version"         bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt       int64           `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt       int64           `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker    *Worker      `json:"worker,omitempty"    bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	AwardedBy *tenant.User `json:"awardedBy,omitempty" bun:"rel:belongs-to,join:awarded_by_id=id"`
+	Worker    *Worker      `json:"worker,omitempty"    bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	AwardedBy *tenant.User `json:"awardedBy,omitempty" bun:"rel:belongs-to,join:awarded_by_id=id" keel:"belongs:awarded_by_id"`
 }
 
 func (r *WorkerRecognition) Validate(multiErr *errortypes.MultiError) {

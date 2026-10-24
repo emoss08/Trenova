@@ -3,6 +3,7 @@ package equipmenttype
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -30,27 +31,28 @@ var (
 
 type EquipmentType struct {
 	bun.BaseModel             `bun:"table:equipment_types,alias:et" json:"-"`
+	keel.Table                `keel:"equipment_types"`
 	pagination.CursorValueSet `bun:",embed"                         json:"-"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(10),notnull"`
-	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Class          Class              `json:"class"          bun:"class,type:equipment_class_enum,notnull"`
-	Color          string             `json:"color"          bun:"color,type:VARCHAR(10),nullzero"`
-	InteriorLength *float64           `json:"interiorLength" bun:"interior_length,type:NUMERIC(10,2),nullzero"`
+	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:et_"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk" keel:"organization_id,pk,tenant"`
+	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
+	Code           string             `json:"code"           bun:"code,type:VARCHAR(10),notnull" keel:"code"`
+	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Class          Class              `json:"class"          bun:"class,type:equipment_class_enum,notnull" keel:"class"`
+	Color          string             `json:"color"          bun:"color,type:VARCHAR(10),nullzero" keel:"color,nullzero"`
+	InteriorLength *float64           `json:"interiorLength" bun:"interior_length,type:NUMERIC(10,2),nullzero" keel:"interior_length"`
 
-	DeckType         DeckType `json:"deckType"         bun:"deck_type,type:equipment_deck_type_enum,nullzero"`
-	DeckHeightInches *float64 `json:"deckHeightInches" bun:"deck_height_inches,type:NUMERIC(10,2),nullzero"`
-	WellLengthFeet   *float64 `json:"wellLengthFeet"   bun:"well_length_feet,type:NUMERIC(10,2),nullzero"`
-	AxleCount        *int16   `json:"axleCount"        bun:"axle_count,type:SMALLINT,nullzero"`
-	SearchVector     string   `json:"-"                bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank             string   `json:"-"                bun:"rank,type:VARCHAR(100),scanonly"`
-	Version          int64    `json:"version"          bun:"version,type:BIGINT"`
-	CreatedAt        int64    `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64    `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	DeckType         DeckType `json:"deckType"         bun:"deck_type,type:equipment_deck_type_enum,nullzero" keel:"deck_type,nullzero"`
+	DeckHeightInches *float64 `json:"deckHeightInches" bun:"deck_height_inches,type:NUMERIC(10,2),nullzero" keel:"deck_height_inches"`
+	WellLengthFeet   *float64 `json:"wellLengthFeet"   bun:"well_length_feet,type:NUMERIC(10,2),nullzero" keel:"well_length_feet"`
+	AxleCount        *int16   `json:"axleCount"        bun:"axle_count,type:SMALLINT,nullzero" keel:"axle_count"`
+	SearchVector     string   `json:"-"                bun:"search_vector,type:TSVECTOR,scanonly" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank             string   `json:"-"                bun:"rank,type:VARCHAR(100),scanonly" keel:"rank,computed"`
+	Version          int64    `json:"version"          bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt        int64    `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt        int64    `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`

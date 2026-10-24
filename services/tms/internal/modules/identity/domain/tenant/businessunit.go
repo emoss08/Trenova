@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -17,14 +18,15 @@ const BusinessUnitIDPrefix = "bu_"
 
 type BusinessUnit struct {
 	bun.BaseModel `bun:"table:business_units,alias:bu" json:"-"`
+	keel.Table    `keel:"business_units"`
 
-	ID        pulid.ID       `json:"id"        bun:"id,pk,type:VARCHAR(100)"`
-	Name      string         `json:"name"      bun:"name,type:VARCHAR(100),notnull"`
-	Code      string         `json:"code"      bun:"code,type:VARCHAR(10),notnull"`
-	Metadata  map[string]any `json:"-"         bun:"metadata,type:JSONB,default:'{}'"`
-	Version   int64          `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64          `json:"createdAt" bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64          `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID        pulid.ID       `json:"id"        bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	Name      string         `json:"name"      bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Code      string         `json:"code"      bun:"code,type:VARCHAR(10),notnull" keel:"code"`
+	Metadata  map[string]any `json:"-"         bun:"metadata,type:JSONB,default:'{}'" keel:"metadata,jsonb"`
+	Version   int64          `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64          `json:"createdAt" bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64          `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (bu *BusinessUnit) Validate(multiErr *errortypes.MultiError) {

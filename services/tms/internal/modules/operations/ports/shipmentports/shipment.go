@@ -675,12 +675,12 @@ type ShipmentRepository interface {
 	GetAutoCancelableShipments(
 		ctx context.Context,
 		req *GetAutoCancelableShipmentsRequest,
-		thresholdDays int8,
+		thresholdDays int16,
 	) ([]*shipment.Shipment, error)
 	AutoCancelShipments(
 		ctx context.Context,
 		req *AutoCancelShipmentsRequest,
-		thresholdDays int8,
+		thresholdDays int16,
 	) ([]*shipment.Shipment, error)
 	ListAutoDelayShipmentTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)
 	ListAutoCancelShipmentTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)

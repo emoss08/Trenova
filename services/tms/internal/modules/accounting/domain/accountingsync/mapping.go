@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -49,34 +50,35 @@ func (s *MappingSignals) CandidateFingerprint() string {
 
 type AccountingMapping struct {
 	bun.BaseModel             `bun:"table:accounting_mappings,alias:acctm" json:"-"`
+	keel.Table                `keel:"accounting_mappings"`
 	pagination.CursorValueSet `bun:",embed"                                json:"-"`
 
-	ID              pulid.ID          `json:"id"              bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID  pulid.ID          `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID  pulid.ID          `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ConnectionID    pulid.ID          `json:"connectionId"    bun:"connection_id,type:VARCHAR(100),notnull"`
-	TargetType      MappingTargetType `json:"targetType"      bun:"target_type,type:VARCHAR(30),notnull"`
-	TrenovaObjectID pulid.ID          `json:"trenovaObjectId" bun:"trenova_object_id,type:VARCHAR(100),nullzero"`
-	TrenovaKey      string            `json:"trenovaKey"      bun:"trenova_key,type:VARCHAR(50),nullzero"`
-	TargetLabel     string            `json:"targetLabel"     bun:"target_label,type:VARCHAR(500),notnull"`
-	SearchLabel     string            `json:"-"               bun:"search_label,type:VARCHAR(500),notnull"`
-	ProviderKind    ReferenceKind     `json:"providerKind"    bun:"provider_kind,type:VARCHAR(30),notnull"`
-	ExternalID      string            `json:"externalId"      bun:"external_id,type:VARCHAR(100),nullzero"`
-	ExternalName    string            `json:"externalName"    bun:"external_name,type:VARCHAR(1000),nullzero"`
-	State           MappingState      `json:"state"           bun:"state,type:VARCHAR(20),notnull"`
-	Source          MappingSource     `json:"source"          bun:"source,type:VARCHAR(30),nullzero"`
-	Confidence      *float64          `json:"confidence"      bun:"confidence,type:NUMERIC(5,4),nullzero"`
-	Reason          string            `json:"reason"          bun:"reason,type:TEXT,nullzero"`
-	Signals         MappingSignals    `json:"signals"         bun:"signals,type:JSONB,notnull"`
-	ConfirmedByID   pulid.ID          `json:"confirmedById"   bun:"confirmed_by_id,type:VARCHAR(100),nullzero"`
-	ConfirmedAt     *int64            `json:"confirmedAt"     bun:"confirmed_at,type:BIGINT,nullzero"`
-	Version         int64             `json:"version"         bun:"version,type:BIGINT"`
-	CreatedAt       int64             `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt       int64             `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID              pulid.ID          `json:"id"              bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:acctm_"`
+	BusinessUnitID  pulid.ID          `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID          `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	ConnectionID    pulid.ID          `json:"connectionId"    bun:"connection_id,type:VARCHAR(100),notnull" keel:"connection_id"`
+	TargetType      MappingTargetType `json:"targetType"      bun:"target_type,type:VARCHAR(30),notnull" keel:"target_type"`
+	TrenovaObjectID pulid.ID          `json:"trenovaObjectId" bun:"trenova_object_id,type:VARCHAR(100),nullzero" keel:"trenova_object_id,nullzero"`
+	TrenovaKey      string            `json:"trenovaKey"      bun:"trenova_key,type:VARCHAR(50),nullzero" keel:"trenova_key,nullzero"`
+	TargetLabel     string            `json:"targetLabel"     bun:"target_label,type:VARCHAR(500),notnull" keel:"target_label"`
+	SearchLabel     string            `json:"-"               bun:"search_label,type:VARCHAR(500),notnull" keel:"search_label"`
+	ProviderKind    ReferenceKind     `json:"providerKind"    bun:"provider_kind,type:VARCHAR(30),notnull" keel:"provider_kind"`
+	ExternalID      string            `json:"externalId"      bun:"external_id,type:VARCHAR(100),nullzero" keel:"external_id,nullzero"`
+	ExternalName    string            `json:"externalName"    bun:"external_name,type:VARCHAR(1000),nullzero" keel:"external_name,nullzero"`
+	State           MappingState      `json:"state"           bun:"state,type:VARCHAR(20),notnull" keel:"state"`
+	Source          MappingSource     `json:"source"          bun:"source,type:VARCHAR(30),nullzero" keel:"source,nullzero"`
+	Confidence      *float64          `json:"confidence"      bun:"confidence,type:NUMERIC(5,4),nullzero" keel:"confidence"`
+	Reason          string            `json:"reason"          bun:"reason,type:TEXT,nullzero" keel:"reason,nullzero"`
+	Signals         MappingSignals    `json:"signals"         bun:"signals,type:JSONB,notnull" keel:"signals,jsonb"`
+	ConfirmedByID   pulid.ID          `json:"confirmedById"   bun:"confirmed_by_id,type:VARCHAR(100),nullzero" keel:"confirmed_by_id,nullzero"`
+	ConfirmedAt     *int64            `json:"confirmedAt"     bun:"confirmed_at,type:BIGINT,nullzero" keel:"confirmed_at"`
+	Version         int64             `json:"version"         bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt       int64             `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt       int64             `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	ConfirmedBy  *tenant.User         `json:"confirmedBy,omitempty"  bun:"rel:belongs-to,join:confirmed_by_id=id"`
+	ConfirmedBy  *tenant.User         `json:"confirmedBy,omitempty"  bun:"rel:belongs-to,join:confirmed_by_id=id" keel:"belongs:confirmed_by_id"`
 }
 
 type Proposal struct {

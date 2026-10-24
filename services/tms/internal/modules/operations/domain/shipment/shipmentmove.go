@@ -3,6 +3,7 @@ package shipment
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,35 +16,36 @@ const maxDistanceFieldLength = 50
 
 type ShipmentMove struct {
 	bun.BaseModel `json:"-" bun:"table:shipment_moves,alias:sm"`
+	keel.Table    `keel:"shipment_moves"`
 
-	ID             pulid.ID         `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ShipmentID     pulid.ID         `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull"`
-	Status         MoveStatus       `json:"status"         bun:"status,type:move_status_enum,notnull,default:'New'"`
-	CoverageType   MoveCoverageType `json:"coverageType"   bun:"coverage_type,type:VARCHAR(20),notnull,default:'unassigned'"`
+	ID             pulid.ID         `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:sm_"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	ShipmentID     pulid.ID         `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull" keel:"shipment_id"`
+	Status         MoveStatus       `json:"status"         bun:"status,type:move_status_enum,notnull,default:'New'" keel:"status"`
+	CoverageType   MoveCoverageType `json:"coverageType"   bun:"coverage_type,type:VARCHAR(20),notnull,default:'unassigned'" keel:"coverage_type"`
 	// Loaded is false for a deadhead move. Deadhead miles are not recorded as
 	// loaded.
-	Loaded                 bool               `json:"loaded"                      bun:"loaded,type:BOOLEAN,notnull"`
-	Sequence               int64              `json:"sequence"                    bun:"sequence,type:INTEGER,notnull"`
-	Distance               *float64           `json:"distance"                    bun:"distance,type:FLOAT,nullzero"`
-	DistanceSource         string             `json:"distanceSource"              bun:"distance_source,type:VARCHAR(50),nullzero"`
-	DistanceProvider       string             `json:"distanceProvider"            bun:"distance_provider,type:VARCHAR(50),nullzero"`
-	DistanceCalculatedAt   *int64             `json:"distanceCalculatedAt"        bun:"distance_calculated_at,type:BIGINT,nullzero"`
-	DistanceRouteSignature string             `json:"distanceRouteSignature"      bun:"distance_route_signature,type:TEXT,nullzero"`
-	DistanceDataVersion    string             `json:"distanceDataVersion"         bun:"distance_data_version,type:VARCHAR(50),nullzero"`
-	DistanceRoutingType    string             `json:"distanceRoutingType"         bun:"distance_routing_type,type:VARCHAR(50),nullzero"`
-	DistanceUnits          string             `json:"distanceUnits"               bun:"distance_units,type:VARCHAR(50),nullzero"`
-	DistanceMetadata       map[string]any     `json:"distanceMetadata,omitempty"  bun:"distance_metadata,type:JSONB,nullzero"`
-	Version                int64              `json:"version"                     bun:"version,type:BIGINT"`
-	CreatedAt              int64              `json:"createdAt"                   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64              `json:"updatedAt"                   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	Stops                  []*Stop            `json:"stops,omitempty"             bun:"rel:has-many,join:id=shipment_move_id"`
-	Assignment             *Assignment        `json:"assignment,omitempty"        bun:"rel:has-one,join:id=shipment_move_id"`
-	CarrierAssignment      *CarrierAssignment `json:"carrierAssignment,omitempty" bun:"rel:has-one,join:id=shipment_move_id"`
-	Shipment               *Shipment          `json:"shipment,omitempty"          bun:"rel:belongs-to,join:shipment_id=id"`
+	Loaded                 bool               `json:"loaded"                      bun:"loaded,type:BOOLEAN,notnull" keel:"loaded"`
+	Sequence               int64              `json:"sequence"                    bun:"sequence,type:INTEGER,notnull" keel:"sequence"`
+	Distance               *float64           `json:"distance"                    bun:"distance,type:FLOAT,nullzero" keel:"distance"`
+	DistanceSource         string             `json:"distanceSource"              bun:"distance_source,type:VARCHAR(50),nullzero" keel:"distance_source,nullzero"`
+	DistanceProvider       string             `json:"distanceProvider"            bun:"distance_provider,type:VARCHAR(50),nullzero" keel:"distance_provider,nullzero"`
+	DistanceCalculatedAt   *int64             `json:"distanceCalculatedAt"        bun:"distance_calculated_at,type:BIGINT,nullzero" keel:"distance_calculated_at"`
+	DistanceRouteSignature string             `json:"distanceRouteSignature"      bun:"distance_route_signature,type:TEXT,nullzero" keel:"distance_route_signature,nullzero"`
+	DistanceDataVersion    string             `json:"distanceDataVersion"         bun:"distance_data_version,type:VARCHAR(50),nullzero" keel:"distance_data_version,nullzero"`
+	DistanceRoutingType    string             `json:"distanceRoutingType"         bun:"distance_routing_type,type:VARCHAR(50),nullzero" keel:"distance_routing_type,nullzero"`
+	DistanceUnits          string             `json:"distanceUnits"               bun:"distance_units,type:VARCHAR(50),nullzero" keel:"distance_units,nullzero"`
+	DistanceMetadata       map[string]any     `json:"distanceMetadata,omitempty"  bun:"distance_metadata,type:JSONB,nullzero" keel:"distance_metadata,jsonb,nullzero"`
+	Version                int64              `json:"version"                     bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt              int64              `json:"createdAt"                   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt              int64              `json:"updatedAt"                   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+	Stops                  []*Stop            `json:"stops,omitempty"             bun:"rel:has-many,join:id=shipment_move_id" keel:"many:shipment_move_id"`
+	Assignment             *Assignment        `json:"assignment,omitempty"        bun:"rel:has-one,join:id=shipment_move_id" keel:"one:shipment_move_id"`
+	CarrierAssignment      *CarrierAssignment `json:"carrierAssignment,omitempty" bun:"rel:has-one,join:id=shipment_move_id" keel:"one:shipment_move_id"`
+	Shipment               *Shipment          `json:"shipment,omitempty"          bun:"rel:belongs-to,join:shipment_id=id" keel:"belongs:shipment_id"`
 
-	JurisdictionMiles      []*ShipmentMoveJurisdictionMile `json:"jurisdictionMiles,omitempty" bun:"rel:has-many,join:id=shipment_move_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	JurisdictionMiles      []*ShipmentMoveJurisdictionMile `json:"jurisdictionMiles,omitempty" bun:"rel:has-many,join:id=shipment_move_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:shipment_move_id"`
 	JurisdictionMilesDirty bool                            `json:"-"                           bun:"-"`
 }
 

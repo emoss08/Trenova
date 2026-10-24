@@ -455,6 +455,9 @@ components:
     in:
       - schema
       - schema/**
+  keeltables:
+    in:
+      - internal/keeltables
 deps:
   kernel-domain:
     mayDependOn:
@@ -3620,3 +3623,5 @@ deps:
   schema:
     mayDependOn:
       - schema
+  keeltables:
+    anyProjectDeps: true

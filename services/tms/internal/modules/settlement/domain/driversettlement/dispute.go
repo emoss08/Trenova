@@ -3,6 +3,7 @@ package driversettlement
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -73,30 +74,31 @@ func (c DisputeCategory) IsValid() bool {
 
 type Dispute struct {
 	bun.BaseModel             `bun:"table:settlement_disputes,alias:dsd" json:"-"`
+	keel.Table                `keel:"settlement_disputes"`
 	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
-	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	SettlementID      pulid.ID        `json:"settlementId"      bun:"settlement_id,type:VARCHAR(100),notnull"`
-	SettlementLineID  *pulid.ID       `json:"settlementLineId"  bun:"settlement_line_id,type:VARCHAR(100),nullzero"`
-	WorkerID          pulid.ID        `json:"workerId"          bun:"worker_id,type:VARCHAR(100),notnull"`
-	Status            DisputeStatus   `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Open'"`
-	Category          DisputeCategory `json:"category"          bun:"category,type:VARCHAR(30),notnull"`
-	Description       string          `json:"description"       bun:"description,type:TEXT,notnull"`
-	SubmittedByUserID pulid.ID        `json:"submittedByUserId" bun:"submitted_by_user_id,type:VARCHAR(100),notnull"`
-	ResolutionNote    string          `json:"resolutionNote"    bun:"resolution_note,type:TEXT,nullzero"`
-	ResolutionLineID  *pulid.ID       `json:"resolutionLineId"  bun:"resolution_line_id,type:VARCHAR(100),nullzero"`
-	ResolvedByID      *pulid.ID       `json:"resolvedById"      bun:"resolved_by_id,type:VARCHAR(100),nullzero"`
-	ResolvedAt        *int64          `json:"resolvedAt"        bun:"resolved_at,type:BIGINT,nullzero"`
-	Version           int64           `json:"version"           bun:"version,type:BIGINT,notnull"`
-	CreatedAt         int64           `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64           `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:dsd_"`
+	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	SettlementID      pulid.ID        `json:"settlementId"      bun:"settlement_id,type:VARCHAR(100),notnull" keel:"settlement_id"`
+	SettlementLineID  *pulid.ID       `json:"settlementLineId"  bun:"settlement_line_id,type:VARCHAR(100),nullzero" keel:"settlement_line_id"`
+	WorkerID          pulid.ID        `json:"workerId"          bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	Status            DisputeStatus   `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Open'" keel:"status"`
+	Category          DisputeCategory `json:"category"          bun:"category,type:VARCHAR(30),notnull" keel:"category"`
+	Description       string          `json:"description"       bun:"description,type:TEXT,notnull" keel:"description"`
+	SubmittedByUserID pulid.ID        `json:"submittedByUserId" bun:"submitted_by_user_id,type:VARCHAR(100),notnull" keel:"submitted_by_user_id"`
+	ResolutionNote    string          `json:"resolutionNote"    bun:"resolution_note,type:TEXT,nullzero" keel:"resolution_note,nullzero"`
+	ResolutionLineID  *pulid.ID       `json:"resolutionLineId"  bun:"resolution_line_id,type:VARCHAR(100),nullzero" keel:"resolution_line_id"`
+	ResolvedByID      *pulid.ID       `json:"resolvedById"      bun:"resolved_by_id,type:VARCHAR(100),nullzero" keel:"resolved_by_id"`
+	ResolvedAt        *int64          `json:"resolvedAt"        bun:"resolved_at,type:BIGINT,nullzero" keel:"resolved_at"`
+	Version           int64           `json:"version"           bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt         int64           `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt         int64           `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Settlement     *Settlement     `json:"settlement,omitempty"     bun:"rel:belongs-to,join:settlement_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	SettlementLine *SettlementLine `json:"settlementLine,omitempty" bun:"rel:belongs-to,join:settlement_line_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Worker         *worker.Worker  `json:"worker,omitempty"         bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	ResolvedBy     *tenant.User    `json:"resolvedBy,omitempty"     bun:"rel:belongs-to,join:resolved_by_id=id"`
+	Settlement     *Settlement     `json:"settlement,omitempty"     bun:"rel:belongs-to,join:settlement_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:settlement_id"`
+	SettlementLine *SettlementLine `json:"settlementLine,omitempty" bun:"rel:belongs-to,join:settlement_line_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:settlement_line_id"`
+	Worker         *worker.Worker  `json:"worker,omitempty"         bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	ResolvedBy     *tenant.User    `json:"resolvedBy,omitempty"     bun:"rel:belongs-to,join:resolved_by_id=id" keel:"belongs:resolved_by_id"`
 }
 
 func (d *Dispute) Validate(multiErr *errortypes.MultiError) {

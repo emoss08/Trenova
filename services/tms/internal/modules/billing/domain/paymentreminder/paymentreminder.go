@@ -5,6 +5,7 @@ package paymentreminder
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -21,20 +22,21 @@ var _ bun.BeforeAppendModelHook = (*Reminder)(nil)
 // went to.
 type Reminder struct {
 	bun.BaseModel `bun:"table:invoice_payment_reminders,alias:ipr" json:"-"`
+	keel.Table    `keel:"invoice_payment_reminders"`
 
-	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	InvoiceID       pulid.ID `json:"invoiceId"       bun:"invoice_id,type:VARCHAR(100),notnull"`
-	CustomerID      pulid.ID `json:"customerId"      bun:"customer_id,type:VARCHAR(100),notnull"`
-	Step            int16    `json:"step"            bun:"step,type:SMALLINT,notnull"`
-	DaysPastDue     int      `json:"daysPastDue"     bun:"days_past_due,type:INTEGER,notnull"`
-	OpenAmountMinor int64    `json:"openAmountMinor" bun:"open_amount_minor,type:BIGINT,notnull"`
-	CurrencyCode    string   `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull"`
-	SentTo          string   `json:"sentTo"          bun:"sent_to,type:TEXT,notnull"`
-	Manual          bool     `json:"manual"          bun:"manual,type:BOOLEAN,notnull"`
-	SentByID        pulid.ID `json:"sentById"        bun:"sent_by_id,type:VARCHAR(100),nullzero"`
-	SentAt          int64    `json:"sentAt"          bun:"sent_at,type:BIGINT,notnull"`
+	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:ipr_"`
+	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	InvoiceID       pulid.ID `json:"invoiceId"       bun:"invoice_id,type:VARCHAR(100),notnull" keel:"invoice_id"`
+	CustomerID      pulid.ID `json:"customerId"      bun:"customer_id,type:VARCHAR(100),notnull" keel:"customer_id"`
+	Step            int16    `json:"step"            bun:"step,type:SMALLINT,notnull" keel:"step"`
+	DaysPastDue     int      `json:"daysPastDue"     bun:"days_past_due,type:INTEGER,notnull" keel:"days_past_due"`
+	OpenAmountMinor int64    `json:"openAmountMinor" bun:"open_amount_minor,type:BIGINT,notnull" keel:"open_amount_minor"`
+	CurrencyCode    string   `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull" keel:"currency_code"`
+	SentTo          string   `json:"sentTo"          bun:"sent_to,type:TEXT,notnull" keel:"sent_to"`
+	Manual          bool     `json:"manual"          bun:"manual,type:BOOLEAN,notnull" keel:"manual"`
+	SentByID        pulid.ID `json:"sentById"        bun:"sent_by_id,type:VARCHAR(100),nullzero" keel:"sent_by_id,nullzero"`
+	SentAt          int64    `json:"sentAt"          bun:"sent_at,type:BIGINT,notnull" keel:"sent_at"`
 }
 
 func (r *Reminder) BeforeAppendModel(_ context.Context, query bun.Query) error {

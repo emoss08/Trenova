@@ -3,6 +3,7 @@ package agentdefinition
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/editchange"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,18 +25,19 @@ const (
 // person saves it, which writes a new version.
 type DefinitionVersion struct {
 	bun.BaseModel `bun:"table:agent_definition_versions,alias:agdv" json:"-"`
+	keel.Table    `keel:"agent_definition_versions"`
 
-	ID                pulid.ID    `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID    `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID    `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	AgentDefinitionID pulid.ID    `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull"`
-	Version           int64       `json:"version"           bun:"version,type:BIGINT,notnull"`
-	Snapshot          *Definition `json:"snapshot"          bun:"snapshot,type:JSONB,notnull"`
-	AuthorID          *pulid.ID   `json:"authorId"          bun:"author_id,type:VARCHAR(100),nullzero"`
-	Summary           string      `json:"summary"           bun:"summary,type:VARCHAR(500),nullzero"`
-	CreatedAt         int64       `json:"createdAt"         bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID    `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	BusinessUnitID    pulid.ID    `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID    `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	AgentDefinitionID pulid.ID    `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull" keel:"agent_definition_id"`
+	Version           int64       `json:"version"           bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	Snapshot          *Definition `json:"snapshot"          bun:"snapshot,type:JSONB,notnull" keel:"snapshot,jsonb"`
+	AuthorID          *pulid.ID   `json:"authorId"          bun:"author_id,type:VARCHAR(100),nullzero" keel:"author_id"`
+	Summary           string      `json:"summary"           bun:"summary,type:VARCHAR(500),nullzero" keel:"summary,nullzero"`
+	CreatedAt         int64       `json:"createdAt"         bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	Author *tenant.User `json:"author,omitempty" bun:"rel:belongs-to,join:author_id=id"`
+	Author *tenant.User `json:"author,omitempty" bun:"rel:belongs-to,join:author_id=id" keel:"belongs:author_id"`
 }
 
 // NewVersion records how the agent stands after a save. The summary names

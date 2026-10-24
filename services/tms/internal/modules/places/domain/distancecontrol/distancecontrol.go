@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -34,26 +35,27 @@ const (
 
 type DistanceControl struct {
 	bun.BaseModel `bun:"table:distance_controls,alias:dc" json:"-"`
+	keel.Table    `keel:"distance_controls"`
 
-	ID                                           pulid.ID `json:"id"                                           bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID                               pulid.ID `json:"businessUnitId"                               bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID                               pulid.ID `json:"organizationId"                               bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	StoreMileage                                 bool     `json:"storeMileage"                                 bun:"store_mileage,type:BOOLEAN,notnull"`
-	StoredDistanceUnits                          string   `json:"storedDistanceUnits"                          bun:"stored_distance_units,type:VARCHAR(50),notnull"`
-	PostalCodeFallbackToCity                     bool     `json:"postalCodeFallbackToCity"                     bun:"postal_code_fallback_to_city,type:BOOLEAN,notnull"`
-	AutoCreateStoredMileage                      bool     `json:"autoCreateStoredMileage"                      bun:"auto_create_stored_mileage,type:BOOLEAN,notnull"`
-	LoadedMoveDistanceProfileID                  pulid.ID `json:"loadedMoveDistanceProfileId"                  bun:"loaded_move_distance_profile_id,type:VARCHAR(100),notnull"`
-	EmptyMoveDistanceProfileID                   pulid.ID `json:"emptyMoveDistanceProfileId"                   bun:"empty_move_distance_profile_id,type:VARCHAR(100),notnull"`
-	PayDistanceProfileID                         pulid.ID `json:"payDistanceProfileId"                         bun:"pay_distance_profile_id,type:VARCHAR(100),notnull"`
-	BillingDistanceProfileID                     pulid.ID `json:"billingDistanceProfileId"                     bun:"billing_distance_profile_id,type:VARCHAR(100),notnull"`
-	FuelDistanceProfileID                        pulid.ID `json:"fuelDistanceProfileId"                        bun:"fuel_distance_profile_id,type:VARCHAR(100),notnull"`
-	EtaOutOfRouteDistanceProfileID               pulid.ID `json:"etaOutOfRouteDistanceProfileId"               bun:"eta_out_of_route_distance_profile_id,type:VARCHAR(100),notnull"`
-	DistanceCalculatorShortestDistanceProfileID  pulid.ID `json:"distanceCalculatorShortestDistanceProfileId"  bun:"distance_calculator_shortest_distance_profile_id,type:VARCHAR(100),notnull"`
-	DistanceCalculatorPracticalDistanceProfileID pulid.ID `json:"distanceCalculatorPracticalDistanceProfileId" bun:"distance_calculator_practical_distance_profile_id,type:VARCHAR(100),notnull"`
-	CaptureJurisdictionMiles                     bool     `json:"captureJurisdictionMiles"                     bun:"capture_jurisdiction_miles,type:BOOLEAN,notnull"`
-	Version                                      int64    `json:"version"                                      bun:"version,type:BIGINT,notnull"`
-	CreatedAt                                    int64    `json:"createdAt"                                    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                                    int64    `json:"updatedAt"                                    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                                           pulid.ID `json:"id"                                           bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dc_"`
+	BusinessUnitID                               pulid.ID `json:"businessUnitId"                               bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID                               pulid.ID `json:"organizationId"                               bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	StoreMileage                                 bool     `json:"storeMileage"                                 bun:"store_mileage,type:BOOLEAN,notnull" keel:"store_mileage"`
+	StoredDistanceUnits                          string   `json:"storedDistanceUnits"                          bun:"stored_distance_units,type:VARCHAR(50),notnull" keel:"stored_distance_units"`
+	PostalCodeFallbackToCity                     bool     `json:"postalCodeFallbackToCity"                     bun:"postal_code_fallback_to_city,type:BOOLEAN,notnull" keel:"postal_code_fallback_to_city"`
+	AutoCreateStoredMileage                      bool     `json:"autoCreateStoredMileage"                      bun:"auto_create_stored_mileage,type:BOOLEAN,notnull" keel:"auto_create_stored_mileage"`
+	LoadedMoveDistanceProfileID                  pulid.ID `json:"loadedMoveDistanceProfileId"                  bun:"loaded_move_distance_profile_id,type:VARCHAR(100),notnull" keel:"loaded_move_distance_profile_id"`
+	EmptyMoveDistanceProfileID                   pulid.ID `json:"emptyMoveDistanceProfileId"                   bun:"empty_move_distance_profile_id,type:VARCHAR(100),notnull" keel:"empty_move_distance_profile_id"`
+	PayDistanceProfileID                         pulid.ID `json:"payDistanceProfileId"                         bun:"pay_distance_profile_id,type:VARCHAR(100),notnull" keel:"pay_distance_profile_id"`
+	BillingDistanceProfileID                     pulid.ID `json:"billingDistanceProfileId"                     bun:"billing_distance_profile_id,type:VARCHAR(100),notnull" keel:"billing_distance_profile_id"`
+	FuelDistanceProfileID                        pulid.ID `json:"fuelDistanceProfileId"                        bun:"fuel_distance_profile_id,type:VARCHAR(100),notnull" keel:"fuel_distance_profile_id"`
+	EtaOutOfRouteDistanceProfileID               pulid.ID `json:"etaOutOfRouteDistanceProfileId"               bun:"eta_out_of_route_distance_profile_id,type:VARCHAR(100),notnull" keel:"eta_out_of_route_distance_profile_id"`
+	DistanceCalculatorShortestDistanceProfileID  pulid.ID `json:"distanceCalculatorShortestDistanceProfileId"  bun:"distance_calculator_shortest_distance_profile_id,type:VARCHAR(100),notnull" keel:"distance_calculator_shortest_distance_profile_id"`
+	DistanceCalculatorPracticalDistanceProfileID pulid.ID `json:"distanceCalculatorPracticalDistanceProfileId" bun:"distance_calculator_practical_distance_profile_id,type:VARCHAR(100),notnull" keel:"distance_calculator_practical_distance_profile_id"`
+	CaptureJurisdictionMiles                     bool     `json:"captureJurisdictionMiles"                     bun:"capture_jurisdiction_miles,type:BOOLEAN,notnull" keel:"capture_jurisdiction_miles"`
+	Version                                      int64    `json:"version"                                      bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt                                    int64    `json:"createdAt"                                    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt                                    int64    `json:"updatedAt"                                    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 	SearchVector                                 string   `json:"-"                                            bun:"search_vector,type:TSVECTOR,scanonly"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -15,22 +16,23 @@ var _ bun.BeforeAppendModelHook = (*CarrierIntelOverride)(nil)
 
 type CarrierIntelOverride struct {
 	bun.BaseModel `bun:"table:carrier_intel_overrides,alias:ciovr" json:"-"`
+	keel.Table    `keel:"carrier_intel_overrides"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull"`
-	RuleCode       RuleCode `json:"ruleCode"       bun:"rule_code,type:VARCHAR(100),notnull"`
-	Reason         string   `json:"reason"         bun:"reason,type:TEXT,notnull"`
-	GrantedByID    pulid.ID `json:"grantedById"    bun:"granted_by_id,type:VARCHAR(100),notnull"`
-	GrantedAt      int64    `json:"grantedAt"      bun:"granted_at,type:BIGINT,notnull"`
-	ExpiresAt      int64    `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull"`
-	RevokedByID    pulid.ID `json:"revokedById"    bun:"revoked_by_id,type:VARCHAR(100),nullzero"`
-	RevokedAt      *int64   `json:"revokedAt"      bun:"revoked_at,type:BIGINT,nullzero"`
-	RevokeReason   string   `json:"revokeReason"   bun:"revoke_reason,type:TEXT,nullzero"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:ciovr_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull" keel:"carrier_id"`
+	RuleCode       RuleCode `json:"ruleCode"       bun:"rule_code,type:VARCHAR(100),notnull" keel:"rule_code"`
+	Reason         string   `json:"reason"         bun:"reason,type:TEXT,notnull" keel:"reason"`
+	GrantedByID    pulid.ID `json:"grantedById"    bun:"granted_by_id,type:VARCHAR(100),notnull" keel:"granted_by_id"`
+	GrantedAt      int64    `json:"grantedAt"      bun:"granted_at,type:BIGINT,notnull" keel:"granted_at"`
+	ExpiresAt      int64    `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull" keel:"expires_at"`
+	RevokedByID    pulid.ID `json:"revokedById"    bun:"revoked_by_id,type:VARCHAR(100),nullzero" keel:"revoked_by_id,nullzero"`
+	RevokedAt      *int64   `json:"revokedAt"      bun:"revoked_at,type:BIGINT,nullzero" keel:"revoked_at"`
+	RevokeReason   string   `json:"revokeReason"   bun:"revoke_reason,type:TEXT,nullzero" keel:"revoke_reason,nullzero"`
+	Version        int64    `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (o *CarrierIntelOverride) Validate(multiErr *errortypes.MultiError) {

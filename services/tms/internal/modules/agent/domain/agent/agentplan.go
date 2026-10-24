@@ -8,6 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -38,52 +39,53 @@ var (
 // every one of them runs and the plan records how many went through.
 type AgentPlan struct {
 	bun.BaseModel `bun:"table:agent_plans,alias:apl" json:"-"`
+	keel.Table    `keel:"agent_plans"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:apl_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	RunID   pulid.ID   `json:"runId"   bun:"run_id,type:VARCHAR(100),notnull"`
-	Title   string     `json:"title"   bun:"title,type:VARCHAR(200),notnull"`
-	Summary string     `json:"summary" bun:"summary,type:TEXT,nullzero"`
-	Status  PlanStatus `json:"status"  bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
+	RunID   pulid.ID   `json:"runId"   bun:"run_id,type:VARCHAR(100),notnull" keel:"run_id"`
+	Title   string     `json:"title"   bun:"title,type:VARCHAR(200),notnull" keel:"title"`
+	Summary string     `json:"summary" bun:"summary,type:TEXT,nullzero" keel:"summary,nullzero"`
+	Status  PlanStatus `json:"status"  bun:"status,type:VARCHAR(20),notnull,default:'Pending'" keel:"status"`
 
-	StepCount      int    `json:"stepCount"      bun:"step_count,type:INTEGER,notnull"`
-	CompletedSteps int    `json:"completedSteps" bun:"completed_steps,type:INTEGER,notnull"`
-	FailedStep     *int   `json:"failedStep"     bun:"failed_step,type:INTEGER,nullzero"`
-	FailureError   string `json:"failureError"   bun:"failure_error,type:TEXT,nullzero"`
+	StepCount      int    `json:"stepCount"      bun:"step_count,type:INTEGER,notnull" keel:"step_count"`
+	CompletedSteps int    `json:"completedSteps" bun:"completed_steps,type:INTEGER,notnull" keel:"completed_steps"`
+	FailedStep     *int   `json:"failedStep"     bun:"failed_step,type:INTEGER,nullzero" keel:"failed_step"`
+	FailureError   string `json:"failureError"   bun:"failure_error,type:TEXT,nullzero" keel:"failure_error,nullzero"`
 
-	DecidedByUserID *pulid.ID `json:"decidedByUserId" bun:"decided_by_user_id,type:VARCHAR(100),nullzero"`
-	DecidedAt       *int64    `json:"decidedAt"       bun:"decided_at,type:BIGINT,nullzero"`
+	DecidedByUserID *pulid.ID `json:"decidedByUserId" bun:"decided_by_user_id,type:VARCHAR(100),nullzero" keel:"decided_by_user_id"`
+	DecidedAt       *int64    `json:"decidedAt"       bun:"decided_at,type:BIGINT,nullzero" keel:"decided_at"`
 	// ExpiresAt is the latest expiry among the plan's steps: while any step
 	// can still be decided, so can the plan.
-	ExpiresAt int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero"`
+	ExpiresAt int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero" keel:"expires_at,nullzero"`
 	// CommitsAt is when a plan approved from the person's own conversation
 	// starts to run, unless it is undone first; UndoneAt and UndoneByUserID
 	// say it was. Empty for a plan decided anywhere else.
-	CommitsAt      *int64    `json:"commitsAt"      bun:"commits_at,type:BIGINT,nullzero"`
-	UndoneAt       *int64    `json:"undoneAt"       bun:"undone_at,type:BIGINT,nullzero"`
-	UndoneByUserID *pulid.ID `json:"undoneByUserId" bun:"undone_by_user_id,type:VARCHAR(100),nullzero"`
+	CommitsAt      *int64    `json:"commitsAt"      bun:"commits_at,type:BIGINT,nullzero" keel:"commits_at"`
+	UndoneAt       *int64    `json:"undoneAt"       bun:"undone_at,type:BIGINT,nullzero" keel:"undone_at"`
+	UndoneByUserID *pulid.ID `json:"undoneByUserId" bun:"undone_by_user_id,type:VARCHAR(100),nullzero" keel:"undone_by_user_id"`
 	// The decision as it was made: its reason, the decider's note and the
 	// digest of the preview they decided on. An approval in its undo window
 	// carries them until it commits.
-	ApprovalReasonCode    string `json:"-" bun:"approval_reason_code,type:VARCHAR(100),nullzero"`
-	ApprovalNote          string `json:"approvalNote"          bun:"approval_note,type:TEXT,nullzero"`
-	ApprovalPreviewDigest string `json:"approvalPreviewDigest" bun:"approval_preview_digest,type:VARCHAR(64),nullzero"`
+	ApprovalReasonCode    string `json:"-" bun:"approval_reason_code,type:VARCHAR(100),nullzero" keel:"approval_reason_code,nullzero"`
+	ApprovalNote          string `json:"approvalNote"          bun:"approval_note,type:TEXT,nullzero" keel:"approval_note,nullzero"`
+	ApprovalPreviewDigest string `json:"approvalPreviewDigest" bun:"approval_preview_digest,type:VARCHAR(64),nullzero" keel:"approval_preview_digest,nullzero"`
 	// ScriptStepKey is the ledger step of the script whose intents are the
 	// plan's steps; empty for a plan of the model's own calls.
-	ScriptStepKey string `json:"scriptStepKey" bun:"script_step_key,type:VARCHAR(120),nullzero"`
+	ScriptStepKey string `json:"scriptStepKey" bun:"script_step_key,type:VARCHAR(120),nullzero" keel:"script_step_key,nullzero"`
 	// Script is what the script that wrote the plan was asked to do and the
 	// code it ran, kept with the plan once the run's steps are swept.
-	Script *ScriptOrigin `json:"script" bun:"script,type:JSONB,nullzero"`
+	Script *ScriptOrigin `json:"script" bun:"script,type:JSONB,nullzero" keel:"script,jsonb"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Run          *AgentRun            `bun:"rel:belongs-to,join:run_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" json:"-"`
+	Run          *AgentRun            `bun:"rel:belongs-to,join:run_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" json:"-" keel:"belongs:run_id"`
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"                                                                   json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"                                                                    json:"-"`
 }

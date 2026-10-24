@@ -3,6 +3,7 @@ package usstate
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,14 +24,15 @@ const (
 
 type UsState struct {
 	bun.BaseModel `json:"-" bun:"table:us_states,alias:ust"`
+	keel.Table    `keel:"us_states"`
 
-	ID           pulid.ID `json:"id"           bun:"id,pk,type:VARCHAR(100)"`
-	Name         string   `json:"name"         bun:"name,notnull"`
-	Abbreviation string   `json:"abbreviation" bun:"abbreviation,notnull"`
-	CountryName  string   `json:"countryName"  bun:"country_name,notnull"`
-	CountryIso3  string   `json:"countryIso3"  bun:"country_iso3,notnull,default:'USA'"`
-	CreatedAt    int64    `json:"createdAt"    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64    `json:"updatedAt"    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID           pulid.ID `json:"id"           bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:us_"`
+	Name         string   `json:"name"         bun:"name,notnull" keel:"name"`
+	Abbreviation string   `json:"abbreviation" bun:"abbreviation,notnull" keel:"abbreviation"`
+	CountryName  string   `json:"countryName"  bun:"country_name,notnull" keel:"country_name"`
+	CountryIso3  string   `json:"countryIso3"  bun:"country_iso3,notnull,default:'USA'" keel:"country_iso3"`
+	CreatedAt    int64    `json:"createdAt"    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt    int64    `json:"updatedAt"    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func RegionForStateAbbreviation(abbreviation string) (Region, bool) {

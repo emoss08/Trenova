@@ -3,6 +3,7 @@ package customfield
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -14,19 +15,20 @@ var _ bun.BeforeAppendModelHook = (*CustomFieldValue)(nil)
 
 type CustomFieldValue struct {
 	bun.BaseModel `bun:"table:custom_field_values,alias:cfv" json:"-"`
+	keel.Table    `keel:"custom_field_values"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	DefinitionID   pulid.ID `json:"definitionId"   bun:"definition_id,type:VARCHAR(100),notnull"`
-	ResourceType   string   `json:"resourceType"   bun:"resource_type,type:VARCHAR(100),notnull"`
-	ResourceID     string   `json:"resourceId"     bun:"resource_id,type:VARCHAR(100),notnull"`
-	Value          any      `json:"value"          bun:"value,type:JSONB,notnull"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:cfv_"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk" keel:"business_unit_id,pk,tenant"`
+	DefinitionID   pulid.ID `json:"definitionId"   bun:"definition_id,type:VARCHAR(100),notnull" keel:"definition_id"`
+	ResourceType   string   `json:"resourceType"   bun:"resource_type,type:VARCHAR(100),notnull" keel:"resource_type"`
+	ResourceID     string   `json:"resourceId"     bun:"resource_id,type:VARCHAR(100),notnull" keel:"resource_id"`
+	Value          any      `json:"value"          bun:"value,type:JSONB,notnull" keel:"value,jsonb"`
+	Version        int64    `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 
-	Definition *CustomFieldDefinition `json:"definition,omitempty" bun:"rel:belongs-to,join:definition_id=id"`
+	Definition *CustomFieldDefinition `json:"definition,omitempty" bun:"rel:belongs-to,join:definition_id=id" keel:"belongs:definition_id"`
 }
 
 func (v *CustomFieldValue) BeforeAppendModel(_ context.Context, query bun.Query) error {

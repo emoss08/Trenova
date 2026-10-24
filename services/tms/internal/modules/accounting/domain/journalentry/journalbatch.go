@@ -3,6 +3,7 @@ package journalentry
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,28 +21,29 @@ var _ bun.BeforeAppendModelHook = (*JournalBatch)(nil)
 // narrower set than the table actually holds.
 type JournalBatch struct {
 	bun.BaseModel `bun:"table:journal_batches,alias:jb" json:"-"`
+	keel.Table    `keel:"journal_batches"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BatchNumber    string   `json:"batchNumber"    bun:"batch_number,type:VARCHAR(50),notnull"`
-	BatchType      string   `json:"batchType"      bun:"batch_type,type:VARCHAR(50),notnull"`
-	Status         string   `json:"status"         bun:"status,type:VARCHAR(50),notnull"`
-	Description    string   `json:"description"    bun:"description,type:TEXT,notnull"`
-	AccountingDate int64    `json:"accountingDate" bun:"accounting_date,type:BIGINT,notnull"`
-	FiscalYearID   pulid.ID `json:"fiscalYearId"   bun:"fiscal_year_id,type:VARCHAR(100),notnull"`
-	FiscalPeriodID pulid.ID `json:"fiscalPeriodId" bun:"fiscal_period_id,type:VARCHAR(100),notnull"`
-	EntryCount     int      `json:"entryCount"     bun:"entry_count,type:INTEGER,notnull"`
-	PostedAt       *int64   `json:"postedAt"       bun:"posted_at,type:BIGINT,nullzero"`
-	PostedByID     pulid.ID `json:"postedById"     bun:"posted_by_id,type:VARCHAR(100),nullzero"`
-	CreatedByID    pulid.ID `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),notnull"`
-	UpdatedByID    pulid.ID `json:"updatedById"    bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:jb_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BatchNumber    string   `json:"batchNumber"    bun:"batch_number,type:VARCHAR(50),notnull" keel:"batch_number"`
+	BatchType      string   `json:"batchType"      bun:"batch_type,type:VARCHAR(50),notnull" keel:"batch_type"`
+	Status         string   `json:"status"         bun:"status,type:VARCHAR(50),notnull" keel:"status"`
+	Description    string   `json:"description"    bun:"description,type:TEXT,notnull" keel:"description"`
+	AccountingDate int64    `json:"accountingDate" bun:"accounting_date,type:BIGINT,notnull" keel:"accounting_date"`
+	FiscalYearID   pulid.ID `json:"fiscalYearId"   bun:"fiscal_year_id,type:VARCHAR(100),notnull" keel:"fiscal_year_id"`
+	FiscalPeriodID pulid.ID `json:"fiscalPeriodId" bun:"fiscal_period_id,type:VARCHAR(100),notnull" keel:"fiscal_period_id"`
+	EntryCount     int      `json:"entryCount"     bun:"entry_count,type:INTEGER,notnull" keel:"entry_count"`
+	PostedAt       *int64   `json:"postedAt"       bun:"posted_at,type:BIGINT,nullzero" keel:"posted_at"`
+	PostedByID     pulid.ID `json:"postedById"     bun:"posted_by_id,type:VARCHAR(100),nullzero" keel:"posted_by_id,nullzero"`
+	CreatedByID    pulid.ID `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),notnull" keel:"created_by_id"`
+	UpdatedByID    pulid.ID `json:"updatedById"    bun:"updated_by_id,type:VARCHAR(100),nullzero" keel:"updated_by_id,nullzero"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	FiscalYear   *fiscalyear.FiscalYear     `json:"fiscalYear,omitempty"   bun:"rel:belongs-to,join:fiscal_year_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	FiscalPeriod *fiscalperiod.FiscalPeriod `json:"fiscalPeriod,omitempty" bun:"rel:belongs-to,join:fiscal_period_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Entries      []*JournalEntry            `json:"entries,omitempty"      bun:"rel:has-many,join:id=batch_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	FiscalYear   *fiscalyear.FiscalYear     `json:"fiscalYear,omitempty"   bun:"rel:belongs-to,join:fiscal_year_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:fiscal_year_id"`
+	FiscalPeriod *fiscalperiod.FiscalPeriod `json:"fiscalPeriod,omitempty" bun:"rel:belongs-to,join:fiscal_period_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:fiscal_period_id"`
+	Entries      []*JournalEntry            `json:"entries,omitempty"      bun:"rel:has-many,join:id=batch_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:batch_id"`
 }
 
 func (b *JournalBatch) Validate(multiErr *errortypes.MultiError) {

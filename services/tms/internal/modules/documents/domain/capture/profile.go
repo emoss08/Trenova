@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -29,27 +30,28 @@ const (
 // who scan, so a billing clerk picks "PODs" rather than a resolution.
 type CaptureProfile struct {
 	bun.BaseModel             `bun:"table:capture_profiles,alias:cprf" json:"-"`
+	keel.Table                `keel:"capture_profiles"`
 	pagination.CursorValueSet `bun:",embed"                            json:"-"`
 
-	ID                  pulid.ID            `json:"id"                  bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID      pulid.ID            `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID            `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Name                string              `json:"name"                bun:"name,type:VARCHAR(100),notnull"`
-	Description         string              `json:"description"         bun:"description,type:VARCHAR(500),nullzero"`
-	Status              ProfileStatus       `json:"status"              bun:"status,type:VARCHAR(20),notnull"`
-	IsDefault           bool                `json:"isDefault"           bun:"is_default,type:BOOLEAN,notnull,default:false"`
-	DPI                 int                 `json:"dpi"                 bun:"dpi,type:INTEGER,notnull"`
-	PixelType           PixelType           `json:"pixelType"           bun:"pixel_type,type:VARCHAR(20),notnull"`
-	Duplex              bool                `json:"duplex"              bun:"duplex,type:BOOLEAN,notnull"`
-	UseFeeder           bool                `json:"useFeeder"           bun:"use_feeder,type:BOOLEAN,notnull"`
-	DiscardBlankPages   bool                `json:"discardBlankPages"   bun:"discard_blank_pages,type:BOOLEAN,notnull"`
-	JPEGQuality         int                 `json:"jpegQuality"         bun:"jpeg_quality,type:INTEGER,notnull"`
-	ShowDriverUI        bool                `json:"showDriverUi"        bun:"show_driver_ui,type:BOOLEAN,notnull,default:false"`
-	SeparatorStrategies []SeparatorStrategy `json:"separatorStrategies" bun:"separator_strategies,type:VARCHAR(30)[],notnull,default:'{}',array"`
-	FixedPageCount      int                 `json:"fixedPageCount"      bun:"fixed_page_count,type:INTEGER,notnull,default:0"`
-	Version             int64               `json:"version"             bun:"version,type:BIGINT"`
-	CreatedAt           int64               `json:"createdAt"           bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64               `json:"updatedAt"           bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID            `json:"id"                  bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:cprf_"`
+	BusinessUnitID      pulid.ID            `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID            `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Name                string              `json:"name"                bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Description         string              `json:"description"         bun:"description,type:VARCHAR(500),nullzero" keel:"description,nullzero"`
+	Status              ProfileStatus       `json:"status"              bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	IsDefault           bool                `json:"isDefault"           bun:"is_default,type:BOOLEAN,notnull,default:false" keel:"is_default"`
+	DPI                 int                 `json:"dpi"                 bun:"dpi,type:INTEGER,notnull" keel:"dpi"`
+	PixelType           PixelType           `json:"pixelType"           bun:"pixel_type,type:VARCHAR(20),notnull" keel:"pixel_type"`
+	Duplex              bool                `json:"duplex"              bun:"duplex,type:BOOLEAN,notnull" keel:"duplex"`
+	UseFeeder           bool                `json:"useFeeder"           bun:"use_feeder,type:BOOLEAN,notnull" keel:"use_feeder"`
+	DiscardBlankPages   bool                `json:"discardBlankPages"   bun:"discard_blank_pages,type:BOOLEAN,notnull" keel:"discard_blank_pages"`
+	JPEGQuality         int                 `json:"jpegQuality"         bun:"jpeg_quality,type:INTEGER,notnull" keel:"jpeg_quality"`
+	ShowDriverUI        bool                `json:"showDriverUi"        bun:"show_driver_ui,type:BOOLEAN,notnull,default:false" keel:"show_driver_ui"`
+	SeparatorStrategies []SeparatorStrategy `json:"separatorStrategies" bun:"separator_strategies,type:VARCHAR(30)[],notnull,default:'{}',array" keel:"separator_strategies"`
+	FixedPageCount      int                 `json:"fixedPageCount"      bun:"fixed_page_count,type:INTEGER,notnull,default:0" keel:"fixed_page_count"`
+	Version             int64               `json:"version"             bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt           int64               `json:"createdAt"           bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt           int64               `json:"updatedAt"           bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,14 +17,15 @@ var _ bun.BeforeAppendModelHook = (*ResourcePermission)(nil)
 
 type ResourcePermission struct {
 	bun.BaseModel `bun:"table:resource_permissions,alias:rp" json:"-"`
+	keel.Table    `keel:"resource_permissions"`
 
-	ID         pulid.ID    `json:"id"         bun:"id,pk,type:VARCHAR(100)"`
-	RoleID     pulid.ID    `json:"roleId"     bun:"role_id,type:VARCHAR(100),notnull"`
-	Resource   string      `json:"resource"   bun:"resource,type:VARCHAR(100),notnull"`
-	Operations []Operation `json:"operations" bun:"operations,type:TEXT[],array,notnull"`
-	DataScope  DataScope   `json:"dataScope"  bun:"data_scope,type:VARCHAR(20),notnull,default:'organization'"`
-	CreatedAt  int64       `json:"createdAt"  bun:"created_at,notnull"`
-	UpdatedAt  int64       `json:"updatedAt"  bun:"updated_at,notnull"`
+	ID         pulid.ID    `json:"id"         bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:rp_"`
+	RoleID     pulid.ID    `json:"roleId"     bun:"role_id,type:VARCHAR(100),notnull" keel:"role_id"`
+	Resource   string      `json:"resource"   bun:"resource,type:VARCHAR(100),notnull" keel:"resource"`
+	Operations []Operation `json:"operations" bun:"operations,type:TEXT[],array,notnull" keel:"operations"`
+	DataScope  DataScope   `json:"dataScope"  bun:"data_scope,type:VARCHAR(20),notnull,default:'organization'" keel:"data_scope"`
+	CreatedAt  int64       `json:"createdAt"  bun:"created_at,notnull" keel:"created_at,autocreate"`
+	UpdatedAt  int64       `json:"updatedAt"  bun:"updated_at,notnull" keel:"updated_at,autoupdate"`
 }
 
 func (rp *ResourcePermission) BeforeAppendModel(_ context.Context, q bun.Query) error {

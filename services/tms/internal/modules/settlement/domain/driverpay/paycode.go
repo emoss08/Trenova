@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -43,26 +44,27 @@ func (d PayCodeDirection) IsValid() bool {
 
 type PayCode struct {
 	bun.BaseModel             `bun:"table:pay_codes,alias:payc" json:"-"`
+	keel.Table                `keel:"pay_codes"`
 	pagination.CursorValueSet `bun:",embed"                     json:"-"`
 
-	ID                    pulid.ID           `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID        pulid.ID           `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID        pulid.ID           `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Status                domaintypes.Status `json:"status"                bun:"status,type:status_enum,notnull,default:'Active'"`
-	Direction             PayCodeDirection   `json:"direction"             bun:"direction,type:VARCHAR(20),notnull"`
-	Code                  string             `json:"code"                  bun:"code,type:VARCHAR(20),notnull"`
-	Name                  string             `json:"name"                  bun:"name,type:VARCHAR(100),notnull"`
-	Description           string             `json:"description"           bun:"description,type:TEXT,nullzero"`
-	Taxable               bool               `json:"taxable"               bun:"taxable,type:BOOLEAN,notnull"`
-	CountsTowardGuarantee bool               `json:"countsTowardGuarantee" bun:"counts_toward_guarantee,type:BOOLEAN,notnull"`
-	GLAccountID           *pulid.ID          `json:"glAccountId"           bun:"gl_account_id,type:VARCHAR(100),nullzero"`
-	DefaultAmountMinor    *int64             `json:"defaultAmountMinor"    bun:"default_amount_minor,type:BIGINT,nullzero"`
-	IsSystem              bool               `json:"isSystem"              bun:"is_system,type:BOOLEAN,notnull"`
-	Version               int64              `json:"version"               bun:"version,type:BIGINT,notnull"`
-	CreatedAt             int64              `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64              `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                    pulid.ID           `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:payc_"`
+	BusinessUnitID        pulid.ID           `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID           `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	Status                domaintypes.Status `json:"status"                bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
+	Direction             PayCodeDirection   `json:"direction"             bun:"direction,type:VARCHAR(20),notnull" keel:"direction"`
+	Code                  string             `json:"code"                  bun:"code,type:VARCHAR(20),notnull" keel:"code"`
+	Name                  string             `json:"name"                  bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	Description           string             `json:"description"           bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Taxable               bool               `json:"taxable"               bun:"taxable,type:BOOLEAN,notnull" keel:"taxable"`
+	CountsTowardGuarantee bool               `json:"countsTowardGuarantee" bun:"counts_toward_guarantee,type:BOOLEAN,notnull" keel:"counts_toward_guarantee"`
+	GLAccountID           *pulid.ID          `json:"glAccountId"           bun:"gl_account_id,type:VARCHAR(100),nullzero" keel:"gl_account_id"`
+	DefaultAmountMinor    *int64             `json:"defaultAmountMinor"    bun:"default_amount_minor,type:BIGINT,nullzero" keel:"default_amount_minor"`
+	IsSystem              bool               `json:"isSystem"              bun:"is_system,type:BOOLEAN,notnull" keel:"is_system"`
+	Version               int64              `json:"version"               bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt             int64              `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt             int64              `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	GLAccount *glaccount.GLAccount `json:"glAccount,omitempty" bun:"rel:belongs-to,join:gl_account_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	GLAccount *glaccount.GLAccount `json:"glAccount,omitempty" bun:"rel:belongs-to,join:gl_account_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:gl_account_id"`
 }
 
 func (p *PayCode) Validate(multiErr *errortypes.MultiError) {

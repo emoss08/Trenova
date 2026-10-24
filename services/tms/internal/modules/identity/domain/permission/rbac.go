@@ -3,6 +3,7 @@ package permission
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -25,18 +26,19 @@ const (
 
 type RoleHierarchyEdge struct {
 	bun.BaseModel `bun:"table:role_hierarchy_edges,alias:rhe" json:"-"`
+	keel.Table    `keel:"role_hierarchy_edges"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	SeniorRoleID   pulid.ID `json:"seniorRoleId"   bun:"senior_role_id,type:VARCHAR(100),notnull"`
-	JuniorRoleID   pulid.ID `json:"juniorRoleId"   bun:"junior_role_id,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	CreatedBy      pulid.ID `json:"createdBy"      bun:"created_by,type:VARCHAR(100)"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,notnull"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:rhe_"`
+	SeniorRoleID   pulid.ID `json:"seniorRoleId"   bun:"senior_role_id,type:VARCHAR(100),notnull" keel:"senior_role_id"`
+	JuniorRoleID   pulid.ID `json:"juniorRoleId"   bun:"junior_role_id,type:VARCHAR(100),notnull" keel:"junior_role_id"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	CreatedBy      pulid.ID `json:"createdBy"      bun:"created_by,type:VARCHAR(100)" keel:"created_by,nullzero"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,notnull" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,notnull" keel:"updated_at,autoupdate"`
 
-	SeniorRole *Role `json:"seniorRole,omitempty" bun:"rel:belongs-to,join:senior_role_id=id"`
-	JuniorRole *Role `json:"juniorRole,omitempty" bun:"rel:belongs-to,join:junior_role_id=id"`
+	SeniorRole *Role `json:"seniorRole,omitempty" bun:"rel:belongs-to,join:senior_role_id=id" keel:"belongs:senior_role_id"`
+	JuniorRole *Role `json:"juniorRole,omitempty" bun:"rel:belongs-to,join:junior_role_id=id" keel:"belongs:junior_role_id"`
 }
 
 func (e *RoleHierarchyEdge) BeforeAppendModel(_ context.Context, q bun.Query) error {
@@ -56,20 +58,21 @@ func (e *RoleHierarchyEdge) BeforeAppendModel(_ context.Context, q bun.Query) er
 
 type RoleConstraint struct {
 	bun.BaseModel `bun:"table:role_constraints,alias:rc" json:"-"`
+	keel.Table    `keel:"role_constraints"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	Name           string             `json:"name"           bun:"name,type:VARCHAR(255),notnull"`
-	Description    string             `json:"description"    bun:"description,type:TEXT"`
-	Type           RoleConstraintType `json:"type"           bun:"type,type:VARCHAR(20),notnull"`
-	MaxRoles       int                `json:"maxRoles"       bun:"max_roles,notnull"`
-	Enabled        bool               `json:"enabled"        bun:"enabled,notnull"`
-	CreatedBy      pulid.ID           `json:"createdBy"      bun:"created_by,type:VARCHAR(100)"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,notnull"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,notnull"`
+	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:rco_"`
+	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	Name           string             `json:"name"           bun:"name,type:VARCHAR(255),notnull" keel:"name"`
+	Description    string             `json:"description"    bun:"description,type:TEXT" keel:"description,nullzero"`
+	Type           RoleConstraintType `json:"type"           bun:"type,type:VARCHAR(20),notnull" keel:"type"`
+	MaxRoles       int                `json:"maxRoles"       bun:"max_roles,notnull" keel:"max_roles"`
+	Enabled        bool               `json:"enabled"        bun:"enabled,notnull" keel:"enabled"`
+	CreatedBy      pulid.ID           `json:"createdBy"      bun:"created_by,type:VARCHAR(100)" keel:"created_by,nullzero"`
+	CreatedAt      int64              `json:"createdAt"      bun:"created_at,notnull" keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,notnull" keel:"updated_at,autoupdate"`
 
-	Roles []*Role `json:"roles,omitempty" bun:"m2m:role_constraint_roles,join:RoleConstraint=Role"`
+	Roles []*Role `json:"roles,omitempty" bun:"m2m:role_constraint_roles,join:RoleConstraint=Role" keel:"m2m:role_constraint_roles.role_constraint_id.role_id"`
 }
 
 func (c *RoleConstraint) BeforeAppendModel(_ context.Context, q bun.Query) error {
@@ -89,15 +92,16 @@ func (c *RoleConstraint) BeforeAppendModel(_ context.Context, q bun.Query) error
 
 type RoleConstraintRole struct {
 	bun.BaseModel `bun:"table:role_constraint_roles,alias:rcr" json:"-"`
+	keel.Table    `keel:"role_constraint_roles"`
 
-	ID               pulid.ID        `json:"id"               bun:"id,pk,type:VARCHAR(100)"`
-	RoleConstraintID pulid.ID        `json:"roleConstraintId" bun:"role_constraint_id,type:VARCHAR(100),notnull"`
-	RoleID           pulid.ID        `json:"roleId"           bun:"role_id,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID        `json:"organizationId"   bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID        `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	CreatedAt        int64           `json:"createdAt"        bun:"created_at,notnull"`
-	RoleConstraint   *RoleConstraint `json:"-"                bun:"rel:belongs-to,join:role_constraint_id=id"`
-	Role             *Role           `json:"-"                bun:"rel:belongs-to,join:role_id=id"`
+	ID               pulid.ID        `json:"id"               bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:rcr_"`
+	RoleConstraintID pulid.ID        `json:"roleConstraintId" bun:"role_constraint_id,type:VARCHAR(100),notnull" keel:"role_constraint_id"`
+	RoleID           pulid.ID        `json:"roleId"           bun:"role_id,type:VARCHAR(100),notnull" keel:"role_id"`
+	OrganizationID   pulid.ID        `json:"organizationId"   bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	BusinessUnitID   pulid.ID        `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	CreatedAt        int64           `json:"createdAt"        bun:"created_at,notnull" keel:"created_at,autocreate"`
+	RoleConstraint   *RoleConstraint `json:"-"                bun:"rel:belongs-to,join:role_constraint_id=id" keel:"belongs:role_constraint_id"`
+	Role             *Role           `json:"-"                bun:"rel:belongs-to,join:role_id=id" keel:"belongs:role_id"`
 }
 
 func (r *RoleConstraintRole) BeforeAppendModel(_ context.Context, q bun.Query) error {

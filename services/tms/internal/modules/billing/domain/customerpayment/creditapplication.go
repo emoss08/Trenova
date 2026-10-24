@@ -3,6 +3,7 @@ package customerpayment
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,25 +35,26 @@ var _ bun.BeforeAppendModelHook = (*CreditMemoApplication)(nil)
 // to the other moves no money: it only decides which open item the credit pays.
 type CreditMemoApplication struct {
 	bun.BaseModel `bun:"table:credit_memo_applications,alias:cma" json:"-"`
+	keel.Table    `keel:"credit_memo_applications"`
 
-	ID                  pulid.ID                `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID                `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID      pulid.ID                `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CreditMemoInvoiceID pulid.ID                `json:"creditMemoInvoiceId" bun:"credit_memo_invoice_id,type:VARCHAR(100),notnull"`
-	InvoiceID           pulid.ID                `json:"invoiceId"           bun:"invoice_id,type:VARCHAR(100),notnull"`
-	AppliedAmountMinor  int64                   `json:"appliedAmountMinor"  bun:"applied_amount_minor,type:BIGINT,notnull"`
-	AccountingDate      int64                   `json:"accountingDate"      bun:"accounting_date,type:BIGINT,notnull"`
-	LineNumber          int                     `json:"lineNumber"          bun:"line_number,type:INTEGER,notnull"`
-	Status              CreditApplicationStatus `json:"status"              bun:"status,type:VARCHAR(20),notnull,default:'Applied'"`
-	UnappliedAt         *int64                  `json:"unappliedAt"         bun:"unapplied_at,type:BIGINT,nullzero"`
-	UnappliedByID       pulid.ID                `json:"unappliedById"       bun:"unapplied_by_id,type:VARCHAR(100),nullzero"`
-	UnappliedReason     string                  `json:"unappliedReason"     bun:"unapplied_reason,type:TEXT,nullzero"`
-	CreatedByID         pulid.ID                `json:"createdById"         bun:"created_by_id,type:VARCHAR(100),notnull"`
-	CreatedAt           int64                   `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64                   `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID                `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:cma_"`
+	OrganizationID      pulid.ID                `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID                `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	CreditMemoInvoiceID pulid.ID                `json:"creditMemoInvoiceId" bun:"credit_memo_invoice_id,type:VARCHAR(100),notnull" keel:"credit_memo_invoice_id"`
+	InvoiceID           pulid.ID                `json:"invoiceId"           bun:"invoice_id,type:VARCHAR(100),notnull" keel:"invoice_id"`
+	AppliedAmountMinor  int64                   `json:"appliedAmountMinor"  bun:"applied_amount_minor,type:BIGINT,notnull" keel:"applied_amount_minor"`
+	AccountingDate      int64                   `json:"accountingDate"      bun:"accounting_date,type:BIGINT,notnull" keel:"accounting_date"`
+	LineNumber          int                     `json:"lineNumber"          bun:"line_number,type:INTEGER,notnull" keel:"line_number"`
+	Status              CreditApplicationStatus `json:"status"              bun:"status,type:VARCHAR(20),notnull,default:'Applied'" keel:"status"`
+	UnappliedAt         *int64                  `json:"unappliedAt"         bun:"unapplied_at,type:BIGINT,nullzero" keel:"unapplied_at"`
+	UnappliedByID       pulid.ID                `json:"unappliedById"       bun:"unapplied_by_id,type:VARCHAR(100),nullzero" keel:"unapplied_by_id,nullzero"`
+	UnappliedReason     string                  `json:"unappliedReason"     bun:"unapplied_reason,type:TEXT,nullzero" keel:"unapplied_reason,nullzero"`
+	CreatedByID         pulid.ID                `json:"createdById"         bun:"created_by_id,type:VARCHAR(100),notnull" keel:"created_by_id"`
+	CreatedAt           int64                   `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt           int64                   `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	CreditMemo *invoice.Invoice `json:"creditMemo,omitempty" bun:"rel:belongs-to,join:credit_memo_invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Invoice    *invoice.Invoice `json:"invoice,omitempty"    bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	CreditMemo *invoice.Invoice `json:"creditMemo,omitempty" bun:"rel:belongs-to,join:credit_memo_invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:credit_memo_invoice_id"`
+	Invoice    *invoice.Invoice `json:"invoice,omitempty"    bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:invoice_id"`
 }
 
 func (a *CreditMemoApplication) Validate(multiErr *errortypes.MultiError) {

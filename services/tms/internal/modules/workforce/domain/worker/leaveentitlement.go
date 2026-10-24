@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -75,27 +76,28 @@ var (
 // consistently (29 CFR 825.200(e)).
 type LeaveControl struct {
 	bun.BaseModel `bun:"table:leave_controls,alias:lctl" json:"-"`
+	keel.Table    `keel:"leave_controls"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:lctl_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	MeasurementMethod LeaveMeasurementMethod `json:"measurementMethod" bun:"measurement_method,type:leave_measurement_method_enum,notnull,default:'RollingBackward'"`
+	MeasurementMethod LeaveMeasurementMethod `json:"measurementMethod" bun:"measurement_method,type:leave_measurement_method_enum,notnull,default:'RollingBackward'" keel:"measurement_method"`
 
-	EntitlementWeeks       decimal.Decimal `json:"entitlementWeeks"       bun:"entitlement_weeks,type:NUMERIC(5,2),notnull"`
-	MilitaryCaregiverWeeks decimal.Decimal `json:"militaryCaregiverWeeks" bun:"military_caregiver_weeks,type:NUMERIC(5,2),notnull"`
+	EntitlementWeeks       decimal.Decimal `json:"entitlementWeeks"       bun:"entitlement_weeks,type:NUMERIC(5,2),notnull" keel:"entitlement_weeks"`
+	MilitaryCaregiverWeeks decimal.Decimal `json:"militaryCaregiverWeeks" bun:"military_caregiver_weeks,type:NUMERIC(5,2),notnull" keel:"military_caregiver_weeks"`
 	// WorkweekHours is what a week of entitlement is worth. Intermittent leave
 	// is taken in hours (29 CFR 825.205), so weeks only become a usable balance
 	// once there is a week's length to convert them with.
-	WorkweekHours decimal.Decimal `json:"workweekHours" bun:"workweek_hours,type:NUMERIC(5,2),notnull"`
+	WorkweekHours decimal.Decimal `json:"workweekHours" bun:"workweek_hours,type:NUMERIC(5,2),notnull" keel:"workweek_hours"`
 
-	EligibilityMonths    int32 `json:"eligibilityMonths"    bun:"eligibility_months,type:INTEGER,notnull"`
-	EligibilityHours     int32 `json:"eligibilityHours"     bun:"eligibility_hours,type:INTEGER,notnull"`
-	CertificationDueDays int32 `json:"certificationDueDays" bun:"certification_due_days,type:INTEGER,notnull"`
+	EligibilityMonths    int32 `json:"eligibilityMonths"    bun:"eligibility_months,type:INTEGER,notnull" keel:"eligibility_months"`
+	EligibilityHours     int32 `json:"eligibilityHours"     bun:"eligibility_hours,type:INTEGER,notnull" keel:"eligibility_hours"`
+	CertificationDueDays int32 `json:"certificationDueDays" bun:"certification_due_days,type:INTEGER,notnull" keel:"certification_due_days"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 // DefaultLeaveControl is what an organisation gets before anybody configures

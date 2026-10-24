@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,49 +42,50 @@ var (
 // StepKey where a tool is involved.
 type AgentRunEvent struct {
 	bun.BaseModel `bun:"table:agent_run_events,alias:are" json:"-"`
+	keel.Table    `keel:"agent_run_events"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:are_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
 	// OwnerKind and OwnerID name the run or conversation turn this belongs to,
 	// exactly as the step ledger does. There is no foreign key for the same
 	// reason: one column cannot point at two tables.
-	OwnerKind string   `json:"ownerKind" bun:"owner_kind,type:VARCHAR(20),notnull"`
-	OwnerID   pulid.ID `json:"ownerId"   bun:"owner_id,type:VARCHAR(100),notnull"`
+	OwnerKind string   `json:"ownerKind" bun:"owner_kind,type:VARCHAR(20),notnull" keel:"owner_kind"`
+	OwnerID   pulid.ID `json:"ownerId"   bun:"owner_id,type:VARCHAR(100),notnull" keel:"owner_id"`
 
 	// Sequence is the event's place in its owner's account of itself.
 	//
 	// Ordering by time would not do. Several events can share a second, and a
 	// trajectory read back in the wrong order is worse than no trajectory: it
 	// reports the agent doing things in an order it never did.
-	Sequence int `json:"sequence" bun:"sequence,type:INTEGER,notnull"`
+	Sequence int `json:"sequence" bun:"sequence,type:INTEGER,notnull" keel:"sequence"`
 
 	// Kind is the runtime's own event name, unchanged.
 	//
 	// Translating it into a second vocabulary would mean two lists to keep in
 	// step and a reader having to learn both.
-	Kind string `json:"kind" bun:"kind,type:VARCHAR(40),notnull"`
+	Kind string `json:"kind" bun:"kind,type:VARCHAR(40),notnull" keel:"kind"`
 
 	// StepKey joins a tool event to the ledger row that claimed it. Empty for
 	// everything that is not a tool call.
-	StepKey string `json:"stepKey" bun:"step_key,type:VARCHAR(120),notnull,default:''"`
-	CallID  string `json:"callId"  bun:"call_id,type:VARCHAR(200),notnull,default:''"`
+	StepKey string `json:"stepKey" bun:"step_key,type:VARCHAR(120),notnull,default:''" keel:"step_key"`
+	CallID  string `json:"callId"  bun:"call_id,type:VARCHAR(200),notnull,default:''" keel:"call_id"`
 
-	Payload map[string]any `json:"payload" bun:"payload,type:JSONB,notnull,default:'{}'::jsonb"`
+	Payload map[string]any `json:"payload" bun:"payload,type:JSONB,notnull,default:'{}'::jsonb" keel:"payload,jsonb"`
 
 	// Truncated marks a payload too large to keep whole. A reader that cannot
 	// tell a short payload from a shortened one will eventually mistake one for
 	// the other, so the row says which it is.
-	Truncated bool `json:"truncated" bun:"truncated,type:BOOLEAN,notnull,default:false"`
+	Truncated bool `json:"truncated" bun:"truncated,type:BOOLEAN,notnull,default:false" keel:"truncated"`
 
-	OccurredAt int64 `json:"occurredAt" bun:"occurred_at,type:BIGINT,notnull"`
+	OccurredAt int64 `json:"occurredAt" bun:"occurred_at,type:BIGINT,notnull" keel:"occurred_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

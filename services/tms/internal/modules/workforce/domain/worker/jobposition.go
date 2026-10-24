@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -71,33 +72,34 @@ var (
 // the org chart is drawn from.
 type JobPosition struct {
 	bun.BaseModel `bun:"table:job_positions,alias:jpos" json:"-"`
+	keel.Table    `keel:"job_positions"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:jpos_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
 
-	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code        string             `json:"code"        bun:"code,type:VARCHAR(20),notnull"`
-	Title       string             `json:"title"       bun:"title,type:VARCHAR(100),notnull"`
-	Description string             `json:"description" bun:"description,type:TEXT,nullzero"`
-	Department  JobDepartment      `json:"department"  bun:"department,type:job_department_enum,notnull,default:'Operations'"`
+	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'" keel:"status"`
+	Code        string             `json:"code"        bun:"code,type:VARCHAR(20),notnull" keel:"code"`
+	Title       string             `json:"title"       bun:"title,type:VARCHAR(100),notnull" keel:"title"`
+	Description string             `json:"description" bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Department  JobDepartment      `json:"department"  bun:"department,type:job_department_enum,notnull,default:'Operations'" keel:"department"`
 	// FLSAExempt says the position is exempt from overtime. It lives on the
 	// position because that is where the duties test is applied — two people
 	// doing the same job are exempt or not together.
-	FLSAExempt bool `json:"flsaExempt" bun:"flsa_exempt,type:BOOLEAN,notnull"`
+	FLSAExempt bool `json:"flsaExempt" bun:"flsa_exempt,type:BOOLEAN,notnull" keel:"flsa_exempt"`
 	// IsDrivingPosition separates the roster that needs a CDL from the one that
 	// does not, which is the line most compliance rules are drawn along.
-	IsDrivingPosition bool `json:"isDrivingPosition" bun:"is_driving_position,type:BOOLEAN,notnull"`
+	IsDrivingPosition bool `json:"isDrivingPosition" bun:"is_driving_position,type:BOOLEAN,notnull" keel:"is_driving_position"`
 	// ReportsToPositionID is the shape of the org chart. A person's own manager
 	// is on the worker, because two people in the same position can report to
 	// different managers.
-	ReportsToPositionID pulid.ID `json:"reportsToPositionId" bun:"reports_to_position_id,type:VARCHAR(100),nullzero"`
+	ReportsToPositionID pulid.ID `json:"reportsToPositionId" bun:"reports_to_position_id,type:VARCHAR(100),nullzero" keel:"reports_to_position_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	ReportsTo *JobPosition `json:"reportsTo,omitempty" bun:"rel:belongs-to,join:reports_to_position_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	ReportsTo *JobPosition `json:"reportsTo,omitempty" bun:"rel:belongs-to,join:reports_to_position_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:reports_to_position_id"`
 }
 
 func (p *JobPosition) Validate(multiErr *errortypes.MultiError) {

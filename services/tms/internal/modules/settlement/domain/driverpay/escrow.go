@@ -3,6 +3,7 @@ package driverpay
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,45 +25,47 @@ var (
 
 type EscrowAccount struct {
 	bun.BaseModel             `bun:"table:escrow_accounts,alias:escr" json:"-"`
+	keel.Table                `keel:"escrow_accounts"`
 	pagination.CursorValueSet `bun:",embed"                           json:"-"`
 
-	ID                      pulid.ID            `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID          pulid.ID            `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID          pulid.ID            `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID                pulid.ID            `json:"workerId"                bun:"worker_id,type:VARCHAR(100),notnull"`
-	Status                  EscrowAccountStatus `json:"status"                  bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
-	TargetAmountMinor       int64               `json:"targetAmountMinor"       bun:"target_amount_minor,type:BIGINT,notnull"`
-	BalanceMinor            int64               `json:"balanceMinor"            bun:"balance_minor,type:BIGINT,notnull"`
-	AnnualInterestRate      decimal.Decimal     `json:"annualInterestRate"      bun:"annual_interest_rate,type:NUMERIC(7,4),notnull,default:0"`
-	LastInterestAccrualDate *int64              `json:"lastInterestAccrualDate" bun:"last_interest_accrual_date,type:BIGINT,nullzero"`
-	OpenedDate              int64               `json:"openedDate"              bun:"opened_date,type:BIGINT,notnull"`
-	ClosedDate              *int64              `json:"closedDate"              bun:"closed_date,type:BIGINT,nullzero"`
-	CurrencyCode            string              `json:"currencyCode"            bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	Version                 int64               `json:"version"                 bun:"version,type:BIGINT,notnull"`
-	CreatedAt               int64               `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt               int64               `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                      pulid.ID            `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:escr_"`
+	BusinessUnitID          pulid.ID            `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID            `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	WorkerID                pulid.ID            `json:"workerId"                bun:"worker_id,type:VARCHAR(100),notnull" keel:"worker_id"`
+	Status                  EscrowAccountStatus `json:"status"                  bun:"status,type:VARCHAR(50),notnull,default:'Active'" keel:"status"`
+	TargetAmountMinor       int64               `json:"targetAmountMinor"       bun:"target_amount_minor,type:BIGINT,notnull" keel:"target_amount_minor"`
+	BalanceMinor            int64               `json:"balanceMinor"            bun:"balance_minor,type:BIGINT,notnull" keel:"balance_minor"`
+	AnnualInterestRate      decimal.Decimal     `json:"annualInterestRate"      bun:"annual_interest_rate,type:NUMERIC(7,4),notnull,default:0" keel:"annual_interest_rate"`
+	LastInterestAccrualDate *int64              `json:"lastInterestAccrualDate" bun:"last_interest_accrual_date,type:BIGINT,nullzero" keel:"last_interest_accrual_date"`
+	OpenedDate              int64               `json:"openedDate"              bun:"opened_date,type:BIGINT,notnull" keel:"opened_date"`
+	ClosedDate              *int64              `json:"closedDate"              bun:"closed_date,type:BIGINT,nullzero" keel:"closed_date"`
+	CurrencyCode            string              `json:"currencyCode"            bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'" keel:"currency_code"`
+	Version                 int64               `json:"version"                 bun:"version,type:BIGINT,notnull" keel:"version,version"`
+	CreatedAt               int64               `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt               int64               `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	Worker       *worker.Worker       `json:"worker,omitempty"       bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Transactions []*EscrowTransaction `json:"transactions,omitempty" bun:"rel:has-many,join:id=escrow_account_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Worker       *worker.Worker       `json:"worker,omitempty"       bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:worker_id"`
+	Transactions []*EscrowTransaction `json:"transactions,omitempty" bun:"rel:has-many,join:id=escrow_account_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"many:escrow_account_id"`
 }
 
 type EscrowTransaction struct {
 	bun.BaseModel `bun:"table:escrow_transactions,alias:esctx" json:"-"`
+	keel.Table    `keel:"escrow_transactions"`
 
-	ID                pulid.ID              `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID              `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID              `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	EscrowAccountID   pulid.ID              `json:"escrowAccountId"   bun:"escrow_account_id,type:VARCHAR(100),notnull"`
-	Type              EscrowTransactionType `json:"type"              bun:"type,type:VARCHAR(50),notnull"`
-	AmountMinor       int64                 `json:"amountMinor"       bun:"amount_minor,type:BIGINT,notnull"`
-	BalanceAfterMinor int64                 `json:"balanceAfterMinor" bun:"balance_after_minor,type:BIGINT,notnull"`
-	OccurredDate      int64                 `json:"occurredDate"      bun:"occurred_date,type:BIGINT,notnull"`
-	Description       string                `json:"description"       bun:"description,type:VARCHAR(255),nullzero"`
-	SettlementID      *pulid.ID             `json:"settlementId"      bun:"settlement_id,type:VARCHAR(100),nullzero"`
-	CreatedByID       pulid.ID              `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	CreatedAt         int64                 `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID              `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:esctx_"`
+	BusinessUnitID    pulid.ID              `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID              `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	EscrowAccountID   pulid.ID              `json:"escrowAccountId"   bun:"escrow_account_id,type:VARCHAR(100),notnull" keel:"escrow_account_id"`
+	Type              EscrowTransactionType `json:"type"              bun:"type,type:VARCHAR(50),notnull" keel:"type"`
+	AmountMinor       int64                 `json:"amountMinor"       bun:"amount_minor,type:BIGINT,notnull" keel:"amount_minor"`
+	BalanceAfterMinor int64                 `json:"balanceAfterMinor" bun:"balance_after_minor,type:BIGINT,notnull" keel:"balance_after_minor"`
+	OccurredDate      int64                 `json:"occurredDate"      bun:"occurred_date,type:BIGINT,notnull" keel:"occurred_date"`
+	Description       string                `json:"description"       bun:"description,type:VARCHAR(255),nullzero" keel:"description,nullzero"`
+	SettlementID      *pulid.ID             `json:"settlementId"      bun:"settlement_id,type:VARCHAR(100),nullzero" keel:"settlement_id"`
+	CreatedByID       pulid.ID              `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero" keel:"created_by_id,nullzero"`
+	CreatedAt         int64                 `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 
-	EscrowAccount *EscrowAccount `json:"escrowAccount,omitempty" bun:"rel:belongs-to,join:escrow_account_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	EscrowAccount *EscrowAccount `json:"escrowAccount,omitempty" bun:"rel:belongs-to,join:escrow_account_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:escrow_account_id"`
 }
 
 func (e *EscrowAccount) Validate(multiErr *errortypes.MultiError) {

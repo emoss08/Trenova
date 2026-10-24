@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -53,43 +54,44 @@ func (f *ExportFilter) Unfiltered() bool {
 // AIAuditExport is one request to write the trail to a file, and the file.
 type AIAuditExport struct {
 	bun.BaseModel `bun:"table:ai_audit_exports,alias:aiax" json:"-"`
+	keel.Table    `keel:"ai_audit_exports"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)" keel:"organization_id,pk,tenant"`
 
-	RequestedByUserID pulid.ID      `json:"requestedByUserId" bun:"requested_by_user_id,type:VARCHAR(100),notnull"`
-	Format            ExportFormat  `json:"format"            bun:"format,type:VARCHAR(10),notnull"`
-	Filters           *ExportFilter `json:"filters"           bun:"filters,type:JSONB,notnull,default:'{}'::jsonb"`
-	RangeFrom         int64         `json:"rangeFrom"         bun:"range_from,type:BIGINT,notnull"`
-	RangeTo           int64         `json:"rangeTo"           bun:"range_to,type:BIGINT,notnull"`
+	RequestedByUserID pulid.ID      `json:"requestedByUserId" bun:"requested_by_user_id,type:VARCHAR(100),notnull" keel:"requested_by_user_id"`
+	Format            ExportFormat  `json:"format"            bun:"format,type:VARCHAR(10),notnull" keel:"format"`
+	Filters           *ExportFilter `json:"filters"           bun:"filters,type:JSONB,notnull,default:'{}'::jsonb" keel:"filters,jsonb"`
+	RangeFrom         int64         `json:"rangeFrom"         bun:"range_from,type:BIGINT,notnull" keel:"range_from"`
+	RangeTo           int64         `json:"rangeTo"           bun:"range_to,type:BIGINT,notnull" keel:"range_to"`
 	// SnapshotSeq is the end of the tenant's chain when the export was asked
 	// for. The file holds nothing recorded after it, so a count taken first
 	// and the rows written later agree.
-	SnapshotSeq int64        `json:"snapshotSeq" bun:"snapshot_seq,type:BIGINT,notnull,default:0"`
-	Status      ExportStatus `json:"status"      bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
+	SnapshotSeq int64        `json:"snapshotSeq" bun:"snapshot_seq,type:BIGINT,notnull,default:0" keel:"snapshot_seq"`
+	Status      ExportStatus `json:"status"      bun:"status,type:VARCHAR(20),notnull,default:'Pending'" keel:"status"`
 
-	RowCount          int64  `json:"rowCount"          bun:"row_count,type:BIGINT,notnull,default:0"`
-	ByteSize          int64  `json:"byteSize"          bun:"byte_size,type:BIGINT,notnull,default:0"`
-	SHA256            string `json:"sha256"            bun:"sha256,type:VARCHAR(64),nullzero"`
-	ArtifactKey       string `json:"artifactKey"       bun:"artifact_key,type:VARCHAR(500),nullzero"`
-	ArtifactExpiresAt *int64 `json:"artifactExpiresAt" bun:"artifact_expires_at,type:BIGINT,nullzero"`
+	RowCount          int64  `json:"rowCount"          bun:"row_count,type:BIGINT,notnull,default:0" keel:"row_count"`
+	ByteSize          int64  `json:"byteSize"          bun:"byte_size,type:BIGINT,notnull,default:0" keel:"byte_size"`
+	SHA256            string `json:"sha256"            bun:"sha256,type:VARCHAR(64),nullzero" keel:"sha256,nullzero"`
+	ArtifactKey       string `json:"artifactKey"       bun:"artifact_key,type:VARCHAR(500),nullzero" keel:"artifact_key,nullzero"`
+	ArtifactExpiresAt *int64 `json:"artifactExpiresAt" bun:"artifact_expires_at,type:BIGINT,nullzero" keel:"artifact_expires_at"`
 
-	ChainKeyID    string `json:"chainKeyId"    bun:"chain_key_id,type:VARCHAR(40),nullzero"`
-	ChainFirstSeq *int64 `json:"chainFirstSeq" bun:"chain_first_seq,type:BIGINT,nullzero"`
-	ChainLastSeq  *int64 `json:"chainLastSeq"  bun:"chain_last_seq,type:BIGINT,nullzero"`
-	ChainComplete bool   `json:"chainComplete" bun:"chain_complete,type:BOOLEAN,notnull,default:false"`
+	ChainKeyID    string `json:"chainKeyId"    bun:"chain_key_id,type:VARCHAR(40),nullzero" keel:"chain_key_id,nullzero"`
+	ChainFirstSeq *int64 `json:"chainFirstSeq" bun:"chain_first_seq,type:BIGINT,nullzero" keel:"chain_first_seq"`
+	ChainLastSeq  *int64 `json:"chainLastSeq"  bun:"chain_last_seq,type:BIGINT,nullzero" keel:"chain_last_seq"`
+	ChainComplete bool   `json:"chainComplete" bun:"chain_complete,type:BOOLEAN,notnull,default:false" keel:"chain_complete"`
 
-	WorkflowID   string `json:"workflowId"   bun:"workflow_id,type:VARCHAR(255),nullzero"`
-	ErrorMessage string `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
-	StartedAt    *int64 `json:"startedAt"    bun:"started_at,type:BIGINT,nullzero"`
-	CompletedAt  *int64 `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero"`
+	WorkflowID   string `json:"workflowId"   bun:"workflow_id,type:VARCHAR(255),nullzero" keel:"workflow_id,nullzero"`
+	ErrorMessage string `json:"errorMessage" bun:"error_message,type:TEXT,nullzero" keel:"error_message,nullzero"`
+	StartedAt    *int64 `json:"startedAt"    bun:"started_at,type:BIGINT,nullzero" keel:"started_at"`
+	CompletedAt  *int64 `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero" keel:"completed_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`

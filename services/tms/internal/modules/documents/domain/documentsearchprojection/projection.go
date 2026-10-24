@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,23 +18,24 @@ const maxIndexedContentChars = 100000
 
 type Projection struct {
 	bun.BaseModel `bun:"table:document_search_projections,alias:dsp" json:"-"`
+	keel.Table    `keel:"document_search_projections"`
 
-	ID                  pulid.ID `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID      pulid.ID `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	ResourceID          string   `json:"resourceId"          bun:"resource_id,type:VARCHAR(100),notnull"`
-	ResourceType        string   `json:"resourceType"        bun:"resource_type,type:VARCHAR(100),notnull"`
-	FileName            string   `json:"fileName"            bun:"file_name,type:VARCHAR(255),notnull"`
-	OriginalName        string   `json:"originalName"        bun:"original_name,type:VARCHAR(255),notnull"`
-	Description         string   `json:"description"         bun:"description,type:TEXT,nullzero"`
-	Tags                []string `json:"tags"                bun:"tags,type:VARCHAR(100)[],default:'{}'"`
-	Status              string   `json:"status"              bun:"status,type:VARCHAR(100),notnull"`
-	ContentStatus       string   `json:"contentStatus"       bun:"content_status,type:VARCHAR(100),notnull"`
-	DetectedKind        string   `json:"detectedKind"        bun:"detected_kind,type:VARCHAR(100),nullzero"`
-	ShipmentDraftStatus string   `json:"shipmentDraftStatus" bun:"shipment_draft_status,type:VARCHAR(100),notnull"`
-	ContentText         string   `json:"contentText"         bun:"content_text,type:TEXT,nullzero"`
-	CreatedAt           int64    `json:"createdAt"           bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt           int64    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull"`
+	ID                  pulid.ID `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk"`
+	OrganizationID      pulid.ID `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	ResourceID          string   `json:"resourceId"          bun:"resource_id,type:VARCHAR(100),notnull" keel:"resource_id"`
+	ResourceType        string   `json:"resourceType"        bun:"resource_type,type:VARCHAR(100),notnull" keel:"resource_type"`
+	FileName            string   `json:"fileName"            bun:"file_name,type:VARCHAR(255),notnull" keel:"file_name"`
+	OriginalName        string   `json:"originalName"        bun:"original_name,type:VARCHAR(255),notnull" keel:"original_name"`
+	Description         string   `json:"description"         bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Tags                []string `json:"tags"                bun:"tags,type:VARCHAR(100)[],default:'{}'" keel:"tags"`
+	Status              string   `json:"status"              bun:"status,type:VARCHAR(100),notnull" keel:"status"`
+	ContentStatus       string   `json:"contentStatus"       bun:"content_status,type:VARCHAR(100),notnull" keel:"content_status"`
+	DetectedKind        string   `json:"detectedKind"        bun:"detected_kind,type:VARCHAR(100),nullzero" keel:"detected_kind,nullzero"`
+	ShipmentDraftStatus string   `json:"shipmentDraftStatus" bun:"shipment_draft_status,type:VARCHAR(100),notnull" keel:"shipment_draft_status"`
+	ContentText         string   `json:"contentText"         bun:"content_text,type:TEXT,nullzero" keel:"content_text,nullzero"`
+	CreatedAt           int64    `json:"createdAt"           bun:"created_at,type:BIGINT,notnull" keel:"created_at,autocreate"`
+	UpdatedAt           int64    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull" keel:"updated_at,autoupdate"`
 }
 
 func Build(doc *document.Document, contentText string) *Projection {

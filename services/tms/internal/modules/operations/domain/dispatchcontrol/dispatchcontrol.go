@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -85,59 +86,60 @@ const DefaultServiceFailureGracePeriod = 30
 
 type DispatchControl struct {
 	bun.BaseModel `bun:"table:dispatch_controls,alias:dc" json:"-"`
+	keel.Table    `keel:"dispatch_controls"`
 
-	ID                                   pulid.ID                   `json:"id"                                   bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID                       pulid.ID                   `json:"businessUnitId"                       bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID                       pulid.ID                   `json:"organizationId"                       bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	EnableAutoAssignment                 bool                       `json:"enableAutoAssignment"                 bun:"enable_auto_assignment,type:BOOLEAN,notnull"`
-	AutoAssignmentStrategy               AutoAssignmentStrategy     `json:"autoAssignmentStrategy"               bun:"auto_assignment_strategy,type:auto_assignment_strategy_enum,notnull,default:'Proximity'"`
-	EnforceWorkerAssign                  bool                       `json:"enforceWorkerAssign"                  bun:"enforce_worker_assign,type:BOOLEAN,notnull"`
-	EnforceTrailerContinuity             bool                       `json:"enforceTrailerContinuity"             bun:"enforce_trailer_continuity,type:BOOLEAN,notnull"`
-	EnforceHOSCompliance                 bool                       `json:"enforceHosCompliance"                 bun:"enforce_hos_compliance,type:BOOLEAN,notnull"`
-	EnforceWorkerPTARestrictions         bool                       `json:"enforceWorkerPtaRestrictions"         bun:"enforce_worker_pta_restrictions,type:BOOLEAN,notnull"`
-	EnforceWorkerTractorFleetContinuity  bool                       `json:"enforceWorkerTractorFleetContinuity"  bun:"enforce_worker_tractor_fleet_continuity,type:BOOLEAN,notnull"`
-	EnforceDriverQualificationCompliance bool                       `json:"enforceDriverQualificationCompliance" bun:"enforce_driver_qualification_compliance,type:BOOLEAN,notnull"`
-	EnforceMedicalCertCompliance         bool                       `json:"enforceMedicalCertCompliance"         bun:"enforce_medical_cert_compliance,type:BOOLEAN,notnull"`
-	EnforceHazmatCompliance              bool                       `json:"enforceHazmatCompliance"              bun:"enforce_hazmat_compliance,type:BOOLEAN,notnull"`
-	EnforceDrugAndAlcoholCompliance      bool                       `json:"enforceDrugAndAlcoholCompliance"      bun:"enforce_drug_and_alcohol_compliance,type:BOOLEAN,notnull"`
-	EnableAutoStopActuals                bool                       `json:"enableAutoStopActuals"                bun:"enable_auto_stop_actuals,type:BOOLEAN,notnull"`
-	ScoringWeights                       ScoringWeights             `json:"scoringWeights"                       bun:"scoring_weights,type:JSONB,notnull,default:'{}'"`
-	AutoAssignConfidenceThreshold        decimal.Decimal            `json:"autoAssignConfidenceThreshold"        bun:"auto_assign_confidence_threshold,type:NUMERIC(5,4),notnull,default:0.85"`
-	AutoAssignMaxDeadheadMiles           *int32                     `json:"autoAssignMaxDeadheadMiles"           bun:"auto_assign_max_deadhead_miles,type:INTEGER,nullzero"`
-	AutoAssignPlanningHorizonHours       int16                      `json:"autoAssignPlanningHorizonHours"       bun:"auto_assign_planning_horizon_hours,type:SMALLINT,notnull,default:48"`
-	PlanningMode                         PlanningMode               `json:"planningMode"                         bun:"planning_mode,type:dispatch_planning_mode_enum,notnull,default:'Immediate'"`
-	HorizonMaxMovesPerDriver             int16                      `json:"horizonMaxMovesPerDriver"             bun:"horizon_max_moves_per_driver,type:SMALLINT,notnull,default:3"`
-	HorizonSearchIterations              *int16                     `json:"horizonSearchIterations"              bun:"horizon_search_iterations,type:SMALLINT,nullzero"`
-	CoverageRiskWindowHours              int16                      `json:"coverageRiskWindowHours"              bun:"coverage_risk_window_hours,type:SMALLINT,notnull,default:12"`
-	EnableCheckCallMonitoring            bool                       `json:"enableCheckCallMonitoring"            bun:"enable_check_call_monitoring,type:BOOLEAN,notnull,default:false"`
-	CheckCallIntervalHours               int16                      `json:"checkCallIntervalHours"               bun:"check_call_interval_hours,type:SMALLINT,notnull,default:4"`
-	EnableEtaAlerts                      bool                       `json:"enableEtaAlerts"                      bun:"enable_eta_alerts,type:BOOLEAN,notnull"`
-	EtaRiskThresholdMinutes              int16                      `json:"etaRiskThresholdMinutes"              bun:"eta_risk_threshold_minutes,type:SMALLINT,notnull,default:60"`
-	EtaDwellMinutes                      int16                      `json:"etaDwellMinutes"                      bun:"eta_dwell_minutes,type:SMALLINT,notnull,default:60"`
-	ExceptionDueInfoMinutes              int32                      `json:"exceptionDueInfoMinutes"              bun:"exception_due_info_minutes,type:INTEGER,notnull,default:1440"`
-	ExceptionDueWarningMinutes           int32                      `json:"exceptionDueWarningMinutes"           bun:"exception_due_warning_minutes,type:INTEGER,notnull,default:240"`
-	ExceptionDueCriticalMinutes          int32                      `json:"exceptionDueCriticalMinutes"          bun:"exception_due_critical_minutes,type:INTEGER,notnull,default:60"`
-	ExceptionEscalationMinutes           int32                      `json:"exceptionEscalationMinutes"           bun:"exception_escalation_minutes,type:INTEGER,notnull,default:60"`
-	ExceptionMaxEscalations              int16                      `json:"exceptionMaxEscalations"              bun:"exception_max_escalations,type:SMALLINT,notnull,default:3"`
-	ExceptionDefaultAssigneeID           pulid.ID                   `json:"exceptionDefaultAssigneeId"           bun:"exception_default_assignee_id,type:VARCHAR(100),nullzero"`
-	ExceptionEscalationContactID         pulid.ID                   `json:"exceptionEscalationContactId"         bun:"exception_escalation_contact_id,type:VARCHAR(100),nullzero"`
-	ExceptionMissedStopGraceMinutes      int16                      `json:"exceptionMissedStopGraceMinutes"      bun:"exception_missed_stop_grace_minutes,type:SMALLINT,notnull,default:30"`
-	ExceptionPODGraceHours               int16                      `json:"exceptionPodGraceHours"               bun:"exception_pod_grace_hours,type:SMALLINT,notnull,default:24"`
-	TenderCounterOffersEnabled           bool                       `json:"tenderCounterOffersEnabled"           bun:"tender_counter_offers_enabled,type:BOOLEAN,notnull"`
-	TenderCounterMarginFloorPercent      decimal.NullDecimal        `json:"tenderCounterMarginFloorPercent"      bun:"tender_counter_margin_floor_percent,type:NUMERIC(7,4),notnull"`
-	TenderAutoAcceptCounters             bool                       `json:"tenderAutoAcceptCounters"             bun:"tender_auto_accept_counters,type:BOOLEAN,notnull"`
-	TenderCounterDecisionMinutes         int32                      `json:"tenderCounterDecisionMinutes"         bun:"tender_counter_decision_minutes,type:INTEGER,notnull,default:60"`
-	TenderExhaustedAction                TenderExhaustedAction      `json:"tenderExhaustedAction"                bun:"tender_exhausted_action,type:VARCHAR(50),notnull,default:'Notify'"`
-	TenderEscalationRateIncreasePercent  decimal.Decimal            `json:"tenderEscalationRateIncreasePercent"  bun:"tender_escalation_rate_increase_percent,type:NUMERIC(7,4),notnull"`
-	TenderEscalationOfferTTLMinutes      int32                      `json:"tenderEscalationOfferTtlMinutes"      bun:"tender_escalation_offer_ttl_minutes,type:INTEGER,notnull,default:60"`
-	TenderMaxEscalations                 int16                      `json:"tenderMaxEscalations"                 bun:"tender_max_escalations,type:SMALLINT,notnull"`
-	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
-	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                bun:"record_service_failures,type:service_incident_type_enum,notnull,default:'Never'"`
-	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`
-	ServiceFailureGracePeriod            *int                       `json:"serviceFailureGracePeriod"            bun:"service_failure_grace_period,type:INTEGER,nullzero,default:30"`
-	Version                              int64                      `json:"version"                              bun:"version,type:BIGINT"`
-	CreatedAt                            int64                      `json:"createdAt"                            bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                            int64                      `json:"updatedAt"                            bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                                   pulid.ID                   `json:"id"                                   bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:dc_"`
+	BusinessUnitID                       pulid.ID                   `json:"businessUnitId"                       bun:"business_unit_id,type:VARCHAR(100),notnull,pk" keel:"business_unit_id,pk,tenant"`
+	OrganizationID                       pulid.ID                   `json:"organizationId"                       bun:"organization_id,type:VARCHAR(100),notnull,pk" keel:"organization_id,pk,tenant"`
+	EnableAutoAssignment                 bool                       `json:"enableAutoAssignment"                 bun:"enable_auto_assignment,type:BOOLEAN,notnull" keel:"enable_auto_assignment"`
+	AutoAssignmentStrategy               AutoAssignmentStrategy     `json:"autoAssignmentStrategy"               bun:"auto_assignment_strategy,type:auto_assignment_strategy_enum,notnull,default:'Proximity'" keel:"auto_assignment_strategy"`
+	EnforceWorkerAssign                  bool                       `json:"enforceWorkerAssign"                  bun:"enforce_worker_assign,type:BOOLEAN,notnull" keel:"enforce_worker_assign"`
+	EnforceTrailerContinuity             bool                       `json:"enforceTrailerContinuity"             bun:"enforce_trailer_continuity,type:BOOLEAN,notnull" keel:"enforce_trailer_continuity"`
+	EnforceHOSCompliance                 bool                       `json:"enforceHosCompliance"                 bun:"enforce_hos_compliance,type:BOOLEAN,notnull" keel:"enforce_hos_compliance"`
+	EnforceWorkerPTARestrictions         bool                       `json:"enforceWorkerPtaRestrictions"         bun:"enforce_worker_pta_restrictions,type:BOOLEAN,notnull" keel:"enforce_worker_pta_restrictions"`
+	EnforceWorkerTractorFleetContinuity  bool                       `json:"enforceWorkerTractorFleetContinuity"  bun:"enforce_worker_tractor_fleet_continuity,type:BOOLEAN,notnull" keel:"enforce_worker_tractor_fleet_continuity"`
+	EnforceDriverQualificationCompliance bool                       `json:"enforceDriverQualificationCompliance" bun:"enforce_driver_qualification_compliance,type:BOOLEAN,notnull" keel:"enforce_driver_qualification_compliance"`
+	EnforceMedicalCertCompliance         bool                       `json:"enforceMedicalCertCompliance"         bun:"enforce_medical_cert_compliance,type:BOOLEAN,notnull" keel:"enforce_medical_cert_compliance"`
+	EnforceHazmatCompliance              bool                       `json:"enforceHazmatCompliance"              bun:"enforce_hazmat_compliance,type:BOOLEAN,notnull" keel:"enforce_hazmat_compliance"`
+	EnforceDrugAndAlcoholCompliance      bool                       `json:"enforceDrugAndAlcoholCompliance"      bun:"enforce_drug_and_alcohol_compliance,type:BOOLEAN,notnull" keel:"enforce_drug_and_alcohol_compliance"`
+	EnableAutoStopActuals                bool                       `json:"enableAutoStopActuals"                bun:"enable_auto_stop_actuals,type:BOOLEAN,notnull" keel:"enable_auto_stop_actuals"`
+	ScoringWeights                       ScoringWeights             `json:"scoringWeights"                       bun:"scoring_weights,type:JSONB,notnull,default:'{}'" keel:"scoring_weights,jsonb"`
+	AutoAssignConfidenceThreshold        decimal.Decimal            `json:"autoAssignConfidenceThreshold"        bun:"auto_assign_confidence_threshold,type:NUMERIC(5,4),notnull,default:0.85" keel:"auto_assign_confidence_threshold"`
+	AutoAssignMaxDeadheadMiles           *int32                     `json:"autoAssignMaxDeadheadMiles"           bun:"auto_assign_max_deadhead_miles,type:INTEGER,nullzero" keel:"auto_assign_max_deadhead_miles"`
+	AutoAssignPlanningHorizonHours       int16                      `json:"autoAssignPlanningHorizonHours"       bun:"auto_assign_planning_horizon_hours,type:SMALLINT,notnull,default:48" keel:"auto_assign_planning_horizon_hours"`
+	PlanningMode                         PlanningMode               `json:"planningMode"                         bun:"planning_mode,type:dispatch_planning_mode_enum,notnull,default:'Immediate'" keel:"planning_mode"`
+	HorizonMaxMovesPerDriver             int16                      `json:"horizonMaxMovesPerDriver"             bun:"horizon_max_moves_per_driver,type:SMALLINT,notnull,default:3" keel:"horizon_max_moves_per_driver"`
+	HorizonSearchIterations              *int16                     `json:"horizonSearchIterations"              bun:"horizon_search_iterations,type:SMALLINT,nullzero" keel:"horizon_search_iterations"`
+	CoverageRiskWindowHours              int16                      `json:"coverageRiskWindowHours"              bun:"coverage_risk_window_hours,type:SMALLINT,notnull,default:12" keel:"coverage_risk_window_hours"`
+	EnableCheckCallMonitoring            bool                       `json:"enableCheckCallMonitoring"            bun:"enable_check_call_monitoring,type:BOOLEAN,notnull,default:false" keel:"enable_check_call_monitoring"`
+	CheckCallIntervalHours               int16                      `json:"checkCallIntervalHours"               bun:"check_call_interval_hours,type:SMALLINT,notnull,default:4" keel:"check_call_interval_hours"`
+	EnableEtaAlerts                      bool                       `json:"enableEtaAlerts"                      bun:"enable_eta_alerts,type:BOOLEAN,notnull" keel:"enable_eta_alerts"`
+	EtaRiskThresholdMinutes              int16                      `json:"etaRiskThresholdMinutes"              bun:"eta_risk_threshold_minutes,type:SMALLINT,notnull,default:60" keel:"eta_risk_threshold_minutes"`
+	EtaDwellMinutes                      int16                      `json:"etaDwellMinutes"                      bun:"eta_dwell_minutes,type:SMALLINT,notnull,default:60" keel:"eta_dwell_minutes"`
+	ExceptionDueInfoMinutes              int32                      `json:"exceptionDueInfoMinutes"              bun:"exception_due_info_minutes,type:INTEGER,notnull,default:1440" keel:"exception_due_info_minutes"`
+	ExceptionDueWarningMinutes           int32                      `json:"exceptionDueWarningMinutes"           bun:"exception_due_warning_minutes,type:INTEGER,notnull,default:240" keel:"exception_due_warning_minutes"`
+	ExceptionDueCriticalMinutes          int32                      `json:"exceptionDueCriticalMinutes"          bun:"exception_due_critical_minutes,type:INTEGER,notnull,default:60" keel:"exception_due_critical_minutes"`
+	ExceptionEscalationMinutes           int32                      `json:"exceptionEscalationMinutes"           bun:"exception_escalation_minutes,type:INTEGER,notnull,default:60" keel:"exception_escalation_minutes"`
+	ExceptionMaxEscalations              int16                      `json:"exceptionMaxEscalations"              bun:"exception_max_escalations,type:SMALLINT,notnull,default:3" keel:"exception_max_escalations"`
+	ExceptionDefaultAssigneeID           pulid.ID                   `json:"exceptionDefaultAssigneeId"           bun:"exception_default_assignee_id,type:VARCHAR(100),nullzero" keel:"exception_default_assignee_id,nullzero"`
+	ExceptionEscalationContactID         pulid.ID                   `json:"exceptionEscalationContactId"         bun:"exception_escalation_contact_id,type:VARCHAR(100),nullzero" keel:"exception_escalation_contact_id,nullzero"`
+	ExceptionMissedStopGraceMinutes      int16                      `json:"exceptionMissedStopGraceMinutes"      bun:"exception_missed_stop_grace_minutes,type:SMALLINT,notnull,default:30" keel:"exception_missed_stop_grace_minutes"`
+	ExceptionPODGraceHours               int16                      `json:"exceptionPodGraceHours"               bun:"exception_pod_grace_hours,type:SMALLINT,notnull,default:24" keel:"exception_pod_grace_hours"`
+	TenderCounterOffersEnabled           bool                       `json:"tenderCounterOffersEnabled"           bun:"tender_counter_offers_enabled,type:BOOLEAN,notnull" keel:"tender_counter_offers_enabled"`
+	TenderCounterMarginFloorPercent      decimal.NullDecimal        `json:"tenderCounterMarginFloorPercent"      bun:"tender_counter_margin_floor_percent,type:NUMERIC(7,4),notnull" keel:"tender_counter_margin_floor_percent"`
+	TenderAutoAcceptCounters             bool                       `json:"tenderAutoAcceptCounters"             bun:"tender_auto_accept_counters,type:BOOLEAN,notnull" keel:"tender_auto_accept_counters"`
+	TenderCounterDecisionMinutes         int32                      `json:"tenderCounterDecisionMinutes"         bun:"tender_counter_decision_minutes,type:INTEGER,notnull,default:60" keel:"tender_counter_decision_minutes"`
+	TenderExhaustedAction                TenderExhaustedAction      `json:"tenderExhaustedAction"                bun:"tender_exhausted_action,type:VARCHAR(50),notnull,default:'Notify'" keel:"tender_exhausted_action"`
+	TenderEscalationRateIncreasePercent  decimal.Decimal            `json:"tenderEscalationRateIncreasePercent"  bun:"tender_escalation_rate_increase_percent,type:NUMERIC(7,4),notnull" keel:"tender_escalation_rate_increase_percent"`
+	TenderEscalationOfferTTLMinutes      int32                      `json:"tenderEscalationOfferTtlMinutes"      bun:"tender_escalation_offer_ttl_minutes,type:INTEGER,notnull,default:60" keel:"tender_escalation_offer_ttl_minutes"`
+	TenderMaxEscalations                 int16                      `json:"tenderMaxEscalations"                 bun:"tender_max_escalations,type:SMALLINT,notnull" keel:"tender_max_escalations"`
+	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'" keel:"compliance_enforcement_level"`
+	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                bun:"record_service_failures,type:service_incident_type_enum,notnull,default:'Never'" keel:"record_service_failures"`
+	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero" keel:"service_failure_target"`
+	ServiceFailureGracePeriod            *int                       `json:"serviceFailureGracePeriod"            bun:"service_failure_grace_period,type:INTEGER,nullzero,default:30" keel:"service_failure_grace_period"`
+	Version                              int64                      `json:"version"                              bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt                            int64                      `json:"createdAt"                            bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt                            int64                      `json:"updatedAt"                            bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (dc *DispatchControl) ResolvedScoringWeights() map[ScoringFactor]float64 {

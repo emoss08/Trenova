@@ -3,6 +3,7 @@ package documentpacketrule
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -50,22 +51,23 @@ var (
 
 type DocumentPacketRule struct {
 	bun.BaseModel `bun:"table:document_packet_rules,alias:dpr" json:"-"`
+	keel.Table    `keel:"document_packet_rules"`
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID                    pulid.ID `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID        pulid.ID `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	ResourceType          string   `json:"resourceType"          bun:"resource_type,type:VARCHAR(100),notnull"`
-	DocumentTypeID        pulid.ID `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),notnull"`
-	Required              bool     `json:"required"              bun:"required,type:BOOLEAN,notnull"`
-	AllowMultiple         bool     `json:"allowMultiple"         bun:"allow_multiple,type:BOOLEAN,notnull"`
-	DisplayOrder          int      `json:"displayOrder"          bun:"display_order,type:INTEGER,notnull"`
-	ExpirationRequired    bool     `json:"expirationRequired"    bun:"expiration_required,type:BOOLEAN,notnull"`
-	ExpirationWarningDays int      `json:"expirationWarningDays" bun:"expiration_warning_days,type:INTEGER,notnull,default:30"`
-	Version               int64    `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt             int64    `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64    `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                    pulid.ID `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dpr_"`
+	OrganizationID        pulid.ID `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	ResourceType          string   `json:"resourceType"          bun:"resource_type,type:VARCHAR(100),notnull" keel:"resource_type"`
+	DocumentTypeID        pulid.ID `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),notnull" keel:"document_type_id"`
+	Required              bool     `json:"required"              bun:"required,type:BOOLEAN,notnull" keel:"required"`
+	AllowMultiple         bool     `json:"allowMultiple"         bun:"allow_multiple,type:BOOLEAN,notnull" keel:"allow_multiple"`
+	DisplayOrder          int      `json:"displayOrder"          bun:"display_order,type:INTEGER,notnull" keel:"display_order"`
+	ExpirationRequired    bool     `json:"expirationRequired"    bun:"expiration_required,type:BOOLEAN,notnull" keel:"expiration_required"`
+	ExpirationWarningDays int      `json:"expirationWarningDays" bun:"expiration_warning_days,type:INTEGER,notnull,default:30" keel:"expiration_warning_days"`
+	Version               int64    `json:"version"               bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt             int64    `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt             int64    `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (r *DocumentPacketRule) Validate(multiErr *errortypes.MultiError) {

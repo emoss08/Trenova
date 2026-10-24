@@ -3,6 +3,7 @@ package capture
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -31,32 +32,33 @@ const (
 // hold the device's credential, and the only safe answer is to revoke it.
 type CaptureDevice struct {
 	bun.BaseModel             `bun:"table:capture_devices,alias:cdev" json:"-"`
+	keel.Table                `keel:"capture_devices"`
 	pagination.CursorValueSet `bun:",embed"                           json:"-"`
 
-	ID                   pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID       pulid.ID     `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID     `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	UserID               pulid.ID     `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	Name                 string       `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	MachineName          string       `json:"machineName"    bun:"machine_name,type:VARCHAR(255),notnull"`
-	WindowsUser          string       `json:"windowsUser"    bun:"windows_user,type:VARCHAR(255),nullzero"`
-	AgentVersion         string       `json:"agentVersion"   bun:"agent_version,type:VARCHAR(50),notnull"`
-	Architecture         Architecture `json:"architecture"   bun:"architecture,type:VARCHAR(10),notnull"`
-	OSVersion            string       `json:"osVersion"      bun:"os_version,type:VARCHAR(100),nullzero"`
-	Status               DeviceStatus `json:"status"         bun:"status,type:VARCHAR(20),notnull"`
-	RefreshTokenHash     string       `json:"-"              bun:"refresh_token_hash,type:VARCHAR(128),notnull"`
-	PreviousRefreshHash  string       `json:"-"              bun:"previous_refresh_hash,type:VARCHAR(128),nullzero"`
-	AccessTokenHash      string       `json:"-"              bun:"access_token_hash,type:VARCHAR(128),notnull"`
-	AccessTokenExpiresAt int64        `json:"-"              bun:"access_token_expires_at,type:BIGINT,notnull"`
-	Sources              []SourceInfo `json:"sources"        bun:"sources,type:JSONB,notnull,default:'[]'"`
-	LastSeenAt           *int64       `json:"lastSeenAt"     bun:"last_seen_at,type:BIGINT,nullzero"`
-	LastIP               string       `json:"lastIp"         bun:"last_ip,type:VARCHAR(64),nullzero"`
-	RevokedAt            *int64       `json:"revokedAt"      bun:"revoked_at,type:BIGINT,nullzero"`
-	RevokedByID          *pulid.ID    `json:"revokedById"    bun:"revoked_by_id,type:VARCHAR(100),nullzero"`
-	RevokedReason        string       `json:"revokedReason"  bun:"revoked_reason,type:VARCHAR(255),nullzero"`
-	Version              int64        `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt            int64        `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64        `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:cdev_"`
+	BusinessUnitID       pulid.ID     `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull" keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID     `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull" keel:"organization_id,pk,tenant"`
+	UserID               pulid.ID     `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
+	Name                 string       `json:"name"           bun:"name,type:VARCHAR(100),notnull" keel:"name"`
+	MachineName          string       `json:"machineName"    bun:"machine_name,type:VARCHAR(255),notnull" keel:"machine_name"`
+	WindowsUser          string       `json:"windowsUser"    bun:"windows_user,type:VARCHAR(255),nullzero" keel:"windows_user,nullzero"`
+	AgentVersion         string       `json:"agentVersion"   bun:"agent_version,type:VARCHAR(50),notnull" keel:"agent_version"`
+	Architecture         Architecture `json:"architecture"   bun:"architecture,type:VARCHAR(10),notnull" keel:"architecture"`
+	OSVersion            string       `json:"osVersion"      bun:"os_version,type:VARCHAR(100),nullzero" keel:"os_version,nullzero"`
+	Status               DeviceStatus `json:"status"         bun:"status,type:VARCHAR(20),notnull" keel:"status"`
+	RefreshTokenHash     string       `json:"-"              bun:"refresh_token_hash,type:VARCHAR(128),notnull" keel:"refresh_token_hash"`
+	PreviousRefreshHash  string       `json:"-"              bun:"previous_refresh_hash,type:VARCHAR(128),nullzero" keel:"previous_refresh_hash,nullzero"`
+	AccessTokenHash      string       `json:"-"              bun:"access_token_hash,type:VARCHAR(128),notnull" keel:"access_token_hash"`
+	AccessTokenExpiresAt int64        `json:"-"              bun:"access_token_expires_at,type:BIGINT,notnull" keel:"access_token_expires_at"`
+	Sources              []SourceInfo `json:"sources"        bun:"sources,type:JSONB,notnull,default:'[]'" keel:"sources,jsonb"`
+	LastSeenAt           *int64       `json:"lastSeenAt"     bun:"last_seen_at,type:BIGINT,nullzero" keel:"last_seen_at"`
+	LastIP               string       `json:"lastIp"         bun:"last_ip,type:VARCHAR(64),nullzero" keel:"last_ip,nullzero"`
+	RevokedAt            *int64       `json:"revokedAt"      bun:"revoked_at,type:BIGINT,nullzero" keel:"revoked_at"`
+	RevokedByID          *pulid.ID    `json:"revokedById"    bun:"revoked_by_id,type:VARCHAR(100),nullzero" keel:"revoked_by_id"`
+	RevokedReason        string       `json:"revokedReason"  bun:"revoked_reason,type:VARCHAR(255),nullzero" keel:"revoked_reason,nullzero"`
+	Version              int64        `json:"version"        bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt            int64        `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt            int64        `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`

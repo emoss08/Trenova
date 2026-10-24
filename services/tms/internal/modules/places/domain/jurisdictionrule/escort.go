@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,19 +21,20 @@ var _ bun.BeforeAppendModelHook = (*EscortThreshold)(nil)
 // until 16'7" in Montana. Columns would force every state into one shape.
 type EscortThreshold struct {
 	bun.BaseModel `bun:"table:jurisdiction_escort_thresholds,alias:jet" json:"-"`
+	keel.Table    `keel:"jurisdiction_escort_thresholds"`
 
-	ID                 pulid.ID    `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	JurisdictionRuleID pulid.ID    `json:"jurisdictionRuleId" bun:"jurisdiction_rule_id,type:VARCHAR(100),notnull"`
-	Role               EscortRole  `json:"role"               bun:"role,type:jurisdiction_escort_role_enum,notnull"`
-	Trigger            TriggerKind `json:"trigger"            bun:"trigger,type:jurisdiction_trigger_kind_enum,notnull"`
-	ThresholdValue     float64     `json:"thresholdValue"     bun:"threshold_value,type:NUMERIC(12,2),notnull"`
-	Note               string      `json:"note"               bun:"note,type:TEXT,nullzero"`
+	ID                 pulid.ID    `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull" keel:"id,pk,autoid:jet_"`
+	JurisdictionRuleID pulid.ID    `json:"jurisdictionRuleId" bun:"jurisdiction_rule_id,type:VARCHAR(100),notnull" keel:"jurisdiction_rule_id"`
+	Role               EscortRole  `json:"role"               bun:"role,type:jurisdiction_escort_role_enum,notnull" keel:"role"`
+	Trigger            TriggerKind `json:"trigger"            bun:"trigger,type:jurisdiction_trigger_kind_enum,notnull" keel:"trigger"`
+	ThresholdValue     float64     `json:"thresholdValue"     bun:"threshold_value,type:NUMERIC(12,2),notnull" keel:"threshold_value"`
+	Note               string      `json:"note"               bun:"note,type:TEXT,nullzero" keel:"note,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
-	JurisdictionRule *JurisdictionRule `json:"-" bun:"rel:belongs-to,join:jurisdiction_rule_id=id"`
+	JurisdictionRule *JurisdictionRule `json:"-" bun:"rel:belongs-to,join:jurisdiction_rule_id=id" keel:"belongs:jurisdiction_rule_id"`
 }
 
 func (e *EscortThreshold) GetID() pulid.ID { return e.ID }

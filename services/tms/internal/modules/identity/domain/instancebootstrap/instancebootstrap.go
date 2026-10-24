@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -178,14 +179,15 @@ func (i *Inputs) IdentityDifferences(other *Inputs) []string {
 
 type InstanceBootstrap struct {
 	bun.BaseModel `bun:"table:instance_bootstraps,alias:ibs" json:"-"`
+	keel.Table    `keel:"instance_bootstraps"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	AdminUserID    pulid.ID `json:"adminUserId"    bun:"admin_user_id,type:VARCHAR(100),nullzero"`
-	Inputs         Inputs   `json:"inputs"         bun:"inputs,type:JSONB,notnull"`
-	CompletedAt    int64    `json:"completedAt"    bun:"completed_at,type:BIGINT,notnull"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
+	AdminUserID    pulid.ID `json:"adminUserId"    bun:"admin_user_id,type:VARCHAR(100),nullzero" keel:"admin_user_id,nullzero"`
+	Inputs         Inputs   `json:"inputs"         bun:"inputs,type:JSONB,notnull" keel:"inputs,jsonb"`
+	CompletedAt    int64    `json:"completedAt"    bun:"completed_at,type:BIGINT,notnull" keel:"completed_at"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
 func (r *InstanceBootstrap) BeforeAppendModel(_ context.Context, q bun.Query) error {

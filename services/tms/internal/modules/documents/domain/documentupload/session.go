@@ -3,6 +3,7 @@ package documentupload
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -17,39 +18,40 @@ var _ bun.BeforeAppendModelHook = (*DocumentUploadSession)(nil)
 
 type DocumentUploadSession struct {
 	bun.BaseModel `bun:"table:document_upload_sessions,alias:dus" json:"-"`
+	keel.Table    `keel:"document_upload_sessions"`
 
-	ID                      pulid.ID                   `json:"id"                      bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID          pulid.ID                   `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID          pulid.ID                   `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	DocumentID              *pulid.ID                  `json:"documentId"              bun:"document_id,type:VARCHAR(100),nullzero"`
-	LineageID               *pulid.ID                  `json:"lineageId"               bun:"lineage_id,type:VARCHAR(100),nullzero"`
-	ResourceID              string                     `json:"resourceId"              bun:"resource_id,type:VARCHAR(100),notnull"`
-	ResourceType            string                     `json:"resourceType"            bun:"resource_type,type:VARCHAR(100),notnull"`
-	ProcessingProfile       document.ProcessingProfile `json:"processingProfile"       bun:"processing_profile,type:VARCHAR(64),notnull,default:'none'"`
-	DocumentTypeID          *pulid.ID                  `json:"documentTypeId"          bun:"document_type_id,type:VARCHAR(100),nullzero"`
-	OriginalName            string                     `json:"originalName"            bun:"original_name,type:VARCHAR(255),notnull"`
-	ContentType             string                     `json:"contentType"             bun:"content_type,type:VARCHAR(255),notnull"`
-	FileSize                int64                      `json:"fileSize"                bun:"file_size,type:BIGINT,notnull"`
-	StoragePath             string                     `json:"storagePath"             bun:"storage_path,type:VARCHAR(500),notnull"`
-	StorageProviderUploadID string                     `json:"storageProviderUploadId" bun:"storage_provider_upload_id,type:VARCHAR(255),nullzero"`
-	ChecksumSHA256          string                     `json:"checksumSha256"          bun:"checksum_sha256,type:VARCHAR(64),nullzero"`
-	CryptoMode              string                     `json:"cryptoMode"              bun:"crypto_mode,type:VARCHAR(32),notnull,default:'blob_v1'"`
-	CryptoVersion           int16                      `json:"cryptoVersion"           bun:"crypto_version,type:SMALLINT,notnull,default:2"`
-	MalwareScan             bool                       `json:"malwareScan"             bun:"malware_scan,type:BOOLEAN,notnull,default:false"`
-	Strategy                Strategy                   `json:"strategy"                bun:"strategy,type:VARCHAR(20),notnull"`
-	Status                  Status                     `json:"status"                  bun:"status,type:document_upload_session_status_enum,notnull,default:'Initiated'"`
-	Description             string                     `json:"description"             bun:"description,type:TEXT,nullzero"`
-	Tags                    []string                   `json:"tags"                    bun:"tags,type:VARCHAR(100)[],default:'{}'"`
-	UploadedParts           []kernelports.UploadedPart `json:"uploadedParts"           bun:"uploaded_parts,type:JSONB,notnull,default:'[]'"`
-	PartSize                int64                      `json:"partSize"                bun:"part_size,type:BIGINT,notnull"`
-	FailureCode             string                     `json:"failureCode"             bun:"failure_code,type:VARCHAR(100),nullzero"`
-	FailureMessage          string                     `json:"failureMessage"          bun:"failure_message,type:TEXT,nullzero"`
-	ThreatName              string                     `json:"threatName"              bun:"threat_name,type:VARCHAR(255),nullzero"`
-	ExpiresAt               int64                      `json:"expiresAt"               bun:"expires_at,type:BIGINT,notnull"`
-	LastActivityAt          int64                      `json:"lastActivityAt"          bun:"last_activity_at,type:BIGINT,notnull"`
-	Version                 int64                      `json:"version"                 bun:"version,type:BIGINT"`
-	CreatedAt               int64                      `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt               int64                      `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                      pulid.ID                   `json:"id"                      bun:"id,type:VARCHAR(100),pk,notnull" keel:"id,pk,autoid:dus_"`
+	OrganizationID          pulid.ID                   `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),pk,notnull" keel:"organization_id,pk,tenant"`
+	BusinessUnitID          pulid.ID                   `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),pk,notnull" keel:"business_unit_id,pk,tenant"`
+	DocumentID              *pulid.ID                  `json:"documentId"              bun:"document_id,type:VARCHAR(100),nullzero" keel:"document_id"`
+	LineageID               *pulid.ID                  `json:"lineageId"               bun:"lineage_id,type:VARCHAR(100),nullzero" keel:"lineage_id"`
+	ResourceID              string                     `json:"resourceId"              bun:"resource_id,type:VARCHAR(100),notnull" keel:"resource_id"`
+	ResourceType            string                     `json:"resourceType"            bun:"resource_type,type:VARCHAR(100),notnull" keel:"resource_type"`
+	ProcessingProfile       document.ProcessingProfile `json:"processingProfile"       bun:"processing_profile,type:VARCHAR(64),notnull,default:'none'" keel:"processing_profile"`
+	DocumentTypeID          *pulid.ID                  `json:"documentTypeId"          bun:"document_type_id,type:VARCHAR(100),nullzero" keel:"document_type_id"`
+	OriginalName            string                     `json:"originalName"            bun:"original_name,type:VARCHAR(255),notnull" keel:"original_name"`
+	ContentType             string                     `json:"contentType"             bun:"content_type,type:VARCHAR(255),notnull" keel:"content_type"`
+	FileSize                int64                      `json:"fileSize"                bun:"file_size,type:BIGINT,notnull" keel:"file_size"`
+	StoragePath             string                     `json:"storagePath"             bun:"storage_path,type:VARCHAR(500),notnull" keel:"storage_path"`
+	StorageProviderUploadID string                     `json:"storageProviderUploadId" bun:"storage_provider_upload_id,type:VARCHAR(255),nullzero" keel:"storage_provider_upload_id,nullzero"`
+	ChecksumSHA256          string                     `json:"checksumSha256"          bun:"checksum_sha256,type:VARCHAR(64),nullzero" keel:"checksum_sha256,nullzero"`
+	CryptoMode              string                     `json:"cryptoMode"              bun:"crypto_mode,type:VARCHAR(32),notnull,default:'blob_v1'" keel:"crypto_mode"`
+	CryptoVersion           int16                      `json:"cryptoVersion"           bun:"crypto_version,type:SMALLINT,notnull,default:2" keel:"crypto_version"`
+	MalwareScan             bool                       `json:"malwareScan"             bun:"malware_scan,type:BOOLEAN,notnull,default:false" keel:"malware_scan"`
+	Strategy                Strategy                   `json:"strategy"                bun:"strategy,type:VARCHAR(20),notnull" keel:"strategy"`
+	Status                  Status                     `json:"status"                  bun:"status,type:document_upload_session_status_enum,notnull,default:'Initiated'" keel:"status"`
+	Description             string                     `json:"description"             bun:"description,type:TEXT,nullzero" keel:"description,nullzero"`
+	Tags                    []string                   `json:"tags"                    bun:"tags,type:VARCHAR(100)[],default:'{}'" keel:"tags"`
+	UploadedParts           []kernelports.UploadedPart `json:"uploadedParts"           bun:"uploaded_parts,type:JSONB,notnull,default:'[]'" keel:"uploaded_parts,jsonb"`
+	PartSize                int64                      `json:"partSize"                bun:"part_size,type:BIGINT,notnull" keel:"part_size"`
+	FailureCode             string                     `json:"failureCode"             bun:"failure_code,type:VARCHAR(100),nullzero" keel:"failure_code,nullzero"`
+	FailureMessage          string                     `json:"failureMessage"          bun:"failure_message,type:TEXT,nullzero" keel:"failure_message,nullzero"`
+	ThreatName              string                     `json:"threatName"              bun:"threat_name,type:VARCHAR(255),nullzero" keel:"threat_name,nullzero"`
+	ExpiresAt               int64                      `json:"expiresAt"               bun:"expires_at,type:BIGINT,notnull" keel:"expires_at"`
+	LastActivityAt          int64                      `json:"lastActivityAt"          bun:"last_activity_at,type:BIGINT,notnull" keel:"last_activity_at"`
+	Version                 int64                      `json:"version"                 bun:"version,type:BIGINT" keel:"version,version"`
+	CreatedAt               int64                      `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt               int64                      `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (s *DocumentUploadSession) BeforeAppendModel(_ context.Context, query bun.Query) error {
