@@ -152,4 +152,4 @@ Everything reads the stored rows; nothing estimates on read.
   or a repository, so every rule is a unit test.
 - A new trigger goes through `RefreshRequester`; never refresh synchronously inside a request.
 - `enable_eta_alerts` defaults to true in the table and is set where the dispatch control row is
-  built; its bun tag must not carry `default:`, or a `false` would be discarded on insert.
+  built; keel writes the field as given, so a `false` stays `false` on insert.

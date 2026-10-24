@@ -63,14 +63,12 @@ ALTER TABLE "gl_accounts"
 
 CREATE INDEX IF NOT EXISTS idx_gl_accounts_search_vector ON "gl_accounts" USING GIN(search_vector);
 
--- bun:split
 ALTER TABLE "customer_billing_profiles"
     ADD COLUMN IF NOT EXISTS "revenue_account_id" varchar(100);
 
 ALTER TABLE "customer_billing_profiles"
     ADD CONSTRAINT "fk_customer_billing_profiles_revenue_account" FOREIGN KEY ("revenue_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT;
 
--- bun:split
 ALTER TABLE "customer_billing_profiles"
     ADD COLUMN IF NOT EXISTS "ar_account_id" varchar(100);
 

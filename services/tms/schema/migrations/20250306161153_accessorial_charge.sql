@@ -11,7 +11,6 @@ CREATE TYPE "rate_unit_enum" AS ENUM(
     'Stop'
 );
 
--- bun:split
 CREATE TABLE IF NOT EXISTS "accessorial_charges"(
     "id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
@@ -30,30 +29,23 @@ CREATE TABLE IF NOT EXISTS "accessorial_charges"(
     CONSTRAINT "fk_accessorial_charges_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
--- bun:split
 CREATE INDEX IF NOT EXISTS "idx_accessorial_charges_status" ON "accessorial_charges"("status");
 
--- bun:split
 CREATE INDEX IF NOT EXISTS "idx_accessorial_charges_business_unit" ON "accessorial_charges"("business_unit_id", "organization_id");
 
 COMMENT ON TABLE accessorial_charges IS 'Stores information about accessorial charges';
 
--- bun:split
 ALTER TABLE "accessorial_charges"
     ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (setweight(immutable_to_tsvector('simple', COALESCE("code", '')), 'A') || setweight(immutable_to_tsvector('simple', COALESCE("description", '')), 'B')) STORED;
 
--- bun:split
 CREATE INDEX IF NOT EXISTS idx_accessorial_charges_search ON accessorial_charges USING GIN(search_vector);
 
--- bun:split
 CREATE INDEX IF NOT EXISTS idx_accessorial_charges_dates_brin ON accessorial_charges USING BRIN(created_at, updated_at) WITH (pages_per_range = 128);
 
--- bun:split
 CREATE INDEX IF NOT EXISTS idx_accessorial_charges_active ON accessorial_charges(created_at DESC)
 WHERE
     status != 'Inactive';
 
--- bun:split
 CREATE INDEX IF NOT EXISTS idx_accessorial_charges_trgm_code_description ON accessorial_charges USING gin((code || ' ' || description) gin_trgm_ops);
 
 ALTER TABLE "shipment_controls"

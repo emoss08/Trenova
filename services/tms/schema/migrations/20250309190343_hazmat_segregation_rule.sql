@@ -10,7 +10,6 @@ CREATE TYPE "segregation_type_enum" AS ENUM (
     'Barrier'
 );
 
--- bun:split
 CREATE TABLE IF NOT EXISTS "hazmat_segregation_rules" (
     "id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
@@ -41,21 +40,16 @@ CREATE TABLE IF NOT EXISTS "hazmat_segregation_rules" (
     CONSTRAINT "chk_hazmat_segregation_rules_exceptions" CHECK ((NOT has_exceptions) OR (has_exceptions AND exception_notes IS NOT NULL))
 );
 
--- bun:split
 CREATE INDEX IF NOT EXISTS "idx_hazmat_segregation_rules_status" ON "hazmat_segregation_rules" ("status");
 
--- bun:split
 CREATE INDEX IF NOT EXISTS "idx_hazmat_segregation_rules_business_unit" ON "hazmat_segregation_rules" ("business_unit_id", "organization_id");
 
--- bun:split
 CREATE INDEX IF NOT EXISTS "idx_hazmat_segregation_rules_classes" ON "hazmat_segregation_rules" ("class_a", "class_b");
 
--- bun:split
 CREATE INDEX IF NOT EXISTS "idx_hazmat_segregation_rules_hazmats" ON "hazmat_segregation_rules" ("hazmat_a_id", "hazmat_b_id");
 
 COMMENT ON TABLE hazmat_segregation_rules IS 'Stores rules for segregation of incompatible hazardous materials during transport';
 
--- bun:split
 ALTER TABLE "hazmat_segregation_rules"
     ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
         setweight(immutable_to_tsvector('simple', COALESCE("name", '')), 'A') ||
@@ -64,19 +58,14 @@ ALTER TABLE "hazmat_segregation_rules"
         setweight(immutable_to_tsvector('simple', COALESCE("regulation_source", '')), 'C')
     ) STORED;
 
--- bun:split
 CREATE INDEX IF NOT EXISTS idx_hazmat_segregation_rules_search ON hazmat_segregation_rules USING GIN (search_vector);
 
--- bun:split
 CREATE INDEX IF NOT EXISTS idx_hazmat_segregation_rules_dates_brin ON hazmat_segregation_rules USING BRIN (created_at, updated_at) WITH (pages_per_range = 128);
 
--- bun:split
 CREATE INDEX IF NOT EXISTS idx_hazmat_segregation_rules_active ON hazmat_segregation_rules (created_at DESC)
 WHERE
     status != 'Inactive';
 
--- bun:split
 CREATE INDEX IF NOT EXISTS idx_hazmat_segregation_rules_trgm_name_description ON hazmat_segregation_rules USING gin ((name || ' ' || coalesce(description, '') || ' ' || coalesce(reference_code, '')) gin_trgm_ops);
 
--- bun:split
 CREATE UNIQUE INDEX IF NOT EXISTS idx_hazmat_segregation_rules_unique ON hazmat_segregation_rules (organization_id, business_unit_id, class_a, class_b, COALESCE(hazmat_a_id, ''), COALESCE(hazmat_b_id, ''));

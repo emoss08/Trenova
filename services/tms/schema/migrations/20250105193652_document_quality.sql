@@ -19,7 +19,6 @@ CREATE TYPE feedback_type_enum AS ENUM (
     'Unclear' -- Document was not clear enough to assess
 );
 
--- bun:split
 CREATE TABLE IF NOT EXISTS "pretrained_models" (
     -- Primary identifiers
     "id" varchar(100) NOT NULL,
@@ -43,7 +42,6 @@ CREATE TABLE IF NOT EXISTS "pretrained_models" (
     CONSTRAINT "check_pretrained_training_metrics_format" CHECK (jsonb_typeof(training_metrics) = 'object')
 );
 
--- bun:split
 -- Indexes for pretrained_models table
 CREATE INDEX "idx_pretrained_models_type" ON "pretrained_models" ("type");
 
@@ -53,7 +51,6 @@ CREATE INDEX "idx_pretrained_models_created_updated" ON "pretrained_models" ("cr
 
 COMMENT ON TABLE "pretrained_models" IS 'Stores information about pretrained models';
 
--- bun:split
 -- Document Quality Configs
 CREATE TABLE IF NOT EXISTS "document_quality_configs" (
     -- Primary identifiers
