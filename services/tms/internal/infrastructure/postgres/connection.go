@@ -21,7 +21,10 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ kernelports.DBConnection = (*Connection)(nil)
+var (
+	_ kernelports.DBConnection = (*Connection)(nil)
+	_ kernelports.Transactor   = (*Connection)(nil)
+)
 
 type ConnectionParams struct {
 	fx.In
@@ -434,6 +437,16 @@ func (c *Connection) WithTx(
 
 	hooks.Run(ctx)
 	return nil
+}
+
+func (c *Connection) Transact(
+	ctx context.Context,
+	opts kernelports.TxOptions,
+	fn func(context.Context) error,
+) error {
+	return c.WithTx(ctx, opts, func(ctx context.Context, _ bun.Tx) error {
+		return fn(ctx)
+	})
 }
 
 func applyLockTimeout(ctx context.Context, tx bun.Tx, timeout time.Duration) error {
