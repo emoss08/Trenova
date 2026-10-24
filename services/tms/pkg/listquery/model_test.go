@@ -1,17 +1,13 @@
 package listquery
 
 import (
-	"context"
 	"testing"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
-	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/stretchr/testify/require"
 )
 
 type testStatus string
@@ -207,36 +203,8 @@ var (
 	}
 )
 
-func renderDB(t *testing.T) *keel.DB {
+func render(t *testing.T, q keeltest.Renderer) (string, []any) {
 	t.Helper()
 
-	cfg := dbpool.KeelConfig(nil, nil)
-	cfg.DSN = "postgres://test:test@127.0.0.1:1/none"
-	db, err := keel.Open(t.Context(), cfg)
-	require.NoError(t, err)
-	t.Cleanup(db.Close)
-
-	return db
-}
-
-func tenantContext(t *testing.T) context.Context {
-	t.Helper()
-
-	return dbscope.WithTenant(t.Context(), dbscope.Tenant{
-		OrganizationID: pulid.ID("org_1"),
-		BusinessUnitID: pulid.ID("bu_1"),
-	})
-}
-
-type renderer interface {
-	ToSQL(ctx context.Context, db *keel.DB) (string, []any, error)
-}
-
-func render(t *testing.T, q renderer) (string, []any) {
-	t.Helper()
-
-	sql, args, err := q.ToSQL(tenantContext(t), renderDB(t))
-	require.NoError(t, err)
-
-	return sql, args
+	return keeltest.Render(t, q)
 }

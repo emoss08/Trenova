@@ -1,12 +1,10 @@
 package validationframework
 
 import (
-	"context"
 	"testing"
 
-	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -75,34 +73,13 @@ func checkTables() (*schema.Table, *schema.Table, *schema.Table) {
 	return items, kinds, states
 }
 
-func checkDB(t *testing.T) *keel.DB {
-	t.Helper()
-
-	cfg := dbpool.KeelConfig(nil, nil)
-	cfg.DSN = "postgres://test:test@127.0.0.1:1/none"
-	db, err := keel.Open(t.Context(), cfg)
-	require.NoError(t, err)
-	t.Cleanup(db.Close)
-
-	return db
-}
-
-func checkContext(t *testing.T) context.Context {
-	t.Helper()
-
-	return dbscope.WithTenant(t.Context(), dbscope.Tenant{
-		OrganizationID: pulid.ID("org_1"),
-		BusinessUnitID: pulid.ID("bu_1"),
-	})
-}
-
 func TestKeelChecker_UniquenessQuery(t *testing.T) {
 	t.Parallel()
 
 	items, _, _ := checkTables()
 	checker := NewKeelChecker(nil, items)
 
-	ctx := checkContext(t)
+	ctx := keeltest.TenantContext(t)
 	q, err := checker.uniquenessQuery(ctx, &UniquenessRequest{
 		TableName:      "check_items",
 		OrganizationID: pulid.ID("org_1"),
@@ -113,7 +90,7 @@ func TestKeelChecker_UniquenessQuery(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	sql, args, err := q.ToSQL(ctx, checkDB(t))
+	sql, args, err := q.ToSQL(ctx, keeltest.RenderDB(t))
 	require.NoError(t, err)
 
 	assert.Equal(t, `SELECT ci."id" AS c1 FROM "check_items" ci `+
@@ -128,7 +105,7 @@ func TestKeelChecker_ReferenceQueryReachesRelatedTables(t *testing.T) {
 	items, _, _ := checkTables()
 	checker := NewKeelChecker(nil, items)
 
-	ctx := checkContext(t)
+	ctx := keeltest.TenantContext(t)
 	q, err := checker.referenceQuery(ctx, &ReferenceRequest{
 		TableName:      "check_kinds",
 		OrganizationID: pulid.ID("org_1"),
@@ -137,7 +114,7 @@ func TestKeelChecker_ReferenceQueryReachesRelatedTables(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	sql, args, err := q.ToSQL(ctx, checkDB(t))
+	sql, args, err := q.ToSQL(ctx, keeltest.RenderDB(t))
 	require.NoError(t, err)
 
 	assert.Equal(t, `SELECT ck."id" AS c1 FROM "check_kinds" ck `+
@@ -151,7 +128,7 @@ func TestKeelChecker_RefusesWhatItDoesNotKnow(t *testing.T) {
 	items, _, _ := checkTables()
 	checker := NewKeelChecker(nil, items)
 
-	ctx := checkContext(t)
+	ctx := keeltest.TenantContext(t)
 	_, err := checker.referenceQuery(
 		ctx,
 		&ReferenceRequest{TableName: "elsewhere", ID: pulid.ID("x_1")},
@@ -189,7 +166,7 @@ func TestKeelChecker_ASystemScopeReadsEveryTenant(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	sql, args, err := q.ToSQL(ctx, checkDB(t))
+	sql, args, err := q.ToSQL(ctx, keeltest.RenderDB(t))
 	require.NoError(t, err)
 
 	assert.Equal(t, `SELECT ci."id" AS c1 FROM "check_items" ci `+
@@ -209,7 +186,7 @@ func TestKeelReferenceCheck_AGlobalTableNeedsNoTenant(t *testing.T) {
 		pulid.ID("st_1"),
 	)
 
-	sql, args, err := q.ToSQL(t.Context(), checkDB(t))
+	sql, args, err := q.ToSQL(t.Context(), keeltest.RenderDB(t))
 	require.NoError(t, err)
 
 	assert.Equal(t, `SELECT cs."id" AS c1 FROM "check_states" cs WHERE (cs."id" = $1) LIMIT 1`, sql)
