@@ -8,11 +8,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 var ErrCheckRowNil = errors.New("check rows affected: result is nil")
@@ -55,7 +55,7 @@ func HandleNotFoundError(err error, entityName string) error {
 }
 
 func IsNotFoundError(err error) bool {
-	return errors.Is(err, sql.ErrNoRows)
+	return errors.Is(err, sql.ErrNoRows) || errors.Is(err, keel.ErrNotFound)
 }
 
 func CreateVersionMismatchError(entityName, entityID string) error {
@@ -92,15 +92,33 @@ func CreateBulkVersionMismatchError(entityName string, entityIDs []pulid.ID) err
 }
 
 func CheckRowsAffected(result sql.Result, entityName, entityID string) error {
-	if result == nil {
-		return ErrCheckRowNil
-	}
-
-	rows, err := result.RowsAffected()
+	rows, err := rowsAffected(result)
 	if err != nil {
-		return fmt.Errorf("get rows affected: %w", err)
+		return err
 	}
 
+	return CheckAffected(rows, entityName, entityID)
+}
+
+func CheckFound(result sql.Result, entityName string) error {
+	rows, err := rowsAffected(result)
+	if err != nil {
+		return err
+	}
+
+	return CheckFoundCount(rows, entityName)
+}
+
+func CheckBulkRowsAffected(result sql.Result, entityName string, entityIDs []pulid.ID) error {
+	rows, err := rowsAffected(result)
+	if err != nil {
+		return err
+	}
+
+	return CheckBulkAffected(rows, entityName, entityIDs)
+}
+
+func CheckAffected(rows int64, entityName, entityID string) error {
 	if rows == 0 {
 		return CreateVersionMismatchError(entityName, entityID)
 	}
@@ -108,16 +126,7 @@ func CheckRowsAffected(result sql.Result, entityName, entityID string) error {
 	return nil
 }
 
-func CheckFound(result sql.Result, entityName string) error {
-	if result == nil {
-		return ErrCheckRowNil
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("get rows affected: %w", err)
-	}
-
+func CheckFoundCount(rows int64, entityName string) error {
 	if rows == 0 {
 		return errortypes.NewNotFoundError("{0} not found within your organization", entityName)
 	}
@@ -125,21 +134,25 @@ func CheckFound(result sql.Result, entityName string) error {
 	return nil
 }
 
-func CheckBulkRowsAffected(result sql.Result, entityName string, entityIDs []pulid.ID) error {
-	if result == nil {
-		return ErrCheckRowNil
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("get rows affected: %w", err)
-	}
-
+func CheckBulkAffected(rows int64, entityName string, entityIDs []pulid.ID) error {
 	if rows == 0 {
 		return CreateBulkVersionMismatchError(entityName, entityIDs)
 	}
 
 	return nil
+}
+
+func rowsAffected(result sql.Result) (int64, error) {
+	if result == nil {
+		return 0, ErrCheckRowNil
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("get rows affected: %w", err)
+	}
+
+	return rows, nil
 }
 
 func IsConstraintViolation(err error) bool {
@@ -172,18 +185,14 @@ func DriverError(err error) error {
 		return pgErr
 	}
 
-	var pgDriverErr pgdriver.Error
-	if errors.As(err, &pgDriverErr) {
-		return pgDriverErr
-	}
-
 	return nil
 }
 
 // IsReadOnlyTransaction reports a write attempted inside a read-only
 // transaction, such as a preview's snapshot.
 func IsReadOnlyTransaction(err error) bool {
-	return ExtractCode(err) == pgerrcode.ReadOnlySQLTransaction
+	return errors.Is(err, keel.ErrReadOnly) ||
+		ExtractCode(err) == pgerrcode.ReadOnlySQLTransaction
 }
 
 func IsRowLevelSecurityViolation(err error) bool {
@@ -273,15 +282,6 @@ func extractPostgresErrorDetails(err error) (postgresErrorDetails, bool) {
 			code:       pgErr.Code,
 			constraint: pgErr.ConstraintName,
 			message:    pgErr.Message,
-		}, true
-	}
-
-	var pgDriverErr pgdriver.Error
-	if errors.As(err, &pgDriverErr) {
-		return postgresErrorDetails{
-			code:       pgDriverErr.Field('C'),
-			constraint: pgDriverErr.Field('n'),
-			message:    pgDriverErr.Field('M'),
 		}, true
 	}
 
